@@ -11,7 +11,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   BUILDING_STYLE_DEFAULTS,
+  MATERIAL_THEMES,
+  assignMaterials,
+  archetypeOfTags,
   generateBuilding,
+  materialKey,
+  pickTheme,
   nodeSeed,
   rotateFacing,
   rotateLocalColumn,
@@ -20,6 +25,7 @@ import {
   type BuildingParams,
   type BuildingRoof,
   type LocalVoxelOp,
+  type MaterialTheme,
   type StructureYaw,
 } from "../src/index.js";
 
@@ -42,8 +48,29 @@ const CASES: readonly Case[] = [
   { label: "minimum", size: [3, 5, 3], params: { floors: 1, roof: "flat" } },
 ];
 
+/**
+ * A fixed style so a test can name the block it expects.
+ *
+ * The grammar now draws its materials from a village theme, which is the whole
+ * point of the diversity work — but a test that wants to say "the door is an
+ * oak door" has to pin the palette, or it is really testing the theme deal.
+ */
+const PINNED: Readonly<Record<string, string>> = Object.freeze({ ...BUILDING_STYLE_DEFAULTS });
+
 function build(c: Case, extra: Partial<Parameters<typeof generateBuilding>[0]> = {}) {
-  return generateBuilding({ size: c.size, params: c.params, seed: SEED, foundationDepth: 2, ...extra });
+  return generateBuilding({
+    size: c.size,
+    params: c.params,
+    seed: SEED,
+    foundationDepth: 2,
+    style: PINNED,
+    ...extra,
+  });
+}
+
+/** Ops inside the footprint proper — everything but the apron decorations. */
+function core(ops: readonly LocalVoxelOp[], sx: number, sz: number): LocalVoxelOp[] {
+  return ops.filter((o) => o.x >= 0 && o.x < sx && o.z >= 0 && o.z < sz);
 }
 
 function key(op: { x: number; y: number; z: number }): string {
@@ -67,14 +94,18 @@ describe("generateBuilding — determinism", () => {
     }
   });
 
-  it("changes materials but not geometry when the seed changes", () => {
+  it("keeps the massing but varies the detail when the seed changes", () => {
     const c = CASES[1] as Case;
     const a = build(c);
     const b = build(c, { seed: nodeSeed(0x5eedn, "world.other_house") });
-    expect(b.ops.map(key)).toEqual(a.ops.map(key));
-    expect(b.meta).toEqual(a.meta);
-    // The foundation mix is position-*and*-seed keyed, so at least one block
-    // of the skirt has to differ; anything else would mean the seed is unused.
+    // The shell is the envelope's business, not the seed's: two houses of the
+    // same size and params stand the same height and roof at the same line.
+    expect(b.meta.wallTop).toBe(a.meta.wallTop);
+    expect(b.meta.roofBase).toBe(a.meta.roofBase);
+    expect(b.meta.roofTop).toBe(a.meta.roofTop);
+    expect(b.meta.interior).toEqual(a.meta.interior);
+    // Everything else is allowed — and required — to differ, or the seed is
+    // doing nothing and every house in a village is the same house.
     expect(b.ops.map((o) => o.block).join()).not.toBe(a.ops.map((o) => o.block).join());
   });
 
@@ -85,14 +116,34 @@ describe("generateBuilding — determinism", () => {
 });
 
 describe("generateBuilding — structural sanity", () => {
-  it("never places a block outside the footprint", () => {
+  it("keeps every block inside the footprint or its one-block apron", () => {
     for (const c of CASES) {
       const [sx, , sz] = c.size;
       for (const op of build(c).ops) {
-        expect(op.x).toBeGreaterThanOrEqual(0);
-        expect(op.z).toBeGreaterThanOrEqual(0);
-        expect(op.x).toBeLessThan(sx);
-        expect(op.z).toBeLessThan(sz);
+        expect(op.x, c.label).toBeGreaterThanOrEqual(-1);
+        expect(op.z, c.label).toBeGreaterThanOrEqual(-1);
+        expect(op.x, c.label).toBeLessThanOrEqual(sx);
+        expect(op.z, c.label).toBeLessThanOrEqual(sz);
+      }
+    }
+  });
+
+  it("puts nothing structural in the apron — only the named decorations", () => {
+    const decorations = new Set([
+      PINNED["roof.stairs"] as string,
+      PINNED["roof.slab"] as string,
+      PINNED["wall.fence"] as string,
+      PINNED["wall.trapdoor"] as string,
+      PINNED["light.lantern"] as string,
+    ]);
+    for (const c of CASES) {
+      const [sx, , sz] = c.size;
+      const { ops, meta } = build(c);
+      const apron = ops.filter((o) => o.x < 0 || o.x >= sx || o.z < 0 || o.z >= sz);
+      expect(apron.length, c.label).toBe(meta.apronOps);
+      for (const op of apron) {
+        const ok = decorations.has(op.block) || op.block.startsWith("potted_");
+        expect(ok, `${c.label}: ${op.block} in the apron`).toBe(true);
       }
     }
   });
@@ -166,11 +217,14 @@ describe("generateBuilding — structural sanity", () => {
           size: c.size,
           params: { ...c.params, roof },
           seed: SEED,
+          style: PINNED,
         });
-        const covered = new Set(
-          ops.filter((o) => o.y >= meta.roofBase).map((o) => `${o.x},${o.z}`),
-        );
         const [sx, , sz] = c.size;
+        const covered = new Set(
+          core(ops, sx, sz)
+            .filter((o) => o.y >= meta.roofBase)
+            .map((o) => `${o.x},${o.z}`),
+        );
         expect(covered.size, `${c.label} ${roof}`).toBe(sx * sz);
       }
     }
@@ -204,9 +258,20 @@ describe("generateBuilding — structural sanity", () => {
     for (const c of CASES) {
       const { ops, meta } = build(c);
       const lanterns = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["light.lantern"]);
-      expect(lanterns.length).toBe(meta.lanternCount);
+      // The porch lamp is a lantern too, and it is not one of the interior
+      // lights `meta.lanternCount` counts.
+      const inside = lanterns.filter((o) => o.props?.["hanging"] === "true");
+      expect(inside.length).toBe(meta.lanternCount);
       if (meta.interior.x0 <= meta.interior.x1 && meta.interior.z0 <= meta.interior.z1) {
         expect(meta.lanternCount).toBe(meta.params.floors);
+      }
+      // Every hanging lantern has the floor/ceiling plane above it to hang from.
+      const filled = new Set(ops.map(key));
+      for (const lamp of lanterns) {
+        const supported =
+          filled.has(`${lamp.x},${lamp.y + 1},${lamp.z}`) ||
+          filled.has(`${lamp.x},${lamp.y - 1},${lamp.z}`);
+        expect(supported, `${c.label} lantern at ${key(lamp)}`).toBe(true);
       }
     }
   });
@@ -247,10 +312,10 @@ describe("rotateOps", () => {
         expect(new Set(rotated.map(key)).size).toBe(ops.length);
         const [rx, rz] = yaw === 90 || yaw === 270 ? [sz, sx] : [sx, sz];
         for (const op of rotated) {
-          expect(op.x).toBeGreaterThanOrEqual(0);
-          expect(op.z).toBeGreaterThanOrEqual(0);
-          expect(op.x).toBeLessThan(rx);
-          expect(op.z).toBeLessThan(rz);
+          expect(op.x).toBeGreaterThanOrEqual(-1);
+          expect(op.z).toBeGreaterThanOrEqual(-1);
+          expect(op.x).toBeLessThanOrEqual(rx);
+          expect(op.z).toBeLessThanOrEqual(rz);
         }
       }
     }
@@ -326,5 +391,129 @@ describe("rotateOps", () => {
         }
       }
     }
+  });
+});
+
+describe("material themes", () => {
+  it("picks a theme deterministically, and honours an override", () => {
+    const a = pickTheme(SEED);
+    expect(pickTheme(SEED).id).toBe(a.id);
+    expect(MATERIAL_THEMES.map((t) => t.id)).toContain(a.id);
+    for (const theme of MATERIAL_THEMES) {
+      expect(pickTheme(SEED, theme.id).id).toBe(theme.id);
+    }
+    // An unknown name falls back to the seed's draw rather than failing.
+    expect(pickTheme(SEED, "no_such_theme").id).toBe(a.id);
+  });
+
+  it("deals a distinct triple to every building until the palette runs out", () => {
+    for (const theme of MATERIAL_THEMES) {
+      const capacity = theme.woods.length * theme.roofs.length;
+      const deal = assignMaterials(theme, capacity, SEED);
+      expect(new Set(deal.map(materialKey)).size).toBe(capacity);
+      // Below capacity the property still holds — that is the case a village of
+      // eight or nine houses actually exercises.
+      for (const n of [2, 5, 9]) {
+        const some = assignMaterials(theme, n, SEED);
+        expect(new Set(some.map(materialKey)).size).toBe(Math.min(n, capacity));
+      }
+      // Past capacity it wraps, which is the documented exhaustion case.
+      const over = assignMaterials(theme, capacity + 3, SEED);
+      expect(new Set(over.map(materialKey)).size).toBe(capacity);
+    }
+  });
+
+  it("deals the same hand for the same seed and a different one otherwise", () => {
+    const theme = MATERIAL_THEMES[0] as MaterialTheme;
+    const a = assignMaterials(theme, 9, SEED).map(materialKey);
+    expect(assignMaterials(theme, 9, SEED).map(materialKey)).toEqual(a);
+    const other = assignMaterials(theme, 9, nodeSeed(0x5eedn, "world.elsewhere")).map(materialKey);
+    expect(other).not.toEqual(a);
+  });
+
+  it("reads an archetype off a node's tags", () => {
+    expect(archetypeOfTags(["civic", "hall"])).toBe("hall");
+    expect(archetypeOfTags(["house", "trade"])).toBe("inn");
+    expect(archetypeOfTags(["craft"])).toBe("smithy");
+    expect(archetypeOfTags(["store"])).toBe("granary");
+    expect(archetypeOfTags(["civic", "lookout"])).toBe("watchtower");
+    expect(archetypeOfTags(["house"])).toBe("cottage");
+    expect(archetypeOfTags([])).toBe("cottage");
+  });
+
+  it("furnishes each archetype with something to find inside", () => {
+    const props: Record<string, string[]> = {
+      cottage: ["red_bed", "crafting_table"],
+      inn: ["barrel", "cauldron"],
+      smithy: ["blast_furnace", "anvil", "smithing_table"],
+      granary: ["hay_block", "composter"],
+      hall: ["white_carpet", "blue_banner"],
+    };
+    for (const [archetype, wanted] of Object.entries(props)) {
+      const { ops, meta } = generateBuilding({
+        size: [11, 11, 11],
+        params: { floors: 1, archetype },
+        seed: SEED,
+        style: PINNED,
+      });
+      const blocks = new Set(ops.map((o) => o.block));
+      for (const block of wanted) expect(blocks.has(block), `${archetype}/${block}`).toBe(true);
+      expect(meta.params.archetype).toBe(archetype);
+      expect(meta.furnitureCount).toBeGreaterThan(2);
+    }
+  });
+
+  it("builds a watchtower as a tower, not a house with a flat lid", () => {
+    const { ops, meta } = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.params.archetype).toBe("watchtower");
+    expect(meta.roofTop).toBeGreaterThan(14);
+    // The shaft is set back from the base, so the widest course is not the top.
+    const widthAt = (y: number): number => {
+      const xs = ops.filter((o) => o.y === y).map((o) => o.x);
+      return xs.length === 0 ? 0 : Math.max(...xs) - Math.min(...xs) + 1;
+    };
+    expect(widthAt(3)).toBe(7);
+    expect(widthAt(8)).toBe(5);
+    // Crenellations: the parapet's top course covers only part of its ring.
+    const parapet = ops.filter((o) => o.y === meta.roofTop).length;
+    const below = ops.filter((o) => o.y === meta.roofTop - 1).length;
+    expect(parapet).toBeGreaterThan(4);
+    expect(parapet).toBeLessThan(below);
+    // Climbable, and nothing floating: a ladder the full height of the shaft.
+    expect(ops.filter((o) => o.block === "ladder").length).toBeGreaterThan(8);
+  });
+
+  it("puts a fire-safe campfire on top of a one-storey chimney", () => {
+    const { ops, meta } = generateBuilding({
+      size: [9, 8, 9],
+      params: { floors: 1, roof: "gable", archetype: "cottage" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.chimney).toBe(true);
+    const fire = ops.find((o) => o.block === "campfire");
+    expect(fire).toBeDefined();
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const fx = fire?.x as number;
+    const fy = fire?.y as number;
+    const fz = fire?.z as number;
+    // Supported from below, open above, and ringed by stone on all four sides.
+    expect(at.get(`${fx},${fy - 1},${fz}`)?.block).toBe(PINNED["chimney.block"]);
+    expect(at.has(`${fx},${fy + 1},${fz}`)).toBe(false);
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      expect(at.get(`${fx + dx},${fy},${fz + dz}`)?.block).toBe(PINNED["chimney.rim"]);
+    }
+    // The flue clears the ridge, so the smoke is not trapped under the roof.
+    expect(fy).toBeGreaterThan(meta.roofTop);
   });
 });

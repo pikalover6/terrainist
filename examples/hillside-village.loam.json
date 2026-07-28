@@ -260,7 +260,7 @@
         "kind": "generator",
         "generator": "building.grammar@0",
         "label": "A watchtower on the north-east rise — dropped if the hill will not take it",
-        "envelope": { "shape": "box", "size": [7, 12, 7] },
+        "envelope": { "shape": "box", "size": [7, 19, 7] },
         "params": { "floors": 2, "roof": "flat", "windowRhythm": "sparse" },
         "optional": true,
         "constraints": [

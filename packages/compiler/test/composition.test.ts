@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { nodeSeed, type Region } from "@terrainist/stdlib";
+import { SurfaceClass, nodeSeed, type Region } from "@terrainist/stdlib";
 
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
@@ -35,7 +35,7 @@ import {
 import { FluidKind, type ColumnPlan } from "../src/terrain/columns.js";
 import { checkFluidStability } from "../src/terrain/validate.js";
 import { resolvePalette } from "../src/terrain/palette.js";
-import { TREE_TEMPLATES, type TreePlacement } from "../src/terrain/vegetation.js";
+import { TREE_TEMPLATES, scatterForests, type TreePlacement } from "../src/terrain/vegetation.js";
 import type { BuiltBuilding } from "../src/structures/buildings.js";
 import { MIN_PLAZA_SIZE, pavePlaza } from "../src/structures/plaza.js";
 import { ROAD_FILL_BAND, gradeProfile } from "../src/structures/roads.js";
@@ -260,7 +260,16 @@ describe("structure clip", () => {
       blockCount: 100,
       floorY: 71,
     };
-    expect(structureBoxes([built])[0]).toEqual({ ...hall, y0: 68, y1: 81 });
+    // One block wider than the footprint on every side: the eave course and the
+    // rest of the facade detail live in that apron ring.
+    expect(structureBoxes([built])[0]).toEqual({
+      x0: hall.x0 - 1,
+      z0: hall.z0 - 1,
+      x1: hall.x1 + 1,
+      z1: hall.z1 + 1,
+      y0: 68,
+      y1: 81,
+    });
   });
 });
 
@@ -401,7 +410,9 @@ describe("pavePlaza", () => {
     expect(ring).toHaveLength(8);
     expect(ring.filter((b) => b.stateId === border)).toHaveLength(4);
     expect(ring.filter((b) => b.stateId === wall)).toHaveLength(4);
-    expect(out.blocks.filter((b) => b.stateId === post)).toHaveLength(2);
+    // Two posts per lamp, not one: a single course reads as a lantern sunk into
+    // the ground from every angle above.
+    expect(out.blocks.filter((b) => b.stateId === post)).toHaveLength(4);
     expect(out.blocks.filter((b) => b.stateId === lantern)).toHaveLength(2);
   });
 
@@ -476,5 +487,101 @@ describe("gradeProfile with a per-cell fill band", () => {
     expect(gradeProfile(ground, SEA, ground.map(() => ROAD_FILL_BAND))).toEqual(
       gradeProfile(ground, SEA),
     );
+  });
+});
+
+describe("tree templates", () => {
+  /**
+   * The invariant a canopy has to satisfy: **no log is the topmost block of its
+   * own column.**
+   *
+   * This is the "bare trunk tips" defect stated precisely. It was true of every
+   * single-trunk shape and false of the 2×2 mega conifer, whose cap was pushed
+   * only over `(0, 0)` — so three of its four trunk columns ended in a log with
+   * open sky above, and a wood full of giants grew a field of little masts.
+   */
+  it("never leaves a log as the top of its column", () => {
+    for (const [shape, template] of Object.entries(TREE_TEMPLATES)) {
+      for (const mega of [false, true]) {
+        for (const height of [template.minHeight, template.maxHeight]) {
+          for (const radiusDelta of [-1, 0, 1]) {
+            const blocks = template.blocks({ height, radiusDelta, mega });
+            const top = new Map<string, { dy: number; part: string }>();
+            for (const b of blocks) {
+              const key = `${b.dx},${b.dz}`;
+              const seen = top.get(key);
+              if (seen === undefined || b.dy > seen.dy) top.set(key, { dy: b.dy, part: b.part });
+            }
+            const bare = [...top.entries()].filter(([, v]) => v.part === "log");
+            expect(bare.map(([k]) => k), `${shape} mega=${mega} h=${height} r=${radiusDelta}`).toEqual(
+              [],
+            );
+          }
+        }
+      }
+    }
+  });
+});
+
+describe("forest area feathering", () => {
+  /**
+   * A forest limited to a `zone` or a radius must *fade* at its boundary.
+   *
+   * `edgeFalloff` has always meant "taper the edge"; until now the only edge it
+   * knew about was the region's, so an `area`-limited node stopped dead along a
+   * straight line and a birch wood read as a hedge someone had trimmed.
+   */
+  it("thins a zone-limited node towards its boundary", () => {
+    const r = region();
+    const p = plan(r);
+    const n = r.width * r.depth;
+    const classification = {
+      slopes: new Float64Array(n),
+      classes: new Uint8Array(n).fill(SurfaceClass.SOIL),
+      relief: new Float64Array(n),
+      minHeight: 70,
+      maxHeight: 70,
+      snowLine: 200,
+      oceanMask: new Uint8Array(n),
+      lakeMask: new Uint8Array(n),
+      overriddenNoFlood: 0,
+      markers: [],
+    };
+    const node = {
+      id: "wood",
+      nodePath: "world.wood",
+      seed: nodeSeed(11n, "world.wood"),
+      params: {
+        area: { zone: "center" } as const,
+        density: 0.5,
+        spacing: 2,
+        clumping: 0,
+        edgeFalloff: 10,
+        species: [{ id: "b", shape: "birch_slim" as const }],
+      },
+    };
+    const out = scatterForests([node], p, classification, palette);
+    expect(out.trees.length).toBeGreaterThan(20);
+
+    // The zone is one cell of the nine-grid: a box a sixth of the region wide
+    // either side of its centre. Trees in the outer third of that box should be
+    // markedly sparser per unit area than those in the inner third.
+    const halfX = r.width / 6;
+    const halfZ = r.depth / 6;
+    const cx = r.x0 + r.width / 2;
+    const cz = r.z0 + r.depth / 2;
+    let inner = 0;
+    let outer = 0;
+    for (const tree of out.trees) {
+      const inset = Math.min(halfX - Math.abs(tree.x - cx), halfZ - Math.abs(tree.z - cz));
+      if (inset > 10) inner++;
+      else outer++;
+    }
+    // Areas: the feathered band is a frame of width 10 around a box of half-width
+    // ~53, so it is comparable in area to the interior. A hard edge would give
+    // roughly equal densities; a feather has to be visibly thinner.
+    const innerArea = (2 * (halfX - 10)) * (2 * (halfZ - 10));
+    const outerArea = 2 * halfX * 2 * halfZ - innerArea;
+    expect(outer / outerArea).toBeLessThan(0.6 * (inner / innerArea));
   });
 });

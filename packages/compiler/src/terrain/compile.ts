@@ -63,7 +63,7 @@ import { loadPrismarine } from "../emit/prismarine.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
-import { clipTrees, makeStructureClip, structureBoxes } from "./clip.js";
+import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes } from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
 import { buildColumnPlan, type VolcanoInfo } from "./columns.js";
 import { decorate } from "./decorate.js";
@@ -408,7 +408,12 @@ async function compileValidated(
   const clip =
     structures === undefined
       ? undefined
-      : makeStructureClip(region, structureBoxes(structures.buildings));
+      : makeStructureClip(region, [
+          ...structureBoxes(structures.buildings),
+          ...(structures.roads === undefined
+            ? []
+            : roadCorridorBoxes(structures.roads.routes, structures.roads.width)),
+        ]);
 
   // --- pass 6: vegetation --------------------------------------------------
   const t3 = now();

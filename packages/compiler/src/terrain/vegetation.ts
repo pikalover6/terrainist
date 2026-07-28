@@ -303,6 +303,7 @@ function scatterOne(
           p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
         }
         p *= edgeTaper(region, x, z, params.edgeFalloff);
+        p *= areaTaper(region, params.area, x, z, params.edgeFalloff);
         // The settlement clearing. Zero inside the hull, so the test below can
         // never pass there; a ramp outside it, so the treeline feathers.
         if (clearing !== undefined) {
@@ -344,6 +345,43 @@ function scatterOne(
       }
     }
   }
+}
+
+/**
+ * Density taper within `falloff` blocks of the *node's own area* boundary.
+ *
+ * `areaTest` is a hard predicate — inside or out — and on its own it gives an
+ * `area: { zone: ... }` forest a boundary you can measure with a ruler: the
+ * first village compile had a birch wood that stopped dead along a straight
+ * line. `edgeFalloff` already existed and already meant "feather the edge"; it
+ * simply had nothing but the region border to feather against. This is the same
+ * ramp applied to the shape the author actually drew.
+ */
+function areaTaper(
+  region: Region,
+  area: ScatterArea,
+  x: number,
+  z: number,
+  falloff: number,
+): number {
+  if (falloff <= 0 || "all" in area) return 1;
+  let inset: number;
+  if ("zone" in area) {
+    const token = (ZONE_TOKENS as readonly string[]).includes(area.zone) ? area.zone : "center";
+    const [fx, fz] = ZONE_FRACTIONS[token] as readonly [number, number];
+    const cx = region.x0 + fx * region.width;
+    const cz = region.z0 + fz * region.depth;
+    inset = Math.min(
+      region.width / 6 - Math.abs(x - cx),
+      region.depth / 6 - Math.abs(z - cz),
+    );
+  } else {
+    const cx = region.x0 + area.at[0] * region.width;
+    const cz = region.z0 + area.at[1] * region.depth;
+    const d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+    inset = area.radius - d;
+  }
+  return inset >= falloff ? 1 : clamp01(inset / falloff);
 }
 
 /** Density taper within `falloff` blocks of the region boundary. */
@@ -490,7 +528,12 @@ function conifer(spread: number): (v: TreeVariation) => TreeBlock[] {
         }
       }
     }
-    out.push({ dx: 0, dy: height, dz: 0, part: "leaves" });
+    // Cap every trunk column, not just the first. A mega spruce has four, and
+    // capping only `(0, 0)` left three bare logs poking out of the crown — the
+    // "trunk tips above the canopy" the render review caught, 262 of them in
+    // one 320² world. The rule the tree templates must satisfy is simply that
+    // no log is the topmost block of its column.
+    for (const [tx, tz] of trunk) out.push({ dx: tx, dy: height, dz: tz, part: "leaves" });
     return out;
   };
 }

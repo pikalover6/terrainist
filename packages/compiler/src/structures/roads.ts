@@ -48,10 +48,14 @@ import type { StructureBlock } from "./buildings.js";
 
 /** Cost of one flat step along virgin ground. */
 export const ROAD_BASE_COST = 10;
+/** Cost of one flat diagonal step — `ROAD_BASE_COST · √2`, rounded. */
+export const ROAD_DIAGONAL_COST = 14;
 /** Extra cost per block of vertical change. */
 export const ROAD_SLOPE_COST = 8;
-/** Extra cost for changing heading — buys straighter roads. */
+/** Extra cost for a 90° change of heading; a 45° kink costs half of it. */
 export const ROAD_TURN_COST = 6;
+/** Longest straight a smoothing pass will pull, in cells. */
+export const ROAD_SMOOTH_REACH = 20;
 /** Multiplier applied when stepping onto an existing road cell. */
 export const ROAD_REUSE_DISCOUNT = 0.35;
 /** Blocks between lantern posts. */
@@ -129,6 +133,8 @@ export interface RoadNetworkResult {
   readonly routes: readonly RoadRoute[];
   /** Every column the network surfaced. */
   readonly surfacedColumns: number;
+  /** The surfaced width the pass used, for the canopy clip. */
+  readonly width: number;
   readonly diagnostics: readonly LoamDiagnostic[];
   /** Anchors that could not be reached. */
   readonly unrouted: readonly string[];
@@ -199,7 +205,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // --- the hub -------------------------------------------------------------
   const hub = pickHub(input, anchors, region, blocked);
   if (hub === null || anchors.length === 0) {
-    return { blocks, routes, surfacedColumns: 0, diagnostics, unrouted };
+    return { blocks, routes, surfacedColumns: 0, width, diagnostics, unrouted };
   }
   road[index(region, hub.x, hub.z)] = 1;
 
@@ -216,12 +222,16 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       continue;
     }
 
-    const path = routeTo(region, blocked, road, plan, start);
-    if (path === null) {
+    const found = routeTo(region, blocked, road, plan, start);
+    if (found === null) {
       unrouted.push(anchor.nodePath);
       diagnostics.push(unroutable(input.nodePath, anchor.nodePath, hub.nodePath, "no legal path exists"));
       continue;
     }
+    // Smooth first, grade second: the elevation profile has to belong to the
+    // cells that will actually be surfaced, or the lane steps where the route
+    // no longer goes.
+    const path = smoothRoute(region, blocked, road, plan, found);
 
     const profile = gradeProfile(
       path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
@@ -234,9 +244,6 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     }
 
     surfaceRoute(region, plan, blocked, road, surfaced, width, states, occupancy, paved);
-    if (wantLanterns) {
-      plantLanterns(region, plan, road, surfaced, width, spacing, states, blocks, rng, lanternSide);
-    }
 
     routes.push({
       from: anchor.nodePath,
@@ -246,10 +253,22 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     });
   }
 
+  // --- lanterns, once every route has been surfaced -----------------------
+  // Deliberately last. A post planted while routes were still being laid could
+  // have a later route regrade the ground out from under it, which is exactly
+  // how the first village ended up with nine lanterns hanging in mid-air: the
+  // block they stood on was replaced by air when the lane beside them was cut
+  // down. Planting against the finished heightfield makes support structural.
+  if (wantLanterns) {
+    for (const route of routes) {
+      plantLanterns(region, plan, road, route.path, width, spacing, states, blocks, rng, lanternSide);
+    }
+  }
+
   let surfacedColumns = 0;
   for (let k = 0; k < cells; k++) if (road[k] === 1) surfacedColumns++;
 
-  return { blocks, routes, surfacedColumns, diagnostics, unrouted };
+  return { blocks, routes, surfacedColumns, width, diagnostics, unrouted };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -347,16 +366,36 @@ function freeCellNear(
 /* A*                                                                          */
 /* -------------------------------------------------------------------------- */
 
-/** Step deltas, in the fixed order the search expands them. */
+/**
+ * Step deltas, in the fixed order the search expands them: the four cardinals
+ * first, then the four diagonals, so a tie between an orthogonal and a diagonal
+ * route resolves the same way every run.
+ *
+ * Eight-connectivity is what stopped roads reading as staircases. A 4-connected
+ * A* has no way to express "head north-east"; it can only alternate north and
+ * east, and the turn penalty then decides whether it does so in one long L or in
+ * a flight of steps. Neither looks like a lane.
+ */
 const STEPS: readonly (readonly [number, number])[] = Object.freeze([
   [0, -1],
   [1, 0],
   [0, 1],
   [-1, 0],
+  [1, -1],
+  [1, 1],
+  [-1, 1],
+  [-1, -1],
 ] as const);
+
+/** Heading states per cell: the eight directions plus "no heading yet". */
+const DIR_STATES = STEPS.length + 1;
+/** The index of the "no heading yet" state. */
+const NO_DIR = STEPS.length;
 
 /** Lowest possible per-step cost — the A* heuristic's scale factor. */
 const MIN_STEP_COST = ROAD_BASE_COST * ROAD_REUSE_DISCOUNT;
+/** Lowest possible diagonal step cost. */
+const MIN_DIAGONAL_COST = ROAD_DIAGONAL_COST * ROAD_REUSE_DISCOUNT;
 
 /**
  * Route from `start` to the nearest cell of the existing network.
@@ -379,22 +418,26 @@ export function routeTo(
   start: { x: number; z: number },
 ): { x: number; z: number }[] | null {
   const cells = region.width * region.depth;
-  const states = cells * 5;
+  const states = cells * DIR_STATES;
   const goal = index(region, start.x, start.z);
 
   const g = new Float64Array(states).fill(Infinity);
   const from = new Int32Array(states).fill(-1);
   const heap = new Heap();
 
+  // Octile distance at the cheapest achievable per-step costs. Never an
+  // over-estimate: no real step can beat a fully discounted straight or
+  // diagonal, so the first expansion of the goal is still optimal.
   const heuristic = (idx: number): number => {
     const dx = Math.abs((idx % region.width) - (goal % region.width));
     const dz = Math.abs(Math.floor(idx / region.width) - Math.floor(goal / region.width));
-    return (dx + dz) * MIN_STEP_COST;
+    const lo = dx < dz ? dx : dz;
+    return (dx + dz) * MIN_STEP_COST + lo * (MIN_DIAGONAL_COST - 2 * MIN_STEP_COST);
   };
 
   for (let idx = 0; idx < cells; idx++) {
     if (road[idx] !== 1) continue;
-    const state = idx * 5 + 4;
+    const state = idx * DIR_STATES + NO_DIR;
     g[state] = 0;
     heap.push(heuristic(idx), state);
   }
@@ -406,29 +449,38 @@ export function routeTo(
     const state = heap.pop();
     if (closed[state] === 1) continue;
     closed[state] = 1;
-    const idx = Math.floor(state / 5);
+    const idx = Math.floor(state / DIR_STATES);
     if (idx === goal) {
       found = state;
       break;
     }
-    const dir = state % 5;
+    const dir = state % DIR_STATES;
     const x = region.x0 + (idx % region.width);
     const z = region.z0 + Math.floor(idx / region.width);
     const here = plan.ground[idx] as number;
 
     for (const [d, step] of STEPS.entries()) {
-      const nx = x + (step[0] as number);
-      const nz = z + (step[1] as number);
+      const sx = step[0] as number;
+      const sz = step[1] as number;
+      const nx = x + sx;
+      const nz = z + sz;
       if (!inside(region, nx, nz)) continue;
       const nIdx = index(region, nx, nz);
       const onRoad = road[nIdx] === 1;
       if (blocked[nIdx] === 1 && !onRoad && nIdx !== goal) continue;
-      const nState = nIdx * 5 + d;
+      const diagonal = sx !== 0 && sz !== 0;
+      // No cutting a corner through a wall or a pond: a diagonal step is only
+      // legal when both of the orthogonal cells it squeezes between are legal
+      // too. Without this a lane slips between two building corners.
+      if (diagonal && !cornerOpen(region, blocked, road, x, z, sx, sz)) continue;
+      const nState = nIdx * DIR_STATES + d;
       if (closed[nState] === 1) continue;
 
       const drop = Math.abs((plan.ground[nIdx] as number) - here);
-      let cost = ROAD_BASE_COST + ROAD_SLOPE_COST * drop;
-      if (dir !== 4 && dir !== d) cost += ROAD_TURN_COST;
+      let cost = (diagonal ? ROAD_DIAGONAL_COST : ROAD_BASE_COST) + ROAD_SLOPE_COST * drop;
+      // A 45° kink is half a turn — which is exactly what buys flowing lanes
+      // instead of staircases, because the search can now bend gently.
+      if (dir !== NO_DIR && dir !== d) cost += (ROAD_TURN_COST * turnEighths(dir, d)) / 2;
       if (onRoad) cost *= ROAD_REUSE_DISCOUNT;
 
       const tentative = (g[state] as number) + cost;
@@ -442,11 +494,175 @@ export function routeTo(
   if (found < 0) return null;
   const path: { x: number; z: number }[] = [];
   for (let s = found; s >= 0; s = from[s] as number) {
-    const idx = Math.floor(s / 5);
+    const idx = Math.floor(s / DIR_STATES);
     path.push({ x: region.x0 + (idx % region.width), z: region.z0 + Math.floor(idx / region.width) });
     if ((from[s] as number) < 0) break;
   }
   return path;
+}
+
+/** Both orthogonal cells a diagonal step squeezes between are enterable. */
+function cornerOpen(
+  region: Region,
+  blocked: Uint8Array,
+  road: Uint8Array,
+  x: number,
+  z: number,
+  sx: number,
+  sz: number,
+): boolean {
+  for (const [cx, cz] of [
+    [x + sx, z],
+    [x, z + sz],
+  ] as const) {
+    if (!inside(region, cx, cz)) return false;
+    const k = index(region, cx, cz);
+    if (blocked[k] === 1 && road[k] === 0) return false;
+  }
+  return true;
+}
+
+/** How many eighths of a turn separate two heading indices, 0..4. */
+function turnEighths(a: number, b: number): number {
+  // STEPS is ordered cardinals-then-diagonals, which is not angular order, so
+  // the angle is read off the deltas rather than off the indices.
+  const angle = (d: number): number => {
+    const [dx, dz] = STEPS[d] as readonly [number, number];
+    // Eighths clockwise from north.
+    if (dx === 0 && dz === -1) return 0;
+    if (dx === 1 && dz === -1) return 1;
+    if (dx === 1 && dz === 0) return 2;
+    if (dx === 1 && dz === 1) return 3;
+    if (dx === 0 && dz === 1) return 4;
+    if (dx === -1 && dz === 1) return 5;
+    if (dx === -1 && dz === 0) return 6;
+    return 7;
+  };
+  const d = Math.abs(angle(a) - angle(b));
+  return Math.min(d, 8 - d);
+}
+
+/**
+ * String-pull a found route straight.
+ *
+ * A\* returns the cheapest *lattice* path, and the cheapest lattice path across
+ * gently varying ground is full of one-cell jogs: every one of them costs the
+ * same as its neighbour, so the tie-break decides, and the eye reads the result
+ * as a wobble. Pulling a string taut through the corridor removes exactly those
+ * jogs and nothing else.
+ *
+ * The rule is conservative on purpose. A segment `i → j` replaces the path
+ * between them only when every cell of the straight line is enterable *and* the
+ * line's own ground profile is no steeper than the path it replaces — so a lane
+ * still walks round a knoll instead of driving through it.
+ */
+export function smoothRoute(
+  region: Region,
+  blocked: Uint8Array,
+  road: Uint8Array,
+  plan: ColumnPlan,
+  path: readonly { x: number; z: number }[],
+  reach: number = ROAD_SMOOTH_REACH,
+): { x: number; z: number }[] {
+  if (path.length < 3) return path.slice();
+  const out: { x: number; z: number }[] = [path[0] as { x: number; z: number }];
+  let i = 0;
+  while (i < path.length - 1) {
+    let best = i + 1;
+    let bestLine: { x: number; z: number }[] | null = null;
+    const limit = Math.min(path.length - 1, i + reach);
+    for (let j = limit; j > i + 1; j--) {
+      const a = path[i] as { x: number; z: number };
+      const b = path[j] as { x: number; z: number };
+      const line = lineCells(a, b);
+      if (!lineLegal(region, blocked, road, line)) continue;
+      if (roughness(region, plan, line) > roughness(region, plan, path.slice(i, j + 1))) continue;
+      best = j;
+      bestLine = line;
+      break;
+    }
+    if (bestLine === null) {
+      out.push(path[best] as { x: number; z: number });
+    } else {
+      for (let k = 1; k < bestLine.length; k++) out.push(bestLine[k] as { x: number; z: number });
+    }
+    i = best;
+  }
+  return out;
+}
+
+/**
+ * The 8-connected line between two cells: a Bresenham walk that emits one cell
+ * per step and never a diagonal whose corners are both skipped.
+ */
+export function lineCells(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+): { x: number; z: number }[] {
+  const out: { x: number; z: number }[] = [{ x: a.x, z: a.z }];
+  let x = a.x;
+  let z = a.z;
+  const dx = Math.abs(b.x - x);
+  const dz = Math.abs(b.z - z);
+  const sx = x < b.x ? 1 : -1;
+  const sz = z < b.z ? 1 : -1;
+  let err = dx - dz;
+  while (x !== b.x || z !== b.z) {
+    const e2 = 2 * err;
+    if (e2 > -dz && e2 < dx) {
+      // A true diagonal step.
+      err += dx - dz;
+      x += sx;
+      z += sz;
+    } else if (e2 > -dz) {
+      err -= dz;
+      x += sx;
+    } else {
+      err += dx;
+      z += sz;
+    }
+    out.push({ x, z });
+  }
+  return out;
+}
+
+/** Every cell of a candidate straight is enterable. */
+function lineLegal(
+  region: Region,
+  blocked: Uint8Array,
+  road: Uint8Array,
+  line: readonly { x: number; z: number }[],
+): boolean {
+  for (const [i, c] of line.entries()) {
+    if (!inside(region, c.x, c.z)) return false;
+    const k = index(region, c.x, c.z);
+    if (blocked[k] === 1 && road[k] === 0) return false;
+    if (i === 0) continue;
+    const p = line[i - 1] as { x: number; z: number };
+    const sx = c.x - p.x;
+    const sz = c.z - p.z;
+    if (sx !== 0 && sz !== 0 && !cornerOpen(region, blocked, road, p.x, p.z, sx, sz)) return false;
+  }
+  return true;
+}
+
+/** Total absolute ground change along a run of cells — its "steepness bill". */
+function roughness(
+  region: Region,
+  plan: ColumnPlan,
+  cells: readonly { x: number; z: number }[],
+): number {
+  let sum = 0;
+  for (let i = 1; i < cells.length; i++) {
+    const a = cells[i - 1] as { x: number; z: number };
+    const b = cells[i] as { x: number; z: number };
+    if (!inside(region, a.x, a.z) || !inside(region, b.x, b.z)) return Infinity;
+    sum += Math.abs(
+      (plan.ground[index(region, b.x, b.z)] as number) -
+        (plan.ground[index(region, a.x, a.z)] as number),
+    );
+  }
+  return sum;
 }
 
 /**
@@ -613,9 +829,27 @@ function surfaceRoute(
   for (const [i, cell] of path.entries()) {
     const heading = headingAt(path, i);
     const isStep = i > 0 && cell.y !== (path[i - 1] as { y: number }).y;
+    const band: { x: number; z: number; outer: boolean }[] = [];
     for (const offset of offsets) {
-      const x = cell.x + heading.pz * offset;
-      const z = cell.z + heading.px * offset;
+      band.push({
+        x: cell.x + heading.pz * offset,
+        z: cell.z + heading.px * offset,
+        outer: offsets.length > 1 && Math.abs(offset) === Math.max(half, width - 1 - half),
+      });
+    }
+    // A diagonal step touches its two neighbours only at a corner, which the
+    // eye reads as a broken ribbon. Surfacing the pair of orthogonal cells the
+    // step passes between closes it without widening the lane anywhere else.
+    if (i > 0) {
+      const prev = path[i - 1] as { x: number; z: number };
+      if (prev.x !== cell.x && prev.z !== cell.z) {
+        band.push({ x: prev.x, z: cell.z, outer: false });
+        band.push({ x: cell.x, z: prev.z, outer: false });
+      }
+    }
+    for (const spot of band) {
+      const x = spot.x;
+      const z = spot.z;
       if (!inside(region, x, z)) continue;
       const idx = index(region, x, z);
       // Never surface a foreign footprint or open water, even in the shoulder.
@@ -628,7 +862,7 @@ function surfaceRoute(
         continue;
       }
 
-      const outer = offsets.length > 1 && Math.abs(offset) === Math.max(half, width - 1 - half);
+      const outer = spot.outer;
       plan.ground[idx] = cell.y;
       plan.fluidTop[idx] = cell.y;
       plan.snow[idx] = 0;
@@ -659,7 +893,15 @@ function headingAt(
 }
 
 /**
- * Plant fence-post lanterns along a route, alternating sides.
+ * Plant lamp posts along a route, alternating sides.
+ *
+ * A lamp is **two** fence posts and a lantern on top, not one. A single post
+ * puts the light at eye level of the ground it stands on, and from any angle
+ * above — which is every angle a render or a player on a hill has — it reads as
+ * a lantern half-buried in the grass. Two courses lift it clear.
+ *
+ * Support is checked, not assumed: the post stands on the finished ground of a
+ * dry, non-road column, and each block of the lamp rests on the one below it.
  *
  * The side alternates per route *and* per post, and which side a route starts
  * on is drawn from the node's `grammar` stream, so two parallel lanes do not
@@ -695,7 +937,8 @@ function plantLanterns(
     sides.set(key, side);
     const base = (plan.ground[idx] as number) + 1;
     out.push({ x, y: base, z, stateId: states.post });
-    out.push({ x, y: base + 1, z, stateId: states.lantern });
+    out.push({ x, y: base + 1, z, stateId: states.post });
+    out.push({ x, y: base + 2, z, stateId: states.lantern });
   }
 }
 

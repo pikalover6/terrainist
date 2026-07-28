@@ -8,6 +8,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { longestOrthogonalZigzag } from "./road-shape.js";
+
 import { nodeSeed, type Region } from "@terrainist/stdlib";
 
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
@@ -22,6 +24,7 @@ import {
   gradeProfile,
   index,
   routeTo,
+  smoothRoute,
   ROAD_FILL_BAND,
 } from "../src/structures/roads.js";
 
@@ -164,14 +167,58 @@ describe("routeTo", () => {
     const path = routeTo(r, new Uint8Array(r.width * r.depth), road, p, { x: -10, z: -8 });
     expect(path).not.toBeNull();
     // Ends at the anchor, arrives at the network, and every step is a single
-    // 4-connected move.
+    // 8-connected move — diagonals included, which is what lets a lane run at
+    // 45° instead of climbing a staircase of right angles.
     expect(path?.[0]).toEqual({ x: -10, z: -8 });
     expect(path?.[(path?.length ?? 1) - 1]).toEqual({ x: 0, z: 0 });
     for (let i = 1; i < (path?.length ?? 0); i++) {
       const a = path?.[i - 1] as { x: number; z: number };
       const b = path?.[i] as { x: number; z: number };
-      expect(Math.abs(a.x - b.x) + Math.abs(a.z - b.z)).toBe(1);
+      expect(Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))).toBe(1);
     }
+  });
+
+  it("runs straight across flat ground instead of staircasing", () => {
+    const p = plan(r);
+    // Flatten everything: with no slope to argue about, the only thing that can
+    // shape the route is the search itself, which is exactly what is on trial.
+    p.ground.fill(70);
+    const road = new Uint8Array(r.width * r.depth);
+    road[index(r, 0, 0)] = 1;
+    const empty = new Uint8Array(r.width * r.depth);
+    const found = routeTo(r, empty, road, p, { x: -14, z: -11 });
+    expect(found).not.toBeNull();
+    const path = smoothRoute(r, empty, road, p, found as { x: number; z: number }[]);
+    // A right-angle staircase is the defect: three or more alternations of two
+    // orthogonal headings. A diagonal run is not one, and is what we want.
+    expect(longestOrthogonalZigzag(path)).toBeLessThan(3);
+    // Smoothing must not invent a detour, and must not break the chain.
+    expect(path[0]).toEqual({ x: -14, z: -11 });
+    expect(path[path.length - 1]).toEqual({ x: 0, z: 0 });
+    expect(path.length).toBeLessThanOrEqual(found?.length ?? 0);
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1] as { x: number; z: number };
+      const b = path[i] as { x: number; z: number };
+      expect(Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))).toBe(1);
+    }
+  });
+
+  it("refuses to smooth a straight through an obstacle", () => {
+    const p = plan(r);
+    p.ground.fill(70);
+    const road = new Uint8Array(r.width * r.depth);
+    road[index(r, 0, 0)] = 1;
+    const blocked = new Uint8Array(r.width * r.depth);
+    // A wall across the diagonal, with one gap the route has to use.
+    for (let z = -16; z <= 15; z++) {
+      if (z === 5) continue;
+      blocked[index(r, -8, z)] = 1;
+    }
+    const found = routeTo(r, blocked, road, p, { x: -14, z: -11 });
+    expect(found).not.toBeNull();
+    const path = smoothRoute(r, blocked, road, p, found as { x: number; z: number }[]);
+    for (const cell of path) expect(blocked[index(r, cell.x, cell.z)]).toBe(0);
+    expect(path.some((c) => c.x === -8 && c.z === 5)).toBe(true);
   });
 
   it("returns null when the anchor is walled in", () => {
@@ -234,7 +281,7 @@ describe("buildRoadNetwork", () => {
     return { ...result, occ };
   }
 
-  it("connects every anchor to the hub, with continuous 4-connected paths", () => {
+  it("connects every anchor to the hub, with continuous 8-connected paths", () => {
     const p = plan(r, (x, z) => 70 + Math.floor((x + z) / 16));
     const result = network(p);
     expect(result.diagnostics).toEqual([]);
@@ -249,7 +296,7 @@ describe("buildRoadNetwork", () => {
       for (let i = 1; i < route.path.length; i++) {
         const a = route.path[i - 1] as { x: number; z: number };
         const b = route.path[i] as { x: number; z: number };
-        expect(Math.abs(a.x - b.x) + Math.abs(a.z - b.z)).toBe(1);
+        expect(Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))).toBe(1);
       }
     }
 
@@ -359,9 +406,27 @@ describe("buildRoadNetwork", () => {
     const p = plan(r);
     const result = network(p);
     expect(result.blocks.length).toBeGreaterThan(0);
-    expect(result.blocks.length % 2).toBe(0);
+    // Three blocks per lamp: two fence courses and the lantern on top.
+    expect(result.blocks.length % 3).toBe(0);
     for (const b of result.blocks) {
       expect(p.fluidKind[index(r, b.x, b.z)]).toBe(FluidKind.NONE);
+    }
+    // Every lamp block rests on the one below it, and the lowest rests on the
+    // finished ground. Support is the invariant, not the block count.
+    const byColumn = new Map<string, number[]>();
+    for (const b of result.blocks) {
+      const key = `${b.x},${b.z}`;
+      const ys = byColumn.get(key) ?? [];
+      ys.push(b.y);
+      byColumn.set(key, ys);
+    }
+    for (const [key, ys] of byColumn) {
+      const [x, z] = key.split(",").map(Number) as [number, number];
+      ys.sort((a, b) => a - b);
+      expect(ys[0]).toBe((p.ground[index(r, x, z)] as number) + 1);
+      for (let i = 1; i < ys.length; i++) {
+        expect((ys[i] as number) - (ys[i - 1] as number)).toBe(1);
+      }
     }
   });
 

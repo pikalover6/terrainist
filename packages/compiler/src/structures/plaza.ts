@@ -284,7 +284,8 @@ function buildWell(
     [r, r],
   ] as const) {
     blocks.push({ x: cx + dx, y: groundY + 2, z: cz + dz, stateId: states.post });
-    blocks.push({ x: cx + dx, y: groundY + 3, z: cz + dz, stateId: states.lantern });
+    blocks.push({ x: cx + dx, y: groundY + 3, z: cz + dz, stateId: states.post });
+    blocks.push({ x: cx + dx, y: groundY + 4, z: cz + dz, stateId: states.lantern });
   }
 
   return true;

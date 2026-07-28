@@ -19,6 +19,7 @@ import {
   generateBuilding,
   rotateOps,
   type BuildingDoor,
+  type BuildingMaterials,
   type BuildingMeta,
   type BuildingParams,
   type Cardinal,
@@ -54,6 +55,8 @@ export interface BuildingJob {
   readonly ports: Readonly<Record<string, PortDeclaration>>;
   readonly seed: Seed256;
   readonly tags: readonly string[];
+  /** The theme triple this building was dealt, if the caller assigned one. */
+  readonly materials?: BuildingMaterials;
   /** Block-id overrides for the grammar's material symbols. */
   readonly style?: Readonly<Record<string, string>>;
 }
@@ -93,6 +96,12 @@ export function buildBuildings(
   const built: BuiltBuilding[] = [];
   const diagnostics: LoamDiagnostic[] = [];
   const missing = new Set<string>();
+  // The grammar's decorations (eaves, shutters, window boxes, the porch lamp)
+  // reach one block into the apron outside the footprint. That is fine over
+  // open ground and wrong over a neighbour, so an apron op that lands inside
+  // *another* building's claim is dropped rather than allowed to punch through
+  // its wall. Nothing structural is ever in the apron, so dropping is safe.
+  const foreign = jobs.map((j) => j.placement.footprint);
 
   for (const job of jobs) {
     const { placement } = job;
@@ -105,6 +114,7 @@ export function buildBuildings(
       seed: job.seed,
       foundationDepth,
       ...(door === null ? {} : { door }),
+      ...(job.materials === undefined ? {} : { materials: job.materials }),
       ...(job.style === undefined ? {} : { style: job.style }),
     });
 
@@ -117,9 +127,15 @@ export function buildBuildings(
 
     let count = 0;
     for (const op of rotated) {
+      const x = tx + op.x;
+      const z = tz + op.z;
+      const inFootprint = contains(placement.footprint, x, z);
+      if (!inFootprint && foreign.some((r) => r !== placement.footprint && contains(r, x, z))) {
+        continue;
+      }
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
-      blocks.push({ x: tx + op.x, y: floorY + op.y, z: tz + op.z, stateId });
+      blocks.push({ x, y: floorY + op.y, z, stateId });
       count++;
     }
 
@@ -153,6 +169,11 @@ export function buildBuildings(
 }
 
 /* -------------------------------------------------------------------------- */
+
+/** True when `(x, z)` is inside an inclusive rectangle. */
+function contains(rect: Rect, x: number, z: number): boolean {
+  return x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+}
 
 /**
  * How far the skirt must reach to meet solid ground.

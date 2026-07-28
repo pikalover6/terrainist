@@ -34,6 +34,14 @@ import { TREE_TEMPLATES, type TreePlacement } from "./vegetation.js";
 /** Share of a tree's voxels that may be clipped before it is dropped entirely. */
 export const MAX_CLIP_FRACTION = 0.4;
 
+/** Blocks of headroom kept clear above a road surface. */
+export const ROAD_CANOPY_CLEARANCE = 4;
+
+/** The shape {@link roadCorridorBoxes} reads out of a routed road. */
+export interface RouteLike {
+  readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
+}
+
 /** The world-space box one structure occupies, inclusive on every axis. */
 export interface StructureBox {
   readonly x0: number;
@@ -60,17 +68,58 @@ export interface StructureClip {
   blockedColumn(x: number, z: number): boolean;
 }
 
-/** Extend each built building's footprint to the box its blocks occupy. */
+/**
+ * Extend each built building's footprint to the box its blocks occupy.
+ *
+ * One block wider than the footprint on every side, because the grammar's
+ * facade details — the eave course above all — live in that apron ring, and a
+ * canopy pressed into an eave looks exactly as wrong as one pressed into a roof.
+ */
 export function structureBoxes(buildings: readonly BuiltBuilding[]): StructureBox[] {
   return buildings.map((b) => ({
-    x0: b.footprint.x0,
-    z0: b.footprint.z0,
-    x1: b.footprint.x1,
-    z1: b.footprint.z1,
+    x0: b.footprint.x0 - 1,
+    z0: b.footprint.z0 - 1,
+    x1: b.footprint.x1 + 1,
+    z1: b.footprint.z1 + 1,
     // Local y = 0 is the floor; the skirt runs below it and the roof above.
     y0: b.floorY - b.meta.foundationDepth,
     y1: b.floorY + b.meta.roofTop + 1,
   }));
+}
+
+/**
+ * The boxes that keep a lane open through a wood.
+ *
+ * A road cut through a forest is a *cut*: you see sky above it. The scatter only
+ * reserves trunk columns, so nothing stopped two oaks either side of a lane from
+ * closing their crowns over it, and the first village had 1198 road columns
+ * roofed in leaves — a tunnel, not a lane.
+ *
+ * One box per route cell, spanning the surfaced band plus a block of verge, and
+ * reaching {@link ROAD_CANOPY_CLEARANCE} above the graded surface. That is the
+ * headroom a rider needs, and no more: a crown that arches *high* over the road
+ * is scenery and is left alone.
+ */
+export function roadCorridorBoxes(
+  routes: readonly RouteLike[],
+  width: number,
+  clearance: number = ROAD_CANOPY_CLEARANCE,
+): StructureBox[] {
+  const reach = Math.max(1, ((width - 1) >> 1) + 1);
+  const out: StructureBox[] = [];
+  for (const route of routes) {
+    for (const cell of route.path) {
+      out.push({
+        x0: cell.x - reach,
+        x1: cell.x + reach,
+        z0: cell.z - reach,
+        z1: cell.z + reach,
+        y0: cell.y,
+        y1: cell.y + clearance,
+      });
+    }
+  }
+  return out;
 }
 
 /** Build the clip test for a region and a set of boxes. */

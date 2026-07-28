@@ -17,7 +17,18 @@
  *    sitting on it.
  */
 
-import { nodeSeed, seed32, streamSeed, type Seed256 } from "@terrainist/stdlib";
+import {
+  archetypeOfTags,
+  assignMaterials,
+  materialKey,
+  nodeSeed,
+  pickTheme,
+  seed32,
+  streamSeed,
+  type BuildingMaterials,
+  type MaterialTheme,
+  type Seed256,
+} from "@terrainist/stdlib";
 import type {
   LoamDiagnostic,
   PortDeclaration,
@@ -61,6 +72,10 @@ export interface StructureStats {
   readonly roadRoutes: number;
   readonly roadColumns: number;
   readonly unroutedAnchors: number;
+  /** The village's material theme id. */
+  readonly theme: string;
+  /** Distinct (wall, stone, roof) triples across the village's buildings. */
+  readonly distinctMaterials: number;
   /** Plaza columns surfaced; 0 when the document declares no plaza. */
   readonly plazaColumns: number;
   readonly plazaBenches: number;
@@ -106,6 +121,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         ...(typeof params["wallSymbol"] === "string" ? { wallSymbol: params["wallSymbol"] } : {}),
         ...(typeof params["trimSymbol"] === "string" ? { trimSymbol: params["trimSymbol"] } : {}),
         ...(typeof params["roofSymbol"] === "string" ? { roofSymbol: params["roofSymbol"] } : {}),
+        archetype:
+          typeof params["archetype"] === "string"
+            ? params["archetype"]
+            : archetypeOfTags(node.tags),
       },
       ports: node.ports as Readonly<Record<string, PortDeclaration>>,
       seed: node.seed,
@@ -113,7 +132,17 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
   }
 
-  const buildings = buildBuildings(jobs, input.plan, input.stack);
+  // --- the village theme ---------------------------------------------------
+  // One theme for the settlement, drawn from the root node's seed, then one
+  // distinct (wood, stone, roof) triple dealt to each building in document
+  // order. Dealing centrally rather than per-building is what makes "no two
+  // houses alike" a property of the village rather than a coincidence.
+  const themeSeed: Seed256 = nodeSeed(input.worldSeed, rootPath, "");
+  const theme: MaterialTheme = pickTheme(themeSeed, themeOverride(input.doc));
+  const deal = assignMaterials(theme, jobs.length, themeSeed);
+  const themed = jobs.map((job, i) => ({ ...job, materials: deal[i] as BuildingMaterials }));
+
+  const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
   const blocks: StructureBlock[] = [...buildings.blocks];
   if (input.occupancy !== undefined) {
@@ -175,6 +204,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
     stats: {
+      theme: theme.id,
+      distinctMaterials: new Set(deal.map((m) => materialKey(m))).size,
       buildingCount: buildings.built.length,
       buildingBlocks: buildings.built.reduce((sum, b) => sum + b.blockCount, 0),
       roadRoutes: roads?.routes.length ?? 0,
@@ -188,6 +219,18 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
 }
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * A document's chosen material theme, if it names one.
+ *
+ * `style.palettes["theme"]` is the escape hatch: an author who wants a specific
+ * village palette says so there, and the seed draw is skipped.
+ */
+function themeOverride(doc: SettlementDocument): string | undefined {
+  const palettes = (doc.style as { palettes?: Record<string, unknown> } | undefined)?.palettes;
+  const named = palettes?.["theme"];
+  return typeof named === "string" ? named : undefined;
+}
 
 /** Structure generator nodes of the document, keyed by node path. */
 function structureNodesOf(
