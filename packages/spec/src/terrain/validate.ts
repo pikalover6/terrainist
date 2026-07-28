@@ -11,6 +11,18 @@
  * that fixes one error per round trip is a retry loop that never converges.
  */
 
+import {
+  checkBooleans,
+  checkFractional,
+  checkId,
+  checkNumbers,
+  checkZone,
+  describe,
+  isObject,
+  unknownKeys,
+  type NumSpec,
+  type Obj,
+} from "../checks.js";
 import { type LoamDiagnostic, error, hasErrors } from "./diagnostics.js";
 import {
   CLIMATE_THEMES,
@@ -26,7 +38,6 @@ import {
   type EditVerbName,
   type TerrainDocument,
   type TreeShape,
-  type ZoneToken,
 } from "./types.js";
 
 /** Result of validating a candidate terrain document. */
@@ -39,21 +50,6 @@ export interface TerrainValidation {
 /** Maximum node depth (world → generator → edit). */
 export const MAX_PROFILE_DEPTH = 3;
 
-/** Keys accepted on every node, everywhere. */
-const ALWAYS_ALLOWED = ["label", "note"] as const;
-
-type Obj = Record<string, unknown>;
-
-function isObject(value: unknown): value is Obj {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** Numeric-parameter schema entry. */
-interface NumSpec {
-  readonly min?: number;
-  readonly max?: number;
-  readonly int?: boolean;
-}
 
 const HEIGHTFIELD_NUMS: Readonly<Record<string, NumSpec>> = {
   seaLevel: { min: -64, max: 319, int: true },
@@ -173,7 +169,8 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
 /* meta                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function validateMeta(out: LoamDiagnostic[], meta: unknown): void {
+/** @internal Shared with the settlement profile, whose `meta` block is identical. */
+export function validateMeta(out: LoamDiagnostic[], meta: unknown): void {
   if (meta === undefined) {
     out.push(
       error(
@@ -270,7 +267,8 @@ function validateMeta(out: LoamDiagnostic[], meta: unknown): void {
 /* style                                                                       */
 /* -------------------------------------------------------------------------- */
 
-function validateStyle(out: LoamDiagnostic[], style: unknown): void {
+/** @internal Shared with the settlement profile. */
+export function validateStyle(out: LoamDiagnostic[], style: unknown): void {
   if (style === undefined) return;
   if (!isObject(style)) {
     out.push(error("BAD_TYPE", "style", `"style" must be an object, got ${describe(style)}`, 'use "style": { "palettes": { "ground.beach": "minecraft:sand" } } or omit "style"'));
@@ -441,7 +439,8 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
   }
 }
 
-function validateRootEnvelope(out: LoamDiagnostic[], path: string, envelope: unknown): void {
+/** @internal Shared with the settlement profile: the root is a region either way. */
+export function validateRootEnvelope(out: LoamDiagnostic[], path: string, envelope: unknown): void {
   if (!isObject(envelope)) {
     out.push(error("MISSING_KEY", path, `the root node needs an "envelope", got ${describe(envelope)}`, 'add "envelope": { "shape": "region", "size": [512, 512] }'));
     return;
@@ -474,7 +473,8 @@ function validateRootEnvelope(out: LoamDiagnostic[], path: string, envelope: unk
 /* generator nodes                                                             */
 /* -------------------------------------------------------------------------- */
 
-function validateHeightfieldNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+/** @internal */
+export function validateHeightfieldNode(out: LoamDiagnostic[], path: string, node: Obj): void {
   unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "children", "tags", "seedSalt", "constraints", "ports"], "terrain.heightfield@0 node");
   const params = requireParams(out, path, node, "terrain.heightfield@0");
   if (params) validateHeightfieldParams(out, path, params);
@@ -608,7 +608,8 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
   }
 }
 
-function validateClimateNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+/** @internal */
+export function validateClimateNode(out: LoamDiagnostic[], path: string, node: Obj): void {
   unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "terrain.climate@0 node");
   const params = node["params"];
   if (params === undefined) return;
@@ -624,7 +625,8 @@ function validateClimateNode(out: LoamDiagnostic[], path: string, node: Obj): vo
   }
 }
 
-function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+/** @internal */
+export function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): void {
   unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "scatter.forest@0 node");
   const params = requireParams(out, path, node, "scatter.forest@0");
   if (!params) return;
@@ -786,7 +788,30 @@ function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: 
 /* shared checks                                                               */
 /* -------------------------------------------------------------------------- */
 
-function requireParams(out: LoamDiagnostic[], path: string, node: Obj, generator: string): Obj | undefined {
+function checkCourse(out: LoamDiagnostic[], path: string, value: unknown): void {
+  if (!Array.isArray(value)) {
+    out.push(error("BAD_TYPE", path, `"course" must be an array of waypoints, got ${describe(value)}`, 'write "course": [[0.15, 0.5], [0.5, 0.42], [0.85, 0.55]]'));
+    return;
+  }
+  if (value.length < 2 || value.length > 8) {
+    out.push(
+      error(
+        "BAD_COURSE",
+        path,
+        `"course" has ${value.length} waypoints; 2\u20138 are required`,
+        value.length < 2
+          ? "add waypoints \u2014 a course needs at least a start and an end; the compiler smooths the curve between them"
+          : "reduce the course to at most 8 waypoints; the compiler refines them into a smooth Catmull-Rom curve, so coarse intent is enough",
+      ),
+    );
+  }
+  for (const [i, pt] of value.entries()) {
+    checkFractional(out, path, `course[${i}]`, pt);
+  }
+}
+
+/** @internal */
+export function requireParams(out: LoamDiagnostic[], path: string, node: Obj, generator: string): Obj | undefined {
   const params = node["params"];
   if (params === undefined) {
     out.push(error("MISSING_KEY", path, `${generator} node needs a "params" object`, `add "params": { ... } to this ${generator} node (an empty object is fine when every default suits you)`));
@@ -799,7 +824,8 @@ function requireParams(out: LoamDiagnostic[], path: string, node: Obj, generator
   return params;
 }
 
-function checkNoConstraints(out: LoamDiagnostic[], path: string, node: Obj): void {
+/** @internal Terrain nodes carry no constraints/ports in either profile. */
+export function checkNoConstraints(out: LoamDiagnostic[], path: string, node: Obj): void {
   for (const key of ["constraints", "ports"] as const) {
     const value = node[key];
     if (value === undefined) continue;
@@ -815,131 +841,3 @@ function checkNoConstraints(out: LoamDiagnostic[], path: string, node: Obj): voi
   }
 }
 
-function checkId(out: LoamDiagnostic[], parentPath: string, id: unknown, what: string): void {
-  if (typeof id !== "string") {
-    out.push(error("MISSING_KEY", parentPath, `${what} has no string "id", got ${describe(id)}`, 'give the node an "id" such as "the_divide" — ids name features and key their seeds'));
-    return;
-  }
-  if (!ID_PATTERN.test(id)) {
-    out.push(
-      error(
-        "BAD_ID",
-        parentPath === "" ? id : `${parentPath}.${id}`,
-        `id "${id}" is not a valid Loam id`,
-        'rename it to match ^[a-z][a-z0-9_]{0,62}$ — start with a lowercase letter, then lowercase letters, digits or underscores (e.g. "north_fjord")',
-      ),
-    );
-  }
-}
-
-function checkZone(out: LoamDiagnostic[], path: string, key: string, value: unknown): void {
-  if (typeof value !== "string" || !(ZONE_TOKENS as readonly string[]).includes(value as ZoneToken)) {
-    out.push(error("BAD_ENUM", path, `"${key}" must be a nine-grid zone token, got ${describe(value)}`, `set "${key}" to one of: ${ZONE_TOKENS.join(", ")}`));
-  }
-}
-
-function checkFractional(out: LoamDiagnostic[], path: string, key: string, value: unknown): void {
-  if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== "number" || typeof value[1] !== "number") {
-    out.push(error("BAD_TYPE", path, `"${key}" must be [fx, fz], got ${describe(value)}`, `write "${key}": [0.5, 0.5] — fractional coordinates of the region, never absolute blocks`));
-    return;
-  }
-  for (const [i, v] of value.entries()) {
-    if (!(v >= 0 && v <= 1)) {
-      out.push(
-        error(
-          "FRACTIONAL_OUT_OF_RANGE",
-          path,
-          `"${key}"[${i}] = ${v} is outside [0, 1]`,
-          "coarse coordinates are fractions of the root region: 0 is the west/north edge, 1 the east/south edge. Divide any block coordinate by the region size",
-        ),
-      );
-    }
-  }
-}
-
-function checkCourse(out: LoamDiagnostic[], path: string, value: unknown): void {
-  if (!Array.isArray(value)) {
-    out.push(error("BAD_TYPE", path, `"course" must be an array of waypoints, got ${describe(value)}`, 'write "course": [[0.15, 0.5], [0.5, 0.42], [0.85, 0.55]]'));
-    return;
-  }
-  if (value.length < 2 || value.length > 8) {
-    out.push(
-      error(
-        "BAD_COURSE",
-        path,
-        `"course" has ${value.length} waypoints; 2–8 are required`,
-        value.length < 2
-          ? "add waypoints — a course needs at least a start and an end; the compiler smooths the curve between them"
-          : "reduce the course to at most 8 waypoints; the compiler refines them into a smooth Catmull-Rom curve, so coarse intent is enough",
-      ),
-    );
-  }
-  for (const [i, pt] of value.entries()) {
-    checkFractional(out, path, `course[${i}]`, pt);
-  }
-}
-
-function checkNumbers(out: LoamDiagnostic[], path: string, obj: Obj, specs: Readonly<Record<string, NumSpec>>): void {
-  for (const [key, spec] of Object.entries(specs)) {
-    const value = obj[key];
-    if (value === undefined) continue;
-    if (typeof value !== "number" || !Number.isFinite(value)) {
-      out.push(error("BAD_TYPE", path, `"${key}" must be a finite number, got ${describe(value)}`, `set "${key}" to a number${spec.min !== undefined ? ` in ${spec.min}..${spec.max ?? "∞"}` : ""}`));
-      continue;
-    }
-    if (spec.int && !Number.isInteger(value)) {
-      out.push(error("PARAM_OUT_OF_RANGE", path, `"${key}" must be a whole number, got ${value}`, `round "${key}" to an integer, e.g. ${Math.round(value)}`));
-      continue;
-    }
-    if ((spec.min !== undefined && value < spec.min) || (spec.max !== undefined && value > spec.max)) {
-      out.push(
-        error(
-          "PARAM_OUT_OF_RANGE",
-          path,
-          `"${key}" = ${value} is outside the allowed range ${spec.min ?? "-∞"}..${spec.max ?? "∞"}`,
-          `clamp "${key}" into ${spec.min ?? "-∞"}..${spec.max ?? "∞"}`,
-        ),
-      );
-    }
-  }
-}
-
-function checkBooleans(out: LoamDiagnostic[], path: string, obj: Obj, keys: readonly string[]): void {
-  for (const key of keys) {
-    const value = obj[key];
-    if (value === undefined) continue;
-    if (typeof value !== "boolean") {
-      out.push(error("BAD_TYPE", path, `"${key}" must be true or false, got ${describe(value)}`, `set "${key}": true or "${key}": false (JSON booleans, not strings)`));
-    }
-  }
-}
-
-function unknownKeys(
-  out: LoamDiagnostic[],
-  obj: Obj,
-  path: string,
-  allowed: readonly string[],
-  what: string,
-): void {
-  const permitted = new Set<string>([...allowed, ...ALWAYS_ALLOWED]);
-  for (const key of Object.keys(obj)) {
-    if (permitted.has(key)) continue;
-    out.push(
-      error(
-        "UNKNOWN_KEY",
-        path,
-        `unknown key "${key}" on ${what}`,
-        `remove "${key}"; ${what} accepts only: ${[...allowed].join(", ")} (plus "label" and "note", which are always allowed)`,
-      ),
-    );
-  }
-}
-
-function describe(value: unknown): string {
-  if (value === undefined) return "nothing";
-  if (value === null) return "null";
-  if (Array.isArray(value)) return `an array of ${value.length}`;
-  if (typeof value === "object") return "an object";
-  if (typeof value === "string") return JSON.stringify(value);
-  return String(value);
-}

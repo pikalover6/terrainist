@@ -57,6 +57,55 @@ export const TERRAIN_DIAGNOSTICS = {
   SPAWN_UNRESOLVED: "LOAM-T107",
   UNSTABLE_FLUID: "LOAM-T110",
   FLOATING_VEGETATION: "LOAM-T111",
+
+  // --- LOAM-T2xx: settlement-profile structure -----------------------------
+  // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec
+  // already names keeps the core code (below), per the profile's aliasing rule.
+  STRUCTURE_GENERATOR_NOT_IN_PROFILE: "LOAM-T200",
+  STRUCTURE_NODE_SHAPE: "LOAM-T201",
+  PLAZA_CARDINALITY: "LOAM-T202",
+  BAD_ENVELOPE: "LOAM-T203",
+  BAD_CONSTRAINT: "LOAM-T204",
+  BAD_PORT: "LOAM-T205",
+  PORT_FEATURE_NOT_IMPLEMENTED: "LOAM-T206",
+  STRUCTURE_PARAM: "LOAM-T207",
+  GENERATOR_NOT_IMPLEMENTED: "LOAM-T208",
+
+  // --- Loam v0.2 core codes, used verbatim ---------------------------------
+  /** §3.3 — a `region`/`path` envelope given three-element `size`. */
+  ENVELOPE_SIZE_COERCED: "LOAM-W152",
+  /** §3.3 — a box-family envelope given two-element `size`. */
+  ENVELOPE_SIZE_ARITY: "LOAM-E153",
+  /** §1.5 / §7.10 — a constraint type outside the v0.2 registry. */
+  UNKNOWN_CONSTRAINT_TYPE: "LOAM-E104",
+  /** §5.3 — a port type outside the v0.2 table. */
+  UNKNOWN_PORT_TYPE: "LOAM-E105",
+  /** §4.1 — two type keys, neither a declared field of the other. */
+  AMBIGUOUS_SHORTHAND: "LOAM-E169",
+  /** §4.1 — a type name used as a field the resolved type does not declare. */
+  SHADOWED_TYPE_KEY: "LOAM-W173",
+  /** §4.4 `zone` — token outside the nine-grid. */
+  UNKNOWN_ZONE: "LOAM-E162",
+  /** §4.9.1 — a fractional component outside [0,1]. */
+  COARSE_COORD_RANGE: "LOAM-E166",
+  /** §4.9.4 — two hard coarse domains intersect to nothing. */
+  COARSE_DOMAIN_EMPTY: "LOAM-E165",
+  /** §4.4 `within` — the domain is non-empty but too small for the node. */
+  CANNOT_FIT: "LOAM-E170",
+  /** §4 — the constraint parses and is ignored by this solver. */
+  CONSTRAINT_NOT_IMPLEMENTED: "LOAM-W407",
+
+  // --- solver report codes (§4.6 relaxation ladder) ------------------------
+  /** §4.6 rung 2. */
+  TOLERANCE_RELAXED: "LOAM-W401",
+  /** §4.6 rung 5. */
+  CONSTRAINT_DEMOTED: "LOAM-E404",
+  /** §4.6 rung 6. */
+  NODE_DROPPED: "LOAM-E405",
+  /** §4.6 rung 7. */
+  UNSATISFIABLE: "LOAM-E406",
+  /** §4.9.4 — a coarse `mode: "center"` fighting `centered_in`/`on_axis`. */
+  COMPETING_PLACEMENT: "LOAM-W167",
 } as const;
 
 /** Symbolic diagnostic name. */
@@ -113,3 +162,12 @@ export function formatDiagnostic(d: LoamDiagnostic): string {
 export function hasErrors(diagnostics: readonly LoamDiagnostic[]): boolean {
   return diagnostics.some((d) => d.severity === "error");
 }
+
+/**
+ * The catalog under its profile-neutral name. `TERRAIN_DIAGNOSTICS` is kept
+ * because G2/G3 code imports it; new code should prefer this.
+ */
+export const LOAM_DIAGNOSTICS = TERRAIN_DIAGNOSTICS;
+
+/** Symbolic diagnostic name (profile-neutral alias). */
+export type LoamDiagnosticName = TerrainDiagnosticName;

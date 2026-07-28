@@ -9,6 +9,7 @@
 import type { LoamDocument } from "@terrainist/spec";
 
 export * from "./emit/index.js";
+export * from "./layout/index.js";
 export * from "./terrain/index.js";
 
 /** Result of compiling a Loam document. Placeholder shape. */

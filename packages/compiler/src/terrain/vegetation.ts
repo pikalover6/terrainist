@@ -119,6 +119,18 @@ export interface ScatterResult {
   readonly nodes: readonly ScatteredNode[];
 }
 
+/**
+ * The slice of the layout solver's occupancy grid the scatter pass reads.
+ *
+ * Structural typing on purpose: `@terrainist/compiler`'s layout module owns the
+ * real `OccupancyGrid`, and the vegetation pass has no business importing the
+ * solver to learn what a mask is.
+ */
+export interface StructureOccupancy {
+  readonly mask: Uint8Array;
+  readonly byTag: ReadonlyMap<string, Uint8Array>;
+}
+
 /** A forest node flattened to what the scatter pass needs. */
 export interface ForestNodeInput {
   readonly id: string;
@@ -153,11 +165,20 @@ export function resolveForestParams(params: ForestParams): Required<
  * A column is eligible when it is soil (not cliff, beach, ocean floor or snow
  * cap), dry, gentle enough, inside the node's coarse `area`, and within the
  * elevation band relative to sea level.
+ *
+ * `structures` is the layout solver's occupancy grid, absent for terrain-profile
+ * documents. Its union mask is excluded **unconditionally**: a footprint plus
+ * its clearance is claimed ground, and a tree standing in it would grow through
+ * a wall whatever the document's `avoidTags` say. `avoidTags` then excludes
+ * further per-tag slices on top, which is how an author keeps an orchard out of
+ * the market square without banning it from the whole settlement.
  */
 export function forestEligibility(
   plan: ColumnPlan,
   classification: Classification,
   params: ReturnType<typeof resolveForestParams>,
+  structures?: StructureOccupancy,
+  avoidTags: readonly string[] = [],
 ): Uint8Array {
   const { region, ground, fluidKind, seaLevel } = plan;
   const mask = new Uint8Array(region.width * region.depth);
@@ -174,6 +195,17 @@ export function forestEligibility(
       const relative = (ground[idx] as number) - seaLevel;
       if (relative < eMin || relative > eMax) continue;
       if (!area(region.x0 + i, z)) continue;
+      if (structures !== undefined) {
+        if (structures.mask[idx] === 1) continue;
+        let avoided = false;
+        for (const tag of avoidTags) {
+          if (structures.byTag.get(tag)?.[idx] === 1) {
+            avoided = true;
+            break;
+          }
+        }
+        if (avoided) continue;
+      }
       mask[idx] = 1;
     }
   }
@@ -186,6 +218,7 @@ export function scatterForests(
   plan: ColumnPlan,
   classification: Classification,
   palette: Palette,
+  structures?: StructureOccupancy,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -198,7 +231,7 @@ export function scatterForests(
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
-    const mask = forestEligibility(plan, classification, params);
+    const mask = forestEligibility(plan, classification, params, structures, node.params.avoidTags ?? []);
     for (let k = 0; k < coverage.length; k++) if (mask[k] === 1) coverage[k] = 1;
     const before = trees.length;
     scatterOne(node, params, plan, mask, occupancy, palette, trees);

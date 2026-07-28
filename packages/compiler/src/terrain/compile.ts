@@ -23,8 +23,10 @@
 import {
   buildTerrainField,
   centeredRegion,
+  classify,
   nodeSeed,
   resolveWorldSeed,
+  type Classification,
   type Marker,
   type Region,
   type TerrainEdit,
@@ -33,12 +35,25 @@ import {
   type EditNode,
   type ForestNode,
   type LoamDiagnostic,
+  type SettlementDocument,
   type TerrainDocument,
+  validateSettlementDocument,
   validateTerrainDocument,
   note,
   warning,
   hasErrors,
 } from "@terrainist/spec";
+
+import {
+  applyPadEdits,
+  layoutNodesFrom,
+  solveLayout,
+  type OccupancyGrid,
+  type PadEdit,
+  type Placement,
+  type ResolvedPort,
+  type SolverReport,
+} from "../layout/index.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
@@ -69,6 +84,8 @@ export interface CompileTerrainOptions {
 export interface CompileTimings {
   readonly validate: number;
   readonly field: number;
+  /** Layout solve; zero for terrain-profile documents. */
+  readonly layout: number;
   readonly climate: number;
   readonly columns: number;
   readonly scatter: number;
@@ -107,6 +124,14 @@ export interface CompileStats {
   readonly lavaFlowColumns: number;
 }
 
+/** What the layout solver contributed, on a settlement-profile compile. */
+export interface LayoutOutcome {
+  readonly report: SolverReport;
+  readonly placements: readonly Placement[];
+  readonly ports: readonly ResolvedPort[];
+  readonly padEdits: readonly PadEdit[];
+}
+
 /** The compile report — what the CLI prints and `--report` writes. */
 export interface TerrainCompileReport {
   readonly name: string;
@@ -117,6 +142,8 @@ export interface TerrainCompileReport {
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly timings: CompileTimings;
   readonly emit: TerrainEmitSummary;
+  /** Present only for settlement-profile documents. */
+  readonly layout?: LayoutOutcome;
 }
 
 /** Result of a compile attempt: a report, or the diagnostics that stopped it. */
@@ -124,13 +151,22 @@ export type CompileTerrainResult =
   | { readonly ok: true; readonly report: TerrainCompileReport }
   | { readonly ok: false; readonly diagnostics: readonly LoamDiagnostic[] };
 
-/** Validate a JSON value and compile it into a world folder. */
+/**
+ * Validate a JSON value and compile it into a world folder.
+ *
+ * Dispatches on `profile`: a `"settlement"` document goes through the
+ * settlement validator and gains the layout solve; a `"terrain"` one takes
+ * exactly the path it took before this function learned about profiles, which
+ * is why the golden terrain hashes are unchanged.
+ */
 export async function compileTerrain(
   input: unknown,
   options: CompileTerrainOptions,
 ): Promise<CompileTerrainResult> {
   const started = now();
-  const validation = validateTerrainDocument(input);
+  const settlement =
+    typeof input === "object" && input !== null && (input as { profile?: unknown }).profile === "settlement";
+  const validation = settlement ? validateSettlementDocument(input) : validateTerrainDocument(input);
   const validateMs = now() - started;
   if (validation.document === undefined) {
     return { ok: false, diagnostics: validation.diagnostics };
@@ -141,8 +177,13 @@ export async function compileTerrain(
   });
 }
 
+/** True for a settlement document — the only path that runs the layout solver. */
+function isSettlement(doc: TerrainDocument | SettlementDocument): doc is SettlementDocument {
+  return doc.profile === "settlement";
+}
+
 async function compileValidated(
-  doc: TerrainDocument,
+  doc: TerrainDocument | SettlementDocument,
   options: CompileTerrainOptions,
   diagnostics: LoamDiagnostic[],
   clock: { started: number; validateMs: number },
@@ -168,8 +209,9 @@ async function compileValidated(
   }
 
   // --- pass 2/3: coarse placement + master heightfield ----------------------
-  const heightfield = doc.root.children.find((c) => c.generator === "terrain.heightfield@0");
-  const climateNode = doc.root.children.find((c) => c.generator === "terrain.climate@0");
+  const children = doc.root.children as readonly TerrainDocument["root"]["children"][number][];
+  const heightfield = children.find((c) => c.generator === "terrain.heightfield@0");
+  const climateNode = children.find((c) => c.generator === "terrain.climate@0");
   /* c8 ignore next 3 — the validator guarantees both exist. */
   if (heightfield === undefined || climateNode === undefined) {
     throw new Error("compileTerrain: validated document is missing a required generator");
@@ -216,6 +258,47 @@ async function compileValidated(
     );
   }
 
+  // --- substages 3c-3f: layout solve (settlement profile only) -------------
+  // §4.7 obligation 6: terrain is composed and classified *before* structural
+  // placement, because `terrain_conform`, `slope` and the ground-fitness score
+  // all need real heights. The pads the solver emits then go back into the
+  // field, and classification re-runs over the changed ground.
+  let classification: Classification = terrain.classification;
+  let layoutOutcome: LayoutOutcome | undefined;
+  let occupancy: OccupancyGrid | undefined;
+  const tLayout = now();
+  if (isSettlement(doc)) {
+    const extraction = layoutNodesFrom(doc, worldSeed);
+    diagnostics.push(...extraction.diagnostics);
+    const solved = solveLayout({
+      region,
+      field: terrain.field,
+      classification,
+      seaLevel: terrain.params.seaLevel,
+      rootPath,
+      nodes: extraction.nodes,
+      hazardMask: buildHazardMask(region, classification, terrain.edits.calderas),
+    });
+    diagnostics.push(...solved.diagnostics);
+    occupancy = solved.occupancy;
+    layoutOutcome = {
+      report: solved.report,
+      placements: solved.placements,
+      ports: solved.ports,
+      padEdits: solved.padEdits,
+    };
+    if (solved.padEdits.length > 0) {
+      applyPadEdits(terrain.field, solved.padEdits);
+      classification = classify(terrain.field, terrain.params, {
+        temperature: climate.temperature,
+        noFlood: terrain.edits.noFlood,
+        basins: terrain.edits.basins,
+        footprints: terrain.edits.footprints,
+      });
+    }
+  }
+  const layoutMs = now() - tLayout;
+
   // --- pass 5: columns -----------------------------------------------------
   const t2 = now();
   const volcanoes: VolcanoInfo[] = (("children" in heightfield ? heightfield.children : undefined) ?? [])
@@ -228,7 +311,7 @@ async function compileValidated(
 
   const plan = buildColumnPlan({
     field: terrain.field,
-    classification: terrain.classification,
+    classification,
     palette,
     seaLevel: terrain.params.seaLevel,
     soilDepth: terrain.params.soilDepth,
@@ -242,7 +325,7 @@ async function compileValidated(
 
   // --- pass 6: vegetation --------------------------------------------------
   const t3 = now();
-  const forestNodes: ForestNodeInput[] = doc.root.children
+  const forestNodes: ForestNodeInput[] = children
     .filter((c): c is ForestNode => c.generator === "scatter.forest@0")
     .map((node) => ({
       id: node.id,
@@ -250,10 +333,10 @@ async function compileValidated(
       seed: nodeSeed(worldSeed, `${rootPath}.${node.id}`, node.seedSalt ?? ""),
       params: node.params,
     }));
-  const scatter = scatterForests(forestNodes, plan, terrain.classification, palette);
+  const scatter = scatterForests(forestNodes, plan, classification, palette, occupancy);
   const decoration = decorate({
     plan,
-    classification: terrain.classification,
+    classification,
     temperature: climate.temperature,
     trees: scatter.trees,
     forests: scatter.nodes,
@@ -265,7 +348,7 @@ async function compileValidated(
 
   // --- pass 4b: biomes -----------------------------------------------------
   const t4 = now();
-  const biomeHistogram = paintBiomes(plan, terrain, climate, scatter.coverage, stack);
+  const biomeHistogram = paintBiomes(plan, classification, climate, scatter.coverage, stack);
   const biomesMs = now() - t4;
 
   // --- pass 7: validators --------------------------------------------------
@@ -282,7 +365,7 @@ async function compileValidated(
   }
 
   // --- pass 8: emit --------------------------------------------------------
-  const markers = [...terrain.classification.markers, ...terrain.edits.markers];
+  const markers = [...classification.markers, ...terrain.edits.markers];
   const spawnResult = resolveSpawn(doc, plan, markers, diagnostics, rootPath);
   const t6 = now();
   const emit = await emitTerrain({
@@ -313,9 +396,9 @@ async function compileValidated(
     stats: {
       region,
       columns: plan.ground.length,
-      minHeight: terrain.classification.minHeight,
-      maxHeight: terrain.classification.maxHeight,
-      snowLine: terrain.classification.snowLine,
+      minHeight: classification.minHeight,
+      maxHeight: classification.maxHeight,
+      snowLine: classification.snowLine,
       seaLevel: terrain.params.seaLevel,
       landFraction: plan.ground.length === 0 ? 0 : land / plan.ground.length,
       treeCount: scatter.trees.length,
@@ -332,9 +415,11 @@ async function compileValidated(
       lavaFlowColumns,
     },
     diagnostics,
+    ...(layoutOutcome === undefined ? {} : { layout: layoutOutcome }),
     timings: {
       validate: clock.validateMs,
       field: fieldMs,
+      layout: layoutMs,
       climate: climateMs,
       columns: columnsMs,
       scatter: scatterMs,
@@ -353,14 +438,13 @@ async function compileValidated(
 /** Assign every column its biome id, and count the result. */
 function paintBiomes(
   plan: ReturnType<typeof buildColumnPlan>,
-  terrain: ReturnType<typeof buildTerrainField>,
+  classification: Classification,
   climate: ReturnType<typeof buildClimateFields>,
   coverage: Uint8Array,
   stack: ReturnType<typeof loadPrismarine>,
 ): Record<string, number> {
   const ids = new Map<string, number>();
   const histogram: Record<string, number> = {};
-  const { classification } = terrain;
 
   for (let idx = 0; idx < plan.ground.length; idx++) {
     const name = biomeForColumn({
@@ -398,7 +482,7 @@ function paintBiomes(
  * player into the sea.
  */
 function resolveSpawn(
-  doc: TerrainDocument,
+  doc: TerrainDocument | SettlementDocument,
   plan: ReturnType<typeof buildColumnPlan>,
   markers: readonly Marker[],
   diagnostics: LoamDiagnostic[],
@@ -482,6 +566,30 @@ function dryLandNear(
     }
   }
   return null;
+}
+
+/**
+ * Columns the layout solver must never build on: ocean, inland lake, and the
+ * lava inside a caldera.
+ *
+ * This is computed here rather than in the solver because it is the compiler
+ * that knows what the edit composition produced — the solver runs before any
+ * block exists and has only the field, the classification, and this mask.
+ */
+function buildHazardMask(
+  region: Region,
+  classification: Classification,
+  calderas: readonly { readonly lava: boolean; readonly columns: Int32Array }[],
+): Uint8Array {
+  const mask = new Uint8Array(region.width * region.depth);
+  for (let k = 0; k < mask.length; k++) {
+    if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) mask[k] = 1;
+  }
+  for (const caldera of calderas) {
+    if (!caldera.lava) continue;
+    for (const idx of caldera.columns) mask[idx] = 1;
+  }
+  return mask;
 }
 
 /** Nine-grid centre for a zone token. */

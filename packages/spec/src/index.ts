@@ -6,6 +6,7 @@
  */
 
 export * from "./terrain/index.js";
+export * from "./settlement/index.js";
 
 /** Draft version of the Loam document format. */
 export const LOAM_VERSION = "0.1.0-draft";

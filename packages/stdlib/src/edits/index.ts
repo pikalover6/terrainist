@@ -1520,3 +1520,60 @@ function applyBasin(
     columns: Int32Array.from(inside),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Structure pads — the level-to kernel, aimed at a footprint
+// ---------------------------------------------------------------------------
+
+/** A rectangular level-to edit: flat ground under a structure, blended out. */
+export interface LevelPad {
+  /** Inclusive world footprint. */
+  readonly x0: number;
+  readonly z0: number;
+  readonly x1: number;
+  readonly z1: number;
+  /** Height the footprint is levelled to. */
+  readonly targetY: number;
+  /** Falloff width outside the footprint, in blocks. */
+  readonly apron: number;
+  /** 0..1 blend between the original field and the levelled target. Default 1. */
+  readonly strength?: number;
+}
+
+/**
+ * Level the field under a structure footprint, with a smooth apron.
+ *
+ * This is the `plateau` verb's level-to kernel with a rectangular outline
+ * instead of a modulated disc: inside the footprint the field *becomes*
+ * `targetY` (cut as well as fill — a building needs one floor height, not a
+ * raised mound), and across the apron it eases back to whatever the terrain was
+ * doing. Mutates `field` in place, exactly as the edit kernels do, because the
+ * pad is composed into the master field before materialization.
+ */
+export function applyLevelPad(field: HeightField, pad: LevelPad): void {
+  const region = field.region;
+  const strength = clamp01(pad.strength ?? 1);
+  if (strength === 0) return;
+  const apron = Math.max(0, Math.floor(pad.apron));
+
+  const i0 = clamp(pad.x0 - apron - region.x0, 0, region.width - 1) | 0;
+  const i1 = clamp(pad.x1 + apron - region.x0, 0, region.width - 1) | 0;
+  const j0 = clamp(pad.z0 - apron - region.z0, 0, region.depth - 1) | 0;
+  const j1 = clamp(pad.z1 + apron - region.z0, 0, region.depth - 1) | 0;
+
+  for (let j = j0; j <= j1; j++) {
+    const z = region.z0 + j;
+    const dz = z < pad.z0 ? pad.z0 - z : z > pad.z1 ? z - pad.z1 : 0;
+    for (let i = i0; i <= i1; i++) {
+      const x = region.x0 + i;
+      const dx = x < pad.x0 ? pad.x0 - x : x > pad.x1 ? x - pad.x1 : 0;
+      const d = dx === 0 && dz === 0 ? 0 : sqrt(dx * dx + dz * dz);
+      if (apron > 0 && d > apron) continue;
+      const f = d === 0 ? 1 : apron === 0 ? 0 : smoothstep01(clamp01((apron - d) / apron));
+      if (f <= 0) continue;
+      const idx = j * region.width + i;
+      const h = field.values[idx] as number;
+      field.values[idx] = lerp(h, pad.targetY, f * strength);
+    }
+  }
+}
