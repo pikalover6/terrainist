@@ -37,6 +37,22 @@ export const MAX_CLIP_FRACTION = 0.4;
 /** Blocks of headroom kept clear above a road surface. */
 export const ROAD_CANOPY_CLEARANCE = 4;
 
+/**
+ * How far loose ground decor must stay clear of built ground, in blocks.
+ *
+ * `blockedColumn` answers "is this column *under* a structure", and for a plant
+ * that stands in one column that is the whole question. A fallen log is not:
+ * it lies across up to four columns, it is a metre-thick horizontal beam, and
+ * a render review found sixteen of them lying flat against village walls, where
+ * the eye reads them not as deadwood but as timber someone left leaning on the
+ * house. Deadwood therefore keeps an apron: no fallen log within this many
+ * blocks of a footprint, a road corridor or the plaza.
+ *
+ * Four blocks is the log's own maximum length, which is exactly the distance at
+ * which a log can no longer point *at* a wall.
+ */
+export const DECOR_APRON = 4;
+
 /** The shape {@link roadCorridorBoxes} reads out of a routed road. */
 export interface RouteLike {
   readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
@@ -66,6 +82,11 @@ export interface StructureClip {
   blocked(x: number, y: number, z: number): boolean;
   /** True when the column `(x, z)` is under or over a structure. */
   blockedColumn(x: number, z: number): boolean;
+  /**
+   * True when `(x, z)` is within {@link DECOR_APRON} blocks of built ground —
+   * a footprint, a road corridor, or a column the caller passed as claimed.
+   */
+  inApron(x: number, z: number): boolean;
 }
 
 /**
@@ -122,8 +143,50 @@ export function roadCorridorBoxes(
   return out;
 }
 
-/** Build the clip test for a region and a set of boxes. */
-export function makeStructureClip(region: Region, boxes: readonly StructureBox[]): StructureClip {
+/**
+ * Dilate a column mask by `margin` blocks, Chebyshev.
+ *
+ * Separable: a horizontal max filter then a vertical one, which is `O(w · d ·
+ * margin)` rather than `O(w · d · margin²)` and gives the same square apron.
+ */
+export function dilateColumns(region: Region, mask: Uint8Array, margin: number): Uint8Array {
+  const { width, depth } = region;
+  if (margin <= 0) return Uint8Array.from(mask);
+  const rows = new Uint8Array(width * depth);
+  for (let j = 0; j < depth; j++) {
+    const base = j * width;
+    for (let i = 0; i < width; i++) {
+      if (mask[base + i] !== 1) continue;
+      const from = Math.max(0, i - margin);
+      const to = Math.min(width - 1, i + margin);
+      for (let k = from; k <= to; k++) rows[base + k] = 1;
+    }
+  }
+  const out = new Uint8Array(width * depth);
+  for (let j = 0; j < depth; j++) {
+    const base = j * width;
+    for (let i = 0; i < width; i++) {
+      if (rows[base + i] !== 1) continue;
+      const from = Math.max(0, j - margin);
+      const to = Math.min(depth - 1, j + margin);
+      for (let k = from; k <= to; k++) out[k * width + i] = 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * Build the clip test for a region and a set of boxes.
+ *
+ * `claimed` is extra built ground that owns no box — the paved plaza, which is
+ * a change to the surface rather than a solid. It contributes to the decor
+ * apron only: there is nothing above it to clip a canopy against.
+ */
+export function makeStructureClip(
+  region: Region,
+  boxes: readonly StructureBox[],
+  claimed?: Uint8Array,
+): StructureClip {
   const columns = new Uint8Array(region.width * region.depth);
   for (const box of boxes) {
     for (let z = box.z0; z <= box.z1; z++) {
@@ -144,10 +207,24 @@ export function makeStructureClip(region: Region, boxes: readonly StructureBox[]
     return columns[j * region.width + i] === 1;
   };
 
+  const built = new Uint8Array(columns);
+  if (claimed !== undefined) {
+    for (let k = 0; k < built.length && k < claimed.length; k++) {
+      if (claimed[k] === 1) built[k] = 1;
+    }
+  }
+  const apron = dilateColumns(region, built, DECOR_APRON);
+
   return {
     boxes,
     columns,
     blockedColumn,
+    inApron(x: number, z: number): boolean {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
+      return apron[j * region.width + i] === 1;
+    },
     blocked(x: number, y: number, z: number): boolean {
       if (!blockedColumn(x, z)) return false;
       for (const box of boxes) {

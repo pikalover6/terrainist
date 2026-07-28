@@ -126,6 +126,10 @@ export function buildBuildings(
     const floorY = placement.foundationY + 1;
 
     let count = 0;
+    /** Lowest world Y this building put in each apron column, keyed `x,z`. */
+    const apronFloor = new Map<string, number>();
+    /** The skirt's block state per footprint column, for underpinning. */
+    const skirtState = new Map<string, number>();
     for (const op of rotated) {
       const x = tx + op.x;
       const z = tz + op.z;
@@ -135,9 +139,18 @@ export function buildBuildings(
       }
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
-      blocks.push({ x, y: floorY + op.y, z, stateId });
+      const y = floorY + op.y;
+      if (inFootprint) {
+        if (op.y === -1) skirtState.set(`${x},${z}`, stateId);
+      } else if (op.y <= 0) {
+        const key = `${x},${z}`;
+        const known = apronFloor.get(key);
+        if (known === undefined || y < known) apronFloor.set(key, y);
+      }
+      blocks.push({ x, y, z, stateId });
       count++;
     }
+    count += underpinApron(plan, placement, apronFloor, skirtState, blocks);
 
     built.push({
       nodePath: job.nodePath,
@@ -173,6 +186,57 @@ export function buildBuildings(
 /** True when `(x, z)` is inside an inclusive rectangle. */
 function contains(rect: Rect, x: number, z: number): boolean {
   return x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+}
+
+/**
+ * Give every apron block at or below the floor plane ground contact.
+ *
+ * The footprint gets a foundation skirt sunk to solid ground; the *apron* ring
+ * does not, because nothing structural is supposed to be there. The entrance
+ * disagrees: the doorstep, the porch and the lamp footings all stand in the
+ * apron at the floor plane, and the floor plane is level while the ground under
+ * it is not. A render review caught the result at a doorstep corner — a step
+ * with daylight under it, which reads as a floating slab from every angle.
+ *
+ * The rule is the skirt's rule, applied one ring out: fill each such column
+ * downward with the same foundation material the adjacent wall stands on, until
+ * it meets the ground. Capped at {@link MAX_FOUNDATION_DEPTH} so a porch beside
+ * a cliff builds a plinth rather than a pillar to bedrock. Returns the block
+ * count added.
+ */
+function underpinApron(
+  plan: ColumnPlan,
+  placement: Placement,
+  apronFloor: ReadonlyMap<string, number>,
+  skirtState: ReadonlyMap<string, number>,
+  blocks: StructureBlock[],
+): number {
+  const { region, ground } = plan;
+  const rect = placement.footprint;
+  let added = 0;
+  // Sorted so the emitted order is a pure function of the geometry, not of Map
+  // insertion order.
+  for (const key of [...apronFloor.keys()].sort()) {
+    const [x, z] = key.split(",").map(Number) as [number, number];
+    const i = x - region.x0;
+    const j = z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+    const top = (apronFloor.get(key) as number) - 1;
+    const floor = ground[j * region.width + i] as number;
+    if (top <= floor) continue;
+    // The material of the nearest wall's skirt: the apron reads as that wall's
+    // footing rather than as a patch of unrelated stone.
+    const nx = Math.min(Math.max(x, rect.x0), rect.x1);
+    const nz = Math.min(Math.max(z, rect.z0), rect.z1);
+    const stateId = skirtState.get(`${nx},${nz}`);
+    if (stateId === undefined) continue;
+    const bottom = Math.max(floor + 1, top - MAX_FOUNDATION_DEPTH + 1);
+    for (let y = top; y >= bottom; y--) {
+      blocks.push({ x, y, z, stateId });
+      added++;
+    }
+  }
+  return added;
 }
 
 /**

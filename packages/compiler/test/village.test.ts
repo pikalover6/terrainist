@@ -23,7 +23,13 @@ import {
   buildSettlementClearing,
   distanceToHull,
 } from "../src/terrain/clearing.js";
-import { ROAD_CANOPY_CLEARANCE, makeStructureClip, structureBoxes } from "../src/terrain/clip.js";
+import {
+  DECOR_APRON,
+  ROAD_CANOPY_CLEARANCE,
+  makeStructureClip,
+  structureBoxes,
+} from "../src/terrain/clip.js";
+import { MAX_FOUNDATION_DEPTH } from "../src/structures/buildings.js";
 import { longestOrthogonalZigzag } from "./road-shape.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 
@@ -407,6 +413,94 @@ describe("hillside village example", () => {
     }
     expect(corridor).toBeGreaterThan(500);
     expect(roofed).toBe(0);
+  }, 180_000);
+
+  /**
+   * Fallen logs, read back out of the world.
+   *
+   * A fallen log is a log lying on natural ground with sky directly above it,
+   * which is precisely what a trunk and a wall's belt course are not: a trunk
+   * has more trunk above it, and a belt course stands on a wall.
+   */
+  it("lays no fallen log against a wall, a lane or the green", async () => {
+    const world = await worldNames();
+    const at = (x: number, y: number, z: number): string => world.get(`${x},${y},${z}`) ?? "air";
+    const GROUND = new Set([
+      "dirt",
+      "grass_block",
+      "podzol",
+      "coarse_dirt",
+      "rooted_dirt",
+      "gravel",
+      "stone",
+      "sand",
+      "moss_block",
+    ]);
+    const rects = [
+      ...(report.layout?.structures?.buildings ?? []).map((b) => b.footprint),
+      ...(report.layout?.placements ?? []).map((p) => p.footprint),
+    ];
+    const lanes = new Set<string>();
+    for (const route of report.layout?.structures?.roads?.routes ?? []) {
+      for (const cell of route.path) lanes.add(`${cell.x},${cell.z}`);
+    }
+    const inApron = (x: number, z: number): boolean => {
+      for (const r of rects) {
+        if (x >= r.x0 - DECOR_APRON && x <= r.x1 + DECOR_APRON && z >= r.z0 - DECOR_APRON && z <= r.z1 + DECOR_APRON) {
+          return true;
+        }
+      }
+      for (let dx = -DECOR_APRON; dx <= DECOR_APRON; dx++) {
+        for (let dz = -DECOR_APRON; dz <= DECOR_APRON; dz++) {
+          if (lanes.has(`${x + dx},${z + dz}`)) return true;
+        }
+      }
+      return false;
+    };
+
+    let fallen = 0;
+    const offenders: string[] = [];
+    for (const [key, name] of world) {
+      if (!name.endsWith("_log") || name.startsWith("stripped_")) continue;
+      const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+      if (!GROUND.has(at(x, y - 1, z))) continue;
+      if (at(x, y + 1, z) !== "air") continue;
+      fallen++;
+      if (inApron(x, z)) offenders.push(key);
+    }
+    // The village is meant to have deadwood in its woods — just not on its
+    // doorsteps.
+    expect(fallen).toBeGreaterThan(50);
+    expect(offenders).toEqual([]);
+  }, 180_000);
+
+  /**
+   * The doorstep: a level floor plane meeting ground that is not level. Every
+   * block a building puts in its apron ring at or below that plane has to stand
+   * on something, or it reads as a step floating over the grass.
+   */
+  it("stands every porch and step block on solid ground", async () => {
+    const world = await worldNames();
+    const at = (x: number, y: number, z: number): string => world.get(`${x},${y},${z}`) ?? "air";
+    const buildings = report.layout?.structures?.buildings ?? [];
+    expect(buildings.length).toBeGreaterThan(0);
+    let checked = 0;
+    const floating: string[] = [];
+    for (const b of buildings) {
+      const { footprint: f, floorY } = b;
+      for (let x = f.x0 - 1; x <= f.x1 + 1; x++) {
+        for (let z = f.z0 - 1; z <= f.z1 + 1; z++) {
+          if (x >= f.x0 && x <= f.x1 && z >= f.z0 && z <= f.z1) continue;
+          for (let y = floorY - MAX_FOUNDATION_DEPTH; y <= floorY; y++) {
+            if (at(x, y, z) === "air") continue;
+            checked++;
+            if (at(x, y - 1, z) === "air") floating.push(`${x},${y},${z} ${at(x, y, z)}`);
+          }
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+    expect(floating).toEqual([]);
   }, 180_000);
 
   it("builds no two houses out of the same materials", () => {

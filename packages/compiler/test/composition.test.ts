@@ -26,6 +26,7 @@ import {
   distanceToHull,
 } from "../src/terrain/clearing.js";
 import {
+  DECOR_APRON,
   MAX_CLIP_FRACTION,
   clipTrees,
   makeStructureClip,
@@ -35,8 +36,15 @@ import {
 import { FluidKind, type ColumnPlan } from "../src/terrain/columns.js";
 import { checkFluidStability } from "../src/terrain/validate.js";
 import { resolvePalette } from "../src/terrain/palette.js";
-import { TREE_TEMPLATES, scatterForests, type TreePlacement } from "../src/terrain/vegetation.js";
-import type { BuiltBuilding } from "../src/structures/buildings.js";
+import {
+  AREA_EDGE_WOBBLE,
+  TREE_TEMPLATES,
+  areaContains,
+  resolveForestParams,
+  scatterForests,
+  type TreePlacement,
+} from "../src/terrain/vegetation.js";
+import { buildBuildings, type BuiltBuilding } from "../src/structures/buildings.js";
 import { MIN_PLAZA_SIZE, pavePlaza } from "../src/structures/plaza.js";
 import { ROAD_FILL_BAND, gradeProfile } from "../src/structures/roads.js";
 
@@ -251,6 +259,39 @@ describe("structure clip", () => {
     expect(clip.blockedColumn(9999, 9999)).toBe(false);
   });
 
+  /**
+   * The apron: what keeps a four-block fallen log from lying against a wall.
+   * `blockedColumn` answers for a plant standing in one column; deadwood needs
+   * the wider question, and it is the same mask dilated by {@link DECOR_APRON}.
+   */
+  it("holds ground decor a fixed apron clear of every claimed column", () => {
+    expect(clip.inApron(5, 5)).toBe(true);
+    expect(clip.inApron(10 + DECOR_APRON, 5)).toBe(true);
+    expect(clip.inApron(10 + DECOR_APRON + 1, 5)).toBe(false);
+    expect(clip.inApron(5, -DECOR_APRON)).toBe(true);
+    expect(clip.inApron(5, -DECOR_APRON - 1)).toBe(false);
+    // The apron is square, so a diagonal corner is inside it too.
+    expect(clip.inApron(10 + DECOR_APRON, 10 + DECOR_APRON)).toBe(true);
+    expect(clip.inApron(9999, 9999)).toBe(false);
+    // Everything the box claims is in its own apron, by construction.
+    for (let x = hall.x0; x <= hall.x1; x++) expect(clip.inApron(x, hall.z0)).toBe(true);
+  });
+
+  it("aprons paved ground that owns no box, and clips nothing over it", () => {
+    const paved = new Uint8Array(r.width * r.depth);
+    const green: Rect = { x0: 40, z0: 40, x1: 46, z1: 46 };
+    for (let z = green.z0; z <= green.z1; z++) {
+      for (let x = green.x0; x <= green.x1; x++) paved[(z - r.z0) * r.width + (x - r.x0)] = 1;
+    }
+    const withPlaza = makeStructureClip(r, [box(hall, 68, 82)], paved);
+    expect(withPlaza.inApron(43, 43)).toBe(true);
+    expect(withPlaza.inApron(green.x1 + DECOR_APRON, 43)).toBe(true);
+    expect(withPlaza.inApron(green.x1 + DECOR_APRON + 1, 43)).toBe(false);
+    // Paving is a surface, not a solid: no canopy is clipped against it.
+    expect(withPlaza.blockedColumn(43, 43)).toBe(false);
+    expect(withPlaza.blocked(43, 71, 43)).toBe(false);
+  });
+
   it("derives its boxes from foundation bottom to roof top plus one", () => {
     const built: BuiltBuilding = {
       nodePath: "world.hall",
@@ -325,6 +366,76 @@ describe("clipTrees", () => {
     const b = clipTrees(forest, clip);
     expect(a.trees.map((t) => `${t.x},${t.z}`)).toEqual(b.trees.map((t) => `${t.x},${t.z}`));
     expect(a.trees.map((t) => `${t.x},${t.z}`)).toEqual(["40,40", "-30,12"]);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the entrance apron                                                          */
+/* -------------------------------------------------------------------------- */
+
+describe("apron underpinning", () => {
+  const r = region();
+  const rect: Rect = { x0: -4, z0: -4, x1: 4, z1: 4 };
+  /** Ground that falls away one block per column south of the footprint. */
+  const slope = (_x: number, z: number): number => (z <= rect.z1 ? 70 : 70 - (z - rect.z1));
+
+  function build(height: (x: number, z: number) => number): {
+    blocks: readonly ReturnType<typeof buildBuildings>["blocks"][number][];
+    floorY: number;
+    p: ColumnPlan;
+  } {
+    const p = plan(r, height);
+    const result = buildBuildings(
+      [
+        {
+          nodePath: "world.cottage",
+          placement: placement("world.cottage", rect),
+          size: [9, 8, 9],
+          params: { archetype: "cottage", floors: 1 },
+          ports: { door: { type: "door", face: "south" } },
+          seed: nodeSeed(5n, "world.cottage"),
+          tags: ["house"],
+        },
+      ],
+      p,
+      stack,
+    );
+    expect(result.built).toHaveLength(1);
+    return { blocks: result.blocks, floorY: (result.built[0] as BuiltBuilding).floorY, p };
+  }
+
+  /**
+   * The doorstep defect: the floor plane is level and the ground is not, so a
+   * porch block in the apron ring could stand a block or more above the ground
+   * with daylight under it.
+   */
+  it("gives every apron block at the floor plane ground contact", () => {
+    const { blocks, floorY, p } = build(slope);
+    const solid = new Set(blocks.map((b) => `${b.x},${b.y},${b.z}`));
+    const groundAt = (x: number, z: number): number =>
+      p.ground[(z - r.z0) * r.width + (x - r.x0)] as number;
+    const floating: string[] = [];
+    for (const b of blocks) {
+      if (b.x >= rect.x0 && b.x <= rect.x1 && b.z >= rect.z0 && b.z <= rect.z1) continue;
+      if (b.y > floorY) continue;
+      if (b.y - 1 <= groundAt(b.x, b.z)) continue;
+      if (solid.has(`${b.x},${b.y - 1},${b.z}`)) continue;
+      floating.push(`${b.x},${b.y},${b.z}`);
+    }
+    expect(floating).toEqual([]);
+  });
+
+  it("adds nothing when the ground already meets the apron", () => {
+    const level = build(() => 70).blocks.length;
+    const sloped = build(slope).blocks.length;
+    expect(sloped).toBeGreaterThan(level);
+    // Flat ground needs no plinth at all — the pass is a residual, like the
+    // skirt it copies.
+    const flat = build(() => 70);
+    const outside = flat.blocks.filter(
+      (b) => (b.x < rect.x0 || b.x > rect.x1 || b.z < rect.z0 || b.z > rect.z1) && b.y < flat.floorY,
+    );
+    expect(outside).toEqual([]);
   });
 });
 
@@ -583,5 +694,71 @@ describe("forest area feathering", () => {
     const innerArea = (2 * (halfX - 10)) * (2 * (halfZ - 10));
     const outerArea = 2 * halfX * 2 * halfZ - innerArea;
     expect(outer / outerArea).toBeLessThan(0.6 * (inner / innerArea));
+  });
+
+  /**
+   * The feather alone was not enough: the *predicate* behind it was still the
+   * nine-grid rectangle, so the patch's last trees stood on a ruled line and
+   * two render reviews called the birch wood a rectangle. The boundary now
+   * carries the same wobble the taper does.
+   */
+  it("bends a zone boundary into bays rather than a ruled line", () => {
+    // A world the size the examples use: the wobble's wavelength is 30 blocks,
+    // so a zone has to be a few of those across before "bays" means anything.
+    const r = region(320);
+    const params = resolveForestParams({
+      area: { zone: "center" },
+      species: [{ id: "b", shape: "birch_slim" }],
+    });
+    const halfX = r.width / 6;
+    const halfZone = r.depth / 6;
+    const cx = r.x0 + r.width / 2;
+    const cz = r.z0 + r.depth / 2;
+    const seed = 0x51ed7ee5;
+
+    // Walk the east boundary row by row and record where it actually falls.
+    const edges: number[] = [];
+    for (let z = Math.round(cz - halfZone); z <= Math.round(cz + halfZone); z++) {
+      let last = Number.NaN;
+      for (let x = Math.round(cx); x <= Math.round(cx + halfX + AREA_EDGE_WOBBLE + 2); x++) {
+        if (areaContains(r, params.area, x, z, seed)) last = x;
+      }
+      edges.push(last);
+    }
+    const spread = Math.max(...edges) - Math.min(...edges);
+    // A rectangle has spread 0. One edge of one zone samples only a few
+    // wavelengths of the noise, so it sees a fraction of the full ±amplitude —
+    // but never more than the amplitude, which is the bound that matters: the
+    // boundary bends, it does not wander off the zone.
+    expect(spread).toBeGreaterThan(AREA_EDGE_WOBBLE / 2);
+    expect(spread).toBeLessThanOrEqual(2 * AREA_EDGE_WOBBLE);
+    // Unseeded, the boundary is the bare rectangle again — the wobble is opt-in
+    // and every caller passes the node's own stream, so two woods never share
+    // an edge shape.
+    const straight = new Set<number>();
+    for (let z = Math.round(cz - halfZone); z <= Math.round(cz + halfZone); z++) {
+      let last = Number.NaN;
+      for (let x = Math.round(cx); x <= Math.round(cx + halfX + AREA_EDGE_WOBBLE + 2); x++) {
+        if (areaContains(r, params.area, x, z, 0)) last = x;
+      }
+      straight.add(last);
+    }
+    expect(straight.size).toBe(1);
+  });
+
+  it("keeps the wobbled boundary a pure function of the seed", () => {
+    const r = region();
+    const params = resolveForestParams({ area: { zone: "north" }, species: [] });
+    const sample = (seed: number): string => {
+      const bits: string[] = [];
+      for (let z = -40; z <= 40; z += 3) {
+        for (let x = -40; x <= 40; x += 3) {
+          bits.push(areaContains(r, params.area, x, z, seed) ? "1" : "0");
+        }
+      }
+      return bits.join("");
+    };
+    expect(sample(99)).toBe(sample(99));
+    expect(sample(99)).not.toBe(sample(100));
   });
 });

@@ -70,6 +70,19 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   which are downstream of the heightfield and neither of which this file
  *   imports. Compiled worlds from before G5 do not reproduce block-for-block;
  *   their terrain shape does.
+ * - **G4.5c micro-fixes** — authorized reroll of the *compiled world* only.
+ *   **Both hashes below are deliberately unchanged.** Three render-review
+ *   defects were fixed, all of them in `@terrainist/compiler`:
+ *     * fallen-log decor now keeps a four-block apron off every footprint,
+ *       road corridor and the plaza, so no deadwood lies against a wall;
+ *     * a forest node's `area` boundary — not just its density taper — carries
+ *       the low-frequency edge wobble, so a `zone` patch stops on a bent line
+ *       rather than on the nine-grid's rectangle. This moves trees, which is
+ *       the reroll;
+ *     * a building underpins every apron block at or below its floor plane
+ *       down to solid ground, so a doorstep on a slope cannot float.
+ *   None of the three imports this file's field engine. Compiled worlds from
+ *   before G4.5c do not reproduce block-for-block; their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

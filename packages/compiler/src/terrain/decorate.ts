@@ -63,7 +63,9 @@ export interface DecorateInput {
    * Structure boxes ground cover may not enter. Undergrowth is already kept out
    * of claimed columns by each node's eligibility mask; this catches the one
    * thing that escapes it — a fallen log, which starts on a legal column and
-   * then runs for up to four blocks in a straight line.
+   * then runs for up to four blocks in a straight line. Deadwood is held to the
+   * wider `inApron` test rather than `blockedColumn`, because a log that merely
+   * *stops* at a wall is still a log lying against it.
    */
   readonly clip?: StructureClip;
   /** Root node seed; the decoration streams hang off it. */
@@ -240,7 +242,14 @@ function decorateForest(
       }
 
       // --- fallen logs (claim several columns, so try them first) -----------
-      if (shade === 0 && hash2(cover, x, z, 3) < deadwood * 0.15) {
+      // A log is a four-block beam, so "this column is not claimed" is not
+      // enough: it must start, and stay, outside the structure apron, or it
+      // ends up lying against a wall reading as a dropped roof timber.
+      if (
+        shade === 0 &&
+        input.clip?.inApron(x, z) !== true &&
+        hash2(cover, x, z, 3) < deadwood * 0.15
+      ) {
         const length = hashInt(cover, x, z, 4, 2, 4);
         const alongX = hash2(cover, x, z, 5) < 0.5;
         let placed = 0;
@@ -252,7 +261,7 @@ function decorateForest(
           if (li < 0 || lj < 0 || li >= region.width || lj >= region.depth) break;
           const lidx = lj * region.width + li;
           if (occupied[lidx] === 1 || fluidKind[lidx] !== FluidKind.NONE) break;
-          if (input.clip?.blockedColumn(lx, lz) === true) break;
+          if (input.clip?.inApron(lx, lz) === true) break;
           if ((ground[lidx] as number) !== (ground[idx] as number)) break;
           decorated[lidx] = 1;
           occupied[lidx] = 1;

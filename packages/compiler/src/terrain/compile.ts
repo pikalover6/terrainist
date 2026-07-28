@@ -412,12 +412,18 @@ async function compileValidated(
   const clip =
     structures === undefined
       ? undefined
-      : makeStructureClip(region, [
-          ...structureBoxes(structures.buildings),
-          ...(structures.roads === undefined
-            ? []
-            : roadCorridorBoxes(structures.roads.routes, structures.roads.width)),
-        ]);
+      : makeStructureClip(
+          region,
+          [
+            ...structureBoxes(structures.buildings),
+            ...(structures.roads === undefined
+              ? []
+              : roadCorridorBoxes(structures.roads.routes, structures.roads.width)),
+          ],
+          // The plaza is paving, not a solid: it clips nothing, but ground
+          // decor still keeps its apron off the green.
+          structures.plaza?.paved,
+        );
 
   // --- pass 6: vegetation --------------------------------------------------
   const t3 = now();

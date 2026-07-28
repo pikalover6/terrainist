@@ -173,6 +173,11 @@ export function resolveForestParams(params: ForestParams): Required<
  * a wall whatever the document's `avoidTags` say. `avoidTags` then excludes
  * further per-tag slices on top, which is how an author keeps an orchard out of
  * the market square without banning it from the whole settlement.
+ *
+ * `areaWobbleSeed` bends the `area` boundary (see {@link AREA_EDGE_WOBBLE}). It
+ * must be the same seed the scatter's taper uses, or the mask and the density
+ * ramp would disagree about where the wood ends — and the undergrowth, which
+ * reads this mask, would dress a rectangle the trees no longer stand on.
  */
 export function forestEligibility(
   plan: ColumnPlan,
@@ -180,10 +185,11 @@ export function forestEligibility(
   params: ReturnType<typeof resolveForestParams>,
   structures?: StructureOccupancy,
   avoidTags: readonly string[] = [],
+  areaWobbleSeed = 0,
 ): Uint8Array {
   const { region, ground, fluidKind, seaLevel } = plan;
   const mask = new Uint8Array(region.width * region.depth);
-  const area = areaTest(region, params.area);
+  const area = areaTest(region, params.area, areaWobbleSeed);
   const [eMin, eMax] = params.elevation;
 
   for (let j = 0; j < region.depth; j++) {
@@ -241,7 +247,15 @@ export function scatterForests(
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
-    const mask = forestEligibility(plan, classification, params, structures, node.params.avoidTags ?? []);
+    const areaWobbleSeed = seed32(streamSeed(node.seed, "scatter.area-edge"));
+    const mask = forestEligibility(
+      plan,
+      classification,
+      params,
+      structures,
+      node.params.avoidTags ?? [],
+      areaWobbleSeed,
+    );
     // Coverage feeds the biome rule, so a fully cleared column must not report
     // as forested — a village green painted `forest` is exactly the wrong colour.
     for (let k = 0; k < coverage.length; k++) {
@@ -359,16 +373,60 @@ function scatterOne(
  * simply had nothing but the region border to feather against. This is the same
  * ramp applied to the shape the author actually drew.
  */
-/** Peak inward wobble of a forest node's own area boundary, in blocks. */
-const AREA_EDGE_WOBBLE = 8;
+/**
+ * Peak wobble of a forest node's own area boundary, in blocks.
+ *
+ * Signed, so the edge bows out as readily as in — which is the whole point.
+ * The first attempt perturbed the *taper* only, and only inward: the density
+ * ramp bent, but the hard `areaTest` predicate behind it did not, so the last
+ * trees still stopped along a ruled line and two independent render reviews
+ * called the birch patch a rectangle. Wobbling the boundary itself, and using
+ * the same signed offset for the predicate and the ramp, is what makes the two
+ * agree and the patch edge read as a wood.
+ *
+ * ±6 blocks against the default 12-block feather is half the ramp: enough to
+ * break every straight edge, not enough to detach a lobe of forest from the
+ * patch it belongs to.
+ */
+export const AREA_EDGE_WOBBLE = 6;
+
+/** Wavelength of that wobble, in blocks. */
+const AREA_EDGE_WAVELENGTH = 30;
 
 /** Two-octave low-frequency edge noise in `[-1, 1]`. */
 function areaEdgeNoise(seed: number, x: number, z: number): number {
-  const f = 1 / 30;
+  const f = 1 / AREA_EDGE_WAVELENGTH;
   return (
     gradientNoise2(seed, x * f, z * f) * 0.75 +
     gradientNoise2(seed ^ 0x9e3779b9, x * f * 2.6, z * f * 2.6) * 0.25
   );
+}
+
+/**
+ * How far inside its `area` a column lies, in blocks; negative outside it.
+ *
+ * The single source of truth for both the hard membership test and the density
+ * taper, wobble included. `all` has no boundary, so it reports a distance no
+ * feather can reach.
+ */
+function areaInset(region: Region, area: ScatterArea, x: number, z: number, wobbleSeed: number): number {
+  if ("all" in area) return Number.POSITIVE_INFINITY;
+  let inset: number;
+  if ("zone" in area) {
+    const token = (ZONE_TOKENS as readonly string[]).includes(area.zone) ? area.zone : "center";
+    const [fx, fz] = ZONE_FRACTIONS[token] as readonly [number, number];
+    const cx = region.x0 + fx * region.width;
+    const cz = region.z0 + fz * region.depth;
+    // A zone is one cell of the nine-grid, with a soft half-cell margin.
+    inset = Math.min(region.width / 6 - Math.abs(x - cx), region.depth / 6 - Math.abs(z - cz));
+  } else {
+    const cx = region.x0 + area.at[0] * region.width;
+    const cz = region.z0 + area.at[1] * region.depth;
+    const d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+    inset = area.radius - d;
+  }
+  if (wobbleSeed !== 0) inset += AREA_EDGE_WOBBLE * areaEdgeNoise(wobbleSeed, x, z);
+  return inset;
 }
 
 function areaTaper(
@@ -380,29 +438,7 @@ function areaTaper(
   wobbleSeed = 0,
 ): number {
   if (falloff <= 0 || "all" in area) return 1;
-  let inset: number;
-  if ("zone" in area) {
-    const token = (ZONE_TOKENS as readonly string[]).includes(area.zone) ? area.zone : "center";
-    const [fx, fz] = ZONE_FRACTIONS[token] as readonly [number, number];
-    const cx = region.x0 + fx * region.width;
-    const cz = region.z0 + fz * region.depth;
-    inset = Math.min(
-      region.width / 6 - Math.abs(x - cx),
-      region.depth / 6 - Math.abs(z - cz),
-    );
-  } else {
-    const cx = region.x0 + area.at[0] * region.width;
-    const cz = region.z0 + area.at[1] * region.depth;
-    const d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
-    inset = area.radius - d;
-  }
-  // Feathering a rectangle still leaves a rectangle: the ramp is straight, so
-  // the wood's edge is straight, just softer. Perturbing the *inset* with a
-  // low-frequency field bends the ramp into bays and spurs. Only inward — the
-  // area predicate is a hard mask and this taper cannot reach past it — which
-  // is enough, because what the eye objects to is the ruled line, not the fact
-  // that the wood ends somewhere.
-  if (wobbleSeed !== 0 && inset > 0) inset -= AREA_EDGE_WOBBLE * (0.5 + 0.5 * areaEdgeNoise(wobbleSeed, x, z));
+  const inset = areaInset(region, area, x, z, wobbleSeed);
   return inset >= falloff ? 1 : clamp01(inset / falloff);
 }
 
@@ -465,23 +501,30 @@ export function claimTrunk(
   return true;
 }
 
-/** A predicate over world coordinates for a coarse `area`. */
-function areaTest(region: Region, area: ScatterArea): (x: number, z: number) => boolean {
+/**
+ * A predicate over world coordinates for a coarse `area`.
+ *
+ * The boundary carries the same wobble the taper does, so the patch's *last*
+ * tree stands on a bent line rather than on the nine-grid's rectangle.
+ */
+function areaTest(
+  region: Region,
+  area: ScatterArea,
+  wobbleSeed = 0,
+): (x: number, z: number) => boolean {
   if ("all" in area) return () => true;
-  if ("zone" in area) {
-    const token = (ZONE_TOKENS as readonly string[]).includes(area.zone) ? area.zone : "center";
-    const [fx, fz] = ZONE_FRACTIONS[token] as readonly [number, number];
-    const cx = region.x0 + fx * region.width;
-    const cz = region.z0 + fz * region.depth;
-    // A zone is one cell of the nine-grid, with a soft half-cell margin.
-    const halfX = region.width / 6;
-    const halfZ = region.depth / 6;
-    return (x, z) => Math.abs(x - cx) <= halfX && Math.abs(z - cz) <= halfZ;
-  }
-  const cx = region.x0 + area.at[0] * region.width;
-  const cz = region.z0 + area.at[1] * region.depth;
-  const r2 = area.radius * area.radius;
-  return (x, z) => (x - cx) * (x - cx) + (z - cz) * (z - cz) <= r2;
+  return (x, z) => areaContains(region, area, x, z, wobbleSeed);
+}
+
+/** Whether `(x, z)` lies inside a coarse `area`, boundary wobble included. */
+export function areaContains(
+  region: Region,
+  area: ScatterArea,
+  x: number,
+  z: number,
+  wobbleSeed = 0,
+): boolean {
+  return areaInset(region, area, x, z, wobbleSeed) >= 0;
 }
 
 /* -------------------------------------------------------------------------- */
