@@ -5,6 +5,9 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
 
 - **Read `docs/DESIGN.md` first** — the working design/plan (Loam's four-layer
   design, compiler pipeline, agent contracts, risks, roadmap G1–G7).
+- `docs/LOAM-SPEC-v0.1.md` — the exhaustive Loam v0.1 syntax spec (DRAFT,
+  under human+Claude review; see its §12 open questions before building on
+  any low-confidence area).
 - `rough-vision.txt` is the original vision, preserved as a historical
   reference. Never delete it; `docs/DESIGN.md` supersedes it.
 
