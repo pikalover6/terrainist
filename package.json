@@ -1,0 +1,23 @@
+{
+  "name": "terrainist",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Text prompt to Minecraft world .zip, via the Loam spec language.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

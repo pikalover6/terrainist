@@ -1,0 +1,25 @@
+{
+  "name": "@terrainist/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Terrainist command line interface.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@terrainist/compiler": "*",
+    "@terrainist/render": "*"
+  }
+}

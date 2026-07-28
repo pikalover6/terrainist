@@ -1,0 +1,25 @@
+{
+  "name": "@terrainist/compiler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Loam compiler: parse, layout solve, generator expansion, CSG merge, Anvil emit.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@terrainist/spec": "*",
+    "@terrainist/stdlib": "*"
+  }
+}

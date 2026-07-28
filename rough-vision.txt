@@ -1,0 +1,118 @@
+TERRAINIST
+End goal: marketable website, text->minecraft world .zip for an affordable price
+
+How it works: We leverage LLMs for creative flexibility, who guide
+old-fashioned (but *extremely* advanced) deterministic generators.
+
+The crux of the project: We create a new "spec"/language, capable of holding
+extreme detail, that deterministically translates into a full minecraft world.
+We use LLMs to generate a spec based on a prompt.
+
+Flow might look like:
+User types prompt: "ruined, ancient city that worshipped cats as gods"
+Opus 5 @ high reasoning makes a high level plan capturing the directon
+in a structured, standardized form.
+GLM 5.2 @ high reasoning implements. The end-result spec is the culmination of
+many, many agents decomposing, subdividing, picking up smaller digestable bits,
+and it ultimately being reassembled at the end. It's crucial the spec is highly
+modular for this reason.
+
+When handed a task, an agent makes a decision whether or not to subdivide further.
+Agents also have access to an ai 3d model generator (based on tripo) for
+structures that are unique/cannot be defined with a set of rules/code.
+Examples:
+    Goal: generate spec for a city with [desc, details] at [location].
+        GLM reasoning: The city contains many important disinct landmarks such as
+        the cat-shaped cathedral, town hall, and so on. I'll divide:
+            cat-shaped cathedral
+            town hall
+            general residential area
+            etc...
+    Now, lower on the chain:
+    Goal: generate spec for cat-shaped cathedral
+        GLM reasoning: This is a good use of the 3d model generator. I'll write a
+        prompt.
+    Goal: generate a town hall:
+        No more subdivision warranted. I'll generate a detail spec.
+    Goal: general residential area:
+        Nothing standout here, so I'll write a procedural generator.
+        !!! this is important
+        What's nice about a house just being a set of rules, is that an LLM could
+        write a program that deterministically create a whole town with unique,
+        but similar houses by writing a generator for the spec/rule-based language.
+        Alternatively, the spec could include a feature to generate a town where you
+        set creative guidance and it generates a whole town for you.
+        Maybe? We end up with that, or a combo.
+    and so on.
+Stuff must be able to be placed in specific places in relation to each other whilst
+not relying on LLMs to just output exact coords for everything.
+For development: we can use https://github.com/misode/deepslate for headless renders
+for autonomous work.
+
+Limitations:
+    - LLMs (no offense) haven't quite perfected arbitrary voxel generation yet, which
+    is a skill necessary to write the spec. A fair bit of human involvement and
+    expirementation with different techniques is expected
+    - Handling variance. I want to ultimately make a service that generate your most
+    wacky requests. Also, I want worlds to feel alive and unique. I don't want all
+    structures to be one standard boxy house design.
+        - One advanced idea to keep in mind: Suppose the user requests something like
+        "an world with 1000 card dealerships, but instead of cars, there are cyborg-
+        unicorns with wheels." We could have a powerful model (eg. opus 5) extend the
+        spec *on the fly* to support a new customizable class of cyborg-wheeled-
+        unicorns. But I think we should save that for an expirement much later.
+    - Integrating tripo 3d models:
+        - We'll have to elegantly convert voxelized 3d models to minecraft 
+        structures with correct color, texture and such.
+        - Also what if we need to generate "a museum about the history of ice cream,
+        that is inside a massive icecream cone". We'd have to generate the icecream
+        cone and then carve it out, or something? I think it's possible but will be
+        tricky.
+        - However, I refuse to infinetely kick the can down the road forever for
+        integrating ai generated 3d models. It's crucial to the project as it really
+        brings worlds to life and makes it feel like "more than" a normal custom
+        minecraft world generator.
+    - Balancing capability & cost:
+        - I think GLM 5.2 is capable enough while also being affordable, but that's
+        subject to change as we get further into development.
+    - Autonomous improvement in claude code:
+        - In that past attempts, agents missed things that I only found once I loaded 
+        up in minecraft and walked around the world. However, autonomous improvement
+        is useful.
+    - This is a new attempt with a fresh perspective at this project, I previously
+    had less success. We can peek at the code for that *maybe* if there is a good
+    reason, but I'd rather start uncontaminated.
+
+Additional notes:
+    - We need to be able to handle definitions for not just houses, but
+        - A large sleuth of hundreds of structures: Churches, police stations,
+        skyscrapers, shops, dirt huts, igloos, schools, walls, ships, cannons,
+        castles, cards, airplanes, submarines, etc..
+        - All different types of forests, foliage, rivers/oceans, rock formations,
+        etc.
+        - Caves, tunnels, undeground cities, so on.
+        - Create coherent road/path layouts.
+        - and much more.
+        - If the user says "the church and town hall are connected by an undeground
+        tunnel", it should be able to do that (that's one example of a field of 
+        requests that must be handled.)
+    - RESEARCH: What existing open source tools can we leverage for ALL aspects of
+    this project.
+    - Pinning down exact subdivision flow is tricky. It's a complex web of agents.
+    Also parallization would be nice to speed things up.
+
+Goals:
+    0: Claude & Human detailed preliminary planning consult
+        Give detailed opinions, recommend changes, a name and high level specification 
+        for our "rule based minecraft world representation", and so on. Plan how
+        to proceed.
+    1: Scaffold project/repo setup
+    2: Limited worldgen spec implemetation just handling base terrain.
+    3: minimal e2e test w/opus 5 & glm 5.2
+    4+: expand from there (plan this in more detail)
+    TBD: package & market
+
+I'll give you an openrouter & tripo key later when needed.
+
+Agents: feel free to supercede this with more polished documentation if it
+becomes outdated, but preserve it somewhere as a historical reference no matter what.

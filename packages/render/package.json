@@ -1,0 +1,24 @@
+{
+  "name": "@terrainist/render",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless multi-angle world rendering for tests and render critique.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@terrainist/spec": "*"
+  }
+}

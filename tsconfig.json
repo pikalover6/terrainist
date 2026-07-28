@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/spec" },
+    { "path": "packages/stdlib" },
+    { "path": "packages/compiler" },
+    { "path": "packages/render" },
+    { "path": "packages/agents" },
+    { "path": "packages/cli" }
+  ]
+}
