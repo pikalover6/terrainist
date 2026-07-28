@@ -25,7 +25,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { compileTerrain, emitWorld, formatDiagnostic, loadSpikeDocument } from "@terrainist/compiler";
+import { buildDevWorld, compileTerrain, emitWorld, formatDiagnostic, loadSpikeDocument } from "@terrainist/compiler";
 import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terrainist/compiler";
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
@@ -53,6 +53,7 @@ Usage:
   terrainist install <worldDir> [--saves <dir>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
+  terrainist devworld [--out <dir>] [--no-zip]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
@@ -78,6 +79,14 @@ compile options:
   --allow-unstable  Downgrade LOAM-T110 (unstable fluid) to a warning.
   --report <file>   Write the full compile report as JSON.
 
+devworld options:
+  --out <dir>       Output directory (default: out). Writes <dir>/dev_world/
+                    and the archive alongside it.
+  --no-zip          Skip creating the .zip.
+  A superflat showcase world: a grid of every building archetype crossed with
+  the size, storey, theme and roof gradients, on a lit, empty grass plain.
+  Fixed seed — two builds are diffable by eye.
+
 emit options:
   --out <dir>       Output directory (default: out). The world folder is
                     written to <dir>/<name>/ and the archive to
@@ -92,6 +101,47 @@ render options:
   --surface-y <Y>   Y below which content is underground; adds an
                     underground-only map to --views. Off by default.
 `;
+
+/** `terrainist devworld [--out <dir>]` — the building-grammar showcase world. */
+export async function runDevWorld(args: readonly string[]): Promise<number> {
+  let outDir = "out";
+  let zip = true;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--out" || arg === "-o") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--out requires a directory");
+      outDir = value;
+      i++;
+    } else if (arg === "--no-zip") {
+      zip = false;
+    } else {
+      throw new Error(`unexpected argument ${String(arg)}`);
+    }
+  }
+
+  const result = await buildDevWorld(path.resolve(outDir));
+  const zipPath = zip ? await zipWorld(result.emit.worldDir) : undefined;
+
+  const rows = new Map<string, number>();
+  for (const e of result.grid.exhibits) rows.set(e.row, (rows.get(e.row) ?? 0) + 1);
+  const { region } = result.grid;
+  const lines = [
+    `built "dev_world" — ${result.emit.minecraftVersion} (DataVersion ${result.emit.dataVersion})`,
+    `  world      ${result.emit.worldDir}`,
+    `  grid       ${rows.size} rows, ${result.buildingCount} buildings ` +
+      `(${[...rows].map(([r, n]) => `${r}=${n}`).join(", ")})`,
+    `  plain      ${region.width}x${region.depth} at (${region.x0}, ${region.z0}), grass at y 64`,
+    `  chunks     ${result.emit.chunkCount}`,
+    `  blocks     ${result.emit.blockCount} (${result.emit.structureBlockCount} building)`,
+    `  lights     ${result.lightCount}`,
+    `  fluids     ${result.fluids.unstable} unstable`,
+    `  spawn      [${result.emit.spawn.join(", ")}]`,
+  ];
+  if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
+  console.log(lines.join("\n"));
+  return result.fluids.unstable === 0 ? 0 : 1;
+}
 
 export async function runEmit(args: readonly string[]): Promise<void> {
   let specPath: string | undefined;
@@ -426,6 +476,8 @@ export async function main(argv: readonly string[]): Promise<number> {
       return await runInstall(rest);
     case "compile":
       return await runCompile(rest);
+    case "devworld":
+      return await runDevWorld(rest);
     case "emit":
       await runEmit(rest);
       return 0;

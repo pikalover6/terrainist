@@ -51,6 +51,25 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   against buildings, plaza paving) live in the compiler and cannot reach this
  *   file at all. Compiled worlds from before G4.5a do not reproduce
  *   block-for-block; their terrain shape does.
+ * - **G5 (roads, treelines, long rivers)** — authorized reroll of the
+ *   *compiled world* only. **Both hashes below are deliberately unchanged**,
+ *   and that is again the hard check. Six changes landed and each was designed
+ *   to stay out of this fixture:
+ *     * corridor verbs gained a second, much longer meander octave whose
+ *       amplitude is a share of *course length*. It ramps in from 120 blocks
+ *       of course and every corridor in the request below is shorter than
+ *       that, so `longRamp` is exactly 0 and `makeCorridorShape` is
+ *       bit-identical to G2.5a's here;
+ *     * roads gained a bridge (priced water crossings, plank decks), a
+ *       wall-hug routing penalty, a perpendicular door approach, a cut bias
+ *       (`ROAD_FILL_BAND` 2 → 1) and graded shoulders;
+ *     * the settlement clearing's distance threshold and a forest node's own
+ *       area boundary are both wobbled by low-frequency noise;
+ *     * the in-wall accent-log share halved, 0.07 → 0.035.
+ *   All six live in `@terrainist/compiler` or in the building grammar, both of
+ *   which are downstream of the heightfield and neither of which this file
+ *   imports. Compiled worlds from before G5 do not reproduce block-for-block;
+ *   their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

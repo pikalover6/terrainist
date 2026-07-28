@@ -30,7 +30,7 @@
  * taper by multiplication and stays a pure function of the column.
  */
 
-import { clamp01, type Region } from "@terrainist/stdlib";
+import { clamp01, gradientNoise2, type Region } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
 
@@ -39,6 +39,39 @@ export const CLEARING_MARGIN = 10;
 
 /** How far past that the treeline feathers back to full density, in blocks. */
 export const CLEARING_FEATHER = 12;
+
+/**
+ * Peak inward/outward wobble of the clearing boundary, in blocks.
+ *
+ * The hull is a convex *polygon*, and a feather of constant width around a
+ * polygon is still a polygon: the first village's treeline ran in five dead
+ * straight lines with visible corners, which is not how a wood meets a
+ * settlement. Perturbing the distance threshold — not the hull — by a
+ * low-frequency noise field bends those lines into bays and spurs without
+ * costing anything: the field is a pure function of the column, so the
+ * clearing stays a per-column multiplier and stays deterministic.
+ *
+ * ±4 blocks against a 12-block feather is roughly a third of the ramp, which
+ * is enough to break every straight edge and not enough to punch a hole in the
+ * clearing or to strand a tree against a wall (the margin absorbs it).
+ */
+export const CLEARING_WOBBLE = 4;
+
+/** Wavelength of that wobble, in blocks. */
+export const CLEARING_WOBBLE_WAVELENGTH = 34;
+
+/**
+ * The boundary wobble at one column, in blocks, in `[-CLEARING_WOBBLE, +…]`.
+ *
+ * Two octaves: the long one bends the treeline into bays, the short one at a
+ * third of the amplitude keeps the resulting edge from reading as a sine wave.
+ */
+export function clearingWobble(seed: number, x: number, z: number): number {
+  const f = 1 / CLEARING_WOBBLE_WAVELENGTH;
+  const a = gradientNoise2(seed, x * f, z * f);
+  const b = gradientNoise2(seed ^ 0x5bd1e995, x * f * 2.7, z * f * 2.7);
+  return CLEARING_WOBBLE * (a * 0.75 + b * 0.25);
+}
 
 /**
  * How close two footprints must be to belong to the same clearing, in blocks.
@@ -144,11 +177,16 @@ function segmentDistance(x: number, z: number, a: HullPoint, b: HullPoint): numb
 export function buildSettlementClearing(
   region: Region,
   rects: readonly Rect[],
+  wobbleSeed = 0,
 ): SettlementClearing {
   const density = new Float32Array(region.width * region.depth).fill(1);
   if (rects.length === 0) return { hulls: [], density, clearedColumns: 0 };
 
   const reach = CLEARING_MARGIN + CLEARING_FEATHER;
+  // The wobble can push a column up to CLEARING_WOBBLE blocks *closer* to the
+  // hull than its true distance, so the sweep has to look that much further
+  // out or the treeline would clip flat against the old polygon again.
+  const sweepReach = reach + CLEARING_WOBBLE;
   const hulls: HullPoint[][] = [];
 
   for (const group of clusterRects(rects)) {
@@ -178,17 +216,21 @@ export function buildSettlementClearing(
       maxZ = Math.max(maxZ, p.z);
     }
 
-    const i0 = Math.max(0, Math.floor(minX - reach) - region.x0);
-    const i1 = Math.min(region.width - 1, Math.ceil(maxX + reach) - region.x0);
-    const j0 = Math.max(0, Math.floor(minZ - reach) - region.z0);
-    const j1 = Math.min(region.depth - 1, Math.ceil(maxZ + reach) - region.z0);
+    const i0 = Math.max(0, Math.floor(minX - sweepReach) - region.x0);
+    const i1 = Math.min(region.width - 1, Math.ceil(maxX + sweepReach) - region.x0);
+    const j0 = Math.max(0, Math.floor(minZ - sweepReach) - region.z0);
+    const j1 = Math.min(region.depth - 1, Math.ceil(maxZ + sweepReach) - region.z0);
 
     for (let j = j0; j <= j1; j++) {
       const z = region.z0 + j;
       for (let i = i0; i <= i1; i++) {
         const x = region.x0 + i;
-        const d = distanceToHull(hull, x, z);
-        if (d >= reach) continue;
+        const raw = distanceToHull(hull, x, z);
+        if (raw >= sweepReach) continue;
+        // Inside the hull the distance is exactly 0 and the wobble is not
+        // allowed to rescue a tree: `raw > 0` keeps "no canopy inside the
+        // hull" a structural property rather than a probable one.
+        const d = raw > 0 && wobbleSeed !== 0 ? raw + clearingWobble(wobbleSeed, x, z) : raw;
         const f = clamp01((d - CLEARING_MARGIN) / CLEARING_FEATHER);
         const idx = j * region.width + i;
         // Clusters may overlap; the clearer of the two wins, so a column between

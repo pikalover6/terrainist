@@ -401,6 +401,32 @@ const WIDTH_VARIATION = 0.3;
 /** Endpoint taper length, as a multiple of the corridor width. */
 const TAPER_WIDTHS = 1.5;
 
+/**
+ * Course length, in blocks, at which the long-wander octave starts to appear,
+ * and the length at which it reaches full strength.
+ *
+ * The G2.5a meander scales with *width*, which is right for a connector and
+ * wrong for a trunk river: a nine-block river gets an amplitude of about five
+ * blocks and a wavelength of seventy-two, so across three hundred blocks of
+ * course it wiggles four times by half its own width. From the map that is a
+ * ruled line. Rivers wander in proportion to how far they run, not to how wide
+ * they are — so a second, much longer octave is added whose amplitude is a
+ * share of the course length and whose wavelength is a fixed fraction of it.
+ *
+ * The ramp is what keeps short connectors tame, and it is also the reason the
+ * pinned golden field hash is **unchanged**: every corridor in that fixture is
+ * under 120 blocks long, so `longRamp` is exactly 0 and this branch is not
+ * taken at all. Below {@link LONG_COURSE_LENGTH} the function is bit-identical
+ * to G2.5a's.
+ */
+const LONG_COURSE_LENGTH = 120;
+/** Course length at which the long-wander octave reaches full amplitude. */
+const LONG_COURSE_FULL = 360;
+/** Long-wander amplitude as a share of course length, at `meander: 1`. */
+const LONG_WANDER_SHARE = 0.12;
+/** How many long-wander wavelengths fit in one course. */
+const LONG_WANDER_CYCLES = 2.5;
+
 /** One 1D noise channel, sampled along a corridor's arclength. */
 function arclengthNoise(seed: number, s: number): number {
   return gradientNoise2(seed, s, 0.5);
@@ -470,7 +496,13 @@ export function makeCorridorShape(
 
   const meanderSeed = seed32(streamSeed(seed, "shape.meander"));
   const widthSeed = seed32(streamSeed(seed, "shape.width"));
+  const wanderSeed = seed32(streamSeed(seed, "shape.wander"));
   const amp = clamp(meander, 0, 1) * width * MEANDER_AMPLITUDE;
+  // Exactly 0 for any course shorter than LONG_COURSE_LENGTH, which is what
+  // makes this an additive octave rather than a reroll of the old behaviour.
+  const longRamp = clamp01((length - LONG_COURSE_LENGTH) / (LONG_COURSE_FULL - LONG_COURSE_LENGTH));
+  const longAmp = clamp(meander, 0, 1) * LONG_WANDER_SHARE * length * longRamp;
+  const longScale = length > 0 ? LONG_WANDER_CYCLES / length : 0;
   const meanderScale = 1 / (MEANDER_WAVELENGTH * width);
   const widthScale = 1 / (WIDTH_WAVELENGTH * width);
   const taperLength = TAPER_WIDTHS * width;
@@ -487,7 +519,7 @@ export function makeCorridorShape(
     if ((halfWidths[i] as number) > maxHalfWidth) maxHalfWidth = halfWidths[i] as number;
 
     const p = base[i] as Point2;
-    if (amp === 0) {
+    if (amp === 0 && longAmp === 0) {
       samples[i] = { x: p.x, z: p.z };
       continue;
     }
@@ -503,7 +535,9 @@ export function makeCorridorShape(
     }
     const nx = -tz / tl;
     const nz = tx / tl;
-    const d = amp * t * arclengthNoise(meanderSeed, si * meanderScale);
+    const d =
+      amp * t * arclengthNoise(meanderSeed, si * meanderScale) +
+      (longAmp === 0 ? 0 : longAmp * t * arclengthNoise(wanderSeed, si * longScale));
     samples[i] = { x: p.x + nx * d, z: p.z + nz * d };
   }
 

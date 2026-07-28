@@ -149,11 +149,31 @@ describe("gradeProfile", () => {
   });
 
   it("leaves flat ground flat, one band above it", () => {
-    expect(gradeProfile([70, 70, 70, 70], SEA)).toEqual([72, 72, 72, 72]);
+    const flat = 70 + ROAD_FILL_BAND;
+    expect(gradeProfile([70, 70, 70, 70], SEA)).toEqual([flat, flat, flat, flat]);
   });
 
   it("handles a single-cell profile", () => {
-    expect(gradeProfile([70], SEA)).toEqual([72]);
+    expect(gradeProfile([70], SEA)).toEqual([70 + ROAD_FILL_BAND]);
+  });
+
+  it("prefers cut to fill: the band is at most one block", () => {
+    // The cut bias is the embankment fix, expressed as a bound. Whatever the
+    // ground does, a graded lane may never stand more than one block proud of
+    // it, so it can never show a two-block fill face.
+    expect(ROAD_FILL_BAND).toBeLessThanOrEqual(1);
+  });
+
+  it("lifts a bridge cell to its deck floor and still holds the grade cap", () => {
+    // Cells 3..6 are a channel whose water surface is at 68; the deck must
+    // clear it, and the ramps either side must still step one block at a time.
+    const ground = [72, 71, 70, 62, 61, 61, 62, 70, 71, 72];
+    const deck = [0, 0, 0, 69, 69, 69, 69, 0, 0, 0];
+    const graded = gradeProfile(ground, SEA, ROAD_FILL_BAND, deck);
+    for (let i = 3; i <= 6; i++) expect(graded[i]).toBeGreaterThanOrEqual(69);
+    for (let i = 1; i < graded.length; i++) {
+      expect(Math.abs((graded[i] as number) - (graded[i - 1] as number))).toBeLessThanOrEqual(1);
+    }
   });
 });
 
@@ -340,13 +360,15 @@ describe("buildRoadNetwork", () => {
     }
   });
 
-  it("never crosses or surfaces water", () => {
-    // A channel across the middle of the map, with a dry gap the routes must
-    // find.
-    const wet = (x: number, z: number): boolean => z === 4 && x !== 2;
+  it("walks round water when the detour is cheap, and never surfaces it", () => {
+    // A pond off to one side of everything. Nothing has to cross it, so the
+    // bridge premium should make certain nothing does.
+    const wet = (x: number, z: number): boolean =>
+      x >= -20 && x <= -14 && z >= -20 && z <= -14;
     const p = plan(r, () => 70, wet);
     const result = network(p);
     expect(result.unrouted).toEqual([]);
+    expect(result.bridgeColumns).toBe(0);
     for (const route of result.routes) {
       for (const cell of route.path) {
         expect(wet(cell.x, cell.z), `route crossed water at ${cell.x},${cell.z}`).toBe(false);
@@ -355,10 +377,54 @@ describe("buildRoadNetwork", () => {
     }
   });
 
+  it("bridges a channel it cannot walk round, without disturbing the water", () => {
+    // A channel across the whole map, four cells wide: no detour exists, and
+    // the span is well inside ROAD_BRIDGE_MAX_SPAN, so the router should build
+    // a bridge rather than give up.
+    const wet = (_x: number, z: number): boolean => z >= 4 && z <= 7;
+    const p = plan(r, () => 70, wet);
+    const before = p.ground.slice();
+    const beforeFluid = p.fluidTop.slice();
+    const result = network(p);
+
+    expect(result.unrouted).toEqual([]);
+    expect(result.bridgeColumns).toBeGreaterThan(0);
+
+    // The plan is untouched under the deck: no dirt in the river, and the
+    // fluid validator still sees the water it settled.
+    for (let j = 0; j < r.depth; j++) {
+      for (let i = 0; i < r.width; i++) {
+        const k = j * r.width + i;
+        if (p.fluidKind[k] === FluidKind.NONE) continue;
+        expect(p.ground[k]).toBe(before[k]);
+        expect(p.fluidTop[k]).toBe(beforeFluid[k]);
+      }
+    }
+
+    // Every deck block stands clear of the water it spans.
+    let deckBlocks = 0;
+    for (const b of result.blocks) {
+      if (!wet(b.x, b.z)) continue;
+      deckBlocks++;
+      expect(b.y).toBeGreaterThan(SEA);
+    }
+    expect(deckBlocks).toBeGreaterThan(0);
+
+    // A bridge crosses square: no diagonal steps over water.
+    for (const route of result.routes) {
+      for (let i = 1; i < route.path.length; i++) {
+        const a = route.path[i - 1] as { x: number; z: number };
+        const b = route.path[i] as { x: number; z: number };
+        if (!wet(a.x, a.z) && !wet(b.x, b.z)) continue;
+        expect(a.x === b.x || a.z === b.z).toBe(true);
+      }
+    }
+  });
+
   it("reports an unroutable anchor instead of throwing", () => {
-    // A channel spanning the whole map: the northern cottage can never reach
-    // the plaza on the far side of it.
-    const p = plan(r, () => 70, (_x, z) => z === 0);
+    // A channel spanning the whole map and far too wide to bridge: the
+    // northern cottage can never reach the plaza on the far side of it.
+    const p = plan(r, () => 70, (_x, z) => z >= -12 && z <= 11);
     const marooned = building("world.marooned", -4, -20, 7, 7);
     const plazaPlacement = building("world.plaza", -4, 12, 10, 10).placement;
     const result = buildRoadNetwork({

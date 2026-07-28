@@ -28,6 +28,7 @@ import {
   classify,
   nodeSeed,
   resolveWorldSeed,
+  seed32,
   type Classification,
   type Marker,
   type Region,
@@ -404,6 +405,9 @@ async function compileValidated(
       : buildSettlementClearing(
           region,
           layoutOutcome.placements.map((p) => p.footprint),
+          // Its own stream: the treeline's wobble must not move when an
+          // unrelated pass draws from the root seed.
+          seed32(nodeSeed(worldSeed, rootPath, "clearing")),
         );
   const clip =
     structures === undefined

@@ -71,6 +71,8 @@ export interface StructureStats {
   readonly buildingBlocks: number;
   readonly roadRoutes: number;
   readonly roadColumns: number;
+  /** Of those, columns carried on a bridge deck over water. */
+  readonly roadBridgeColumns: number;
   readonly unroutedAnchors: number;
   /** The village's material theme id. */
   readonly theme: string;
@@ -210,6 +212,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       buildingBlocks: buildings.built.reduce((sum, b) => sum + b.blockCount, 0),
       roadRoutes: roads?.routes.length ?? 0,
       roadColumns: roads?.surfacedColumns ?? 0,
+      roadBridgeColumns: roads?.bridgeColumns ?? 0,
       unroutedAnchors: roads?.unrouted.length ?? 0,
       plazaColumns: plaza?.pavedColumns ?? 0,
       plazaBenches: plaza?.benches ?? 0,

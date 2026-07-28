@@ -212,8 +212,19 @@ export const BUILDING_STYLE_DEFAULTS: Readonly<Record<string, string>> = Object.
 /** Weight of `foundation.accent` in the foundation mix (per column). */
 const FOUNDATION_ACCENT_SHARE = 0.3;
 
-/** Share of plain wall cells that come up as the accent log instead. */
-const WALL_ACCENT_SHARE = 0.07;
+/**
+ * Share of plain wall cells that come up as the accent log instead.
+ *
+ * Halved in G5 (was 0.07). The accent is meant to read as grain — the odd
+ * exposed post in a timber wall — and at 7% it stopped doing that: on a nine
+ * by nine cottage wall it put five or six darker cells on every face, which at
+ * render scale reads as speckle, or worse, as holes. Reviewers looking at the
+ * first village consistently described "random holes in the walls"; probing
+ * proved they were accents and window panes, but a defect the eye reports is a
+ * defect. At 3.5% the same wall gets two or three, which is the difference
+ * between texture and noise.
+ */
+const WALL_ACCENT_SHARE = 0.035;
 
 /** Roof shapes this grammar builds. */
 export const BUILDING_ROOFS = ["gable", "hip", "flat"] as const;

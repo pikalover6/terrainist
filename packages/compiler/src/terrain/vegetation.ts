@@ -21,6 +21,7 @@ import {
   clamp01,
   columnFloat,
   fbm2,
+  gradientNoise2,
   positionFloat,
   positionInt,
   positionWeighted,
@@ -268,6 +269,7 @@ function scatterOne(
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
   const clumpSeed = seed32(streamSeed(node.seed, "scatter.clump"));
+  const areaWobbleSeed = seed32(streamSeed(node.seed, "scatter.area-edge"));
   const spacing = Math.max(1, Math.floor(params.spacing));
   const species = node.params.species;
   const weights = species.map((s) => s.weight ?? 1);
@@ -303,7 +305,7 @@ function scatterOne(
           p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
         }
         p *= edgeTaper(region, x, z, params.edgeFalloff);
-        p *= areaTaper(region, params.area, x, z, params.edgeFalloff);
+        p *= areaTaper(region, params.area, x, z, params.edgeFalloff, areaWobbleSeed);
         // The settlement clearing. Zero inside the hull, so the test below can
         // never pass there; a ramp outside it, so the treeline feathers.
         if (clearing !== undefined) {
@@ -357,12 +359,25 @@ function scatterOne(
  * simply had nothing but the region border to feather against. This is the same
  * ramp applied to the shape the author actually drew.
  */
+/** Peak inward wobble of a forest node's own area boundary, in blocks. */
+const AREA_EDGE_WOBBLE = 8;
+
+/** Two-octave low-frequency edge noise in `[-1, 1]`. */
+function areaEdgeNoise(seed: number, x: number, z: number): number {
+  const f = 1 / 30;
+  return (
+    gradientNoise2(seed, x * f, z * f) * 0.75 +
+    gradientNoise2(seed ^ 0x9e3779b9, x * f * 2.6, z * f * 2.6) * 0.25
+  );
+}
+
 function areaTaper(
   region: Region,
   area: ScatterArea,
   x: number,
   z: number,
   falloff: number,
+  wobbleSeed = 0,
 ): number {
   if (falloff <= 0 || "all" in area) return 1;
   let inset: number;
@@ -381,6 +396,13 @@ function areaTaper(
     const d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
     inset = area.radius - d;
   }
+  // Feathering a rectangle still leaves a rectangle: the ramp is straight, so
+  // the wood's edge is straight, just softer. Perturbing the *inset* with a
+  // low-frequency field bends the ramp into bays and spurs. Only inward — the
+  // area predicate is a hard mask and this taper cannot reach past it — which
+  // is enough, because what the eye objects to is the ruled line, not the fact
+  // that the wood ends somewhere.
+  if (wobbleSeed !== 0 && inset > 0) inset -= AREA_EDGE_WOBBLE * (0.5 + 0.5 * areaEdgeNoise(wobbleSeed, x, z));
   return inset >= falloff ? 1 : clamp01(inset / falloff);
 }
 
