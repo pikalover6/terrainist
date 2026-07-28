@@ -183,6 +183,49 @@ at G6 — the interface exists from day one so it's never bolted on.
   as gods"; then stdlib breadth, then productization (web, payments) —
   planned in detail at that point.
 
+## Post-G1 decisions (2026-07-28, ratified with Kai)
+
+G1 accepted: the glass-pyramid world loads in a real 26.2 client. From
+review of `docs/LOAM-SPEC-v0.1.md` §12: Q6 (route corridors — build as
+specified, budget a corridor→place→re-route iteration at G4), Q9 (own
+polynomial `ctx.math`, integer/fixed-point bias, cross-arch CI at G2),
+Q11 (implicit pipeline stages, no `after` constraint; delete the stray
+`after` in Example A in v0.2), Q17 (one-tick fluid-settling validator at
+G2) are all ratified per the spec's recommendations.
+
+Three further directions, to fold into Loam v0.2 and G2+:
+
+1. **Spec delivery to agents: role-scoped kits, not spec-dump, not RAG.**
+   Compiled, versioned excerpts per agent role (terrain-node author,
+   subdivider, generator author, asset prompter): common node-anatomy core +
+   role-relevant sections + worked examples that CI-validate against the
+   schema so kits cannot drift. Constrained decoding owns syntax; the
+   contract block owns situational context; kits teach only role semantics.
+   Validation failures trigger diagnostic-driven retry (attach the §13
+   diagnostic + relevant spec excerpt to the repair prompt). RAG only as a
+   small deterministic `loam-doc <topic>` lookup tool — similarity-search
+   context assembly is nondeterministic and stays out of the main path.
+
+2. **Coarse placement vocabulary (v0.2).** Frame-relative soft constraints:
+   compass zones over the parent envelope (nine-grid + edge/center), coarse
+   fractional position hints, and terrain anchors (`on: coastline`,
+   `at: peak`, `beside: river`) resolved against computed terrain products
+   during layout. Handles "volcano in the center, pyramids up north, port on
+   the southeast coast" without model-computed coordinates.
+
+3. **Terrain features are field edits, never stamped structures.** The
+   master heightfield/density function = base field + a stack of
+   model-authored "terrain verbs" (raise-ridge, carve-valley, volcano,
+   river, plateau, basin...), each a kernel blended with falloff; composed
+   in deterministic order and evaluated once, with biomes/moisture/foliage
+   derived from the final field. Terrain features are named nodes exposing
+   anchors (peak, pass, foot, side-a/side-b) so structures constrain
+   against them and repair loops can address them by name. **Macro terrain
+   is model-authored**: every feature above a size threshold exists as a
+   named node in the planner's terrain plan; regions may explicitly opt
+   into a procedural wilderness generator when specifics don't matter.
+   This is the heart of G2's scope.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).

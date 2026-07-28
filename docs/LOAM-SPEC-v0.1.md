@@ -16,6 +16,12 @@
 
 ---
 
+> **Post-review status (2026-07-28):** §12 Q6/Q9/Q11/Q17 ratified as
+> recommended. Three v0.2 directions decided after review — role-scoped spec
+> kits, a coarse placement vocabulary, and terrain-features-as-field-edits
+> with model-authored macro terrain — see "Post-G1 decisions" in
+> `docs/DESIGN.md` before building on the affected sections (§4, §7).
+
 ## Table of contents
 
 - [§0 Orientation](#0-orientation)
