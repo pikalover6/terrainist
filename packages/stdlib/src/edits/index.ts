@@ -696,6 +696,12 @@ export interface EditDiagnostic {
   code: string;
   editId: string;
   message: string;
+  /**
+   * `"warning"` (the default) when the author should change something;
+   * `"note"` when the compiler recovered on its own and is only reporting what
+   * it did.
+   */
+  severity?: "warning" | "note";
 }
 
 /** The outcome of composing every edit into the field. */
@@ -770,6 +776,229 @@ export function applyEdits(
     }
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Fluid settling
+// ---------------------------------------------------------------------------
+
+/** What {@link stableFluidColumns} needs to settle a candidate pool. */
+export interface FluidSettleRequest {
+  readonly width: number;
+  readonly depth: number;
+  /** Candidate grid indices. */
+  readonly columns: Iterable<number>;
+  /** The fluid surface level under test. */
+  readonly level: number;
+  /** Y of the solid floor of a column — a candidate joins the pool only below `level`. */
+  readonly floorAt: (idx: number) => number;
+  /** Y a *neighbouring* column is filled to, solid or fluid. */
+  readonly topAt: (idx: number) => number;
+  /**
+   * Whether the grid border leaks.
+   *
+   * Default `false` — the emitter's region is a closed world as far as the
+   * materializer is concerned. The open-basin search sets it, because water
+   * touching the region edge would pour into chunks this compile never wrote.
+   */
+  readonly edgeLeaks?: boolean;
+}
+
+/** The surviving pool. */
+export interface FluidSettleResult {
+  /** 1 for every column that holds fluid at `level`. */
+  readonly inPool: Uint8Array;
+  /** How many columns that is. */
+  readonly count: number;
+}
+
+/**
+ * Erode a candidate pool at `level` until it cannot flow.
+ *
+ * A candidate drops out when a horizontal neighbour is neither in the pool nor
+ * filled up to `level` — which would leave a fluid block with an air face.
+ * Removing a column can expose its neighbours, so the erosion runs to a fixed
+ * point. Columns outside the grid are treated as walls, not as leaks.
+ *
+ * This is the single definition of "fluid-stable" in the toolchain: the
+ * compiler's `settleFluidPool` places blocks with it, and
+ * {@link resolveOpenBasins} probes fill levels with it, so a level the probe
+ * accepts is exactly a level the materializer can realize.
+ */
+export function stableFluidColumns(req: FluidSettleRequest): FluidSettleResult {
+  const { width, depth, level, floorAt, topAt } = req;
+  const edgeLeaks = req.edgeLeaks === true;
+  const inPool = new Uint8Array(width * depth);
+  const candidates: number[] = [];
+  for (const idx of req.columns) {
+    if (idx < 0 || idx >= inPool.length) continue;
+    if (floorAt(idx) >= level) continue;
+    inPool[idx] = 1;
+    candidates.push(idx);
+  }
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const idx of candidates) {
+      if (inPool[idx] === 0) continue;
+      const i = idx % width;
+      const j = (idx - i) / width;
+      if (leaks(i - 1, j) || leaks(i + 1, j) || leaks(i, j - 1) || leaks(i, j + 1)) {
+        inPool[idx] = 0;
+        changed = true;
+      }
+    }
+  }
+
+  let count = 0;
+  for (const idx of candidates) {
+    if (inPool[idx] === 1) count++;
+  }
+  return { inPool, count };
+
+  function leaks(i: number, j: number): boolean {
+    if (i < 0 || j < 0 || i >= width || j >= depth) return edgeLeaks;
+    const idx = j * width + i;
+    if (inPool[idx] === 1) return false;
+    return topAt(idx) < level;
+  }
+}
+
+/** Lowest level a partial basin fill may settle at, relative to its floor. */
+export const MIN_PARTIAL_BASIN_DEPTH = 2;
+
+/** Highest level a partial basin fill may settle at, relative to its floor. */
+export const MAX_PARTIAL_BASIN_DEPTH = 96;
+
+/**
+ * Give every open-rimmed `water: true` basin the deepest pool its rim can hold.
+ *
+ * The old behaviour was all-or-nothing: a rim with one gap in it meant no water
+ * at all, and a "hidden lagoon" compiled dry. A gap does not stop water, it
+ * only *lowers* the waterline — so instead of giving up, try fill levels
+ * descending from one block below the lowest gap down to two blocks above the
+ * basin floor, and take the first that {@link stableFluidColumns} proves holds
+ * a non-empty pool. Only when no level works does the basin stay dry.
+ *
+ * The search is over integers in a fixed order and reads nothing but the field,
+ * so it is deterministic. Run this **after** every edit has been composed *and*
+ * after the ocean flood fill is known: a later carve can breach a rim that was
+ * closed when the basin was cut, and a basin the sea already reaches is the
+ * sea's, not a lake's.
+ */
+export function resolveOpenBasins(
+  field: HeightField,
+  out: EditComposition,
+  sea?: { readonly seaLevel: number; readonly oceanMask: Uint8Array },
+): void {
+  const { width, depth } = field.region;
+  const values = field.values;
+  const isOcean = (idx: number): boolean => sea !== undefined && sea.oceanMask[idx] === 1;
+  const floorAt = (idx: number): number => Math.floor(values[idx] as number);
+  // An ocean column is already filled to sea level; that is what a neighbouring
+  // pool leans against, and it is why a sea-flooded basin needs no lake at all.
+  const topAt = (idx: number): number =>
+    isOcean(idx) ? Math.max(floorAt(idx), (sea as { seaLevel: number }).seaLevel) : floorAt(idx);
+
+  for (const basin of out.basins) {
+    if (basin.waterY !== null || basin.columns.length === 0) continue;
+
+    // Candidates are the basin's whole footprint, not just the interior the
+    // carve reported: the two-block rim band it excluded is part of the bowl,
+    // and treating it as wall is what put the waterline under the floor.
+    const fp = out.footprints.find((f) => f.editId === basin.editId && f.verb === "basin");
+    const candidates = fp === undefined ? basin.columns : footprintColumns(fp, width * depth);
+
+    const inBasin = new Uint8Array(width * depth);
+    const pool: number[] = [];
+    let floorY = Number.POSITIVE_INFINITY;
+    for (const idx of candidates) {
+      if (idx < 0 || idx >= inBasin.length) continue;
+      // A column the sea already reaches is ocean, not lake.
+      if (isOcean(idx)) continue;
+      if (inBasin[idx] === 1) continue;
+      inBasin[idx] = 1;
+      pool.push(idx);
+      const y = floorAt(idx);
+      if (y < floorY) floorY = y;
+    }
+    if (pool.length === 0) continue;
+
+    // The wall around the bowl: nothing outside the pool can be submerged, so
+    // its highest column is the ceiling on any fill. Note this is the *highest*
+    // wall, not the lowest — taking the lowest point of the rim as the
+    // waterline (what `applyBasin` does) is precisely the over-constraint that
+    // dried these basins out, because one low column is not a spillway if the
+    // ground behind it stands higher. Which levels actually leak is left to the
+    // settle, which knows.
+    let wallY = Number.NEGATIVE_INFINITY;
+    for (const idx of pool) {
+      const i = idx % width;
+      const j = (idx - i) / width;
+      considerWall(i - 1, j);
+      considerWall(i + 1, j);
+      considerWall(i, j - 1);
+      considerWall(i, j + 1);
+    }
+    if (!Number.isFinite(wallY)) continue;
+
+    const start = Math.min(wallY - 1, floorY + MAX_PARTIAL_BASIN_DEPTH);
+    for (let level = start; level >= floorY + MIN_PARTIAL_BASIN_DEPTH; level--) {
+      const settled = stableFluidColumns({
+        width,
+        depth,
+        columns: pool,
+        level,
+        floorAt,
+        topAt,
+        edgeLeaks: true,
+      });
+      if (settled.count === 0) continue;
+      basin.waterY = level;
+      // Narrow the basin to the pool that actually holds, so the lake mask and
+      // the materializer see the same columns this search proved stable.
+      basin.columns = Int32Array.from(pool.filter((idx) => settled.inPool[idx] === 1));
+      downgradeRimDiagnostic(out, basin.editId, level, settled.count);
+      break;
+    }
+
+    function considerWall(i: number, j: number): void {
+      if (i < 0 || j < 0 || i >= width || j >= depth) return;
+      const idx = j * width + i;
+      if (inBasin[idx] === 1) return;
+      const y = topAt(idx);
+      if (y > wallY) wallY = y;
+    }
+  }
+}
+
+/** Every grid index a footprint covers, in row-major order. */
+function footprintColumns(fp: FeatureFootprint, n: number): number[] {
+  const out: number[] = [];
+  for (let idx = 0; idx < n; idx++) {
+    if (footprintHas(fp, idx)) out.push(idx);
+  }
+  return out;
+}
+
+/** Turn an edit's `LOAM-T105` warning into a note recording the level reached. */
+function downgradeRimDiagnostic(
+  out: EditComposition,
+  editId: string,
+  level: number,
+  columns: number,
+): void {
+  for (let k = 0; k < out.diagnostics.length; k++) {
+    const d = out.diagnostics[k] as EditDiagnostic;
+    if (d.code !== "LOAM-T105" || d.editId !== editId) continue;
+    out.diagnostics[k] = {
+      code: "LOAM-T105",
+      editId,
+      severity: "note",
+      message: `basin rim is not closed; filled to the highest fluid-stable level instead, water surface y=${level} over ${columns} columns`,
+    };
+  }
 }
 
 function seedFor(ctx: EditContext, edit: TerrainEdit): Seed256 {

@@ -16,6 +16,7 @@ import {
   polylineDistance,
   refineCourse,
   resolveCenter,
+  resolveOpenBasins,
   type EditContext,
   type TerrainEdit,
 } from "../src/edits/index.js";
@@ -415,6 +416,132 @@ describe("carve kernels", () => {
     );
     expect(out.basins[0]!.waterY).toBeNull();
     expect(out.diagnostics[0]!.code).toBe("LOAM-T105");
+  });
+
+  it("fills an open-rim basin to the highest fluid-stable level it can hold", () => {
+    // A bowl whose rim ring dips to the bowl floor on one side, but whose
+    // *surroundings* stand high: the old rule reported "interior does not sit
+    // below its rim" and left it dry.
+    const region: Region = centeredRegion(64, 64);
+    const field = flatField(100, region);
+    const columns: number[] = [];
+    for (let j = 20; j < 44; j++) {
+      for (let i = 20; i < 44; i++) {
+        const idx = j * 64 + i;
+        field.values[idx] = 80;
+        columns.push(idx);
+      }
+    }
+    const out = {
+      markers: [],
+      calderas: [],
+      basins: [
+        {
+          editId: "lake",
+          centerX: 0,
+          centerZ: 0,
+          radius: 12,
+          waterY: null as number | null,
+          columns: Int32Array.from(columns),
+        },
+      ],
+      diagnostics: [{ code: "LOAM-T105", editId: "lake", message: "basin rim is not closed" }],
+      order: ["lake"],
+      footprints: [],
+      noFlood: new Uint8Array(64 * 64),
+    };
+    resolveOpenBasins(field, out);
+
+    // One block of bank below the surrounding ground, and the whole bowl wet.
+    expect(out.basins[0]!.waterY).toBe(99);
+    expect(out.basins[0]!.columns.length).toBe(columns.length);
+    // ...and the diagnostic is now an informational note naming the level.
+    expect(out.diagnostics[0]!.severity).toBe("note");
+    expect(out.diagnostics[0]!.message).toContain("y=99");
+    expect(out.diagnostics[0]!.code).toBe("LOAM-T105");
+  });
+
+  it("only fills as high as the lowest real spillway, and stays dry with none", () => {
+    const region: Region = centeredRegion(64, 64);
+    const field = flatField(100, region);
+    const columns: number[] = [];
+    for (let j = 20; j < 44; j++) {
+      for (let i = 20; i < 44; i++) {
+        const idx = j * 64 + i;
+        field.values[idx] = 80;
+        columns.push(idx);
+      }
+    }
+    // A notch in the wall at y=90 drains everything above 90.
+    for (let i = 20; i < 44; i++) field.values[19 * 64 + i] = 90;
+    const basin = {
+      editId: "lake",
+      centerX: 0,
+      centerZ: 0,
+      radius: 12,
+      waterY: null as number | null,
+      columns: Int32Array.from(columns),
+    };
+    const out = {
+      markers: [],
+      calderas: [],
+      basins: [basin],
+      diagnostics: [],
+      order: ["lake"],
+      footprints: [],
+      noFlood: new Uint8Array(64 * 64),
+    };
+    resolveOpenBasins(field, out);
+    expect(basin.waterY).toBe(90);
+
+    // A bowl on a slope has no stable level at all, and stays dry.
+    const slope = new HeightField(region);
+    for (let j = 0; j < 64; j++) {
+      for (let i = 0; i < 64; i++) slope.values[j * 64 + i] = 100 - j;
+    }
+    const dry = {
+      ...out,
+      basins: [{ ...basin, waterY: null as number | null, columns: Int32Array.from(columns) }],
+    };
+    resolveOpenBasins(slope, dry);
+    expect(dry.basins[0]!.waterY).toBeNull();
+  });
+
+  it("leaves a basin the sea already reaches to the ocean", () => {
+    const region: Region = centeredRegion(64, 64);
+    const field = flatField(100, region);
+    const columns: number[] = [];
+    for (let j = 20; j < 44; j++) {
+      for (let i = 20; i < 44; i++) {
+        const idx = j * 64 + i;
+        field.values[idx] = 40;
+        columns.push(idx);
+      }
+    }
+    const oceanMask = new Uint8Array(64 * 64);
+    for (const idx of columns) oceanMask[idx] = 1;
+    const basin = {
+      editId: "lake",
+      centerX: 0,
+      centerZ: 0,
+      radius: 12,
+      waterY: null as number | null,
+      columns: Int32Array.from(columns),
+    };
+    resolveOpenBasins(
+      field,
+      {
+        markers: [],
+        calderas: [],
+        basins: [basin],
+        diagnostics: [],
+        order: ["lake"],
+        footprints: [],
+        noFlood: new Uint8Array(64 * 64),
+      },
+      { seaLevel: SEA, oceanMask },
+    );
+    expect(basin.waterY).toBeNull();
   });
 
   it("basin without water requests no fill at all", () => {

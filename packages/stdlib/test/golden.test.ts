@@ -27,6 +27,16 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   so the hashes below are deliberately **unchanged**: the field engine is the
  *   contract, and G2.5b did not touch it. Compiled worlds from before G2.5b do
  *   not reproduce block-for-block; their terrain shape does.
+ * - **G2.5c (snow climate gating + open-basin water)** — authorized reroll of
+ *   the *compiled world* only; both hashes below are again deliberately
+ *   **unchanged**. Snow now needs an altitude-corrected climate temperature as
+ *   well as the relief snow line, but the gate is opt-in at the `classify`
+ *   seam (`MarkerOptions.temperature`) and this request passes no climate
+ *   field, so classification here is bit-identical. Open-rimmed `water: true`
+ *   basins now settle at the highest fluid-stable level instead of compiling
+ *   dry, which moves water blocks, never terrain — the request above has no
+ *   basin at all. Compiled worlds from before G2.5c do not reproduce
+ *   block-for-block; their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

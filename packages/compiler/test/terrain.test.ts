@@ -238,6 +238,45 @@ describe("semantic warnings from the compile passes", () => {
     expect(codes).toContain("LOAM-T107");
     for (const d of result.report.diagnostics) expect(d.severity).toBe("warning");
   }, 60_000);
+
+  it("gives an open-rim basin a partial pool and downgrades LOAM-T105 to a note", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "terrainist-lagoon-"));
+    scratch.push(dir);
+    const doc = smallDocument();
+    const hf = (doc["root"] as { children: Record<string, unknown>[] }).children[0] as Record<
+      string,
+      unknown
+    >;
+    // A plateau with a broad shallow bowl on it: the bowl's rim ring dips to the
+    // bowl floor, so the all-or-nothing rule used to leave it dry.
+    (hf["children"] as Record<string, unknown>[]).push(
+      {
+        id: "tabletop",
+        kind: "generator",
+        generator: "terrain.edit@0",
+        params: { verb: "plateau", at: [0.5, 0.4], radius: 56, height: 40, rim: 8 },
+      },
+      {
+        id: "hidden_lagoon",
+        kind: "generator",
+        generator: "terrain.edit@0",
+        params: { verb: "basin", at: [0.5, 0.4], radius: 46, depth: 6, water: true },
+      },
+    );
+
+    const result = await compileTerrain(doc, { outDir: path.join(dir, "lagoon") });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const t105 = result.report.diagnostics.find((d) => d.code === "LOAM-T105");
+    expect(t105).toBeDefined();
+    expect(t105!.severity).toBe("note");
+    expect(t105!.nodePath).toBe("world.terrain.hidden_lagoon");
+    expect(t105!.message).toMatch(/filled to the highest fluid-stable level .*water surface y=\d+/);
+    // The pool is real, and it is settle-safe: the fluid validator sees nothing.
+    expect(result.report.stats.unstableFluidBlocks).toBe(0);
+    expect(result.report.stats.biomeHistogram["minecraft:river"]).toBeGreaterThan(500);
+  }, 60_000);
 });
 
 describe("per-column biomes survive a save/load round trip", () => {

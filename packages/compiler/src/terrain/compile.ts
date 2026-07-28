@@ -7,7 +7,8 @@
  * 2. resolve coarse placements — fractional coordinates, zone jitter, course
  *    refinement (inside `buildTerrainField`);
  * 3. compose the master heightfield: base stack → raise edits → carve edits;
- * 4. climate fields + surface classification → per-column biomes;
+ * 4. climate fields (built first, since classification's snow rule reads the
+ *    temperature field) + surface classification → per-column biomes;
  * 5. materialize columns;
  * 6. scatter vegetation;
  * 7. validators (fluid settling, floating vegetation);
@@ -34,6 +35,7 @@ import {
   type LoamDiagnostic,
   type TerrainDocument,
   validateTerrainDocument,
+  note,
   warning,
   hasErrors,
 } from "@terrainist/spec";
@@ -175,29 +177,10 @@ async function compileValidated(
   const hfPath = `${rootPath}.${heightfield.id}`;
   const edits = (("children" in heightfield ? heightfield.children : undefined) ?? []).map(toEdit);
 
-  const t0 = now();
-  const terrain = buildTerrainField({
-    region,
-    worldSeed: doc.meta.worldSeed,
-    nodePath: hfPath,
-    ...(heightfield.seedSalt === undefined ? {} : { seedSalt: heightfield.seedSalt }),
-    params: heightfield.params,
-    edits,
-  });
-  const fieldMs = now() - t0;
-
-  for (const d of terrain.edits.diagnostics) {
-    diagnostics.push(
-      warning(
-        "BASIN_RIM_NOT_CLOSED",
-        `${hfPath}.${d.editId}`,
-        d.message,
-        'close the basin rim (increase "radius" or reduce "depth"), or drop "water": true — an open basin cannot hold water',
-      ),
-    );
-  }
-
   // --- pass 4a: climate ----------------------------------------------------
+  // The climate fields depend only on the region and their own node seed, so
+  // they are built *before* the heightfield: classification's snow rule reads
+  // the temperature field, and it is cleaner to hand it in than to reclassify.
   const t1 = now();
   const climateParams = resolveClimateParams(
     climateNode.generator === "terrain.climate@0" ? climateNode.params : undefined,
@@ -208,6 +191,30 @@ async function compileValidated(
     nodeSeed(worldSeed, `${rootPath}.${climateNode.id}`, climateNode.seedSalt ?? ""),
   );
   const climateMs = now() - t1;
+
+  const t0 = now();
+  const terrain = buildTerrainField({
+    region,
+    worldSeed: doc.meta.worldSeed,
+    nodePath: hfPath,
+    ...(heightfield.seedSalt === undefined ? {} : { seedSalt: heightfield.seedSalt }),
+    params: heightfield.params,
+    edits,
+    markers: { temperature: climate.temperature },
+  });
+  const fieldMs = now() - t0;
+
+  for (const d of terrain.edits.diagnostics) {
+    const build = d.severity === "note" ? note : warning;
+    diagnostics.push(
+      build(
+        "BASIN_RIM_NOT_CLOSED",
+        `${hfPath}.${d.editId}`,
+        d.message,
+        'close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true',
+      ),
+    );
+  }
 
   // --- pass 5: columns -----------------------------------------------------
   const t2 = now();

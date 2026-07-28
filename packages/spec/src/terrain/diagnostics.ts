@@ -7,8 +7,14 @@
  * what to change in the document.
  */
 
-/** Severity of a diagnostic. `error` fails the compile; `warning` does not. */
-export type DiagnosticSeverity = "error" | "warning";
+/**
+ * Severity of a diagnostic.
+ *
+ * `error` fails the compile; `warning` does not but asks the author to change
+ * something; `note` is informational — the compiler recovered on its own and is
+ * only reporting what it did.
+ */
+export type DiagnosticSeverity = "error" | "warning" | "note";
 
 /** One validation or compilation finding. */
 export interface LoamDiagnostic {
@@ -87,10 +93,20 @@ export function warning(
   return diagnostic(name, "warning", nodePath, message, fix);
 }
 
+/** Convenience: an informational diagnostic about a recovery the compiler made. */
+export function note(
+  name: TerrainDiagnosticName,
+  nodePath: string,
+  message: string,
+  fix: string,
+): LoamDiagnostic {
+  return diagnostic(name, "note", nodePath, message, fix);
+}
+
 /** Render a diagnostic as one human/LLM readable line. */
 export function formatDiagnostic(d: LoamDiagnostic): string {
   const where = d.nodePath === "" ? "<document>" : d.nodePath;
-  return `${d.severity === "error" ? "error" : "warning"} ${d.code} ${d.name} at ${where}: ${d.message}\n  fix: ${d.fix}`;
+  return `${d.severity} ${d.code} ${d.name} at ${where}: ${d.message}\n  fix: ${d.fix}`;
 }
 
 /** True when any diagnostic is fatal. */

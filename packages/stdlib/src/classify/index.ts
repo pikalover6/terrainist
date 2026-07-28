@@ -224,6 +224,47 @@ function distanceFrom(seeds: Uint8Array, width: number, depth: number, limit: nu
 // Classification
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Snow climate gate
+// ---------------------------------------------------------------------------
+
+/**
+ * Temperature lost per block of altitude above sea level.
+ *
+ * The climate temperature field lives in `[0, 1]`, so 0.0125 per block spends
+ * the whole scale over 80 blocks of rise — the same order as a real
+ * environmental lapse rate once the `[0, 1]` scale is read as "polar to
+ * equatorial".
+ */
+export const SNOW_LAPSE_RATE = 0.0125;
+
+/**
+ * Effective temperature at or above which snow never forms.
+ *
+ * The effective temperature is *not* clamped — subtracting the lapse from a
+ * `[0, 1]` field puts high ground well below zero — so this threshold is
+ * negative by construction. At the default lapse it means: a forced-tropical
+ * world (centre 0.88) sees no snow below y ≈ 165, a default temperate world
+ * (centre 0.5) none below y ≈ 135, and a boreal world (centre 0.18) keeps snow
+ * from y ≈ 109 up. Those are the numbers the constant is tuned to; move this
+ * rather than the lapse when the snow line as a whole is wrong.
+ */
+export const SNOW_TEMPERATURE_THRESHOLD = -0.4;
+
+/**
+ * Climate temperature at a column, corrected for its altitude.
+ *
+ * `temperature` is the raw climate field value; the result is unclamped.
+ */
+export function effectiveTemperature(
+  temperature: number,
+  height: number,
+  seaLevel: number,
+  lapseRate: number = SNOW_LAPSE_RATE,
+): number {
+  return temperature - lapseRate * (height - seaLevel);
+}
+
 /** Extra knobs for marker extraction; all have profile-consistent defaults. */
 export interface MarkerOptions {
   /** Slope (degrees) below which a column counts as "flat". Default 5. */
@@ -236,6 +277,19 @@ export interface MarkerOptions {
   basins?: readonly BasinWater[];
   /** Per-edit footprints; volcano footprints suppress snow. */
   footprints?: readonly FeatureFootprint[];
+  /**
+   * The `terrain.climate@0` temperature field, one entry per column.
+   *
+   * When present, the snow rule is gated on climate as well as on relief: a
+   * column is `SNOW` only where it is above the relief snow line **and** its
+   * altitude-corrected temperature is below {@link snowTemperatureThreshold}.
+   * Omit it and classification behaves exactly as before (relief only).
+   */
+  temperature?: Float32Array | Float64Array | readonly number[];
+  /** Temperature lost per block above sea level. Default {@link SNOW_LAPSE_RATE}. */
+  snowLapseRate?: number;
+  /** Effective temperature below which snow may form. Default {@link SNOW_TEMPERATURE_THRESHOLD}. */
+  snowTemperatureThreshold?: number;
 }
 
 /** The result of the classification pass. */
@@ -277,7 +331,8 @@ export interface Classification {
  *    `seaLevel + beachWidth` → `BEACH`;
  * 3. within `beachWidth` of a basin pool → `LAKESHORE`;
  * 4. slope ≥ `cliffThreshold` → `CLIFF` (and no soil);
- * 5. height ≥ snow line, and not inside a volcano footprint → `SNOW`;
+ * 5. height ≥ snow line, cold enough for snow, and not inside a volcano
+ *    footprint → `SNOW`;
  * 6. otherwise → `SOIL`.
  *
  * Rule 2's proximity test is the fix for inland depressions near sea level
@@ -285,6 +340,15 @@ export interface Classification {
  * actually be by the sea. Rule 5's footprint test keeps snow off a volcano —
  * a fresh cone is bare rock and ash, not an alpine summit, and the old
  * height-only rule crescented every caldera rim in white.
+ *
+ * Rule 5's *climate* test (`options.temperature`) is the fix for snow that
+ * ignored the world it was in: relief alone made the top fifth of every field
+ * white, so a tropical archipelago grew snowy islets and a temperate moorland
+ * plateau came out a glacier. The gate is an altitude-corrected temperature —
+ * the climate field's value at the column minus `snowLapseRate` per block above
+ * sea level — and it is an **AND** with the relief snow line, never a
+ * replacement for it: warm worlds lose their snow entirely, cold ones keep the
+ * snow line they had.
  *
  * The snow line sits at `base + snowLineFraction · (maxHeight - base)` with
  * `base = max(seaLevel, minHeight)` — i.e. `snowLineFraction` (default 0.8) of
@@ -319,6 +383,13 @@ export function classify(
   const oceanDistance = distanceFrom(oceanMask, width, depth, beachReach);
   const lakeDistance = distanceFrom(lakeMask, width, depth, beachReach);
   const snowFree = snowSuppressionMask(width * depth, options.footprints ?? []);
+  const temperature = options.temperature;
+  const lapseRate = options.snowLapseRate ?? SNOW_LAPSE_RATE;
+  const snowTemperature = options.snowTemperatureThreshold ?? SNOW_TEMPERATURE_THRESHOLD;
+  /** Cold enough for snow: no climate field means "unknown", i.e. relief decides alone. */
+  const coldEnough = (idx: number, h: number): boolean =>
+    temperature === undefined ||
+    effectiveTemperature(temperature[idx] as number, h, seaLevel, lapseRate) < snowTemperature;
 
   for (let idx = 0; idx < classes.length; idx++) {
     const h = v[idx] as number;
@@ -331,7 +402,7 @@ export function classify(
       classes[idx] = SurfaceClass.LAKESHORE;
     } else if ((slopes[idx] as number) >= params.cliffThreshold) {
       classes[idx] = SurfaceClass.CLIFF;
-    } else if (reliefSpan > 0 && h >= snowLine && snowFree[idx] === 0) {
+    } else if (reliefSpan > 0 && h >= snowLine && snowFree[idx] === 0 && coldEnough(idx, h)) {
       classes[idx] = SurfaceClass.SNOW;
     } else {
       classes[idx] = SurfaceClass.SOIL;

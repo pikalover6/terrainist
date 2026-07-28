@@ -24,6 +24,7 @@ import {
   fbm2,
   footprintHas,
   sin,
+  stableFluidColumns,
   type BasinWater,
   type CalderaMask,
   type Classification,
@@ -680,11 +681,12 @@ function applyLavaFlows(plan: ColumnPlan, input: ColumnPlanInput, seeds: Materia
 /**
  * Fill a bounded pool to `level`, then **erode it until it cannot flow**.
  *
- * A candidate column drops out when a horizontal neighbour is neither in the
- * pool nor solid up to `level` — which would leave a fluid block with an air
- * face. Removing a column can expose its neighbours, so the erosion runs to a
- * fixed point. This is what makes caldera lava and basin water settle-safe by
- * construction instead of by hope.
+ * The erosion itself is the stdlib's {@link stableFluidColumns} — shared with
+ * the open-basin fill-level search, so a level that search accepts is a level
+ * this function realizes. What is added here is the plan: neighbouring *fluid*
+ * counts as filled ground, and the surviving columns get their blocks. This is
+ * what makes caldera lava and basin water settle-safe by construction instead
+ * of by hope.
  */
 export function settleFluidPool(
   plan: ColumnPlan,
@@ -693,53 +695,24 @@ export function settleFluidPool(
   kind: number,
 ): number {
   const { region, ground, fluidTop, fluidKind } = plan;
-  const n = region.width * region.depth;
-  const inPool = new Uint8Array(n);
-  const candidates: number[] = [];
-  for (const idx of columns) {
-    if (idx < 0 || idx >= n) continue;
-    if ((ground[idx] as number) >= level) continue;
-    inPool[idx] = 1;
-    candidates.push(idx);
-  }
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const idx of candidates) {
-      if (inPool[idx] === 0) continue;
-      const i = idx % region.width;
-      const j = (idx - i) / region.width;
-      if (
-        leaks(i - 1, j) ||
-        leaks(i + 1, j) ||
-        leaks(i, j - 1) ||
-        leaks(i, j + 1)
-      ) {
-        inPool[idx] = 0;
-        changed = true;
-      }
-    }
-  }
+  const { inPool } = stableFluidColumns({
+    width: region.width,
+    depth: region.depth,
+    columns,
+    level,
+    floorAt: (idx) => ground[idx] as number,
+    topAt: (idx) => Math.max(ground[idx] as number, fluidTop[idx] as number),
+  });
 
   let filled = 0;
-  for (const idx of candidates) {
-    if (inPool[idx] === 0) continue;
+  for (const idx of columns) {
+    if (idx < 0 || idx >= inPool.length || inPool[idx] === 0) continue;
     fluidKind[idx] = kind;
     fluidTop[idx] = level;
     plan.snow[idx] = 0;
     filled++;
   }
   return filled;
-
-  /** True when `(i, j)` would let the pool spill: in-region, not pooled, not solid. */
-  function leaks(i: number, j: number): boolean {
-    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
-    const idx = j * region.width + i;
-    if (inPool[idx] === 1) return false;
-    const top = Math.max(ground[idx] as number, (fluidTop[idx] as number));
-    return top < level;
-  }
 }
 
 /** Clamp a field height into the emittable world. */

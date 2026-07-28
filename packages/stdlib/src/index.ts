@@ -16,7 +16,12 @@
 
 import { LOAM_VERSION } from "@terrainist/spec";
 
-import { classify, type Classification, type MarkerOptions } from "./classify/index.js";
+import {
+  classify,
+  computeOceanMask,
+  type Classification,
+  type MarkerOptions,
+} from "./classify/index.js";
 import { deriveNoiseSeeds } from "./noise/index.js";
 import { nodeSeed, resolveWorldSeed } from "./determinism/index.js";
 import {
@@ -26,7 +31,12 @@ import {
   type HeightfieldParams,
   type Region,
 } from "./field/index.js";
-import { applyEdits, type EditComposition, type TerrainEdit } from "./edits/index.js";
+import {
+  applyEdits,
+  resolveOpenBasins,
+  type EditComposition,
+  type TerrainEdit,
+} from "./edits/index.js";
 
 /** Loam version this stdlib build targets. */
 export const STDLIB_TARGET_LOAM_VERSION: string = LOAM_VERSION;
@@ -86,6 +96,11 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
     parentPath: request.nodePath,
     seaLevel: params.seaLevel,
   });
+  // A `water: true` basin whose rim leaks still holds water, just less of it.
+  // Resolving that needs the finished field *and* the ocean fill (a basin the
+  // sea already reaches is the sea's), so it happens between the two.
+  const ocean = computeOceanMask(field, params.seaLevel, edits.noFlood);
+  resolveOpenBasins(field, edits, { seaLevel: params.seaLevel, oceanMask: ocean.mask });
   // Classification reads the composition: hydrology needs the carves' `flooded`
   // declarations and the basin pools, and the snow rule needs the footprints.
   const classification = classify(field, params, {

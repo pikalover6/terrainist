@@ -151,14 +151,23 @@ scaling its kernel, and an optional `profile` (`"sharp"` or `"rounded"`).
 
 | verb | group | placement | shape params (defaults) |
 |---|---|---|---|
-| `ridge` | raise | `course` | `width` (48), `height` (50), `profile` |
-| `peak` | raise | `at` / `zone` | `radius` (56), `height` (70), `profile` |
-| `volcano` | raise | `at` / `zone` | `radius` (64), `height` (80), `caldera` (true), `calderaDepth` (12), `lava` (true), `profile` |
-| `plateau` | raise | `at` / `zone` | `radius` (64), `height` (25), `rim` (8), `profile` |
-| `island` | raise | `at` / `zone` | `radius` (48), `height` (30), `profile` |
-| `valley` | carve | `course` | `width` (40), `depth` (30), `profile` |
-| `river` | carve | `course` | `width` (10), `depth` (6), `profile` |
-| `basin` | carve | `at` / `zone` | `radius` (56), `depth` (20), `water` (false), `profile` |
+| `ridge` | raise | `course` | `width` (48), `height` (50), `profile`, `meander` (0.5) |
+| `peak` | raise | `at` / `zone` | `radius` (56), `height` (70), `profile`, `irregularity` (0.18) |
+| `volcano` | raise | `at` / `zone` | `radius` (64), `height` (80), `caldera` (true), `calderaDepth` (12), `lava` (true), `lavaFlows` (2), `profile`, `irregularity` (0.18) |
+| `plateau` | raise | `at` / `zone` | `radius` (64), `height` (25), `rim` (8), `profile`, `irregularity` (0.18) |
+| `island` | raise | `at` / `zone` | `radius` (48), `height` (30), `profile`, `irregularity` (0.18) |
+| `valley` | carve | `course` | `width` (40), `depth` (30), `profile`, `meander` (0.5), `flooded` ("auto") |
+| `river` | carve | `course` | `width` (10), `depth` (6), `profile`, `meander` (0.5), `flooded` ("auto") |
+| `basin` | carve | `at` / `zone` | `radius` (56), `depth` (20), `water` (false), `profile`, `irregularity` (0.18), `flooded` ("auto") |
+
+Shape and water modifiers:
+
+| param | default | range | what it does |
+|---|---|---|---|
+| `irregularity` | 0.18 | 0..0.5 | organic outline for a radial verb. **The default is right.** Set `0` only when you deliberately want a geometric circle. |
+| `meander` | 0.5 | 0..1 | lateral wander, width variation and end taper for a corridor verb. **The default is right.** `0` gives a ruled, uniform channel. |
+| `flooded` | `"auto"` | `"auto"` / `"never"` | `"auto"` lets a carve take sea water where it reaches the ocean; `"never"` keeps it dry. |
+| `lavaFlows` | 2 | 0..4, int | frozen magma/blackstone flows down a volcano's flanks. Solid blocks, not fluid. |
 
 Rules:
 
@@ -170,11 +179,11 @@ Rules:
 - Shape params belong to their verb. Putting `radius` on a `ridge` or `width`
   on a `peak` is an error; the table above is exhaustive per verb.
 - `width`/`radius` are blocks, 1..2048. `height`/`depth` are blocks, 0..320.
-- `volcano` puts a lava lake strictly inside the caldera rim. This is the
-  **only** way to place lava. There is no lava verb, no lava flow, no lava
-  river.
-- `basin` with `"water": true` only fills when the rim closes completely;
-  otherwise you get a warning and a dry pit.
+- `volcano` puts a lava lake strictly inside the caldera rim, and `lavaFlows`
+  frozen flows down the cone. That is the **only** way to get lava; there is no
+  lava verb and no lava river.
+- `basin` with `"water": true` is how you make an **inland lake**; it only fills
+  when the rim closes completely, otherwise you get a warning and a dry pit.
 
 ---
 
@@ -231,6 +240,7 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
     "maxSlope": 34,
     "elevation": [2, 70],
     "edgeFalloff": 16,
+    "undergrowth": { "grass": 0.45, "flowers": 0.04, "deadwood": 0.05 },
     "species": [
       { "id": "tall_pine", "weight": 3, "shape": "spruce_tall" },
       { "id": "scrub_pine", "weight": 1, "shape": "spruce_squat" }
@@ -243,7 +253,8 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 |---|---|---|
 | `species` | **required** | non-empty array. Each entry: `id` (loam id), `shape` (required), optional `weight`, `minHeight`/`maxHeight` (2..64, int). |
 | `area` | `{"all": true}` | `{"zone": "<token>"}`, `{"at": [fx,fz], "radius": <blocks>}`, or `{"all": true}`. |
-| `density` | 0.15 | 0..1, trees per eligible column *before* spacing caps it. See §7. |
+| `density` | 0.15 | 0..1, trees per eligible column. 0.15–0.3 = closed-canopy forest, 0.02–0.05 = wilderness fill. |
+| `undergrowth` | `{grass: 0.35, flowers: 0.05, deadwood: 0.02}` | per-column probabilities, each 0..1: grass/ferns, flower patches, dead bushes and fallen logs. Raise `grass`/`flowers` for a lush floor, `deadwood` for an old or blighted wood. |
 | `spacing` | 3 | 1..64, minimum blocks between trunks. |
 | `clumping` | 0.4 | 0..1, how much trees gather into groves. |
 | `maxSlope` | 35 | 0..90 degrees; trees refuse steeper ground. |
@@ -271,25 +282,28 @@ at low density so the rest of the world is not bald.
 These are honest limitations of today's compiler. Working with them produces
 much better worlds than fighting them.
 
-1. **Prefer `valley` over `river` for waterways.** The `river` carve currently
-   renders unnaturally straight and thin. A `valley` whose course runs from
-   inland out past the coast carves below sea level and floods into a natural
-   inlet — that is how you get rivers, fjords, sounds and channels today. Use
-   `river` only for a narrow inland notch you are willing to have look
-   ruled-straight.
-2. **Vegetation saturates around one tree per 25 columns.** `density` above
-   roughly `0.04` with `spacing: 3` buys you almost nothing; the spacing mask
-   is the real limit. "Dense forest" means `density` ≈ 0.04–0.06 with
-   `clumping` ≈ 0.4 and a generous `elevation` band — not `density: 0.9`.
-   Wilderness fill: `density` ≈ 0.01–0.02.
-3. **Lava is caldera-only.** Only `volcano` with `"lava": true` produces lava,
-   inside the rim. Nothing else in the profile emits lava.
-4. **Water only settles at `seaLevel`** (plus closed `basin` fills). A carve
-   that dips below sea level becomes water; a carve that stays above it stays
-   dry. There are no perched lakes or waterfalls.
-5. **Colour comes from `style.palettes`**, not from block choices elsewhere.
+1. **Water needs a route to the sea.** A carve floods only where it is below
+   sea level *and* hydraulically connected to the ocean. `river` (or a `valley`
+   run past the coast) is how you make waterways, fjords and estuaries — both
+   meander and descend properly now. A carve that dips below sea level in the
+   middle of the land stays **dry**: gorges and canyons are dry by design.
+2. **Inland lake = `basin` with `"water": true`.** That is the only way to get
+   standing fresh water away from the coast. `"flooded": "never"` forces a carve
+   dry if you want a canyon that a sea connection would otherwise flood.
+3. **Dense forest is `density` 0.15–0.3** with `undergrowth`; 0.15 is already a
+   closed canopy (≈ 1 tree per 8 columns). Wilderness fill: `density` ≈ 0.02–0.05.
+4. **Leave `irregularity` and `meander` at their defaults.** They give organic
+   outlines and wandering channels for free. Set them to `0` only when you
+   deliberately want a geometric circle or a ruled channel.
+5. **Volcanoes dress themselves.** Rocky elevation banding, an ash-biome
+   (`basalt_deltas`) summit and caldera, no snow, and `lavaFlows` frozen flows
+   down the flanks all happen automatically — you do not need palette overrides
+   or extra edits for them.
+6. **Lava is caldera-only.** Only `volcano` with `"lava": true` produces liquid
+   lava, inside the rim.
+7. **Colour comes from `style.palettes`**, not from block choices elsewhere.
    Black sand, red rock and pale cliffs are palette overrides.
-6. Compilation fails on unstable fluid. Very deep, very narrow carves near sea
+8. Compilation fails on unstable fluid. Very deep, very narrow carves near sea
    level are the usual cause — widen them.
 
 ### Palette symbols
@@ -324,8 +338,10 @@ speckled rather than banded:
 ## 8. Worked patterns
 
 **Fjord inlets** — a `valley` course that starts well inland and runs *past*
-the coast into open water. The seaward end floods; the inland end climbs the
-walls. Pair with `"ridged": true` for knife-edge walls between arms.
+the coast into open water. The seaward end floods because it reaches the ocean;
+the inland end climbs the walls and stays dry. Pair with `"ridged": true` for
+knife-edge walls between arms. Use `river` for a narrower waterway running down
+to the same sea.
 
 ```json
 {
@@ -339,6 +355,19 @@ walls. Pair with `"ridged": true` for knife-edge walls between arms.
     "width": 40,
     "depth": 100
   }
+}
+```
+
+**Inland lake** — a `basin` with `"water": true`. The rim must close, so keep
+the basin away from ground that already slopes below its rim. Nothing else in
+the profile makes standing fresh water.
+
+```json
+{
+  "id": "still_tarn",
+  "kind": "generator",
+  "generator": "terrain.edit@0",
+  "params": { "verb": "basin", "zone": "northwest", "radius": 70, "depth": 14, "water": true }
 }
 ```
 
@@ -447,8 +476,9 @@ Prompt: *"a small volcanic island ringed by black beaches"*.
         "params": { "forceTheme": "temperate", "temperatureFrequency": 0.0014 } },
       { "id": "slope_pines", "kind": "generator", "generator": "scatter.forest@0",
         "label": "pine belt on the lower slopes",
-        "params": { "area": { "at": [0.5, 0.52], "radius": 180 }, "density": 0.06, "spacing": 3,
+        "params": { "area": { "at": [0.5, 0.52], "radius": 180 }, "density": 0.18, "spacing": 3,
                     "clumping": 0.45, "maxSlope": 44, "elevation": [2, 58], "edgeFalloff": 14,
+                    "undergrowth": { "grass": 0.3, "flowers": 0.03, "deadwood": 0.06 },
                     "species": [ { "id": "black_pine", "weight": 3, "shape": "spruce_tall" },
                                  { "id": "scrub_pine", "weight": 1, "shape": "spruce_squat" } ] } },
       { "id": "wilderness", "kind": "generator", "generator": "scatter.forest@0",

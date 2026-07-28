@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  SNOW_LAPSE_RATE,
+  SNOW_TEMPERATURE_THRESHOLD,
   SURFACE_CLASS_NAMES,
   SurfaceClass,
   classify,
+  effectiveTemperature,
   computeLakeMask,
   computeOceanMask,
   computeSlopes,
@@ -362,5 +365,72 @@ describe("water-aware classification", () => {
       if (footprintHas(fp!, idx) && bare.classes[idx] === SurfaceClass.SNOW) bareSnow++;
     }
     expect(bareSnow).toBeGreaterThan(0);
+  });
+});
+
+describe("the snow climate gate", () => {
+  /** A cone from sea level up to `peak`, so relief always yields a snow line. */
+  function cone(peak: number): HeightField {
+    return fieldFrom(64, 64, (x, z) => {
+      const d = Math.sqrt((x - 32) ** 2 + (z - 32) ** 2);
+      return Math.max(60, peak - 2.2 * d);
+    });
+  }
+
+  const uniform = (n: number, t: number): Float32Array => new Float32Array(n).fill(t);
+  const snowCount = (c: { classes: Uint8Array }): number =>
+    c.classes.reduce((acc, v) => acc + (v === SurfaceClass.SNOW ? 1 : 0), 0);
+
+  it("keeps the snow line on a cold, high-relief world", () => {
+    const f = cone(210);
+    const n = f.values.length;
+    const relief = classify(f, PARAMS, {});
+    const cold = classify(f, PARAMS, { temperature: uniform(n, 0.18) });
+    expect(snowCount(relief)).toBeGreaterThan(0);
+    // A boreal world at these heights is unaffected: the relief line still rules.
+    expect(snowCount(cold)).toBe(snowCount(relief));
+  });
+
+  it("puts no snow at all on a warm, low world", () => {
+    const f = cone(96);
+    const n = f.values.length;
+    expect(snowCount(classify(f, PARAMS, {}))).toBeGreaterThan(0);
+    expect(snowCount(classify(f, PARAMS, { temperature: uniform(n, 0.88) }))).toBe(0);
+    // ...and a temperate one of the same shape is bare too — 96 is not a summit.
+    expect(snowCount(classify(f, PARAMS, { temperature: uniform(n, 0.5) }))).toBe(0);
+  });
+
+  it("applies a lapse rate: the same temperature snows high and not low", () => {
+    const f = cone(210);
+    const n = f.values.length;
+    const c = classify(f, PARAMS, { temperature: uniform(n, 0.5) });
+    // Every snow column is above the altitude where the lapse alone crosses the
+    // threshold, and the summit — the same temperature, higher up — is snow.
+    const breakEven =
+      PARAMS.seaLevel + (0.5 - SNOW_TEMPERATURE_THRESHOLD) / SNOW_LAPSE_RATE;
+    expect(snowCount(c)).toBeGreaterThan(0);
+    for (let idx = 0; idx < c.classes.length; idx++) {
+      if (c.classes[idx] !== SurfaceClass.SNOW) continue;
+      expect(f.values[idx]!).toBeGreaterThanOrEqual(breakEven);
+    }
+    // The summit is snow; a column of the same temperature 90 blocks lower is not.
+    const summit = c.classes[32 * 64 + 32];
+    expect(summit).toBe(SurfaceClass.SNOW);
+    expect(effectiveTemperature(0.5, 210, PARAMS.seaLevel)).toBeLessThan(
+      SNOW_TEMPERATURE_THRESHOLD,
+    );
+    expect(effectiveTemperature(0.5, 120, PARAMS.seaLevel)).toBeGreaterThan(
+      SNOW_TEMPERATURE_THRESHOLD,
+    );
+  });
+
+  it("is an AND with the relief snow line, never a replacement", () => {
+    // Freezing everywhere still does not snow below the relief line.
+    const f = cone(210);
+    const c = classify(f, PARAMS, { temperature: new Float32Array(f.values.length).fill(-5) });
+    for (let idx = 0; idx < c.classes.length; idx++) {
+      if (c.classes[idx] !== SurfaceClass.SNOW) continue;
+      expect(f.values[idx]!).toBeGreaterThanOrEqual(c.snowLine);
+    }
   });
 });

@@ -116,14 +116,23 @@ Common placement params (exactly one required):
 
 | `verb` | group | placement | params (defaults) |
 |---|---|---|---|
-| `ridge` | raise | course | `width` (48), `height` (50), `profile: "sharp"\|"rounded"` ("rounded") |
-| `peak` | raise | at/zone | `radius` (56), `height` (70), `profile` ("sharp") |
-| `volcano` | raise | at/zone | `radius` (64), `height` (80), `caldera` (true), `calderaDepth` (12), `lava` (true — lava lake strictly inside the caldera rim, settle-safe) |
-| `plateau` | raise | at/zone | `radius` (64), `height` (25), `rim` (8 — falloff width) |
-| `island` | raise | at/zone | `radius` (48), `height` (30) |
-| `valley` | carve | course | `width` (40), `depth` (30) |
-| `river` | carve | course | `width` (10), `depth` (6) — carves to a water surface **at `seaLevel`** in v0 (fjord/inlet semantics; perched rivers are out of scope until fluid settling handles them) |
-| `basin` | carve | at/zone | `radius` (56), `depth` (20), `water` (false — if true, fills to the basin's rim minus 1, only when rim is fully closed, else `LOAM-T105` warning and no water) |
+| `ridge` | raise | course | `width` (48), `height` (50), `profile: "sharp"\|"rounded"` ("rounded"), `meander` (0.5) |
+| `peak` | raise | at/zone | `radius` (56), `height` (70), `profile` ("sharp"), `irregularity` (0.18) |
+| `volcano` | raise | at/zone | `radius` (64), `height` (80), `caldera` (true), `calderaDepth` (12), `lava` (true — lava lake strictly inside the caldera rim, settle-safe), `lavaFlows` (2), `irregularity` (0.18) |
+| `plateau` | raise | at/zone | `radius` (64), `height` (25), `rim` (8 — falloff width), `irregularity` (0.18) |
+| `island` | raise | at/zone | `radius` (48), `height` (30), `irregularity` (0.18) |
+| `valley` | carve | course | `width` (40), `depth` (30), `meander` (0.5), `flooded` ("auto") |
+| `river` | carve | course | `width` (10), `depth` (6), `meander` (0.5), `flooded` ("auto") — the refined course descends monotonically to its lower end, so a river bed follows the terrain down to its estuary |
+| `basin` | carve | at/zone | `radius` (56), `depth` (20), `water` (false — if true, fills to the basin's rim minus 1, only when rim is fully closed, else `LOAM-T105` warning and no water), `irregularity` (0.18), `flooded` ("auto") |
+
+Shaping and flooding params (added G2.5a/b):
+
+| param | range (default) | verbs | meaning |
+|---|---|---|---|
+| `irregularity` | 0..0.5 (0.18) | radial verbs (`peak`, `volcano`, `plateau`, `island`, `basin`) | angular harmonic + low-frequency warp deformation of the outline. `0` reproduces the exact geometric circle; the default reads as an organic landform. |
+| `meander` | 0..1 (0.5) | corridor verbs (`ridge`, `valley`, `river`) | lateral wander of the refined centreline (as a multiple of 1.5 × `width`), plus per-sample width variation and an endpoint taper so a carve never ends in a blunt wall. `0` is the plain uniform ribbon. |
+| `flooded` | `"auto"` \| `"never"` (`"auto"`) | carve verbs (`valley`, `river`, `basin`) | `"auto"` lets the carve take ocean water wherever it is hydraulically connected to the sea; `"never"` keeps it dry everywhere dryness is fluid-stable. |
+| `lavaFlows` | 0..4 int (2) | `volcano` | frozen magma/blackstone flows running from the caldera rim down the flanks along seeded steepest-descent paths. Solid blocks, never flowing fluid. |
 
 Every edit node's `id` names a terrain feature. Features expose **markers**
 (`center`, `peak`, `foot`; `mouth`/`head` for courses) recorded in the compile
@@ -135,7 +144,19 @@ consumes them yet.
 `scatter.forest@0` in this profile takes `area`: `{ "zone": token }` or
 `{ "at": [fx,fz], "radius": blocks }` or `{ "all": true }` (default). The
 scatter's eligibility rules (`maxSlope`, `elevation`, `avoidTags`) then apply
-within that area. `kind`-style wilderness opt-out: a forest node with
+within that area.
+
+`scatter.forest@0` also takes **`undergrowth`**:
+`{ "grass": 0.35, "flowers": 0.05, "deadwood": 0.02 }` (those are the
+defaults; each value is a per-eligible-column probability in 0..1). `grass`
+covers short/tall grass and ferns, `flowers` the clustered flower patches,
+`deadwood` dead bushes and fallen logs; the pass also dresses deep-shade
+floors (podzol, mushrooms) and cold floors as taiga. Tree density is no longer
+spacing-saturated: at `density: 0.15` a forest reaches a closed canopy of
+roughly **one tree per 8 columns**, so `density` is a meaningful dial across
+its whole range.
+
+`kind`-style wilderness opt-out: a forest node with
 `"area": {"all": true}` and low density is the v0 "unremarkable wilderness"
 fill; deliberate forests use zones. (v0.2: `area` folds into coarse placement
 constraints.)
@@ -154,10 +175,36 @@ constraints.)
   ocean → `minecraft:ocean` (`deep_ocean` below y=45), beach zone →
   `minecraft:beach`, lowland → `plains` (or `forest`/`taiga` under a forest
   node, by climate temperature), upland → `windswept_hills`, high rock →
-  `stony_peaks`, snow → `snowy_slopes`. `terrain.climate@0` params modulate
-  the temperature/humidity fields per §7.
-- Water: fill to `seaLevel` where the field is lower; volcano lava only inside
-  calderas; **the fluid-settling validator (one simulated spread tick over the
+  `stony_peaks`, snow → `snowy_slopes`, volcanic upper cone/rim/caldera →
+  `minecraft:basalt_deltas`. `terrain.climate@0` params modulate the
+  temperature/humidity fields per §7.
+- Materials layer (G2.5b, all automatic — no params, no document surface):
+  - a **`lakeshore`** surface class rings standing inland water (mud, gravel,
+    coarse dirt, position-hashed);
+  - **volcanic elevation banding** inside a volcano's footprint — soil and
+    scree on the foot, darker rock on the mid flank, bare basalt/blackstone on
+    the upper cone and caldera, plus the frozen `lavaFlows` streaks;
+  - the stone body blends to **deepslate below y≈0** (pure deepslate at
+    y ≤ −4, pure stone at y ≥ 8, a hashed blend between);
+  - **snow is suppressed on volcano footprints**, whatever the snow line says;
+  - **ocean flora** (seagrass to ~12 blocks depth, kelp forests ~12–30) and
+    **lily pads** on inland lakes are placed by the decoration pass;
+  - cliff-face and scree rock detail and ocean-floor variation.
+- Water (**revised G2.5a** — supersedes the original "everything below
+  `seaLevel` is water" rule): a carved column takes sea water only when it is
+  **below `seaLevel` and hydraulically connected to the ocean**. Connectivity is
+  computed over the finished field from the region edge inward, so fjords,
+  sounds, estuaries and river mouths flood, while a landlocked gorge or canyon
+  bottom below sea level stays **dry** — that is the intended behaviour, not a
+  bug. A `river` carve descends monotonically along its course and meets the sea
+  at its estuary; the water it holds is the ocean reaching inland.
+  **Inland lakes are `basin` with `water: true`**, which fills to the closed rim
+  minus 1 independently of sea connectivity; a below-sea carve alone never makes
+  a lake. `flooded: "never"` forces a carve dry except where fluid stability
+  requires water at a sea connection (a partially connected channel keeps the
+  water it needs so no fluid face is exposed to air).
+- Volcano lava only inside calderas (plus solid, frozen `lavaFlows` on the
+  flanks — those are blocks, not fluid); **the fluid-settling validator (one simulated spread tick over the
   emitted field) must report zero unstable fluid blocks** or compilation fails
   (`LOAM-T110`; `--allow-unstable` downgrades to warning).
 
