@@ -21,5 +21,8 @@
   "dependencies": {
     "@terrainist/compiler": "*",
     "@terrainist/render": "*"
+  },
+  "bin": {
+    "terrainist": "./dist/index.js"
   }
 }

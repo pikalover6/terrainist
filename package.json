@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc -b",
     "test": "vitest run",
-    "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo"
+    "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo",
+    "emit:example": "npm run build && node packages/cli/dist/index.js emit examples/pyramid.spike.json --out out/"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

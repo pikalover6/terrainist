@@ -19,6 +19,11 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@terrainist/spec": "*"
+    "@terrainist/compiler": "*",
+    "@terrainist/spec": "*",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5"
   }
 }

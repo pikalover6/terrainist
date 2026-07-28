@@ -8,6 +8,8 @@
 
 import type { LoamDocument } from "@terrainist/spec";
 
+export * from "./emit/index.js";
+
 /** Result of compiling a Loam document. Placeholder shape. */
 export interface CompileResult {
   version: string;

@@ -6,5 +6,5 @@
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": [{ "path": "../spec" }]
+  "references": [{ "path": "../spec" }, { "path": "../compiler" }]
 }
