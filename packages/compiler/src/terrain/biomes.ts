@@ -34,6 +34,8 @@ export const PROFILE_BIOMES = [
   "minecraft:windswept_hills",
   "minecraft:stony_peaks",
   "minecraft:snowy_slopes",
+  "minecraft:river",
+  "minecraft:basalt_deltas",
 ] as const;
 
 /** A biome name this profile can paint. */
@@ -65,10 +67,24 @@ export interface BiomeInput {
   readonly temperature: number;
   /** Whether any forest node considers this column plantable. */
   readonly forested: boolean;
+  /** Submerged by a closed-basin pool — fresh water, not sea. */
+  readonly lake?: boolean;
+  /** On the bare upper cone, rim or caldera of a volcano. */
+  readonly volcanicUpper?: boolean;
 }
 
-/** The profile's per-column biome rule. */
+/**
+ * The profile's per-column biome rule.
+ *
+ * Two overrides come before the surface-class table, because they are about
+ * *what the column is part of* rather than what it looks like: a closed-basin
+ * pool is fresh water (`river`, whose tint reads as a lake rather than as the
+ * sea), and the bare upper cone of a volcano is `basalt_deltas` — which in game
+ * brings the ash particles and dark fog that sell a volcano from the ground.
+ */
 export function biomeForColumn(c: BiomeInput): ProfileBiome {
+  if (c.lake === true) return "minecraft:river";
+  if (c.volcanicUpper === true) return "minecraft:basalt_deltas";
   switch (c.surfaceClass) {
     case SurfaceClass.UNDERWATER: {
       const deep = c.groundY < DEEP_OCEAN_Y;

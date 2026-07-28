@@ -137,6 +137,12 @@ export interface EditParams {
   readonly caldera?: boolean;
   readonly calderaDepth?: number;
   readonly lava?: boolean;
+  /**
+   * 0..4 — frozen lava flows spilling from the rim down the cone. The paths are
+   * seeded steepest-descent runs over the final field; they are surfaced in
+   * magma/blackstone/basalt, never in flowing fluid.
+   */
+  readonly lavaFlows?: number;
   readonly water?: boolean;
   /** 0..0.5 — angular + noise deformation of a radial verb's outline. */
   readonly irregularity?: number;
@@ -181,6 +187,19 @@ export interface ForestSpecies {
   readonly leafPalette?: string;
 }
 
+/**
+ * Ground cover under a forest node (Loam v0.2 §7, `scatter.forest@0`).
+ *
+ * Each value is a per-eligible-column probability: `grass` covers short/tall
+ * grass and ferns, `flowers` the clustered flower patches, `deadwood` dead
+ * bushes and fallen logs.
+ */
+export interface UndergrowthParams {
+  readonly grass?: number;
+  readonly flowers?: number;
+  readonly deadwood?: number;
+}
+
 /** Coarse area for a scatter node. */
 export type ScatterArea =
   | { readonly zone: ZoneToken }
@@ -198,6 +217,7 @@ export interface ForestParams {
   readonly elevation?: readonly [number, number];
   readonly edgeFalloff?: number;
   readonly avoidTags?: readonly string[];
+  readonly undergrowth?: UndergrowthParams;
   readonly snowLine?: number;
 }
 

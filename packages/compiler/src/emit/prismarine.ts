@@ -26,10 +26,20 @@ interface RawVec3 {
   readonly z: number;
 }
 
+interface RawBlockStateDef {
+  readonly name: string;
+  readonly type: string;
+  readonly num_values: number;
+  readonly values?: readonly string[];
+}
+
 interface RawBlockDef {
   readonly id: number;
   readonly name: string;
   readonly defaultState: number;
+  readonly minStateId: number;
+  readonly maxStateId: number;
+  readonly states?: readonly RawBlockStateDef[];
 }
 
 interface RawBiomeDef {
@@ -153,6 +163,16 @@ export interface PrismarineStack {
   readonly minecraftVersion: string;
   readonly dataVersion: number;
   blockByName(name: string): EmitBlock | undefined;
+  /**
+   * A specific block *state*, addressed by property values — e.g.
+   * `blockStateOf("tall_grass", { half: "lower" })`.
+   *
+   * Block states are laid out contiguously from `minStateId`, with the **last**
+   * declared property varying fastest, so the id is a mixed-radix index. Any
+   * property left out keeps the value the default state carries; an unknown
+   * block or an unknown property value yields `undefined`.
+   */
+  blockStateOf(name: string, properties: Readonly<Record<string, string>>): number | undefined;
   /** Un-namespaced name for a block state id; `undefined` if unknown. */
   blockNameByStateId(stateId: number): string | undefined;
   biomeIdByName(name: string): number | undefined;
@@ -286,6 +306,42 @@ export function loadPrismarine(version: string): PrismarineStack {
       return def === undefined
         ? undefined
         : { id: def.id, name: def.name, stateId: def.defaultState };
+    },
+
+    blockStateOf(name: string, properties: Readonly<Record<string, string>>): number | undefined {
+      const def = data.blocksByName[stripNamespace(name)];
+      if (def === undefined) return undefined;
+      const states = def.states ?? [];
+      if (states.length === 0) return Object.keys(properties).length === 0 ? def.defaultState : undefined;
+
+      // Decode the default state into per-property indices, then override the
+      // ones the caller named — so partial property sets stay meaningful.
+      const indices: number[] = new Array(states.length).fill(0);
+      let rest = def.defaultState - def.minStateId;
+      for (let k = states.length - 1; k >= 0; k--) {
+        const radix = (states[k] as RawBlockStateDef).num_values;
+        indices[k] = rest % radix;
+        rest = (rest - (indices[k] as number)) / radix;
+      }
+
+      for (const [key, value] of Object.entries(properties)) {
+        const k = states.findIndex((s) => s.name === key);
+        if (k < 0) return undefined;
+        const state = states[k] as RawBlockStateDef;
+        const values = state.values ?? (state.type === "bool" ? ["true", "false"] : undefined);
+        if (values === undefined) return undefined;
+        const at = values.indexOf(value);
+        if (at < 0) return undefined;
+        indices[k] = at;
+      }
+
+      let stateId = def.minStateId;
+      let stride = 1;
+      for (let k = states.length - 1; k >= 0; k--) {
+        stateId += (indices[k] as number) * stride;
+        stride *= (states[k] as RawBlockStateDef).num_values;
+      }
+      return stateId;
     },
 
     blockNameByStateId,

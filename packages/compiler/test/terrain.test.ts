@@ -4,10 +4,13 @@ import path from "node:path";
 
 import {
   HeightField,
+  buildTerrainField,
   centeredRegion,
   classify,
+  footprintHas,
   nodeSeed,
   resolveHeightfieldParams,
+  type FeatureFootprint,
 } from "@terrainist/stdlib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -15,14 +18,27 @@ import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain } from "../src/terrain/compile.js";
 import type { CompileTerrainResult, TerrainCompileReport } from "../src/terrain/compile.js";
-import { FluidKind, buildColumnPlan, settleFluidPool, type ColumnPlan } from "../src/terrain/columns.js";
+import {
+  DEEPSLATE_BAND_HIGH,
+  DEEPSLATE_BAND_LOW,
+  FluidKind,
+  buildColumnPlan,
+  settleFluidPool,
+  stoneBandState,
+  type ColumnPlan,
+} from "../src/terrain/columns.js";
+import { decorate } from "../src/terrain/decorate.js";
 import { resolvePalette } from "../src/terrain/palette.js";
 import {
   checkFloatingVegetation,
   checkFluidStability,
   validatorDiagnostics,
 } from "../src/terrain/validate.js";
-import type { TreePlacement } from "../src/terrain/vegetation.js";
+import {
+  scatterForests,
+  type ForestNodeInput,
+  type TreePlacement,
+} from "../src/terrain/vegetation.js";
 
 const scratch: string[] = [];
 
@@ -116,8 +132,13 @@ function blankPlan(width: number, depth: number, groundY: number): ColumnPlan {
     soil: new Uint8Array(n),
     snow: new Uint8Array(n),
     biome: new Uint16Array(n),
+    volcanic: new Uint8Array(n),
+    volcanicUpper: new Uint8Array(n),
+    lavaFlow: new Uint8Array(n),
+    lakeMask: new Uint8Array(n),
     seaLevel: 63,
-    states: { bedrock: 85, stone: 1, water: 86, lava: 102, snowLayer: 6718 },
+    stoneSeed: 1234,
+    states: { bedrock: 85, stone: 1, deepslate: 2, water: 86, lava: 102, snowLayer: 6718 },
   };
 }
 
@@ -372,4 +393,333 @@ describe("the water pass reads the ocean mask, not sea level", () => {
     // and the result is still a settle-safe world
     expect(checkFluidStability(plan).unstable).toBe(0);
   });
+});
+
+/* -------------------------------------------------------------------------- */
+/* G2.5b — materials and lushness                                              */
+/* -------------------------------------------------------------------------- */
+
+/** A flat, dry, fully plantable world: the cleanest possible scatter fixture. */
+function flatWorld(size: number, height: number) {
+  const region = centeredRegion(size, size);
+  const field = new HeightField(region);
+  field.values.fill(height);
+  const classification = classify(field, resolveHeightfieldParams({}));
+  const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+  const seed = nodeSeed(7n, "world");
+  const { palette } = resolvePalette(stack, undefined, seed);
+  const plan = buildColumnPlan({
+    field,
+    classification,
+    palette,
+    seaLevel: 63,
+    soilDepth: 3,
+    calderas: [],
+    basins: [],
+    seed,
+  });
+  return { region, field, classification, plan, palette, stack, seed };
+}
+
+function denseForestNode(seed: ReturnType<typeof nodeSeed>): ForestNodeInput {
+  return {
+    id: "woods",
+    nodePath: "world.woods",
+    seed,
+    params: {
+      species: [{ id: "spruce", weight: 1, shape: "spruce_tall" }],
+      density: 0.15,
+      spacing: 3,
+      clumping: 0,
+      edgeFalloff: 0,
+    },
+  };
+}
+
+describe("forest density and spacing", () => {
+  const size = 96;
+  const world = flatWorld(size, 80);
+  const node = denseForestNode(nodeSeed(7n, "world.woods"));
+  const scatter = scatterForests([node], world.plan, world.classification, world.palette);
+
+  it("reaches closed canopy: better than one tree per 12 eligible columns", () => {
+    const eligible = world.plan.ground.length;
+    expect(scatter.trees.length).toBeGreaterThan(eligible / 12);
+  });
+
+  it("never places two trunks closer than `spacing`", () => {
+    const spacing = 3;
+    const trees = scatter.trees;
+    for (let a = 0; a < trees.length; a++) {
+      for (let b = a + 1; b < trees.length; b++) {
+        const ta = trees[a] as TreePlacement;
+        const tb = trees[b] as TreePlacement;
+        const dx = ta.x - tb.x;
+        const dz = ta.z - tb.z;
+        if (Math.abs(dx) > spacing || Math.abs(dz) > spacing) continue;
+        expect(
+          dx * dx + dz * dz,
+          `trunks at (${ta.x},${ta.z}) and (${tb.x},${tb.z}) are too close`,
+        ).toBeGreaterThanOrEqual(spacing * spacing);
+      }
+    }
+  });
+
+  it("varies tree geometry per position", () => {
+    const heights = new Set(scatter.trees.map((t) => t.height));
+    const radii = new Set(scatter.trees.map((t) => t.radiusDelta));
+    expect(heights.size).toBeGreaterThan(3);
+    expect(radii.size).toBe(3);
+    // Mega spruces are rare but not absent over ten thousand columns.
+    expect(scatter.trees.some((t) => t.mega)).toBe(true);
+    expect(scatter.trees.filter((t) => t.mega).length).toBeLessThan(scatter.trees.length * 0.1);
+  });
+});
+
+describe("undergrowth", () => {
+  function decorateOnce() {
+    const world = flatWorld(64, 80);
+    const node = denseForestNode(nodeSeed(7n, "world.woods"));
+    const scatter = scatterForests([node], world.plan, world.classification, world.palette);
+    const result = decorate({
+      plan: world.plan,
+      classification: world.classification,
+      temperature: new Float32Array(world.plan.ground.length).fill(0.5),
+      trees: scatter.trees,
+      forests: scatter.nodes,
+      palette: world.palette,
+      stack: world.stack,
+      seed: world.seed,
+    });
+    return { world, result };
+  }
+
+  const first = decorateOnce();
+
+  it("covers the forest floor", () => {
+    expect(first.result.blocks.length).toBeGreaterThan(500);
+    expect(first.result.counts["grass"] as number).toBeGreaterThan(0);
+  });
+
+  it("is identical across two runs (position-keyed, not sequential)", () => {
+    const second = decorateOnce();
+    expect(second.result.blocks).toEqual(first.result.blocks);
+    expect(second.result.counts).toEqual(first.result.counts);
+    expect([...second.world.plan.surface]).toEqual([...first.world.plan.surface]);
+  });
+
+  it("never buries a trunk or floats above the ground", () => {
+    const { plan } = first.world;
+    const { region, ground } = plan;
+    for (const block of first.result.blocks) {
+      const idx = (block.z - region.z0) * region.width + (block.x - region.x0);
+      expect(block.y).toBeGreaterThan(ground[idx] as number);
+      expect(block.y).toBeLessThanOrEqual((ground[idx] as number) + 2);
+    }
+  });
+});
+
+describe("the deepslate band", () => {
+  const states = {
+    bedrock: 0,
+    stone: 1,
+    deepslate: 2,
+    water: 3,
+    lava: 4,
+    snowLayer: 5,
+  } as const;
+
+  it("is pure deepslate low, pure stone high, and mixed only between", () => {
+    for (let y = -64; y <= DEEPSLATE_BAND_LOW; y++) {
+      expect(stoneBandState(states, 99, 3, y, 5)).toBe(states.deepslate);
+    }
+    for (let y = DEEPSLATE_BAND_HIGH; y <= 80; y++) {
+      expect(stoneBandState(states, 99, 3, y, 5)).toBe(states.stone);
+    }
+    let deep = 0;
+    let stone = 0;
+    for (let x = 0; x < 64; x++) {
+      for (let y = DEEPSLATE_BAND_LOW + 1; y < DEEPSLATE_BAND_HIGH; y++) {
+        if (stoneBandState(states, 99, x, y, 0) === states.deepslate) deep++;
+        else stone++;
+      }
+    }
+    expect(deep).toBeGreaterThan(0);
+    expect(stone).toBeGreaterThan(0);
+  });
+});
+
+/** A document whose single feature is a volcano with frozen lava flows. */
+function volcanoDocument(): Record<string, unknown> {
+  return {
+    loam: "0.1",
+    profile: "terrain",
+    meta: { name: "ash_cone", worldSeed: 991, spawn: { zone: "center" } },
+    root: {
+      id: "world",
+      kind: "composite",
+      envelope: { shape: "region", size: [160, 160] },
+      children: [
+        {
+          id: "terrain",
+          kind: "generator",
+          generator: "terrain.heightfield@0",
+          params: { amplitude: 24, seaLevel: 63, baseHeight: 72, continentalness: { frequency: 0.003, seaFraction: 0.25 } },
+          children: [
+            {
+              id: "cone",
+              kind: "generator",
+              generator: "terrain.edit@0",
+              params: {
+                verb: "volcano",
+                at: [0.5, 0.5],
+                radius: 56,
+                height: 80,
+                caldera: true,
+                calderaDepth: 14,
+                lava: true,
+                lavaFlows: 3,
+              },
+            },
+          ],
+        },
+        { id: "climate", kind: "generator", generator: "terrain.climate@0", params: { forceTheme: "temperate" } },
+      ],
+    },
+  };
+}
+
+describe("volcanic materials", () => {
+  let volcanoA: TerrainCompileReport;
+  let volcanoB: TerrainCompileReport;
+
+  beforeAll(async () => {
+    const dirA = await mkdtemp(path.join(tmpdir(), "terrainist-volcano-a-"));
+    const dirB = await mkdtemp(path.join(tmpdir(), "terrainist-volcano-b-"));
+    scratch.push(dirA, dirB);
+    const a = await compileTerrain(volcanoDocument(), { outDir: path.join(dirA, "ash_cone") });
+    const b = await compileTerrain(volcanoDocument(), { outDir: path.join(dirB, "ash_cone") });
+    if (!a.ok || !b.ok) throw new Error("volcano compile failed");
+    volcanoA = a.report;
+    volcanoB = b.report;
+  }, 180_000);
+
+  it("cuts frozen lava flows down the cone, deterministically", () => {
+    expect(volcanoA.stats.lavaFlowColumns).toBeGreaterThan(0);
+    expect(volcanoB.stats.lavaFlowColumns).toBe(volcanoA.stats.lavaFlowColumns);
+    expect(volcanoB.stats.volcanicColumns).toBe(volcanoA.stats.volcanicColumns);
+  });
+
+  it("leaves zero unstable fluid blocks", () => {
+    expect(volcanoA.stats.unstableFluidBlocks).toBe(0);
+    expect(volcanoA.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+  });
+
+  it("paints the upper cone as basalt deltas", () => {
+    expect(volcanoA.stats.biomeHistogram["minecraft:basalt_deltas"] as number).toBeGreaterThan(0);
+  });
+
+  it("keeps every volcanic block strictly inside the volcano footprint", () => {
+    const region = centeredRegion(160, 160);
+    const terrain = buildTerrainField({
+      region,
+      worldSeed: 991,
+      nodePath: "world.terrain",
+      params: { amplitude: 24, seaLevel: 63, baseHeight: 72, continentalness: { frequency: 0.003, seaFraction: 0.25 } },
+      edits: [
+        {
+          id: "cone",
+          verb: "volcano",
+          at: [0.5, 0.5],
+          radius: 56,
+          height: 80,
+          caldera: true,
+          calderaDepth: 14,
+          lava: true,
+        },
+      ],
+    });
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const seed = nodeSeed(991n, "world");
+    const { palette } = resolvePalette(stack, undefined, seed);
+    const plan = buildColumnPlan({
+      field: terrain.field,
+      classification: terrain.classification,
+      palette,
+      seaLevel: terrain.params.seaLevel,
+      soilDepth: terrain.params.soilDepth,
+      calderas: terrain.edits.calderas,
+      basins: terrain.edits.basins,
+      footprints: terrain.edits.footprints,
+      volcanoes: [{ editId: "cone", lavaFlows: 3, seed: nodeSeed(991n, "world.terrain.cone") }],
+      seed,
+    });
+
+    const footprint = terrain.edits.footprints.find((f) => f.verb === "volcano");
+    expect(footprint).toBeDefined();
+    const volcanicStates = new Set(
+      ["ground.basalt", "ground.blackstone", "ground.magma"].map((s) => palette.state(s)),
+    );
+    let inside = 0;
+    for (let idx = 0; idx < plan.surface.length; idx++) {
+      if (!volcanicStates.has(plan.surface[idx] as number)) continue;
+      expect(footprintHas(footprint as FeatureFootprint, idx)).toBe(true);
+      inside++;
+    }
+    expect(inside).toBeGreaterThan(0);
+    expect(checkFluidStability(plan).unstable).toBe(0);
+  }, 60_000);
+});
+
+describe("water and shore life", () => {
+  it("places seagrass and kelp strictly under water, never breaking the surface", () => {
+    const region = centeredRegion(96, 96);
+    const field = new HeightField(region);
+    // A shelf sloping from just below sea level down into a kelp-depth basin.
+    for (let j = 0; j < 96; j++) {
+      for (let i = 0; i < 96; i++) field.values[j * 96 + i] = 62 - Math.floor(i / 4);
+    }
+    const classification = classify(field, resolveHeightfieldParams({}));
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const seed = nodeSeed(3n, "world");
+    const { palette } = resolvePalette(stack, undefined, seed);
+    const plan = buildColumnPlan({
+      field,
+      classification,
+      palette,
+      seaLevel: 63,
+      soilDepth: 3,
+      calderas: [],
+      basins: [],
+      seed,
+    });
+
+    const result = decorate({
+      plan,
+      classification,
+      temperature: new Float32Array(plan.ground.length).fill(0.5),
+      trees: [],
+      forests: [],
+      palette,
+      stack,
+      seed,
+    });
+
+    const waterPlants = new Set(
+      ["foliage.seagrass", "foliage.tall_seagrass", "foliage.kelp", "foliage.kelp_plant"].map((s) =>
+        palette.state(s),
+      ),
+    );
+    let count = 0;
+    for (const block of result.blocks) {
+      if (!waterPlants.has(block.stateId)) continue;
+      const idx = (block.z - region.z0) * region.width + (block.x - region.x0);
+      expect(plan.fluidKind[idx]).toBe(FluidKind.WATER);
+      expect(block.y).toBeGreaterThan(plan.ground[idx] as number);
+      expect(block.y).toBeLessThan(plan.fluidTop[idx] as number);
+      count++;
+    }
+    expect(count).toBeGreaterThan(0);
+    expect(checkFluidStability(plan).unstable).toBe(0);
+  }, 60_000);
 });

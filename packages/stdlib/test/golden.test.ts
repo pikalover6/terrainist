@@ -20,6 +20,13 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   flood-fill (so beaches need actual sea, and landlocked carves stay dry).
  *   Every one of those changes the field by design. Pre-1.0 kernel iteration;
  *   no world in the wild depends on the old hashes.
+ * - **G2.5b (materials / lushness)** — authorized reroll of the *compiled
+ *   world*, not of the field. Every G2.5b change (volcanic banding and frozen
+ *   lava flows, y-banded rock, ocean-floor and lakeshore materials, real forest
+ *   density, per-tree variety, undergrowth) lives downstream of the heightfield,
+ *   so the hashes below are deliberately **unchanged**: the field engine is the
+ *   contract, and G2.5b did not touch it. Compiled worlds from before G2.5b do
+ *   not reproduce block-for-block; their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

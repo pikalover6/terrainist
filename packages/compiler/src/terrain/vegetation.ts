@@ -9,8 +9,11 @@
  * coordinates — no sequential RNG, so the forest is identical however the
  * region is traversed.
  *
- * Occupancy is checked against the **canopy footprint**, not the trunk, so
- * canopies never interpenetrate.
+ * Occupancy is checked against the **trunk**, not the canopy. Real forests have
+ * interlocking crowns; reserving the whole canopy footprint was what capped a
+ * "dense" forest at roughly one tree per 25 columns and made every wood read as
+ * dotted speckle. Canopies may now overlap freely, and `spacing` means exactly
+ * what §7 says it means: the minimum distance between two trunks.
  */
 
 import {
@@ -44,6 +47,16 @@ export const FOREST_DEFAULTS = Object.freeze({
   edgeFalloff: 12,
 });
 
+/** §7 defaults for `scatter.forest@0.undergrowth`. */
+export const UNDERGROWTH_DEFAULTS = Object.freeze({
+  grass: 0.35,
+  flowers: 0.05,
+  deadwood: 0.02,
+});
+
+/** `undergrowth` with every default filled in. */
+export type ResolvedUndergrowth = Readonly<Record<keyof typeof UNDERGROWTH_DEFAULTS, number>>;
+
 /** Zone token → fractional centre, matching the stdlib's nine-grid. */
 const ZONE_FRACTIONS: Readonly<Record<string, readonly [number, number]>> = Object.freeze({
   center: [0.5, 0.5],
@@ -68,8 +81,31 @@ export interface TreePlacement {
   readonly baseY: number;
   /** Trunk length in blocks. */
   readonly height: number;
+  /** Per-tree canopy radius offset in `-1..+1`. */
+  readonly radiusDelta: number;
+  /** A 2×2-trunk giant (rare, `spruce_tall` only). */
+  readonly mega: boolean;
   readonly trunkState: number;
   readonly leafState: number;
+}
+
+/** How the geometry of one tree differs from its template's baseline. */
+export interface TreeVariation {
+  readonly height: number;
+  readonly radiusDelta: number;
+  readonly mega: boolean;
+}
+
+/** Share of `spruce_tall` trees that come up as 2×2-trunk giants. */
+export const MEGA_SPRUCE_SHARE = 0.03;
+
+/** One forest node after its scatter ran, as the decoration pass needs it. */
+export interface ScatteredNode {
+  readonly id: string;
+  readonly seed: Seed256;
+  readonly params: ReturnType<typeof resolveForestParams>;
+  /** Where this node considers the ground plantable. */
+  readonly mask: Uint8Array;
 }
 
 /** The outcome of the scatter pass. */
@@ -79,6 +115,8 @@ export interface ScatterResult {
   readonly coverage: Uint8Array;
   /** Trees placed per forest node id, for the report. */
   readonly perNode: Readonly<Record<string, number>>;
+  /** Per-node eligibility and resolved params, for the undergrowth pass. */
+  readonly nodes: readonly ScatteredNode[];
 }
 
 /** A forest node flattened to what the scatter pass needs. */
@@ -92,8 +130,13 @@ export interface ForestNodeInput {
 /** Fill in `scatter.forest@0` defaults. */
 export function resolveForestParams(params: ForestParams): Required<
   Pick<ForestParams, "density" | "spacing" | "clumping" | "maxSlope" | "edgeFalloff">
-> & { elevation: readonly [number, number]; area: ScatterArea } {
+> & { elevation: readonly [number, number]; area: ScatterArea; undergrowth: ResolvedUndergrowth } {
   return {
+    undergrowth: {
+      grass: params.undergrowth?.grass ?? UNDERGROWTH_DEFAULTS.grass,
+      flowers: params.undergrowth?.flowers ?? UNDERGROWTH_DEFAULTS.flowers,
+      deadwood: params.undergrowth?.deadwood ?? UNDERGROWTH_DEFAULTS.deadwood,
+    },
     density: params.density ?? FOREST_DEFAULTS.density,
     spacing: params.spacing ?? FOREST_DEFAULTS.spacing,
     clumping: params.clumping ?? FOREST_DEFAULTS.clumping,
@@ -146,11 +189,12 @@ export function scatterForests(
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
-  // Canopy footprints already claimed, shared across nodes so a wilderness
-  // fill cannot grow into a deliberate forest's canopy.
+  // Trunk exclusion zones already claimed, shared across nodes so a wilderness
+  // fill cannot plant a trunk on top of a deliberate forest's tree.
   const occupancy = new Uint8Array(region.width * region.depth);
   const trees: TreePlacement[] = [];
   const perNode: Record<string, number> = {};
+  const scattered: ScatteredNode[] = [];
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
@@ -159,9 +203,10 @@ export function scatterForests(
     const before = trees.length;
     scatterOne(node, params, plan, mask, occupancy, palette, trees);
     perNode[node.id] = trees.length - before;
+    scattered.push({ id: node.id, seed: node.seed, params, mask });
   }
 
-  return { trees, coverage, perNode };
+  return { trees, coverage, perNode, nodes: scattered };
 }
 
 function scatterOne(
@@ -179,52 +224,70 @@ function scatterOne(
   const spacing = Math.max(1, Math.floor(params.spacing));
   const species = node.params.species;
   const weights = species.map((s) => s.weight ?? 1);
-  // The per-cell acceptance probability that reproduces `density` trees per
-  // eligible column, capped at 1 (spacing itself then limits the density).
-  const cellProbability = clamp01(params.density * spacing * spacing);
+  // `density` is trees per eligible column, so one cell wants
+  // `density · spacing²` of them. Below one that is a probability; at or above
+  // one the forest is *saturating* — the author asked for more trees than the
+  // grid has cells, and what limits the result is `spacing`, not chance. There
+  // the cell throws several darts instead of one, which is what lets a dense
+  // forest actually close its canopy (roughly one trunk per 8 columns at
+  // spacing 3) rather than stalling at one dart per cell.
+  const wanted = params.density * spacing * spacing;
+  const saturating = wanted >= 1;
+  const attempts = saturating ? Math.min(12, Math.ceil(wanted * 5)) : 1;
+  const cellProbability = saturating ? 1 : clamp01(wanted);
 
   const cellsX = Math.ceil(region.width / spacing);
   const cellsZ = Math.ceil(region.depth / spacing);
 
   for (let cz = 0; cz < cellsZ; cz++) {
     for (let cx = 0; cx < cellsX; cx++) {
-      // Candidate position: cell origin plus a position-keyed jitter.
-      const jx = positionFloat(scatter, cx, 1, cz);
-      const jz = positionFloat(scatter, cx, 2, cz);
-      const x = region.x0 + Math.min(region.width - 1, Math.floor(cx * spacing + jx * spacing));
-      const z = region.z0 + Math.min(region.depth - 1, Math.floor(cz * spacing + jz * spacing));
-      const idx = (z - region.z0) * region.width + (x - region.x0);
-      if (mask[idx] !== 1) continue;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        // Candidate position: cell origin plus a position-keyed jitter.
+        const jx = positionFloat(scatter, cx, 1 + attempt * 2, cz);
+        const jz = positionFloat(scatter, cx, 2 + attempt * 2, cz);
+        const x = region.x0 + Math.min(region.width - 1, Math.floor(cx * spacing + jx * spacing));
+        const z = region.z0 + Math.min(region.depth - 1, Math.floor(cz * spacing + jz * spacing));
+        const idx = (z - region.z0) * region.width + (x - region.x0);
+        if (mask[idx] !== 1) continue;
 
-      let p = cellProbability;
-      if (params.clumping > 0) {
-        const n = fbm2(clumpSeed, x, z, { octaves: 2, frequency: 0.02, lacunarity: 2, gain: 0.5 });
-        p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
+        let p = cellProbability;
+        if (params.clumping > 0) {
+          const n = fbm2(clumpSeed, x, z, { octaves: 2, frequency: 0.02, lacunarity: 2, gain: 0.5 });
+          p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
+        }
+        p *= edgeTaper(region, x, z, params.edgeFalloff);
+        if (columnFloat(scatter, x, z, 3) >= p) continue;
+
+        const pick = positionWeighted(scatter, x, 4, z, weights);
+        const chosen = species[pick] as ForestSpecies;
+        const template = TREE_TEMPLATES[chosen.shape];
+        const minH = chosen.minHeight ?? template.minHeight;
+        const maxH = chosen.maxHeight ?? template.maxHeight;
+        // Per-tree variety, all position-keyed: height inside the species range, a
+        // canopy a block wider or narrower, and the occasional giant.
+        const height = positionInt(scatter, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
+        const radiusDelta = positionInt(scatter, x, 6, z, -1, 1);
+        const mega =
+          chosen.shape === "spruce_tall" && positionFloat(scatter, x, 7, z) < MEGA_SPRUCE_SHARE;
+
+        // Only the trunk is exclusive; a mega spruce occupies 2×2, so it claims
+        // one more block of clearance.
+        if (!claimTrunk(region, occupancy, x, z, spacing + (mega ? 1 : 0), mega)) continue;
+
+        out.push({
+          nodeId: node.id,
+          speciesId: chosen.id,
+          shape: chosen.shape,
+          x,
+          z,
+          baseY: (ground[idx] as number) + 1,
+          height: mega ? height + 4 : height,
+          radiusDelta,
+          mega,
+          trunkState: palette.state(chosen.trunkPalette ?? template.trunkSymbol),
+          leafState: palette.state(chosen.leafPalette ?? template.leafSymbol),
+        });
       }
-      p *= edgeTaper(region, x, z, params.edgeFalloff);
-      if (columnFloat(scatter, x, z, 3) >= p) continue;
-
-      const pick = positionWeighted(scatter, x, 4, z, weights);
-      const chosen = species[pick] as ForestSpecies;
-      const template = TREE_TEMPLATES[chosen.shape];
-      const minH = chosen.minHeight ?? template.minHeight;
-      const maxH = chosen.maxHeight ?? template.maxHeight;
-      const height = positionInt(scatter, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
-      const radius = template.canopyRadius(height);
-
-      if (!claim(region, occupancy, x, z, radius)) continue;
-
-      out.push({
-        nodeId: node.id,
-        speciesId: chosen.id,
-        shape: chosen.shape,
-        x,
-        z,
-        baseY: (ground[idx] as number) + 1,
-        height,
-        trunkState: palette.state(chosen.trunkPalette ?? template.trunkSymbol),
-        leafState: palette.state(chosen.leafPalette ?? template.leafSymbol),
-      });
     }
   }
 }
@@ -238,27 +301,51 @@ function edgeTaper(region: Region, x: number, z: number, falloff: number): numbe
   return d >= falloff ? 1 : clamp01(d / falloff);
 }
 
-/** Reserve a canopy footprint; false when it would overlap an existing one. */
-function claim(
+/**
+ * Claim a trunk position, honouring the Poisson minimum distance.
+ *
+ * `occupancy` holds the union of every placed trunk's exclusion disk, so the
+ * test is one lookup and the invariant — no two trunks closer than `spacing` —
+ * is exact rather than approximate. Canopies are deliberately not considered.
+ */
+export function claimTrunk(
   region: Region,
   occupancy: Uint8Array,
   x: number,
   z: number,
-  radius: number,
+  spacing: number,
+  mega: boolean,
 ): boolean {
-  const r = Math.max(0, Math.ceil(radius));
-  const i0 = Math.max(0, x - r - region.x0);
-  const i1 = Math.min(region.width - 1, x + r - region.x0);
-  const j0 = Math.max(0, z - r - region.z0);
-  const j1 = Math.min(region.depth - 1, z + r - region.z0);
-  for (let j = j0; j <= j1; j++) {
-    for (let i = i0; i <= i1; i++) {
-      if (occupancy[j * region.width + i] === 1) return false;
+  const i = x - region.x0;
+  const j = z - region.z0;
+  if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
+  if (occupancy[j * region.width + i] === 1) return false;
+  // A mega spruce's second trunk column must be clear too.
+  if (mega) {
+    const i1 = i + 1;
+    const j1 = j + 1;
+    if (i1 >= region.width || j1 >= region.depth) return false;
+    if (
+      occupancy[j * region.width + i1] === 1 ||
+      occupancy[j1 * region.width + i] === 1 ||
+      occupancy[j1 * region.width + i1] === 1
+    ) {
+      return false;
     }
   }
-  for (let j = j0; j <= j1; j++) {
-    for (let i = i0; i <= i1; i++) {
-      occupancy[j * region.width + i] = 1;
+
+  const r = Math.max(1, Math.ceil(spacing));
+  const r2 = spacing * spacing;
+  for (let dj = -r; dj <= r; dj++) {
+    const jj = j + dj;
+    if (jj < 0 || jj >= region.depth) continue;
+    for (let di = -r; di <= r; di++) {
+      const ii = i + di;
+      if (ii < 0 || ii >= region.width) continue;
+      // Strictly inside `spacing`: two trunks exactly `spacing` apart are legal,
+      // which is what lets a saturating forest settle onto a tight lattice.
+      if (di * di + dj * dj >= r2) continue;
+      occupancy[jj * region.width + ii] = 1;
     }
   }
   return true;
@@ -302,31 +389,49 @@ export interface TreeTemplate {
   readonly maxHeight: number;
   readonly trunkSymbol: string;
   readonly leafSymbol: string;
-  /** Horizontal canopy radius for a given trunk height. */
-  canopyRadius(height: number): number;
+  /** Horizontal canopy radius for one tree's variation. */
+  canopyRadius(v: TreeVariation): number;
   /** The blocks of one tree, trunk base at the origin. */
-  blocks(height: number): TreeBlock[];
+  blocks(v: TreeVariation): TreeBlock[];
 }
 
-function conifer(spread: number): (height: number) => TreeBlock[] {
-  return (height) => {
+/** The baseline variation: no jitter, no giant. */
+export function plainVariation(height: number): TreeVariation {
+  return { height, radiusDelta: 0, mega: false };
+}
+
+function conifer(spread: number): (v: TreeVariation) => TreeBlock[] {
+  return ({ height, radiusDelta, mega }) => {
     const out: TreeBlock[] = [];
-    for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
+    const trunk: readonly (readonly [number, number])[] = mega
+      ? [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [1, 1],
+        ]
+      : [[0, 0]];
+    for (let dy = 0; dy < height; dy++) {
+      for (const [tx, tz] of trunk) out.push({ dx: tx, dy, dz: tz, part: "log" });
+    }
+    const cap = Math.max(1, spread + radiusDelta + (mega ? 2 : 0));
     // Whorled conifer canopy: radius grows downward from the tip, dipping every
     // third layer so the silhouette reads as a spruce rather than a cone.
     const start = Math.max(1, Math.floor(height * 0.35));
     for (let dy = start; dy <= height; dy++) {
       const fromTop = height - dy;
-      let r = Math.min(spread, Math.floor(fromTop / 2));
+      let r = Math.min(cap, Math.floor(fromTop / 2));
       if (fromTop % 3 === 2 && r > 0) r -= 1;
       if (r === 0) {
         if (dy >= height) out.push({ dx: 0, dy, dz: 0, part: "leaves" });
         continue;
       }
-      for (let dz = -r; dz <= r; dz++) {
-        for (let dx = -r; dx <= r; dx++) {
-          if (dx === 0 && dz === 0 && dy < height) continue;
-          if (dx * dx + dz * dz > r * r + r) continue;
+      for (let dz = -r; dz <= r + (mega ? 1 : 0); dz++) {
+        for (let dx = -r; dx <= r + (mega ? 1 : 0); dx++) {
+          if (isTrunk(trunk, dx, dz) && dy < height) continue;
+          const qx = mega ? Math.min(Math.abs(dx), Math.abs(dx - 1)) : Math.abs(dx);
+          const qz = mega ? Math.min(Math.abs(dz), Math.abs(dz - 1)) : Math.abs(dz);
+          if (qx * qx + qz * qz > r * r + r) continue;
           out.push({ dx, dy, dz, part: "leaves" });
         }
       }
@@ -336,18 +441,24 @@ function conifer(spread: number): (height: number) => TreeBlock[] {
   };
 }
 
-function blob(radius: number, squash: number): (height: number) => TreeBlock[] {
-  return (height) => {
+function isTrunk(trunk: readonly (readonly [number, number])[], dx: number, dz: number): boolean {
+  for (const [tx, tz] of trunk) if (tx === dx && tz === dz) return true;
+  return false;
+}
+
+function blob(radius: number, squash: number): (v: TreeVariation) => TreeBlock[] {
+  return ({ height, radiusDelta }) => {
     const out: TreeBlock[] = [];
     for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
+    const r = Math.max(1, radius + radiusDelta);
     const cy = height - 1;
-    const ry = Math.max(1, Math.round(radius * squash));
+    const ry = Math.max(1, Math.round(r * squash));
     for (let dy = cy - ry; dy <= cy + ry; dy++) {
-      for (let dz = -radius; dz <= radius; dz++) {
-        for (let dx = -radius; dx <= radius; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        for (let dx = -r; dx <= r; dx++) {
           if (dx === 0 && dz === 0 && dy < height) continue;
           const vy = (dy - cy) / ry;
-          if ((dx * dx + dz * dz) / (radius * radius) + vy * vy > 1.15) continue;
+          if ((dx * dx + dz * dz) / (r * r) + vy * vy > 1.15) continue;
           out.push({ dx, dy, dz, part: "leaves" });
         }
       }
@@ -363,7 +474,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 13,
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
-    canopyRadius: () => 2,
+    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta + (v.mega ? 2 : 0)),
     blocks: conifer(2),
   },
   spruce_squat: {
@@ -371,7 +482,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 7,
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
-    canopyRadius: () => 3,
+    canopyRadius: (v) => Math.max(1, 3 + v.radiusDelta),
     blocks: conifer(3),
   },
   oak_round: {
@@ -379,7 +490,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 7,
     trunkSymbol: "wood.oak_log",
     leafSymbol: "wood.oak_leaves",
-    canopyRadius: () => 2,
+    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
     blocks: blob(2, 1),
   },
   birch_slim: {
@@ -387,7 +498,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 9,
     trunkSymbol: "wood.birch_log",
     leafSymbol: "wood.birch_leaves",
-    canopyRadius: () => 2,
+    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
     blocks: blob(2, 0.75),
   },
 });

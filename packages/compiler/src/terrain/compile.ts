@@ -43,11 +43,15 @@ import { loadPrismarine } from "../emit/prismarine.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
-import { buildColumnPlan } from "./columns.js";
+import { buildColumnPlan, type VolcanoInfo } from "./columns.js";
+import { decorate } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
 import { checkFloatingVegetation, checkFluidStability, validatorDiagnostics } from "./validate.js";
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
+
+/** Default `lavaFlows` for a volcano edit that does not name one. */
+export const DEFAULT_LAVA_FLOWS = 2;
 
 /** Options for {@link compileTerrain}. */
 export interface CompileTerrainOptions {
@@ -91,6 +95,14 @@ export interface CompileStats {
   readonly chunkCount: number;
   readonly blockCount: number;
   readonly treeBlockCount: number;
+  /** Ground-cover and water-plant blocks placed. */
+  readonly decorBlockCount: number;
+  /** Decoration counts by category. */
+  readonly decorCounts: Readonly<Record<string, number>>;
+  /** Columns painted with volcanic materials. */
+  readonly volcanicColumns: number;
+  /** Columns claimed by a frozen lava flow. */
+  readonly lavaFlowColumns: number;
 }
 
 /** The compile report — what the CLI prints and `--report` writes. */
@@ -199,6 +211,14 @@ async function compileValidated(
 
   // --- pass 5: columns -----------------------------------------------------
   const t2 = now();
+  const volcanoes: VolcanoInfo[] = (("children" in heightfield ? heightfield.children : undefined) ?? [])
+    .filter((child) => child.params.verb === "volcano")
+    .map((child) => ({
+      editId: child.id,
+      lavaFlows: child.params.lavaFlows ?? DEFAULT_LAVA_FLOWS,
+      seed: nodeSeed(worldSeed, `${hfPath}.${child.id}`, ""),
+    }));
+
   const plan = buildColumnPlan({
     field: terrain.field,
     classification: terrain.classification,
@@ -207,6 +227,9 @@ async function compileValidated(
     soilDepth: terrain.params.soilDepth,
     calderas: terrain.edits.calderas,
     basins: terrain.edits.basins,
+    footprints: terrain.edits.footprints,
+    volcanoes,
+    seed: rootSeed,
   });
   const columnsMs = now() - t2;
 
@@ -221,6 +244,16 @@ async function compileValidated(
       params: node.params,
     }));
   const scatter = scatterForests(forestNodes, plan, terrain.classification, palette);
+  const decoration = decorate({
+    plan,
+    classification: terrain.classification,
+    temperature: climate.temperature,
+    trees: scatter.trees,
+    forests: scatter.nodes,
+    palette,
+    stack,
+    seed: rootSeed,
+  });
   const scatterMs = now() - t3;
 
   // --- pass 4b: biomes -----------------------------------------------------
@@ -248,6 +281,7 @@ async function compileValidated(
   const emit = await emitTerrain({
     plan,
     trees: scatter.trees,
+    decor: decoration.blocks,
     stack,
     worldDir: options.outDir,
     levelName: doc.meta.name,
@@ -256,8 +290,12 @@ async function compileValidated(
   const emitMs = now() - t6;
 
   let land = 0;
+  let volcanicColumns = 0;
+  let lavaFlowColumns = 0;
   for (let k = 0; k < plan.ground.length; k++) {
     if ((plan.ground[k] as number) >= plan.seaLevel) land++;
+    if (plan.volcanic[k] === 1) volcanicColumns++;
+    if (plan.lavaFlow[k] === 1) lavaFlowColumns++;
   }
 
   const report: TerrainCompileReport = {
@@ -281,6 +319,10 @@ async function compileValidated(
       chunkCount: emit.chunkCount,
       blockCount: emit.blockCount,
       treeBlockCount: emit.treeBlockCount,
+      decorBlockCount: emit.decorBlockCount,
+      decorCounts: decoration.counts,
+      volcanicColumns,
+      lavaFlowColumns,
     },
     diagnostics,
     timings: {
@@ -320,6 +362,8 @@ function paintBiomes(
       relief: classification.relief[idx] as number,
       temperature: climate.temperature[idx] as number,
       forested: coverage[idx] === 1,
+      lake: plan.lakeMask[idx] === 1,
+      volcanicUpper: plan.volcanicUpper[idx] === 1,
     });
     let id = ids.get(name);
     if (id === undefined) {

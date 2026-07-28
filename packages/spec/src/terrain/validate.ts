@@ -78,6 +78,7 @@ const EDIT_NUMS: Readonly<Record<string, NumSpec>> = {
   depth: { min: 0, max: 320 },
   rim: { min: 0, max: 512 },
   calderaDepth: { min: 0, max: 320 },
+  lavaFlows: { min: 0, max: 4, int: true },
   irregularity: { min: 0, max: 0.5 },
   meander: { min: 0, max: 1 },
 };
@@ -98,11 +99,18 @@ const FOREST_NUMS: Readonly<Record<string, NumSpec>> = {
   snowLine: { min: -64, max: 319, int: true },
 };
 
+/** `scatter.forest@0.undergrowth` — every entry is a per-column probability. */
+const UNDERGROWTH_NUMS: Readonly<Record<string, NumSpec>> = {
+  grass: { min: 0, max: 1 },
+  flowers: { min: 0, max: 1 },
+  deadwood: { min: 0, max: 1 },
+};
+
 /** Per-verb required/forbidden shape params, for the T104 "wrong knob" hint. */
 const VERB_SHAPE_KEYS: Readonly<Record<EditVerbName, readonly string[]>> = {
   ridge: ["width", "height", "profile", "meander"],
   peak: ["radius", "height", "profile", "irregularity"],
-  volcano: ["radius", "height", "caldera", "calderaDepth", "lava", "profile", "irregularity"],
+  volcano: ["radius", "height", "caldera", "calderaDepth", "lava", "lavaFlows", "profile", "irregularity"],
   plateau: ["radius", "height", "rim", "profile", "irregularity"],
   island: ["radius", "height", "profile", "irregularity"],
   valley: ["width", "depth", "profile", "meander", "flooded"],
@@ -526,7 +534,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
   const params = requireParams(out, path, node, "terrain.edit@0");
   if (!params) return;
 
-  unknownKeys(out, params, `${path}.params`, ["verb", "strength", "at", "zone", "course", "width", "height", "radius", "depth", "profile", "rim", "caldera", "calderaDepth", "lava", "water", "irregularity", "meander", "flooded"], "terrain.edit@0 params");
+  unknownKeys(out, params, `${path}.params`, ["verb", "strength", "at", "zone", "course", "width", "height", "radius", "depth", "profile", "rim", "caldera", "calderaDepth", "lava", "lavaFlows", "water", "irregularity", "meander", "flooded"], "terrain.edit@0 params");
 
   const verb = params["verb"];
   if (typeof verb !== "string" || !(EDIT_VERBS as readonly string[]).includes(verb)) {
@@ -586,7 +594,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
 
   // Shape params that belong to a different verb are a common LLM slip.
   const allowedShape = VERB_SHAPE_KEYS[v];
-  for (const key of ["width", "height", "radius", "depth", "rim", "caldera", "calderaDepth", "lava", "water", "irregularity", "meander", "flooded"]) {
+  for (const key of ["width", "height", "radius", "depth", "rim", "caldera", "calderaDepth", "lava", "lavaFlows", "water", "irregularity", "meander", "flooded"]) {
     if (params[key] !== undefined && !allowedShape.includes(key)) {
       out.push(
         error(
@@ -620,7 +628,7 @@ function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): voi
   unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "scatter.forest@0 node");
   const params = requireParams(out, path, node, "scatter.forest@0");
   if (!params) return;
-  unknownKeys(out, params, `${path}.params`, ["species", "area", "density", "spacing", "clumping", "maxSlope", "elevation", "edgeFalloff", "avoidTags", "snowLine"], "scatter.forest@0 params");
+  unknownKeys(out, params, `${path}.params`, ["species", "area", "density", "spacing", "clumping", "maxSlope", "elevation", "edgeFalloff", "avoidTags", "undergrowth", "snowLine"], "scatter.forest@0 params");
   checkNumbers(out, `${path}.params`, params, FOREST_NUMS);
 
   const species = params["species"];
@@ -661,6 +669,23 @@ function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): voi
       out.push(error("BAD_TYPE", `${path}.params`, `"elevation" must be [min, max] numbers relative to sea level, got ${describe(elevation)}`, 'write "elevation": [1, 90] — heights above sea level where trees may grow'));
     } else if (elevation[0] > elevation[1]) {
       out.push(error("PARAM_OUT_OF_RANGE", `${path}.params`, `"elevation" min (${elevation[0]}) exceeds max (${elevation[1]})`, "swap the two numbers so the range reads [min, max]"));
+    }
+  }
+
+  const undergrowth = params["undergrowth"];
+  if (undergrowth !== undefined) {
+    if (!isObject(undergrowth)) {
+      out.push(
+        error(
+          "BAD_TYPE",
+          `${path}.params.undergrowth`,
+          `"undergrowth" must be an object, got ${describe(undergrowth)}`,
+          'write "undergrowth": { "grass": 0.35, "flowers": 0.05, "deadwood": 0.02 } — or omit it to take those defaults',
+        ),
+      );
+    } else {
+      unknownKeys(out, undergrowth, `${path}.params.undergrowth`, ["grass", "flowers", "deadwood"], "undergrowth");
+      checkNumbers(out, `${path}.params.undergrowth`, undergrowth, UNDERGROWTH_NUMS);
     }
   }
 

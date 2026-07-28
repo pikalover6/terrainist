@@ -356,3 +356,73 @@ describe("G2.5a organic-shape params", () => {
     );
   });
 });
+
+describe("G2.5b materials and lushness params", () => {
+  /** Replace the heightfield's single edit with `params`. */
+  function withEdit(params: Record<string, unknown>): Record<string, unknown> {
+    const doc = baseDocument();
+    (heightfield(doc)["children"] as Record<string, unknown>[])[0] = {
+      id: "feature",
+      kind: "generator",
+      generator: "terrain.edit@0",
+      params,
+    };
+    return doc;
+  }
+
+  /** Replace the forest node's params. */
+  function withForest(params: Record<string, unknown>): Record<string, unknown> {
+    const doc = baseDocument();
+    const root = doc["root"] as { children: Record<string, unknown>[] };
+    (root.children[2] as Record<string, unknown>)["params"] = {
+      area: { all: true },
+      species: [{ id: "spruce", shape: "spruce_tall" }],
+      ...params,
+    };
+    return doc;
+  }
+
+  it("accepts lavaFlows on a volcano", () => {
+    for (const flows of [0, 1, 4]) {
+      const { diagnostics, document } = validateTerrainDocument(
+        withEdit({ verb: "volcano", at: [0.5, 0.5], lava: true, lavaFlows: flows }),
+      );
+      expect(codesOf(diagnostics), `lavaFlows ${flows}`).toEqual([]);
+      expect(document).toBeDefined();
+    }
+  });
+
+  it("range-checks lavaFlows and rejects it on other verbs", () => {
+    const tooMany = expectDiagnostic(
+      withEdit({ verb: "volcano", at: [0.5, 0.5], lavaFlows: 9 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    expect(tooMany.fix).toBeTruthy();
+    expectDiagnostic(
+      withEdit({ verb: "volcano", at: [0.5, 0.5], lavaFlows: 1.5 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    const wrongVerb = expectDiagnostic(
+      withEdit({ verb: "peak", at: [0.5, 0.5], lavaFlows: 2 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    expect(wrongVerb.fix).toContain("peak");
+  });
+
+  it("accepts undergrowth and range-checks each entry", () => {
+    const ok = validateTerrainDocument(
+      withForest({ undergrowth: { grass: 0.4, flowers: 0.06, deadwood: 0.03 } }),
+    );
+    expect(codesOf(ok.diagnostics)).toEqual([]);
+    expect(ok.document).toBeDefined();
+
+    const outOfRange = expectDiagnostic(
+      withForest({ undergrowth: { grass: 4 } }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    expect(outOfRange.fix).toBeTruthy();
+    expectDiagnostic(withForest({ undergrowth: 0.4 }), "BAD_TYPE");
+    const unknown = expectDiagnostic(withForest({ undergrowth: { moss: 0.2 } }), "UNKNOWN_KEY");
+    expect(unknown.fix).toBeTruthy();
+  });
+});
