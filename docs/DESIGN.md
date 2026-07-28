@@ -226,6 +226,24 @@ Three further directions, to fold into Loam v0.2 and G2+:
    into a procedural wilderness generator when specifics don't matter.
    This is the heart of G2's scope.
 
+## Status (2026-07-28, overnight session)
+
+- **G1 ✓** (accepted in-client), **G2 ✓**, **G3 ✓** — e2e runs pure GLM 5.2
+  @ high reasoning (~$0.01/world); Opus planner and render-critique→repair
+  deliberately deferred by Kai.
+- **G2.5 quality pass ✓**: organic kernels (`irregularity`/`meander`),
+  connectivity hydrology (`flooded`), temperature-gated snow with altitude
+  lapse, open-basin partial fills, volcanic banding + `lavaFlows`,
+  undergrowth/flora, rock strata, ocean/lake life. Five GLM-authored worlds
+  spot-checked across diverse prompts (~$0.06 total spend of a $1 budget).
+- **G4 code-complete, unreviewed**: settlement profile, layout solver v1
+  (tier-1 constraints, relaxation-ladder subset, solver report), ports,
+  `building.grammar@0` v0, `road.network@0` v0, occupancy, pads;
+  `examples/hillside-village.loam.json` compiles clean (zero diagnostics,
+  deterministic). All v0.2 gaps are marked `v0.2 §x.y: not yet` in-code and
+  surfaced as W407/T206/T208-style diagnostics, never silent. **No visual
+  iteration has been done on G4 — pending Kai's review.**
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).

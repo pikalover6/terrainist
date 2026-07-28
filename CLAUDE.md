@@ -41,5 +41,10 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
   auto-upgrades worlds on load. Revisit as libraries catch up.
 - Stack: TypeScript monorepo. Key deps: deepslate (rendering/NBT),
   PrismarineJS (world IO), minecraft-data.
-- Status: GOAL 0 (planning consult) complete. Next: G1 scaffold — do not
-  start it without Kai's go-ahead.
+- Status (2026-07-28): G1–G3 complete and human-accepted through the GLM 5.2
+  e2e; G2.5 terrain-quality pass done (organic kernels, hydrology,
+  climate-gated snow, lushness). G4 (settlement profile, layout solver v1,
+  building grammar, roads) is CODE-COMPLETE BUT UNREVIEWED — no worldgen
+  iteration has been run on it, per Kai's instruction; do not iterate on
+  village visuals without Kai. Opus 5 planner and the render-critique→repair
+  loop remain deliberately off.
