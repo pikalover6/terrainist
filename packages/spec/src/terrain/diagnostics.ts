@@ -70,6 +70,8 @@ export const TERRAIN_DIAGNOSTICS = {
   PORT_FEATURE_NOT_IMPLEMENTED: "LOAM-T206",
   STRUCTURE_PARAM: "LOAM-T207",
   GENERATOR_NOT_IMPLEMENTED: "LOAM-T208",
+  /** G4b `road.network@0` — a route between two anchors has no legal path. */
+  ROAD_UNROUTABLE: "LOAM-T209",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */

@@ -59,15 +59,16 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
     const structure = child;
     if (structure.generator === "road.network@0" && structure.envelope === undefined) {
       // v0.2 §4.9.6 / §7.5: not yet — `road.network@0.corridors()` should
-      // register frozen route corridors at substage 3b. Corridor construction
-      // and routing land in G4b, so an envelope-less road network contributes
-      // no placement and no occupancy yet.
+      // register frozen route corridors at substage 3b, which is what `along`
+      // constraints bind to. G4b routes the network in the connective pass
+      // instead, *after* placement, so the node is intentionally not placed and
+      // claims no envelope — its roads still get built.
       diagnostics.push(
         note(
           "GENERATOR_NOT_IMPLEMENTED",
           nodePath,
-          "road.network@0 registers route corridors at substage 3b; corridor construction is not implemented yet, so this node is carried but not placed",
-          'nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it in the meantime',
+          "road.network@0 is routed after placement rather than reserving a corridor at substage 3b, so this node takes part in no layout decision; its roads are still built",
+          'nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well',
         ),
       );
       continue;

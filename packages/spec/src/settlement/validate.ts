@@ -979,7 +979,14 @@ function validateRoadParams(out: LoamDiagnostic[], at: string, params: Obj): voi
     out,
     params,
     at,
-    ["anchors", "pattern", "hierarchy", "blockSize", "maxGrade", "bridgeThreshold", "tunnelThreshold", "junctionStyle", "curvature", "crown", "lighting"],
+    [
+      "anchors", "pattern", "hierarchy", "blockSize", "maxGrade", "bridgeThreshold",
+      "tunnelThreshold", "junctionStyle", "curvature", "crown", "lighting",
+      // Profile shorthands for the single-class case, in the same spirit as the
+      // terrain profile's flattened `terrain.edit@0` params: `width` is
+      // `hierarchy[0].width` and `lanterns`/`lanternSpacing` are `lighting`.
+      "width", "lanterns", "lanternSpacing",
+    ],
     "road.network@0 params",
   );
   checkNumbers(out, at, params, {
@@ -988,7 +995,10 @@ function validateRoadParams(out: LoamDiagnostic[], at: string, params: Obj): voi
     tunnelThreshold: { min: 0, max: 256, int: true },
     curvature: { min: 0, max: 1 },
     crown: { min: 0, max: 8, int: true },
+    width: { min: 2, max: 3, int: true },
+    lanternSpacing: { min: 4, max: 64, int: true },
   });
+  checkBooleans(out, at, params, ["lanterns"]);
   checkEnumParam(out, at, params, "pattern", ROAD_PATTERNS);
   checkEnumParam(out, at, params, "junctionStyle", JUNCTION_STYLES);
 

@@ -17,7 +17,7 @@ import type { PaletteValue, TerrainStyle } from "@terrainist/spec";
 import type { PrismarineStack } from "../emit/prismarine.js";
 
 /** The profile's default symbol table (`docs/LOAM-TERRAIN-PROFILE-v0.md`). */
-export const DEFAULT_PALETTE: Readonly<Record<string, string>> = Object.freeze({
+export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.freeze({
   "ground.bedrock": "minecraft:bedrock",
   "ground.stone": "minecraft:stone",
   "ground.surface": "minecraft:grass_block",
@@ -72,6 +72,18 @@ export const DEFAULT_PALETTE: Readonly<Record<string, string>> = Object.freeze({
   "wood.oak_leaves": "minecraft:oak_leaves",
   "wood.birch_log": "minecraft:birch_log",
   "wood.birch_leaves": "minecraft:birch_leaves",
+  // --- roads (G4b) ---------------------------------------------------------
+  "road.surface": "minecraft:dirt_path",
+  "road.shoulder": {
+    mix: [
+      ["minecraft:gravel", 3] as const,
+      ["minecraft:cobblestone", 2] as const,
+    ],
+  },
+  "road.step": "minecraft:stone_bricks",
+  "road.subsurface": "minecraft:dirt",
+  "road.post": "minecraft:oak_fence",
+  "road.lantern": "minecraft:lantern",
 });
 
 /** A palette symbol resolved down to block state ids. */

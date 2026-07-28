@@ -34,6 +34,11 @@ export interface TerrainEmitInput {
   readonly trees: readonly TreePlacement[];
   /** Ground cover and water plants, from the decoration pass. */
   readonly decor?: readonly DecorBlock[];
+  /**
+   * Buildings and road furniture, from the structure pass. Stamped **last**, so
+   * a wall always wins over a tuft of grass or a tree that shared its column.
+   */
+  readonly structures?: readonly DecorBlock[];
   readonly stack: PrismarineStack;
   readonly worldDir: string;
   readonly levelName: string;
@@ -52,6 +57,8 @@ export interface TerrainEmitSummary {
   readonly treeBlockCount: number;
   /** Ground-cover and water-plant blocks written. */
   readonly decorBlockCount: number;
+  /** Building and road-furniture blocks written. */
+  readonly structureBlockCount: number;
   readonly minecraftVersion: string;
   readonly dataVersion: number;
   readonly spawn: readonly [number, number, number];
@@ -64,6 +71,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
 
   const treesByChunk = bucketTrees(input.trees);
   const decorByChunk = bucketDecor(input.decor ?? []);
+  const structureByChunk = bucketDecor(input.structures ?? []);
   const chunks = new Map<string, EmitChunk>();
 
   const chunkX0 = region.x0 >> 4;
@@ -74,6 +82,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   let blockCount = 0;
   let treeBlockCount = 0;
   let decorBlockCount = 0;
+  let structureBlockCount = 0;
 
   for (let cz = chunkZ0; cz <= chunkZ1; cz++) {
     for (let cx = chunkX0; cx <= chunkX1; cx++) {
@@ -86,6 +95,8 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
       if (decor !== undefined) decorBlockCount += stampBlocks(chunk, decor, cx, cz);
       const trees = treesByChunk.get(`${cx},${cz}`);
       if (trees !== undefined) treeBlockCount += stampBlocks(chunk, trees, cx, cz);
+      const structures = structureByChunk.get(`${cx},${cz}`);
+      if (structures !== undefined) structureBlockCount += stampBlocks(chunk, structures, cx, cz);
       chunks.set(`${cx},${cz}`, chunk);
     }
   }
@@ -104,9 +115,10 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     regionDir: written.regionDir,
     regionFiles: written.regionFiles,
     chunkCount: written.chunkCount,
-    blockCount: blockCount + treeBlockCount + decorBlockCount,
+    blockCount: blockCount + treeBlockCount + decorBlockCount + structureBlockCount,
     treeBlockCount,
     decorBlockCount,
+    structureBlockCount,
     minecraftVersion: stack.minecraftVersion,
     dataVersion: stack.dataVersion,
     spawn: [input.spawn.x, input.spawn.y, input.spawn.z],

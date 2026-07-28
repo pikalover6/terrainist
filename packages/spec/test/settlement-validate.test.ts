@@ -318,6 +318,31 @@ describe("settlement profile — generator params", () => {
     );
     expect(result.diagnostics.map((d) => d.message).join()).toMatch(/needs a string "class"/);
   });
+
+  it("accepts the profile's road shorthands", () => {
+    const result = validateSettlementDocument(
+      doc([
+        {
+          id: "streets",
+          kind: "generator",
+          generator: "road.network@0",
+          params: { anchors: ["town_hall"], width: 3, lanterns: false, lanternSpacing: 12 },
+        },
+      ]),
+    );
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("range-checks the road shorthands", () => {
+    const names = (params: Record<string, unknown>): string[] =>
+      validateSettlementDocument(
+        doc([{ id: "streets", kind: "generator", generator: "road.network@0", params }]),
+      ).diagnostics.map((d) => d.name);
+    expect(names({ anchors: ["town_hall"], width: 9 })).toContain("PARAM_OUT_OF_RANGE");
+    expect(names({ anchors: ["town_hall"], width: 1 })).toContain("PARAM_OUT_OF_RANGE");
+    expect(names({ anchors: ["town_hall"], lanternSpacing: 2 })).toContain("PARAM_OUT_OF_RANGE");
+    expect(names({ anchors: ["town_hall"], lanterns: "yes" })).toContain("BAD_TYPE");
+  });
 });
 
 describe("constraint registry", () => {

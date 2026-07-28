@@ -10,6 +10,8 @@
  * 4. climate fields (built first, since classification's snow rule reads the
  *    temperature field) + surface classification → per-column biomes;
  * 5. materialize columns;
+ * 5b. build structures — `building.grammar@0` blocks, then `road.network@0`
+ *     routes graded and surfaced *into* the column plan;
  * 6. scatter vegetation;
  * 7. validators (fluid settling, floating vegetation);
  * 8. emit + report.
@@ -48,6 +50,7 @@ import {
   applyPadEdits,
   layoutNodesFrom,
   solveLayout,
+  type LayoutNodeInput,
   type OccupancyGrid,
   type PadEdit,
   type Placement,
@@ -66,6 +69,7 @@ import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
 import { checkFloatingVegetation, checkFluidStability, validatorDiagnostics } from "./validate.js";
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
+import { buildStructures, type StructurePassResult, type StructureStats } from "../structures/index.js";
 
 /** Default `lavaFlows` for a volcano edit that does not name one. */
 export const DEFAULT_LAVA_FLOWS = 2;
@@ -88,6 +92,8 @@ export interface CompileTimings {
   readonly layout: number;
   readonly climate: number;
   readonly columns: number;
+  /** Structure pass; zero for terrain-profile documents. */
+  readonly structures: number;
   readonly scatter: number;
   readonly biomes: number;
   readonly validators: number;
@@ -122,6 +128,8 @@ export interface CompileStats {
   readonly volcanicColumns: number;
   /** Columns claimed by a frozen lava flow. */
   readonly lavaFlowColumns: number;
+  /** What the structure pass built; absent for a terrain-profile compile. */
+  readonly structures?: StructureStats;
 }
 
 /** What the layout solver contributed, on a settlement-profile compile. */
@@ -130,6 +138,8 @@ export interface LayoutOutcome {
   readonly placements: readonly Placement[];
   readonly ports: readonly ResolvedPort[];
   readonly padEdits: readonly PadEdit[];
+  /** Per-building geometry and the routed road network. */
+  readonly structures?: StructurePassResult;
 }
 
 /** The compile report — what the CLI prints and `--report` writes. */
@@ -266,9 +276,11 @@ async function compileValidated(
   let classification: Classification = terrain.classification;
   let layoutOutcome: LayoutOutcome | undefined;
   let occupancy: OccupancyGrid | undefined;
+  let layoutNodes: readonly LayoutNodeInput[] = [];
   const tLayout = now();
   if (isSettlement(doc)) {
     const extraction = layoutNodesFrom(doc, worldSeed);
+    layoutNodes = extraction.nodes;
     diagnostics.push(...extraction.diagnostics);
     const solved = solveLayout({
       region,
@@ -323,6 +335,31 @@ async function compileValidated(
   });
   const columnsMs = now() - t2;
 
+  // --- pass 5b: structures -------------------------------------------------
+  // After the columns exist (a foundation needs ground to sink into, a road
+  // needs a surface to grade) and before the scatter, whose occupancy grid this
+  // pass has just finished filling in.
+  const tStruct = now();
+  let structures: StructurePassResult | undefined;
+  // Nothing placed means nothing to build *and* nothing to connect, and the
+  // report must stay identical to a terrain-profile compile's in that case.
+  if (isSettlement(doc) && layoutOutcome !== undefined && layoutOutcome.placements.length > 0) {
+    structures = buildStructures({
+      doc,
+      worldSeed,
+      nodes: layoutNodes,
+      placements: layoutOutcome.placements,
+      ports: layoutOutcome.ports,
+      plan,
+      palette,
+      stack,
+      ...(occupancy === undefined ? {} : { occupancy }),
+    });
+    diagnostics.push(...structures.diagnostics);
+    layoutOutcome = { ...layoutOutcome, structures };
+  }
+  const structuresMs = now() - tStruct;
+
   // --- pass 6: vegetation --------------------------------------------------
   const t3 = now();
   const forestNodes: ForestNodeInput[] = children
@@ -372,6 +409,7 @@ async function compileValidated(
     plan,
     trees: scatter.trees,
     decor: decoration.blocks,
+    ...(structures === undefined ? {} : { structures: structures.blocks }),
     stack,
     worldDir: options.outDir,
     levelName: doc.meta.name,
@@ -413,6 +451,7 @@ async function compileValidated(
       decorCounts: decoration.counts,
       volcanicColumns,
       lavaFlowColumns,
+      ...(structures === undefined ? {} : { structures: structures.stats }),
     },
     diagnostics,
     ...(layoutOutcome === undefined ? {} : { layout: layoutOutcome }),
@@ -422,6 +461,7 @@ async function compileValidated(
       layout: layoutMs,
       climate: climateMs,
       columns: columnsMs,
+      structures: structuresMs,
       scatter: scatterMs,
       biomes: biomesMs,
       validators: validatorsMs,
