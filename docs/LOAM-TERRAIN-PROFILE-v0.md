@@ -6,6 +6,11 @@ Authored by the orchestrator 2026-07-28 from the ratified post-G1 decisions
 baseline: it may extend and generalize what is here (e.g. promote coarse
 placement to first-class constraints) but must not rename or contradict it.
 
+> **Update 2026-07-28:** Loam v0.2 is ratified and legalizes every construct
+> in this profile (see v0.2 §1.6 for profile semantics; `LOAM-T` codes alias
+> core codes per §13.5). The compatibility notes below describe the original
+> v0.1 relationship and are retained for context.
+
 ## Relationship to Loam v0.1
 
 A terrain-profile document **is a valid Loam v0.1 document** using a strict

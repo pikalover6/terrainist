@@ -1,13 +1,13 @@
-# Loam v0.1 — Draft Syntax Specification
+# Loam v0.2 — Syntax Specification
 
-> **Status: DRAFT for human + Claude review (2026-07-27).** Nothing here is
-> locked. This document specifies the *syntax and semantics* of Loam v0.1, the
-> deterministic world-spec language described in `docs/DESIGN.md`. It is design
-> work only — no compiler code exists yet.
+> **Status: RATIFIED 2026-07-28.** This document specifies the *syntax and
+> semantics* of Loam v0.2, the deterministic world-spec language described in
+> `docs/DESIGN.md`. It is the single normative reference for the language:
+> where this document and any other disagree, this one wins.
 >
-> Confidence is marked inline as `[C:high]`, `[C:med]`, `[C:low]`. Anything
-> `[C:low]` is a coin-flip I made to keep the spec complete and internally
-> consistent; treat those as open questions (all are collected in §12).
+> Confidence is marked inline as `[C:high]`, `[C:med]`, `[C:low]`. A `[C:low]`
+> mark is a judgement call made to keep the spec complete and internally
+> consistent; the ones that remain open are collected in §12.
 >
 > Design bias, stated once and applied everywhere: **this format is written by
 > LLM agents under token budgets.** Where "elegant" and "regular + explicit +
@@ -16,11 +16,32 @@
 
 ---
 
-> **Post-review status (2026-07-28):** §12 Q6/Q9/Q11/Q17 ratified as
-> recommended. Three v0.2 directions decided after review — role-scoped spec
-> kits, a coarse placement vocabulary, and terrain-features-as-field-edits
-> with model-authored macro terrain — see "Post-G1 decisions" in
-> `docs/DESIGN.md` before building on the affected sections (§4, §7).
+> **Changelog — v0.1 → v0.2 (2026-07-28).** Twenty-seven ratified amendments,
+> applied in place. In summary:
+>
+> - **Coarse placement** became first-class: the constraints `zone`, `at`,
+>   `course`, `on` and the shorthand `beside`, resolved against frames and
+>   against computed terrain products and feature markers (§4.2, §4.4, §4.9).
+> - **Terrain features became field edits.** `terrain.edit@0` joined the stdlib
+>   catalog; stamping a landform as a structure is now forbidden and linted
+>   (§7 preamble, §7.5).
+> - **Execution order became implicit** through a generator's declared `stage`;
+>   an `after` constraint is permanently ruled out (§7.10, §3.7).
+> - **Pass 3 gained named substages** and a bounded corridor→place→re-route→nudge
+>   iteration (§0.2, §4.9.6).
+> - **`ctx.math`** is own-implementation-only, defined by golden vector tables,
+>   with a cross-architecture determinism gate (§6.8).
+> - **A one-tick fluid-settling validator** became a release gate (§13.4).
+> - **Spec kits** — the role-scoped delivery of this document to authoring
+>   agents, with a deterministic lookup tool and a diagnostic-driven repair
+>   protocol — were specified (§14).
+> - Four **profile-legalization** fixes (§1.2, §2.2, §3.3) so that a restricted
+>   *profile* of the language, such as the terrain profile, is expressible
+>   without exceptions.
+>
+> v0.x remains explicitly pre-stability: **v0.2 → v0.3 may break anything.** The
+> amendment-by-amendment rationale for the above is retained in git history and
+> is historical, not normative.
 
 ## Table of contents
 
@@ -28,7 +49,7 @@
 - [§1 Document format & framing](#1-document-format--framing)
 - [§2 L3 — Style directives](#2-l3--style-directives)
 - [§3 L2 — Scene graph node anatomy](#3-l2--scene-graph-node-anatomy)
-- [§4 Constraint vocabulary](#4-constraint-vocabulary)
+- [§4 Constraint vocabulary](#4-constraint-vocabulary) — incl. [§4.9 Coarse placement](#49-coarse-placement)
 - [§5 Ports](#5-ports)
 - [§6 Determinism & seeds](#6-determinism--seeds)
 - [§7 L1 — Generator interface & stdlib catalog](#7-l1--generator-interface--stdlib-catalog)
@@ -38,6 +59,7 @@
 - [§11 Appendix A — JSON Schema skeleton](#11-appendix-a--json-schema-skeleton)
 - [§12 Open questions](#12-open-questions)
 - [§13 Appendix B — diagnostic codes](#13-appendix-b--diagnostic-codes)
+- [§14 Spec kits](#14-spec-kits)
 
 ---
 
@@ -64,15 +86,30 @@ consumed" row.
 
 | Pass | Name | Reads | Writes |
 |---|---|---|---|
-| 1 | Parse + validate | whole document, `loam`, `requires` | AST, diagnostics |
+| 1 | Parse + validate | whole document, `loam`, `profile`, `requires` | AST, diagnostics |
 | 2 | Style inherit | `style`, `styleOverride`, `seal` | resolved style per node |
-| 3 | Layout solve | `envelope`, `constraints`, `layout`, generator `estimate()` | `placement` per node (translation + yaw) |
+| **3** | **Layout solve** — seven substages, below | `envelope`, `constraints`, `layout`, generator `estimate()` | `placement` per node (translation + yaw), terrain products, route corridors |
 | 4 | Generator expansion | `generator`, `params`, resolved style, seed | L0 ops, child nodes, resolved ports |
 | 5 | CSG merge | L0 ops, `csg.precedence` | voxel field |
 | 6 | Connective pass | `connected` constraints, resolved ports | roads/tunnels/bridges as L0 ops |
 | 7 | Decorate | `decorate` blocks, occupancy | L0 ops |
 | 8 | Light + heightmaps | voxel field | chunk metadata |
+| 8.5 | Validators | voxel field, occupancy | diagnostics (§13.4) |
 | 9 | Anvil emit | voxel field, `meta` | world `.zip` |
+
+Pass 3 has internal structure, because terrain must be composed before anything
+can be placed *on* it, and linear features must exist before anything can be
+placed *along* them:
+
+| Substage | Name | Reads | Writes |
+|---|---|---|---|
+| **3a** | **Terrain composition & products** | generators at stage `field` and `field_edit` (§7.10) | master height field, terrain products (§4.2), published feature markers (§7.3) |
+| **3b** | **Corridor construction** | `path` envelopes, `course` constraints, `road.network@0.corridors()` | one frozen **route corridor** per linear node (§4.9.6) |
+| **3c** | **Domain construction** | `within`, `elevation`, `avoid`, `inside_shell`, `orientation`, `envelope.rotations`, `on`, coarse `mode: "contain"` | per-node placement domain |
+| **3d** | **Discrete placement** | `adjacent_to`, `along`, `beside`, `distance`, `not_overlapping`, `above`/`below`, `slope` | candidate placements |
+| **3e** | **Relaxation** | all soft constraints, including coarse `mode: "center"` | cost-minimal placements |
+| **3.5** | **Corridor iteration** | corridors, placed geometry | re-routed centerlines, nudged placements (§4.9.6) |
+| **3f** | **Post-placement fixups** | `terrain_conform`, envelope-level `clearance` | final `placement` records |
 
 An important consequence, spelled out because agents get it wrong: **`connected`
 does not place anything.** It contributes a soft proximity term in pass 3 and is
@@ -157,7 +194,7 @@ A `world` document:
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "world",
   "meta": {
     "name": "Misty Fjords",
@@ -178,6 +215,7 @@ Header fields:
 |---|---|---|---|
 | `loam` | `"MAJOR.MINOR"` | yes | Spec version. Must be first key by convention. |
 | `kind` | enum | yes | `world` \| `module` \| `style` \| `bundle` |
+| `profile` | string | no | Names a restricted **profile** of the language, §1.6 |
 | `meta` | object | world only | Provenance; see below |
 | `requires` | object | no | Capability gate, §1.5 |
 | `imports` | object | no | Named module/style references, §1.3 |
@@ -187,7 +225,18 @@ critic and for asset prompt context), `worldSeed` (string; hex `0x…`, decimal,
 or arbitrary UTF-8 which is hashed to 64 bits — see §6.1), `mcVersion`,
 `generatedBy`, `createdAtIso` (**informational only; never read by the
 compiler** — determinism forbids wall-clock input), `toolchain` (filled in by
-the compiler on emit: compiler version, stdlib version, asset-lock hash).
+the compiler on emit: compiler version, stdlib version, asset-lock hash), and
+`spawn`.
+
+**`meta.spawn`** requests the world spawn point coarsely, never as coordinates:
+`{"zone": "<token>"}` or `{"at": [fx, fz]}`, resolved against the root frame by
+the arithmetic of §4.9.1–§4.9.3. When absent, spawn is the `largest_flat` marker
+nearest the region center that sits ≥ 2 blocks above sea level. Resolution is
+deterministic either way. `[C:high]`
+
+**`meta.generatedBy`** is an open object; `generatedBy.kits` (string array)
+records the spec-kit ids that produced the document (§14.8), so a world can
+always report what taught the agents that wrote it.
 
 ### 1.3 Multi-file modules
 
@@ -211,7 +260,7 @@ The module file:
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "module",
   "contract": {
     "envelope": { "shape": "box", "size": [320, 96, 320], "flexible": true },
@@ -236,7 +285,7 @@ Rules `[C:high]`:
    determines seeds (§6) — so ids are load-bearing, not cosmetic.
 3. Module paths are **relative to the referencing document**, POSIX-separated,
    confined to the spec root (no `..` escaping the root, no absolute paths, no
-   URLs in v0.1). `[C:high]`
+   URLs in v0.2). `[C:high]`
 4. A module may itself reference further modules. The reference graph must be a
    **tree**, not a DAG: a module may be referenced once. (Reuse is expressed
    with `prototypes`, §3.9, not with shared module references — sharing would
@@ -249,7 +298,7 @@ Rules `[C:high]`:
 flattens to one document:
 
 ```json
-{ "loam": "0.1", "kind": "bundle",
+{ "loam": "0.2", "kind": "bundle",
   "entry": "world.loam.json",
   "documents": { "world.loam.json": { "...": "..." },
                  "modules/old_town.loam.json": { "...": "..." } } }
@@ -291,6 +340,7 @@ geometry fails loud when unknown; anything advisory is dropped with a warning.*
 | Unknown thing | Behavior |
 |---|---|
 | Unknown top-level document key | error `LOAM-E101` |
+| Unknown `profile` value | error `LOAM-E101` — a profile narrows what is legal, so ignoring it would accept documents the toolchain cannot honor |
 | Unknown node key | error `LOAM-E102` |
 | Unknown `kind` | error `LOAM-E103` |
 | Unknown constraint type | error `LOAM-E104` — a silently dropped constraint produces a plausible, wrong world |
@@ -321,9 +371,39 @@ failing. `[C:high]`
 
 **Deprecation.** A MINOR may deprecate a field; deprecated fields keep working
 for the remainder of the MAJOR and emit `LOAM-W1xx`. Removal requires a MAJOR.
-v0.x is explicitly pre-stability: **v0.1 → v0.2 may break anything**, and the
+v0.x is explicitly pre-stability: **v0.2 → v0.3 may break anything**, and the
 repo will carry a migration note instead of a compatibility shim until v1.0.
 `[C:high]`
+
+### 1.6 Profiles `[C:high]`
+
+A **profile** is a named *restriction* of Loam: a subset of the language that a
+narrower toolchain commits to implementing completely. A profile never adds
+syntax and never changes the meaning of anything in this document — it only
+forbids. A document opts in with the top-level `profile` key:
+
+```json
+{ "loam": "0.2", "profile": "terrain", "kind": "world", "…": "…" }
+```
+
+Rules:
+
+1. A profile document is an ordinary Loam document. Every construct it uses
+   means exactly what this specification says it means.
+2. A profile MAY restrict: which generators are allowed, which node kinds and
+   fields may appear, maximum tree depth, and which passes run. Violations are
+   reported in the profile's own diagnostic namespace (§13.5).
+3. A profile MUST NOT introduce a construct that a full compiler would reject,
+   and MUST NOT redefine a symbol, constraint, generator, or diagnostic.
+4. A full (non-profile) compiler accepts profile documents unchanged; dropping
+   the `profile` key from a valid profile document always yields a valid
+   document.
+
+v0.2 defines one profile, `terrain` (`docs/LOAM-TERRAIN-PROFILE-v0.md`): a
+terrain-only subset with no layout solver, used for the G2/G3 milestones. Its
+coarse placement is written in generator `params` rather than as constraints;
+§4.9.5 specifies the lossless two-way translation, and both spellings are
+permanently valid.
 
 ---
 
@@ -383,13 +463,18 @@ right.
 }
 ```
 
-**Value forms**, in order of terseness — all three are valid for any symbol:
+**Value forms**, in order of terseness — all four are valid for any symbol:
 
 1. **String** — a block id, optionally with inline state:
    `"minecraft:oak_stairs[facing=north,half=bottom,waterlogged=false]"`.
    The `[k=v,…]` suffix is parsed by Loam, not passed through.
 2. **Array** — uniform-weight variants. `["a","b"]` ≡ each weight 1.
 3. **Object** — `{ block, state?, w?, shape?, when? }`, or an array of those.
+4. **Mix** — `{"mix": [[blockId, weight], …]}`, weights ≥ 0. Desugars to form 3
+   and selects identically (position-hashed, below). This is the terse form for
+   weighted ground materials, which is most of what a terrain document writes:
+   `{"mix": [["minecraft:gravel", 2], ["minecraft:basalt", 1]]}`
+   ≡ `[{"block":"minecraft:gravel","w":2},{"block":"minecraft:basalt","w":1}]`.
 
 Object fields:
 
@@ -423,14 +508,21 @@ every symbol always resolves. Generators may rely on their existence.
 | Forms | `stairs`, `slab`, `fence`, `wall_block`, `pane`, `door`, `trapdoor` |
 | Openings | `glass`, `window_frame`, `bars` |
 | Light | `light`, `light.wall`, `light.ceiling`, `light.ambient` |
-| Ground | `ground.surface`, `ground.subsurface`, `ground.deep`, `ground.beach`, `ground.cliff`, `ground.path` |
-| Nature | `foliage.log`, `foliage.leaves`, `foliage.sapling`, `foliage.grass`, `foliage.flower`, `foliage.vine`, `foliage.crop` |
+| Ground | `ground.surface`, `ground.subsurface`, `ground.deep`, `ground.beach`, `ground.underwater`, `ground.cliff`, `ground.peak`, `ground.path` |
+| Nature | `foliage.log`, `foliage.leaves`, `foliage.sapling`, `foliage.grass`, `foliage.flower`, `foliage.vine`, `foliage.crop`, `foliage.snow_layer` |
 | Liquid | `liquid.water`, `liquid.lava`, `liquid.surface_ice` |
 | Infra | `path.surface`, `path.edge`, `road.surface`, `road.edge`, `road.marking`, `bridge.deck`, `bridge.rail`, `tunnel.wall`, `tunnel.floor`, `tunnel.support` |
 | Decor | `decor.rubble`, `decor.moss`, `decor.banner`, `decor.pot`, `decor.crate` |
 | Meta | `air` (always `minecraft:air`), `void` (carve marker, §8.4) |
 
 `air` and `void` are reserved and MUST NOT be redefined (`LOAM-E211`).
+
+The terrain-facing members of that set bind in `std:default` to
+`ground.underwater` → `minecraft:gravel`, `ground.peak` → `minecraft:stone`,
+`foliage.snow_layer` → `minecraft:snow[layers=1]`. They are listed explicitly
+because dot-fallback cannot rescue them: there is no bare `ground` or `foliage`
+symbol, so an undeclared `ground.underwater` would fall through to
+`LOAM-E210` rather than to something sane.
 
 ### 2.3 Form families
 
@@ -642,7 +734,7 @@ debugging a 300-node style cascade is hopeless.
 }
 ```
 
-`when` predicates available in v0.1 `[C:med]`:
+`when` predicates available in v0.2 `[C:med]`:
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -714,7 +806,7 @@ transforms, and solver work all compose down the tree.
 | Kind | `children` | Semantics |
 |---|---|---|
 | `composite` | yes, primary | children are laid out inside this envelope |
-| `generator` | yes, optional | *additional* static children, merged with the children the generator emits at runtime; ids must not collide (`LOAM-E140`) |
+| `generator` | yes, optional | *additional* static children, merged with the children the generator emits at runtime; ids must not collide (`LOAM-E140`). **Exception:** a child whose generator's `stage` is `field_edit` (§7.10) is not laid out — it is consumed by its field ancestor at substage 3a (§7.5, `terrain.edit@0`) |
 | `asset` | yes, only if `role: "shell"` | children are placed in the interior cavity envelope (§9.5) |
 | `primitive` | no (`LOAM-E141`) | leaves by definition |
 
@@ -759,11 +851,11 @@ which LLMs never emit absolute coordinates.
 | `shape` | Extra fields | Notes |
 |---|---|---|
 | `box` | `size: [x,y,z]` | the default and the workhorse |
-| `cylinder` | `radius`, `height` | axis is always +Y in v0.1 |
+| `cylinder` | `radius`, `height` | axis is always +Y in v0.2 |
 | `sphere` | `radius` | |
 | `dome` | `radius`, `height` | treated as a half-ellipsoid |
 | `prism` | `footprint: [[x,z], …]`, `height` | polygon extruded up; must be simple (non-self-intersecting), CCW |
-| `region` | `footprint` or `size: [x,z]`, `yMin`/`yMax` or `follows: "terrain"`, `bandBelow`, `bandAbove` | a 2D area with a vertical band — **the right shape for terrain, forests, biomes, road networks** |
+| `region` | `footprint` or `size: [x,z]`, `yMin`/`yMax` or `follows: "terrain"`, `bandBelow`, `bandAbove` | a 2D area with a vertical band — **the right shape for terrain, forests, biomes, road networks**. With neither `size` nor `footprint`, the region **inherits the parent's footprint** (as `shape: "inherit"` would), keeping its own vertical treatment |
 | `path` | `width`, centerline supplied by the `along`/`connected` machinery | a linear corridor; roads, rivers, walls |
 | `inherit` | — | exactly the parent's envelope (minus `padding`) |
 | `auto` | — | size from children (composite), from the generator's `estimate()` (generator), or from `asset.size` (asset) |
@@ -773,7 +865,7 @@ which LLMs never emit absolute coordinates.
 
 | Field | Type | Default | Meaning |
 |---|---|---|---|
-| `size` | `[x,y,z]` ints | — | requested extent in blocks |
+| `size` | ints | — | requested extent in blocks; **arity depends on `shape`**, below |
 | `minSize` / `maxSize` | `[x,y,z]` | `size` | resize range, used **only if `flexible`** |
 | `flexible` | bool | `false` | opt-in resizing |
 | `anchor` | enum | `terrain` | vertical datum: `terrain` (floor sits on solved ground height), `sea`, `absolute` (world Y from `anchorOffset`), `parent_floor`, `parent_ceiling`, `float` |
@@ -782,6 +874,26 @@ which LLMs never emit absolute coordinates.
 | `rotations` | int[] | `[0,90,180,270]` | yaw values the solver may choose; `[0]` pins orientation |
 | `mirror` | bool | `false` | solver may mirror across local X |
 | `grow` | enum | `none` | `none`\|`up`\|`down`\|`out`\|`any` — permission for pass 4 to exceed the envelope; overflow beyond this is `LOAM-E150 ENVELOPE_OVERFLOW` |
+
+**`size` arity is a function of `shape`** `[C:high]`:
+
+| `shape` | `size` |
+|---|---|
+| `region`, `path` | `[x, z]` — a horizontal footprint. Vertical extent comes from `yMin`/`yMax`, `follows`, `bandBelow`/`bandAbove` |
+| everything else | `[x, y, z]` |
+
+Mismatches are **coerced with a fix-it diagnostic, never silently
+reinterpreted**. A `region`/`path` given three elements has its middle element
+dropped with `LOAM-W152 ENVELOPE_SIZE_COERCED`, whose message names the fields
+that actually control Y. A box-family shape given two elements is
+`LOAM-E153 ENVELOPE_SIZE_ARITY`, naming the missing axis.
+
+The alternative — forcing three elements everywhere and ignoring Y for regions —
+was considered and rejected. It creates a number that *looks* load-bearing and
+is not: an author writing `[512, 200, 512]` on a region reasonably expects `200`
+to bound Y, and it does nothing. That is precisely the class of quiet wrongness
+§1.1 rejected YAML over. Arity is derivable from `shape`, which the author has
+already written, so regularity is preserved without the lie.
 
 **Terse forms** (the only value-level sugar in the language, §1.4):
 
@@ -889,6 +1001,15 @@ are the only place an author writes coordinates, and those coordinates are
 Ties in `precedence` break by (depth, then solver order, then `nodePath`
 lexicographic) — never by order of parallel completion. `[C:high]`
 
+**`precedence` is a conflict rule, not an ordering rule.** It decides which
+write wins a contested block at pass 5 and nothing else. *Execution* order —
+which generator runs before which — is implicit in each generator's declared
+`stage` (§7.10). The two questions are separate, and conflating them breaks as
+soon as a stage needs an internal grouping (the `field_edit` raise-then-carve
+grouping does, on day one) or as soon as a low-precedence subtractive node such
+as a cave carver must nevertheless run *after* the structures whose occupancy it
+protects. `[C:high]`
+
 ### 3.8 `repeat` `[C:med]`
 
 ```json
@@ -974,6 +1095,29 @@ Desugaring is mechanical: `{"<type>": X, …rest}` → `{"type":"<type>",
 forms are always valid; the compiler canonicalizes before hashing. Agents should
 use shorthand.
 
+**Type-key resolution `[C:high]`.** Some type names are also *field* names of
+other types (`at` is a constraint type and a field of `along`), so "the single
+type-key" needs a rule. The type key is found by scanning the **constraint-type
+registry in registry order** — the declaration order of §4.4 — and taking the
+first type whose name appears as a key of the object:
+
+```
+within, adjacent_to, facing, along, beside, distance, connected, align,
+orientation, clearance, terrain_conform, zone, at, course, on, not_overlapping,
+elevation, slope, spread, cluster, inside_shell, above, below, centered_in,
+on_axis, visible_from, avoid
+```
+
+So `{"along": "main_road", "at": 0.5}` resolves to `along` — `along` precedes
+`at` in the registry — and `{"at": [0.3, 0.7]}` resolves to `at`. `beside` sits
+immediately after `along` for the same reason: it desugars to `along` and
+therefore inherits `at` as a field, so it must be found before `at` is. A type name
+appearing as a field of a constraint that does not declare that field is
+`LOAM-W173 SHADOWED_TYPE_KEY`; two type keys where neither is a declared field
+of the other is `LOAM-E169 AMBIGUOUS_SHORTHAND` (write two constraints). The
+rule is stated once here so that adding a constraint type in a future MINOR can
+never make an existing document ambiguous.
+
 Common fields on every constraint:
 
 | Field | Type | Default | Meaning |
@@ -991,17 +1135,44 @@ Common fields on every constraint:
 | Absolute node path | `"world.old_town.plaza"` | from root |
 | Relative path | `"plaza"` | resolved by walking out from `self`: siblings, then each ancestor's children, then their descendants. First match wins; ambiguity is `LOAM-E160 AMBIGUOUS_SELECTOR` |
 | `^`, `^^` | `"^"` | parent, grandparent |
+| `parent` | | exactly `^`, spelled out |
+| `root` | | the root node of the world document — the outermost frame (§4.9.1) |
 | `^.main_street` | | explicit sibling-of-parent — **the preferred, unambiguous form** |
 | `self` | | this node (`clearance`, `orientation`) |
-| Port ref | `"town_hall#tunnel_stub"` | a specific port (§5.5) |
+| Anchor ref | `"town_hall#tunnel_stub"`, `"the_divide#peak"` | a port **or** a published marker (§5.5) |
 | Tag set | `"#tag:road"` | all nodes carrying tag `road`; per-type set semantics in §4.4 |
-| Terrain feature | `"@terrain:coast"` | derived from pass 3's terrain preview. v0.1 features: `coast`, `water`, `ridge`, `valley`, `flat`, `slope`, `cliff`, `river`, `cave_mouth` `[C:med]` |
+| Terrain product | `"@terrain:coastline"` | computed at substage 3a; see the product table below |
 | Biome theme | `"@theme:fjord_slope"` | region where a theme applies |
 | World anchor | `"@world:spawn"`, `"@world:center"`, `"@world:origin"` | fixed points |
+
+`~` remains reserved (§3.2) and unassigned in v0.2.
 
 Cross-module references resolve after link (§1.3), but a module referencing
 outside its own subtree without declaring it in `contract.sees` gets
 `LOAM-W161` — the contract is supposed to be the interface. `[C:med]`
+
+**Terrain products.** `@terrain:*` selectors resolve against products computed
+at substage 3a from the composed height field, *after* all field edits (§7.5,
+`terrain.edit@0`) and before any structural placement:
+
+| Product | Kind | Definition |
+|---|---|---|
+| `coastline` | polyline set | the 4-neighbour boundary between columns at or below the water surface and columns above it, traced per connected component, starting at the component's lexicographically smallest `(x, z)`, clockwise |
+| `coast` / `shore` | region | columns within `beachWidth` of the waterline |
+| `water` | region | columns below the water surface |
+| `peak` | point set | published `peak` markers, **plus** local maxima over a 16-block radius with prominence ≥ `peakProminence` (default 12) |
+| `ridge` | polyline set | published `ridge`-verb crests, **plus**, only where none exist, a thinned single-axis-local-maximum skeleton `[C:low]` |
+| `river` | polyline set | published `river`-verb courses, plus `water.body@0` river centerlines |
+| `valley` | region | published valley courses buffered to their `width` |
+| `flat`, `slope`, `cliff` | region | slope bands: `flat` ≤ 6°, `slope` 6–30°, `cliff` above the terrain generator's `cliffThreshold` |
+| `cave_mouth` | point set | daylight openings forced by `cave.carver@0`'s `surfaceOpenings` |
+
+**Authored feature markers outrank derived products** `[C:med]`. Where a
+`terrain.edit@0` node published a marker, `@terrain:*` resolves to it; the
+derived detectors exist only for regions with no authored macro terrain. This is
+the selector-level consequence of the rule that macro terrain is model-authored
+(§7 preamble): a named feature is always addressable as the thing the author
+named, never as whatever a detector happened to find nearby.
 
 ### 4.3 What the solver produces
 
@@ -1101,10 +1272,24 @@ lateral offset, front toward the line.
 
 **Ordering hazard, resolved:** `along` targets a road, but roads are *routed* in
 pass 6. Therefore a linear target must exist in pass 3 as a node with a `path`
-envelope — a **route corridor** — and pass 6 refines the exact centerline
+envelope or a `course` constraint — a **route corridor**, constructed at
+substage 3b and frozen thereafter — and pass 6 refines the exact centerline
 *inside* that corridor. Buildings snap to the corridor; the road wiggles within
 it. `[C:high]` This is what makes "houses along the main street" work despite
-the late connective pass.
+the late connective pass. §4.9.6 specifies the corridor contract and the bounded
+re-route/nudge iteration that reconciles the two.
+
+---
+
+#### `beside` — prim `target` · def **hard** · pure sugar
+
+`{"beside": X, …rest}` desugars to
+`{"along": X, "offset": [2, 8], "faceRoad": false, …rest}`. If `X` is a terrain
+product (§4.2), the `along` target is that product's polyline. No new solver
+primitive is involved: "beside the river" and "along the main street" are the
+same question asked of different linear features. It is declared here, adjacent
+to `along`, because it inherits `along`'s fields and must therefore precede
+`at` in the type-key registry (§4.1).
 
 ---
 
@@ -1221,7 +1406,99 @@ for anything tagged `road`/`path`/`wall`, `float` when `envelope.anchor` is
 
 ---
 
-#### Additional v0.1 types
+#### `zone` — prim `zone` · def **soft** (weight 2.0)
+
+Place the node's **anchor** in a nine-grid cell of a frame. The frame geometry,
+the nine tokens, and the jitter rule are specified in §4.9.
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `zone` | one of the nine tokens (§4.9.2) | — | unknown token is `LOAM-E162 UNKNOWN_ZONE` |
+| `of` | selector | `"^"` | the frame this zone divides |
+| `mode` | `center` \| `contain` | `center` | below |
+| `jitter` | 0..1 | `0.10` | §4.9.3; ignored under `mode: "contain"` |
+| `inset` | int | `0` | `contain` only |
+| `partial` | 0..1 | `1.0` | `contain` only, as in `within` |
+
+- **`mode: "center"`** (soft): a cost pulling the node's anchor toward the
+  jittered zone point, **zero anywhere inside the cell** (§4.9.4).
+- **`mode: "contain"`** (**hard** by default): a domain restriction — the
+  footprint lies inside the cell, inset by `inset`, `partial` of it at minimum.
+
+`{"zone": "north"}` is "the pyramids go up north"; `{"zone": "center"}` is "the
+volcano is in the middle". Neither computes a coordinate.
+
+---
+
+#### `at` — prim `at` · def **soft** (weight 2.0)
+
+Place the node's anchor at a coarse point. The primary argument is
+**type-dispatched on its JSON type**:
+
+| Value form | Meaning |
+|---|---|
+| `[fx, fz]` (array) | a fractional point in the frame (§4.9.1) |
+| `"the_divide#peak"`, `"@terrain:peak"` (string) | a **terrain anchor**: a published marker or a terrain product |
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `at` | array or string | — | above |
+| `of` | selector | `"^"` | the frame; array form only |
+| `mode` | `center` \| `contain` | `center` | as `zone` |
+| `tolerance` | number | `0.05 × frameNorm` blocks | radius of the zero-cost deadzone |
+| `radius` | int | absent | `contain` only: restrict the domain to this disc |
+
+---
+
+#### `course` — prim `course` · def **hard**
+
+Declare the node's **anchor course**: an ordered coarse polyline in a frame. The
+node must be linear — a `path` or `region` envelope, or a `field_edit` generator
+running a course verb (§7.5).
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `course` | array of 2..8 `[fx, fz]` | — | outside 2..8 is `LOAM-E241 COURSE_WAYPOINTS` |
+| `of` | selector | `"^"` | the frame |
+| `tolerance` | number | `0.08 × frameNorm` blocks | maximum deviation of the refined centerline from each waypoint |
+| `width` | int | from `envelope.width` | corridor width |
+| `descend` | bool | `false` | refine under a monotone-descent constraint (rivers set this) |
+
+**Refinement is the compiler's job, not the author's.** The waypoints are
+refined into a smooth centerline by **centripetal Catmull–Rom, α = 0.5**, with
+the first and last waypoints duplicated as phantom control points, sampled at
+1-block arclength and rounded to integer columns with `floor`. The refined
+centerline MUST pass within `tolerance` of every waypoint; failing that is
+relaxable at ladder step 2. Under `descend`, refinement additionally enforces
+non-increasing surface height toward the last waypoint. *The model gives intent;
+the compiler does geometry.*
+
+**A `course` registers a route corridor** at substage 3b: the refined centerline
+buffered by `max(width, 2 × tolerance)`, frozen thereafter (§4.9.6). This is
+deliberate unification — a river, a ridge and a main street are the same object
+to the solver, so `along` and `beside` work against terrain features and roads
+through one mechanism. `[C:med]`
+
+---
+
+#### `on` — prim `target` · def **hard**
+
+The node's footprint sits on a terrain product or a feature marker.
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `target` | `@terrain:<product>` or an anchor ref | — | §4.2 |
+| `band` | int | `8` | blocks; widens a polyline or point product into an areal domain |
+| `partial` | 0..1 | `0.5` | fraction of the footprint that must lie in the band |
+| `side` | `left`\|`right`\|`any` | `any` | for polyline products, in the polyline's direction of travel |
+
+`{"on": "@terrain:coastline"}`, `{"on": "@terrain:flat"}`,
+`{"on": "volcano_kez#rim"}`. `on` is a domain restriction, applied at substage
+3c and demotable at ladder step 5 (§4.6).
+
+---
+
+#### Additional types
 
 | Type | prim | def | Meaning |
 |---|---|---|---|
@@ -1247,9 +1524,11 @@ for anything tagged `road`/`path`/`wall`, `float` when `envelope.anchor` is
 Defaults are **per-type** rather than uniform, because uniform-hard guarantees
 over-constrained LLM specs and uniform-soft guarantees mush. The rule encoded in
 the defaults: **topological facts are hard** (`within`, `adjacent_to`,
-`connected`, `not_overlapping`, `elevation`, `terrain_conform`), **aesthetic
-preferences are soft** (`facing`, `align`, `centered_in`, `spread`, `cluster`,
-`on_axis`, `visible_from`).
+`connected`, `not_overlapping`, `elevation`, `terrain_conform`, `course`, `on`),
+**aesthetic preferences are soft** (`facing`, `align`, `centered_in`, `spread`,
+`cluster`, `on_axis`, `visible_from`), and **coarse intent is soft while coarse
+containment is hard** (`zone`/`at` default to `mode: "center"`, soft; the same
+types under `mode: "contain"` are hard).
 
 Any constraint can be flipped with `strength`. An agent that wants something but
 can live without it should write `"strength": "soft"` — the single most useful
@@ -1270,12 +1549,15 @@ a node it climbs this ladder, recording every step in the solver report:
 5. **Demote hard constraints to soft**, one at a time, in a fixed order (lowest
    `weight`, then reverse declaration order, then `nodePath`). Never demote
    `within` (domain becomes unbounded) or `not_overlapping` (bodies
-   interpenetrate). → `LOAM-E404 CONSTRAINT_DEMOTED` — error severity; does not
-   stop the compile but gates the repair loop.
+   interpenetrate). Coarse containment (`zone`/`at` with `mode: "contain"`) and
+   `on` **are** demotable: the implicit `within: "^"` still bounds the domain
+   afterwards, so the reasoning that protects `within` does not transfer to a
+   cell nested inside it. → `LOAM-E404 CONSTRAINT_DEMOTED` — error severity;
+   does not stop the compile but gates the repair loop.
 6. **Drop the node** if `optional: true`, with its subtree. → `LOAM-E405
    NODE_DROPPED`
 7. **Fail** with `LOAM-E406 UNSATISFIABLE`, naming the minimal conflicting
-   constraint set (greedy removal, not a real MUS algorithm in v0.1). `[C:med]`
+   constraint set (greedy removal, not a real MUS algorithm in v0.2). `[C:med]`
 
 The ladder is deterministic: same input → same rung → same world. The solver
 report is a first-class artifact (`report.json`) consumed by the deterministic
@@ -1297,26 +1579,199 @@ The solver MUST:
    fall to the ladder.
 4. **Place every node or account for it** in the report.
 5. Respect `envelope.rotations`, `mirror`, integer translation only.
-6. Produce a **terrain preview** before structural placement, since
-   `terrain_conform`, `elevation`, `slope`, and `@terrain:*` all need ground
-   heights. The terrain generator must therefore expose a cheap `heightAt(x, z)`
-   evaluable without full expansion (§7.5).
+6. **Compose terrain before structural placement** (substage 3a), since
+   `terrain_conform`, `elevation`, `slope`, `on`, and `@terrain:*` all need
+   ground heights, and feature markers must be published before anything can be
+   constrained against them. The terrain generator must therefore expose a cheap
+   `heightAt(x, z)` evaluable without full expansion (§7.5).
+7. **Report coarse placement.** For every node carrying a coarse constraint, the
+   solver MUST record in `report.json` the resolved frame, the target point or
+   region, and the realized coarse cost. Without it, "why is my volcano not in
+   the center" is undebuggable, and the repair loop has nothing to act on.
 
-Non-obligations for v0.1: no global optimality, no SAT/SMT, no backtracking
+Non-obligations for v0.2: no global optimality, no SAT/SMT, no backtracking
 across composite boundaries. `DESIGN.md` calls for "simple deterministic
 packing/relaxation, upgradable in isolation"; this vocabulary is deliberately
 expressible as costs + domain restrictions so a better solver is a drop-in.
 
 ### 4.8 Constraint evaluation order
 
-| Phase | Applied |
+| Substage (§0.2) | Applied |
 |---|---|
-| Domain construction | `within`, `elevation`, `avoid`, `inside_shell`, `orientation`, `envelope.rotations` |
-| Discrete placement | `adjacent_to`, `along`, `distance`, `not_overlapping`, `above`/`below`, `slope` |
-| Relaxation (cost min) | `facing`, `align`, `centered_in`, `spread`, `cluster`, `on_axis`, `visible_from`, all soft |
-| Post-placement fixups | `terrain_conform`, envelope-level `clearance` |
+| 3a Terrain composition | field edits composed; terrain products and feature markers published |
+| 3b Corridor construction | `course`; `path`-envelope nodes; `road.network@0.corridors()` |
+| 3c Domain construction | `within`, `elevation`, `avoid`, `inside_shell`, `orientation`, `envelope.rotations`, `on`, coarse `mode: "contain"` |
+| 3d Discrete placement | `adjacent_to`, `along`, `beside`, `distance`, `not_overlapping`, `above`/`below`, `slope` |
+| 3e Relaxation (cost min) | `facing`, `align`, `centered_in`, `spread`, `cluster`, `on_axis`, `visible_from`, coarse `mode: "center"`, all soft |
+| 3.5 Corridor iteration | re-route within frozen corridors; nudge `along`/`beside` dependants |
+| 3f Post-placement fixups | `terrain_conform`, envelope-level `clearance` |
 | Pass 6 | `connected` realization |
 | Post-geometry lint | voxel-level `clearance`, port reachability, road-graph connectivity |
+
+---
+
+### 4.9 Coarse placement
+
+The vocabulary an author reaches for when the sentence is "a volcano in the
+centre, pyramids up north, a port on the southeast coast". It is the answer to
+the standing rule that **LLMs never emit absolute coordinates**: coarse
+placement expresses *where, roughly, and relative to what* — and the solver
+turns that into blocks.
+
+Three ingredients: a **frame** to be relative to (§4.9.1–§4.9.3), the
+constraints that address it (`zone`, `at`, `course`, `on`, `beside` — §4.4), and
+the solver semantics that keep the result from looking mechanical (§4.9.4).
+
+#### 4.9.1 Frames
+
+A **frame** is the horizontal footprint of a resolved envelope: a min corner
+`(x0, z0)` and extents `(W, D)` in blocks. Every coarse constraint resolves
+against a frame, named by its `of` field (a selector, default `"^"`). Because
+parents are always placed before their children (§4.7 obligation 2), `^` and
+`root` are always resolved by the time a child's coarse constraint is evaluated.
+
+**Axes.** `fx` runs west→east (+X); `fz` runs north→south (+Z). North is −Z,
+east is +X.
+
+**Fractional coordinates.** `[fx, fz] ∈ [0,1]²` maps to
+`(x0 + floor(fx·W), z0 + floor(fz·D))`. Multiplication and `floor` are
+IEEE-exact (§6.8), so this is bit-reproducible across engines. A component
+outside `[0,1]` is `LOAM-E166 COARSE_COORD_RANGE`.
+
+**`frameNorm`**, used to normalize coarse costs and tolerances, is
+`0.5 · sqrt(W² + D²)` — the frame's half-diagonal. `sqrt` is IEEE-exact, so this
+too is reproducible.
+
+#### 4.9.2 The nine-grid
+
+A frame divides into a 3×3 grid of **zone cells**. Cell column *i* spans
+`[x0 + floor(i·W/3), x0 + floor((i+1)·W/3) − 1]` — integer division, so the
+cells tile the frame exactly, with no gaps and no overlap — and rows likewise
+in Z.
+
+| token | (i, j) | token | (i, j) | token | (i, j) |
+|---|---|---|---|---|---|
+| `northwest` | (0, 0) | `north` | (1, 0) | `northeast` | (2, 0) |
+| `west` | (0, 1) | `center` | (1, 1) | `east` | (2, 1) |
+| `southwest` | (0, 2) | `south` | (1, 2) | `southeast` | (2, 2) |
+
+These nine tokens are the complete vocabulary. Anything else is
+`LOAM-E162 UNKNOWN_ZONE`. A zone's **center point** is the integer center of its
+cell, `(x0 + floor((lo+hi)/2), …)`.
+
+#### 4.9.3 Jitter
+
+A `zone` constraint's target point is the cell center displaced by
+`(jx·W, jz·D)`, where `jx = 2·u₀ − 1` and `jz = 2·u₁ − 1`, scaled by `jitter`
+(default **0.10**) and clamped into the frame. `u₀` and `u₁` are the *2k*-th and
+*(2k+1)*-th `float()` draws of the node's **`coarse`** RNG stream (§6.3), where
+*k* is the constraint's index in the node's `constraints` array.
+
+Indexing by position rather than by draw order is deliberate: adding an
+unrelated constraint to a node must never move an already-placed feature.
+
+#### 4.9.4 Solver semantics `[C:med]`
+
+**Anchors.** A coarse constraint constrains the node's **anchor**: the
+horizontal center of its footprint for placeable nodes; the kernel origin (point
+verbs) or the centerline (course verbs) for `field_edit` generators, which the
+solver never translates (§7.5).
+
+**Soft cost, with a deadzone.** For `mode: "center"`:
+
+```
+d    = horizontal distance from the anchor to the nearest point of the
+       target region — the zone cell, or the tolerance disc for `at`
+cost = weight · (d / frameNorm)          // exactly 0 inside the target region
+```
+
+The **deadzone is the point**. A cost measured to the cell *centre* would pull
+every zoned feature onto a 3×3 lattice and make every world look gridded. The
+author's intent is "somewhere in the north", not "at the north point", and the
+cost function has to say so.
+
+**Seeded initialization.** The jittered zone point (§4.9.3) is the node's
+*preferred initial anchor* at substage 3d. Packing and relaxation start there
+and may move it anywhere in the zero-cost region at no cost. Jitter and deadzone
+together are what make coarse placement read as authored rather than snapped.
+
+**Hard coarse constraints.** `mode: "contain"` and `on` are domain restrictions
+applied at 3c alongside `within`, and are demotable at ladder step 5 (§4.6).
+
+**Empty intersection.** If two or more hard coarse domains intersect to nothing
+— `{"zone":"north","mode":"contain"}` together with
+`{"zone":"south","mode":"contain"}` — that is `LOAM-E165 COARSE_DOMAIN_EMPTY`
+at 3c, naming both constraints. It is distinct from `LOAM-E170 CANNOT_FIT`,
+which means the domain is non-empty but too small.
+
+**Competing placement.** A node carrying a coarse `mode: "center"` constraint
+*and* `centered_in`/`on_axis` against the same frame gets
+`LOAM-W167 COMPETING_PLACEMENT`. Both are soft, so the world still compiles; the
+report lists both costs so the repair loop can see the tug-of-war rather than
+guessing at it.
+
+#### 4.9.5 Params form and constraint form
+
+A profile of the language (§1.6) may have no layout solver and therefore no
+constraint machinery, and expresses coarse placement inside generator `params`
+instead. Both spellings are **permanently valid**, and a compiler MUST rewrite
+params form into constraint form **before `specHash` is computed** (§6.6), so
+that equivalent documents hash identically and share cache entries.
+
+| Params form (inside `params`) | Constraint form |
+|---|---|
+| `"at": [fx, fz]` | `{"at": [fx,fz], "of": "root", "strength": "soft"}` |
+| `"zone": "<token>"` | `{"zone": "<token>", "of": "root", "strength": "soft", "jitter": 0.10}` |
+| `"course": [[fx,fz], …]` | `{"course": [[fx,fz], …], "of": "root", "strength": "hard", "tolerance": 0.08}` |
+| `"area": {"zone": t}` | `{"zone": t, "of": "root", "mode": "contain", "strength": "hard"}` |
+| `"area": {"at": [fx,fz], "radius": r}` | `{"at": [fx,fz], "of": "root", "mode": "contain", "radius": r, "strength": "hard"}` |
+| `"area": {"all": true}` | *nothing* — equivalent to the implicit `within: "^"` |
+| `meta.spawn` | not a constraint; resolved by §4.9.1–§4.9.3 against the root frame |
+
+**`of` is `"root"`, not `"^"`.** Params-form coarse coordinates are fractions of
+the **root region**. `"^"` would happen to agree whenever the field node's
+envelope is `"inherit"`, and would silently disagree the moment a document nests
+a smaller field node — a bug that would surface as terrain drifting off-plan
+with no diagnostic. `[C:high]`
+
+A node carrying the same placement in both forms, or more than one of
+`at`/`zone`/`course` in params, is `LOAM-E168 DUPLICATE_PLACEMENT`.
+
+#### 4.9.6 Route corridors and the corridor iteration `[C:med]`
+
+A **route corridor** is a polygon in the horizontal plane plus a coarse
+centerline inside it. Corridors are constructed once, at substage 3b, from
+`course` constraints, `path` envelopes, and `road.network@0.corridors()` — and
+then **frozen**: substage 3.5 and pass 6 may move a centerline only *within* its
+corridor, and may never widen, shorten, or re-topologize it. `along` and
+`beside` bind to the corridor, never to the centerline.
+
+Freezing is what makes the promise in §4.4 (`along`) enforceable rather than
+aspirational: buildings snap to something that cannot move out from under them,
+while the road still gets to find its own line through the finished geometry.
+
+**Substage 3.5** then reconciles the two, in at most `maxCorridorIterations`
+rounds (default **2**). Round *k*:
+
+1. **Re-route.** For each corridor, in `nodePath` order, recompute the
+   centerline inside the frozen polygon using the *placed* occupancy from
+   3d–3e and the pass-6 routing cost (grade, occupancy, `prefer`).
+2. **Re-evaluate.** For each node bound to that corridor by `along`/`beside`,
+   in `layoutParams.order` then `nodePath` order, recompute lateral offset and
+   `at`-position satisfaction.
+3. **Nudge.** A node whose offset now falls outside its declared `offset` range
+   is translated by the **minimal integer displacement along the corridor
+   normal** that restores satisfaction, provided every one of its hard
+   constraints still holds; emit `LOAM-I409 NODE_NUDGED` with the displacement.
+   If no such displacement exists, the node is marked dirty and re-enters
+   3c–3e with its corridor binding held fixed.
+4. **Converge.** If nothing moved, stop. If *k* reaches the cap with violations
+   outstanding, emit `LOAM-W408 CORRIDOR_ITERATION_CAP` and hand the residue to
+   the relaxation ladder (§4.6) as normal.
+
+Fixed iteration order at every step and a hard round cap mean 3.5 satisfies
+§4.7 obligation 1 by construction: it is a bounded, deterministic loop, not an
+open-ended negotiation.
 
 ---
 
@@ -1440,12 +1895,31 @@ Reconciliation rules when two ports differ:
 5. **Waterline** — `dock` and `canal_stub` must resolve within ±1 of the water
    surface, else `LOAM-W184`.
 
-### 5.5 Port references
+### 5.5 Port references, and the anchor namespace
 
-`<node-selector>#<port-name>`. The node selector uses the §4.2 grammar, so
+`<node-selector>#<name>`. The node selector uses the §4.2 grammar, so
 `^.town_hall#tunnel_stub`, `self#main_door`, and
 `world.old_town.town_hall#tunnel_stub` are all valid. `#port` with no node
 selector is invalid — write `self#port` (`LOAM-E185`).
+
+**`#` addresses the node's anchor namespace**: its declared **ports** ∪ its
+published **markers** (§7.3). Ports shadow markers of the same name, with
+`LOAM-W164 MARKER_SHADOWED_BY_PORT`; a name in neither is
+`LOAM-E163 UNKNOWN_ANCHOR`. `[C:med]`
+
+Sharing one namespace is deliberate. A marker and a port are both "a named point
+on a node", terrain nodes have no ports to collide with, and the alternative — a
+fourth reference sigil — would cost every consumer a second lookup path to buy
+collision-safety nobody needs. The consequence is that
+`{"facing": "the_divide#peak"}` and `{"adjacent_to": "great_bay#mouth"}` need no
+new machinery: the existing selector grammar reaches terrain features the moment
+those features publish markers.
+
+Markers are typed `point` | `polyline` | `ring` | `region`. Where a constraint
+needs a point and is given a polyline, it uses the nearest point on that
+polyline to the referencing node's current anchor — evaluated at domain
+construction, re-evaluated during relaxation; a `ring` in a point context
+resolves to its centroid. `[C:med]`
 
 A bare node selector where a port ref is expected means "any compatible port on
 that node", resolved deterministically by: matching type first, then lowest
@@ -1528,8 +2002,8 @@ A node never draws from one linear stream. It draws from **named streams**:
 streamSeed(n, name) = BLAKE3_256( nodeSeed(n) ‖ 0x01 ‖ utf8(name) )
 ```
 
-Reserved stream names: `layout`, `repeat`, `palette`, `scatter`, `grammar`,
-`jitter`, `decor`, `carve`, `noise`. Generators may declare their own.
+Reserved stream names: `layout`, `coarse`, `repeat`, `palette`, `scatter`,
+`grammar`, `jitter`, `decor`, `carve`, `noise`. Generators may declare their own.
 
 This matters more than it looks. With a single stream, adding one extra
 `rng.next()` call inside the roof code shifts every subsequent draw and changes
@@ -1590,9 +2064,9 @@ Normative for the compiler, the stdlib, and every authored generator:
 6. **Float discipline.** All arithmetic is f64. Voxelization is `Math.floor`.
    No `Math.fround`, no SIMD, no accumulating sums over unordered collections.
    Transcendental functions (`sin`, `cos`, `pow`) are *not* IEEE-specified across
-   engines — so the sandbox exposes only `ctx.math`, a pinned deterministic
-   implementation, and the noise primitives are the pinned FastNoiseLite port
-   rather than raw trig. `[C:med]` — a real hazard; see §12 Q9.
+   engines — so the sandbox exposes only `ctx.math`, whose implementation and
+   permitted primitives are specified normatively in §6.8, and the noise
+   primitives are the pinned FastNoiseLite port rather than raw trig.
 7. **Content-addressed assets.** External asset generation (Tripo) is not
    deterministic, so its outputs are content-addressed and pinned in a lockfile
    (§9.8). Given the lockfile, the compile is deterministic; without it, only the
@@ -1648,6 +2122,42 @@ path-derived seeds and it is the right trade — the alternative (explicit stabl
 GUIDs on every node) costs tokens on every node forever to buy something needed
 rarely. `[C:med]`
 
+### 6.8 Deterministic math `[C:high]`
+
+`Math.sin` and its relatives are not IEEE-specified: two conforming JavaScript
+engines may return different bits for the same input. A pipeline whose entire
+product promise is "byte-identical worlds" cannot build on that. The rules:
+
+1. **Own implementations.** `ctx.math` MUST implement `sin`, `cos`, `tan`,
+   `asin`, `acos`, `atan`, `atan2`, `exp`, `log`, `pow`, `cbrt`, and `hypot` as
+   explicit polynomial or rational approximations over f64. Delegating any of
+   them to the engine's `Math.*` is a spec violation, not an optimization
+   choice.
+2. **Permitted engine primitives.** `Math.sqrt`, `Math.abs`, `Math.floor`,
+   `Math.ceil`, `Math.round`, `Math.trunc`, `Math.min`, `Math.max`,
+   `Math.sign`, and the f64 operators `+ − × ÷` are IEEE-754-exact in every
+   conforming engine and MAY be used directly. `ctx.math.sqrt` is a thin alias
+   of `Math.sqrt`.
+3. **Test vectors are the definition.** Each `ctx.math` function ships a
+   committed golden vector table — input bit pattern → output bit pattern, at
+   least 4096 entries spanning the domain, including subnormals, ±0, ±∞ and
+   NaN. A reimplementation is conforming iff it reproduces the table
+   bit-for-bit. **This spec deliberately states no ULP bound: a ULP bound is an
+   accuracy guarantee, and what determinism needs is an identity guarantee.**
+4. **Integer and fixed-point bias.** Every stdlib generator MUST derive its
+   final block-level decisions by **integer comparison**. f64 is permitted for
+   intermediate shaping, but each generator MUST document the single point at
+   which it quantizes — `Math.floor`, or `ctx.math.q16` for Q16.16 fixed point.
+   The terrain kernels of §7.5 are low-order polynomials precisely so they
+   evaluate exactly in fixed point with no transcendentals.
+5. **Noise.** The FastNoiseLite port is pinned by exact version, recorded in
+   `toolchain`, and covered by its own golden vector table.
+6. **Cross-architecture CI.** A determinism matrix job compares the BLAKE3 of
+   the emitted golden world across at minimum
+   `{arm64-darwin, x64-linux} × {Node LTS, Node current}`. This is cheap to
+   establish and extremely expensive to retrofit, because a drift discovered
+   later invalidates every world generated before it.
+
 ---
 
 ## §7 L1 — Generator interface & stdlib catalog
@@ -1657,6 +2167,37 @@ flavors, per `DESIGN.md`: curated **stdlib** generators (zero tokens once
 parameterized — bias toward these) and **authored** TypeScript written by an LLM
 against a strict sandbox.
 
+### 7.0 Terrain features are field edits, never stamps `[C:high]`
+
+Stated first because it governs how the terrain generators below are meant to be
+used, and because it is the rule most likely to be violated by an agent that
+finds a big `prism` easier to write.
+
+> **A macro landform — ridge, peak, volcano, plateau, island, valley, river,
+> basin — MUST be expressed as a contribution to the height field, composed
+> before materialization, and MUST NOT be a structure stamped over finished
+> ground.**
+
+This is architecture, not taste. Stamping breaks four things at once: the
+surface classifier can no longer see the true slope; biome assignment reads the
+pre-stamp field; `terrain_conform` and `heightAt()` lie to every structure
+placed nearby; and the seam between stamp and ground is permanent, because
+nothing downstream knows it is a seam.
+
+**Enforced by lint.** `LOAM-W441 STAMPED_TERRAIN` fires when a node whose
+generator's `stage` is neither `field` nor `field_edit` writes over a footprint
+of more than **256 columns** with ≥ **60%** of its writes resolving to
+`ground.*` or `liquid.*` symbols. Thresholds are overridable per node via
+`validate` (§13.3), with the suppression recorded in the report as usual.
+`[C:med]` on the thresholds.
+
+**Macro terrain is model-authored.** Every landform above a size threshold
+(default: radius or half-width ≥ 32 blocks) SHOULD exist as a named
+`terrain.edit@0` node rather than as noise parameters — so that it has an id, a
+seed, published markers, and a name the repair loop can address. A region that
+does not care may opt out explicitly with a wilderness fill: a base field plus a
+low-density scatter over the whole area.
+
 ### 7.1 The two-phase contract `[C:high]`
 
 Every generator implements two functions:
@@ -1665,6 +2206,7 @@ Every generator implements two functions:
 export interface Generator<P> {
   readonly name: string;            // "building.grammar"
   readonly version: number;         // 0  → referenced as "building.grammar@0"
+  readonly stage: Stage;            // execution order, §7.10 — required
   readonly paramSchema: JSONSchema; // validated at pass 1
   readonly openParams?: boolean;    // default false (§1.5)
   readonly emitsChildren?: boolean;
@@ -1672,10 +2214,14 @@ export interface Generator<P> {
   /** Pass 3. Cheap. Called before placement is known. */
   estimate(ctx: EstimateContext<P>): Estimate;
 
-  /** Pass 4. Called with a concrete placement. */
+  /** Pass 4 (or substage 3a for field stages). Called with a concrete placement. */
   generate(ctx: GenContext<P>): GenResult;
 }
 ```
+
+`stage` is declared by the generator and is **never authorable on a node** — a
+document cannot reorder the pipeline (§7.10). An authored generator that omits
+it is `LOAM-E245 STAGE_NOT_DECLARED`.
 
 `estimate()` exists to break the chicken-and-egg between layout and expansion:
 the solver needs a size before it can place, but the size may depend on the
@@ -1709,6 +2255,7 @@ interface GenContext<P> {
   readonly placement: Placement;                   // world translation, yaw, mirror (read-only)
   readonly terrain: TerrainSampler;                // heightAt / slopeAt / themeAt / isWater
   readonly parentOccupancy: OccupancyView;         // read-only: what siblings already claim
+  readonly field?: FieldEditor;                    // stages `field` / `field_edit` only (§7.5)
 
   // — inputs —
   readonly params: P;                              // validated against paramSchema
@@ -1725,6 +2272,18 @@ interface GenContext<P> {
   readonly math: DeterministicMath;                // pinned sin/cos/pow/sqrt (§6.5 rule 6)
   readonly noise: NoiseFactory;                    // pinned FastNoiseLite
   log(msg: string): void;                          // diagnostics only, never affects output
+}
+```
+
+`ctx.field` is present only for generators at stage `field` or `field_edit`, and
+is how a field edit reaches the height field it contributes to:
+
+```ts
+interface FieldEditor {
+  readonly frame: Frame;                   // §4.9.1 — the field's horizontal extent
+  raise(kernel: Kernel): void;             // composed per §7.5 terrain.edit@0
+  carve(kernel: Kernel): void;
+  sample(x: number, z: number): number;    // H at the current composition point
 }
 ```
 
@@ -1747,6 +2306,22 @@ interface GenResult {
 }
 ```
 
+`markers` are typed, and are published into the node's anchor namespace (§5.5)
+so that later passes, other nodes' constraints, and the repair loop can all name
+the same point:
+
+```ts
+type Marker =
+  | { name: string; kind: "point";    at: [number, number, number] }
+  | { name: string; kind: "polyline"; points: [number, number, number][] }
+  | { name: string; kind: "ring";     points: [number, number, number][] }
+  | { name: string; kind: "region";   mask: OccupancyMask };
+```
+
+Markers emitted by field-stage generators are published at substage 3a, so
+structural nodes placed at 3c–3e can constrain against them within the same
+solve.
+
 Ops are emitted in node-local coordinates and transformed once, by the compiler,
 using the node's placement. **A generator never sees or writes world
 coordinates** — it cannot, structurally, break the no-absolute-coordinates rule.
@@ -1763,14 +2338,14 @@ documented-and-hoped-for.
 | No IO | no `fs`, `net`, `process`, `fetch`; module resolution allowlist is `loam/std` only |
 | No clock | `Date`, `performance` removed from the global object |
 | No unseeded randomness | `Math.random` removed; only `ctx.rng` / `ctx.hash` |
-| No engine-variant math | `Math.sin/cos/tan/pow/exp/log` shadowed by `ctx.math` equivalents; direct use is a lint error |
+| No engine-variant math | `Math.sin/cos/tan/asin/acos/atan/atan2/pow/exp/log/cbrt/hypot` shadowed by `ctx.math` equivalents; direct use is a lint error. The IEEE-exact primitives listed in §6.8 rule 2 (`sqrt`, `abs`, `floor`, `ceil`, `round`, `trunc`, `min`, `max`, `sign`) remain available and do not trip the lint |
 | Bounded time | instruction-count "fuel" budget (default 50M), not wall-clock — wall-clock limits would be nondeterministic |
 | Bounded memory | op-count cap and array allocation cap from `budget` |
 | Bounded output | ops must lie within `envelope` + `grow`; violations are clipped and reported |
 | No global state | module top-level mutable state is frozen after load; a generator called twice with the same context produces the same result |
 | No dynamic code | `eval`, `Function`, `import()` unavailable |
 
-Execution is in a locked-down realm (`node:vm` with a frozen context in v0.1;
+Execution is in a locked-down realm (`node:vm` with a frozen context in v0.2;
 `isolated-vm` or a worker with a restricted realm is the hardening path).
 `[C:med]` The threat model here is *bugs*, not adversaries — LLM-authored
 generators fail by looping forever or writing 400M blocks, not by attacking the
@@ -1778,12 +2353,13 @@ host. Cost control, not security, is the primary driver.
 
 ### 7.5 Stdlib catalog v0
 
-Nine generators. Each entry gives the param schema (as a table — the machine
-schema lives in the stdlib package), the ports it can honor, and what it emits.
+Eleven generators. Each entry gives its `stage` (§7.10), the param schema (as a
+table — the machine schema lives in the stdlib package), the ports it can honor,
+and what it emits.
 
 ---
 
-#### `terrain.heightfield@0`
+#### `terrain.heightfield@0` · stage `field`
 
 The workhorse for G2. Produces a 2.5D surface with materials by slope and
 elevation. Emits a `heightfield` that every later pass reads.
@@ -1812,12 +2388,31 @@ elevation. Emits a `heightfield` that every later pass reads.
 
 Ports: none. Emits: ops + `heightfield` + `markers` (`highest_point`,
 `largest_flat`, `coast_points`). `estimate()` returns the node's region size and
-is O(1). Also exposes the pass-3 `heightAt(x, z)` sampler required by §4.7.6 —
-implemented by evaluating the same noise stack without materialization.
+is O(1). Also exposes the substage-3a `heightAt(x, z)` sampler required by
+§4.7.6 — implemented by evaluating the same noise stack without materialization.
+
+**Field composition.** A `field`-stage node owns a **field target**: the master
+height field `H(x, z)` over its frame. When one field node's frame lies inside
+another's, the inner composes into the outer over its own footprint:
+
+| `compose` | Effect over the inner footprint |
+|---|---|
+| `replace` (default) | outer `H` replaced by inner `H` |
+| `add` / `max` / `min` | as named |
+
+cross-faded linearly over `blend` blocks (default **16**) inward from the inner
+footprint boundary. Field edits attach to the *nearest* field ancestor, so an
+edit written inside the inner node shapes the inner field before composition —
+which is what makes "a detailed island field nested in an ocean field" behave.
+`[C:med]`
+
+**Materialization happens exactly once**, at the end of the `field_edit` stage,
+after all composition. Caves (stage `carve`) subtract from the materialized
+voxels; they are not field edits.
 
 ---
 
-#### `terrain.density@0` `[C:med]`
+#### `terrain.density@0` · stage `field` `[C:med]`
 
 3D density field for overhangs, floating islands, and cliff undercuts. Same
 noise params as above plus:
@@ -1833,9 +2428,103 @@ Emits a full 3D voxel field, so it is 5–20× the cost of `heightfield`. Use it
 where the *prompt* calls for it, not by default. Its `heightAt` sampler returns
 the topmost solid, which is more expensive; the solver caches it per column.
 
+**Interaction with field edits `[C:med]`.** Field edits are height-domain; a
+density field is 3D. The height field is applied to the density evaluation as a
+**vertical shift**:
+
+```
+density′(x, y, z) = density(x, y − H(x, z), z)
+```
+
+Consequence: every terrain verb behaves identically with or without overhangs,
+and overhang structure rides the edited landform instead of fighting it. A
+document may add `terrain.density@0` to an existing terrain plan without
+re-authoring a single edit. The rule is exact for the common case — a landform
+raised underneath an overhang stack — and approximate where an author wants the
+*character* of the overhangs to change with elevation.
+
 ---
 
-#### `terrain.climate@0`
+#### `terrain.edit@0` · stage `field_edit`
+
+A **field edit**: a kernel contributed to the master height field before any
+block exists. This is the generator that makes §7.0 practical — the terrain
+verbs an author reaches for instead of describing noise.
+
+| Param | Type | Default | Meaning |
+|---|---|---|---|
+| `verb` | enum | required | the table below; unknown is `LOAM-E244 UNKNOWN_TERRAIN_VERB` |
+| `strength` | 0..1 | `1` | scales the kernel. **Not** the constraint field `strength` (`hard`/`soft`) — different namespace, flagged because the collision is genuinely confusing |
+| `at` / `zone` / `course` | — | — | exactly one, in params form or as the equivalent constraint (§4.9.5); both is `LOAM-E168` |
+| `blend` | `max`\|`add` (raise), `min`\|`sub` (carve) | `max` / `min` | within-group composition |
+
+| `verb` | group | placement | params (defaults) |
+|---|---|---|---|
+| `ridge` | raise | course | `width` (48), `height` (50), `profile: "sharp"\|"rounded"` ("rounded") |
+| `peak` | raise | at/zone | `radius` (56), `height` (70), `profile` ("sharp") |
+| `volcano` | raise | at/zone | `radius` (64), `height` (80), `caldera` (true), `calderaDepth` (12), `lava` (true — lava lake strictly inside the caldera rim, settle-safe) |
+| `plateau` | raise | at/zone | `radius` (64), `height` (25), `rim` (8 — falloff width) |
+| `island` | raise | at/zone | `radius` (48), `height` (30) |
+| `valley` | carve | course | `width` (40), `depth` (30) |
+| `river` | carve | course | `width` (10), `depth` (6) — carves to a water surface **at `seaLevel`**; perched rivers are out of scope until fluid settling handles them |
+| `basin` | carve | at/zone | `radius` (56), `depth` (20), `water` (false — fills to rim − 1 only when the rim is fully closed, else `LOAM-W242 BASIN_RIM_OPEN` and no water) |
+
+**Kernel shapes.** Radial verbs contribute `h(d) = height · f(d / radius)` for
+`d ≤ radius` and 0 beyond; course verbs contribute
+`h(d) = height · f(d / (width/2))`, where `d` is the distance to the refined
+centerline (§4.4, `course`).
+
+- `profile: "sharp"` → `f(t) = 1 − t` — a cone: pointed summit, straight flanks
+- `profile: "rounded"` → `f(t) = 1 − t²·(3 − 2t)` — smoothstep
+
+Both are low-order polynomials, chosen so they evaluate exactly in Q16.16 fixed
+point with no transcendentals (§6.8 rule 4). `volcano` and `basin` subtract a
+second, smaller radial kernel inside the first to form the caldera or the
+basin floor.
+
+(The `profile` *param* here — the falloff shape — is unrelated to the document's
+top-level `profile` key of §1.6. Different namespaces, unfortunate collision,
+noted so a reader does not go looking for a connection.)
+
+**Composition `[C:med]`.** Edits apply in two deterministic groups: all `raise`
+verbs, then all `carve` verbs, each in document order (§7.10).
+
+- Within `raise`: `H ← max(H, H_base + strength·h)`. `blend: "add"` accumulates
+  instead. Max is the default because two overlapping `peak` verbs should read
+  as a mountain range, not as one 140-block superpeak.
+- Within `carve`: each verb computes a target surface
+  `T = H_groupStart − strength·h` against the field state at the **start of the
+  carve group**, then `H ← min(H, T)`, so carves do not cascade into each other.
+  `blend: "sub"` subtracts instead.
+
+**Markers published.** Every edit node's `id` names a terrain feature, and every
+feature publishes markers into its anchor namespace (§5.5):
+
+| `verb` | markers |
+|---|---|
+| `peak`, `island` | `center` (point), `peak` (point, the summit column), `foot` (ring at the kernel base) |
+| `volcano` | `center`, `peak`, `foot`, `rim` (ring, the caldera lip) |
+| `plateau` | `center`, `peak` (the plateau top's centroid column), `foot`, `rim` (ring, where falloff starts) |
+| `basin` | `center` (the lowest column), `foot`, `rim` (ring, the basin lip) |
+| `ridge` | `center` (polyline, the refined crest), `peak` (highest crest column), `head`/`mouth` (points, the two ends), `side_a`/`side_b` (polylines offset by ±`width`/2) |
+| `valley`, `river` | `center` (polyline, the refined thalweg), `head`/`mouth` (points; for `river`, `mouth` is the downhill end), `side_a`/`side_b` (banks at ±`width`/2) |
+
+**Placement and attachment.**
+
+1. An edit node edits the field target of its **nearest ancestor field node**.
+   No such ancestor is `LOAM-E240 EDIT_WITHOUT_FIELD`.
+2. The solver never translates, rotates, or lays out an edit node. Its frame is
+   its field ancestor's frame; its `placement.translation` is that ancestor's.
+   An `envelope` on such a node is ignored with
+   `LOAM-W243 ENVELOPE_IGNORED_ON_FIELD_EDIT`.
+3. `course` verbs use the refinement in §4.4; `river` sets `descend: true`.
+
+Ports: none. Emits: no ops — a field contribution plus markers. `estimate()`
+returns the ancestor field node's frame.
+
+---
+
+#### `terrain.climate@0` · stage `climate`
 
 Assigns `biomeThemes` to columns and writes the chunk biome array.
 
@@ -1852,7 +2541,7 @@ scatter so scatter can read it.
 
 ---
 
-#### `scatter.forest@0`
+#### `scatter.forest@0` · stage `decorate`
 
 | Param | Type | Default | Meaning |
 |---|---|---|---|
@@ -1877,7 +2566,7 @@ move the trees of other species. Emits ops + occupancy.
 
 ---
 
-#### `scatter.props@0`
+#### `scatter.props@0` · stage `decorate`
 
 Same masking machinery, for non-tree clutter: boulders, driftwood, crates,
 lanterns, market stalls, rubble piles.
@@ -1892,11 +2581,17 @@ lanterns, market stalls, rubble piles.
 
 ---
 
-#### `road.network@0`
+#### `road.network@0` · stage `connective`
 
 Builds a road graph over anchor points and port stubs, then drapes surfaces.
-Registers **route corridors** in pass 3 (so `along` works, §4.4) and refines
-centerlines in pass 6.
+Registers **route corridors** at substage 3b (so `along` works, §4.4) and
+refines centerlines in pass 6.
+
+The generator MUST expose a `corridors()` method usable at substage 3b,
+returning corridor polygons and coarse centerlines from `anchors` and `pattern`
+alone, with no placed geometry available. Its pass-6 routing MUST be a
+refinement *inside* those polygons (§4.9.6): the corridor is frozen once
+`corridors()` has returned it.
 
 | Param | Type | Default | Meaning |
 |---|---|---|---|
@@ -1921,7 +2616,7 @@ validator (`LOAM-W430 DISCONNECTED_ROAD_GRAPH`).
 
 ---
 
-#### `cave.carver@0`
+#### `cave.carver@0` · stage `carve`
 
 Subtractive. Runs with `csg.mode: "carve"`.
 
@@ -1944,7 +2639,7 @@ carving respects occupancy claimed by higher-precedence nodes.
 
 ---
 
-#### `building.grammar@0`
+#### `building.grammar@0` · stage `structure`
 
 The parameterized building generator. Footprint → massing → floors → facade →
 roof, each stage seeded from the `grammar` stream.
@@ -1974,7 +2669,7 @@ ports + occupancy + `markers` (`entrance`, `ridge`, `interior_center`).
 
 ---
 
-#### `settlement.layout@0` (`emitsChildren: true`)
+#### `settlement.layout@0` · stage `structure` (`emitsChildren: true`)
 
 The "generate a whole town from creative guidance" generator from
 `rough-vision.txt`. Emits **child nodes**, not voxels: plots, a road network
@@ -2004,7 +2699,7 @@ the cat-cathedral asset to a slot without hand-placing anything.
 
 ---
 
-#### `water.body@0`
+#### `water.body@0` · stage `water`
 
 | Param | Type | Default |
 |---|---|---|
@@ -2072,6 +2767,47 @@ rather than fails. `[C:med]`
 Inherited down the tree; a child may only shrink its budget, never grow it
 (`LOAM-E195`). Exhaustion is `LOAM-E196 BUDGET_EXCEEDED`, except in the decorate
 pass (warning `LOAM-W197`, output truncated deterministically by op index).
+
+### 7.10 Execution order `[C:high]`
+
+Generator execution order is **fully implicit**. There is no ordering
+constraint, and `after` is not a constraint type: a document containing one gets
+`LOAM-E104 UNKNOWN_CONSTRAINT_TYPE`, per §1.5's rule that anything which can
+change geometry fails loud. Explicit ordering constraints in a declarative
+language invite cycles, and the ordering an author would want to express is
+almost always a property of the *generator*, not of the document.
+
+Order is, in decreasing significance:
+
+1. **Stage**, in the fixed total order
+
+   ```
+   field → field_edit → climate → carve → water → structure → connective → decorate
+   ```
+
+2. **Group**, where a stage defines one. Only `field_edit` does: all `raise`
+   verbs, then all `carve` verbs (§7.5).
+3. **Document order** — pre-order DFS of the scene graph, siblings in
+   declaration order, after `repeat` and `$proto` expansion.
+
+Stages `field` and `field_edit` execute at substage 3a; `climate` through
+`connective` at passes 4 and 6; `decorate` at pass 7. Both sources of decoration
+— a node's `decorate` array (§7.8) and a biome theme's `scatter` array (§2.5) —
+run at stage `decorate` and are ordered against each other by document order,
+which is the whole of the precedence rule between them.
+
+Stage assignments for the v0 catalog:
+
+| Generator | `stage` |
+|---|---|
+| `terrain.heightfield@0`, `terrain.density@0` | `field` |
+| `terrain.edit@0` | `field_edit` |
+| `terrain.climate@0` | `climate` |
+| `cave.carver@0` | `carve` |
+| `water.body@0` | `water` |
+| `building.grammar@0`, `settlement.layout@0` | `structure` |
+| `road.network@0` | `connective` |
+| `scatter.forest@0`, `scatter.props@0` | `decorate` |
 
 ---
 
@@ -2396,7 +3132,7 @@ assetCacheKey = BLAKE3( canonical({
 `assets.lock.json`:
 
 ```json
-{ "loam": "0.1", "kind": "asset-lock",
+{ "loam": "0.2", "kind": "asset-lock",
   "entries": {
     "b3:7f21…": { "provider": "tripo/tripo-v3",
                   "meshSha256": "…", "schemSha256": "…",
@@ -2487,7 +3223,7 @@ Terrain only, one file, no structures. This is the G3 acceptance case.
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "world",
   "meta": {
     "name": "Misty Fjords",
@@ -2657,8 +3393,7 @@ Terrain only, one file, no structures. This is the G3 acceptance case.
           "humidityFrequency": 0.0013,
           "blendRadius": 10,
           "latitudeGradient": -0.35
-        },
-        "constraints": [{ "type": "after", "target": "^.landform" }]
+        }
       },
       {
         "id": "sea_caves",
@@ -2734,10 +3469,11 @@ Notes on what this demonstrates:
   non-falling base. A "black sand" palette of pure gravel would collapse into
   the water on first tick — exactly the kind of thing the deterministic
   validators should lint (`LOAM-W440 FALLING_BLOCK_UNSUPPORTED`).
-- `after` is used as an ordering constraint between terrain generators. *(This
-  is a gap — see §12 Q11: v0.1 as written has no `after` constraint. Either add
-  it or make terrain ordering implicit by precedence. Recommendation: implicit,
-  and drop this line.)*
+- **No ordering constraint appears anywhere.** `terrain.heightfield@0` (stage
+  `field`) runs before `terrain.climate@0` (stage `climate`), which runs before
+  `cave.carver@0` (stage `carve`), entirely by the implicit stage order of
+  §7.10. Ordering is a property of the generator, not of the document — which
+  is why an author never has to think about it and can never introduce a cycle.
 
 ### 10.2 Example B — small village with roads and ports
 
@@ -2748,7 +3484,7 @@ route corridors, `repeat`, and port-driven roads.
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "world",
   "meta": {
     "name": "Hollow Beck",
@@ -2892,7 +3628,7 @@ route corridors, `repeat`, and port-driven roads.
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "module",
   "contract": {
     "envelope": { "shape": "box", "size": [180, 48, 180],
@@ -3147,7 +3883,7 @@ asset with rooms inside it; the tunnel is a first-class `connected` constraint.
 
 ```json
 {
-  "loam": "0.1",
+  "loam": "0.2",
   "kind": "world",
   "meta": {
     "name": "Bastet's Rest",
@@ -3599,8 +4335,8 @@ canonical form; the tolerant entry point desugars first.
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://terrainist.dev/schema/loam-0.1.json",
-  "title": "Loam v0.1",
+  "$id": "https://terrainist.dev/schema/loam-0.2.json",
+  "title": "Loam v0.2",
   "$defs": {
     "id":       { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,62}$" },
     "symbol":   { "type": "string", "pattern": "^@[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*(:[a-z_]+)?$" },
@@ -3619,6 +4355,13 @@ canonical form; the tolerant entry point desugars first.
       "oneOf": [
         { "$ref": "#/$defs/blockId" },
         { "type": "array", "items": { "$ref": "#/$defs/blockSpec" } },
+        { "type": "object",
+          "properties": {
+            "mix": { "type": "array", "minItems": 1,
+                     "items": { "type": "array", "minItems": 2, "maxItems": 2,
+                                "prefixItems": [ { "$ref": "#/$defs/blockId" },
+                                                 { "type": "number", "minimum": 0 } ] } } },
+          "required": ["mix"], "additionalProperties": false },
         { "type": "object",
           "properties": {
             "block":  { "$ref": "#/$defs/blockId" },
@@ -3773,9 +4516,10 @@ canonical form; the tolerant entry point desugars first.
     "constraint": {
       "type": "object",
       "properties": {
-        "type": { "enum": ["within","adjacent_to","facing","along","distance",
-                           "connected","align","orientation","clearance",
-                           "terrain_conform","not_overlapping","elevation","slope",
+        "type": { "enum": ["within","adjacent_to","facing","along","beside",
+                           "distance","connected","align","orientation","clearance",
+                           "terrain_conform","zone","at","course","on",
+                           "not_overlapping","elevation","slope",
                            "spread","cluster","inside_shell","above","below",
                            "centered_in","on_axis","visible_from","avoid"] },
         "target": { "oneOf": [ { "$ref": "#/$defs/selector" },
@@ -3793,7 +4537,20 @@ canonical form; the tolerant entry point desugars first.
         "value": {}, "axis": { "type": "string" },
         "gap": { "oneOf": [ { "type": "integer" }, { "$ref": "#/$defs/range" } ] },
         "offset": { "oneOf": [ { "type": "integer" }, { "$ref": "#/$defs/range" } ] },
-        "at": { "oneOf": [ { "type": "number" }, { "$ref": "#/$defs/range" } ] },
+        "at": { "oneOf": [ { "type": "number" }, { "$ref": "#/$defs/range" },
+                           { "type": "array", "items": { "$ref": "#/$defs/unit" },
+                             "minItems": 2, "maxItems": 2 },
+                           { "$ref": "#/$defs/selector" } ] },
+        "zone": { "enum": ["center","north","south","east","west",
+                           "northeast","northwest","southeast","southwest"] },
+        "course": { "type": "array", "minItems": 2, "maxItems": 8,
+                    "items": { "type": "array", "items": { "$ref": "#/$defs/unit" },
+                               "minItems": 2, "maxItems": 2 } },
+        "of": { "$ref": "#/$defs/selector" },
+        "jitter": { "$ref": "#/$defs/unit" },
+        "band": { "type": "integer" },
+        "radius": { "type": "integer" },
+        "descend": { "type": "boolean" },
         "side": { "enum": ["left","right","any"] },
         "face": { "enum": ["north","south","east","west","up","down","any"] },
         "overlap": { "oneOf": [ { "type": "integer" }, { "const": "full" } ] },
@@ -4074,6 +4831,7 @@ canonical form; the tolerant entry point desugars first.
   "properties": {
     "loam": { "type": "string", "pattern": "^0\\.[0-9]+$" },
     "kind": { "enum": ["world","module","style","bundle"] },
+    "profile": { "type": "string" },
     "meta": {
       "type": "object",
       "properties": {
@@ -4083,7 +4841,15 @@ canonical form; the tolerant entry point desugars first.
         "mcVersion": { "type": "string" },
         "generatedBy": { "type": "object" },
         "createdAtIso": { "type": "string" },
-        "toolchain": { "type": "object" }
+        "toolchain": { "type": "object" },
+        "spawn": {
+          "type": "object",
+          "properties": {
+            "zone": { "enum": ["center","north","south","east","west",
+                               "northeast","northwest","southeast","southwest"] },
+            "at": { "type": "array", "items": { "$ref": "#/$defs/unit" },
+                    "minItems": 2, "maxItems": 2 } },
+          "additionalProperties": false }
       },
       "additionalProperties": false },
     "requires": {
@@ -4123,10 +4889,17 @@ Known limits of this skeleton, to be closed before G4:
 
 - `constraint` is a flat union of every type's fields; the real schema should be
   a `oneOf` discriminated on `type` so unknown-field errors point at the right
-  constraint. Deferred because a flat union is far more forgiving during early
-  authoring, and because constrained-decoding grammars are smaller for it.
+  constraint. Deferred once already, and now carrying five more types, so its
+  unknown-field diagnostics are correspondingly vaguer: **schedule the rewrite
+  at G4 rather than deferring it again.**
+- `envelope.size` keeps `minItems: 2, maxItems: 3`; the shape-dependent arity of
+  §3.3 is enforced by the post-schema validator, not by an `if`/`then` on
+  `shape`. A schema-level encoding is possible but bloats constrained-decoding
+  grammars for no diagnostic benefit, since the validator's message is better
+  than the schema's would be.
 - `params` for generators is `{}` here; the second-pass registry validation is
-  where the real checking happens.
+  where the real checking happens — including `terrain.edit@0`'s verb-dependent
+  param schema and the params-form coarse placement of §4.9.5.
 - `additionalProperties: false` everywhere is the strict-mode shape; the
   tolerant parser relaxes it to allow `x-` keys, per §1.5.
 
@@ -4134,7 +4907,32 @@ Known limits of this skeleton, to be closed before G4:
 
 ## §12 Open questions
 
-Every decision I was not confident about, with a recommendation.
+### 12.0 Resolved in v0.2
+
+These were open in v0.1 and are now settled. They are recorded rather than
+deleted, because the reasoning is the reason the normative text reads as it
+does.
+
+| Q | Resolution |
+|---|---|
+| **Q6** — `along` route corridors | **Built as specified, plus a bounded reconciliation.** Corridors are constructed at substage 3b and *frozen*; substage 3.5 runs at most two rounds of re-route-within-corridor and nudge-dependent-nodes. §4.9.6. |
+| **Q9** — cross-engine float determinism | **`ctx.math` is own-implementation-only**, defined by committed golden vector tables rather than a ULP bound, with a documented list of IEEE-exact primitives that remain permitted, an integer/fixed-point quantization rule for stdlib generators, and a cross-architecture CI matrix. §6.8. |
+| **Q11** — ordering between sibling generators | **No `after` constraint, ever.** Ordering is implicit: `stage` → group → document order, with `csg.precedence` demoted to a conflict rule only. §7.10, §3.7. Example A (§10.1) no longer carries the stray `after`. |
+| **Q14** — envelope `size` arity | **Arity is a function of `shape`**: 2D for `region`/`path`, 3D elsewhere, with coercion diagnostics rather than schema errors. The "force 3D everywhere" alternative was rejected — it manufactures a number that looks load-bearing and is ignored. §3.3. |
+| **Q17** — water and fluid correctness | **A one-tick fluid-settling validator is a release gate**, not an aspiration: `LOAM-E450`, downgradable with `--allow-unstable`. `LOAM-W440` is promoted to a required check in the same pass. §13.4. |
+| **Q13** — `decorate` in two places | **Folded into stage order.** Node `decorate` and biome-theme `scatter` both run at stage `decorate` and are ordered against each other by document order (§7.10), which replaces the ad-hoc "biome first, node wins" rule. Both remain, because node-scoped and biome-scoped decoration are genuinely different questions. |
+
+**Q5 (constraint vocabulary size) is amended rather than resolved.** The
+two-tier implementation plan stands, but the tiering predates coarse placement.
+Revised: `zone`, `at`, `course`, and `on` are **required at G2** — ahead of the
+rest of tier 1 — because terrain authoring depends on them. `beside` is sugar
+over `along` and needs no tier of its own. Everything else is unchanged: tier 1
+at G4, tier 2 at G5+, and tier-2 types must still parse and produce
+`LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED` rather than an error.
+
+### 12.1 Still open
+
+Every remaining decision I was not confident about, with a recommendation.
 
 **Q1 — JSON vs JSON5 as the *authoring* format.** I recommend strict JSON,
 justified by constrained decoding (§1.1). But comments genuinely help agents
@@ -4152,9 +4950,12 @@ the compiler ingests, so multi-file support is a thin, testable front end.
 **Q3 — Should `nodePath` seeds be positional?** Positional seeds mean moving a
 node in the tree rerolls it. The alternative is a mandatory stable `uid` per
 node, costing tokens on every node forever. **Recommendation:** keep positional;
-add an *optional* `uid` in v0.2 that, when present, replaces `nodePath` in the
-seed derivation. That way stability is opt-in for nodes that need it (landmarks
-a user liked) and free for the other 95%. `[C:med]`
+add an *optional* `uid` that, when present, replaces `nodePath` in the seed
+derivation. That way stability is opt-in for nodes that need it (landmarks a
+user liked) and free for the other 95%. The case strengthened in v0.2: feature
+markers (§7.5) make a terrain node's id referenceable from anywhere in the
+document, so renaming one now breaks constraints as well as rerolling seeds.
+`[C:med]`
 
 **Q4 — Are per-type default strengths too clever?** A single global default
 ("everything hard") is more predictable and easier to document in a system
@@ -4164,22 +4965,20 @@ global-hard (constant unsat on `facing`) is much worse than the failure mode of
 per-type (occasional surprise). Mitigate by having the compiler echo effective
 strengths in the solver report. `[C:med]`
 
-**Q5 — Is the constraint vocabulary too large for v0.1?** Twenty-two types is a
-lot to implement for G4. **Recommendation:** implement in two tiers. Tier 1
-(G4): `within`, `adjacent_to`, `distance`, `along`, `orientation`,
+**Q5 — Is the constraint vocabulary too large?** Twenty-seven types is a lot to
+implement. **Recommendation:** implement in tiers. Tier 0 (G2): `zone`, `at`,
+`course`, `on` — terrain authoring depends on them, so they land first. Tier 1
+(G4): `within`, `adjacent_to`, `distance`, `along`, `beside`, `orientation`,
 `terrain_conform`, `not_overlapping`, `elevation`, `facing`, `connected`,
 `clearance`. Tier 2 (G5+): the rest. Tier 2 types must still *parse* and must
 produce `LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED` rather than an error — so specs
 written against the full vocabulary stay valid. `[C:high]`
 
-**Q6 — `along` route corridors.** §4.4 resolves the road-ordering hazard by
-requiring linear targets to exist as `path`-envelope nodes in pass 3. This is
-the single most likely thing in this spec to be wrong in practice, because it
-requires the road network generator to produce a *plausible* corridor before it
-knows where buildings go, and then buildings shift the ideal road. **Recommendation:**
-build it as specified, but plan for a pass 3.5 "coarse route" iteration
-(corridor → buildings → re-route within corridor → nudge buildings) at G4, and
-budget time for it. `[C:low — flag for Kai]`
+**Q6 — `along` route corridors.** *Resolved — §12.0; specified in §4.9.6.* The
+worry that motivated it stands as the thing to watch at G4: the road network
+generator must produce a plausible corridor before it knows where buildings go,
+and buildings then shift the ideal road. Freezing the corridor and capping the
+iteration bounds that feedback loop; it does not abolish it.
 
 **Q7 — `layout: "manual"` and explicit `offset`.** This is a coordinate escape
 hatch, which contradicts the no-absolute-coordinates rule — though the
@@ -4193,14 +4992,10 @@ local variation ("this one building is marble"). **Recommendation:** keep, and
 add `sealExcept` in v0.2 if it bites. Watch for agents fighting the seal and
 producing worse specs to route around it. `[C:med]`
 
-**Q9 — Cross-engine float determinism.** §6.5 rule 6 pins transcendental math
-behind `ctx.math` because `Math.sin` is not IEEE-specified. This is a real
-correctness risk that will only show up when someone runs the compiler on a
-different Node version or arch. **Recommendation:** implement `ctx.math` with
-explicit polynomial approximations from day one (not wrappers over `Math`), and
-add a CI determinism test across at least two architectures at G1. Cheap now,
-extremely expensive to retrofit. `[C:high that it matters; C:med on the
-implementation]`
+**Q9 — Cross-engine float determinism.** *Resolved — §12.0; specified in §6.8.*
+The residual risk is that the golden vector tables are only as good as their
+coverage: a drift discovered after worlds have shipped invalidates all of them.
+The CI matrix gate exists to catch that early rather than eventually.
 
 **Q10 — BLAKE3 vs SHA-256.** BLAKE3 is faster and TS-available; SHA-256 is more
 universally implemented and needs no extra dependency in some environments.
@@ -4208,15 +5003,12 @@ universally implemented and needs no extra dependency in some environments.
 `toolchain`. The choice matters only in that it must never change silently.
 `[C:med]`
 
-**Q11 — Ordering between sibling generators.** Example A (§10.1) used an
-`after` constraint that does not exist in §4's vocabulary — a real gap I hit
-while writing the example. Terrain must run before climate, which must run
-before scatter. **Recommendation:** do *not* add an `after` constraint. Make
-ordering implicit from `csg.precedence` plus a fixed pass sub-order (heightfield
-→ density → climate → carve → structures → connective → decorate), and give
-generators a declared `stage` in their stdlib metadata. Explicit ordering
-constraints in a declarative language invite cycles. **The `after` line in
-Example A should be deleted once this is settled.** `[C:med]`
+**Q11 — Ordering between sibling generators.** *Resolved — §12.0; specified in
+§7.10.* One refinement was made while resolving it: ordering is carried by
+`stage` **alone**, not by `csg.precedence` plus a sub-order as originally
+recommended. Precedence answers "who wins this block"; stage answers "who runs
+first". Using one field for both breaks the moment a stage needs an internal
+grouping, which `field_edit` does immediately.
 
 **Q12 — Interior generation.** §9.5 inserts floors into shells and
 `building.grammar` has an `interior` param, but there is no real
@@ -4226,17 +5018,14 @@ at G5 with BSP partitioning + door graph + furnish tables, and treat interior
 quality as a G5 acceptance criterion, not a G7 polish item. `[C:med]`
 
 **Q13 — Should `decorate` be a node field or a separate document section?**
-Currently per-node (§7.8) and per-biome-theme (§2.5), which means two places to
-look. **Recommendation:** keep both — node-scoped decoration is genuinely
-different from biome-scoped — but document the precedence (biome theme first,
-then node, node wins on conflict). `[C:low]`
+*Resolved — §12.0.* Both are kept; ordering between them is document order
+within stage `decorate`.
 
-**Q14 — Envelope `size` for `region` shapes is 2D, elsewhere 3D.** An
-irregularity that will trip agents. **Recommendation:** accept `[x,z]` for
-`region`/`path` and `[x,y,z]` everywhere else, but have the validator emit a
-*specific* fix-it message rather than a schema error. Alternatively force 3D
-everywhere and ignore Y for regions — simpler, slightly wasteful. Leaning toward
-forcing 3D for regularity. `[C:low]`
+**Q14 — Envelope `size` for `region` shapes is 2D, elsewhere 3D.** *Resolved —
+§12.0; specified in §3.3.* Resolved **against** the original lean toward forcing
+3D: the deciding argument is that an ignored Y component on a region is a number
+that looks load-bearing and is not, which is worse than an irregularity the
+author can see. Arity is derivable from `shape`, so regularity survives.
 
 **Q15 — Asset `variants > 1`.** Generating N meshes and picking one
 deterministically is the obvious quality lever, but it multiplies the most
@@ -4251,12 +5040,10 @@ it leads to every statue in the world being a cat. The planner should put the
 relevant intent in each asset's `prompt`/`label`. Revisit if assets come back
 off-theme. `[C:med]`
 
-**Q17 — Water and fluid correctness.** Waterlogging is derived (§8.3) and
-falling blocks are linted (§10.1), but flowing water, fluid updates on load, and
-lava/water interaction are unaddressed. A world that looks right in a render and
-then floods on first tick is a serious product failure. **Recommendation:** add
-a `fluid-settling` validator at G2 that simulates one tick of fluid spread over
-the emitted field and reports instability. `[C:high that it's needed]`
+**Q17 — Water and fluid correctness.** *Resolved — §12.0; specified in §13.4.*
+One tick is deliberately the whole of it: it catches the failure that matters
+(a world that renders correctly and floods on first tick) without turning the
+compiler into a fluid simulator.
 
 **Q18 — Chunk-boundary and structure-integrity concerns at emit.** Not covered
 here at all (this is a spec, not an emitter design), but `LOAM-W440`-class lints
@@ -4277,6 +5064,24 @@ buildings that are themselves generators). Depth and cost are unbounded in the
 current design. **Recommendation:** cap nested expansion at depth 3 and require
 `budget.maxChildren`; a generator that wants deeper structure should emit a
 composite and let the normal tree handle it. `[C:med]`
+
+**Q21 — Cross-feature terrain anchors.** The marker vocabulary of §7.5 omits
+`pass` — the saddle between two peaks — although it is an obviously useful place
+to put a road or a fortress. It is omitted because a saddle is a property of a
+*pair* of features, not of either node: it has no owner, no natural name, and
+computing it needs a cross-feature analysis at substage 3a that nothing else
+requires. **Recommendation:** leave it out of v0.2; revisit if G2/G3 worlds
+actually want to place things in passes, at which point the right shape is
+probably a derived `@terrain:pass` product rather than a published marker.
+`[C:med]`
+
+**Q22 — Coarse cost normalization.** §4.9.4 normalizes coarse cost by the
+frame's half-diagonal, which makes a `zone` pull scale-free but also means the
+same `weight` behaves differently in a 512-block frame and a 64-block one
+*relative to* fixed-distance constraints like `distance`. **Recommendation:**
+ship it and measure at G3. Normalizing by a fixed block count instead trades one
+surprise for another, and there is no way to tell which surprises less without
+real worlds. `[C:med]`
 
 ---
 
@@ -4306,11 +5111,22 @@ composite and let the normal tree handle it. `[C:med]`
 | `E150` | envelope overflow | §3.3 |
 | `W151` | op clipped to envelope | §8.1 |
 | `E151` | envelope out of world bounds | §3.3 |
+| `W152` | envelope size coerced (region/path given 3 elements) | §3.3 |
+| `E153` | envelope size arity (box family given 2 elements) | §3.3 |
 | `E160` | ambiguous selector | §4.2 |
 | `W161` | undeclared cross-module reference | §4.2 |
+| `E162` | unknown zone token | §4.9.2 |
+| `E163` | unknown anchor — no such port or marker | §5.5 |
+| `W164` | marker shadowed by a port of the same name | §5.5 |
+| `E165` | coarse domains intersect to nothing | §4.9.4 |
+| `E166` | coarse coordinate outside [0,1] | §4.9.1 |
+| `W167` | competing placement (coarse + `centered_in`/`on_axis`) | §4.9.4 |
+| `E168` | duplicate placement (both forms, or two of at/zone/course) | §4.9.5 |
+| `E169` | ambiguous shorthand — two unrelated type keys | §4.1 |
 | `E170` | cannot fit within container | §4.4 |
 | `E171` | no front defined for `facing` | §4.4 |
 | `E172` | orientation incompatible with allowed rotations | §4.4 |
+| `W173` | shadowed type key | §4.1 |
 | `E180` | unroutable connection | §4.4 |
 | `E181` | incompatible ports | §5.4 |
 | `W182` | port width mismatch > 2× | §5.4 |
@@ -4329,6 +5145,12 @@ composite and let the normal tree handle it. `[C:med]`
 | `W213` | literal block id outside a primitive node | §8.3 |
 | `E220` | unknown enum value in `motifs` | §2.4 |
 | `E221` | sealed style path overridden | §2.8 |
+| `E240` | terrain edit with no ancestor field node | §7.5 |
+| `E241` | course waypoint count outside 2..8 | §4.4 |
+| `W242` | basin rim open, water not filled | §7.5 |
+| `W243` | envelope ignored on a field-edit node | §7.5 |
+| `E244` | unknown terrain verb | §7.5 |
+| `E245` | authored generator declares no `stage` | §7.1 |
 | `W301` | asset fallback used | §9.7 |
 | `W302` | asset node has no fallback | §9.7 |
 | `E310` | shell produced no interior cavity | §9.5 |
@@ -4340,11 +5162,20 @@ composite and let the normal tree handle it. `[C:med]`
 | `E405` | optional node dropped | §4.6 |
 | `E406` | unsatisfiable constraint set | §4.6 |
 | `W407` | constraint parsed but not implemented in this tier | §12 Q5 |
+| `W408` | corridor iteration cap reached | §4.9.6 |
+| `I409` | node nudged by corridor iteration | §4.9.6 |
 | `W420` | port blocked by geometry | §5.6 |
 | `W421` | port not walkable (no supported floor) | §5.6 |
 | `W422` | expected opening missing in asset mesh | §9.6 |
 | `W430` | disconnected road graph | §7.5 |
-| `W440` | falling block unsupported | §10.1 |
+| `W440` | falling block unsupported | §13.4 |
+| `W441` | stamped terrain — non-field node writing bulk ground | §7.0 |
+| `E450` / `W450` | fluid unstable after one settling tick (`W` under `--allow-unstable`) | §13.4 |
+| `E900` | kit example invalid | §14.4 |
+| `E901` | kit cites a section that does not exist | §14.4 |
+| `W902` | kit references a topic missing from the index | §14.4 |
+| `E903` | kit stale — cited spec sections changed | §14.4 |
+| `W904` | diagnostic code with no topic mapping | §14.7 |
 
 ### 13.3 Per-node lint overrides
 
@@ -4358,9 +5189,210 @@ is deliberately awkward to write, and every suppression appears in the report,
 because the deterministic validators are the cheap feedback loop and silently
 disabling them is how worlds get shipped with doors into walls.
 
+### 13.4 Post-emit validators `[C:high]`
+
+Run at pass 8.5, after lighting and heightmaps and before Anvil emit. Both are
+pure functions of the emitted voxel field: no scheduling, no randomness, no
+wall-clock.
+
+**Fluid settling.** The compiler simulates **exactly one** Minecraft fluid-spread
+tick over the emitted field, for water and lava, using the vanilla flow rules
+for the pinned `mcVersion`. Any block whose state would change in that tick is
+an *unstable fluid block*.
+
+- One or more unstable blocks → `LOAM-E450 FLUID_UNSTABLE`; compilation fails.
+- `--allow-unstable` downgrades it to `LOAM-W450 FLUID_UNSTABLE` (same name,
+  warning severity) and the compile completes.
+- The report lists the first 64 unstable positions with their owning
+  `nodePath`, so the repair loop can name the node responsible rather than the
+  puddle.
+
+One tick is deliberately the whole of it. It catches the failure that matters —
+a world that renders correctly and then floods on first load — without turning
+the compiler into a fluid simulator.
+
+**Falling blocks.** `LOAM-W440 FALLING_BLOCK_UNSUPPORTED` fires for any
+gravity-affected block with a non-solid block beneath it. A "black sand" palette
+of pure gravel collapses into the water on first tick; this is the check that
+says so before the player finds out.
+
+### 13.5 Profile diagnostic namespaces
+
+`LOAM-T***` is reserved for **profile-scoped** diagnostics (§1.6). Every `T`
+code MUST either report a profile *restriction* that has no core-language
+equivalent, or alias a core code with identical semantics — a profile may not
+quietly fork the diagnostic vocabulary. A profile's documentation MUST publish
+its alias table.
+
 ---
 
-*End of Loam v0.1 draft. Written 2026-07-27 against `docs/DESIGN.md` (GOAL 0
-output). Review targets, in order of value: §4 (constraint semantics and the
-relaxation ladder), §6 (determinism rules), §9.5 (shell interiors), and §12 Q6,
-Q9, Q11, Q17.*
+## §14 Spec kits
+
+How this document reaches the agents that write Loam. Kits are a delivery
+mechanism, not a dialect: nothing in §14 changes what any construct means.
+
+### 14.1 What a kit is, and is not
+
+A **spec kit** is a compiled, versioned, role-scoped excerpt of this
+specification, delivered to an authoring agent as its system context. The
+division of labor is fixed, and each part is owned by exactly one mechanism:
+
+| Concern | Owned by |
+|---|---|
+| Syntactic validity | **Constrained decoding** against the role's schema subset (§1.1) |
+| Situational context — this node's envelope, ports, budget, siblings | The **contract block** (§1.3) |
+| Role semantics — what the fields *mean*, and which to reach for | The **kit** |
+| Everything else | `loam-doc` on demand (§14.5) — never a full-spec dump |
+
+Kits are not RAG. No part of kit assembly is similarity-based; a kit is a
+deterministic build artifact, byte-identical for a given spec version.
+
+### 14.2 Roles
+
+| Role | Writes | Kit contents beyond the core |
+|---|---|---|
+| `terrain-node-author` | terrain plans, field edits, biome themes | §2.2 and §2.5, §3.3 envelopes, §4.9 coarse placement, §7.5 `terrain.*` and `scatter.forest@0`, §7.0 |
+| `subdivider` | L2 subtrees under a contract | §1.3 modules and contracts, §3 in full, tier-0/1 constraints from §4, §5 ports, §3.8 and §3.9 |
+| `generator-author` | authored TypeScript generators | §7.1–§7.4, §7.7, §7.10, §8 op set, §6.3–§6.5 and §6.8 |
+| `asset-prompter` | `kind: "asset"` nodes | §9.1–§9.7, §2.4 motifs, §9.3 prompt augmentation |
+
+The **common core**, present in every kit: §0.3's cheat sheet, §3.1's field
+table, a one-paragraph statement that ids are load-bearing (§3.2), §4.1's
+shorthand rule, §2.2's symbols and dot-fallback, a "never do this" list, and the
+`loam-doc` topic index.
+
+New roles are added by adding a kit source file. The role list is data, not spec
+text.
+
+### 14.3 Budgets
+
+Budgets are stated in **bytes**, not tokens, because tokenizers differ per model
+and CI has to be deterministic (≈4 bytes per token as a working conversion):
+
+| Part | Max |
+|---|---|
+| common core | 6 KiB |
+| role sections | 12 KiB |
+| worked examples | 8 KiB |
+| **total kit** | **24 KiB** |
+
+Exceeding a budget is a build failure, not a warning. The budget is the forcing
+function that keeps kits curated rather than accreted. `[C:med]` on the numbers.
+
+### 14.4 Kit sources and the build
+
+A kit source is `kits/<role>.kit.md` with front matter:
+
+```yaml
+loam: "0.2"
+role: terrain-node-author
+sourceSections: ["§0.3", "§3.1", "§4.9", "§7.5/terrain.edit@0"]
+sourceHash: "b3:9c41…"        # written by the build
+examples: ["examples/kits/terrain-basic.loam.json"]
+topics: ["coarse-placement", "terrain-verbs"]
+```
+
+`loam kit build` resolves each `sourceSections` entry against the spec at the
+pinned version, concatenates the cited bodies, records their BLAKE3 as
+`sourceHash`, splices in the role prose and examples, and checks the budgets.
+
+CI checks, all blocking:
+
+1. Every `sourceSections` entry resolves → else `LOAM-E901 KIT_SECTION_MISSING`.
+2. `sourceHash` matches the current spec → else `LOAM-E903 KIT_STALE`. **This is
+   what makes drift impossible:** editing a cited section of this document fails
+   CI until the kit is rebuilt and re-reviewed.
+3. Every embedded example parses, validates against the schema, and compiles
+   with zero `E` diagnostics → else `LOAM-E900 KIT_EXAMPLE_INVALID`.
+4. A *teaching-the-error* example may declare `expect: ["E170", …]`; its
+   diagnostic set must match exactly.
+5. Byte budgets (§14.3).
+6. Every topic a kit references exists in `topics.json` → else
+   `LOAM-W902 KIT_TOPIC_MISSING`.
+
+### 14.5 `loam-doc` — the only retrieval mechanism
+
+```
+loam-doc <topic>              # a spec topic, verbatim
+loam-doc --code <CODE>        # a diagnostic's §13 row, its topic, and its fix hint
+loam-doc --list               # the full topic index
+```
+
+**Deterministic resolution, in order:** exact topic-id match → unique
+case-insensitive prefix match → otherwise return the topic list. **Never fuzzy,
+never embedding-based, never ranked.** An ambiguous prefix returns the
+candidates rather than a guess.
+
+Topics live in a build-generated `topics.json` mapping topic id to section
+anchor, with ids stable across MINOR versions. Output is capped at **8 KiB**;
+any section longer than that is split *at build time* into numbered subtopics
+(`coarse-placement.1`, `.2`), so runtime output is never truncated mid-sentence.
+
+The tool is registered in the authoring agent's tool list. Its calls are logged
+into the world manifest for session reproducibility — informative only, since
+`loam-doc` never influences a compile and therefore carries no determinism
+weight.
+
+### 14.6 Diagnostic-driven retry
+
+Normative loop, per authoring task:
+
+1. **Attempt 0** — constrained decode against the role's schema subset, with the
+   role kit and the contract block in context.
+2. **Validate** — compile far enough to produce diagnostics. Order them
+   canonically: severity (`E` before `W`), then code ascending, then `nodePath`.
+3. **Repair prompt**, assembled deterministically from:
+   - the original contract block, verbatim;
+   - **only the offending node(s)**, verbatim, plus their parent's `id` and
+     `envelope` for context — never the whole document, never a sibling's body;
+   - the diagnostics in canonical order, each with its one-line fix hint;
+   - for at most `maxExcerpts` (default **3**) distinct codes, most severe
+     first, the spec excerpt registered in the code→topic map (§14.7);
+   - an instruction to return only the corrected node(s).
+4. **Retry budget** — `maxRepairs`, default **2** per node. On exhaustion,
+   escalate: mark the node `optional: true` and let the ladder drop it
+   (`LOAM-E405`), or return to the planner for re-subdivision. Every escalation
+   is recorded in the report.
+5. **Determinism boundary.** The repair prompt is a pure function of
+   (document, diagnostics, kit id) — therefore cacheable, diffable, and covered
+   by golden tests. The *model call* is not deterministic; the **world** is
+   deterministic given the final document. This is the same boundary the asset
+   lockfile draws (§9.8), stated for authoring instead of for meshes.
+
+### 14.7 The code→topic map
+
+`diagnostics.json` maps every §13 code to a one-line **fix hint** in the
+imperative, the **topic** whose excerpt to attach, and optionally one minimal
+**worked example** of the correct form:
+
+```json
+"E170": { "hint": "Shrink the child, or set flexible:true on the parent envelope.",
+          "topic": "envelope-fitting", "example": "examples/fix/E170.loam.json" }
+```
+
+A code in §13 with no entry is `LOAM-W904 CODE_WITHOUT_TOPIC`. This map is the
+load-bearing artifact of the whole retry protocol: a diagnostic without a fix
+hint and an excerpt produces a repair prompt that is just the error message
+again, which is exactly the loop that burns tokens without converging.
+
+### 14.8 Versioning
+
+A kit id is `loam-kit/<role>@<loamVersion>-<buildHash8>`, e.g.
+`loam-kit/terrain-node-author@0.2-9c41ab7e`.
+
+- A spec MINOR bump rebuilds every kit and changes every id; the `sourceHash`
+  check (§14.4) guarantees no kit survives a spec edit unreviewed.
+- A kit-only editorial change changes `buildHash` alone.
+- Agents pin an **exact** kit id. A kit whose front-matter `loam` version
+  differs from the compiler's refuses to load.
+- The kit ids that produced a document are recorded in `meta.generatedBy.kits`
+  (§1.2), so a world can always report what taught the agents that wrote it —
+  without which a quality regression traced to a kit edit is unfalsifiable.
+
+---
+
+*End of Loam v0.2. Ratified 2026-07-28 against `docs/DESIGN.md`. Review targets,
+in order of value: §4.9 (coarse placement — the cost model and the corridor
+contract are the parts most likely to need tuning against real worlds), §7.0 and
+§7.5 (terrain as field edits, and the density vertical-shift rule), §6.8
+(determinism math), and §12.1 (what is still open).*
