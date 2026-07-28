@@ -22,6 +22,7 @@ import {
   FluidKind,
   stoneBandState,
 } from "./columns.js";
+import type { StructureClip } from "./clip.js";
 import type { DecorBlock } from "./decorate.js";
 import { TREE_TEMPLATES, type TreePlacement } from "./vegetation.js";
 
@@ -39,6 +40,12 @@ export interface TerrainEmitInput {
    * a wall always wins over a tuft of grass or a tree that shared its column.
    */
   readonly structures?: readonly DecorBlock[];
+  /**
+   * Structure boxes vegetation may not enter. Trees whose crowns overlap a
+   * building have already been dropped or accepted upstream (`clip.ts`); this
+   * is where the survivors' individual leaf and log voxels are withheld.
+   */
+  readonly clip?: StructureClip;
   readonly stack: PrismarineStack;
   readonly worldDir: string;
   readonly levelName: string;
@@ -69,7 +76,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   const { plan, stack } = input;
   const { region } = plan;
 
-  const treesByChunk = bucketTrees(input.trees);
+  const treesByChunk = bucketTrees(input.trees, input.clip);
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
   const chunks = new Map<string, EmitChunk>();
@@ -286,7 +293,10 @@ function bucketDecor(decor: readonly DecorBlock[]): Map<string, PlacedBlock[]> {
  * of the placement list carries through: two trees whose canopies could touch
  * cannot, because the scatter's occupancy mask already forbade it.
  */
-function bucketTrees(trees: readonly TreePlacement[]): Map<string, PlacedBlock[]> {
+function bucketTrees(
+  trees: readonly TreePlacement[],
+  clip?: StructureClip,
+): Map<string, PlacedBlock[]> {
   const out = new Map<string, PlacedBlock[]>();
   for (const tree of trees) {
     const template = TREE_TEMPLATES[tree.shape];
@@ -299,6 +309,7 @@ function bucketTrees(trees: readonly TreePlacement[]): Map<string, PlacedBlock[]
       const y = tree.baseY + block.dy;
       const z = tree.z + block.dz;
       if (y < WORLD_MIN_Y || y > 319) continue;
+      if (clip !== undefined && clip.blocked(x, y, z)) continue;
       const key = `${x >> 4},${z >> 4}`;
       let bucket = out.get(key);
       if (bucket === undefined) {

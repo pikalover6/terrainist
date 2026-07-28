@@ -22,7 +22,7 @@
     "id": "world",
     "kind": "composite",
     "label": "A hillside village above a river mouth",
-    "envelope": { "shape": "region", "size": [256, 256] },
+    "envelope": { "shape": "region", "size": [320, 320] },
     "children": [
       {
         "id": "terrain",
@@ -59,6 +59,20 @@
             }
           },
           {
+            "id": "south_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The bay the mill river empties into — the map's sea",
+            "params": {
+              "verb": "basin",
+              "at": [0.45, 1.0],
+              "radius": 110,
+              "depth": 45,
+              "profile": "rounded",
+              "irregularity": 0.22
+            }
+          },
+          {
             "id": "mill_river",
             "kind": "generator",
             "generator": "terrain.edit@0",
@@ -79,9 +93,9 @@
             "label": "The gentle shelf the village sits on",
             "params": {
               "verb": "plateau",
-              "at": [0.42, 0.46],
-              "radius": 62,
-              "height": 6,
+              "at": [0.42, 0.44],
+              "radius": 88,
+              "height": 7,
               "profile": "rounded"
             }
           }
@@ -137,9 +151,10 @@
         "envelope": { "shape": "box", "size": [11, 11, 9] },
         "params": { "floors": 2, "roof": "gable", "windowRhythm": "paired" },
         "constraints": [
-          { "adjacent_to": "plaza", "gap": [1, 6] },
+          { "zone": "center" },
+          { "adjacent_to": "plaza", "gap": [1, 8] },
           { "facing": "plaza" },
-          { "distance": "great_hall", "min": 8, "max": 40 },
+          { "distance": "great_hall", "min": 6, "max": 60 },
           { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
         ],
         "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },

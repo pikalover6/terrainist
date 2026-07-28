@@ -37,6 +37,20 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   dry, which moves water blocks, never terrain — the request above has no
  *   basin at all. Compiled worlds from before G2.5c do not reproduce
  *   block-for-block; their terrain shape does.
+ * - **G4.5a (composition)** — authorized reroll of the *classification* only.
+ *   The **field hash below is deliberately unchanged**, and that is the hard
+ *   check: every G4.5a change is downstream of the heightfield. What did move
+ *   is hydrology. A `river` with `flooded: "auto"` that reaches no ocean is now
+ *   demoted to a chain of ponds instead of compiling as a bone-dry trench, and
+ *   this request's `riv` is exactly such a river — its region never dips to
+ *   sea level, so the flood fill had nothing to propagate from. The ponds are
+ *   recorded as basins, the lake mask picks them up, and the columns under them
+ *   reclassify from soil to lake and lakeshore. `field.values` is never
+ *   touched by the demotion, which is why only the second hash below moved.
+ *   The other three defects G4.5a fixed (settlement clearing, canopy clipping
+ *   against buildings, plaza paving) live in the compiler and cannot reach this
+ *   file at all. Compiled worlds from before G4.5a do not reproduce
+ *   block-for-block; their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");
@@ -97,7 +111,7 @@ describe("golden field", () => {
   it("matches the pinned classification hash", () => {
     const r = buildTerrainField(REQUEST);
     expect(hex(blake3(r.classification.classes))).toBe(
-      "8a2f4b10d905e7145257d3c6b317b140216ec62f44b829bc19866e5d25d675af",
+      "41841b2db16f77391cad154f2f650de469c859080f44764e84c547bce663bfb8",
     );
   });
 

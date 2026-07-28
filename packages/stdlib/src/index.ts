@@ -36,7 +36,9 @@ import {
 import {
   applyEdits,
   resolveOpenBasins,
+  resolvePondChains,
   type EditComposition,
+  type PondChainResult,
   type TerrainEdit,
 } from "./edits/index.js";
 
@@ -78,6 +80,8 @@ export interface TerrainFieldResult {
   params: HeightfieldParams;
   classification: Classification;
   edits: EditComposition;
+  /** One entry per river demoted to a pond chain; empty on a map with a sea. */
+  ponds: PondChainResult[];
   /** The resolved 64-bit world seed, for `level.dat`. */
   worldSeed: bigint;
 }
@@ -103,7 +107,11 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
   // Resolving that needs the finished field *and* the ocean fill (a basin the
   // sea already reaches is the sea's), so it happens between the two.
   const ocean = computeOceanMask(field, params.seaLevel, edits.noFlood);
-  resolveOpenBasins(field, edits, { seaLevel: params.seaLevel, oceanMask: ocean.mask });
+  const sea = { seaLevel: params.seaLevel, oceanMask: ocean.mask };
+  resolveOpenBasins(field, edits, sea);
+  // A river that reaches no sea beads into ponds rather than compiling as a dry
+  // trench. Same seam, same post-composition field, and it too only adds basins.
+  const ponds = resolvePondChains(field, edits, sea);
   // Classification reads the composition: hydrology needs the carves' `flooded`
   // declarations and the basin pools, and the snow rule needs the footprints.
   const classification = classify(field, params, {
@@ -112,5 +120,5 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
     basins: edits.basins,
     footprints: edits.footprints,
   });
-  return { field, params, classification, edits, worldSeed };
+  return { field, params, classification, edits, ponds, worldSeed };
 }

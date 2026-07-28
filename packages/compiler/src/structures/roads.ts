@@ -97,6 +97,17 @@ export interface RoadNetworkInput {
   readonly ports: readonly ResolvedPort[];
   /** The plaza's placement, when the document has one. */
   readonly plaza?: Placement;
+  /**
+   * Columns the plaza pass has already surfaced.
+   *
+   * Routes cross them freely — the green is where the lanes are *going* — but
+   * they are graded to the plaza's own level rather than lifted onto the fill
+   * band, and their paving is left alone. Without this a lane runs straight
+   * across the square two blocks up and cuts it in half.
+   */
+  readonly paved?: Uint8Array;
+  /** Columns no route may enter even though they are on the plaza — the well. */
+  readonly keepClear?: Uint8Array;
   /** Node paths that are buildings (their footprints are hard obstacles). */
   readonly buildingPaths: ReadonlySet<string>;
   /** Updated with a `road` tag for every surfaced column. */
@@ -167,6 +178,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const wantLanterns = input.params.lanterns !== false;
 
   const blocked = buildBlockedMask(input);
+  const paved = input.paved ?? new Uint8Array(cells);
   const road = new Uint8Array(cells);
 
   const diagnostics: LoamDiagnostic[] = [];
@@ -211,13 +223,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       continue;
     }
 
-    const profile = gradeProfile(path.map((c) => plan.ground[index(region, c.x, c.z)] as number), plan.seaLevel);
+    const profile = gradeProfile(
+      path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
+      plan.seaLevel,
+      path.map((c) => (paved[index(region, c.x, c.z)] === 1 ? 0 : ROAD_FILL_BAND)),
+    );
     const surfaced: { x: number; z: number; y: number }[] = [];
     for (const [i, cell] of path.entries()) {
       surfaced.push({ x: cell.x, z: cell.z, y: profile[i] as number });
     }
 
-    surfaceRoute(region, plan, blocked, road, surfaced, width, states, occupancy);
+    surfaceRoute(region, plan, blocked, road, surfaced, width, states, occupancy, paved);
     if (wantLanterns) {
       plantLanterns(region, plan, road, surfaced, width, spacing, states, blocks, rng, lanternSide);
     }
@@ -258,6 +274,9 @@ function buildBlockedMask(input: RoadNetworkInput): Uint8Array {
     if (!input.buildingPaths.has(placement.nodePath)) continue;
     stamp(region, mask, placement.footprint, 1);
   }
+  if (input.keepClear !== undefined) {
+    for (let k = 0; k < mask.length; k++) if (input.keepClear[k] === 1) mask[k] = 1;
+  }
   return mask;
 }
 
@@ -272,8 +291,23 @@ function pickHub(
     const rect = input.plaza.footprint;
     const x = Math.floor((rect.x0 + rect.x1) / 2);
     const z = Math.floor((rect.z0 + rect.z1) / 2);
-    if (inside(region, x, z) && blocked[index(region, x, z)] === 0) {
-      return { nodePath: input.plaza.nodePath, x, z, area: 0 };
+    // The exact centre is not always available — since G4.5a the plaza pass puts
+    // a well there, and a well is water, which is a hard obstacle. Step outward
+    // in a fixed spiral until a paved column turns up; anywhere on the green is
+    // as good a hub as any, and giving up would demote the plaza to "not the
+    // hub" and scatter the lanes to the largest building instead.
+    for (let r = 0; r <= 4; r++) {
+      for (let dz = -r; dz <= r; dz++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+          const hx = x + dx;
+          const hz = z + dz;
+          if (!inside(region, hx, hz)) continue;
+          if (hx < rect.x0 || hx > rect.x1 || hz < rect.z0 || hz > rect.z1) continue;
+          if (blocked[index(region, hx, hz)] === 1) continue;
+          return { nodePath: input.plaza.nodePath, x: hx, z: hz, area: 0 };
+        }
+      }
     }
   }
   let best: RoadAnchor | null = null;
@@ -490,7 +524,7 @@ class Heap {
  * The result is the lower envelope of cones of slope 1 rooted at
  * `ground + ROAD_FILL_BAND`, floored at the water table:
  *
- *     s[i] = max(waterTable + 1, min_j (o[j] + band + |i − j|))
+ *     s[i] = max(waterTable + 1, min_j (o[j] + band[j] + |i − j|))
  *
  * Two properties fall straight out of that form and are what the tests assert:
  * a lower envelope of unit cones is 1-Lipschitz, so `|s[i+1] − s[i]| ≤ 1`
@@ -498,13 +532,24 @@ class Heap {
  * at `band` by construction. Cut is not — a route crossing a narrow gully digs
  * as deep as the gully, because this v0 has no bridges.
  *
+ * `band` may vary per cell, which is what lets a lane arriving at the plaza
+ * *descend onto* the green instead of running across it two blocks up on an
+ * embankment: the plaza's cells are given band 0, the cone construction ramps
+ * the approach down to meet them, and the 1-Lipschitz guarantee is untouched
+ * because a per-cone apex height was always allowed to differ.
+ *
  * v0.2 §7 `road.network@0`: not yet — `maxGrade`, `bridgeThreshold`,
  * `tunnelThreshold` and `crown` would each change this function; none is read.
  */
-export function gradeProfile(ground: readonly number[], seaLevel: number): number[] {
+export function gradeProfile(
+  ground: readonly number[],
+  seaLevel: number,
+  band: readonly number[] | number = ROAD_FILL_BAND,
+): number[] {
   const n = ground.length;
   const out = new Array<number>(n);
-  for (let i = 0; i < n; i++) out[i] = (ground[i] as number) + ROAD_FILL_BAND;
+  const bandAt = (i: number): number => (typeof band === "number" ? band : (band[i] as number));
+  for (let i = 0; i < n; i++) out[i] = (ground[i] as number) + bandAt(i);
   for (let i = 1; i < n; i++) out[i] = Math.min(out[i] as number, (out[i - 1] as number) + 1);
   for (let i = n - 2; i >= 0; i--) out[i] = Math.min(out[i] as number, (out[i + 1] as number) + 1);
   const floor = seaLevel + 1;
@@ -559,6 +604,7 @@ function surfaceRoute(
   width: number,
   states: RoadStates,
   occupancy: OccupancyGrid | undefined,
+  paved: Uint8Array,
 ): void {
   const half = (width - 1) >> 1;
   const offsets: number[] = [];
@@ -574,6 +620,13 @@ function surfaceRoute(
       const idx = index(region, x, z);
       // Never surface a foreign footprint or open water, even in the shoulder.
       if (blocked[idx] === 1) continue;
+      // The plaza surfaced itself; a lane crossing the green is *on* the green.
+      // It still counts as road for routing, occupancy and lantern spacing.
+      if (paved[idx] === 1) {
+        road[idx] = 1;
+        if (occupancy !== undefined) claim(occupancy, idx);
+        continue;
+      }
 
       const outer = offsets.length > 1 && Math.abs(offset) === Math.max(half, width - 1 - half);
       plan.ground[idx] = cell.y;

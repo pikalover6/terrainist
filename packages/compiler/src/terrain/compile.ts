@@ -62,6 +62,8 @@ import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
 
 import { biomeForColumn } from "./biomes.js";
+import { buildSettlementClearing } from "./clearing.js";
+import { clipTrees, makeStructureClip, structureBoxes } from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
 import { buildColumnPlan, type VolcanoInfo } from "./columns.js";
 import { decorate } from "./decorate.js";
@@ -73,6 +75,29 @@ import { buildStructures, type StructurePassResult, type StructureStats } from "
 
 /** Default `lavaFlows` for a volcano edit that does not name one. */
 export const DEFAULT_LAVA_FLOWS = 2;
+
+/**
+ * How the stdlib's composition diagnostics surface as profile diagnostics.
+ *
+ * The stdlib deliberately knows nothing about the diagnostic catalog, so it
+ * emits bare codes; this table is where each one gets its symbolic name and,
+ * more importantly, its fix hint — which G3 feeds back to the authoring LLM.
+ */
+const EDIT_DIAGNOSTIC_NAMES: Readonly<
+  Record<string, { readonly name: "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED"; readonly fix: string }>
+> = Object.freeze({
+  "LOAM-T105": {
+    name: "BASIN_RIM_NOT_CLOSED",
+    fix: 'close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true',
+  },
+  "LOAM-T112": {
+    name: "RIVER_PONDED",
+    fix:
+      "nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea " +
+      'for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is ' +
+      "inside the region — and end the river's \"course\" on that coast.",
+  },
+});
 
 /** Options for {@link compileTerrain}. */
 export interface CompileTerrainOptions {
@@ -128,6 +153,14 @@ export interface CompileStats {
   readonly volcanicColumns: number;
   /** Columns claimed by a frozen lava flow. */
   readonly lavaFlowColumns: number;
+  /** Columns inside the settlement clearing where no tree may stand. */
+  readonly clearedColumns: number;
+  /** Trees dropped for losing too much of themselves to a building. */
+  readonly clippedTrees: number;
+  /** Voxels withheld from surviving trees at emit. */
+  readonly clippedTreeBlocks: number;
+  /** Ponds formed by demoting a sealess river, per river edit. */
+  readonly pondChains: Readonly<Record<string, number>>;
   /** What the structure pass built; absent for a terrain-profile compile. */
   readonly structures?: StructureStats;
 }
@@ -258,12 +291,13 @@ async function compileValidated(
 
   for (const d of terrain.edits.diagnostics) {
     const build = d.severity === "note" ? note : warning;
+    const mapped = EDIT_DIAGNOSTIC_NAMES[d.code] ?? EDIT_DIAGNOSTIC_NAMES["LOAM-T105"];
     diagnostics.push(
       build(
-        "BASIN_RIM_NOT_CLOSED",
+        (mapped as { name: "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED" }).name,
         `${hfPath}.${d.editId}`,
         d.message,
-        'close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true',
+        (mapped as { fix: string }).fix,
       ),
     );
   }
@@ -360,6 +394,22 @@ async function compileValidated(
   }
   const structuresMs = now() - tStruct;
 
+  // --- pass 5c: the settlement clearing and the vegetation clip ------------
+  // Both are derived from what the structure pass actually built, and both are
+  // consumed by the scatter that follows: the clearing decides where trees may
+  // stand at all, the clip decides which of a standing tree's voxels survive.
+  const clearing =
+    layoutOutcome === undefined || layoutOutcome.placements.length === 0
+      ? undefined
+      : buildSettlementClearing(
+          region,
+          layoutOutcome.placements.map((p) => p.footprint),
+        );
+  const clip =
+    structures === undefined
+      ? undefined
+      : makeStructureClip(region, structureBoxes(structures.buildings));
+
   // --- pass 6: vegetation --------------------------------------------------
   const t3 = now();
   const forestNodes: ForestNodeInput[] = children
@@ -370,15 +420,27 @@ async function compileValidated(
       seed: nodeSeed(worldSeed, `${rootPath}.${node.id}`, node.seedSalt ?? ""),
       params: node.params,
     }));
-  const scatter = scatterForests(forestNodes, plan, classification, palette, occupancy);
+  const scatter = scatterForests(
+    forestNodes,
+    plan,
+    classification,
+    palette,
+    occupancy,
+    clearing?.density,
+  );
+  // A tree that a building would eat most of was never really there; the
+  // survivors keep their placements and lose only the voxels that intersect.
+  const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip);
+  const trees = clipped?.trees ?? scatter.trees;
   const decoration = decorate({
     plan,
     classification,
     temperature: climate.temperature,
-    trees: scatter.trees,
+    trees,
     forests: scatter.nodes,
     palette,
     stack,
+    ...(clip === undefined ? {} : { clip }),
     seed: rootSeed,
   });
   const scatterMs = now() - t3;
@@ -391,7 +453,7 @@ async function compileValidated(
   // --- pass 7: validators --------------------------------------------------
   const t5 = now();
   const fluids = checkFluidStability(plan);
-  const floating = checkFloatingVegetation(plan, scatter.trees);
+  const floating = checkFloatingVegetation(plan, trees);
   diagnostics.push(
     ...validatorDiagnostics(fluids, floating, { allowUnstable: options.allowUnstable ?? false }),
   );
@@ -407,9 +469,10 @@ async function compileValidated(
   const t6 = now();
   const emit = await emitTerrain({
     plan,
-    trees: scatter.trees,
+    trees,
     decor: decoration.blocks,
     ...(structures === undefined ? {} : { structures: structures.blocks }),
+    ...(clip === undefined ? {} : { clip }),
     stack,
     worldDir: options.outDir,
     levelName: doc.meta.name,
@@ -439,7 +502,7 @@ async function compileValidated(
       snowLine: classification.snowLine,
       seaLevel: terrain.params.seaLevel,
       landFraction: plan.ground.length === 0 ? 0 : land / plan.ground.length,
-      treeCount: scatter.trees.length,
+      treeCount: trees.length,
       treesPerNode: scatter.perNode,
       unstableFluidBlocks: fluids.unstable,
       floatingTrees: floating.length,
@@ -451,6 +514,12 @@ async function compileValidated(
       decorCounts: decoration.counts,
       volcanicColumns,
       lavaFlowColumns,
+      clearedColumns: clearing?.clearedColumns ?? 0,
+      clippedTrees: clipped?.dropped ?? 0,
+      clippedTreeBlocks: clipped?.clippedBlocks ?? 0,
+      pondChains: Object.fromEntries(
+        terrain.ponds.map((p) => [p.editId, p.ponds] as const).sort(([a], [b]) => (a < b ? -1 : 1)),
+      ),
       ...(structures === undefined ? {} : { structures: structures.stats }),
     },
     diagnostics,

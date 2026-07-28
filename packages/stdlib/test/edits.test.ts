@@ -17,6 +17,10 @@ import {
   refineCourse,
   resolveCenter,
   resolveOpenBasins,
+  resolvePondChains,
+  stableFluidColumns,
+  POND_MIN_COLUMNS,
+  type EditComposition,
   type EditContext,
   type TerrainEdit,
 } from "../src/edits/index.js";
@@ -919,3 +923,148 @@ describe("feature footprints", () => {
     expect(flagged).toBe(dry.count);
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* pond chains — the sealess-river demotion                                    */
+/* -------------------------------------------------------------------------- */
+
+describe("resolvePondChains", () => {
+  const W = 96;
+  const CHANNEL_Z0 = 40;
+  const CHANNEL_Z1 = 44;
+  /** Where the three dips start along the channel, in grid i. */
+  const DIPS = [15, 35, 55];
+
+  /**
+   * A landlocked channel: a plain at 100 with a five-wide bed cut to 90 and
+   * three 5×5 dips in it at 85 — the shape a river carve leaves on a map that
+   * never reaches sea level.
+   */
+  function channel(): { field: HeightField; out: EditComposition; ocean: Uint8Array } {
+    const region: Region = centeredRegion(W, W);
+    const field = flatField(100, region);
+    const bits = new Uint8Array((W * W + 7) >> 3);
+    const set = (idx: number): void => {
+      bits[idx >> 3] = (bits[idx >> 3] as number) | (1 << (idx & 7));
+    };
+    let count = 0;
+    for (let j = CHANNEL_Z0; j <= CHANNEL_Z1; j++) {
+      for (let i = 8; i < W - 8; i++) {
+        const idx = j * W + i;
+        field.values[idx] = 90;
+        set(idx);
+        count++;
+      }
+    }
+    for (const start of DIPS) {
+      for (let j = CHANNEL_Z0; j <= CHANNEL_Z1; j++) {
+        for (let i = start; i < start + 5; i++) field.values[j * W + i] = 85;
+      }
+    }
+
+    const samples = [];
+    for (let i = 8; i < W - 8; i++) {
+      samples.push({ x: region.x0 + i, z: region.z0 + CHANNEL_Z0 + 2 });
+    }
+
+    const out: EditComposition = {
+      markers: [],
+      calderas: [],
+      basins: [],
+      courses: [{ editId: "riv", verb: "river", flooded: "auto", samples }],
+      diagnostics: [],
+      order: ["riv"],
+      footprints: [{ editId: "riv", verb: "river", bits, count }],
+      noFlood: new Uint8Array(W * W),
+    };
+    return { field, out, ocean: new Uint8Array(W * W) };
+  }
+
+  it("beads a landlocked river into one pond per local minimum", () => {
+    const { field, out, ocean } = channel();
+    const result = resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.editId).toBe("riv");
+    expect(result[0]!.ponds).toBe(DIPS.length);
+    expect(out.basins).toHaveLength(DIPS.length);
+    for (const basin of out.basins) {
+      expect(basin.waterY).not.toBeNull();
+      expect(basin.columns.length).toBeGreaterThanOrEqual(POND_MIN_COLUMNS);
+    }
+  });
+
+  it("reports what it did as an informational note naming the count", () => {
+    const { field, out, ocean } = channel();
+    resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    const note = out.diagnostics.find((d) => d.code === "LOAM-T112");
+    expect(note?.severity).toBe("note");
+    expect(note?.editId).toBe("riv");
+    expect(note?.message).toContain(`${DIPS.length} ponds`);
+  });
+
+  it("leaves the stretches between the ponds dry", () => {
+    const { field, out, ocean } = channel();
+    resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    const wet = new Set<number>();
+    for (const basin of out.basins) for (const idx of basin.columns) wet.add(idx);
+    // The bed halfway between the first two dips is bare channel floor.
+    const between = (CHANNEL_Z0 + 2) * W + Math.floor((DIPS[0]! + DIPS[1]!) / 2 + 3);
+    expect(wet.has(between)).toBe(false);
+    // ...and no two ponds share a column.
+    expect(wet.size).toBe(out.basins.reduce((n, b) => n + b.columns.length, 0));
+  });
+
+  it("records only levels the fluid settle proves stable", () => {
+    const { field, out, ocean } = channel();
+    resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    const floorAt = (idx: number): number => Math.floor(field.values[idx] as number);
+    for (const basin of out.basins) {
+      const settled = stableFluidColumns({
+        width: W,
+        depth: W,
+        columns: basin.columns,
+        level: basin.waterY as number,
+        floorAt,
+        topAt: floorAt,
+      });
+      // Every recorded column survives its own settle: zero unstable fluid.
+      expect(settled.count).toBe(basin.columns.length);
+    }
+  });
+
+  it("leaves a river that reaches the sea entirely alone", () => {
+    const { field, out, ocean } = channel();
+    ocean[(CHANNEL_Z0 + 2) * W + 20] = 1;
+    const result = resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    expect(result).toEqual([]);
+    expect(out.basins).toEqual([]);
+    expect(out.diagnostics).toEqual([]);
+  });
+
+  it('leaves a "never" river alone — the author asked for a dry channel', () => {
+    const { field, out, ocean } = channel();
+    out.courses = [{ ...(out.courses[0] as (typeof out.courses)[number]), flooded: "never" }];
+    expect(resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean })).toEqual([]);
+    expect(out.basins).toEqual([]);
+  });
+
+  it("never touches the heightfield", () => {
+    const { field, out, ocean } = channel();
+    const before = Float64Array.from(field.values);
+    resolvePondChains(field, out, { seaLevel: SEA, oceanMask: ocean });
+    expect([...field.values]).toEqual([...before]);
+  });
+
+  it("is byte-identical run twice", () => {
+    const a = channel();
+    const b = channel();
+    resolvePondChains(a.field, a.out, { seaLevel: SEA, oceanMask: a.ocean });
+    resolvePondChains(b.field, b.out, { seaLevel: SEA, oceanMask: b.ocean });
+    expect(JSON.stringify(a.out.basins, replacer)).toBe(JSON.stringify(b.out.basins, replacer));
+  });
+});
+
+/** JSON replacer that renders typed arrays as plain arrays. */
+function replacer(_key: string, value: unknown): unknown {
+  return value instanceof Int32Array ? [...value] : value;
+}

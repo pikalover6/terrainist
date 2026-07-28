@@ -212,13 +212,22 @@ export function forestEligibility(
   return mask;
 }
 
-/** Run every forest node's scatter, in document order. */
+/**
+ * Run every forest node's scatter, in document order.
+ *
+ * `clearing` is the settlement's tree-density field (see `clearing.ts`): a
+ * per-column multiplier in `0..1` that is 0 over the built-up area and ramps
+ * back to 1 across the treeline. It scales the acceptance probability and
+ * nothing else — in particular it does **not** touch each node's eligibility
+ * mask, so the undergrowth pass still dresses the cleared ground as a meadow.
+ */
 export function scatterForests(
   nodes: readonly ForestNodeInput[],
   plan: ColumnPlan,
   classification: Classification,
   palette: Palette,
   structures?: StructureOccupancy,
+  clearing?: Float32Array,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -232,9 +241,13 @@ export function scatterForests(
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
     const mask = forestEligibility(plan, classification, params, structures, node.params.avoidTags ?? []);
-    for (let k = 0; k < coverage.length; k++) if (mask[k] === 1) coverage[k] = 1;
+    // Coverage feeds the biome rule, so a fully cleared column must not report
+    // as forested — a village green painted `forest` is exactly the wrong colour.
+    for (let k = 0; k < coverage.length; k++) {
+      if (mask[k] === 1 && (clearing === undefined || (clearing[k] as number) > 0)) coverage[k] = 1;
+    }
     const before = trees.length;
-    scatterOne(node, params, plan, mask, occupancy, palette, trees);
+    scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing);
     perNode[node.id] = trees.length - before;
     scattered.push({ id: node.id, seed: node.seed, params, mask });
   }
@@ -250,6 +263,7 @@ function scatterOne(
   occupancy: Uint8Array,
   palette: Palette,
   out: TreePlacement[],
+  clearing: Float32Array | undefined,
 ): void {
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
@@ -289,6 +303,13 @@ function scatterOne(
           p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
         }
         p *= edgeTaper(region, x, z, params.edgeFalloff);
+        // The settlement clearing. Zero inside the hull, so the test below can
+        // never pass there; a ramp outside it, so the treeline feathers.
+        if (clearing !== undefined) {
+          const f = clearing[idx] as number;
+          if (f <= 0) continue;
+          p *= f;
+        }
         if (columnFloat(scatter, x, z, 3) >= p) continue;
 
         const pick = positionWeighted(scatter, x, 4, z, weights);

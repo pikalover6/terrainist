@@ -17,7 +17,7 @@
  *    sitting on it.
  */
 
-import { nodeSeed, type Seed256 } from "@terrainist/stdlib";
+import { nodeSeed, seed32, streamSeed, type Seed256 } from "@terrainist/stdlib";
 import type {
   LoamDiagnostic,
   PortDeclaration,
@@ -31,9 +31,11 @@ import type { ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
 import { buildBuildings, type BuildingJob, type BuiltBuilding, type StructureBlock } from "./buildings.js";
+import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
 
 export * from "./buildings.js";
+export * from "./plaza.js";
 export * from "./roads.js";
 
 /** Everything {@link buildStructures} reads. */
@@ -59,6 +61,10 @@ export interface StructureStats {
   readonly roadRoutes: number;
   readonly roadColumns: number;
   readonly unroutedAnchors: number;
+  /** Plaza columns surfaced; 0 when the document declares no plaza. */
+  readonly plazaColumns: number;
+  readonly plazaBenches: number;
+  readonly plazaWell: boolean;
 }
 
 /** What the structure pass produced. */
@@ -66,6 +72,7 @@ export interface StructurePassResult {
   /** Blocks to stamp after the terrain columns are written. */
   readonly blocks: readonly StructureBlock[];
   readonly buildings: readonly BuiltBuilding[];
+  readonly plaza?: PlazaResult;
   readonly roads?: RoadNetworkResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
@@ -113,6 +120,27 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     for (const built of buildings.built) claimFootprint(input.occupancy, built);
   }
 
+  // --- the plaza -----------------------------------------------------------
+  // Before the roads, so a lane arriving on the green blends into paving that
+  // already exists rather than being overwritten by it.
+  const plazaNode = input.nodes.find((n) => n.kind === "primitive");
+  const plazaPlacement =
+    plazaNode === undefined ? undefined : placementByPath.get(plazaNode.nodePath);
+  let plaza: PlazaResult | undefined;
+  if (plazaNode !== undefined && plazaPlacement !== undefined) {
+    plaza = pavePlaza({
+      nodePath: plazaNode.nodePath,
+      placement: plazaPlacement,
+      plan: input.plan,
+      palette: input.palette,
+      stack: input.stack,
+      seed: seed32(streamSeed(plazaNode.seed, "plaza")),
+      ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+    });
+    diagnostics.push(...plaza.diagnostics);
+    blocks.push(...plaza.blocks);
+  }
+
   // --- roads ---------------------------------------------------------------
   // v0.2 §4.9.6: not yet — `road.network@0` is not a *placed* node, so it has no
   // envelope, no yaw and no occupancy of its own before routing. It is found by
@@ -122,8 +150,6 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   if (roadNode !== undefined) {
     const nodePath = `${rootPath}.${roadNode.id}`;
     const seed: Seed256 = nodeSeed(input.worldSeed, nodePath, roadNode.seedSalt ?? "");
-    const plazaNode = input.nodes.find((n) => n.kind === "primitive");
-    const plaza = plazaNode === undefined ? undefined : placementByPath.get(plazaNode.nodePath);
     roads = buildRoadNetwork({
       nodePath,
       params: roadParamsOf(roadNode.params),
@@ -134,7 +160,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       placements: input.placements,
       ports: input.ports,
       buildingPaths,
-      ...(plaza === undefined ? {} : { plaza }),
+      ...(plazaPlacement === undefined ? {} : { plaza: plazaPlacement }),
+      ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     diagnostics.push(...roads.diagnostics);
@@ -144,6 +171,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   return {
     blocks,
     buildings: buildings.built,
+    ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
     stats: {
@@ -152,6 +180,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       roadRoutes: roads?.routes.length ?? 0,
       roadColumns: roads?.surfacedColumns ?? 0,
       unroutedAnchors: roads?.unrouted.length ?? 0,
+      plazaColumns: plaza?.pavedColumns ?? 0,
+      plazaBenches: plaza?.benches ?? 0,
+      plazaWell: plaza?.well ?? false,
     },
   };
 }

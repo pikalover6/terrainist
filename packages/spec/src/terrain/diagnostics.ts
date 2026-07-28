@@ -57,6 +57,8 @@ export const TERRAIN_DIAGNOSTICS = {
   SPAWN_UNRESOLVED: "LOAM-T107",
   UNSTABLE_FLUID: "LOAM-T110",
   FLOATING_VEGETATION: "LOAM-T111",
+  /** G4.5a — a `river` with no sea to reach, demoted to a chain of ponds. */
+  RIVER_PONDED: "LOAM-T112",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec

@@ -704,12 +704,30 @@ export interface EditDiagnostic {
   severity?: "warning" | "note";
 }
 
+/**
+ * The refined centreline a corridor verb actually cut.
+ *
+ * Kept because hydrology needs it *after* composition: to demote a landlocked
+ * river to a chain of ponds you have to walk its course looking for the low
+ * points, and re-deriving the spline (meander, taper and all) downstream would
+ * be a second source of truth for the same geometry.
+ */
+export interface CourseRecord {
+  readonly editId: string;
+  readonly verb: EditVerb;
+  readonly flooded: FloodedMode;
+  /** Refined, meandered samples in world coordinates, head-to-tail. */
+  readonly samples: readonly Point2[];
+}
+
 /** The outcome of composing every edit into the field. */
 export interface EditComposition {
   /** Markers keyed by `"<editId>.<name>"`, in application order. */
   markers: Marker[];
   calderas: CalderaMask[];
   basins: BasinWater[];
+  /** One record per applied corridor verb, in application order. */
+  courses: CourseRecord[];
   diagnostics: EditDiagnostic[];
   /** Application order actually used (raise group, then carve group). */
   order: string[];
@@ -756,6 +774,7 @@ export function applyEdits(
     markers: [],
     calderas: [],
     basins: [],
+    courses: [],
     diagnostics: [],
     order: [],
     footprints: [],
@@ -971,6 +990,218 @@ export function resolveOpenBasins(
       if (y > wallY) wallY = y;
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Pond chains — the sealess-river demotion                                    */
+/* -------------------------------------------------------------------------- */
+
+/** How far from a course sample a pond may gather its bed columns. */
+export const POND_REACH = 12;
+/** Shallowest pond worth keeping, in blocks above its floor. */
+export const POND_MIN_DEPTH = 1;
+/** Deepest a pond may fill above its floor. */
+export const POND_MAX_DEPTH = 6;
+/** Fewest bed columns a pond must hold to count as water rather than a puddle. */
+export const POND_MIN_COLUMNS = 6;
+/** Minimum spacing between two ponds of one chain, in blocks. */
+export const POND_SEPARATION = 18;
+/** Course samples either side of a candidate that must not sit lower. */
+const POND_MINIMUM_WINDOW = 6;
+
+/** One pond the demotion formed. */
+export interface PondChainResult {
+  readonly editId: string;
+  readonly ponds: number;
+  /** Columns given water across the whole chain. */
+  readonly columns: number;
+}
+
+/**
+ * Demote a `river` that reaches no sea into a chain of ponds.
+ *
+ * A `river` carve digs a bed to `min(seaLevel, descent) - depth` and then relies
+ * on the ocean flood fill to put water in it. On a map with no ocean — an inland
+ * plateau, a small region that never dips below `seaLevel` — the flood fill has
+ * nothing to propagate from, and the channel compiles bone dry: hydraulically
+ * correct, visually a trench.
+ *
+ * Real landlocked drainage does not vanish, it *beads*: water collects at the
+ * low points and the stretches between them run dry. So when a `flooded: "auto"`
+ * river has **zero** ocean-connected columns, walk its course, find the local
+ * minima of the bed, and give each one the deepest pool
+ * {@link stableFluidColumns} proves its own banks can hold. Dry stretches stay
+ * dry, and because every pond is settle-proved at the level it is recorded at,
+ * the fluid validator's "zero unstable blocks" is preserved by construction.
+ *
+ * A river that *does* touch the sea is untouched, so an estuary still floods the
+ * way it always did. Runs after {@link resolveOpenBasins}, on the same
+ * post-composition field, and touches only `out.basins` — never `field.values`.
+ */
+export function resolvePondChains(
+  field: HeightField,
+  out: EditComposition,
+  sea: { readonly seaLevel: number; readonly oceanMask: Uint8Array },
+): PondChainResult[] {
+  const { width, depth, x0, z0 } = field.region;
+  const n = width * depth;
+  const values = field.values;
+  const floorAt = (idx: number): number => Math.floor(values[idx] as number);
+  const results: PondChainResult[] = [];
+
+  for (const course of out.courses) {
+    if (course.verb !== "river" || course.flooded !== "auto") continue;
+    const fp = out.footprints.find((f) => f.editId === course.editId && f.verb === "river");
+    if (fp === undefined || fp.count === 0) continue;
+
+    // Ocean connectivity: one flooded column anywhere in the channel and this is
+    // a river with a mouth, which needs no help.
+    let oceanic = 0;
+    const bed = new Uint8Array(n);
+    for (let idx = 0; idx < n; idx++) {
+      if (!footprintHas(fp, idx)) continue;
+      bed[idx] = 1;
+      if (sea.oceanMask[idx] === 1) oceanic++;
+    }
+    if (oceanic > 0) continue;
+
+    const claimed = new Uint8Array(n);
+    let ponds = 0;
+    let columns = 0;
+    let lastX = Number.NEGATIVE_INFINITY;
+    let lastZ = Number.NEGATIVE_INFINITY;
+
+    const samples = course.samples;
+    const elevation = samples.map((p) => {
+      const i = Math.round(p.x) - x0;
+      const j = Math.round(p.z) - z0;
+      if (i < 0 || j < 0 || i >= width || j >= depth) return Number.POSITIVE_INFINITY;
+      return floorAt(j * width + i);
+    });
+
+    for (let k = 0; k < samples.length; k++) {
+      if (!isLocalMinimum(elevation, k)) continue;
+      const p = samples[k] as Point2;
+      const dx = p.x - lastX;
+      const dz = p.z - lastZ;
+      if (dx * dx + dz * dz < POND_SEPARATION * POND_SEPARATION) continue;
+
+      const pool = gatherPond(p);
+      if (pool === null) continue;
+      lastX = p.x;
+      lastZ = p.z;
+      ponds++;
+      columns += pool.columns.length;
+      for (const idx of pool.columns) claimed[idx] = 1;
+      out.basins.push({
+        editId: `${course.editId}#pond${ponds}`,
+        centerX: Math.round(p.x),
+        centerZ: Math.round(p.z),
+        radius: POND_REACH,
+        waterY: pool.level,
+        columns: Int32Array.from(pool.columns),
+      });
+    }
+
+    out.diagnostics.push({
+      code: "LOAM-T112",
+      editId: course.editId,
+      severity: "note",
+      message:
+        ponds === 0
+          ? `river "${course.editId}" is connected to no sea on this map and its bed holds no fluid-stable pool, so it compiled as a dry channel`
+          : `river "${course.editId}" is connected to no sea on this map; it was demoted to a chain of ${ponds} pond${ponds === 1 ? "" : "s"} over ${columns} columns, with the stretches between them left dry`,
+    });
+    results.push({ editId: course.editId, ponds, columns });
+
+    /** The deepest fluid-stable pool centred on one course sample, if any. */
+    function gatherPond(p: Point2): { level: number; columns: number[] } | null {
+      const ci = Math.round(p.x) - x0;
+      const cj = Math.round(p.z) - z0;
+      const candidates: number[] = [];
+      const inPond = new Uint8Array(n);
+      let floorY = Number.POSITIVE_INFINITY;
+      for (let j = cj - POND_REACH; j <= cj + POND_REACH; j++) {
+        if (j < 0 || j >= depth) continue;
+        for (let i = ci - POND_REACH; i <= ci + POND_REACH; i++) {
+          if (i < 0 || i >= width) continue;
+          const di = i - ci;
+          const dj = j - cj;
+          if (di * di + dj * dj > POND_REACH * POND_REACH) continue;
+          const idx = j * width + i;
+          if (bed[idx] !== 1 || claimed[idx] === 1) continue;
+          if (sea.oceanMask[idx] === 1) continue;
+          inPond[idx] = 1;
+          candidates.push(idx);
+          const y = floorAt(idx);
+          if (y < floorY) floorY = y;
+        }
+      }
+      if (candidates.length < POND_MIN_COLUMNS) return null;
+
+      // Same reasoning as `resolveOpenBasins`: the ceiling is the *highest*
+      // column of the surrounding wall, and which levels actually leak is left
+      // to the settle, which knows.
+      let wallY = Number.NEGATIVE_INFINITY;
+      for (const idx of candidates) {
+        const i = idx % width;
+        const j = (idx - i) / width;
+        consider(i - 1, j);
+        consider(i + 1, j);
+        consider(i, j - 1);
+        consider(i, j + 1);
+      }
+      if (!Number.isFinite(wallY)) return null;
+
+      const start = Math.min(wallY - 1, floorY + POND_MAX_DEPTH);
+      for (let level = start; level >= floorY + POND_MIN_DEPTH; level--) {
+        const settled = stableFluidColumns({
+          width,
+          depth,
+          columns: candidates,
+          level,
+          floorAt,
+          topAt: floorAt,
+          edgeLeaks: true,
+        });
+        if (settled.count < POND_MIN_COLUMNS) continue;
+        return { level, columns: candidates.filter((idx) => settled.inPool[idx] === 1) };
+      }
+      return null;
+
+      function consider(i: number, j: number): void {
+        if (i < 0 || j < 0 || i >= width || j >= depth) return;
+        const idx = j * width + i;
+        if (inPond[idx] === 1) return;
+        const y = floorAt(idx);
+        if (y > wallY) wallY = y;
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * True when sample `k`'s bed is no higher than every sample within
+ * {@link POND_MINIMUM_WINDOW} of it, and strictly lower than at least one — the
+ * plateau-tolerant local-minimum test, so a long flat reach reports its first
+ * column rather than every column.
+ */
+function isLocalMinimum(elevation: readonly number[], k: number): boolean {
+  const here = elevation[k] as number;
+  if (!Number.isFinite(here)) return false;
+  let strictly = false;
+  for (let d = 1; d <= POND_MINIMUM_WINDOW; d++) {
+    for (const j of [k - d, k + d]) {
+      if (j < 0 || j >= elevation.length) continue;
+      const there = elevation[j] as number;
+      if (!Number.isFinite(there)) continue;
+      if (there < here) return false;
+      if (there > here) strictly = true;
+    }
+  }
+  return strictly;
 }
 
 /** Every grid index a footprint covers, in row-major order. */
@@ -1403,6 +1634,14 @@ function applyRiver(
     }
   }
   emitCourseMarkers(field, out, edit.id, samples, reversed);
+  out.courses.push({
+    editId: edit.id,
+    verb: "river",
+    flooded: floodedOf(edit),
+    // Head-to-tail: `monotonicDescent` reports when the *last* waypoint is the
+    // higher one, and the pond chain wants to walk downstream.
+    samples: reversed ? [...samples].reverse() : samples,
+  });
 }
 
 /**

@@ -15,7 +15,27 @@ import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { loadPrismarine } from "../src/emit/prismarine.js";
+import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
+import {
+  CLEARING_FEATHER,
+  CLEARING_MARGIN,
+  buildSettlementClearing,
+  distanceToHull,
+} from "../src/terrain/clearing.js";
+import { makeStructureClip, structureBoxes } from "../src/terrain/clip.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
+
+/** Blocks the tree templates place as canopy; the building grammar places none. */
+const LEAF_BLOCKS = [
+  "minecraft:oak_leaves",
+  "minecraft:birch_leaves",
+  "minecraft:spruce_leaves",
+] as const;
+
+/** Y range the canopy scan covers — well above and below anything built here. */
+const SCAN_MIN_Y = 60;
+const SCAN_MAX_Y = 140;
 
 const EXAMPLE = fileURLToPath(new URL("../../../examples/hillside-village.loam.json", import.meta.url));
 
@@ -155,6 +175,111 @@ describe("hillside village example", () => {
       for (const cell of route.path) claimed.add(`${cell.x},${cell.z}`);
     }
     expect(claimed.size).toBeGreaterThan(0);
+  });
+
+  /**
+   * Where the leaves are, read back out of the emitted world.
+   *
+   * Deliberately not read off the tree placements: the whole point of the clip
+   * is what the *renderer* sees, and the renderer sees chunks. Leaves are the
+   * probe block because the building grammar never places one — a leaf inside a
+   * hall is unambiguously a tree that should not be there.
+   */
+  async function leafColumns(): Promise<Set<string>> {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const anvil = stack.openAnvil(path.join(worldDir, "region"));
+    const leaf = new Map<number, boolean>();
+    const isLeaf = (stateId: number): boolean => {
+      let known = leaf.get(stateId);
+      if (known === undefined) {
+        const name = stack.blockNameByStateId(stateId);
+        known = name !== undefined && LEAF_BLOCKS.some((n) => n.endsWith(name) || name === n);
+        leaf.set(stateId, known);
+      }
+      return known;
+    };
+
+    const out = new Set<string>();
+    const region = report.stats.region;
+    for (let cz = region.z0 >> 4; cz <= (region.z0 + region.depth - 1) >> 4; cz++) {
+      for (let cx = region.x0 >> 4; cx <= (region.x0 + region.width - 1) >> 4; cx++) {
+        const chunk = await anvil.load(cx, cz);
+        if (chunk === null) continue;
+        for (let lz = 0; lz < 16; lz++) {
+          for (let lx = 0; lx < 16; lx++) {
+            for (let y = SCAN_MIN_Y; y <= SCAN_MAX_Y; y++) {
+              if (!isLeaf(chunk.getBlockStateId(lx, y, lz))) continue;
+              out.add(`${cx * 16 + lx},${y},${cz * 16 + lz}`);
+            }
+          }
+        }
+      }
+    }
+    await anvil.close();
+    return out;
+  }
+
+  it("clears the settlement: no canopy stands inside the hull", async () => {
+    const clearing = buildSettlementClearing(
+      report.stats.region,
+      (report.layout?.placements ?? []).map((p) => p.footprint),
+    );
+    expect(clearing.hulls.length).toBeGreaterThan(0);
+    expect(report.stats.clearedColumns).toBeGreaterThan(500);
+
+    let insideHull = 0;
+    let inFeather = 0;
+    let openForest = 0;
+    for (const key of await leafColumns()) {
+      const [x, , z] = key.split(",").map(Number) as [number, number, number];
+      const d = Math.min(...clearing.hulls.map((h) => distanceToHull(h, x, z)));
+      // Strictly inside the hull — over the built-up ground itself.
+      if (d === 0) insideHull++;
+      else if (d < CLEARING_MARGIN + CLEARING_FEATHER) inFeather++;
+      else openForest++;
+    }
+    // Not one leaf over the settlement: every trunk stands at least the margin
+    // away and no canopy reaches back across it. Outside, the treeline exists
+    // but is thinner than the open forest — a feather, not a wall.
+    expect(insideHull).toBe(0);
+    expect(inFeather).toBeGreaterThan(0);
+    expect(openForest).toBeGreaterThan(inFeather);
+  }, 120_000);
+
+  it("still dresses the cleared ground as a meadow, not a dirt pad", () => {
+    // Undergrowth reads each node's eligibility mask, which the clearing never
+    // touches — so the green keeps its grass and its flowers.
+    expect(report.stats.decorCounts["grass"] ?? 0).toBeGreaterThan(1000);
+    expect(report.stats.decorCounts["flowers"] ?? 0).toBeGreaterThan(100);
+  });
+
+  it("puts no leaf inside a building", async () => {
+    const boxes = structureBoxes(report.layout?.structures?.buildings ?? []);
+    expect(boxes.length).toBeGreaterThan(0);
+    const clip = makeStructureClip(report.stats.region, boxes);
+    const offenders: string[] = [];
+    for (const key of await leafColumns()) {
+      const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+      if (clip.blocked(x, y, z)) offenders.push(key);
+    }
+    expect(offenders).toEqual([]);
+  }, 120_000);
+
+  it("paves the plaza and gives it a stable well", () => {
+    const stats = report.stats.structures;
+    expect(stats?.plazaColumns).toBeGreaterThan(100);
+    expect(stats?.plazaWell).toBe(true);
+    expect(stats?.plazaBenches).toBeGreaterThanOrEqual(2);
+    // The well's water is part of the world, and the world has no unstable fluid.
+    expect(report.stats.unstableFluidBlocks).toBe(0);
+  });
+
+  it("gives the mill river a sea to reach, so it never beads into ponds", () => {
+    expect(report.stats.pondChains).toEqual({});
+    expect(report.stats.biomeHistogram["minecraft:ocean"] ?? 0).toBeGreaterThan(0);
+    expect(report.stats.biomeHistogram["minecraft:beach"] ?? 0).toBeGreaterThan(0);
+    // Water plants only exist where there is real water to grow in.
+    expect(report.stats.decorCounts["water"] ?? 0).toBeGreaterThan(0);
   });
 
   it("compiles byte-identically twice", async () => {

@@ -27,6 +27,7 @@ import { SurfaceClass, fbm2, type Classification, type Seed256 } from "@terraini
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 
+import type { StructureClip } from "./clip.js";
 import { FluidKind, type ColumnPlan } from "./columns.js";
 import { detailSeed, hash2, hashInt, hashPick } from "./detail.js";
 import type { Palette } from "./palette.js";
@@ -58,6 +59,13 @@ export interface DecorateInput {
   readonly forests: readonly ScatteredNode[];
   readonly palette: Palette;
   readonly stack: PrismarineStack;
+  /**
+   * Structure boxes ground cover may not enter. Undergrowth is already kept out
+   * of claimed columns by each node's eligibility mask; this catches the one
+   * thing that escapes it — a fallen log, which starts on a legal column and
+   * then runs for up to four blocks in a straight line.
+   */
+  readonly clip?: StructureClip;
   /** Root node seed; the decoration streams hang off it. */
   readonly seed: Seed256;
 }
@@ -205,6 +213,7 @@ function decorateForest(
       if (node.mask[idx] !== 1) continue;
       if (decorated[idx] === 1) continue;
       if (occupied[idx] === 1) continue;
+      if (input.clip?.blockedColumn(region.x0 + i, z) === true) continue;
       if (fluidKind[idx] !== FluidKind.NONE) continue;
       if (volcanic[idx] === 1 || lavaFlow[idx] === 1) continue;
       if (classification.classes[idx] !== SurfaceClass.SOIL) continue;
@@ -243,6 +252,7 @@ function decorateForest(
           if (li < 0 || lj < 0 || li >= region.width || lj >= region.depth) break;
           const lidx = lj * region.width + li;
           if (occupied[lidx] === 1 || fluidKind[lidx] !== FluidKind.NONE) break;
+          if (input.clip?.blockedColumn(lx, lz) === true) break;
           if ((ground[lidx] as number) !== (ground[idx] as number)) break;
           decorated[lidx] = 1;
           occupied[lidx] = 1;

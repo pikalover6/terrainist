@@ -84,6 +84,13 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "road.subsurface": "minecraft:dirt",
   "road.post": "minecraft:oak_fence",
   "road.lantern": "minecraft:lantern",
+
+  // --- the plaza (G4.5a) ---------------------------------------------------
+  "plaza.path": "minecraft:dirt_path",
+  "plaza.gravel": "minecraft:gravel",
+  "plaza.cobble": "minecraft:cobblestone",
+  "plaza.border": "minecraft:stone_bricks",
+  "plaza.well_wall": "minecraft:cobblestone_wall",
 });
 
 /** A palette symbol resolved down to block state ids. */
