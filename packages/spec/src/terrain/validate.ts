@@ -17,6 +17,7 @@ import {
   COURSE_VERBS,
   EDIT_VERBS,
   FALLOFF_PROFILES,
+  FLOODED_MODES,
   ID_PATTERN,
   PROFILE_GENERATORS,
   TREE_SHAPES,
@@ -77,6 +78,8 @@ const EDIT_NUMS: Readonly<Record<string, NumSpec>> = {
   depth: { min: 0, max: 320 },
   rim: { min: 0, max: 512 },
   calderaDepth: { min: 0, max: 320 },
+  irregularity: { min: 0, max: 0.5 },
+  meander: { min: 0, max: 1 },
 };
 
 const CLIMATE_NUMS: Readonly<Record<string, NumSpec>> = {
@@ -97,14 +100,14 @@ const FOREST_NUMS: Readonly<Record<string, NumSpec>> = {
 
 /** Per-verb required/forbidden shape params, for the T104 "wrong knob" hint. */
 const VERB_SHAPE_KEYS: Readonly<Record<EditVerbName, readonly string[]>> = {
-  ridge: ["width", "height", "profile"],
-  peak: ["radius", "height", "profile"],
-  volcano: ["radius", "height", "caldera", "calderaDepth", "lava", "profile"],
-  plateau: ["radius", "height", "rim", "profile"],
-  island: ["radius", "height", "profile"],
-  valley: ["width", "depth", "profile"],
-  river: ["width", "depth", "profile"],
-  basin: ["radius", "depth", "water", "profile"],
+  ridge: ["width", "height", "profile", "meander"],
+  peak: ["radius", "height", "profile", "irregularity"],
+  volcano: ["radius", "height", "caldera", "calderaDepth", "lava", "profile", "irregularity"],
+  plateau: ["radius", "height", "rim", "profile", "irregularity"],
+  island: ["radius", "height", "profile", "irregularity"],
+  valley: ["width", "depth", "profile", "meander", "flooded"],
+  river: ["width", "depth", "profile", "meander", "flooded"],
+  basin: ["radius", "depth", "water", "profile", "irregularity", "flooded"],
 };
 
 /**
@@ -523,7 +526,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
   const params = requireParams(out, path, node, "terrain.edit@0");
   if (!params) return;
 
-  unknownKeys(out, params, `${path}.params`, ["verb", "strength", "at", "zone", "course", "width", "height", "radius", "depth", "profile", "rim", "caldera", "calderaDepth", "lava", "water"], "terrain.edit@0 params");
+  unknownKeys(out, params, `${path}.params`, ["verb", "strength", "at", "zone", "course", "width", "height", "radius", "depth", "profile", "rim", "caldera", "calderaDepth", "lava", "water", "irregularity", "meander", "flooded"], "terrain.edit@0 params");
 
   const verb = params["verb"];
   if (typeof verb !== "string" || !(EDIT_VERBS as readonly string[]).includes(verb)) {
@@ -536,6 +539,9 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
   checkBooleans(out, `${path}.params`, params, ["caldera", "lava", "water"]);
   if (params["profile"] !== undefined && !(FALLOFF_PROFILES as readonly string[]).includes(params["profile"] as string)) {
     out.push(error("BAD_ENUM", `${path}.params`, `"profile" must be "sharp" or "rounded", got ${describe(params["profile"])}`, 'set "profile": "sharp" for a crisp cone or "rounded" for a soft dome'));
+  }
+  if (params["flooded"] !== undefined && !(FLOODED_MODES as readonly string[]).includes(params["flooded"] as string)) {
+    out.push(error("BAD_ENUM", `${path}.params`, `"flooded" must be "auto" or "never", got ${describe(params["flooded"])}`, 'set "flooded": "auto" to let the carve take sea water where it opens to the ocean, or "never" to keep it a dry gorge'));
   }
 
   // Placement.
@@ -580,7 +586,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
 
   // Shape params that belong to a different verb are a common LLM slip.
   const allowedShape = VERB_SHAPE_KEYS[v];
-  for (const key of ["width", "height", "radius", "depth", "rim", "caldera", "calderaDepth", "lava", "water"]) {
+  for (const key of ["width", "height", "radius", "depth", "rim", "caldera", "calderaDepth", "lava", "water", "irregularity", "meander", "flooded"]) {
     if (params[key] !== undefined && !allowedShape.includes(key)) {
       out.push(
         error(

@@ -4,6 +4,8 @@ import {
   SURFACE_CLASS_NAMES,
   SurfaceClass,
   classify,
+  computeLakeMask,
+  computeOceanMask,
   computeSlopes,
   findHighestPoint,
   findLargestFlat,
@@ -15,6 +17,7 @@ import {
   resolveHeightfieldParams,
   type Region,
 } from "../src/field/index.js";
+import { footprintHas } from "../src/edits/index.js";
 import { buildTerrainField } from "../src/index.js";
 
 const PARAMS = resolveHeightfieldParams({});
@@ -57,7 +60,8 @@ describe("surface classes", () => {
   it("names every class", () => {
     expect(SURFACE_CLASS_NAMES[SurfaceClass.UNDERWATER]).toBe("underwater");
     expect(SURFACE_CLASS_NAMES[SurfaceClass.SNOW]).toBe("snow");
-    expect(SURFACE_CLASS_NAMES).toHaveLength(5);
+    expect(SURFACE_CLASS_NAMES[SurfaceClass.LAKESHORE]).toBe("lakeshore");
+    expect(SURFACE_CLASS_NAMES).toHaveLength(6);
   });
 
   it("classifies by height then slope, in rule order", () => {
@@ -67,9 +71,10 @@ describe("surface classes", () => {
     // sea level 63 → first land column is x = 29
     expect(c.classes[28]).toBe(SurfaceClass.UNDERWATER);
     expect(c.classes[29]).toBe(SurfaceClass.BEACH);
-    // beachWidth 4 → beach up to y = 67, i.e. x ≤ 33
-    expect(c.classes[33]).toBe(SurfaceClass.BEACH);
-    expect(c.classes[34]).toBe(SurfaceClass.SOIL);
+    // beachWidth 4 caps *both* the height band and the distance from the water,
+    // so the beach reaches four columns inland and no further.
+    expect(c.classes[32]).toBe(SurfaceClass.BEACH);
+    expect(c.classes[33]).toBe(SurfaceClass.SOIL);
     // snow line = 63 + 0.8 * (max - 63)
     expect(c.snowLine).toBeCloseTo(63 + 0.8 * (c.maxHeight - 63), 9);
     const snowStart = c.classes.indexOf(SurfaceClass.SNOW);
@@ -187,5 +192,175 @@ describe("classification over a real field", () => {
     expect(names.has("coast_points")).toBe(true);
     expect(r.classification.slopes).toHaveLength(128 * 128);
     expect(r.classification.classes).toHaveLength(128 * 128);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G2.5a — hydrology and the classifier rules that depend on it
+// ---------------------------------------------------------------------------
+
+/**
+ * One hand-built 40×40 plateau at y=80 holding all three hydrology cases:
+ *
+ * - an **open fjord**: a below-sea channel cut in from the west edge;
+ * - a **landlocked gorge**: an equally deep below-sea pocket with no path out;
+ * - a **closed basin**: a shallow bowl that a `water: true` basin pools.
+ *
+ * A lone 200-high spire in the corner carries the snow line clear of the
+ * plateau, so these cases are read on their own terms rather than through a
+ * snow cap.
+ */
+function hydrologyField(): HeightField {
+  const f = fieldFrom(40, 40, () => 80);
+  const set = (x: number, z: number, y: number): void => {
+    f.values[z * 40 + x] = y;
+  };
+  for (let x = 0; x <= 14; x++) for (let z = 5; z <= 7; z++) set(x, z, 50); // fjord
+  for (let x = 25; x <= 34; x++) for (let z = 20; z <= 22; z++) set(x, z, 50); // gorge
+  for (let x = 6; x <= 12; x++) for (let z = 28; z <= 33; z++) set(x, z, 72); // bowl
+  for (let x = 0; x <= 14; x++) for (const z of [4, 8]) set(x, z, 65); // fjord shore
+  set(39, 0, 200); // lifts the snow line off the plateau
+  return f;
+}
+
+describe("ocean connectivity", () => {
+  it("floods a fjord that opens to the map edge and nothing else", () => {
+    const f = hydrologyField();
+    const { mask } = computeOceanMask(f, 63);
+    // the fjord is water all the way to its inland head
+    expect(mask[6 * 40 + 0]).toBe(1);
+    expect(mask[6 * 40 + 14]).toBe(1);
+    // the landlocked gorge is just as deep, and stays dry
+    expect(f.values[21 * 40 + 30]).toBeLessThan(63);
+    expect(mask[21 * 40 + 30]).toBe(0);
+    // and dry land is dry land
+    expect(mask[0]).toBe(0);
+  });
+
+  it("counts every flooded column as connected, and no column above sea", () => {
+    const f = hydrologyField();
+    const { mask, overriddenNoFlood } = computeOceanMask(f, 63);
+    let wet = 0;
+    for (let idx = 0; idx < mask.length; idx++) {
+      if (mask[idx] === 1) {
+        wet++;
+        expect(f.values[idx]!).toBeLessThan(63);
+      }
+    }
+    expect(wet).toBe(15 * 3); // the fjord channel only
+    expect(overriddenNoFlood).toBe(0);
+  });
+
+  it("honours flooded:\"never\" where it can, and floods anyway where it must", () => {
+    const f = hydrologyField();
+    const noFlood = new Uint8Array(40 * 40);
+    // plug the middle of the fjord: the sea still reaches the plug
+    for (let x = 8; x <= 10; x++) for (let z = 5; z <= 7; z++) noFlood[z * 40 + x] = 1;
+    const { mask, overriddenNoFlood } = computeOceanMask(f, 63, noFlood);
+    // the barrier touches the open sea, so physics wins and it fills
+    expect(overriddenNoFlood).toBeGreaterThan(0);
+    expect(mask[6 * 40 + 0]).toBe(1);
+
+    // a barrier over the landlocked gorge costs nothing — it was dry anyway
+    const inland = new Uint8Array(40 * 40);
+    for (let x = 25; x <= 34; x++) for (let z = 20; z <= 22; z++) inland[z * 40 + x] = 1;
+    const dry = computeOceanMask(f, 63, inland);
+    expect(dry.overriddenNoFlood).toBe(0);
+    expect(dry.mask[21 * 40 + 30]).toBe(0);
+  });
+
+  it("marks a closed basin pool as lake water, separate from the ocean", () => {
+    const f = hydrologyField();
+    const columns: number[] = [];
+    for (let x = 6; x <= 12; x++) for (let z = 28; z <= 33; z++) columns.push(z * 40 + x);
+    const lake = computeLakeMask(f, [
+      {
+        editId: "pond",
+        centerX: 9,
+        centerZ: 30,
+        radius: 4,
+        waterY: 78,
+        columns: Int32Array.from(columns),
+      },
+    ]);
+    expect(lake[30 * 40 + 9]).toBe(1);
+    expect(lake[0]).toBe(0);
+    // a basin whose rim never closed contributes nothing
+    expect(
+      computeLakeMask(f, [
+        { editId: "x", centerX: 9, centerZ: 30, radius: 4, waterY: null, columns: Int32Array.from(columns) },
+      ]).every((v) => v === 0),
+    ).toBe(true);
+  });
+});
+
+describe("water-aware classification", () => {
+  it("puts beach only next to ocean water, never around an inland hollow", () => {
+    const f = hydrologyField();
+    const c = classify(f, PARAMS);
+    // the fjord's low shore is beach
+    expect(c.classes[4 * 40 + 10]).toBe(SurfaceClass.BEACH);
+    expect(c.classes[8 * 40 + 10]).toBe(SurfaceClass.BEACH);
+    // the landlocked gorge floor is dry land, and its lip is not a beach
+    expect(c.classes[21 * 40 + 30]).not.toBe(SurfaceClass.UNDERWATER);
+    for (let x = 24; x <= 35; x++) {
+      expect(c.classes[19 * 40 + x]).not.toBe(SurfaceClass.BEACH);
+      expect(c.classes[23 * 40 + x]).not.toBe(SurfaceClass.BEACH);
+    }
+  });
+
+  it("classifies the ground around a basin pool as lakeshore", () => {
+    const f = hydrologyField();
+    const columns: number[] = [];
+    for (let x = 6; x <= 12; x++) for (let z = 28; z <= 33; z++) columns.push(z * 40 + x);
+    const c = classify(f, PARAMS, {
+      basins: [
+        {
+          editId: "pond",
+          centerX: 9,
+          centerZ: 30,
+          radius: 4,
+          waterY: 78,
+          columns: Int32Array.from(columns),
+        },
+      ],
+    });
+    expect(c.classes[30 * 40 + 9]).toBe(SurfaceClass.UNDERWATER);
+    expect(c.classes[30 * 40 + 13]).toBe(SurfaceClass.LAKESHORE);
+    // far away is ordinary soil
+    expect(c.classes[30 * 40 + 25]).toBe(SurfaceClass.SOIL);
+  });
+
+  it("never puts snow inside a volcano footprint", () => {
+    const request = {
+      region: centeredRegion(160, 160),
+      worldSeed: 4242,
+      nodePath: "world.terrain",
+      params: { amplitude: 10, baseHeight: 80 },
+      edits: [
+        { id: "cone", verb: "volcano" as const, at: [0.5, 0.5] as const, radius: 50, height: 120 },
+      ],
+    };
+    const r = buildTerrainField(request);
+    const fp = r.edits.footprints.find((p) => p.verb === "volcano");
+    expect(fp).toBeDefined();
+    expect(fp!.count).toBeGreaterThan(0);
+
+    let insideSnow = 0;
+    for (let idx = 0; idx < r.classification.classes.length; idx++) {
+      if (footprintHas(fp!, idx) && r.classification.classes[idx] === SurfaceClass.SNOW) {
+        insideSnow++;
+      }
+    }
+    expect(insideSnow).toBe(0);
+
+    // and the suppression is doing real work: without the footprint the same
+    // field snow-caps the cone.
+    const bare = classify(r.field, r.params, {});
+    let bareSnow = 0;
+    for (let idx = 0; idx < bare.classes.length; idx++) {
+      if (footprintHas(fp!, idx) && bare.classes[idx] === SurfaceClass.SNOW) bareSnow++;
+    }
+    expect(bareSnow).toBeGreaterThan(0);
   });
 });

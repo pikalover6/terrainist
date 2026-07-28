@@ -292,3 +292,67 @@ describe("validateTerrainDocument", () => {
     expect(document?.meta.prompt).toBe("misty fjords with a black-sand coast");
   });
 });
+
+describe("G2.5a organic-shape params", () => {
+  /** Replace the heightfield's single edit with `params`. */
+  function withEdit(params: Record<string, unknown>): Record<string, unknown> {
+    const doc = baseDocument();
+    (heightfield(doc)["children"] as Record<string, unknown>[])[0] = {
+      id: "feature",
+      kind: "generator",
+      generator: "terrain.edit@0",
+      params,
+    };
+    return doc;
+  }
+
+  it("accepts irregularity on radial verbs and meander on corridor verbs", () => {
+    for (const params of [
+      { verb: "peak", at: [0.5, 0.5], irregularity: 0.3 },
+      { verb: "volcano", zone: "north", irregularity: 0 },
+      { verb: "island", at: [0.2, 0.2], irregularity: 0.5 },
+      { verb: "plateau", at: [0.5, 0.5], irregularity: 0.1 },
+      { verb: "basin", at: [0.5, 0.5], irregularity: 0.25, flooded: "never" },
+      { verb: "ridge", course: [[0.1, 0.5], [0.9, 0.5]], meander: 1 },
+      { verb: "valley", course: [[0.1, 0.5], [0.9, 0.5]], meander: 0, flooded: "auto" },
+      { verb: "river", course: [[0.1, 0.5], [0.9, 0.5]], meander: 0.5, flooded: "never" },
+    ]) {
+      const { diagnostics, document } = validateTerrainDocument(withEdit(params));
+      expect(codesOf(diagnostics), JSON.stringify(params)).toEqual([]);
+      expect(document).toBeDefined();
+    }
+  });
+
+  it("range-checks irregularity and meander with a fix hint", () => {
+    const tooRound = expectDiagnostic(
+      withEdit({ verb: "peak", at: [0.5, 0.5], irregularity: 0.9 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    expect(tooRound.fix).toBeTruthy();
+    expectDiagnostic(
+      withEdit({ verb: "river", course: [[0.1, 0.5], [0.9, 0.5]], meander: -1 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+  });
+
+  it("rejects flooded values that are not auto or never", () => {
+    const d = expectDiagnostic(
+      withEdit({ verb: "river", course: [[0.1, 0.5], [0.9, 0.5]], flooded: "sometimes" }),
+      "BAD_ENUM",
+    );
+    expect(d.fix).toContain("auto");
+  });
+
+  it("rejects the params on verbs they do not belong to", () => {
+    // meander is a corridor knob; irregularity and flooded are not ridge knobs
+    expectDiagnostic(withEdit({ verb: "peak", at: [0.5, 0.5], meander: 0.5 }), "PARAM_OUT_OF_RANGE");
+    expectDiagnostic(
+      withEdit({ verb: "ridge", course: [[0.1, 0.5], [0.9, 0.5]], irregularity: 0.2 }),
+      "PARAM_OUT_OF_RANGE",
+    );
+    expectDiagnostic(
+      withEdit({ verb: "ridge", course: [[0.1, 0.5], [0.9, 0.5]], flooded: "never" }),
+      "PARAM_OUT_OF_RANGE",
+    );
+  });
+});

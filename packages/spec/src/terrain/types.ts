@@ -54,6 +54,12 @@ export const COURSE_VERBS: readonly EditVerbName[] = ["ridge", "valley", "river"
 /** Falloff profiles. */
 export const FALLOFF_PROFILES = ["sharp", "rounded"] as const;
 
+/** `flooded` modes of a carve verb. */
+export const FLOODED_MODES = ["auto", "never"] as const;
+
+/** One of the `flooded` modes. */
+export type FloodedModeName = (typeof FLOODED_MODES)[number];
+
 /** Tree shapes this profile implements. */
 export const TREE_SHAPES = ["spruce_tall", "spruce_squat", "oak_round", "birch_slim"] as const;
 
@@ -132,6 +138,12 @@ export interface EditParams {
   readonly calderaDepth?: number;
   readonly lava?: boolean;
   readonly water?: boolean;
+  /** 0..0.5 — angular + noise deformation of a radial verb's outline. */
+  readonly irregularity?: number;
+  /** 0..1 — lateral meander of a corridor verb's centreline. */
+  readonly meander?: number;
+  /** Whether a carve may take on ocean water. */
+  readonly flooded?: FloodedModeName;
 }
 
 /** A `terrain.heightfield@0` node. */

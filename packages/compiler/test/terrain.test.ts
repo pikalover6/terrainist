@@ -2,14 +2,21 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { centeredRegion } from "@terrainist/stdlib";
+import {
+  HeightField,
+  centeredRegion,
+  classify,
+  nodeSeed,
+  resolveHeightfieldParams,
+} from "@terrainist/stdlib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain } from "../src/terrain/compile.js";
 import type { CompileTerrainResult, TerrainCompileReport } from "../src/terrain/compile.js";
-import { FluidKind, settleFluidPool, type ColumnPlan } from "../src/terrain/columns.js";
+import { FluidKind, buildColumnPlan, settleFluidPool, type ColumnPlan } from "../src/terrain/columns.js";
+import { resolvePalette } from "../src/terrain/palette.js";
 import {
   checkFloatingVegetation,
   checkFluidStability,
@@ -329,5 +336,40 @@ describe("floating vegetation validator", () => {
       allowUnstable: false,
     });
     expect(diagnostics[0]?.code).toBe("LOAM-T111");
+  });
+});
+
+describe("the water pass reads the ocean mask, not sea level", () => {
+  it("fills a fjord that opens to the map edge and leaves a landlocked gorge dry", () => {
+    const region = centeredRegion(48, 48);
+    const field = new HeightField(region);
+    field.values.fill(80);
+    const set = (i: number, j: number, y: number): void => {
+      field.values[j * 48 + i] = y;
+    };
+    // a channel in from the west edge, and an identical pit in the middle
+    for (let i = 0; i <= 16; i++) for (let j = 8; j <= 10; j++) set(i, j, 40);
+    for (let i = 28; i <= 38; i++) for (let j = 30; j <= 32; j++) set(i, j, 40);
+
+    const classification = classify(field, resolveHeightfieldParams({}));
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const { palette } = resolvePalette(stack, undefined, nodeSeed(1n, "world"));
+    const plan = buildColumnPlan({
+      field,
+      classification,
+      palette,
+      seaLevel: 63,
+      soilDepth: 3,
+      calderas: [],
+      basins: [],
+    });
+
+    expect(plan.fluidKind[9 * 48 + 0]).toBe(FluidKind.WATER);
+    expect(plan.fluidKind[9 * 48 + 16]).toBe(FluidKind.WATER);
+    // just as deep, no way out to sea, and therefore dry
+    expect(plan.ground[31 * 48 + 33]).toBeLessThan(63);
+    expect(plan.fluidKind[31 * 48 + 33]).toBe(FluidKind.NONE);
+    // and the result is still a settle-safe world
+    expect(checkFluidStability(plan).unstable).toBe(0);
   });
 });

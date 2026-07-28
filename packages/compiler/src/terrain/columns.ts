@@ -73,6 +73,7 @@ export interface ColumnPlanInput {
  */
 export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
   const { field, classification, palette, seaLevel, soilDepth } = input;
+  const oceanMask = classification.oceanMask;
   const region = field.region;
   const n = region.width * region.depth;
 
@@ -109,6 +110,9 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
           soil[idx] = 0;
           break;
         case SurfaceClass.BEACH:
+        // A lake shore gets the beach material for now; T2 (materials) is where
+        // the two diverge.
+        case SurfaceClass.LAKESHORE:
           surface[idx] = palette.stateAt("ground.beach", x, z);
           subsurface[idx] = palette.stateAt("ground.beach", x, z);
           soil[idx] = Math.min(255, soilDepth);
@@ -131,7 +135,10 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
           break;
       }
 
-      if (y < seaLevel) {
+      // Sea water goes only where the sea can reach: the classification's ocean
+      // mask, not a blanket "below sea level". A landlocked gorge floor stays
+      // dry however deep it is cut.
+      if (oceanMask[idx] === 1) {
         fluidKind[idx] = FluidKind.WATER;
         fluidTop[idx] = seaLevel;
         snow[idx] = 0;

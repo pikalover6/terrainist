@@ -78,6 +78,7 @@ export function biomeForColumn(c: BiomeInput): ProfileBiome {
       return deep ? "minecraft:deep_ocean" : "minecraft:ocean";
     }
     case SurfaceClass.BEACH:
+    case SurfaceClass.LAKESHORE:
       return c.temperature < COLD_TEMPERATURE ? "minecraft:snowy_beach" : "minecraft:beach";
     case SurfaceClass.SNOW:
       return "minecraft:snowy_slopes";

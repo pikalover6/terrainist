@@ -11,7 +11,7 @@
 
 import { atan, toDegrees } from "../math/index.js";
 import type { ClassifyParams, HeightField } from "../field/index.js";
-import type { Marker } from "../edits/index.js";
+import { footprintHas, type BasinWater, type FeatureFootprint, type Marker } from "../edits/index.js";
 
 // ---------------------------------------------------------------------------
 // Surface classes
@@ -29,6 +29,8 @@ export const SurfaceClass = Object.freeze({
   SOIL: 3,
   /** Above the snow line — `@ground.peak` plus snow layers. */
   SNOW: 4,
+  /** Bordering still fresh water (a basin pool) rather than the ocean. */
+  LAKESHORE: 5,
 } as const);
 
 /** Numeric surface-class value. */
@@ -41,6 +43,7 @@ export const SURFACE_CLASS_NAMES: readonly string[] = Object.freeze([
   "cliff",
   "soil",
   "snow",
+  "lakeshore",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -74,6 +77,150 @@ export function computeSlopes(field: HeightField): Float64Array {
 }
 
 // ---------------------------------------------------------------------------
+// Hydrology
+// ---------------------------------------------------------------------------
+
+/** The outcome of the ocean flood-fill. */
+export interface OceanMask {
+  /** 1 where the column holds ocean water at sea level. */
+  mask: Uint8Array;
+  /** Number of `flooded: "never"` columns that had to be flooded anyway. */
+  overriddenNoFlood: number;
+}
+
+/**
+ * Which below-sea columns are actually ocean.
+ *
+ * A depression only holds sea water if the sea can reach it, so the mask is the
+ * set of below-sea columns 4-connected to the **map edge** — an open fjord or
+ * estuary floods; a landlocked gorge, however deep, stays dry. This is the fix
+ * for "any carve below y=63 becomes a river".
+ *
+ * `noFlood` (from carves declaring `flooded: "never"`) blocks the fill. Blocking
+ * alone would be unsound, though: a dry below-sea column touching ocean water
+ * would leave that water with an exposed air face. So after the fill, any
+ * blocked column adjacent to water is flooded regardless, to a fixed point, and
+ * counted — `never` is honoured exactly as far as physics allows.
+ */
+export function computeOceanMask(
+  field: HeightField,
+  seaLevel: number,
+  noFlood?: Uint8Array,
+): OceanMask {
+  const { width, depth } = field.region;
+  const v = field.values;
+  const n = width * depth;
+  const mask = new Uint8Array(n);
+  const below = (idx: number): boolean => (v[idx] as number) < seaLevel;
+  const blocked = (idx: number): boolean => noFlood !== undefined && noFlood[idx] === 1;
+
+  const queue = new Int32Array(n);
+  let head = 0;
+  let tail = 0;
+  const push = (idx: number): void => {
+    if (mask[idx] === 1 || !below(idx) || blocked(idx)) return;
+    mask[idx] = 1;
+    queue[tail++] = idx;
+  };
+
+  for (let i = 0; i < width; i++) {
+    push(i);
+    push((depth - 1) * width + i);
+  }
+  for (let j = 0; j < depth; j++) {
+    push(j * width);
+    push(j * width + width - 1);
+  }
+  while (head < tail) {
+    const idx = queue[head++] as number;
+    const i = idx % width;
+    const j = (idx - i) / width;
+    if (i > 0) push(idx - 1);
+    if (i < width - 1) push(idx + 1);
+    if (j > 0) push(idx - width);
+    if (j < depth - 1) push(idx + width);
+  }
+
+  // Fixed-point repair: a blocked column that borders water must flood too.
+  let overriddenNoFlood = 0;
+  if (noFlood !== undefined) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let idx = 0; idx < n; idx++) {
+        if (mask[idx] === 1 || !below(idx) || !blocked(idx)) continue;
+        const i = idx % width;
+        const j = (idx - i) / width;
+        const wet =
+          (i > 0 && mask[idx - 1] === 1) ||
+          (i < width - 1 && mask[idx + 1] === 1) ||
+          (j > 0 && mask[idx - width] === 1) ||
+          (j < depth - 1 && mask[idx + width] === 1);
+        if (!wet) continue;
+        mask[idx] = 1;
+        overriddenNoFlood++;
+        changed = true;
+      }
+    }
+  }
+
+  return { mask, overriddenNoFlood };
+}
+
+/** Columns submerged by a closed-basin pool (below its settled water surface). */
+export function computeLakeMask(
+  field: HeightField,
+  basins: readonly BasinWater[],
+): Uint8Array {
+  const { width, depth } = field.region;
+  const mask = new Uint8Array(width * depth);
+  for (const basin of basins) {
+    if (basin.waterY === null) continue;
+    for (const idx of basin.columns) {
+      if (idx < 0 || idx >= mask.length) continue;
+      if ((field.values[idx] as number) < basin.waterY) mask[idx] = 1;
+    }
+  }
+  return mask;
+}
+
+/**
+ * Chebyshev-free 4-connected BFS distance from the set `seeds`, capped at
+ * `limit`. Columns further than `limit` (or unreachable) read `limit + 1`.
+ */
+function distanceFrom(seeds: Uint8Array, width: number, depth: number, limit: number): Int32Array {
+  const n = width * depth;
+  const dist = new Int32Array(n).fill(limit + 1);
+  const queue = new Int32Array(n);
+  let head = 0;
+  let tail = 0;
+  for (let idx = 0; idx < n; idx++) {
+    if (seeds[idx] === 1) {
+      dist[idx] = 0;
+      queue[tail++] = idx;
+    }
+  }
+  while (head < tail) {
+    const idx = queue[head++] as number;
+    const d = (dist[idx] as number) + 1;
+    if (d > limit) continue;
+    const i = idx % width;
+    const j = (idx - i) / width;
+    if (i > 0) relax(idx - 1, d);
+    if (i < width - 1) relax(idx + 1, d);
+    if (j > 0) relax(idx - width, d);
+    if (j < depth - 1) relax(idx + width, d);
+  }
+  return dist;
+
+  function relax(next: number, d: number): void {
+    if ((dist[next] as number) <= d) return;
+    dist[next] = d;
+    queue[tail++] = next;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Classification
 // ---------------------------------------------------------------------------
 
@@ -83,6 +230,12 @@ export interface MarkerOptions {
   flatSlopeDegrees?: number;
   /** Maximum number of `coast_points` sampled. Default 64. */
   maxCoastPoints?: number;
+  /** Carve columns that asked not to be flooded (`EditComposition.noFlood`). */
+  noFlood?: Uint8Array;
+  /** Closed-basin pools, so their shores classify as `LAKESHORE`. */
+  basins?: readonly BasinWater[];
+  /** Per-edit footprints; volcano footprints suppress snow. */
+  footprints?: readonly FeatureFootprint[];
 }
 
 /** The result of the classification pass. */
@@ -99,6 +252,16 @@ export interface Classification {
   maxHeight: number;
   /** Absolute Y above which columns are classified `SNOW`. */
   snowLine: number;
+  /**
+   * 1 where the column holds ocean water at sea level — below-sea *and*
+   * hydraulically connected to the map edge. The water pass must read this
+   * rather than testing `height < seaLevel`.
+   */
+  oceanMask: Uint8Array;
+  /** 1 where the column is submerged by a closed-basin pool. */
+  lakeMask: Uint8Array;
+  /** How many `flooded: "never"` columns had to be flooded for fluid stability. */
+  overriddenNoFlood: number;
   /** `highest_point`, `largest_flat`, and one marker per sampled coast point. */
   markers: Marker[];
   /** Column count of the largest connected near-flat land area. */
@@ -108,12 +271,20 @@ export interface Classification {
 /**
  * Classify every column and extract the heightfield markers.
  *
- * Rule order (first match wins), per the terrain profile:
- * 1. height < `seaLevel` → `UNDERWATER`;
- * 2. height ≤ `seaLevel + beachWidth` → `BEACH`;
- * 3. slope ≥ `cliffThreshold` → `CLIFF` (and no soil);
- * 4. height ≥ snow line → `SNOW`;
- * 5. otherwise → `SOIL`.
+ * Rule order (first match wins):
+ * 1. the column holds water (ocean mask, or a basin pool) → `UNDERWATER`;
+ * 2. within `beachWidth` **of ocean water**, and no higher than
+ *    `seaLevel + beachWidth` → `BEACH`;
+ * 3. within `beachWidth` of a basin pool → `LAKESHORE`;
+ * 4. slope ≥ `cliffThreshold` → `CLIFF` (and no soil);
+ * 5. height ≥ snow line, and not inside a volcano footprint → `SNOW`;
+ * 6. otherwise → `SOIL`.
+ *
+ * Rule 2's proximity test is the fix for inland depressions near sea level
+ * coming out as beach: being at beach *height* is not enough, the column has to
+ * actually be by the sea. Rule 5's footprint test keeps snow off a volcano —
+ * a fresh cone is bare rock and ash, not an alpine summit, and the old
+ * height-only rule crescented every caldera rim in white.
  *
  * The snow line sits at `base + snowLineFraction · (maxHeight - base)` with
  * `base = max(seaLevel, minHeight)` — i.e. `snowLineFraction` (default 0.8) of
@@ -141,16 +312,26 @@ export function classify(
   const reliefSpan = maxHeight - reliefBase;
   const snowLine = reliefBase + params.snowLineFraction * (reliefSpan > 0 ? reliefSpan : 0);
 
+  const ocean = computeOceanMask(field, seaLevel, options.noFlood);
+  const oceanMask = ocean.mask;
+  const lakeMask = computeLakeMask(field, options.basins ?? []);
+  const beachReach = params.beachWidth;
+  const oceanDistance = distanceFrom(oceanMask, width, depth, beachReach);
+  const lakeDistance = distanceFrom(lakeMask, width, depth, beachReach);
+  const snowFree = snowSuppressionMask(width * depth, options.footprints ?? []);
+
   for (let idx = 0; idx < classes.length; idx++) {
     const h = v[idx] as number;
     relief[idx] = reliefSpan > 0 ? (h - reliefBase) / reliefSpan : 0;
-    if (h < seaLevel) {
+    if (oceanMask[idx] === 1 || lakeMask[idx] === 1) {
       classes[idx] = SurfaceClass.UNDERWATER;
-    } else if (h <= seaLevel + params.beachWidth) {
+    } else if (h <= seaLevel + params.beachWidth && (oceanDistance[idx] as number) <= beachReach) {
       classes[idx] = SurfaceClass.BEACH;
+    } else if ((lakeDistance[idx] as number) <= beachReach) {
+      classes[idx] = SurfaceClass.LAKESHORE;
     } else if ((slopes[idx] as number) >= params.cliffThreshold) {
       classes[idx] = SurfaceClass.CLIFF;
-    } else if (reliefSpan > 0 && h >= snowLine) {
+    } else if (reliefSpan > 0 && h >= snowLine && snowFree[idx] === 0) {
       classes[idx] = SurfaceClass.SNOW;
     } else {
       classes[idx] = SurfaceClass.SOIL;
@@ -173,9 +354,27 @@ export function classify(
     minHeight,
     maxHeight,
     snowLine,
+    oceanMask,
+    lakeMask,
+    overriddenNoFlood: ocean.overriddenNoFlood,
     markers,
     largestFlatArea: flat ? flat.area : 0,
   };
+}
+
+/** Verbs whose footprint forbids snow. */
+const SNOWLESS_VERBS: readonly string[] = Object.freeze(["volcano"]);
+
+/** 1 where a footprint forbids the snow class. */
+function snowSuppressionMask(n: number, footprints: readonly FeatureFootprint[]): Uint8Array {
+  const out = new Uint8Array(n);
+  for (const fp of footprints) {
+    if (!SNOWLESS_VERBS.includes(fp.verb)) continue;
+    for (let idx = 0; idx < n; idx++) {
+      if (footprintHas(fp, idx)) out[idx] = 1;
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------

@@ -86,6 +86,13 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
     parentPath: request.nodePath,
     seaLevel: params.seaLevel,
   });
-  const classification = classify(field, params, request.markers ?? {});
+  // Classification reads the composition: hydrology needs the carves' `flooded`
+  // declarations and the basin pools, and the snow rule needs the footprints.
+  const classification = classify(field, params, {
+    ...(request.markers ?? {}),
+    noFlood: edits.noFlood,
+    basins: edits.basins,
+    footprints: edits.footprints,
+  });
   return { field, params, classification, edits, worldSeed };
 }

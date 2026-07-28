@@ -10,6 +10,8 @@ import {
   applyEdits,
   editGroup,
   falloff,
+  footprintHas,
+  makeCorridorShape,
   monotonicDescent,
   polylineDistance,
   refineCourse,
@@ -201,6 +203,7 @@ describe("raise kernels", () => {
         width: 48,
         height: 60,
         profile: "sharp",
+        meander: 0,
       },
     ];
     const out = applyEdits(field, edits, ctx());
@@ -218,7 +221,7 @@ describe("raise kernels", () => {
 
   it("peak raises a cone with its apex at the centre", () => {
     const field = flatField();
-    applyEdits(field, [{ id: "p", verb: "peak", at: [0.5, 0.5], radius: 50, height: 70 }], ctx());
+    applyEdits(field, [{ id: "p", verb: "peak", at: [0.5, 0.5], radius: 50, height: 70, irregularity: 0 }], ctx());
     expect(field.at(0, 0)).toBeCloseTo(150, 6);
     expect(field.at(25, 0)).toBeCloseTo(115, 6); // sharp = linear
     expect(field.at(50, 0)).toBe(80);
@@ -226,7 +229,7 @@ describe("raise kernels", () => {
 
   it("island raises a rounded dome", () => {
     const field = flatField();
-    applyEdits(field, [{ id: "i", verb: "island", at: [0.5, 0.5] }], ctx());
+    applyEdits(field, [{ id: "i", verb: "island", at: [0.5, 0.5], irregularity: 0 }], ctx());
     expect(field.at(0, 0)).toBeCloseTo(110, 6); // default height 30
     expect(field.at(48, 0)).toBe(80);
   });
@@ -239,7 +242,7 @@ describe("raise kernels", () => {
     }
     applyEdits(
       field,
-      [{ id: "mesa", verb: "plateau", at: [0.5, 0.5], radius: 64, height: 25, rim: 8 }],
+      [{ id: "mesa", verb: "plateau", at: [0.5, 0.5], radius: 64, height: 25, rim: 8, irregularity: 0 }],
       ctx(),
     );
     const centre = field.at(0, 0);
@@ -269,7 +272,17 @@ describe("raise kernels", () => {
     const field = flatField();
     const out = applyEdits(
       field,
-      [{ id: "fuji", verb: "volcano", at: [0.5, 0.5], radius: 64, height: 80, calderaDepth: 12 }],
+      [
+        {
+          id: "fuji",
+          verb: "volcano",
+          at: [0.5, 0.5],
+          radius: 64,
+          height: 80,
+          calderaDepth: 12,
+          irregularity: 0,
+        },
+      ],
       ctx(),
     );
     expect(out.calderas).toHaveLength(1);
@@ -299,7 +312,7 @@ describe("raise kernels", () => {
     const field = flatField();
     const out = applyEdits(
       field,
-      [{ id: "v", verb: "volcano", at: [0.5, 0.5], caldera: false }],
+      [{ id: "v", verb: "volcano", at: [0.5, 0.5], caldera: false, irregularity: 0 }],
       ctx(),
     );
     expect(out.calderas).toHaveLength(0);
@@ -322,6 +335,7 @@ describe("carve kernels", () => {
           ],
           width: 40,
           depth: 30,
+          meander: 0,
         },
       ],
       ctx(),
@@ -344,6 +358,7 @@ describe("carve kernels", () => {
           ],
           width: 10,
           depth: 6,
+          meander: 0,
         },
       ],
       ctx(),
@@ -355,22 +370,31 @@ describe("carve kernels", () => {
     expect(out.markers.map((m) => m.name).sort()).toEqual(["head", "mouth"]);
   });
 
-  it("river never raises ground that is already below its bed", () => {
-    const field = flatField(20); // already far below sea level
+  it("river only ever lowers the field, never raises it", () => {
+    // Ground already far below sea level: the channel is cut relative to the
+    // local descent profile, so it deepens — but no column may come out higher.
+    const field = flatField(20);
     const before = Float64Array.from(field.values);
     applyEdits(
       field,
-      [{ id: "r", verb: "river", course: [[0.1, 0.5], [0.9, 0.5]] }],
+      [{ id: "r", verb: "river", course: [[0.1, 0.5], [0.9, 0.5]], meander: 0 }],
       ctx(),
     );
-    expect(Array.from(field.values)).toEqual(Array.from(before));
+    let lowered = 0;
+    for (let k = 0; k < field.values.length; k++) {
+      expect(field.values[k]!).toBeLessThanOrEqual(before[k]! + 1e-9);
+      if (field.values[k]! < before[k]! - 1e-9) lowered++;
+    }
+    expect(lowered).toBeGreaterThan(0);
   });
 
   it("basin carves a bowl and reports water when the rim is closed", () => {
     const field = flatField(100);
     const out = applyEdits(
       field,
-      [{ id: "lake", verb: "basin", at: [0.5, 0.5], radius: 56, depth: 20, water: true }],
+      [
+        { id: "lake", verb: "basin", at: [0.5, 0.5], radius: 56, depth: 20, water: true, irregularity: 0 },
+      ],
       ctx(),
     );
     expect(field.at(0, 0)).toBeCloseTo(80, 6);
@@ -386,7 +410,7 @@ describe("carve kernels", () => {
     const field = flatField(100);
     const out = applyEdits(
       field,
-      [{ id: "lake", verb: "basin", at: [0.02, 0.02], radius: 56, water: true }],
+      [{ id: "lake", verb: "basin", at: [0.02, 0.02], radius: 56, water: true, irregularity: 0 }],
       ctx(),
     );
     expect(out.basins[0]!.waterY).toBeNull();
@@ -395,7 +419,7 @@ describe("carve kernels", () => {
 
   it("basin without water requests no fill at all", () => {
     const field = flatField(100);
-    const out = applyEdits(field, [{ id: "b", verb: "basin", at: [0.5, 0.5] }], ctx());
+    const out = applyEdits(field, [{ id: "b", verb: "basin", at: [0.5, 0.5], irregularity: 0 }], ctx());
     expect(out.basins).toHaveLength(0);
     expect(field.at(0, 0)).toBeCloseTo(80, 6);
   });
@@ -431,7 +455,7 @@ describe("composition", () => {
     const full = flatField();
     const half = flatField();
     const none = flatField();
-    const edit: TerrainEdit = { id: "p", verb: "peak", at: [0.5, 0.5], radius: 50, height: 70 };
+    const edit: TerrainEdit = { id: "p", verb: "peak", at: [0.5, 0.5], radius: 50, height: 70, irregularity: 0 };
     applyEdits(full, [edit], ctx());
     applyEdits(half, [{ ...edit, strength: 0.5 }], ctx());
     applyEdits(none, [{ ...edit, strength: 0 }], ctx());
@@ -454,5 +478,317 @@ describe("composition", () => {
     expect(out.markers.map((m) => m.id)).toEqual(["p.center", "p.peak", "p.foot"]);
     expect(out.markers[0]!.x).toBe(0);
     expect(out.markers[2]!.x).toBe(56);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G2.5a — organic shaping
+// ---------------------------------------------------------------------------
+
+/** Columns of `field` that differ from `base`, as a plain index set. */
+function touched(field: HeightField, base: Float64Array): number[] {
+  const out: number[] = [];
+  for (let k = 0; k < field.values.length; k++) {
+    if (Math.abs(field.values[k]! - base[k]!) > 1e-9) out.push(k);
+  }
+  return out;
+}
+
+/** Distance from the region centre to each touched column, in blocks. */
+function radii(field: HeightField, base: Float64Array): number[] {
+  const { x0, z0, width } = field.region;
+  return touched(field, base).map((idx) => {
+    const x = x0 + (idx % width);
+    const z = z0 + Math.floor(idx / width);
+    return Math.sqrt(x * x + z * z);
+  });
+}
+
+describe("organic radial falloff", () => {
+  const RADIAL: readonly TerrainEdit["verb"][] = ["peak", "volcano", "island", "plateau", "basin"];
+
+  it("irregularity 0 leaves every radial verb a perfect circle", () => {
+    for (const verb of RADIAL) {
+      const field = flatField(120);
+      const base = Float64Array.from(field.values);
+      applyEdits(field, [{ id: verb, verb, at: [0.5, 0.5], radius: 60, irregularity: 0 }], ctx());
+      const r = radii(field, base);
+      expect(r.length).toBeGreaterThan(0);
+      // every touched column is inside the nominal radius, and the extreme ones
+      // reach it — a disc, to within the grid's own quantization
+      expect(Math.max(...r)).toBeLessThan(60);
+      expect(Math.max(...r)).toBeGreaterThan(59);
+    }
+  });
+
+  it("irregularity pushes the outline off the circle in both directions", () => {
+    for (const verb of RADIAL) {
+      const field = flatField(120);
+      const base = Float64Array.from(field.values);
+      applyEdits(field, [{ id: verb, verb, at: [0.5, 0.5], radius: 60, irregularity: 0.3 }], ctx());
+      const r = radii(field, base);
+      // the boundary now reaches beyond the nominal radius somewhere...
+      expect(Math.max(...r)).toBeGreaterThan(60);
+      // ...and falls short of it somewhere else, which a circle cannot do
+      const boundary = boundaryRadiusByOctant(field, base);
+      expect(Math.min(...boundary)).toBeLessThan(58);
+      expect(Math.max(...boundary)).toBeGreaterThan(62);
+    }
+  });
+
+  it("gives two features with different ids different outlines", () => {
+    const outline = (id: string): number[] => {
+      const field = flatField(120);
+      const base = Float64Array.from(field.values);
+      applyEdits(field, [{ id, verb: "peak", at: [0.5, 0.5], radius: 60 }], ctx());
+      return boundaryRadiusByOctant(field, base);
+    };
+    expect(outline("alpha")).not.toEqual(outline("beta"));
+    expect(outline("alpha")).toEqual(outline("alpha"));
+  });
+
+  it("keeps a modulated volcano's caldera concentric with its cone", () => {
+    const field = flatField(80);
+    const out = applyEdits(
+      field,
+      [
+        {
+          id: "krak",
+          verb: "volcano",
+          at: [0.5, 0.5],
+          radius: 64,
+          height: 80,
+          calderaDepth: 12,
+          irregularity: 0.35,
+        },
+      ],
+      ctx(),
+    );
+    const cal = out.calderas[0]!;
+    // the rim is still a rim: every interior column sits below it, and the
+    // truncation height is the same all the way round despite the lobes
+    expect(cal.columns.length).toBeGreaterThan(0);
+    for (const idx of cal.columns) expect(field.values[idx]!).toBeLessThan(cal.rimY);
+    expect(cal.lavaY).toBeLessThan(cal.rimY);
+    // the crater sits well inside the cone, not spilling out of a narrow lobe
+    for (const idx of cal.columns) {
+      const x = REGION.x0 + (idx % REGION.width);
+      const z = REGION.z0 + Math.floor(idx / REGION.width);
+      expect(Math.sqrt(x * x + z * z)).toBeLessThan(64 * 0.28 * 1.5);
+    }
+  });
+});
+
+/** The outermost touched radius in each of 32 angular sectors. */
+const SECTORS = 32;
+function boundaryRadiusByOctant(field: HeightField, base: Float64Array): number[] {
+  const { x0, z0, width } = field.region;
+  const best = new Array<number>(SECTORS).fill(0);
+  for (const idx of touched(field, base)) {
+    const x = x0 + (idx % width);
+    const z = z0 + Math.floor(idx / width);
+    const r = Math.sqrt(x * x + z * z);
+    const a = Math.floor(
+      ((Math.atan2(z, x) / (2 * Math.PI)) * SECTORS + SECTORS) % SECTORS,
+    );
+    if (r > best[a]!) best[a] = r;
+  }
+  return best;
+}
+
+describe("organic corridors", () => {
+  const straight: TerrainEdit["course"] = [
+    [0.1, 0.5],
+    [0.9, 0.5],
+  ];
+
+  it("meanders the centreline away from the straight course", () => {
+    const field = flatField(120);
+    const base = Float64Array.from(field.values);
+    applyEdits(
+      field,
+      [{ id: "wander", verb: "valley", course: straight, width: 24, depth: 20, meander: 1 }],
+      ctx(),
+    );
+    // the trough's centre of mass drifts off z = 0 along its length
+    const offsets: number[] = [];
+    for (let x = -50; x <= 50; x += 10) {
+      let bestZ = 0;
+      let bestDrop = 0;
+      for (let z = -60; z <= 60; z++) {
+        const drop = base[field.clampedIndex(x, z)]! - field.at(x, z);
+        if (drop > bestDrop) {
+          bestDrop = drop;
+          bestZ = z;
+        }
+      }
+      offsets.push(bestZ);
+    }
+    expect(Math.max(...offsets.map(Math.abs))).toBeGreaterThan(4);
+    // and it is not a constant sideways shift — it actually wanders
+    expect(new Set(offsets).size).toBeGreaterThan(2);
+  });
+
+  it("varies the carve width along the course", () => {
+    const field = flatField(120);
+    const base = Float64Array.from(field.values);
+    applyEdits(
+      field,
+      [{ id: "w", verb: "valley", course: straight, width: 40, depth: 20, meander: 0.001 }],
+      ctx(),
+    );
+    const widths: number[] = [];
+    for (let x = -50; x <= 50; x += 5) {
+      let n = 0;
+      for (let z = -60; z <= 60; z++) {
+        if (base[field.clampedIndex(x, z)]! - field.at(x, z) > 1e-9) n++;
+      }
+      widths.push(n);
+    }
+    expect(Math.max(...widths)).toBeGreaterThan(Math.min(...widths));
+    // within the documented ±30%
+    expect(Math.max(...widths)).toBeLessThanOrEqual(Math.ceil(40 * 1.3) + 2);
+  });
+
+  it("tapers the ends instead of stopping at a blunt wall", () => {
+    const field = flatField(120);
+    const base = Float64Array.from(field.values);
+    applyEdits(
+      field,
+      [{ id: "t", verb: "valley", course: straight, width: 30, depth: 30 }],
+      ctx(),
+    );
+    const depthAt = (x: number): number => {
+      let deepest = 0;
+      for (let z = -60; z <= 60; z++) {
+        const d = base[field.clampedIndex(x, z)]! - field.at(x, z);
+        if (d > deepest) deepest = d;
+      }
+      return deepest;
+    };
+    const head = Math.round(REGION.x0 + 0.1 * REGION.width);
+    // the carve is shallow at the mouth of the course and full depth well inside
+    expect(depthAt(head + 2)).toBeLessThan(depthAt(head + 45));
+    expect(depthAt(head + 45)).toBeGreaterThan(25);
+  });
+
+  it("keeps a meandered river descending monotonically to its mouth", () => {
+    // sloping ground, high in the west, so the river has somewhere to run
+    const field = new HeightField(REGION);
+    for (let j = 0; j < REGION.depth; j++) {
+      for (let i = 0; i < REGION.width; i++) {
+        field.values[j * REGION.width + i] = 180 - i * 0.5;
+      }
+    }
+    const before = field.clone();
+    applyEdits(
+      field,
+      [
+        {
+          id: "run",
+          verb: "river",
+          course: [
+            [0.1, 0.3],
+            [0.5, 0.6],
+            [0.9, 0.4],
+          ],
+          width: 12,
+          depth: 6,
+          meander: 1,
+        },
+      ],
+      ctx(),
+    );
+    // Re-derive the displaced curve exactly as the kernel did, then check the
+    // bed it left behind never climbs on the way to the mouth.
+    const seed = nodeSeed(813205n, "world.terrain.run");
+    const shape = makeCorridorShape(refineCourse(REGION, [[0.1, 0.3], [0.5, 0.6], [0.9, 0.4]]), seed, 12, 1);
+    const { elevations, reversed } = monotonicDescent(shape.samples, before);
+    for (let k = 1; k < elevations.length; k++) {
+      if (reversed) expect(elevations[k - 1]!).toBeGreaterThanOrEqual(elevations[k]! - 1e-9);
+      else expect(elevations[k]!).toBeLessThanOrEqual(elevations[k - 1]! + 1e-9);
+    }
+    // and the carved channel itself descends from head to mouth, over the
+    // stretch where the kernel runs at full amplitude (the tapered last
+    // 1.5×width at each end is deliberately only partly cut)
+    const bed: number[] = [];
+    for (let k = 0; k < shape.samples.length; k += 20) {
+      if (shape.taper[k]! < 0.999) continue;
+      // the channel floor near the sample, not the single rounded column —
+      // the meandered centreline does not land on grid points
+      const p = shape.samples[k]!;
+      let floor = Number.POSITIVE_INFINITY;
+      for (let dz = -3; dz <= 3; dz++) {
+        for (let dx = -3; dx <= 3; dx++) {
+          const h = field.at(Math.round(p.x) + dx, Math.round(p.z) + dz);
+          if (h < floor) floor = h;
+        }
+      }
+      bed.push(floor);
+    }
+    const ordered = reversed ? bed.slice().reverse() : bed;
+    for (let k = 1; k < ordered.length; k++) {
+      // half a block of slack: the bed is continuous, the grid is not
+      expect(ordered[k]!).toBeLessThanOrEqual(ordered[k - 1]! + 0.5);
+    }
+  });
+});
+
+describe("feature footprints", () => {
+  it("records one footprint per edit, tagged by verb and id", () => {
+    const field = flatField();
+    const out = applyEdits(
+      field,
+      [
+        { id: "cone", verb: "peak", at: [0.3, 0.3], radius: 40 },
+        { id: "cut", verb: "valley", course: [[0.1, 0.7], [0.9, 0.7]] },
+      ],
+      ctx(),
+    );
+    expect(out.footprints.map((f) => f.editId)).toEqual(["cone", "cut"]);
+    expect(out.footprints.map((f) => f.verb)).toEqual(["peak", "valley"]);
+    for (const fp of out.footprints) {
+      expect(fp.count).toBeGreaterThan(0);
+      expect(fp.bits.length).toBe((REGION.width * REGION.depth + 7) >> 3);
+    }
+  });
+
+  it("marks exactly the columns the edit changed", () => {
+    const field = flatField();
+    const base = Float64Array.from(field.values);
+    const out = applyEdits(field, [{ id: "cone", verb: "peak", at: [0.5, 0.5], radius: 40 }], ctx());
+    const fp = out.footprints[0]!;
+    let marked = 0;
+    for (let idx = 0; idx < field.values.length; idx++) {
+      const changed = Math.abs(field.values[idx]! - base[idx]!) > 1e-9;
+      if (footprintHas(fp, idx)) marked++;
+      // every changed column is in the footprint (the converse allows the
+      // zero-amplitude boundary ring)
+      if (changed) expect(footprintHas(fp, idx)).toBe(true);
+    }
+    expect(marked).toBe(fp.count);
+  });
+
+  it("collects flooded:\"never\" carve columns into the noFlood mask", () => {
+    const field = flatField();
+    const out = applyEdits(
+      field,
+      [
+        { id: "dry", verb: "valley", course: [[0.1, 0.5], [0.9, 0.5]], flooded: "never" },
+        { id: "wet", verb: "valley", course: [[0.1, 0.8], [0.9, 0.8]] },
+      ],
+      ctx(),
+    );
+    const dry = out.footprints.find((f) => f.editId === "dry")!;
+    const wet = out.footprints.find((f) => f.editId === "wet")!;
+    let flagged = 0;
+    for (let idx = 0; idx < out.noFlood.length; idx++) {
+      if (out.noFlood[idx] === 1) {
+        flagged++;
+        expect(footprintHas(dry, idx)).toBe(true);
+        expect(footprintHas(wet, idx)).toBe(false);
+      }
+    }
+    expect(flagged).toBe(dry.count);
   });
 });

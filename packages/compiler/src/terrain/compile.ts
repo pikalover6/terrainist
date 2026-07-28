@@ -469,6 +469,9 @@ function toEdit(node: EditNode): TerrainEdit {
     ...(p.calderaDepth === undefined ? {} : { calderaDepth: p.calderaDepth }),
     ...(p.lava === undefined ? {} : { lava: p.lava }),
     ...(p.water === undefined ? {} : { water: p.water }),
+    ...(p.irregularity === undefined ? {} : { irregularity: p.irregularity }),
+    ...(p.meander === undefined ? {} : { meander: p.meander }),
+    ...(p.flooded === undefined ? {} : { flooded: p.flooded }),
   };
 }
 
