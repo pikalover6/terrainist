@@ -1,18 +1,47 @@
 /**
- * Worldgen agents: planner emits L3 + top-of-tree L2, implementers expand
- * nodes under a subdivision contract.
+ * Worldgen agents.
  *
- * Placeholder scaffold: the real agent loop lands in G3.
+ * G3 scope: one agent — the **terrain author**. It hands GLM 5.2 the
+ * terrain-author spec kit as a system prompt, extracts the JSON document from
+ * the reply, validates it, and retries with the validator's diagnostics
+ * verbatim until the document is valid or the attempt budget runs out.
+ *
+ * The multi-agent planner/implementer split of `docs/DESIGN.md` is still
+ * ahead; nothing here presumes it.
  */
 
-import type { LoamDocument } from "@terrainist/spec";
+export {
+  AuthoringFailedError,
+  authorTerrainDoc,
+  retryPrompt,
+  userPrompt,
+} from "./author.js";
+export type { AuthorAttempt, AuthorRequest, AuthorResult } from "./author.js";
 
-/** What a parent hands a child agent when subdividing. Placeholder shape. */
-export interface SubdivisionContract {
-  nodePath: string;
-}
+export {
+  ATTRIBUTION_HEADERS,
+  AUTHORING_REASONING_EFFORT,
+  AUTHORING_TEMPERATURE,
+  CHAT_COMPLETIONS_URL,
+  GLM_MODEL_ID,
+  MAX_AUTHOR_ATTEMPTS,
+  MODELS_URL,
+  OPENROUTER_BASE_URL,
+} from "./config.js";
 
-/** Not implemented yet — prompt-to-Loam planning lands in G3. */
-export function plan(_prompt: string): Promise<LoamDocument> {
-  throw new Error("@terrainist/agents: plan() is not implemented yet");
-}
+export { findRepoRoot, loadOpenRouterKey, parseEnv, readDotEnv } from "./env.js";
+
+export { extractJson, stripFences } from "./json.js";
+export type { JsonExtraction } from "./json.js";
+
+export { KIT_RELATIVE_PATH, loadTerrainAuthorKit } from "./kit.js";
+
+export { chatComplete, sumUsage, verifyModelAvailable } from "./openrouter.js";
+export type {
+  ChatMessage,
+  ChatOptions,
+  ClientOptions,
+  CompletionResult,
+  FetchLike,
+  Usage,
+} from "./openrouter.js";

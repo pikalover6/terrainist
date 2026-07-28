@@ -30,6 +30,13 @@ import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terraini
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
 
+import {
+  authorAndWriteDocument,
+  discardDocument,
+  parseGenerateArgs,
+  seedFromPrompt,
+} from "./generate.js";
+import { defaultSavesDir, installWorld } from "./install.js";
 import { zipWorld } from "./zip.js";
 
 /** Parsed CLI invocation. */
@@ -41,11 +48,28 @@ export interface CliInvocation {
 const USAGE = `terrainist — text prompt to Minecraft world
 
 Usage:
+  terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
+                                 [--keep-doc] [--no-zip] [--allow-unstable]
+  terrainist install <worldDir> [--saves <dir>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
+
+generate options:
+  --size <N>        Region edge length in blocks (default: 512).
+  --seed <N>        World seed (default: BLAKE3 of the prompt).
+  --out <dir>       Output directory (default: out).
+  --keep-doc        Keep the authored .loam.json after a successful compile.
+  --model <id>      Override the pinned authoring model.
+  Requires OPENROUTER_API_KEY in the repo-root .env or the environment.
+
+install options:
+  --saves <dir>     Saves directory (default: ${defaultSavesDir()}).
+  Never overwrites: a name collision installs as <name>-2, <name>-3, ...
+  Stamps level.dat's LastPlayed with the current time — the only place
+  Terrainist reads the wall clock.
 
 compile options:
   --out <dir>       Output directory (default: out). The world folder is
@@ -199,6 +223,77 @@ function printCompileReport(
   for (const d of report.diagnostics) console.warn(`\n${formatDiagnostic(d)}`);
 }
 
+/** `terrainist generate "<prompt>"` — author with GLM 5.2, then compile and zip. */
+export async function runGenerate(args: readonly string[]): Promise<number> {
+  const options = parseGenerateArgs(args);
+
+  const authored = await authorAndWriteDocument(options);
+  if (authored === undefined) return 1;
+
+  const result = await compileTerrain(authored.result.doc, {
+    outDir: authored.worldDir,
+    allowUnstable: options.allowUnstable,
+  });
+
+  if (!result.ok) {
+    console.error(
+      `terrainist: the authored document failed to compile — ${result.diagnostics.length} problem(s)\n`,
+    );
+    for (const d of result.diagnostics) console.error(`${formatDiagnostic(d)}\n`);
+    console.error(`the document was kept at ${authored.docPath}`);
+    return 1;
+  }
+
+  const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
+  await discardDocument(authored.docPath, options.keepDoc);
+  printCompileReport(result.report, zipPath, undefined);
+  console.log(`\nnext: terrainist install ${result.report.emit.worldDir}`);
+  return 0;
+}
+
+/** `terrainist install <worldDir> [--saves <dir>]` — copy into the saves folder. */
+export async function runInstall(args: readonly string[]): Promise<number> {
+  let worldDir: string | undefined;
+  let savesDir: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--saves") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--saves requires a directory");
+      savesDir = value;
+      i++;
+    } else if (arg !== undefined && arg.startsWith("-")) {
+      throw new Error(`unknown option ${arg}`);
+    } else if (worldDir === undefined) {
+      worldDir = arg;
+    } else {
+      throw new Error(`unexpected argument ${String(arg)}`);
+    }
+  }
+
+  if (worldDir === undefined) throw new Error("install requires a world directory");
+
+  const result = await installWorld({
+    worldDir,
+    ...(savesDir === undefined ? {} : { savesDir }),
+  });
+
+  const lines = [
+    `installed "${result.folderName}"`,
+    `  from       ${path.resolve(worldDir)}`,
+    `  to         ${result.installedPath}`,
+    `  lastPlayed ${result.lastPlayed} (${new Date(result.lastPlayed).toISOString()})`,
+  ];
+  if (result.renamed) {
+    lines.push(
+      `  note       "${path.basename(path.resolve(worldDir))}" already existed; installed alongside it`,
+    );
+  }
+  console.log(lines.join("\n"));
+  return 0;
+}
+
 export async function runRender(args: readonly string[]): Promise<void> {
   let worldDir: string | undefined;
   let outFile: string | undefined;
@@ -325,6 +420,10 @@ export async function main(argv: readonly string[]): Promise<number> {
   const [command, ...rest] = argv;
 
   switch (command) {
+    case "generate":
+      return await runGenerate(rest);
+    case "install":
+      return await runInstall(rest);
     case "compile":
       return await runCompile(rest);
     case "emit":
@@ -362,5 +461,10 @@ if (entry !== undefined && import.meta.url === pathToFileURL(entry).href) {
     },
   );
 }
+
+export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed } from "./install.js";
+export type { InstallOptions, InstallResult } from "./install.js";
+export { parseGenerateArgs, seedFromPrompt } from "./generate.js";
+export type { GenerateOptions } from "./generate.js";
 
 export type { CompileResult, EmitSummary, RenderView };
