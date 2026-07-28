@@ -15,20 +15,17 @@
  * write order.
  */
 
-import { mkdir, open, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { SpikeDocument, SpikeFillOp } from "./document.js";
-import { DEFAULT_BIOME, buildLevelDat } from "./level-dat.js";
+import { DEFAULT_BIOME } from "./level-dat.js";
 import type { EmitBlock, EmitChunk } from "./prismarine.js";
-import { WORLD_HEIGHT, WORLD_MIN_Y, loadPrismarine, writeGzippedNbt } from "./prismarine.js";
+import { WORLD_HEIGHT, WORLD_MIN_Y, loadPrismarine } from "./prismarine.js";
+import { zeroRegionTimestamps } from "./timestamps.js";
+import { writeWorldFiles } from "./write.js";
 
 /** Minecraft version we emit at. Newest the prismarine stack supports. */
 export const EMIT_MINECRAFT_VERSION = "1.21.11";
-
-/** Anvil region header constants. */
-const SECTOR_BYTES = 4096;
-const TIMESTAMP_SECTOR_OFFSET = SECTOR_BYTES;
 
 export interface EmitBounds {
   readonly min: readonly [number, number, number];
@@ -105,49 +102,20 @@ export async function emitWorld(
   if (bounds === undefined) throw new Error("emit: document produced no blocks");
 
   // --- write -------------------------------------------------------------
-  const worldDir = path.resolve(outDir);
-  const regionDir = path.join(worldDir, "region");
-  // Start from a clean region directory: prismarine reuses existing sector
-  // layouts, which would make output depend on what was there before.
-  await rm(regionDir, { recursive: true, force: true });
-  await mkdir(regionDir, { recursive: true });
-
-  const anvil = mc.openAnvil(regionDir);
-  const regionFiles = new Set<string>();
-  for (const key of [...chunks.keys()].sort(compareChunkKeys)) {
-    const [chunkX, chunkZ] = parseChunkKey(key);
-    const chunk = chunks.get(key);
-    /* c8 ignore next */
-    if (chunk === undefined) continue;
-    await anvil.save(chunkX, chunkZ, chunk);
-    regionFiles.add(path.join(regionDir, `r.${chunkX >> 5}.${chunkZ >> 5}.mca`));
-  }
-  await anvil.close();
-
-  const sortedRegionFiles = [...regionFiles].sort();
-  for (const file of sortedRegionFiles) {
-    await zeroRegionTimestamps(file);
-  }
-
-  const levelDatPath = path.join(worldDir, "level.dat");
-  await writeFile(
-    levelDatPath,
-    writeGzippedNbt(
-      buildLevelDat({
-        levelName: doc.name,
-        spawn: doc.spawn,
-        minecraftVersion: mc.minecraftVersion,
-        dataVersion: mc.dataVersion,
-      }),
-    ),
-  );
+  const writeResult = await writeWorldFiles({
+    chunks,
+    worldDir: path.resolve(outDir),
+    levelName: doc.name,
+    spawn: doc.spawn,
+    stack: mc,
+  });
 
   return {
-    worldDir,
-    levelDatPath,
-    regionDir,
-    regionFiles: sortedRegionFiles,
-    chunkCount: chunks.size,
+    worldDir: writeResult.worldDir,
+    levelDatPath: writeResult.levelDatPath,
+    regionDir: writeResult.regionDir,
+    regionFiles: writeResult.regionFiles,
+    chunkCount: writeResult.chunkCount,
     blockCount: written.size,
     bounds: {
       min: [bounds.minX, bounds.minY, bounds.minZ],
@@ -159,22 +127,8 @@ export async function emitWorld(
   };
 }
 
-/**
- * Zero the region file's chunk-timestamp table.
- *
- * `prismarine-provider-anvil` writes `Math.floor(Date.now() / 1000)` per chunk
- * into the 4 KiB sector at offset 4096. Minecraft only uses these for cache
- * invalidation, so zeroing them is safe — and it is the difference between a
- * reproducible build and a nondeterministic one.
- */
-export async function zeroRegionTimestamps(regionFile: string): Promise<void> {
-  const handle = await open(regionFile, "r+");
-  try {
-    await handle.write(Buffer.alloc(SECTOR_BYTES), 0, SECTOR_BYTES, TIMESTAMP_SECTOR_OFFSET);
-  } finally {
-    await handle.close();
-  }
-}
+/** Re-exported for the CLI and tests; the implementation lives in `timestamps.ts`. */
+export { zeroRegionTimestamps };
 
 /* -------------------------------------------------------------------------- */
 
@@ -249,15 +203,4 @@ function getOrCreateChunk(
     chunks.set(key, chunk);
   }
   return chunk;
-}
-
-function parseChunkKey(key: string): [number, number] {
-  const [x, z] = key.split(",");
-  return [Number(x), Number(z)];
-}
-
-function compareChunkKeys(a: string, b: string): number {
-  const [ax, az] = parseChunkKey(a);
-  const [bx, bz] = parseChunkKey(b);
-  return az - bz || ax - bx;
 }

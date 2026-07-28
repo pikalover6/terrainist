@@ -2,7 +2,11 @@
 /**
  * Terrainist CLI.
  *
- * Two real commands, both from the G1 spike:
+ * Three commands:
+ *
+ *   terrainist compile <doc.loam.json> --out <dir>
+ *
+ * which compiles a Loam terrain-profile document into a Minecraft world;
  *
  *   terrainist emit <spec.json> --out <dir>
  *
@@ -17,12 +21,12 @@
  * PNG per view.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { emitWorld, loadSpikeDocument } from "@terrainist/compiler";
-import type { CompileResult, EmitSummary } from "@terrainist/compiler";
+import { compileTerrain, emitWorld, formatDiagnostic, loadSpikeDocument } from "@terrainist/compiler";
+import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terrainist/compiler";
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
 
@@ -37,9 +41,18 @@ export interface CliInvocation {
 const USAGE = `terrainist — text prompt to Minecraft world
 
 Usage:
+  terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
+                                     [--report <file.json>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
+
+compile options:
+  --out <dir>       Output directory (default: out). The world folder is
+                    written to <dir>/<meta.name>/ and the archive alongside it.
+  --no-zip          Skip creating the .zip.
+  --allow-unstable  Downgrade LOAM-T110 (unstable fluid) to a warning.
+  --report <file>   Write the full compile report as JSON.
 
 emit options:
   --out <dir>       Output directory (default: out). The world folder is
@@ -87,6 +100,103 @@ export async function runEmit(args: readonly string[]): Promise<void> {
   const zipPath = zip ? await zipWorld(summary.worldDir) : undefined;
 
   printSummary(summary, zipPath);
+}
+
+/** `terrainist compile <doc.loam.json> --out <dir>` — the terrain profile pipeline. */
+export async function runCompile(args: readonly string[]): Promise<number> {
+  let docPath: string | undefined;
+  let outDir = "out";
+  let zip = true;
+  let allowUnstable = false;
+  let reportPath: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--out" || arg === "-o") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--out requires a directory");
+      outDir = value;
+      i++;
+    } else if (arg === "--report") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--report requires a file path");
+      reportPath = value;
+      i++;
+    } else if (arg === "--no-zip") {
+      zip = false;
+    } else if (arg === "--allow-unstable") {
+      allowUnstable = true;
+    } else if (arg !== undefined && arg.startsWith("-")) {
+      throw new Error(`unknown option ${arg}`);
+    } else if (docPath === undefined) {
+      docPath = arg;
+    } else {
+      throw new Error(`unexpected argument ${arg}`);
+    }
+  }
+
+  if (docPath === undefined) throw new Error("compile requires a .loam.json document");
+
+  const source = await readFile(path.resolve(docPath), "utf8");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch (cause) {
+    throw new Error(`${docPath} is not valid JSON`, { cause: cause as Error });
+  }
+
+  const name = typeof (parsed as { meta?: { name?: unknown } })?.meta?.name === "string"
+    ? ((parsed as { meta: { name: string } }).meta.name)
+    : "world";
+  const worldDir = path.join(path.resolve(outDir), name);
+
+  const result = await compileTerrain(parsed, { outDir: worldDir, allowUnstable });
+
+  if (!result.ok) {
+    console.error(`terrainist: ${result.diagnostics.length} problem(s) in ${docPath}\n`);
+    for (const d of result.diagnostics) console.error(`${formatDiagnostic(d)}\n`);
+    return 1;
+  }
+
+  const zipPath = zip ? await zipWorld(result.report.emit.worldDir) : undefined;
+  if (reportPath !== undefined) {
+    const target = path.resolve(reportPath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, `${JSON.stringify(result.report, null, 2)}\n`);
+  }
+  printCompileReport(result.report, zipPath, reportPath);
+  return 0;
+}
+
+function printCompileReport(
+  report: TerrainCompileReport,
+  zipPath: string | undefined,
+  reportPath: string | undefined,
+): void {
+  const { stats, timings, emit } = report;
+  const biomes = Object.entries(stats.biomeHistogram)
+    .sort(([, a], [, b]) => b - a)
+    .map(([name, count]) => `${name.replace("minecraft:", "")} ${((count / stats.columns) * 100).toFixed(1)}%`)
+    .join(", ");
+  const lines = [
+    `compiled "${report.name}" — ${emit.minecraftVersion} (DataVersion ${emit.dataVersion})`,
+    `  world      ${emit.worldDir}`,
+    `  seed       ${report.worldSeed}`,
+    `  region     ${stats.region.width}x${stats.region.depth} at (${stats.region.x0}, ${stats.region.z0})`,
+    `  heights    ${stats.minHeight.toFixed(1)}..${stats.maxHeight.toFixed(1)}  sea ${stats.seaLevel}  snow line ${stats.snowLine.toFixed(1)}`,
+    `  land       ${(stats.landFraction * 100).toFixed(1)}% of columns above sea level`,
+    `  biomes     ${biomes}`,
+    `  trees      ${stats.treeCount} (${Object.entries(stats.treesPerNode).map(([k, v]) => `${k}=${v}`).join(", ")})`,
+    `  chunks     ${stats.chunkCount}`,
+    `  blocks     ${stats.blockCount} (${stats.treeBlockCount} vegetation)`,
+    `  markers    ${report.markers.length}`,
+    `  spawn      [${emit.spawn.join(", ")}]`,
+    `  timings    ${Object.entries(timings).map(([k, v]) => `${k} ${v.toFixed(0)}ms`).join("  ")}`,
+  ];
+  if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
+  if (reportPath !== undefined) lines.push(`  report     ${path.resolve(reportPath)}`);
+  console.log(lines.join("\n"));
+  for (const d of report.diagnostics) console.warn(`\n${formatDiagnostic(d)}`);
 }
 
 export async function runRender(args: readonly string[]): Promise<void> {
@@ -215,6 +325,8 @@ export async function main(argv: readonly string[]): Promise<number> {
   const [command, ...rest] = argv;
 
   switch (command) {
+    case "compile":
+      return await runCompile(rest);
     case "emit":
       await runEmit(rest);
       return 0;

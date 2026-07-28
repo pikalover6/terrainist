@@ -5,6 +5,8 @@
  * L2 scene graph, L1 generators, L0 voxel IR) lands in G2.
  */
 
+export * from "./terrain/index.js";
+
 /** Draft version of the Loam document format. */
 export const LOAM_VERSION = "0.1.0-draft";
 

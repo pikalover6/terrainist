@@ -51,6 +51,9 @@ interface RawMinecraftData {
  */
 interface RawChunkColumn {
   setBlock(pos: RawVec3, block: { type: number; stateId: number }): void;
+  /** Direct state write — the fast path used by the terrain materializer. */
+  setBlockStateId(pos: RawVec3, stateId: number): void;
+  setBiome(pos: RawVec3, biomeId: number): void;
   getBlock(pos: RawVec3): { name: string; stateId: number };
   /** Cheap read path: skips building a `prismarine-block` instance. */
   getBlockStateId(pos: RawVec3): number;
@@ -113,6 +116,25 @@ export interface EmitChunk {
   /** Paint the whole column with one biome (keeps single-value palettes). */
   setUniformBiome(biomeId: number): void;
   /**
+   * Fast bulk write of one state id, without allocating a `Vec3` per call.
+   *
+   * 30M+ block writes is an ordinary terrain compile, so the materializer uses
+   * this instead of {@link setBlock}: it reuses a single scratch position
+   * object and skips the `prismarine-block` round trip entirely.
+   */
+  setStateId(x: number, y: number, z: number, stateId: number): void;
+  /**
+   * Fill `y0..y1` (inclusive, either order) of one column with a state id.
+   * The materializer's column-run fast path.
+   */
+  fillColumn(x: number, z: number, y0: number, y1: number, stateId: number): void;
+  /**
+   * Set the biome of the 4×4×4 cell containing this block position. Unlike
+   * {@link setUniformBiome} this promotes the section's biome container to a
+   * palette, which is what per-column biomes require.
+   */
+  setBiomeAt(x: number, y: number, z: number, biomeId: number): void;
+  /**
    * Pin `LastUpdate` to 0. prismarine-provider-anvil otherwise writes
    * `Date.now() & 0xffff`, which would break byte-for-byte determinism.
    */
@@ -142,12 +164,49 @@ export interface PrismarineStack {
 const AIR_NAMES = new Set(["air", "cave_air", "void_air"]);
 
 class ChunkAdapter implements EmitChunk {
+  /**
+   * Reused mutable position for the bulk write paths. Safe because
+   * `prismarine-chunk` reads `x`/`y`/`z` synchronously and never retains the
+   * object.
+   */
+  private readonly scratch: { x: number; y: number; z: number };
+
   constructor(
     /** @internal exposed so the Anvil adapter can hand it back to the library. */
     readonly raw: RawChunkColumn,
     private readonly vec: RawVec3Ctor,
     private readonly nameByStateId: (stateId: number) => string | undefined,
-  ) {}
+  ) {
+    this.scratch = new vec(0, 0, 0) as { x: number; y: number; z: number };
+  }
+
+  setStateId(x: number, y: number, z: number, stateId: number): void {
+    const p = this.scratch;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    this.raw.setBlockStateId(p, stateId);
+  }
+
+  fillColumn(x: number, z: number, y0: number, y1: number, stateId: number): void {
+    const lo = y0 <= y1 ? y0 : y1;
+    const hi = y0 <= y1 ? y1 : y0;
+    const p = this.scratch;
+    p.x = x;
+    p.z = z;
+    for (let y = lo; y <= hi; y++) {
+      p.y = y;
+      this.raw.setBlockStateId(p, stateId);
+    }
+  }
+
+  setBiomeAt(x: number, y: number, z: number, biomeId: number): void {
+    const p = this.scratch;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    this.raw.setBiome(p, biomeId);
+  }
 
   setBlock(x: number, y: number, z: number, block: EmitBlock): void {
     this.raw.setBlock(new this.vec(x, y, z), { type: block.id, stateId: block.stateId });
