@@ -470,6 +470,108 @@ describe("material themes", () => {
     expect(other).not.toEqual(a);
   });
 
+  it("leaves the foot of a flight an open approach, and rails the well", () => {
+    const { ops, meta } = generateBuilding({
+      size: [11, 12, 11],
+      params: { floors: 2, floorHeight: 4, archetype: "cottage" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const stairs = ops.filter((o) => o.block === PINNED["stair.interior"]);
+    const { interior } = meta;
+    const level = meta.floorLevels[1] as number;
+
+    // The run stands one cell off the north wall. With its bottom step hard
+    // against that wall the step's front face was buried in it, and the only
+    // approach left was from the side — where the gap between the wall and the
+    // step's raised half is half a block, narrower than a player. That is the
+    // "stairs still need a jump" defect, and this is the shape that fixes it.
+    const feet = stairs.reduce((lo, o) => (o.y < lo.y ? o : lo));
+    expect(feet.z).toBe(interior.z0 + 1);
+    expect(feet.x).toBe(interior.x0);
+    // The approach cell itself is floor and carries nothing.
+    expect(at.get(`${interior.x0},0,${interior.z0}`)?.block).toBe(PINNED["floor.interior"]);
+    expect(at.has(`${interior.x0},1,${interior.z0}`)).toBe(false);
+
+    // The stairwell is a well, not a hatch: the floor above is open over the
+    // run *and* over the approach, because a player rising half a block onto
+    // the first step puts their head through a three-high ceiling.
+    for (let z = interior.z0; z <= feet.z + stairs.length - 1; z++) {
+      const above = at.get(`${interior.x0},${level},${z}`);
+      expect(above === undefined || above.block === PINNED["stair.interior"], `well at z=${z}`).toBe(
+        true,
+      );
+    }
+    // The landing past the top step is real floor, part of the storey it
+    // serves — never a pad hanging on its own.
+    const top = stairs.reduce((hi, o) => (o.y > hi.y ? o : hi));
+    expect(at.get(`${interior.x0},${level},${top.z + 1}`)?.block).toBe(PINNED["floor.interior"]);
+
+    // The one exposed edge of the well is railed.
+    for (let z = interior.z0; z <= top.z; z++) {
+      expect(at.get(`${interior.x0 + 1},${level + 1},${z}`)?.block).toBe(PINNED["wall.fence"]);
+    }
+  });
+
+  it("stacks a granary's hay against the walls and leaves the floor walkable", () => {
+    const { ops, meta } = generateBuilding({
+      size: [11, 9, 11],
+      params: { floors: 1, floorHeight: 5, archetype: "granary" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const { interior } = meta;
+    const hay = ops.filter((o) => o.block === "hay_block");
+    expect(hay.length).toBeGreaterThan(0);
+
+    const columns = new Set(hay.map((o) => `${o.x},${o.z}`));
+    const area = (interior.x1 - interior.x0 + 1) * (interior.z1 - interior.z0 + 1);
+    // A quarter of the floor at most. The first version checkerboarded the
+    // *whole* floor, which is not a granary but a maze with no legal move:
+    // the free cells only touched at their corners.
+    expect(columns.size).toBeLessThanOrEqual(Math.floor(area * 0.25));
+    for (const cell of columns) {
+      const [x, z] = cell.split(",").map(Number) as [number, number];
+      const wallAdjacent =
+        x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
+      expect(wallAdjacent, cell).toBe(true);
+    }
+    // One to three bales, and never up to the joists.
+    for (const cell of columns) {
+      const height = hay.filter((o) => `${o.x},${o.z}` === cell).length;
+      expect(height).toBeGreaterThanOrEqual(1);
+      expect(height).toBeLessThanOrEqual(3);
+      expect(height).toBeLessThan(meta.params.storyHeight - 1);
+    }
+
+    // Every free floor cell is still 4-connected to every other one.
+    const free: string[] = [];
+    for (let z = interior.z0; z <= interior.z1; z++) {
+      for (let x = interior.x0; x <= interior.x1; x++) {
+        if (!ops.some((o) => o.x === x && o.z === z && o.y === 1)) free.push(`${x},${z}`);
+      }
+    }
+    const open = new Set(free);
+    const seen = new Set([free[0] as string]);
+    const queue = [free[0] as string];
+    while (queue.length > 0) {
+      const [x, z] = (queue.pop() as string).split(",").map(Number) as [number, number];
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const k = `${x + dx},${z + dz}`;
+        if (!open.has(k) || seen.has(k)) continue;
+        seen.add(k);
+        queue.push(k);
+      }
+    }
+    expect(seen.size).toBe(open.size);
+  });
+
   it("reads an archetype off a node's tags", () => {
     expect(archetypeOfTags(["civic", "hall"])).toBe("hall");
     expect(archetypeOfTags(["house", "trade"])).toBe("inn");
@@ -527,7 +629,7 @@ describe("material themes", () => {
     expect(ops.filter((o) => o.block === "ladder").length).toBeGreaterThan(8);
   });
 
-  it("puts a fire-safe campfire on top of a one-storey chimney", () => {
+  it("runs a one-storey chimney up the wall, not through the room", () => {
     const { ops, meta } = generateBuilding({
       size: [9, 8, 9],
       params: { floors: 1, roof: "gable", archetype: "cottage" },
@@ -535,24 +637,51 @@ describe("material themes", () => {
       style: PINNED,
     });
     expect(meta.chimney).toBe(true);
-    const fire = ops.find((o) => o.block === "campfire");
-    expect(fire).toBeDefined();
     const at = new Map(ops.map((o) => [key(o), o] as const));
-    const fx = fire?.x as number;
-    const fy = fire?.y as number;
-    const fz = fire?.z as number;
-    // Supported from below, open above, and ringed by stone on all four sides.
-    expect(at.get(`${fx},${fy - 1},${fz}`)?.block).toBe(PINNED["chimney.block"]);
-    expect(at.has(`${fx},${fy + 1},${fz}`)).toBe(false);
+    const fires = ops.filter((o) => o.block === "campfire").sort((a, b) => a.y - b.y);
+    // Two: the hearth in the wall face, and the fire in the chimney head.
+    expect(fires.length).toBe(2);
+
+    // --- the hearth --------------------------------------------------------
+    const hearth = fires[0] as { x: number; y: number; z: number };
+    expect(hearth.y).toBe(1);
+    // It is in the wall plane, which is the whole point: a flue is a piece of
+    // wall, and the version that stood it on an interior column put a
+    // cobblestone pillar through the middle of a smithy and three courses of
+    // it over a bed.
+    const onWall =
+      hearth.x === 0 || hearth.x === 8 || hearth.z === 0 || hearth.z === 8;
+    expect(onWall).toBe(true);
+    // Standing on the course below it, with its flue directly above.
+    expect(at.has(`${hearth.x},0,${hearth.z}`)).toBe(true);
+    expect(at.get(`${hearth.x},2,${hearth.z}`)?.block).toBe(PINNED["chimney.block"]);
+
+    // --- no interior cell is a full column ---------------------------------
+    for (let z = meta.interior.z0; z <= meta.interior.z1; z++) {
+      for (let x = meta.interior.x0; x <= meta.interior.x1; x++) {
+        const filled = [1, 2, 3].every((y) => at.has(`${x},${y},${z}`));
+        expect(filled, `interior column ${x},${z}`).toBe(false);
+      }
+    }
+
+    // --- the head ----------------------------------------------------------
+    const fire = fires[1] as { x: number; y: number; z: number };
+    expect(at.get(`${fire.x},${fire.y - 1},${fire.z}`)?.block).toBe(PINNED["chimney.block"]);
+    expect(at.has(`${fire.x},${fire.y + 1},${fire.z}`)).toBe(false);
+    // Ringed by the rim on every side that is still inside the footprint; the
+    // head is clipped there rather than reaching into the apron.
     for (const [dx, dz] of [
       [1, 0],
       [-1, 0],
       [0, 1],
       [0, -1],
     ] as const) {
-      expect(at.get(`${fx + dx},${fy},${fz + dz}`)?.block).toBe(PINNED["chimney.rim"]);
+      const nx = fire.x + dx;
+      const nz = fire.z + dz;
+      if (nx < 0 || nx > 8 || nz < 0 || nz > 8) continue;
+      expect(at.get(`${nx},${fire.y},${nz}`)?.block).toBe(PINNED["chimney.rim"]);
     }
     // The flue clears the ridge, so the smoke is not trapped under the roof.
-    expect(fy).toBeGreaterThan(meta.roofTop);
+    expect(fire.y).toBeGreaterThan(meta.roofTop);
   });
 });

@@ -50,7 +50,7 @@ const USAGE = `terrainist — text prompt to Minecraft world
 Usage:
   terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
-  terrainist install <worldDir> [--saves <dir>]
+  terrainist install <worldDir> [--saves <dir>] [--replace]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist devworld [--out <dir>] [--no-zip]
@@ -68,7 +68,10 @@ generate options:
 
 install options:
   --saves <dir>     Saves directory (default: ${defaultSavesDir()}).
-  Never overwrites: a name collision installs as <name>-2, <name>-3, ...
+  --replace         Replace an existing save of the same name in place —
+                    delete it, copy this one over it, stamp a fresh
+                    LastPlayed. Without it a name collision never overwrites
+                    and installs as <name>-2, <name>-3, ...
   Stamps level.dat's LastPlayed with the current time — the only place
   Terrainist reads the wall clock.
 
@@ -305,6 +308,7 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
 export async function runInstall(args: readonly string[]): Promise<number> {
   let worldDir: string | undefined;
   let savesDir: string | undefined;
+  let replace = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -313,6 +317,8 @@ export async function runInstall(args: readonly string[]): Promise<number> {
       if (value === undefined) throw new Error("--saves requires a directory");
       savesDir = value;
       i++;
+    } else if (arg === "--replace") {
+      replace = true;
     } else if (arg !== undefined && arg.startsWith("-")) {
       throw new Error(`unknown option ${arg}`);
     } else if (worldDir === undefined) {
@@ -326,6 +332,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
 
   const result = await installWorld({
     worldDir,
+    replace,
     ...(savesDir === undefined ? {} : { savesDir }),
   });
 
@@ -339,6 +346,9 @@ export async function runInstall(args: readonly string[]): Promise<number> {
     lines.push(
       `  note       "${path.basename(path.resolve(worldDir))}" already existed; installed alongside it`,
     );
+  }
+  if (result.replaced) {
+    lines.push(`  note       replaced the existing save of the same name`);
   }
   console.log(lines.join("\n"));
   return 0;

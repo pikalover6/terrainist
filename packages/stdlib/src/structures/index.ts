@@ -209,6 +209,9 @@ export const BUILDING_STYLE_DEFAULTS: Readonly<Record<string, string>> = Object.
   "chimney.rim": "cobblestone_wall",
 });
 
+/** Most of a granary floor that hay bales may stand on. */
+const GRANARY_HAY_SHARE = 0.25;
+
 /** Weight of `foundation.accent` in the foundation mix (per column). */
 const FOUNDATION_ACCENT_SHARE = 0.3;
 
@@ -608,38 +611,70 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     // The stair run climbs +z along the west interior wall, from the floor
     // below (`base`) to this one.
     //
-    // The run is `storyHeight` steps long, not `storyHeight - 1`. The old
-    // count put the top step one block *below* the storey it served: standing
-    // on its back tread your feet were at `level`, the upper floor's walking
-    // surface is `level + 1`, and a one-block rise is a jump, not a stair. A
-    // walkthrough reported exactly that — "the interior stairs need a jump to
-    // mount". The last step now sits **in** the upper floor plane, so its back
-    // half is flush with the floor it arrives on and every rise in the flight
-    // is half a block. One further interior cell past the run is the landing,
-    // which is why the run needs `storyHeight + 1` cells of depth to fit.
+    // Two things about its geometry are load-bearing, and both were learned
+    // from a player who could not get upstairs.
+    //
+    // First, the run is `storyHeight` steps long and its **top step sits in
+    // the upper floor plane**, so the back tread of the last step is flush
+    // with the floor it arrives on. An earlier version stopped one course
+    // short, which made the final rise a full block — a jump.
+    //
+    // Second — and this is what survived that fix — the run starts at
+    // `z0 + 1`, not at `z0`, and the cell at `z0` is left as an **approach**.
+    // A bottom-half stair is only half-height on its front half; the back half
+    // is a full block. With the bottom step hard against the north wall its
+    // front face was buried in that wall, and the only way in was from the
+    // side, where the gap between the wall and the step's raised half is half
+    // a block — narrower than a player, who therefore met a full block and had
+    // to jump. Standing the run one cell off the wall gives the flight an open
+    // front face and turns the climb into a walk.
     const base = level - storyHeight;
     const runLength = storyHeight;
-    const canStair = interior.z1 - interior.z0 >= runLength;
-    // The floor plane keeps a hole over the whole run (the top step lives in
-    // it); when the footprint is too shallow for a flight, the hole is the one
+    // approach cell + run + landing, all inside the interior.
+    const canStair = interior.z1 - interior.z0 >= runLength + 1;
+    // The floor plane keeps a stairwell over the whole run — a well, not a
+    // hatch: the top step lives in it and every step below has open sky over
+    // it. When the footprint is too shallow for a flight, the hole is the one
     // cell the ladder comes up through.
-    const holeSpan = canStair ? runLength : 1;
+    // The well spans the approach cell as well as the run. It has to: on a
+    // three-high storey the ceiling over the approach is exactly two blocks up,
+    // and a player who rises half a block to mount the first step puts their
+    // head through it. A hole over the run alone is a hatch you can see the
+    // stairs through and not climb.
+    const holeZ0 = interior.z0;
+    const holeZ1 = canStair ? interior.z0 + runLength : interior.z0;
     for (let z = interior.z0; z <= interior.z1; z++) {
       for (let x = interior.x0; x <= interior.x1; x++) {
-        const inHole = x === interior.x0 && z < interior.z0 + holeSpan;
-        if (inHole) continue;
+        if (x === interior.x0 && z >= holeZ0 && z <= holeZ1) continue;
         put(x, level, z, style["floor.interior"] as string);
       }
     }
     stairRuns.push(base + 1);
     if (canStair) {
       for (let i = 0; i < runLength; i++) {
-        put(interior.x0, base + 1 + i, interior.z0 + i, style["stair.interior"] as string, {
+        put(interior.x0, base + 1 + i, interior.z0 + 1 + i, style["stair.interior"] as string, {
           facing: "south",
           half: "bottom",
           shape: "straight",
         });
-        if (base === 0) stairColumns.add(`${interior.x0},${interior.z0 + i}`);
+        if (base === 0) stairColumns.add(`${interior.x0},${interior.z0 + 1 + i}`);
+      }
+      // The approach: the cell at the foot of the flight is floor, and stays
+      // clear of furniture, because it is the only square you can mount from.
+      // ...and so does the cell beside it, which is the only way *to* the
+      // approach: a smithy put an anvil there and walled the flight off from
+      // its own ground floor.
+      if (base === 0) {
+        stairColumns.add(`${interior.x0},${interior.z0}`);
+        if (interior.x0 + 1 <= interior.x1) stairColumns.add(`${interior.x0 + 1},${interior.z0}`);
+      }
+      // A guard along the open edge of the well. West is the wall, north is the
+      // wall, south is where the flight arrives — so the only exposed edge, and
+      // the only one that needs a rail, is the east one.
+      if (interior.x0 + 1 <= interior.x1) {
+        for (let z = holeZ0; z <= holeZ1; z++) {
+          put(interior.x0 + 1, level + 1, z, style["wall.fence"] as string);
+        }
       }
     } else {
       // Too shallow for a flight: a ladder up the west wall instead. `facing`
@@ -650,7 +685,13 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       for (let y = base + 1; y <= level + 1; y++) {
         put(interior.x0, y, interior.z0, "ladder", { facing: "east" });
       }
-      if (base === 0) stairColumns.add(`${interior.x0},${interior.z0}`);
+      // ...and so does the cell beside it, which is the only way *to* the
+      // approach: a smithy put an anvil there and walled the flight off from
+      // its own ground floor.
+      if (base === 0) {
+        stairColumns.add(`${interior.x0},${interior.z0}`);
+        if (interior.x0 + 1 <= interior.x1) stairColumns.add(`${interior.x0 + 1},${interior.z0}`);
+      }
     }
   }
   // A ceiling over the top storey. Without it the roof reads as a hat balanced
@@ -687,8 +728,21 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
 
   // --- chimney -------------------------------------------------------------
   let chimney = false;
+  /** Interior cells the chimney reserves; furniture never lands in them. */
+  const hearthColumns = new Set<string>();
   if (hasInterior && floors === 1 && archetype !== "granary" && sx >= 5 && sz >= 5) {
-    chimney = emitChimney(put, style, interior, door, roofTop);
+    const hearth = emitChimney(put, style, interior, door, roofTop, sx, sz);
+    chimney = hearth !== null;
+    // The cell in front of the fire, and the two beside it: a bed or a table
+    // pushed up against a hearth is the defect this reserve exists to stop.
+    if (hearth !== null) {
+      for (let dz = -1; dz <= 1; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (Math.abs(dx) + Math.abs(dz) > 1) continue;
+          hearthColumns.add(`${hearth.x + dx},${hearth.z + dz}`);
+        }
+      }
+    }
   }
 
   // --- fit-out -------------------------------------------------------------
@@ -703,6 +757,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         floors,
         choice,
         stairColumns,
+        hearthColumns,
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
       })
     : 0;
@@ -1112,54 +1167,82 @@ function fillGableEnds(
 }
 
 /**
- * A cobblestone chimney from the hearth to above the ridge, with a corbelled
- * head, a wall rim, and a campfire in it.
+ * A cobblestone chimney: a flue **in the wall**, a hearth opening on its inside
+ * face, and a corbelled head with a fire in it above the ridge.
  *
- * Fire safety is structural, not hoped for: the campfire's block below is the
- * corbel, its four horizontal neighbours are the rim's cobblestone walls, and
- * nothing is emitted above it. The shaft is placed on an *interior* column, so
- * the 3×3 corbel is guaranteed to stay inside the footprint.
+ * The shaft used to stand on an interior column, and it was as bad as that
+ * sounds: a walkthrough found a full cobblestone pillar running floor to
+ * ceiling through the middle of a smithy — with the cauldron the furnisher had
+ * already put in that cell left sitting in its base like a hearth nobody
+ * ordered — and, in a cottage, three courses of cobblestone directly over a
+ * bed. A flue is a piece of *wall*. It belongs in the wall plane, flush with
+ * it, replacing the wall blocks it passes; the room keeps its whole floor and
+ * the fireplace is a feature of the wall face rather than an obstacle in the
+ * middle of the room.
+ *
+ * The head's corbel and rim are clipped to the footprint, so a chimney in a
+ * wall still never puts structure in the apron.
+ *
+ * Returns the interior cell in front of the hearth, which the fit-out must
+ * leave clear, or `null` when no chimney was built.
  */
 function emitChimney(
   put: Put,
   style: Readonly<Record<string, string>>,
   interior: LocalRect,
-  door: { x: number; z: number } | null,
+  door: { x: number; z: number; face: Cardinal } | null,
   roofTop: number,
-): boolean {
+  sx: number,
+  sz: number,
+): { x: number; z: number } | null {
   const block = style["chimney.block"] as string;
   const rim = style["chimney.rim"] as string;
-  // The interior corner furthest from the door, so the flue never fights the
-  // entrance for the same wall.
-  const candidates: readonly (readonly [number, number])[] = [
-    [interior.x0, interior.z0],
-    [interior.x1, interior.z0],
-    [interior.x0, interior.z1],
-    [interior.x1, interior.z1],
-  ];
-  let best = candidates[0] as readonly [number, number];
-  let bestD = -1;
-  for (const c of candidates) {
-    const d = door === null ? 0 : Math.abs(c[0] - door.x) + Math.abs(c[1] - door.z);
-    if (d > bestD) {
-      bestD = d;
-      best = c;
-    }
+  // The wall opposite the door, so the flue never fights the entrance for the
+  // same face, and the mid-point of that wall so it never lands on a corner
+  // post.
+  const face: Cardinal = door === null ? "north" : opposite(door.face);
+  const alongX = face === "north" || face === "south";
+  const span = alongX ? sx : sz;
+  if (span < 3) return null;
+  const mid = clamp(Math.floor((span - 1) / 2), 1, span - 2);
+  const cx = alongX ? mid : face === "west" ? 0 : sx - 1;
+  const cz = alongX ? (face === "north" ? 0 : sz - 1) : mid;
+  // The interior cell the hearth opens onto: one step *inward* from the wall.
+  const [ox, oz] = cardinalStep(opposite(face));
+  const hearth = { x: cx + ox, z: cz + oz };
+  if (
+    hearth.x < interior.x0 ||
+    hearth.x > interior.x1 ||
+    hearth.z < interior.z0 ||
+    hearth.z > interior.z1
+  ) {
+    return null;
   }
-  const [cx, cz] = best;
-  if (cx - 1 < 0 || cx + 1 > interior.x1 + 1 || cz - 1 < 0 || cz + 1 > interior.z1 + 1) return false;
 
   const corbelY = roofTop + 1;
   for (let y = 0; y <= corbelY - 1; y++) put(cx, y, cz, block);
-  for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) put(cx + dx, corbelY, cz + dz, block);
+  // The fireplace: an opening in the wall face at floor level, standing on the
+  // course below it, with the flue it vents into directly above.
+  put(cx, 1, cz, "campfire", {
+    lit: "true",
+    facing: opposite(face),
+    signal_fire: "false",
+    waterlogged: "false",
+  });
+  const inside = (x: number, z: number): boolean => x >= 0 && x < sx && z >= 0 && z < sz;
+  for (let dz = -1; dz <= 1; dz++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (inside(cx + dx, cz + dz)) put(cx + dx, corbelY, cz + dz, block);
+    }
+  }
   for (let dz = -1; dz <= 1; dz++) {
     for (let dx = -1; dx <= 1; dx++) {
       if (dx === 0 && dz === 0) continue;
-      put(cx + dx, corbelY + 1, cz + dz, rim, { up: "true", waterlogged: "false" });
+      if (inside(cx + dx, cz + dz)) put(cx + dx, corbelY + 1, cz + dz, rim, { up: "true", waterlogged: "false" });
     }
   }
   put(cx, corbelY + 1, cz, "campfire", { lit: "true", facing: "north", signal_fire: "false", waterlogged: "false" });
-  return true;
+  return hearth;
 }
 
 /** Fill an inclusive rectangle at `y`; returns `y`, or `null` when it is empty. */
@@ -1192,6 +1275,8 @@ interface FurnishRequest {
   readonly choice: Seed256;
   /** Ground-floor columns the inter-storey stair run stands in. */
   readonly stairColumns: ReadonlySet<string>;
+  /** Interior columns at and around the hearth; nothing may be pushed into a fire. */
+  readonly hearthColumns: ReadonlySet<string>;
   /** What the earlier stages have already written at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
 }
@@ -1216,6 +1301,10 @@ function furnish(r: FurnishRequest): number {
     // Never on the stairs: a bed head in the bottom step is both ugly and a
     // broken climb, and it is exactly what happened the first time round.
     if (r.stairColumns.has(`${x},${z}`)) return false;
+    // Never at the hearth: the chimney is in the wall now, and the cell it
+    // opens onto is the fireside, not a shelf. A bed or a table there is the
+    // "cobblestone directly above a bed" defect in its other form.
+    if (r.hearthColumns.has(`${x},${z}`)) return false;
     if (door === null) return true;
     // The door column and the cell straight inside it stay clear.
     const [dx, dz] = cardinalStep(door.face);
@@ -1313,18 +1402,49 @@ function furnish(r: FurnishRequest): number {
       break;
     }
     case "smithy": {
-      place(x0, z0, "blast_furnace", { facing: "south", lit: "false" });
-      place(x0 + 1, z0, "anvil", { facing: "south" });
-      place(x1, z0, "smithing_table");
-      place(x1, z1, "chest", { facing: "west", type: "single" });
-      place(x0, z1, "cauldron", { level: "0" });
+      // The forge works the *east* wall. It used to work the west one, which
+      // is the wall the stair climbs: the anvil landed in the single cell
+      // between the room and the foot of the flight and sealed the stairs off
+      // from the shop floor.
+      place(x1, z0, "blast_furnace", { facing: "west", lit: "false" });
+      place(x1, z0 + 1 <= z1 ? z0 + 1 : z0, "anvil", { facing: "west" });
+      place(x1, z1, "smithing_table");
+      place(x0, z1, "chest", { facing: "east", type: "single" });
+      place(x0 + 1 <= x1 ? x0 + 1 : x0, z1, "cauldron", { level: "0" });
       break;
     }
     case "granary": {
-      for (let z = z0; z <= z1; z++) {
-        for (let x = x0; x <= x1; x++) {
-          if ((x + z) % 2 !== 0) continue;
-          place(x, z, "hay_block", { axis: (x + z) % 4 === 0 ? "y" : "x" });
+      // Stacks against the walls, never a field of them. The first version
+      // filled every other cell of the whole floor, and a checkerboard of
+      // full blocks is not a granary — it is a maze with no legal move, because
+      // the free cells only touch each other at their corners. A walkthrough
+      // called it exactly that. Hay now goes where hay goes: piled one to three
+      // high along the walls, leaving the floor of the room open.
+      const cap = Math.max(1, Math.floor(w * d * GRANARY_HAY_SHARE));
+      let stacks = 0;
+      for (let z = z0; z <= z1 && stacks < cap; z++) {
+        for (let x = x0; x <= x1 && stacks < cap; x++) {
+          const wallAdjacent = x === x0 || x === x1 || z === z0 || z === z1;
+          if (!wallAdjacent) continue;
+          // Corners and their two neighbours stay bare. A bale on each side of
+          // a corner leaves the corner itself boxed in, and a floor cell you
+          // can see and not reach is the same defect as the checkerboard, only
+          // one cell wide.
+          const nearCorner =
+            ((x === x0 || x === x1) && (z <= z0 + 1 || z >= z1 - 1)) ||
+            ((z === z0 || z === z1) && (x <= x0 + 1 || x >= x1 - 1));
+          if (nearCorner) continue;
+          // Spaced along the wall so the piles read as separate heaps.
+          if ((x + z * 2) % 3 !== 0) continue;
+          if (!free(x, z)) continue;
+          // Never up to the ceiling: a pile that reaches the joists is a
+          // column through the room, which is the defect one door along.
+          const height = Math.max(1, Math.min(1 + ((x * 5 + z * 3) % 3), r.storyHeight - 2));
+          for (let h = 0; h < height; h++) {
+            put(x, 1 + h, z, "hay_block", { axis: h === 0 ? "y" : (x + z) % 2 === 0 ? "x" : "z" });
+            n++;
+          }
+          stacks++;
         }
       }
       place(x1, z1, "composter", { level: "0" });

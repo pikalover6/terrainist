@@ -7,12 +7,17 @@
  * `LastPlayed` stamp. Minecraft sorts the world list by `LastPlayed`, and a
  * world stamped 0 sorts to the bottom of a long list where nobody finds it.
  *
- * Existing worlds are never overwritten: a name collision picks `-2`, `-3`,
- * and so on. Losing somebody's save to a generated one is not a tradeoff worth
- * making for the convenience of a stable path.
+ * Existing worlds are never overwritten by default: a name collision picks
+ * `-2`, `-3`, and so on. Losing somebody's save to a generated one is not a
+ * tradeoff worth making for the convenience of a stable path — but iterating on
+ * a world is exactly the case where a stable path is what you want, and a saves
+ * folder with nine copies of the same village in it is its own kind of data
+ * loss. `replace: true` is that opt-in: it deletes the same-named folder and
+ * copies the new one into the same place, so the world keeps its identity in
+ * the client's list. It is never the default and it is never implied.
  */
 
-import { access, cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -32,6 +37,8 @@ export interface InstallResult {
   readonly lastPlayed: number;
   /** True when the requested name was taken and a suffix was added. */
   readonly renamed: boolean;
+  /** True when an existing same-name save was deleted to make room. */
+  readonly replaced: boolean;
 }
 
 /** Options for {@link installWorld}. */
@@ -42,6 +49,8 @@ export interface InstallOptions {
   readonly savesDir?: string;
   /** Override the stamp (tests); defaults to `Date.now()`. */
   readonly now?: number;
+  /** Delete an existing same-name save and take its place, instead of suffixing. */
+  readonly replace?: boolean;
 }
 
 /** The default Minecraft saves directory for this platform. */
@@ -70,8 +79,26 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
   await mkdir(savesDir, { recursive: true });
 
   const requested = path.basename(worldDir);
-  const folderName = await freeName(savesDir, requested);
+  const replace = options.replace === true;
+  const folderName = replace ? requested : await freeName(savesDir, requested);
   const installedPath = path.join(savesDir, folderName);
+  if (installedPath === worldDir) {
+    throw new Error(`${installedPath} is the world being installed — nothing to do`);
+  }
+
+  // Delete rather than copy over: a stale region file from the previous build
+  // that this one no longer writes would survive a merge and leave the save a
+  // chimera of two compiles.
+  let replaced = false;
+  if (replace) {
+    try {
+      await access(installedPath);
+      replaced = true;
+    } catch {
+      replaced = false;
+    }
+    if (replaced) await rm(installedPath, { recursive: true, force: true });
+  }
 
   await cp(worldDir, installedPath, { recursive: true, errorOnExist: true, force: false });
 
@@ -84,6 +111,7 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
     savesDir,
     lastPlayed,
     renamed: folderName !== requested,
+    replaced,
   };
 }
 

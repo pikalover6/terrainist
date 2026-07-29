@@ -27,13 +27,14 @@ import { loadPrismarine, type EmitChunk, type PrismarineStack } from "../src/emi
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { buildDevWorld } from "../src/devworld.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
+import { writeWorldFiles } from "../src/emit/write.js";
 
 const EXAMPLE = fileURLToPath(new URL("../../../examples/hillside-village.loam.json", import.meta.url));
 
 const scratch: string[] = [];
 let stack: PrismarineStack;
 let village: { dir: string; report: TerrainCompileReport };
-let dev: { dir: string };
+let dev: { dir: string; buildings: readonly unknown[] };
 
 async function scratchDir(label: string): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), `terrainist-physics-${label}-`));
@@ -53,7 +54,7 @@ beforeAll(async () => {
 
   const devRoot = await scratchDir("dev");
   const built = await buildDevWorld(devRoot);
-  dev = { dir: built.worldDir };
+  dev = { dir: built.emit.worldDir, buildings: built.buildings };
 }, 120_000);
 
 afterAll(async () => {
@@ -97,7 +98,12 @@ describe("physics lint — the dev world", () => {
   let report: PhysicsReport;
 
   beforeAll(async () => {
-    report = await lintWorldPhysics(dev.dir, stack, {});
+    // The dev world gets the *same* context the village does. It is the
+    // building grammar's showroom — every archetype crossed with every size,
+    // storey count and yaw — so it is where a grammar regression shows up
+    // first, and the interior rules (which need the building list) are exactly
+    // the ones a grammar regression trips.
+    report = await lintWorldPhysics(dev.dir, stack, { buildings: dev.buildings as never });
   }, 120_000);
 
   it("finds nothing wrong, under every rule", () => {
@@ -106,6 +112,100 @@ describe("physics lint — the dev world", () => {
       expect(report.counts[rule], rule).toBe(0);
     }
   });
+});
+
+describe("the walking agent", () => {
+  /**
+   * A one-room shell with a door, a floor, a ceiling and a stair flight, built
+   * block by block so the traversal simulation can be pointed at a *known*
+   * geometry rather than at whatever the grammar happened to emit.
+   *
+   * `stairFootZ` is the whole experiment: at `z0 + 1` the flight has an open
+   * front face and the climb is a walk; at `z0` its front face is buried in the
+   * north wall, which is the geometry a player reported as "the stairs still
+   * need a jump" and which every previous version of this lint passed.
+   */
+  async function shell(stairFootZ: number): Promise<PhysicsReport> {
+    const dir = path.join(await scratchDir("shell"), "shell");
+    const chunk = stack.createChunk();
+    const id = (name: string, props?: Record<string, string>): number =>
+      (props === undefined ? stack.blockByName(name)?.stateId : stack.blockStateOf(name, props)) as number;
+    const stone = id("stone");
+    const planks = id("oak_planks");
+
+    const x0 = 2;
+    const z0 = 2;
+    const x1 = 10;
+    const z1 = 12;
+    const floorY = 64;
+    const storey = 4;
+    // Ground under it, floor plane, walls up to the ceiling, ceiling.
+    for (let z = z0 - 1; z <= z1 + 1; z++) {
+      for (let x = x0 - 1; x <= x1 + 1; x++) {
+        chunk.setStateId(x, floorY - 1, z, stone);
+        chunk.setStateId(x, floorY, z, planks);
+        chunk.setStateId(x, floorY + storey, z, planks);
+        chunk.setStateId(x, floorY + storey * 2, z, planks);
+        const wall = x === x0 - 1 || x === x1 + 1 || z === z0 - 1 || z === z1 + 1;
+        if (!wall) continue;
+        for (let y = floorY + 1; y < floorY + storey * 2; y++) chunk.setStateId(x, y, z, stone);
+      }
+    }
+    // A door in the south wall.
+    const dx = 6;
+    for (const half of ["lower", "upper"] as const) {
+      chunk.setStateId(dx, floorY + (half === "lower" ? 1 : 2), z1 + 1, id("oak_door", {
+        facing: "north",
+        half,
+        hinge: "left",
+        open: "false",
+        powered: "false",
+      }));
+    }
+    // The well first, then the flight — the top step lives *in* the upper floor
+    // plane, so carving afterwards would delete it.
+    for (let z = z0; z <= stairFootZ + storey - 1; z++) {
+      chunk.setStateId(x0, floorY + storey, z, 0);
+    }
+    for (let i = 0; i < storey; i++) {
+      chunk.setStateId(x0, floorY + 1 + i, stairFootZ + i, id("oak_stairs", {
+        facing: "south",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      }));
+    }
+
+    await writeWorldFiles({
+      chunks: new Map([["0,0", chunk]]),
+      worldDir: dir,
+      levelName: "shell",
+      spawn: { x: 6, y: floorY + 1, z: 6 },
+      stack,
+    });
+    return await lintWorldPhysics(dir, stack, {
+      minY: 60,
+      maxY: 80,
+      buildings: [
+        {
+          footprint: { x0: x0 - 1, z0: z0 - 1, x1: x1 + 1, z1: z1 + 1 },
+          interior: { x0, z0, x1, z1 },
+          floorY,
+          meta: { roofTop: storey * 2, foundationDepth: 1, wallTop: storey * 2, floorLevels: [0, storey] },
+        },
+      ],
+    });
+  }
+
+  it("cannot climb a flight whose front face is buried in the wall", async () => {
+    const report = await shell(2);
+    expect(report.counts["traversal.unreachable"]).toBeGreaterThan(0);
+  }, 60_000);
+
+  it("climbs the same flight once it stands one cell off the wall", async () => {
+    const report = await shell(3);
+    expect(report.counts["traversal.unreachable"]).toBe(0);
+  }, 60_000);
 });
 
 describe("the connection-state pass", () => {

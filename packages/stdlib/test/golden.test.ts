@@ -83,6 +83,33 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *       down to solid ground, so a doorstep on a slope cannot float.
  *   None of the three imports this file's field engine. Compiled worlds from
  *   before G4.5c do not reproduce block-for-block; their terrain shape does.
+ * - **G4.7 (second walkthrough: stairs, chimneys, granaries, lamp posts)** —
+ *   authorized reroll of the *compiled world* only. **Both hashes below are
+ *   deliberately unchanged**, and once again that is the check that matters:
+ *   every change is downstream of the heightfield. Four defects a human found
+ *   walking the village, and two of them proved the physics lint had blind
+ *   spots:
+ *     * an interior stair flight now stands one cell off the wall it climbs,
+ *       with the cell at its foot left as an open approach and the stairwell
+ *       cut over the approach as well as the run. A flight with its front face
+ *       buried in the wall is mountable only from the side, and the half-block
+ *       gap left there is narrower than a player;
+ *     * the chimney moved out of the room and into the wall: the flue occupies
+ *       wall cells flush with the face, the hearth is an opening in that face,
+ *       and the head's corbel is clipped to the footprint. It used to stand on
+ *       an interior column and run floor-to-ceiling through the middle of a
+ *       smithy;
+ *     * a granary's hay is stacked one to three high against the walls, on at
+ *       most a quarter of the floor, instead of checkerboarding the whole of
+ *       it — a pattern whose free cells only touched at their corners;
+ *     * road lamp posts are planted after the shoulder blend rather than
+ *       before it, so they stand on the ground the emitter will actually lay
+ *       rather than on a height a later pass moved;
+ *     * the smithy's forge moved to the east wall, because on the west it
+ *       sealed the stair approach off from the shop floor.
+ *   All of it lives in the building grammar and in `@terrainist/compiler`;
+ *   neither imports this file's field engine. Compiled worlds from before G4.7
+ *   do not reproduce block-for-block; their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

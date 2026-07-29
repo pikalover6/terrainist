@@ -15,9 +15,21 @@
  * - a bed whose two halves were paired the wrong way round;
  * - fences carrying the default "connected to nothing" state;
  * - a road laid a block proud of the field it crossed;
- * - a half-block hole over every doorway.
+ * - a half-block hole over every doorway;
+ * - a cobblestone flue running floor to ceiling through the middle of a room;
+ * - a granary checkerboarded with hay bales, so no cell touched another;
+ * - a lamp post standing on air twelve blocks over a gorge.
  *
  * Renders miss all of it. A readback does not.
+ *
+ * Two of those got past an *earlier* version of this file, which is the reason
+ * for its shape now. The old stair rule matched a list of geometries that had
+ * gone wrong before, and passed a flight that was a jump for a reason not on
+ * the list; the old support rules asked each block about the one below it, and
+ * passed a lantern on a fence on a fence on air. Both are replaced by rules
+ * that simulate the property instead of enumerating its failures: a walking
+ * agent that has to reach every floor of every building from the front door,
+ * and a support check that walks each chain all the way to the ground.
  *
  * Each check returns findings rather than throwing, so a caller can report a
  * count, sample the worst offenders, and assert zero.
@@ -53,8 +65,17 @@ export interface PhysicsContext {
   /** Placed buildings, as the compile report carries them. */
   readonly buildings?: readonly {
     readonly footprint: { x0: number; z0: number; x1: number; z1: number };
+    /** The enclosed interior in world columns; derived from the footprint when absent. */
+    readonly interior?: { x0: number; z0: number; x1: number; z1: number };
     readonly floorY: number;
-    readonly meta: { readonly roofTop: number; readonly foundationDepth: number };
+    readonly meta: {
+      readonly roofTop: number;
+      readonly foundationDepth: number;
+      /** Y of the topmost wall course, node-local. Enables the interior rules. */
+      readonly wallTop?: number;
+      /** Node-local Y of each storey's floor plane. Enables the interior rules. */
+      readonly floorLevels?: readonly number[];
+    };
   }[];
   /** Road centre lines; bridge decks are exempt from the flush-road rule. */
   readonly roads?: readonly {
@@ -76,12 +97,52 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "bed.pairing",
   "floating.slab",
   "floating.stair",
-  "stair.unmountable",
+  "floating.isolated",
+  "unsupported.chain",
+  "interior.blocked_column",
+  "traversal.no_start",
+  "traversal.unreachable",
   "connection.stale",
   "road.proud",
 ]);
 
 const AIR = new Set(["air", "cave_air", "void_air"]);
+
+/* -------------------------------------------------------------------------- */
+/* the walking agent's block vocabulary                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Blocks a 1×2 player body cannot stand inside.
+ *
+ * Deliberately a positive list of *obstacles* rather than a list of things you
+ * can walk through: the failure mode that matters is calling something passable
+ * that is not, because that makes the traversal simulation report a route the
+ * player does not have. Anything unrecognised falls through to `isFullCube`,
+ * which is the block table's own answer.
+ */
+const BODY_BLOCKING =
+  /(_slab|_stairs|_fence|_wall|_bed|_pane|iron_bars|_gate|chest|barrel|furnace|smithing_table|crafting_table|fletching_table|cartography_table|loom|anvil|cauldron|composter|bookshelf|lectern|campfire|_shulker_box|hopper|beacon|conduit|lantern|bell|grindstone|stonecutter|brewing_stand|enchanting_table|_cake|dragon_egg)$/;
+
+/** Blocks that a foot may rest on even though they are not full cubes. */
+const STANDABLE_PARTIAL = /(_slab|_stairs)$/;
+
+/**
+ * Blocks that stand on whatever is under them and fall over without it.
+ *
+ * The old `unsupported.*` rules asked each of these for its *immediate*
+ * neighbour only, which is why a lantern on a fence on a fence on air passed:
+ * every link in the chain was happy with the link below it and nobody asked
+ * whether the chain reached the ground.
+ */
+const NEEDS_GROUND = /(_fence|_wall|_fence_gate|_carpet|_pressure_plate|_sign|torch|campfire|lantern)$/;
+
+/** True for a block that stands on the one below it — a link in a support chain. */
+function needsGround(name: string): boolean {
+  if (name.startsWith("potted_")) return true;
+  if (name.endsWith("wall_torch")) return false;
+  return NEEDS_GROUND.test(name);
+}
 
 /** `(dx, dz)` per cardinal name. */
 const STEP: Readonly<Record<string, readonly [number, number]>> = Object.freeze({
@@ -154,7 +215,6 @@ export async function lintWorldPhysics(
 
   let examined = 0;
   const connective: { x: number; y: number; z: number }[] = [];
-  const stairs = new Map<string, { x: number; y: number; z: number; facing: string }>();
 
   for (const [key, chunk] of chunks) {
     const [cx, cz] = key.split(",").map(Number) as [number, number];
@@ -231,79 +291,134 @@ export async function lintWorldPhysics(
             }
           }
 
-          if (name.endsWith("_stairs") && props["half"] === "bottom") {
-            stairs.set(`${x},${y},${z}`, { x, y, z, facing: props["facing"] ?? "north" });
+          // --- transitive support ----------------------------------------
+          // A block that stands on the one below it is only up if the whole
+          // chain under it reaches something grounded. Checking one link was
+          // enough to pass a lantern on a fence on a fence on air.
+          if (name.endsWith("lantern") && props["hanging"] === "true") {
+            if (!hungChain(x, y, z)) {
+              add("unsupported.chain", x, y, z, "nothing above it to hang from");
+            }
+          } else if (needsGround(name)) {
+            if (!groundedChain(x, y, z)) {
+              add("unsupported.chain", x, y, z, "its support chain does not reach a solid block");
+            }
           }
+
+          // --- isolated blocks -------------------------------------------
+          // A full cube with air on all six faces is not a design; it is the
+          // residue of a pass that emitted a landing, a pad or a marker and
+          // forgot to attach it to anything.
+          if (
+            stack.isFullCube(id) &&
+            airAt(x + 1, y, z) &&
+            airAt(x - 1, y, z) &&
+            airAt(x, y + 1, z) &&
+            airAt(x, y - 1, z) &&
+            airAt(x, y, z + 1) &&
+            airAt(x, y, z - 1)
+          ) {
+            add("floating.isolated", x, y, z, "a full block with air on all six faces");
+          }
+
           if (connectiveKindOf(name) !== undefined) connective.push({ x, y, z });
         }
       }
     }
   }
 
-  // --- interior stair runs -------------------------------------------------
-  // A run is a chain of bottom-half stairs each one block up and one cell along
-  // its own `facing`. Roof courses form the same chain, so only runs *inside* a
-  // building's shell are checked — which is where a player climbs.
-  const inside = (x: number, y: number, z: number): boolean =>
-    (context.buildings ?? []).some(
-      (b) =>
-        x > b.footprint.x0 &&
-        x < b.footprint.x1 &&
-        z > b.footprint.z0 &&
-        z < b.footprint.z1 &&
-        y > b.floorY &&
-        y < b.floorY + b.meta.roofTop,
-    );
-  const linked = (s: { x: number; y: number; z: number; facing: string }): string => {
-    const [dx, dz] = STEP[s.facing] ?? [0, -1];
-    return `${s.x + dx},${s.y + 1},${s.z + dz}`;
-  };
-  const hasPredecessor = new Set<string>();
-  for (const s of stairs.values()) {
-    if (stairs.has(linked(s))) hasPredecessor.add(linked(s));
-  }
-  for (const s of stairs.values()) {
-    const key = `${s.x},${s.y},${s.z}`;
-    if (hasPredecessor.has(key)) continue;
-    if (!stairs.has(linked(s))) continue;
-    if (!inside(s.x, s.y, s.z)) continue;
-    // Walk to the top of the run.
-    let top = s;
-    while (stairs.has(linked(top))) top = stairs.get(linked(top)) as typeof top;
-    const [dx, dz] = STEP[s.facing] ?? [0, -1];
-    // Mounting: *some* neighbour of the bottom step has to be a floor cell at
-    // the step's own level, so a player can walk onto it with a half-block
-    // rise. Any of the four will do — a flight against a wall is boarded from
-    // the side, and that is a stair, not a jump.
-    const mountable = ([
-      [dx, dz],
-      [-dx, -dz],
-      [dz, dx],
-      [-dz, -dx],
-    ] as const).some(
-      ([ox, oz]) =>
-        solidAt(s.x - ox, s.y - 1, s.z - oz) &&
-        airAt(s.x - ox, s.y, s.z - oz) &&
-        airAt(s.x - ox, s.y + 1, s.z - oz),
-    );
-    if (!mountable) {
-      add("stair.unmountable", s.x, s.y, s.z, "no walkable floor cell at the foot of the run");
-    }
-    // Landing: the cell past the top step must be solid at the top step's own
-    // level, so its surface is flush with the step's back tread.
-    if (!solidAt(top.x + dx, top.y, top.z + dz)) {
-      add("stair.unmountable", top.x, top.y, top.z, "no landing flush with the top step");
-    }
-    // Headroom: two clear blocks over every step.
-    const obstructs = (x: number, y: number, z: number): boolean => {
-      const name = nameAt(x, y, z);
-      return stack.isFullCube(stateAt(x, y, z)) || name.endsWith("_slab") || name.endsWith("_stairs");
+  // --- interior traversal --------------------------------------------------
+  // The rule this replaces (`stair.unmountable`) checked a stair flight against
+  // a list of things that had gone wrong before: a foot with no floor beside
+  // it, a top step with no landing, a step with a torch over it. It passed a
+  // flight whose bottom step had its low face buried in a wall — walkable in
+  // the checker's model, a jump in the game, because the half-block gap between
+  // the wall and the step's raised half is narrower than a player.
+  //
+  // So the check is no longer a list of shapes. It is a walking agent: a 1x2
+  // body that starts on the cell inside the front door and may step up half a
+  // block onto a stair or a slab, step down up to three, and climb a ladder. It
+  // may not jump. Every interior floor cell a player could stand on, on every
+  // storey, has to be somewhere that agent can reach — which makes "the stairs
+  // work", "the furniture leaves a path" and "the doorway is clear" one
+  // property with one implementation.
+  for (const b of context.buildings ?? []) {
+    const levels = b.meta.floorLevels;
+    if (levels === undefined || b.meta.wallTop === undefined) continue;
+    const interior = b.interior ?? {
+      x0: b.footprint.x0 + 1,
+      z0: b.footprint.z0 + 1,
+      x1: b.footprint.x1 - 1,
+      z1: b.footprint.z1 - 1,
     };
-    for (let step = s; ; step = stairs.get(linked(step)) as typeof step) {
-      if (obstructs(step.x, step.y + 1, step.z) || obstructs(step.x, step.y + 2, step.z)) {
-        add("stair.unmountable", step.x, step.y, step.z, "less than two blocks of headroom");
+    if (interior.x0 > interior.x1 || interior.z0 > interior.z1) continue;
+
+    // --- a full-block column through the room ------------------------------
+    // A chimney flue, a misplaced pillar or a stack of anything that runs from
+    // the floor to the ceiling of an interior cell is furniture nobody can walk
+    // round and, in the case that prompted the rule, a cobblestone shaft
+    // standing in the middle of a smithy with a cauldron for a hearth.
+    const bands: { lo: number; hi: number }[] = [];
+    for (const [i, level] of levels.entries()) {
+      const next = levels[i + 1] ?? b.meta.wallTop;
+      const lo = b.floorY + level + 1;
+      const hi = b.floorY + next - 1;
+      if (hi >= lo) bands.push({ lo, hi });
+    }
+    for (const band of bands) {
+      for (let z = interior.z0; z <= interior.z1; z++) {
+        for (let x = interior.x0; x <= interior.x1; x++) {
+          let blockedAll = true;
+          for (let y = band.lo; y <= band.hi && blockedAll; y++) {
+            if (passableAt(x, y, z)) blockedAll = false;
+          }
+          // A column a ladder is fixed to is wall, not obstruction: the
+          // watchtower supplies its own pilaster inside the shaft precisely so
+          // the rungs have something to hold on to.
+          if (blockedAll && ladderBacking(x, band.lo, band.hi, z)) continue;
+          if (blockedAll) {
+            add(
+              "interior.blocked_column",
+              x,
+              band.lo,
+              z,
+              `interior column is solid from y ${band.lo} to y ${band.hi}`,
+            );
+          }
+        }
       }
-      if (!stairs.has(linked(step))) break;
+    }
+
+    // --- the walking agent -------------------------------------------------
+    const start = doorApproach(b, interior);
+    if (start === null) {
+      const anchor = { x: interior.x0, y: b.floorY + 1, z: interior.z0 };
+      add(
+        "traversal.no_start",
+        anchor.x,
+        anchor.y,
+        anchor.z,
+        "no standable cell inside the door — the way in is blocked",
+      );
+      continue;
+    }
+
+    const reached = walk(start);
+    for (const level of levels) {
+      const feet = b.floorY + level + 1;
+      for (let z = interior.z0; z <= interior.z1; z++) {
+        for (let x = interior.x0; x <= interior.x1; x++) {
+          if (!standable(x, feet, z)) continue;
+          if (reached.has(`${x},${feet},${z}`)) continue;
+          add(
+            "traversal.unreachable",
+            x,
+            feet,
+            z,
+            `no walking route from the door cell ${start.x},${start.y},${start.z}`,
+          );
+        }
+      }
     }
   }
 
@@ -376,6 +491,203 @@ export async function lintWorldPhysics(
         add("road.proud", cell.x, surfaceY, cell.z, `road stands ${worst} above the ground all round (worst at ${where})`);
       }
     }
+  }
+
+  /** True when a 1x1x1 cell is one a player's body may occupy. */
+  function passableAt(x: number, y: number, z: number): boolean {
+    const id = stateAt(x, y, z);
+    if (id === 0) return true;
+    const name = nameAt(x, y, z);
+    if (AIR.has(name)) return true;
+    if (stack.isFullCube(id)) return false;
+    if (name.endsWith("wall_torch")) return true;
+    return !BODY_BLOCKING.test(name);
+  }
+
+  /** True when a foot resting on the top of this cell has something under it. */
+  function supportAt(x: number, y: number, z: number): boolean {
+    const id = stateAt(x, y, z);
+    if (id === 0) return false;
+    if (stack.isFullCube(id)) return true;
+    return STANDABLE_PARTIAL.test(nameAt(x, y, z));
+  }
+
+  /**
+   * Whether stepping onto this block from `(dx, dz)` costs only half a block.
+   *
+   * A bottom slab is half a block from any side. A stair is not, and the
+   * difference is the whole reason this simulation exists: its front half is
+   * half-height and its back half is a full block, so it is a step from the
+   * front, a wall from the back, and from the side it is a step *only if the
+   * player has somewhere to put the other half of their body*. A player is 0.6
+   * wide and the low half of a stair is 0.5 deep, so mounting sideways needs
+   * the cell beyond the low face to be open. When that cell is a wall — which
+   * is where a flight run hard against one puts it — there is no legal
+   * approach, and this is exactly the case that walked past every earlier
+   * version of the check.
+   */
+  function halfStepFrom(x: number, y: number, z: number, dx: number, dz: number): boolean {
+    const id = stateAt(x, y, z);
+    if (id === 0 || stack.isFullCube(id)) return false;
+    const decoded = stack.blockStateProps(id);
+    if (decoded === undefined) return false;
+    const { name, props } = decoded;
+    if (name.endsWith("_slab")) return props["type"] === "bottom";
+    if (!name.endsWith("_stairs")) return false;
+    if (props["half"] !== "bottom") return false;
+    const [fx, fz] = STEP[props["facing"] ?? "north"] ?? [0, -1];
+    if (dx === fx && dz === fz) return true;
+    // Perpendicular: legal only with room to stand in the low half.
+    if (dx * fx + dz * fz !== 0) return false;
+    return passableAt(x - fx, y + 1, z - fz);
+  }
+
+  /** True when `(x, y, z)` is a cell a standing player fits in, feet included. */
+  function standable(x: number, y: number, z: number): boolean {
+    return supportAt(x, y - 1, z) && passableAt(x, y, z) && passableAt(x, y + 1, z);
+  }
+
+  /** True when the cell holds a ladder, which the agent may climb. */
+  function isLadder(x: number, y: number, z: number): boolean {
+    return nameAt(x, y, z) === "ladder";
+  }
+
+  /**
+   * Flood the cells a walking player can reach from `start`.
+   *
+   * Moves are the ones a player has without pressing jump: level steps, a
+   * half-block rise onto a stair or a slab, a drop of up to three, and a ladder
+   * climb. The rise needs clearance over the cell being left as well as over
+   * the one being entered, because a player who cannot lift their head cannot
+   * lift their feet either.
+   */
+  function walk(start: { x: number; y: number; z: number }): Set<string> {
+    const seen = new Set<string>([`${start.x},${start.y},${start.z}`]);
+    const queue: { x: number; y: number; z: number }[] = [start];
+    const visit = (x: number, y: number, z: number): void => {
+      const key = `${x},${y},${z}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      queue.push({ x, y, z });
+    };
+    for (let head = 0; head < queue.length; head++) {
+      const cell = queue[head] as { x: number; y: number; z: number };
+      const { x, y, z } = cell;
+      if (isLadder(x, y, z)) {
+        if (passableAt(x, y + 1, z) && passableAt(x, y + 2, z) && isLadder(x, y + 1, z)) {
+          visit(x, y + 1, z);
+        }
+        if (isLadder(x, y - 1, z) || standable(x, y - 1, z)) visit(x, y - 1, z);
+      }
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const nx = x + dx;
+        const nz = z + dz;
+        // Up: only onto a half-height support, and only with headroom to rise.
+        if (
+          halfStepFrom(nx, y, nz, dx, dz) &&
+          passableAt(x, y + 2, z) &&
+          passableAt(nx, y + 1, nz) &&
+          passableAt(nx, y + 2, nz)
+        ) {
+          visit(nx, y + 1, nz);
+        }
+        // Level, then down: the first standable landing within a safe drop.
+        for (let ny = y; ny >= y - 3; ny--) {
+          if (!passableAt(nx, ny, nz) || !passableAt(nx, ny + 1, nz)) break;
+          if (supportAt(nx, ny - 1, nz)) {
+            visit(nx, ny, nz);
+            break;
+          }
+          if (isLadder(nx, ny, nz)) {
+            visit(nx, ny, nz);
+            break;
+          }
+        }
+      }
+    }
+    return seen;
+  }
+
+  /**
+   * The cell just inside the front door, found in the world rather than taken
+   * on trust: the lower half of a door in the building's shell, then whichever
+   * of its four neighbours is an interior cell.
+   */
+  function doorApproach(
+    b: NonNullable<PhysicsContext["buildings"]>[number],
+    interior: { x0: number; z0: number; x1: number; z1: number },
+  ): { x: number; y: number; z: number } | null {
+    const y = b.floorY + 1;
+    for (let z = b.footprint.z0; z <= b.footprint.z1; z++) {
+      for (let x = b.footprint.x0; x <= b.footprint.x1; x++) {
+        const inShell =
+          x === b.footprint.x0 || x === b.footprint.x1 || z === b.footprint.z0 || z === b.footprint.z1;
+        if (!inShell) continue;
+        const decoded = stack.blockStateProps(stateAt(x, y, z));
+        if (decoded === undefined) continue;
+        if (!decoded.name.endsWith("_door") || decoded.props["half"] !== "lower") continue;
+        for (const [dx, dz] of [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as const) {
+          const nx = x + dx;
+          const nz = z + dz;
+          if (nx < interior.x0 || nx > interior.x1 || nz < interior.z0 || nz > interior.z1) continue;
+          if (standable(nx, y, nz)) return { x: nx, y, z: nz };
+        }
+      }
+    }
+    return null;
+  }
+
+  /** True when a ladder anywhere in this column's band is fixed to it. */
+  function ladderBacking(x: number, lo: number, hi: number, z: number): boolean {
+    for (let y = lo; y <= hi; y++) {
+      for (const [dir, [dx, dz]] of Object.entries(STEP)) {
+        if (nameAt(x + dx, y, z + dz) !== "ladder") continue;
+        const props = stack.blockStateProps(stateAt(x + dx, y, z + dz))?.props;
+        if ((props?.["facing"] ?? "north") === dir) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Walk a standing block's support chain down to something grounded. */
+  function groundedChain(x: number, y: number, z: number): boolean {
+    for (let depth = 0; depth < 64; depth++) {
+      const by = y - 1 - depth;
+      const id = stateAt(x, by, z);
+      if (id === 0) return false;
+      if (stack.isFullCube(id)) return true;
+      const name = nameAt(x, by, z);
+      if (AIR.has(name)) return false;
+      if (STANDABLE_PARTIAL.test(name)) return true;
+      if (!needsGround(name)) return false;
+    }
+    return false;
+  }
+
+  /** The same walk, upward, for anything that hangs. */
+  function hungChain(x: number, y: number, z: number): boolean {
+    for (let depth = 0; depth < 64; depth++) {
+      const ay = y + 1 + depth;
+      const id = stateAt(x, ay, z);
+      if (id === 0) return false;
+      if (stack.isFullCube(id)) return true;
+      const name = nameAt(x, ay, z);
+      if (AIR.has(name)) return false;
+      if (name.endsWith("_fence") || name.endsWith("_wall") || name === "chain") return true;
+      if (name.endsWith("lantern")) continue;
+      return false;
+    }
+    return false;
   }
 
   /** True when any column within one block holds a fluid at this height. */

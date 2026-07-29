@@ -6,7 +6,7 @@
  * anything but an explicit user invocation.
  */
 
-import { cp, mkdtemp, mkdir, readFile, readdir, rm, stat } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -122,6 +122,51 @@ describe("installWorld", () => {
 
     // The first install is intact.
     expect(await fileList(first.installedPath)).toEqual(await fileList(sourceWorld));
+  });
+
+  it("replaces a same-name save in place with --replace", async () => {
+    const saves = await scratchDir("saves-replace");
+    const first = await installWorld({ worldDir: sourceWorld, savesDir: saves, now: 1 });
+    expect(first.replaced).toBe(false);
+
+    // Something the new build does not write. A copy-over-the-top install
+    // would leave it behind and the save would be a chimera of two compiles.
+    const stale = path.join(first.installedPath, "region", "r.9.9.mca");
+    await writeFile(stale, "stale");
+
+    const again = await installWorld({
+      worldDir: sourceWorld,
+      savesDir: saves,
+      replace: true,
+      now: 1_700_000_000_456,
+    });
+
+    expect(again.folderName).toBe(first.folderName);
+    expect(again.installedPath).toBe(first.installedPath);
+    expect(again.replaced).toBe(true);
+    expect(again.renamed).toBe(false);
+    // One save, not two.
+    expect((await readdir(saves)).sort()).toEqual([first.folderName]);
+    // The stale file is gone, and the tree matches the source exactly.
+    expect(await fileList(again.installedPath)).toEqual(await fileList(sourceWorld));
+    // A fresh LastPlayed, so the client floats it back to the top of the list.
+    const installed = await levelData(again.installedPath);
+    expect(longToMillis(installed["LastPlayed"] as [number, number])).toBe(1_700_000_000_456);
+  });
+
+  it("installs normally with --replace when nothing is there to replace", async () => {
+    const saves = await scratchDir("saves-replace-fresh");
+    const result = await installWorld({ worldDir: sourceWorld, savesDir: saves, replace: true });
+    expect(result.replaced).toBe(false);
+    expect(result.folderName).toBe(path.basename(sourceWorld));
+    expect(await fileList(result.installedPath)).toEqual(await fileList(sourceWorld));
+  });
+
+  it("refuses to replace the world it is installing", async () => {
+    const saves = path.dirname(sourceWorld);
+    await expect(
+      installWorld({ worldDir: sourceWorld, savesDir: saves, replace: true }),
+    ).rejects.toThrow(/is the world being installed/);
   });
 
   it("creates the saves directory when it does not exist", async () => {

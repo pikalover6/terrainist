@@ -376,22 +376,27 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     });
   }
 
-  // --- lanterns, once every route has been surfaced -----------------------
-  // Deliberately last. A post planted while routes were still being laid could
-  // have a later route regrade the ground out from under it, which is exactly
-  // how the first village ended up with nine lanterns hanging in mid-air: the
-  // block they stood on was replaced by air when the lane beside them was cut
-  // down. Planting against the finished heightfield makes support structural.
+  // --- shoulders, after every route is graded -----------------------------
+  // A verge blended against a lane that a later route then re-cuts is a verge
+  // blended to the wrong height, so this waits for every route.
+  blendShoulders(region, plan, road, roadY, blocked, paved);
+
+  // --- lanterns, dead last -------------------------------------------------
+  // A post planted while routes were still being laid could have a later route
+  // regrade the ground out from under it, which is how the first village ended
+  // up with nine lanterns hanging in mid-air. Moving the planting after routing
+  // fixed those and left a subtler version of the same bug: a lamp stands one
+  // column *off* the lane, which is precisely a shoulder column, and
+  // `blendShoulders` rewrites `plan.ground` there. Where the east lane cut down
+  // the lip of a gorge the blend dropped the shoulder twelve blocks and left
+  // the post it had already planted hanging over the drop. Planting is now the
+  // last thing the pass does, so `plan.ground` is the ground the emitter will
+  // actually lay.
   if (wantLanterns) {
     for (const route of routes) {
       plantLanterns(region, plan, road, route.path, width, spacing, states, blocks, rng, lanternSide);
     }
   }
-
-  // --- shoulders, after every route is graded -----------------------------
-  // Same reason as the lanterns: a verge blended against a lane that a later
-  // route then re-cuts is a verge blended to the wrong height.
-  blendShoulders(region, plan, road, roadY, blocked, paved);
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;
