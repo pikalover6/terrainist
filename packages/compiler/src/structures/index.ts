@@ -54,6 +54,7 @@ import { buildTunnels, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 export * from "./buildings.js";
 export * from "./doorsteps.js";
 export * from "./plaza.js";
+export * from "./props.js";
 export * from "./roads.js";
 export * from "./tunnels.js";
 
