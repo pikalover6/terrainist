@@ -71,6 +71,11 @@ export const TIER1_CONSTRAINTS = [
   "not_overlapping",
   "clearance",
   "terrain_conform",
+  // §4.4 `on`: a domain restriction against a terrain product, applied at
+  // substage 3c beside `within` and demotable at ladder step 5. The solver
+  // realizes it outright — there is no later pass that has anything to add —
+  // so it is tier 1 rather than tier 2.
+  "on",
 ] as const;
 
 /** A constraint type the solver understands. */
@@ -79,14 +84,48 @@ export type Tier1Constraint = (typeof TIER1_CONSTRAINTS)[number];
 /**
  * Tier 2: types the solver scores but does not *realize* on its own.
  *
- * `connected` is the only member, and it is here rather than in tier 1 because
+ * `connected` is the archetype, and it is here rather than in tier 1 because
  * satisfying it is two jobs in two passes (§4 `connected`, pass 3 vs pass 6):
  * at solve time it is a **soft proximity cost** — pull the pair together so the
  * connector has a short run — and the connector itself is built by the
  * connective pass long after placement is frozen. A type that is only half
  * solved by the solver would be a lie in the tier-1 list.
+ *
+ * `along` and `beside` join it for exactly the same reason, and §4.9.6 says so
+ * in as many words: a building binds to a **frozen route corridor** registered
+ * at substage 3b, and the centreline inside that corridor is only settled by the
+ * pass-6 router. The solver's half is real and load-bearing — the corridor is
+ * reserved, the lateral offset is costed, the footprint is oriented to the
+ * line — but the lane the author pictures is drawn later.
+ *
+ * `beside` is not a primitive at all: it is `along` with a wider default band
+ * and no `faceRoad`, desugared before the solver ever sees it (§4.4).
  */
-export const TIER2_CONSTRAINTS = ["connected"] as const;
+export const TIER2_CONSTRAINTS = ["connected", "along", "beside"] as const;
+
+/**
+ * The `@terrain:` products an `on` constraint resolves against here (§4.2).
+ *
+ * All three are *derived*, not authored: `coastline` from the finished ocean
+ * mask, `ridge` from every `terrain.edit@0` running the `ridge` verb, `peak`
+ * from the summit marker each `peak`/`volcano` edit emits. Nothing else in the
+ * §4.2 product vocabulary is derived yet, so nothing else is offered.
+ */
+export const ON_TARGET_PRODUCTS = ["coastline", "ridge", "peak"] as const;
+
+/** An `on` target this compiler resolves. */
+export type OnTargetProduct = (typeof ON_TARGET_PRODUCTS)[number];
+
+/** Strip a `@terrain:` prefix from an `on` / `along` target selector. */
+export function bareProduct(target: string): string {
+  const t = target.trim();
+  return t.startsWith("@terrain:") ? t.slice("@terrain:".length) : t;
+}
+
+/** True when `target` names a terrain product this compiler derives. */
+export function isOnTargetProduct(target: string): target is OnTargetProduct {
+  return (ON_TARGET_PRODUCTS as readonly string[]).includes(bareProduct(target));
+}
 
 /** A constraint type the solver costs but the connective pass realizes. */
 export type Tier2Constraint = (typeof TIER2_CONSTRAINTS)[number];

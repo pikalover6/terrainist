@@ -58,6 +58,29 @@ export const ROAD_TURN_COST = 6;
 export const ROAD_SMOOTH_REACH = 20;
 /** Multiplier applied when stepping onto an existing road cell. */
 export const ROAD_REUSE_DISCOUNT = 0.35;
+
+/**
+ * Multiplier applied inside this network's own reserved route corridor.
+ *
+ * §4.9.6 says pass-6 routing "MUST be a refinement *inside* those polygons",
+ * and a stricter compiler would make the corridor a hard channel. This one
+ * makes it a strong preference instead, and the reason is what the corridor is
+ * built from: at substage 3b there is no placed geometry, so the polygon is
+ * strung through the anchors' *coarse* target points — jittered zone centres —
+ * with no knowledge of where the ground is steep, where the water is, or where
+ * a building will end up standing. Forcing a lane to stay inside a guess of
+ * that provenance turns an unroutable anchor into a diagnostic where a
+ * fifteen-block excursion would have produced a road.
+ *
+ * What the discount does buy is the thing the corridor exists for: where two
+ * lines are otherwise comparable, the lane takes the one the buildings were
+ * placed against, so `along` houses face a street that is actually there.
+ *
+ * Deliberately weaker than {@link ROAD_REUSE_DISCOUNT}: sharing tarmac with an
+ * existing lane is a real economy, and staying in the reservation is a
+ * preference, and the router should not confuse the two.
+ */
+export const ROAD_CORRIDOR_DISCOUNT = 0.7;
 /** Blocks between lantern posts. */
 export const ROAD_LANTERN_SPACING = 14;
 
@@ -204,6 +227,15 @@ export interface RoadNetworkInput {
   readonly buildingPaths: ReadonlySet<string>;
   /** Updated with a `road` tag for every surfaced column. */
   readonly occupancy?: OccupancyGrid;
+  /**
+   * 1 for a column inside this network's own frozen route corridor (§4.9.6).
+   *
+   * A **preference**, not a channel: cells inside it are discounted by
+   * {@link ROAD_CORRIDOR_DISCOUNT}, exactly the way an existing road cell is,
+   * and the router is otherwise free to leave. See the constant for why the
+   * corridor is not a hard bound.
+   */
+  readonly corridor?: Uint8Array;
 }
 
 /** One routed road. */
@@ -335,7 +367,11 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       continue;
     }
 
-    const found = routeTo(region, blocked, road, plan, start, { water, wallHug });
+    const found = routeTo(region, blocked, road, plan, start, {
+      water,
+      wallHug,
+      ...(input.corridor === undefined ? {} : { corridor: input.corridor }),
+    });
     if (found === null) {
       unrouted.push(anchor.nodePath);
       diagnostics.push(unroutable(input.nodePath, anchor.nodePath, hub.nodePath, "no legal path exists"));
@@ -665,10 +701,11 @@ export function routeTo(
   road: Uint8Array,
   plan: ColumnPlan,
   start: { x: number; z: number },
-  costs: { water?: Uint8Array; wallHug?: Uint8Array } = {},
+  costs: { water?: Uint8Array; wallHug?: Uint8Array; corridor?: Uint8Array } = {},
 ): { x: number; z: number }[] | null {
   const water = costs.water;
   const wallHug = costs.wallHug;
+  const corridor = costs.corridor;
   const cells = region.width * region.depth;
   const states = cells * DIR_STATES;
   const goal = index(region, start.x, start.z);
@@ -743,7 +780,18 @@ export function routeTo(
       // A 45° kink is half a turn — which is exactly what buys flowing lanes
       // instead of staircases, because the search can now bend gently.
       if (dir !== NO_DIR && dir !== d) cost += (ROAD_TURN_COST * turnEighths(dir, d)) / 2;
-      if (onRoad) cost *= ROAD_REUSE_DISCOUNT;
+      // The **better** of the two discounts, never their product. Compounding
+      // them would put a step onto a road cell inside the corridor below
+      // `MIN_STEP_COST`, which is what the heuristic is scaled by — and an
+      // over-estimating heuristic is an A* that no longer returns the cheapest
+      // path, silently, on exactly the routes this feature is meant to improve.
+      const inCorridor = corridor !== undefined && corridor[nIdx] === 1;
+      const discount = onRoad
+        ? ROAD_REUSE_DISCOUNT
+        : inCorridor
+          ? ROAD_CORRIDOR_DISCOUNT
+          : 1;
+      if (discount !== 1) cost *= discount;
 
       const tentative = (g[state] as number) + cost;
       if (tentative >= (g[nState] as number)) continue;
@@ -1545,8 +1593,21 @@ function clampInt(v: number, lo: number, hi: number): number {
  * v0.2 §7: not yet — `pattern`; the network is always `minimal_spanning`-ish.
  * v0.2 §7: not yet — `hierarchy`, `blockSize`, `junctionStyle`, `curvature`.
  * v0.2 §7: not yet — `maxGrade`, `bridgeThreshold`, `tunnelThreshold`, `crown`.
- * v0.2 §4.9.6: not yet — `corridors()` at substage 3b, so `along` constraints
- *   still have nothing to bind to and the network is not a placed node.
+ * implemented: `corridors()` at substage 3b (§4.9.6) — the network registers a
+ *   frozen route corridor from its anchors' coarse points before anything is
+ *   placed, `along`/`beside` bind to it, structures are costed against it, and
+ *   the routing here prefers it (`ROAD_CORRIDOR_DISCOUNT`).
+ *
+ * v0.2 §4.9.6: not yet — the corridor is a *preference* here, not the hard
+ *   channel the spec's "refinement inside those polygons" asks for, and there
+ *   is no substage 3.5: no re-route-and-nudge round runs after placement, so a
+ *   lane that leaves its corridor does not pull its `along` dependants after it
+ *   (`LOAM-I409`/`LOAM-W408` are never emitted). See `ROAD_CORRIDOR_DISCOUNT`.
+ * v0.2 §7.5: not yet — `corridors()` reserves one chain through the anchors,
+ *   not a `pattern`-shaped graph, and an anchor with no coarse constraint
+ *   contributes no waypoint.
+ * v0.2 §4.9.6: not yet — the network is still not a *placed* node: no envelope,
+ *   no yaw, no footprint of its own.
  * v0.2 §7.10: not yet — `LOAM-W430 DISCONNECTED_ROAD_GRAPH`; an unreachable
  *   anchor is reported per route as `LOAM-T209 ROAD_UNROUTABLE` instead.
  */

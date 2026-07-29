@@ -12,7 +12,9 @@ import type { LoamDiagnostic } from "@terrainist/spec";
 import type { Classification, HeightField, Region, Seed256 } from "@terrainist/stdlib";
 import type { CanonicalConstraint, HorizontalFace, PortDeclaration, Yaw } from "@terrainist/spec";
 
+import type { RouteCorridor } from "./corridors.js";
 import type { Rect } from "./frames.js";
+import type { TerrainProductIndex } from "./products.js";
 
 /** What the solver is asked to place. */
 export interface LayoutNodeInput {
@@ -132,10 +134,31 @@ export interface SolverNodeReport {
   readonly candidatesConsidered: number;
 }
 
+/** One frozen route corridor, as the solver report records it (§4.9.6). */
+export interface CorridorReport {
+  readonly nodePath: string;
+  readonly id: string;
+  readonly kind: "road" | "course";
+  readonly verb?: string;
+  readonly halfWidth: number;
+  /** Coarse centreline waypoints, as registered and frozen at substage 3b. */
+  readonly centerline: readonly (readonly [number, number])[];
+  /** Columns of the region the reservation claims. */
+  readonly reservedColumns: number;
+}
+
 /** The machine-readable solver report (§4.6: "a first-class artifact"). */
 export interface SolverReport {
   readonly nodes: readonly SolverNodeReport[];
   readonly dropped: readonly string[];
+  /**
+   * Corridors registered at substage 3b, in registration order.
+   *
+   * §4.9.6 makes freezing the whole promise of `along`, and a promise nobody
+   * can inspect is not one: this is what lets "why is my chapel three blocks
+   * off the street" be answered with the street the solver actually reserved.
+   */
+  readonly corridors: readonly CorridorReport[];
   /** Local-improvement rounds actually run. */
   readonly improvementRounds: number;
   /** Nodes moved by the local-improvement pass. */
@@ -181,6 +204,15 @@ export interface LayoutRequest {
    * solver runs before any block exists.
    */
   readonly hazardMask?: Uint8Array;
+  /**
+   * Route corridors registered at substage 3b (§4.9.6), in document order.
+   *
+   * Frozen by the time the solver sees them: it costs structures against them,
+   * binds `along` / `beside` to them, and reports them — and never changes one.
+   */
+  readonly corridors?: readonly RouteCorridor[];
+  /** Derived `@terrain:` products, for `on` (§4.2/§4.4). */
+  readonly products?: TerrainProductIndex;
   /** Candidate positions sampled per node. Default {@link DEFAULT_CANDIDATES}. */
   readonly candidateCount?: number;
   /** Local-improvement rounds. Default {@link DEFAULT_IMPROVEMENT_ROUNDS}. */

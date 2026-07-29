@@ -39,6 +39,8 @@ import {
   CONSTRAINT_FIELDS,
   COMMON_CONSTRAINT_FIELDS,
   CONNECTED_VIA_IMPLEMENTED,
+  ON_TARGET_PRODUCTS as ON_TARGETS,
+  bareProduct,
   canonicalize,
   isImplementedVia,
   isTier1,
@@ -666,8 +668,15 @@ function validateConstraints(
     unknownKeys(out, c as Obj, at, allowed, `a "${resolved.type}" constraint`);
     checkCommonFields(out, at, c as Obj);
 
-    if (isTier2(resolved.type)) {
+    if (resolved.type === "connected") {
       validateConnected(out, at, c as Obj, selfId, connections);
+      continue;
+    }
+    if (isTier2(resolved.type)) {
+      // `along` / `beside` — §4.4 and §4.9.6. Both bind to a route corridor
+      // registered at substage 3b, so both are checked here and neither is a
+      // W407 pass-through any more.
+      validateAlong(out, at, resolved.type, c as Obj);
       continue;
     }
 
@@ -865,6 +874,87 @@ function resolveConnections(
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* `along` / `beside` (§4.4, tier 2)                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Check an `along` (or its `beside` sugar) against §4.4.
+ *
+ * The one thing worth saying loudly is what the target has to *be*: `along`
+ * only means anything against something linear that exists at substage 3b — a
+ * `road.network@0` node, or a `terrain.edit@0` running a course verb. Pointing
+ * it at a house is the mistake an author actually makes, and the solver's
+ * silence about it (no corridor, no cost, no placement change) is exactly the
+ * kind of quiet nothing this validator exists to prevent.
+ */
+function validateAlong(out: LoamDiagnostic[], at: string, type: string, c: Obj): void {
+  checkSelector(out, at, c["target"], "target", true);
+  const offset = c["offset"];
+  if (offset !== undefined && typeof offset !== "number") {
+    if (
+      !Array.isArray(offset) ||
+      offset.length !== 2 ||
+      typeof offset[0] !== "number" ||
+      typeof offset[1] !== "number"
+    ) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          at,
+          `"offset" must be a number of blocks or [min, max], got ${describe(offset)}`,
+          'write "offset": [3, 6] — how far the footprint sits from the corridor\'s edge',
+        ),
+      );
+    } else if ((offset[0] as number) > (offset[1] as number)) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          at,
+          `"offset" min (${offset[0]}) exceeds max (${offset[1]})`,
+          "swap them so the band reads [near, far]",
+        ),
+      );
+    }
+  }
+  checkEnum(out, at, c, "side", ["left", "right", "any"], "which side of the line, in its direction of travel");
+  checkBooleans(out, at, c, ["faceRoad"]);
+  checkNumbers(out, at, c, { spacing: { min: 0, max: 512, int: true } });
+  const position = c["at"];
+  if (position !== undefined) {
+    const pair = Array.isArray(position) ? position : [position, position];
+    const bad =
+      pair.length !== 2 ||
+      typeof pair[0] !== "number" ||
+      typeof pair[1] !== "number" ||
+      !((pair[0] as number) >= 0 && (pair[0] as number) <= 1) ||
+      !((pair[1] as number) >= 0 && (pair[1] as number) <= 1);
+    if (bad) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          at,
+          `"at" on an "${type}" constraint is a normalized position along the line, got ${describe(position)}`,
+          'write "at": 0.5 for the middle of the run, or "at": [0.2, 0.4] for a stretch of it',
+        ),
+      );
+    }
+  }
+  // §4.4 `along` `spacing`: parsed, carried, and not enforced — the solver's
+  // implicit `not_overlapping` plus `clearance` already keeps siblings apart,
+  // and a second, corridor-relative spacing rule would fight it.
+  if (c["spacing"] !== undefined) {
+    out.push(
+      warning(
+        "CONSTRAINT_NOT_IMPLEMENTED",
+        at,
+        `"spacing" on an "${type}" constraint parses but is not enforced; sibling separation comes from "clearance" and the implicit "not_overlapping"`,
+        'set "clearance" on this node instead — it is the keep-clear margin the solver actually applies',
+      ),
+    );
+  }
+}
+
 function checkCommonFields(out: LoamDiagnostic[], at: string, c: Obj): void {
   const strength = c["strength"];
   if (strength !== undefined && strength !== "hard" && strength !== "soft") {
@@ -1002,6 +1092,25 @@ function validateTier1(out: LoamDiagnostic[], at: string, type: ConstraintType, 
       checkEnum(out, at, c, "reference", ["min", "max", "mean", "median"], "which statistic of the footprint's ground heights becomes the foundation elevation");
       checkNumbers(out, at, c, { blend: { min: 0, max: 64, int: true }, maxSlope: { min: 0, max: 90 }, step: { min: 1, max: 32, int: true } });
       checkBooleans(out, at, c, ["skirt"]);
+      break;
+    }
+    case "on": {
+      const target = c["target"];
+      checkSelector(out, at, target, "target", true);
+      if (typeof target === "string" && !(ON_TARGETS as readonly string[]).includes(bareProduct(target))) {
+        out.push(
+          warning(
+            "CONSTRAINT_NOT_IMPLEMENTED",
+            at,
+            `"on" was given "${target}"; this compiler resolves the terrain products ${ON_TARGETS.map((t) => `"@terrain:${t}"`).join(", ")}, and treats anything else as no restriction at all`,
+            `write "on": "@terrain:coastline" (or ${ON_TARGETS.slice(1)
+              .map((t) => `"@terrain:${t}"`)
+              .join(", ")}) — a feature-marker target such as "volcano#rim" is valid v0.2 but not resolved here yet`,
+          ),
+        );
+      }
+      checkNumbers(out, at, c, { band: { min: 1, max: 512, int: true }, partial: { min: 0, max: 1 } });
+      checkEnum(out, at, c, "side", ["left", "right", "any"], "for a polyline product, which side of it in its direction of travel");
       break;
     }
     /* c8 ignore next 2 — every tier-1 type is handled above. */

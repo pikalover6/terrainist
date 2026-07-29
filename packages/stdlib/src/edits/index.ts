@@ -988,6 +988,14 @@ export interface CourseRecord {
   readonly flooded: FloodedMode;
   /** Refined, meandered samples in world coordinates, head-to-tail. */
   readonly samples: readonly Point2[];
+  /**
+   * The declared cut width, in blocks.
+   *
+   * Carried for the layout solver, which buffers this centreline into the
+   * frozen route corridor `along` / `beside` bind to (§4.4 `course`, §4.9.6).
+   * Hydrology has no use for it.
+   */
+  readonly width?: number;
 }
 
 /**
@@ -1775,6 +1783,7 @@ function applyCorridorRaise(
   pushMarker(out, edit.id, "head", head, field.heightAt(head.x, head.z));
   pushMarker(out, edit.id, "mouth", mouth, field.heightAt(mouth.x, mouth.z));
   pushMarker(out, edit.id, "peak", peakPoint, peakY === Number.NEGATIVE_INFINITY ? 0 : peakY);
+  recordCourse(out, edit, samples);
 }
 
 // --- raise: peak / island ---------------------------------------------------
@@ -2028,6 +2037,7 @@ function applyValley(
     }
   }
   emitCourseMarkers(field, out, edit.id, samples, false);
+  recordCourse(out, edit, samples);
 }
 
 // --- carve: river -----------------------------------------------------------
@@ -2090,6 +2100,7 @@ function applyRiver(
     // Head-to-tail: `monotonicDescent` reports when the *last* waypoint is the
     // higher one, and the pond chain wants to walk downstream.
     samples: reversed ? [...samples].reverse() : samples,
+    width: num(edit, "width", "river"),
   });
 }
 
@@ -2098,6 +2109,29 @@ function applyRiver(
  * `reversed` is set when the *last* waypoint is the higher one, in which case
  * the roles swap.
  */
+/**
+ * Record a non-river corridor verb's refined centreline.
+ *
+ * `river` records its own, because it has a head-to-tail direction to establish
+ * first and the pond-demotion pass walks it downstream. `ridge` and `valley`
+ * have no such direction and nothing in hydrology reads them — but the *layout*
+ * solver does, because §4.4 `course` unifies the three: "a river, a ridge and a
+ * main street are the same object to the solver", and `along`/`beside` bind to
+ * the route corridor each of them registers at substage 3b (§4.9.6).
+ *
+ * Every consumer of `courses` inside this module filters on `verb === "river"`
+ * for exactly that reason, and did before these two were added.
+ */
+function recordCourse(out: EditComposition, edit: TerrainEdit, samples: readonly Point2[]): void {
+  out.courses.push({
+    editId: edit.id,
+    verb: edit.verb,
+    flooded: floodedOf(edit),
+    samples: [...samples],
+    width: num(edit, "width", edit.verb),
+  });
+}
+
 function emitCourseMarkers(
   field: HeightField,
   out: EditComposition,

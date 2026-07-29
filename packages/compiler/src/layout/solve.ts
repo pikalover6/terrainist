@@ -26,6 +26,7 @@ import {
 } from "@terrainist/stdlib";
 import {
   isImplementedConstraint,
+  isTier2,
   strengthOf,
   weightOf,
   warning,
@@ -44,6 +45,13 @@ import {
   type Rect,
 } from "./frames.js";
 import {
+  CORRIDOR_RESERVATION_COST,
+  corridorOverlap,
+  roadCorridors,
+  type RoadCorridorAnchor,
+  type RouteCorridor,
+} from "./corridors.js";
+import {
   coarseAtRegion,
   coarseZoneRegion,
   evaluateConstraint,
@@ -58,6 +66,7 @@ import {
   DEFAULT_IMPROVEMENT_ROUNDS,
   DEFAULT_MAX_SLOPE,
   type ConstraintReport,
+  type CorridorReport,
   type CoarseReport,
   type LadderRung,
   type LayoutNodeInput,
@@ -111,7 +120,15 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
   const dropped: string[] = [];
 
   for (const node of nodes) {
-    const ctx: EvalContext = { frame, frameNorm: norm, self: node, placed, nodes };
+    const ctx: EvalContext = {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    };
     const pool = buildCandidates(node, ctx, request);
     pools.set(node.id, pool);
 
@@ -202,7 +219,15 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
       const report = reports.get(node.id);
       if (current === undefined || pool === undefined || report === undefined) continue;
       placed.delete(node.id);
-      const ctx: EvalContext = { frame, frameNorm: norm, self: node, placed, nodes };
+      const ctx: EvalContext = {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    };
       const demoted = new Set<number>(report.demotedIndices ?? []);
       const best = bestOf(node, pool, ctx, request, demoted);
       if (best !== null && best.total < report.score.total - IMPROVEMENT_EPSILON) {
@@ -234,6 +259,7 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
     report: {
       nodes: nodes.map((n) => finalizeReport(reports.get(n.id) as MutableNodeReport)),
       dropped,
+      corridors: (request.corridors ?? []).map((c) => corridorReport(c, region)),
       improvementRounds: roundsRun,
       improvements,
     },
@@ -389,8 +415,47 @@ function scoreCandidate(
     }
   }
 
+  // --- the corridor reservation (§4.9.6) ------------------------------------
+  // Soft, and only soft. A corridor is a *reservation*, not a wall: it was
+  // drawn at 3b from coarse anchor points, before anything knew where the
+  // ground was steep or where the water was, and a hard veto against a guess of
+  // that vintage would throw away buildable placements to protect a line the
+  // router may not even take. What it must do is stop the default outcome —
+  // sixteen houses scattered across the future high street because nothing in
+  // the cost model had heard of it — and a cost does that.
+  //
+  // A node that binds itself to the corridor with `along`/`beside` is exempt:
+  // charging it for being near the street it asked to be near would be the two
+  // halves of §4.4 fighting each other.
+  //
+  // Only **road** corridors reserve ground, and the asymmetry is the point. A
+  // road corridor is a reservation for something that will be built there; a
+  // course corridor is the record of something that already was. Nothing is
+  // going to be routed along a ridge later, so charging a house for standing on
+  // one would be the corridor mechanism inventing a keep-out the author never
+  // asked for — and a `ridge` edit is seventy blocks wide, so it would be a
+  // keep-out over most of the map. A river's channel is already unbuildable
+  // ground and the hazard mask says so. Course corridors exist here for one
+  // reason: `along` and `beside` need something to bind to (§4.4 `course`).
+  const corridors = ctx.corridors ?? [];
+  if (corridors.length > 0 && !bindsToCorridor(node)) {
+    const area = (candidate.rect.x1 - candidate.rect.x0 + 1) * (candidate.rect.z1 - candidate.rect.z0 + 1);
+    let claimed = 0;
+    for (const corridor of corridors) {
+      if (corridor.kind !== "road") continue;
+      if (corridor.anchors.includes(node.nodePath)) continue;
+      claimed += corridorOverlap(corridor, candidate.rect);
+    }
+    if (claimed > 0) soft += (CORRIDOR_RESERVATION_COST * Math.min(claimed, area)) / area;
+  }
+
   const terrain = terrainCost(stats, slopeLimit);
   return { candidate, stats, terrain, soft, total: terrain + soft, feasible, evals, penalty };
+}
+
+/** True when the node declares an `along` (or desugared `beside`) constraint. */
+function bindsToCorridor(node: LayoutNodeInput): boolean {
+  return node.constraints.some((c) => c.type === "along");
 }
 
 /** The cheapest feasible candidate, or `null`. Ties break by candidate order. */
@@ -523,12 +588,26 @@ function commit(
     const e = scored.evals[index];
     const declared = strengthOf(c);
     const implemented = isImplemented(c);
+    // §4.4: a desugared `beside` reports as the `beside` the author wrote, not
+    // as the `along` the solver ran. The rewrite is an implementation detail
+    // and a report that leaked it would send them looking for a constraint
+    // their document does not contain.
+    const declaredType = typeof c["desugaredFrom"] === "string" ? (c["desugaredFrom"] as string) : c.type;
     return {
       index,
-      type: c.type,
+      type: declaredType,
       ...(typeof c["target"] === "string" ? { target: c["target"] as string } : {}),
       declaredStrength: declared,
-      effectiveStrength: !implemented ? "ignored" : demoted.has(index) ? "soft" : declared,
+      // A tier-2 type is scored soft whatever it declares (§4 `connected`,
+      // §4.9.6 `along`): the half of it the solver owns is a cost, and the
+      // half that could veto belongs to a later pass. Reporting the declared
+      // `hard` as the effective strength would be the report lying about which
+      // knob the author has.
+      effectiveStrength: !implemented
+        ? "ignored"
+        : isTier2(c.type) || demoted.has(index)
+          ? "soft"
+          : declared,
       weight: weightOf(c),
       cost: e?.cost ?? 0,
       satisfied: e?.satisfied ?? true,
@@ -543,6 +622,84 @@ function commit(
 
 function isImplemented(c: CanonicalConstraint): boolean {
   return isImplementedConstraint(c.type);
+}
+
+function corridorReport(corridor: RouteCorridor, region: Region): CorridorReport {
+  let reserved = 0;
+  const clipped = intersectRect(corridor.bounds, {
+    x0: region.x0,
+    z0: region.z0,
+    x1: region.x0 + region.width - 1,
+    z1: region.z0 + region.depth - 1,
+  });
+  if (clipped !== null) reserved = corridorOverlap(corridor, clipped);
+  return {
+    nodePath: corridor.nodePath,
+    id: corridor.id,
+    kind: corridor.kind,
+    ...(corridor.verb === undefined ? {} : { verb: corridor.verb }),
+    halfWidth: corridor.halfWidth,
+    centerline: corridor.centerline.map((p) => [p.x, p.z] as const),
+    reservedColumns: reserved,
+  };
+}
+
+/**
+ * `road.network@0.corridors()`, resolved against the solver's own node list —
+ * substage 3b (§7.5).
+ *
+ * The anchors are selectors, and the only thing a selector can be resolved
+ * *to* before placement is a node's coarse target point: the jittered `zone`
+ * cell centre or the `at` fraction the search will start from (§4.9.3/§4.9.4).
+ * A node with neither is invisible here, which is the honest answer — it has no
+ * pre-placement position for a corridor to be strung through, and inventing one
+ * would reserve ground on the strength of nothing.
+ *
+ * Anchors are taken in **document order**, not in the order the `anchors`
+ * array names them, so that adding a selector to the array cannot re-topologize
+ * an already-frozen corridor.
+ */
+export function registerRoadCorridors(
+  nodePath: string,
+  anchorIds: readonly string[],
+  nodes: readonly LayoutNodeInput[],
+  region: Region,
+  laneWidth: number,
+): RouteCorridor[] {
+  const frame: Frame = { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth };
+  const norm = computeFrameNorm(frame);
+  const wanted = new Set(anchorIds.map(leafOf));
+  const anchors: RoadCorridorAnchor[] = [];
+
+  for (const node of nodes) {
+    // No `anchors` at all reads as "every placed node", which is what the road
+    // pass itself already does with its own anchor list.
+    if (wanted.size > 0 && !wanted.has(node.id) && !node.tags.some((t) => wanted.has(`#tag:${t}`))) {
+      continue;
+    }
+    const ctx: EvalContext = { frame, frameNorm: norm, self: node, placed: new Map(), nodes };
+    let point: Point2 | null = null;
+    for (const [index, c] of node.constraints.entries()) {
+      if (c.type !== "zone" && c.type !== "at") continue;
+      const coarse = c.type === "zone" ? coarseZoneRegion(c, index, ctx) : coarseAtRegion(c, ctx);
+      if (coarse.region === null) continue;
+      point = coarse.seedPoint;
+      break;
+    }
+    if (point === null) continue;
+    anchors.push({ nodePath: node.nodePath, point });
+  }
+
+  return roadCorridors(nodePath, anchors, laneWidth, frame);
+}
+
+/** The leaf id of a selector: `"^.town_hall"` and `"world.town_hall"` → `"town_hall"`. */
+function leafOf(selector: string): string {
+  const s = selector.trim();
+  if (s.startsWith("#tag:")) return s;
+  const bare = s.startsWith("^.") ? s.slice(2) : s;
+  const withoutPort = bare.split("#")[0] as string;
+  return withoutPort.includes(".") ? (withoutPort.split(".").pop() as string) : withoutPort;
 }
 
 function coarseReports(node: LayoutNodeInput, ctx: EvalContext): CoarseReport[] {

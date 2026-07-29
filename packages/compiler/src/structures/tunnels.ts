@@ -31,11 +31,36 @@
  *   a cave system is a tunnel with mobs in it.
  * - **Other buildings' foundations**, so a gallery never passes under a third
  *   party's cellar and takes its floor with it.
- * - **Tunnels already built**, in document order. v0.2 §4 allows a deliberate
- *   junction; this version routes around instead, because a junction is only
- *   trivially safe when the two galleries share a floor level *and* cross
- *   square, and proving that is more machinery than a second tunnel is worth
- *   today. Routing around is never wrong, only longer.
+ * - **Tunnels already built**, in document order — *unless the two galleries
+ *   meet at a level*, which is the one case that is not an obstacle but a
+ *   junction. See below.
+ *
+ * ## Junctions
+ *
+ * The earlier version of this pass treated every column an earlier gallery had
+ * claimed as a wall, and routed around. That is never *wrong* — but on a
+ * network of more than two buildings it is nearly always what happens, and the
+ * result is a set of galleries that carefully avoid each other by ten blocks
+ * and cross nothing, which is not what an underground network looks like and
+ * makes every route longer than the one the player would expect.
+ *
+ * A crossing is admitted on exactly one condition: the new gallery enters the
+ * claimed column **at the floor level the earlier one left there**. That single
+ * rule is what makes a junction trivially safe, and it is enforced in the A*'s
+ * legality test rather than checked afterwards, so a route that cannot meet the
+ * level simply never finds the crossing and goes round as before. Crossing is
+ * priced ({@link TUNNEL_JUNCTION_COST}) so it happens where it is the natural
+ * line and not merely where it is free.
+ *
+ * Where a crossing does happen, the two bores are widened into a **shared
+ * junction chamber**: a square room {@link JUNCTION_RADIUS} blocks out from the
+ * crossing, {@link JUNCTION_HEIGHT} high — a course taller than a gallery, so
+ * it reads as a room and not as a wide bit of corridor — lined in the same
+ * masonry and lit from the middle of its ceiling. The widening is skipped, and
+ * only the widening, wherever the room would break the roof rule or reach into
+ * an obstacle: the crossing itself is already a walkable square where the two
+ * three-wide bores overlap, so a chamber that cannot be dug costs the network
+ * nothing but its architecture.
  *
  * ## The one place the roof rule is relaxed
  *
@@ -128,6 +153,29 @@ export const TUNNEL_STEP_COST = 10;
 /** Extra cost of a step that also changes level — what keeps a gallery flat. */
 export const TUNNEL_RISE_COST = 16;
 
+/**
+ * Extra cost of a step into a column an earlier gallery already claimed.
+ *
+ * Four flat blocks' worth. Enough that a route which could cross or miss by a
+ * couple of cells will miss — two galleries running side by side through the
+ * same rock is a worse room than two that meet once — and nowhere near enough
+ * to make a genuine crossing detour instead, which would put the junction
+ * machinery back where it started.
+ */
+export const TUNNEL_JUNCTION_COST = 40;
+
+/** Blocks out from a crossing that a shared junction chamber reaches. */
+export const JUNCTION_RADIUS = 2;
+
+/**
+ * Clear height of a junction chamber.
+ *
+ * One course taller than a gallery on purpose. A room the same height as the
+ * corridors feeding it does not read as a room from inside it; the extra course
+ * is also where the lantern hangs without standing in anyone's headroom.
+ */
+export const JUNCTION_HEIGHT = 4;
+
 /* -------------------------------------------------------------------------- */
 /* inputs and outputs                                                          */
 /* -------------------------------------------------------------------------- */
@@ -156,6 +204,38 @@ interface Portal {
   readonly y: number;
   /** A standable cell inside the cellar, in front of the opening. */
   readonly landing: { readonly x: number; readonly y: number; readonly z: number };
+}
+
+/**
+ * What earlier galleries have claimed, per column.
+ *
+ * `floorY` is only meaningful where `taken` is 1; it carries the walkable floor
+ * the earlier bore left in that column, which is the level a later gallery has
+ * to match to be allowed a junction there rather than a collision.
+ */
+export interface TunnelClaims {
+  readonly taken: Uint8Array;
+  readonly floorY: Int32Array;
+}
+
+/** A shared chamber where two galleries meet. */
+export interface TunnelJunction {
+  /** Centre column of the crossing. */
+  readonly x: number;
+  readonly z: number;
+  /** The floor level both galleries share here. */
+  readonly y: number;
+  /** The other tunnel's id. */
+  readonly withTunnel: string;
+  /**
+   * True when the crossing was widened into a proper chamber.
+   *
+   * False means the room would have broken the roof rule or reached into an
+   * obstacle, so only the square where the two bores already overlap was left.
+   * Walkable either way — that is the whole reason the widening is allowed to
+   * fail quietly.
+   */
+  readonly chamber: boolean;
 }
 
 /** One cell of a tunnel's centre line. */
@@ -187,6 +267,8 @@ export interface BuiltTunnel {
   readonly stairSteps: number;
   readonly frames: number;
   readonly lanterns: number;
+  /** Shared chambers this gallery dug where it met an earlier one. */
+  readonly junctions: readonly TunnelJunction[];
 }
 
 /** Everything {@link buildTunnels} reads. */
@@ -250,8 +332,19 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
   const byPath = new Map(input.buildings.map((b) => [b.nodePath, b] as const));
   const states = resolveTunnelStates(input.stack, input.materials);
   const obstacles = buildObstacleMask(input);
-  /** Columns an earlier tunnel already claimed. */
-  const taken = new Uint8Array(n);
+  /** Columns an earlier tunnel claimed, and the floor level it left there. */
+  const claimed: TunnelClaims = { taken: new Uint8Array(n), floorY: new Int32Array(n) };
+  /** Which tunnel claimed each column, so a junction can name its other half. */
+  const claimedBy = new Map<number, string>();
+  /**
+   * Every air cell every gallery has carved so far.
+   *
+   * The lining rule "never write into a cell the bore carved" was per tunnel
+   * while tunnels could not meet. Once they can, it has to be global, or the
+   * second gallery lays its wall through the first one's walkway at the very
+   * cell where they cross.
+   */
+  const carvedCells = new Set<string>();
 
   for (const link of input.links) {
     const from = byPath.get(link.fromPath);
@@ -312,7 +405,9 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
       portalA,
       portalB,
       obstacles,
-      taken,
+      claimed,
+      claimedBy,
+      carvedCells,
       states,
       carved,
       columns,
@@ -502,7 +597,9 @@ interface RouteRequest {
   readonly portalA: Portal;
   readonly portalB: Portal;
   readonly obstacles: Uint8Array;
-  readonly taken: Uint8Array;
+  readonly claimed: TunnelClaims;
+  readonly claimedBy: Map<number, string>;
+  readonly carvedCells: Set<string>;
   readonly states: TunnelStates;
   readonly carved: Map<number, number[]>;
   readonly columns: Uint8Array;
@@ -512,6 +609,16 @@ interface RouteRequest {
 
 function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
   const { input, portalA, portalB } = r;
+  /**
+   * How many blocks were queued before this gallery started.
+   *
+   * The reopen pass below may only touch *earlier* galleries' work. This
+   * tunnel's own carve pushes air blocks for the doorways it cuts through its
+   * cellar walls, and those blocks are — by construction — at carved cells, so
+   * a reopen that swept the whole list would delete the two doors the gallery
+   * exists to connect and leave a walk-through that walks into masonry.
+   */
+  const blocksBefore = r.blocks.length;
   const { region } = input.plan;
   void region;
 
@@ -520,15 +627,23 @@ function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
 
   // Free the two portals from the obstacle mask: their columns are inside (or
   // one ring outside) their own building, which the mask blanket-closed.
+  //
+  // Earlier tunnels are deliberately *not* folded into `open` any more. They go
+  // to the router as claims, which it may cross at a matching level and must
+  // otherwise treat as closed — the distinction `open` cannot express.
   const open = Uint8Array.from(r.obstacles);
-  for (let idx = 0; idx < open.length; idx++) {
-    if (r.taken[idx] === 1) open[idx] = 1;
-  }
   for (const cell of [...stubA, ...stubB]) clearSwath(region, open, cell);
+  // A portal is this gallery's own ground and may always be entered; an earlier
+  // tunnel that reached into it is a junction like any other.
+  const claims: TunnelClaims = {
+    taken: Uint8Array.from(r.claimed.taken),
+    floorY: Int32Array.from(r.claimed.floorY),
+  };
+  for (const cell of [...stubA, ...stubB]) clearSwath(region, claims.taken, cell);
 
   const head = stubA[stubA.length - 1] as TunnelCell;
   const tail = stubB[stubB.length - 1] as TunnelCell;
-  const middle = routeTunnel(input.plan, open, head, tail);
+  const middle = routeTunnel(input.plan, open, head, tail, claims);
   if (middle === null) return null;
 
   // `middle` starts at `head` and ends at `tail`; the two stubs already hold
@@ -540,15 +655,39 @@ function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
   ];
   markFlights(path);
 
-  const carveSet = carveTunnel(r, path);
-  const lining = lineTunnel(r, path, carveSet);
+  // --- junctions ----------------------------------------------------------
+  // Found before anything is carved, because whether a crossing becomes a room
+  // decides how much rock comes out of it.
+  const junctions = findJunctions(r, path);
 
-  // Every column this gallery touched is closed to the next one: v0 routes
-  // around rather than junctioning, so the claim is the whole bore, not just
-  // its centre line.
-  for (const idx of carveSet.columns) r.taken[idx] = 1;
+  const carveSet = carveTunnel(r, path);
+  for (const junction of junctions) {
+    if (junction.chamber) carveJunction(r, junction, carveSet);
+  }
+
+  // Any lining an *earlier* gallery laid that now stands inside this one's air
+  // is removed. Two bores that cross share their cells, and the block that was
+  // the first tunnel's wall is the second tunnel's walkway.
+  reopenCarvedCells(r.blocks, carveSet.cells, blocksBefore);
+
+  const lining = lineTunnel(r, path, carveSet);
+  for (const junction of junctions) {
+    if (junction.chamber) lineJunction(r, junction, carveSet);
+  }
+
+  // Claim the bore for the tunnels that follow — the whole three-wide swath,
+  // not the centre line, because that is what a later gallery has to meet the
+  // level of. The floor recorded per column is the one a junction there would
+  // share.
+  for (const [idx, y] of carveSet.floorByColumn) {
+    r.claimed.taken[idx] = 1;
+    r.claimed.floorY[idx] = y;
+    if (!r.claimedBy.has(idx)) r.claimedBy.set(idx, r.link.id);
+  }
+  for (const key of carveSet.cells) r.carvedCells.add(key);
 
   return {
+    junctions,
     id: r.link.id,
     fromPath: portalA.nodePath,
     toPath: portalB.nodePath,
@@ -636,6 +775,7 @@ export function routeTunnel(
   open: Uint8Array,
   start: TunnelCell,
   goal: TunnelCell,
+  claimed?: TunnelClaims,
 ): TunnelCell[] | null {
   const { region, ground } = plan;
   const cells = region.width * region.depth;
@@ -648,6 +788,13 @@ export function routeTunnel(
     if (y < yLo || y > yHi) return false;
     if (open[idx] === 1) return false;
     if (y - 1 <= TUNNEL_FLOOR_Y) return false;
+    // A column an earlier gallery claimed is enterable only at the level that
+    // gallery left there. Anything else is one bore passing over or under
+    // another with a course or two of rock between them, which is a ceiling
+    // nobody checked and a floor nobody laid.
+    if (claimed !== undefined && claimed.taken[idx] === 1 && (claimed.floorY[idx] as number) !== y) {
+      return false;
+    }
     return y + TUNNEL_FLIGHT_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS <= (ground[idx] as number);
   };
 
@@ -699,7 +846,10 @@ export function routeTunnel(
         if (!(nIdx === goalIdx && ny === goal.y) && !legal(nIdx, ny)) continue;
         const nState = nIdx * ySpan + (ny - yLo);
         if (closed[nState] === 1) continue;
-        const cost = TUNNEL_STEP_COST + (dy === 0 ? 0 : TUNNEL_RISE_COST);
+        const cost =
+          TUNNEL_STEP_COST +
+          (dy === 0 ? 0 : TUNNEL_RISE_COST) +
+          (claimed !== undefined && claimed.taken[nIdx] === 1 ? TUNNEL_JUNCTION_COST : 0);
         const tentative = (g[state] as number) + cost;
         if (tentative >= (g[nState] as number)) continue;
         g[nState] = tentative;
@@ -802,7 +952,9 @@ interface CarveSet {
   readonly cells: Set<string>;
   /** Column indices the bore passes through. */
   readonly columns: Set<number>;
-  readonly blocks: number;
+  /** Walkable floor Y per column — what a later gallery must match to junction. */
+  readonly floorByColumn: Map<number, number>;
+  blocks: number;
 }
 
 /**
@@ -818,6 +970,7 @@ function carveTunnel(r: RouteRequest, path: readonly TunnelCell[]): CarveSet {
   const { region } = r.input.plan;
   const cells = new Set<string>();
   const columns = new Set<number>();
+  const floorByColumn = new Map<number, number>();
   const footprints = r.input.placements.map((p) => p.footprint);
   const air = r.states.air;
   let blocks = 0;
@@ -850,11 +1003,188 @@ function carveTunnel(r: RouteRequest, path: readonly TunnelCell[]): CarveSet {
     // Both perpendiculars at a corner, so the turn is carved square.
     for (const [px, pz] of perpendiculars(path, i)) {
       for (let d = -half; d <= half; d++) {
-        for (let y = cell.y; y < cell.y + height; y++) add(cell.x + px * d, y, cell.z + pz * d);
+        const bx = cell.x + px * d;
+        const bz = cell.z + pz * d;
+        for (let y = cell.y; y < cell.y + height; y++) add(bx, y, bz);
+        if (inside(region, bx, bz)) floorByColumn.set(index(region, bx, bz), cell.y);
       }
     }
   }
-  return { cells, columns, blocks };
+  return { cells, columns, floorByColumn, blocks };
+}
+
+/* -------------------------------------------------------------------------- */
+/* junctions                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Where this route crosses an earlier gallery, and whether each crossing can be
+ * widened into a room.
+ *
+ * A crossing is a *run* of claimed cells, not a single one — two three-wide
+ * bores meeting square share several columns — so the run is collapsed to its
+ * midpoint and one chamber is dug per run. Without that a square crossing would
+ * produce three overlapping chambers and three lanterns in the same ceiling.
+ */
+function findJunctions(r: RouteRequest, path: readonly TunnelCell[]): TunnelJunction[] {
+  const { region } = r.input.plan;
+  const runs: TunnelCell[][] = [];
+  let run: TunnelCell[] = [];
+  for (const cell of path) {
+    if (!inside(region, cell.x, cell.z)) continue;
+    const idx = index(region, cell.x, cell.z);
+    const meets =
+      r.claimed.taken[idx] === 1 &&
+      (r.claimed.floorY[idx] as number) === cell.y &&
+      !cell.portal;
+    if (meets) {
+      run.push(cell);
+      continue;
+    }
+    if (run.length > 0) runs.push(run);
+    run = [];
+  }
+  if (run.length > 0) runs.push(run);
+
+  const out: TunnelJunction[] = [];
+  for (const cells of runs) {
+    const mid = cells[cells.length >> 1] as TunnelCell;
+    const idx = index(region, mid.x, mid.z);
+    out.push({
+      x: mid.x,
+      z: mid.z,
+      y: mid.y,
+      withTunnel: r.claimedBy.get(idx) ?? "",
+      chamber: chamberFits(r, mid),
+    });
+  }
+  return out;
+}
+
+/** Every column a chamber would occupy, centre first. */
+function chamberColumns(junction: { x: number; z: number }): { x: number; z: number }[] {
+  const out: { x: number; z: number }[] = [];
+  for (let dz = -JUNCTION_RADIUS; dz <= JUNCTION_RADIUS; dz++) {
+    for (let dx = -JUNCTION_RADIUS; dx <= JUNCTION_RADIUS; dx++) {
+      out.push({ x: junction.x + dx, z: junction.z + dz });
+    }
+  }
+  return out;
+}
+
+/**
+ * Can a chamber be dug here?
+ *
+ * Every column of the room, and the ring of rock its lining occupies, has to be
+ * in the region, out of the obstacle mask — which already carries the fluid
+ * shell, the ocean keep-out, the caves and every footprint — and deep enough
+ * under the surface for a room a course taller than a gallery. All or nothing:
+ * a chamber with one corner missing is a chamber that has opened onto
+ * something.
+ */
+function chamberFits(r: RouteRequest, junction: TunnelCell): boolean {
+  const { region, ground } = r.input.plan;
+  for (let dz = -JUNCTION_RADIUS - 1; dz <= JUNCTION_RADIUS + 1; dz++) {
+    for (let dx = -JUNCTION_RADIUS - 1; dx <= JUNCTION_RADIUS + 1; dx++) {
+      const x = junction.x + dx;
+      const z = junction.z + dz;
+      if (!inside(region, x, z)) return false;
+      const idx = index(region, x, z);
+      if (r.obstacles[idx] === 1) return false;
+      // Exactly the roof rule the router already enforces on a flight cell —
+      // `JUNCTION_HEIGHT` and `TUNNEL_FLIGHT_HEIGHT` are the same four blocks —
+      // so a chamber fits wherever the gallery that reaches it was legal, and
+      // `checkTunnelIntegrity` re-derives the identical inequality.
+      if (junction.y + JUNCTION_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS > (ground[idx] as number)) {
+        return false;
+      }
+    }
+  }
+  return junction.y - 1 > TUNNEL_FLOOR_Y;
+}
+
+/** Hollow the chamber, adding its cells to the tunnel's own carve set. */
+function carveJunction(r: RouteRequest, junction: TunnelJunction, carve: CarveSet): void {
+  const { region } = r.input.plan;
+  for (const { x, z } of chamberColumns(junction)) {
+    const idx = index(region, x, z);
+    for (let y = junction.y; y < junction.y + JUNCTION_HEIGHT; y++) {
+      const key = `${x},${y},${z}`;
+      if (carve.cells.has(key)) continue;
+      carve.cells.add(key);
+      carve.blocks++;
+      pushRun(r.carved, idx, y);
+    }
+    carve.columns.add(idx);
+    carve.floorByColumn.set(idx, junction.y);
+    r.columns[idx] = 1;
+  }
+}
+
+/**
+ * Line the chamber: a floor, a vaulted ceiling and four walls, and a lantern in
+ * the middle of the ceiling.
+ *
+ * "Vaulted" here is what a block world can honestly offer — the ceiling is a
+ * course higher than the galleries that feed it, so an arriving player walks
+ * out of a three-high corridor into a four-high room and reads the change.
+ */
+function lineJunction(r: RouteRequest, junction: TunnelJunction, carve: CarveSet): void {
+  const { region } = r.input.plan;
+  const footprints = r.input.placements.map((p) => p.footprint);
+  const crackSeed = detailSeed(r.input.seed, `junction.${r.link.id}.${junction.x},${junction.z}`);
+  const stone = (x: number, y: number, z: number): number =>
+    hash3(crackSeed, x, y, z, 1) < 0.22 ? r.states.cracked : r.states.masonry;
+  const place = (x: number, y: number, z: number, stateId: number, force = false): void => {
+    if (!inside(region, x, z)) return;
+    if (insideFootprint(footprints, x, z)) return;
+    const key = `${x},${y},${z}`;
+    if (!force && (carve.cells.has(key) || r.carvedCells.has(key))) return;
+    r.blocks.push({ x, y, z, stateId });
+  };
+
+  const reach = JUNCTION_RADIUS + 1;
+  for (let dz = -reach; dz <= reach; dz++) {
+    for (let dx = -reach; dx <= reach; dx++) {
+      const x = junction.x + dx;
+      const z = junction.z + dz;
+      const wall = Math.max(Math.abs(dx), Math.abs(dz)) === reach;
+      if (wall) {
+        // The four walls, but only where a gallery does not come through them:
+        // an arm's own bore is carved, and a carved cell is never written into,
+        // so the four doorways open themselves.
+        for (let y = junction.y; y < junction.y + JUNCTION_HEIGHT; y++) {
+          place(x, y, z, stone(x, y, z));
+        }
+        continue;
+      }
+      place(x, junction.y - 1, z, stone(x, junction.y - 1, z), true);
+      place(x, junction.y + JUNCTION_HEIGHT, z, stone(x, junction.y + JUNCTION_HEIGHT, z));
+    }
+  }
+  // Hung from the middle of the ceiling, clear of every arm's headroom.
+  place(junction.x, junction.y + JUNCTION_HEIGHT - 1, junction.z, r.states.lantern, true);
+}
+
+/**
+ * Remove any block already queued that stands inside a cell this bore carved.
+ *
+ * Only ever removes: the pass's block list is its own, so the entries here are
+ * earlier galleries' lining, and an earlier gallery's wall inside a later one's
+ * walkway is exactly the defect junctions would otherwise introduce.
+ */
+function reopenCarvedCells(
+  blocks: StructureBlock[],
+  cells: ReadonlySet<string>,
+  end: number,
+): void {
+  let write = 0;
+  for (let read = 0; read < blocks.length; read++) {
+    const b = blocks[read] as StructureBlock;
+    if (read < end && cells.has(`${b.x},${b.y},${b.z}`)) continue;
+    blocks[write++] = b;
+  }
+  blocks.length = write;
 }
 
 /**
@@ -988,7 +1318,12 @@ function lineTunnel(
   ): void => {
     if (!inside(region, x, z)) return;
     if (!allowInBuilding && insideFootprint(footprints, x, z)) return;
-    if (!force && carve.cells.has(`${x},${y},${z}`)) return;
+    const key = `${x},${y},${z}`;
+    if (!force && carve.cells.has(key)) return;
+    // An *earlier* gallery's air is never written into, forced or not. `force`
+    // means "this block is deliberate inside my own bore" — a floor stair, a
+    // frame post — and none of those reasons apply to somebody else's walkway.
+    if (r.carvedCells.has(key) && !carve.cells.has(key)) return;
     r.blocks.push({ x, y, z, stateId });
     blocks++;
   };
@@ -1194,6 +1529,41 @@ export function checkTunnelIntegrity(
   const footprints = buildings.map((b) => b.footprint);
 
   for (const tunnel of tunnels) {
+    // Junction chambers first. They are wider and a course taller than the
+    // galleries that feed them, so if either invariant is going to fail
+    // anywhere it fails here — and the chambers are not on any centre line, so
+    // the loop below would never look at them.
+    for (const junction of tunnel.junctions ?? []) {
+      if (!junction.chamber) continue;
+      for (const { x, z } of chamberColumns(junction)) {
+        if (!inside(region, x, z)) continue;
+        const idx = index(region, x, z);
+        if (nearFluid[idx] === 1 || nearOcean[idx] === 1) {
+          fluidBreaches++;
+          sample({
+            tunnelId: tunnel.id,
+            x,
+            y: junction.y,
+            z,
+            detail: `junction chamber within ${TUNNEL_FLUID_SHELL} blocks of water, lava or the sea`,
+          });
+          continue;
+        }
+        if (insideFootprint(footprints, x, z)) continue;
+        const roof = (ground[idx] as number) - (junction.y + JUNCTION_HEIGHT - 1);
+        if (roof < TUNNEL_ROOF_THICKNESS) {
+          roofBreaches++;
+          sample({
+            tunnelId: tunnel.id,
+            x,
+            y: junction.y + JUNCTION_HEIGHT - 1,
+            z,
+            detail: `junction chamber leaves only ${roof} blocks of roof under the surface at y ${ground[idx] as number} (want ${TUNNEL_ROOF_THICKNESS})`,
+          });
+        }
+      }
+    }
+
     for (const [i, cell] of tunnel.path.entries()) {
       const height = boreHeight(cell, footprints);
       for (const [px, pz] of perpendiculars(tunnel.path, i)) {

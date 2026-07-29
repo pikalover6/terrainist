@@ -258,6 +258,81 @@ describe("routeTo", () => {
     expect(routeTo(r, new Uint8Array(r.width * r.depth), road, p, { x: 0, z: 0 })).toBeNull();
   });
 
+  describe("the reserved route corridor (§4.9.6)", () => {
+    /**
+     * A wall across the middle with two gaps, one either side of the direct
+     * line and exactly as far from it.
+     *
+     * The symmetry is the instrument: with the two routes costing the same, the
+     * unguided search is decided by its tie-break, and a corridor that covers
+     * one gap and not the other has to be what decides it instead.
+     */
+    function twoGaps(): Uint8Array {
+      const blocked = new Uint8Array(r.width * r.depth);
+      for (let z = -16; z <= 15; z++) {
+        if (z === -6 || z === 6) continue;
+        blocked[index(r, -6, z)] = 1;
+      }
+      return blocked;
+    }
+
+    /** A band of the given half-width around the gap at `z`. */
+    function bandThrough(z: number, halfWidth = 4): Uint8Array {
+      const mask = new Uint8Array(r.width * r.depth);
+      for (let x = -16; x <= 15; x++) {
+        for (let dz = -halfWidth; dz <= halfWidth; dz++) {
+          const zz = z + dz;
+          if (zz < -16 || zz > 15) continue;
+          mask[index(r, x, zz)] = 1;
+        }
+      }
+      return mask;
+    }
+
+    it("takes whichever equal line its reservation covers", () => {
+      const p = plan(r);
+      p.ground.fill(70);
+      const road = new Uint8Array(r.width * r.depth);
+      road[index(r, 12, 0)] = 1;
+      const blocked = twoGaps();
+      const gapOf = (path: readonly { x: number; z: number }[] | null): number | undefined =>
+        path?.find((c) => c.x === -6)?.z;
+
+      expect(gapOf(routeTo(r, blocked, road, p, { x: -12, z: 0 }, { corridor: bandThrough(-6) }))).toBe(-6);
+      expect(gapOf(routeTo(r, blocked, road, p, { x: -12, z: 0 }, { corridor: bandThrough(6) }))).toBe(6);
+    });
+
+    it("leaves the corridor rather than fail — it is a preference, not a channel", () => {
+      const p = plan(r);
+      p.ground.fill(70);
+      const road = new Uint8Array(r.width * r.depth);
+      road[index(r, 12, 0)] = 1;
+      // The reservation is aimed at a gap that is not there: a hard channel
+      // would report the anchor unroutable, a discount stops paying and goes
+      // through the gap that is.
+      const blocked = new Uint8Array(r.width * r.depth);
+      for (let z = -16; z <= 15; z++) {
+        if (z === 6) continue;
+        blocked[index(r, -6, z)] = 1;
+      }
+      const path = routeTo(r, blocked, road, p, { x: -12, z: 0 }, { corridor: bandThrough(-6) });
+      expect(path).not.toBeNull();
+      for (const cell of path ?? []) expect(blocked[index(r, cell.x, cell.z)]).toBe(0);
+      expect(path?.find((c) => c.x === -6)?.z).toBe(6);
+    });
+
+    it("changes nothing when no corridor was registered", () => {
+      const p = plan(r);
+      p.ground.fill(70);
+      const road = new Uint8Array(r.width * r.depth);
+      road[index(r, 0, 0)] = 1;
+      const empty = new Uint8Array(r.width * r.depth);
+      const a = routeTo(r, empty, road, p, { x: -12, z: -12 });
+      const b = routeTo(r, empty, road, p, { x: -12, z: -12 }, {});
+      expect(JSON.stringify(b)).toBe(JSON.stringify(a));
+    });
+  });
+
   it("prefers flat ground to a shorter climb", () => {
     // A wall of high ground straight between the two, with a flat corridor
     // around it: the slope penalty has to beat the extra distance.
