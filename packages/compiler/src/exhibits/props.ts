@@ -37,6 +37,7 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { buildProps, type PropJob, type PropPassResult } from "../structures/props.js";
+import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -142,6 +143,7 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "statue_plinth", params: { yaw: 180 } },
     ],
   },
+  ...BLITZ_PROP_EXHIBIT_PLAN,
 ]);
 
 /**

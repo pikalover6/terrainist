@@ -42,6 +42,12 @@
 import { Rng, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import { sortOps, type LocalVoxelOp, type StructureYaw } from "./core.js";
+import {
+  BLITZ_PROP_GENERATORS,
+  BLITZ_PROP_NAMES,
+  blitzPropFootprint,
+  isBlitzProp,
+} from "./props-blitz.js";
 import { type BuildingMaterials } from "./themes.js";
 // The two transport families live in files of their own — an airliner and a
 // galleon are each longer than everything above put together — and are merged
@@ -68,6 +74,7 @@ export const PROP_NAMES = [
   "statue_plinth",
   ...AIRCRAFT_PROP_NAMES,
   ...SHIP_PROP_NAMES,
+  ...BLITZ_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -379,6 +386,7 @@ export function propFootprint(
   const ship = SHIP_FOOTPRINTS[prop];
   if (ship !== undefined) return ship(params);
 
+  if (isBlitzProp(prop)) return blitzPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -907,6 +915,7 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   statue_plinth: statuePlinth,
   ...AIRCRAFT_GENERATORS,
   ...SHIP_GENERATORS,
+  ...BLITZ_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

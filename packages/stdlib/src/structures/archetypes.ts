@@ -25,6 +25,14 @@ import {
 
 export * from "./archetypes-civic.js";
 
+import {
+  BLITZ_BUILDING_ARCHETYPES,
+  blitzArchetypeOfTags,
+  furnishBlitz,
+} from "./archetypes-blitz.js";
+
+export * from "./archetypes-blitz.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 
 /* -------------------------------------------------------------------------- */
@@ -43,6 +51,7 @@ export const BUILDING_ARCHETYPES = [
   "granary",
   "watchtower",
   ...EXTENDED_BUILDING_ARCHETYPES,
+  ...BLITZ_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
 ] as const;
 
@@ -58,6 +67,11 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   const tall = highriseArchetypeOfTags(tags);
   if (tall !== null) return tall;
   if (has("lookout") || has("tower") || has("watchtower")) return "watchtower";
+  // The breadth table, ahead of the extended one for the same reason the
+  // extended one goes ahead of the original: `temple` means church over there,
+  // and a pagoda would never reach its own building if this ran second.
+  const blitz = blitzArchetypeOfTags(tags);
+  if (blitz !== null) return blitz;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -367,6 +381,7 @@ export function furnish(r: FurnishRequest): number {
     blockAt: r.blockAt,
   };
   n += furnishExtended(ctx);
+  n += furnishBlitz(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
   return n;
