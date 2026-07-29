@@ -161,6 +161,27 @@ export interface PaletteResolution {
 }
 
 /**
+ * The `style.palettes` key that names a village material theme.
+ *
+ * It is the documented override for the settlement profile's theme draw, read
+ * by `themeOverride` in the structure pass — and it is *not* a block symbol.
+ * Exported so that the reader and the resolver share one name: when they did
+ * not, `"theme": "modern_city"` resolved as a symbol, failed the block lookup
+ * and produced a bogus LOAM-T106 on every document that used the documented
+ * feature.
+ */
+export const PALETTE_THEME_KEY = "theme";
+
+/**
+ * `style.palettes` keys that carry something other than a block.
+ *
+ * The single source of truth for "this key is not a symbol". Anything listed
+ * here is skipped by {@link resolvePalette} and belongs to whichever pass
+ * declares it.
+ */
+export const NON_SYMBOL_PALETTE_KEYS: ReadonlySet<string> = new Set([PALETTE_THEME_KEY]);
+
+/**
  * Resolve the default symbol table plus any `style.palettes` overrides.
  *
  * @param stack the version-pinned block table.
@@ -177,6 +198,7 @@ export function resolvePalette(
   const unknownBlocks: { symbol: string; block: string }[] = [];
 
   for (const symbol of Object.keys(merged).sort()) {
+    if (NON_SYMBOL_PALETTE_KEYS.has(symbol)) continue;
     const value = merged[symbol] as PaletteValue;
     if (typeof value === "string") {
       const block = stack.blockByName(value);

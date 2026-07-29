@@ -41,17 +41,20 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
   auto-upgrades worlds on load. Revisit as libraries catch up.
 - Stack: TypeScript monorepo. Key deps: deepslate (rendering/NBT),
   PrismarineJS (world IO), minecraft-data.
-- Status (2026-07-28): G1–G3 complete and human-accepted through the GLM 5.2
-  e2e; G2.5 terrain-quality pass done (organic kernels, hydrology,
-  climate-gated snow, lushness). G4 (settlement profile, layout solver v1,
-  building grammar, roads) plus the pre-implementation program (rounds A–E:
+- Status (2026-07-29): G1–G3 complete and human-accepted through the GLM 5.2
+  e2e; G2.5 terrain-quality pass done. G4 (settlement profile, layout solver
+  v1, building grammar, roads), the pre-implementation program (rounds A–E:
   caves + tunnels, `prop.place@0`, L/T `wing` footprints, seven new
-  archetypes with upper-floor fit-out, the dev-world exhibit grid, and the
-  Round E wiring) is CODE-COMPLETE PENDING JOINT IN-GAME TESTING WITH KAI.
-  Both shipped worlds lint zero on every physics rule and the village example
-  compiles with zero error/warning diagnostics, but nothing has been walked in
-  the client; do not iterate on village visuals without Kai. See the dated
-  status block in `docs/DESIGN.md` for what each round added.
+  archetypes, the dev-world exhibit grid) and the overnight program (W1
+  corridors + tier-2 constraints + tunnel junctions + the 440-entry structure
+  catalog + high-rise grammar + Terrarium v2; W2 structure blitz + vehicles +
+  themed underground; W3 widened settlement kit + two GLM demo worlds; then a
+  fix round closing the tunnel roof-margin escape, the `palettes.theme` false
+  warning, silently-ignored prop constraints and `PROP_MAX_RELIEF`) are all
+  CODE-COMPLETE PENDING JOINT IN-GAME TESTING WITH KAI. 1075 tests green;
+  every shipped world lints zero on every physics rule; but **nothing has been
+  walked in the client** — do not iterate on visuals without Kai. See the
+  dated status blocks in `docs/DESIGN.md` for what each round added.
 - **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
   indefinitely — production authoring is pure GLM 5.2 (cheapness is a core
   goal); escalate only if GLM hits a hard capability wall. The

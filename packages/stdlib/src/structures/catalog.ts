@@ -128,7 +128,17 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   "ore_chamber",
 ]);
 
-/** Curried entry builder — one per (category, kind) pair. */
+/**
+ * Curried entry builder — one per (category, kind) pair.
+ *
+ * The kind is the category's *usual* one, not a law: a category groups things
+ * by what they are for, and how a thing is realised does not always follow.
+ * A graveyard sits in `memorial` beside the mausoleums and is a compound prop;
+ * a curtain wall is `military` and is linear infrastructure. Rather than
+ * inventing a `memorial-prop` group for each of them, an entry may say
+ * `{ kind: … }` and override its group — which is also the only way the
+ * exception stays visible at the entry that makes it.
+ */
 function group(
   category: StructureCategory,
   kind: StructureKind,
@@ -136,13 +146,18 @@ function group(
   id: string,
   name: string,
   status?: StructureStatus,
-  extra?: { readonly tags?: readonly string[]; readonly note?: string },
+  extra?: {
+    readonly tags?: readonly string[];
+    readonly note?: string;
+    /** Overrides the group's kind for this entry alone. */
+    readonly kind?: StructureKind;
+  },
 ) => StructureEntry {
   return (id, name, status = "not_started", extra = {}) => ({
     id,
     name,
     category,
-    kind,
+    kind: extra.kind ?? kind,
     status,
     ...(extra.tags === undefined ? {} : { tags: extra.tags }),
     ...(extra.note === undefined ? {} : { note: extra.note }),
@@ -320,7 +335,8 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mil("watchtower", "Watchtower", "implemented", { tags: ["village", "lookout"] }),
   mil("castle", "Castle"),
   mil("keep", "Keep", "implemented", { note: "Masonry re-clad of the building shell, with a fighting deck and a crenellated parapet." }),
-  mil("curtain_wall", "Curtain wall", "implemented", { tags: ["linear"] }),
+  // Linear, not a shell: it follows a line the way a wall or an aqueduct does.
+  mil("curtain_wall", "Curtain wall", "implemented", { tags: ["linear"], kind: "infrastructure" }),
   mil("gatehouse", "Gatehouse", "implemented", { note: "The keep's battlement plus a raised portcullis and a machicolation over the gate." }),
   mil("barbican", "Barbican"),
   mil("bastion", "Bastion"),
@@ -364,7 +380,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- memorial ---------------------------------------------------------- */
   mem("statue_plinth", "Statue plinth", "implemented", { tags: ["prop", "plaza"] }),
-  mem("graveyard", "Graveyard", "implemented", { note: "Compound prop: fenced yard, seeded headstone variety, corner mausoleum." }),
+  mem("graveyard", "Graveyard", "implemented", {
+    kind: "prop",
+    note: "Compound prop: fenced yard, seeded headstone variety, corner mausoleum.",
+  }),
   mem("mausoleum", "Mausoleum", "implemented"),
   mem("tomb", "Tomb"),
   mem("cenotaph", "Cenotaph"),
@@ -386,7 +405,8 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   lei("dance_hall", "Dance hall"),
   lei("gym", "Gymnasium", "implemented", { note: "Wool mats, a glass mirror wall, anvils and a hanging bag." }),
   lei("boxing_gym", "Boxing gym"),
-  lei("swimming_pool", "Swimming pool", "implemented", { tags: ["water"] }),
+  // A basin sunk into the ground with no interior to walk: a prop, not a shell.
+  lei("swimming_pool", "Swimming pool", "implemented", { tags: ["water"], kind: "prop" }),
   lei("bathing_pavilion", "Bathing pavilion"),
   lei("sauna", "Sauna"),
   lei("tennis_court", "Tennis court"),
@@ -547,7 +567,8 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   wat("canal_basin", "Canal basin"),
   wat("sluice_gate", "Sluice gate"),
   wat("watermill", "Watermill"),
-  wat("windpump", "Windpump", "implemented"),
+  // A standing machine, not a network: it pumps where it stands.
+  wat("windpump", "Windpump", "implemented", { kind: "prop" }),
   wat("millpond", "Millpond"),
   wat("reservoir", "Reservoir"),
   wat("drydock", "Dry dock", "implemented", { tags: ["prop"] }),
@@ -623,7 +644,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- fantasy / whimsy ---------------------------------------------------- */
   fan("wizard_tower", "Wizard's tower", "implemented", { note: "Glowstone-set masonry under a steep cone." }),
   fan("alchemists_tower", "Alchemist's tower"),
-  fan("treehouse", "Treehouse", "implemented", { note: "Compound prop: a mega trunk it grows itself, a deck, a hut and a ladder." }),
+  fan("treehouse", "Treehouse", "implemented", {
+    kind: "prop",
+    note: "Compound prop: a mega trunk it grows itself, a deck, a hut and a ladder.",
+  }),
   fan("hedge_maze", "Hedge maze"),
   fan("mushroom_house", "Mushroom house"),
   fan("witch_hut", "Witch's hut"),
@@ -644,7 +668,8 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   ruin("standing_stones", "Standing stones"),
   ruin("henge", "Henge"),
   ruin("monolith", "Monolith"),
-  ruin("cairn", "Cairn", "implemented"),
+  // A heap of stones. There has never been anything to walk into.
+  ruin("cairn", "Cairn", "implemented", { kind: "prop" }),
   ruin("burial_mound", "Burial mound"),
   ruin("dig_site", "Dig site"),
   ruin("excavation_trench", "Excavation trench"),

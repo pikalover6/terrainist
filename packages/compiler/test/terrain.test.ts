@@ -1,3 +1,12 @@
+/**
+ * The terrain profile: field, classification, columns, palette and scatter.
+ *
+ * These run against hand-built heightfields wherever they can, because a
+ * synthetic field is the only way to put a basin, a shelf or a channel exactly
+ * where a rule is supposed to fire — and the only way to tell "the rule works"
+ * from "the noise happened to agree".
+ */
+
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -28,7 +37,11 @@ import {
   type ColumnPlan,
 } from "../src/terrain/columns.js";
 import { decorate } from "../src/terrain/decorate.js";
-import { resolvePalette } from "../src/terrain/palette.js";
+import {
+  NON_SYMBOL_PALETTE_KEYS,
+  PALETTE_THEME_KEY,
+  resolvePalette,
+} from "../src/terrain/palette.js";
 import {
   checkFloatingVegetation,
   checkFluidStability,
@@ -765,4 +778,42 @@ describe("water and shore life", () => {
     expect(count).toBeGreaterThan(0);
     expect(checkFluidStability(plan).unstable).toBe(0);
   }, 60_000);
+});
+
+/* -------------------------------------------------------------------------- */
+/* `style.palettes` keys that are not symbols                                  */
+/* -------------------------------------------------------------------------- */
+
+describe("the palette resolver and the theme key", () => {
+  /**
+   * `style.palettes.theme` is the documented village-theme override, read by
+   * the structure pass — not a block symbol. The resolver used to treat it as
+   * one, fail the block lookup and report LOAM-T106 UNKNOWN_BLOCK on every
+   * document that used the feature as documented.
+   */
+  it("does not resolve `theme` as a block symbol", () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const { unknownBlocks, palette } = resolvePalette(
+      stack,
+      { palettes: { theme: "modern_city" } } as never,
+      nodeSeed(1n, "world"),
+    );
+    expect(unknownBlocks).toEqual([]);
+    expect(palette.names()).not.toContain(PALETTE_THEME_KEY);
+  });
+
+  it("still reports a genuinely unknown block", () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const { unknownBlocks } = resolvePalette(
+      stack,
+      { palettes: { "rock.base": "not_a_block" } } as never,
+      nodeSeed(1n, "world"),
+    );
+    expect(unknownBlocks).toEqual([{ symbol: "rock.base", block: "not_a_block" }]);
+  });
+
+  it("keeps one name for the key the reader and the resolver share", () => {
+    expect(PALETTE_THEME_KEY).toBe("theme");
+    expect(NON_SYMBOL_PALETTE_KEYS.has(PALETTE_THEME_KEY)).toBe(true);
+  });
 });

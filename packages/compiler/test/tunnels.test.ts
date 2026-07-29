@@ -34,6 +34,7 @@ import {
   TUNNEL_WIDTH,
   buildObstacleMask,
   checkTunnelIntegrity,
+  requiredRoofSurfaceY,
   routeTunnel,
   type BuiltTunnel,
   type TunnelCell,
@@ -57,6 +58,18 @@ const EXAMPLE = fileURLToPath(new URL("../../../examples/tunnel-test.loam.json",
  */
 const HAMLET = fileURLToPath(
   new URL("../../../examples/hilltop-crypt-hamlet.loam.json", import.meta.url),
+);
+/**
+ * The document that found the roof-margin escape, kept as a fixture.
+ *
+ * GLM 5.2 authored a delta port with a 475-block mine gallery from the mine
+ * head to the keep. It compiled with `LOAM-W408 TUNNEL_INTEGRITY` at two
+ * columns — a compiler defect by its own hint, since the router is supposed to
+ * carry the same margin the validator measures. It did not: it measured the
+ * centre line, and the validator measures the whole bore swath.
+ */
+const DELTAPORT = fileURLToPath(
+  new URL("../../../examples/demo-deltaport.loam.json", import.meta.url),
 );
 /** Four halls, two galleries, one forced crossing — see the junction suite. */
 const JUNCTION = fileURLToPath(
@@ -170,6 +183,68 @@ describe("the tunnel router", () => {
       if (c.x === 4 || c.x === 58) continue;
       expect(c.y + TUNNEL_FLIGHT_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS).toBeLessThanOrEqual(g);
     }
+  });
+
+  /**
+   * The roof-margin escape, at its smallest.
+   *
+   * A bore is `TUNNEL_WIDTH` wide, so the rock the validator measures is the
+   * rock over the whole swath. Before the swath fix the router tested the
+   * centre column alone, and a notch one step to the side of an otherwise deep
+   * hillside was invisible to it: the route ran straight through, and
+   * `checkTunnelIntegrity` — which does measure the swath — reported a breach
+   * the router had promised could not happen. That is the LOAM-W408 the
+   * deltaport document produced, reduced to eight columns.
+   */
+  it("keeps the roof margin over the whole bore swath, not just the centre line", () => {
+    const plan = flatPlan();
+    // A one-column-wide notch beside the straight line: the centre stays deep,
+    // one perpendicular column does not.
+    for (let x = 20; x <= 40; x++) plan.ground[idx(x, 33)] = 86;
+    const open = new Uint8Array(REGION.width * REGION.depth);
+    const route = routeTunnel(plan, open, cell(4, 32, 80), cell(58, 32, 80)) as TunnelCell[];
+    expect(route).not.toBeNull();
+    const half = (TUNNEL_WIDTH - 1) >> 1;
+    for (const c of route) {
+      if (c.x === 4 || c.x === 58) continue;
+      for (let d = -half; d <= half; d++) {
+        const g = plan.ground[idx(c.x, c.z + d)] as number;
+        expect(requiredRoofSurfaceY(c.y + TUNNEL_FLIGHT_HEIGHT - 1)).toBeLessThanOrEqual(g);
+      }
+    }
+  });
+
+  it("agrees with the validator on the route it returns", () => {
+    const plan = flatPlan();
+    // 85, not 86: a three-high bore at y 80 tops out at 82 and wants four
+    // blocks over that, so this notch is one short for the *validator* too.
+    // Routed against the centre line alone it is invisible and the gallery
+    // runs straight through it.
+    for (let x = 20; x <= 40; x++) plan.ground[idx(x, 33)] = 85;
+    const open = new Uint8Array(REGION.width * REGION.depth);
+    const route = routeTunnel(plan, open, cell(4, 32, 80), cell(58, 32, 80)) as TunnelCell[];
+    const path = (route as TunnelCell[]).map((c, i) =>
+      i === 0 || i === (route as TunnelCell[]).length - 1 ? { ...c, portal: true } : c,
+    );
+    expect(
+      checkTunnelIntegrity(plan, [
+        {
+          id: "t",
+          fromPath: "a",
+          toPath: "b",
+          path,
+          endpoints: [
+            { x: 0, y: 0, z: 0 },
+            { x: 0, y: 0, z: 0 },
+          ],
+          carvedBlocks: 0,
+          liningBlocks: 0,
+          stairSteps: 0,
+          frames: 0,
+          lanterns: 0,
+        },
+      ]).roofBreaches,
+    ).toBe(0);
   });
 
   it("climbs and falls one block at a time — a 1:1 flight, never a shaft", () => {
@@ -821,5 +896,71 @@ describe("two galleries that cross — the junction chamber", () => {
         })),
       );
     expect(shape(structures)).toBe(shape(structures));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the deltaport fixture                                                       */
+/* -------------------------------------------------------------------------- */
+
+describe("the deltaport document, compiled", () => {
+  let root: string;
+  let report: TerrainCompileReport;
+  let plan: ColumnPlan;
+  let structures: StructurePassResult;
+
+  beforeAll(async () => {
+    root = await mkdtemp(path.join(tmpdir(), "terrainist-deltaport-"));
+    const doc = JSON.parse(await readFile(DELTAPORT, "utf8")) as unknown;
+    const compiled = await compileTerrain(doc, {
+      outDir: path.join(root, "deltaport"),
+      onColumnPlan: (p) => {
+        plan = p;
+      },
+    });
+    if (!compiled.ok) {
+      throw new Error(
+        `deltaport failed to compile: ${compiled.diagnostics.map((d) => `${d.code} ${d.message}`).join("; ")}`,
+      );
+    }
+    report = compiled.report;
+    structures = report.layout?.structures as StructurePassResult;
+  }, 300_000);
+
+  afterAll(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("compiles with no error-severity diagnostic at all", () => {
+    expect(
+      report.diagnostics
+        .filter((d) => d.severity === "error")
+        .map((d) => `${d.code} ${d.nodePath} ${d.message}`),
+    ).toEqual([]);
+  });
+
+  it("keeps its roof margin, measured against the finished plan", () => {
+    const integrity = checkTunnelIntegrity(plan, structures.tunnels, structures.buildings);
+    expect(integrity.roofBreaches).toBe(0);
+    expect(integrity.fluidBreaches).toBe(0);
+  });
+
+  /**
+   * The warnings that remain are the document's, not the compiler's: four props
+   * asking for water or a flat quay that the terrain does not offer where they
+   * were pointed, and a gallery longer than the `maxLength` it declared. Those
+   * are authoring problems with actionable fixes, and the fixture keeps them so
+   * a regression that *silences* them is visible too.
+   */
+  it("still reports the author's own four CANNOT_FIT props and the long gallery", () => {
+    const byCode = (code: string): string[] =>
+      report.diagnostics.filter((d) => d.code === code).map((d) => d.nodePath).sort();
+    expect(byCode("LOAM-E170")).toEqual([
+      "world.fishing_jetty",
+      "world.main_quay",
+      "world.the_cog",
+      "world.the_galleon",
+    ]);
+    expect(byCode("LOAM-E180")).toEqual(["world.mine_head__the_keep"]);
   });
 });

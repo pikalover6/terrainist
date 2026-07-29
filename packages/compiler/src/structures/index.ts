@@ -31,7 +31,13 @@ import {
   type MaterialTheme,
   type Seed256,
 } from "@terrainist/stdlib";
-import { canonicalize, isImplementedVia, isPropNode, resolveTypeKey } from "@terrainist/spec";
+import {
+  canonicalize,
+  isImplementedVia,
+  isPropNode,
+  resolveTypeKey,
+  warning,
+} from "@terrainist/spec";
 import type {
   LoamDiagnostic,
   PortDeclaration,
@@ -43,7 +49,7 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import type { Palette } from "../terrain/palette.js";
+import { PALETTE_THEME_KEY, type Palette } from "../terrain/palette.js";
 
 import {
   buildBuildings,
@@ -327,6 +333,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     const nodePath = `${rootPath}.${child.id}`;
     const params = (child.params ?? {}) as Record<string, unknown>;
     const seed: Seed256 = nodeSeed(input.worldSeed, nodePath, child.seedSalt ?? "");
+    // A prop never reaches the layout solver: `buildProps` sites it itself,
+    // from its own `zone`/`at`/`jitter` params against the finished ground. A
+    // constraint on a prop node therefore validates cleanly and then does
+    // nothing at all — which is worse than rejecting it, because the author
+    // reads a clean compile as agreement. Say so, and name the way out.
+    const ignored = ignoredPropConstraints(child.constraints);
+    if (ignored.length > 0) {
+      diagnostics.push(
+        warning(
+          "CONSTRAINT_NOT_IMPLEMENTED",
+          nodePath,
+          `prop.place@0 does not go through the layout solver, so the ${ignored.length === 1 ? "constraint" : "constraints"} on this node ${ignored.length === 1 ? "is" : "are"} ignored: ${ignored.map((t) => `"${t}"`).join(", ")}`,
+          'props take zone/at/jitter params — move the placement into "params", e.g. "params": { "zone": "north", "at": [0.4, 0.7], "jitter": 3 }',
+        ),
+      );
+    }
     propJobs.push({
       nodePath,
       prop: typeof params["prop"] === "string" ? params["prop"] : "",
@@ -404,6 +426,27 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       propWaterLeaks: propFluids.leaks.length,
     },
   };
+}
+
+/**
+ * The constraint types declared on a prop node, in document order, deduplicated.
+ *
+ * Every one of them is ignored — this is not a list of the unsupported ones,
+ * it is a list of what was written, because `prop.place@0` skips the solver
+ * entirely. An entry whose type key cannot be resolved is left out: the profile
+ * validator has already reported it as a malformed constraint, and saying it
+ * twice in two vocabularies helps nobody.
+ */
+function ignoredPropConstraints(constraints: unknown): string[] {
+  if (!Array.isArray(constraints)) return [];
+  const out: string[] = [];
+  for (const raw of constraints) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const resolved = resolveTypeKey(raw as Record<string, unknown>);
+    if (!resolved.ok) continue;
+    if (!out.includes(resolved.type)) out.push(resolved.type);
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -545,7 +588,7 @@ function attachTunnelSpans(
  */
 function themeOverride(doc: SettlementDocument): string | undefined {
   const palettes = (doc.style as { palettes?: Record<string, unknown> } | undefined)?.palettes;
-  const named = palettes?.["theme"];
+  const named = palettes?.[PALETTE_THEME_KEY];
   return typeof named === "string" ? named : undefined;
 }
 

@@ -66,8 +66,50 @@ export const PROP_SEARCH_RADIUS = 48;
 /** Deepest a pier pile is driven before the placer gives up on the column. */
 export const MAX_PILE_DEPTH = 24;
 
-/** Ground unevenness a land prop tolerates under its footprint, in blocks. */
+/**
+ * Ground unevenness a *small* land prop tolerates under its footprint.
+ *
+ * The floor of {@link propReliefTolerance}, and the whole tolerance for
+ * anything up to {@link PROP_RELIEF_SPAN} blocks on its long side.
+ */
 export const PROP_MAX_RELIEF = 1;
+
+/**
+ * Blocks of footprint that buy one more block of tolerated relief.
+ *
+ * A flat block of one relief is a reasonable ask of a cart. It is not a
+ * reasonable ask of a 40-block drydock: natural terrain that is level to one
+ * block over forty is a lake bed, so the drydock was unplaceable *anywhere*
+ * outdoors and the compile said only `LOAM-E170 CANNOT_FIT`.
+ *
+ * The design, of the two on the table:
+ *
+ * - Tolerance scales with the footprint's long side — `max(1, ceil(long/12))` —
+ *   so a big prop may be sited on ground that is gently rolling rather than
+ *   flat, and
+ * - the placer *levels* what it stands on, but **only when the site is rougher
+ *   than {@link PROP_MAX_RELIEF}**.
+ *
+ * That second clause is the point. A cart, a well or a bench sits on ground it
+ * already fitted, emits not one block of pad, and costs exactly what it always
+ * did — no new blocks, no moved worlds, no goldens to reroll. The pad is a
+ * large-prop feature that small props never pay for.
+ */
+export const PROP_RELIEF_SPAN = 12;
+
+/**
+ * Ground unevenness this footprint tolerates, in blocks.
+ *
+ * A pure function of the rectangle, so the placer's fitness test and the pad
+ * that follows it cannot disagree about what "fits" meant.
+ */
+export function propReliefTolerance(rect: Rect): number {
+  const long = Math.max(rect.x1 - rect.x0 + 1, rect.z1 - rect.z0 + 1);
+  return Math.max(PROP_MAX_RELIEF, Math.ceil(long / PROP_RELIEF_SPAN));
+}
+
+/** Rings of levelled skirt carried outside a prop's pad. */
+export const PROP_PAD_SKIRT = 1;
 
 /** One prop the compiler is asked to materialize. */
 export interface PropJob {
@@ -169,6 +211,16 @@ export function buildProps(input: PropPassInput): PropPassResult {
         ),
       );
       continue;
+    }
+
+    // The pad, before the prop: a land prop stands on the plane `groundBase`
+    // chose, and on a site rougher than `PROP_MAX_RELIEF` that plane is above
+    // some of the ground under it. Levelling first means the prop's own blocks
+    // are laid over finished ground, and `plan.ground` is right for everything
+    // downstream. Water and shore props never get one — their base is a water
+    // surface, which is level by definition.
+    if (propFootprint(job.prop, job.params).base === "ground") {
+      blocks.push(...levelPropPad(plan, site.footprint, site.baseY));
     }
 
     const generated = generateProp({
@@ -409,9 +461,10 @@ function indexOf(plan: ColumnPlan, x: number, z: number): number | undefined {
  * The base plane of a land prop, or `undefined` when the ground will not do.
  *
  * Every column has to be dry, inside the region, and within
- * {@link PROP_MAX_RELIEF} of every other — a cart standing half in a hillside
- * is worse than a cart somewhere else. The plane is the *highest* ground under
- * the footprint plus one, so nothing is ever buried.
+ * {@link propReliefTolerance} of every other — a cart standing half in a
+ * hillside is worse than a cart somewhere else. The plane is the *highest*
+ * ground under the footprint plus one, so nothing is ever buried; the columns
+ * below it are brought up to meet it by {@link levelPropPad}.
  */
 export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
   let lo = Infinity;
@@ -426,8 +479,79 @@ export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
       if (g > hi) hi = g;
     }
   }
-  if (hi - lo > PROP_MAX_RELIEF) return undefined;
+  if (hi - lo > propReliefTolerance(rect)) return undefined;
   return hi + 1;
+}
+
+/**
+ * Bring the ground under a prop up to its base plane, and one ring beyond it.
+ *
+ * Fill only: the pad raises the low columns to `baseY - 1` with the material
+ * already under them, and never cuts. Cutting would mean deleting terrain
+ * blocks — and the vegetation, snow and surface decoration standing on them —
+ * from a pass that runs after every one of those, which is how you get a
+ * floating tree. Raising is what a building's foundation skirt does, one ring
+ * out, and it reads the same way: a plinth.
+ *
+ * A no-op unless the site is rougher than {@link PROP_MAX_RELIEF}, which is
+ * what keeps a cart exactly as cheap as it has always been. The plan's `ground`
+ * is updated as the blocks go down, because everything downstream — the
+ * scatter's occupancy, the doorstep pass, the readback lints — measures the
+ * surface, not the block list.
+ *
+ * Returns the blocks it laid.
+ */
+export function levelPropPad(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+): StructureBlock[] {
+  const out: StructureBlock[] = [];
+  const top = baseY - 1;
+  let relief = 0;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      relief = Math.max(relief, top - (plan.ground[idx] as number));
+    }
+  }
+  if (relief <= PROP_MAX_RELIEF) return out;
+
+  const skirted: Rect = {
+    x0: rect.x0 - PROP_PAD_SKIRT,
+    z0: rect.z0 - PROP_PAD_SKIRT,
+    x1: rect.x1 + PROP_PAD_SKIRT,
+    z1: rect.z1 + PROP_PAD_SKIRT,
+  };
+  // Sorted iteration by construction: the loops are the order, so the block
+  // list is a pure function of the geometry.
+  for (let z = skirted.z0; z <= skirted.z1; z++) {
+    for (let x = skirted.x0; x <= skirted.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      const inside = x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+      // The skirt steps down one block, so the pad's edge is a kerb rather than
+      // a wall — the same trick the road shoulders use to blend a cut.
+      const want = inside ? top : top - 1;
+      const g = plan.ground[idx] as number;
+      if (g >= want) continue;
+      const fill = plan.subsurface[idx] as number;
+      const cap = inside ? fill : (plan.surface[idx] as number);
+      for (let y = g + 1; y <= want; y++) {
+        out.push({ x, y, z, stateId: y === want ? cap : fill });
+      }
+      plan.ground[idx] = want;
+      plan.surface[idx] = cap;
+      plan.fluidTop[idx] = want;
+      // A pad is bare ground: the snow layer that sat on the old surface is
+      // now buried, and re-laying it is the climate pass's business, not this
+      // pass's. Clearing it keeps the emitter from floating one.
+      plan.snow[idx] = 0;
+    }
+  }
+  return out;
 }
 
 /**

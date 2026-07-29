@@ -2,23 +2,28 @@
 /**
  * Terrainist CLI.
  *
- * Three commands:
+ * The whole pipeline, and every useful place to enter it partway:
  *
- *   terrainist compile <doc.loam.json> --out <dir>
+ * - **`generate "<prompt>"`** — an authoring model writes a Loam document, the
+ *   compiler builds it, and author-actionable findings go back for revision
+ *   rounds. Needs `OPENROUTER_API_KEY`.
+ * - **`compile <doc.loam.json>`** — build a world from a document that already
+ *   exists. The entry point for debugging the compiler, because it takes the
+ *   model out of the loop entirely.
+ * - **`install <worldDir>`** — copy a built world into the saves directory.
+ * - **`devworld`** / **`terrarium`** — the two review worlds: the exhibit grid
+ *   of everything the grammar can build, and the multi-structure station world
+ *   wired for walking a change rather than reading about it.
+ * - **`catalog`** — the structure registry, as text or `--json`.
+ * - **`review-import`** — fold an in-game session's logs and screenshots into
+ *   one session file.
+ * - **`emit <spec.json>`** — the pre-Loam spike emitter, kept because the
+ *   golden pyramid still goes through it.
+ * - **`render <worldDir>`** — a deterministic top-down PNG, or the whole
+ *   multi-angle view set (isometric corners, maps, cutaways, sections).
  *
- * which compiles a Loam terrain-profile document into a Minecraft world;
- *
- *   terrainist emit <spec.json> --out <dir>
- *
- * which compiles a `terrainist-spike-0` fixture into `<dir>/<name>/`
- * (level.dat + region/) and packages it as `<dir>/<name>.zip`; and
- *
- *   terrainist render <worldDir> --out <file.png>
- *   terrainist render <worldDir> --views all --out <dir>
- *
- * which render that world top-down to a deterministic PNG, or write the whole
- * multi-angle view set (isometric corners, maps, cutaways, sections) as one
- * PNG per view.
+ * Each command's own options are printed by `--help`; `usage()` below is the
+ * single source of that text.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";

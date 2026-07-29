@@ -109,6 +109,21 @@ export const TUNNEL_FLIGHT_HEIGHT = 4;
 /** Rock left between a tunnel's ceiling and the surface, outside the portals. */
 export const TUNNEL_ROOF_THICKNESS = 4;
 
+/** Rock left over a bore's ceiling *inside a portal*, where a pad is the roof. */
+export const TUNNEL_PORTAL_ROOF = 1;
+
+/**
+ * The lowest surface Y that leaves a legal roof over a ceiling at `topY`.
+ *
+ * The single source of truth for the roof margin. The router's legality test,
+ * the chamber fit tests and {@link checkTunnelIntegrity} all go through this,
+ * which is what makes "the router and the validator agree" a property of the
+ * code rather than of two inequalities that were once typed the same way.
+ */
+export function requiredRoofSurfaceY(topY: number, portal = false): number {
+  return topY + (portal ? TUNNEL_PORTAL_ROOF : TUNNEL_ROOF_THICKNESS);
+}
+
 /** Horizontal shell kept from any fluid column — the cave carver's rule. */
 export const TUNNEL_FLUID_SHELL = 4;
 
@@ -427,6 +442,9 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
   const byPath = new Map(input.buildings.map((b) => [b.nodePath, b] as const));
   const states = resolveTunnelStates(input.stack, input.materials);
   const obstacles = buildObstacleMask(input);
+  // Once for the pass: the ground the bore *swath* stands under, with building
+  // footprints exempt — the surface every legality test in here reads.
+  const swathGround = boreSwathGround(plan, input.buildings.map((b) => b.footprint));
   /** Columns an earlier tunnel claimed, and the floor level it left there. */
   const claimed: TunnelClaims = { taken: new Uint8Array(n), floorY: new Int32Array(n) };
   /** Which tunnel claimed each column, so a junction can name its other half. */
@@ -500,6 +518,7 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
       portalA,
       portalB,
       obstacles,
+      swathGround,
       claimed,
       claimedBy,
       carvedCells,
@@ -700,6 +719,8 @@ interface RouteRequest {
   readonly columns: Uint8Array;
   readonly portalColumns: Uint8Array;
   readonly blocks: StructureBlock[];
+  /** {@link boreSwathGround} over this plan, computed once for the pass. */
+  readonly swathGround: Int32Array;
 }
 
 function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
@@ -738,7 +759,7 @@ function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
 
   const head = stubA[stubA.length - 1] as TunnelCell;
   const tail = stubB[stubB.length - 1] as TunnelCell;
-  const middle = routeTunnel(input.plan, open, head, tail, claims);
+  const middle = routeTunnel(input.plan, open, head, tail, claims, r.swathGround);
   if (middle === null) return null;
 
   // `middle` starts at `head` and ends at `tail`; the two stubs already hold
@@ -883,8 +904,18 @@ export function routeTunnel(
   start: TunnelCell,
   goal: TunnelCell,
   claimed?: TunnelClaims,
+  swathGround?: Int32Array,
 ): TunnelCell[] | null {
-  const { region, ground } = plan;
+  const { region } = plan;
+  // *Not* `plan.ground`. A bore is `TUNNEL_WIDTH` wide and turns square corners,
+  // so the rock the validator measures is the rock over the whole swath, not
+  // over the centre line — and on a hillside the centre column can carry a full
+  // roof while a column one step to the side carries three blocks. That was a
+  // real escape: `checkTunnelIntegrity` reported breaches at columns the router
+  // had never looked at. Routing against the swath *minimum* closes it by
+  // construction, because the swath is a superset of every column the validator
+  // visits for this cell.
+  const ground = swathGround ?? boreSwathGround(plan, []);
   const cells = region.width * region.depth;
   const yLo = Math.min(start.y, goal.y) - TUNNEL_Y_BAND;
   const yHi = Math.max(start.y, goal.y) + TUNNEL_Y_BAND;
@@ -902,7 +933,9 @@ export function routeTunnel(
     if (claimed !== undefined && claimed.taken[idx] === 1 && (claimed.floorY[idx] as number) !== y) {
       return false;
     }
-    return y + TUNNEL_FLIGHT_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS <= (ground[idx] as number);
+    // `TUNNEL_FLIGHT_HEIGHT` because the router does not yet know which cells
+    // `markFlights` will pick, and four is the tallest a bore ever gets.
+    return requiredRoofSurfaceY(y + TUNNEL_FLIGHT_HEIGHT - 1) <= (ground[idx] as number);
   };
 
   const startIdx = index(region, start.x, start.z);
@@ -980,6 +1013,56 @@ export function routeTunnel(
     if ((from[s] as number) < 0) break;
   }
   return out.reverse();
+}
+
+/**
+ * Surface height as the *bore swath* sees it: per column, the lowest ground
+ * over the block of columns a bore centred there can occupy.
+ *
+ * A cell of centre line owns a `TUNNEL_WIDTH`-wide swath perpendicular to the
+ * run, and at a corner it owns both perpendiculars — so the columns
+ * {@link checkTunnelIntegrity} measures for a cell at `(x, z)` are always a
+ * subset of the `TUNNEL_WIDTH × TUNNEL_WIDTH` box around it. Taking the minimum
+ * over that box makes the router's legality test at least as strict as the
+ * validator's, whichever way the gallery happens to turn.
+ *
+ * Columns inside a building footprint are exempt, exactly as they are in the
+ * validator: a bore under a levelled pad is under the building, and the
+ * building's own floor is its roof.
+ */
+export function boreSwathGround(plan: ColumnPlan, footprints: readonly Rect[]): Int32Array {
+  const { region, ground } = plan;
+  const n = region.width * region.depth;
+  const half = (TUNNEL_WIDTH - 1) >> 1;
+  // Higher than any world height, so an exempt column never wins a minimum.
+  const EXEMPT = 1 << 24;
+  const own = new Int32Array(n);
+  for (let idx = 0; idx < n; idx++) own[idx] = ground[idx] as number;
+  for (const f of footprints) {
+    for (let z = Math.max(f.z0, region.z0); z <= Math.min(f.z1, region.z0 + region.depth - 1); z++) {
+      for (let x = Math.max(f.x0, region.x0); x <= Math.min(f.x1, region.x0 + region.width - 1); x++) {
+        own[index(region, x, z)] = EXEMPT;
+      }
+    }
+  }
+  const out = new Int32Array(n);
+  for (let z = 0; z < region.depth; z++) {
+    for (let x = 0; x < region.width; x++) {
+      let lo = EXEMPT;
+      for (let dz = -half; dz <= half; dz++) {
+        const nz = z + dz;
+        if (nz < 0 || nz >= region.depth) continue;
+        for (let dx = -half; dx <= half; dx++) {
+          const nx = x + dx;
+          if (nx < 0 || nx >= region.width) continue;
+          const v = own[nz * region.width + nx] as number;
+          if (v < lo) lo = v;
+        }
+      }
+      out[z * region.width + x] = lo;
+    }
+  }
+  return out;
 }
 
 const ORTHOGONAL: readonly (readonly [number, number])[] = Object.freeze([
@@ -1216,7 +1299,7 @@ function chamberFits(r: RouteRequest, junction: TunnelCell): boolean {
       // `JUNCTION_HEIGHT` and `TUNNEL_FLIGHT_HEIGHT` are the same four blocks —
       // so a chamber fits wherever the gallery that reaches it was legal, and
       // `checkTunnelIntegrity` re-derives the identical inequality.
-      if (junction.y + JUNCTION_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS > (ground[idx] as number)) {
+      if (requiredRoofSurfaceY(junction.y + JUNCTION_HEIGHT - 1) > (ground[idx] as number)) {
         return false;
       }
     }
@@ -1403,7 +1486,7 @@ function findOreChamber(r: RouteRequest, path: readonly TunnelCell[]): OreChambe
         else {
           const idx = index(region, x, z);
           if (r.obstacles[idx] === 1) fits = false;
-          else if (cell.y + ORE_CHAMBER_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS > (ground[idx] as number)) {
+          else if (requiredRoofSurfaceY(cell.y + ORE_CHAMBER_HEIGHT - 1) > (ground[idx] as number)) {
             fits = false;
           }
         }
@@ -1839,9 +1922,20 @@ function lineTunnel(
     // --- the support frame ------------------------------------------------
     // Only on a straight, level, single-perpendicular run well clear of both
     // portals: a frame at a corner would stand its posts in the other arm.
+    //
+    // …and never at the foot of a rise. A frame's lantern hangs at
+    // `cell.y + height - 1`, which on a level cell is `cell.y + 2` — exactly
+    // the block a walking agent needs clear over its head to climb the step in
+    // front of it. A lantern there is a gallery that can be walked down and not
+    // back up, which is what the traversal lint found the first time a reroute
+    // happened to line a frame up with a staircase.
+    const atRiseFoot =
+      (path[i - 1] !== undefined && (path[i - 1] as TunnelCell).y > cell.y) ||
+      (path[i + 1] !== undefined && (path[i + 1] as TunnelCell).y > cell.y);
     const straight =
       straightRun &&
       !cell.flight &&
+      !atRiseFoot &&
       i >= 2 &&
       i <= path.length - 3 &&
       i % TUNNEL_FRAME_SPACING === 0;
@@ -2210,8 +2304,9 @@ export function checkTunnelIntegrity(
           continue;
         }
         if (insideFootprint(footprints, x, z)) continue;
-        const roof = (ground[idx] as number) - (junction.y + JUNCTION_HEIGHT - 1);
-        if (roof < TUNNEL_ROOF_THICKNESS) {
+        const top = junction.y + JUNCTION_HEIGHT - 1;
+        const roof = (ground[idx] as number) - top;
+        if ((ground[idx] as number) < requiredRoofSurfaceY(top)) {
           roofBreaches++;
           sample({
             tunnelId: tunnel.id,
@@ -2243,8 +2338,9 @@ export function checkTunnelIntegrity(
           continue;
         }
         if (insideFootprint(footprints, x, z)) continue;
-        const roof = (ground[idx] as number) - (chamber.y + ORE_CHAMBER_HEIGHT - 1);
-        if (roof < TUNNEL_ROOF_THICKNESS) {
+        const top = chamber.y + ORE_CHAMBER_HEIGHT - 1;
+        const roof = (ground[idx] as number) - top;
+        if ((ground[idx] as number) < requiredRoofSurfaceY(top)) {
           roofBreaches++;
           sample({
             tunnelId: tunnel.id,
@@ -2281,9 +2377,10 @@ export function checkTunnelIntegrity(
           // there is a foundation, but a hole in the ground beside a chapel is
           // a hole in the ground beside a chapel.
           if (insideFootprint(footprints, x, z)) continue;
-          const roof = (ground[idx] as number) - (cell.y + height - 1);
-          const want = cell.portal ? 1 : TUNNEL_ROOF_THICKNESS;
-          if (roof < want) {
+          const top = cell.y + height - 1;
+          const roof = (ground[idx] as number) - top;
+          const want = cell.portal ? TUNNEL_PORTAL_ROOF : TUNNEL_ROOF_THICKNESS;
+          if ((ground[idx] as number) < requiredRoofSurfaceY(top, cell.portal)) {
             roofBreaches++;
             sample({
               tunnelId: tunnel.id,

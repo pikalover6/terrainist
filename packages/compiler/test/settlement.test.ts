@@ -1,3 +1,16 @@
+/**
+ * The settlement profile, end to end.
+ *
+ * Two claims, tested against compiled worlds rather than against the passes:
+ *
+ * 1. **Adding the profile moves nothing.** The same document under `terrain`
+ *    and under `settlement`, with no structure nodes, has to come out
+ *    identical — the settlement path is additive or it is a regression.
+ * 2. **A settlement document builds and diagnoses honestly.** What the solver
+ *    could not satisfy, and what a generator does not implement, is reported;
+ *    nothing is silently dropped.
+ */
+
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -197,5 +210,57 @@ describe("settlement compile", () => {
     // consequence — the ground the buildings claim stops growing trees.
     expect(settled.stats.treeCount).toBeGreaterThan(0);
     expect(settled.stats.treeCount).toBeLessThan(asSettlement.stats.treeCount);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* constraints on a prop node                                                  */
+/* -------------------------------------------------------------------------- */
+
+describe("a constraint on prop.place@0", () => {
+  let report: TerrainCompileReport;
+
+  beforeAll(async () => {
+    report = await compile(
+      "prop-constraints",
+      document("settlement", [
+        ...structures(),
+        {
+          id: "market_cart",
+          kind: "generator",
+          generator: "prop.place@0",
+          params: { prop: "cart", zone: "center" },
+          // Both of these validate, and both of them do nothing: a prop never
+          // reaches the layout solver.
+          constraints: [{ adjacent_to: "town_hall", gap: [0, 2] }, { clearance: 3 }],
+        },
+        {
+          id: "quiet_cart",
+          kind: "generator",
+          generator: "prop.place@0",
+          params: { prop: "cart", zone: "north" },
+        },
+      ]),
+    );
+  }, 180_000);
+
+  it("says so, once, naming the node and every constraint type it ignored", () => {
+    const found = report.diagnostics.filter(
+      (d) => d.code === "LOAM-W407" && d.nodePath === "world.market_cart",
+    );
+    expect(found).toHaveLength(1);
+    const only = found[0] as { message: string; fix: string; severity: string };
+    expect(only.severity).toBe("warning");
+    expect(only.message).toContain("adjacent_to");
+    expect(only.message).toContain("clearance");
+    expect(only.fix).toContain("zone/at/jitter");
+  });
+
+  it("says nothing about a prop that declared none", () => {
+    expect(
+      report.diagnostics.filter(
+        (d) => d.code === "LOAM-W407" && d.nodePath === "world.quiet_cart",
+      ),
+    ).toEqual([]);
   });
 });

@@ -141,6 +141,29 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   `@terrainist/compiler`; neither imports this file's field engine.
  *   Compiled worlds from before this round do not reproduce block-for-block;
  *   their terrain shape does.
+ * - **Overnight-program final fix round (2026-07-29)** — authorized reroll of
+ *   the *compiled world* only, and only of worlds that carry a tunnel or a
+ *   large ground prop. **Both hashes below are deliberately unchanged**: the
+ *   round touches the structure pass and the prop placer, neither of which is
+ *   upstream of the heightfield. What moved:
+ *     * the tunnel router now tests its roof margin over the **whole bore
+ *       swath** rather than over the centre line alone. The centre-line test
+ *       was strictly weaker than the one `checkTunnelIntegrity` applies, which
+ *       is how a GLM-authored delta port produced `LOAM-W408` from a route the
+ *       router had certified. Every gallery on rolling ground therefore takes
+ *       a slightly different — and legal — line; the deltaport's own route
+ *       went from 475 cells to 477;
+ *     * a support frame is no longer built at the foot of a rise. Its lantern
+ *       hangs in exactly the block a walking agent needs clear to climb the
+ *       step, so a gallery could be walked down and not back up. Latent since
+ *       the frames were added and unmasked by the reroute above, which is a
+ *       reminder that the traversal lint is load-bearing;
+ *     * a land prop's relief tolerance scales with its footprint, and a prop
+ *       on a site rougher than one block levels a pad under itself. Small
+ *       props are on the old rule and emit no pad, so nothing that fitted
+ *       before has moved — only props that could not be placed at all.
+ *   Compiled worlds from before this round reproduce block-for-block unless
+ *   they contain a tunnel; their terrain shape is unchanged either way.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

@@ -29,10 +29,13 @@ import { DEV_GROUND_Y, devColumnPlan } from "../src/devworld.js";
 import { FluidKind, type ColumnPlan } from "../src/terrain/columns.js";
 import { checkFluidStability } from "../src/terrain/validate.js";
 import {
+  PROP_MAX_RELIEF,
   buildProps,
   checkPropFluidSafety,
   groundBase,
+  levelPropPad,
   planPropPlacement,
+  propReliefTolerance,
   waterBase,
   type PropJob,
 } from "../src/structures/props.js";
@@ -588,5 +591,82 @@ describe("the prop exhibits", () => {
     expect([...shapes].some((s) => ["south_west", "south_east", "north_west", "north_east"].includes(s))).toBe(
       true,
     );
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* a big prop on ground that is gently rolling rather than flat                */
+/* -------------------------------------------------------------------------- */
+
+describe("relief tolerance scales with the footprint", () => {
+  /** The dev plain under a gentle slope: one block every `rise` blocks east. */
+  function rollingPlan(rise: number): ColumnPlan {
+    const plan = plainPlan();
+    for (let z = 0; z < REGION.depth; z++) {
+      for (let x = 0; x < REGION.width; x++) {
+        const idx = z * REGION.width + x;
+        // About one block per fifteen — a slope you would walk up without
+        // noticing, and far too rough for a flat-to-one-block rule.
+        plan.ground[idx] = DEV_GROUND_Y + Math.floor(x / rise);
+        plan.fluidTop[idx] = plan.ground[idx] as number;
+      }
+    }
+    return plan;
+  }
+
+  it("keeps a small prop on the old one-block rule", () => {
+    expect(propReliefTolerance({ x0: 0, z0: 0, x1: 4, z1: 4 })).toBe(PROP_MAX_RELIEF);
+    expect(propReliefTolerance({ x0: 0, z0: 0, x1: 11, z1: 2 })).toBe(PROP_MAX_RELIEF);
+  });
+
+  it("gives a long footprint one more block of tolerance every twelve", () => {
+    expect(propReliefTolerance({ x0: 0, z0: 0, x1: 23, z1: 14 })).toBe(2);
+    expect(propReliefTolerance({ x0: 0, z0: 0, x1: 33, z1: 14 })).toBe(3);
+  });
+
+  /**
+   * The drydock, which is what found this.
+   *
+   * 34 × 15 on land: no natural outdoor site anywhere is level to one block
+   * across it, so the placer rejected every column in its search radius and the
+   * compile reported `LOAM-E170 CANNOT_FIT` with a "flatten the ground" hint no
+   * author could act on.
+   */
+  it("places a drydock on gentle natural terrain, and levels what it stands on", () => {
+    // One block in sixteen: gentler than most natural ground, and still two
+    // blocks of relief across a 34-block cradle — which the old flat-to-one
+    // rule rejected everywhere in the search radius.
+    const plan = rollingPlan(16);
+    const job: PropJob = {
+      nodePath: "world.yard",
+      prop: "drydock",
+      // Yaw pinned so the cradle lies along the slope rather than across it.
+      params: { zone: "center", yaw: 0 },
+      seed: seedOf("world.yard"),
+    };
+    const result = buildProps({ jobs: [job], plan, stack });
+    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(result.placed).toHaveLength(1);
+
+    const { footprint } = result.placed[0] as { footprint: { x0: number; z0: number; x1: number; z1: number } };
+    // Levelled: whatever the yaw came out as, the ground the cradle stands on
+    // is now flat to within the small-prop rule.
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let z = footprint.z0; z <= footprint.z1; z++) {
+      for (let x = footprint.x0; x <= footprint.x1; x++) {
+        const g = plan.ground[(z - REGION.z0) * REGION.width + (x - REGION.x0)] as number;
+        lo = Math.min(lo, g);
+        hi = Math.max(hi, g);
+      }
+    }
+    expect(hi - lo).toBeLessThanOrEqual(PROP_MAX_RELIEF);
+  });
+
+  it("lays no pad at all for a site inside the small-prop tolerance", () => {
+    const plan = plainPlan();
+    const rect = { x0: 10, z0: 10, x1: 13, z1: 13 };
+    const base = groundBase(plan, rect) as number;
+    expect(levelPropPad(plan, rect, base)).toEqual([]);
   });
 });

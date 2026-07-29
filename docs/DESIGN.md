@@ -288,6 +288,71 @@ A–E has been walked in the Minecraft client. The physics lint is the strongest
 statement available without that, and its whole history is that a human found
 things it could not see.
 
+## Status (2026-07-29, overnight program: waves W1–W3 + final fix round)
+
+Three waves of parallel implementation agents, run overnight after the
+rounds A–E program, then one fix-and-tidy round to close what the waves
+surfaced. As before, every wave was implementation against a settled design;
+nothing here changed Loam.
+
+- **W1 — reach.** G5 corridors (`road.network@0` route reservation at
+  substage 3b) with the tier-2 `along` / `beside` / `on` constraints bound to
+  them; tunnel **junctions**, where two galleries that cross share a chamber
+  instead of passing blind; the **structure catalog** — one typed registry of
+  every structure the project builds or intends to, now **440 entries, 80 of
+  them implemented**, with `terrainist catalog` to read it and a test that
+  checks every `implemented` id against the live generator registries;
+  the **high-rise grammar**; and **Terrarium v2**, whose stations are
+  multi-structure exhibits rather than single specimens.
+- **W2 — breadth.** A broad-domain **structure blitz** across the catalog's
+  empty corners; **vehicles** — ships and aircraft, with a rotated-op path
+  that keeps a hull a hull at every yaw; and **themed underground**: a cellar
+  or gallery may be dug as a crypt, catacombs, a vault, a wine cellar or a
+  mineshaft, with an ore chamber at the far end of a working.
+- **W3 — end to end.** The settlement **spec kit** widened to cover the
+  breadth W1 and W2 added, so an authoring model can actually reach it; and
+  two GLM-authored **demo worlds** — `examples/demo-meridian-shore.loam.json`
+  and `examples/demo-saltmarsh-keep.loam.json` — kept as fixtures.
+- **Final fix round (this one).** Four real defects, each fixed at source:
+  1. **The tunnel roof-margin escape.** The router tested its roof margin over
+     the bore's *centre line*; `checkTunnelIntegrity` measures the whole
+     three-wide swath. The router's test was therefore strictly weaker than
+     the validator's, and a 475-block mine gallery in a GLM-authored delta
+     port ran through two columns that failed it — reported as `LOAM-W408`
+     with a hint that said "this is a compiler defect", correctly. Both sides
+     now go through one `requiredRoofSurfaceY`, and the router routes against
+     `boreSwathGround` — the per-column minimum over the swath box, building
+     footprints exempt — which is a superset of every column the validator
+     visits. Agreement is now a property of the code. The reroute unmasked a
+     second, latent defect: a support frame at the foot of a rise hangs its
+     lantern in the block a walking agent needs to climb the step, so the
+     gallery could be walked down and not up. Frames now skip a rise foot.
+  2. **`style.palettes.theme`** is the documented village-theme override and
+     was resolved as a block symbol, producing a bogus `LOAM-T106` on every
+     document that used it. One `PALETTE_THEME_KEY` is now shared by the
+     resolver and the reader.
+  3. **Constraints on a `prop.place@0` node** validated and then did nothing,
+     because a prop never reaches the layout solver. They now draw a
+     `LOAM-W407` naming the node and every ignored constraint type, with the
+     `zone`/`at`/`jitter` params as the fix.
+  4. **`PROP_MAX_RELIEF`** demanded flat-to-one-block ground under any land
+     prop, which no natural site offers across a 34-block drydock: it was
+     unplaceable outdoors anywhere. Tolerance now scales with the footprint
+     (`max(1, ceil(long/12))`) and the placer levels a pad under a prop —
+     **only** when the site is rougher than one block, so small props emit no
+     pad and cost exactly what they always did.
+
+  The deltaport document is kept as `examples/demo-deltaport.loam.json` and
+  compiles with **zero error-severity diagnostics**; its four `CANNOT_FIT`
+  prop warnings are authoring issues and are asserted, not fixed. Field-hash
+  goldens are unchanged; the compiled-world reroll for tunnel-bearing worlds
+  is logged in `packages/stdlib/test/golden.test.ts`. **1075 tests green.**
+
+Still true, and still the most important line in this file: **none of the
+overnight program has been walked in the Minecraft client.** The physics lint
+and the readback validators are the strongest statement available without
+that, and their whole history is that a human found things they could not see.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
