@@ -58,16 +58,16 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
 
     const structure = child;
     if (structure.generator === "road.network@0" && structure.envelope === undefined) {
-      // v0.2 §4.9.6 / §7.5: not yet — `road.network@0.corridors()` should
-      // register frozen route corridors at substage 3b, which is what `along`
-      // constraints bind to. G4b routes the network in the connective pass
-      // instead, *after* placement, so the node is intentionally not placed and
-      // claims no envelope — its roads still get built.
+      // §4.9.6 / §7.5: the network *does* reserve a route corridor at substage
+      // 3b now — see `roadCorridors` — but it is still not a *placed* node: it
+      // has no box, no yaw and no footprint, so it contributes nothing to the
+      // solver's node list. The corridor is registered separately, from the
+      // anchors' coarse points, and the routing itself is still pass 6.
       diagnostics.push(
         note(
           "GENERATOR_NOT_IMPLEMENTED",
           nodePath,
-          "road.network@0 is routed after placement rather than reserving a corridor at substage 3b, so this node takes part in no layout decision; its roads are still built",
+          "road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass",
           'nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well',
         ),
       );
@@ -148,7 +148,33 @@ export function canonicalConstraints(
     if (typeof raw !== "object" || raw === null) continue;
     const resolved = resolveTypeKey(raw as Record<string, unknown>);
     if (!resolved.ok) continue;
-    out.push(canonicalize(raw as Record<string, unknown>, resolved.type, resolved.shorthand));
+    out.push(desugarBeside(canonicalize(raw as Record<string, unknown>, resolved.type, resolved.shorthand)));
   }
   return out;
+}
+
+/**
+ * `beside` → `along`, per §4.4: *"pure sugar … no new solver primitive is
+ * involved"*.
+ *
+ * Desugaring here rather than in `canonicalize` is deliberate. The spec
+ * package's canonical form is what the *validator* reports against, and an
+ * author who wrote `beside` should be told about their `beside`; the solver, on
+ * the other hand, must not grow a second copy of the corridor machinery just to
+ * spell the same question differently. So the rewrite happens exactly once, on
+ * the way into the solver, and leaves `desugaredFrom` behind so the solver
+ * report can still name what the document said.
+ *
+ * The two defaults §4.4 gives it — a wider band, and no `faceRoad` — are
+ * applied only where the author did not state them.
+ */
+export function desugarBeside(constraint: CanonicalConstraint): CanonicalConstraint {
+  if (constraint.type !== "beside") return constraint;
+  return {
+    ...constraint,
+    type: "along",
+    desugaredFrom: "beside",
+    offset: constraint["offset"] ?? [2, 8],
+    faceRoad: constraint["faceRoad"] ?? false,
+  } as CanonicalConstraint;
 }

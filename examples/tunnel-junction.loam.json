@@ -1,0 +1,134 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "tunnel_junction",
+    "worldSeed": 90210,
+    "prompt": "four halls around a flat green, two crypt tunnels crossing under it at right angles",
+    "spawn": { "zone": "center" }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Tunnel junction — two galleries that have to meet",
+    "note": "A deliberately forced crossing: the north-south tunnel and the east-west tunnel both run under the middle of a flat plateau, so the second one routed cannot avoid the first without a detour it will not pay for. The plateau is flat so both galleries settle at the same floor level, which is the condition a junction is admitted on.",
+    "envelope": { "shape": "region", "size": [192, 192] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "A quiet inland table, well above any waterline",
+        "params": {
+          "baseHeight": 88,
+          "amplitude": 4,
+          "seaLevel": 63,
+          "octaves": 3,
+          "frequency": 0.004,
+          "gain": 0.45,
+          "lacunarity": 2.0,
+          "erosionPasses": 1,
+          "cliffThreshold": 58,
+          "soilDepth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_green",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The flat table all four halls stand on",
+            "params": {
+              "verb": "plateau",
+              "at": [0.5, 0.5],
+              "radius": 80,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and green",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "north_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": { "shape": "box", "size": [11, 12, 11], "padding": 1 },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "gable", "basement": { "depth": 4 } },
+        "constraints": [
+          { "zone": "north" },
+          { "connected": "south_hall", "via": "tunnel" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 20 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "south", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "hall"]
+      },
+      {
+        "id": "south_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": { "shape": "box", "size": [11, 12, 11], "padding": 1 },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "hip", "basement": { "depth": 4 } },
+        "constraints": [
+          { "zone": "south" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 20 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "north", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "north", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "hall"]
+      },
+      {
+        "id": "west_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": { "shape": "box", "size": [11, 12, 11], "padding": 1 },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "gable", "basement": { "depth": 4 } },
+        "constraints": [
+          { "zone": "west" },
+          { "connected": "east_hall", "via": "tunnel" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 20 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "east", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "east", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "hall"]
+      },
+      {
+        "id": "east_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": { "shape": "box", "size": [11, 12, 11], "padding": 1 },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "hip", "basement": { "depth": 4 } },
+        "constraints": [
+          { "zone": "east" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 20 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "west", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "west", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "hall"]
+      }
+    ]
+  }
+}

@@ -49,10 +49,16 @@ import {
 } from "@terrainist/spec";
 
 import {
+  TerrainProductIndex,
   applyPadEdits,
+  corridorMask,
+  corridorsFromCourses,
+  deriveTerrainProducts,
   layoutNodesFrom,
+  registerRoadCorridors,
   solveLayout,
   type LayoutNodeInput,
+  type RouteCorridor,
   type OccupancyGrid,
   type PadEdit,
   type Placement,
@@ -89,6 +95,7 @@ import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vege
 import {
   buildStructures,
   checkTunnelIntegrity,
+  roadParamsOf,
   type StructurePassResult,
   type StructureStats,
 } from "../structures/index.js";
@@ -408,11 +415,35 @@ async function compileValidated(
   let layoutOutcome: LayoutOutcome | undefined;
   let occupancy: OccupancyGrid | undefined;
   let layoutNodes: readonly LayoutNodeInput[] = [];
+  /** Frozen at substage 3b, read by the solver and again by the road router. */
+  let corridors: readonly RouteCorridor[] = [];
+  let products: TerrainProductIndex | undefined;
   const tLayout = now();
   if (isSettlement(doc)) {
     const extraction = layoutNodesFrom(doc, worldSeed);
     layoutNodes = extraction.nodes;
     diagnostics.push(...extraction.diagnostics);
+
+    // --- substage 3b: corridor construction (§4.9.6) -----------------------
+    // Course-bearing terrain features first, in the order the edits were
+    // applied, then the road network's own reservation. Order is registration
+    // order and registration order is what `resolveCorridor` breaks ties on,
+    // so a document with both a `river` and a `lanes` node named the same thing
+    // resolves the same way every run.
+    corridors = [
+      ...corridorsFromCourses(terrain.edits.courses, hfPath),
+      ...roadNetworkCorridors(doc, rootPath, region, extraction.nodes),
+    ];
+    products = new TerrainProductIndex(
+      region,
+      deriveTerrainProducts({
+        region,
+        oceanMask: classification.oceanMask,
+        ridgeCourses: terrain.edits.courses.filter((c) => c.verb === "ridge").map((c) => c.samples),
+        peaks: peakPoints(heightfield, terrain.edits.markers),
+      }),
+    );
+
     const solved = solveLayout({
       region,
       field: terrain.field,
@@ -421,6 +452,8 @@ async function compileValidated(
       rootPath,
       nodes: extraction.nodes,
       hazardMask: buildHazardMask(region, classification, terrain.edits.calderas),
+      corridors,
+      products,
     });
     diagnostics.push(...solved.diagnostics);
     occupancy = solved.occupancy;
@@ -509,6 +542,10 @@ async function compileValidated(
       palette,
       stack,
       ...(occupancy === undefined ? {} : { occupancy }),
+      // §4.9.6: the pass-6 router prefers the polygon that was frozen at 3b.
+      ...(corridors.some((c) => c.kind === "road")
+        ? { roadCorridor: corridorMask(region, corridors.filter((c) => c.kind === "road")) }
+        : {}),
     });
     diagnostics.push(...structures.diagnostics);
     layoutOutcome = { ...layoutOutcome, structures };
@@ -879,6 +916,55 @@ function dryLandNear(
  * that knows what the edit composition produced — the solver runs before any
  * block exists and has only the field, the classification, and this mask.
  */
+/**
+ * `road.network@0.corridors()` for the document's road node, at substage 3b.
+ *
+ * The lane width the reservation is sized from is the *same* `width` the pass-6
+ * router will surface, read through the same `roadParamsOf` shorthand, because
+ * a corridor sized from one number and a lane surfaced from another is a
+ * corridor that does not fit its road.
+ */
+function roadNetworkCorridors(
+  doc: SettlementDocument,
+  rootPath: string,
+  region: Region,
+  nodes: readonly LayoutNodeInput[],
+): RouteCorridor[] {
+  const roadNode = doc.root.children.find(
+    (c) => c.kind === "generator" && c.generator === "road.network@0",
+  );
+  if (roadNode === undefined) return [];
+  const params = (roadNode as { params?: Record<string, unknown> }).params ?? {};
+  const anchors = Array.isArray(params["anchors"])
+    ? (params["anchors"] as unknown[]).filter((a): a is string => typeof a === "string")
+    : [];
+  const width = roadParamsOf(params).width ?? 3;
+  return registerRoadCorridors(`${rootPath}.${roadNode.id}`, anchors, nodes, region, width);
+}
+
+/**
+ * Summit points for the `@terrain:peak` product.
+ *
+ * Restricted to the two verbs that actually make a summit. Every radial edit
+ * emits a marker named `peak` — a `plateau`'s "peak" is the middle of a flat
+ * table and an `island`'s is a beach hump — and treating those as peaks would
+ * make `{"on": "@terrain:peak"}` mean "on any radial edit", which is not a
+ * thing anyone would ask for.
+ */
+function peakPoints(
+  heightfield: { readonly children?: readonly { readonly id: string; readonly params: { readonly verb?: string } }[] },
+  markers: readonly { readonly id: string; readonly name: string; readonly x: number; readonly z: number }[],
+): { x: number; z: number }[] {
+  const summits = new Set(
+    (heightfield.children ?? [])
+      .filter((c) => c.params.verb === "peak" || c.params.verb === "volcano")
+      .map((c) => c.id),
+  );
+  return markers
+    .filter((m) => m.name === "peak" && summits.has(m.id.split(".")[0] as string))
+    .map((m) => ({ x: m.x, z: m.z }));
+}
+
 function buildHazardMask(
   region: Region,
   classification: Classification,

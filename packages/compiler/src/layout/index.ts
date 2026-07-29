@@ -23,7 +23,9 @@ import { applyLevelPad } from "@terrainist/stdlib";
 
 import type { PadEdit } from "./types.js";
 
+export * from "./corridors.js";
 export * from "./cost.js";
+export * from "./products.js";
 export * from "./fitness.js";
 export * from "./frames.js";
 export * from "./from-document.js";

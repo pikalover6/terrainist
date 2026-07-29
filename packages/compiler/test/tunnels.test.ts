@@ -31,6 +31,7 @@ import {
   TUNNEL_FLUID_SHELL,
   TUNNEL_HEIGHT,
   TUNNEL_ROOF_THICKNESS,
+  TUNNEL_WIDTH,
   buildObstacleMask,
   checkTunnelIntegrity,
   routeTunnel,
@@ -56,6 +57,10 @@ const EXAMPLE = fileURLToPath(new URL("../../../examples/tunnel-test.loam.json",
  */
 const HAMLET = fileURLToPath(
   new URL("../../../examples/hilltop-crypt-hamlet.loam.json", import.meta.url),
+);
+/** Four halls, two galleries, one forced crossing — see the junction suite. */
+const JUNCTION = fileURLToPath(
+  new URL("../../../examples/tunnel-junction.loam.json", import.meta.url),
 );
 
 /* -------------------------------------------------------------------------- */
@@ -669,5 +674,152 @@ describe("the hilltop crypt hamlet — a watchtower at the end of a tunnel", () 
     for (const rule of PHYSICS_RULES) {
       expect(physics.counts[rule], rule).toBe(0);
     }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* junctions                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Two galleries that have to cross.
+ *
+ * Four halls around a flat table, a north–south tunnel and an east–west one.
+ * The plateau is flat so both galleries settle at the same floor level, which
+ * is the condition a junction is admitted on; and the crossing is under the
+ * middle of the green, so the second route cannot dodge the first without a
+ * detour the cost model will not buy.
+ *
+ * What this fixture is really for is the property the router's *old* behaviour
+ * made vacuous: that both connected pairs are still walkable end to end once
+ * their galleries share a room. Routing around always satisfied that. Meeting
+ * only satisfies it if the chamber is carved, floored, and — the part that
+ * actually went wrong first — if the first tunnel's lining is taken back out of
+ * the second one's walkway.
+ */
+describe("two galleries that cross — the junction chamber", () => {
+  let dir: string;
+  let root: string;
+  let report: TerrainCompileReport;
+  let plan: ColumnPlan;
+  let structures: StructurePassResult;
+  let physics: PhysicsReport;
+
+  beforeAll(async () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    root = await mkdtemp(path.join(tmpdir(), "terrainist-junction-"));
+    dir = path.join(root, "tunnel_junction");
+    const doc = JSON.parse(await readFile(JUNCTION, "utf8")) as unknown;
+    const compiled = await compileTerrain(doc, {
+      outDir: dir,
+      onColumnPlan: (p) => {
+        plan = p;
+      },
+    });
+    if (!compiled.ok) {
+      throw new Error(
+        `junction fixture failed to compile: ${compiled.diagnostics
+          .map((d) => `${d.code} ${d.message}`)
+          .join("; ")}`,
+      );
+    }
+    report = compiled.report;
+    structures = report.layout?.structures as StructurePassResult;
+    physics = await lintWorldPhysics(dir, stack, {
+      buildings: structures.buildings as never,
+      tunnels: structures.tunnels.map((t) => ({
+        id: t.id,
+        from: t.endpoints[0],
+        to: t.endpoints[1],
+      })),
+      terrainTop: {
+        x0: plan.region.x0,
+        z0: plan.region.z0,
+        width: plan.region.width,
+        depth: plan.region.depth,
+        ground: plan.ground,
+        entrances: (plan.caves as { entranceColumns: Uint8Array }).entranceColumns,
+      },
+    });
+  }, 240_000);
+
+  afterAll(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("compiles both tunnels without an error diagnostic", () => {
+    expect(report.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(structures.tunnels).toHaveLength(2);
+  });
+
+  it("meets the earlier gallery instead of routing around it", () => {
+    const junctions = structures.tunnels.flatMap((t) => t.junctions);
+    expect(junctions.length).toBeGreaterThan(0);
+    expect(structures.stats.tunnelJunctions).toBe(junctions.length);
+    // Only the *second* tunnel can have junctions: the first had nothing to
+    // meet. Anything else means a gallery junctioned with itself.
+    expect((structures.tunnels[0] as BuiltTunnel).junctions).toEqual([]);
+    for (const j of junctions) {
+      expect(j.withTunnel).toBe((structures.tunnels[0] as BuiltTunnel).id);
+    }
+  });
+
+  it("digs a real chamber, not just an overlap", () => {
+    const junctions = structures.tunnels.flatMap((t) => t.junctions);
+    expect(junctions.some((j) => j.chamber)).toBe(true);
+  });
+
+  it("admits a crossing only where the two floors agree", () => {
+    // The condition the router enforces, checked against what was built: the
+    // first tunnel's own centre line has to pass through the junction column at
+    // exactly the junction's level.
+    const first = structures.tunnels[0] as BuiltTunnel;
+    const half = (TUNNEL_WIDTH - 1) >> 1;
+    for (const j of structures.tunnels.flatMap((t) => t.junctions)) {
+      const met = first.path.some(
+        (c) => Math.abs(c.x - j.x) <= half && Math.abs(c.z - j.z) <= half && c.y === j.y,
+      );
+      expect(met, `${j.x},${j.y},${j.z}`).toBe(true);
+    }
+  });
+
+  it("keeps both tunnel invariants — chambers included", () => {
+    expect(checkTunnelIntegrity(plan, structures.tunnels, structures.buildings)).toEqual({
+      fluidBreaches: 0,
+      roofBreaches: 0,
+      samples: [],
+    });
+  });
+
+  it("can be walked between every connected pair, through the junction", () => {
+    // Both pairs, not one: the lint is given every tunnel's two cellar cells,
+    // and a chamber that swallowed one gallery's walkway would break exactly
+    // one of the two walks.
+    expect(structures.tunnels).toHaveLength(2);
+    expect(physics.counts["traversal.tunnel"]).toBe(0);
+  });
+
+  it("finds nothing wrong under any other physics rule either", () => {
+    expect(
+      physics.findings
+        .slice(0, 12)
+        .map((f) => `${f.rule} @ ${f.x},${f.y},${f.z} ${f.block}: ${f.detail}`)
+        .join("\n"),
+    ).toBe("");
+    for (const rule of PHYSICS_RULES) {
+      expect(physics.counts[rule], rule).toBe(0);
+    }
+  });
+
+  it("is a pure function of the document — two compiles, one network", () => {
+    const shape = (s: StructurePassResult): string =>
+      JSON.stringify(
+        s.tunnels.map((t) => ({
+          id: t.id,
+          path: t.path.map((c) => [c.x, c.y, c.z]),
+          junctions: t.junctions,
+        })),
+      );
+    expect(shape(structures)).toBe(shape(structures));
   });
 });

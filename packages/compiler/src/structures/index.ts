@@ -81,6 +81,15 @@ export interface StructurePassInput {
   readonly stack: PrismarineStack;
   /** Mutated by both passes, and read by the scatter that follows. */
   readonly occupancy?: OccupancyGrid;
+  /**
+   * The road network's frozen route corridor as a column mask (§4.9.6).
+   *
+   * Registered at substage 3b, long before this pass runs, and handed straight
+   * through to the router — which discounts it rather than being confined to
+   * it. Absent when the document has no road node or its anchors had no coarse
+   * constraints to string a corridor through.
+   */
+  readonly roadCorridor?: Uint8Array;
 }
 
 /** Aggregate numbers about what the structure pass built. */
@@ -114,6 +123,8 @@ export interface StructureStats {
   readonly tunnelLength: number;
   readonly tunnelStairSteps: number;
   readonly tunnelLanterns: number;
+  /** Shared chambers dug where two galleries crossed. */
+  readonly tunnelJunctions: number;
   /** Props built by `prop.place@0`. */
   readonly props: number;
   /** Prop nodes the placer could find no site for. */
@@ -253,9 +264,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   }
 
   // --- roads ---------------------------------------------------------------
-  // v0.2 §4.9.6: not yet — `road.network@0` is not a *placed* node, so it has no
-  // envelope, no yaw and no occupancy of its own before routing. It is found by
-  // walking the document rather than the solver's placement list.
+  // §4.9.6: `road.network@0` reserved its route corridor at substage 3b, and
+  // `roadCorridor` is that reservation — but it is still not a *placed* node,
+  // with no envelope, no yaw and no occupancy of its own before routing, so it
+  // is found by walking the document rather than the solver's placement list.
   let roads: RoadNetworkResult | undefined;
   const roadNode = [...docNodes.values()].find((n) => n.generator === "road.network@0");
   if (roadNode !== undefined) {
@@ -274,6 +286,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       ...(plazaPlacement === undefined ? {} : { plaza: plazaPlacement }),
       ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+      ...(input.roadCorridor === undefined ? {} : { corridor: input.roadCorridor }),
     });
     diagnostics.push(...roads.diagnostics);
     blocks.push(...roads.blocks);
@@ -365,6 +378,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       tunnelLength: tunnelPass.tunnels.reduce((sum, t) => sum + t.path.length, 0),
       tunnelStairSteps: tunnelPass.tunnels.reduce((sum, t) => sum + t.stairSteps, 0),
       tunnelLanterns: tunnelPass.tunnels.reduce((sum, t) => sum + t.lanterns, 0),
+      tunnelJunctions: tunnelPass.tunnels.reduce((sum, t) => sum + t.junctions.length, 0),
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,

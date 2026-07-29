@@ -22,6 +22,11 @@ import {
 } from "@terrainist/spec";
 
 import {
+  corridorHit,
+  resolveCorridor,
+  type RouteCorridor,
+} from "./corridors.js";
+import {
   distanceToRect,
   intersectRect,
   isZoneToken,
@@ -32,6 +37,7 @@ import {
   type Rect,
 } from "./frames.js";
 import { frontFace, rotateFace } from "./ports.js";
+import { productSideAt, type TerrainProductIndex } from "./products.js";
 import type { LayoutNodeInput, Placement } from "./types.js";
 
 /** A candidate placement being scored. */
@@ -50,6 +56,10 @@ export interface EvalContext {
   readonly placed: ReadonlyMap<string, Placement>;
   /** Every node the solver knows about, keyed by id — for tag selectors. */
   readonly nodes: readonly LayoutNodeInput[];
+  /** Route corridors frozen at substage 3b (§4.9.6) — what `along` binds to. */
+  readonly corridors?: readonly RouteCorridor[];
+  /** Derived `@terrain:` products — what `on` restricts against (§4.2). */
+  readonly products?: TerrainProductIndex;
 }
 
 /** The verdict on one constraint against one candidate. */
@@ -121,6 +131,10 @@ export function evaluateConstraint(
       return facingEval(constraint, candidate, ctx, hard, weight);
     case "connected":
       return connectedEval(constraint, candidate, ctx, weight);
+    case "along":
+      return alongEval(constraint, candidate, ctx, weight);
+    case "on":
+      return onEval(constraint, candidate, ctx, hard, weight);
     // `not_overlapping`, `clearance` and `terrain_conform` are enforced
     // structurally by the solver (overlap tests, pad edits), not as costs.
     default:
@@ -370,6 +384,204 @@ function connectedEval(
   for (const r of rects) nearest = Math.min(nearest, rectGap(candidate.rect, r));
   if (nearest === 0) return OK;
   return { feasible: true, cost: (weight * nearest) / ctx.frameNorm, satisfied: true };
+}
+
+/* -------------------------------------------------------------------------- */
+/* `along` / `beside` (§4.4, §4.9.6)                                           */
+/* -------------------------------------------------------------------------- */
+
+/** Default lateral band of an `along` constraint, in blocks (§4.4). */
+export const ALONG_DEFAULT_OFFSET: readonly [number, number] = [1, 4];
+
+/** Default lateral band of a `beside`, which is a wider `along` (§4.4). */
+export const BESIDE_DEFAULT_OFFSET: readonly [number, number] = [2, 8];
+
+/**
+ * `along` — the pass-3 half of a corridor binding (§4.4, §4.9.6).
+ *
+ * Everything is measured against the **corridor**, never against a centreline:
+ * the polygon is frozen at 3b and the line inside it is still the router's to
+ * choose, so a cost read off the line would be a cost read off a number that is
+ * going to change. `corridorHit` returns the distance to the centreline and
+ * `clearance` is that minus the half-width — the distance to the corridor's
+ * *edge*, which is what §4.4's `offset` is defined against.
+ *
+ * Four terms, all in blocks, all normalized by `frameNorm` like every other
+ * soft cost in this file:
+ *
+ * 1. **offset** — how far outside `[min, max]` the lateral clearance falls;
+ * 2. **side** — a flat miss of the band's own width when the footprint is on
+ *    the wrong side of the line, which is never satisfiable by moving closer;
+ * 3. **`at`** — how far along the run the closest point is, against the
+ *    declared normalized stretch, converted back to blocks by the run length;
+ * 4. **orientation** — for an elongated footprint, whether its long axis runs
+ *    with the corridor. A hall built across the street rather than along it is
+ *    the single most visible way to get this constraint wrong, and yaw is
+ *    quantized to 90°, so the test is just "is the long axis the same axis the
+ *    line mostly runs on". Charged as the footprint's own long extent, so a
+ *    barn cares about it more than a shed does.
+ *
+ * Scored soft whatever the declared strength, exactly as `connected` is, and
+ * for the same reason: §4.9.6 hands the last word to a pass-6 re-route and a
+ * bounded nudge. Vetoing placements at 3d against a corridor drawn from coarse
+ * anchor points would be this compiler pretending to a precision it does not
+ * have until pass 6.
+ */
+function alongEval(
+  constraint: CanonicalConstraint,
+  candidate: Candidate,
+  ctx: EvalContext,
+  weight: number,
+): ConstraintEval {
+  const target = constraint["target"];
+  if (typeof target !== "string") return OK;
+  const corridor = resolveCorridor(target, ctx.corridors ?? []);
+  // Nothing registered a corridor by that name. Reported unsatisfied — the
+  // author asked for something the document does not contain — but never a
+  // veto: an unresolvable target must not delete the node from the world.
+  if (corridor === null) return { feasible: true, cost: 0, satisfied: false };
+
+  const hit = corridorHit(corridor, candidate.anchor.x, candidate.anchor.z);
+  const fallback = constraint["desugaredFrom"] === "beside" ? BESIDE_DEFAULT_OFFSET : ALONG_DEFAULT_OFFSET;
+  const [near, far] = offsetRange(constraint["offset"], fallback);
+
+  let violation = Math.max(0, near - hit.clearance, hit.clearance - far);
+
+  const side = constraint["side"];
+  if ((side === "left" || side === "right") && hit.side !== 0) {
+    const want = side === "left" ? 1 : -1;
+    if (hit.side !== want) violation += far - near + 1;
+  }
+
+  const at = constraint["at"];
+  if (at !== undefined) {
+    const [lo, hi] = Array.isArray(at)
+      ? [at[0] as number, at[1] as number]
+      : typeof at === "number"
+        ? [at, at]
+        : [0, 1];
+    const miss = Math.max(0, lo - hit.position, hit.position - hi);
+    violation += miss * corridor.length;
+  }
+
+  let cost = (weight * violation) / ctx.frameNorm;
+  const satisfied = violation === 0;
+
+  // --- orientation ---------------------------------------------------------
+  const w = candidate.rect.x1 - candidate.rect.x0 + 1;
+  const d = candidate.rect.z1 - candidate.rect.z0 + 1;
+  const longExtent = Math.max(w, d);
+  const shortExtent = Math.min(w, d);
+  if (longExtent >= ALONG_ELONGATION * shortExtent) {
+    const lineAxis = Math.abs(hit.tangent.x) >= Math.abs(hit.tangent.z) ? "x" : "z";
+    const longAxis = w >= d ? "x" : "z";
+    if (longAxis !== lineAxis) cost += (weight * longExtent) / ctx.frameNorm;
+  }
+
+  // --- faceRoad ------------------------------------------------------------
+  // §4.4: `faceRoad` defaults true on `along` and false on `beside`, and the
+  // desugaring has already written the right default into the constraint.
+  if (constraint["faceRoad"] === true) {
+    const local = frontFace(ctx.self.ports, undefined);
+    const world = rotateFace(local, candidate.yaw);
+    const angle = faceAngleTo(world, candidate.anchor, {
+      x: Math.floor(hit.closest.x),
+      z: Math.floor(hit.closest.z),
+    });
+    if (angle > 0) cost += (weight * angle) / 180;
+  }
+
+  return { feasible: true, cost, satisfied };
+}
+
+/** Aspect ratio at which a footprint counts as elongated enough to orient. */
+export const ALONG_ELONGATION = 1.5;
+
+/** Read an `offset` field: a number, a `[min, max]` pair, or the type's default. */
+function offsetRange(value: unknown, fallback: readonly [number, number]): [number, number] {
+  if (typeof value === "number") return [value, value];
+  if (Array.isArray(value) && typeof value[0] === "number" && typeof value[1] === "number") {
+    return [value[0] as number, value[1] as number];
+  }
+  return [fallback[0] as number, fallback[1] as number];
+}
+
+/* -------------------------------------------------------------------------- */
+/* `on` (§4.4)                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/** `on.band` — how far a point or polyline product widens into a domain. */
+export const ON_DEFAULT_BAND = 8;
+
+/** `on.partial` — the fraction of the footprint that must lie in the band. */
+export const ON_DEFAULT_PARTIAL = 0.5;
+
+/**
+ * `on` — the footprint sits on a terrain product (§4.4).
+ *
+ * A **domain restriction**, applied here rather than as a pull: hard by
+ * default, so a candidate that misses the band is infeasible and the ladder
+ * demotes the constraint (step 5) if nothing else works. That is exactly what
+ * §4.9's "hard coarse constraints" paragraph asks for, and it is the difference
+ * between "the lighthouse is on the coast" and "the lighthouse would rather be
+ * on the coast".
+ *
+ * The measure is the fraction of the footprint's columns inside the widened
+ * product, compared against `partial`. Soft cost, when demoted, is the shortfall
+ * in that fraction scaled to blocks by the footprint's own diagonal — so it is
+ * in the same units as every other term and a near miss reads as a near miss.
+ */
+function onEval(
+  constraint: CanonicalConstraint,
+  candidate: Candidate,
+  ctx: EvalContext,
+  hard: boolean,
+  weight: number,
+): ConstraintEval {
+  const target = constraint["target"];
+  if (typeof target !== "string") return OK;
+  const products = ctx.products;
+  if (products === undefined) return OK;
+  const product = products.get(target);
+  // The document names a product this terrain did not produce — no coast in a
+  // landlocked region, no ridge edit anywhere. Unsatisfied, never a veto: an
+  // empty domain would delete every candidate and the node with it.
+  if (product === null) return { feasible: true, cost: 0, satisfied: false };
+
+  const band = typeof constraint["band"] === "number" ? constraint["band"] : ON_DEFAULT_BAND;
+  const mask = products.band(target, band);
+  if (mask === null) return { feasible: true, cost: 0, satisfied: false };
+
+  const wantPartial = typeof constraint["partial"] === "number" ? constraint["partial"] : ON_DEFAULT_PARTIAL;
+  const side = constraint["side"];
+  const wantSide = side === "left" ? 1 : side === "right" ? -1 : 0;
+  const { region } = products;
+
+  let inside = 0;
+  let total = 0;
+  for (let z = candidate.rect.z0; z <= candidate.rect.z1; z++) {
+    const j = z - region.z0;
+    for (let x = candidate.rect.x0; x <= candidate.rect.x1; x++) {
+      total++;
+      const i = x - region.x0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      if (mask[j * region.width + i] !== 1) continue;
+      if (wantSide !== 0 && productSideAt(product, x, z) !== wantSide) continue;
+      inside++;
+    }
+  }
+  const fraction = total === 0 ? 0 : inside / total;
+  if (fraction >= wantPartial) return OK;
+  if (hard) return { feasible: false, cost: 0, satisfied: false };
+
+  const dx = candidate.rect.x1 - candidate.rect.x0 + 1;
+  const dz = candidate.rect.z1 - candidate.rect.z0 + 1;
+  const diagonal = Math.sqrt(dx * dx + dz * dz);
+  return {
+    feasible: true,
+    cost: (weight * (wantPartial - fraction) * diagonal) / ctx.frameNorm,
+    satisfied: false,
+  };
 }
 
 /**

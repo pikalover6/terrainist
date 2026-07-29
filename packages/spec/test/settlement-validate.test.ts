@@ -196,18 +196,85 @@ describe("settlement profile — constraints", () => {
   });
 
   it("passes every unimplemented registry type through as W407, and none of the implemented ones", () => {
-    // `connected` is the one tier-2 type: the solver costs it and the
-    // connective pass realizes it, so a bare `{ "type": "connected" }` gets an
-    // error for its missing target rather than a W407 pass-through.
+    // The tier-2 types — `connected`, and since the corridor work `along` and
+    // its `beside` sugar — are costed by the solver and finished by a later
+    // pass, so a bare `{ "type": … }` gets an error for its missing target or
+    // selector rather than a W407 pass-through.
+    //
+    // `on` is tier 1 (a domain restriction against a terrain product), but its
+    // *target* is checked, so a bare `on` still warns — about the target, not
+    // about the type. The `target` given here is deliberately a product name
+    // for that reason.
     for (const type of CONSTRAINT_REGISTRY) {
-      const result = validateSettlementDocument(doc([building({ constraints: [{ type, to: "other" }] })]));
+      const result = validateSettlementDocument(
+        doc([building({ constraints: [{ type, to: "other", target: "@terrain:ridge" }] })]),
+      );
       const hasW407 = result.diagnostics.some((d) => d.code === "LOAM-W407");
       const implemented = [
         "zone", "at", "adjacent_to", "distance", "facing",
         "not_overlapping", "clearance", "terrain_conform", "connected",
+        "along", "beside", "on",
       ];
       expect(hasW407, type).toBe(!implemented.includes(type));
     }
+  });
+
+  describe("`along` / `beside` / `on` — the tier-2 corridor constraints", () => {
+    /** Diagnostics about the constraint itself, with the fixture's own noise dropped. */
+    const of = (constraint: Record<string, unknown>) =>
+      validateSettlementDocument(doc([building({ constraints: [constraint] })])).diagnostics.filter(
+        (d) => d.name === "BAD_CONSTRAINT" || d.name === "CONSTRAINT_NOT_IMPLEMENTED",
+      );
+
+    it("accepts a well-formed `along` with nothing to say about it", () => {
+      expect(of({ along: "main_street", offset: [3, 6], side: "left", at: 0.5 })).toEqual([]);
+    });
+
+    it("accepts `beside` — its fields are `along`'s", () => {
+      expect(of({ beside: "@terrain:river", offset: 4, faceRoad: false })).toEqual([]);
+    });
+
+    it("needs a target, and says what one looks like", () => {
+      const d = of({ type: "along", offset: 3 })[0];
+      expect(d?.name).toBe("BAD_CONSTRAINT");
+      expect(d?.message).toMatch(/target/);
+    });
+
+    it("rejects an offset band that reads backwards, and offers the swap", () => {
+      const d = of({ along: "main_street", offset: [8, 2] })[0];
+      expect(d?.name).toBe("BAD_CONSTRAINT");
+      expect(d?.fix).toMatch(/near, far/);
+    });
+
+    it("rejects an `at` outside the run", () => {
+      expect(of({ along: "main_street", at: 1.5 })[0]?.name).toBe("BAD_CONSTRAINT");
+      expect(of({ along: "main_street", at: [0.2, 0.4] })).toEqual([]);
+    });
+
+    it("says out loud that `spacing` is carried and not enforced", () => {
+      const d = of({ along: "main_street", spacing: 3 })[0];
+      expect(d?.code).toBe("LOAM-W407");
+      expect(d?.fix).toMatch(/clearance/);
+    });
+
+    it("checks `on` against the products this compiler actually derives", () => {
+      expect(of({ on: "@terrain:coastline", band: 6, partial: 0.8 })).toEqual([]);
+      expect(of({ on: "@terrain:ridge" })).toEqual([]);
+      expect(of({ on: "@terrain:peak" })).toEqual([]);
+      const d = of({ on: "volcano_kez#rim" })[0];
+      expect(d?.code).toBe("LOAM-W407");
+      expect(d?.fix).toMatch(/@terrain:coastline/);
+    });
+
+    it("rejects an `on` band or partial outside its range", () => {
+      const bad = (c: Record<string, unknown>): string[] =>
+        validateSettlementDocument(doc([building({ constraints: [c] })]))
+          .diagnostics.filter((d) => d.severity === "error")
+          .map((d) => d.name);
+      expect(bad({ on: "@terrain:peak", band: 0 })).toContain("PARAM_OUT_OF_RANGE");
+      expect(bad({ on: "@terrain:peak", partial: 2 })).toContain("PARAM_OUT_OF_RANGE");
+      expect(bad({ on: "@terrain:peak", band: 6, partial: 0.9 })).toEqual([]);
+    });
   });
 
   it("errors on a constraint type outside the v0.2 registry", () => {
