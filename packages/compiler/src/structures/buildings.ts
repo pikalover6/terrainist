@@ -17,11 +17,13 @@
 
 import {
   generateBuilding,
+  rotateCells,
   rotateOps,
   type BuildingDoor,
   type BuildingMaterials,
   type BuildingMeta,
   type BuildingParams,
+  type BuildingWing,
   type Cardinal,
   type LocalVoxelOp,
   type Seed256,
@@ -80,6 +82,15 @@ export interface BuiltBuilding {
   readonly basementFloorY?: number;
   /** The cellar's enclosed interior, in world columns. */
   readonly basementInterior?: Rect;
+  /**
+   * The columns this building actually covers, as `"x,z"` world keys.
+   *
+   * Equal to every column of {@link BuiltBuilding.footprint} for a rect plan,
+   * and a strict subset of it for an L or a T. Consumers that ask "is this
+   * ground built on?" should prefer this to the rect; the rect remains the
+   * *envelope*, which is what the solver reserved and the pad levelled.
+   */
+  readonly cells: ReadonlySet<string>;
 }
 
 /** Result of the building pass. */
@@ -105,27 +116,40 @@ export function buildBuildings(
   const built: BuiltBuilding[] = [];
   const diagnostics: LoamDiagnostic[] = [];
   const missing = new Set<string>();
+
+  // The grammar runs for every job first, because the *true* cells each
+  // building covers are an output of the grammar (an L covers less than its
+  // envelope) and the apron rule below needs every building's cells before it
+  // can place the first block. Generation is pure, so hoisting it changes
+  // nothing about what is emitted or in what order.
+  const results = jobs.map((job) => {
+    const door = doorOf(job.ports);
+    return generateBuilding({
+      size: job.size,
+      params: job.params,
+      seed: job.seed,
+      foundationDepth: skirtDepth(plan, job.placement),
+      ...(door === null ? {} : { door }),
+      ...(job.materials === undefined ? {} : { materials: job.materials }),
+      ...(job.style === undefined ? {} : { style: job.style }),
+    });
+  });
+
   // The grammar's decorations (eaves, shutters, window boxes, the porch lamp)
   // reach one block into the apron outside the footprint. That is fine over
   // open ground and wrong over a neighbour, so an apron op that lands inside
   // *another* building's claim is dropped rather than allowed to punch through
   // its wall. Nothing structural is ever in the apron, so dropping is safe.
-  const foreign = jobs.map((j) => j.placement.footprint);
+  //
+  // The claim is the true cell set, not the envelope: over an L's notch there
+  // is no wall to punch through, and an eave that reaches into it is over open
+  // ground like any other.
+  const cellSets = jobs.map((job, k) => worldCells(job, results[k] as ReturnType<typeof generateBuilding>));
 
-  for (const job of jobs) {
+  for (const [index, job] of jobs.entries()) {
     const { placement } = job;
-    const door = doorOf(job.ports);
-    const foundationDepth = skirtDepth(plan, placement);
-
-    const result = generateBuilding({
-      size: job.size,
-      params: job.params,
-      seed: job.seed,
-      foundationDepth,
-      ...(door === null ? {} : { door }),
-      ...(job.materials === undefined ? {} : { materials: job.materials }),
-      ...(job.style === undefined ? {} : { style: job.style }),
-    });
+    const result = results[index] as ReturnType<typeof generateBuilding>;
+    const cells = cellSets[index] as ReadonlySet<string>;
 
     const [sizeX, , sizeZ] = job.size;
     const cellar = result.meta.basementDepth;
@@ -143,17 +167,15 @@ export function buildBuildings(
     for (const op of rotated) {
       const x = tx + op.x;
       const z = tz + op.z;
-      const inFootprint = contains(placement.footprint, x, z);
-      if (!inFootprint && foreign.some((r) => r !== placement.footprint && contains(r, x, z))) {
-        continue;
-      }
+      const key = `${x},${z}`;
+      const inFootprint = cells.has(key);
+      if (!inFootprint && cellSets.some((s, k) => k !== index && s.has(key))) continue;
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
       const y = floorY + op.y;
       if (inFootprint) {
         if (op.y === -1) skirtState.set(`${x},${z}`, stateId);
       } else if (op.y <= 0) {
-        const key = `${x},${z}`;
         const known = apronFloor.get(key);
         if (known === undefined || y < known) apronFloor.set(key, y);
       }
@@ -173,6 +195,7 @@ export function buildBuildings(
       },
       meta: result.meta,
       blockCount: count,
+      cells,
       floorY,
       basementDepth: cellar,
       ...(cellar === 0
@@ -208,6 +231,30 @@ export function buildBuildings(
 /** True when `(x, z)` is inside an inclusive rectangle. */
 function contains(rect: Rect, x: number, z: number): boolean {
   return x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+}
+
+/**
+ * The world columns one building covers, as `"x,z"` keys.
+ *
+ * The grammar's cells are node-local and unrotated; the solver's yaw and
+ * translation carry them into the world through exactly the transform
+ * {@link rotateOps} applies to the ops, so a cell and the block standing on it
+ * can never disagree about which building owns the column.
+ *
+ * For a rect plan this is every column of `placement.footprint` — the same set
+ * the old rect test returned — so nothing about a rectangular village moves.
+ */
+function worldCells(
+  job: BuildingJob,
+  result: { readonly meta: { readonly cells: readonly { readonly x: number; readonly z: number }[] } },
+): ReadonlySet<string> {
+  const [sizeX, , sizeZ] = job.size;
+  const [tx, , tz] = job.placement.translation;
+  const out = new Set<string>();
+  for (const c of rotateCells(result.meta.cells, job.placement.yaw, sizeX, sizeZ)) {
+    out.add(`${tx + c.x},${tz + c.z}`);
+  }
+  return out;
 }
 
 /**
@@ -250,7 +297,10 @@ function underpinApron(
     // footing rather than as a patch of unrelated stone.
     const nx = Math.min(Math.max(x, rect.x0), rect.x1);
     const nz = Math.min(Math.max(z, rect.z0), rect.z1);
-    const stateId = skirtState.get(`${nx},${nz}`);
+    // Clamping to the envelope finds the nearest wall of a rect plan every
+    // time. On an L it can land in the notch, where there is no skirt at all —
+    // so fall back to the nearest column that *does* have one.
+    const stateId = skirtState.get(`${nx},${nz}`) ?? nearestSkirt(skirtState, x, z);
     if (stateId === undefined) continue;
     const bottom = Math.max(floor + 1, top - MAX_FOUNDATION_DEPTH + 1);
     for (let y = top; y >= bottom; y--) {
@@ -259,6 +309,30 @@ function underpinApron(
     }
   }
   return added;
+}
+
+/**
+ * The skirt state of the built column nearest `(x, z)`, or `undefined`.
+ *
+ * Ties break on the sorted key, so the answer is a pure function of the
+ * geometry rather than of Map insertion order.
+ */
+function nearestSkirt(
+  skirtState: ReadonlyMap<string, number>,
+  x: number,
+  z: number,
+): number | undefined {
+  let best: number | undefined;
+  let bestCost = Infinity;
+  for (const key of [...skirtState.keys()].sort()) {
+    const [kx, kz] = key.split(",").map(Number) as [number, number];
+    const cost = Math.abs(kx - x) + Math.abs(kz - z);
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = skirtState.get(key) as number;
+    }
+  }
+  return best;
 }
 
 /**
@@ -300,6 +374,34 @@ export function doorOf(ports: Readonly<Record<string, PortDeclaration>>): Buildi
     return { face: cardinal, ...(port.at === undefined ? {} : { at: port.at }) };
   }
   return null;
+}
+
+/**
+ * Read a document's `wing` param into the grammar's shape, or `undefined`.
+ *
+ * The seam for wiring L/T plans through from Loam. `structures/index.ts` reads
+ * generator params by an explicit whitelist — deliberately, so an unimplemented
+ * param can never reach the grammar by accident — and this is the one line that
+ * whitelist needs when the plan vocabulary is turned on:
+ *
+ * ```ts
+ * ...(wingParamOf(params) === undefined ? {} : { wing: wingParamOf(params) }),
+ * ```
+ *
+ * Shape errors are `undefined` here rather than thrown; the profile validator
+ * is where a defective document is told about them, with a fix hint.
+ */
+export function wingParamOf(value: unknown): BuildingWing | undefined {
+  if (value === null || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const size = raw["size"];
+  const side = raw["side"];
+  const offset = raw["offset"] ?? 0;
+  if (!Array.isArray(size) || size.length !== 2) return undefined;
+  const [wx, wz] = size as unknown[];
+  if (typeof wx !== "number" || typeof wz !== "number" || typeof offset !== "number") return undefined;
+  if (side !== "north" && side !== "east" && side !== "south" && side !== "west") return undefined;
+  return { size: [wx, wz], side, offset };
 }
 
 /** Resolve one op to a state id, remembering names the block table refuses. */

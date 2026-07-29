@@ -298,6 +298,12 @@ export interface BuildingParams {
    * that spelling is settled.
    */
   readonly basement?: number;
+  /**
+   * A second rect unioned onto the main one — the L and the T of v0.2 §7's
+   * `footprint` vocabulary. See {@link BuildingWing}. Ignored (silently, so a
+   * document is never failed by the grammar) when it does not validate.
+   */
+  readonly wing?: BuildingWing;
 }
 
 /** Lowest story height that still fits a two-block door plus a lintel. */
@@ -355,6 +361,301 @@ export interface LocalRect {
   readonly z1: number;
 }
 
+/* -------------------------------------------------------------------------- */
+/* footprint — the main rect, plus an optional wing                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A wing: the second rect of an L- or T-shaped plan.
+ *
+ * The *envelope* never changes. `size` is still the bounding box the solver
+ * placed and the occupancy grid claimed; a wing does not grow it, it **carves
+ * it**. The main rect is the envelope minus the wing's reach on the wing's
+ * side, and the wing is the strip it gives up — so a `[13, 8, 11]` cottage with
+ * a `{ size: [5, 4], side: "south", offset: 0 }` wing is a 13 × 8 main block
+ * with a 5 × 4 ell hanging off its south-west corner, and the two together
+ * still fit exactly inside 13 × 11.
+ *
+ * That is the only arrangement in which the layout solver, the pad edit, the
+ * road pass and the terrain clip all keep working untouched: every one of them
+ * reasons about the bounding box, and the bounding box is still true. What
+ * changes is which *cells inside it* are built — and those are the cells the
+ * emit pass claims (`meta.cells`), so the ground the building actually owns is
+ * the ground it actually covers.
+ *
+ * - `size` — `[x, z]` extents of the wing rect, in blocks.
+ * - `side` — which face of the main block it hangs off.
+ * - `offset` — where along that face it starts, from the envelope's min corner
+ *   on the along-axis (x for a north/south wing, z for an east/west one).
+ *
+ * The wing **shares one row** with the main rect: the main block's wall line on
+ * that side. That row is what makes the union a single connected solid rather
+ * than two buildings touching, and its interior cells are the opening between
+ * the two rooms — which is why the run has to be at least
+ * {@link MIN_WING_OVERLAP} long (a two-cell overlap is two corner posts and no
+ * doorway).
+ */
+export interface BuildingWing {
+  /** `[x, z]` extents of the wing rect. */
+  readonly size: readonly [number, number];
+  /** The main block's face the wing hangs off. */
+  readonly side: Cardinal;
+  /** Start of the wing along the shared face, from the envelope's min corner. */
+  readonly offset: number;
+}
+
+/** Shortest shared run that still leaves a doorway between the two rects. */
+export const MIN_WING_OVERLAP = 3;
+
+/** Shallowest wing that is a room rather than a buttress. */
+export const MIN_WING_DEPTH = 3;
+
+/** Least main-block depth left after a wing has taken its bite. */
+export const MIN_MAIN_DEPTH = 3;
+
+/**
+ * A resolved footprint: one or two rects inside a bounding box.
+ *
+ * `wing === null` is the pure-rect case, and it is a genuine fast path — the
+ * main rect *is* the bounding box, every predicate below reduces to the
+ * inequalities the pre-wing grammar used inline, and the emitted ops are
+ * byte-identical to what that grammar produced. `test/footprints.test.ts`
+ * pins that.
+ */
+export interface Footprint {
+  /** Bounding-box extents — the envelope the solver placed. */
+  readonly sx: number;
+  readonly sz: number;
+  readonly main: LocalRect;
+  readonly wing: LocalRect | null;
+}
+
+/** True when `(x, z)` is inside an inclusive rect. */
+export function inRect(rect: LocalRect, x: number, z: number): boolean {
+  return x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+}
+
+/** True when `(x, z)` is a built cell of the footprint. */
+export function footprintCovers(fp: Footprint, x: number, z: number): boolean {
+  if (inRect(fp.main, x, z)) return true;
+  return fp.wing !== null && inRect(fp.wing, x, z);
+}
+
+/** Why a wing was refused, or `null` when it validates. */
+export type WingRejection =
+  | "not_finite"
+  | "overlap_too_short"
+  | "wing_too_shallow"
+  | "main_too_shallow"
+  | "overhangs";
+
+/**
+ * Check a wing against a bounding box.
+ *
+ * Returns `null` when it is buildable, or the reason it is not. The grammar
+ * itself is forgiving — a wing it refuses is simply dropped and the building
+ * comes out a rect — because the place a defective document should be *told*
+ * about it is the profile validator, which reports this same set of reasons
+ * with fix hints.
+ */
+export function checkWing(sx: number, sz: number, wing: BuildingWing): WingRejection | null {
+  const wx = wing.size[0];
+  const wz = wing.size[1];
+  const offset = wing.offset;
+  if (
+    !Number.isFinite(wx) ||
+    !Number.isFinite(wz) ||
+    !Number.isFinite(offset) ||
+    !Number.isInteger(wx) ||
+    !Number.isInteger(wz) ||
+    !Number.isInteger(offset)
+  ) {
+    return "not_finite";
+  }
+  const alongX = wing.side === "north" || wing.side === "south";
+  const span = alongX ? wx : wz;
+  const depth = alongX ? wz : wx;
+  const boxSpan = alongX ? sx : sz;
+  const boxDepth = alongX ? sz : sx;
+  if (span < MIN_WING_OVERLAP) return "overlap_too_short";
+  if (depth < MIN_WING_DEPTH) return "wing_too_shallow";
+  // The wing shares one row with the main block, so it eats `depth - 1` of the
+  // envelope's depth and leaves the rest.
+  if (boxDepth - depth + 1 < MIN_MAIN_DEPTH) return "main_too_shallow";
+  // Straight edges only: a wing that ran past the end of the face it hangs off
+  // would put a wall segment in mid-air over the notch, and the outline tracer
+  // would have to invent a corner that is neither convex nor reflex.
+  if (offset < 0 || offset + span > boxSpan) return "overhangs";
+  return null;
+}
+
+/**
+ * Resolve `(size, wing)` into a footprint.
+ *
+ * A wing that does not pass {@link checkWing} is dropped and the pure rect
+ * returned, which is also what happens when no wing was asked for at all.
+ */
+export function resolveFootprint(sx: number, sz: number, wing?: BuildingWing): Footprint {
+  const rect: Footprint = { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null };
+  if (wing === undefined) return rect;
+  if (checkWing(sx, sz, wing) !== null) return rect;
+  const [wx, wz] = wing.size;
+  const off = wing.offset;
+  switch (wing.side) {
+    case "south": {
+      const shared = sz - wz;
+      return {
+        sx,
+        sz,
+        main: { x0: 0, z0: 0, x1: sx - 1, z1: shared },
+        wing: { x0: off, z0: shared, x1: off + wx - 1, z1: sz - 1 },
+      };
+    }
+    case "north": {
+      const shared = wz - 1;
+      return {
+        sx,
+        sz,
+        main: { x0: 0, z0: shared, x1: sx - 1, z1: sz - 1 },
+        wing: { x0: off, z0: 0, x1: off + wx - 1, z1: shared },
+      };
+    }
+    case "east": {
+      const shared = sx - wx;
+      return {
+        sx,
+        sz,
+        main: { x0: 0, z0: 0, x1: shared, z1: sz - 1 },
+        wing: { x0: shared, z0: off, x1: sx - 1, z1: off + wz - 1 },
+      };
+    }
+    default: {
+      const shared = wx - 1;
+      return {
+        sx,
+        sz,
+        main: { x0: shared, z0: 0, x1: sx - 1, z1: sz - 1 },
+        wing: { x0: 0, z0: off, x1: shared, z1: off + wz - 1 },
+      };
+    }
+  }
+}
+
+/** A traced outline cell: where the wall turns, and which way it faces out. */
+export interface OutlineCell {
+  readonly x: number;
+  readonly z: number;
+  /** Cardinals in which the next cell is *not* part of the footprint. */
+  readonly blocked: readonly Cardinal[];
+  /**
+   * True at a post: a convex corner (two perpendicular blocked sides) or a
+   * reflex one (none blocked, but a diagonal neighbour missing). Both need a
+   * standing post rather than a wall course, and neither may be glazed.
+   */
+  readonly corner: boolean;
+  /** True when the wall runs along x — the course a belt log lies down. */
+  readonly alongX: boolean;
+  /** The outward normal; `north` at a reflex corner, which has none. */
+  readonly outward: Cardinal;
+}
+
+/** The traced footprint: its cells, its outline and its enclosed interior. */
+export interface Shell {
+  readonly fp: Footprint;
+  /** Every built cell, in canonical (z, x) order. */
+  readonly cells: readonly { readonly x: number; readonly z: number }[];
+  /** The outline, in the same canonical order. */
+  readonly ring: readonly OutlineCell[];
+  /** Enclosed cells — floor, never wall — in the same order. */
+  readonly interiorCells: readonly { readonly x: number; readonly z: number }[];
+}
+
+/** Cardinals in outward-priority order: the tie-break at a convex corner. */
+const OUTWARD_ORDER: readonly Cardinal[] = Object.freeze(["north", "south", "west", "east"] as const);
+
+/**
+ * Trace a footprint into cells, outline and interior.
+ *
+ * A cell is **interior** when all eight of its neighbours are built, and
+ * **outline** otherwise. Eight and not four, deliberately: at a reflex corner
+ * the only missing neighbour is the diagonal one, and calling that cell
+ * interior would leave the two wall runs meeting corner-to-corner with a
+ * one-block diagonal hole between them — daylight through the elbow of every L.
+ *
+ * On a pure rect the two rules agree exactly with the old inline ones: the
+ * interior is `1..sx-2 × 1..sz-2`, the ring is {@link perimeter}'s cells in
+ * {@link perimeter}'s order, `corner` is the four box corners, `alongX` is
+ * `z === 0 || z === sz - 1`, and `outward` matches {@link outwardOf}. That is
+ * what makes the rect case byte-identical rather than merely equivalent.
+ */
+export function traceShell(fp: Footprint): Shell {
+  const cells: { x: number; z: number }[] = [];
+  const ring: OutlineCell[] = [];
+  const interiorCells: { x: number; z: number }[] = [];
+  const has = (x: number, z: number): boolean => footprintCovers(fp, x, z);
+  for (let z = 0; z < fp.sz; z++) {
+    for (let x = 0; x < fp.sx; x++) {
+      if (!has(x, z)) continue;
+      cells.push({ x, z });
+      let enclosed = true;
+      for (let dz = -1; dz <= 1 && enclosed; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dz === 0) continue;
+          if (!has(x + dx, z + dz)) {
+            enclosed = false;
+            break;
+          }
+        }
+      }
+      if (enclosed) {
+        interiorCells.push({ x, z });
+        continue;
+      }
+      const blocked: Cardinal[] = [];
+      for (const dir of OUTWARD_ORDER) {
+        const [dx, dz] = cardinalStep(dir);
+        if (!has(x + dx, z + dz)) blocked.push(dir);
+      }
+      const onZ = blocked.includes("north") || blocked.includes("south");
+      const onX = blocked.includes("west") || blocked.includes("east");
+      const corner = (onZ && onX) || blocked.length === 0;
+      ring.push({
+        x,
+        z,
+        blocked,
+        corner,
+        alongX: onZ,
+        outward: blocked[0] ?? "north",
+      });
+    }
+  }
+  return { fp, cells, ring, interiorCells };
+}
+
+/** Index a shell's outline by cell, for the facade's neighbour questions. */
+export function outlineIndex(shell: Shell): ReadonlyMap<string, OutlineCell> {
+  const map = new Map<string, OutlineCell>();
+  for (const cell of shell.ring) map.set(`${cell.x},${cell.z}`, cell);
+  return map;
+}
+
+/**
+ * The footprint's cells under a yaw, as `x,z` keys in the rotated box.
+ *
+ * The same rotation {@link rotateOps} applies to the ops, applied to the claim
+ * — so "the cells this building owns" survives the solver's yaw without the
+ * emit pass having to re-derive the plan.
+ */
+export function rotateCells(
+  cells: readonly { readonly x: number; readonly z: number }[],
+  yaw: StructureYaw,
+  sizeX: number,
+  sizeZ: number,
+): { x: number; z: number }[] {
+  const out = cells.map((c) => rotateLocalColumn(c.x, c.z, sizeX, sizeZ, yaw));
+  return out.sort((a, b) => a.z - b.z || a.x - b.x);
+}
+
 /** What the grammar built, for validators, tests and the compile report. */
 export interface BuildingMeta {
   readonly params: ResolvedBuildingParams;
@@ -371,8 +672,34 @@ export interface BuildingMeta {
   readonly foundationDepth: number;
   /** The door's column and face; `null` when the footprint was too small. */
   readonly door: { readonly x: number; readonly z: number; readonly face: Cardinal } | null;
-  /** The enclosed interior, inclusive; empty when the footprint is 2 or less. */
+  /**
+   * The enclosed interior of the **main** rect, inclusive; empty when the
+   * footprint is 2 or less.
+   *
+   * Unchanged by a wing, and deliberately so: every existing consumer — the
+   * fit-out, the chimney, the stair well, the cellar — reasons about a
+   * rectangle, and a wing is additive. {@link BuildingMeta.floorCells} is the
+   * generalization, and it spans both rects.
+   */
   readonly interior: LocalRect;
+  /** The resolved footprint: bounding box, main rect, and the wing or `null`. */
+  readonly footprint: Footprint;
+  /**
+   * Every built cell of the footprint, unrotated, in canonical (z, x) order.
+   *
+   * The building's true claim on the ground. Equal to the whole bounding box in
+   * the pure-rect case; a strict subset of it when there is a wing, which is
+   * what the emit pass reads so an apron decoration over the notch is treated
+   * as an apron op rather than as structure.
+   */
+  readonly cells: readonly { readonly x: number; readonly z: number }[];
+  /**
+   * Enclosed floor cells across **both** rects, in canonical (z, x) order.
+   *
+   * Additive: the archetype fit-out still reads {@link BuildingMeta.interior},
+   * so a wing gets floor, ceiling and light but no furniture in this version.
+   */
+  readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** Y of each story's floor plane, lowest first. */
   readonly floorLevels: readonly number[];
   /** Y of the lowest step of each inter-story stair run. */
@@ -491,7 +818,14 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     cells.set(`${x},${y},${z}`, { x, y, z, block, ...(props === undefined ? {} : { props }) });
   };
 
-  const door = resolveDoor(request.door, sx, sz);
+  // The footprint. A wing carves the envelope; it never grows it, so `sx`/`sz`
+  // stay the bounding box every downstream pass already agreed on.
+  const fp = resolveFootprint(sx, sz, params.wing);
+  const shell = traceShell(fp);
+  const ringAt = outlineIndex(shell);
+  const inFootprint = (x: number, z: number): boolean => footprintCovers(fp, x, z);
+
+  const door = snapDoor(resolveDoor(request.door, sx, sz), shell);
 
   if (archetype === "watchtower") {
     return emitWatchtower({
@@ -505,6 +839,8 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       foundationDepth,
       door,
       materials,
+      footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
+      shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
       params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype },
     });
   }
@@ -519,21 +855,28 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   // --- foundation skirt ----------------------------------------------------
   // The cellar's band (`-1 .. -(cellar + 1)`) is skipped: `emitCellar` owns it,
   // and it emits its own floor slab where the skirt's deepest course would be.
+  // The cellar is dug under the **main** rect only, so the skirt keeps its
+  // courses everywhere else — including under a wing, which would otherwise be
+  // left standing over the hole the cellar never dug.
   for (let d = 1; d <= foundationDepth; d++) {
-    if (cellar > 0 && d <= cellar + 1) continue;
-    for (let z = 0; z < sz; z++) {
-      for (let x = 0; x < sx; x++) put(x, -d, z, foundationAt(x, -d, z));
+    for (const cell of shell.cells) {
+      if (cellar > 0 && d <= cellar + 1 && inRect(fp.main, cell.x, cell.z)) continue;
+      put(cell.x, -d, cell.z, foundationAt(cell.x, -d, cell.z));
     }
   }
 
   // --- ground floor plane --------------------------------------------------
-  const interior: LocalRect = { x0: 1, z0: 1, x1: sx - 2, z1: sz - 2 };
+  const interior: LocalRect = {
+    x0: fp.main.x0 + 1,
+    z0: fp.main.z0 + 1,
+    x1: fp.main.x1 - 1,
+    z1: fp.main.z1 - 1,
+  };
   const hasInterior = interior.x0 <= interior.x1 && interior.z0 <= interior.z1;
-  for (let z = 0; z < sz; z++) {
-    for (let x = 0; x < sx; x++) {
-      const inside = x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
-      put(x, 0, z, inside ? (style["floor.interior"] as string) : foundationAt(x, 0, z));
-    }
+  const isFloor = new Set(shell.interiorCells.map((c) => `${c.x},${c.z}`));
+  for (const cell of shell.cells) {
+    const inside = isFloor.has(`${cell.x},${cell.z}`);
+    put(cell.x, 0, cell.z, inside ? (style["floor.interior"] as string) : foundationAt(cell.x, 0, cell.z));
   }
 
   // --- walls ---------------------------------------------------------------
@@ -541,12 +884,12 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   // belt course of the same at every floor line and at the eave plate, a
   // masonry plinth at y = 1, and a sparse, position-keyed scatter of the accent
   // log through the field so the plank surface has grain without confetti.
-  const ring = perimeter(sx, sz);
+  const ring = shell.ring;
   for (let y = 1; y <= wallTop; y++) {
     const belt = y === wallTop || y % storyHeight === 0;
     for (const cell of ring) {
-      const corner = (cell.x === 0 || cell.x === sx - 1) && (cell.z === 0 || cell.z === sz - 1);
-      const alongX = cell.z === 0 || cell.z === sz - 1;
+      const corner = cell.corner;
+      const alongX = cell.alongX;
       if (corner) {
         put(cell.x, y, cell.z, style["wall.frame"] as string, { axis: "y" });
       } else if (belt) {
@@ -573,13 +916,12 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     const y = s * storyHeight + 2;
     if (y >= wallTop) continue;
     for (const cell of ring) {
-      const corner = (cell.x === 0 || cell.x === sx - 1) && (cell.z === 0 || cell.z === sz - 1);
-      if (corner) continue;
+      if (cell.corner) continue;
       if (door !== null && nearDoor(cell, door)) continue;
-      const alongZ = cell.x === 0 || cell.x === sx - 1;
+      const alongZ = !cell.alongX;
       const index = alongZ ? cell.z : cell.x;
       if (!rhythmHit(rhythm, index)) continue;
-      const out = outwardOf(cell, sx, sz);
+      const out = cell.outward;
       windowCount += emitWindow({
         put,
         style,
@@ -590,8 +932,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         outward: out,
         storyHeight,
         wallTop,
-        sx,
-        sz,
+        ringAt,
         door,
       });
       // Shutters and a window box: the only facade details that live in the
@@ -602,10 +943,10 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
           const wx = cell.x + (alongZ ? 0 : side);
           const wz = cell.z + (alongZ ? side : 0);
           // The shutter hangs off the wall cell beside the light, so that cell
-          // has to be a wall cell — never a corner post, never past the end.
-          const along = alongZ ? wz : wx;
-          const span = alongZ ? sz : sx;
-          if (along <= 0 || along >= span - 1) continue;
+          // has to be a wall cell on the *same face* — never a corner post,
+          // never past the end, and never round the elbow of an L, where the
+          // shutter would have hung on the far side of a reflex corner.
+          if (!sameFaceWall(ringAt, wx, wz, out)) continue;
           put(wx + ox, y, wz + oz, style["wall.trapdoor"] as string, {
             facing: out,
             open: "true",
@@ -682,11 +1023,10 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     // stairs through and not climb.
     const holeZ0 = interior.z0;
     const holeZ1 = canStair ? interior.z0 + runLength : interior.z0;
-    for (let z = interior.z0; z <= interior.z1; z++) {
-      for (let x = interior.x0; x <= interior.x1; x++) {
-        if (x === interior.x0 && z >= holeZ0 && z <= holeZ1) continue;
-        put(x, level, z, style["floor.interior"] as string);
-      }
+    // Both rects: an upper storey over an L is a floor over the whole L.
+    for (const cell of shell.interiorCells) {
+      if (cell.x === interior.x0 && cell.z >= holeZ0 && cell.z <= holeZ1) continue;
+      put(cell.x, level, cell.z, style["floor.interior"] as string);
     }
     stairRuns.push(base + 1);
     if (canStair) {
@@ -737,10 +1077,8 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   // on an open box from inside, and — the reason it is not optional — a hanging
   // lantern on the top floor has nothing to hang from.
   if (hasInterior) {
-    for (let z = interior.z0; z <= interior.z1; z++) {
-      for (let x = interior.x0; x <= interior.x1; x++) {
-        put(x, wallTop, z, style["floor.interior"] as string);
-      }
+    for (const cell of shell.interiorCells) {
+      put(cell.x, wallTop, cell.z, style["floor.interior"] as string);
     }
   }
 
@@ -759,18 +1097,63 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       put(cx, y, cz, style["light.lantern"] as string, { hanging: "true" });
       lanternCount++;
     }
+    // A wing is a room of its own, far enough from the main block's lantern to
+    // go dark — and a dark room with a floor is a mob farm with a roof.
+    if (fp.wing !== null) {
+      const wingFloor = shell.interiorCells.filter((c) => !inRect(fp.main, c.x, c.z));
+      const mid = wingFloor[wingFloor.length >> 1];
+      if (mid !== undefined) {
+        for (let s = 0; s < floors; s++) {
+          put(mid.x, (s + 1) * storyHeight - 1, mid.z, style["light.lantern"] as string, {
+            hanging: "true",
+          });
+          lanternCount++;
+        }
+      }
+    }
   }
 
   // --- roof ----------------------------------------------------------------
-  const roofTop = emitRoof(put, style, roof, roofLayers, roofBase, sx, sz, wallTop, grammar);
-  apronOps += emitEave(put, style, roofBase, sx, sz);
+  // The main block keeps its roof exactly as it was — same shape, same layer
+  // count, same code, over its own rect. The wing gets a gable of its own from
+  // the same function, and every op of it that lands over the main block is
+  // clipped: the main roof was there first, and the seam where the wing's slope
+  // dies into the main wall is the valley. A real valley is a mitred gutter;
+  // this is the v0 of it, and it is watertight because the main roof already
+  // covers every cell the clip removes.
+  let roofTop = emitRoof(put, style, roof, roofLayers, roofBase, fp.main, wallTop, grammar);
+  if (fp.wing !== null) {
+    const wing = fp.wing;
+    const wingSpan = minor(wing.x1 - wing.x0 + 1, wing.z1 - wing.z0 + 1);
+    const wingLayers = clamp(
+      minor(Math.ceil(wingSpan / 2), Math.max(2, Math.round(wallTop * ROOF_PITCH_SHARE))),
+      2,
+      MAX_ROOF_LAYERS,
+    );
+    const clipped: Put = (x, y, z, block, props) => {
+      if (inRect(fp.main, x, z)) return;
+      put(x, y, z, block, props);
+    };
+    const wingTop = emitRoof(
+      clipped,
+      style,
+      roof === "flat" ? "flat" : "gable",
+      wingLayers,
+      roofBase,
+      wing,
+      wallTop,
+      grammar,
+    );
+    if (wingTop > roofTop) roofTop = wingTop;
+  }
+  apronOps += emitEave(put, style, roofBase, shell);
 
   // --- chimney -------------------------------------------------------------
   let chimney = false;
   /** Interior cells the chimney reserves; furniture never lands in them. */
   const hearthColumns = new Set<string>();
   if (hasInterior && floors === 1 && archetype !== "granary" && sx >= 5 && sz >= 5) {
-    const hearth = emitChimney(put, style, interior, door, roofTop, sx, sz);
+    const hearth = emitChimney(put, style, interior, door, roofTop, fp.main, inFootprint);
     chimney = hearth !== null;
     // The cell in front of the fire, and the two beside it: a bed or a table
     // pushed up against a hearth is the defect this reserve exists to stop.
@@ -814,8 +1197,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       style,
       grammar,
       choice,
-      sx,
-      sz,
+      rect: fp.main,
       depth: cellar,
       interior: cellarInterior,
       access: cellarAccess,
@@ -834,6 +1216,9 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       foundationDepth,
       door: door === null ? null : { x: door.x, z: door.z, face: door.face },
       interior,
+      footprint: fp,
+      cells: shell.cells,
+      floorCells: shell.interiorCells,
       floorLevels,
       stairRuns,
       basementDepth: cellarInterior === null ? 0 : cellar,
@@ -861,6 +1246,53 @@ function outwardOf(cell: { x: number; z: number }, sx: number, sz: number): Card
   return "east";
 }
 
+/**
+ * True when `(x, z)` is a wall cell of the face whose outward normal is `out`.
+ *
+ * The facade's neighbour question, asked once. On a rect it is exactly the old
+ * `along > 0 && along < span - 1` bound check: the cells that pass are the
+ * non-corner ring cells of the same face, which on a rect is the same set.
+ */
+function sameFaceWall(
+  ringAt: ReadonlyMap<string, OutlineCell>,
+  x: number,
+  z: number,
+  out: Cardinal,
+): boolean {
+  const cell = ringAt.get(`${x},${z}`);
+  return cell !== undefined && !cell.corner && cell.outward === out;
+}
+
+/**
+ * Move a resolved door onto a wall cell that exists.
+ *
+ * On a rect this is a no-op — `resolveDoor` already lands on a non-corner cell
+ * of the named face — and it is written so that it provably is: the snap only
+ * runs when the resolved column is not already a wall cell of that face. On an
+ * L it matters, because the face the port names may be half missing, and a door
+ * resolved into the notch is a door into thin air.
+ */
+function snapDoor(
+  door: { x: number; z: number; face: Cardinal } | null,
+  shell: Shell,
+): { x: number; z: number; face: Cardinal } | null {
+  if (door === null) return null;
+  const ringAt = outlineIndex(shell);
+  if (sameFaceWall(ringAt, door.x, door.z, door.face)) return door;
+  let best: OutlineCell | null = null;
+  let bestCost = Infinity;
+  for (const cell of shell.ring) {
+    if (cell.corner || cell.outward !== door.face) continue;
+    const cost = Math.abs(cell.x - door.x) + Math.abs(cell.z - door.z);
+    if (cost < bestCost) {
+      best = cell;
+      bestCost = cost;
+    }
+  }
+  if (best === null) return null;
+  return { x: best.x, z: best.z, face: door.face };
+}
+
 /** True for the door column or either cell beside it. */
 function nearDoor(cell: { x: number; z: number }, door: { x: number; z: number }): boolean {
   return Math.abs(cell.x - door.x) + Math.abs(cell.z - door.z) <= 1;
@@ -876,8 +1308,7 @@ interface WindowRequest {
   readonly outward: Cardinal;
   readonly storyHeight: number;
   readonly wallTop: number;
-  readonly sx: number;
-  readonly sz: number;
+  readonly ringAt: ReadonlyMap<string, OutlineCell>;
   readonly door: { x: number; z: number } | null;
 }
 
@@ -898,10 +1329,8 @@ function emitWindow(r: WindowRequest): number {
     // which are structure and neither of which may be glazed.
     const nx = cell.x + (alongZ ? 0 : 2);
     const nz = cell.z + (alongZ ? 2 : 0);
-    const along = alongZ ? nz : nx;
-    const span = alongZ ? r.sz : r.sx;
     const clash = r.door !== null && Math.abs(nx - r.door.x) + Math.abs(nz - r.door.z) <= 1;
-    if (along > 0 && along < span - 1 && !clash) {
+    if (sameFaceWall(r.ringAt, nx, nz, r.outward) && !clash) {
       put(nx, y, nz, pane, props);
       return 2;
     }
@@ -999,32 +1428,42 @@ function emitEave(
   put: Put,
   style: Readonly<Record<string, string>>,
   roofBase: number,
-  sx: number,
-  sz: number,
+  shell: Shell,
 ): number {
   const stairs = style["roof.stairs"] as string;
+  const taken = new Set<string>();
   let n = 0;
-  const place = (x: number, z: number, facing: Cardinal): void => {
-    put(x, roofBase, z, stairs, { facing, half: "top", shape: "straight" });
+  const place = (x: number, z: number, block: string, props: Record<string, string>): void => {
+    const key = `${x},${z}`;
+    if (taken.has(key)) return;
+    taken.add(key);
+    put(x, roofBase, z, block, props);
     n++;
   };
-  for (let x = 0; x < sx; x++) {
-    place(x, -1, "south");
-    place(x, sz, "north");
+  // One stair per blocked side of every outline cell, laid in the apron cell
+  // that side points at, facing back at the wall it overhangs. On a rect that
+  // is the same set of ops the four edge loops used to emit, cell for cell.
+  for (const cell of shell.ring) {
+    for (const dir of cell.blocked) {
+      const [dx, dz] = cardinalStep(dir);
+      place(cell.x + dx, cell.z + dz, stairs, {
+        facing: opposite(dir),
+        half: "top",
+        shape: "straight",
+      });
+    }
   }
-  for (let z = 0; z < sz; z++) {
-    place(-1, z, "east");
-    place(sx, z, "west");
-  }
-  // The four apron corners, so the course closes rather than leaving nicks.
-  for (const [cx, cz] of [
-    [-1, -1],
-    [sx, -1],
-    [-1, sz],
-    [sx, sz],
-  ] as const) {
-    put(cx, roofBase, cz, style["roof.slab"] as string, { type: "top" });
-    n++;
+  // The diagonal outside every convex corner, so the course closes rather than
+  // leaving nicks. A reflex corner has no blocked side and therefore no
+  // diagonal to close — the two runs meeting there are already continuous.
+  for (const cell of shell.ring) {
+    for (const dz of cell.blocked.filter((d) => d === "north" || d === "south")) {
+      for (const dx of cell.blocked.filter((d) => d === "west" || d === "east")) {
+        const [, sz1] = cardinalStep(dz);
+        const [sx1] = cardinalStep(dx);
+        place(cell.x + sx1, cell.z + sz1, style["roof.slab"] as string, { type: "top" });
+      }
+    }
   }
   return n;
 }
@@ -1086,27 +1525,27 @@ function emitRoof(
   roof: BuildingRoof,
   layers: number,
   base: number,
-  sx: number,
-  sz: number,
+  rect: LocalRect,
   wallTop: number,
   grammar: Seed256,
 ): number {
   const stairs = style["roof.stairs"] as string;
   const solid = style["roof.solid"] as string;
   const slab = style["roof.slab"] as string;
+  const { x0: rx0, x1: rx1, z0: rz0, z1: rz1 } = rect;
 
   if (roof === "flat") {
-    for (let z = 0; z < sz; z++) for (let x = 0; x < sx; x++) put(x, base, z, solid);
+    for (let z = rz0; z <= rz1; z++) for (let x = rx0; x <= rx1; x++) put(x, base, z, solid);
     return base;
   }
 
   if (roof === "hip") {
     for (let k = 0; k < layers; k++) {
       const y = base + k;
-      const x0 = k;
-      const x1 = sx - 1 - k;
-      const z0 = k;
-      const z1 = sz - 1 - k;
+      const x0 = rx0 + k;
+      const x1 = rx1 - k;
+      const z0 = rz0 + k;
+      const z1 = rz1 - k;
       if (x0 > x1 || z0 > z1) break;
       for (let x = x0; x <= x1; x++) {
         for (let z = z0; z <= z1; z++) {
@@ -1124,28 +1563,30 @@ function emitRoof(
       }
     }
     const capY = base + layers;
-    const capped = capRect(put, solid, capY, layers, sx - 1 - layers, layers, sz - 1 - layers);
-    if (capped !== null) ridgeCap(put, slab, capY + 1, layers, sx - 1 - layers, layers, sz - 1 - layers);
+    const capped = capRect(put, solid, capY, rx0 + layers, rx1 - layers, rz0 + layers, rz1 - layers);
+    if (capped !== null) {
+      ridgeCap(put, slab, capY + 1, rx0 + layers, rx1 - layers, rz0 + layers, rz1 - layers);
+    }
     return capped === null ? base + layers - 1 : capped + 1;
   }
 
   // gable — the ridge runs along the longer axis.
-  const ridgeAlongX = sx >= sz;
+  const ridgeAlongX = rx1 - rx0 >= rz1 - rz0;
   for (let k = 0; k < layers; k++) {
     const y = base + k;
     if (ridgeAlongX) {
-      const near = k;
-      const far = sz - 1 - k;
+      const near = rz0 + k;
+      const far = rz1 - k;
       if (near > far) break;
-      for (let x = 0; x < sx; x++) {
+      for (let x = rx0; x <= rx1; x++) {
         put(x, y, near, stairs, { facing: "south", half: "bottom", shape: "straight" });
         if (far !== near) put(x, y, far, stairs, { facing: "north", half: "bottom", shape: "straight" });
       }
     } else {
-      const near = k;
-      const far = sx - 1 - k;
+      const near = rx0 + k;
+      const far = rx1 - k;
       if (near > far) break;
-      for (let z = 0; z < sz; z++) {
+      for (let z = rz0; z <= rz1; z++) {
         put(near, y, z, stairs, { facing: "east", half: "bottom", shape: "straight" });
         if (far !== near) put(far, y, z, stairs, { facing: "west", half: "bottom", shape: "straight" });
       }
@@ -1153,15 +1594,15 @@ function emitRoof(
   }
   const capY = base + layers;
   const capped = ridgeAlongX
-    ? capRect(put, solid, capY, 0, sx - 1, layers, sz - 1 - layers)
-    : capRect(put, solid, capY, layers, sx - 1 - layers, 0, sz - 1);
+    ? capRect(put, solid, capY, rx0, rx1, rz0 + layers, rz1 - layers)
+    : capRect(put, solid, capY, rx0 + layers, rx1 - layers, rz0, rz1);
   // The gable ends: fill the triangle under the slope with wall, then trace the
   // rake itself in frame logs so the end reads as a framed gable, not a wedge.
-  fillGableEnds(put, style, ridgeAlongX, layers, base, sx, sz, grammar);
+  fillGableEnds(put, style, ridgeAlongX, layers, base, rect, grammar);
   const top = capped ?? base + layers - 1;
   if (capped !== null) {
-    if (ridgeAlongX) ridgeCap(put, slab, capY + 1, 0, sx - 1, layers, sz - 1 - layers);
-    else ridgeCap(put, slab, capY + 1, layers, sx - 1 - layers, 0, sz - 1);
+    if (ridgeAlongX) ridgeCap(put, slab, capY + 1, rx0, rx1, rz0 + layers, rz1 - layers);
+    else ridgeCap(put, slab, capY + 1, rx0 + layers, rx1 - layers, rz0, rz1);
     return top + 1;
   }
   return top;
@@ -1194,20 +1635,20 @@ function fillGableEnds(
   ridgeAlongX: boolean,
   layers: number,
   base: number,
-  sx: number,
-  sz: number,
+  rect: LocalRect,
   grammar: Seed256,
 ): void {
   const wall = style["wall.primary"] as string;
   const frame = style["wall.frame"] as string;
   const accent = style["wall.accent"] as string;
-  const ends = ridgeAlongX ? [0, sx - 1] : [0, sz - 1];
-  const span = ridgeAlongX ? sz : sx;
+  const ends = ridgeAlongX ? [rect.x0, rect.x1] : [rect.z0, rect.z1];
+  const lo = ridgeAlongX ? rect.z0 : rect.x0;
+  const hi = ridgeAlongX ? rect.z1 : rect.x1;
 
   for (const end of ends) {
     for (let k = 0; k < layers; k++) {
-      const near = k;
-      const far = span - 1 - k;
+      const near = lo + k;
+      const far = hi - k;
       if (near > far) break;
       const y = base + k;
       const axis = ridgeAlongX ? "z" : "x";
@@ -1254,8 +1695,8 @@ function emitChimney(
   interior: LocalRect,
   door: { x: number; z: number; face: Cardinal } | null,
   roofTop: number,
-  sx: number,
-  sz: number,
+  rect: LocalRect,
+  inFootprint: (x: number, z: number) => boolean,
 ): { x: number; z: number } | null {
   const block = style["chimney.block"] as string;
   const rim = style["chimney.rim"] as string;
@@ -1264,11 +1705,13 @@ function emitChimney(
   // post.
   const face: Cardinal = door === null ? "north" : opposite(door.face);
   const alongX = face === "north" || face === "south";
-  const span = alongX ? sx : sz;
+  const lo = alongX ? rect.x0 : rect.z0;
+  const hi = alongX ? rect.x1 : rect.z1;
+  const span = hi - lo + 1;
   if (span < 3) return null;
-  const mid = clamp(Math.floor((span - 1) / 2), 1, span - 2);
-  const cx = alongX ? mid : face === "west" ? 0 : sx - 1;
-  const cz = alongX ? (face === "north" ? 0 : sz - 1) : mid;
+  const mid = lo + clamp(Math.floor((span - 1) / 2), 1, span - 2);
+  const cx = alongX ? mid : face === "west" ? rect.x0 : rect.x1;
+  const cz = alongX ? (face === "north" ? rect.z0 : rect.z1) : mid;
   // The interior cell the hearth opens onto: one step *inward* from the wall.
   const [ox, oz] = cardinalStep(opposite(face));
   const hearth = { x: cx + ox, z: cz + oz };
@@ -1281,6 +1724,21 @@ function emitChimney(
     return null;
   }
 
+  // A flue is a piece of wall, so the column it takes has to *be* wall. On an L
+  // whose wing hangs off the face opposite the door, the main block's wall line
+  // there is the opening between the two rooms — and a flue standing in it
+  // would be a cobblestone pillar in the doorway.
+  let enclosed = true;
+  for (let dz = -1; dz <= 1 && enclosed; dz++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!inFootprint(cx + dx, cz + dz)) {
+        enclosed = false;
+        break;
+      }
+    }
+  }
+  if (enclosed) return null;
+
   const corbelY = roofTop + 1;
   for (let y = 0; y <= corbelY - 1; y++) put(cx, y, cz, block);
   // The fireplace: an opening in the wall face at floor level, standing on the
@@ -1291,7 +1749,7 @@ function emitChimney(
     signal_fire: "false",
     waterlogged: "false",
   });
-  const inside = (x: number, z: number): boolean => x >= 0 && x < sx && z >= 0 && z < sz;
+  const inside = inFootprint;
   for (let dz = -1; dz <= 1; dz++) {
     for (let dx = -1; dx <= 1; dx++) {
       if (inside(cx + dx, cz + dz)) put(cx + dx, corbelY, cz + dz, block);
@@ -1338,6 +1796,13 @@ interface TowerRequest {
   readonly door: { x: number; z: number; face: Cardinal } | null;
   readonly materials: BuildingMaterials;
   readonly params: ResolvedBuildingParams;
+  /**
+   * The footprint, which for a tower is always the bare rect: a shaft with an
+   * ell on it is a different building, not this one, and the set-back/corbel
+   * geometry below is written in terms of one box.
+   */
+  readonly footprint: Footprint;
+  readonly shell: Shell;
 }
 
 /**
@@ -1495,6 +1960,9 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
     meta: {
       params: r.params,
       size: [sx, sy, sz],
+      footprint: r.footprint,
+      cells: r.shell.cells,
+      floorCells: r.shell.interiorCells,
       wallTop: platformY,
       roofBase: platformY,
       roofTop,
@@ -1532,8 +2000,8 @@ interface CellarRequest {
   readonly style: Readonly<Record<string, string>>;
   readonly grammar: Seed256;
   readonly choice: Seed256;
-  readonly sx: number;
-  readonly sz: number;
+  /** The rect the cellar is dug under — the main block, never the wing. */
+  readonly rect: LocalRect;
   /** Headroom, in blocks: the room spans `-depth .. -1`. */
   readonly depth: number;
   readonly interior: LocalRect;
@@ -1565,7 +2033,7 @@ interface CellarRequest {
  * Returns the number of lanterns hung, for the meta count.
  */
 function emitCellar(r: CellarRequest): number {
-  const { put, style, grammar, choice, sx, sz, depth, interior, access } = r;
+  const { put, style, grammar, choice, rect, depth, interior, access } = r;
   const masonry = (x: number, y: number, z: number): string =>
     positionFloat(grammar, x, y, z) < CELLAR_CRACK_SHARE
       ? (style["cellar.wall_cracked"] as string)
@@ -1573,15 +2041,15 @@ function emitCellar(r: CellarRequest): number {
 
   // --- the floor slab ------------------------------------------------------
   const slabY = -(depth + 1);
-  for (let z = 0; z < sz; z++) {
-    for (let x = 0; x < sx; x++) put(x, slabY, z, masonry(x, slabY, z));
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) put(x, slabY, z, masonry(x, slabY, z));
   }
 
   // --- the room ------------------------------------------------------------
   for (let d = 1; d <= depth; d++) {
     const y = -d;
-    for (let z = 0; z < sz; z++) {
-      for (let x = 0; x < sx; x++) {
+    for (let z = rect.z0; z <= rect.z1; z++) {
+      for (let x = rect.x0; x <= rect.x1; x++) {
         const inside = x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
         put(x, y, z, inside ? "air" : masonry(x, y, z));
       }
@@ -1732,8 +2200,12 @@ function minor(a: number, b: number): number {
  *   framing, slab ridge caps, chimneys, shutters, window boxes, a porch lamp,
  *   and archetype interiors.
  *
- * v0.2 §7: not yet — `footprint` (only `rect`; l/t/u/cross/courtyard/irregular
- *   massing needs a shape grammar).
+ * v0.2 §7 `footprint`: partly — `rect`, and `l_shape`/`t_shape` through the
+ *   `wing` param (one extra rect, unioned, sharing one wall line). The wing's
+ *   roof is a gable clipped out of the main volume rather than a mitred valley,
+ *   the fit-out still furnishes the main rect only, and the cellar is dug under
+ *   the main rect only. `u_shape`, `cross`, `courtyard` and `irregular` need
+ *   more than one wing and are not built.
  * v0.2 §7: not yet — `bays` (facade module count; windows use `windowRhythm`).
  * v0.2 §7: not yet — `roofPitch` (pitch is fixed at one layer per row).
  * v0.2 §7: not yet — `windowRatio` (glazed fraction is implied by the rhythm).

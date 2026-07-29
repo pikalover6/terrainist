@@ -1174,11 +1174,13 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       "floors", "floorHeight", "footprint", "bays", "roof", "roofPitch",
       "wallSymbol", "trimSymbol", "roofSymbol", "windowRhythm", "windowRatio",
       "entrance", "interior", "furnish", "basement", "tower", "variance", "decayOverride",
+      "wing",
     ],
     "building.grammar@0 params",
   );
   checkNumbers(out, at, params, BUILDING_NUMS);
   validateBasementParam(out, at, params["basement"]);
+  validateWingParam(out, at, params["wing"]);
   checkEnumParam(out, at, params, "footprint", BUILDING_FOOTPRINTS);
   checkEnumParam(out, at, params, "interior", BUILDING_INTERIORS);
   for (const key of ["roof", "windowRhythm", "wallSymbol", "trimSymbol", "roofSymbol"]) {
@@ -1192,6 +1194,74 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
     if (v !== undefined && !isObject(v)) {
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
+  }
+}
+
+/** Shortest shared run between a wing and the main block, in cells. */
+export const WING_MIN_OVERLAP = 3;
+
+/** Shallowest wing this grammar builds, in blocks. */
+export const WING_MIN_DEPTH = 3;
+
+const WING_SIDES = ["north", "east", "south", "west"] as const;
+
+/**
+ * `wing`: `{ "size": [x, z], "side": "north"|"east"|"south"|"west",
+ * "offset": int }` — the second rect of an L- or T-shaped plan.
+ *
+ * The bounding box does not change: a wing carves the node's envelope rather
+ * than growing it, so nothing here needs the envelope to check. What it *can*
+ * check without one is the shape: that the run along the shared face is long
+ * enough to be a doorway rather than two corner posts, that the wing is deep
+ * enough to be a room, and that the offset does not run the wing off the end of
+ * the face it hangs off — the "straight edges only" rule, which exists because
+ * a wing that overhangs would need a wall segment standing over open air.
+ */
+function validateWingParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  const fix =
+    'write "wing": { "size": [5, 4], "side": "south", "offset": 0 } — the wing is carved out of the node\'s own envelope, so its depth must leave at least 3 blocks of main block behind it';
+  if (!isObject(value)) {
+    out.push(error("STRUCTURE_PARAM", at, `"wing" must be an object, got ${describe(value)}`, fix));
+    return;
+  }
+  const path = `${at}.wing`;
+  unknownKeys(out, value, path, ["size", "side", "offset"], "a wing");
+
+  const side = value["side"];
+  if (side === undefined) {
+    out.push(error("STRUCTURE_PARAM", path, `"wing" needs a "side"`, `add "side": "south" — which face of the main block the wing hangs off (${WING_SIDES.join(", ")})`));
+  } else if (typeof side !== "string" || !(WING_SIDES as readonly string[]).includes(side)) {
+    out.push(error("STRUCTURE_PARAM", path, `"side" must be one of ${WING_SIDES.join(", ")}, got ${describe(side)}`, `set "side" to the face the wing hangs off, e.g. "south"`));
+  }
+
+  const size = value["size"];
+  let span: number | null = null;
+  let depth: number | null = null;
+  if (!Array.isArray(size) || size.length !== 2 || !size.every((n) => Number.isInteger(n))) {
+    out.push(error("STRUCTURE_PARAM", path, `"size" must be a pair of integers [x, z], got ${describe(size)}`, fix));
+  } else {
+    const [wx, wz] = size as [number, number];
+    if (wx < 1 || wz < 1) {
+      out.push(error("STRUCTURE_PARAM", path, `"size" must be positive in both axes, got [${wx}, ${wz}]`, fix));
+    } else if (typeof side === "string" && (WING_SIDES as readonly string[]).includes(side)) {
+      const alongX = side === "north" || side === "south";
+      span = alongX ? wx : wz;
+      depth = alongX ? wz : wx;
+      if (span < WING_MIN_OVERLAP) {
+        out.push(error("STRUCTURE_PARAM", path, `a "${side}" wing shares a ${span}-cell run with the main block; ${WING_MIN_OVERLAP} is the shortest that leaves a doorway between the two rooms`, `widen the wing along its ${alongX ? "x" : "z"} axis to at least ${WING_MIN_OVERLAP}`));
+      }
+      if (depth < WING_MIN_DEPTH) {
+        out.push(error("STRUCTURE_PARAM", path, `a "${side}" wing ${depth} deep is a buttress, not a room`, `deepen the wing along its ${alongX ? "z" : "x"} axis to at least ${WING_MIN_DEPTH}`));
+      }
+    }
+  }
+
+  const offset = value["offset"];
+  if (offset !== undefined && !Number.isInteger(offset)) {
+    out.push(error("STRUCTURE_PARAM", path, `"offset" must be an integer, got ${describe(offset)}`, `set "offset" to how far along the face the wing starts, counted from the envelope's min corner — 0 for a flush L, or centre it for a T`));
+  } else if (typeof offset === "number" && offset < 0) {
+    out.push(error("STRUCTURE_PARAM", path, `"offset" must not be negative, got ${offset}`, `a wing may not overhang the face it hangs off — straight edges only; use 0 for a wing flush with the corner`));
   }
 }
 
