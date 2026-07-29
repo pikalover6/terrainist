@@ -25,6 +25,8 @@ import {
 
 export * from "./archetypes-civic.js";
 
+import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
+
 /* -------------------------------------------------------------------------- */
 /* archetypes                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -41,6 +43,7 @@ export const BUILDING_ARCHETYPES = [
   "granary",
   "watchtower",
   ...EXTENDED_BUILDING_ARCHETYPES,
+  ...HIGHRISE_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -49,6 +52,11 @@ export type BuildingArchetype = (typeof BUILDING_ARCHETYPES)[number];
 /** Map a node's tags onto an archetype; `cottage` when nothing matches. */
 export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   const has = (t: string): boolean => tags.includes(t);
+  // The tall table goes first, ahead of even the watchtower: `tower` is the
+  // greediest tag in the whole vocabulary, and `tower_block` means a block of
+  // flats rather than a stone lookout.
+  const tall = highriseArchetypeOfTags(tags);
+  if (tall !== null) return tall;
   if (has("lookout") || has("tower") || has("watchtower")) return "watchtower";
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise

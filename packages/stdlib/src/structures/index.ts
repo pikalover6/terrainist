@@ -18,6 +18,8 @@
  */
 
 export * from "./core.js";
+export * from "./highrise.js";
+export * from "./catalog.js";
 export * from "./archetypes.js";
 export * from "./themes.js";
 export * from "./props.js";

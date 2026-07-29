@@ -41,6 +41,13 @@ import { AuthoringFailedError, reviseLoamDoc, sumUsage } from "@terrainist/agent
 import type { Usage } from "@terrainist/agents";
 
 import {
+  STRUCTURE_CATALOG,
+  STRUCTURE_CATEGORIES,
+  summarizeCatalog,
+  type StructureStatus,
+} from "@terrainist/stdlib";
+
+import {
   physicsLintFailures,
   renderCompileFeedback,
   renderDiagnosticFeedback,
@@ -86,6 +93,7 @@ Usage:
   terrainist terrarium [--out <dir>] [--no-zip]
   terrainist review-import [--log <file>]... [--screenshots <dir>]
                            [--manifest <file>] [--out <session.json>]
+  terrainist catalog [--json] [--category <name>] [--status <name>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
@@ -172,6 +180,73 @@ render options:
   --surface-y <Y>   Y below which content is underground; adds an
                     underground-only map to --views. Off by default.
 `;
+
+/**
+ * `terrainist catalog [--json] [--category <c>] [--status <s>]`.
+ *
+ * The structure registry, printed. `--json` is the machine form the artifact
+ * build reads; without it the same data comes out as a coverage table, which
+ * is what a human wants when the question is "how much of this is real".
+ */
+export function runCatalog(args: readonly string[]): number {
+  let asJson = false;
+  let category: string | undefined;
+  let status: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--json") {
+      asJson = true;
+    } else if (arg === "--category") {
+      category = args[i + 1];
+      if (category === undefined) throw new Error("--category requires a name");
+      i++;
+    } else if (arg === "--status") {
+      status = args[i + 1];
+      if (status === undefined) throw new Error("--status requires a name");
+      i++;
+    } else {
+      throw new Error(`unexpected argument ${String(arg)}`);
+    }
+  }
+  const rows = STRUCTURE_CATALOG.filter(
+    (e) => (category === undefined || e.category === category) && (status === undefined || e.status === status),
+  );
+  if (asJson) {
+    console.log(
+      JSON.stringify(
+        { summary: summarizeCatalog(), categories: STRUCTURE_CATEGORIES, entries: rows },
+        null,
+        2,
+      ),
+    );
+    return 0;
+  }
+  const summary = summarizeCatalog();
+  const label: Readonly<Record<StructureStatus, string>> = {
+    implemented: "done",
+    in_progress: "wip ",
+    not_started: "    ",
+  };
+  const lines: string[] = [
+    `terrainist structure catalog — ${summary.total} entries, ` +
+      `${summary.byStatus.implemented} implemented, ` +
+      `${summary.byStatus.in_progress} in progress, ` +
+      `${summary.byStatus.not_started} not started`,
+    "",
+  ];
+  for (const category_ of STRUCTURE_CATEGORIES) {
+    const inCategory = rows.filter((e) => e.category === category_);
+    if (inCategory.length === 0) continue;
+    const done = inCategory.filter((e) => e.status === "implemented").length;
+    lines.push(`${category_}  (${done}/${inCategory.length})`);
+    for (const entry of inCategory) {
+      lines.push(`  [${label[entry.status]}] ${entry.id.padEnd(26)} ${entry.name}`);
+    }
+    lines.push("");
+  }
+  console.log(lines.join("\n"));
+  return 0;
+}
 
 /** `terrainist devworld [--out <dir>]` — the building-grammar showcase world. */
 export async function runDevWorld(args: readonly string[]): Promise<number> {
@@ -793,6 +868,8 @@ export async function main(argv: readonly string[]): Promise<number> {
       return await runTerrarium(rest);
     case "review-import":
       return await runReviewImport(rest);
+    case "catalog":
+      return runCatalog(rest);
     case "emit":
       await runEmit(rest);
       return 0;

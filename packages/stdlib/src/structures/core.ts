@@ -38,6 +38,12 @@ import {
   resolveArchetype,
   type BuildingArchetype,
 } from "./archetypes.js";
+import {
+  HIGHRISE_MAX_FLOORS,
+  HIGHRISE_STOREY_HEIGHT,
+  emitHighrise,
+  isHighriseArchetype,
+} from "./highrise.js";
 import { pickTheme, styleOf, type BuildingMaterials } from "./themes.js";
 
 /* -------------------------------------------------------------------------- */
@@ -879,6 +885,54 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
       shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
       params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype },
+    });
+  }
+
+  // The tall archetypes are a different building, not a house with more
+  // storeys: an open plate over a switchback core, a curtain wall and a roof
+  // deck. Dispatched here, on the same footing as the watchtower, and given
+  // its own storey count because `MAX_FLOORS` is the *cottage* grammar's
+  // ceiling — it is two because the cottage has no core, and a tower is
+  // nothing but core.
+  if (isHighriseArchetype(archetype)) {
+    const tallStorey = clamp(
+      Math.round(params.floorHeight ?? HIGHRISE_STOREY_HEIGHT),
+      MIN_STORY_HEIGHT,
+      MAX_STORY_HEIGHT,
+    );
+    const tallFloors = clamp(
+      Math.round(params.floors ?? Math.max(1, Math.floor((sy - 2) / tallStorey))),
+      1,
+      HIGHRISE_MAX_FLOORS[archetype],
+    );
+    return emitHighrise({
+      put,
+      cells,
+      style,
+      grammar,
+      choice,
+      sx,
+      sy,
+      sz,
+      foundationDepth,
+      door,
+      materials,
+      archetype,
+      floors: tallFloors,
+      storeyHeight: tallStorey,
+      // A tall building is one box. A wing on a twenty-storey tower is a
+      // podium, which is a composition of two nodes rather than one footprint,
+      // so the wing is dropped here exactly as the watchtower drops it.
+      footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
+      shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
+      params: {
+        floors: tallFloors,
+        storyHeight: tallStorey,
+        roof: "flat",
+        windowRhythm: rhythm,
+        windowShape,
+        archetype,
+      },
     });
   }
 

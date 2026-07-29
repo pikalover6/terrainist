@@ -356,6 +356,9 @@ function validateStructureNode(
   }
 
   validateBoxEnvelope(out, path, node["envelope"]);
+  if (generator === "building.grammar@0") {
+    validateHighriseEnvelope(out, path, node, isObject(params) ? params : {});
+  }
   validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
 }
@@ -1270,6 +1273,139 @@ function validateWingParam(out: LoamDiagnostic[], at: string, value: unknown): v
 }
 
 /** Cellar depths this grammar digs, in blocks of headroom. */
+/* -------------------------------------------------------------------------- */
+/* the tall archetypes                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Tags that ask for a tall building, and the archetype each one means.
+ *
+ * Duplicated from `stdlib`'s `highriseArchetypeOfTags` rather than imported —
+ * `spec` sits *below* `stdlib` in the dependency graph and has always restated
+ * the handful of grammar constants it validates against (`WING_MIN_OVERLAP` is
+ * the precedent). `test/settlement-validate.test.ts` is where the two are
+ * pinned to each other.
+ */
+const HIGHRISE_TAGS: Readonly<Record<string, string>> = Object.freeze({
+  skyscraper: "skyscraper",
+  high_rise: "skyscraper",
+  highrise: "skyscraper",
+  tower_block: "skyscraper",
+  hotel: "hotel",
+  lodging: "hotel",
+  guesthouse: "hotel",
+  apartment: "apartment_block",
+  apartment_block: "apartment_block",
+  tenement: "apartment_block",
+  flats: "apartment_block",
+  office: "office",
+  offices: "office",
+  corporate: "office",
+  headquarters: "office",
+});
+
+/**
+ * Storey caps, per tall archetype.
+ *
+ * The general `floors` range in {@link BUILDING_NUMS} stays 1..24 for every
+ * other building, unchanged: this is a *narrowing* that applies only where a
+ * tall tag has been asked for, and it is here rather than in the number table
+ * because 24 storeys of hotel and 24 storeys of skyscraper are not the same
+ * request.
+ */
+export const HIGHRISE_FLOOR_CAPS: Readonly<Record<string, number>> = Object.freeze({
+  skyscraper: 20,
+  office: 16,
+  hotel: 14,
+  apartment_block: 10,
+});
+
+/**
+ * Envelope width a tall building may ask for, in blocks.
+ *
+ * The raise that makes the tall grammar usable: the village archetypes top out
+ * around fifteen blocks on a side in practice, and a tower needs a plate wide
+ * enough to hold a stair core *and* a room beside it. Both ends are checked —
+ * a nine-storey office on a 6 × 6 footprint is a chimney, not an office.
+ */
+export const HIGHRISE_WIDTH_RANGE = [7, 24] as const;
+
+/**
+ * Check a tall building's envelope and storey count.
+ *
+ * Only ever fires on a node whose tags ask for a tall archetype; a node without
+ * one is not touched, which is what "existing archetypes' caps unchanged"
+ * means in code.
+ */
+function validateHighriseEnvelope(out: LoamDiagnostic[], path: string, node: Obj, params: Obj): void {
+  const tags = node["tags"];
+  if (!Array.isArray(tags)) return;
+  let archetype: string | undefined;
+  for (const tag of tags) {
+    if (typeof tag !== "string") continue;
+    const named = HIGHRISE_TAGS[tag];
+    if (named !== undefined) {
+      archetype = named;
+      break;
+    }
+  }
+  if (archetype === undefined) return;
+
+  const cap = HIGHRISE_FLOOR_CAPS[archetype] as number;
+  const floors = params["floors"];
+  if (typeof floors === "number" && Number.isInteger(floors) && floors > cap) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        `${path}.params`,
+        `a "${archetype}" builds at most ${cap} storeys; "floors" is ${floors}`,
+        `lower "floors" to ${cap} or below, or retag the node as "skyscraper" (${HIGHRISE_FLOOR_CAPS["skyscraper"] as number} storeys) if it really is that tall`,
+      ),
+    );
+  }
+
+  const envelope = node["envelope"];
+  if (!isObject(envelope)) return;
+  const size = envelope["size"];
+  if (!Array.isArray(size) || size.length !== 3) return;
+  const [lo, hi] = HIGHRISE_WIDTH_RANGE;
+  for (const axis of [0, 2] as const) {
+    const v = size[axis];
+    if (typeof v !== "number" || !Number.isInteger(v)) continue;
+    if (v < lo) {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `a "${archetype}" needs at least ${lo} blocks on each horizontal axis for a stair core and a floor plate; "size"[${axis}] is ${v}`,
+          `write "size": [${lo + 5}, ${(typeof floors === "number" ? floors : 8) * 4 + 4}, ${lo + 5}] — the tall grammar builds at 4 blocks per storey`,
+        ),
+      );
+    } else if (v > hi) {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `a "${archetype}" footprint is capped at ${hi} blocks per horizontal axis; "size"[${axis}] is ${v}`,
+          `lower "size"[${axis}] to ${hi} or below — a wider plate is a podium, which is a second node under the same parent rather than one bigger envelope`,
+        ),
+      );
+    }
+  }
+  const height = size[1];
+  const wanted = (typeof floors === "number" && Number.isInteger(floors) ? floors : 1) * 4 + 4;
+  if (typeof height === "number" && Number.isInteger(height) && typeof floors === "number" && height < wanted) {
+    out.push(
+      warning(
+        "ENVELOPE_SIZE_COERCED",
+        `${path}.envelope`,
+        `"size"[1] is ${height}, which is shorter than ${floors} storeys at 4 blocks each plus a parapet`,
+        `raise "size"[1] to ${wanted} — the tall grammar builds to its storey count and the envelope's Y is advisory, so a short box only misleads a reader`,
+      ),
+    );
+  }
+}
+
 export const BASEMENT_DEPTH_RANGE = [3, 5] as const;
 
 /**

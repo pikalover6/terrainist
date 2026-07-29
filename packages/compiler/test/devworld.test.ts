@@ -42,7 +42,10 @@ import {
   contextGroundAt,
   planContextSection,
 } from "../src/devworld-rows.js";
+import { EXTENDED_BUILDING_ARCHETYPES } from "@terrainist/stdlib";
+
 import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
+import { HIGHRISE_EXHIBIT_ROWS, HIGHRISE_ROW_LENGTH } from "../src/exhibits/highrise.js";
 import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
 import {
   MAX_BASEMENT_DEPTH,
@@ -107,7 +110,14 @@ describe("dev world grid", () => {
     // `EXTRA_EXHIBIT_ROWS` rather than out of a literal.
     const extra = EXTRA_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const breakpoints = BREAKPOINT_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
-    expect(extra).toBe(7 * ARCHETYPE_ROW_LENGTH + 2 * 7 + SEED_SWEEP_LENGTH + breakpoints);
+    const tall = HIGHRISE_EXHIBIT_ROWS.length * HIGHRISE_ROW_LENGTH;
+    expect(extra).toBe(
+      EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
+        tall +
+        2 * 7 +
+        SEED_SWEEP_LENGTH +
+        breakpoints,
+    );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
     expect(grid.exhibits).toHaveLength(expected);
