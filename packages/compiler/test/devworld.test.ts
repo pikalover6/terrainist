@@ -60,8 +60,11 @@ describe("dev world grid", () => {
   });
 
   it("gives the grid the count the brief asks for", () => {
-    expect(result.buildingCount).toBeGreaterThanOrEqual(40);
-    expect(result.buildingCount).toBeLessThanOrEqual(60);
+    // One row per archetype plus the roof control row, so the bound moves when
+    // the grammar grows a new archetype — which is the point of deriving the
+    // rows from `BUILDING_ARCHETYPES` rather than listing them.
+    const expected = BUILDING_ARCHETYPES_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length;
+    expect(result.buildingCount).toBe(expected);
     expect(result.buildings).toHaveLength(planDevGrid().exhibits.length);
   });
 

@@ -11,6 +11,17 @@
 import { positionFloat, type Seed256 } from "../determinism/index.js";
 
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
+import {
+  EXTENDED_BUILDING_ARCHETYPES,
+  extendedArchetypeOfTags,
+  furnishExtended,
+  furnishUpperFloors,
+  isPassable,
+  wholeFloorPlan,
+  type FitOutContext,
+} from "./archetypes-civic.js";
+
+export * from "./archetypes-civic.js";
 
 /* -------------------------------------------------------------------------- */
 /* archetypes                                                                  */
@@ -27,6 +38,7 @@ export const BUILDING_ARCHETYPES = [
   "smithy",
   "granary",
   "watchtower",
+  ...EXTENDED_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -36,6 +48,11 @@ export type BuildingArchetype = (typeof BUILDING_ARCHETYPES)[number];
 export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   const has = (t: string): boolean => tags.includes(t);
   if (has("lookout") || has("tower") || has("watchtower")) return "watchtower";
+  // The extended table is consulted before the original one, not after: the
+  // original is greedy (`trade` → inn, `store` → granary) and would otherwise
+  // swallow `market` and `storehouse` before either reached its own building.
+  const extended = extendedArchetypeOfTags(tags);
+  if (extended !== null) return extended;
   if (has("hall")) return "hall";
   if (has("trade") || has("inn")) return "inn";
   if (has("craft") || has("smithy")) return "smithy";
@@ -101,6 +118,18 @@ export function furnish(r: FurnishRequest): number {
   if (w < 2 || d < 2) return 0;
 
   let n = 0;
+  /**
+   * The ground floor's walkable region, maintained as props land on it.
+   *
+   * The granary learned this rule for hay and nothing else learned it at all:
+   * an inn on a nine-wide plan put a table and two chairs across the room and
+   * cut its own front half off from its back. Routing every solid prop through
+   * one guard makes "you can cross the room" a property of the fit-out rather
+   * than of each archetype's arithmetic.
+   */
+  const plan = wholeFloorPlan(interior, r.blockAt);
+  const take = (cells: readonly (readonly [number, number])[], block: string): boolean =>
+    isPassable(block) || plan.occupy(cells);
   const free = (x: number, z: number): boolean => {
     if (x < interior.x0 || x > interior.x1 || z < interior.z0 || z > interior.z1) return false;
     // Never on the stairs: a bed head in the bottom step is both ugly and a
@@ -117,6 +146,7 @@ export function furnish(r: FurnishRequest): number {
   };
   const place = (x: number, z: number, block: string, props?: Record<string, string>): void => {
     if (!free(x, z)) return;
+    if (!take([[x, z]], block)) return;
     put(x, 1, z, block, props);
     n++;
   };
@@ -138,6 +168,7 @@ export function furnish(r: FurnishRequest): number {
     const hx = x + dx;
     const hz = z + dz;
     if (!free(x, z) || !free(hx, hz)) return;
+    if (!take([[x, z], [hx, hz]], block)) return;
     put(x, 1, z, block, { facing, part: "foot", occupied: "false" });
     put(hx, 1, hz, block, { facing, part: "head", occupied: "false" });
     n += 2;
@@ -242,6 +273,7 @@ export function furnish(r: FurnishRequest): number {
           // Spaced along the wall so the piles read as separate heaps.
           if ((x + z * 2) % 3 !== 0) continue;
           if (!free(x, z)) continue;
+          if (!take([[x, z]], "hay_block")) continue;
           // Never up to the ceiling: a pile that reaches the joists is a
           // column through the room, which is the defect one door along.
           const height = Math.max(1, Math.min(1 + ((x * 5 + z * 3) % 3), r.storyHeight - 2));
@@ -281,6 +313,26 @@ export function furnish(r: FurnishRequest): number {
     default:
       break;
   }
+
+  // The extended archetypes, and then every storey above the ground one.
+  // Both go through the same context, so the door/stair/hearth reserve the
+  // ground floor built above is the one they honour too.
+  const ctx: FitOutContext = {
+    put,
+    style,
+    archetype: r.archetype,
+    interior,
+    door,
+    storyHeight: r.storyHeight,
+    floors: r.floors,
+    free,
+    place,
+    placeBed,
+    take,
+    blockAt: r.blockAt,
+  };
+  n += furnishExtended(ctx);
+  n += furnishUpperFloors(ctx);
   return n;
 }
 
