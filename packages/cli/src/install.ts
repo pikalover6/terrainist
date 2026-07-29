@@ -51,6 +51,11 @@ export interface InstallOptions {
   readonly now?: number;
   /** Delete an existing same-name save and take its place, instead of suffixing. */
   readonly replace?: boolean;
+  /**
+   * Skip the "is Minecraft holding this save open?" check. Escape hatch for a
+   * stale lock; it is never what you want while the game is actually running.
+   */
+  readonly force?: boolean;
 }
 
 /** The default Minecraft saves directory for this platform. */
@@ -97,6 +102,7 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
     } catch {
       replaced = false;
     }
+    if (replaced && options.force !== true) await assertNotOpenInMinecraft(installedPath);
     if (replaced) await rm(installedPath, { recursive: true, force: true });
   }
 
@@ -161,6 +167,68 @@ export function longToMillis(pair: readonly [number, number]): number {
 interface NbtNode {
   type: string;
   value?: unknown;
+}
+
+/**
+ * Refuse to replace a save that Minecraft currently has open.
+ *
+ * This is the guard for the one way Terrainist has actually destroyed a world.
+ * Modern Minecraft (26.x) does not keep world-gen settings in `level.dat` any
+ * more: on first open it upgrades the save's file structure and moves them out
+ * to `data/minecraft/world_gen_settings.dat`, leaving a slim `level.dat` that
+ * no longer carries a `WorldGenSettings` tag at all. `replace: true` deletes
+ * the save folder — including that sidecar — and copies our freshly emitted
+ * world in. If the game is running with that world loaded, none of the deletion
+ * is visible to it: it still holds its own in-memory level data, and when the
+ * player quits it writes that back out. The folder is then a chimera — a 26.x
+ * `level.dat` with no `WorldGenSettings`, no `data/minecraft/world_gen_settings.dat`
+ * to supply one, and our region files underneath — and the world can never be
+ * opened again, in any version:
+ *
+ *     Unable to read or access the world gen settings file!
+ *     java.lang.IllegalStateException: Overworld settings missing
+ *
+ * The save cannot be repaired from the client, so this has to be caught before
+ * the `rm`. `session.lock` is the file the game holds an exclusive lock on for
+ * exactly this purpose; Node cannot test an advisory lock directly, so we ask
+ * the operating system who has the file open. If we cannot ask — no `lsof`, an
+ * unusual platform — we let the install through rather than block a legitimate
+ * one on a check we could not perform.
+ */
+async function assertNotOpenInMinecraft(installedPath: string): Promise<void> {
+  const lockPath = path.join(installedPath, "session.lock");
+  try {
+    await access(lockPath);
+  } catch {
+    return; // Never opened by the game; nothing can be holding it.
+  }
+  if (!(await isFileOpenByAProcess(lockPath))) return;
+
+  throw new Error(
+    `${installedPath} is open in Minecraft right now — refusing to replace it.\n` +
+      "Replacing a save the game has loaded destroys it: the game rewrites level.dat on\n" +
+      "quit and the world gen settings it moved to data/minecraft/ are already gone, which\n" +
+      'leaves an unopenable world ("Overworld settings missing").\n' +
+      "Quit to the title screen (or close the game), then run the install again.",
+  );
+}
+
+/** Ask the OS whether any process holds `file` open. `false` when it cannot be asked. */
+async function isFileOpenByAProcess(file: string): Promise<boolean> {
+  if (process.platform === "win32") return false;
+  const { execFile } = await import("node:child_process");
+  return await new Promise<boolean>((resolve) => {
+    // `lsof -t` prints one pid per line and exits 1 when nothing has it open.
+    execFile("lsof", ["-t", "--", file], (error, stdout) => {
+      if (error !== null && stdout.trim() === "") {
+        // Exit 1 with no output is "nobody has it"; a missing lsof is ENOENT,
+        // and both land here. Neither is grounds for blocking the install.
+        resolve(false);
+        return;
+      }
+      resolve(stdout.trim() !== "");
+    });
+  });
 }
 
 async function assertIsWorld(worldDir: string): Promise<void> {

@@ -18,6 +18,7 @@ export {
   listRegionFiles,
   loadPrismarine,
   readGzippedNbt,
+  readRegionChunksNbt,
   writeGzippedNbt,
 } from "./prismarine.js";
 export type {
@@ -27,6 +28,7 @@ export type {
   EmitChunk,
   EmitColumnTop,
   PrismarineStack,
+  RawChunkNbt,
 } from "./prismarine.js";
 
 export { EMIT_MINECRAFT_VERSION, emitWorld, zeroRegionTimestamps } from "./world.js";

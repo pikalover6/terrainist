@@ -35,8 +35,10 @@
  * count, sample the worst offenders, and assert zero.
  */
 
+import { readFile } from "node:fs/promises";
+
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
-import { listChunks } from "./prismarine.js";
+import { listChunks, listRegionFiles, readRegionChunksNbt } from "./prismarine.js";
 import { applyConnectionStates, connectiveKindOf } from "./connections.js";
 
 /** One thing wrong with the world. */
@@ -152,6 +154,8 @@ export interface PhysicsContext {
 
 /** Every rule this module can report, so a clean world still lists them all. */
 export const PHYSICS_RULES: readonly string[] = Object.freeze([
+  "palette.registry",
+  "palette.biome",
   "unsupported.ladder",
   "unsupported.wall_torch",
   "unsupported.torch",
@@ -250,6 +254,17 @@ export async function lintWorldPhysics(
   const minY = context.minY ?? 40;
   const maxY = context.maxY ?? 200;
   const regionDir = `${worldDir}/region`;
+
+  // First, and on its own: a world whose palette does not typecheck against the
+  // registry is not a world any reader can open — not the game, and not the
+  // readback below, which resolves palette entries through `prismarine-block`
+  // and throws on an entry it cannot match. So the registry check runs before
+  // anything touches a chunk, and a failure short-circuits: the remaining rules
+  // describe how a world plays, and there is no point asking that of one the
+  // client would refuse to load.
+  const paletteFindings = await lintPalettes(worldDir, stack);
+  if (paletteFindings.length > 0) return report(paletteFindings, 0);
+
   const positions = await listChunks(regionDir);
   const anvil: EmitAnvil = stack.openAnvil(regionDir);
   const chunks = new Map<string, EmitChunk>();
@@ -1077,9 +1092,135 @@ export async function lintWorldPhysics(
     return null;
   }
 
+  return report(findings, examined);
+}
+
+/** Tally findings per rule, listing every rule so a clean world reports zeroes. */
+function report(findings: readonly PhysicsFinding[], examined: number): PhysicsReport {
   const counts: Record<string, number> = {};
   for (const rule of PHYSICS_RULES) counts[rule] = 0;
   for (const finding of findings) counts[finding.rule] = (counts[finding.rule] ?? 0) + 1;
-
   return { findings, counts, examined };
+}
+
+/* -------------------------------------------------------------------------- */
+/* palette.registry / palette.biome                                            */
+/* -------------------------------------------------------------------------- */
+
+/** One `block_states` container as it sits in a section's NBT. */
+interface RawPaletteEntry {
+  readonly Name?: unknown;
+  readonly Properties?: unknown;
+}
+
+/**
+ * Check every palette entry of every section of every region file against the
+ * pinned registry.
+ *
+ * This is the cheapest rule in the file and the one with the worst failure
+ * mode. Every other rule here describes a world that is wrong to walk through;
+ * this one describes a world the client will not open at all. A palette entry
+ * naming a block that does not exist, or carrying a property that block does
+ * not declare, is not a defect a player finds — it is a chunk the game rejects,
+ * and on a bad day a `level.dat`/registry parse failure that presents to the
+ * player as "world corrupted" with no way back in.
+ *
+ * It reads the region files directly rather than going through the chunk
+ * adapter, because the property under test is what the *serializer wrote*, and
+ * a readback through `prismarine-chunk` would launder any fault in it back
+ * through the same table that produced it.
+ *
+ * The scan is unbounded in Y on purpose: `lintWorldPhysics`'s other rules work
+ * a surface band, but an illegal state anywhere in the column — a cellar, a
+ * tunnel, a cave — breaks the same chunk.
+ */
+async function lintPalettes(
+  worldDir: string,
+  stack: PrismarineStack,
+): Promise<PhysicsFinding[]> {
+  const findings: PhysicsFinding[] = [];
+  // A world's distinct states number in the hundreds against millions of
+  // blocks; caching the verdict keeps this a per-state check, not a per-entry one.
+  const blockVerdicts = new Map<string, string | undefined>();
+  const biomeVerdicts = new Map<string, boolean>();
+
+  for (const file of await listRegionFiles(`${worldDir}/region`)) {
+    const buffer = await readFile(file);
+    for (const { chunkX, chunkZ, root } of readRegionChunksNbt(file, buffer)) {
+      const sections = Array.isArray(root["sections"]) ? (root["sections"] as unknown[]) : [];
+      for (const raw of sections) {
+        const section = raw as { Y?: unknown; block_states?: unknown; biomes?: unknown };
+        const sectionY = typeof section.Y === "number" ? section.Y : 0;
+        // The section's own corner, so a finding points at a real place.
+        const x = chunkX * 16;
+        const y = sectionY * 16;
+        const z = chunkZ * 16;
+
+        const palette = (section.block_states as { palette?: unknown } | undefined)?.palette;
+        if (Array.isArray(palette)) {
+          for (const entry of palette as RawPaletteEntry[]) {
+            const name = typeof entry.Name === "string" ? entry.Name : "";
+            const props = normaliseProperties(entry.Properties);
+            const key = `${name} ${Object.entries(props)
+              .map(([k, v]) => `${k}=${v}`)
+              .join(",")}`;
+            let issue = blockVerdicts.get(key);
+            if (!blockVerdicts.has(key)) {
+              issue = name === "" ? "palette entry has no Name" : stack.blockStateIssue(name, props);
+              blockVerdicts.set(key, issue);
+            }
+            if (issue !== undefined) {
+              findings.push({
+                rule: "palette.registry",
+                x,
+                y,
+                z,
+                block: describePaletteEntry(name, props),
+                detail: `${issue} (section y=${sectionY} of chunk ${chunkX},${chunkZ})`,
+              });
+            }
+          }
+        }
+
+        const biomes = (section.biomes as { palette?: unknown } | undefined)?.palette;
+        if (Array.isArray(biomes)) {
+          for (const biome of biomes as unknown[]) {
+            const name = typeof biome === "string" ? biome : "";
+            let known = biomeVerdicts.get(name);
+            if (known === undefined) {
+              known = name !== "" && stack.hasBiome(name);
+              biomeVerdicts.set(name, known);
+            }
+            if (!known) {
+              findings.push({
+                rule: "palette.biome",
+                x,
+                y,
+                z,
+                block: name === "" ? "<unnamed biome>" : name,
+                detail: `no such biome in ${stack.minecraftVersion} (section y=${sectionY} of chunk ${chunkX},${chunkZ})`,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  return findings;
+}
+
+/** Coerce an NBT `Properties` compound into the `string -> string` map the registry speaks. */
+function normaliseProperties(value: unknown): Record<string, string> {
+  if (value === null || typeof value !== "object") return {};
+  const out: Record<string, string> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = String(raw);
+  }
+  return out;
+}
+
+function describePaletteEntry(name: string, props: Record<string, string>): string {
+  const entries = Object.entries(props);
+  if (entries.length === 0) return name === "" ? "<unnamed>" : name;
+  return `${name}[${entries.map(([k, v]) => `${k}=${v}`).join(",")}]`;
 }

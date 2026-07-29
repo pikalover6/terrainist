@@ -62,7 +62,7 @@ Usage:
   terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
                                  [--kit settlement|terrain] [--compile-rounds N]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
-  terrainist install <worldDir> [--saves <dir>] [--replace]
+  terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist devworld [--out <dir>] [--no-zip]
@@ -92,6 +92,11 @@ install options:
                     delete it, copy this one over it, stamp a fresh
                     LastPlayed. Without it a name collision never overwrites
                     and installs as <name>-2, <name>-3, ...
+                    Refuses if Minecraft has that save open: replacing a
+                    loaded world leaves it unopenable, because the game
+                    rewrites level.dat on quit and the world gen settings it
+                    keeps in data/minecraft/ have already been deleted.
+  --force           Replace even if the save looks open. For a stale lock only.
   Stamps level.dat's LastPlayed with the current time — the only place
   Terrainist reads the wall clock.
 
@@ -426,6 +431,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   let worldDir: string | undefined;
   let savesDir: string | undefined;
   let replace = false;
+  let force = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -436,6 +442,8 @@ export async function runInstall(args: readonly string[]): Promise<number> {
       i++;
     } else if (arg === "--replace") {
       replace = true;
+    } else if (arg === "--force") {
+      force = true;
     } else if (arg !== undefined && arg.startsWith("-")) {
       throw new Error(`unknown option ${arg}`);
     } else if (worldDir === undefined) {
@@ -450,6 +458,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   const result = await installWorld({
     worldDir,
     replace,
+    force,
     ...(savesDir === undefined ? {} : { savesDir }),
   });
 

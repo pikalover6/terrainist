@@ -199,6 +199,22 @@ export interface PrismarineStack {
    * remove, so "unsure" resolves to "no".
    */
   isFullCube(stateId: number): boolean;
+  /**
+   * Validate a block state *as it appears in a written palette* against the
+   * pinned registry: the block has to exist, every property name has to be one
+   * that block declares, every value has to be in that property's domain, no
+   * declared property may be missing, and the resulting mixed-radix state id
+   * has to land back inside the block's own id range.
+   *
+   * Returns `undefined` when the state is legal, or a human-readable reason
+   * when it is not. This is the check that makes "the world loads at all" a
+   * testable property rather than something only the game client can answer:
+   * an unknown block or an out-of-domain property value is not a cosmetic
+   * defect, it is a chunk the client refuses to parse.
+   */
+  blockStateIssue(name: string, properties: Readonly<Record<string, string>>): string | undefined;
+  /** True when `name` (namespaced or not) is a biome in the pinned registry. */
+  hasBiome(name: string): boolean;
   biomeIdByName(name: string): number | undefined;
   createChunk(): EmitChunk;
   openAnvil(regionDir: string): EmitAnvil;
@@ -478,8 +494,8 @@ export function loadPrismarine(version: string): PrismarineStack {
         const k = states.findIndex((s) => s.name === key);
         if (k < 0) return undefined;
         const state = states[k] as RawBlockStateDef;
-        const values = state.values ?? (state.type === "bool" ? ["true", "false"] : undefined);
-        if (values === undefined) return undefined;
+        const values = domainOf(state);
+        if (values.length === 0) return undefined;
         const at = values.indexOf(value);
         if (at < 0) return undefined;
         indices[k] = at;
@@ -526,6 +542,54 @@ export function loadPrismarine(version: string): PrismarineStack {
         isFullCubeName(def.name);
       fullCubeCache.set(stateId, known);
       return known;
+    },
+
+    blockStateIssue(
+      name: string,
+      properties: Readonly<Record<string, string>>,
+    ): string | undefined {
+      const short = stripNamespace(name);
+      const def = data.blocksByName[short];
+      if (def === undefined) return `no such block in ${data.version.minecraftVersion}`;
+      const states = def.states ?? [];
+      const declared = new Map(states.map((s) => [s.name, s] as const));
+
+      for (const key of Object.keys(properties)) {
+        if (!declared.has(key)) {
+          const legal = states.map((s) => s.name).join(", ");
+          return `property "${key}" is not one of [${legal || "none"}]`;
+        }
+      }
+      for (const state of states) {
+        if (!(state.name in properties)) return `property "${state.name}" is missing`;
+      }
+
+      // Same mixed-radix layout `blockStateOf` writes; recomputing it here is
+      // the round trip, not a second copy of the intent.
+      let stateId = def.minStateId;
+      let stride = 1;
+      for (let k = states.length - 1; k >= 0; k--) {
+        const state = states[k] as RawBlockStateDef;
+        const values = domainOf(state);
+        const at = values.indexOf(String(properties[state.name]));
+        if (at < 0) {
+          return `property "${state.name}" value "${String(properties[state.name])}" is not one of [${values.join("|")}]`;
+        }
+        stateId += at * stride;
+        stride *= state.num_values;
+      }
+      if (stateId < def.minStateId || stateId > def.maxStateId) {
+        return `state id ${stateId} falls outside ${short}'s range ${def.minStateId}..${def.maxStateId}`;
+      }
+      const back = data.blocksByStateId[stateId];
+      if (back?.name !== short) {
+        return `state id ${stateId} decodes back to "${back?.name ?? "nothing"}"`;
+      }
+      return undefined;
+    },
+
+    hasBiome(name: string): boolean {
+      return data.biomesByName[stripNamespace(name)] !== undefined;
     },
 
     biomeIdByName(name: string): number | undefined {
@@ -629,6 +693,65 @@ export async function listChunks(regionDir: string): Promise<ChunkPos[]> {
   return chunks.sort((a, b) => a.chunkZ - b.chunkZ || a.chunkX - b.chunkX);
 }
 
+/** One chunk's root NBT, simplified, together with where it came from. */
+export interface RawChunkNbt {
+  /** Region file this chunk was read from. */
+  readonly file: string;
+  readonly chunkX: number;
+  readonly chunkZ: number;
+  /** `prismarine-nbt`'s `simplify`d root compound. */
+  readonly root: Record<string, unknown>;
+}
+
+/**
+ * Read every chunk of one region file as raw NBT, bypassing `prismarine-chunk`.
+ *
+ * The chunk adapter decodes sections into state ids, which is exactly the wrong
+ * lens for a lint that has to check what was *written*: the palette entry's
+ * `Name` and `Properties` are the bytes the game parses, and a fault in the
+ * serializer would be invisible to a read that goes back through the same
+ * table that produced it. So this walks the Anvil container itself — location
+ * header, sector, compression byte, NBT — and hands back the tree.
+ */
+export function readRegionChunksNbt(file: string, buffer: Buffer): RawChunkNbt[] {
+  const nbt = require("prismarine-nbt") as {
+    parseUncompressed(buf: Buffer): unknown;
+    simplify(value: unknown): Record<string, unknown>;
+  };
+  const zlib = require("node:zlib") as {
+    gunzipSync(buf: Buffer): Buffer;
+    inflateSync(buf: Buffer): Buffer;
+  };
+
+  const match = REGION_FILE_RE.exec(path.basename(file));
+  const regionX = match === null ? 0 : Number(match[1]);
+  const regionZ = match === null ? 0 : Number(match[2]);
+
+  const chunks: RawChunkNbt[] = [];
+  if (buffer.length < REGION_LOCATION_BYTES) return chunks;
+  for (let index = 0; index < REGION_LOCATION_ENTRIES; index++) {
+    const location = buffer.readUInt32BE(index * 4);
+    if (location === 0) continue;
+    const offset = (location >> 8) * 4096;
+    const length = buffer.readUInt32BE(offset);
+    const compression = buffer.readUInt8(offset + 4);
+    const payload = buffer.subarray(offset + 5, offset + 4 + length);
+    const raw =
+      compression === 1
+        ? zlib.gunzipSync(payload)
+        : compression === 2
+          ? zlib.inflateSync(payload)
+          : /* 3 = stored uncompressed */ payload;
+    chunks.push({
+      file,
+      chunkX: regionX * 32 + (index % 32),
+      chunkZ: regionZ * 32 + Math.floor(index / 32),
+      root: nbt.simplify(nbt.parseUncompressed(raw)),
+    });
+  }
+  return chunks;
+}
+
 /** Serialise an NBT document to a gzipped buffer (level.dat's on-disk form). */
 export function writeGzippedNbt(root: NbtRoot): Buffer {
   const nbt = require("prismarine-nbt") as { writeUncompressed(value: unknown): Buffer };
@@ -653,6 +776,17 @@ function unwrap(chunk: EmitChunk): RawChunkColumn {
     throw new Error("emit: chunk was not created by this prismarine stack");
   }
   return chunk.raw;
+}
+
+/**
+ * The legal values of one block-state property, in registry order.
+ *
+ * `minecraft-data` spells out `values` for every enum and every int property
+ * but leaves booleans implicit, and the order matters: it is the radix digit
+ * order the state id is built from, and Minecraft lists `true` first.
+ */
+function domainOf(state: RawBlockStateDef): readonly string[] {
+  return state.values ?? (state.type === "bool" ? ["true", "false"] : []);
 }
 
 function stripNamespace(name: string): string {

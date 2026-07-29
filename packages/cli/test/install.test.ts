@@ -6,7 +6,7 @@
  * anything but an explicit user invocation.
  */
 
-import { cp, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, open, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -160,6 +160,53 @@ describe("installWorld", () => {
     expect(result.replaced).toBe(false);
     expect(result.folderName).toBe(path.basename(sourceWorld));
     expect(await fileList(result.installedPath)).toEqual(await fileList(sourceWorld));
+  });
+
+  it("replaces a save whose session.lock nobody is holding", async () => {
+    // A `session.lock` on its own means "the game has opened this world at some
+    // point", which is the normal state of any world you are iterating on. It
+    // must not block the install; only a lock somebody is *holding* does.
+    const saves = await scratchDir("saves-stale-lock");
+    const first = await installWorld({ worldDir: sourceWorld, savesDir: saves, now: 1 });
+    await writeFile(path.join(first.installedPath, "session.lock"), "☃");
+
+    const again = await installWorld({ worldDir: sourceWorld, savesDir: saves, replace: true });
+    expect(again.replaced).toBe(true);
+    expect(await fileList(again.installedPath)).toEqual(await fileList(sourceWorld));
+  });
+
+  it("refuses to replace a save something still has open", async () => {
+    // The regression this exists for: replacing a world Minecraft has loaded
+    // deletes the `data/minecraft/world_gen_settings.dat` it moved out of
+    // level.dat on upgrade, and the game then writes its own settings-less
+    // level.dat back on quit. The save is unopenable afterwards, in any
+    // version, and cannot be repaired from the client — so the check has to
+    // happen before the delete, not after.
+    const saves = await scratchDir("saves-live-lock");
+    const first = await installWorld({ worldDir: sourceWorld, savesDir: saves, now: 1 });
+    const lockPath = path.join(first.installedPath, "session.lock");
+    await writeFile(lockPath, "☃");
+
+    const held = await open(lockPath, "r");
+    try {
+      await expect(
+        installWorld({ worldDir: sourceWorld, savesDir: saves, replace: true }),
+      ).rejects.toThrow(/open in Minecraft right now/);
+      // The save is untouched: refusing has to be non-destructive, or the
+      // guard would be the very thing it protects against.
+      expect(await fileList(first.installedPath)).toContain("session.lock");
+
+      // …and `force` is the way past it, for a lock this process itself holds.
+      const forced = await installWorld({
+        worldDir: sourceWorld,
+        savesDir: saves,
+        replace: true,
+        force: true,
+      });
+      expect(forced.replaced).toBe(true);
+    } finally {
+      await held.close();
+    }
   });
 
   it("refuses to replace the world it is installing", async () => {

@@ -14,10 +14,12 @@
  */
 
 import { mkdtemp, rm } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import zlib from "node:zlib";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -245,6 +247,155 @@ describe("the walking agent", () => {
     const report = await shell(3);
     expect(report.counts["traversal.unreachable"]).toBe(0);
   }, 60_000);
+});
+
+describe("palette.registry", () => {
+  /**
+   * The rule's own fixture: a world that *was* valid, with its written palette
+   * then edited on disk.
+   *
+   * Nothing in the compiler can produce an illegal state on purpose — every
+   * write goes through `blockStateOf`, which returns `undefined` rather than a
+   * bad id — so the only honest way to prove this rule fires is to damage a
+   * region file the way a serializer regression would and check that the lint
+   * notices. It also means the test exercises the raw Anvil read, which is the
+   * half of the rule that exists so a fault in the writer cannot hide behind
+   * the reader.
+   */
+  async function withEditedPalette(
+    edit: (entry: Record<string, { type: string; value: unknown }>) => void,
+  ): Promise<PhysicsReport> {
+    const dir = path.join(await scratchDir("palette"), "palette");
+    const chunk = stack.createChunk();
+    const stone = stack.blockByName("stone")?.stateId as number;
+    for (let z = 0; z < 16; z++) {
+      for (let x = 0; x < 16; x++) chunk.setStateId(x, 64, z, stone);
+    }
+    await writeWorldFiles({
+      chunks: new Map([["0,0", chunk]]),
+      worldDir: dir,
+      levelName: "palette",
+      spawn: { x: 8, y: 66, z: 8 },
+      stack,
+    });
+
+    const nbt = createRequire(import.meta.url)("prismarine-nbt") as {
+      parseUncompressed(buf: Buffer): { type: string; name: string; value: unknown };
+      writeUncompressed(value: unknown): Buffer;
+    };
+    const regionPath = path.join(dir, "region", "r.0.0.mca");
+    const region = await readFile(regionPath);
+
+    // Chunk (0,0) is slot 0 of the location table.
+    const location = region.readUInt32BE(0);
+    const offset = (location >> 8) * 4096;
+    const length = region.readUInt32BE(offset);
+    const root = nbt.parseUncompressed(
+      zlib.inflateSync(region.subarray(offset + 5, offset + 4 + length)),
+    );
+
+    type Node = { type: string; value: unknown };
+    const sections = (
+      (root.value as Record<string, Node>)["sections"] as { value: { value: unknown[] } }
+    ).value.value as Record<string, Node>[];
+    let edited = false;
+    for (const section of sections) {
+      const palette = (
+        (section["block_states"] as { value: Record<string, Node> } | undefined)?.value[
+          "palette"
+        ] as { value: { value: unknown[] } } | undefined
+      )?.value.value;
+      if (palette === undefined) continue;
+      for (const raw of palette) {
+        const entry = raw as Record<string, { type: string; value: unknown }>;
+        if (entry["Name"]?.value !== "minecraft:stone") continue;
+        edit(entry);
+        edited = true;
+        break;
+      }
+      if (edited) break;
+    }
+    expect(edited, "found the stone palette entry to edit").toBe(true);
+
+    const payload = zlib.deflateSync(nbt.writeUncompressed(root));
+    const sectors = Math.ceil((payload.length + 5) / 4096);
+    const rebuilt = Buffer.alloc(8192 + sectors * 4096);
+    rebuilt.writeUInt32BE((2 << 8) | sectors, 0);
+    rebuilt.writeUInt32BE(payload.length + 1, 8192);
+    rebuilt.writeUInt8(2, 8196);
+    payload.copy(rebuilt, 8197);
+    await writeFile(regionPath, rebuilt);
+
+    return await lintWorldPhysics(dir, stack, { minY: 60, maxY: 70 });
+  }
+
+  it("catches a palette entry naming a block that does not exist", async () => {
+    const report = await withEditedPalette((entry) => {
+      entry["Name"] = { type: "string", value: "minecraft:mithril_block" };
+    });
+    expect(report.counts["palette.registry"]).toBeGreaterThan(0);
+    const finding = report.findings.find((f) => f.rule === "palette.registry");
+    expect(finding?.block).toContain("mithril_block");
+    expect(finding?.detail).toContain("no such block");
+  }, 60_000);
+
+  it("catches a property the block does not declare", async () => {
+    const report = await withEditedPalette((entry) => {
+      entry["Properties"] = {
+        type: "compound",
+        value: { facing: { type: "string", value: "north" } },
+      };
+    });
+    expect(report.counts["palette.registry"]).toBeGreaterThan(0);
+    expect(
+      report.findings.find((f) => f.rule === "palette.registry")?.detail,
+    ).toContain('property "facing" is not one of');
+  }, 60_000);
+
+  it("passes the same world untouched", async () => {
+    // The edit hook is the only difference between this and the two above, so
+    // a green here is what makes those two mean "the rule fired", rather than
+    // "the rewrite broke the file".
+    const report = await withEditedPalette((entry) => {
+      entry["Name"] = { type: "string", value: "minecraft:stone" };
+    });
+    expect(report.counts["palette.registry"]).toBe(0);
+    expect(report.counts["palette.biome"]).toBe(0);
+  }, 60_000);
+});
+
+describe("the registry check behind palette.registry", () => {
+  it("accepts a fully specified legal state", () => {
+    expect(
+      stack.blockStateIssue("minecraft:oak_stairs", {
+        facing: "north",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      }),
+    ).toBeUndefined();
+    expect(stack.blockStateIssue("stone", {})).toBeUndefined();
+  });
+
+  it("rejects an unknown block, a bad value, a stray property and a missing one", () => {
+    expect(stack.blockStateIssue("minecraft:nope", {})).toContain("no such block");
+    expect(
+      stack.blockStateIssue("oak_stairs", {
+        facing: "sideways",
+        half: "bottom",
+        shape: "straight",
+        waterlogged: "false",
+      }),
+    ).toContain('value "sideways"');
+    expect(stack.blockStateIssue("stone", { lit: "true" })).toContain('property "lit"');
+    expect(stack.blockStateIssue("oak_stairs", { facing: "north" })).toContain("is missing");
+  });
+
+  it("knows the biomes the emitter uses, and no others", () => {
+    expect(stack.hasBiome("minecraft:plains")).toBe(true);
+    expect(stack.hasBiome("windswept_hills")).toBe(true);
+    expect(stack.hasBiome("minecraft:the_shire")).toBe(false);
+  });
 });
 
 describe("the connection-state pass", () => {
