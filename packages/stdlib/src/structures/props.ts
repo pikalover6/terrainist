@@ -43,6 +43,13 @@ import { Rng, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import { sortOps, type LocalVoxelOp, type StructureYaw } from "./core.js";
 import { type BuildingMaterials } from "./themes.js";
+// The two transport families live in files of their own — an airliner and a
+// galleon are each longer than everything above put together — and are merged
+// in here, which keeps `PROP_GENERATORS` the one place a prop is looked up.
+// The import cycle (`props → aircraft → props`) is safe by construction:
+// neither file reads a value of the other at module-evaluation time.
+import { AIRCRAFT_FOOTPRINTS, AIRCRAFT_GENERATORS, AIRCRAFT_PROP_NAMES } from "./aircraft.js";
+import { SHIP_FOOTPRINTS, SHIP_GENERATORS, SHIP_PROP_NAMES } from "./ships.js";
 
 /* -------------------------------------------------------------------------- */
 /* the catalog                                                                 */
@@ -59,6 +66,8 @@ export const PROP_NAMES = [
   "fountain",
   "gazebo",
   "statue_plinth",
+  ...AIRCRAFT_PROP_NAMES,
+  ...SHIP_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -363,6 +372,13 @@ export function propFootprint(
   readonly minY: number;
   readonly base: PropBase;
 } {
+  // The transport families declare their own boxes, in their own files, from
+  // the same table their generators build against.
+  const air = AIRCRAFT_FOOTPRINTS[prop];
+  if (air !== undefined) return { ...air(params), base: "ground" };
+  const ship = SHIP_FOOTPRINTS[prop];
+  if (ship !== undefined) return ship(params);
+
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -889,6 +905,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   fountain,
   gazebo,
   statue_plinth: statuePlinth,
+  ...AIRCRAFT_GENERATORS,
+  ...SHIP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

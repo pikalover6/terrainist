@@ -55,6 +55,26 @@ export {
 } from "./exhibits/props.js";
 
 /**
+ * The vehicle grid: the transport-air and transport-water craft.
+ *
+ * Re-exported for the same reason the prop grid is — these are not buildings —
+ * and kept separate from it because its water rows need a *harbour* rather than
+ * a pond: a galleon wants 46 × 13 of open water at one level, which is an order
+ * of magnitude more digging than a rowboat.
+ */
+export {
+  VEHICLE_EXHIBIT_GAP,
+  VEHICLE_EXHIBIT_PLAN,
+  VEHICLE_POND_MARGIN,
+  buildVehicleExhibits,
+  planVehicleExhibits,
+  type VehicleExhibit,
+  type VehicleExhibitGrid,
+  type VehicleExhibitResult,
+  type VehicleExhibitRow,
+} from "./exhibits/vehicles.js";
+
+/**
  * Rows appended to the dev world by the parallel tracks, in grid order.
  *
  * The extended archetypes come first because they are the ones a grammar

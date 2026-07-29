@@ -56,6 +56,28 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   fountain: [{}],
   gazebo: [{}],
   statue_plinth: [{}],
+  // The transport families, whose own properties are held in vehicles.test.ts;
+  // here they walk the same bounds, determinism and rotation checks as the rest
+  // of the catalog, which is what makes those checks exhaustive.
+  airliner: [{}],
+  cargo_plane: [{}],
+  biplane: [{}],
+  light_plane: [{}],
+  airship: [{}],
+  zeppelin_mast: [{}],
+  hangar: [{}],
+  runway: [{}, { length: 12 }, { length: 64 }],
+  longship: [{}],
+  cog: [{}],
+  caravel: [{}],
+  galleon: [{}],
+  yacht: [{}],
+  speedboat: [{}],
+  ferry: [{}],
+  tugboat: [{}],
+  fishing_trawler: [{}],
+  drydock: [{}, { length: 16 }, { length: 64 }],
+  buoy: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {
@@ -87,15 +109,16 @@ describe("prop geometry bounds", () => {
     for (const prop of PROP_NAMES) {
       for (const params of PARAM_CASES[prop]) {
         const declared = propFootprint(prop, params);
-        const ops = opsOf(prop, params);
-        for (const op of ops) {
-          expect(op.x, `${prop} x`).toBeGreaterThanOrEqual(0);
-          expect(op.x, `${prop} x`).toBeLessThan(declared.size[0]);
-          expect(op.z, `${prop} z`).toBeGreaterThanOrEqual(0);
-          expect(op.z, `${prop} z`).toBeLessThan(declared.size[2]);
-          expect(op.y, `${prop} y`).toBeGreaterThanOrEqual(declared.minY);
-          expect(op.y, `${prop} y`).toBeLessThan(declared.minY + declared.size[1]);
-        }
+        const outside = opsOf(prop, params).filter(
+          (op) =>
+            op.x < 0 ||
+            op.x >= declared.size[0] ||
+            op.z < 0 ||
+            op.z >= declared.size[2] ||
+            op.y < declared.minY ||
+            op.y >= declared.minY + declared.size[1],
+        );
+        expect(outside, `${prop} left its box`).toEqual([]);
       }
     }
   });
@@ -206,12 +229,13 @@ describe("prop rotation", () => {
             yaw === 90 || yaw === 270
               ? [declared.size[2], declared.size[0]]
               : [declared.size[0], declared.size[2]];
-          for (const op of rotated) {
-            expect(op.x).toBeGreaterThanOrEqual(0);
-            expect(op.x).toBeLessThan(w);
-            expect(op.z).toBeGreaterThanOrEqual(0);
-            expect(op.z).toBeLessThan(d);
-          }
+          // Collected rather than asserted per op: an airliner is fifteen
+          // hundred blocks and four yaws, and `expect` per cell turns a
+          // millisecond of arithmetic into seconds of matcher bookkeeping.
+          const outside = rotated.filter(
+            (op) => op.x < 0 || op.x >= w || op.z < 0 || op.z >= d,
+          );
+          expect(outside, `${prop}@${yaw} left its box`).toEqual([]);
           // A rotation is a bijection: no two ops may land in one cell.
           expect(new Set(rotated.map((o) => `${o.x},${o.y},${o.z}`)).size).toBe(ops.length);
         }
