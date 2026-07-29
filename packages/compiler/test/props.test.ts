@@ -37,6 +37,7 @@ import {
   type PropJob,
 } from "../src/structures/props.js";
 import { buildPropExhibits, planPropExhibits } from "../src/exhibits/props.js";
+import { planVehicleExhibits } from "../src/exhibits/vehicles.js";
 import type { Region } from "@terrainist/stdlib";
 
 let stack: PrismarineStack;
@@ -503,9 +504,14 @@ describe("the rail-state pass", () => {
 });
 
 describe("the prop exhibits", () => {
-  it("shows every prop in the catalog at least once", () => {
-    const grid = planPropExhibits();
-    const shown = new Set(grid.exhibits.map((e) => e.prop));
+  it("shows every prop in the catalog at least once, across both grids", () => {
+    // The transport families are big enough to need a grid of their own — see
+    // `exhibits/vehicles.ts` — so the claim that every prop is exhibited is a
+    // claim about the union of the two.
+    const shown = new Set([
+      ...planPropExhibits().exhibits.map((e) => e.prop),
+      ...planVehicleExhibits().exhibits.map((e) => e.prop),
+    ]);
     for (const name of PROP_NAMES) expect(shown.has(name), name).toBe(true);
   });
 

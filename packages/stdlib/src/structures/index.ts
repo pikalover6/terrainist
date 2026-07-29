@@ -23,3 +23,5 @@ export * from "./catalog.js";
 export * from "./archetypes.js";
 export * from "./themes.js";
 export * from "./props.js";
+export * from "./aircraft.js";
+export * from "./ships.js";

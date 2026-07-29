@@ -678,6 +678,25 @@ target, skipping anything already built.
 | `fountain` | 7×5×7 | ground | — |
 | `gazebo` | 7×6×7 | ground | — |
 | `statue_plinth` | 3×5×3 | ground | — |
+| `airliner` | 52×19×35 | ground, flat | the large one: swept wing, engines, airstair at the fore door |
+| `cargo_plane` | 40×21×29 | ground, flat | high wing, four turboprops, rear ramp down to the apron |
+| `biplane` | 14×8×15 | ground | — |
+| `light_plane` | 12×7×13 | ground | — |
+| `airship` | 41×17×13 | ground | ellipsoid envelope on a rigging frame, gondola beneath |
+| `zeppelin_mast` | 7×20×7 | ground | the mast an `airship` is moored to; place both |
+| `hangar` | 25×14×19 | ground, flat | barrel vault, open across the whole `z = 0` end |
+| `runway` | `length`×2×9 | ground, flat | `length` 12..64 (32); a repeatable strip — place several in a line |
+| `longship` | 20×10×5 | water | clinker sides, oars, one square sail |
+| `cog` | 24×16×9 | water | fore and aft castles, one mast |
+| `caravel` | 30×17×9 | water | two masts, lateen canvas |
+| `galleon` | 46×31×13 | water | the large one: three masts, gunports, stern gallery, bowsprit |
+| `yacht` | 22×10×7 | water | quartz hull, glazed saloon, radar |
+| `speedboat` | 8×4×5 | water | — |
+| `ferry` | 25×10×11 | water | car deck, bow ramp, wheelhouse |
+| `tugboat` | 12×10×7 | water | — |
+| `fishing_trawler` | 18×12×7 | water | booms and nets |
+| `drydock` | `length`×8×15 | ground, flat | `length` 16..64 (34); an open cradle a hull sits in |
+| `buoy` | 3×5×3 | water | the smallest thing that floats |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask

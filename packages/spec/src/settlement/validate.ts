@@ -1674,6 +1674,27 @@ export const SETTLEMENT_PROP_NAMES = [
   "fountain",
   "gazebo",
   "statue_plinth",
+  // transport: air
+  "airliner",
+  "cargo_plane",
+  "biplane",
+  "light_plane",
+  "airship",
+  "zeppelin_mast",
+  "hangar",
+  "runway",
+  // transport: water
+  "longship",
+  "cog",
+  "caravel",
+  "galleon",
+  "yacht",
+  "speedboat",
+  "ferry",
+  "tugboat",
+  "fishing_trawler",
+  "drydock",
+  "buoy",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
