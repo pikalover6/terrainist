@@ -25,7 +25,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { buildDevWorld, compileTerrain, emitWorld, formatDiagnostic, loadSpikeDocument } from "@terrainist/compiler";
+import {
+  buildDevWorld,
+  buildReviewRig,
+  compileTerrain,
+  emitWorld,
+  formatDiagnostic,
+  loadSpikeDocument,
+} from "@terrainist/compiler";
 import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terrainist/compiler";
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
@@ -48,6 +55,16 @@ import {
   writeDocument,
 } from "./generate.js";
 import { defaultSavesDir, installWorld } from "./install.js";
+import {
+  buildSession,
+  readClientLog,
+  readManifest,
+  readScreenshots,
+  renderSessionMarkdown,
+  type ReviewEvent,
+  type ReviewManifest,
+  type ReviewScreenshot,
+} from "./review-import.js";
 import { zipWorld } from "./zip.js";
 
 /** Parsed CLI invocation. */
@@ -66,6 +83,9 @@ Usage:
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist devworld [--out <dir>] [--no-zip]
+  terrainist rig-build [--out <dir>] [--no-zip]
+  terrainist review-import [--log <file>]... [--screenshots <dir>]
+                           [--manifest <file>] [--out <session.json>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
@@ -114,6 +134,24 @@ devworld options:
   A superflat showcase world: a grid of every building archetype crossed with
   the size, storey, theme and roof gradients, on a lit, empty grass plain.
   Fixed seed — two builds are diffable by eye.
+
+rig-build options:
+  --out <dir>       Output directory (default: out). Writes <dir>/review_rig/,
+                    <dir>/review_rig.manifest.json and the archive alongside.
+  --no-zip          Skip creating the .zip.
+  The human-review rig: one void-floating station per exhibit cell, each with
+  one structure, an arrival pressure plate that announces the station in chat,
+  NEXT/PREV teleport buttons and PASS/FAIL verdict buttons. Fixed seed.
+
+review-import options:
+  --log <file>      A Minecraft client log to read; repeatable, and read in
+                    the order given. Defaults to the client's latest.log.
+  --screenshots <dir>
+                    Screenshot directory; each PNG is filed under the station
+                    whose visit window contains its timestamp.
+  --manifest <file> The rig manifest, to attach each station's provenance.
+  --out <file>      Session JSON to write (default: review-session.json). A
+                    markdown summary is written alongside it as <file>.md.
 
 emit options:
   --out <dir>       Output directory (default: out). The world folder is
@@ -169,6 +207,132 @@ export async function runDevWorld(args: readonly string[]): Promise<number> {
   if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
   console.log(lines.join("\n"));
   return result.fluids.unstable === 0 ? 0 : 1;
+}
+
+/** `terrainist rig-build [--out <dir>]` — the human-review rig. */
+export async function runRigBuild(args: readonly string[]): Promise<number> {
+  let outDir = "out";
+  let zip = true;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--out" || arg === "-o") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--out requires a directory");
+      outDir = value;
+      i++;
+    } else if (arg === "--no-zip") {
+      zip = false;
+    } else {
+      throw new Error(`unexpected argument ${String(arg)}`);
+    }
+  }
+
+  const result = await buildReviewRig(path.resolve(outDir));
+  const zipPath = zip ? await zipWorld(result.worldDir) : undefined;
+
+  const kinds = new Map<string, number>();
+  for (const s of result.plan.stations) kinds.set(s.kind, (kinds.get(s.kind) ?? 0) + 1);
+  const { region } = result.plan;
+  const lines = [
+    `built "review_rig" — ${result.minecraftVersion} (DataVersion ${result.dataVersion})`,
+    `  world      ${result.worldDir}`,
+    `  manifest   ${result.manifestPath}`,
+    `  stations   ${result.stationCount} + spawn ` +
+      `(${[...kinds].map(([k, n]) => `${k}=${n}`).join(", ")})`,
+    `  extent     ${region.width}x${region.depth} at (${region.x0}, ${region.z0}), platforms at y ${result.manifest.groundY}`,
+    `  chunks     ${result.chunkCount}`,
+    `  blocks     ${result.blockCount}`,
+    `  entities   ${result.blockEntityCount} block entities (signs and command blocks)`,
+    `  spawn      [${result.plan.spawn.landing.x}, ${result.plan.spawn.landing.y}, ${result.plan.spawn.landing.z}]`,
+  ];
+  if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
+  lines.push(`\nnext: terrainist install ${result.worldDir}`);
+  console.log(lines.join("\n"));
+  return 0;
+}
+
+/** The client's default log directory on this platform. */
+export function defaultLogsDir(): string {
+  const home = process.env["HOME"] ?? "";
+  if (process.platform === "darwin") {
+    return path.join(home, "Library", "Application Support", "minecraft", "logs");
+  }
+  if (process.platform === "win32") {
+    return path.join(process.env["APPDATA"] ?? home, ".minecraft", "logs");
+  }
+  return path.join(home, ".minecraft", "logs");
+}
+
+/** `terrainist review-import` — a client log back into a session document. */
+export async function runReviewImport(args: readonly string[]): Promise<number> {
+  const logs: string[] = [];
+  let screenshotDir: string | undefined;
+  let manifestPath: string | undefined;
+  let outFile = "review-session.json";
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const value = args[i + 1];
+    if (arg === "--log") {
+      if (value === undefined) throw new Error("--log requires a file");
+      logs.push(value);
+      i++;
+    } else if (arg === "--screenshots") {
+      if (value === undefined) throw new Error("--screenshots requires a directory");
+      screenshotDir = value;
+      i++;
+    } else if (arg === "--manifest") {
+      if (value === undefined) throw new Error("--manifest requires a file");
+      manifestPath = value;
+      i++;
+    } else if (arg === "--out" || arg === "-o") {
+      if (value === undefined) throw new Error("--out requires a file path");
+      outFile = value;
+      i++;
+    } else {
+      throw new Error(`unexpected argument ${String(arg)}`);
+    }
+  }
+
+  if (logs.length === 0) logs.push(path.join(defaultLogsDir(), "latest.log"));
+
+  const events: ReviewEvent[] = [];
+  for (const log of logs) events.push(...(await readClientLog(log)));
+
+  let screenshots: ReviewScreenshot[] | undefined;
+  if (screenshotDir !== undefined) screenshots = await readScreenshots(screenshotDir);
+
+  let manifest: ReviewManifest | undefined;
+  if (manifestPath !== undefined) manifest = await readManifest(manifestPath);
+
+  const session = buildSession({
+    events,
+    ...(screenshots === undefined ? {} : { screenshots }),
+    manifest,
+    logs: logs.map((l) => path.resolve(l)),
+    screenshotDir: screenshotDir === undefined ? undefined : path.resolve(screenshotDir),
+    manifestPath: manifestPath === undefined ? undefined : path.resolve(manifestPath),
+  });
+
+  const outPath = path.resolve(outFile);
+  const summaryPath = `${outPath.replace(/\.json$/, "")}.md`;
+  await mkdir(path.dirname(outPath), { recursive: true });
+  await writeFile(outPath, `${JSON.stringify(session, null, 2)}\n`);
+  await writeFile(summaryPath, renderSessionMarkdown(session));
+
+  const t = session.totals;
+  console.log(
+    [
+      `imported ${logs.length} log(s)`,
+      `  stations   ${t.stationsVisited} visited` +
+        (t.stationsInManifest === null ? "" : ` of ${t.stationsInManifest}`),
+      `  verdicts   ${t.pass} pass, ${t.fail} fail (${t.markers} arrivals)`,
+      `  notes      ${t.comments} comment(s), ${t.screenshots} screenshot(s)`,
+      `  session    ${outPath}`,
+      `  summary    ${summaryPath}`,
+    ].join("\n"),
+  );
+  return 0;
 }
 
 export async function runEmit(args: readonly string[]): Promise<void> {
@@ -614,6 +778,10 @@ export async function main(argv: readonly string[]): Promise<number> {
       return await runCompile(rest);
     case "devworld":
       return await runDevWorld(rest);
+    case "rig-build":
+      return await runRigBuild(rest);
+    case "review-import":
+      return await runReviewImport(rest);
     case "emit":
       await runEmit(rest);
       return 0;
@@ -653,6 +821,28 @@ if (entry !== undefined && import.meta.url === pathToFileURL(entry).href) {
 export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed } from "./install.js";
 export type { InstallOptions, InstallResult } from "./install.js";
 export { parseGenerateArgs, seedFromPrompt } from "./generate.js";
+export {
+  buildSession,
+  chatPayload,
+  classifyChat,
+  logStartDate,
+  parseClientLog,
+  readClientLog,
+  readManifest,
+  readScreenshots,
+  renderSessionMarkdown,
+  screenshotTime,
+} from "./review-import.js";
+export type {
+  ReviewComment,
+  ReviewEvent,
+  ReviewManifest,
+  ReviewScreenshot,
+  ReviewSession,
+  ReviewShot,
+  ReviewStation,
+  ReviewVisit,
+} from "./review-import.js";
 export type { GenerateOptions } from "./generate.js";
 
 export type { CompileResult, EmitSummary, RenderView };

@@ -49,6 +49,19 @@ export interface LevelDatOptions {
   readonly difficulty?: number;
   /** World seed, as a `[high, low]` long. Fixed for determinism. */
   readonly seed?: readonly [number, number];
+  /**
+   * Game rules to override, by rule name.
+   *
+   * Names are the 1.21.9+ ones — namespaced `minecraft:` snake_case, e.g.
+   * `command_block_output`, not the old camelCase `commandBlockOutput`. A bare
+   * name is namespaced here; the old spelling would be written verbatim and
+   * silently ignored by the game, so callers pass the new one.
+   *
+   * A `boolean` is written as a byte and a `number` as an int, which is the
+   * shape real 1.21.11 saves carry (verified: `minecraft:command_block_output`
+   * is `byte 1`, `minecraft:random_tick_speed` is `int 3`).
+   */
+  readonly gameRules?: Readonly<Record<string, boolean | number>>;
 }
 
 /**
@@ -66,6 +79,7 @@ export function buildLevelDat(options: LevelDatOptions): NbtRoot {
     gameType = 1,
     difficulty = 0,
     seed = LONG_ZERO,
+    gameRules = {},
   } = options;
 
   const data: NbtCompoundValue = {
@@ -93,7 +107,7 @@ export function buildLevelDat(options: LevelDatOptions): NbtRoot {
     Difficulty: byte(difficulty),
     DifficultyLocked: bool(false),
     // 1.21.9+ name; an empty compound means "all rules at their defaults".
-    game_rules: compound({}),
+    game_rules: compound(gameRulesCompound(gameRules)),
 
     // --- spawn (1.21.9+ shape; replaces SpawnX/SpawnY/SpawnZ/SpawnAngle) -----
     spawn: compound({
@@ -127,6 +141,23 @@ export function buildLevelDat(options: LevelDatOptions): NbtRoot {
   };
 
   return { type: "compound", name: "", value: { Data: compound(data) } };
+}
+
+/**
+ * The `game_rules` compound, with every key namespaced and sorted.
+ *
+ * Sorted because the compound is written in insertion order and the output has
+ * to be byte-identical run to run: a caller who builds the record from an
+ * object literal would otherwise pin the bytes to their key order.
+ */
+function gameRulesCompound(rules: Readonly<Record<string, boolean | number>>): NbtCompoundValue {
+  const out: Record<string, ReturnType<typeof bool> | ReturnType<typeof int>> = {};
+  for (const key of Object.keys(rules).sort()) {
+    const value = rules[key] as boolean | number;
+    out[key.includes(":") ? key : `minecraft:${key}`] =
+      typeof value === "boolean" ? bool(value) : int(value);
+  }
+  return out;
 }
 
 function buildWorldGenSettings(seed: readonly [number, number]) {

@@ -30,6 +30,8 @@ export interface WriteWorldInput {
   readonly levelName: string;
   readonly spawn: WriteSpawn;
   readonly stack: PrismarineStack;
+  /** Game-rule overrides for `level.dat`; see {@link LevelDatOptions.gameRules}. */
+  readonly gameRules?: Readonly<Record<string, boolean | number>>;
 }
 
 /** What the write step produced. */
@@ -82,6 +84,7 @@ export async function writeWorldFiles(input: WriteWorldInput): Promise<WriteWorl
         spawn: input.spawn,
         minecraftVersion: input.stack.minecraftVersion,
         dataVersion: input.stack.dataVersion,
+        ...(input.gameRules === undefined ? {} : { gameRules: input.gameRules }),
       }),
     ),
   );

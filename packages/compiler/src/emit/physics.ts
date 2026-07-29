@@ -159,6 +159,7 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "palette.biome",
   "unsupported.ladder",
   "unsupported.wall_torch",
+  "unsupported.wall_sign",
   "unsupported.torch",
   "unsupported.lantern",
   "unsupported.door",
@@ -227,7 +228,13 @@ const NEEDS_GROUND = /(_fence|_wall|_fence_gate|_carpet|_pressure_plate|_sign|to
 /** True for a block that stands on the one below it — a link in a support chain. */
 function needsGround(name: string): boolean {
   if (name.startsWith("potted_")) return true;
+  // The blocks whose name ends in the suffix of a standing block but which
+  // hang off a *neighbour* instead: a wall torch brackets to the block behind
+  // it, and so does a wall sign. Both are checked by their own attachment rule
+  // below; asking the support chain about them reads the air under a wall sign
+  // as a defect, which is a finding with no defect under it.
   if (name.endsWith("wall_torch")) return false;
+  if (name.endsWith("_wall_sign") || name.endsWith("_wall_hanging_sign")) return false;
   return NEEDS_GROUND.test(name);
 }
 
@@ -353,6 +360,14 @@ export async function lintWorldPhysics(
             const [dx, dz] = STEP[props["facing"] ?? "north"] ?? [0, -1];
             if (!solidAt(x - dx, y, z - dz)) {
               add("unsupported.wall_torch", x, y, z, `nothing to bracket to at ${x - dx},${y},${z - dz}`);
+            }
+          } else if (name.endsWith("_wall_sign")) {
+            // A wall sign brackets to the block *behind* it, exactly as a wall
+            // torch does — `facing` is the direction it reads towards, so the
+            // block it hangs on is one step the other way.
+            const [dx, dz] = STEP[props["facing"] ?? "north"] ?? [0, -1];
+            if (!solidAt(x - dx, y, z - dz)) {
+              add("unsupported.wall_sign", x, y, z, `nothing to hang on at ${x - dx},${y},${z - dz}`);
             }
           } else if (name === "torch" || name === "soul_torch" || name === "redstone_torch") {
             if (!solidAt(x, y - 1, z)) add("unsupported.torch", x, y, z, "no solid block below");
