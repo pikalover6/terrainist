@@ -22,36 +22,12 @@
  * collects them, and Round E wires the import.
  */
 
-import { MATERIAL_THEMES, type BuildingArchetype, type BuildingWing } from "@terrainist/stdlib";
+import { type BuildingWing } from "@terrainist/stdlib";
 
-/**
- * One exhibit cell.
- *
- * Structurally the `DevExhibit` fields `devworld.ts` fills in per row — id,
- * archetype, theme, roof, floors, size — plus the `params` this row needs and
- * the base grid has no column for. A wirer that spreads `params` over the job's
- * params gets a wing; one that ignores it gets a plain rect, which is a
- * degradation rather than a break.
- */
-export interface ExhibitCell {
-  readonly id: string;
-  readonly archetype: BuildingArchetype;
-  readonly theme: string;
-  readonly roof: string;
-  readonly floors: number;
-  readonly size: readonly [number, number, number];
-  /** Extra generator params for this cell — here, always a `wing`. */
-  readonly params?: { readonly wing: BuildingWing };
-}
-
-/** One dev-world row: a label and its cells, west to east. */
-export interface ExhibitRow {
-  readonly row: string;
-  readonly cells: readonly ExhibitCell[];
-}
+import { DEV_THEMES, type DevExhibitCell, type DevExhibitRow } from "./types.js";
 
 /** The themes these rows cycle, so the two rows are comparable cell for cell. */
-const THEMES = MATERIAL_THEMES.map((t) => t.id);
+const THEMES = DEV_THEMES;
 
 /**
  * The envelope every footprint exhibit uses.
@@ -96,8 +72,8 @@ const ROOFS = ["gable", "hip", "flat"] as const;
 function rowFor(
   label: string,
   wingOf: (side: BuildingWing["side"]) => BuildingWing,
-): ExhibitRow {
-  const cells: ExhibitCell[] = [];
+): DevExhibitRow {
+  const cells: DevExhibitCell[] = [];
   // Four cells: one wing per side, at the default roof. This is the rotation
   // exhibit — the same plan turned four ways, which is what makes a yaw bug
   // visible as an asymmetry across the four rather than as "that one looks odd".
@@ -129,13 +105,13 @@ function rowFor(
 }
 
 /** The L row: a wing flush with the corner, on every side and every roof. */
-export const FOOTPRINT_L_ROW: ExhibitRow = rowFor("footprint_l", ellWing);
+export const FOOTPRINT_L_ROW: DevExhibitRow = rowFor("footprint_l", ellWing);
 
 /** The T row: the same wing centred on its face. */
-export const FOOTPRINT_T_ROW: ExhibitRow = rowFor("footprint_t", teeWing);
+export const FOOTPRINT_T_ROW: DevExhibitRow = rowFor("footprint_t", teeWing);
 
 /** Both rows, in grid order. Registered from `devworld-rows.ts`. */
-export const FOOTPRINT_EXHIBIT_ROWS: readonly ExhibitRow[] = Object.freeze([
+export const FOOTPRINT_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   FOOTPRINT_L_ROW,
   FOOTPRINT_T_ROW,
 ]);

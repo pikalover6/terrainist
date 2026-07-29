@@ -32,6 +32,7 @@
 import { positionFloat, positionInt, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import {
+  archetypeFacadeDefaults,
   furnish,
   furnishCellar,
   resolveArchetype,
@@ -777,8 +778,14 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   const choice = streamSeed(request.seed, "grammar.choice");
 
   const archetype = resolveArchetype(params.archetype);
-  const roof = resolveRoof(params.roof);
-  const rhythm = resolveRhythm(params.windowRhythm);
+  // Archetype-intrinsic facade. A church wants tall lights and a warehouse
+  // wants almost none, and neither is something an author should have to spell
+  // out: `archetypeFacadeDefaults` returns the tendency, and it fills holes
+  // only — an explicit param always wins, which is what keeps the exhibit rows
+  // and every existing document byte-identical where they *do* name one.
+  const facade = archetypeFacadeDefaults(archetype);
+  const roof = resolveRoof(params.roof ?? facade.roof);
+  const rhythm = resolveRhythm(params.windowRhythm ?? facade.windowRhythm);
   // v0.2 §7 `floors`: not yet — the catalog allows 1..24; this version builds
   // 1..2 and clamps, because it has no core/circulation model above two stories.
   const floors = clamp(Math.round(params.floors ?? 2), 1, MAX_FLOORS);
@@ -803,7 +810,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
           2,
           MAX_ROOF_LAYERS,
         );
-  const windowShape = resolveWindowShape(params.windowShape, choice, storyHeight);
+  const windowShape = resolveWindowShape(params.windowShape ?? facade.windowShape, choice, storyHeight);
 
   // The cellar is dug before the skirt is measured, because the two share the
   // same ground: a skirt sunk through a cellar would fill the room it stands in.
@@ -1180,6 +1187,17 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         choice,
         stairColumns,
         hearthColumns,
+        // The geometry the fit-out used to *probe* for. A steeple and a set of
+        // sails are both sized off the roof, and the fit-out reconstructed
+        // `roofTop` by scanning every cell above the eave because nothing
+        // handed it over. It is right here, so it is handed over.
+        size: [sx, sy, sz],
+        wallTop,
+        roofTop,
+        // The floor across both rects, so a wing is part of the room the
+        // walkability guard reasons about rather than a place furniture can
+        // silently strand.
+        floorCells: shell.interiorCells,
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
       })
     : 0;

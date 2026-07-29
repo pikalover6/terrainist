@@ -135,6 +135,27 @@ export interface StructureNode extends StructureBase {
   readonly envelope?: BoxEnvelope;
 }
 
+/**
+ * A `prop.place@0` node under the root.
+ *
+ * Its own type rather than a third {@link StructureGenerator}, because it is
+ * not one: a prop takes no part in the layout solve. It carries the *coarse*
+ * placement vocabulary in its params (`zone`, `at`, `jitter`, `yaw`) and is
+ * resolved against the finished ground by the structure pass, which is the
+ * only stage that knows where the water and the lanes ended up.
+ */
+export interface PropNode extends StructureBase {
+  readonly kind: "generator";
+  readonly generator: "prop.place@0";
+  readonly params?: Readonly<Record<string, unknown>>;
+  readonly envelope?: BoxEnvelope;
+}
+
+/** True for a `prop.place@0` node. */
+export function isPropNode(node: SettlementChildNode): node is PropNode {
+  return node.kind === "generator" && node.generator === "prop.place@0";
+}
+
 /** The optional single plaza: a primitive holding a region of open ground. */
 export interface PlazaNode extends StructureBase {
   readonly kind: "primitive";
@@ -148,11 +169,14 @@ export type SettlementChildNode =
   | ClimateNode
   | ForestNode
   | StructureNode
+  | PropNode
   | PlazaNode;
 
 /** True for the nodes the layout solver places. */
 export function isPlaceableNode(node: SettlementChildNode): node is StructureNode | PlazaNode {
   if (node.kind === "primitive") return true;
+  // A prop node is deliberately not placeable: it is resolved coarsely by the
+  // structure pass against the finished ground, not by the solver.
   return (STRUCTURE_GENERATORS as readonly string[]).includes(node.generator);
 }
 

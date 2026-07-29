@@ -34,7 +34,12 @@ const EXAMPLE = fileURLToPath(new URL("../../../examples/hillside-village.loam.j
 const scratch: string[] = [];
 let stack: PrismarineStack;
 let village: { dir: string; report: TerrainCompileReport };
-let dev: { dir: string; buildings: readonly unknown[] };
+let dev: {
+  dir: string;
+  buildings: readonly unknown[];
+  props: readonly unknown[];
+  blocks: readonly { readonly stateId: number }[];
+};
 
 async function scratchDir(label: string): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), `terrainist-physics-${label}-`));
@@ -54,7 +59,12 @@ beforeAll(async () => {
 
   const devRoot = await scratchDir("dev");
   const built = await buildDevWorld(devRoot);
-  dev = { dir: built.emit.worldDir, buildings: built.buildings };
+  dev = {
+    dir: built.emit.worldDir,
+    buildings: built.buildings,
+    props: built.placedProps,
+    blocks: built.blocks,
+  };
 }, 120_000);
 
 afterAll(async () => {
@@ -79,6 +89,9 @@ describe("physics lint — the hillside village", () => {
     report = await lintWorldPhysics(village.dir, stack, {
       buildings: (structures?.buildings ?? []) as never,
       roads: (structures?.roads?.routes ?? []) as never,
+      // The pier and the boat moored at it: `prop.fluid_leak` is bounded to
+      // the prop footprints, so without this the rule is asked nothing.
+      props: (structures?.props ?? []) as never,
     });
   }, 120_000);
 
@@ -103,7 +116,10 @@ describe("physics lint — the dev world", () => {
     // storey count and yaw — so it is where a grammar regression shows up
     // first, and the interior rules (which need the building list) are exactly
     // the ones a grammar regression trips.
-    report = await lintWorldPhysics(dev.dir, stack, { buildings: dev.buildings as never });
+    report = await lintWorldPhysics(dev.dir, stack, {
+      buildings: dev.buildings as never,
+      props: dev.props as never,
+    });
   }, 120_000);
 
   it("finds nothing wrong, under every rule", () => {
@@ -111,6 +127,29 @@ describe("physics lint — the dev world", () => {
     for (const rule of PHYSICS_RULES) {
       expect(report.counts[rule], rule).toBe(0);
     }
+  });
+
+  it("actually contains the blocks the newest rules are about", () => {
+    // A rule that finds nothing because the world holds nothing it could find
+    // anything in is not a passing rule, it is an untested one. The dev world
+    // is the fixture for all three of the newest ones, so it has to carry a
+    // rail line (the connection-state diff), a bell (the steeple rule) and
+    // water a prop put there (the fluid rule) — and the assertion above is
+    // what then means something.
+    const names = new Map<number, string>();
+    const nameOf = (id: number): string => {
+      let n = names.get(id);
+      if (n === undefined) {
+        n = stack.blockNameByStateId(id) ?? "air";
+        names.set(id, n);
+      }
+      return n;
+    };
+    const seen = new Set(dev.blocks.map((b) => nameOf(b.stateId)));
+    expect([...seen].some((n) => n.endsWith("rail")), "a rail line").toBe(true);
+    expect(seen.has("bell"), "a steeple bell").toBe(true);
+    expect(seen.has("water"), "the fountain's bowl").toBe(true);
+    expect(dev.props.length, "props placed").toBeGreaterThan(0);
   });
 });
 

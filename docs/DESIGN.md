@@ -244,6 +244,50 @@ Three further directions, to fold into Loam v0.2 and G2+:
   surfaced as W407/T206/T208-style diagnostics, never silent. **No visual
   iteration has been done on G4 — pending Kai's review.**
 
+## Status (2026-07-28, pre-implementation program, rounds A–E)
+
+A five-round parallel program, run after the G4 review and before any
+in-client testing of it. Every round was implementation, not design; the
+rounds are named by what they added rather than by what they touched, because
+several touched the same files.
+
+- **A — the underground.** `cave.carver@0` in the terrain profile, and the
+  settlement's own underground: `basement` on a building, `connected … via
+  "tunnel"` between two, a router, a gallery, cellar portals, and the cave
+  integrity + traversal rules that check them. The settlement profile
+  deliberately **excludes** `cave.carver@0` until `protectTags` exists.
+- **B — props.** `prop.place@0`: nine props (boats, pier, cart, wagon, rail
+  line, fountain, gazebo, statue plinth), a coarse placer that resolves `zone`
+  / `at` / `at: "pier"` against the finished ground, pier piles, and a
+  fluid-safety check re-derived from the emitted blocks.
+- **C1 — footprints.** The `wing`: L- and T-shaped plans, a generalized
+  outline tracer, roof valleys, and the true cell set a building claims.
+- **C2 — archetype breadth.** Seven new archetypes (church, barn, windmill,
+  warehouse, market stall, library, bakery), their fit-out, a steeple with a
+  bell, a windmill's sails, and — the largest single gap the grammar had —
+  upper-floor fit-out for every archetype.
+- **D — exhibits.** Dev-world rows for all of the above, written as data in
+  `packages/compiler/src/exhibits/` and registered through one seam file.
+- **E — integration.** The wiring: `wing` from a document to the grammar;
+  archetype-intrinsic facades merged into the grammar's own param resolution;
+  `meta.floorCells` adopted by the fit-out so furnishing spans a wing;
+  `prop.place@0` wired into the structure pass; the exhibit rows and the prop
+  grid assembled into the dev world (16 rows, 100 buildings, 22 props); four
+  new physics rules and three fixed blind spots; a second apron underpinning
+  after the roads; and the village example enriched with a chapel (an L,
+  tunnelled to the great hall), a market stall, a pier and a rowboat.
+
+Both shipped worlds — `dev_world` and `hillside_village` — read back **zero
+findings under every physics rule**, and the village compiles with zero error
+and zero warning diagnostics. The field goldens are unchanged; the compiled
+worlds are not, and the reroll is logged in `packages/stdlib/test/golden.test.ts`
+as *G5/G6-pre integration*.
+
+**Code-complete pending joint in-game testing with Kai.** Nothing in rounds
+A–E has been walked in the Minecraft client. The physics lint is the strongest
+statement available without that, and its whole history is that a human found
+things it could not see.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).

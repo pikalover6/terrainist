@@ -24,24 +24,7 @@
 
 import { archetypeFacadeDefaults, EXTENDED_BUILDING_ARCHETYPES } from "@terrainist/stdlib";
 
-import { DEV_ROOFS, DEV_THEMES, type DevExhibit } from "../devworld.js";
-
-/**
- * One exhibit cell, before the grid gives it a position.
- *
- * The same shape `planDevGrid` builds internally: `row`, `column`, `x` and `z`
- * are the grid's to assign, everything else is the exhibit's own.
- */
-export type ExhibitCell = Omit<DevExhibit, "x" | "z" | "column" | "row"> & {
-  /** Facade parameters the grid should pass through to the grammar. */
-  readonly params?: Readonly<Record<string, string | number>>;
-};
-
-/** A named row of cells, west to east. */
-export interface ExhibitRow {
-  readonly row: string;
-  readonly cells: readonly ExhibitCell[];
-}
+import { DEV_ROOFS, DEV_THEMES, type DevExhibitCell, type DevExhibitRow } from "./types.js";
 
 /** Cells per extended-archetype row. */
 export const ARCHETYPE_ROW_LENGTH = 5;
@@ -90,10 +73,10 @@ export function extendedSizeFor(
  * comparison already has a control row of its own and repeating it here would
  * only make the church row harder to read.
  */
-export const ARCHETYPE_EXHIBIT_ROWS: readonly ExhibitRow[] = EXTENDED_BUILDING_ARCHETYPES.map(
+export const ARCHETYPE_EXHIBIT_ROWS: readonly DevExhibitRow[] = EXTENDED_BUILDING_ARCHETYPES.map(
   (archetype) => ({
     row: archetype,
-    cells: Array.from({ length: ARCHETYPE_ROW_LENGTH }, (_, column): ExhibitCell => {
+    cells: Array.from({ length: ARCHETYPE_ROW_LENGTH }, (_, column): DevExhibitCell => {
       const facade = archetypeFacadeDefaults(archetype);
       // Two storeys from the halfway mark, so every row shows the upper-floor
       // fit-out next to the single-storey version of the same building.

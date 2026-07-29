@@ -110,6 +110,37 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   All of it lives in the building grammar and in `@terrainist/compiler`;
  *   neither imports this file's field engine. Compiled worlds from before G4.7
  *   do not reproduce block-for-block; their terrain shape does.
+ * - **G5/G6-pre integration (rounds A–E)** — authorized reroll of the
+ *   *compiled world* only. **Both hashes below are deliberately unchanged**,
+ *   and the reason is the same one it has been every time: nothing in the
+ *   round is upstream of the heightfield. What moved, and why each is a
+ *   reroll rather than a regression:
+ *     * the building grammar resolves `roof`, `windowShape` and
+ *       `windowRhythm` from the **archetype** when the params do not name
+ *       them, so a church gets tall lights and a warehouse gets almost none
+ *       without an author saying so. Explicit params still win, so any node
+ *       that named one is byte-identical;
+ *     * `wing` is wired end to end — a Loam document can now ask for an L or
+ *       a T — and the fit-out reasons about `meta.floorCells` rather than the
+ *       main rect's interior, so a wing gets furniture, its upper storey gets
+ *       a fit-out, and the walkability guard spans both rects;
+ *     * the cellar decoration goes through the same walkability guard as
+ *       everything else. Two crates drawn independently used to be able to box
+ *       a corner in, which the physics lint duly reported;
+ *     * `prop.place@0` is wired into the structure pass, so a document's piers,
+ *       boats, carts, rails and fountains are built. They are placed against
+ *       the *finished* ground, after the roads;
+ *     * a building underpins its apron a second time, after the roads have
+ *       cut, because a lane arriving at a door can drop the column a porch
+ *       lamp stands in. The fill stops at a tunnel roof rather than punching
+ *       through it;
+ *     * `examples/hillside-village.loam.json` gained a chapel (an L, tunnelled
+ *       to the great hall), a market stall, a pier and a rowboat, which moves
+ *       every seeded draw downstream of them in that document.
+ *   All of it lives in `@terrainist/stdlib`'s structures or in
+ *   `@terrainist/compiler`; neither imports this file's field engine.
+ *   Compiled worlds from before this round do not reproduce block-for-block;
+ *   their terrain shape does.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

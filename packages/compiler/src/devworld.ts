@@ -40,9 +40,10 @@ import {
   nodeSeed,
   pickTheme,
   BUILDING_ARCHETYPES,
-  MATERIAL_THEMES,
+  EXTENDED_BUILDING_ARCHETYPES,
   type BuildingArchetype,
   type BuildingMaterials,
+  type BuildingParams,
   type Region,
 } from "@terrainist/stdlib";
 import type { PortDeclaration } from "@terrainist/spec";
@@ -54,10 +55,21 @@ import { FluidKind, type ColumnPlan } from "./terrain/columns.js";
 import { checkFluidStability, type FluidStabilityReport } from "./terrain/validate.js";
 import {
   buildBuildings,
+  wingParamOf,
   type BuildingJob,
   type BuiltBuilding,
   type StructureBlock,
 } from "./structures/buildings.js";
+import {
+  DEV_ROOFS,
+  DEV_THEMES,
+  EXTRA_EXHIBIT_ROWS,
+  buildPropExhibits,
+  planPropExhibits,
+  type DevExhibitCell,
+  type PropExhibit,
+} from "./devworld-rows.js";
+import type { PlacedProp } from "./structures/props.js";
 
 /** World Y of the showcase plain. */
 export const DEV_GROUND_Y = 64;
@@ -84,11 +96,19 @@ export const DEV_WORLD_NAME = "dev_world";
  */
 export const BUILDING_ARCHETYPES_ROWS: readonly BuildingArchetype[] = BUILDING_ARCHETYPES;
 
-/** The themes the grid walks through, in this order. */
-export const DEV_THEMES = MATERIAL_THEMES.map((t) => t.id);
+export { DEV_ROOFS, DEV_THEMES } from "./devworld-rows.js";
 
-/** The roof shapes the grid walks through, in this order. */
-export const DEV_ROOFS = ["gable", "hip", "flat"] as const;
+/**
+ * The archetypes the *base* grid lays out on its own size gradient.
+ *
+ * The original six. The seven extended archetypes get rows of their own from
+ * `exhibits/archetypes.ts`, on footprints shaped like the buildings they are —
+ * a church is a nave, a market stall is barely a room — and putting them in
+ * both places would give the grid two rows with the same label.
+ */
+export const BASE_ARCHETYPE_ROWS: readonly BuildingArchetype[] = BUILDING_ARCHETYPES.filter(
+  (a) => !(EXTENDED_BUILDING_ARCHETYPES as readonly string[]).includes(a),
+);
 
 /** One exhibit: what it is, and where the grid put it. */
 export interface DevExhibit {
@@ -101,6 +121,8 @@ export interface DevExhibit {
   readonly roof: string;
   readonly floors: number;
   readonly size: readonly [number, number, number];
+  /** Extra generator params this cell carries — a wing, a facade override. */
+  readonly params?: Readonly<Record<string, unknown>>;
   /** South-west corner of the footprint, in world columns. */
   readonly x: number;
   readonly z: number;
@@ -114,6 +136,8 @@ export interface DevGrid {
   readonly spawn: readonly [number, number, number];
   /** Rows, in order, with the z of each row's gravel rule. */
   readonly rules: readonly { readonly row: string; readonly z: number; readonly x0: number; readonly x1: number }[];
+  /** North-west corner of the prop grid, south of the last building row. */
+  readonly propOrigin: { readonly x: number; readonly z: number };
 }
 
 /** What {@link buildDevWorld} produced. */
@@ -125,6 +149,13 @@ export interface DevWorldResult {
   /** Light sources emitted across the grid — lanterns, torches, campfires. */
   readonly lightCount: number;
   readonly buildingCount: number;
+  /** Props placed south of the building grid, as the grid planned them. */
+  readonly props: readonly PropExhibit[];
+  /** Where each prop actually landed — the lint's `props` context. */
+  readonly placedProps: readonly PlacedProp[];
+  readonly propCount: number;
+  /** Columns dug and flooded for the harbour row's basin. */
+  readonly pondColumns: number;
   /** Every block the grammar emitted, in build order. */
   readonly blocks: readonly StructureBlock[];
 }
@@ -172,10 +203,10 @@ function sizeFor(archetype: BuildingArchetype, column: number): [number, number,
  * front of them rather than behind.
  */
 export function planDevGrid(): DevGrid {
-  const rows: { row: string; cells: Omit<DevExhibit, "x" | "z" | "column" | "row">[] }[] = [];
+  const rows: { row: string; cells: DevExhibitCell[] }[] = [];
 
-  for (const archetype of BUILDING_ARCHETYPES) {
-    const cells: Omit<DevExhibit, "x" | "z" | "column" | "row">[] = [];
+  for (const archetype of BASE_ARCHETYPE_ROWS) {
+    const cells: DevExhibitCell[] = [];
     for (let c = 0; c < DEV_ROW_LENGTH; c++) {
       const size = sizeFor(archetype, c);
       // The gradient: size grows left to right, the storey count steps up at
@@ -197,7 +228,7 @@ export function planDevGrid(): DevGrid {
   // The control row: one footprint, one storey count, every roof against every
   // theme. Anything that differs across these nine is the roof or the palette,
   // and nothing else — which is what makes it the row to look at first.
-  const roofCells: Omit<DevExhibit, "x" | "z" | "column" | "row">[] = [];
+  const roofCells: DevExhibitCell[] = [];
   for (const roof of DEV_ROOFS) {
     for (const theme of DEV_THEMES) {
       roofCells.push({
@@ -211,6 +242,10 @@ export function planDevGrid(): DevGrid {
     }
   }
   rows.push({ row: "roofs", cells: roofCells });
+
+  // The tracks' own rows, through the one seam this file reads: the extended
+  // archetypes on footprints shaped like themselves, then the L and the T.
+  for (const row of EXTRA_EXHIBIT_ROWS) rows.push({ row: row.row, cells: [...row.cells] });
 
   // --- place ---------------------------------------------------------------
   const exhibits: DevExhibit[] = [];
@@ -232,7 +267,14 @@ export function planDevGrid(): DevGrid {
     z += depth + DEV_GAP;
   }
 
-  const depthTotal = z - DEV_GAP;
+  // The props go south of every building row, on their own grid: they are not
+  // buildings, they are laid out on their rotated extents rather than on an
+  // envelope, and one of their rows carries a pond.
+  const propOrigin = { x: 0, z };
+  const propGrid = planPropExhibits(propOrigin.x, propOrigin.z);
+  maxX = Math.max(maxX, propGrid.width);
+  const depthTotal = z + propGrid.depth;
+
   const region: Region = {
     x0: -DEV_MARGIN,
     z0: -DEV_MARGIN,
@@ -246,6 +288,7 @@ export function planDevGrid(): DevGrid {
     // South-west corner: minimum x, maximum z. The player faces the grid.
     spawn: [region.x0 + 4, DEV_GROUND_Y + 1, region.z0 + region.depth - 5],
     rules,
+    propOrigin,
   };
 }
 
@@ -312,6 +355,29 @@ const DEV_PORTS: Readonly<Record<string, PortDeclaration>> = Object.freeze({
   door: { type: "door", face: "south", tags: ["primary"] } as PortDeclaration,
 });
 
+/**
+ * The generator params one exhibit hands the grammar.
+ *
+ * An explicit whitelist, for the same reason `structures/index.ts` has one: a
+ * row is data, and data that could reach the grammar unfiltered would let an
+ * exhibit exercise a param no document can. The three columns the grid owns
+ * (storeys, roof, archetype) come from the cell; everything else has to be
+ * something a Loam document could also have said.
+ */
+export function exhibitParams(e: DevExhibit): BuildingParams {
+  const extra = e.params ?? {};
+  const wing = wingParamOf(extra["wing"]);
+  return {
+    floors: e.floors,
+    roof: e.roof,
+    archetype: e.archetype,
+    ...(typeof extra["windowShape"] === "string" ? { windowShape: extra["windowShape"] } : {}),
+    ...(typeof extra["windowRhythm"] === "string" ? { windowRhythm: extra["windowRhythm"] } : {}),
+    ...(typeof extra["floorHeight"] === "number" ? { floorHeight: extra["floorHeight"] } : {}),
+    ...(wing === undefined ? {} : { wing }),
+  };
+}
+
 /** Build and write the dev world into `outDir/dev_world`. */
 export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
   const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
@@ -346,7 +412,7 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
         foundationY: DEV_GROUND_Y,
       },
       size: e.size,
-      params: { floors: e.floors, roof: e.roof, archetype: e.archetype },
+      params: exhibitParams(e),
       ports: DEV_PORTS,
       seed,
       tags: [e.archetype],
@@ -356,10 +422,16 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
 
   const built = buildBuildings(jobs, plan, stack);
 
+  // The props, last: `buildPropExhibits` digs the harbour row's basin into the
+  // plan, and the plan has to be the finished one before anything is placed
+  // over water. It is south of every building row, so nothing above it moves.
+  const props = buildPropExhibits(plan, stack, DEV_WORLD_SEED, grid.propOrigin.x, grid.propOrigin.z);
+  const structures = [...built.blocks, ...props.blocks];
+
   const emit = await emitTerrain({
     plan,
     trees: [],
-    structures: built.blocks,
+    structures,
     stack,
     worldDir: path.join(path.resolve(outDir), DEV_WORLD_NAME),
     levelName: DEV_WORLD_NAME,
@@ -374,7 +446,7 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
       .filter((id): id is number => id !== undefined),
   );
   let lightCount = 0;
-  for (const b of built.blocks) if (lit.has(b.stateId)) lightCount++;
+  for (const b of structures) if (lit.has(b.stateId)) lightCount++;
 
   return {
     grid,
@@ -383,6 +455,10 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     fluids,
     lightCount,
     buildingCount: built.built.length,
-    blocks: built.blocks,
+    props: props.grid.exhibits,
+    placedProps: props.placed,
+    propCount: props.placed.length,
+    pondColumns: props.pondColumns,
+    blocks: structures,
   };
 }

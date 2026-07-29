@@ -83,6 +83,15 @@ export interface BuiltBuilding {
   /** The cellar's enclosed interior, in world columns. */
   readonly basementInterior?: Rect;
   /**
+   * The cellar's floor columns, as `"x,z"` world keys.
+   *
+   * The cellar is dug under the **main** rect only — a wing stands on solid
+   * foundation — so on an L this is a strict subset of the building's own
+   * floor columns, and the difference is four courses of masonry that the
+   * interior rules would otherwise read as a blocked room.
+   */
+  readonly basementCells?: ReadonlySet<string>;
+  /**
    * The columns this building actually covers, as `"x,z"` world keys.
    *
    * Equal to every column of {@link BuiltBuilding.footprint} for a rect plan,
@@ -91,6 +100,38 @@ export interface BuiltBuilding {
    * *envelope*, which is what the solver reserved and the pad levelled.
    */
   readonly cells: ReadonlySet<string>;
+  /**
+   * The enclosed floor columns, as `"x,z"` world keys — the *room*, across
+   * both rects of an L or a T.
+   *
+   * {@link BuiltBuilding.interior} is the main rect's interior rectangle and
+   * stays that, because every existing consumer reasons about a rectangle. On
+   * a wing plan that rectangle is both too small (it misses the wing) and too
+   * large (it spans the notch, which is open ground outside the building). The
+   * physics lint needs the true set, and so does anything else that asks "is
+   * this column inside this building".
+   */
+  readonly interiorCells: ReadonlySet<string>;
+  /**
+   * What the apron needs to stay off the air, kept for a second look later.
+   *
+   * The skirt and the apron underpinning are both measured against the ground
+   * *as it was when the building was generated*, and the road pass then cuts
+   * lanes into that ground — after the buildings, because a router has to
+   * treat their footprints as obstacles. A lane arriving at a door can drop
+   * the column a porch lamp stands in by several blocks, and the lamp is then
+   * a fence post on air: exactly the defect the underpinning exists to stop,
+   * one pass too early to see it. {@link underpinAprons} is the second look,
+   * and this is what it needs to take it.
+   */
+  readonly apron: {
+    /** Lowest world Y this building put in each apron column, keyed `x,z`. */
+    readonly floor: ReadonlyMap<string, number>;
+    /** The skirt's block state per footprint column. */
+    readonly skirt: ReadonlyMap<string, number>;
+    /** Apron columns already filled, as `x,y,z` keys. */
+    readonly filled: ReadonlySet<string>;
+  };
 }
 
 /** Result of the building pass. */
@@ -144,7 +185,9 @@ export function buildBuildings(
   // The claim is the true cell set, not the envelope: over an L's notch there
   // is no wall to punch through, and an eave that reaches into it is over open
   // ground like any other.
-  const cellSets = jobs.map((job, k) => worldCells(job, results[k] as ReturnType<typeof generateBuilding>));
+  const cellSets = jobs.map((job, k) =>
+    worldCells(job, (results[k] as ReturnType<typeof generateBuilding>).meta.cells),
+  );
 
   for (const [index, job] of jobs.entries()) {
     const { placement } = job;
@@ -182,7 +225,8 @@ export function buildBuildings(
       blocks.push({ x, y, z, stateId });
       count++;
     }
-    count += underpinApron(plan, placement, apronFloor, skirtState, blocks);
+    const filled = new Set<string>();
+    count += underpinApron(plan, placement.footprint, apronFloor, skirtState, filled, blocks);
 
     built.push({
       nodePath: job.nodePath,
@@ -196,18 +240,19 @@ export function buildBuildings(
       meta: result.meta,
       blockCount: count,
       cells,
+      interiorCells: worldCells(job, result.meta.floorCells),
+      apron: { floor: apronFloor, skirt: skirtState, filled },
       floorY,
       basementDepth: cellar,
-      ...(cellar === 0
+      ...(cellar === 0 || result.meta.basementInterior === null
         ? {}
         : {
             basementFloorY: floorY - cellar,
-            basementInterior: {
-              x0: placement.footprint.x0 + 1,
-              z0: placement.footprint.z0 + 1,
-              x1: placement.footprint.x1 - 1,
-              z1: placement.footprint.z1 - 1,
-            },
+            // The cellar's own rect, carried through the yaw — not the
+            // envelope inset by one. On a rect plan the two agree exactly; on
+            // an L the envelope's inset spans the wing, which has no cellar
+            // under it at all.
+            ...rectAndCells(job, result.meta.basementInterior),
           }),
     });
   }
@@ -246,15 +291,93 @@ function contains(rect: Rect, x: number, z: number): boolean {
  */
 function worldCells(
   job: BuildingJob,
-  result: { readonly meta: { readonly cells: readonly { readonly x: number; readonly z: number }[] } },
+  cells: readonly { readonly x: number; readonly z: number }[],
 ): ReadonlySet<string> {
   const [sizeX, , sizeZ] = job.size;
   const [tx, , tz] = job.placement.translation;
   const out = new Set<string>();
-  for (const c of rotateCells(result.meta.cells, job.placement.yaw, sizeX, sizeZ)) {
+  for (const c of rotateCells(cells, job.placement.yaw, sizeX, sizeZ)) {
     out.add(`${tx + c.x},${tz + c.z}`);
   }
   return out;
+}
+
+/**
+ * The course a fill must stop at when a carved span crosses the column.
+ *
+ * `undefined` when nothing is carved between the fill's top and the ground, in
+ * which case the terrain's own surface is the floor as before.
+ */
+function carvedTop(plan: ColumnPlan, idx: number, top: number): number | undefined {
+  const caves = plan.caves;
+  if (caves === undefined) return undefined;
+  const { offsets, lo, hi } = caves.spans;
+  const from = offsets[idx] as number;
+  const to = offsets[idx + 1] as number;
+  let best: number | undefined;
+  for (let k = from; k < to; k++) {
+    if ((lo[k] as number) > top) continue;
+    const stop = (hi[k] as number) + 1;
+    if (best === undefined || stop > best) best = stop;
+  }
+  return best;
+}
+
+/**
+ * Underpin every apron again, against the ground as it finally is.
+ *
+ * Called after the passes that *move* ground — the roads above all — with the
+ * buildings the first pass produced. Columns the first pass already filled are
+ * skipped, so this only ever adds the courses a later cut exposed; on a world
+ * with no roads it adds nothing at all.
+ *
+ * Returns the blocks to append.
+ */
+export function underpinAprons(
+  builds: readonly BuiltBuilding[],
+  plan: ColumnPlan,
+): StructureBlock[] {
+  const blocks: StructureBlock[] = [];
+  for (const built of builds) {
+    underpinApron(
+      plan,
+      built.footprint,
+      built.apron.floor,
+      built.apron.skirt,
+      built.apron.filled as Set<string>,
+      blocks,
+    );
+  }
+  return blocks;
+}
+
+/**
+ * A local rect's world columns, under the placement's yaw.
+ *
+ * Returns both the set (the truth) and its bounding rectangle (what the
+ * existing rect-shaped consumers read). They agree on every rect plan.
+ */
+function rectAndCells(
+  job: BuildingJob,
+  local: { readonly x0: number; readonly z0: number; readonly x1: number; readonly z1: number },
+): { basementInterior: Rect; basementCells: ReadonlySet<string> } {
+  const cells: { x: number; z: number }[] = [];
+  for (let z = local.z0; z <= local.z1; z++) {
+    for (let x = local.x0; x <= local.x1; x++) cells.push({ x, z });
+  }
+  const world = worldCells(job, cells);
+  let x0 = Infinity;
+  let z0 = Infinity;
+  let x1 = -Infinity;
+  let z1 = -Infinity;
+  for (const key of world) {
+    const [x, z] = key.split(",").map(Number) as [number, number];
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (z < z0) z0 = z;
+    if (z > z1) z1 = z;
+  }
+  return { basementInterior: { x0, z0, x1, z1 }, basementCells: world };
 }
 
 /**
@@ -275,13 +398,13 @@ function worldCells(
  */
 function underpinApron(
   plan: ColumnPlan,
-  placement: Placement,
+  rect: Rect,
   apronFloor: ReadonlyMap<string, number>,
   skirtState: ReadonlyMap<string, number>,
+  filled: Set<string>,
   blocks: StructureBlock[],
 ): number {
   const { region, ground } = plan;
-  const rect = placement.footprint;
   let added = 0;
   // Sorted so the emitted order is a pure function of the geometry, not of Map
   // insertion order.
@@ -302,8 +425,16 @@ function underpinApron(
     // so fall back to the nearest column that *does* have one.
     const stateId = skirtState.get(`${nx},${nz}`) ?? nearestSkirt(skirtState, x, z);
     if (stateId === undefined) continue;
-    const bottom = Math.max(floor + 1, top - MAX_FOUNDATION_DEPTH + 1);
+    // A tunnel bore under the apron is a hole the fill must not drop into: the
+    // gallery below is interior air, and a plinth punched through its roof is
+    // both a breach and a pillar standing in a corridor. The first solid block
+    // is then the one above the span, not the terrain's own surface.
+    const carved = carvedTop(plan, j * region.width + i, top);
+    const bottom = Math.max(carved ?? floor + 1, top - MAX_FOUNDATION_DEPTH + 1);
     for (let y = top; y >= bottom; y--) {
+      const cell = `${x},${y},${z}`;
+      if (filled.has(cell)) continue;
+      filled.add(cell);
       blocks.push({ x, y, z, stateId });
       added++;
     }

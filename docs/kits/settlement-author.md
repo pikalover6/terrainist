@@ -46,8 +46,13 @@ Hard rules, all enforced by the validator:
 - `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
   one** `terrain.climate@0`, any number of `scatter.forest@0` nodes, and —
   optionally — the settlement layer: **at most one** `plaza` primitive, any
-  number of `building.grammar@0` nodes, and **at most one** `road.network@0`
-  node. Nothing else is allowed.
+  number of `building.grammar@0` nodes, any number of `prop.place@0` nodes,
+  and **at most one** `road.network@0` node. Nothing else is allowed.
+- **`cave.carver@0` is not in this profile**, even though the terrain profile
+  has it: its `protectTags` param — the one that keeps a cave out of a town's
+  foundations — is unimplemented, so a cave under a settlement is a lottery on
+  whether the smithy still has a floor. It comes back when `protectTags` does.
+  Underground space in a settlement is a `basement` and a tunnel (§10).
 - `terrain.edit@0` nodes live **only** in `heightfield.children`. They are
   never children of the root and never nest inside each other.
 - Terrain generators (`heightfield`, `climate`, `forest`, `edit`) never carry
@@ -452,13 +457,15 @@ stops well below the summit so the cone stays bare.
 
 ## 9. The settlement layer
 
-Three node kinds, all children of the root, all placed by the **layout
-solver** rather than by you:
+Four node kinds, all children of the root. The first two are placed by the
+**layout solver** rather than by you; a prop is placed coarsely, and the roads
+are routed last:
 
 | node | cardinality | what it is |
 |---|---|---|
 | `plaza` (`"kind": "primitive"`) | 0 or 1 | an open paved area: the green, the market, the quay |
 | `building.grammar@0` | any number | one building |
+| `prop.place@0` | any number | one boat, cart, pier, fountain… — the evidence people live here |
 | `road.network@0` | 0 or 1 | the lanes joining everything |
 
 A structure node may carry `constraints`, `ports`, `tags`, `optional`,
@@ -532,6 +539,52 @@ footprint and the total height, walls *and* roof. The hard-won numbers:
 | `floorHeight` | 3..8 | blocks per storey; default 4 |
 | `roof` | `gable`, `hip`, `flat` | `gable` for houses, `hip` for civic buildings, `flat` for towers |
 | `windowRhythm` | `regular`, `dense`, `sparse`, `paired`, `none` | `sparse` for a smithy or a granary, `dense` for an inn |
+| `wing` | `{"size": [w, d], "side": …, "offset": n}` | an L- or T-shaped plan — see below |
+| `basement` | `true`, `3..5`, or `{"depth": 3..5}` | a cellar; see §10's tunnels |
+
+#### `wing` — L- and T-shaped footprints
+
+A wing is a **second rect carved out of the same envelope**, not bolted onto
+it: the bounding box does not grow, so `envelope.size` still describes the
+whole building. `side` is the face of the main block the wing hangs off
+(`north`, `east`, `south`, `west`); `offset` is how far along that face the
+wing starts, counted from the envelope's min corner (default 0).
+
+```json
+{
+  "id": "the_long_house",
+  "kind": "generator",
+  "generator": "building.grammar@0",
+  "envelope": { "shape": "box", "size": [13, 11, 13] },
+  "params": { "floors": 2, "roof": "gable", "wing": { "size": [5, 4], "side": "south", "offset": 0 } },
+  "tags": ["house"]
+}
+```
+
+That is an **L**: the wing sits flush with one corner. Centre the offset and
+you get a **T**:
+
+```json
+{ "params": { "wing": { "size": [5, 4], "side": "north", "offset": 4 } } }
+```
+
+The rules, exactly as the validator states them (every failure is a
+`LOAM-T207` error with a fix hint):
+
+- **The shared run must be at least 3 columns.** For a `north`/`south` wing
+  that run is `size[0]`; for an `east`/`west` wing it is `size[1]`. Less and
+  the validator says the wing *"shares a 2-cell run with the main block; 3 is
+  the shortest that leaves a doorway between the two rooms"* — the two rects
+  would meet at corner posts with no door between them.
+- **The other axis — the wing's depth — must also be at least 3**, or it is
+  *"a buttress, not a room"*.
+- `offset` is a non-negative integer. Straight edges only: a wing may not
+  overhang the face it hangs off.
+- Two further conditions the grammar checks silently rather than rejecting: the
+  wing must leave at least 3 blocks of main block behind it (its depth eats
+  `depth − 1` of the envelope), and `offset + run` must not pass the end of the
+  face. Break either and the wing is dropped and you get a plain rect — so keep
+  the wing well inside a 11–13 wide envelope.
 
 **Archetype comes from `tags`, not from a param.** The building grammar picks
 the massing, the interior and the furniture from the first tag it recognizes:
@@ -545,8 +598,26 @@ the massing, the interior and the furniture from the first tag it recognizes:
 | `store`, `granary` | granary |
 | anything else | cottage |
 
+Seven more archetypes sit **between** the watchtower row and the rest, and each
+one now brings its own facade — window shape, rhythm and roof — so you do not
+have to spell them out. An explicit `roof`/`windowRhythm` param still wins.
+
+| archetype | tags that select it | what it gets |
+|---|---|---|
+| church | `church`, `chapel`, `temple`, `shrine`, `worship` | tall lights, one per bay, gable roof, a steeple with a bell |
+| windmill | `windmill`, `mill` | few small windows, hip roof, a static cross of blades |
+| barn | `barn`, `stable`, `byre` | big doors, sparse single windows, gable roof |
+| warehouse | `warehouse`, `depot`, `storehouse` | sparse single windows, gable roof, goods stacked inside |
+| market_stall | `market_stall`, `stall`, `market`, `vendor` | mullioned, dense openings, flat roof |
+| library | `library`, `study`, `scriptorium`, `archive` | paired mullioned lights between the presses, gable roof |
+| bakery | `bakery`, `bakehouse`, `baker` | regular single windows, gable roof, oven |
+
+Matching is **specific before greedy**, which is the whole reason this table is
+consulted first: `market` beats `trade` (→ inn) and `storehouse` beats `store`
+(→ granary). `watchtower` is still checked before everything.
+
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
-granary `"tags": ["store"]`. Add `"house"` to anything people live in — it is
+granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
 also the tag `{"distance": "#tag:house"}` and the road network select on.
 There is no `archetype` param; writing one is an error.
 
@@ -589,6 +660,58 @@ an outlying building that must be connected. A route that cannot be found —
 water, lava or a wall of houses in the way — is reported as `LOAM-T209` and
 that building is simply left unconnected.
 
+### `prop.place@0`
+
+One node per prop. A prop is what makes a village look lived in — three or four
+is usually enough. It takes `params` and nothing else that matters: no
+constraints drive it, and it is placed by a spiral search out from a coarse
+target, skipping anything already built.
+
+| prop | size (x, y, z) | base | notable params |
+|---|---|---|---|
+| `rowboat` | 5×3×3 | water | `at: "pier"` |
+| `fishing_sloop` | 9×8×4 | water | `at: "pier"` |
+| `pier` | `width`×4×`length` (2×4×8) | shore — a dry column with water within reach | `length` 3..32, `width` 1..5; publishes an anchor at its seaward end |
+| `cart` | 4×3×3 | ground | — |
+| `covered_wagon` | 4×5×3 | ground | — |
+| `rail_line` | `length`×(5+`grade`)×3, or ×6 curved | ground | `length` 5..64 (12), `curve` (false), `grade` 0..4 (0), `platform` (true) |
+| `fountain` | 7×5×7 | ground | — |
+| `gazebo` | 7×6×7 | ground | — |
+| `statue_plinth` | 3×5×3 | ground | — |
+
+**Base** is a hard requirement, not a preference: a `water` prop needs open
+water to sit on, a `shore` prop needs dry land with water in front of it. Ask
+for a rowboat in a landlocked hamlet and the prop is dropped.
+
+Placement is the profile's usual coarse vocabulary. `{"zone": "south"}` aims at
+a nine-grid cell, jittered by `jitter` (0..1, default 0.15). `yaw` is `0`,
+`90`, `180` or `270`; omit it and it is drawn from the node seed — except on a
+pier, whose yaw is the direction the water is in and not a matter of taste.
+`{"at": {"x": …, "z": …}}` is an absolute-column escape hatch: prefer `zone`.
+`"on": "water"` / `"ground"` forces which surface the search will accept.
+
+**The `at: "pier"` idiom.** Document order matters in exactly one place: a
+`pier` placed *earlier* becomes an anchor a later boat moors to, so a boat with
+`"at": "pier"` targets the seaward end of the nearest pier already placed. Give
+the pier first.
+
+```json
+[
+  {
+    "id": "stone_quay",
+    "kind": "generator",
+    "generator": "prop.place@0",
+    "params": { "prop": "pier", "zone": "north", "length": 10, "width": 2 }
+  },
+  {
+    "id": "moored_boat",
+    "kind": "generator",
+    "generator": "prop.place@0",
+    "params": { "prop": "rowboat", "at": "pier" }
+  }
+]
+```
+
 ---
 
 ## 10. Constraints
@@ -597,7 +720,7 @@ A constraint is one JSON object in a node's `constraints` array. The shorthand
 form — the type name as the key, its primary argument as the value — is the
 one to use: `{"zone": "center"}`, `{"distance": "plaza", "min": 8}`.
 
-These eight are the ones the solver implements. Anything else in the Loam
+These nine are the ones the solver implements. Anything else in the Loam
 registry parses and is *ignored* with a `LOAM-W407` warning, so stick to these:
 
 | constraint | example | what it does |
@@ -610,6 +733,7 @@ registry parses and is *ignored* with a `LOAM-W407` warning, so stick to these:
 | `clearance` | `{"clearance": 2}` | blocks of empty space kept around it |
 | `not_overlapping` | `{"not_overlapping": "#tag:house", "margin": 2}` | never needed explicitly — placement never overlaps anyway |
 | `terrain_conform` | `{"terrain_conform": "cut_fill", "reference": "median", "blend": 4}` | level the ground under the footprint |
+| `connected` | `{"connected": "great_hall", "via": "tunnel"}` | dig a gallery between two cellars — see below |
 
 Notes that matter:
 
@@ -626,6 +750,48 @@ Notes that matter:
   reported back.
 - Too many hard constraints on one node is the usual cause of a demotion
   warning. Three or four per building is plenty.
+
+### Tunnels and cellars
+
+`{"connected": "<sibling id>", "via": "tunnel"}` on a building digs a walkable
+underground gallery between that building's cellar and the target's.
+
+```json
+{
+  "id": "smithy",
+  "kind": "generator",
+  "generator": "building.grammar@0",
+  "envelope": { "shape": "box", "size": [9, 8, 9] },
+  "params": { "floors": 1, "roof": "gable", "basement": { "depth": 4 } },
+  "constraints": [
+    { "distance": "plaza", "min": 8, "max": 50 },
+    { "connected": "great_hall", "via": "tunnel" },
+    { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
+  ],
+  "tags": ["craft"]
+}
+```
+
+- **Declare it on one side only.** `bidirectional` defaults to true, so the
+  constraint reaches both ways; writing it on both buildings is *not* two
+  tunnels — the pair is deduplicated and you get one gallery.
+- **Both endpoints get a cellar whether or not they asked**, at the default
+  depth: a tunnel that ends in a wall is worse than one you did not ask for. You
+  only need `basement` when you want a cellar for its own sake or a specific
+  headroom.
+- The target must name **one sibling building**: a tag set, the plaza, or the
+  node itself are all errors. `via` other than `"tunnel"` parses with a
+  `LOAM-W407` and builds nothing (for a road between two buildings, add them
+  both to `road.network@0`'s `anchors`). Optional `maxLength` warns if the route
+  runs long; it is dug anyway.
+- If either end was dropped, or no route clears the caves, water and
+  foundations between them, you get `LOAM-E180` and no tunnel — move the two
+  buildings closer or straighter.
+
+**`basement`** has three spellings, all equivalent where they overlap:
+`true` (the default 4 blocks of headroom), a bare number (`"basement": 4`,
+3..5), or `{"depth": 4}`. `false` or `0` means no cellar — unless a tunnel
+implies one.
 
 ### Ports
 

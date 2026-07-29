@@ -31,7 +31,7 @@ import {
   type MaterialTheme,
   type Seed256,
 } from "@terrainist/stdlib";
-import { canonicalize, isImplementedVia, resolveTypeKey } from "@terrainist/spec";
+import { canonicalize, isImplementedVia, isPropNode, resolveTypeKey } from "@terrainist/spec";
 import type {
   LoamDiagnostic,
   PortDeclaration,
@@ -45,9 +45,18 @@ import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
-import { buildBuildings, type BuildingJob, type BuiltBuilding, type StructureBlock } from "./buildings.js";
+import {
+  buildBuildings,
+  underpinAprons,
+  wingParamOf,
+  type BuildingJob,
+  type BuiltBuilding,
+  type StructureBlock,
+} from "./buildings.js";
 import { buildDoorsteps } from "./doorsteps.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
+import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
+
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
 import { buildTunnels, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
@@ -105,6 +114,12 @@ export interface StructureStats {
   readonly tunnelLength: number;
   readonly tunnelStairSteps: number;
   readonly tunnelLanterns: number;
+  /** Props built by `prop.place@0`. */
+  readonly props: number;
+  /** Prop nodes the placer could find no site for. */
+  readonly propsUnplaced: number;
+  /** Water blocks the props wrote that could flow. Zero is required. */
+  readonly propWaterLeaks: number;
 }
 
 /** What the structure pass produced. */
@@ -115,6 +130,7 @@ export interface StructurePassResult {
   readonly plaza?: PlazaResult;
   readonly roads?: RoadNetworkResult;
   readonly tunnels: readonly BuiltTunnel[];
+  readonly props: readonly PlacedProp[];
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -147,6 +163,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     buildingPaths.add(placement.nodePath);
     const params = (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>;
     const basement = resolveBasementParam(params["basement"], needsCellar.has(placement.nodePath));
+    const wing = wingParamOf(params["wing"]);
     jobs.push({
       nodePath: placement.nodePath,
       placement,
@@ -160,6 +177,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         ...(typeof params["trimSymbol"] === "string" ? { trimSymbol: params["trimSymbol"] } : {}),
         ...(typeof params["roofSymbol"] === "string" ? { roofSymbol: params["roofSymbol"] } : {}),
         ...(basement === 0 ? {} : { basement }),
+        // The L and the T. Read through `wingParamOf`, which is where a
+        // defective shape becomes `undefined` rather than an exception — the
+        // profile validator is what tells the author about it, with a hint.
+        ...(wing === undefined ? {} : { wing }),
         archetype:
           typeof params["archetype"] === "string"
             ? params["archetype"]
@@ -258,10 +279,55 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks.push(...roads.blocks);
   }
 
+  // --- props ---------------------------------------------------------------
+  // After the roads, and that ordering is the point: a prop is placed against
+  // the *finished* ground, and until the lanes have cut and their shoulders
+  // have blended, the ground a cart stands on is not the ground the emitter
+  // will lay. It is also after the buildings, whose footprints it is given as
+  // reserved rectangles — a rowboat inside the granary is not a rowboat.
+  //
+  // Document order is load-bearing in exactly one direction: a `pier` placed
+  // earlier is the anchor a later `at: "pier"` boat moors to.
+  const propJobs: PropJob[] = [];
+  for (const child of input.doc.root.children) {
+    if (!isPropNode(child)) continue;
+    const nodePath = `${rootPath}.${child.id}`;
+    const params = (child.params ?? {}) as Record<string, unknown>;
+    const seed: Seed256 = nodeSeed(input.worldSeed, nodePath, child.seedSalt ?? "");
+    propJobs.push({
+      nodePath,
+      prop: typeof params["prop"] === "string" ? params["prop"] : "",
+      params,
+      seed,
+      materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
+    });
+  }
+  const props =
+    propJobs.length === 0
+      ? { blocks: [] as StructureBlock[], placed: [] as PlacedProp[], diagnostics: [] as LoamDiagnostic[] }
+      : buildProps({
+          jobs: propJobs,
+          plan: input.plan,
+          stack: input.stack,
+          reserved: buildings.built.map((b) => b.footprint),
+          ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+        });
+  diagnostics.push(...props.diagnostics);
+  blocks.push(...props.blocks);
+  // The grammar's fluid claim, re-derived from what it actually emitted. It is
+  // reported here as well as by the readback lint because a leak is cheapest
+  // to attribute at the pass that caused it.
+  const propFluids = checkPropFluidSafety(props.blocks, input.plan, input.stack);
+
   // --- doorsteps -----------------------------------------------------------
   // Last, and it has to be: a doorstep reconciles a threshold with the ground
   // *outside* it, and until the roads have cut and the shoulders have blended,
   // that ground is not final.
+  // The apron, a second time: the roads have cut and the shoulders have
+  // blended, so the ground a porch lamp stands in is only now the ground the
+  // emitter will lay. Adds nothing on a world with no roads.
+  blocks.push(...underpinAprons(buildings.built, input.plan));
+
   const doorsteps = buildDoorsteps({
     buildings: buildings.built,
     ports: input.ports,
@@ -275,6 +341,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks,
     buildings: buildings.built,
     tunnels: tunnelPass.tunnels,
+    props: props.placed,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
@@ -298,6 +365,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       tunnelLength: tunnelPass.tunnels.reduce((sum, t) => sum + t.path.length, 0),
       tunnelStairSteps: tunnelPass.tunnels.reduce((sum, t) => sum + t.stairSteps, 0),
       tunnelLanterns: tunnelPass.tunnels.reduce((sum, t) => sum + t.lanterns, 0),
+      props: props.placed.length,
+      propsUnplaced: propJobs.length - props.placed.length,
+      propWaterLeaks: propFluids.leaks.length,
     },
   };
 }

@@ -272,6 +272,61 @@
         "tags": ["civic", "lookout"]
       },
       {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chapel and its vestry wing, joined to the great hall by a crypt tunnel",
+        "envelope": { "shape": "box", "size": [13, 14, 15], "padding": 1 },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6,
+          "wing": { "size": [4, 5], "side": "east", "offset": 5 },
+          "basement": { "depth": 4 }
+        },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "plaza", "min": 8, "max": 60 },
+          { "connected": "great_hall", "via": "tunnel" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 24 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "north", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "chapel"]
+      },
+      {
+        "id": "market_stall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A market stall on the edge of the green",
+        "envelope": { "shape": "box", "size": [7, 8, 7] },
+        "params": { "floors": 1 },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "plaza", "min": 2, "max": 40 },
+          { "facing": "plaza" },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["market"]
+      },
+      {
+        "id": "bay_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A pier running out into the bay",
+        "params": { "prop": "pier", "zone": "south", "length": 10, "width": 2 }
+      },
+      {
+        "id": "pier_boat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A rowboat moored at the pier's end",
+        "params": { "prop": "rowboat", "at": "pier" }
+      },
+      {
         "id": "lanes",
         "kind": "generator",
         "generator": "road.network@0",

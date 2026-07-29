@@ -44,9 +44,14 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
 - Status (2026-07-28): G1–G3 complete and human-accepted through the GLM 5.2
   e2e; G2.5 terrain-quality pass done (organic kernels, hydrology,
   climate-gated snow, lushness). G4 (settlement profile, layout solver v1,
-  building grammar, roads) is CODE-COMPLETE BUT UNREVIEWED — no worldgen
-  iteration has been run on it, per Kai's instruction; do not iterate on
-  village visuals without Kai.
+  building grammar, roads) plus the pre-implementation program (rounds A–E:
+  caves + tunnels, `prop.place@0`, L/T `wing` footprints, seven new
+  archetypes with upper-floor fit-out, the dev-world exhibit grid, and the
+  Round E wiring) is CODE-COMPLETE PENDING JOINT IN-GAME TESTING WITH KAI.
+  Both shipped worlds lint zero on every physics rule and the village example
+  compiles with zero error/warning diagnostics, but nothing has been walked in
+  the client; do not iterate on village visuals without Kai. See the dated
+  status block in `docs/DESIGN.md` for what each round added.
 - **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
   indefinitely — production authoring is pure GLM 5.2 (cheapness is a core
   goal); escalate only if GLM hits a hard capability wall. The

@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import {
+  BASE_ARCHETYPE_ROWS,
   BUILDING_ARCHETYPES_ROWS,
   DEV_GAP,
   DEV_GROUND_Y,
@@ -27,6 +28,8 @@ import {
   planDevGrid,
   type DevWorldResult,
 } from "../src/devworld.js";
+import { EXTRA_EXHIBIT_ROWS, PROP_EXHIBIT_PLAN } from "../src/devworld-rows.js";
+import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
 
 const scratch: string[] = [];
 let result: DevWorldResult;
@@ -44,12 +47,27 @@ afterAll(async () => {
 });
 
 describe("dev world grid", () => {
-  it("lays out one row per archetype plus the roof-comparison row", () => {
+  it("lays out the base rows, the roof control row, and every registered extra", () => {
     const grid = planDevGrid();
     const rows = [...new Set(grid.exhibits.map((e) => e.row))];
-    expect(rows).toEqual([...BUILDING_ARCHETYPES_ROWS, "roofs"]);
-    for (const row of BUILDING_ARCHETYPES_ROWS) {
+    expect(rows).toEqual([
+      ...BASE_ARCHETYPE_ROWS,
+      "roofs",
+      ...EXTRA_EXHIBIT_ROWS.map((r) => r.row),
+    ]);
+    for (const row of BASE_ARCHETYPE_ROWS) {
       expect(grid.exhibits.filter((e) => e.row === row)).toHaveLength(DEV_ROW_LENGTH);
+    }
+    // Every archetype the grammar knows appears somewhere, once: the base grid
+    // carries the original six and the extended rows carry the other seven.
+    for (const archetype of BUILDING_ARCHETYPES_ROWS) {
+      expect(grid.exhibits.some((e) => e.row === archetype), archetype).toBe(true);
+    }
+    // The L and the T, on every side and under every roof shape.
+    for (const label of ["footprint_l", "footprint_t"]) {
+      const cells = grid.exhibits.filter((e) => e.row === label);
+      expect(cells.length, label).toBe(7);
+      expect(cells.every((c) => c.params?.["wing"] !== undefined), label).toBe(true);
     }
     // The control row is every roof against every theme, and nothing else
     // varies across it.
@@ -60,17 +78,21 @@ describe("dev world grid", () => {
   });
 
   it("gives the grid the count the brief asks for", () => {
-    // One row per archetype plus the roof control row, so the bound moves when
-    // the grammar grows a new archetype — which is the point of deriving the
-    // rows from `BUILDING_ARCHETYPES` rather than listing them.
-    const expected = BUILDING_ARCHETYPES_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length;
+    // Derived, never listed: the base rows plus the roof control row plus
+    // whatever the exhibit seam registered. The bound therefore moves on its
+    // own when the grammar grows a new archetype or a track adds a row, which
+    // is the point of building the grid out of `BUILDING_ARCHETYPES` and
+    // `EXTRA_EXHIBIT_ROWS` rather than out of a literal.
+    const extra = EXTRA_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    expect(extra).toBe(7 * ARCHETYPE_ROW_LENGTH + 2 * 7);
+    const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
     expect(result.buildingCount).toBe(expected);
     expect(result.buildings).toHaveLength(planDevGrid().exhibits.length);
   });
 
   it("walks the gradient: size grows, storeys step, themes cycle", () => {
     const grid = planDevGrid();
-    for (const row of BUILDING_ARCHETYPES_ROWS) {
+    for (const row of BASE_ARCHETYPE_ROWS) {
       const cells = grid.exhibits.filter((e) => e.row === row).sort((a, b) => a.column - b.column);
       const first = cells[0] as (typeof cells)[number];
       const last = cells[cells.length - 1] as (typeof cells)[number];
@@ -82,7 +104,7 @@ describe("dev world grid", () => {
 
   it("leaves a clear gap between every pair of neighbours in a row", () => {
     const grid = planDevGrid();
-    for (const row of [...BUILDING_ARCHETYPES_ROWS, "roofs"]) {
+    for (const row of [...BASE_ARCHETYPE_ROWS, "roofs"]) {
       const cells = grid.exhibits.filter((e) => e.row === row).sort((a, b) => a.column - b.column);
       for (let i = 1; i < cells.length; i++) {
         const prev = cells[i - 1] as (typeof cells)[number];
@@ -137,9 +159,22 @@ describe("dev world build", () => {
     expect(result.lightCount).toBeGreaterThanOrEqual(result.buildingCount);
   });
 
-  it("has no unstable fluid — nothing on the plain places water at all", () => {
+  it("has no unstable fluid — the harbour basin included", () => {
+    // The plain itself is dry; the one body of water in the world is the
+    // harbour row's basin, and it is a plain box whose every column sits a
+    // block below its dry neighbours. If it were not, this is where it would
+    // show up.
+    expect(result.pondColumns).toBeGreaterThan(0);
     expect(result.fluids.unstable).toBe(0);
     expect(result.fluids.samples).toEqual([]);
+  });
+
+  it("builds every prop in the catalog, in its own row", () => {
+    const planned = PROP_EXHIBIT_PLAN.reduce((sum, r) => sum + r.cells.length, 0);
+    expect(result.props).toHaveLength(planned);
+    // Every cell found a site: a prop grid with a hole in it is a prop grid
+    // that is not showing you the prop you came to look at.
+    expect(result.propCount).toBe(planned);
   });
 
   it("supports every lantern — none hangs in mid-air", () => {
@@ -180,5 +215,7 @@ describe("dev world build", () => {
     expect(again.emit.structureBlockCount).toBe(result.emit.structureBlockCount);
     expect(again.lightCount).toBe(result.lightCount);
     expect(again.buildings.map((b) => b.blockCount)).toEqual(result.buildings.map((b) => b.blockCount));
+    expect(again.propCount).toBe(result.propCount);
+    expect(again.pondColumns).toBe(result.pondColumns);
   }, 300_000);
 });

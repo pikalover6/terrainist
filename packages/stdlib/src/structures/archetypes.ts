@@ -12,10 +12,12 @@ import { positionFloat, type Seed256 } from "../determinism/index.js";
 
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import {
+  FloorPlan,
   EXTENDED_BUILDING_ARCHETYPES,
   extendedArchetypeOfTags,
   furnishExtended,
   furnishUpperFloors,
+  furnishWing,
   isPassable,
   wholeFloorPlan,
   type FitOutContext,
@@ -99,6 +101,22 @@ interface FurnishRequest {
   readonly stairColumns: ReadonlySet<string>;
   /** Interior columns at and around the hearth; nothing may be pushed into a fire. */
   readonly hearthColumns: ReadonlySet<string>;
+  /** The building's unrotated envelope, `[sizeX, sizeY, sizeZ]`. */
+  readonly size: readonly [number, number, number];
+  /** Y of the eave plate — the ceiling plane over the top storey. */
+  readonly wallTop: number;
+  /** Y of the roof's highest course, as the roof generator actually built it. */
+  readonly roofTop: number;
+  /**
+   * Every enclosed floor cell, across **both** rects of the footprint.
+   *
+   * The generalization of {@link FurnishRequest.interior}: on a rect plan it
+   * is exactly the interior rectangle's cells, and on an L or a T it also
+   * carries the wing's room. The fit-out reasons about it rather than about
+   * the rectangle so that a wing is part of the floor the walkability guard
+   * keeps connected, and so a wing can be furnished at all.
+   */
+  readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** What the earlier stages have already written at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
 }
@@ -127,11 +145,16 @@ export function furnish(r: FurnishRequest): number {
    * one guard makes "you can cross the room" a property of the fit-out rather
    * than of each archetype's arithmetic.
    */
-  const plan = wholeFloorPlan(interior, r.blockAt);
+  const plan = wholeFloorPlan(interior, r.blockAt, r.floorCells);
+  /** Every cell of the room, both rects — what `free` is bounded by. */
+  const floorSet = new Set(r.floorCells.map((c) => `${c.x},${c.z}`));
   const take = (cells: readonly (readonly [number, number])[], block: string): boolean =>
     isPassable(block) || plan.occupy(cells);
   const free = (x: number, z: number): boolean => {
-    if (x < interior.x0 || x > interior.x1 || z < interior.z0 || z > interior.z1) return false;
+    // The room, not the rectangle. On a rect plan the two are the same set;
+    // on an L or a T the difference is the wing, which is floor a player can
+    // stand on and therefore floor the fit-out may use.
+    if (!floorSet.has(`${x},${z}`)) return false;
     // Never on the stairs: a bed head in the bottom step is both ugly and a
     // broken climb, and it is exactly what happened the first time round.
     if (r.stairColumns.has(`${x},${z}`)) return false;
@@ -329,9 +352,14 @@ export function furnish(r: FurnishRequest): number {
     place,
     placeBed,
     take,
+    size: r.size,
+    wallTop: r.wallTop,
+    roofTop: r.roofTop,
+    floorCells: r.floorCells,
     blockAt: r.blockAt,
   };
   n += furnishExtended(ctx);
+  n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
   return n;
 }
@@ -363,12 +391,22 @@ export function furnishCellar(
     `${access.x},${access.z - 1}`,
     `${cx},${cz}`,
   ]);
+  // The cellar's copy of the walkability invariant, and it needed one: two
+  // crates drawn independently against a wall boxed the corner between them
+  // in, and the physics lint duly reported a standable cellar cell with no
+  // route to it. The draw is unchanged — the guard only ever *refuses*.
+  const cells: string[] = [];
+  for (let z = interior.z0; z <= interior.z1; z++) {
+    for (let x = interior.x0; x <= interior.x1; x++) cells.push(`${x},${z}`);
+  }
+  const plan = new FloorPlan(cells, reserved);
   for (let z = interior.z0; z <= interior.z1; z++) {
     for (let x = interior.x0; x <= interior.x1; x++) {
       if (reserved.has(`${x},${z}`)) continue;
       const wall =
         x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
       if (wall && positionFloat(choice, x, floorY, z) < 0.22) {
+        if (!plan.occupy([[x, z]])) continue;
         put(x, floorY, z, style["cellar.crate"] as string);
       } else if (positionFloat(choice, z, floorY, x) < 0.1) {
         // Under the beams, never at head height on the floor: a cobweb a player

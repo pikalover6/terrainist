@@ -67,6 +67,25 @@ export interface PhysicsContext {
     readonly footprint: { x0: number; z0: number; x1: number; z1: number };
     /** The enclosed interior in world columns; derived from the footprint when absent. */
     readonly interior?: { x0: number; z0: number; x1: number; z1: number };
+    /**
+     * The building's true floor columns, as `"x,z"` keys.
+     *
+     * The interior rectangle is the envelope's, and on an L or a T the envelope
+     * lies about the room in both directions: it spans the notch, which is open
+     * ground with somebody's outside wall standing in it, and it misses the
+     * wing, which is floor. Every interior rule is bounded by this set when it
+     * is supplied, and falls back to the rectangle when it is not.
+     */
+    readonly interiorCells?: ReadonlySet<string>;
+    /**
+     * The cellar's own floor columns, as `"x,z"` keys.
+     *
+     * A cellar is dug under the main rect only, so below the ground floor the
+     * room is a *different* set of columns from the one above it. Without
+     * this, the interior rules read the four courses of foundation under a
+     * wing as a blocked room and the cell over them as unreachable floor.
+     */
+    readonly basementCells?: ReadonlySet<string>;
     readonly floorY: number;
     readonly meta: {
       readonly roofTop: number;
@@ -89,6 +108,21 @@ export interface PhysicsContext {
     readonly id?: string;
     readonly from: { readonly x: number; readonly y: number; readonly z: number };
     readonly to: { readonly x: number; readonly y: number; readonly z: number };
+  }[];
+  /**
+   * Props, as the footprint and base plane each one was placed on.
+   *
+   * `prop.place@0` is the one generator that writes *water* — the fountain's
+   * bowl — and the one that stands blocks in water that was already there —
+   * the piers and the boats. `checkPropFluidSafety` re-derives that claim from
+   * the op list at the pass; this is the same property asked of the world on
+   * disk, which is where a leak would actually flood a village green.
+   */
+  readonly props?: readonly {
+    readonly nodePath?: string;
+    readonly prop?: string;
+    readonly footprint: { x0: number; z0: number; x1: number; z1: number };
+    readonly baseY: number;
   }[];
   /** Road centre lines; bridge decks are exempt from the flush-road rule. */
   readonly roads?: readonly {
@@ -129,6 +163,8 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "floating.stair",
   "floating.isolated",
   "unsupported.chain",
+  "unsupported.bell",
+  "prop.fluid_leak",
   "interior.blocked_column",
   "traversal.no_start",
   "traversal.unreachable",
@@ -383,8 +419,47 @@ export async function lintWorldPhysics(
               add("unsupported.chain", x, y, z, "nothing above it to hang from");
             }
           } else if (needsGround(name)) {
-            if (!groundedChain(x, y, z)) {
+            // A wall or a fence is *also* up if it is bracketed sideways to
+            // something solid: the statue's outstretched arms are wall posts
+            // fixed to its torso, and a cantilever is not a floating block.
+            // Nothing else gets the exemption — a torch, a carpet or a lamp
+            // post over a gorge still has to reach the ground.
+            const braced =
+              (name.endsWith("_wall") || name.endsWith("_fence")) && bracedSideways(x, y, z);
+            if (!braced && !groundedChain(x, y, z)) {
               add("unsupported.chain", x, y, z, "its support chain does not reach a solid block");
+            }
+          }
+
+          // --- the bell ---------------------------------------------------
+          // A church bell names the thing it hangs on in its own state, and
+          // nothing else in the lint reads `attachment`. Vanilla drops one
+          // whose anchor is missing on the first block update, so a steeple
+          // with a bell hung from nothing is a steeple that empties itself.
+          if (name === "bell") {
+            const attachment = props["attachment"] ?? "floor";
+            const [fdx, fdz] = STEP[props["facing"] ?? "north"] ?? [0, -1];
+            const anchors: [number, number, number][] =
+              attachment === "ceiling"
+                ? [[x, y + 1, z]]
+                : attachment === "floor"
+                  ? [[x, y - 1, z]]
+                  : attachment === "double_wall"
+                    ? [
+                        [x + fdz, y, z + fdx],
+                        [x - fdz, y, z - fdx],
+                      ]
+                    : [[x - fdx, y, z - fdz]];
+            const missing = anchors.filter(([ax, ay, az]) => !solidAt(ax, ay, az));
+            if (missing.length > 0) {
+              const [ax, ay, az] = missing[0] as [number, number, number];
+              add(
+                "unsupported.bell",
+                x,
+                y,
+                z,
+                `attachment=${attachment} but nothing solid at ${ax},${ay},${az}`,
+              );
             }
           }
 
@@ -435,45 +510,64 @@ export async function lintWorldPhysics(
       z1: b.footprint.z1 - 1,
     };
     if (interior.x0 > interior.x1 || interior.z0 > interior.z1) continue;
+    // The room. Beyond the rectangle for a wing, inside it for a notch.
+    const cells = b.interiorCells;
+    const inRoom = (x: number, z: number): boolean =>
+      cells === undefined
+        ? x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1
+        : cells.has(`${x},${z}`);
+    const columns: { x: number; z: number }[] = [];
+    if (cells === undefined) {
+      for (let z = interior.z0; z <= interior.z1; z++) {
+        for (let x = interior.x0; x <= interior.x1; x++) columns.push({ x, z });
+      }
+    } else {
+      columns.push(...columnsOf(cells));
+    }
 
     // --- a full-block column through the room ------------------------------
     // A chimney flue, a misplaced pillar or a stack of anything that runs from
     // the floor to the ceiling of an interior cell is furniture nobody can walk
     // round and, in the case that prompted the rule, a cobblestone shaft
     // standing in the middle of a smithy with a cauldron for a hearth.
-    const bands: { lo: number; hi: number }[] = [];
+    // Below the ground floor the room is the cellar's, not the building's:
+    // `columnsAt` answers "which columns is this storey's floor made of".
+    const cellarColumns =
+      b.basementCells === undefined ? undefined : columnsOf(b.basementCells);
+    const columnsAt = (level: number): { x: number; z: number }[] =>
+      level < 0 && cellarColumns !== undefined ? cellarColumns : columns;
+
+    const bands: { lo: number; hi: number; columns: { x: number; z: number }[] }[] = [];
     for (const [i, level] of levels.entries()) {
       const next = levels[i + 1] ?? b.meta.wallTop;
       const lo = b.floorY + level + 1;
       const hi = b.floorY + next - 1;
-      if (hi >= lo) bands.push({ lo, hi });
+      if (hi >= lo) bands.push({ lo, hi, columns: columnsAt(level) });
     }
     for (const band of bands) {
-      for (let z = interior.z0; z <= interior.z1; z++) {
-        for (let x = interior.x0; x <= interior.x1; x++) {
-          let blockedAll = true;
-          for (let y = band.lo; y <= band.hi && blockedAll; y++) {
-            if (passableAt(x, y, z)) blockedAll = false;
-          }
-          // A column a ladder is fixed to is wall, not obstruction: the
-          // watchtower supplies its own pilaster inside the shaft precisely so
-          // the rungs have something to hold on to.
-          if (blockedAll && ladderBacking(x, band.lo, band.hi, z)) continue;
-          if (blockedAll) {
-            add(
-              "interior.blocked_column",
-              x,
-              band.lo,
-              z,
-              `interior column is solid from y ${band.lo} to y ${band.hi}`,
-            );
-          }
+      for (const { x, z } of band.columns) {
+        let blockedAll = true;
+        for (let y = band.lo; y <= band.hi && blockedAll; y++) {
+          if (passableAt(x, y, z)) blockedAll = false;
+        }
+        // A column a ladder is fixed to is wall, not obstruction: the
+        // watchtower supplies its own pilaster inside the shaft precisely so
+        // the rungs have something to hold on to.
+        if (blockedAll && ladderBacking(x, band.lo, band.hi, z)) continue;
+        if (blockedAll) {
+          add(
+            "interior.blocked_column",
+            x,
+            band.lo,
+            z,
+            `interior column is solid from y ${band.lo} to y ${band.hi}`,
+          );
         }
       }
     }
 
     // --- the walking agent -------------------------------------------------
-    const start = doorApproach(b, interior);
+    const start = doorApproach(b, inRoom);
     if (start === null) {
       const anchor = { x: interior.x0, y: b.floorY + 1, z: interior.z0 };
       add(
@@ -489,18 +583,16 @@ export async function lintWorldPhysics(
     const reached = walk(start);
     for (const level of levels) {
       const feet = b.floorY + level + 1;
-      for (let z = interior.z0; z <= interior.z1; z++) {
-        for (let x = interior.x0; x <= interior.x1; x++) {
-          if (!standable(x, feet, z)) continue;
-          if (reached.has(`${x},${feet},${z}`)) continue;
-          add(
-            "traversal.unreachable",
-            x,
-            feet,
-            z,
-            `no walking route from the door cell ${start.x},${start.y},${start.z}`,
-          );
-        }
+      for (const { x, z } of columnsAt(level)) {
+        if (!standable(x, feet, z)) continue;
+        if (reached.has(`${x},${feet},${z}`)) continue;
+        add(
+          "traversal.unreachable",
+          x,
+          feet,
+          z,
+          `no walking route from the door cell ${start.x},${start.y},${start.z}`,
+        );
       }
     }
   }
@@ -533,6 +625,44 @@ export async function lintWorldPhysics(
         from.z,
         `${tunnel.id ?? "tunnel"}: no walking route to the far cellar at ${to.x},${to.y},${to.z}`,
       );
+    }
+  }
+
+  // --- the props' water ----------------------------------------------------
+  // Every water block a prop's footprint holds has to be boxed in: something
+  // under it and something on all four sides. A fountain that satisfies that
+  // cannot spread, and a pier or a boat cannot have opened a face in the water
+  // it was set into — removing water only ever *reduces* the faces the rest of
+  // it has, so the rule is exactly as tight for a boat as for a bowl.
+  //
+  // Bounded to the footprints, which is what makes it safe to run against a
+  // world with an ocean in it: the sea's own surface is nobody's prop.
+  for (const prop of context.props ?? []) {
+    const { footprint: fp } = prop;
+    for (let y = prop.baseY - 2; y <= prop.baseY + 2; y++) {
+      for (let z = fp.z0; z <= fp.z1; z++) {
+        for (let x = fp.x0; x <= fp.x1; x++) {
+          if (nameAt(x, y, z) !== "water") continue;
+          const faces: readonly (readonly [string, number, number, number])[] = [
+            ["down", 0, -1, 0],
+            ["north", 0, 0, -1],
+            ["east", 1, 0, 0],
+            ["south", 0, 0, 1],
+            ["west", -1, 0, 0],
+          ];
+          for (const [face, dx, dy, dz] of faces) {
+            if (!airAt(x + dx, y + dy, z + dz)) continue;
+            add(
+              "prop.fluid_leak",
+              x,
+              y,
+              z,
+              `${prop.prop ?? prop.nodePath ?? "prop"}: water with an open ${face} face`,
+            );
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -784,14 +914,15 @@ export async function lintWorldPhysics(
    */
   function doorApproach(
     b: NonNullable<PhysicsContext["buildings"]>[number],
-    interior: { x0: number; z0: number; x1: number; z1: number },
+    inRoom: (x: number, z: number) => boolean,
   ): { x: number; y: number; z: number } | null {
     const y = b.floorY + 1;
+    // Every column of the envelope, not just its outer ring. A wing puts wall
+    // — and can put the door — on a face that is nowhere near the bounding
+    // box's edge, and a door the lint cannot find is a building the agent
+    // never gets into.
     for (let z = b.footprint.z0; z <= b.footprint.z1; z++) {
       for (let x = b.footprint.x0; x <= b.footprint.x1; x++) {
-        const inShell =
-          x === b.footprint.x0 || x === b.footprint.x1 || z === b.footprint.z0 || z === b.footprint.z1;
-        if (!inShell) continue;
         const decoded = stack.blockStateProps(stateAt(x, y, z));
         if (decoded === undefined) continue;
         if (!decoded.name.endsWith("_door") || decoded.props["half"] !== "lower") continue;
@@ -803,7 +934,7 @@ export async function lintWorldPhysics(
         ] as const) {
           const nx = x + dx;
           const nz = z + dz;
-          if (nx < interior.x0 || nx > interior.x1 || nz < interior.z0 || nz > interior.z1) continue;
+          if (!inRoom(nx, nz)) continue;
           if (standable(nx, y, nz)) return { x: nx, y, z: nz };
         }
       }
@@ -872,10 +1003,50 @@ export async function lintWorldPhysics(
       const name = nameAt(x, ay, z);
       if (AIR.has(name)) return false;
       if (name.endsWith("_fence") || name.endsWith("_wall") || name === "chain") return true;
+      // A soffit: the underside of a bottom slab or a bottom stair is a full,
+      // flush square, which is exactly what vanilla asks of the block a
+      // lantern hangs from. The gazebo's ridge lantern hangs from its slab
+      // roof, and calling that unsupported was the lint being stricter than
+      // the game.
+      if (solidUnderside(x, ay, z)) return true;
       if (name.endsWith("lantern")) continue;
       return false;
     }
     return false;
+  }
+
+  /** A `"x,z"` key set as columns, in a sorted — and therefore stable — order. */
+  function columnsOf(keys: ReadonlySet<string>): { x: number; z: number }[] {
+    return [...keys].sort().map((key) => {
+      const [x, z] = key.split(",").map(Number) as [number, number];
+      return { x, z };
+    });
+  }
+
+  /**
+   * True when the block at `(x, y, z)` presents a full, flush **bottom** face.
+   *
+   * A full cube does, and so does the lower half of a bottom slab or a bottom
+   * stair — which is what a canopy, a gazebo roof and a market stall's awning
+   * are all made of.
+   */
+  function solidUnderside(x: number, y: number, z: number): boolean {
+    const id = stateAt(x, y, z);
+    if (id === 0) return false;
+    if (stack.isFullCube(id)) return true;
+    const decoded = stack.blockStateProps(id);
+    if (decoded === undefined) return false;
+    const { name, props } = decoded;
+    if (name.endsWith("_slab")) return props["type"] === "bottom" || props["type"] === "double";
+    if (name.endsWith("_stairs")) return props["half"] === "bottom";
+    return false;
+  }
+
+  /** True when a full cube stands beside this cell, at its own level. */
+  function bracedSideways(x: number, y: number, z: number): boolean {
+    return (
+      solidAt(x + 1, y, z) || solidAt(x - 1, y, z) || solidAt(x, y, z + 1) || solidAt(x, y, z - 1)
+    );
   }
 
   /** True when any column within one block holds a fluid at this height. */

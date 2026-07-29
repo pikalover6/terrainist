@@ -59,6 +59,8 @@ const REQUIRED = [
   "world.great_hall",
   "world.inn",
   "world.smithy",
+  "world.chapel",
+  "world.market_stall",
 ];
 
 const scratch: string[] = [];
@@ -102,6 +104,40 @@ describe("hillside village example", () => {
   it("compiles with zero error-severity diagnostics", () => {
     const errors = report.diagnostics.filter((d) => d.severity === "error");
     expect(errors.map((d) => `${d.code} ${d.nodePath}: ${d.message}`)).toEqual([]);
+  });
+
+  it("builds the chapel as an L: the wing param reaches the grammar", () => {
+    // The end-to-end claim for the `wing` param: the document says one, the
+    // param whitelist lets it through, `wingParamOf` reads it, and the
+    // footprint the grammar returns is smaller than its own bounding box —
+    // which only a multi-rect plan can be.
+    const chapel = report.layout?.structures?.buildings?.find((b) => b.nodePath === "world.chapel");
+    expect(chapel, "the chapel was placed").toBeDefined();
+    const fp = chapel?.footprint as { x0: number; z0: number; x1: number; z1: number };
+    const box = (fp.x1 - fp.x0 + 1) * (fp.z1 - fp.z0 + 1);
+    expect(chapel?.cells.size).toBeLessThan(box);
+    expect(chapel?.meta.footprint.wing).not.toBeNull();
+    // ...and the archetype came from the tags, with the church's own facade.
+    expect(chapel?.meta.params.archetype).toBe("church");
+    expect(chapel?.meta.params.windowShape).toBe("tall");
+    // The crypt: a tunnel endpoint gets a cellar whether or not it asked.
+    expect(chapel?.basementDepth).toBeGreaterThan(0);
+    expect(report.layout?.structures?.tunnels).toHaveLength(1);
+  });
+
+  it("moors a rowboat at the pier it declared", () => {
+    const props = report.layout?.structures?.props ?? [];
+    expect(props.map((p) => p.prop)).toEqual(["pier", "rowboat"]);
+    const pier = props[0];
+    const boat = props[1];
+    expect(pier?.anchor, "a pier offers an anchor").toBeDefined();
+    // `at: "pier"` is a *coarse* target, not a coordinate: the boat is placed
+    // on the first open water near the pier's seaward end, so the claim is
+    // proximity rather than adjacency.
+    const dx = (boat?.footprint.x0 ?? 0) - (pier?.anchor?.x ?? 0);
+    const dz = (boat?.footprint.z0 ?? 0) - (pier?.anchor?.z ?? 0);
+    expect(Math.abs(dx) + Math.abs(dz)).toBeLessThan(24);
+    expect(report.layout?.structures?.stats.propWaterLeaks).toBe(0);
   });
 
   it("raises no warnings either — the constraints all fit", () => {
@@ -483,6 +519,20 @@ describe("hillside village example", () => {
     const world = await worldNames();
     const at = (x: number, y: number, z: number): string => world.get(`${x},${y},${z}`) ?? "air";
     const buildings = report.layout?.structures?.buildings ?? [];
+    // A gallery's *ceiling* is an apron block with air under it, and it is
+    // meant to be: the tunnel from the chapel to the great hall passes under
+    // the apron of both, and the block over its bore is the roof, not a step
+    // floating over the grass. The rule is about the ground the doorstep meets,
+    // so a column the compiler deliberately hollowed out is not its business —
+    // `cave.fluid_shell` and the tunnel traversal lint own those.
+    const carved = new Set<string>();
+    for (const tunnel of report.layout?.structures?.tunnels ?? []) {
+      for (const cell of tunnel.path) {
+        for (let dx = -2; dx <= 2; dx++) {
+          for (let dz = -2; dz <= 2; dz++) carved.add(`${cell.x + dx},${cell.z + dz}`);
+        }
+      }
+    }
     expect(buildings.length).toBeGreaterThan(0);
     let checked = 0;
     const floating: string[] = [];
@@ -494,7 +544,9 @@ describe("hillside village example", () => {
           for (let y = floorY - MAX_FOUNDATION_DEPTH; y <= floorY; y++) {
             if (at(x, y, z) === "air") continue;
             checked++;
-            if (at(x, y - 1, z) === "air") floating.push(`${x},${y},${z} ${at(x, y, z)}`);
+            if (at(x, y - 1, z) !== "air") continue;
+            if (carved.has(`${x},${z}`)) continue;
+            floating.push(`${x},${y},${z} ${at(x, y, z)}`);
           }
         }
       }

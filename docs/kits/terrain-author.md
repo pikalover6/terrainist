@@ -34,8 +34,8 @@ Hard rules, all enforced by the validator:
 - Top level accepts only `loam`, `profile`, `meta`, `style`, `root`.
 - `root.kind` is `"composite"`; every child is `"kind": "generator"`.
 - `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
-  one** `terrain.climate@0`, and any number of `scatter.forest@0` nodes.
-  Nothing else is allowed.
+  one** `terrain.climate@0`, and any number of `scatter.forest@0` and
+  `cave.carver@0` nodes. Nothing else is allowed.
 - `terrain.edit@0` nodes live **only** in `heightfield.children`. They are
   never children of the root and never nest inside each other.
 - Tree depth is 3: root → generator → edit.
@@ -277,7 +277,57 @@ at low density so the rest of the world is not bald.
 
 ---
 
-## 7. Current-state guidance (read this — it is not optional)
+## 7. `cave.carver@0` — underground systems
+
+Any number of nodes, each a child of the root. Purely **subtractive**: it cuts
+interior air out of the rock and never moves a column's surface, so it cannot
+change the landscape you wrote above. `"params": {}` accepts every default.
+
+```json
+{
+  "id": "deep_workings",
+  "kind": "generator",
+  "generator": "cave.carver@0",
+  "params": {
+    "density": 0.35,
+    "frequency": 0.012,
+    "radius": [2, 5],
+    "yRange": [-32, 48],
+    "verticality": 0.3,
+    "chambers": { "count": 3, "radius": 8, "chance": 0.4 },
+    "entrances": 2,
+    "decorate": true
+  }
+}
+```
+
+| param | default | range | what it does |
+|---|---|---|---|
+| `density` | 0.3 | 0..1 | how many worm systems the region carries — one per ≈9000 blocks of area at `1`, capped at 64. |
+| `frequency` | 0.012 | 0..0.5 | scale of the field steering the worms. Smaller = long, lazy tunnels. |
+| `radius` | `[2, 5]` | `[min, max]` ints 1..12 | tunnel radius in blocks, min ≤ max. |
+| `yRange` | `[-32, 48]` | `[min, max]` ints −63..200 | **absolute world Y**, not a depth below the surface. |
+| `verticality` | 0.3 | 0..1 | how willingly a worm climbs and dives. 0 = near-horizontal galleries. |
+| `chambers` | `{count: 3, radius: 8, chance: 0.4}` | `count` 0..64 int, `radius` 3..24, `chance` 0..1 | ellipsoid rooms opened along the worms. |
+| `entrances` | 0 | `true`/`false` or int 0..8 | daylight mouths. Each one needs a hillside no steeper than 26° with a cave already running near it, and publishes a `cave_mouth` marker. Without this the system is sealed. |
+| `decorate` | true | bool | gravel floor patches, stalagmites and stalactites, moss, mushrooms, cobwebs. |
+
+Rules and honest limits:
+
+- Water safety is structural: no carve comes within 4 blocks of any water or
+  lava column, and nothing is cut at or below sea level within 8 blocks of the
+  ocean. A cave will simply not go where it would flood.
+- 4 blocks of rock are always left between a ceiling and the surface, except at
+  an entrance mouth.
+- Five params from the v0.2 §7 table are **rejected**, each with a
+  `LOAM-T114`: `style` (only the worm style is carved), `lavaLevel` and
+  `waterTable` (no fluid in caves yet), `surfaceOpenings` (this profile spells
+  it `entrances`) and `protectTags`.
+- Caves take no `constraints` and no `ports`, like every terrain generator.
+
+---
+
+## 8. Current-state guidance (read this — it is not optional)
 
 These are honest limitations of today's compiler. Working with them produces
 much better worlds than fighting them.
@@ -335,7 +385,7 @@ speckled rather than banded:
 
 ---
 
-## 8. Worked patterns
+## 9. Worked patterns
 
 **Fjord inlets** — a `valley` course that starts well inland and runs *past*
 the coast into open water. The seaward end floods because it reaches the ocean;
@@ -420,7 +470,7 @@ stops well below the summit so the cone stays bare.
 
 ---
 
-## 9. Complete example
+## 10. Complete example
 
 Prompt: *"a small volcanic island ringed by black beaches"*.
 
@@ -493,7 +543,7 @@ Prompt: *"a small volcanic island ringed by black beaches"*.
 
 ---
 
-## 10. Before you answer
+## 11. Before you answer
 
 - Output **only** the JSON object. No fences, no explanation.
 - One heightfield, one climate, at least one forest.

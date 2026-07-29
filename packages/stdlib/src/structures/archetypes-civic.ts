@@ -159,6 +159,14 @@ export interface FitOutContext {
    * {@link isPassable}) go through untouched.
    */
   readonly take: (cells: readonly (readonly [number, number])[], block: string) => boolean;
+  /** The building's unrotated envelope, `[sizeX, sizeY, sizeZ]`. */
+  readonly size: readonly [number, number, number];
+  /** Y of the eave plate. */
+  readonly wallTop: number;
+  /** Y of the roof's highest course, as `core.ts` actually built it. */
+  readonly roofTop: number;
+  /** Every enclosed floor cell, across both rects of the footprint. */
+  readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** What earlier stages wrote at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
 }
@@ -171,34 +179,6 @@ function planX(interior: LocalRect): number {
 /** Plan depth. See {@link planX}. */
 function planZ(interior: LocalRect): number {
   return interior.z1 + 2;
-}
-
-/**
- * The highest course anything has been written at, over the whole plan.
- *
- * `core.ts` computes `roofTop` and returns it in `meta`, but it does not hand
- * it to the fit-out, and the fit-out is where the steeple and the blades have
- * to be sized from. Probing the cells that were already written recovers it
- * exactly, and cannot drift from the roof generator the way a re-derivation
- * from `wallTop` and the layer count would.
- */
-function probeRoofTop(ctx: FitOutContext, wallTop: number): number {
-  const sx = planX(ctx.interior);
-  const sz = planZ(ctx.interior);
-  let top = wallTop;
-  for (let y = wallTop + 1; y <= wallTop + 12; y++) {
-    let any = false;
-    for (let z = 0; z < sz && !any; z++) {
-      for (let x = 0; x < sx; x++) {
-        if (ctx.blockAt(x, y, z) !== undefined) {
-          any = true;
-          break;
-        }
-      }
-    }
-    if (any) top = y;
-  }
-  return top;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -312,14 +292,25 @@ export function isPassable(block: string): boolean {
 export function wholeFloorPlan(
   interior: LocalRect,
   blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined,
+  floorCells?: readonly { readonly x: number; readonly z: number }[],
 ): FloorPlan {
+  // `floorCells` is the whole room across both rects of an L or a T; the
+  // rectangle is the fallback for a caller that has not got one. Passing it
+  // matters for more than reach: the guard's job is to keep the floor one
+  // connected region, and a guard that cannot see the wing would happily wall
+  // the wing off from the main block and call the remainder connected.
   const cells: string[] = [];
-  for (let z = interior.z0; z <= interior.z1; z++) {
-    for (let x = interior.x0; x <= interior.x1; x++) {
-      const standing = blockAt(x, 1, z);
-      if (standing !== undefined && !isPassable(standing.block)) continue;
-      cells.push(`${x},${z}`);
+  const consider = (x: number, z: number): void => {
+    const standing = blockAt(x, 1, z);
+    if (standing !== undefined && !isPassable(standing.block)) return;
+    cells.push(`${x},${z}`);
+  };
+  if (floorCells === undefined) {
+    for (let z = interior.z0; z <= interior.z1; z++) {
+      for (let x = interior.x0; x <= interior.x1; x++) consider(x, z);
     }
+  } else {
+    for (const cell of floorCells) consider(cell.x, cell.z);
   }
   return new FloorPlan(cells);
 }
@@ -658,6 +649,64 @@ function fitBakery(ctx: FitOutContext, c: PropCounter): void {
   c.put1(it.x0 + 1 <= it.x1 ? it.x0 + 1 : it.x0, it.z0, "cauldron", { level: "3" });
 }
 
+/**
+ * Furnish the wing of an L or a T.
+ *
+ * The archetype fit-outs above all reason about {@link FitOutContext.interior},
+ * which is the *main* rect's interior — a deliberate simplification, because
+ * every one of them is a composition against a rectangle. The consequence was
+ * that a wing came out as floor, ceiling and a lantern with nothing in it: a
+ * back room whose only content was the fact that it was a back room.
+ *
+ * This is the generic answer, and it is generic on purpose. A wing is a back
+ * room whatever the building is — a scullery, a store, a vestry — so it gets
+ * back-room furniture rather than a second copy of the archetype's own layout
+ * at a different offset. Two props, against the wall furthest from the way in,
+ * both through `ctx.take`, so the walkability guard has the same veto here it
+ * has everywhere else.
+ *
+ * Returns the props written; 0 when the plan is a plain rect.
+ */
+export function furnishWing(ctx: FitOutContext): number {
+  const { interior: it } = ctx;
+  // The wing is exactly the floor the main rect's interior does not carry.
+  const wing = ctx.floorCells.filter(
+    (c) => c.x < it.x0 || c.x > it.x1 || c.z < it.z0 || c.z > it.z1,
+  );
+  if (wing.length < 4) return 0;
+
+  // Order by distance from the door, furthest first: the far corner of a back
+  // room is where the barrels go, and the near end is the way through to it.
+  const door = ctx.door;
+  const from = door ?? { x: it.x0, z: it.z0 };
+  const ranked = [...wing].sort(
+    (a, b) =>
+      (b.x - from.x) ** 2 + (b.z - from.z) ** 2 - ((a.x - from.x) ** 2 + (a.z - from.z) ** 2) ||
+      a.z - b.z ||
+      a.x - b.x,
+  );
+
+  let n = 0;
+  for (const cell of ranked) {
+    if (n >= 2) break;
+    const block = n === 0 ? "barrel" : "composter";
+    const props = n === 0 ? { facing: "up", open: "false" } : { level: "0" };
+    if (!ctx.free(cell.x, cell.z)) continue;
+    // Never under the wing's own hanging lantern. A barrel at `y = 1` with a
+    // lantern at `y = 2` is a column a player cannot occupy at all, which the
+    // physics lint reports — correctly — as a blocked interior column.
+    let overhead = false;
+    for (let y = 2; y < ctx.storyHeight; y++) {
+      if (ctx.blockAt(cell.x, y, cell.z) !== undefined) overhead = true;
+    }
+    if (overhead) continue;
+    if (!ctx.take([[cell.x, cell.z]], block)) continue;
+    ctx.put(cell.x, 1, cell.z, block, props);
+    n++;
+  }
+  return n;
+}
+
 /* -------------------------------------------------------------------------- */
 /* exterior flourishes                                                         */
 /* -------------------------------------------------------------------------- */
@@ -693,8 +742,7 @@ export function emitSteeple(ctx: FitOutContext, c: PropCounter): number {
   const sx = planX(ctx.interior);
   const sz = planZ(ctx.interior);
   if (sx < 7 || sz < 7) return 0;
-  const wallTop = ctx.floors * ctx.storyHeight;
-  const roofTop = probeRoofTop(ctx, wallTop);
+  const { wallTop, roofTop } = ctx;
   const top = roofTop + ROOF_FLOURISH_RISE;
   const base = wallTop + 1;
   if (top - base < 3) return 0;
@@ -745,8 +793,7 @@ export function emitSteeple(ctx: FitOutContext, c: PropCounter): number {
  */
 export function emitBlades(ctx: FitOutContext, c: PropCounter): number {
   const sx = planX(ctx.interior);
-  const wallTop = ctx.floors * ctx.storyHeight;
-  const roofTop = probeRoofTop(ctx, wallTop);
+  const { wallTop, roofTop } = ctx;
   const cx = Math.floor(sx / 2);
   const cy = wallTop + 1;
   // The arms reach as far as the shorter of: the wall they hang on, the ground
@@ -798,16 +845,19 @@ export function furnishUpperFloors(ctx: FitOutContext): number {
     const level = s * ctx.storyHeight;
     const usable: string[] = [];
     const holes: string[] = [];
-    for (let z = it.z0; z <= it.z1; z++) {
-      for (let x = it.x0; x <= it.x1; x++) {
-        if (ctx.blockAt(x, level, z) === undefined) {
-          holes.push(`${x},${z}`);
-          continue;
-        }
-        if (ctx.blockAt(x, level + 1, z) !== undefined) continue;
-        if (ctx.blockAt(x, level + 2, z) !== undefined) continue;
-        usable.push(`${x},${z}`);
+    // Across both rects: `core.ts` lays an upper floor plane over the whole L,
+    // so a storey over a wing is floor a player walks on and the guard has to
+    // see. On a rect plan `floorCells` is the interior rectangle in the same
+    // (z, x) order this loop used to walk, so nothing rectangular moves.
+    for (const cell of ctx.floorCells) {
+      const { x, z } = cell;
+      if (ctx.blockAt(x, level, z) === undefined) {
+        holes.push(`${x},${z}`);
+        continue;
       }
+      if (ctx.blockAt(x, level + 1, z) !== undefined) continue;
+      if (ctx.blockAt(x, level + 2, z) !== undefined) continue;
+      usable.push(`${x},${z}`);
     }
     // The approach to the flight: every cell that touches the well stays bare,
     // for the reason the ground floor's stair reserve exists — the square you
