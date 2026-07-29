@@ -12,7 +12,8 @@ import { open, readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 
-import type { NbtRoot } from "./nbt.js";
+import * as nbt from "./nbt.js";
+import type { NbtCompoundValue, NbtRoot } from "./nbt.js";
 
 const require = createRequire(import.meta.url);
 
@@ -72,6 +73,15 @@ interface RawChunkColumn {
   /** Read by prismarine-provider-anvil; defaults to a `Date.now()`-derived value. */
   lastUpdate?: readonly [number, number];
   inhabitedTime?: number;
+  /**
+   * The chunk's block entities, keyed `"<x>,<y>,<z>"` by
+   * `CommonChunkColumn`'s `posKey`. `prismarine-provider-anvil` serialises
+   * `Object.values(...)` of this straight into the chunk's `block_entities`
+   * list, so each value is a *compound body* — a map of field name to tagged
+   * value — and the insertion order of this object is the order they land on
+   * disk.
+   */
+  blockEntities: Record<string, unknown>;
 }
 
 interface RawAnvil {
@@ -149,6 +159,31 @@ export interface EmitChunk {
    * `Date.now() & 0xffff`, which would break byte-for-byte determinism.
    */
   freezeLastUpdate(): void;
+  /**
+   * Attach a block entity to the block at **absolute world** `(x, y, z)`.
+   *
+   * The odd coordinate convention — world x/z here, chunk-local x/z everywhere
+   * else on this interface — is not a slip. A block entity's own compound
+   * stores absolute coordinates, and the chunk column does not know where it
+   * sits in the world until the Anvil writer is told, so the *only* place the
+   * world position exists is the caller's hand. Taking it here lets the adapter
+   * stamp the envelope (`x`, `y`, `z`, `keepPacked`, and a `components` default)
+   * itself, which is what stops a caller from writing a compound whose stored
+   * coordinates disagree with the block it is attached to — a mismatch the game
+   * resolves by discarding the block entity.
+   *
+   * `compound` is the type-specific body plus an `id` naming the block-entity
+   * type; the envelope fields are overwritten, so they cannot be got wrong.
+   * Setting a second entity at the same position replaces the first.
+   */
+  setBlockEntityNbt(x: number, y: number, z: number, compound: NbtCompoundValue): void;
+  /**
+   * Every block entity this chunk carries, in the order it will be written.
+   *
+   * Read-side counterpart of {@link setBlockEntityNbt}, for tests and for a
+   * readback that wants the compound rather than the block.
+   */
+  blockEntitiesNbt(): readonly NbtCompoundValue[];
 }
 
 /** The Anvil region writer/reader for one `region/` directory. */
@@ -438,6 +473,35 @@ class ChunkAdapter implements EmitChunk {
   freezeLastUpdate(): void {
     this.raw.lastUpdate = [0, 0];
     this.raw.inhabitedTime = 0;
+  }
+
+  setBlockEntityNbt(x: number, y: number, z: number, compound: NbtCompoundValue): void {
+    const id = compound["id"];
+    if (id === undefined || id.type !== "string") {
+      throw new Error(
+        `emit: block entity at ${x},${y},${z} has no string "id" naming its type`,
+      );
+    }
+    // The envelope every 1.21.11 block entity carries, verified against real
+    // saves. `components` is defaulted rather than forced: a chest that names
+    // its own item components should keep them.
+    const body: NbtCompoundValue = {
+      components: nbt.compound({}),
+      ...compound,
+      id,
+      x: nbt.int(x),
+      y: nbt.int(y),
+      z: nbt.int(z),
+      keepPacked: nbt.byte(0),
+    };
+    // `setBlockEntity` keys by the position it is handed; the library documents
+    // that position as chunk-relative while the tag's own coordinates stay
+    // absolute, so the key is local and the body is not.
+    this.raw.blockEntities[`${x - (x >> 4) * 16},${y},${z - (z >> 4) * 16}`] = body;
+  }
+
+  blockEntitiesNbt(): readonly NbtCompoundValue[] {
+    return Object.values(this.raw.blockEntities) as NbtCompoundValue[];
   }
 }
 

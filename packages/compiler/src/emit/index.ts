@@ -37,5 +37,26 @@ export type { EmitBounds, EmitOptions, EmitSummary } from "./world.js";
 export { applyConnectionStates, connectiveKindOf } from "./connections.js";
 export type { ConnectionCandidate, ConnectionStats, ConnectiveKind } from "./connections.js";
 
-export { PHYSICS_RULES, lintWorldPhysics } from "./physics.js";
-export type { PhysicsContext, PhysicsFinding, PhysicsReport } from "./physics.js";
+export { PHYSICS_RULES, lintWorldPhysics, readBlockEntities } from "./physics.js";
+export type {
+  PhysicsContext,
+  PhysicsFinding,
+  PhysicsReport,
+  PlacedBlockEntity,
+} from "./physics.js";
+
+export {
+  SIGN_LINES,
+  blockEntity,
+  blockEntityIdOf,
+  commandBlockEntity,
+  hangingSignEntity,
+  requiredBlockEntityId,
+  signEntity,
+} from "./block-entities.js";
+export type {
+  BlockEntity,
+  CommandBlockOptions,
+  SignFace,
+  SignOptions,
+} from "./block-entities.js";
