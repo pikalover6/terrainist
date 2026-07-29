@@ -58,7 +58,7 @@ import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
-import { buildTunnels, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
+import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
@@ -160,9 +160,24 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // says the two are connected, and there is nowhere else for a gallery to end.
   const links = tunnelLinksOf(input.doc, rootPath);
   const needsCellar = new Set<string>();
+  /**
+   * The cellar style a gallery implies at each of its ends.
+   *
+   * A mine gallery that arrives into a plain grey box has arrived nowhere: the
+   * room at the end of a working is the bottom of the working. So a tunnel's
+   * style carries into the cellars it opens into — and only where the document
+   * did not say, because an explicit `basement.style` is a decision and this is
+   * a default.
+   */
+  const impliedStyle = new Map<string, string>();
   for (const link of links) {
     needsCellar.add(link.fromPath);
     needsCellar.add(link.toPath);
+    const implied = link.style === "mine" ? "mine" : link.style === "crypt" ? "crypt" : null;
+    if (implied === null) continue;
+    for (const path of [link.fromPath, link.toPath]) {
+      if (!impliedStyle.has(path)) impliedStyle.set(path, implied);
+    }
   }
 
   // --- buildings -----------------------------------------------------------
@@ -174,6 +189,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     buildingPaths.add(placement.nodePath);
     const params = (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>;
     const basement = resolveBasementParam(params["basement"], needsCellar.has(placement.nodePath));
+    const cellarStyle = resolveBasementStyle(
+      params["basement"],
+      impliedStyle.get(placement.nodePath),
+    );
     const wing = wingParamOf(params["wing"]);
     jobs.push({
       nodePath: placement.nodePath,
@@ -188,6 +207,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         ...(typeof params["trimSymbol"] === "string" ? { trimSymbol: params["trimSymbol"] } : {}),
         ...(typeof params["roofSymbol"] === "string" ? { roofSymbol: params["roofSymbol"] } : {}),
         ...(basement === 0 ? {} : { basement }),
+        ...(cellarStyle === undefined ? {} : { cellarStyle }),
         // The L and the T. Read through `wingParamOf`, which is where a
         // defective shape becomes `undefined` rather than an exception — the
         // profile validator is what tells the author about it, with a hint.
@@ -425,6 +445,12 @@ export function tunnelLinksOf(doc: SettlementDocument, rootPath: string): Tunnel
         ...(typeof c["from"] === "string" ? { fromPort: portNameOf(c["from"]) } : {}),
         ...(target.includes("#") ? { toPort: portNameOf(target) } : {}),
         ...(typeof c["maxLength"] === "number" ? { maxLength: c["maxLength"] } : {}),
+        // §4 `connected` carries a `style`; for a tunnel it is the hand the
+        // gallery is dug by. Unrecognised spellings resolve to `dressed`, which
+        // is what the pass has always built — the profile validator is where an
+        // author is told they wrote something it does not know.
+        style: resolveTunnelStyle(c["style"]),
+        ...(c["oreChamber"] === true ? { oreChamber: true } : {}),
       });
     }
   }
@@ -453,6 +479,21 @@ export function resolveBasementParam(value: unknown, implied: boolean): number {
     return typeof depth === "number" ? Math.round(depth) : DEFAULT_BASEMENT_DEPTH;
   }
   return fallback;
+}
+
+/**
+ * The cellar style a `basement` param asks for, or the one its tunnel implies.
+ *
+ * `undefined` means "say nothing", which is how the grammar's own default —
+ * plain, except under a mine head — stays the grammar's business rather than
+ * this function's.
+ */
+export function resolveBasementStyle(value: unknown, implied?: string): string | undefined {
+  if (typeof value === "object" && value !== null) {
+    const style = (value as { style?: unknown }).style;
+    if (typeof style === "string") return style;
+  }
+  return implied;
 }
 
 /**

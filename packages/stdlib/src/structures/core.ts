@@ -45,6 +45,13 @@ import {
   isHighriseArchetype,
 } from "./highrise.js";
 import { pickTheme, styleOf, type BuildingMaterials } from "./themes.js";
+import {
+  cellarDressing,
+  cellarSecondAccent,
+  dressCellar,
+  resolveCellarStyle,
+  type CellarStyle,
+} from "./underground.js";
 
 /* -------------------------------------------------------------------------- */
 /* ops                                                                         */
@@ -306,6 +313,15 @@ export interface BuildingParams {
    */
   readonly basement?: number;
   /**
+   * How the cellar is dressed — `plain` (the default, and what every cellar
+   * was) or one of the themed rooms in `structures/underground.ts`.
+   *
+   * Style changes the masonry and the contents and nothing else: same shell,
+   * same ladder, same walkable plane, so a tunnel portal or a physics lint
+   * cannot tell one style from another.
+   */
+  readonly cellarStyle?: string;
+  /**
    * A second rect unioned onto the main one — the L and the T of v0.2 §7's
    * `footprint` vocabulary. See {@link BuildingWing}. Ignored (silently, so a
    * document is never failed by the grammar) when it does not validate.
@@ -334,6 +350,8 @@ export interface ResolvedBuildingParams {
   readonly windowRhythm: BuildingWindowRhythm;
   readonly windowShape: BuildingWindowShape;
   readonly archetype: BuildingArchetype;
+  /** How the cellar is dressed. Resolved once, beside the depth. */
+  readonly cellarStyle?: CellarStyle;
 }
 
 /** A declared door port, in unrotated node-local terms. */
@@ -834,6 +852,13 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       ? 0
       : clamp(Math.round(params.basement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
   const foundationDepth = Math.max(Math.max(0, Math.round(request.foundationDepth ?? 1)), cellar + 1);
+  // The style, resolved once beside the depth. A mine head's cellar is the
+  // bottom of its own shaft, so it dresses itself when the document says
+  // nothing — every other archetype stays plain unless asked.
+  const cellarStyle: CellarStyle =
+    params.cellarStyle === undefined && archetype === "mine_head"
+      ? "mine"
+      : resolveCellarStyle(params.cellarStyle);
 
   const cells = new Map<string, LocalVoxelOp>();
   const put: Put = (x, y, z, block, props) => {
@@ -884,7 +909,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       materials,
       footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
       shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
-      params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype },
+      params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype, cellarStyle },
     });
   }
 
@@ -1327,13 +1352,14 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       depth: cellar,
       interior: cellarInterior,
       access: cellarAccess,
+      cellarStyle,
     });
   }
 
   return {
     ops: sortOps([...cells.values()]),
     meta: {
-      params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype },
+      params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype, cellarStyle },
       size: [sx, sy, sz],
       wallTop,
       roofBase,
@@ -2106,6 +2132,7 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
       depth: r.cellar,
       interior: cellarInterior,
       access: cellarAccess,
+      cellarStyle: r.params.cellarStyle ?? "plain",
       // The rungs keep the facing they have above ground, so the ladder is one
       // continuous run from the cellar floor to the parapet.
       ladderFacing,
@@ -2183,6 +2210,8 @@ interface CellarRequest {
    * crate is drawn into a column that is about to become stone.
    */
   readonly pilaster?: { readonly x: number; readonly z: number } | null;
+  /** How the room is dressed. `plain` is what it always was. */
+  readonly cellarStyle?: CellarStyle;
 }
 
 /**
@@ -2214,10 +2243,25 @@ function emitCellar(r: CellarRequest): number {
   const pilaster = r.pilaster ?? null;
   const isPilaster = (x: number, z: number): boolean =>
     pilaster !== null && x === pilaster.x && z === pilaster.z;
-  const masonry = (x: number, y: number, z: number): string =>
-    positionFloat(grammar, x, y, z) < CELLAR_CRACK_SHARE
-      ? (style["cellar.wall_cracked"] as string)
-      : (style["cellar.wall"] as string);
+  // The wall's two blocks. A style overrides the theme here on purpose: a
+  // crypt is stone brick because a crypt is stone brick, not because the
+  // village happens to build in it.
+  const cellarStyle: CellarStyle = r.cellarStyle ?? "plain";
+  const dressing = cellarDressing(cellarStyle);
+  const second = cellarSecondAccent(cellarStyle);
+  const masonry = (x: number, y: number, z: number): string => {
+    const draw = positionFloat(grammar, x, y, z);
+    if (dressing === null) {
+      return draw < CELLAR_CRACK_SHARE
+        ? (style["cellar.wall_cracked"] as string)
+        : (style["cellar.wall"] as string);
+    }
+    if (draw >= dressing.accentShare) return dressing.primary;
+    // The crypt's third block: the accent share is split between moss and
+    // cracks, so the wall reads as aged in two ways rather than tinted in one.
+    if (second !== null && draw < dressing.accentShare / 2) return second;
+    return dressing.accent;
+  };
 
   // --- the floor slab ------------------------------------------------------
   const slabY = -(depth + 1);
@@ -2262,16 +2306,23 @@ function emitCellar(r: CellarRequest): number {
   if (blocked(cz)) cz = cz + 1 <= interior.z1 && !blocked(cz + 1) ? cz + 1 : cz - 1;
   put(cx, -1, cz, style["light.lantern"] as string, { hanging: "true" });
 
-  furnishCellar(
-    put,
-    style,
-    choice,
-    interior,
-    access,
-    { x: cx, z: cz },
-    -depth,
-    pilaster === null ? undefined : new Set([`${pilaster.x},${pilaster.z}`]),
-  );
+  const pilasterCells = pilaster === null ? undefined : new Set([`${pilaster.x},${pilaster.z}`]);
+  if (cellarStyle === "plain") {
+    furnishCellar(put, style, choice, interior, access, { x: cx, z: cz }, -depth, pilasterCells);
+  } else {
+    dressCellar({
+      put,
+      style: cellarStyle,
+      table: style,
+      choice,
+      interior,
+      rect,
+      access,
+      center: { x: cx, z: cz },
+      floorY: -depth,
+      ...(pilasterCells === undefined ? {} : { blocked: pilasterCells }),
+    });
+  }
   return 1;
 }
 
