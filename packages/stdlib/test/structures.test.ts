@@ -632,6 +632,96 @@ describe("material themes", () => {
     expect(ops.filter((o) => o.block === "ladder").length).toBeGreaterThan(8);
   });
 
+  it("digs a watchtower a cellar and runs its own ladder down into it", () => {
+    // The bug: `emitWatchtower` was a special-cased path that never called the
+    // cellar machinery, so a tower asked for a basement — by the param, or by
+    // a `connected … via "tunnel"` constraint, which implies one — silently
+    // built none, and the tunnel router reported the tower as an end with no
+    // cellar to open into.
+    const depth = 4;
+    const { ops, meta } = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower", basement: depth },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.params.archetype).toBe("watchtower");
+    expect(meta.basementDepth).toBe(depth);
+    expect(meta.basementInterior).not.toBe(null);
+    expect(meta.basementAccess).not.toBe(null);
+    // The cellar's floor slab is a storey of its own, which is what makes the
+    // physics lint walk down there.
+    expect(meta.floorLevels[0]).toBe(-(depth + 1));
+
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const interior = meta.basementInterior as NonNullable<typeof meta.basementInterior>;
+    const access = meta.basementAccess as NonNullable<typeof meta.basementAccess>;
+
+    // --- the room ----------------------------------------------------------
+    // Air under the shaft, a masonry slab under that, and the ground floor
+    // plane above is its ceiling.
+    for (let d = 1; d <= depth; d++) {
+      for (let z = interior.z0; z <= interior.z1; z++) {
+        for (let x = interior.x0; x <= interior.x1; x++) {
+          const cell = at.get(`${x},${-d},${z}`);
+          expect(cell, `cellar cell ${x},${-d},${z}`).toBeDefined();
+        }
+      }
+    }
+    expect(at.get(`${interior.x0},${-(depth + 1)},${interior.z0}`)?.block).not.toBe("air");
+
+    // --- one continuous ladder ---------------------------------------------
+    // From the cellar floor to the parapet, in a single column: the tower's
+    // existing shaft ladder, carried on through the floor rather than a second
+    // ladder in a corner.
+    const ladders = ops
+      .filter((o) => o.block === "ladder")
+      .map((o) => ({ ...o }))
+      .sort((a, b) => a.y - b.y);
+    expect(ladders.length).toBeGreaterThan(0);
+    for (const rung of ladders) {
+      expect([rung.x, rung.z]).toEqual([access.x, access.z]);
+    }
+    expect((ladders[0] as LocalVoxelOp).y).toBe(-depth);
+    for (const [i, rung] of ladders.entries()) {
+      expect(rung.y, "the ladder has no gap in it").toBe(-depth + i);
+    }
+    // Every rung is backed. `facing: "south"` names the block at `z - 1`, so
+    // the pilaster the tower runs up the shaft has to keep going down.
+    for (const rung of ladders) {
+      expect(rung.props?.["facing"]).toBe("south");
+      const backing = at.get(`${rung.x},${rung.y},${rung.z - 1}`);
+      expect(backing, `backing behind the rung at y ${rung.y}`).toBeDefined();
+      expect(backing?.block).not.toBe("air");
+      expect(backing?.block).not.toBe("ladder");
+    }
+
+    // --- reachable ---------------------------------------------------------
+    // A walk down the ladder column: every cell of it is either air or the
+    // ladder itself, from the base storey to the cellar floor, so the interior
+    // route from the door to the cellar exists.
+    for (let y = -depth; y <= 3; y++) {
+      const cell = at.get(`${access.x},${y},${access.z}`);
+      expect(cell?.block === undefined || cell.block === "air" || cell.block === "ladder").toBe(
+        true,
+      );
+    }
+    // …and the cellar is furnished and lit like any other.
+    expect(meta.lanternCount).toBeGreaterThan(1);
+  });
+
+  it("leaves a watchtower without a basement exactly as it was", () => {
+    const plain = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(plain.meta.basementDepth).toBe(0);
+    expect(plain.meta.basementInterior).toBe(null);
+    expect(plain.ops.every((o) => o.y >= -plain.meta.foundationDepth)).toBe(true);
+  });
+
   it("runs a one-storey chimney up the wall, not through the room", () => {
     const { ops, meta } = generateBuilding({
       size: [9, 8, 9],

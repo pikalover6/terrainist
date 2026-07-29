@@ -868,6 +868,8 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       cells,
       style,
       grammar,
+      choice,
+      cellar,
       sx,
       sy,
       sz,
@@ -1859,6 +1861,10 @@ interface TowerRequest {
   readonly cells: Map<string, LocalVoxelOp>;
   readonly style: Readonly<Record<string, string>>;
   readonly grammar: Seed256;
+  /** The fit-out's stream — the cellar's crates and cobwebs are drawn from it. */
+  readonly choice: Seed256;
+  /** Cellar headroom, already clamped; 0 for none. */
+  readonly cellar: number;
   readonly sx: number;
   readonly sy: number;
   readonly sz: number;
@@ -2024,6 +2030,38 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
   put(1, platformY + 2, 1, style["light.lantern"] as string, { hanging: "false" });
   lanternCount++;
 
+  // --- the cellar ----------------------------------------------------------
+  // Last, like the house's: it punches through the base floor plane the tower
+  // laid at `y = 0`, and the way down has to win against everything above.
+  //
+  // The tower's cellar is the shaft's own room, one storey further down, and it
+  // is reached by the ladder that is already there rather than by a second one
+  // in a corner: the rungs and the pilaster they are fixed to simply carry on
+  // through the floor. That is the "laddered vertical shaft" the archetype has
+  // always described — it just used to stop at the ground.
+  const cellarInterior: LocalRect | null =
+    r.cellar > 0 && shaft.x1 >= shaft.x0 && shaft.z1 >= shaft.z0 + 1 ? shaft : null;
+  const cellarAccess = cellarInterior === null ? null : { x: lx, z: lz };
+  if (cellarInterior !== null && cellarAccess !== null) {
+    lanternCount += emitCellar({
+      put,
+      style,
+      grammar,
+      choice: r.choice,
+      rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
+      depth: r.cellar,
+      interior: cellarInterior,
+      access: cellarAccess,
+      // The rungs keep the facing they have above ground, so the ladder is one
+      // continuous run from the cellar floor to the parapet.
+      ladderFacing,
+      // …and the wall they are fixed to keeps going too. The backing column
+      // stands *inside* the cellar room, so it has to be stated: without it the
+      // room's air would leave four courses of ladder attached to nothing.
+      pilaster: { x: lx, z: ladderBackZ },
+    });
+  }
+
   const roofTop = platformY + 2;
   return {
     ops: sortOps([...cells.values()]),
@@ -2040,13 +2078,11 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
       foundationDepth: r.foundationDepth,
       door,
       interior: shaft,
-      floorLevels: [0, platformY],
+      floorLevels: cellarInterior === null ? [0, platformY] : [-(r.cellar + 1), 0, platformY],
       stairRuns: [1],
-      // v0.2 §7 `basement`: not yet for `watchtower` — the shaft archetype's
-      // ladder already owns the one interior column a cellar hatch would need.
-      basementDepth: 0,
-      basementInterior: null,
-      basementAccess: null,
+      basementDepth: cellarInterior === null ? 0 : r.cellar,
+      basementInterior: cellarInterior,
+      basementAccess: cellarAccess,
       windowCount: 0,
       lanternCount,
       apronOps: door === null ? 0 : 1,
@@ -2076,6 +2112,23 @@ interface CellarRequest {
   readonly depth: number;
   readonly interior: LocalRect;
   readonly access: { readonly x: number; readonly z: number };
+  /**
+   * Which way the ladder's rungs face — i.e. which neighbouring cell is the
+   * wall behind them. `west` (the default) is the house's south-east corner
+   * ladder; the watchtower hands in `south`, because its ladder is the one that
+   * already runs up the shaft and it keeps its backing.
+   */
+  readonly ladderFacing?: Cardinal;
+  /**
+   * A column *inside* the room that stays masonry at every course.
+   *
+   * The house's ladder is fixed to the cellar's own perimeter wall and needs
+   * nothing extra. The watchtower's stands one cell off the wall, so the cell
+   * behind it falls inside the room: this is that cell, and it is built as a
+   * pilaster rather than left as air. The fit-out is told about it too, so no
+   * crate is drawn into a column that is about to become stone.
+   */
+  readonly pilaster?: { readonly x: number; readonly z: number } | null;
 }
 
 /**
@@ -2104,6 +2157,9 @@ interface CellarRequest {
  */
 function emitCellar(r: CellarRequest): number {
   const { put, style, grammar, choice, rect, depth, interior, access } = r;
+  const pilaster = r.pilaster ?? null;
+  const isPilaster = (x: number, z: number): boolean =>
+    pilaster !== null && x === pilaster.x && z === pilaster.z;
   const masonry = (x: number, y: number, z: number): string =>
     positionFloat(grammar, x, y, z) < CELLAR_CRACK_SHARE
       ? (style["cellar.wall_cracked"] as string)
@@ -2120,7 +2176,12 @@ function emitCellar(r: CellarRequest): number {
     const y = -d;
     for (let z = rect.z0; z <= rect.z1; z++) {
       for (let x = rect.x0; x <= rect.x1; x++) {
-        const inside = x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
+        const inside =
+          x >= interior.x0 &&
+          x <= interior.x1 &&
+          z >= interior.z0 &&
+          z <= interior.z1 &&
+          !isPilaster(x, z);
         put(x, y, z, inside ? "air" : masonry(x, y, z));
       }
     }
@@ -2130,17 +2191,33 @@ function emitCellar(r: CellarRequest): number {
   // `facing: "west"` fixes the rungs to the cell at `x + 1`: the east wall,
   // which is masonry below the plane and timber above it, and solid at every
   // course in between.
-  for (let y = -depth; y <= 1; y++) put(access.x, y, access.z, "ladder", { facing: "west" });
+  const facing = r.ladderFacing ?? "west";
+  for (let y = -depth; y <= 1; y++) put(access.x, y, access.z, "ladder", { facing });
 
   // --- light ---------------------------------------------------------------
   // One lantern, hung from the ground-floor plane at the room's centre. It is
   // the only light down here, so it is placed rather than drawn: a cellar that
   // came up dark by chance would be a mob farm under someone's kitchen.
   const cx = Math.floor((interior.x0 + interior.x1) / 2);
-  const cz = Math.floor((interior.z0 + interior.z1) / 2);
+  // A narrow room can put the centre on the ladder or on its pilaster, and a
+  // lantern there is a lantern inside the way out. One cell along the z axis is
+  // enough to clear both, and it is the axis the room is never one deep on.
+  let cz = Math.floor((interior.z0 + interior.z1) / 2);
+  const blocked = (z: number): boolean =>
+    (cx === access.x && z === access.z) || isPilaster(cx, z);
+  if (blocked(cz)) cz = cz + 1 <= interior.z1 && !blocked(cz + 1) ? cz + 1 : cz - 1;
   put(cx, -1, cz, style["light.lantern"] as string, { hanging: "true" });
 
-  furnishCellar(put, style, choice, interior, access, { x: cx, z: cz }, -depth);
+  furnishCellar(
+    put,
+    style,
+    choice,
+    interior,
+    access,
+    { x: cx, z: cz },
+    -depth,
+    pilaster === null ? undefined : new Set([`${pilaster.x},${pilaster.z}`]),
+  );
   return 1;
 }
 

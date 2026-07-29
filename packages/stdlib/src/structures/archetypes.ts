@@ -383,6 +383,12 @@ export function furnishCellar(
   access: { readonly x: number; readonly z: number },
   center: { readonly x: number; readonly z: number },
   floorY: number,
+  /**
+   * Interior columns that are not really room — a pilaster the cellar's own
+   * geometry stands inside it. They are neither furnished nor counted as floor
+   * by the walkability guard, because they are solid stone.
+   */
+  blocked?: ReadonlySet<string>,
 ): void {
   const { x: cx, z: cz } = center;
   const reserved = new Set([
@@ -397,12 +403,15 @@ export function furnishCellar(
   // route to it. The draw is unchanged — the guard only ever *refuses*.
   const cells: string[] = [];
   for (let z = interior.z0; z <= interior.z1; z++) {
-    for (let x = interior.x0; x <= interior.x1; x++) cells.push(`${x},${z}`);
+    for (let x = interior.x0; x <= interior.x1; x++) {
+      if (blocked?.has(`${x},${z}`) === true) continue;
+      cells.push(`${x},${z}`);
+    }
   }
   const plan = new FloorPlan(cells, reserved);
   for (let z = interior.z0; z <= interior.z1; z++) {
     for (let x = interior.x0; x <= interior.x1; x++) {
-      if (reserved.has(`${x},${z}`)) continue;
+      if (reserved.has(`${x},${z}`) || blocked?.has(`${x},${z}`) === true) continue;
       const wall =
         x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
       if (wall && positionFloat(choice, x, floorY, z) < 0.22) {

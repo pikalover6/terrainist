@@ -44,6 +44,19 @@ import {
 } from "../src/structures/index.js";
 
 const EXAMPLE = fileURLToPath(new URL("../../../examples/tunnel-test.loam.json", import.meta.url));
+/**
+ * A real authored document, kept as a fixture because of what it caught.
+ *
+ * A model asked for "a laddered vertical shaft beside the watchtower" and a
+ * passage linking it to the crypt under the longhouse. The watchtower declared
+ * `basement: { depth: 4 }` and was one end of a `connected … via "tunnel"`
+ * constraint — and built no cellar at all, because `emitWatchtower` never ran
+ * the cellar machinery. The compile reported one cellar instead of two and
+ * LOAM-E180 instead of a tunnel.
+ */
+const HAMLET = fileURLToPath(
+  new URL("../../../examples/hilltop-crypt-hamlet.loam.json", import.meta.url),
+);
 
 /* -------------------------------------------------------------------------- */
 /* the router, against a plan built by hand                                    */
@@ -547,6 +560,106 @@ describe("the tunnel fixture, compiled", () => {
   });
 
   it("finds nothing wrong under any pre-existing physics rule either", () => {
+    expect(
+      physics.findings
+        .slice(0, 12)
+        .map((f) => `${f.rule} @ ${f.x},${f.y},${f.z} ${f.block}: ${f.detail}`)
+        .join("\n"),
+    ).toBe("");
+    for (const rule of PHYSICS_RULES) {
+      expect(physics.counts[rule], rule).toBe(0);
+    }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the watchtower regression, end to end                                       */
+/* -------------------------------------------------------------------------- */
+
+describe("the hilltop crypt hamlet — a watchtower at the end of a tunnel", () => {
+  let dir: string;
+  let root: string;
+  let report: TerrainCompileReport;
+  let plan: ColumnPlan;
+  let structures: StructurePassResult;
+  let physics: PhysicsReport;
+
+  beforeAll(async () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    root = await mkdtemp(path.join(tmpdir(), "terrainist-hamlet-"));
+    dir = path.join(root, "hilltop_crypt_hamlet");
+    const doc = JSON.parse(await readFile(HAMLET, "utf8")) as unknown;
+    const compiled = await compileTerrain(doc, {
+      outDir: dir,
+      onColumnPlan: (p) => {
+        plan = p;
+      },
+    });
+    if (!compiled.ok) {
+      throw new Error(
+        `hamlet fixture failed to compile: ${compiled.diagnostics.map((d) => `${d.code} ${d.message}`).join("; ")}`,
+      );
+    }
+    report = compiled.report;
+    structures = report.layout?.structures as StructurePassResult;
+    physics = await lintWorldPhysics(dir, stack, {
+      buildings: structures.buildings as never,
+      roads: (structures.roads?.routes ?? []) as never,
+      tunnels: structures.tunnels.map((t) => ({
+        id: t.id,
+        from: t.endpoints[0],
+        to: t.endpoints[1],
+      })),
+      terrainTop: {
+        x0: plan.region.x0,
+        z0: plan.region.z0,
+        width: plan.region.width,
+        depth: plan.region.depth,
+        ground: plan.ground,
+        entrances: (plan.caves as { entranceColumns: Uint8Array }).entranceColumns,
+      },
+    });
+  }, 240_000);
+
+  afterAll(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("read the finished world back", () => {
+    expect(physics.examined).toBeGreaterThan(1_000_000);
+  });
+
+  it("digs both cellars — the watchtower's included", () => {
+    const byPath = new Map(structures.buildings.map((b) => [b.nodePath, b] as const));
+    const tower = byPath.get("world.watchtower");
+    expect(tower?.meta.params.archetype).toBe("watchtower");
+    expect(tower?.basementDepth).toBe(4);
+    expect(byPath.get("world.longhouse")?.basementDepth).toBe(4);
+    expect(structures.stats.cellars).toBe(2);
+  });
+
+  it("joins them with a tunnel, and reports no LOAM-E180", () => {
+    expect(structures.stats.tunnels).toBe(1);
+    const t = structures.tunnels[0] as BuiltTunnel;
+    expect([t.fromPath, t.toPath].sort()).toEqual(["world.longhouse", "world.watchtower"]);
+    expect(t.path.length).toBeGreaterThan(0);
+    expect(structures.stats.tunnelLength).toBe(t.path.length);
+    expect(
+      report.diagnostics
+        .filter((d) => d.code === "LOAM-E180")
+        .map((d) => d.message),
+    ).toEqual([]);
+  });
+
+  it("keeps the tunnel's own invariants", () => {
+    expect(checkTunnelIntegrity(plan, structures.tunnels, structures.buildings)).toEqual({
+      fluidBreaches: 0,
+      roofBreaches: 0,
+      samples: [],
+    });
+  });
+
+  it("is walkable everywhere the lint can reach — the tower's cellar included", () => {
     expect(
       physics.findings
         .slice(0, 12)

@@ -259,17 +259,46 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
     if (from === undefined || to === undefined || from.basementDepth === 0 || to.basementDepth === 0) {
       // Only reachable when the solver dropped one end (`optional: true`), or
       // when a cellar could not be dug. §4 calls both ends existing a hard
-      // precondition, so this is worth saying out loud.
+      // precondition, so this is worth saying out loud — and worth saying
+      // *which* end, and which of the two failures it is. The old text said
+      // "one end has no cellar" and offered a hint about `optional` and
+      // envelopes, neither of which had anything to do with it; a watchtower
+      // that silently built no cellar was diagnosed as a placement problem for
+      // as long as that lasted.
+      const unplaced = [
+        ...(from === undefined ? [link.fromPath] : []),
+        ...(to === undefined ? [link.toPath] : []),
+      ];
+      if (from === undefined || to === undefined) {
+        diagnostics.push(
+          warning(
+            "TUNNEL_UNROUTABLE",
+            link.id,
+            `no tunnel was dug between "${link.fromPath}" and "${link.toPath}": ${quoteList(unplaced)} ${
+              unplaced.length === 1 ? "was" : "were"
+            } not placed`,
+            'both ends must be placed buildings — drop "optional": true from them, or widen the envelope that stopped one being placed',
+          ),
+        );
+        continue;
+      }
+      // Both ends stand; at least one of them has no cellar under it. Every
+      // archetype digs one when asked, so this now means the building's own
+      // geometry refused — a footprint too small for a room and a way down.
+      const cellarless = [
+        ...(from.basementDepth === 0 ? [from] : []),
+        ...(to.basementDepth === 0 ? [to] : []),
+      ];
       diagnostics.push(
         warning(
           "TUNNEL_UNROUTABLE",
           link.id,
-          `no tunnel was dug between "${link.fromPath}" and "${link.toPath}": ${
-            from === undefined || to === undefined
-              ? "one end was not placed"
-              : "one end has no cellar to open into"
-          }`,
-          'both ends must be placed buildings — drop "optional": true from them, or widen the envelope that stopped one being placed',
+          `no tunnel was dug between "${link.fromPath}" and "${link.toPath}": ${quoteList(
+            cellarless.map((b) => b.nodePath),
+          )} ${cellarless.length === 1 ? "was" : "were"} placed, but ${
+            cellarless.length === 1 ? "has" : "have"
+          } no cellar for the gallery to open into${archetypeNote(cellarless)}`,
+          "every archetype digs a cellar when a tunnel asks for one, so what refused here is the building's own size: give it a footprint of at least 5x5, so a room and the ladder into it fit, or route the tunnel to a larger building",
         ),
       );
       continue;
@@ -321,6 +350,18 @@ export function buildTunnels(input: TunnelPassInput): TunnelPassResult {
   }
 
   return { tunnels, blocks, spans: flattenSpans(carved, n), columns, portalColumns, diagnostics };
+}
+
+/** `"a"`, or `"a" and "b"` — for a diagnostic that names one end or both. */
+function quoteList(paths: readonly string[]): string {
+  return paths.map((p) => `"${p}"`).join(" and ");
+}
+
+/** ` (archetype "watchtower")`, when every named building is the same one. */
+function archetypeNote(buildings: readonly BuiltBuilding[]): string {
+  const names = new Set(buildings.map((b) => b.meta.params.archetype));
+  const only = [...names];
+  return only.length === 1 && only[0] !== undefined ? ` (archetype "${only[0]}")` : "";
 }
 
 /* -------------------------------------------------------------------------- */
