@@ -394,7 +394,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // actually lay.
   if (wantLanterns) {
     for (const route of routes) {
-      plantLanterns(region, plan, road, route.path, width, spacing, states, blocks, rng, lanternSide);
+      plantLanterns(region, plan, road, blocked, route.path, width, spacing, states, blocks, rng, lanternSide);
     }
   }
 
@@ -1443,7 +1443,13 @@ function headingAt(
  * a lantern half-buried in the grass. Two courses lift it clear.
  *
  * Support is checked, not assumed: the post stands on the finished ground of a
- * dry, non-road column, and each block of the lamp rests on the one below it.
+ * dry, non-road, **unbuilt** column, and each block of the lamp rests on the
+ * one below it. The unbuilt part is not hypothetical: the Terrarium's village
+ * slice put a lane's lamp one column off the lane and one column *inside the
+ * inn*, where it stood in the middle of the taproom floor as a two-block post
+ * a player could not walk through. `blocked` already carries every building's
+ * footprint — the router has been steering around them all along — so the
+ * planter asks the same mask the routes did.
  *
  * The side alternates per route *and* per post, and which side a route starts
  * on is drawn from the node's `grammar` stream, so two parallel lanes do not
@@ -1453,6 +1459,8 @@ function plantLanterns(
   region: Region,
   plan: ColumnPlan,
   road: Uint8Array,
+  /** Columns the router treated as obstacles — building footprints included. */
+  blocked: Uint8Array,
   path: readonly { x: number; z: number; y: number }[],
   width: number,
   spacing: number,
@@ -1473,6 +1481,7 @@ function plantLanterns(
     if (!inside(region, x, z)) continue;
     const idx = index(region, x, z);
     if (road[idx] === 1) continue;
+    if (blocked[idx] === 1) continue;
     if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
     const key = `${x},${z}`;
     if (sides.has(key)) continue;

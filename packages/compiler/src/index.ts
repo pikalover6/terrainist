@@ -12,7 +12,8 @@ export * from "./emit/index.js";
 export * from "./layout/index.js";
 export * from "./terrain/index.js";
 export * from "./devworld.js";
-export * from "./reviewrig.js";
+export * from "./terrarium.js";
+export * from "./terrarium-stations.js";
 
 /** Result of compiling a Loam document. Placeholder shape. */
 export interface CompileResult {

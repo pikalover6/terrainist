@@ -27,7 +27,7 @@ import { pathToFileURL } from "node:url";
 
 import {
   buildDevWorld,
-  buildReviewRig,
+  buildTerrarium,
   compileTerrain,
   emitWorld,
   formatDiagnostic,
@@ -83,7 +83,7 @@ Usage:
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist devworld [--out <dir>] [--no-zip]
-  terrainist rig-build [--out <dir>] [--no-zip]
+  terrainist terrarium [--out <dir>] [--no-zip]
   terrainist review-import [--log <file>]... [--screenshots <dir>]
                            [--manifest <file>] [--out <session.json>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
@@ -135,13 +135,16 @@ devworld options:
   the size, storey, theme and roof gradients, on a lit, empty grass plain.
   Fixed seed — two builds are diffable by eye.
 
-rig-build options:
-  --out <dir>       Output directory (default: out). Writes <dir>/review_rig/,
-                    <dir>/review_rig.manifest.json and the archive alongside.
+terrarium options:
+  --out <dir>       Output directory (default: out). Writes <dir>/terrarium/,
+                    <dir>/terrarium.manifest.json and the archive alongside.
   --no-zip          Skip creating the .zip.
-  The human-review rig: one void-floating station per exhibit cell, each with
-  one structure, an arrival pressure plate that announces the station in chat,
-  NEXT/PREV teleport buttons and PASS/FAIL verdict buttons. Fixed seed.
+  The human-review world: one void-floating station per exhibit, each with an
+  arrival pressure plate that announces the station in chat, NEXT/PREV teleport
+  buttons and PASS/FAIL verdict buttons. Single-structure stations come first;
+  after them a band of multi-structure stations, each a whole mini-settlement
+  put through the real compiler — a lane arriving at a door, two cellars joined
+  by a tunnel, a plaza with four buildings, a pier over water. Fixed seed.
 
 review-import options:
   --log <file>      A Minecraft client log to read; repeatable, and read in
@@ -149,7 +152,9 @@ review-import options:
   --screenshots <dir>
                     Screenshot directory; each PNG is filed under the station
                     whose visit window contains its timestamp.
-  --manifest <file> The rig manifest, to attach each station's provenance.
+  --manifest <file> The Terrarium manifest, to attach each station's
+                    provenance. Both terrainist-terrarium/2 and the older
+                    terrainist-review-rig/1 are read.
   --out <file>      Session JSON to write (default: review-session.json). A
                     markdown summary is written alongside it as <file>.md.
 
@@ -209,8 +214,8 @@ export async function runDevWorld(args: readonly string[]): Promise<number> {
   return result.fluids.unstable === 0 ? 0 : 1;
 }
 
-/** `terrainist rig-build [--out <dir>]` — the human-review rig. */
-export async function runRigBuild(args: readonly string[]): Promise<number> {
+/** `terrainist terrarium [--out <dir>]` — the human-review world. */
+export async function runTerrarium(args: readonly string[]): Promise<number> {
   let outDir = "out";
   let zip = true;
   for (let i = 0; i < args.length; i++) {
@@ -227,18 +232,20 @@ export async function runRigBuild(args: readonly string[]): Promise<number> {
     }
   }
 
-  const result = await buildReviewRig(path.resolve(outDir));
+  const result = await buildTerrarium(path.resolve(outDir));
   const zipPath = zip ? await zipWorld(result.worldDir) : undefined;
 
   const kinds = new Map<string, number>();
   for (const s of result.plan.stations) kinds.set(s.kind, (kinds.get(s.kind) ?? 0) + 1);
   const { region } = result.plan;
   const lines = [
-    `built "review_rig" — ${result.minecraftVersion} (DataVersion ${result.dataVersion})`,
+    `built "terrarium" — ${result.minecraftVersion} (DataVersion ${result.dataVersion})`,
     `  world      ${result.worldDir}`,
     `  manifest   ${result.manifestPath}`,
     `  stations   ${result.stationCount} + spawn ` +
       `(${[...kinds].map(([k, n]) => `${k}=${n}`).join(", ")})`,
+    `  multi      ${result.multiStationCount} mini-settlements ` +
+      `(${result.tunnels.length} tunnels, ${result.roads.length} lanes)`,
     `  extent     ${region.width}x${region.depth} at (${region.x0}, ${region.z0}), platforms at y ${result.manifest.groundY}`,
     `  chunks     ${result.chunkCount}`,
     `  blocks     ${result.blockCount}`,
@@ -778,8 +785,12 @@ export async function main(argv: readonly string[]): Promise<number> {
       return await runCompile(rest);
     case "devworld":
       return await runDevWorld(rest);
+    // `rig-build` is the v1 name, kept as a hidden alias: it is in shell
+    // history, in notes and in at least one script, and a command that used to
+    // work should not start printing "unknown command".
+    case "terrarium":
     case "rig-build":
-      return await runRigBuild(rest);
+      return await runTerrarium(rest);
     case "review-import":
       return await runReviewImport(rest);
     case "emit":

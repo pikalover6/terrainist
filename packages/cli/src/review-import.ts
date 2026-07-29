@@ -255,6 +255,17 @@ export interface ReviewStation {
   readonly visits: readonly ReviewVisit[];
   /** The manifest's provenance for this station, when a manifest was supplied. */
   readonly provenance?: unknown;
+  /**
+   * v2: the node paths inside a multi-structure station, in manifest order.
+   *
+   * Carried through so a note filed against the station can be read next to the
+   * list of things that were standing in front of the reviewer when they wrote
+   * it. Attribution is still **per station**: a chat line says nothing about
+   * which of five buildings it meant, and guessing would file half the notes
+   * against the wrong node. Per-structure attribution — a "look at" marker, or
+   * a plate under each building — is v3.
+   */
+  readonly structures?: readonly string[];
   /** True when the station has no counterpart in the manifest. */
   readonly unknown: boolean;
 }
@@ -266,6 +277,8 @@ export interface ReviewSession {
     readonly logs: readonly string[];
     readonly screenshots: string | null;
     readonly manifest: string | null;
+    /** The manifest's own format string, so a stale join is visible. */
+    readonly manifestFormat: string | null;
   };
   readonly totals: {
     readonly stationsVisited: number;
@@ -286,11 +299,38 @@ export interface ReviewSession {
   };
 }
 
-/** The manifest fields the harvester reads — everything else is ignored. */
+/**
+ * The manifest fields the harvester reads — everything else is ignored.
+ *
+ * Both formats are accepted: `terrainist-review-rig/1` and
+ * `terrainist-terrarium/2`. They differ only by addition — v2 stations may
+ * carry a `structures[]` list and the mini-document that generated them — and
+ * the harvester's join is on `id`, which neither version changed. A v1 manifest
+ * and a v2 world are therefore still joinable, which matters because a session
+ * is often reviewed against the manifest that shipped with the world the
+ * reviewer installed rather than the one on disk today.
+ */
 export interface ReviewManifest {
-  readonly stations?: readonly { readonly id: string; readonly provenance?: unknown }[];
-  readonly spawn?: { readonly id: string; readonly provenance?: unknown };
+  readonly format?: string;
+  readonly stations?: readonly ReviewManifestStation[];
+  readonly spawn?: ReviewManifestStation;
 }
+
+/** One station, as the harvester reads it. */
+export interface ReviewManifestStation {
+  readonly id: string;
+  readonly provenance?: unknown;
+  /** v2, multi-structure stations only: what the mini-settlement contains. */
+  readonly structures?: readonly { readonly nodePath: string; readonly id?: string }[];
+  /** v2, multi-structure stations only: the generating document, inline. */
+  readonly document?: unknown;
+}
+
+/** Manifest format strings this harvester understands. */
+export const REVIEW_MANIFEST_FORMATS: readonly string[] = Object.freeze([
+  "terrainist-review-rig/1",
+  "terrainist-terrarium/2",
+]);
 
 /** Input to {@link buildSession}. */
 export interface SessionInput {
@@ -326,14 +366,14 @@ export function buildSession(input: SessionInput): ReviewSession {
   const events = [...input.events].sort((a, b) => a.t - b.t);
   const manifestIds = new Set<string>();
   const provenanceOf = new Map<string, unknown>();
-  for (const s of input.manifest?.stations ?? []) {
+  const structuresOf = new Map<string, readonly string[]>();
+  const spawn = input.manifest?.spawn;
+  for (const s of [...(input.manifest?.stations ?? []), ...(spawn === undefined ? [] : [spawn])]) {
     manifestIds.add(s.id);
     if (s.provenance !== undefined) provenanceOf.set(s.id, s.provenance);
-  }
-  const spawn = input.manifest?.spawn;
-  if (spawn !== undefined) {
-    manifestIds.add(spawn.id);
-    if (spawn.provenance !== undefined) provenanceOf.set(spawn.id, spawn.provenance);
+    if (s.structures !== undefined) {
+      structuresOf.set(s.id, s.structures.map((x) => x.nodePath));
+    }
   }
 
   const stations = new Map<string, Accumulator>();
@@ -422,6 +462,7 @@ export function buildSession(input: SessionInput): ReviewSession {
     comments += acc.comments.length;
     screenshots += acc.screenshots.length;
     const provenance = provenanceOf.get(acc.id);
+    const structures = structuresOf.get(acc.id);
     out[acc.id] = {
       id: acc.id,
       verdict,
@@ -430,6 +471,7 @@ export function buildSession(input: SessionInput): ReviewSession {
       screenshots: acc.screenshots.sort((a, b) => a.t - b.t),
       visits: acc.visits,
       ...(provenance === undefined ? {} : { provenance }),
+      ...(structures === undefined ? {} : { structures }),
       unknown: manifestIds.size > 0 && !manifestIds.has(acc.id),
     };
   }
@@ -440,6 +482,7 @@ export function buildSession(input: SessionInput): ReviewSession {
       logs: input.logs ?? [],
       screenshots: input.screenshotDir ?? null,
       manifest: input.manifestPath ?? null,
+      manifestFormat: input.manifest?.format ?? null,
     },
     totals: {
       stationsVisited: stations.size,
@@ -504,6 +547,11 @@ export function renderSessionMarkdown(session: ReviewSession): string {
     lines.push(`### ${station.id}${station.unknown ? " _(not in manifest)_" : ""}`);
     const prov = provenanceLine(station);
     if (prov !== "") lines.push(`\`${prov}\``);
+    // A multi-structure station's note is about *something* in a settlement,
+    // and this is the list of candidates. Not an attribution — a shortlist.
+    if (station.structures !== undefined && station.structures.length > 0) {
+      lines.push(`structures: ${station.structures.join(", ")}`);
+    }
     for (const c of station.comments) lines.push(`- ${c.clock} <${c.author}> ${c.text}`);
     if (station.comments.length === 0) lines.push("- _no comment recorded_");
     for (const s of station.screenshots) lines.push(`- shot: \`${s.file}\``);

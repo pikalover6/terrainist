@@ -27,6 +27,7 @@ import {
   readScreenshots,
   renderSessionMarkdown,
   screenshotTime,
+  REVIEW_MANIFEST_FORMATS,
   type ReviewEvent,
   type ReviewManifest,
 } from "../src/review-import.js";
@@ -327,5 +328,105 @@ describe("reading files", () => {
     // to nobody rather than to whatever came next.
     expect(session.unassigned.screenshots.map((s) => s.file)).toEqual(["2026-07-29_18.19.00.png"]);
     expect(session.totals.screenshots).toBe(5);
+  });
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* v2 manifests                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A Terrarium v2 session: the reviewer walks a single-structure station and
+ * then a multi-structure one.
+ *
+ * The property under test is the one the format bump was for. A note left in
+ * front of a compiled hamlet has to arrive attached to the *list of things that
+ * were standing in front of the reviewer* — the mini-document's node paths —
+ * because "the inn's roof is wrong" is unusable if nobody can say which node
+ * built the inn. Attribution itself stays per station: nothing in a chat line
+ * says which of five buildings it meant, and a harvester that guessed would
+ * file half the notes against the wrong node. That is v3's problem.
+ */
+const V2_MANIFEST: ReviewManifest = {
+  format: "terrainist-terrarium/2",
+  spawn: { id: "_start", provenance: { row: "_start", family: "instructions" } },
+  stations: [
+    {
+      id: "cottage__cottage_0",
+      provenance: { row: "cottage", family: "cottage", size: [7, 8, 7] },
+    },
+    {
+      id: "multi__village_slice",
+      provenance: { row: "village_slice", family: "terrarium_village_slice", size: [88, 1, 88] },
+      structures: [
+        { nodePath: "world.hall", id: "hall" },
+        { nodePath: "world.inn", id: "inn" },
+        { nodePath: "world.smithy", id: "smithy" },
+        { nodePath: "world.plaza", id: "plaza" },
+      ],
+      document: { profile: "settlement", meta: { name: "terrarium_village_slice", worldSeed: 811004 } },
+    },
+  ],
+};
+
+const V2_LOG = [
+  chat("19:00:00", "[@] >> STATION cottage__cottage_0"),
+  chat("19:00:05", "[PASS] VERDICT cottage__cottage_0 pass"),
+  chat("19:00:20", "[@] >> STATION multi__village_slice"),
+  chat("19:00:31", "<kai> the inn's roof is wrong and the lane misses the smithy door"),
+  chat("19:00:40", "Saved screenshot as 2026-07-29_19.00.40.png"),
+  chat("19:00:55", "[FAIL] VERDICT multi__village_slice fail"),
+  "",
+].join("\n");
+
+describe("a v2 session", () => {
+  const session = buildSession({
+    events: parseClientLog(V2_LOG, "latest.log", DAY),
+    manifest: V2_MANIFEST,
+    logs: ["latest.log"],
+    manifestPath: "/tmp/terrarium.manifest.json",
+  });
+
+  it("reads both manifest formats", () => {
+    expect(REVIEW_MANIFEST_FORMATS).toContain("terrainist-terrarium/2");
+    expect(REVIEW_MANIFEST_FORMATS).toContain("terrainist-review-rig/1");
+    expect(session.source.manifestFormat).toBe("terrainist-terrarium/2");
+    // A v1 manifest still joins: the two formats differ only by addition, and
+    // the join has always been on the station id.
+    const v1 = buildSession({ events: parseClientLog(LOG, "l", DAY), manifest: MANIFEST });
+    expect(v1.source.manifestFormat).toBeNull();
+    expect(v1.stations["cottage__cottage_0"]?.unknown).toBe(false);
+    expect(v1.stations["cottage__cottage_0"]?.structures).toBeUndefined();
+  });
+
+  it("aggregates a multi-station exactly as it does a single one", () => {
+    const station = session.stations["multi__village_slice"];
+    expect(station?.verdict).toBe("fail");
+    expect(station?.unknown).toBe(false);
+    expect(station?.visits).toHaveLength(1);
+    expect(station?.comments).toHaveLength(1);
+    expect(station?.screenshots.map((x) => x.file)).toEqual(["2026-07-29_19.00.40.png"]);
+    expect(session.totals).toMatchObject({ stationsVisited: 2, pass: 1, fail: 1, comments: 1 });
+  });
+
+  it("carries the mini-document's node paths through to the session", () => {
+    expect(session.stations["multi__village_slice"]?.structures).toEqual([
+      "world.hall",
+      "world.inn",
+      "world.smithy",
+      "world.plaza",
+    ]);
+    // A single-structure station has none, and gains no empty list.
+    expect(session.stations["cottage__cottage_0"]?.structures).toBeUndefined();
+  });
+
+  it("lists a failed multi-station's structures in the summary, under its note", () => {
+    const md = renderSessionMarkdown(session);
+    expect(md).toContain("### multi__village_slice");
+    expect(md).toContain("structures: world.hall, world.inn, world.smithy, world.plaza");
+    expect(md).toContain("the inn's roof is wrong");
+    // The shortlist sits with the note, not somewhere else in the document.
+    expect(md.indexOf("structures: world.hall")).toBeLessThan(md.indexOf("the inn's roof is wrong"));
   });
 });

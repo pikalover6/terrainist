@@ -65,7 +65,7 @@ import { loadPrismarine } from "../emit/prismarine.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
-import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes } from "./clip.js";
+import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes, type StructureClip } from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
 import {
   buildCavePlan,
@@ -75,7 +75,7 @@ import {
   type CaveNodeInput,
 } from "./caves.js";
 import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js";
-import { decorate } from "./decorate.js";
+import { decorate, type DecorBlock } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
 import {
@@ -148,6 +148,46 @@ export interface CompileTerrainOptions {
    * typed arrays and the report is JSON the CLI writes to a file.
    */
   readonly onColumnPlan?: (plan: ColumnPlan) => void;
+  /**
+   * Stop before the world is written, and hand the finished pipeline output to
+   * the caller instead.
+   *
+   * The compiler's product is a world folder, and for every shipped artefact
+   * that is the right product. The Terrarium's multi-structure stations are the
+   * exception: what they want is a *small compiled settlement transplanted onto
+   * a floating platform*, which means the plan and the block lists in memory
+   * and never a `region/` directory of their own. Without this seam the only
+   * ways to get them are to duplicate the pipeline (which would exhibit the
+   * duplicate, not the pipeline) or to write a world and read it back (which
+   * throws away the column plan, the building list and the tunnel endpoints
+   * that the physics lint needs).
+   *
+   * `report.emit` is a zeroed summary when this is set: nothing was written, and
+   * a summary claiming otherwise would be a lie the caller might believe.
+   */
+  readonly skipEmit?: boolean;
+  /** Receives the pipeline's output just before emit. See {@link CompileTerrainOptions.skipEmit}. */
+  readonly onArtifacts?: (artifacts: CompileArtifacts) => void;
+}
+
+/**
+ * Everything a world would have been written from — the pipeline's output, one
+ * step before it becomes chunks.
+ *
+ * The block lists are in **world coordinates** for the document's own region,
+ * which `centeredRegion` puts around the origin; a caller transplanting them
+ * elsewhere translates both these and {@link ColumnPlan.region}.
+ */
+export interface CompileArtifacts {
+  readonly plan: ColumnPlan;
+  readonly trees: readonly TreePlacement[];
+  /** Ground cover and water plants. */
+  readonly decor: readonly DecorBlock[];
+  /** Buildings, roads, plaza, tunnels and props; absent for a terrain profile. */
+  readonly structures?: readonly DecorBlock[];
+  readonly clip?: StructureClip;
+  readonly spawn: { readonly x: number; readonly y: number; readonly z: number };
+  readonly stack: ReturnType<typeof loadPrismarine>;
 }
 
 /** Wall-clock milliseconds per pass. */
@@ -572,7 +612,7 @@ async function compileValidated(
   const markers = [...classification.markers, ...terrain.edits.markers, ...(plan.caves?.markers ?? [])];
   const spawnResult = resolveSpawn(doc, plan, markers, diagnostics, rootPath);
   const t6 = now();
-  const emit = await emitTerrain({
+  const emitInput = {
     plan,
     trees,
     decor: [...caveDecor.blocks, ...decoration.blocks],
@@ -582,7 +622,18 @@ async function compileValidated(
     worldDir: options.outDir,
     levelName: doc.meta.name,
     spawn: spawnResult,
+  };
+  options.onArtifacts?.({
+    plan,
+    trees,
+    decor: emitInput.decor,
+    ...(structures === undefined ? {} : { structures: structures.blocks }),
+    ...(clip === undefined ? {} : { clip }),
+    spawn: spawnResult,
+    stack,
   });
+  const emit =
+    options.skipEmit === true ? unwrittenEmit(stack, spawnResult) : await emitTerrain(emitInput);
   const emitMs = now() - t6;
 
   let land = 0;
@@ -657,6 +708,35 @@ async function compileValidated(
 }
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The emit summary of a compile that emitted nothing.
+ *
+ * Every count is zero and every path is empty, deliberately: a `skipEmit`
+ * compile wrote no chunk, and the one thing this value must never do is let a
+ * caller mistake it for a world on disk.
+ */
+function unwrittenEmit(
+  stack: ReturnType<typeof loadPrismarine>,
+  spawn: { x: number; y: number; z: number },
+): TerrainEmitSummary {
+  return {
+    worldDir: "",
+    levelDatPath: "",
+    regionDir: "",
+    regionFiles: [],
+    chunkCount: 0,
+    blockCount: 0,
+    treeBlockCount: 0,
+    decorBlockCount: 0,
+    structureBlockCount: 0,
+    blockEntityCount: 0,
+    minecraftVersion: stack.minecraftVersion,
+    dataVersion: stack.dataVersion,
+    spawn: [spawn.x, spawn.y, spawn.z],
+    connections: { examined: 0, rewritten: 0 },
+  };
+}
 
 /** Assign every column its biome id, and count the result. */
 function paintBiomes(
