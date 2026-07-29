@@ -34,6 +34,7 @@ import {
   type Seed256,
 } from "@terrainist/stdlib";
 
+import type { CavePlan } from "./caves.js";
 import { detailSeed, hash2, hash3i, hashInt } from "./detail.js";
 import type { Palette } from "./palette.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
@@ -81,6 +82,24 @@ export interface ColumnPlan {
   readonly lavaFlow: Uint8Array;
   /** 1 where a closed-basin pool submerges the column (fresh water). */
   readonly lakeMask: Uint8Array;
+  /**
+   * 1 where the sea reaches the column.
+   *
+   * Carried on the plan, not just on the classification, because the cave
+   * pass's ocean keep-out is re-derived after the fact by a validator that has
+   * the plan and nothing else.
+   */
+  readonly oceanMask: Uint8Array;
+  /**
+   * Interior air spans cut out of the stone body by `cave.carver@0`, or absent
+   * when the document declares no cave node.
+   *
+   * This is the one field of the plan that is *filled in after construction*.
+   * Caves are post-field and post-classification by design — they may not move
+   * a surface, a biome or a fluid — so the pass that produces them needs a
+   * finished plan to read, and the only thing it hands back is this.
+   */
+  caves?: CavePlan;
   /** Sea level, carried for the emitter and validators. */
   readonly seaLevel: number;
   /** Detail-stream seed for the emitter's deepslate blend band. */
@@ -93,6 +112,8 @@ export interface ColumnPlan {
     readonly water: number;
     readonly lava: number;
     readonly snowLayer: number;
+    /** `minecraft:cave_air` — what a carved cave interval is filled with. */
+    readonly caveAir: number;
   };
 }
 
@@ -165,6 +186,7 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
     water: palette.state("liquid.water"),
     lava: palette.state("liquid.lava"),
     snowLayer: palette.state("foliage.snow_layer"),
+    caveAir: palette.state("cave.air"),
   };
 
   for (let j = 0; j < region.depth; j++) {
@@ -244,6 +266,7 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
     volcanicUpper,
     lavaFlow,
     lakeMask: classification.lakeMask,
+    oceanMask,
     seaLevel,
     stoneSeed: seeds.stone,
     states,

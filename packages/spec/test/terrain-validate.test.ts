@@ -88,7 +88,9 @@ describe("validateTerrainDocument", () => {
   it("LOAM-T001 rejects a generator outside the profile", () => {
     const doc = baseDocument();
     const root = doc["root"] as { children: Record<string, unknown>[] };
-    root.children.push({ id: "caves", kind: "generator", generator: "cave.carver@0", params: {} });
+    // `cave.carver@0` used to stand here; G5a admitted it to the profile, so the
+    // case moved to a generator the profile still has no implementation for.
+    root.children.push({ id: "town", kind: "generator", generator: "settlement.layout@0", params: {} });
     const d = expectDiagnostic(doc, "GENERATOR_NOT_IN_PROFILE");
     expect(d.code).toBe(TERRAIN_DIAGNOSTICS.GENERATOR_NOT_IN_PROFILE);
     expect(d.fix).toContain("terrain.heightfield@0");
@@ -466,5 +468,81 @@ describe("G2.5b materials and lushness params", () => {
     expectDiagnostic(withForest({ undergrowth: 0.4 }), "BAD_TYPE");
     const unknown = expectDiagnostic(withForest({ undergrowth: { moss: 0.2 } }), "UNKNOWN_KEY");
     expect(unknown.fix).toBeTruthy();
+  });
+
+  /** The base document with a `cave.carver@0` node carrying `params`. */
+  function withCaves(params: unknown): Record<string, unknown> {
+    const doc = baseDocument();
+    const root = doc["root"] as { children: Record<string, unknown>[] };
+    root.children.push({ id: "caves", kind: "generator", generator: "cave.carver@0", params });
+    return doc;
+  }
+
+  it("accepts a cave.carver@0 node, with defaults or a full param set", () => {
+    const bare = validateTerrainDocument(withCaves({}));
+    expect(codesOf(bare.diagnostics)).toEqual([]);
+    expect(bare.document).toBeDefined();
+
+    const full = validateTerrainDocument(
+      withCaves({
+        density: 0.4,
+        frequency: 0.01,
+        radius: [2, 6],
+        yRange: [-20, 40],
+        verticality: 0.5,
+        chambers: { count: 4, radius: 10, chance: 0.5 },
+        entrances: 2,
+        decorate: true,
+      }),
+    );
+    expect(codesOf(full.diagnostics)).toEqual([]);
+  });
+
+  it("accepts more than one cave node — caves have no cardinality rule", () => {
+    const doc = withCaves({ density: 0.2 });
+    const root = doc["root"] as { children: Record<string, unknown>[] };
+    root.children.push({ id: "deep_caves", kind: "generator", generator: "cave.carver@0", params: {} });
+    expect(codesOf(validateTerrainDocument(doc).diagnostics)).toEqual([]);
+  });
+
+  it("range-checks the cave scalars and the [min, max] pairs", () => {
+    expectDiagnostic(withCaves({ density: 1.5 }), "PARAM_OUT_OF_RANGE");
+    expectDiagnostic(withCaves({ verticality: -1 }), "PARAM_OUT_OF_RANGE");
+    const swapped = expectDiagnostic(withCaves({ radius: [6, 2] }), "PARAM_OUT_OF_RANGE");
+    expect(swapped.fix).toContain("[min, max]");
+    expectDiagnostic(withCaves({ yRange: [-200, 40] }), "PARAM_OUT_OF_RANGE");
+    const shape = expectDiagnostic(withCaves({ radius: 4 }), "BAD_TYPE");
+    expect(shape.fix).toContain("radius");
+    expectDiagnostic(withCaves({ chambers: { chance: 2 } }), "PARAM_OUT_OF_RANGE");
+    expectDiagnostic(withCaves({ chambers: 3 }), "BAD_TYPE");
+    expectDiagnostic(withCaves({ decorate: "yes" }), "BAD_TYPE");
+  });
+
+  it("accepts entrances as a count or a boolean, and rejects anything else", () => {
+    expect(codesOf(validateTerrainDocument(withCaves({ entrances: true })).diagnostics)).toEqual([]);
+    expect(codesOf(validateTerrainDocument(withCaves({ entrances: 0 })).diagnostics)).toEqual([]);
+    const bad = expectDiagnostic(withCaves({ entrances: 40 }), "PARAM_OUT_OF_RANGE");
+    expect(bad.fix).toContain("cave_mouth");
+    expectDiagnostic(withCaves({ entrances: "two" }), "PARAM_OUT_OF_RANGE");
+  });
+
+  it("names the v0.2 cave params it does not implement, with the knob that replaces them", () => {
+    const opening = expectDiagnostic(withCaves({ surfaceOpenings: 2 }), "PARAM_NOT_IMPLEMENTED");
+    expect(opening.fix).toContain('"entrances"');
+    const water = expectDiagnostic(withCaves({ waterTable: 20 }), "PARAM_NOT_IMPLEMENTED");
+    expect(water.fix).toContain("basin");
+    expectDiagnostic(withCaves({ lavaLevel: -48 }), "PARAM_NOT_IMPLEMENTED");
+    expectDiagnostic(withCaves({ style: "spaghetti" }), "PARAM_NOT_IMPLEMENTED");
+    expectDiagnostic(withCaves({ protectTags: ["building"] }), "PARAM_NOT_IMPLEMENTED");
+    const spacing = expectDiagnostic(
+      withCaves({ chambers: { count: 2, spacing: 40 } }),
+      "PARAM_NOT_IMPLEMENTED",
+    );
+    expect(spacing.fix).toContain("chance");
+  });
+
+  it("rejects an unknown cave param outright", () => {
+    const unknown = expectDiagnostic(withCaves({ wiggle: 3 }), "UNKNOWN_KEY");
+    expect(unknown.fix).toContain("verticality");
   });
 });

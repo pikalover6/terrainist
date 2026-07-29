@@ -273,6 +273,7 @@ export function devColumnPlan(region: Region, stack: PrismarineStack): ColumnPla
     volcanicUpper: new Uint8Array(n),
     lavaFlow: new Uint8Array(n),
     lakeMask: new Uint8Array(n),
+    oceanMask: new Uint8Array(n),
     seaLevel: DEV_GROUND_Y - 8,
     stoneSeed: 0,
     states: {
@@ -282,6 +283,7 @@ export function devColumnPlan(region: Region, stack: PrismarineStack): ColumnPla
       water: state("water"),
       lava: state("lava"),
       snowLayer: state("snow"),
+      caveAir: state("cave_air"),
     },
   };
 }

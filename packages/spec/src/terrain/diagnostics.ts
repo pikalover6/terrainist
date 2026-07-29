@@ -65,6 +65,23 @@ export const TERRAIN_DIAGNOSTICS = {
    * coast actually fell.
    */
   CARVE_DRY: "LOAM-T113",
+  /**
+   * G5a — a param this profile does not implement, named rather than silently
+   * dropped. Used by `cave.carver@0` for the half of the v0.2 §7 table it
+   * leaves out.
+   */
+  PARAM_NOT_IMPLEMENTED: "LOAM-T114",
+  /**
+   * G5a — a carved cave interval comes within four blocks of a fluid column,
+   * or below sea level near the ocean. Structurally impossible; the check is a
+   * second opinion on the carve band, and a compiler bug if it ever fires.
+   */
+  CAVE_FLUID_BREACH: "LOAM-T115",
+  /**
+   * G5a — a cave removed a column's top solid block somewhere that is not a
+   * declared entrance mouth. Interior caves must leave the heightmap alone.
+   */
+  CAVE_SURFACE_BREACH: "LOAM-T116",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec

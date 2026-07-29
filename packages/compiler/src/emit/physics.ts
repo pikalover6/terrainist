@@ -81,6 +81,23 @@ export interface PhysicsContext {
   readonly roads?: readonly {
     readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
   }[];
+  /**
+   * The terrain's expected top solid block per column, so the cave rules can
+   * check that carving left the heightmap alone.
+   *
+   * `entrances` marks the columns a declared cave mouth is allowed to open;
+   * every other column's top must match `ground` exactly. Without this the
+   * cave rules are skipped — a caller who has no column plan (a readback of a
+   * world from disk, say) can still run every other rule.
+   */
+  readonly terrainTop?: {
+    readonly x0: number;
+    readonly z0: number;
+    readonly width: number;
+    readonly depth: number;
+    readonly ground: Int32Array;
+    readonly entrances: Uint8Array;
+  };
   /** Y range to read back. Defaults to a generous band around the surface. */
   readonly minY?: number;
   readonly maxY?: number;
@@ -104,6 +121,9 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "traversal.unreachable",
   "connection.stale",
   "road.proud",
+  "dripstone.unattached",
+  "cave.fluid_shell",
+  "cave.surface_breach",
 ]);
 
 const AIR = new Set(["air", "cave_air", "void_air"]);
@@ -228,6 +248,18 @@ export async function lintWorldPhysics(
           const decoded = stack.blockStateProps(id);
           if (decoded === undefined) continue;
           const { name, props } = decoded;
+          if (name === "cave_air" && context.terrainTop !== undefined) {
+            // The four-block water shell, re-derived from the world on disk.
+            //
+            // Sampled rather than exhaustive: the exact rule is horizontal, so
+            // the scan is a 9x9 column window taken at three heights, which is
+            // 243 lookups per carved block instead of 729. The column plan's
+            // `checkCaveIntegrity` is the exhaustive check; this one exists to
+            // catch an emitter that wrote spans the plan never held.
+            if (fluidNear(x, y, z)) {
+              add("cave.fluid_shell", x, y, z, "carved air within four blocks of water or lava");
+            }
+          }
           if (AIR.has(name)) continue;
           examined++;
 
@@ -277,6 +309,32 @@ export async function lintWorldPhysics(
               other.props["part"] === (part === "foot" ? "head" : "foot");
             if (!ok) {
               add("bed.pairing", x, y, z, `${part} has no matching half at ${x + dx * sign},${y},${z + dz * sign}`);
+            }
+          }
+
+          // --- dripstone attachment ---------------------------------------
+          // A pointed dripstone is fixed to the rock it grows out of, and a
+          // multi-block spike is fixed to the block of dripstone before it.
+          // Vanilla breaks one that loses its anchor, so a floating spike is
+          // not a cosmetic defect: it is a block that vanishes on first tick.
+          if (name === "pointed_dripstone") {
+            const up = props["vertical_direction"] === "up";
+            const ax = x;
+            const ay = up ? y - 1 : y + 1;
+            const az = z;
+            const anchor = stack.blockStateProps(stateAt(ax, ay, az));
+            const chained =
+              anchor !== undefined &&
+              anchor.name === "pointed_dripstone" &&
+              anchor.props["vertical_direction"] === props["vertical_direction"];
+            if (!chained && !solidAt(ax, ay, az)) {
+              add(
+                "dripstone.unattached",
+                x,
+                y,
+                z,
+                `${up ? "stalagmite" : "stalactite"} has nothing to grow from at ${ax},${ay},${az}`,
+              );
             }
           }
 
@@ -491,6 +549,45 @@ export async function lintWorldPhysics(
         add("road.proud", cell.x, surfaceY, cell.z, `road stands ${worst} above the ground all round (worst at ${where})`);
       }
     }
+  }
+
+  // --- the terrain's top surface ------------------------------------------
+  // An interior cave may not change what a column looks like from above. Only
+  // the columns of a declared entrance mouth are exempt, and they are exempt
+  // *by name*: a mouth that drifted one column sideways is still a hole in the
+  // heightmap nobody asked for.
+  const top = context.terrainTop;
+  if (top !== undefined) {
+    for (let j = 0; j < top.depth; j++) {
+      const z = top.z0 + j;
+      for (let i = 0; i < top.width; i++) {
+        const idx = j * top.width + i;
+        if (top.entrances[idx] === 1) continue;
+        const x = top.x0 + i;
+        const expected = top.ground[idx] as number;
+        if (expected < minY || expected > maxY) continue;
+        // The property is precisely "the cave did not eat this column's surface
+        // block", so it is asked that way rather than through `topOf`: whether
+        // mud, a slab or a dirt path counts as "the ground" is a question about
+        // materials, and answering it here would make the rule fail on worlds
+        // with no caves in them at all.
+        if (!airAt(x, expected, z)) continue;
+        add("cave.surface_breach", x, expected, z, `the surface block at y ${expected} is air`);
+      }
+    }
+  }
+
+  /** True when any block within the cave shell of this cell is a fluid. */
+  function fluidNear(x: number, y: number, z: number): boolean {
+    for (const dy of [-2, 0, 2] as const) {
+      for (let dz = -4; dz <= 4; dz++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const name = nameAt(x + dx, y + dy, z + dz);
+          if (name === "water" || name === "lava") return true;
+        }
+      }
+    }
+    return false;
   }
 
   /** True when a 1x1x1 cell is one a player's body may occupy. */

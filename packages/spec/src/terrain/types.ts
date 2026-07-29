@@ -12,6 +12,7 @@ export const PROFILE_GENERATORS = [
   "terrain.edit@0",
   "terrain.climate@0",
   "scatter.forest@0",
+  "cave.carver@0",
 ] as const;
 
 /** A generator id allowed by the profile. */
@@ -246,8 +247,64 @@ export interface ForestNode extends NodeBase {
   readonly params: ForestParams;
 }
 
+/**
+ * Ellipsoid chambers along a cave system's worms.
+ *
+ * `spacing` from the v0.2 §7 table is not implemented: chambers are opened at a
+ * fixed step interval along each worm, gated by `chance`, so the knob that
+ * actually varies the result is how *often* one is taken rather than how far
+ * apart two are guaranteed to be.
+ */
+export interface CaveChamberParams {
+  /** Upper bound on chambers opened across the whole node. */
+  readonly count?: number;
+  /** Horizontal radius, in blocks; the vertical axis is about two-thirds of it. */
+  readonly radius?: number;
+  /** 0..1 — probability a chamber opportunity is taken. */
+  readonly chance?: number;
+}
+
+/**
+ * Params of `cave.carver@0` in this profile — an honest subset of the v0.2 §7
+ * table.
+ *
+ * Implemented: `density`, `radius`, `yRange`, `verticality`, `chambers`,
+ * `decorate`, plus `frequency` (the wander field's spatial frequency, which §7
+ * leaves implicit) and `entrances` (v0.2's `surfaceOpenings`, accepting a
+ * boolean as well as a count).
+ *
+ * Not implemented, and rejected rather than silently ignored: `style`,
+ * `lavaLevel`, `waterTable` (a cave that carries fluid cannot satisfy the
+ * profile's zero-unstable-fluids invariant without a fill solver of its own)
+ * and `protectTags` (the terrain profile has no occupancy to protect).
+ */
+export interface CaveParams {
+  /** 0..1 — how many worm systems the region carries. */
+  readonly density?: number;
+  /** Spatial frequency of the field that steers the worms. */
+  readonly frequency?: number;
+  /** `[min, max]` tunnel radius in blocks. */
+  readonly radius?: readonly [number, number];
+  /** `[yMin, yMax]` absolute world Y band the systems live in. */
+  readonly yRange?: readonly [number, number];
+  /** 0..1 — how much the worms climb and dive. */
+  readonly verticality?: number;
+  readonly chambers?: CaveChamberParams;
+  /** Daylight mouths to force; `true`/`false` mean 1/0. Publishes `cave_mouth` markers. */
+  readonly entrances?: number | boolean;
+  /** Whether the compiler dresses the caves with dripstone, moss and mushrooms. */
+  readonly decorate?: boolean;
+}
+
+/** A `cave.carver@0` node. */
+export interface CaveNode extends NodeBase {
+  readonly kind: "generator";
+  readonly generator: "cave.carver@0";
+  readonly params: CaveParams;
+}
+
 /** Any generator node the profile allows below the root. */
-export type TerrainChildNode = HeightfieldNode | ClimateNode | ForestNode;
+export type TerrainChildNode = HeightfieldNode | ClimateNode | ForestNode | CaveNode;
 
 /** The root composite. */
 export interface TerrainRootNode extends NodeBase {

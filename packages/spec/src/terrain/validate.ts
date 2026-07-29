@@ -104,6 +104,36 @@ const UNDERGROWTH_NUMS: Readonly<Record<string, NumSpec>> = {
   deadwood: { min: 0, max: 1 },
 };
 
+/** `cave.carver@0` scalar params. */
+const CAVE_NUMS: Readonly<Record<string, NumSpec>> = {
+  density: { min: 0, max: 1 },
+  frequency: { min: 0, max: 0.5 },
+  verticality: { min: 0, max: 1 },
+};
+
+/** `cave.carver@0.chambers`. */
+const CAVE_CHAMBER_NUMS: Readonly<Record<string, NumSpec>> = {
+  count: { min: 0, max: 64, int: true },
+  radius: { min: 3, max: 24 },
+  chance: { min: 0, max: 1 },
+};
+
+/**
+ * `cave.carver@0` params from the v0.2 §7 table that this profile does not
+ * implement, and the fix hint each one gets.
+ *
+ * Silently ignoring them would be worse than rejecting them: an author who
+ * writes `"waterTable": 20` and gets a dry cave has no way to learn that the
+ * knob did nothing.
+ */
+const CAVE_UNIMPLEMENTED: Readonly<Record<string, string>> = Object.freeze({
+  style: 'this profile carves the "worm" style only — remove "style", or express the shape you want with "radius", "verticality" and "chambers"',
+  lavaLevel: 'remove "lavaLevel" — a cave that carries fluid cannot satisfy the profile\'s zero-unstable-fluids rule yet',
+  waterTable: 'remove "waterTable" — flooded caves are not implemented; for surface water use a "basin" edit with "water": true',
+  surfaceOpenings: 'this profile spells it "entrances" — write "entrances": 2 (or true) instead',
+  protectTags: 'remove "protectTags" — the terrain profile has no structure occupancy to protect, and cave.carver@0 is not allowed in the settlement profile',
+});
+
 /** Per-verb required/forbidden shape params, for the T104 "wrong knob" hint. */
 const VERB_SHAPE_KEYS: Readonly<Record<EditVerbName, readonly string[]>> = {
   ridge: ["width", "height", "profile", "meander"],
@@ -402,6 +432,9 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       case "scatter.forest@0":
         validateForestNode(out, childPath, raw);
         break;
+      case "cave.carver@0":
+        validateCaveNode(out, childPath, raw);
+        break;
       case "terrain.edit@0":
         out.push(
           error(
@@ -624,6 +657,113 @@ export function validateClimateNode(out: LoamDiagnostic[], path: string, node: O
   const theme = params["forceTheme"];
   if (theme !== undefined && !(CLIMATE_THEMES as readonly string[]).includes(theme as ClimateTheme)) {
     out.push(error("BAD_ENUM", `${path}.params`, `"forceTheme" must be a known climate theme, got ${describe(theme)}`, `set "forceTheme" to one of: ${CLIMATE_THEMES.join(", ")} — or omit it to let the noise decide`));
+  }
+}
+
+/**
+ * @internal
+ *
+ * `cave.carver@0`. Every rejection here names the knob that *does* work, because
+ * the v0.2 §7 table is wider than this profile's implementation and an author
+ * reading the spec will reach for the missing half of it.
+ */
+export function validateCaveNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "cave.carver@0 node");
+  const params = node["params"];
+  if (params === undefined) return;
+  if (!isObject(params)) {
+    out.push(error("BAD_TYPE", path, `"params" must be an object, got ${describe(params)}`, 'use "params": {} to accept every cave.carver@0 default'));
+    return;
+  }
+
+  // Named-but-unimplemented params first: a specific hint beats the generic
+  // "unknown key" list for anything an author could reasonably have read in §7.
+  for (const [key, fix] of Object.entries(CAVE_UNIMPLEMENTED)) {
+    if (params[key] === undefined) continue;
+    out.push(
+      error(
+        "PARAM_NOT_IMPLEMENTED",
+        `${path}.params`,
+        `"${key}" is in the Loam v0.2 cave.carver@0 table but this profile does not implement it`,
+        fix,
+      ),
+    );
+  }
+
+  unknownKeys(
+    out,
+    params,
+    `${path}.params`,
+    ["density", "frequency", "radius", "yRange", "verticality", "chambers", "entrances", "decorate", ...Object.keys(CAVE_UNIMPLEMENTED)],
+    "cave.carver@0 params",
+  );
+  checkNumbers(out, `${path}.params`, params, CAVE_NUMS);
+  checkBooleans(out, `${path}.params`, params, ["decorate"]);
+
+  checkIntPair(out, `${path}.params`, "radius", params["radius"], {
+    min: 1,
+    max: 12,
+    example: '"radius": [2, 5] — the min and max tunnel radius in blocks',
+  });
+  checkIntPair(out, `${path}.params`, "yRange", params["yRange"], {
+    min: -63,
+    max: 200,
+    example: '"yRange": [-32, 48] — absolute world Y, not a depth below the surface',
+  });
+
+  const chambers = params["chambers"];
+  if (chambers !== undefined) {
+    if (!isObject(chambers)) {
+      out.push(error("BAD_TYPE", `${path}.params.chambers`, `"chambers" must be an object, got ${describe(chambers)}`, 'write "chambers": { "count": 3, "radius": 8, "chance": 0.4 }, or omit it'));
+    } else {
+      unknownKeys(out, chambers, `${path}.params.chambers`, ["count", "radius", "chance"], "chambers");
+      if (chambers["spacing"] !== undefined) {
+        out.push(error("PARAM_NOT_IMPLEMENTED", `${path}.params.chambers`, '"chambers.spacing" is not implemented', 'remove "spacing" — chambers are gated by "chance" along each worm instead'));
+      }
+      checkNumbers(out, `${path}.params.chambers`, chambers, CAVE_CHAMBER_NUMS);
+    }
+  }
+
+  const entrances = params["entrances"];
+  if (entrances !== undefined && typeof entrances !== "boolean") {
+    if (typeof entrances !== "number" || !Number.isInteger(entrances) || entrances < 0 || entrances > 8) {
+      out.push(
+        error(
+          "PARAM_OUT_OF_RANGE",
+          `${path}.params`,
+          `"entrances" must be true/false or a whole number in 0..8, got ${describe(entrances)}`,
+          'write "entrances": 2 for two daylight mouths, or "entrances": true for one — each publishes a "cave_mouth" marker',
+        ),
+      );
+    }
+  }
+}
+
+/** Require a `[min, max]` integer pair within `spec`, min ≤ max. */
+function checkIntPair(
+  out: LoamDiagnostic[],
+  path: string,
+  key: string,
+  value: unknown,
+  spec: { min: number; max: number; example: string },
+): void {
+  if (value === undefined) return;
+  if (
+    !Array.isArray(value) ||
+    value.length !== 2 ||
+    !value.every((v) => typeof v === "number" && Number.isInteger(v))
+  ) {
+    out.push(error("BAD_TYPE", path, `"${key}" must be a pair of whole numbers [min, max], got ${describe(value)}`, `write ${spec.example}`));
+    return;
+  }
+  const [lo, hi] = value as [number, number];
+  for (const [i, v] of ([lo, hi] as const).entries()) {
+    if (v < spec.min || v > spec.max) {
+      out.push(error("PARAM_OUT_OF_RANGE", path, `"${key}"[${i}] = ${v} is outside ${spec.min}..${spec.max}`, `clamp both entries into ${spec.min}..${spec.max}; ${spec.example}`));
+    }
+  }
+  if (lo > hi) {
+    out.push(error("PARAM_OUT_OF_RANGE", path, `"${key}" min (${lo}) is greater than max (${hi})`, `swap the two numbers so it reads [min, max]; ${spec.example}`));
   }
 }
 

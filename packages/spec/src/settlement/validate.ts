@@ -46,6 +46,7 @@ import {
 import {
   HORIZONTAL_FACES,
   PORT_TYPES,
+  SETTLEMENT_EXCLUDED_GENERATORS,
   STRUCTURE_GENERATORS,
   V02_FACES,
   V02_PORT_TYPES,
@@ -227,13 +228,17 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       validateStructureNode(out, childPath, raw);
       continue;
     }
-    if (typeof generator !== "string" || !(PROFILE_GENERATORS as readonly string[]).includes(generator)) {
+    if (
+      typeof generator !== "string" ||
+      !(PROFILE_GENERATORS as readonly string[]).includes(generator) ||
+      (SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(generator)
+    ) {
       out.push(
         error(
           "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
           childPath,
           `generator ${describe(generator)} is not allowed by the settlement profile`,
-          `use one of: ${[...PROFILE_GENERATORS, ...STRUCTURE_GENERATORS].join(", ")}`,
+          `use one of: ${[...PROFILE_GENERATORS.filter((g) => !(SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(g)), ...STRUCTURE_GENERATORS].join(", ")}`,
         ),
       );
       continue;

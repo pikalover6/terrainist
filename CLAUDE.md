@@ -46,5 +46,9 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
   climate-gated snow, lushness). G4 (settlement profile, layout solver v1,
   building grammar, roads) is CODE-COMPLETE BUT UNREVIEWED — no worldgen
   iteration has been run on it, per Kai's instruction; do not iterate on
-  village visuals without Kai. Opus 5 planner and the render-critique→repair
-  loop remain deliberately off.
+  village visuals without Kai.
+- **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
+  indefinitely — production authoring is pure GLM 5.2 (cheapness is a core
+  goal); escalate only if GLM hits a hard capability wall. The
+  critique→repair pass stays MANUAL — Kai reviews; never build autonomous
+  repair iteration.

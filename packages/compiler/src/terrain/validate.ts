@@ -18,6 +18,7 @@
 
 import { type LoamDiagnostic, error, warning } from "@terrainist/spec";
 
+import type { CaveIntegrityReport } from "./caves.js";
 import type { ColumnPlan } from "./columns.js";
 import { FluidKind } from "./columns.js";
 import type { TreePlacement } from "./vegetation.js";
@@ -114,6 +115,52 @@ export function checkFloatingVegetation(
     }
   }
   return floating;
+}
+
+/**
+ * Turn the cave integrity report into profile diagnostics.
+ *
+ * Both are errors and neither has an author-facing fix, because neither can be
+ * caused by anything an author wrote: the carve band makes both impossible by
+ * construction, so a finding here is a compiler bug and the hint says so. The
+ * alternative — a warning nobody reads — would let exactly the defect this
+ * round exists to prevent ship quietly.
+ */
+export function caveDiagnostics(
+  report: CaveIntegrityReport,
+  nodePath: string,
+): LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  const where = (): string =>
+    report.samples.map((s) => `(${s.x}, ${s.y}, ${s.z}): ${s.detail}`).join("; ");
+
+  if (report.fluidBreaches > 0) {
+    out.push(
+      error(
+        "CAVE_FLUID_BREACH",
+        nodePath,
+        `${report.fluidBreaches} carved cave span${report.fluidBreaches === 1 ? "" : "s"} break the ` +
+          `four-block shell around water or lava — e.g. ${where()}`,
+        "this is a compiler defect, not a document one: cave.carver@0's carve band is supposed to make " +
+          "it unreachable. Report it. Narrowing the node's \"yRange\" or lowering \"density\" may work " +
+          "around it meanwhile.",
+      ),
+    );
+  }
+  if (report.surfaceBreaches > 0) {
+    out.push(
+      error(
+        "CAVE_SURFACE_BREACH",
+        nodePath,
+        `${report.surfaceBreaches} carved cave span${report.surfaceBreaches === 1 ? "" : "s"} come ` +
+          `within the roof margin of the surface away from a declared entrance — e.g. ${where()}`,
+        "this is a compiler defect: interior caves must leave the heightmap alone, and only an " +
+          '"entrances" mouth may open the surface. Report it; lowering the node\'s "yRange" upper ' +
+          "bound may work around it meanwhile.",
+      ),
+    );
+  }
+  return out;
 }
 
 /** Turn both validator results into profile diagnostics. */

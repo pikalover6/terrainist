@@ -29,6 +29,17 @@ export const STRUCTURE_GENERATORS = ["building.grammar@0", "road.network@0"] as 
 /** A structure generator id. */
 export type StructureGenerator = (typeof STRUCTURE_GENERATORS)[number];
 
+/**
+ * Terrain-profile generators the settlement profile does **not** inherit.
+ *
+ * `cave.carver@0` is excluded because it has no occupancy to respect yet: the
+ * v0.2 `protectTags` param — the field that keeps a cave from eating a town's
+ * foundations — is unimplemented, so a cave under a settlement would be a
+ * lottery on whether the smithy still has a floor. It comes back when
+ * `protectTags` does.
+ */
+export const SETTLEMENT_EXCLUDED_GENERATORS = ["cave.carver@0"] as const;
+
 /** Port types the profile implements. Other v0.2 types parse with `LOAM-T206`. */
 export const PORT_TYPES = ["door", "road_stub"] as const;
 

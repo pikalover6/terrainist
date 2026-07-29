@@ -43,6 +43,15 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "ground.basalt": "minecraft:basalt",
   "ground.blackstone": "minecraft:blackstone",
   "ground.magma": "minecraft:magma_block",
+  // --- caves (G5a) ---------------------------------------------------------
+  // `cave_air` rather than `air`: Minecraft distinguishes the two for light
+  // propagation and mob spawning, and it also gives the physics readback a way
+  // to tell a carved interval from the sky above the terrain.
+  "cave.air": "minecraft:cave_air",
+  "cave.floor": "minecraft:dripstone_block",
+  "cave.dripstone": "minecraft:pointed_dripstone",
+  "cave.moss": "minecraft:moss_carpet",
+  "cave.cobweb": "minecraft:cobweb",
   // --- ground cover --------------------------------------------------------
   "foliage.short_grass": "minecraft:short_grass",
   "foliage.tall_grass": "minecraft:tall_grass",

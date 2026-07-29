@@ -12,6 +12,8 @@
  * - `field/` — the materialized heightfield and its `heightAt` sampler
  * - `edits/` — the eight `terrain.edit@0` kernels and their composition rule
  * - `classify/` — slope, surface classes, and markers
+ * - `caves/` — `cave.carver@0`: seeded worm tunnels, chambers and entrances,
+ *   expressed as per-column interior air spans (G5a)
  * - `structures/` — `building.grammar@0`: node-local voxel ops and their
  *   rotation, with no dependency on the block table (G4b)
  */
@@ -53,6 +55,7 @@ export * from "./noise/index.js";
 export * from "./field/index.js";
 export * from "./edits/index.js";
 export * from "./classify/index.js";
+export * from "./caves/index.js";
 export * from "./structures/index.js";
 
 // ---------------------------------------------------------------------------

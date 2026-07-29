@@ -1,0 +1,110 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "caverns_test",
+    "worldSeed": 9182736,
+    "prompt": "a single wooded hill riddled with caves, with two entrances you can walk into",
+    "spawn": { "at": [0.5, 0.5] }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Caverns test — one hill, one cave system, two mouths",
+    "envelope": { "shape": "region", "size": [192, 192] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "A gentle inland hill, well clear of any sea",
+        "note": "No ocean anywhere in the region: the cave carver's water rules are exercised by the pond in the north-west, not by a coastline.",
+        "params": {
+          "baseHeight": 84,
+          "amplitude": 22,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.006,
+          "gain": 0.5,
+          "lacunarity": 2.0,
+          "erosionPasses": 1,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "the_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The hill the caves run under",
+            "params": {
+              "verb": "peak",
+              "at": [0.5, 0.5],
+              "radius": 70,
+              "height": 46,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "north_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A small tarn, so the four-block water shell has something to dodge",
+            "params": {
+              "verb": "basin",
+              "at": [0.22, 0.24],
+              "radius": 26,
+              "depth": 14,
+              "water": true,
+              "irregularity": 0.15
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and damp",
+        "params": { "forceTheme": "temperate" }
+      },
+      {
+        "id": "caves",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "The cave system under the hill",
+        "params": {
+          "density": 0.8,
+          "frequency": 0.012,
+          "radius": [2, 5],
+          "yRange": [20, 92],
+          "verticality": 0.35,
+          "chambers": { "count": 4, "radius": 9, "chance": 0.6 },
+          "entrances": 2,
+          "decorate": true
+        }
+      },
+      {
+        "id": "hill_wood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Oak and birch over the whole hill",
+        "params": {
+          "area": { "all": true },
+          "density": 0.35,
+          "spacing": 3,
+          "clumping": 0.4,
+          "maxSlope": 34,
+          "elevation": [1, 120],
+          "edgeFalloff": 10,
+          "species": [
+            { "id": "hill_oak", "weight": 3, "shape": "oak_round" },
+            { "id": "hill_birch", "weight": 1, "shape": "birch_slim" }
+          ]
+        }
+      }
+    ]
+  }
+}

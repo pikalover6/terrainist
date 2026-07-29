@@ -193,9 +193,44 @@ function fillChunk(chunk: EmitChunk, plan: ColumnPlan, cx: number, cz: number): 
         chunk.setStateId(lx, top + 1, lz, states.snowLayer);
         count += 1;
       }
+
+      // Caves last, over the finished column: the stone body was written as
+      // bulk fills, and punching the interior spans out of it afterwards costs
+      // one pass over the carved blocks instead of splitting every column's
+      // fill into runs. `cave_air`, not `air` — Minecraft treats the two
+      // differently for light and spawning, and the readback lint uses the
+      // distinction to tell a carved gallery from the sky above the terrain.
+      count -= punchCaves(chunk, plan, idx, lx, lz);
     }
   }
   return count;
+}
+
+/**
+ * Replace one column's cave spans with `cave_air`.
+ *
+ * Returns the number of solid blocks removed, so the caller can keep its block
+ * count honest — a carved world writes *fewer* blocks than its heightfield
+ * implies, and a count that ignored that would drift from what is on disk.
+ */
+function punchCaves(
+  chunk: EmitChunk,
+  plan: ColumnPlan,
+  idx: number,
+  lx: number,
+  lz: number,
+): number {
+  const caves = plan.caves;
+  if (caves === undefined) return 0;
+  const end = caves.spans.offsets[idx + 1] as number;
+  let removed = 0;
+  for (let k = caves.spans.offsets[idx] as number; k < end; k++) {
+    const lo = caves.spans.lo[k] as number;
+    const hi = caves.spans.hi[k] as number;
+    chunk.fillColumn(lx, lz, lo, hi, plan.states.caveAir);
+    removed += hi - lo + 1;
+  }
+  return removed;
 }
 
 /**

@@ -35,6 +35,7 @@ import {
   type TerrainEdit,
 } from "@terrainist/stdlib";
 import {
+  type CaveNode,
   type EditNode,
   type ForestNode,
   type LoamDiagnostic,
@@ -66,11 +67,23 @@ import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
 import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes } from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
-import { buildColumnPlan, type VolcanoInfo } from "./columns.js";
+import {
+  buildCavePlan,
+  checkCaveIntegrity,
+  decorateCaves,
+  resolveCaveParams,
+  type CaveNodeInput,
+} from "./caves.js";
+import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js";
 import { decorate } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
-import { checkFloatingVegetation, checkFluidStability, validatorDiagnostics } from "./validate.js";
+import {
+  caveDiagnostics,
+  checkFloatingVegetation,
+  checkFluidStability,
+  validatorDiagnostics,
+} from "./validate.js";
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
 import { buildStructures, type StructurePassResult, type StructureStats } from "../structures/index.js";
 
@@ -119,6 +132,16 @@ export interface CompileTerrainOptions {
   readonly allowUnstable?: boolean;
   /** Emit target version; defaults to the pinned one. */
   readonly minecraftVersion?: string;
+  /**
+   * Hand the finished column plan to the caller, just before emit.
+   *
+   * A seam for readback lints and tests, which need the plan the world was
+   * written from — the cave rules in particular compare the world on disk
+   * against `plan.ground` and `plan.caves.entranceColumns`. It is deliberately
+   * a callback rather than a report field: the plan is tens of megabytes of
+   * typed arrays and the report is JSON the CLI writes to a file.
+   */
+  readonly onColumnPlan?: (plan: ColumnPlan) => void;
 }
 
 /** Wall-clock milliseconds per pass. */
@@ -129,6 +152,8 @@ export interface CompileTimings {
   readonly layout: number;
   readonly climate: number;
   readonly columns: number;
+  /** Cave carve pass; zero for a document with no cave node. */
+  readonly caves: number;
   /** Structure pass; zero for terrain-profile documents. */
   readonly structures: number;
   readonly scatter: number;
@@ -136,6 +161,18 @@ export interface CompileTimings {
   readonly validators: number;
   readonly emit: number;
   readonly total: number;
+}
+
+/** What the cave pass cut and dressed. */
+export interface CaveStats {
+  readonly systems: number;
+  readonly chambers: number;
+  /** Stone blocks replaced by `cave_air`. */
+  readonly carvedBlocks: number;
+  /** Daylight mouths opened; each publishes a `cave_mouth` marker. */
+  readonly entrances: number;
+  readonly decorBlocks: number;
+  readonly decorCounts: Readonly<Record<string, number>>;
 }
 
 /** Aggregate numbers about the compiled world. */
@@ -161,6 +198,8 @@ export interface CompileStats {
   readonly decorBlockCount: number;
   /** Decoration counts by category. */
   readonly decorCounts: Readonly<Record<string, number>>;
+  /** What `cave.carver@0` cut, or all zeroes for a document with no cave node. */
+  readonly caves: CaveStats;
   /** Columns painted with volcanic materials. */
   readonly volcanicColumns: number;
   /** Columns claimed by a frozen lava flow. */
@@ -381,6 +420,30 @@ async function compileValidated(
   });
   const columnsMs = now() - t2;
 
+  // --- pass 5a: caves ------------------------------------------------------
+  // Subtractive, and deliberately downstream of everything that decides what
+  // the world looks like from above: the field, the classification, the biomes
+  // and the fluids are all settled by now, and the carver may not touch any of
+  // them. What it produces is interior air, which nothing before this point
+  // could have depended on.
+  const tCaves = now();
+  const caveNodes: CaveNodeInput[] = children
+    .filter((c): c is CaveNode => c.generator === "cave.carver@0")
+    .map((node) => ({
+      id: node.id,
+      nodePath: `${rootPath}.${node.id}`,
+      seed: nodeSeed(worldSeed, `${rootPath}.${node.id}`, node.seedSalt ?? ""),
+      params: resolveCaveParams(node.params),
+    }));
+  if (caveNodes.length > 0) {
+    plan.caves = buildCavePlan(caveNodes, plan, classification);
+    // A mouth that opens the surface has no ground left to hold a snow layer.
+    for (let idx = 0; idx < plan.snow.length; idx++) {
+      if (plan.caves.entranceColumns[idx] === 1) plan.snow[idx] = 0;
+    }
+  }
+  const cavesMs = now() - tCaves;
+
   // --- pass 5b: structures -------------------------------------------------
   // After the columns exist (a foundation needs ground to sink into, a road
   // needs a surface to grade) and before the scatter, whose occupancy grid this
@@ -469,6 +532,11 @@ async function compileValidated(
     ...(clip === undefined ? {} : { clip }),
     seed: rootSeed,
   });
+  // Cave dressing rides the same decoration list: it is the same kind of thing
+  // (absolute-positioned blocks stamped after the column fill) and it cannot
+  // collide, because every block it places is inside a carved span and every
+  // block the surface pass places is at or above the ground.
+  const caveDecor = decorateCaves(plan, palette, stack, rootSeed);
   const scatterMs = now() - t3;
 
   // --- pass 4b: biomes -----------------------------------------------------
@@ -480,8 +548,10 @@ async function compileValidated(
   const t5 = now();
   const fluids = checkFluidStability(plan);
   const floating = checkFloatingVegetation(plan, trees);
+  const caveIntegrity = checkCaveIntegrity(plan);
   diagnostics.push(
     ...validatorDiagnostics(fluids, floating, { allowUnstable: options.allowUnstable ?? false }),
+    ...caveDiagnostics(caveIntegrity, rootPath),
   );
   const validatorsMs = now() - t5;
 
@@ -490,13 +560,14 @@ async function compileValidated(
   }
 
   // --- pass 8: emit --------------------------------------------------------
-  const markers = [...classification.markers, ...terrain.edits.markers];
+  options.onColumnPlan?.(plan);
+  const markers = [...classification.markers, ...terrain.edits.markers, ...(plan.caves?.markers ?? [])];
   const spawnResult = resolveSpawn(doc, plan, markers, diagnostics, rootPath);
   const t6 = now();
   const emit = await emitTerrain({
     plan,
     trees,
-    decor: decoration.blocks,
+    decor: [...caveDecor.blocks, ...decoration.blocks],
     ...(structures === undefined ? {} : { structures: structures.blocks }),
     ...(clip === undefined ? {} : { clip }),
     stack,
@@ -538,6 +609,14 @@ async function compileValidated(
       treeBlockCount: emit.treeBlockCount,
       decorBlockCount: emit.decorBlockCount,
       decorCounts: decoration.counts,
+      caves: {
+        systems: plan.caves?.systems ?? 0,
+        chambers: plan.caves?.chambers ?? 0,
+        carvedBlocks: plan.caves?.carvedBlocks ?? 0,
+        entrances: plan.caves?.markers.length ?? 0,
+        decorBlocks: caveDecor.blocks.length,
+        decorCounts: caveDecor.counts,
+      },
       volcanicColumns,
       lavaFlowColumns,
       clearedColumns: clearing?.clearedColumns ?? 0,
@@ -556,6 +635,7 @@ async function compileValidated(
       layout: layoutMs,
       climate: climateMs,
       columns: columnsMs,
+      caves: cavesMs,
       structures: structuresMs,
       scatter: scatterMs,
       biomes: biomesMs,
