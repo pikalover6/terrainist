@@ -1,0 +1,866 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "saltmarsh_keep",
+    "worldSeed": 1749207,
+    "prompt": "Saltmarsh Keep: a walled old town on a shelf above a sheltered bay, its harbour crowded with a galleon, a cog and a longship; a mine head on the sea ridge, a wizard's tower on the crag, a graveyard and mausoleum outside the walls, and a crypt under the keep",
+    "spawn": { "zone": "center" }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": {
+        "mix": [
+          ["minecraft:cobblestone", 3],
+          ["minecraft:gravel", 2],
+          ["minecraft:mossy_cobblestone", 1]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          ["minecraft:sand", 4],
+          ["minecraft:gravel", 2],
+          ["minecraft:coarse_dirt", 1]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Saltmarsh Keep and its bay",
+    "note": "A coastal showcase: ridged headland north, sheltered bay south, walled town on the shelf between them.",
+    "envelope": { "shape": "region", "size": [512, 512] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "A green headland falling south into salt water",
+        "params": {
+          "baseHeight": 82,
+          "amplitude": 26,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.0034,
+          "gain": 0.48,
+          "lacunarity": 2.0,
+          "erosionPasses": 2,
+          "cliffThreshold": 56,
+          "soilDepth": 4,
+          "beachWidth": 5,
+          "snowLineFraction": 0.96,
+          "continentalness": { "frequency": 0.0013, "seaFraction": 0.3 }
+        },
+        "children": [
+          {
+            "id": "sea_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The ridged northern coast — the mine head's ground",
+            "params": {
+              "verb": "ridge",
+              "course": [[0.02, 0.24], [0.32, 0.15], [0.66, 0.19], [0.98, 0.3]],
+              "width": 74,
+              "height": 46,
+              "profile": "sharp",
+              "meander": 0.62
+            }
+          },
+          {
+            "id": "warden_crag",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The crag the wizard's tower stands on",
+            "params": {
+              "verb": "peak",
+              "at": [0.16, 0.34],
+              "radius": 56,
+              "height": 52,
+              "profile": "sharp",
+              "irregularity": 0.24
+            }
+          },
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the walled town sits on, above the bay",
+            "params": {
+              "verb": "plateau",
+              "at": [0.44, 0.62],
+              "radius": 92,
+              "height": 12,
+              "rim": 14,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "boatyard_flat",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The levelled apron above the cove, where boats are drawn up",
+            "params": {
+              "verb": "plateau",
+              "at": [0.16, 0.8],
+              "radius": 30,
+              "height": 4,
+              "rim": 10,
+              "profile": "rounded",
+              "irregularity": 0.12
+            }
+          },
+          {
+            "id": "open_sea",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The open water off the southern shore",
+            "params": {
+              "verb": "basin",
+              "at": [0.5, 1.0],
+              "radius": 190,
+              "depth": 55,
+              "irregularity": 0.26,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "eastern_roads",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Open water east of the headland",
+            "params": {
+              "verb": "basin",
+              "at": [0.88, 1.0],
+              "radius": 175,
+              "depth": 50,
+              "irregularity": 0.28,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "western_sound",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Open water west of the headland",
+            "params": {
+              "verb": "basin",
+              "at": [0.08, 1.0],
+              "radius": 160,
+              "depth": 46,
+              "irregularity": 0.28,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "sheltered_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The sheltered bay the harbour works out of",
+            "params": {
+              "verb": "basin",
+              "at": [0.5, 0.9],
+              "radius": 70,
+              "depth": 22,
+              "irregularity": 0.32,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "fisher_cove",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The little cove west of the bay, where the fishers beach their boats",
+            "params": {
+              "verb": "basin",
+              "at": [0.26, 0.88],
+              "radius": 40,
+              "depth": 16,
+              "irregularity": 0.3,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "salt_brook",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The brook off the ridge, crossed by the east road",
+            "params": {
+              "verb": "river",
+              "course": [[0.76, 0.22], [0.69, 0.42], [0.63, 0.6], [0.56, 0.76], [0.5, 0.9]],
+              "width": 9,
+              "depth": 5,
+              "meander": 0.7,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Damp, mild, sea-fed",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+
+      {
+        "id": "market_square",
+        "kind": "primitive",
+        "label": "The market square inside the walls",
+        "envelope": { "shape": "region", "size": [24, 24] },
+        "constraints": [
+          { "zone": "center" },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 6 }
+        ],
+        "tags": ["plaza", "public"]
+      },
+      {
+        "id": "keep",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The keep, with the old crypt cut beneath it",
+        "envelope": { "shape": "box", "size": [15, 26, 15], "padding": 1 },
+        "params": {
+          "floors": 3,
+          "floorHeight": 5,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "basement": { "depth": 5, "style": "crypt" }
+        },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 10, "max": 54 },
+          { "connected": "chapel", "via": "tunnel", "style": "crypt" },
+          { "clearance": 3 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 6, "maxSlope": 26 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "west", "width": 3, "height": 3 }
+        },
+        "tags": ["keep", "civic"]
+      },
+      {
+        "id": "gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The gatehouse on the town's landward side",
+        "envelope": { "shape": "box", "size": [13, 16, 11], "padding": 1 },
+        "params": { "floors": 2, "floorHeight": 5, "roof": "flat", "windowRhythm": "sparse" },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "keep", "min": 16, "max": 70 },
+          { "facing": "market_square" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 26 }
+        ],
+        "ports": {
+          "gate": { "type": "door", "face": "north", "tags": ["primary"] },
+          "road": { "type": "road_stub", "face": "north" }
+        },
+        "tags": ["gatehouse", "military"]
+      },
+      {
+        "id": "barracks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The garrison barracks in the keep's shadow",
+        "envelope": { "shape": "box", "size": [17, 11, 11] },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular",
+          "wing": { "size": [5, 6], "side": "east", "offset": 3 }
+        },
+        "constraints": [
+          { "zone": "center" },
+          { "adjacent_to": "keep", "gap": [4, 18] },
+          { "clearance": 2 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
+        ],
+        "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+        "tags": ["barracks", "military"]
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chapel by the wall, its undercroft joined to the keep's crypt",
+        "envelope": { "shape": "box", "size": [13, 14, 15], "padding": 1 },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6,
+          "roof": "gable",
+          "windowRhythm": "regular",
+          "wing": { "size": [4, 5], "side": "east", "offset": 5 },
+          "basement": { "depth": 4, "style": "crypt" }
+        },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 8, "max": 70 },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 24 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "undercroft": { "type": "tunnel_stub", "face": "east", "width": 3, "height": 3 }
+        },
+        "tags": ["chapel", "civic"]
+      },
+      {
+        "id": "inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The Anchor & Bell, on the square",
+        "envelope": { "shape": "box", "size": [13, 12, 11] },
+        "params": { "floors": 2, "roof": "gable", "windowRhythm": "paired" },
+        "constraints": [
+          { "zone": "center" },
+          { "adjacent_to": "market_square", "gap": [1, 9] },
+          { "facing": "market_square" },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
+        ],
+        "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+        "tags": ["inn", "house", "trade"]
+      },
+      {
+        "id": "bakery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The bakehouse off the square",
+        "envelope": { "shape": "box", "size": [10, 9, 9] },
+        "params": { "floors": 1, "roof": "gable", "windowRhythm": "regular" },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 3, "max": 40 },
+          { "facing": "market_square" },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["bakery", "trade"]
+      },
+      {
+        "id": "stall_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A market stall on the square's east side",
+        "envelope": { "shape": "box", "size": [7, 8, 7] },
+        "params": { "floors": 1 },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 2, "max": 30 },
+          { "facing": "market_square" },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "west", "tags": ["primary"] } },
+        "tags": ["market_stall", "market"]
+      },
+      {
+        "id": "stall_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A second stall opposite",
+        "envelope": { "shape": "box", "size": [7, 8, 7] },
+        "params": { "floors": 1 },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 2, "max": 30 },
+          { "distance": "stall_east", "min": 8 },
+          { "facing": "market_square" },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "east", "tags": ["primary"] } },
+        "tags": ["market_stall", "market"]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The armourer's forge, kept apart from the thatch",
+        "envelope": { "shape": "box", "size": [10, 9, 9] },
+        "params": { "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
+        "constraints": [
+          { "zone": "center" },
+          { "distance": "market_square", "min": 8, "max": 60 },
+          { "distance": "#tag:house", "min": 7 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["craft", "smithy"]
+      },
+      {
+        "id": "townhouse_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A townhouse on the north lane",
+        "envelope": { "shape": "box", "size": [9, 12, 9] },
+        "params": { "floors": 2, "roof": "gable", "windowRhythm": "dense" },
+        "constraints": [
+          { "zone": "center" },
+          { "along": "lanes", "offset": [2, 6], "side": "any", "faceRoad": true },
+          { "distance": "market_square", "min": 8, "max": 76 },
+          { "distance": "#tag:house", "min": 6 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+        "tags": ["house"]
+      },
+      {
+        "id": "townhouse_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A townhouse on the west lane",
+        "envelope": { "shape": "box", "size": [9, 12, 9] },
+        "params": { "floors": 2, "roof": "gable", "windowRhythm": "paired" },
+        "constraints": [
+          { "zone": "center" },
+          { "beside": "lanes", "offset": [2, 8] },
+          { "distance": "market_square", "min": 8, "max": 76 },
+          { "distance": "#tag:house", "min": 6 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "east", "tags": ["primary"] } },
+        "tags": ["house"]
+      },
+
+      {
+        "id": "wizard_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The wizard's tower on Warden Crag",
+        "envelope": { "shape": "box", "size": [11, 30, 11], "padding": 1 },
+        "params": { "floors": 5, "floorHeight": 5, "roof": "flat", "windowRhythm": "sparse" },
+        "optional": true,
+        "constraints": [
+          { "zone": "west" },
+          { "on": "@terrain:peak", "band": 60, "strength": "soft" },
+          { "distance": "market_square", "min": 60 },
+          { "clearance": 3 },
+          { "terrain_conform": "flatten", "reference": "max", "blend": 8, "maxSlope": 40 }
+        ],
+        "ports": { "door": { "type": "door", "face": "east", "tags": ["primary"] } },
+        "tags": ["wizard", "arcane"]
+      },
+      {
+        "id": "mausoleum",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The mausoleum of the old harbour families, outside the walls",
+        "envelope": { "shape": "box", "size": [11, 11, 13], "padding": 1 },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6,
+          "roof": "hip",
+          "windowRhythm": "sparse",
+          "basement": { "depth": 4, "style": "crypt" }
+        },
+        "constraints": [
+          { "zone": "west" },
+          { "distance": "market_square", "min": 34, "max": 140 },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 24 }
+        ],
+        "ports": { "door": { "type": "door", "face": "east", "tags": ["primary"] } },
+        "tags": ["mausoleum", "memorial"]
+      },
+
+      {
+        "id": "mine_head",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The mine head on the sea ridge",
+        "envelope": { "shape": "box", "size": [11, 10, 11], "padding": 1 },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": { "depth": 5, "style": "mine" }
+        },
+        "constraints": [
+          { "zone": "northeast" },
+          { "on": "@terrain:ridge", "band": 60, "strength": "soft" },
+          { "connected": "ore_shed", "via": "tunnel", "style": "mine", "oreChamber": true },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 28 }
+        ],
+        "ports": {
+          "door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "adit": { "type": "tunnel_stub", "face": "west", "width": 3, "height": 3 }
+        },
+        "tags": ["mineshaft", "industry"]
+      },
+      {
+        "id": "ore_shed",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The ore shed the working runs back to",
+        "envelope": { "shape": "box", "size": [11, 9, 11] },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": { "depth": 4, "style": "mine" }
+        },
+        "constraints": [
+          { "zone": "northeast" },
+          { "distance": "mine_head", "min": 26, "max": 80 },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 4, "maxSlope": 26 }
+        ],
+        "ports": {
+          "door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "gallery": { "type": "tunnel_stub", "face": "east", "width": 3, "height": 3 }
+        },
+        "tags": ["warehouse", "industry"]
+      },
+
+      {
+        "id": "harbour_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The bonded warehouse above the quay",
+        "envelope": { "shape": "box", "size": [15, 11, 11] },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "gable", "windowRhythm": "sparse" },
+        "constraints": [
+          { "zone": "south" },
+          { "on": "@terrain:coastline", "band": 40 },
+          { "distance": "market_square", "min": 40, "max": 170 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 5, "maxSlope": 26 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["warehouse", "harbour"]
+      },
+      {
+        "id": "fisher_cottage_a",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A fisherman's cottage above the strand",
+        "envelope": { "shape": "box", "size": [8, 8, 9] },
+        "params": { "floors": 1, "roof": "gable" },
+        "constraints": [
+          { "zone": "south" },
+          { "on": "@terrain:coastline", "band": 34 },
+          { "distance": "harbour_warehouse", "min": 8, "max": 70 },
+          { "distance": "#tag:house", "min": 6 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["house", "harbour"]
+      },
+      {
+        "id": "fisher_cottage_b",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A second cottage further along the strand",
+        "envelope": { "shape": "box", "size": [8, 8, 9] },
+        "params": { "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
+        "constraints": [
+          { "zone": "south" },
+          { "on": "@terrain:coastline", "band": 34 },
+          { "distance": "fisher_cottage_a", "min": 10, "max": 60 },
+          { "distance": "#tag:house", "min": 6 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["house", "harbour"]
+      },
+      {
+        "id": "harbour_watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The harbour lookout on the bay's shoulder",
+        "envelope": { "shape": "box", "size": [7, 20, 7] },
+        "params": { "floors": 2, "roof": "flat", "windowRhythm": "sparse" },
+        "optional": true,
+        "constraints": [
+          { "zone": "southeast" },
+          { "on": "@terrain:coastline", "band": 44, "strength": "soft" },
+          { "terrain_conform": "flatten", "reference": "max", "blend": 6, "maxSlope": 36 }
+        ],
+        "ports": { "door": { "type": "door", "face": "west", "tags": ["primary"] } },
+        "tags": ["watchtower", "lookout"]
+      },
+
+      {
+        "id": "town_wall_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's landward run",
+        "params": { "prop": "curtain_wall", "zone": "center", "length": 30, "yaw": 0, "jitter": 0.15 }
+      },
+      {
+        "id": "town_wall_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's eastern run",
+        "params": { "prop": "curtain_wall", "zone": "center", "length": 26, "yaw": 90, "jitter": 0.15 }
+      },
+      {
+        "id": "town_wall_seaward",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A wall stub above the harbour road",
+        "params": { "prop": "curtain_wall", "zone": "south", "length": 22, "yaw": 90, "jitter": 0.3 }
+      },
+
+      {
+        "id": "main_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The main pier out into the sheltered bay",
+        "params": { "prop": "pier", "zone": "south", "length": 18, "width": 3 }
+      },
+      {
+        "id": "fish_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The fishing jetty in the cove",
+        "params": { "prop": "pier", "zone": "southwest", "length": 12, "width": 2 }
+      },
+      {
+        "id": "galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A galleon at the main pier",
+        "params": { "prop": "galleon", "at": "pier" }
+      },
+      {
+        "id": "cog",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A cog riding at anchor in the bay",
+        "params": { "prop": "cog", "zone": "south", "on": "water", "yaw": 90 }
+      },
+      {
+        "id": "longship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A longship drawn up in the shallows",
+        "params": { "prop": "longship", "zone": "south", "on": "water", "yaw": 0 }
+      },
+      {
+        "id": "sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A fishing sloop working the bay mouth",
+        "params": { "prop": "fishing_sloop", "zone": "southeast", "on": "water" }
+      },
+      {
+        "id": "harbour_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A rowboat tied at the jetty",
+        "params": { "prop": "rowboat", "at": "pier" }
+      },
+      {
+        "id": "buoy_channel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A channel buoy",
+        "params": { "prop": "buoy", "zone": "south", "on": "water" }
+      },
+      {
+        "id": "buoy_outer",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The outer buoy, off the headland",
+        "params": { "prop": "buoy", "zone": "southeast", "on": "water" }
+      },
+
+      {
+        "id": "boneyard",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The graveyard outside the walls, beside the mausoleum",
+        "params": { "prop": "graveyard", "zone": "west", "yaw": 0 }
+      },
+      {
+        "id": "town_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The well on the market square",
+        "params": { "prop": "fountain", "zone": "center" }
+      },
+      {
+        "id": "square_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A trader's barrow left on the square",
+        "params": { "prop": "market_barrow", "zone": "center", "jitter": 0.4 }
+      },
+      {
+        "id": "square_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A bench under the square's lantern",
+        "params": { "prop": "bench", "zone": "center", "jitter": 0.5, "yaw": 180 }
+      },
+      {
+        "id": "square_planter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A planter by the inn door",
+        "params": { "prop": "planter", "zone": "center", "jitter": 0.5 }
+      },
+      {
+        "id": "quay_clothesline",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Nets strung to dry between the townhouses",
+        "params": { "prop": "clothesline", "zone": "center", "jitter": 0.6 }
+      },
+      {
+        "id": "crossroads_sign",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The signpost where the ridge road forks",
+        "params": { "prop": "signpost", "zone": "north", "jitter": 0.3 }
+      },
+      {
+        "id": "road_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A carters' campsite on the road out",
+        "params": { "prop": "campsite", "zone": "north", "yaw": 0, "jitter": 0.3 }
+      },
+      {
+        "id": "camp_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A cart parked at the camp",
+        "params": { "prop": "cart", "zone": "north", "jitter": 0.4 }
+      },
+      {
+        "id": "crag_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A cairn on the way up Warden Crag",
+        "params": { "prop": "cairn", "zone": "west", "jitter": 0.5 }
+      },
+      {
+        "id": "wood_treehouse",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A treehouse in the northern wood",
+        "params": { "prop": "treehouse", "zone": "northwest", "yaw": 0 }
+      },
+      {
+        "id": "field_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A scarecrow in the strip fields east of town",
+        "params": { "prop": "scarecrow", "zone": "east", "jitter": 0.4 }
+      },
+
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The lanes: square to keep to gate, the ridge road north, the harbour road south",
+        "params": {
+          "anchors": [
+            "market_square",
+            "#tag:house",
+            "keep",
+            "gatehouse",
+            "chapel",
+            "mausoleum",
+            "harbour_warehouse",
+            "mine_head"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "curvature": 0.4,
+          "bridgeThreshold": 24,
+          "lanterns": true,
+          "lanternSpacing": 13
+        }
+      },
+
+      {
+        "id": "ridge_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Wind-bent pine on the sea ridge",
+        "params": {
+          "area": { "zone": "north" },
+          "density": 0.2,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 36,
+          "elevation": [6, 150],
+          "edgeFalloff": 16,
+          "avoidTags": ["structure", "road", "plaza"],
+          "species": [
+            { "id": "ridge_spruce", "weight": 3, "shape": "spruce_tall" },
+            { "id": "ridge_birch", "weight": 1, "shape": "birch_slim" }
+          ]
+        }
+      },
+      {
+        "id": "crag_wood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "The old wood under Warden Crag — the treehouse's cover",
+        "params": {
+          "area": { "zone": "northwest" },
+          "density": 0.38,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [4, 130],
+          "edgeFalloff": 14,
+          "avoidTags": ["structure", "road", "plaza"],
+          "species": [
+            { "id": "crag_oak", "weight": 3, "shape": "oak_round" },
+            { "id": "crag_birch", "weight": 2, "shape": "birch_slim" }
+          ]
+        }
+      },
+      {
+        "id": "brook_birches",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Birch along the salt brook",
+        "params": {
+          "area": { "zone": "east" },
+          "density": 0.28,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [3, 110],
+          "edgeFalloff": 12,
+          "avoidTags": ["structure", "road", "plaza"],
+          "species": [{ "id": "brook_birch", "weight": 1, "shape": "birch_slim" }]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Thin cover everywhere else",
+        "params": {
+          "area": { "all": true },
+          "density": 0.06,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [3, 140],
+          "edgeFalloff": 10,
+          "avoidTags": ["structure", "road", "plaza"],
+          "species": [
+            { "id": "wild_oak", "weight": 3, "shape": "oak_round" },
+            { "id": "wild_spruce", "weight": 1, "shape": "spruce_tall" }
+          ]
+        }
+      }
+    ]
+  }
+}
