@@ -14,6 +14,7 @@ import {
   MATERIAL_THEMES,
   assignMaterials,
   archetypeOfTags,
+  cardinalStep,
   generateBuilding,
   materialKey,
   pickTheme,
@@ -244,14 +245,52 @@ describe("generateBuilding — structural sanity", () => {
     const ys = stairs.map((o) => o.y).sort((a, b) => a - b);
     expect(ys[0]).toBe(meta.stairRuns[0]);
     for (let i = 1; i < ys.length; i++) expect((ys[i] as number) - (ys[i - 1] as number)).toBe(1);
-    expect(ys[ys.length - 1]).toBe((meta.floorLevels[1] as number) - 1);
+    // The **top** step sits in the upper floor plane, not one below it. A step
+    // at `level - 1` leaves its back tread at `level` while the floor it
+    // serves walks at `level + 1`: a one-block rise, which is a jump.
+    expect(ys[ys.length - 1]).toBe(meta.floorLevels[1]);
+    // The lowest step stands on the floor below, so the first rise is half a
+    // block rather than a hop onto a plinth.
+    expect(ys[0]).toBe((meta.floorLevels[0] as number) + 1);
 
-    // …and the floor above is open over the run, so the climb is not into a
-    // ceiling.
+    // …and the floor above is open over the whole run, so the climb is not
+    // into a ceiling. (The top step is *in* that plane and is not floor.)
+    const stairCells = new Set(stairs.map((o) => `${o.x},${o.z}`));
     const upper = new Set(
-      ops.filter((o) => o.y === meta.floorLevels[1]).map((o) => `${o.x},${o.z}`),
+      ops
+        .filter((o) => o.y === meta.floorLevels[1] && o.block !== BUILDING_STYLE_DEFAULTS["stair.interior"])
+        .map((o) => `${o.x},${o.z}`),
     );
-    for (const stair of stairs) expect(upper.has(`${stair.x},${stair.z}`)).toBe(false);
+    for (const cell of stairCells) expect(upper.has(cell)).toBe(false);
+
+    // Every step has two blocks of headroom: a flight you have to crouch
+    // through is not a flight.
+    const filled = new Set(ops.map((o) => `${o.x},${o.y},${o.z}`));
+    for (const stair of stairs) {
+      for (const dy of [1, 2]) {
+        expect(filled.has(`${stair.x},${stair.y + dy},${stair.z}`)).toBe(false);
+      }
+    }
+  });
+
+  it("pairs both halves of a bed, at every yaw", () => {
+    const c = CASES[0] as Case;
+    for (const yaw of YAWS) {
+      const { ops } = build(c, { params: { ...c.params, archetype: "cottage" } });
+      const [sx, , sz] = c.size;
+      const beds = rotateOps(ops, yaw, sx, sz).filter((o) => o.block === "red_bed");
+      expect(beds.length, `yaw ${yaw}`).toBe(2);
+      const foot = beds.find((o) => o.props?.["part"] === "foot") as LocalVoxelOp;
+      const head = beds.find((o) => o.props?.["part"] === "head") as LocalVoxelOp;
+      expect(foot, `yaw ${yaw} foot`).toBeDefined();
+      expect(head, `yaw ${yaw} head`).toBeDefined();
+      // One `facing`, shared, and the head exactly one step along it. Anything
+      // else renders as two overlapping bed pieces.
+      expect(head.props?.["facing"], `yaw ${yaw}`).toBe(foot.props?.["facing"]);
+      expect(head.y).toBe(foot.y);
+      const [dx, dz] = cardinalStep(foot.props?.["facing"] as never);
+      expect([head.x - foot.x, head.z - foot.z], `yaw ${yaw}`).toEqual([dx, dz]);
+    }
   });
 
   it("lights every storey", () => {

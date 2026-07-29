@@ -274,10 +274,31 @@ export function clipTrees(
 
     const blocks = TREE_TEMPLATES[tree.shape].blocks(variation);
     let hit = 0;
+    let leaves = 0;
+    let leavesHit = 0;
+    let logHit = 0;
     for (const block of blocks) {
-      if (clip.blocked(tree.x + block.dx, tree.baseY + block.dy, tree.z + block.dz)) hit++;
+      const cut = clip.blocked(tree.x + block.dx, tree.baseY + block.dy, tree.z + block.dz);
+      if (block.part === "leaves") leaves++;
+      if (!cut) continue;
+      hit++;
+      if (block.part === "leaves") leavesHit++;
+      else logHit++;
     }
-    if (blocks.length > 0 && hit / blocks.length > MAX_CLIP_FRACTION) {
+    // Three ways to fail, and the first one on its own was not enough.
+    //
+    // A road-corridor box is a *low* box — the surfaced band plus four blocks
+    // of headroom — so on a tall tree it eats the trunk and leaves the crown,
+    // and the crown is only a small share of the whole, so the volume rule let
+    // it through. The village had floating canopies and bare two-block log
+    // stumps beside its lanes for exactly that reason. A tree that loses any
+    // of its trunk is not a tree, and neither is one that keeps its trunk but
+    // loses most of its canopy.
+    const eaten =
+      (blocks.length > 0 && hit / blocks.length > MAX_CLIP_FRACTION) ||
+      (leaves > 0 && leavesHit / leaves > MAX_CLIP_FRACTION) ||
+      logHit > 0;
+    if (eaten) {
       dropped++;
       continue;
     }

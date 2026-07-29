@@ -42,10 +42,12 @@ import type { ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
 import { buildBuildings, type BuildingJob, type BuiltBuilding, type StructureBlock } from "./buildings.js";
+import { buildDoorsteps } from "./doorsteps.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
 
 export * from "./buildings.js";
+export * from "./doorsteps.js";
 export * from "./plaza.js";
 export * from "./roads.js";
 
@@ -82,6 +84,10 @@ export interface StructureStats {
   readonly plazaColumns: number;
   readonly plazaBenches: number;
   readonly plazaWell: boolean;
+  /** Doors given a flight of steps out to the ground. */
+  readonly doorstepsStepped: number;
+  /** Doors whose approach was cut down to the threshold. */
+  readonly doorstepsDropped: number;
 }
 
 /** What the structure pass produced. */
@@ -199,6 +205,19 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks.push(...roads.blocks);
   }
 
+  // --- doorsteps -----------------------------------------------------------
+  // Last, and it has to be: a doorstep reconciles a threshold with the ground
+  // *outside* it, and until the roads have cut and the shoulders have blended,
+  // that ground is not final.
+  const doorsteps = buildDoorsteps({
+    buildings: buildings.built,
+    ports: input.ports,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+  });
+  blocks.push(...doorsteps.blocks);
+
   return {
     blocks,
     buildings: buildings.built,
@@ -217,6 +236,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plazaColumns: plaza?.pavedColumns ?? 0,
       plazaBenches: plaza?.benches ?? 0,
       plazaWell: plaza?.well ?? false,
+      doorstepsStepped: doorsteps.stepped,
+      doorstepsDropped: doorsteps.dropped,
     },
   };
 }

@@ -175,6 +175,30 @@ export interface PrismarineStack {
   blockStateOf(name: string, properties: Readonly<Record<string, string>>): number | undefined;
   /** Un-namespaced name for a block state id; `undefined` if unknown. */
   blockNameByStateId(stateId: number): string | undefined;
+  /**
+   * Decode a state id back into its block name and full property map — the
+   * inverse of {@link blockStateOf}.
+   *
+   * The connection-state pass needs this: to rewrite a fence's four
+   * connection flags without losing the `waterlogged` it already carries, it
+   * has to read the state it is rewriting rather than start from the default.
+   */
+  blockStateProps(
+    stateId: number,
+  ): { readonly name: string; readonly props: Record<string, string> } | undefined;
+  /**
+   * True when a block presents a full, solid square face on every side — the
+   * property that decides whether a fence, wall or pane connects to it.
+   *
+   * Deliberately conservative. `minecraft-data` reports a `boundingBox` of
+   * `"block"` for anything whose *bounds* are a cube, which includes stairs,
+   * slabs, doors, torches and a dirt path, so it cannot answer this on its
+   * own; what it can do is rule out the empty-bounded blocks cheaply, and the
+   * rest is a name deny-list. Getting this wrong in the permissive direction
+   * would connect a fence to thin air, which is the defect the pass exists to
+   * remove, so "unsure" resolves to "no".
+   */
+  isFullCube(stateId: number): boolean;
   biomeIdByName(name: string): number | undefined;
   createChunk(): EmitChunk;
   openAnvil(regionDir: string): EmitAnvil;
@@ -182,6 +206,131 @@ export interface PrismarineStack {
 
 /** Block names that count as "nothing here" when scanning a column. */
 const AIR_NAMES = new Set(["air", "cave_air", "void_air"]);
+
+/** Name suffixes that are never a full cube, whatever the bounding box says. */
+const PARTIAL_SUFFIXES: readonly string[] = Object.freeze([
+  "_stairs",
+  "_slab",
+  "_fence",
+  "_fence_gate",
+  "_wall",
+  "_pane",
+  "_door",
+  "_trapdoor",
+  "_button",
+  "_pressure_plate",
+  "_sign",
+  "_banner",
+  "_carpet",
+  "_bed",
+  "_head",
+  "_skull",
+  "_candle",
+  "_torch",
+  "_rod",
+  "_chain",
+  "_bars",
+  "_plate",
+  "_rail",
+  "_sapling",
+  "_bulb",
+  "_amethyst_bud",
+  "_cluster",
+  "_coral",
+  "_coral_fan",
+  "_hanging_sign",
+]);
+
+/** Exact block names that are not a full cube. */
+const PARTIAL_NAMES: ReadonlySet<string> = new Set([
+  "air",
+  "cave_air",
+  "void_air",
+  "water",
+  "lava",
+  "dirt_path",
+  "farmland",
+  "snow",
+  "ladder",
+  "lantern",
+  "soul_lantern",
+  "chest",
+  "trapped_chest",
+  "ender_chest",
+  "anvil",
+  "chipped_anvil",
+  "damaged_anvil",
+  "campfire",
+  "soul_campfire",
+  "cauldron",
+  "water_cauldron",
+  "lava_cauldron",
+  "powder_snow_cauldron",
+  "composter",
+  "hopper",
+  "brewing_stand",
+  "enchanting_table",
+  "end_portal_frame",
+  "grindstone",
+  "lectern",
+  "stonecutter",
+  "bell",
+  "conduit",
+  "daylight_detector",
+  "sea_pickle",
+  "turtle_egg",
+  "flower_pot",
+  "cake",
+  "dragon_egg",
+  "piston_head",
+  "moving_piston",
+  "lever",
+  "repeater",
+  "comparator",
+  "redstone_wire",
+  "tripwire",
+  "tripwire_hook",
+  "vine",
+  "glow_lichen",
+  "scaffolding",
+  "cactus",
+  "sugar_cane",
+  "bamboo",
+  "kelp",
+  "kelp_plant",
+  "seagrass",
+  "tall_seagrass",
+  "short_grass",
+  "grass",
+  "tall_grass",
+  "fern",
+  "large_fern",
+  "dead_bush",
+  "lily_pad",
+  "snow_block_layer",
+  "soul_sand",
+  "mud",
+  "brown_mushroom",
+  "red_mushroom",
+  "cobweb",
+  "end_rod",
+  "lightning_rod",
+  "decorated_pot",
+  "sniffer_egg",
+  "heavy_core",
+  "pointed_dripstone",
+]);
+
+/** Conservative "does a fence connect to this?" test, by block name. */
+function isFullCubeName(name: string): boolean {
+  if (PARTIAL_NAMES.has(name)) return false;
+  if (name.startsWith("potted_")) return false;
+  if (name.endsWith("_flower") || name.endsWith("_tulip") || name.endsWith("_orchid")) return false;
+  for (const suffix of PARTIAL_SUFFIXES) {
+    if (name.endsWith(suffix)) return false;
+  }
+  return true;
+}
 
 class ChunkAdapter implements EmitChunk {
   /**
@@ -296,6 +445,7 @@ export function loadPrismarine(version: string): PrismarineStack {
 
   const blockNameByStateId = (stateId: number): string | undefined =>
     data.blocksByStateId[stateId]?.name;
+  const fullCubeCache = new Map<number, boolean>();
 
   return {
     minecraftVersion: data.version.minecraftVersion,
@@ -345,6 +495,38 @@ export function loadPrismarine(version: string): PrismarineStack {
     },
 
     blockNameByStateId,
+
+    blockStateProps(stateId: number) {
+      const def = data.blocksByStateId[stateId];
+      if (def === undefined) return undefined;
+      const states = def.states ?? [];
+      const props: Record<string, string> = {};
+      let rest = stateId - def.minStateId;
+      for (let k = states.length - 1; k >= 0; k--) {
+        const state = states[k] as RawBlockStateDef;
+        const index = rest % state.num_values;
+        rest = (rest - index) / state.num_values;
+        const values =
+          state.values ??
+          (state.type === "bool"
+            ? ["true", "false"]
+            : Array.from({ length: state.num_values }, (_, i) => String(i)));
+        props[state.name] = values[index] as string;
+      }
+      return { name: def.name, props };
+    },
+
+    isFullCube(stateId: number): boolean {
+      let known = fullCubeCache.get(stateId);
+      if (known !== undefined) return known;
+      const def = data.blocksByStateId[stateId];
+      known =
+        def !== undefined &&
+        (def as { boundingBox?: string }).boundingBox === "block" &&
+        isFullCubeName(def.name);
+      fullCubeCache.set(stateId, known);
+      return known;
+    },
 
     biomeIdByName(name: string): number | undefined {
       return data.biomesByName[stripNamespace(name)]?.id;

@@ -11,6 +11,7 @@
 
 import path from "node:path";
 
+import { applyConnectionStates, type ConnectionStats } from "../emit/connections.js";
 import type { EmitChunk, PrismarineStack } from "../emit/prismarine.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
 import { writeWorldFiles } from "../emit/write.js";
@@ -69,6 +70,8 @@ export interface TerrainEmitSummary {
   readonly minecraftVersion: string;
   readonly dataVersion: number;
   readonly spawn: readonly [number, number, number];
+  /** What the connection-state pass examined and rewrote. */
+  readonly connections: ConnectionStats;
 }
 
 /** Materialize and write. */
@@ -108,6 +111,17 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     }
   }
 
+  // Connections last, over the finished world. Fences, panes, walls and bars
+  // store their neighbours in their own block state and Minecraft never
+  // recomputes that on load, so it has to be right on disk — and it can only
+  // be computed once every block exists. Terrain columns hold no connective
+  // block, so the decoration and structure lists are the whole candidate set.
+  const connections = applyConnectionStates(
+    chunks,
+    [...(input.decor ?? []), ...(input.structures ?? [])],
+    stack,
+  );
+
   const written = await writeWorldFiles({
     chunks,
     worldDir: path.resolve(input.worldDir),
@@ -129,6 +143,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     minecraftVersion: stack.minecraftVersion,
     dataVersion: stack.dataVersion,
     spawn: [input.spawn.x, input.spawn.y, input.spawn.z],
+    connections,
   };
 }
 

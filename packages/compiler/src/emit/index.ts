@@ -31,3 +31,9 @@ export type {
 
 export { EMIT_MINECRAFT_VERSION, emitWorld, zeroRegionTimestamps } from "./world.js";
 export type { EmitBounds, EmitOptions, EmitSummary } from "./world.js";
+
+export { applyConnectionStates, connectiveKindOf } from "./connections.js";
+export type { ConnectionCandidate, ConnectionStats, ConnectiveKind } from "./connections.js";
+
+export { PHYSICS_RULES, lintWorldPhysics } from "./physics.js";
+export type { PhysicsContext, PhysicsFinding, PhysicsReport } from "./physics.js";

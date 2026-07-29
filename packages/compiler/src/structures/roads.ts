@@ -76,8 +76,17 @@ export const ROAD_LANTERN_SPACING = 14;
  * any fill face that does survive is capped at one block by construction,
  * which is the property {@link gradeProfile}'s test asserts. What smooths over
  * the remaining edges is {@link blendShoulders}, not a taller embankment.
+ *
+ * At **0** it is not biased downward, it is *flush*: the envelope's apex is
+ * natural ground, so `min_j (ground[j] + |i − j|) ≤ ground[i]` holds
+ * everywhere and a lane is only ever cut into the land, never laid on it. One
+ * was still one too many — a walkthrough of the first village reported the
+ * lanes as raised causeways with a cobble kerb showing a full block of face
+ * beside the grass, which is exactly what a uniform `+1` apex builds on flat
+ * ground. The road surface block now *replaces* the terrain's top block in its
+ * column, which is what "a path worn into a field" means.
  */
-export const ROAD_FILL_BAND = 1;
+export const ROAD_FILL_BAND = 0;
 
 /**
  * Extra cost for a cell that touches a building's perimeter.

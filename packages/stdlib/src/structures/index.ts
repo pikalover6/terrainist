@@ -535,11 +535,11 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   }
 
   // --- door and entrance ---------------------------------------------------
-  if (door !== null) emitEntrance(put, style, door, sx, sz, archetype);
+  let apronOps = 0;
+  if (door !== null) apronOps += emitEntrance(put, style, door, sx, sz, archetype);
 
   // --- windows -------------------------------------------------------------
   let windowCount = 0;
-  let apronOps = 0;
   for (let s = 0; s < floors; s++) {
     const y = s * storyHeight + 2;
     if (y >= wallTop) continue;
@@ -606,26 +606,51 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     floorLevels.push(level);
     if (!hasInterior) continue;
     // The stair run climbs +z along the west interior wall, from the floor
-    // below (`base`) to this one. The floor plane keeps a matching hole over
-    // the run, so the last step actually emerges onto the storey above.
+    // below (`base`) to this one.
+    //
+    // The run is `storyHeight` steps long, not `storyHeight - 1`. The old
+    // count put the top step one block *below* the storey it served: standing
+    // on its back tread your feet were at `level`, the upper floor's walking
+    // surface is `level + 1`, and a one-block rise is a jump, not a stair. A
+    // walkthrough reported exactly that — "the interior stairs need a jump to
+    // mount". The last step now sits **in** the upper floor plane, so its back
+    // half is flush with the floor it arrives on and every rise in the flight
+    // is half a block. One further interior cell past the run is the landing,
+    // which is why the run needs `storyHeight + 1` cells of depth to fit.
     const base = level - storyHeight;
-    const runLength = Math.min(storyHeight - 1, interior.z1 - interior.z0);
-    const canStair = runLength >= 1;
+    const runLength = storyHeight;
+    const canStair = interior.z1 - interior.z0 >= runLength;
+    // The floor plane keeps a hole over the whole run (the top step lives in
+    // it); when the footprint is too shallow for a flight, the hole is the one
+    // cell the ladder comes up through.
+    const holeSpan = canStair ? runLength : 1;
     for (let z = interior.z0; z <= interior.z1; z++) {
       for (let x = interior.x0; x <= interior.x1; x++) {
-        const inHole = canStair && x === interior.x0 && z < interior.z0 + runLength;
+        const inHole = x === interior.x0 && z < interior.z0 + holeSpan;
         if (inHole) continue;
         put(x, level, z, style["floor.interior"] as string);
       }
     }
-    if (!canStair) continue;
     stairRuns.push(base + 1);
-    for (let i = 0; i < runLength; i++) {
-      put(interior.x0, base + 1 + i, interior.z0 + i, style["stair.interior"] as string, {
-        facing: "south",
-        half: "bottom",
-      });
-      if (base === 0) stairColumns.add(`${interior.x0},${interior.z0 + i}`);
+    if (canStair) {
+      for (let i = 0; i < runLength; i++) {
+        put(interior.x0, base + 1 + i, interior.z0 + i, style["stair.interior"] as string, {
+          facing: "south",
+          half: "bottom",
+          shape: "straight",
+        });
+        if (base === 0) stairColumns.add(`${interior.x0},${interior.z0 + i}`);
+      }
+    } else {
+      // Too shallow for a flight: a ladder up the west wall instead. `facing`
+      // east means the ladder's back is fixed to the cell at `x - 1`, which is
+      // the west wall — solid from y = 1 to the eave plate — so every rung has
+      // the support the game requires. It runs one course *past* the floor
+      // plane so a climber can step off onto it rather than into it.
+      for (let y = base + 1; y <= level + 1; y++) {
+        put(interior.x0, y, interior.z0, "ladder", { facing: "east" });
+      }
+      if (base === 0) stairColumns.add(`${interior.x0},${interior.z0}`);
     }
   }
   // A ceiling over the top storey. Without it the roof reads as a hat balanced
@@ -644,7 +669,10 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   // stage above has just guaranteed exists.
   let lanternCount = 0;
   if (hasInterior) {
-    const cx = Math.floor((interior.x0 + interior.x1) / 2);
+    // Never in the stair column: the floor plane there is a hole, so a lantern
+    // hung under it would hang from nothing.
+    const cx0 = Math.floor((interior.x0 + interior.x1) / 2);
+    const cx = cx0 === interior.x0 && interior.x1 > interior.x0 && floors > 1 ? cx0 + 1 : cx0;
     const cz = Math.floor((interior.z0 + interior.z1) / 2);
     for (let s = 0; s < floors; s++) {
       const y = (s + 1) * storyHeight - 1;
@@ -665,7 +693,18 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
 
   // --- fit-out -------------------------------------------------------------
   const furnitureCount = hasInterior
-    ? furnish({ put, style, archetype, interior, door, storyHeight, floors, choice, stairColumns })
+    ? furnish({
+        put,
+        style,
+        archetype,
+        interior,
+        door,
+        storyHeight,
+        floors,
+        choice,
+        stairColumns,
+        blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
+      })
     : 0;
   if (door !== null) apronOps += emitPorchLamp(put, style, door, sx, sz);
 
@@ -769,7 +808,7 @@ function emitEntrance(
   sx: number,
   sz: number,
   archetype: BuildingArchetype,
-): void {
+): number {
   const facing = door.face;
   for (const half of ["lower", "upper"] as const) {
     put(door.x, half === "lower" ? 1 : 2, door.z, style["door.block"] as string, {
@@ -782,11 +821,13 @@ function emitEntrance(
   // The inn gets a double door: the second leaf takes the cell along the wall,
   // hinged the other way, which is what makes the pair read as one opening.
   const alongZ = door.x === 0 || door.x === sx - 1;
+  let double: { x: number; z: number } | null = null;
   if (archetype === "inn" || archetype === "hall") {
     const nx = door.x + (alongZ ? 0 : 1);
     const nz = door.z + (alongZ ? 1 : 0);
     const fits = alongZ ? nz < sz - 1 : nx < sx - 1;
     if (fits) {
+      double = { x: nx, z: nz };
       for (const half of ["lower", "upper"] as const) {
         put(nx, half === "lower" ? 1 : 2, nz, style["door.block"] as string, {
           facing,
@@ -797,7 +838,7 @@ function emitEntrance(
       }
     }
   }
-  // Posts either side and an upside-down slab lintel: the awning.
+  // Posts either side of the opening.
   for (const side of [-1, 1]) {
     const px = door.x + (alongZ ? 0 : side);
     const pz = door.z + (alongZ ? side : 0);
@@ -806,7 +847,26 @@ function emitEntrance(
       put(px, y, pz, style["wall.frame"] as string, { axis: "y" });
     }
   }
-  put(door.x, 3, door.z, style["roof.slab"] as string, { type: "top" });
+  // The lintel, and the awning one block **out**.
+  //
+  // This used to be an upside-down slab in the wall plane directly over the
+  // door, and a player standing at the threshold could see straight through
+  // the bottom half of it: a top slab fills only the upper half of its cell,
+  // so putting one *in the wall* replaces a solid block with a half-block hole
+  // over the door head. A world walkthrough reported it as exactly that. The
+  // wall course above the frame is now a solid lintel log, and the slab moves
+  // one cell outward over the doorstep, where its open lower half is the
+  // shelter the awning was always meant to be.
+  const lintelAxis = alongZ ? "z" : "x";
+  put(door.x, 3, door.z, style["wall.frame"] as string, { axis: lintelAxis });
+  if (double !== null) put(double.x, 3, double.z, style["wall.frame"] as string, { axis: lintelAxis });
+  const [ox, oz] = cardinalStep(facing);
+  let apron = 0;
+  for (const cell of double === null ? [door] : [door, double]) {
+    put(cell.x + ox, 3, cell.z + oz, style["roof.slab"] as string, { type: "top" });
+    apron++;
+  }
+  return apron;
 }
 
 /**
@@ -1132,6 +1192,8 @@ interface FurnishRequest {
   readonly choice: Seed256;
   /** Ground-floor columns the inter-storey stair run stands in. */
   readonly stairColumns: ReadonlySet<string>;
+  /** What the earlier stages have already written at a cell, if anything. */
+  readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
 }
 
 /**
@@ -1164,18 +1226,57 @@ function furnish(r: FurnishRequest): number {
     put(x, 1, z, block, props);
     n++;
   };
+  /**
+   * Lay a bed, both halves or neither.
+   *
+   * Minecraft stores a bed as two blocks sharing one `facing`, with the head
+   * at `foot + facing`. The first version had the pair the other way round —
+   * head at the anchor, foot at `+z` with `facing = south` — and the client
+   * renders that mismatch as two overlapping bed pieces, which is what a
+   * walkthrough reported. It also placed each half through `place`, so a foot
+   * that landed on a blocked cell left a headboard on its own. Both halves are
+   * now checked before either is written, and the head offset is taken from
+   * the same `facing` the blocks carry, so {@link rotateOps} — which rotates
+   * coordinates and `facing` by the same yaw — keeps the pair together.
+   */
+  const placeBed = (x: number, z: number, facing: Cardinal, block: string): void => {
+    const [dx, dz] = cardinalStep(facing);
+    const hx = x + dx;
+    const hz = z + dz;
+    if (!free(x, z) || !free(hx, hz)) return;
+    put(x, 1, z, block, { facing, part: "foot", occupied: "false" });
+    put(hx, 1, hz, block, { facing, part: "head", occupied: "false" });
+    n += 2;
+  };
   // Wall torches, on the interior face of the two long walls.
   const torchY = Math.min(3, r.storyHeight - 1);
   const torch = style["light.torch"] as string;
   const wallTorch = torch === "torch" ? "wall_torch" : torch;
-  for (const [tx, tz, facing] of [
-    [interior.x0, interior.z0, "south"],
-    [interior.x1, interior.z1, "north"],
+  for (const [tx0, tz, facing, slide] of [
+    [interior.x0, interior.z0, "south", 1],
+    [interior.x1, interior.z1, "north", -1],
   ] as const) {
-    if (tx >= interior.x0 && tz >= interior.z0) {
-      put(tx, torchY, tz, wallTorch, { facing });
-      n++;
+    // A torch bracketed to the north or south wall may slide *along* that wall
+    // but never off it, because `facing` names the block it hangs on. It has
+    // to slide for two reasons, both found by a world readback: a torch two
+    // blocks over the bottom step of a stair is a low bridge you cannot walk
+    // under, and a torch whose backing cell is a **window** is bracketed to a
+    // pane, which is not a solid face and which the game would drop on the
+    // first block update.
+    const [bx, bz] = cardinalStep(facing);
+    let tx: number | null = null;
+    for (let k = 0; k <= interior.x1 - interior.x0; k++) {
+      const candidate = tx0 + slide * k;
+      if (candidate < interior.x0 || candidate > interior.x1) break;
+      if (r.stairColumns.has(`${candidate},${tz}`)) continue;
+      const backing = r.blockAt(candidate + bx, torchY, tz + bz);
+      if (backing === undefined || !SOLID_BACKING.test(backing.block)) continue;
+      tx = candidate;
+      break;
     }
+    if (tx === null) continue;
+    put(tx, torchY, tz, wallTorch, { facing });
+    n++;
   }
 
   const x0 = interior.x0;
@@ -1185,8 +1286,7 @@ function furnish(r: FurnishRequest): number {
 
   switch (r.archetype) {
     case "cottage": {
-      place(x0, z0, "red_bed", { facing: "south", part: "head", occupied: "false" });
-      place(x0, z0 + 1, "red_bed", { facing: "south", part: "foot", occupied: "false" });
+      placeBed(x0, z0, "south", "red_bed");
       place(x1, z0, "chest", { facing: "west", type: "single" });
       place(x1, z1, "crafting_table");
       place(x1 - 1 >= x0 ? x1 - 1 : x1, z1, "barrel", { facing: "up", open: "false" });
@@ -1304,6 +1404,14 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
   const shaft: LocalRect = { x0: 1, z0: 1, x1: sx - 2, z1: sz - 2 };
   const hasShaft = shaft.x1 - shaft.x0 >= 2 && shaft.z1 - shaft.z0 >= 2;
   const ring = perimeter(sx, sz);
+  // The ladder's column, decided before anything is built because two later
+  // stages have to keep out of its way: the arrow slits must not punch out the
+  // wall it is fixed to, and the platform must leave it a hole to come up
+  // through. `ladderBackX` is the wall cell the rungs attach to; the ladder
+  // itself stands one cell *inside* it.
+  const ladderBackX = Math.floor(sx / 2);
+  const ladderBackZ = shaft.z0;
+  const ladderZ = Math.min(shaft.z0 + 1, Math.max(shaft.z0 + 1, shaft.z1));
 
   // --- base: the full footprint, up to the first set-back ------------------
   for (let y = 1; y <= baseTop; y++) {
@@ -1318,7 +1426,12 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
         open: "false",
       });
     }
-    put(door.x, 3, door.z, style["stone.slab"] as string, { type: "top" });
+    // The course above the door head stays the solid wall it already is; a
+    // top slab there would leave the lower half of the cell open, which is the
+    // half-block hole a walkthrough reported over every doorway. The awning
+    // moves one cell out over the doorstep instead.
+    const [ox, oz] = cardinalStep(door.face);
+    put(door.x + ox, 3, door.z + oz, style["stone.slab"] as string, { type: "top" });
   }
   // The set-back course reads as a plinth cap.
   for (const cell of ring) {
@@ -1345,6 +1458,11 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
         ? cell.z === Math.floor((shaft.z0 + shaft.z1) / 2)
         : cell.x === Math.floor((shaft.x0 + shaft.x1) / 2);
       if (!mid) continue;
+      // Never the ladder's backing column. On an odd footprint the north
+      // face's mid cell *is* that column, so every fourth course used to
+      // delete the wall behind the ladder and leave rungs fixed to open air —
+      // a walkthrough found the tower shaft full of them.
+      if (cell.x === ladderBackX && cell.z === ladderBackZ) continue;
       cells.delete(`${cell.x},${y},${cell.z}`);
     }
   }
@@ -1373,15 +1491,22 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
   }
 
   // --- ladder + lights -----------------------------------------------------
-  const lx = Math.floor(sx / 2);
-  const lz = hasShaft ? shaft.z0 : 1;
+  // Every rung is fixed to a solid cell. `facing = south` means the ladder's
+  // back is against the block at `z - 1`, so the ladder stands at `ladderZ`
+  // and its backing column at `ladderBackZ` is filled the whole way up — the
+  // base storey's interior and the parapet course have no wall there of their
+  // own, so this pass supplies one, which reads as a pilaster.
+  const lx = ladderBackX;
+  const lz = ladderZ;
   const ladderFacing: Cardinal = "south";
-  for (let y = 1; y < platformY; y++) {
+  for (let y = 1; y <= platformY + 1; y++) {
+    if (cells.get(`${lx},${y},${ladderBackZ}`) === undefined) {
+      put(lx, y, ladderBackZ, stoneAt(lx, y, ladderBackZ));
+    }
+    // The platform floor and the storeys below it must not block the shaft.
+    cells.delete(`${lx},${y},${lz}`);
     put(lx, y, lz, "ladder", { facing: ladderFacing });
   }
-  // A hole in the platform so the ladder actually arrives somewhere.
-  cells.delete(`${lx},${platformY},${lz}`);
-  put(lx, platformY, lz, "ladder", { facing: ladderFacing });
   // Torches up the shaft, bracketed to the wall the ladder is fixed to. They
   // were free-standing lanterns until a world readback found them hanging in
   // mid-air: nothing in an open shaft can support a lantern, but a wall torch
@@ -1389,7 +1514,11 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
   let lanternCount = 0;
   const bracketX = lx + 1 <= shaft.x1 ? lx + 1 : lx - 1;
   for (let y = baseTop + 3; y < platformY; y += 4) {
-    put(bracketX, y, lz + 1, "wall_torch", { facing: "south" });
+    // Same course as the ladder, so the bracket is against the shaft wall at
+    // `ladderBackZ` — `facing = south` names the block behind it, and an
+    // arrow slit in that cell means there is nothing to bracket to.
+    if (cells.get(`${bracketX},${y},${ladderBackZ}`) === undefined) continue;
+    put(bracketX, y, ladderZ, "wall_torch", { facing: "south" });
     lanternCount++;
   }
   // A lantern on a post at the parapet corner: a beacon, and supported.
@@ -1414,7 +1543,7 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
       stairRuns: [1],
       windowCount: 0,
       lanternCount,
-      apronOps: 0,
+      apronOps: door === null ? 0 : 1,
       furnitureCount: 0,
       chimney: false,
       materialKey: `${r.materials.wood.planks}|${r.materials.stone.primary}|${r.materials.roof.stairs}`,
@@ -1429,6 +1558,17 @@ function opposite(c: Cardinal): Cardinal {
 /* -------------------------------------------------------------------------- */
 /* helpers                                                                     */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Block names a wall-mounted torch, sign or bracket may hang on.
+ *
+ * The grammar's wall vocabulary is small and closed — planks, logs, stone,
+ * brick, glass panes, doors, trapdoors — so a positive match on the solid part
+ * of it is both exact and cheap. Anything unrecognised is treated as *not* a
+ * face, which is the safe direction: the cost of a false negative is a torch
+ * one cell further along the wall.
+ */
+const SOLID_BACKING = /(planks|_log$|_wood$|bricks?$|cobblestone$|stone$|_block$|deepslate$|terracotta$|sandstone$|_tiles$|glass$)/;
 
 /** The footprint perimeter, in canonical (z, x) order. */
 export function perimeter(sx: number, sz: number): { x: number; z: number }[] {
