@@ -246,7 +246,10 @@ export const CONSTRAINT_FIELDS: Readonly<Record<ConstraintType, readonly string[
   along: ["target", "offset", "side", "faceRoad", "spacing", "at"],
   beside: ["target", "offset", "side", "faceRoad", "spacing", "at"],
   distance: ["target", "min", "max", "measure", "axis", "aggregate"],
-  connected: ["to", "from", "via", "style", "width", "height", "maxGrade", "maxLength", "prefer", "bidirectional"],
+  // `oreChamber` is this compiler's own: a mine gallery may widen into a
+  // working face near its far end, which is a property of the connector and so
+  // belongs on the constraint that declares it.
+  connected: ["to", "from", "via", "style", "width", "height", "maxGrade", "maxLength", "prefer", "bidirectional", "oreChamber"],
   align: ["target", "axis", "mode"],
   orientation: ["value", "axis"],
   clearance: ["amount", "direction", "of", "against"],

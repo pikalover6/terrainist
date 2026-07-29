@@ -32,6 +32,7 @@ import {
   BREAKPOINT_EXHIBIT_ROWS,
   CONTEXT_YAWS,
   EXTRA_EXHIBIT_ROWS,
+  UNDERGROUND_EXHIBIT_ROWS,
   PROP_EXHIBIT_PLAN,
   SEED_SWEEP_LENGTH,
   SEED_SWEEP_ROW_LABEL,
@@ -111,12 +112,14 @@ describe("dev world grid", () => {
     const extra = EXTRA_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const breakpoints = BREAKPOINT_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const tall = HIGHRISE_EXHIBIT_ROWS.length * HIGHRISE_ROW_LENGTH;
+    const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         tall +
         2 * 7 +
         SEED_SWEEP_LENGTH +
-        breakpoints,
+        breakpoints +
+        underground,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

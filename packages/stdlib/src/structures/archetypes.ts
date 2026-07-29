@@ -26,6 +26,13 @@ import {
 export * from "./archetypes-civic.js";
 
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
+import {
+  UNDERGROUND_ARCHETYPES,
+  furnishMineHead,
+  undergroundArchetypeOfTags,
+} from "./underground.js";
+
+export * from "./underground.js";
 
 /* -------------------------------------------------------------------------- */
 /* archetypes                                                                  */
@@ -44,6 +51,7 @@ export const BUILDING_ARCHETYPES = [
   "watchtower",
   ...EXTENDED_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
+  ...UNDERGROUND_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -57,6 +65,11 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // flats rather than a stone lookout.
   const tall = highriseArchetypeOfTags(tags);
   if (tall !== null) return tall;
+  // The mine head, ahead of the lookout table: "tower" is greedy and a
+  // headframe over a shaft is a tower to that rule, which is not what a
+  // document tagged `mineshaft` is asking for.
+  const dug = undergroundArchetypeOfTags(tags);
+  if (dug !== null) return dug;
   if (has("lookout") || has("tower") || has("watchtower")) return "watchtower";
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
@@ -367,6 +380,7 @@ export function furnish(r: FurnishRequest): number {
     blockAt: r.blockAt,
   };
   n += furnishExtended(ctx);
+  n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
   return n;

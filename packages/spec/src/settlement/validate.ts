@@ -756,11 +756,42 @@ function validateConnected(
   // port-pair inference yet, so an unstated `via` reads as the kind it builds.
   const kind = typeof via === "string" ? via : "tunnel";
 
-  for (const key of ["style", "prefer"] as const) {
-    const v = c[key];
-    if (v !== undefined && typeof v !== "string") {
-      out.push(error("BAD_CONSTRAINT", at, `"${key}" must be a string, got ${describe(v)}`, `omit "${key}" — it is carried but not read yet`));
-    }
+  // `style` is read for a tunnel and carried for everything else. A gallery is
+  // dug `dressed`, `mine` or `crypt`; anything else names a hand nobody has.
+  const styleValue = c["style"];
+  if (styleValue !== undefined && typeof styleValue !== "string") {
+    out.push(error("BAD_CONSTRAINT", at, `"style" must be a string, got ${describe(styleValue)}`, 'write "style": "mine" for a rough working, "crypt" for a burial passage, or omit it for the dressed gallery'));
+  } else if (
+    typeof styleValue === "string" &&
+    kind === "tunnel" &&
+    !(TUNNEL_STYLE_VALUES as readonly string[]).includes(styleValue)
+  ) {
+    out.push(
+      error(
+        "BAD_CONSTRAINT",
+        at,
+        `"style" must name a tunnel style — one of ${TUNNEL_STYLE_VALUES.join(", ")} — got ${describe(styleValue)}`,
+        'write "style": "mine" for a rough working with rails and ore, "crypt" for a burial passage with niches, or omit it for the dressed stone-brick gallery',
+      ),
+    );
+  }
+  const prefer = c["prefer"];
+  if (prefer !== undefined && typeof prefer !== "string") {
+    out.push(error("BAD_CONSTRAINT", at, `"prefer" must be a string, got ${describe(prefer)}`, 'omit "prefer" — it is carried but not read yet'));
+  }
+  // `oreChamber` widens a mine gallery into a working face near its far end.
+  if (c["oreChamber"] !== undefined && typeof c["oreChamber"] !== "boolean") {
+    out.push(error("BAD_CONSTRAINT", at, `"oreChamber" must be a boolean, got ${describe(c["oreChamber"])}`, 'write "oreChamber": true beside "style": "mine" to widen the far end into an ore chamber'));
+  } else if (c["oreChamber"] === true && styleValue !== "mine") {
+    out.push(
+      warning(
+        "CONSTRAINT_NOT_IMPLEMENTED",
+        at,
+        '"oreChamber" is only dug on a mine gallery; this constraint asks for one on a ' +
+          `${typeof styleValue === "string" ? `"${styleValue}"` : "dressed"} tunnel, and none will be`,
+        'add "style": "mine" to the same constraint, or drop "oreChamber"',
+      ),
+    );
   }
   checkNumbers(out, at, c, {
     width: { min: 1, max: 16, int: true },
@@ -1518,6 +1549,19 @@ function validateHighriseEnvelope(out: LoamDiagnostic[], path: string, node: Obj
 export const BASEMENT_DEPTH_RANGE = [3, 5] as const;
 
 /**
+ * How a cellar may be dressed.
+ *
+ * `plain` is what every cellar was before the themed rooms existed and is
+ * still the default. The rest change the masonry and the contents and nothing
+ * else — same shell, same ladder, same walkable plane — which is why this is a
+ * param of `basement` rather than an archetype of its own.
+ */
+export const CELLAR_STYLE_VALUES = ["plain", "crypt", "vault", "wine_cellar", "mine"] as const;
+
+/** How a `connected … via "tunnel"` gallery may be dug. */
+export const TUNNEL_STYLE_VALUES = ["dressed", "mine", "crypt"] as const;
+
+/**
  * `basement`: `true`, or `{ "depth": 3..5 }`.
  *
  * The bare-number form (`"basement": 4`) is accepted as the same thing, because
@@ -1539,7 +1583,18 @@ function validateBasementParam(out: LoamDiagnostic[], at: string, value: unknown
     out.push(error("STRUCTURE_PARAM", at, `"basement" must be a boolean or an object, got ${describe(value)}`, fix));
     return;
   }
-  unknownKeys(out, value, `${at}.basement`, ["depth"], "a basement");
+  unknownKeys(out, value, `${at}.basement`, ["depth", "style"], "a basement");
+  const style = value["style"];
+  if (style !== undefined && !(CELLAR_STYLE_VALUES as readonly unknown[]).includes(style)) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        `${at}.basement`,
+        `"style" must name a cellar style — one of ${CELLAR_STYLE_VALUES.join(", ")} — got ${describe(style)}`,
+        'write "basement": { "depth": 4, "style": "crypt" } for a burial vault, or omit "style" for the plain cellar',
+      ),
+    );
+  }
   const depth = value["depth"];
   if (depth === undefined) return;
   if (typeof depth !== "number" || !Number.isInteger(depth) || depth < lo || depth > hi) {

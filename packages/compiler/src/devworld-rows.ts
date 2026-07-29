@@ -28,6 +28,7 @@ import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
+import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
 export type { DevExhibitCell, DevExhibitRow } from "./exhibits/types.js";
@@ -64,6 +65,7 @@ export {
  */
 export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCHETYPE_EXHIBIT_ROWS,
+  ...UNDERGROUND_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
   ...SEED_EXHIBIT_ROWS,
@@ -112,3 +114,12 @@ export { BREAKPOINT_EXHIBIT_ROWS, exactRoofHeight } from "./exhibits/breakpoints
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";
+
+/** The themed underground: the cellar styles, and the mine head over one. */
+export {
+  CELLAR_STYLE_ROW,
+  MINE_HEAD_ROW,
+  UNDERGROUND_EXHIBIT_DEPTH,
+  UNDERGROUND_EXHIBIT_ROWS,
+  cellarStyleSize,
+} from "./exhibits/underground.js";

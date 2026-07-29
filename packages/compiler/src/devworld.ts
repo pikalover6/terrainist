@@ -401,6 +401,9 @@ export function exhibitParams(e: DevExhibit): BuildingParams {
     // off a document (via `resolveBasementParam`), so the breakpoint rows can
     // exhibit its clamps without the grid learning a param no author has.
     ...(typeof extra["basement"] === "number" ? { basement: extra["basement"] } : {}),
+    // …and how it is dressed, which is a `basement.style` in a document and so
+    // is something a document could also have said.
+    ...(typeof extra["cellarStyle"] === "string" ? { cellarStyle: extra["cellarStyle"] } : {}),
     ...(wing === undefined ? {} : { wing }),
   };
 }

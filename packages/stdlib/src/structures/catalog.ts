@@ -116,6 +116,16 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   "cellar",
   "tunnel",
   "caves",
+  // The themed underground. None of these is a node either: a crypt is a
+  // `basement` style, a mine gallery is a `connected … via "tunnel"` style, and
+  // an ore chamber is a room that style digs at its far end. They are named
+  // here because an author needs to know they can ask for them.
+  "crypt",
+  "catacombs",
+  "vault",
+  "wine_cellar",
+  "mineshaft",
+  "ore_chamber",
 ]);
 
 /** Curried entry builder — one per (category, kind) pair. */
@@ -655,15 +665,37 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   und("tunnel", "Tunnel", "implemented", { tags: ["network"] }),
   und("caves", "Cave system", "implemented", { tags: ["network", "natural"] }),
-  und("mineshaft", "Mineshaft network"),
-  und("mine_head", "Mine head"),
-  und("catacombs", "Catacombs"),
-  und("crypt", "Crypt"),
+  und("mineshaft", "Mineshaft network", "implemented", {
+    tags: ["network", "style"],
+    note: 'connected … via "tunnel" with style "mine": rough bore, timber frames, rails, ore studding, flooded dips.',
+  }),
+  und("mine_head", "Mine head", "implemented", {
+    tags: ["village", "mine"],
+    note: "building.grammar@0 archetype: headframe hut over the laddered shaft into a mine-style cellar.",
+  }),
+  und("ore_chamber", "Ore chamber", "implemented", {
+    tags: ["network", "mine"],
+    note: 'the widened terminal room of a mine gallery — "oreChamber": true on the constraint.',
+  }),
+  und("catacombs", "Catacombs", "implemented", {
+    tags: ["network", "style"],
+    note: 'connected … via "tunnel" with style "crypt": mossy stone brick with burial niches along the passage.',
+  }),
+  und("crypt", "Crypt", "implemented", {
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "crypt" } — niches, coffin, cobwebs. A cellar style, not a node.',
+  }),
   und("ossuary", "Ossuary"),
   und("undercroft", "Undercroft"),
   und("dungeon_room", "Dungeon room"),
-  und("vault", "Vault"),
-  und("wine_cellar", "Wine cellar"),
+  und("vault", "Vault", "implemented", {
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "vault" } — bar gate, dense chests and barrels.',
+  }),
+  und("wine_cellar", "Wine cellar", "implemented", {
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "wine_cellar" } — stacked barrel walls and a bottle gesture.',
+  }),
   und("root_cellar", "Root cellar"),
   und("smugglers_cove", "Smugglers' cove"),
   und("sewer_network", "Sewer network"),

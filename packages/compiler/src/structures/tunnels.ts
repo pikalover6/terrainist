@@ -76,6 +76,7 @@
 
 import {
   dilate,
+  stableFluidColumns,
   type BuildingMaterials,
   type CaveSpans,
   type Region,
@@ -164,6 +165,69 @@ export const TUNNEL_RISE_COST = 16;
  */
 export const TUNNEL_JUNCTION_COST = 40;
 
+/* -------------------------------------------------------------------------- */
+/* styles                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How a gallery is dressed.
+ *
+ * `dressed` is the masonry gallery this pass has always dug and is still the
+ * default. The other two are the same bore with a different hand on it:
+ *
+ * - **`mine`** — a rough-hewn working. The lining is drawn from three stones
+ *   rather than one, the walls are studded with ore and recessed here and
+ *   there, the frames are timber rather than masonry, a rail runs the length
+ *   of the floor, and the dips in its profile stand in water.
+ * - **`crypt`** — the burial passage that matches a `crypt` cellar: stone
+ *   brick gone mossy and cracked, with niches along both walls.
+ *
+ * Style changes only what is *written*. The route, the bore, the roof rule and
+ * the junction machinery are identical, which is what keeps one router and one
+ * integrity check honest across all three.
+ */
+export const TUNNEL_STYLES = ["dressed", "mine", "crypt"] as const;
+
+/** One gallery style. */
+export type TunnelStyle = (typeof TUNNEL_STYLES)[number];
+
+/** Coerce an unknown to a style; anything unrecognised is `dressed`. */
+export function resolveTunnelStyle(value: unknown): TunnelStyle {
+  return typeof value === "string" && (TUNNEL_STYLES as readonly string[]).includes(value)
+    ? (value as TunnelStyle)
+    : "dressed";
+}
+
+/** Cells between burial niches on a crypt passage. */
+export const TUNNEL_NICHE_SPACING = 5;
+
+/** Share of a mine gallery's wall blocks that are cut back one cell. */
+export const MINE_RECESS_SHARE = 0.06;
+
+/** Share of a mine gallery's wall blocks that show ore, inside an ore field. */
+export const MINE_ORE_SHARE = 0.34;
+
+/** Share of a mine gallery's wall that is inside an ore field at all. */
+export const MINE_ORE_FIELD_SHARE = 0.3;
+
+/** How deep a local dip in the floor profile must be before it holds water. */
+export const MINE_POOL_MIN_DEPTH = 2;
+
+/** Blocks out from an ore chamber's centre — a room wider than a junction. */
+export const ORE_CHAMBER_RADIUS = 3;
+
+/** Clear height of an ore chamber. */
+export const ORE_CHAMBER_HEIGHT = 4;
+
+/** Cells back from the far cellar the ore chamber is centred on. */
+export const ORE_CHAMBER_INSET = 6;
+
+/** Share of an ore chamber's wall that shows ore — dense, by design. */
+export const ORE_CHAMBER_ORE_SHARE = 0.42;
+
+/** Blocks out from the pool that the shell rule has to be answered for. */
+const POOL_AIR_SHELL = TUNNEL_FLUID_SHELL;
+
 /** Blocks out from a crossing that a shared junction chamber reaches. */
 export const JUNCTION_RADIUS = 2;
 
@@ -191,6 +255,10 @@ export interface TunnelLink {
   readonly toPort?: string;
   /** `maxLength`, when the constraint set one. */
   readonly maxLength?: number;
+  /** How the gallery is dressed. `dressed` when the constraint said nothing. */
+  readonly style?: TunnelStyle;
+  /** Whether a mine gallery widens into an ore chamber near its far end. */
+  readonly oreChamber?: boolean;
 }
 
 /** One end of a tunnel, resolved against a built cellar. */
@@ -269,6 +337,33 @@ export interface BuiltTunnel {
   readonly lanterns: number;
   /** Shared chambers this gallery dug where it met an earlier one. */
   readonly junctions: readonly TunnelJunction[];
+  /** How this gallery was dressed. */
+  readonly style: TunnelStyle;
+  /** Rails laid down the centre line. */
+  readonly rails: number;
+  /** Burial niches cut into the walls. */
+  readonly niches: number;
+  /** Wall blocks replaced with ore. */
+  readonly ores: number;
+  /** Cells of standing water in the floor's dips. */
+  readonly pool: number;
+  /** The widened terminal room, when one was dug. */
+  readonly oreChamber: OreChamber | null;
+}
+
+/** A widened terminal room on a mine gallery. */
+export interface OreChamber {
+  readonly x: number;
+  readonly z: number;
+  readonly y: number;
+  /**
+   * The direction the gallery runs through the room.
+   *
+   * Carried because the cart has to stand *beside* the line rather than across
+   * it: a three-block cart laid over a three-wide bore is a wall, and the
+   * traversal lint said so the first time this was built.
+   */
+  readonly along: readonly [number, number];
 }
 
 /** Everything {@link buildTunnels} reads. */
@@ -670,10 +765,16 @@ function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
   // the first tunnel's wall is the second tunnel's walkway.
   reopenCarvedCells(r.blocks, carveSet.cells, blocksBefore);
 
+  // The ore chamber, before the lining: it is more bore, and the lining pass
+  // has to see its cells as carved or it lays a wall across the room's mouth.
+  const oreChamber = findOreChamber(r, path);
+  if (oreChamber !== null) carveOreChamber(r, oreChamber, carveSet);
+
   const lining = lineTunnel(r, path, carveSet);
   for (const junction of junctions) {
     if (junction.chamber) lineJunction(r, junction, carveSet);
   }
+  if (oreChamber !== null) lineOreChamber(r, oreChamber, carveSet);
 
   // Claim the bore for the tunnels that follow — the whole three-wide swath,
   // not the centre line, because that is what a later gallery has to meet the
@@ -698,6 +799,12 @@ function routeAndBuild(r: RouteRequest): BuiltTunnel | null {
     stairSteps: path.filter((c) => c.flight).length,
     frames: lining.frames,
     lanterns: lining.lanterns,
+    style: r.link.style ?? "dressed",
+    rails: lining.rails,
+    niches: lining.niches,
+    ores: lining.ores,
+    pool: lining.pool,
+    oreChamber,
   };
 }
 
@@ -954,6 +1061,16 @@ interface CarveSet {
   readonly columns: Set<number>;
   /** Walkable floor Y per column — what a later gallery must match to junction. */
   readonly floorByColumn: Map<number, number>;
+  /**
+   * `"x,y,z"` of every cell that is some path cell's **walk plane**.
+   *
+   * Distinct from `floorByColumn`, which holds one Y per column and therefore
+   * loses the second one where a corner is also a step. This is the set the
+   * floor course is guarded against: the course under a walk plane is inside
+   * the bore of whatever stands one lower, so it has to be force-written, and
+   * a forced write into a cell somebody walks on is a block in a corridor.
+   */
+  readonly walkCells: Set<string>;
   blocks: number;
 }
 
@@ -971,6 +1088,7 @@ function carveTunnel(r: RouteRequest, path: readonly TunnelCell[]): CarveSet {
   const cells = new Set<string>();
   const columns = new Set<number>();
   const floorByColumn = new Map<number, number>();
+  const walkCells = new Set<string>();
   const footprints = r.input.placements.map((p) => p.footprint);
   const air = r.states.air;
   let blocks = 0;
@@ -1006,11 +1124,14 @@ function carveTunnel(r: RouteRequest, path: readonly TunnelCell[]): CarveSet {
         const bx = cell.x + px * d;
         const bz = cell.z + pz * d;
         for (let y = cell.y; y < cell.y + height; y++) add(bx, y, bz);
-        if (inside(region, bx, bz)) floorByColumn.set(index(region, bx, bz), cell.y);
+        if (inside(region, bx, bz)) {
+          floorByColumn.set(index(region, bx, bz), cell.y);
+          walkCells.add(`${bx},${cell.y},${bz}`);
+        }
       }
     }
   }
-  return { cells, columns, floorByColumn, blocks };
+  return { cells, columns, floorByColumn, walkCells, blocks };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1117,6 +1238,7 @@ function carveJunction(r: RouteRequest, junction: TunnelJunction, carve: CarveSe
     }
     carve.columns.add(idx);
     carve.floorByColumn.set(idx, junction.y);
+    carve.walkCells.add(`${x},${junction.y},${z}`);
     r.columns[idx] = 1;
   }
 }
@@ -1240,6 +1362,179 @@ function perpendiculars(
 }
 
 /* -------------------------------------------------------------------------- */
+/* the ore chamber                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Where a mine gallery widens into a working face, if it can.
+ *
+ * A terminal room, not a mid-route one: it is centred `ORE_CHAMBER_INSET` cells
+ * back from the far cellar, which is the last place on the route that is both
+ * out of the portal ramp and far enough from the cellar wall for a room three
+ * blocks wider than the bore. If the geometry there refuses — too near the
+ * surface, too near water, over somebody's foundation — the gallery simply
+ * arrives without one, exactly as a junction that cannot be widened stays a
+ * crossing. The alternative is a route search that carries a room around with
+ * it, and no route is worth that.
+ */
+function findOreChamber(r: RouteRequest, path: readonly TunnelCell[]): OreChamber | null {
+  if (r.link.style !== "mine" || r.link.oreChamber !== true) return null;
+  const { region, ground } = r.input.plan;
+  // Walk in from the far end: the first cell that is out of both portals, level
+  // with its neighbours, and has room for the chamber.
+  for (let i = path.length - 1 - ORE_CHAMBER_INSET; i >= ORE_CHAMBER_INSET; i--) {
+    const cell = path[i] as TunnelCell | undefined;
+    if (cell === undefined || cell.portal || cell.flight) continue;
+    // The room has to be *level* with the gallery for its whole width: a
+    // chamber widened around a staircase is not a room, it is a stairwell with
+    // the walls pushed out, and its floor course lands in the walkway of every
+    // cell the flight passes through. Every path cell the room would contain
+    // must therefore stand at the room's own plane.
+    const span = path.filter(
+      (q) => Math.abs(q.x - cell.x) <= ORE_CHAMBER_RADIUS + 1 && Math.abs(q.z - cell.z) <= ORE_CHAMBER_RADIUS + 1,
+    );
+    if (span.some((q) => q.y !== cell.y || q.portal)) continue;
+    let fits = true;
+    for (let dz = -ORE_CHAMBER_RADIUS - 1; dz <= ORE_CHAMBER_RADIUS + 1 && fits; dz++) {
+      for (let dx = -ORE_CHAMBER_RADIUS - 1; dx <= ORE_CHAMBER_RADIUS + 1 && fits; dx++) {
+        const x = cell.x + dx;
+        const z = cell.z + dz;
+        if (!inside(region, x, z)) fits = false;
+        else {
+          const idx = index(region, x, z);
+          if (r.obstacles[idx] === 1) fits = false;
+          else if (cell.y + ORE_CHAMBER_HEIGHT - 1 + TUNNEL_ROOF_THICKNESS > (ground[idx] as number)) {
+            fits = false;
+          }
+        }
+      }
+    }
+    if (!fits || cell.y - 1 <= TUNNEL_FLOOR_Y) continue;
+    const next = (path[i + 1] ?? path[i - 1]) as TunnelCell;
+    const dx = Math.sign(next.x - cell.x);
+    const dz = Math.sign(next.z - cell.z);
+    const along: readonly [number, number] = dx === 0 && dz === 0 ? [1, 0] : [dx, dz];
+    return { x: cell.x, z: cell.z, y: cell.y, along };
+  }
+  return null;
+}
+
+/** Every column an ore chamber occupies, centre outward. */
+function oreChamberColumns(c: OreChamber): { x: number; z: number }[] {
+  const out: { x: number; z: number }[] = [];
+  for (let dz = -ORE_CHAMBER_RADIUS; dz <= ORE_CHAMBER_RADIUS; dz++) {
+    for (let dx = -ORE_CHAMBER_RADIUS; dx <= ORE_CHAMBER_RADIUS; dx++) {
+      out.push({ x: c.x + dx, z: c.z + dz });
+    }
+  }
+  return out;
+}
+
+/** Hollow the chamber into the gallery's own carve set. */
+function carveOreChamber(r: RouteRequest, c: OreChamber, carve: CarveSet): void {
+  const { region } = r.input.plan;
+  for (const { x, z } of oreChamberColumns(c)) {
+    if (!inside(region, x, z)) continue;
+    const idx = index(region, x, z);
+    for (let y = c.y; y < c.y + ORE_CHAMBER_HEIGHT; y++) {
+      const key = `${x},${y},${z}`;
+      if (carve.cells.has(key)) continue;
+      carve.cells.add(key);
+      carve.blocks++;
+      pushRun(r.carved, idx, y);
+    }
+    carve.columns.add(idx);
+    carve.floorByColumn.set(idx, c.y);
+    carve.walkCells.add(`${x},${c.y},${z}`);
+    r.columns[idx] = 1;
+  }
+}
+
+/**
+ * Line the chamber: rough stone studded densely with ore, a colonnade of
+ * timber holding the roof up, a lantern, and the cart that ends the line.
+ *
+ * The colonnade is what makes it read as a *room* rather than as a wide bit of
+ * tunnel from inside: four posts on the diagonal, clear of the walkway and
+ * clear of every arm's mouth, which is the same argument the junction chamber's
+ * extra course of height makes in the other direction.
+ */
+function lineOreChamber(r: RouteRequest, c: OreChamber, carve: CarveSet): void {
+  const { region } = r.input.plan;
+  const footprints = r.input.placements.map((p) => p.footprint);
+  const oreSeed = detailSeed(r.input.seed, `tunnel.chamber.${r.link.id}.${c.x},${c.z}`);
+  const rough = r.states.rough;
+  const stone = (x: number, y: number, z: number, wall: boolean): number => {
+    if (wall) {
+      const ore = oreAt(r.states, oreSeed, x, y, z, 1, ORE_CHAMBER_ORE_SHARE);
+      if (ore !== null) return ore;
+    }
+    const draw = hash3(oreSeed, x, y, z, 1);
+    return rough[Math.min(rough.length - 1, Math.floor(draw * rough.length))] as number;
+  };
+  const place = (x: number, y: number, z: number, stateId: number, force = false): void => {
+    if (!inside(region, x, z)) return;
+    if (insideFootprint(footprints, x, z)) return;
+    const key = `${x},${y},${z}`;
+    if (!force && (carve.cells.has(key) || r.carvedCells.has(key))) return;
+    r.blocks.push({ x, y, z, stateId });
+  };
+
+  const reach = ORE_CHAMBER_RADIUS + 1;
+  for (let dz = -reach; dz <= reach; dz++) {
+    for (let dx = -reach; dx <= reach; dx++) {
+      const x = c.x + dx;
+      const z = c.z + dz;
+      if (Math.max(Math.abs(dx), Math.abs(dz)) === reach) {
+        // The four walls, and only where an arm does not come through them:
+        // a carved cell is never written into, so the mouths open themselves.
+        for (let y = c.y; y < c.y + ORE_CHAMBER_HEIGHT; y++) place(x, y, z, stone(x, y, z, true));
+        continue;
+      }
+      // The floor, under the same guard the gallery's own is under: a room
+      // dug at one level meets a gallery that arrives at another, and the
+      // room's floor course is the arriving corridor's walkway.
+      if (!carve.walkCells.has(`${x},${c.y - 1},${z}`)) {
+        place(x, c.y - 1, z, stone(x, c.y - 1, z, false), true);
+      }
+      place(x, c.y + ORE_CHAMBER_HEIGHT, z, stone(x, c.y + ORE_CHAMBER_HEIGHT, z, true));
+    }
+  }
+  // The colonnade.
+  for (const [dx, dz] of [
+    [-2, -2],
+    [2, -2],
+    [-2, 2],
+    [2, 2],
+  ] as const) {
+    for (let y = c.y; y < c.y + ORE_CHAMBER_HEIGHT; y++) {
+      place(c.x + dx, y, c.z + dz, r.states.timberPost, true);
+    }
+  }
+  place(c.x, c.y + ORE_CHAMBER_HEIGHT - 1, c.z, r.states.lantern, true);
+
+  // The cart at the terminus: wheels, a plank bed and a load, standing two
+  // cells off the line and pointing along it — beside the walkway the gallery
+  // arrives through, never across it. Blocks, not an entity: a minecart is an
+  // entity, and everything this compiler emits has to survive a load-save
+  // round trip as blocks.
+  const [ax, az] = c.along;
+  const px = -az;
+  const pz = ax;
+  const bx = c.x + px * 2;
+  const bz = c.z + pz * 2;
+  for (let k = -1; k <= 1; k++) {
+    const x = bx + ax * k;
+    const z = bz + az * k;
+    // The grain of the wheels runs across the cart, which is the axis the
+    // hubs read as from the side.
+    place(x, c.y, z, r.states.cartWheel[ax !== 0 ? 1 : 0] as number, true);
+    place(x, c.y + 1, z, r.states.cartBed, true);
+  }
+  place(bx, c.y + 2, bz, r.states.cartLoad, true);
+}
+
+/* -------------------------------------------------------------------------- */
 /* lining                                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -1253,6 +1548,29 @@ interface TunnelStates {
   readonly lantern: number;
   /** Plain air — what a doorway through a cellar wall is made of. */
   readonly air: number;
+  /* --- the styles ------------------------------------------------------- */
+  /** Stone-brick gone green: the crypt's third block. */
+  readonly mossy: number;
+  /** The three stones a rough bore is hewn from, in draw order. */
+  readonly rough: readonly number[];
+  /** Coal, iron and copper — what a mine gallery's walls are studded with. */
+  readonly ores: readonly number[];
+  /** Timber post and lintel, for a working rather than a masonry gallery. */
+  readonly timberPost: number;
+  readonly timberLintel: readonly [number, number];
+  /** The rail down the floor, in its default shape; the connection pass fixes it. */
+  readonly rail: number;
+  /** Still water, one block deep, in a dip. */
+  readonly water: number;
+  /** The shelf of a burial niche. */
+  readonly nicheSlab: number;
+  /** What lies on a shelf, and what hangs over it. */
+  readonly candle: number;
+  readonly cobweb: number;
+  /** The cart at a terminus: wheels, bed and load. */
+  readonly cartWheel: readonly [number, number];
+  readonly cartBed: number;
+  readonly cartLoad: number;
 }
 
 function resolveTunnelStates(stack: PrismarineStack, materials?: BuildingMaterials): TunnelStates {
@@ -1269,6 +1587,8 @@ function resolveTunnelStates(stack: PrismarineStack, materials?: BuildingMateria
     }) ?? byName(stairName, "stone_brick_stairs");
   const log = (axis: string): number =>
     stack.blockStateOf("stripped_oak_log", { axis }) ?? byName("stripped_oak_log", "oak_log");
+  const rawLog = (name: string, axis: string): number =>
+    stack.blockStateOf(name, { axis }) ?? byName(name, "oak_log");
   return {
     masonry: byName(masonryName, "stone_bricks"),
     cracked: byName("cracked_stone_bricks", "stone_bricks"),
@@ -1278,6 +1598,38 @@ function resolveTunnelStates(stack: PrismarineStack, materials?: BuildingMateria
     lantern: stack.blockStateOf("lantern", { hanging: "true", waterlogged: "false" }) ??
       byName("lantern", "lantern"),
     air: stack.blockByName("air")?.stateId ?? 0,
+    mossy: byName("mossy_stone_bricks", "stone_bricks"),
+    // Three stones, not one. A working is cut through whatever the rock gave
+    // and patched where it fell in, and one block repeated is the single
+    // strongest tell that a corridor was generated rather than dug.
+    rough: [
+      byName("stone", "stone"),
+      byName("cobblestone", "stone"),
+      byName("andesite", "stone"),
+    ] as const,
+    ores: [
+      byName("coal_ore", "stone"),
+      byName("iron_ore", "stone"),
+      byName("copper_ore", "stone"),
+    ] as const,
+    timberPost: rawLog("oak_log", "y"),
+    timberLintel: [rawLog("oak_log", "x"), rawLog("oak_log", "z")] as const,
+    rail: stack.blockStateOf("rail", { shape: "north_south", waterlogged: "false" }) ??
+      byName("rail", "rail"),
+    water: stack.blockStateOf("water", { level: "0" }) ?? byName("water", "water"),
+    nicheSlab: stack.blockStateOf("stone_brick_slab", {
+      type: "bottom",
+      waterlogged: "false",
+    }) ?? byName("stone_brick_slab", "stone_brick_slab"),
+    candle: stack.blockStateOf("candle", { candles: "1", lit: "false", waterlogged: "false" }) ??
+      byName("candle", "candle"),
+    cobweb: byName("cobweb", "cobweb"),
+    cartWheel: [
+      rawLog("stripped_oak_log", "x"),
+      rawLog("stripped_oak_log", "z"),
+    ] as const,
+    cartBed: byName("oak_planks", "oak_planks"),
+    cartLoad: stack.blockStateOf("hay_block", { axis: "y" }) ?? byName("hay_block", "hay_block"),
   };
 }
 
@@ -1299,14 +1651,19 @@ function lineTunnel(
   r: RouteRequest,
   path: readonly TunnelCell[],
   carve: CarveSet,
-): { blocks: number; frames: number; lanterns: number } {
+): LiningResult {
   const { region } = r.input.plan;
+  const style = r.link.style ?? "dressed";
   const footprints = r.input.placements.map((p) => p.footprint);
   const crackSeed = detailSeed(r.input.seed, `tunnel.${r.link.id}`);
+  const oreSeed = detailSeed(r.input.seed, `tunnel.ore.${r.link.id}`);
   const half = (TUNNEL_WIDTH - 1) >> 1;
   let blocks = 0;
   let frames = 0;
   let lanterns = 0;
+  let rails = 0;
+  let niches = 0;
+  let ores = 0;
 
   const place = (
     x: number,
@@ -1327,10 +1684,50 @@ function lineTunnel(
     r.blocks.push({ x, y, z, stateId });
     blocks++;
   };
-  const stone = (x: number, y: number, z: number): number =>
-    hash3(crackSeed, x, y, z, 1) < 0.22 ? r.states.cracked : r.states.masonry;
+
+  /**
+   * The block one cell of the lining is drawn from.
+   *
+   * `wall` is what separates a face a player looks at from the floor they walk
+   * on: ore is studded into walls and ceilings and never into the floor, both
+   * because that is where a miner would have followed it and because an ore
+   * block in the walkway reads as a trip hazard rather than as a seam.
+   */
+  const stone = (x: number, y: number, z: number, wall: boolean): number => {
+    const draw = hash3(crackSeed, x, y, z, 1);
+    if (style === "crypt") {
+      if (draw < 0.18) return r.states.cracked;
+      if (draw < 0.36) return r.states.mossy;
+      return r.states.masonry;
+    }
+    if (style === "mine") {
+      if (wall) {
+        const ore = oreAt(r.states, oreSeed, x, y, z, MINE_ORE_FIELD_SHARE, MINE_ORE_SHARE);
+        if (ore !== null) {
+          ores++;
+          return ore;
+        }
+      }
+      const rough = r.states.rough;
+      return rough[Math.min(rough.length - 1, Math.floor(draw * rough.length))] as number;
+    }
+    return draw < 0.22 ? r.states.cracked : r.states.masonry;
+  };
+
+  // --- the water ------------------------------------------------------------
+  // Found before anything is written, because the shell rule the physics lint
+  // re-derives from the finished world is about the air *around* a fluid: the
+  // bore within four blocks of a pool is written as plain air rather than left
+  // as the cave air a bore normally is, which is the honest answer to "is this
+  // a flooded working or a cave that broke into a lake" — it is a room.
+  const pool = style === "mine" ? settleTunnelPools(r, path, carve) : EMPTY_POOL;
+  for (const key of pool.shell) {
+    const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+    place(x, y, z, r.states.air, true);
+  }
 
   let frameIndex = 0;
+  let nicheIndex = 0;
   for (const [i, cell] of path.entries()) {
     const height = boreHeight(cell, footprints);
     const perps = perpendiculars(path, i);
@@ -1340,14 +1737,36 @@ function lineTunnel(
       for (let d = -half; d <= half; d++) {
         const x = cell.x + px * d;
         const z = cell.z + pz * d;
-        place(x, cell.y - 1, z, stone(x, cell.y - 1, z), true);
-        place(x, cell.y + height, z, stone(x, cell.y + height, z));
+        // The floor is force-written, because the course under a walk plane is
+        // inside the bore of whatever cell stands one lower. That is exactly
+        // why it needs a guard: where a corner is also a step, the higher
+        // cell's floor swath reaches across the *lower* cell's walkway, and a
+        // forced write there lays a full block in a corridor a player has to
+        // walk down — which is what the traversal lint found the first time a
+        // mine gallery was dug through one.
+        if (!carve.walkCells.has(`${x},${cell.y - 1},${z}`)) {
+          place(x, cell.y - 1, z, stone(x, cell.y - 1, z, false), true);
+        }
+        place(x, cell.y + height, z, stone(x, cell.y + height, z, true));
       }
       // --- walls ------------------------------------------------------------
       for (const side of [-(half + 1), half + 1]) {
         const x = cell.x + px * side;
         const z = cell.z + pz * side;
-        for (let y = cell.y; y < cell.y + height; y++) place(x, y, z, stone(x, y, z));
+        // A rough bore is cut back a cell here and there: the wall block is
+        // replaced with air, and the rock behind it is what the player sees.
+        const recess =
+          style === "mine" &&
+          perps.length === 1 &&
+          !cell.portal &&
+          hash3(oreSeed, x, cell.y, z, 7) < MINE_RECESS_SHARE;
+        for (let y = cell.y; y < cell.y + height; y++) {
+          if (recess && y < cell.y + 2) {
+            place(x, y, z, r.states.air);
+            continue;
+          }
+          place(x, y, z, stone(x, y, z, true));
+        }
       }
     }
 
@@ -1367,30 +1786,83 @@ function lineTunnel(
       }
     }
 
+    const straightRun = perps.length === 1 && !cell.portal;
+
+    // --- the water, and the rail -------------------------------------------
+    // The pool is one block deep by construction: it fills the *floor* course
+    // of a dip whose sides rise at least two, so a player wades it rather than
+    // swims it and the traversal walk crosses it unchanged.
+    const flooded = pool.cells.has(`${cell.x},${cell.y},${cell.z}`);
+    if (flooded) {
+      for (const [px, pz] of perps) {
+        for (let d = -half; d <= half; d++) {
+          const x = cell.x + px * d;
+          const z = cell.z + pz * d;
+          if (!pool.cells.has(`${x},${cell.y},${z}`)) continue;
+          place(x, cell.y, z, r.states.water, true);
+        }
+      }
+    } else if (style === "mine" && !cell.portal && !insideFootprint(footprints, cell.x, cell.z)) {
+      // The rail is laid in its *default* shape and left there: `shape` is a
+      // statement about a neighbourhood, and `emit/connections.ts` is the one
+      // place in this compiler allowed to make it — which is also what gets
+      // the ascending variants right where the gallery climbs.
+      place(cell.x, cell.y, cell.z, r.states.rail, true);
+      rails++;
+    }
+
+    // --- burial niches ------------------------------------------------------
+    if (style === "crypt" && straightRun && !cell.flight && i % TUNNEL_NICHE_SPACING === 0) {
+      const [px, pz] = perps[0] as readonly [number, number];
+      const side = nicheIndex % 2 === 0 ? half + 1 : -(half + 1);
+      nicheIndex++;
+      const x = cell.x + px * side;
+      const z = cell.z + pz * side;
+      if (
+        inside(region, x, z) &&
+        !insideFootprint(footprints, x, z) &&
+        !carve.cells.has(`${x},${cell.y},${z}`)
+      ) {
+        // A niche is a *wall* cell: two courses of the lining removed and a
+        // shelf laid in the bottom of the recess. It costs the gallery no
+        // floor, so the walk through it is the walk it already had.
+        place(x, cell.y, z, r.states.air, true);
+        place(x, cell.y + 1, z, r.states.air, true);
+        place(x, cell.y, z, r.states.nicheSlab, true);
+        const draw = hash3(oreSeed, x, cell.y, z, 9);
+        if (draw < 0.4) place(x, cell.y + 1, z, r.states.candle, true);
+        else if (draw < 0.7) place(x, cell.y + 1, z, r.states.cobweb, true);
+        niches++;
+      }
+    }
+
     // --- the support frame ------------------------------------------------
     // Only on a straight, level, single-perpendicular run well clear of both
     // portals: a frame at a corner would stand its posts in the other arm.
     const straight =
-      perps.length === 1 &&
+      straightRun &&
       !cell.flight &&
-      !cell.portal &&
       i >= 2 &&
       i <= path.length - 3 &&
       i % TUNNEL_FRAME_SPACING === 0;
     if (!straight) continue;
     const [px, pz] = perps[0] as readonly [number, number];
     frames++;
-    // Posts against the walls, the full height of the bore, and a stripped-log
-    // lintel across the ceiling plane above them.
+    // Posts against the walls, the full height of the bore, and a lintel
+    // across the ceiling plane above them. A working frames in timber — whole
+    // logs, standing on the floor — where a dressed gallery frames in a fence
+    // stem under a stripped-log beam.
+    const post = style === "mine" ? r.states.timberPost : r.states.post;
+    const lintel = style === "mine" ? r.states.timberLintel : r.states.lintel;
     for (const side of [-half, half]) {
       const x = cell.x + px * side;
       const z = cell.z + pz * side;
-      for (let y = cell.y; y < cell.y + height; y++) place(x, y, z, r.states.post, true);
+      for (let y = cell.y; y < cell.y + height; y++) place(x, y, z, post, true);
     }
     for (let d = -half; d <= half; d++) {
       const x = cell.x + px * d;
       const z = cell.z + pz * d;
-      place(x, cell.y + height, z, r.states.lintel[px !== 0 ? 0 : 1] as number, true);
+      place(x, cell.y + height, z, lintel[px !== 0 ? 0 : 1] as number, true);
     }
     if (frameIndex % TUNNEL_LANTERN_EVERY_N_FRAMES === 0) {
       // Hung from the lintel, one block over head height: the light is in the
@@ -1401,7 +1873,195 @@ function lineTunnel(
     frameIndex++;
   }
 
-  return { blocks, frames, lanterns };
+  return { blocks, frames, lanterns, rails, niches, ores, pool: pool.cells.size };
+}
+
+/** What one gallery's lining came to. */
+interface LiningResult {
+  readonly blocks: number;
+  readonly frames: number;
+  readonly lanterns: number;
+  readonly rails: number;
+  readonly niches: number;
+  readonly ores: number;
+  readonly pool: number;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ore                                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The ore one wall block shows, or `null` for plain rock.
+ *
+ * Two draws, and the reason is that one draw gives a rash. The coarse one asks
+ * whether this part of the rock is a *seam* at all, on a four-by-two-by-four
+ * lattice so the answer is the same for a patch of wall rather than for a
+ * block; the fine one picks which blocks of that patch broke through. The
+ * result reads as a vein a miner followed, which is the thing a uniformly
+ * sprinkled wall never does.
+ */
+export function oreAt(
+  states: TunnelStates,
+  seed: number,
+  x: number,
+  y: number,
+  z: number,
+  fieldShare: number,
+  share: number,
+): number | null {
+  if (hash3(seed, x >> 2, y >> 1, z >> 2, 3) >= fieldShare) return null;
+  const fine = hash3(seed, x, y, z, 4);
+  if (fine >= share) return null;
+  const ores = states.ores;
+  const pick = Math.min(ores.length - 1, Math.floor((fine / share) * ores.length));
+  return ores[pick] as number;
+}
+
+/* -------------------------------------------------------------------------- */
+/* flooded dips                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** A settled pool, and the bore air whose shell rule it made this pass's problem. */
+interface TunnelPool {
+  /** `"x,y,z"` of every water block. */
+  readonly cells: ReadonlySet<string>;
+  /** `"x,y,z"` of bore cells to write as plain air rather than leave cave air. */
+  readonly shell: ReadonlySet<string>;
+}
+
+const EMPTY_POOL: TunnelPool = { cells: new Set<string>(), shell: new Set<string>() };
+
+/**
+ * The runs of a gallery's floor profile that stand at least `minDepth` below
+ * both of their shoulders.
+ *
+ * A pure function of the centre line, and exported because that is what makes
+ * it testable without a world: a route is a list of `(x, z, y)`, a dip is a
+ * maximal run of equal `y` whose ground rises far enough on both sides before
+ * it falls again, and everything about which cells hold water follows from
+ * that one definition.
+ */
+export function floodedDipRuns(
+  path: readonly TunnelCell[],
+  minDepth = MINE_POOL_MIN_DEPTH,
+): readonly (readonly [number, number])[] {
+  const out: [number, number][] = [];
+  let a = 0;
+  while (a < path.length) {
+    let b = a;
+    const y = (path[a] as TunnelCell).y;
+    while (b + 1 < path.length && (path[b + 1] as TunnelCell).y === y) b++;
+    // The shoulders: scan out either way, taking the highest ground reached
+    // before the profile falls below this run. A run that reaches the end of
+    // the path without ever falling below has an open shoulder there, and an
+    // open shoulder is a cellar — no basin, no water.
+    const shoulder = (step: number): number | null => {
+      let best = y;
+      for (let i = (step < 0 ? a : b) + step; i >= 0 && i < path.length; i += step) {
+        const cy = (path[i] as TunnelCell).y;
+        if (cy < y) return best;
+        if (cy > best) best = cy;
+        if (best - y >= minDepth) return best;
+      }
+      return null;
+    };
+    const left = shoulder(-1);
+    const right = shoulder(1);
+    const closed =
+      left !== null && right !== null && left - y >= minDepth && right - y >= minDepth;
+    // Portal runs never flood: they are the ramp out of a cellar, and a cellar
+    // doorway standing in water is a defect, not a mood.
+    const dry = path.slice(a, b + 1).some((c) => c.portal);
+    if (closed && !dry) out.push([a, b]);
+    a = b + 1;
+  }
+  return out;
+}
+
+/**
+ * Fill the dips, and prove they hold.
+ *
+ * The proof is the stdlib's {@link stableFluidColumns} — the single definition
+ * of "fluid-stable" in the toolchain, the same one the terrain's ponds and the
+ * open-basin search use. A candidate column drops out when a neighbour is
+ * neither in the pool nor filled to the surface level, run to a fixed point;
+ * what survives is water that cannot flow, so zero unstable columns is a
+ * property of the machinery rather than of this caller's arithmetic.
+ */
+function settleTunnelPools(
+  r: RouteRequest,
+  path: readonly TunnelCell[],
+  carve: CarveSet,
+): TunnelPool {
+  const { region } = r.input.plan;
+  const footprints = r.input.placements.map((p) => p.footprint);
+  const cells = new Set<string>();
+  const half = (TUNNEL_WIDTH - 1) >> 1;
+
+  for (const [a, b] of floodedDipRuns(path)) {
+    const level = (path[a] as TunnelCell).y + 1;
+    /** The dip's own columns, and the walk plane each one stands at. */
+    const floorByColumn = new Map<number, number>();
+    for (let i = a; i <= b; i++) {
+      const cell = path[i] as TunnelCell;
+      for (const [px, pz] of perpendiculars(path, i)) {
+        for (let d = -half; d <= half; d++) {
+          const x = cell.x + px * d;
+          const z = cell.z + pz * d;
+          if (!inside(region, x, z)) continue;
+          if (insideFootprint(footprints, x, z)) continue;
+          floorByColumn.set(index(region, x, z), cell.y);
+        }
+      }
+    }
+    const settled = stableFluidColumns({
+      width: region.width,
+      depth: region.depth,
+      columns: floorByColumn.keys(),
+      level,
+      // The floor of a candidate is the block under the walk plane, so a
+      // column whose plane is the dip's own is below `level` and joins.
+      floorAt: (idx) => (floorByColumn.get(idx) ?? level) - 1,
+      // A neighbour that is not in the pool is either the rock the bore is cut
+      // through — filled past this question as far as it is concerned — or a
+      // stretch of gallery standing higher, whose own floor is the level it is
+      // filled to. Both hold water in; neither leaks.
+      topAt: (idx) => {
+        const floor = carve.floorByColumn.get(idx);
+        return floor === undefined ? level + TUNNEL_HEIGHT : floor;
+      },
+    });
+    for (const [idx, y] of floorByColumn) {
+      if (settled.inPool[idx] !== 1) continue;
+      const x = region.x0 + (idx % region.width);
+      const z = region.z0 + Math.floor(idx / region.width);
+      cells.add(`${x},${y},${z}`);
+    }
+  }
+
+  if (cells.size === 0) return EMPTY_POOL;
+
+  // The shell: every carved cell of this gallery within the fluid shell of a
+  // water block. Written as plain air, which is what it is — a lined room with
+  // a puddle in it, not a cave that broke into groundwater.
+  const shell = new Set<string>();
+  const water = [...cells].map((k) => k.split(",").map(Number) as [number, number, number]);
+  for (const key of carve.cells) {
+    if (cells.has(key)) continue;
+    const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+    for (const [wx, wy, wz] of water) {
+      if (
+        Math.abs(x - wx) <= POOL_AIR_SHELL &&
+        Math.abs(z - wz) <= POOL_AIR_SHELL &&
+        Math.abs(y - wy) <= 2
+      ) {
+        shell.add(key);
+        break;
+      }
+    }
+  }
+  return { cells, shell };
 }
 
 /** Index into {@link FACINGS} for a unit step, or -1. */
@@ -1559,6 +2219,39 @@ export function checkTunnelIntegrity(
             y: junction.y + JUNCTION_HEIGHT - 1,
             z,
             detail: `junction chamber leaves only ${roof} blocks of roof under the surface at y ${ground[idx] as number} (want ${TUNNEL_ROOF_THICKNESS})`,
+          });
+        }
+      }
+    }
+
+    // The ore chamber, on the same argument the junction chambers are checked
+    // on: wider and taller than the gallery, and not on any centre line.
+    const chamber = tunnel.oreChamber;
+    if (chamber !== null && chamber !== undefined) {
+      for (const { x, z } of oreChamberColumns(chamber)) {
+        if (!inside(region, x, z)) continue;
+        const idx = index(region, x, z);
+        if (nearFluid[idx] === 1 || nearOcean[idx] === 1) {
+          fluidBreaches++;
+          sample({
+            tunnelId: tunnel.id,
+            x,
+            y: chamber.y,
+            z,
+            detail: `ore chamber within ${TUNNEL_FLUID_SHELL} blocks of water, lava or the sea`,
+          });
+          continue;
+        }
+        if (insideFootprint(footprints, x, z)) continue;
+        const roof = (ground[idx] as number) - (chamber.y + ORE_CHAMBER_HEIGHT - 1);
+        if (roof < TUNNEL_ROOF_THICKNESS) {
+          roofBreaches++;
+          sample({
+            tunnelId: tunnel.id,
+            x,
+            y: chamber.y + ORE_CHAMBER_HEIGHT - 1,
+            z,
+            detail: `ore chamber leaves only ${roof} blocks of roof under the surface at y ${ground[idx] as number} (want ${TUNNEL_ROOF_THICKNESS})`,
           });
         }
       }
