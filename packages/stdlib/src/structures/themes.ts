@@ -171,10 +171,118 @@ export const MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
   },
 ] as const);
 
+/* -------------------------------------------------------------------------- */
+/* the modern city palette                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Concrete, glass and quartz — the palette the high-rise grammar is drawn in.
+ *
+ * `WoodSet` is a shape, not a claim about trees: what the grammar asks of it is
+ * a wall surface, a frame member, an accent, a stair, a slab, a railing, a door
+ * and a trapdoor. Concrete and quartz answer every one of those, and the
+ * `iron_bars` railing is what a balcony and a stairwell guard want anyway.
+ */
+const CONCRETE_LIGHT: WoodSet = {
+  id: "concrete_light",
+  planks: "light_gray_concrete",
+  log: "gray_concrete",
+  stripped: "smooth_quartz",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  fence: "iron_bars",
+  door: "birch_door",
+  trapdoor: "iron_trapdoor",
+};
+
+const CONCRETE_WHITE: WoodSet = {
+  id: "concrete_white",
+  planks: "white_concrete",
+  log: "light_blue_concrete",
+  stripped: "quartz_block",
+  stairs: "smooth_quartz_stairs",
+  slab: "smooth_quartz_slab",
+  fence: "iron_bars",
+  door: "birch_door",
+  trapdoor: "iron_trapdoor",
+};
+
+const CONCRETE_BLUE: WoodSet = {
+  id: "concrete_blue",
+  planks: "gray_concrete",
+  log: "blue_concrete",
+  stripped: "light_gray_concrete",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  fence: "iron_bars",
+  door: "birch_door",
+  trapdoor: "iron_trapdoor",
+};
+
+const SMOOTH_STONE: StoneSet = {
+  id: "smooth_stone",
+  primary: "smooth_stone",
+  accent: "polished_andesite",
+  stairs: "polished_andesite_stairs",
+  slab: "smooth_stone_slab",
+  wall: "andesite_wall",
+};
+
+const POLISHED_DIORITE: StoneSet = {
+  id: "polished_diorite",
+  primary: "polished_diorite",
+  accent: "smooth_stone",
+  stairs: "polished_diorite_stairs",
+  slab: "polished_diorite_slab",
+  wall: "diorite_wall",
+};
+
+const QUARTZ_ROOF: RoofSet = {
+  id: "smooth_quartz",
+  stairs: "smooth_quartz_stairs",
+  slab: "smooth_quartz_slab",
+  solid: "smooth_quartz",
+};
+
+const CONCRETE_ROOF: RoofSet = {
+  id: "gray_concrete",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  solid: "gray_concrete",
+};
+
+/** The id a document (or an exhibit row) names to get the modern palette. */
+export const MODERN_CITY_THEME_ID = "modern_city";
+
+/**
+ * Concrete, glass curtain wall, quartz trim; gray, white and blue accents.
+ *
+ * Deliberately **not** a member of {@link MATERIAL_THEMES}. That array is the
+ * pool `pickTheme` draws a *village* from, and a village of concrete towers is
+ * not a thing any existing document asked for — adding a fourth entry to the
+ * pool would also reroll every seeded draw that has ever been taken from it,
+ * which is a change to every golden world for the sake of a palette none of
+ * them wanted. It lives in {@link ALL_MATERIAL_THEMES} instead, which is what
+ * the by-name lookup consults, so `"theme": "modern_city"` resolves and
+ * nothing else moves.
+ */
+export const MODERN_CITY_THEME: MaterialTheme = Object.freeze({
+  id: MODERN_CITY_THEME_ID,
+  woods: [CONCRETE_LIGHT, CONCRETE_WHITE, CONCRETE_BLUE],
+  stones: [SMOOTH_STONE, POLISHED_DIORITE],
+  roofs: [QUARTZ_ROOF, CONCRETE_ROOF],
+});
+
+/** Every theme that can be asked for **by name**, drawable or not. */
+export const ALL_MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
+  ...MATERIAL_THEMES,
+  MODERN_CITY_THEME,
+]);
+
 /** The theme a world is built in, drawn from the settlement's node seed. */
 export function pickTheme(seed: Seed256, override?: string): MaterialTheme {
   if (override !== undefined) {
-    const named = MATERIAL_THEMES.find((t) => t.id === override);
+    const named = ALL_MATERIAL_THEMES.find((t) => t.id === override);
     if (named !== undefined) return named;
   }
   const rng = new Rng(streamSeed(seed, "theme"));

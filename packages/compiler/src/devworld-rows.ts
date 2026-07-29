@@ -25,6 +25,7 @@
 import { ARCHETYPE_EXHIBIT_ROWS } from "./exhibits/archetypes.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
+import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 
@@ -63,6 +64,7 @@ export {
  */
 export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCHETYPE_EXHIBIT_ROWS,
+  ...HIGHRISE_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
   ...SEED_EXHIBIT_ROWS,
   ...BREAKPOINT_EXHIBIT_ROWS,
@@ -96,6 +98,14 @@ export {
   type ContextSection,
   type ContextStrip,
 } from "./exhibits/context.js";
+
+/** The tall rows, for tests that assert on the high-rise gradient itself. */
+export {
+  HIGHRISE_EXHIBIT_ROWS,
+  HIGHRISE_FLOOR_GRADIENT,
+  HIGHRISE_ROW_LENGTH,
+  highriseSizeFor,
+} from "./exhibits/highrise.js";
 
 /** The breakpoint rows, for tests that assert on the thresholds themselves. */
 export { BREAKPOINT_EXHIBIT_ROWS, exactRoofHeight } from "./exhibits/breakpoints.js";
