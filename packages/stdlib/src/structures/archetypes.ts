@@ -1,0 +1,328 @@
+/**
+ * Building **contents** — archetypes and their fit-out.
+ *
+ * `core.ts` owns SHAPE (footprint, walls, openings, roof, stairs, the cellar
+ * shell, rotation). This module owns CONTENTS: what a building is *for*, the
+ * tag → archetype mapping, and the props each archetype puts on its floor.
+ * Split out of `structures/index.ts` verbatim in the structures refactor;
+ * `index.ts` re-exports both halves, so every existing import path is unchanged.
+ */
+
+import { positionFloat, type Seed256 } from "../determinism/index.js";
+
+import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
+
+/* -------------------------------------------------------------------------- */
+/* archetypes                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Most of a granary floor that hay bales may stand on. */
+const GRANARY_HAY_SHARE = 0.25;
+
+/** What a building is *for* — the thing that drives its furniture and massing. */
+export const BUILDING_ARCHETYPES = [
+  "cottage",
+  "hall",
+  "inn",
+  "smithy",
+  "granary",
+  "watchtower",
+] as const;
+
+/** A building archetype. */
+export type BuildingArchetype = (typeof BUILDING_ARCHETYPES)[number];
+
+/** Map a node's tags onto an archetype; `cottage` when nothing matches. */
+export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
+  const has = (t: string): boolean => tags.includes(t);
+  if (has("lookout") || has("tower") || has("watchtower")) return "watchtower";
+  if (has("hall")) return "hall";
+  if (has("trade") || has("inn")) return "inn";
+  if (has("craft") || has("smithy")) return "smithy";
+  if (has("store") || has("granary")) return "granary";
+  return "cottage";
+}
+
+export function resolveArchetype(value: string | undefined): BuildingArchetype {
+  if (value !== undefined && (BUILDING_ARCHETYPES as readonly string[]).includes(value)) {
+    return value as BuildingArchetype;
+  }
+  return "cottage";
+}
+
+/* -------------------------------------------------------------------------- */
+/* helpers                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Block names a wall-mounted torch, sign or bracket may hang on.
+ *
+ * The grammar's wall vocabulary is small and closed — planks, logs, stone,
+ * brick, glass panes, doors, trapdoors — so a positive match on the solid part
+ * of it is both exact and cheap. Anything unrecognised is treated as *not* a
+ * face, which is the safe direction: the cost of a false negative is a torch
+ * one cell further along the wall.
+ */
+const SOLID_BACKING = /(planks|_log$|_wood$|bricks?$|cobblestone$|stone$|_block$|deepslate$|terracotta$|sandstone$|_tiles$|glass$)/;
+
+/* -------------------------------------------------------------------------- */
+/* interiors                                                                   */
+/* -------------------------------------------------------------------------- */
+
+interface FurnishRequest {
+  readonly put: Put;
+  readonly style: Readonly<Record<string, string>>;
+  readonly archetype: BuildingArchetype;
+  readonly interior: LocalRect;
+  readonly door: { x: number; z: number; face: Cardinal } | null;
+  readonly storyHeight: number;
+  readonly floors: number;
+  readonly choice: Seed256;
+  /** Ground-floor columns the inter-storey stair run stands in. */
+  readonly stairColumns: ReadonlySet<string>;
+  /** Interior columns at and around the hearth; nothing may be pushed into a fire. */
+  readonly hearthColumns: ReadonlySet<string>;
+  /** What the earlier stages have already written at a cell, if anything. */
+  readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
+}
+
+/**
+ * Fit out the ground floor for what the building is *for*.
+ *
+ * Modest on purpose: a handful of props that say "someone lives/works here" and
+ * that a player can use. Everything stands on the floor plane at `y = 0`, which
+ * exists over the whole interior, so nothing here can float. Cells adjacent to
+ * the door are left clear so a prop never blocks the way in.
+ */
+export function furnish(r: FurnishRequest): number {
+  const { put, style, interior, door } = r;
+  const w = interior.x1 - interior.x0 + 1;
+  const d = interior.z1 - interior.z0 + 1;
+  if (w < 2 || d < 2) return 0;
+
+  let n = 0;
+  const free = (x: number, z: number): boolean => {
+    if (x < interior.x0 || x > interior.x1 || z < interior.z0 || z > interior.z1) return false;
+    // Never on the stairs: a bed head in the bottom step is both ugly and a
+    // broken climb, and it is exactly what happened the first time round.
+    if (r.stairColumns.has(`${x},${z}`)) return false;
+    // Never at the hearth: the chimney is in the wall now, and the cell it
+    // opens onto is the fireside, not a shelf. A bed or a table there is the
+    // "cobblestone directly above a bed" defect in its other form.
+    if (r.hearthColumns.has(`${x},${z}`)) return false;
+    if (door === null) return true;
+    // The door column and the cell straight inside it stay clear.
+    const [dx, dz] = cardinalStep(door.face);
+    return !((x === door.x && z === door.z) || (x === door.x - dx && z === door.z - dz));
+  };
+  const place = (x: number, z: number, block: string, props?: Record<string, string>): void => {
+    if (!free(x, z)) return;
+    put(x, 1, z, block, props);
+    n++;
+  };
+  /**
+   * Lay a bed, both halves or neither.
+   *
+   * Minecraft stores a bed as two blocks sharing one `facing`, with the head
+   * at `foot + facing`. The first version had the pair the other way round —
+   * head at the anchor, foot at `+z` with `facing = south` — and the client
+   * renders that mismatch as two overlapping bed pieces, which is what a
+   * walkthrough reported. It also placed each half through `place`, so a foot
+   * that landed on a blocked cell left a headboard on its own. Both halves are
+   * now checked before either is written, and the head offset is taken from
+   * the same `facing` the blocks carry, so {@link rotateOps} — which rotates
+   * coordinates and `facing` by the same yaw — keeps the pair together.
+   */
+  const placeBed = (x: number, z: number, facing: Cardinal, block: string): void => {
+    const [dx, dz] = cardinalStep(facing);
+    const hx = x + dx;
+    const hz = z + dz;
+    if (!free(x, z) || !free(hx, hz)) return;
+    put(x, 1, z, block, { facing, part: "foot", occupied: "false" });
+    put(hx, 1, hz, block, { facing, part: "head", occupied: "false" });
+    n += 2;
+  };
+  // Wall torches, on the interior face of the two long walls.
+  const torchY = Math.min(3, r.storyHeight - 1);
+  const torch = style["light.torch"] as string;
+  const wallTorch = torch === "torch" ? "wall_torch" : torch;
+  for (const [tx0, tz, facing, slide] of [
+    [interior.x0, interior.z0, "south", 1],
+    [interior.x1, interior.z1, "north", -1],
+  ] as const) {
+    // A torch bracketed to the north or south wall may slide *along* that wall
+    // but never off it, because `facing` names the block it hangs on. It has
+    // to slide for two reasons, both found by a world readback: a torch two
+    // blocks over the bottom step of a stair is a low bridge you cannot walk
+    // under, and a torch whose backing cell is a **window** is bracketed to a
+    // pane, which is not a solid face and which the game would drop on the
+    // first block update.
+    const [bx, bz] = cardinalStep(facing);
+    let tx: number | null = null;
+    for (let k = 0; k <= interior.x1 - interior.x0; k++) {
+      const candidate = tx0 + slide * k;
+      if (candidate < interior.x0 || candidate > interior.x1) break;
+      if (r.stairColumns.has(`${candidate},${tz}`)) continue;
+      const backing = r.blockAt(candidate + bx, torchY, tz + bz);
+      if (backing === undefined || !SOLID_BACKING.test(backing.block)) continue;
+      tx = candidate;
+      break;
+    }
+    if (tx === null) continue;
+    put(tx, torchY, tz, wallTorch, { facing });
+    n++;
+  }
+
+  const x0 = interior.x0;
+  const x1 = interior.x1;
+  const z0 = interior.z0;
+  const z1 = interior.z1;
+
+  switch (r.archetype) {
+    case "cottage": {
+      placeBed(x0, z0, "south", "red_bed");
+      place(x1, z0, "chest", { facing: "west", type: "single" });
+      place(x1, z1, "crafting_table");
+      place(x1 - 1 >= x0 ? x1 - 1 : x1, z1, "barrel", { facing: "up", open: "false" });
+      break;
+    }
+    case "inn": {
+      // Two or three tables: a fence stem with a pressure plate for a top, and
+      // stair chairs turned in towards it.
+      for (let i = 0; i < 3; i++) {
+        const tx = x0 + 1 + i * 2;
+        const tz = z0 + 1 + (i % 2);
+        if (tx > x1 - 1 || tz > z1 - 1) continue;
+        place(tx, tz, style["wall.fence"] as string);
+        if (free(tx, tz)) {
+          put(tx, 2, tz, "oak_pressure_plate", { powered: "false" });
+          n++;
+        }
+        place(tx - 1, tz, style["stair.interior"] as string, { facing: "east", half: "bottom" });
+        place(tx + 1, tz, style["stair.interior"] as string, { facing: "west", half: "bottom" });
+      }
+      place(x1, z0, "barrel", { facing: "up", open: "false" });
+      place(x1, z0 + 1, "barrel", { facing: "up", open: "false" });
+      place(x0, z1, "cauldron", { level: "0" });
+      break;
+    }
+    case "smithy": {
+      // The forge works the *east* wall. It used to work the west one, which
+      // is the wall the stair climbs: the anvil landed in the single cell
+      // between the room and the foot of the flight and sealed the stairs off
+      // from the shop floor.
+      place(x1, z0, "blast_furnace", { facing: "west", lit: "false" });
+      place(x1, z0 + 1 <= z1 ? z0 + 1 : z0, "anvil", { facing: "west" });
+      place(x1, z1, "smithing_table");
+      place(x0, z1, "chest", { facing: "east", type: "single" });
+      place(x0 + 1 <= x1 ? x0 + 1 : x0, z1, "cauldron", { level: "0" });
+      break;
+    }
+    case "granary": {
+      // Stacks against the walls, never a field of them. The first version
+      // filled every other cell of the whole floor, and a checkerboard of
+      // full blocks is not a granary — it is a maze with no legal move, because
+      // the free cells only touch each other at their corners. A walkthrough
+      // called it exactly that. Hay now goes where hay goes: piled one to three
+      // high along the walls, leaving the floor of the room open.
+      const cap = Math.max(1, Math.floor(w * d * GRANARY_HAY_SHARE));
+      let stacks = 0;
+      for (let z = z0; z <= z1 && stacks < cap; z++) {
+        for (let x = x0; x <= x1 && stacks < cap; x++) {
+          const wallAdjacent = x === x0 || x === x1 || z === z0 || z === z1;
+          if (!wallAdjacent) continue;
+          // Corners and their two neighbours stay bare. A bale on each side of
+          // a corner leaves the corner itself boxed in, and a floor cell you
+          // can see and not reach is the same defect as the checkerboard, only
+          // one cell wide.
+          const nearCorner =
+            ((x === x0 || x === x1) && (z <= z0 + 1 || z >= z1 - 1)) ||
+            ((z === z0 || z === z1) && (x <= x0 + 1 || x >= x1 - 1));
+          if (nearCorner) continue;
+          // Spaced along the wall so the piles read as separate heaps.
+          if ((x + z * 2) % 3 !== 0) continue;
+          if (!free(x, z)) continue;
+          // Never up to the ceiling: a pile that reaches the joists is a
+          // column through the room, which is the defect one door along.
+          const height = Math.max(1, Math.min(1 + ((x * 5 + z * 3) % 3), r.storyHeight - 2));
+          for (let h = 0; h < height; h++) {
+            put(x, 1 + h, z, "hay_block", { axis: h === 0 ? "y" : (x + z) % 2 === 0 ? "x" : "z" });
+            n++;
+          }
+          stacks++;
+        }
+      }
+      place(x1, z1, "composter", { level: "0" });
+      place(x0, z1, "barrel", { facing: "up", open: "false" });
+      break;
+    }
+    case "hall": {
+      // A long table down the middle, a carpet runner beside it, banners high on
+      // the end wall.
+      const mid = Math.floor((x0 + x1) / 2);
+      for (let z = z0 + 1; z <= z1 - 1; z++) {
+        place(mid, z, style["wall.fence"] as string);
+        if (free(mid, z)) {
+          put(mid, 2, z, "oak_pressure_plate", { powered: "false" });
+          n++;
+        }
+        place(mid - 1, z, "white_carpet");
+        place(mid + 1, z, "white_carpet");
+      }
+      for (const bx of [mid - 1, mid + 1]) {
+        if (bx < x0 || bx > x1) continue;
+        put(bx, Math.min(4, r.storyHeight - 1), z0, "blue_banner", { rotation: "8" });
+        n++;
+      }
+      place(x0, z1, "barrel", { facing: "up", open: "false" });
+      place(x1, z1, "bookshelf");
+      break;
+    }
+    default:
+      break;
+  }
+  return n;
+}
+
+/* -------------------------------------------------------------------------- */
+/* cellar fit-out                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a cellar is for.
+ *
+ * Barrels on the floor and cobwebs under the beams, both position-keyed and
+ * both kept off the ladder's column and the two cells that reach it — the
+ * approach a player needs is the one thing the decoration may not take.
+ */
+export function furnishCellar(
+  put: Put,
+  style: Readonly<Record<string, string>>,
+  choice: Seed256,
+  interior: LocalRect,
+  access: { readonly x: number; readonly z: number },
+  center: { readonly x: number; readonly z: number },
+  floorY: number,
+): void {
+  const { x: cx, z: cz } = center;
+  const reserved = new Set([
+    `${access.x},${access.z}`,
+    `${access.x - 1},${access.z}`,
+    `${access.x},${access.z - 1}`,
+    `${cx},${cz}`,
+  ]);
+  for (let z = interior.z0; z <= interior.z1; z++) {
+    for (let x = interior.x0; x <= interior.x1; x++) {
+      if (reserved.has(`${x},${z}`)) continue;
+      const wall =
+        x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
+      if (wall && positionFloat(choice, x, floorY, z) < 0.22) {
+        put(x, floorY, z, style["cellar.crate"] as string);
+      } else if (positionFloat(choice, z, floorY, x) < 0.1) {
+        // Under the beams, never at head height on the floor: a cobweb a player
+        // has to wade through to cross their own cellar is a bug, not a mood.
+        put(x, -1, z, style["cellar.cobweb"] as string);
+      }
+    }
+  }
+}
