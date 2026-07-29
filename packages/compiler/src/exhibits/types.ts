@@ -35,6 +35,18 @@ export interface DevExhibitCell {
   readonly size: readonly [number, number, number];
   /** Extra generator params for this cell. */
   readonly params?: Readonly<Record<string, unknown>>;
+  /**
+   * The node's `seedSalt` — the one knob that rerolls a node without changing
+   * anything a reader can point at.
+   *
+   * Every other field of a cell is a *decision*: change it and the building is
+   * a different building. The salt is the opposite — same archetype, same
+   * envelope, same theme, same roof, and a different draw for every choice the
+   * grammar makes on its own. The seed-sweep row is nothing but this field,
+   * which is what makes that row a measurement of cosmetic variance rather
+   * than a comparison of two designs.
+   */
+  readonly seedSalt?: string;
 }
 
 /** One dev-world row: a label and its cells, west to east. */

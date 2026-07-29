@@ -23,7 +23,9 @@
  */
 
 import { ARCHETYPE_EXHIBIT_ROWS } from "./exhibits/archetypes.js";
+import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
+import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
@@ -62,4 +64,41 @@ export {
 export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCHETYPE_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
+  ...SEED_EXHIBIT_ROWS,
+  ...BREAKPOINT_EXHIBIT_ROWS,
 ]);
+
+/**
+ * The context section: strips of hand-written ground, built on by the real
+ * pipeline.
+ *
+ * Re-exported rather than spread into {@link EXTRA_EXHIBIT_ROWS} for the same
+ * reason the props are: these cells are not grid cells. They carry a yaw, they
+ * stand on ground that is not the plain, their foundation elevation is derived
+ * per cell rather than fixed, and building them runs three passes the grid does
+ * not (the pad kernel, the prop placer, the doorstep pass). The dev world calls
+ * {@link buildContextExhibits} once, after everything else has finished writing
+ * into the plan.
+ */
+export {
+  CONTEXT_SIZE,
+  CONTEXT_YAWS,
+  SLOPE_POSITIONS,
+  SLOPE_RISE,
+  SLOPE_RUN,
+  buildContextExhibits,
+  contextFootprint,
+  contextGroundAt,
+  planContextSection,
+  shapeContextGround,
+  type ContextCell,
+  type ContextResult,
+  type ContextSection,
+  type ContextStrip,
+} from "./exhibits/context.js";
+
+/** The breakpoint rows, for tests that assert on the thresholds themselves. */
+export { BREAKPOINT_EXHIBIT_ROWS, exactRoofHeight } from "./exhibits/breakpoints.js";
+
+/** The seed sweep, for the same reason. */
+export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

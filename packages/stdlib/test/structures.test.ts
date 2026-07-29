@@ -298,9 +298,12 @@ describe("generateBuilding — structural sanity", () => {
       const { ops, meta } = build(c);
       const lanterns = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["light.lantern"]);
       // The porch lamp is a lantern too, and it is not one of the interior
-      // lights `meta.lanternCount` counts.
+      // lights `meta.lanternCount` counts. Nor is every interior light a
+      // lantern: a room one cell across gets a wall torch, because a lantern
+      // at head height in a one-wide room blocks the only way through it.
       const inside = lanterns.filter((o) => o.props?.["hanging"] === "true");
-      expect(inside.length).toBe(meta.lanternCount);
+      const brackets = ops.filter((o) => o.block === "wall_torch");
+      expect(inside.length + brackets.length).toBe(meta.lanternCount);
       if (meta.interior.x0 <= meta.interior.x1 && meta.interior.z0 <= meta.interior.z1) {
         expect(meta.lanternCount).toBe(meta.params.floors);
       }

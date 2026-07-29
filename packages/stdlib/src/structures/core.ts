@@ -718,6 +718,15 @@ export interface BuildingMeta {
   /** Local column of the cellar ladder, or `null` without a cellar. */
   readonly basementAccess: { readonly x: number; readonly z: number } | null;
   readonly windowCount: number;
+  /**
+   * Interior lights — one per storey, plus one per storey for a wing.
+   *
+   * Usually hanging lanterns. In a room one cell across it is a wall torch
+   * instead: a lantern at head height in a one-wide room is a wall across the
+   * only corridor the room has, which the physics lint reports as unreachable
+   * floor. The count is the same either way, because what it means is "this
+   * storey is lit", and that is the property every caller reads it for.
+   */
   readonly lanternCount: number;
   /** Ops emitted into the one-block apron ring outside the footprint. */
   readonly apronOps: number;
@@ -833,6 +842,25 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   const inFootprint = (x: number, z: number): boolean => footprintCovers(fp, x, z);
 
   const door = snapDoor(resolveDoor(request.door, sx, sz), shell);
+
+  /**
+   * Claim a wall cell as solid backing for something fixed to it.
+   *
+   * Ladders and wall torches both name the block behind them, and both are
+   * placed *after* the window pass has already decided which cells of the wall
+   * field are glass. Asking "is it solid?" is not enough — the answer is
+   * whatever the window rhythm happened to say — so the two callers state it
+   * instead: the cell becomes wall, and the fixture has the support the game
+   * requires.
+   *
+   * The one cell that may not be overwritten is the doorway, which would seal
+   * the building. `false` says so, and both callers have a fallback for it.
+   */
+  const backWall = (x: number, y: number, z: number): boolean => {
+    if (door !== null && x === door.x && z === door.z && y >= 1 && y <= 3) return false;
+    put(x, y, z, style["wall.primary"] as string);
+    return true;
+  };
 
   if (archetype === "watchtower") {
     return emitWatchtower({
@@ -1065,10 +1093,17 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     } else {
       // Too shallow for a flight: a ladder up the west wall instead. `facing`
       // east means the ladder's back is fixed to the cell at `x - 1`, which is
-      // the west wall — solid from y = 1 to the eave plate — so every rung has
-      // the support the game requires. It runs one course *past* the floor
-      // plane so a climber can step off onto it rather than into it.
+      // the west wall. It runs one course *past* the floor plane so a climber
+      // can step off onto it rather than into it.
+      //
+      // That wall is **not** reliably solid, which is what the dev world's
+      // `bp_stairs_ladder` breakpoint exhibit found: the window pass punches
+      // openings through the same wall field, and a window behind a ladder
+      // leaves its rungs fixed to glass — an `unsupported.ladder` finding, and
+      // in game a ladder that pops off the wall. So the backing is claimed
+      // first. A blank wall behind a ladder is architecture, not a patch.
       for (let y = base + 1; y <= level + 1; y++) {
+        backWall(interior.x0 - 1, y, interior.z0);
         put(interior.x0, y, interior.z0, "ladder", { facing: "east" });
       }
       // ...and so does the cell beside it, which is the only way *to* the
@@ -1099,9 +1134,26 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     const cx0 = Math.floor((interior.x0 + interior.x1) / 2);
     const cx = cx0 === interior.x0 && interior.x1 > interior.x0 && floors > 1 ? cx0 + 1 : cx0;
     const cz = Math.floor((interior.z0 + interior.z1) / 2);
+    // A hanging lantern is a body-blocking cell at head height. In a room two
+    // or more cells across you walk around it; in a room one cell across there
+    // is nothing to walk around it into, and the lantern cuts the room in two.
+    // The dev world's `bp_wing_main_min` breakpoint exhibit — a wing that takes
+    // the envelope down to MIN_MAIN_DEPTH, leaving the main block a single
+    // course of floor — is where that showed up, as a `traversal.unreachable`
+    // finding covering everything past the light. A wall torch lights the same
+    // room without standing in it: vanilla lets a player walk through one.
+    const narrowX = interior.x0 === interior.x1;
+    const narrowZ = interior.z0 === interior.z1;
     for (let s = 0; s < floors; s++) {
       const y = (s + 1) * storyHeight - 1;
-      put(cx, y, cz, style["light.lantern"] as string, { hanging: "true" });
+      const bracket = narrowX
+        ? { x: interior.x0, z: cz, bx: interior.x0 - 1, bz: cz, facing: "east" as const }
+        : { x: cx, z: interior.z0, bx: cx, bz: interior.z0 - 1, facing: "south" as const };
+      if ((narrowX || narrowZ) && backWall(bracket.bx, y, bracket.bz)) {
+        put(bracket.x, y, bracket.z, "wall_torch", { facing: bracket.facing });
+      } else {
+        put(cx, y, cz, style["light.lantern"] as string, { hanging: "true" });
+      }
       lanternCount++;
     }
     // A wing is a room of its own, far enough from the main block's lantern to

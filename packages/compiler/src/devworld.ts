@@ -64,8 +64,12 @@ import {
   DEV_ROOFS,
   DEV_THEMES,
   EXTRA_EXHIBIT_ROWS,
+  buildContextExhibits,
   buildPropExhibits,
+  planContextSection,
   planPropExhibits,
+  type ContextResult,
+  type ContextSection,
   type DevExhibitCell,
   type PropExhibit,
 } from "./devworld-rows.js";
@@ -123,6 +127,8 @@ export interface DevExhibit {
   readonly size: readonly [number, number, number];
   /** Extra generator params this cell carries — a wing, a facade override. */
   readonly params?: Readonly<Record<string, unknown>>;
+  /** The node's `seedSalt`, when the row rerolls a cell rather than changing it. */
+  readonly seedSalt?: string;
   /** South-west corner of the footprint, in world columns. */
   readonly x: number;
   readonly z: number;
@@ -138,6 +144,10 @@ export interface DevGrid {
   readonly rules: readonly { readonly row: string; readonly z: number; readonly x0: number; readonly x1: number }[];
   /** North-west corner of the prop grid, south of the last building row. */
   readonly propOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the context section, south of the prop grid. */
+  readonly contextOrigin: { readonly x: number; readonly z: number };
+  /** The context section's plan — strips of shaped ground and what stands on them. */
+  readonly context: ContextSection;
 }
 
 /** What {@link buildDevWorld} produced. */
@@ -154,8 +164,10 @@ export interface DevWorldResult {
   /** Where each prop actually landed — the lint's `props` context. */
   readonly placedProps: readonly PlacedProp[];
   readonly propCount: number;
-  /** Columns dug and flooded for the harbour row's basin. */
+  /** Columns dug and flooded for the harbour row's basin and the shore strip's. */
   readonly pondColumns: number;
+  /** What the context section built — the one part of the world on real terrain. */
+  readonly contextResult: ContextResult;
   /** Every block the grammar emitted, in build order. */
   readonly blocks: readonly StructureBlock[];
 }
@@ -273,7 +285,16 @@ export function planDevGrid(): DevGrid {
   const propOrigin = { x: 0, z };
   const propGrid = planPropExhibits(propOrigin.x, propOrigin.z);
   maxX = Math.max(maxX, propGrid.width);
-  const depthTotal = z + propGrid.depth;
+  z += propGrid.depth + DEV_GAP;
+
+  // The context section goes last, south of everything. It is the only part of
+  // the world whose ground is not the plain, so it is kept as far from the grid
+  // as the layout allows: a strip's grade must never read as an error in the
+  // row above it.
+  const contextOrigin = { x: 0, z };
+  const context = planContextSection(contextOrigin.x, contextOrigin.z);
+  maxX = Math.max(maxX, context.width);
+  const depthTotal = z + context.depth;
 
   const region: Region = {
     x0: -DEV_MARGIN,
@@ -289,6 +310,8 @@ export function planDevGrid(): DevGrid {
     spawn: [region.x0 + 4, DEV_GROUND_Y + 1, region.z0 + region.depth - 5],
     rules,
     propOrigin,
+    contextOrigin,
+    context,
   };
 }
 
@@ -374,6 +397,10 @@ export function exhibitParams(e: DevExhibit): BuildingParams {
     ...(typeof extra["windowShape"] === "string" ? { windowShape: extra["windowShape"] } : {}),
     ...(typeof extra["windowRhythm"] === "string" ? { windowRhythm: extra["windowRhythm"] } : {}),
     ...(typeof extra["floorHeight"] === "number" ? { floorHeight: extra["floorHeight"] } : {}),
+    // The cellar. A `basement` int is exactly what `structures/index.ts` reads
+    // off a document (via `resolveBasementParam`), so the breakpoint rows can
+    // exhibit its clamps without the grid learning a param no author has.
+    ...(typeof extra["basement"] === "number" ? { basement: extra["basement"] } : {}),
     ...(wing === undefined ? {} : { wing }),
   };
 }
@@ -387,7 +414,9 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
 
   const jobs: BuildingJob[] = grid.exhibits.map((e) => {
     const nodePath = `dev.${e.row}.${e.id}`;
-    const seed = nodeSeed(DEV_WORLD_SEED, nodePath, "");
+    // The salt is the seed-sweep row's whole content: same node, same envelope,
+    // eight draws. Every other row leaves it empty and is unaffected.
+    const seed = nodeSeed(DEV_WORLD_SEED, nodePath, e.seedSalt ?? "");
     // One theme per exhibit, named rather than drawn — the whole point of the
     // grid is that the column you are looking at is the theme it claims to be.
     const theme = pickTheme(seed, e.theme);
@@ -426,7 +455,21 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
   // plan, and the plan has to be the finished one before anything is placed
   // over water. It is south of every building row, so nothing above it moves.
   const props = buildPropExhibits(plan, stack, DEV_WORLD_SEED, grid.propOrigin.x, grid.propOrigin.z);
-  const structures = [...built.blocks, ...props.blocks];
+
+  // The context section, last of all: it shapes its own ground, and the pads,
+  // skirts, aprons and doorsteps it then runs all measure themselves against
+  // the plan as it finally is. Nothing above it moves, because every strip
+  // writes only inside its own band.
+  const context = buildContextExhibits({
+    plan,
+    stack,
+    worldSeed: DEV_WORLD_SEED,
+    baseY: DEV_GROUND_Y,
+    x0: grid.contextOrigin.x,
+    z0: grid.contextOrigin.z,
+  });
+
+  const structures = [...built.blocks, ...props.blocks, ...context.blocks];
 
   const emit = await emitTerrain({
     plan,
@@ -448,17 +491,26 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
   let lightCount = 0;
   for (const b of structures) if (lit.has(b.stateId)) lightCount++;
 
+  // The context cells are buildings like any other as far as every consumer is
+  // concerned — the lantern check, the physics lint's interior rules, the
+  // block-count claims — so they are appended to the same list rather than
+  // hidden behind `contextResult`. What `contextResult` carries is the part
+  // that is *only* true of them: the ground they stand on and the doorsteps
+  // they needed.
+  const buildings = [...built.built, ...context.buildings];
+
   return {
     grid,
-    buildings: built.built,
+    buildings,
     emit,
     fluids,
     lightCount,
-    buildingCount: built.built.length,
+    buildingCount: buildings.length,
     props: props.grid.exhibits,
-    placedProps: props.placed,
-    propCount: props.placed.length,
-    pondColumns: props.pondColumns,
+    placedProps: [...props.placed, ...context.props],
+    propCount: props.placed.length + context.props.length,
+    pondColumns: props.pondColumns + context.pondColumns,
+    contextResult: context,
     blocks: structures,
   };
 }

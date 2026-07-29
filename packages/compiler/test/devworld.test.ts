@@ -28,8 +28,30 @@ import {
   planDevGrid,
   type DevWorldResult,
 } from "../src/devworld.js";
-import { EXTRA_EXHIBIT_ROWS, PROP_EXHIBIT_PLAN } from "../src/devworld-rows.js";
+import {
+  BREAKPOINT_EXHIBIT_ROWS,
+  CONTEXT_YAWS,
+  EXTRA_EXHIBIT_ROWS,
+  PROP_EXHIBIT_PLAN,
+  SEED_SWEEP_LENGTH,
+  SEED_SWEEP_ROW_LABEL,
+  SLOPE_POSITIONS,
+  SLOPE_RISE,
+  SLOPE_RUN,
+  contextFootprint,
+  contextGroundAt,
+  planContextSection,
+} from "../src/devworld-rows.js";
 import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
+import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
+import {
+  MAX_BASEMENT_DEPTH,
+  MAX_FLOORS,
+  MAX_ROOF_LAYERS,
+  MAX_STORY_HEIGHT,
+  MIN_BASEMENT_DEPTH,
+  MIN_STORY_HEIGHT,
+} from "@terrainist/stdlib";
 
 const scratch: string[] = [];
 let result: DevWorldResult;
@@ -84,10 +106,15 @@ describe("dev world grid", () => {
     // is the point of building the grid out of `BUILDING_ARCHETYPES` and
     // `EXTRA_EXHIBIT_ROWS` rather than out of a literal.
     const extra = EXTRA_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
-    expect(extra).toBe(7 * ARCHETYPE_ROW_LENGTH + 2 * 7);
+    const breakpoints = BREAKPOINT_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    expect(extra).toBe(7 * ARCHETYPE_ROW_LENGTH + 2 * 7 + SEED_SWEEP_LENGTH + breakpoints);
+    const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
-    expect(result.buildingCount).toBe(expected);
-    expect(result.buildings).toHaveLength(planDevGrid().exhibits.length);
+    expect(grid.exhibits).toHaveLength(expected);
+    // The context section's cells are buildings too, and are counted with the
+    // grid's — the derivation is what keeps this honest when a strip grows.
+    expect(result.buildingCount).toBe(expected + grid.context.cells.length);
+    expect(result.buildings).toHaveLength(expected + grid.context.cells.length);
   });
 
   it("walks the gradient: size grows, storeys step, themes cycle", () => {
@@ -104,7 +131,11 @@ describe("dev world grid", () => {
 
   it("leaves a clear gap between every pair of neighbours in a row", () => {
     const grid = planDevGrid();
-    for (const row of [...BASE_ARCHETYPE_ROWS, "roofs"]) {
+    // Every row, not just the base ones: a row registered through the exhibit
+    // seam is laid out by the same loop and has to obey the same rule, and the
+    // rows most likely to break it are exactly the new ones.
+    const rows = [...new Set(grid.exhibits.map((e) => e.row))];
+    for (const row of rows) {
       const cells = grid.exhibits.filter((e) => e.row === row).sort((a, b) => a.column - b.column);
       for (let i = 1; i < cells.length; i++) {
         const prev = cells[i - 1] as (typeof cells)[number];
@@ -114,14 +145,19 @@ describe("dev world grid", () => {
     }
   });
 
-  it("no two exhibits overlap", () => {
+  it("no two exhibits overlap — the context section's cells included", () => {
     const grid = planDevGrid();
-    const boxes = grid.exhibits.map((e) => ({
-      x0: e.x,
-      z0: e.z,
-      x1: e.x + (e.size[0] as number) - 1,
-      z1: e.z + (e.size[2] as number) - 1,
-    }));
+    const boxes = [
+      ...grid.exhibits.map((e) => ({
+        x0: e.x,
+        z0: e.z,
+        x1: e.x + (e.size[0] as number) - 1,
+        z1: e.z + (e.size[2] as number) - 1,
+      })),
+      // On its *rotated* extents: a yaw-90 cell claims a different rectangle
+      // from the envelope the row was laid out against.
+      ...grid.context.cells.map((c) => contextFootprint(c)),
+    ];
     for (let a = 0; a < boxes.length; a++) {
       for (let b = a + 1; b < boxes.length; b++) {
         const p = boxes[a] as (typeof boxes)[number];
@@ -173,8 +209,11 @@ describe("dev world build", () => {
     const planned = PROP_EXHIBIT_PLAN.reduce((sum, r) => sum + r.cells.length, 0);
     expect(result.props).toHaveLength(planned);
     // Every cell found a site: a prop grid with a hole in it is a prop grid
-    // that is not showing you the prop you came to look at.
-    expect(result.propCount).toBe(planned);
+    // that is not showing you the prop you came to look at. The context
+    // section's own props (the shore pier) are counted with them.
+    const contextProps = result.grid.context.strips.reduce((sum, s) => sum + s.props.length, 0);
+    expect(contextProps).toBeGreaterThan(0);
+    expect(result.propCount).toBe(planned + contextProps);
   });
 
   it("supports every lantern — none hangs in mid-air", () => {
@@ -217,5 +256,261 @@ describe("dev world build", () => {
     expect(again.buildings.map((b) => b.blockCount)).toEqual(result.buildings.map((b) => b.blockCount));
     expect(again.propCount).toBe(result.propCount);
     expect(again.pondColumns).toBe(result.pondColumns);
+    // The context section is the one part of the world with derived ground, a
+    // derived foundation elevation per cell and a pass (doorsteps) that mutates
+    // the plan while reading it. Every one of those is a place a run could
+    // disagree with itself, so the determinism claim names them.
+    expect([...again.contextResult.foundations]).toEqual([...result.contextResult.foundations]);
+    expect(again.contextResult.doorsteps.stepped).toBe(result.contextResult.doorsteps.stepped);
+    expect(again.contextResult.doorsteps.dropped).toBe(result.contextResult.doorsteps.dropped);
+    expect(again.contextResult.blocks.length).toBe(result.contextResult.blocks.length);
+    expect(again.contextResult.padded).toEqual(result.contextResult.padded);
   }, 300_000);
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe("the seed-sweep row", () => {
+  const cells = (): ReturnType<typeof planDevGrid>["exhibits"] =>
+    planDevGrid().exhibits.filter((e) => e.row === SEED_SWEEP_ROW_LABEL);
+
+  it("varies the salt and nothing else", () => {
+    const row = cells();
+    expect(row).toHaveLength(SEED_SWEEP_LENGTH);
+    // One design, eight draws: everything a reader could point at is constant.
+    for (const key of ["archetype", "theme", "roof", "floors"] as const) {
+      expect(new Set(row.map((c) => c[key])).size, key).toBe(1);
+    }
+    expect(new Set(row.map((c) => c.size.join("x"))).size).toBe(1);
+    expect(new Set(row.map((c) => c.seedSalt)).size).toBe(SEED_SWEEP_LENGTH);
+    expect(row.every((c) => c.seedSalt !== undefined)).toBe(true);
+  });
+
+  it("actually produces eight different buildings", () => {
+    // The point of the row is that it *spans* something. If every cell came out
+    // identical the salt would not be reaching the grammar, and the row would
+    // be eight copies of one house pretending to be a measurement.
+    const ids = new Set(cells().map((c) => `dev.${SEED_SWEEP_ROW_LABEL}.${c.id}`));
+    const built = result.buildings.filter((b) => ids.has(b.nodePath));
+    expect(built).toHaveLength(SEED_SWEEP_LENGTH);
+    const signatures = new Set(
+      built.map((b) => `${b.blockCount}:${b.meta.windowCount}:${b.meta.params.windowShape}`),
+    );
+    expect(signatures.size).toBeGreaterThan(1);
+    // ...and it varies only cosmetically: the envelope, the storeys and the
+    // roof line are decisions, not draws, so they must agree across all eight.
+    expect(new Set(built.map((b) => b.meta.roofTop)).size).toBe(1);
+    expect(new Set(built.map((b) => b.meta.height)).size).toBe(1);
+  });
+});
+
+describe("the breakpoint rows", () => {
+  const metaOf = (id: string): (typeof result.buildings)[number]["meta"] => {
+    const found = result.buildings.find((b) => b.nodePath.endsWith(`.${id}`));
+    expect(found, id).toBeDefined();
+    return (found as (typeof result.buildings)[number]).meta;
+  };
+
+  it("puts a stair flight in the shallowest footprint that fits one, and a ladder one below", () => {
+    // `canStair` is `interior depth ≥ storyHeight + 1`; `STAIR_MIN_DEPTH` is the
+    // envelope that meets it exactly, and one block less is the fallback.
+    expect(metaOf("bp_stairs_flight_min").stairRuns.length).toBeGreaterThan(0);
+    const flight = result.buildings.find((b) => b.nodePath.endsWith(".bp_stairs_flight_min"));
+    const ladder = result.buildings.find((b) => b.nodePath.endsWith(".bp_stairs_ladder"));
+    const depthOf = (b: typeof flight): number =>
+      (b as NonNullable<typeof flight>).footprint.z1 -
+      (b as NonNullable<typeof flight>).footprint.z0 +
+      1;
+    expect(depthOf(flight)).toBe(STAIR_MIN_DEPTH);
+    expect(depthOf(ladder)).toBe(STAIR_MIN_DEPTH - 1);
+    // The fallback is a ladder, so the flight's steps are gone. Read from the
+    // emitted blocks rather than the meta, because the meta records the run
+    // either way — `stairRuns` is the *plane* the climb starts at.
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    // By *name*, not by state id: a ladder carries a `facing`, so the id the
+    // grammar emitted is not the block table's default one.
+    const inFootprint = (b: NonNullable<typeof flight>): number => {
+      let n = 0;
+      for (const block of result.blocks) {
+        if (block.x < b.footprint.x0 || block.x > b.footprint.x1) continue;
+        if (block.z < b.footprint.z0 || block.z > b.footprint.z1) continue;
+        if (stack.blockNameByStateId(block.stateId) === "ladder") n++;
+      }
+      return n;
+    };
+    expect(inFootprint(ladder as NonNullable<typeof flight>)).toBeGreaterThan(0);
+    expect(inFootprint(flight as NonNullable<typeof flight>)).toBe(0);
+  });
+
+  it("accepts a wing exactly at each limit and drops it one step past", () => {
+    // A dropped wing is silent by design — the grammar never fails a document —
+    // so the only way to see it is `footprint.wing`, which is null for a rect.
+    for (const [ok, bad] of [
+      ["bp_wing_overlap_min", "bp_wing_overlap_short"],
+      ["bp_wing_depth_min", "bp_wing_depth_shallow"],
+      ["bp_wing_main_min", "bp_wing_main_thin"],
+      ["bp_wing_flush_end", "bp_wing_overhang"],
+    ] as const) {
+      expect(metaOf(ok).footprint.wing, ok).not.toBeNull();
+      expect(metaOf(bad).footprint.wing, bad).toBeNull();
+    }
+  });
+
+  it("clamps the storey height when the envelope is one block short", () => {
+    for (const floors of [1, 2]) {
+      const exact = metaOf(`bp_height_${floors}f_exact`);
+      const crushed = metaOf(`bp_height_${floors}f_crushed`);
+      // Same walls either side of the line — the clamp is what makes them the
+      // same — over an envelope one block shorter, so the roof is what gives.
+      expect(exact.params.storyHeight, `${floors}f`).toBe(MIN_STORY_HEIGHT);
+      expect(crushed.params.storyHeight, `${floors}f`).toBe(MIN_STORY_HEIGHT);
+      expect(exact.wallTop).toBe(crushed.wallTop);
+      expect(exact.size[1]).toBe(exactRoofHeight(floors));
+      expect(crushed.size[1]).toBe(exactRoofHeight(floors) - 1);
+      // The crush itself: the envelope lost a block and the building did not.
+      // Below the line the storey division returns `MIN_STORY_HEIGHT − 1`, the
+      // clamp puts it back, and what was a fit becomes an overrun — the same
+      // house standing in a shorter box.
+      expect(crushed.height).toBe(exact.height);
+      expect(crushed.roofTop).toBe(exact.roofTop);
+      expect(crushed.height).toBeGreaterThan(crushed.size[1]);
+    }
+  });
+
+  it("clamps floors, storey height, roof layers and cellar depth at their stops", () => {
+    expect(metaOf(`bp_clamp_floors_${MAX_FLOORS + 1}`).params.floors).toBe(MAX_FLOORS);
+    expect(metaOf("bp_clamp_story_min").params.storyHeight).toBe(MIN_STORY_HEIGHT);
+    expect(metaOf("bp_clamp_story_under").params.storyHeight).toBe(MIN_STORY_HEIGHT);
+    expect(metaOf("bp_clamp_story_max").params.storyHeight).toBe(MAX_STORY_HEIGHT);
+    expect(metaOf("bp_clamp_story_over").params.storyHeight).toBe(MAX_STORY_HEIGHT);
+    // The roof-layer cap: the wide cell wants more courses than the cap allows
+    // and gets the cap; the narrow one is under it and gets what it asked for.
+    const capped = metaOf("bp_clamp_roof_cap");
+    const under = metaOf("bp_clamp_roof_under");
+    const layers = (m: typeof capped): number => m.roofTop - m.roofBase + 1;
+    expect(layers(capped)).toBe(MAX_ROOF_LAYERS);
+    expect(layers(under)).toBeLessThan(layers(capped));
+    expect(metaOf("bp_clamp_cellar_min").basementDepth).toBe(MIN_BASEMENT_DEPTH);
+    expect(metaOf("bp_clamp_cellar_under").basementDepth).toBe(MIN_BASEMENT_DEPTH);
+    expect(metaOf("bp_clamp_cellar_max").basementDepth).toBe(MAX_BASEMENT_DEPTH);
+    expect(metaOf("bp_clamp_cellar_over").basementDepth).toBe(MAX_BASEMENT_DEPTH);
+  });
+});
+
+describe("the context section", () => {
+  it("shapes each strip's band and leaves the plain between them alone", () => {
+    const section = planContextSection(0, 0);
+    expect(section.strips.map((s) => s.strip)).toEqual(["slope", "ridge", "shore", "yaw"]);
+    // No two bands share a column: a strip's pad apron and its grade both reach
+    // outside its cells, and two overlapping bands would be an exhibit of the
+    // overlap rather than of either strip.
+    for (let a = 0; a < section.strips.length; a++) {
+      for (let b = a + 1; b < section.strips.length; b++) {
+        const p = section.strips[a]?.band as { x0: number; x1: number };
+        const q = section.strips[b]?.band as { x0: number; x1: number };
+        expect(p.x1 < q.x0 || q.x1 < p.x0, `${a} vs ${b}`).toBe(true);
+      }
+    }
+  });
+
+  it("builds a grade that falls, a ridge that is symmetric, and flat ground for the yaws", () => {
+    const section = planContextSection(0, 0);
+    const strip = (name: string): (typeof section.strips)[number] =>
+      section.strips.find((s) => s.strip === name) as (typeof section.strips)[number];
+
+    const slope = strip("slope");
+    let previous = Number.POSITIVE_INFINITY;
+    for (let z = slope.band.z0; z <= slope.band.z1; z++) {
+      const y = contextGroundAt(slope, 64, z);
+      expect(y).toBeLessThanOrEqual(previous);
+      previous = y;
+    }
+    // The grade is the one it claims to be: the fall over the band matches the
+    // rise-over-run to within the rounding of a single block.
+    const fall = contextGroundAt(slope, 64, slope.band.z0) - contextGroundAt(slope, 64, slope.band.z1);
+    const span = slope.band.z1 - slope.band.z0;
+    expect(Math.abs(fall - (span * SLOPE_RISE) / SLOPE_RUN)).toBeLessThanOrEqual(1);
+
+    const ridge = strip("ridge");
+    const crestZ = (ridge.ground as { crestZ: number }).crestZ;
+    const crestY = contextGroundAt(ridge, 64, crestZ);
+    for (let d = 1; d <= 8; d++) {
+      expect(contextGroundAt(ridge, 64, crestZ - d)).toBe(contextGroundAt(ridge, 64, crestZ + d));
+      expect(contextGroundAt(ridge, 64, crestZ - d)).toBeLessThanOrEqual(crestY);
+    }
+
+    const yaw = strip("yaw");
+    for (let z = yaw.band.z0; z <= yaw.band.z1; z++) {
+      expect(contextGroundAt(yaw, 64, z)).toBe(64);
+    }
+  });
+
+  it("gives the slope's three cottages three different foundations", () => {
+    const foundations = SLOPE_POSITIONS === 0
+      ? []
+      : Array.from({ length: SLOPE_POSITIONS }, (_, k) =>
+          result.contextResult.foundations.get(`slope_${k}`) as number,
+        );
+    expect(new Set(foundations).size).toBe(SLOPE_POSITIONS);
+    // Downhill, in order: the first cell is the highest.
+    for (let k = 1; k < foundations.length; k++) {
+      expect(foundations[k] as number).toBeLessThan(foundations[k - 1] as number);
+    }
+    // Every one of them had ground to move, which is the whole point of the
+    // strip: a pad that moved nothing would be a flat exhibit with a grade
+    // painted behind it.
+    for (const entry of result.contextResult.padded.filter((p) => p.id.startsWith("slope_"))) {
+      expect(entry.cutFill, entry.id).toBeGreaterThan(0);
+    }
+  });
+
+  it("sits the ridge cottage on the crest, cutting one side and filling the other", () => {
+    const crest = result.contextResult.padded.find((p) => p.id === "ridge_crest");
+    expect(crest?.cutFill).toBeGreaterThan(0);
+
+    const section = planContextSection(0, 0);
+    const ridge = section.strips.find((s) => s.strip === "ridge") as (typeof section.strips)[number];
+    const cell = section.cells.find((c) => c.id === "ridge_crest") as (typeof section.cells)[number];
+    const rect = contextFootprint(cell);
+    const crestZ = (ridge.ground as { crestZ: number }).crestZ;
+    // Straddling means exactly this: the ridge line runs through the footprint,
+    // and the ground at the two ends of it is lower than the ground in the
+    // middle. A pad over that has to cut and fill in the same edit.
+    expect(crestZ).toBeGreaterThan(rect.z0);
+    expect(crestZ).toBeLessThan(rect.z1);
+    const high = contextGroundAt(ridge, 64, crestZ);
+    expect(contextGroundAt(ridge, 64, rect.z0)).toBeLessThan(high);
+    expect(contextGroundAt(ridge, 64, rect.z1)).toBeLessThan(high);
+    // ...and the foundation the solver's own rule picks lands between them, so
+    // some of the footprint is cut down to it and some is filled up to it.
+    const foundation = result.contextResult.foundations.get("ridge_crest") as number;
+    expect(foundation).toBeLessThanOrEqual(64 + high - 64);
+    expect(foundation).toBeGreaterThan(contextGroundAt(ridge, 64, rect.z0) - 1);
+  });
+
+  it("runs the doorstep pass — the one thing the flat grid can never do", () => {
+    const steps = result.contextResult.doorsteps;
+    const cells = planContextSection(0, 0).cells.length;
+    // Every door in the section, at every yaw: the pass reaches all four strips
+    // and leaves no threshold you have to jump into.
+    expect(steps.stepped + steps.dropped).toBe(cells);
+    expect(steps.stepped).toBeGreaterThanOrEqual(SLOPE_POSITIONS);
+    // Exactly one stair per door, and that is the interesting number: the pad's
+    // apron has already graded the four columns outside the footprint back to
+    // the hill, so even on a 10° slope the approach arrives within half a block
+    // of the threshold and one step closes it. If the apron ever stopped
+    // grading — a blend set to zero, a pad that levelled only the footprint —
+    // the flights on the slope strip would lengthen and this number would jump,
+    // which is the regression this pins.
+    expect(steps.blocks).toHaveLength(cells);
+  });
+
+  it("puts the same cottage at all four yaws, and a pier over the shore's water", () => {
+    const section = planContextSection(0, 0);
+    const yaws = section.cells.filter((c) => c.strip === "yaw").map((c) => c.yaw);
+    expect(yaws).toEqual([...CONTEXT_YAWS]);
+    const pier = result.contextResult.props.find((p) => p.prop === "pier");
+    expect(pier, "the shore strip's pier found a site").toBeDefined();
+    expect(result.contextResult.pondColumns).toBeGreaterThan(0);
+  });
 });
