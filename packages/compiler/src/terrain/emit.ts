@@ -11,6 +11,7 @@
 
 import path from "node:path";
 
+import type { BlockEntity } from "../emit/block-entities.js";
 import { applyConnectionStates, type ConnectionStats } from "../emit/connections.js";
 import type { EmitChunk, PrismarineStack } from "../emit/prismarine.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
@@ -42,6 +43,17 @@ export interface TerrainEmitInput {
    */
   readonly structures?: readonly DecorBlock[];
   /**
+   * Block entities — the sign text and command-block commands that no block
+   * state can carry. Stamped after every block list, so the compound always
+   * lands on the block the same pass placed, and in list order, which is what
+   * keeps the written `block_entities` list deterministic.
+   *
+   * These are *not* blocks: nothing here places one, and a compound whose
+   * block was never placed is a defect (`blockentity.orphan` in the physics
+   * lint), not a shortcut.
+   */
+  readonly blockEntities?: readonly BlockEntity[];
+  /**
    * Structure boxes vegetation may not enter. Trees whose crowns overlap a
    * building have already been dropped or accepted upstream (`clip.ts`); this
    * is where the survivors' individual leaf and log voxels are withheld.
@@ -67,6 +79,8 @@ export interface TerrainEmitSummary {
   readonly decorBlockCount: number;
   /** Building and road-furniture blocks written. */
   readonly structureBlockCount: number;
+  /** Block-entity compounds stamped into chunks. */
+  readonly blockEntityCount: number;
   readonly minecraftVersion: string;
   readonly dataVersion: number;
   readonly spawn: readonly [number, number, number];
@@ -82,6 +96,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   const treesByChunk = bucketTrees(input.trees, input.clip);
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
+  const blockEntityByChunk = bucketBlockEntities(input.blockEntities ?? []);
   const chunks = new Map<string, EmitChunk>();
 
   const chunkX0 = region.x0 >> 4;
@@ -93,6 +108,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   let treeBlockCount = 0;
   let decorBlockCount = 0;
   let structureBlockCount = 0;
+  let blockEntityCount = 0;
 
   for (let cz = chunkZ0; cz <= chunkZ1; cz++) {
     for (let cx = chunkX0; cx <= chunkX1; cx++) {
@@ -107,6 +123,10 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
       if (trees !== undefined) treeBlockCount += stampBlocks(chunk, trees, cx, cz);
       const structures = structureByChunk.get(`${cx},${cz}`);
       if (structures !== undefined) structureBlockCount += stampBlocks(chunk, structures, cx, cz);
+      // Last of all, and touching no block: the compounds that carry a sign's
+      // text and a command block's command.
+      const entities = blockEntityByChunk.get(`${cx},${cz}`);
+      if (entities !== undefined) blockEntityCount += stampBlockEntities(chunk, entities);
       chunks.set(`${cx},${cz}`, chunk);
     }
   }
@@ -140,6 +160,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     treeBlockCount,
     decorBlockCount,
     structureBlockCount,
+    blockEntityCount,
     minecraftVersion: stack.minecraftVersion,
     dataVersion: stack.dataVersion,
     spawn: [input.spawn.x, input.spawn.y, input.spawn.z],
@@ -309,6 +330,38 @@ function stampBlocks(
     count++;
   }
   return count;
+}
+
+/**
+ * Attach one chunk's block entities.
+ *
+ * Coordinates stay absolute: unlike every block write in this file, the adapter
+ * wants the world position, because that is what the compound itself stores.
+ */
+function stampBlockEntities(chunk: EmitChunk, entities: readonly BlockEntity[]): number {
+  for (const entity of entities) {
+    chunk.setBlockEntityNbt(entity.x, entity.y, entity.z, {
+      ...entity.data,
+      id: { type: "string", value: entity.id },
+    });
+  }
+  return entities.length;
+}
+
+/** Bucket block entities by chunk, preserving their deterministic order. */
+function bucketBlockEntities(entities: readonly BlockEntity[]): Map<string, BlockEntity[]> {
+  const out = new Map<string, BlockEntity[]>();
+  for (const entity of entities) {
+    if (entity.y < WORLD_MIN_Y || entity.y > 319) continue;
+    const key = `${entity.x >> 4},${entity.z >> 4}`;
+    let bucket = out.get(key);
+    if (bucket === undefined) {
+      bucket = [];
+      out.set(key, bucket);
+    }
+    bucket.push(entity);
+  }
+  return out;
 }
 
 /** One block, resolved to absolute coordinates and a state id. */

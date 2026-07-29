@@ -40,6 +40,7 @@ import { readFile } from "node:fs/promises";
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { listChunks, listRegionFiles, readRegionChunksNbt } from "./prismarine.js";
 import { applyConnectionStates, connectiveKindOf } from "./connections.js";
+import { blockEntityIdOf, requiredBlockEntityId } from "./block-entities.js";
 
 /** One thing wrong with the world. */
 export interface PhysicsFinding {
@@ -178,6 +179,7 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "dripstone.unattached",
   "cave.fluid_shell",
   "cave.surface_breach",
+  "blockentity.orphan",
 ]);
 
 const AIR = new Set(["air", "cave_air", "void_air"]);
@@ -311,6 +313,8 @@ export async function lintWorldPhysics(
 
   let examined = 0;
   const connective: { x: number; y: number; z: number }[] = [];
+  /** Blocks that are meaningless without a block entity, and which one. */
+  const needsEntity: { x: number; y: number; z: number; id: string }[] = [];
 
   for (const [key, chunk] of chunks) {
     const [cx, cz] = key.split(",").map(Number) as [number, number];
@@ -495,6 +499,8 @@ export async function lintWorldPhysics(
           }
 
           if (connectiveKindOf(name) !== undefined) connective.push({ x, y, z });
+          const wants = requiredBlockEntityId(name);
+          if (wants !== undefined) needsEntity.push({ x, y, z, id: wants });
         }
       }
     }
@@ -705,6 +711,62 @@ export async function lintWorldPhysics(
     });
   }
   void diff;
+
+  // --- block entities ------------------------------------------------------
+  // A sign's text and a command block's command live in a compound in the
+  // chunk's `block_entities` list, not in the block state — so this is the one
+  // pairing no block-level rule can see, and it fails in both directions.
+  //
+  // A compound with no block under it (or the wrong block under it) is dropped
+  // by the game on load, silently. A sign with no compound is a blank plank on
+  // a post, and a command block with no compound is a decorative cube. Both are
+  // exactly the defect the human-review rig would ship: the labels missing and
+  // the teleport pads inert, in a world that lints clean under every other rule.
+  //
+  // The compounds are read from the region files as raw NBT rather than through
+  // the chunk adapter, for the same reason `palette.registry` is: the property
+  // under test is what the *serializer wrote*, and prismarine-chunk's own
+  // block-entity table would launder a fault in it back through the code that
+  // produced it.
+  const entityAt = new Map<string, string>();
+  for (const entity of await readBlockEntities(worldDir)) {
+    const key = `${entity.x},${entity.y},${entity.z}`;
+    entityAt.set(key, entity.id);
+    // Unbounded in Y, unlike the scan above: a cellar sign sits below the
+    // default band, and a compound down there is still a compound on disk.
+    const chunk = chunks.get(`${entity.x >> 4},${entity.z >> 4}`);
+    const stateId =
+      chunk === undefined
+        ? 0
+        : chunk.getBlockStateId(entity.x - (entity.x >> 4) * 16, entity.y, entity.z - (entity.z >> 4) * 16);
+    const blockName = stack.blockNameByStateId(stateId) ?? "air";
+    const carries = blockEntityIdOf(blockName);
+    if (carries === entity.id) continue;
+    findings.push({
+      rule: "blockentity.orphan",
+      x: entity.x,
+      y: entity.y,
+      z: entity.z,
+      block: describe(stateId),
+      detail:
+        carries === undefined
+          ? `a ${entity.id} compound sits on ${blockName}, which carries no block entity`
+          : `a ${entity.id} compound sits on ${blockName}, which carries ${carries}`,
+    });
+  }
+  for (const cell of needsEntity) {
+    const found = entityAt.get(`${cell.x},${cell.y},${cell.z}`);
+    if (found === cell.id) continue;
+    add(
+      "blockentity.orphan",
+      cell.x,
+      cell.y,
+      cell.z,
+      found === undefined
+        ? `placed without its ${cell.id} block entity`
+        : `expects a ${cell.id} block entity but carries ${found}`,
+    );
+  }
 
   // --- road flushness ------------------------------------------------------
   // A lane is a thing cut into the land. If its surface stands proud of the
@@ -1207,6 +1269,43 @@ async function lintPalettes(
     }
   }
   return findings;
+}
+
+/** One block entity as it sits on disk: where it is and what type it claims. */
+export interface PlacedBlockEntity {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** The namespaced block-entity type from the compound's `id` field. */
+  readonly id: string;
+}
+
+/**
+ * Every block entity in a world's region files, in region/chunk order.
+ *
+ * Reads the Anvil container directly, like {@link lintPalettes}: the whole
+ * point of the `blockentity.orphan` rule is to check what the writer put on
+ * disk, so it may not go back through the writer's own in-memory table.
+ */
+export async function readBlockEntities(worldDir: string): Promise<PlacedBlockEntity[]> {
+  const out: PlacedBlockEntity[] = [];
+  for (const file of await listRegionFiles(`${worldDir}/region`)) {
+    const buffer = await readFile(file);
+    for (const { root } of readRegionChunksNbt(file, buffer)) {
+      const list = root["block_entities"];
+      if (!Array.isArray(list)) continue;
+      for (const raw of list as Record<string, unknown>[]) {
+        const id = typeof raw["id"] === "string" ? raw["id"] : "";
+        out.push({
+          x: Number(raw["x"] ?? 0),
+          y: Number(raw["y"] ?? 0),
+          z: Number(raw["z"] ?? 0),
+          id: id === "" ? "<unnamed>" : id,
+        });
+      }
+    }
+  }
+  return out;
 }
 
 /** Coerce an NBT `Properties` compound into the `string -> string` map the registry speaks. */
