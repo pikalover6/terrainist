@@ -32,6 +32,10 @@
  * - **fences** (`*_fence`) — `north`/`east`/`south`/`west`;
  * - **glass panes and iron bars** — the same four;
  * - **walls** (`*_wall`) — the same four as `none`/`low`/`tall`, plus `up`;
+ * - **rails** (`rail`, `powered_rail`, `detector_rail`, `activator_rail`) —
+ *   their `shape`: `north_south`/`east_west`, the four `ascending_*` variants
+ *   where the line changes level, and — for the flexible `rail` only — the
+ *   four curves;
  *
  * and nothing else. Stairs already carry the `facing`/`half` they were placed
  * with; their `shape` (the inner/outer mitre at a corner) is *not* computed
@@ -59,14 +63,23 @@ export interface ConnectionStats {
 }
 
 /** Which connection grammar a block name follows. */
-export type ConnectiveKind = "fence" | "pane" | "wall";
+export type ConnectiveKind = "fence" | "pane" | "wall" | "rail" | "straight_rail";
 
 /** Classify a block name, or `undefined` when it has no connection state. */
 export function connectiveKindOf(name: string): ConnectiveKind | undefined {
   if (name.endsWith("_fence")) return "fence";
   if (name.endsWith("_wall")) return "wall";
   if (name.endsWith("_pane") || name === "iron_bars") return "pane";
+  if (name === "rail") return "rail";
+  if (name === "powered_rail" || name === "detector_rail" || name === "activator_rail") {
+    return "straight_rail";
+  }
   return undefined;
+}
+
+/** True for either rail grammar. */
+function isRail(kind: ConnectiveKind | undefined): boolean {
+  return kind === "rail" || kind === "straight_rail";
 }
 
 /** `(dx, dz)` per cardinal, in the order the state properties are named. */
@@ -124,6 +137,22 @@ export function applyConnectionStates(
     if (decoded === undefined) continue;
 
     const props: Record<string, string> = { ...decoded.props };
+
+    if (isRail(kind)) {
+      // A rail carries one property, `shape`, and it is a statement about the
+      // neighbourhood: which of the four cardinals holds another rail, and
+      // whether that rail is a step up. Same two-phase discipline as the rest
+      // of this pass, and the same `at()` accessor, so a line that crosses a
+      // chunk boundary is read exactly like one that does not.
+      props["shape"] = railShape(cell, kind === "rail", (dx, dy, dz) =>
+        isRail(kindOf(at(cell.x + dx, cell.y + dy, cell.z + dz))),
+      );
+      const nextRail = stack.blockStateOf(decoded.name, props);
+      if (nextRail === undefined || nextRail === stateId) continue;
+      writes.push({ x: cell.x, y: cell.y, z: cell.z, stateId: nextRail });
+      continue;
+    }
+
     let connections = 0;
     let axisNS = 0;
     let axisEW = 0;
@@ -157,6 +186,82 @@ export function applyConnectionStates(
   }
 
   return { examined, rewritten: writes.length };
+}
+
+/* -------------------------------------------------------------------------- */
+/* rails                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/** A rail's four possible curve shapes, in the priority they are chosen. */
+const RAIL_CURVES: readonly (readonly [string, string, string])[] = Object.freeze([
+  ["south", "east", "south_east"],
+  ["south", "west", "south_west"],
+  ["north", "east", "north_east"],
+  ["north", "west", "north_west"],
+] as const);
+
+/**
+ * The `shape` one rail should carry.
+ *
+ * `hasRail(dx, dy, dz)` answers "is there a rail at this offset from me". A
+ * neighbour counts as connected when it sits at the same level, one higher (we
+ * climb to it) or one lower (it climbs to us) — which is exactly vanilla's
+ * rule, and the reason a graded line resolves without the generator having to
+ * say anything about slope.
+ *
+ * The choice, in order:
+ *
+ * 1. both cardinals of one axis connected → that axis, straight;
+ * 2. a perpendicular pair, on the flexible `rail` only → the curve naming the
+ *    two directions (`south_east` connects south and east);
+ * 3. one connection, or none → the axis it lies on, defaulting `north_south`,
+ *    which is the vanilla default and what a buffer-ended run wants.
+ *
+ * A straight shape becomes its `ascending_*` variant when the neighbour it
+ * runs toward is one block higher. Curves have no ascending form in the game,
+ * so a corner on a grade stays flat — which is why {@link railShape} resolves
+ * the axis first and the slope second.
+ */
+export function railShape(
+  cell: ConnectionCandidate,
+  curvesAllowed: boolean,
+  hasRail: (dx: number, dy: number, dz: number) => boolean,
+): string {
+  const level = (dx: number, dz: number): number | undefined => {
+    if (hasRail(dx, 0, dz)) return 0;
+    if (hasRail(dx, 1, dz)) return 1;
+    if (hasRail(dx, -1, dz)) return -1;
+    return undefined;
+  };
+  const north = level(0, -1);
+  const east = level(1, 0);
+  const south = level(0, 1);
+  const west = level(-1, 0);
+  const at = (name: string): number | undefined =>
+    name === "north" ? north : name === "east" ? east : name === "south" ? south : west;
+
+  const ns = north !== undefined && south !== undefined;
+  const ew = east !== undefined && west !== undefined;
+
+  if (!ns && !ew && curvesAllowed) {
+    for (const [a, b, shape] of RAIL_CURVES) {
+      if (at(a) !== undefined && at(b) !== undefined) return shape;
+    }
+  }
+
+  // The axis: a full pair first, then a lone connection, then the default.
+  const axis: "ns" | "ew" = ns
+    ? "ns"
+    : ew
+      ? "ew"
+      : east !== undefined || west !== undefined
+        ? "ew"
+        : "ns";
+
+  const [a, b] = axis === "ns" ? (["north", "south"] as const) : (["east", "west"] as const);
+  if (at(a) === 1) return `ascending_${a}`;
+  if (at(b) === 1) return `ascending_${b}`;
+  return axis === "ns" ? "north_south" : "east_west";
 }
 
 /**

@@ -245,6 +245,10 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       validateStructureNode(out, childPath, raw, connections);
       continue;
     }
+    if (generator === PROP_GENERATOR) {
+      validatePropNode(out, childPath, raw, connections);
+      continue;
+    }
     if (
       typeof generator !== "string" ||
       !(PROFILE_GENERATORS as readonly string[]).includes(generator) ||
@@ -255,7 +259,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
           "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
           childPath,
           `generator ${describe(generator)} is not allowed by the settlement profile`,
-          `use one of: ${[...PROFILE_GENERATORS.filter((g) => !(SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(g)), ...STRUCTURE_GENERATORS].join(", ")}`,
+          `use one of: ${[...PROFILE_GENERATORS.filter((g) => !(SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(g)), ...STRUCTURE_GENERATORS, PROP_GENERATOR].join(", ")}`,
         ),
       );
       continue;
@@ -1395,5 +1399,176 @@ function checkSeedSalt(out: LoamDiagnostic[], path: string, salt: unknown): void
   if (salt === undefined) return;
   if (typeof salt !== "string") {
     out.push(error("BAD_TYPE", path, `"seedSalt" must be a string, got ${describe(salt)}`, 'write "seedSalt": "v2" to reroll this node without renaming it'));
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* prop.place@0                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** The vehicle-and-prop generator the settlement profile accepts. */
+export const PROP_GENERATOR = "prop.place@0";
+
+/**
+ * Every prop `prop.place@0` builds, in catalog order.
+ *
+ * Duplicated from the stdlib grammar's `PROP_NAMES` rather than imported: the
+ * spec package is the *bottom* of the dependency graph — stdlib depends on it,
+ * not the other way round — and a validator that could not run without the
+ * generator it validates would be a layering inversion. The compiler's
+ * `test/props.test.ts` asserts the two lists are identical, which is what
+ * keeps the duplication honest.
+ */
+export const SETTLEMENT_PROP_NAMES = [
+  "rowboat",
+  "fishing_sloop",
+  "pier",
+  "cart",
+  "covered_wagon",
+  "rail_line",
+  "fountain",
+  "gazebo",
+  "statue_plinth",
+] as const;
+
+/** Params a `prop.place@0` node may carry. */
+const PROP_PARAM_KEYS = [
+  // What to build.
+  "prop",
+  // Coarse placement — the same vocabulary every profile node speaks.
+  "zone",
+  "at",
+  "jitter",
+  "yaw",
+  // Per-prop geometry.
+  "length",
+  "width",
+  "curve",
+  "grade",
+  "platform",
+  "on",
+] as const;
+
+/**
+ * A `prop.place@0` node.
+ *
+ * Deliberately *not* routed through `validateStructureNode`: a prop has no
+ * road params and no building params, so the only checks it shares with those
+ * are the node-shape ones. What it adds is the one param carrying all the
+ * meaning — `prop` — and a fix hint naming every legal value, because
+ * "unknown prop" with no list is the diagnostic an author can do least with.
+ */
+function validatePropNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, STRUCTURE_KEYS, "structure node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  if (node["children"] !== undefined) {
+    out.push(
+      error(
+        "STRUCTURE_NODE_SHAPE",
+        path,
+        "prop.place@0 nodes have no children",
+        'remove "children" — a prop is a leaf; declare another prop.place@0 sibling under the root instead',
+      ),
+    );
+  }
+
+  const params = node["params"];
+  if (params !== undefined && !isObject(params)) {
+    out.push(
+      error(
+        "BAD_TYPE",
+        path,
+        `"params" must be an object, got ${describe(params)}`,
+        'write "params": { "prop": "rowboat" } — prop.place@0 has to be told what to build',
+      ),
+    );
+  } else {
+    validatePropParams(out, `${path}.params`, isObject(params) ? params : {});
+  }
+
+  validateBoxEnvelope(out, path, node["envelope"]);
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+function validatePropParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, PROP_PARAM_KEYS, "prop.place@0 params");
+
+  const prop = params["prop"];
+  const list = SETTLEMENT_PROP_NAMES.join(", ");
+  if (prop === undefined) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        'prop.place@0 needs a "prop" — the thing to build',
+        `set "prop" to one of: ${list}`,
+      ),
+    );
+  } else if (
+    typeof prop !== "string" ||
+    !(SETTLEMENT_PROP_NAMES as readonly string[]).includes(prop)
+  ) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `prop.place@0 does not build ${describe(prop)}`,
+        `set "prop" to one of: ${list}`,
+      ),
+    );
+  }
+
+  if (params["zone"] !== undefined) checkZone(out, at, "zone", params["zone"]);
+  checkBooleans(out, at, params, ["curve", "platform"]);
+  checkNumbers(out, at, params, {
+    length: { min: 3, max: 64, int: true },
+    width: { min: 1, max: 5, int: true },
+    grade: { min: 0, max: 4, int: true },
+    jitter: { min: 0, max: 1 },
+  });
+
+  const yaw = params["yaw"];
+  if (yaw !== undefined && !(YAWS as readonly unknown[]).includes(yaw)) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"yaw" must be one of ${YAWS.join(", ")}, got ${describe(yaw)}`,
+        'write "yaw": 90 — a prop is placed on the quarter-turn lattice, like every other node',
+      ),
+    );
+  }
+
+  const anchor = params["at"];
+  if (anchor !== undefined && anchor !== "pier" && !isObject(anchor)) {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"at" must be "pier" or an { "x", "z" } column, got ${describe(anchor)}`,
+        'write "at": "pier" to moor at the nearest pier end, or use "zone": "north" to place it coarsely',
+      ),
+    );
+  }
+
+  const on = params["on"];
+  if (on !== undefined && on !== "water" && on !== "ground") {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"on" must be "water" or "ground", got ${describe(on)}`,
+        'write "on": "water" to put the prop on the nearest suitable water columns — boats declare it by default',
+      ),
+    );
   }
 }
