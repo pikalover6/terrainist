@@ -42,6 +42,12 @@
 import { Rng, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import { sortOps, type LocalVoxelOp, type StructureYaw } from "./core.js";
+import {
+  BLITZ_PROP_GENERATORS,
+  BLITZ_PROP_NAMES,
+  blitzPropFootprint,
+  isBlitzProp,
+} from "./props-blitz.js";
 import { type BuildingMaterials } from "./themes.js";
 
 /* -------------------------------------------------------------------------- */
@@ -59,6 +65,7 @@ export const PROP_NAMES = [
   "fountain",
   "gazebo",
   "statue_plinth",
+  ...BLITZ_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -363,6 +370,7 @@ export function propFootprint(
   readonly minY: number;
   readonly base: PropBase;
 } {
+  if (isBlitzProp(prop)) return blitzPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -889,6 +897,7 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   fountain,
   gazebo,
   statue_plinth: statuePlinth,
+  ...BLITZ_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

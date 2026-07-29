@@ -30,6 +30,7 @@
  * couple of dozen times per building; it costs nothing worth measuring.
  */
 
+import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -121,7 +122,10 @@ export function archetypeFacadeDefaults(
     case "bakery":
       return { windowShape: "single", windowRhythm: "regular", roof: "gable" };
     default:
-      return {};
+      // The breadth wave keeps its own tendencies in its own file; falling
+      // through to it here is what lets a keep ask for the roof shape whose
+      // height its battlement is going to take over.
+      return blitzFacadeDefaults(archetype);
   }
 }
 

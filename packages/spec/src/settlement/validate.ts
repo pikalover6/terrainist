@@ -1565,6 +1565,22 @@ export const SETTLEMENT_PROP_NAMES = [
   "fountain",
   "gazebo",
   "statue_plinth",
+  // The breadth wave: street furniture, works, camps, yards and smallcraft.
+  "bench",
+  "planter",
+  "clothesline",
+  "scarecrow",
+  "market_barrow",
+  "signpost",
+  "swimming_pool",
+  "curtain_wall",
+  "graveyard",
+  "tent",
+  "caravan",
+  "campsite",
+  "treehouse",
+  "cairn",
+  "carousel",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
