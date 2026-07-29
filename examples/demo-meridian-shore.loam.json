@@ -1,0 +1,1314 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "meridian_shore",
+    "worldSeed": 20260729,
+    "prompt": "a modern lakeside city — glass towers above a waterfront promenade, a marina of yachts and a ferry, a small airfield inland, an observatory on the hill",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": {
+        "mix": [
+          [
+            "minecraft:andesite",
+            3
+          ],
+          [
+            "minecraft:polished_andesite",
+            2
+          ],
+          [
+            "minecraft:stone",
+            1
+          ]
+        ]
+      },
+      "plaza.path": "minecraft:polished_diorite",
+      "plaza.cobble": "minecraft:smooth_stone",
+      "plaza.gravel": {
+        "mix": [
+          [
+            "minecraft:polished_andesite",
+            3
+          ],
+          [
+            "minecraft:smooth_stone",
+            2
+          ]
+        ]
+      },
+      "plaza.border": "minecraft:polished_blackstone",
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:sand",
+            4
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Meridian Shore — a glass city on a wide southern bay",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Gentle green country falling south to a broad bay",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 78,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0038,
+          "lacunarity": 2.0,
+          "gain": 0.46,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 58,
+          "soilDepth": 4,
+          "beachWidth": 5,
+          "snowLineFraction": 0.96
+        },
+        "children": [
+          {
+            "id": "observatory_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The hill the observatory stands on, north-west of the city",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.17,
+                0.22
+              ],
+              "radius": 74,
+              "height": 46,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "downtown_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The flat shelf downtown is built on, running to the water",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.585
+              ],
+              "radius": 115,
+              "height": 10,
+              "rim": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "airfield_flat",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The level ground inland the airstrip was laid across",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.83,
+                0.17
+              ],
+              "radius": 100,
+              "height": 6,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "meridian_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The bay itself — open water along the whole southern edge",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                1.0
+              ],
+              "radius": 210,
+              "depth": 50,
+              "profile": "rounded",
+              "irregularity": 0.24
+            }
+          },
+          {
+            "id": "west_creek",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A creek off the western hills into the bay",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.13,
+                  0.3
+                ],
+                [
+                  0.18,
+                  0.45
+                ],
+                [
+                  0.25,
+                  0.57
+                ],
+                "coast"
+              ],
+              "width": 9,
+              "depth": 5,
+              "meander": 0.6
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild, green, maritime",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "esplanade",
+        "kind": "primitive",
+        "label": "The waterfront promenade — the city's front room",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            34,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.49,
+              0.665
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 22
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "promenade"
+        ]
+      },
+      {
+        "id": "tower_meridian",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Meridian Tower — the tallest thing on the bay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            19,
+            64,
+            19
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 14,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:light_gray_concrete",
+          "trimSymbol": "minecraft:smooth_stone",
+          "roofSymbol": "minecraft:smooth_quartz"
+        },
+        "constraints": [
+          {
+            "distance": "esplanade",
+            "min": 18,
+            "max": 60
+          },
+          {
+            "facing": "esplanade"
+          },
+          {
+            "clearance": 3
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 18
+          }
+        ],
+        "ports": {
+          "lobby": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          },
+          "forecourt": {
+            "type": "road_stub",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "skyscraper",
+          "downtown"
+        ]
+      },
+      {
+        "id": "tower_harbour",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Harbour Tower, a block back from the water",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            52,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 11,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:white_concrete",
+          "trimSymbol": "minecraft:polished_diorite",
+          "roofSymbol": "minecraft:gray_concrete"
+        },
+        "constraints": [
+          {
+            "distance": "esplanade",
+            "min": 20,
+            "max": 66
+          },
+          {
+            "distance": "#tag:downtown",
+            "min": 13
+          },
+          {
+            "clearance": 3
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 18
+          }
+        ],
+        "ports": {
+          "lobby": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "skyscraper",
+          "downtown"
+        ]
+      },
+      {
+        "id": "tower_lantern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The Lantern — the shorter third tower closing the skyline",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            40,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 8,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "dense",
+          "wallSymbol": "minecraft:blue_concrete",
+          "trimSymbol": "minecraft:smooth_stone",
+          "roofSymbol": "minecraft:smooth_quartz"
+        },
+        "constraints": [
+          {
+            "distance": "esplanade",
+            "min": 18,
+            "max": 62
+          },
+          {
+            "distance": "#tag:downtown",
+            "min": 13
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 20
+          }
+        ],
+        "ports": {
+          "lobby": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "skyscraper",
+          "downtown"
+        ]
+      },
+      {
+        "id": "shore_hotel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The Shore Hotel, looking straight down the promenade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            18,
+            44,
+            20
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 9,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:white_concrete",
+          "trimSymbol": "minecraft:smooth_stone",
+          "roofSymbol": "minecraft:smooth_quartz"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "esplanade",
+            "gap": [
+              2,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "esplanade"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          },
+          "portico": {
+            "type": "road_stub",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "hotel",
+          "downtown"
+        ]
+      },
+      {
+        "id": "apartments_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "West-side flats above the creek",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            32,
+            17
+          ]
+        },
+        "params": {
+          "floors": 6,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:light_gray_concrete",
+          "trimSymbol": "minecraft:polished_diorite",
+          "roofSymbol": "minecraft:gray_concrete"
+        },
+        "constraints": [
+          {
+            "distance": "esplanade",
+            "min": 24,
+            "max": 84
+          },
+          {
+            "distance": "#tag:downtown",
+            "min": 12
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 22
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apartment_block",
+          "downtown",
+          "residential"
+        ]
+      },
+      {
+        "id": "apartments_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "East-side flats, balconies to the bay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            28,
+            15
+          ]
+        },
+        "params": {
+          "floors": 5,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:blue_concrete",
+          "trimSymbol": "minecraft:polished_diorite",
+          "roofSymbol": "minecraft:gray_concrete"
+        },
+        "constraints": [
+          {
+            "distance": "esplanade",
+            "min": 22,
+            "max": 84
+          },
+          {
+            "distance": "#tag:downtown",
+            "min": 12
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 22
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apartment_block",
+          "downtown",
+          "residential"
+        ]
+      },
+      {
+        "id": "waterfront_gym",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The lido gym on the promenade, beside the pool",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "floorHeight": 4,
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:white_concrete",
+          "trimSymbol": "minecraft:smooth_stone",
+          "roofSymbol": "minecraft:smooth_quartz"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "esplanade",
+            "gap": [
+              2,
+              16
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "esplanade"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gym",
+          "leisure"
+        ]
+      },
+      {
+        "id": "ferry_terminal",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The ferry terminal at the promenade's eastern end",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:light_gray_concrete",
+          "trimSymbol": "minecraft:smooth_stone",
+          "roofSymbol": "minecraft:gray_concrete"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "esplanade",
+            "gap": [
+              2,
+              20
+            ],
+            "strength": "soft"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 32,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "depot",
+          "transport"
+        ]
+      },
+      {
+        "id": "airfield_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The airfield's little control block",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            24,
+            13
+          ]
+        },
+        "params": {
+          "floors": 4,
+          "floorHeight": 4,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:white_concrete",
+          "trimSymbol": "minecraft:polished_diorite",
+          "roofSymbol": "minecraft:gray_concrete"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.83,
+              0.17
+            ]
+          },
+          {
+            "distance": "esplanade",
+            "min": 120
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 18
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "office",
+          "transport"
+        ]
+      },
+      {
+        "id": "glasshouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The market-garden glasshouse on the western outskirts",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            9,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "esplanade",
+            "min": 70,
+            "max": 190
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 22
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "greenhouse",
+          "rural"
+        ]
+      },
+      {
+        "id": "west_windpump",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The windpump that drains the western field",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "floorHeight": 4
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "glasshouse",
+            "min": 16,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "windpump",
+          "rural"
+        ]
+      },
+      {
+        "id": "observatory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The observatory on the north-west hill — dropped if the hill will not take it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "floorHeight": 5
+        },
+        "optional": true,
+        "constraints": [
+          {
+            "at": [
+              0.17,
+              0.22
+            ]
+          },
+          {
+            "on": "@terrain:peak",
+            "band": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 40
+          }
+        ],
+        "ports": {
+          "entrance": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "observatory",
+          "science"
+        ]
+      },
+      {
+        "id": "promenade_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The main pier, running out from the promenade",
+        "params": {
+          "prop": "pier",
+          "zone": "south",
+          "length": 16,
+          "width": 3
+        }
+      },
+      {
+        "id": "marina_yacht",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A yacht on the pier's outer berth",
+        "params": {
+          "prop": "yacht",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "marina_pier_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The second finger pier, east of the first",
+        "params": {
+          "prop": "pier",
+          "zone": "southeast",
+          "length": 12,
+          "width": 2
+        }
+      },
+      {
+        "id": "marina_speedboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A speedboat tied up on the east pier",
+        "params": {
+          "prop": "speedboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "bay_ferry",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The bay ferry, standing off the terminal",
+        "params": {
+          "prop": "ferry",
+          "zone": "south",
+          "on": "water",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "channel_buoy_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A channel buoy west of the marina",
+        "params": {
+          "prop": "buoy",
+          "zone": "south",
+          "on": "water",
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "channel_buoy_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A channel buoy east of the marina",
+        "params": {
+          "prop": "buoy",
+          "zone": "south",
+          "on": "water",
+          "jitter": 0.6
+        }
+      },
+      {
+        "id": "lido_pool",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The lido pool behind the promenade",
+        "params": {
+          "prop": "swimming_pool",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "promenade_carousel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The carousel on the promenade",
+        "params": {
+          "prop": "carousel",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "promenade_bench_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A bench facing the water",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "promenade_bench_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A second bench further along the walk",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "promenade_planter_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A planter on the walk",
+        "params": {
+          "prop": "planter",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "promenade_planter_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A planter at the eastern end of the walk",
+        "params": {
+          "prop": "planter",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "civic_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The fountain in the middle of downtown",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "promenade_signpost",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A signpost where the lanes meet the walk",
+        "params": {
+          "prop": "signpost",
+          "zone": "center",
+          "on": "ground",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "runway_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The airstrip's southern segment",
+        "params": {
+          "prop": "runway",
+          "zone": "northeast",
+          "length": 56,
+          "yaw": 0,
+          "on": "ground",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "runway_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The airstrip's northern segment, in line with the first",
+        "params": {
+          "prop": "runway",
+          "zone": "northeast",
+          "length": 56,
+          "yaw": 0,
+          "on": "ground",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "apron_airliner",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "An airliner on the apron",
+        "params": {
+          "prop": "airliner",
+          "zone": "northeast",
+          "yaw": 90,
+          "on": "ground",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "apron_light_plane",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A light plane parked beside the strip",
+        "params": {
+          "prop": "light_plane",
+          "zone": "northeast",
+          "on": "ground",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "airfield_hangar",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The hangar at the head of the strip",
+        "params": {
+          "prop": "hangar",
+          "zone": "northeast",
+          "on": "ground",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "mooring_mast",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The zeppelin mast north of the airfield",
+        "params": {
+          "prop": "zeppelin_mast",
+          "zone": "north",
+          "on": "ground",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "moored_airship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The airship at the mast",
+        "params": {
+          "prop": "airship",
+          "zone": "north",
+          "on": "ground",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "city_streets",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The city grid, the promenade and the airfield road",
+        "params": {
+          "anchors": [
+            "esplanade",
+            "#tag:downtown",
+            "waterfront_gym",
+            "ferry_terminal",
+            "airfield_office",
+            "glasshouse"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12,
+          "junctionStyle": "plain"
+        }
+      },
+      {
+        "id": "hill_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Mixed woodland on the observatory hill, well clear of downtown",
+        "params": {
+          "area": {
+            "zone": "northwest"
+          },
+          "density": 0.24,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            4,
+            110
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.42,
+            "flowers": 0.06,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "hill_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "hill_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "east_parkland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Parkland oaks east of the city, between town and airfield",
+        "params": {
+          "area": {
+            "zone": "east"
+          },
+          "density": 0.16,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            3,
+            90
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.08,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "park_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "park_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse cover everywhere else",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.022,
+          "spacing": 6,
+          "clumping": 0.6,
+          "maxSlope": 32,
+          "elevation": [
+            3,
+            110
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "field_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
