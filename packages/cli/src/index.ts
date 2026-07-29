@@ -30,11 +30,22 @@ import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terraini
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
 
+import { AuthoringFailedError, reviseLoamDoc, sumUsage } from "@terrainist/agents";
+import type { Usage } from "@terrainist/agents";
+
+import {
+  physicsLintFailures,
+  renderCompileFeedback,
+  renderDiagnosticFeedback,
+} from "./feedback.js";
 import {
   authorAndWriteDocument,
   discardDocument,
   parseGenerateArgs,
+  printAuthorFailure,
+  printReviseSummary,
   seedFromPrompt,
+  writeDocument,
 } from "./generate.js";
 import { defaultSavesDir, installWorld } from "./install.js";
 import { zipWorld } from "./zip.js";
@@ -49,6 +60,7 @@ const USAGE = `terrainist — text prompt to Minecraft world
 
 Usage:
   terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
+                                 [--kit settlement|terrain] [--compile-rounds N]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
@@ -62,6 +74,14 @@ generate options:
   --size <N>        Region edge length in blocks (default: 512).
   --seed <N>        World seed (default: BLAKE3 of the prompt).
   --out <dir>       Output directory (default: out).
+  --kit <name>      Spec kit the model authors against: "settlement" (default,
+                    terrain + plaza, buildings, roads and constraints) or
+                    "terrain" (terrain profile only).
+  --compile-rounds <N>
+                    Compile-feedback revision rounds (default: 2, max 5). After
+                    each compile, author-actionable findings — an unclosed
+                    basin rim, an unroutable road, a demoted or dropped
+                    layout node — go back to the model for a revision.
   --keep-doc        Keep the authored .loam.json after a successful compile.
   --model <id>      Override the pinned authoring model.
   Requires OPENROUTER_API_KEY in the repo-root .env or the environment.
@@ -276,32 +296,129 @@ function printCompileReport(
   for (const d of report.diagnostics) console.warn(`\n${formatDiagnostic(d)}`);
 }
 
-/** `terrainist generate "<prompt>"` — author with GLM 5.2, then compile and zip. */
+/**
+ * `terrainist generate "<prompt>"` — author with GLM 5.2, then compile and zip.
+ *
+ * Two loops, in order. The authoring loop (inside `@terrainist/agents`) makes
+ * the document *valid*. Then this one makes the *world* good: compile, look at
+ * what the compiler says about the world it just built, and — for the findings
+ * the author can actually act on — hand them back and ask for a revision. A
+ * compile is a couple of seconds, so up to `--compile-rounds` of them is a
+ * cheap way to catch a lake that never filled or a house no lane could reach.
+ *
+ * A physics-lint failure is never fed back. It means the compiler emitted a
+ * world that breaks its own invariants, which no rewording of the document can
+ * fix, so the run aborts and says so.
+ */
 export async function runGenerate(args: readonly string[]): Promise<number> {
   const options = parseGenerateArgs(args);
 
   const authored = await authorAndWriteDocument(options);
   if (authored === undefined) return 1;
 
-  const result = await compileTerrain(authored.result.doc, {
-    outDir: authored.worldDir,
-    allowUnstable: options.allowUnstable,
-  });
+  let session = authored.result;
+  let docPath = authored.docPath;
+  let worldDir = authored.worldDir;
+  const usages: Usage[] = [session.usage];
 
-  if (!result.ok) {
-    console.error(
-      `terrainist: the authored document failed to compile — ${result.diagnostics.length} problem(s)\n`,
-    );
-    for (const d of result.diagnostics) console.error(`${formatDiagnostic(d)}\n`);
-    console.error(`the document was kept at ${authored.docPath}`);
-    return 1;
+  for (let round = 0; ; round++) {
+    const result = await compileTerrain(session.doc, {
+      outDir: worldDir,
+      allowUnstable: options.allowUnstable,
+    });
+
+    const diagnostics = result.ok ? result.report.diagnostics : result.diagnostics;
+    const lint = physicsLintFailures(diagnostics);
+    if (lint.length > 0) {
+      console.error(
+        [
+          "",
+          "terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.",
+          "The authored document is legal Loam; the compiler still emitted a world that",
+          "breaks its own invariants. Do not re-prompt: file this against the compiler,",
+          `with the document at ${docPath}.`,
+          "",
+          ...lint.map(formatDiagnostic),
+          "",
+        ].join("\n"),
+      );
+      return 1;
+    }
+
+    const feedback = result.ok
+      ? renderCompileFeedback(result.report)
+      : renderDiagnosticFeedback(result.diagnostics);
+
+    if (result.ok && feedback === undefined) {
+      const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
+      await discardDocument(docPath, options.keepDoc);
+      printCompileReport(result.report, zipPath, undefined);
+      printRunUsage(usages, round);
+      console.log(`\nnext: terrainist install ${result.report.emit.worldDir}`);
+      return 0;
+    }
+
+    const exhausted = round >= options.compileRounds;
+    if (result.ok && exhausted) {
+      // Warnings only, and no budget left: the world exists and is worth
+      // keeping. The findings are printed with the report, as always.
+      const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
+      await discardDocument(docPath, options.keepDoc);
+      printCompileReport(result.report, zipPath, undefined);
+      printRunUsage(usages, round);
+      console.log(
+        `\nnote: ${options.compileRounds} compile-feedback round(s) used; the findings above remain`,
+      );
+      console.log(`next: terrainist install ${result.report.emit.worldDir}`);
+      return 0;
+    }
+    if (!result.ok && (exhausted || feedback === undefined)) {
+      console.error(
+        `terrainist: the authored document failed to compile — ${result.diagnostics.length} problem(s)\n`,
+      );
+      for (const d of result.diagnostics) console.error(`${formatDiagnostic(d)}\n`);
+      console.error(`the document was kept at ${docPath}`);
+      printRunUsage(usages, round);
+      return 1;
+    }
+
+    console.log(`\ncompile feedback, round ${round + 1} of ${options.compileRounds}:\n`);
+    console.log(`${feedback as string}\n`);
+
+    try {
+      session = await reviseLoamDoc({
+        messages: session.messages,
+        feedback: feedback as string,
+        previous: JSON.stringify(session.doc),
+        worldSeed: options.seed,
+        size: options.size,
+        kitName: session.kitName,
+        model: options.model,
+      });
+    } catch (err) {
+      if (err instanceof AuthoringFailedError) {
+        console.error("terrainist: the revision never validated; keeping the previous document");
+        printAuthorFailure(err);
+        usages.push(err.usage);
+        continue;
+      }
+      throw err;
+    }
+    usages.push(session.usage);
+    printReviseSummary(round + 1, session);
+    docPath = await writeDocument(path.resolve(options.outDir), session.doc);
+    worldDir = path.join(path.resolve(options.outDir), session.doc.meta.name);
   }
+}
 
-  const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
-  await discardDocument(authored.docPath, options.keepDoc);
-  printCompileReport(result.report, zipPath, undefined);
-  console.log(`\nnext: terrainist install ${result.report.emit.worldDir}`);
-  return 0;
+/** Total spend across authoring and every revision round. */
+function printRunUsage(usages: readonly Usage[], rounds: number): void {
+  const total = sumUsage(usages);
+  console.log(
+    `  authoring  ${usages.length} model run(s), ${rounds} compile-feedback round(s), ` +
+      `${total.promptTokens} in + ${total.completionTokens} out = ${total.totalTokens} tokens` +
+      `${total.cost === undefined ? "" : ` ($${total.cost.toFixed(4)})`}`,
+  );
 }
 
 /** `terrainist install <worldDir> [--saves <dir>]` — copy into the saves folder. */

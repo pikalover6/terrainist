@@ -37,6 +37,8 @@ import {
   applyEdits,
   resolveOpenBasins,
   resolvePondChains,
+  reportDryCarves,
+  type DryCarveResult,
   type EditComposition,
   type PondChainResult,
   type TerrainEdit,
@@ -82,6 +84,8 @@ export interface TerrainFieldResult {
   edits: EditComposition;
   /** One entry per river demoted to a pond chain; empty on a map with a sea. */
   ponds: PondChainResult[];
+  /** One entry per carve that asked to flood and stayed dry (`LOAM-T113`). */
+  dryCarves: DryCarveResult[];
   /** The resolved 64-bit world seed, for `level.dat`. */
   worldSeed: bigint;
 }
@@ -112,6 +116,9 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
   // A river that reaches no sea beads into ponds rather than compiling as a dry
   // trench. Same seam, same post-composition field, and it too only adds basins.
   const ponds = resolvePondChains(field, edits, sea);
+  // Whatever is still dry after both water passes and asked not to be gets said
+  // out loud, with a bearing to the water it missed.
+  const dryCarves = reportDryCarves(field, edits, sea);
   // Classification reads the composition: hydrology needs the carves' `flooded`
   // declarations and the basin pools, and the snow rule needs the footprints.
   const classification = classify(field, params, {
@@ -120,5 +127,5 @@ export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldRes
     basins: edits.basins,
     footprints: edits.footprints,
   });
-  return { field, params, classification, edits, ponds, worldSeed };
+  return { field, params, classification, edits, ponds, dryCarves, worldSeed };
 }

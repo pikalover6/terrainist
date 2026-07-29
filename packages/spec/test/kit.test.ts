@@ -1,10 +1,18 @@
 /**
- * The terrain-author spec kit must never drift from the validator.
+ * The spec kits must never drift from the validators.
  *
- * Every ```json block in `docs/kits/terrain-author.md` is extracted and
- * parsed; any block that carries a `"loam"` key is a complete document and
- * must validate with zero diagnostics. If someone tightens the validator and
- * forgets the kit, this test fails before an LLM ever sees the stale wording.
+ * Every ```json block in `docs/kits/terrain-author.md` and
+ * `docs/kits/settlement-author.md` is extracted and parsed; any block that
+ * carries a `"loam"` key is a complete document and must validate against its
+ * profile's validator. If someone tightens a validator and forgets the kit,
+ * this test fails before an LLM ever sees the stale wording.
+ *
+ * The bar differs slightly by kit, and deliberately. A terrain document has no
+ * solver, so zero diagnostics is achievable and required. A settlement document
+ * can pick up advisory warnings (`LOAM-W407` for a constraint the solver parses
+ * but ignores, `LOAM-T206` for a port type it carries but does not resolve)
+ * without anything being wrong with the example, so the settlement bar is zero
+ * *error* diagnostics.
  */
 
 import { readFile } from "node:fs/promises";
@@ -14,18 +22,16 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { formatDiagnostic, validateTerrainDocument } from "../src/terrain/index.js";
+import { validateSettlementDocument } from "../src/settlement/index.js";
 
-const KIT_PATH = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../docs/kits/terrain-author.md",
-);
+const DOCS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../docs/kits");
 
 /**
  * Every fenced ```json block, in document order, with its 1-based line.
  *
  * A block preceded by `<!-- kit:skeleton -->` is an intentionally incomplete
  * shape sketch: it must still be valid JSON, but it is not held to the
- * zero-diagnostics bar.
+ * diagnostics bar.
  */
 function extractJsonBlocks(
   markdown: string,
@@ -61,15 +67,28 @@ function extractJsonBlocks(
   return blocks;
 }
 
-const markdown = await readFile(KIT_PATH, "utf8");
-const blocks = extractJsonBlocks(markdown);
+const terrainBlocks = extractJsonBlocks(await readFile(path.join(DOCS, "terrain-author.md"), "utf8"));
+const settlementBlocks = extractJsonBlocks(
+  await readFile(path.join(DOCS, "settlement-author.md"), "utf8"),
+);
+
+/** The complete documents among `blocks` — a skeleton or a fragment is neither. */
+function completeDocuments(
+  blocks: readonly { line: number; source: string; skeleton: boolean }[],
+): { line: number; value: unknown }[] {
+  return blocks
+    .map((b) => ({ ...b, value: JSON.parse(b.source) as unknown }))
+    .filter(
+      (b) => !b.skeleton && typeof b.value === "object" && b.value !== null && "loam" in b.value,
+    );
+}
 
 describe("terrain-author kit", () => {
   it("contains JSON examples", () => {
-    expect(blocks.length).toBeGreaterThanOrEqual(5);
+    expect(terrainBlocks.length).toBeGreaterThanOrEqual(5);
   });
 
-  it.each(blocks.map((b, i) => [i, b] as const))(
+  it.each(terrainBlocks.map((b, i) => [i, b] as const))(
     "block %i parses as JSON",
     (_i, block) => {
       expect(() => JSON.parse(block.source), `kit line ${block.line}`).not.toThrow();
@@ -77,13 +96,7 @@ describe("terrain-author kit", () => {
   );
 
   it("every complete document validates with zero diagnostics", () => {
-    const complete = blocks
-      .map((b) => ({ ...b, value: JSON.parse(b.source) as unknown }))
-      .filter(
-        (b) =>
-          !b.skeleton && typeof b.value === "object" && b.value !== null && "loam" in b.value,
-      );
-
+    const complete = completeDocuments(terrainBlocks);
     expect(complete.length, "the kit must embed at least one complete document").toBeGreaterThan(0);
 
     for (const doc of complete) {
@@ -91,6 +104,49 @@ describe("terrain-author kit", () => {
       const rendered = result.diagnostics.map(formatDiagnostic).join("\n");
       expect(rendered, `kit line ${doc.line}`).toBe("");
       expect(result.document, `kit line ${doc.line}`).toBeDefined();
+    }
+  });
+});
+
+describe("settlement-author kit", () => {
+  it("contains JSON examples", () => {
+    expect(settlementBlocks.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it.each(settlementBlocks.map((b, i) => [i, b] as const))(
+    "block %i parses as JSON",
+    (_i, block) => {
+      expect(() => JSON.parse(block.source), `kit line ${block.line}`).not.toThrow();
+    },
+  );
+
+  it("every complete document validates with no error diagnostics", () => {
+    const complete = completeDocuments(settlementBlocks);
+    expect(complete.length, "the kit must embed at least one complete document").toBeGreaterThan(0);
+
+    for (const doc of complete) {
+      const result = validateSettlementDocument(doc.value);
+      const errors = result.diagnostics
+        .filter((d) => d.severity === "error")
+        .map(formatDiagnostic)
+        .join("\n");
+      expect(errors, `kit line ${doc.line}`).toBe("");
+      expect(result.document, `kit line ${doc.line}`).toBeDefined();
+    }
+  });
+
+  it("embeds a complete settlement, not just terrain", () => {
+    const complete = completeDocuments(settlementBlocks);
+    const withStructures = complete.filter((doc) => {
+      const children = (doc.value as { root: { children: { generator?: string }[] } }).root.children;
+      return children.some((c) => c.generator === "building.grammar@0");
+    });
+    expect(withStructures.length).toBeGreaterThan(0);
+  });
+
+  it("teaches the settlement profile, not the terrain one", () => {
+    for (const doc of completeDocuments(settlementBlocks)) {
+      expect((doc.value as { profile: string }).profile, `kit line ${doc.line}`).toBe("settlement");
     }
   });
 });

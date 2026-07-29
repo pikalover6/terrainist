@@ -259,6 +259,48 @@ describe("validateTerrainDocument", () => {
     expectDiagnostic(tooMany, "BAD_COURSE");
   });
 
+  it("LOAM-T103 accepts the \"coast\" anchor on a carve endpoint", () => {
+    for (const course of [
+      [[0.5, 0.4], "coast"],
+      ["coast", [0.5, 0.4]],
+      [[0.5, 0.4], [0.5, 0.3], "coast"],
+    ]) {
+      const doc = baseDocument();
+      const edit = (heightfield(doc)["children"] as Record<string, unknown>[])[0] as Record<string, unknown>;
+      edit["params"] = { verb: "valley", course, width: 30, depth: 20 };
+      const { diagnostics, document } = validateTerrainDocument(doc);
+      expect(codesOf(diagnostics)).toEqual([]);
+      expect(document).toBeDefined();
+    }
+  });
+
+  it("LOAM-T103 rejects \"coast\" in the middle of a course", () => {
+    const doc = baseDocument();
+    const edit = (heightfield(doc)["children"] as Record<string, unknown>[])[0] as Record<string, unknown>;
+    edit["params"] = { verb: "valley", course: [[0.5, 0.4], "coast", [0.5, 0.9]], width: 30, depth: 20 };
+    const d = expectDiagnostic(doc, "BAD_COURSE");
+    expect(d.message).toContain("middle of the course");
+    expect(d.fix).toContain("first or last");
+  });
+
+  it("LOAM-T103 rejects \"coast\" on a raise verb", () => {
+    const doc = baseDocument();
+    const edit = (heightfield(doc)["children"] as Record<string, unknown>[])[0] as Record<string, unknown>;
+    // The base document's edit is a `ridge` — a corridor, but not a carve.
+    (edit["params"] as Record<string, unknown>)["course"] = [[0.1, 0.5], "coast"];
+    const d = expectDiagnostic(doc, "BAD_COURSE");
+    expect(d.message).toContain("verb \"ridge\"");
+    expect(d.fix).toContain("valley");
+  });
+
+  it("LOAM-T103 rejects a course that is nothing but anchors", () => {
+    const doc = baseDocument();
+    const edit = (heightfield(doc)["children"] as Record<string, unknown>[])[0] as Record<string, unknown>;
+    edit["params"] = { verb: "river", course: ["coast", "coast"] };
+    const d = expectDiagnostic(doc, "BAD_COURSE");
+    expect(d.message).toContain("no direction");
+  });
+
   it("LOAM-T104 rejects out-of-range params and knobs from the wrong verb", () => {
     const doc = baseDocument();
     (heightfield(doc)["params"] as Record<string, unknown>)["gain"] = 4;

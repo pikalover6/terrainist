@@ -84,8 +84,10 @@ export const DEFAULT_LAVA_FLOWS = 2;
  * emits bare codes; this table is where each one gets its symbolic name and,
  * more importantly, its fix hint — which G3 feeds back to the authoring LLM.
  */
+type EditDiagnosticName = "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED" | "CARVE_DRY";
+
 const EDIT_DIAGNOSTIC_NAMES: Readonly<
-  Record<string, { readonly name: "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED"; readonly fix: string }>
+  Record<string, { readonly name: EditDiagnosticName; readonly fix: string }>
 > = Object.freeze({
   "LOAM-T105": {
     name: "BASIN_RIM_NOT_CLOSED",
@@ -97,6 +99,15 @@ const EDIT_DIAGNOSTIC_NAMES: Readonly<
       "nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea " +
       'for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is ' +
       "inside the region — and end the river's \"course\" on that coast.",
+  },
+  "LOAM-T113": {
+    name: "CARVE_DRY",
+    fix:
+      'end the carve at the water instead of guessing where it is: make the last "course" ' +
+      'waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the ' +
+      "compiler will aim it at the sea this seed actually produced. Use it as the *first* " +
+      "waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so " +
+      'with "flooded": "never" and this note goes away.',
   },
 });
 
@@ -295,7 +306,7 @@ async function compileValidated(
     const mapped = EDIT_DIAGNOSTIC_NAMES[d.code] ?? EDIT_DIAGNOSTIC_NAMES["LOAM-T105"];
     diagnostics.push(
       build(
-        (mapped as { name: "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED" }).name,
+        (mapped as { name: EditDiagnosticName }).name,
         `${hfPath}.${d.editId}`,
         d.message,
         (mapped as { fix: string }).fix,

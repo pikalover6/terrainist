@@ -1,18 +1,30 @@
 /**
- * Prompt → terrain-profile Loam document, via GLM 5.2 on OpenRouter.
+ * Prompt → Loam document, via GLM 5.2 on OpenRouter.
  *
- * The only feedback loop here is the validator's: when a candidate document
- * fails, the diagnostics go back to the model **verbatim** — code, node path,
- * message and fix hint — alongside the document it just wrote. That is what
- * the `fix` field in every diagnostic exists for. There is no render critique
- * and no repair pass; if three attempts cannot produce a valid document, the
+ * Two feedback loops meet here, and they are deliberately separate:
+ *
+ * 1. **Validation.** When a candidate document fails the profile validator, the
+ *    diagnostics go back to the model **verbatim** — code, node path, message
+ *    and fix hint — alongside the document it just wrote. That is what the
+ *    `fix` field in every diagnostic exists for. Budget:
+ *    {@link MAX_AUTHOR_ATTEMPTS}.
+ * 2. **Compile feedback.** A document can be perfectly valid and still describe
+ *    a world the compiler cannot make well: a basin whose rim never closes, a
+ *    house the road network cannot reach, a constraint the solver had to demote.
+ *    {@link reviseLoamDoc} continues the same conversation with that report and
+ *    asks for a revision. The caller owns the compile; this module only knows
+ *    how to carry the text back. Budget: {@link MAX_COMPILE_ROUNDS}.
+ *
+ * There is no render critique and no repair pass. If the budgets run out, the
  * kit is wrong and the kit is what gets fixed.
  */
 
 import {
   formatDiagnostic,
+  validateSettlementDocument,
   validateTerrainDocument,
   type LoamDiagnostic,
+  type SettlementDocument,
   type TerrainDocument,
 } from "@terrainist/spec";
 
@@ -24,10 +36,13 @@ import {
 } from "./config.js";
 import { loadOpenRouterKey } from "./env.js";
 import { extractJson } from "./json.js";
-import { loadTerrainAuthorKit } from "./kit.js";
+import { DEFAULT_KIT, loadAuthorKit, type KitName } from "./kit.js";
 import { chatComplete, sumUsage, type ChatMessage, type FetchLike, type Usage } from "./openrouter.js";
 
-/** Request for {@link authorTerrainDoc}. */
+/** A document either profile's validator accepts. */
+export type AuthoredDocument = TerrainDocument | SettlementDocument;
+
+/** Request for {@link authorLoamDoc}. */
 export interface AuthorRequest {
   /** The user's text prompt. */
   readonly prompt: string;
@@ -35,6 +50,8 @@ export interface AuthorRequest {
   readonly size?: number;
   /** The world seed the caller has already decided on. */
   readonly worldSeed: number | string;
+  /** Which kit to author against. Defaults to {@link DEFAULT_KIT}. */
+  readonly kitName?: KitName;
   /** Override the pinned model. */
   readonly model?: string;
   /** Maximum attempts, initial included. */
@@ -45,6 +62,23 @@ export interface AuthorRequest {
   readonly apiKey?: string;
   /** Injected for tests; defaults to the on-disk kit. */
   readonly kit?: string;
+}
+
+/** Request for {@link reviseLoamDoc}: another turn on an existing conversation. */
+export interface ReviseRequest {
+  /** The conversation {@link authorLoamDoc} (or a previous revision) left behind. */
+  readonly messages: readonly ChatMessage[];
+  /** The compile report, rendered for the model. Goes in verbatim. */
+  readonly feedback: string;
+  /** The document that produced that report, serialized. */
+  readonly previous: string;
+  readonly worldSeed: number | string;
+  readonly size: number;
+  readonly kitName?: KitName;
+  readonly model?: string;
+  readonly maxAttempts?: number;
+  readonly fetchImpl?: FetchLike;
+  readonly apiKey?: string;
 }
 
 /** One authoring attempt, for the report. */
@@ -58,12 +92,16 @@ export interface AuthorAttempt {
 
 /** A completed authoring run. */
 export interface AuthorResult {
-  readonly doc: TerrainDocument;
+  readonly doc: AuthoredDocument;
   readonly attempts: number;
   readonly diagnosticsPerAttempt: readonly (readonly LoamDiagnostic[])[];
   readonly usage: Usage;
   readonly model: string;
   readonly history: readonly AuthorAttempt[];
+  /** The conversation so far — hand this to {@link reviseLoamDoc}. */
+  readonly messages: readonly ChatMessage[];
+  /** Which kit (and therefore which profile) produced it. */
+  readonly kitName: KitName;
 }
 
 /** Thrown when every attempt failed validation. */
@@ -89,35 +127,96 @@ export class AuthoringFailedError extends Error {
 const DEFAULT_SIZE = 512;
 
 /**
- * Author a terrain-profile document for `prompt`.
+ * Author a document for `prompt` against the kit named by `kitName`.
  *
  * The caller's `worldSeed` and `size` are authoritative: whatever the model
  * writes for `meta.worldSeed` and `root.envelope.size` is overwritten after a
  * successful validation and the document is validated once more, so the result
  * is always both caller-consistent and known-valid.
  */
-export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorResult> {
+export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResult> {
+  const kitName = request.kitName ?? DEFAULT_KIT;
   const apiKey = request.apiKey ?? loadOpenRouterKey();
-  const kit = request.kit ?? (await loadTerrainAuthorKit());
-  const model = request.model ?? GLM_MODEL_ID;
+  const kit = request.kit ?? (await loadAuthorKit(kitName));
   const size = request.size ?? DEFAULT_SIZE;
-  const maxAttempts = Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS);
 
   const messages: ChatMessage[] = [
     { role: "system", content: kit },
-    { role: "user", content: userPrompt(request.prompt, size, request.worldSeed) },
+    { role: "user", content: userPrompt(request.prompt, size, request.worldSeed, kitName) },
   ];
 
+  return await runAuthorLoop({
+    messages,
+    apiKey,
+    kitName,
+    size,
+    worldSeed: request.worldSeed,
+    model: request.model ?? GLM_MODEL_ID,
+    maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
+    ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
+  });
+}
+
+/** Author a terrain-profile document. Kept for callers pinned to that profile. */
+export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorResult> {
+  return await authorLoamDoc({ ...request, kitName: request.kitName ?? "terrain" });
+}
+
+/**
+ * Ask for a revision of a document that validated but compiled badly.
+ *
+ * The conversation continues rather than restarting: the model still has its
+ * own reasoning, the kit, and the original prompt in context, so the revision
+ * turn only has to carry what the compiler found.
+ */
+export async function reviseLoamDoc(request: ReviseRequest): Promise<AuthorResult> {
+  const kitName = request.kitName ?? DEFAULT_KIT;
+  const apiKey = request.apiKey ?? loadOpenRouterKey();
+  const messages: ChatMessage[] = [
+    ...request.messages,
+    { role: "assistant", content: request.previous },
+    { role: "user", content: compileFeedbackPrompt(request.feedback) },
+  ];
+
+  return await runAuthorLoop({
+    messages,
+    apiKey,
+    kitName,
+    size: request.size,
+    worldSeed: request.worldSeed,
+    model: request.model ?? GLM_MODEL_ID,
+    maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
+    ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+
+interface LoopOptions {
+  readonly messages: ChatMessage[];
+  readonly apiKey: string;
+  readonly kitName: KitName;
+  readonly size: number;
+  readonly worldSeed: number | string;
+  readonly model: string;
+  readonly maxAttempts: number;
+  readonly fetchImpl?: FetchLike;
+}
+
+/** Completion → extract → validate → retry with diagnostics, until valid. */
+async function runAuthorLoop(options: LoopOptions): Promise<AuthorResult> {
+  const { messages, kitName } = options;
+  const validate = kitName === "terrain" ? validateTerrainDocument : validateSettlementDocument;
   const history: AuthorAttempt[] = [];
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= options.maxAttempts; attempt++) {
     const completion = await chatComplete({
-      apiKey,
-      model,
+      apiKey: options.apiKey,
+      model: options.model,
       messages,
       temperature: AUTHORING_TEMPERATURE,
       reasoningEffort: AUTHORING_REASONING_EFFORT,
-      ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
+      ...(options.fetchImpl === undefined ? {} : { fetchImpl: options.fetchImpl }),
     });
 
     const extracted = extractJson(completion.text);
@@ -133,13 +232,13 @@ export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorRe
         },
       ];
       history.push({ index: attempt, diagnostics, usage: completion.usage, raw: completion.text });
-      if (attempt === maxAttempts) break;
+      if (attempt === options.maxAttempts) break;
       messages.push({ role: "assistant", content: completion.text });
       messages.push({ role: "user", content: retryPrompt(diagnostics, undefined) });
       continue;
     }
 
-    const validation = validateTerrainDocument(extracted.value);
+    const validation = validate(extracted.value);
     history.push({
       index: attempt,
       diagnostics: validation.diagnostics,
@@ -148,12 +247,12 @@ export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorRe
     });
 
     if (validation.document !== undefined) {
-      const pinned = pinCallerValues(validation.document, request.worldSeed, size);
-      const recheck = validateTerrainDocument(pinned);
+      const pinned = pinCallerValues(validation.document, options.worldSeed, options.size);
+      const recheck = validate(pinned);
       if (recheck.document === undefined) {
         /* c8 ignore next 4 — only reachable if pinning itself is buggy. */
         throw new Error(
-          `authorTerrainDoc: pinning worldSeed/size invalidated the document:\n${recheck.diagnostics.map(formatDiagnostic).join("\n")}`,
+          `authorLoamDoc: pinning worldSeed/size invalidated the document:\n${recheck.diagnostics.map(formatDiagnostic).join("\n")}`,
         );
       }
       return {
@@ -163,10 +262,12 @@ export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorRe
         usage: sumUsage(history.map((a) => a.usage)),
         model: completion.model,
         history,
+        messages: [...messages],
+        kitName,
       };
     }
 
-    if (attempt === maxAttempts) break;
+    if (attempt === options.maxAttempts) break;
     messages.push({ role: "assistant", content: extracted.source });
     messages.push({ role: "user", content: retryPrompt(validation.diagnostics, extracted.source) });
   }
@@ -174,12 +275,15 @@ export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorRe
   throw new AuthoringFailedError(history);
 }
 
-/* -------------------------------------------------------------------------- */
-
 /** The first user turn. */
-export function userPrompt(prompt: string, size: number, worldSeed: number | string): string {
+export function userPrompt(
+  prompt: string,
+  size: number,
+  worldSeed: number | string,
+  kitName: KitName = DEFAULT_KIT,
+): string {
   return [
-    `Author a Loam terrain-profile document for this world:`,
+    `Author a Loam ${kitName}-profile document for this world:`,
     ``,
     prompt,
     ``,
@@ -189,8 +293,10 @@ export function userPrompt(prompt: string, size: number, worldSeed: number | str
     `- "meta.prompt" must be exactly ${JSON.stringify(prompt)}.`,
     `- "meta.name" should be a short snake_case name derived from the prompt.`,
     ``,
-    `Every feature the prompt names must show up as a terrain verb, a palette`,
-    `override, or a forest node. Respond with the JSON object and nothing else.`,
+    kitName === "settlement"
+      ? `Every feature the prompt names must show up as a terrain verb, a palette\noverride, a forest node, or a structure node placed by constraints. If the\nprompt describes no habitation, author the terrain layer alone — a document\nwith no plaza, buildings or roads is a correct answer.`
+      : `Every feature the prompt names must show up as a terrain verb, a palette\noverride, or a forest node.`,
+    `Respond with the JSON object and nothing else.`,
   ].join("\n");
 }
 
@@ -222,9 +328,25 @@ export function retryPrompt(
   return lines.join("\n");
 }
 
+/** A compile-feedback turn: the report verbatim, plus what to do about it. */
+export function compileFeedbackPrompt(feedback: string): string {
+  return [
+    `That document is valid, and it compiled — but the compiler found problems`,
+    `with the world it describes. These are not syntax errors: the geometry or`,
+    `the layout did not come out the way the document asks for.`,
+    ``,
+    feedback,
+    ``,
+    `Revise the document to address every point above and reply with the`,
+    `complete, corrected JSON document. Change as little as possible — keep the`,
+    `world's character, the names, and everything that compiled cleanly. Do not`,
+    `explain the changes. Do not wrap the JSON in a fence.`,
+  ].join("\n");
+}
+
 /** Overwrite the caller-owned fields, structurally, without mutating the input. */
 function pinCallerValues(
-  doc: TerrainDocument,
+  doc: AuthoredDocument,
   worldSeed: number | string,
   size: number,
 ): unknown {

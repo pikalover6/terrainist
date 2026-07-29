@@ -38,6 +38,16 @@ export const AUTHORING_REASONING_EFFORT = "high";
 /** How many authoring attempts (initial + diagnostic retries) before giving up. */
 export const MAX_AUTHOR_ATTEMPTS = 3;
 
+/**
+ * How many compile-feedback revision rounds a document gets.
+ *
+ * Separate from {@link MAX_AUTHOR_ATTEMPTS}, and much smaller: a validation
+ * retry is cheap and almost always converges, while a compile round costs a
+ * full compile plus a long completion, and the second round has historically
+ * been where the returns stop.
+ */
+export const MAX_COMPILE_ROUNDS = 2;
+
 /** Attribution headers OpenRouter uses for its rankings page. */
 export const ATTRIBUTION_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   "HTTP-Referer": "https://github.com/terrainist",

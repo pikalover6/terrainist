@@ -12,11 +12,20 @@
 
 export {
   AuthoringFailedError,
+  authorLoamDoc,
   authorTerrainDoc,
+  compileFeedbackPrompt,
   retryPrompt,
+  reviseLoamDoc,
   userPrompt,
 } from "./author.js";
-export type { AuthorAttempt, AuthorRequest, AuthorResult } from "./author.js";
+export type {
+  AuthorAttempt,
+  AuthorRequest,
+  AuthorResult,
+  AuthoredDocument,
+  ReviseRequest,
+} from "./author.js";
 
 export {
   ATTRIBUTION_HEADERS,
@@ -25,6 +34,7 @@ export {
   CHAT_COMPLETIONS_URL,
   GLM_MODEL_ID,
   MAX_AUTHOR_ATTEMPTS,
+  MAX_COMPILE_ROUNDS,
   MODELS_URL,
   OPENROUTER_BASE_URL,
 } from "./config.js";
@@ -34,7 +44,16 @@ export { findRepoRoot, loadOpenRouterKey, parseEnv, readDotEnv } from "./env.js"
 export { extractJson, stripFences } from "./json.js";
 export type { JsonExtraction } from "./json.js";
 
-export { KIT_RELATIVE_PATH, loadTerrainAuthorKit } from "./kit.js";
+export {
+  DEFAULT_KIT,
+  KIT_RELATIVE_PATH,
+  SETTLEMENT_KIT_RELATIVE_PATH,
+  kitRelativePath,
+  loadAuthorKit,
+  loadSettlementAuthorKit,
+  loadTerrainAuthorKit,
+} from "./kit.js";
+export type { KitName } from "./kit.js";
 
 export { chatComplete, sumUsage, verifyModelAvailable } from "./openrouter.js";
 export type {

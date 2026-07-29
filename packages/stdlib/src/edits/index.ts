@@ -66,6 +66,27 @@ export function editGroup(verb: EditVerb): "raise" | "carve" {
 /** A fractional `[fx, fz] ∈ [0,1]²` coordinate of the root region. */
 export type Fractional = readonly [number, number];
 
+/** The string a course endpoint may carry instead of a coordinate. */
+export const COAST_ANCHOR = "coast";
+
+/**
+ * One `course` waypoint: a fractional coordinate, or the terrain anchor
+ * `"coast"` in the first or last position of a carve corridor.
+ *
+ * The anchor exists because the author physically cannot know where the coast
+ * will be. Continentalness and the world seed decide that, and they are
+ * evaluated long after the document is written — so a cove aimed at
+ * `[0.5, 0.0]` is a guess, and when the sea comes up in the south-west instead
+ * the guess compiles as a dry canyon. `"coast"` says *aim at the water* and
+ * defers the coordinate to {@link resolveCourseAnchors}.
+ */
+export type CourseWaypoint = Fractional | typeof COAST_ANCHOR;
+
+/** True for the `"coast"` terrain anchor. */
+export function isCoastAnchor(w: CourseWaypoint): w is typeof COAST_ANCHOR {
+  return w === COAST_ANCHOR;
+}
+
 /** A `terrain.edit@0` node, flattened to id + verb + params. */
 export interface TerrainEdit {
   /** The edit node's `id`; names the feature and keys its markers. */
@@ -77,7 +98,7 @@ export interface TerrainEdit {
   // placement (exactly one required, matching the verb's placement mode)
   at?: Fractional;
   zone?: Zone;
-  course?: readonly Fractional[];
+  course?: readonly CourseWaypoint[];
 
   // shape params (defaults per verb, see EDIT_DEFAULTS)
   width?: number;
@@ -350,11 +371,20 @@ const COURSE_SAMPLE_SPACING = 1.0;
  * through the first and last waypoints. Sample spacing is ≈1 block, which is
  * finer than any kernel's falloff needs and keeps the distance field smooth.
  */
-export function refineCourse(region: Region, waypoints: readonly Fractional[]): Point2[] {
+export function refineCourse(region: Region, waypoints: readonly CourseWaypoint[]): Point2[] {
   if (waypoints.length < 2) {
     throw new Error("terrain.edit@0: 'course' needs 2–8 waypoints");
   }
-  const pts = waypoints.map((w) => toWorld(region, w));
+  const pts = waypoints.map((w) => {
+    if (isCoastAnchor(w)) {
+      // Unreachable through `applyEdits`, which resolves anchors before any
+      // carve runs. Reaching it means someone refined a raw authored course.
+      throw new Error(
+        "terrain.edit@0: 'course' still holds a \"coast\" anchor — resolve it with resolveCourseAnchors first",
+      );
+    }
+    return toWorld(region, w);
+  });
   const ext: Point2[] = [pts[0] as Point2, ...pts, pts[pts.length - 1] as Point2];
   const out: Point2[] = [];
   for (let i = 1; i + 2 < ext.length; i++) {
@@ -384,6 +414,212 @@ function catmullRom(p0: Point2, p1: Point2, p2: Point2, p3: Point2, t: number): 
     x: p0.x * c0 + p1.x * c1 + p2.x * c2 + p3.x * c3,
     z: p0.z * c0 + p1.z * c1 + p2.z * c2 + p3.z * c3,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Terrain anchors — resolving `"coast"`
+// ---------------------------------------------------------------------------
+
+/**
+ * How far past the resolved coastline the course is pushed, in blocks.
+ *
+ * Landing the endpoint *on* the first wet column is not enough: the corridor
+ * tapers over its last `1.5 × width` of arclength, so a course that stops at the
+ * waterline carves its shallowest, narrowest cross-section exactly where the
+ * mouth needs to open. Running a little way out to sea puts the taper in the
+ * water, where nobody can see it, and leaves the mouth at full section.
+ */
+export const COAST_ANCHOR_OVERSHOOT = 8;
+
+/**
+ * The preliminary ocean: which columns the sea would reach if the carves had
+ * not run yet.
+ *
+ * Same rule as `classify`'s `computeOceanMask` — below sea level and
+ * 4-connected to the map edge — minus the `flooded: "never"` machinery, which
+ * has nothing to block at this point in the pipeline because no carve has
+ * claimed a column yet. It is computed after the base field and every raise
+ * verb, which is the last moment at which "where is the coast" has an answer
+ * that does not depend on the carve asking the question.
+ */
+export function preliminaryOceanMask(field: HeightField, seaLevel: number): Uint8Array {
+  const { width, depth } = field.region;
+  const v = field.values;
+  const n = width * depth;
+  const mask = new Uint8Array(n);
+  const queue = new Int32Array(n);
+  let head = 0;
+  let tail = 0;
+  const push = (idx: number): void => {
+    if (mask[idx] === 1 || !((v[idx] as number) < seaLevel)) return;
+    mask[idx] = 1;
+    queue[tail++] = idx;
+  };
+  for (let i = 0; i < width; i++) {
+    push(i);
+    push((depth - 1) * width + i);
+  }
+  for (let j = 0; j < depth; j++) {
+    push(j * width);
+    push(j * width + width - 1);
+  }
+  while (head < tail) {
+    const idx = queue[head++] as number;
+    const i = idx % width;
+    const j = (idx - i) / width;
+    if (i > 0) push(idx - 1);
+    if (i < width - 1) push(idx + 1);
+    if (j > 0) push(idx - width);
+    if (j < depth - 1) push(idx + width);
+  }
+  return mask;
+}
+
+/**
+ * The nearest set column of `mask` to a world point, or `null` when the mask is
+ * empty. Ties go to the lowest grid index — a full scan in row-major order, so
+ * the answer never depends on iteration luck.
+ *
+ * `forward`, when given, is the course's outgoing bearing, and the search
+ * prefers water that lies *ahead* of it. Without that preference the anchor
+ * simply takes the closest sea in any direction, which on a peninsula means the
+ * shore behind the course: the resolved endpoint doubles back over the channel
+ * that was heading somewhere else, and the "cove" comes out as a hook. Columns
+ * behind the bearing are not forbidden — if the only water is astern, astern is
+ * where the mouth goes — they just lose to any candidate in front.
+ */
+export function nearestMaskColumn(
+  field: HeightField,
+  mask: Uint8Array,
+  from: Point2,
+  forward?: { readonly x: number; readonly z: number },
+): Point2 | null {
+  const { width, depth, x0, z0 } = field.region;
+  let best = Number.POSITIVE_INFINITY;
+  let bestPoint: Point2 | null = null;
+  let bestBehind = Number.POSITIVE_INFINITY;
+  let bestBehindPoint: Point2 | null = null;
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      if (mask[j * width + i] !== 1) continue;
+      const dx = x0 + i - from.x;
+      const dz = z0 + j - from.z;
+      const d = dx * dx + dz * dz;
+      const ahead = forward === undefined || dx * forward.x + dz * forward.z > 0;
+      if (ahead) {
+        if (d < best) {
+          best = d;
+          bestPoint = { x: x0 + i, z: z0 + j };
+        }
+      } else if (d < bestBehind) {
+        bestBehind = d;
+        bestBehindPoint = { x: x0 + i, z: z0 + j };
+      }
+    }
+  }
+  return bestPoint ?? bestBehindPoint;
+}
+
+/**
+ * The lowest column on the region border — where the water *would* leave the
+ * map if this map had any. The fallback for `"coast"` on an ocean-free world:
+ * aiming the carve downhill toward the edge is the closest thing to a coast
+ * available, and `LOAM-T113` then tells the author plainly that it stayed dry.
+ */
+export function lowestEdgeColumn(field: HeightField): Point2 {
+  const { width, depth, x0, z0 } = field.region;
+  const v = field.values;
+  let best = Number.POSITIVE_INFINITY;
+  let bestPoint: Point2 = { x: x0, z: z0 };
+  const consider = (i: number, j: number): void => {
+    const h = v[j * width + i] as number;
+    if (h < best) {
+      best = h;
+      bestPoint = { x: x0 + i, z: z0 + j };
+    }
+  };
+  for (let i = 0; i < width; i++) {
+    consider(i, 0);
+    consider(i, depth - 1);
+  }
+  for (let j = 0; j < depth; j++) {
+    consider(0, j);
+    consider(width - 1, j);
+  }
+  return bestPoint;
+}
+
+function toFractional(region: Region, p: Point2): Fractional {
+  return [
+    clamp01(region.width === 0 ? 0 : (p.x - region.x0) / region.width),
+    clamp01(region.depth === 0 ? 0 : (p.z - region.z0) / region.depth),
+  ];
+}
+
+/**
+ * Replace any `"coast"` waypoint with a real coordinate.
+ *
+ * The anchor may only be the first or last waypoint (the validator enforces
+ * that), and it resolves against its *neighbour*: the nearest preliminary-ocean
+ * column to the waypoint next to it, pushed {@link COAST_ANCHOR_OVERSHOOT}
+ * blocks further along the same bearing so the mouth opens under water rather
+ * than tapering shut on the beach. When the course has a waypoint before that
+ * neighbour, the sea *ahead* of the direction it is already travelling wins
+ * over the sea behind it — otherwise a cove running down a peninsula resolves
+ * onto the shore it just left and comes out hooked.
+ *
+ * With no ocean anywhere the anchor falls back to {@link lowestEdgeColumn} and
+ * the carve compiles dry — reported as `LOAM-T113`, not silently swallowed.
+ */
+export function resolveCourseAnchors(
+  field: HeightField,
+  course: readonly CourseWaypoint[],
+  ocean: Uint8Array | null,
+): Fractional[] {
+  const region = field.region;
+  const out = course.map((w) => (isCoastAnchor(w) ? null : (w as Fractional)));
+
+  const resolveAt = (index: number, neighbour: number, behind: number): void => {
+    if (out[index] !== null) return;
+    const anchorFor = out[neighbour];
+    // Both ends anchored *and* the neighbour unresolved cannot happen for a
+    // 2-point course (the validator rejects it) and for longer ones the
+    // neighbour is always an interior, coordinate-carrying waypoint.
+    const from =
+      anchorFor === null || anchorFor === undefined
+        ? { x: region.x0 + region.width / 2, z: region.z0 + region.depth / 2 }
+        : toWorld(region, anchorFor);
+    // The bearing the course is already travelling on, when there is a waypoint
+    // before the anchor's neighbour to measure it from.
+    const prior = behind >= 0 && behind < out.length ? out[behind] : null;
+    const bearing =
+      prior === null || prior === undefined
+        ? undefined
+        : (() => {
+            const p = toWorld(region, prior);
+            return { x: from.x - p.x, z: from.z - p.z };
+          })();
+    const target =
+      ocean === null ? null : nearestMaskColumn(field, ocean, from, bearing);
+    const landing = target ?? lowestEdgeColumn(field);
+    const dx = landing.x - from.x;
+    const dz = landing.z - from.z;
+    const len = sqrt(dx * dx + dz * dz);
+    const extended =
+      len === 0
+        ? landing
+        : {
+            x: landing.x + (dx / len) * COAST_ANCHOR_OVERSHOOT,
+            z: landing.z + (dz / len) * COAST_ANCHOR_OVERSHOOT,
+          };
+    out[index] = toFractional(region, extended);
+  };
+
+  if (course.length >= 2) {
+    resolveAt(0, 1, 2);
+    resolveAt(course.length - 1, course.length - 2, course.length - 3);
+  }
+  return out.map((p) => p ?? ([0.5, 0.5] as Fractional));
 }
 
 // ---------------------------------------------------------------------------
@@ -754,6 +990,21 @@ export interface CourseRecord {
   readonly samples: readonly Point2[];
 }
 
+/**
+ * A carve that was applied, and what it asked hydrology for.
+ *
+ * `courses` only covers `river` (the pond demotion's input); the dry-carve check
+ * has to see `valley` and `basin` too, and it needs the `flooded` declaration
+ * next to the id without re-walking the document.
+ */
+export interface CarveRecord {
+  readonly editId: string;
+  readonly verb: EditVerb;
+  readonly flooded: FloodedMode;
+  /** Whether the author's course named the `"coast"` anchor. */
+  readonly coastAnchored: boolean;
+}
+
 /** The outcome of composing every edit into the field. */
 export interface EditComposition {
   /** Markers keyed by `"<editId>.<name>"`, in application order. */
@@ -762,6 +1013,8 @@ export interface EditComposition {
   basins: BasinWater[];
   /** One record per applied corridor verb, in application order. */
   courses: CourseRecord[];
+  /** One record per applied carve verb, in application order — what T113 walks. */
+  carves: CarveRecord[];
   diagnostics: EditDiagnostic[];
   /** Application order actually used (raise group, then carve group). */
   order: string[];
@@ -797,6 +1050,14 @@ export interface EditContext {
  * in document order**. This makes composition independent of how the author
  * interleaved the nodes, so a river always cuts the mountain that a later-listed
  * `ridge` raised.
+ *
+ * Between the two groups sits the terrain-anchor seam. A carve whose `course`
+ * names `"coast"` is aimed at water that does not exist until the land does, so
+ * the preliminary ocean mask is computed **after every raise and before any
+ * carve** — the one moment when the coastline is final (no carve has moved it)
+ * and still available (no carve has needed it yet). The resolved course then
+ * goes through the ordinary refinement, meander and descent, exactly as an
+ * authored one would.
  */
 export function applyEdits(
   field: HeightField,
@@ -809,6 +1070,7 @@ export function applyEdits(
     calderas: [],
     basins: [],
     courses: [],
+    carves: [],
     diagnostics: [],
     order: [],
     footprints: [],
@@ -816,17 +1078,47 @@ export function applyEdits(
   };
   const raises = edits.filter((e) => editGroup(e.verb) === "raise");
   const carves = edits.filter((e) => editGroup(e.verb) === "carve");
-  for (const edit of [...raises, ...carves]) {
+
+  const run = (edit: TerrainEdit, coastAnchored: boolean): void => {
     result.order.push(edit.id);
     const fp = new FootprintBuilder(edit.id, edit.verb, n);
     applyEdit(field, edit, ctx, result, fp);
     const footprint = fp.finish();
     result.footprints.push(footprint);
-    if (editGroup(edit.verb) === "carve" && floodedOf(edit) === "never") {
+    if (editGroup(edit.verb) !== "carve") return;
+    result.carves.push({
+      editId: edit.id,
+      verb: edit.verb,
+      flooded: floodedOf(edit),
+      coastAnchored,
+    });
+    if (floodedOf(edit) === "never") {
       for (let idx = 0; idx < n; idx++) {
         if (footprintHas(footprint, idx)) result.noFlood[idx] = 1;
       }
     }
+  };
+
+  for (const edit of raises) run(edit, false);
+
+  const anchored = carves.some((e) => e.course?.some(isCoastAnchor) === true);
+  // Only computed when something asks for it: the fill is O(columns) but the
+  // rule "same document, same field" is easier to trust when an unused feature
+  // costs literally nothing.
+  const ocean = anchored ? preliminaryOceanMask(field, ctx.seaLevel) : null;
+  let oceanEmpty = false;
+  if (ocean !== null) {
+    oceanEmpty = !ocean.some((b) => b === 1);
+  }
+
+  for (const edit of carves) {
+    const hasAnchor = edit.course?.some(isCoastAnchor) === true;
+    if (!hasAnchor) {
+      run(edit, false);
+      continue;
+    }
+    const course = resolveCourseAnchors(field, edit.course as readonly CourseWaypoint[], oceanEmpty ? null : ocean);
+    run({ ...edit, course }, true);
   }
   return result;
 }
@@ -1211,6 +1503,129 @@ export function resolvePondChains(
         if (y > wallY) wallY = y;
       }
     }
+  }
+
+  return results;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dry carves — LOAM-T113                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** One carve that asked to flood and did not. */
+export interface DryCarveResult {
+  readonly editId: string;
+  /** Blocks from the carve's lowest column to the nearest ocean, or `null`. */
+  readonly distance: number | null;
+  /** Compass bearing to that ocean, or `null` on a map with no ocean at all. */
+  readonly direction: string | null;
+}
+
+/** Eight-point compass bearing for a world-space offset. North is −Z. */
+export function compassBearing(dx: number, dz: number): string {
+  const ax = dx < 0 ? -dx : dx;
+  const az = dz < 0 ? -dz : dz;
+  const ns = dz < 0 ? "north" : "south";
+  const ew = dx > 0 ? "east" : "west";
+  // tan(22.5°) — the boundary between a cardinal and a diagonal sector.
+  const T = 0.41421356237;
+  if (ax <= az * T) return ns;
+  if (az <= ax * T) return ew;
+  return `${ns}-${ew}`;
+}
+
+/**
+ * Report every carve that asked for water and got none — `LOAM-T113`.
+ *
+ * `flooded: "auto"` is a request, not a promise: the carve floods only where it
+ * is below sea level *and* connected to the sea. A cove authored as a valley
+ * running north, on a map whose ocean came up in the south-west, satisfies
+ * neither — and the compiler used to say nothing at all, leaving a dry canyon
+ * scar where the water was meant to be. The author is not at fault for guessing
+ * wrong (they cannot know where continentalness will put the coast) but they
+ * *are* the only one who can fix it, so the note names the edit, says it stayed
+ * dry, gives the distance and bearing from its lowest point to the nearest real
+ * coastline, and points at the `"coast"` anchor.
+ *
+ * Rivers already demoted to ponds by {@link resolvePondChains} are skipped —
+ * `LOAM-T112` covers them and says the same thing better. So are basins that
+ * settled a lake, which are wet by another route.
+ *
+ * Runs after the ocean fill and the two water passes, on the finished field.
+ */
+export function reportDryCarves(
+  field: HeightField,
+  out: EditComposition,
+  sea: { readonly seaLevel: number; readonly oceanMask: Uint8Array },
+): DryCarveResult[] {
+  const { width, depth, x0, z0 } = field.region;
+  const n = width * depth;
+  const values = field.values;
+  const ponded = new Set(
+    out.diagnostics.filter((d) => d.code === "LOAM-T112").map((d) => d.editId),
+  );
+  const results: DryCarveResult[] = [];
+
+  for (const carve of out.carves) {
+    if (carve.flooded !== "auto") continue;
+    if (ponded.has(carve.editId)) continue;
+    // A basin that settled a pool is water, just not sea water.
+    if (out.basins.some((b) => b.editId === carve.editId && b.waterY !== null)) continue;
+    const fp = out.footprints.find((f) => f.editId === carve.editId && f.verb === carve.verb);
+    if (fp === undefined || fp.count === 0) continue;
+
+    let wet = 0;
+    let lowY = Number.POSITIVE_INFINITY;
+    let lowIdx = -1;
+    for (let idx = 0; idx < n; idx++) {
+      if (!footprintHas(fp, idx)) continue;
+      if (sea.oceanMask[idx] === 1) {
+        wet++;
+        break;
+      }
+      const y = values[idx] as number;
+      if (y < lowY) {
+        lowY = y;
+        lowIdx = idx;
+      }
+    }
+    if (wet > 0 || lowIdx < 0) continue;
+
+    const low: Point2 = { x: x0 + (lowIdx % width), z: z0 + ((lowIdx - (lowIdx % width)) / width) };
+    const coast = nearestMaskColumn(field, sea.oceanMask, low);
+    const noun = `${carve.verb} "${carve.editId}"`;
+    const hint = carve.coastAnchored
+      ? " Its course already names the \"coast\" anchor, so there was nothing nearer to aim at."
+      : "";
+
+    if (coast === null) {
+      out.diagnostics.push({
+        code: "LOAM-T113",
+        editId: carve.editId,
+        severity: "note",
+        message:
+          `${noun} asked to flood ("flooded": "auto") but compiled dry: this map has no ocean ` +
+          `anywhere — no column below sea level reaches the map edge, so there is no water to ` +
+          `flow in.${hint}`,
+      });
+      results.push({ editId: carve.editId, distance: null, direction: null });
+      continue;
+    }
+
+    const dx = coast.x - low.x;
+    const dz = coast.z - low.z;
+    const distance = Math.round(sqrt(dx * dx + dz * dz));
+    const direction = compassBearing(dx, dz);
+    out.diagnostics.push({
+      code: "LOAM-T113",
+      editId: carve.editId,
+      severity: "note",
+      message:
+        `${noun} asked to flood ("flooded": "auto") but compiled dry: not one of its columns ` +
+        `reaches the sea. Its lowest point sits ${distance} blocks ${direction} of the nearest ` +
+        `coastline, so the carve is a dry channel in the middle of the land.${hint}`,
+    });
+    results.push({ editId: carve.editId, distance, direction });
   }
 
   return results;

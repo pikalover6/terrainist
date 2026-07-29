@@ -26,6 +26,8 @@ import {
 import { type LoamDiagnostic, error, hasErrors } from "./diagnostics.js";
 import {
   CLIMATE_THEMES,
+  COAST_ANCHOR,
+  COAST_ANCHOR_VERBS,
   COURSE_VERBS,
   EDIT_VERBS,
   FALLOFF_PROFILES,
@@ -590,7 +592,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
 
   if (params["at"] !== undefined) checkFractional(out, `${path}.params`, "at", params["at"]);
   if (params["zone"] !== undefined) checkZone(out, `${path}.params`, "zone", params["zone"]);
-  if (params["course"] !== undefined) checkCourse(out, `${path}.params`, params["course"]);
+  if (params["course"] !== undefined) checkCourse(out, `${path}.params`, params["course"], v);
 
   // Shape params that belong to a different verb are a common LLM slip.
   const allowedShape = VERB_SHAPE_KEYS[v];
@@ -788,7 +790,21 @@ function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: 
 /* shared checks                                                               */
 /* -------------------------------------------------------------------------- */
 
-function checkCourse(out: LoamDiagnostic[], path: string, value: unknown): void {
+/**
+ * Validate a `course`.
+ *
+ * A waypoint is normally `[fx, fz]`. The one exception is the terrain anchor
+ * `"coast"`, which stands for "wherever the sea turns out to be" and is legal
+ * only as the **first or last** waypoint of a **carve** corridor (`valley`,
+ * `river`) — the compiler resolves it against the preliminary ocean, and a
+ * `ridge` has no sea to aim at.
+ */
+function checkCourse(
+  out: LoamDiagnostic[],
+  path: string,
+  value: unknown,
+  verb: EditVerbName,
+): void {
   if (!Array.isArray(value)) {
     out.push(error("BAD_TYPE", path, `"course" must be an array of waypoints, got ${describe(value)}`, 'write "course": [[0.15, 0.5], [0.5, 0.42], [0.85, 0.55]]'));
     return;
@@ -805,8 +821,41 @@ function checkCourse(out: LoamDiagnostic[], path: string, value: unknown): void 
       ),
     );
   }
+  const anchorAllowed = COAST_ANCHOR_VERBS.includes(verb);
   for (const [i, pt] of value.entries()) {
+    if (pt === COAST_ANCHOR) {
+      if (!anchorAllowed) {
+        out.push(
+          error(
+            "BAD_COURSE",
+            path,
+            `"course[${i}]" is the terrain anchor "coast", which verb "${verb}" cannot use`,
+            `"coast" is only meaningful on a carve that should flood — use it on a "valley" or a "river". Replace it here with a fractional waypoint such as [0.5, 0.5]`,
+          ),
+        );
+      } else if (i !== 0 && i !== value.length - 1) {
+        out.push(
+          error(
+            "BAD_COURSE",
+            path,
+            `"course[${i}]" is the terrain anchor "coast" in the middle of the course`,
+            'move "coast" to the first or last waypoint — it names where the course meets the sea, not a point it passes through — and give this waypoint fractional coordinates such as [0.5, 0.5]',
+          ),
+        );
+      }
+      continue;
+    }
     checkFractional(out, path, `course[${i}]`, pt);
+  }
+  if (value.length === 2 && value[0] === COAST_ANCHOR && value[1] === COAST_ANCHOR) {
+    out.push(
+      error(
+        "BAD_COURSE",
+        path,
+        '"course" is nothing but two "coast" anchors, so it names no direction at all',
+        'give at least one fractional waypoint inland, e.g. "course": [[0.5, 0.4], "coast"]',
+      ),
+    );
   }
 }
 

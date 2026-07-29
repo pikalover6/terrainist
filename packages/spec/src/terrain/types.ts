@@ -78,6 +78,24 @@ export const ID_PATTERN = /^[a-z][a-z0-9_]{0,62}$/;
 /** A fractional `[fx, fz] ∈ [0,1]²` region coordinate. */
 export type FractionalPoint = readonly [number, number];
 
+/**
+ * The terrain anchor a course endpoint may name instead of a coordinate.
+ *
+ * An author cannot know where the coast will fall — continentalness and the
+ * world seed decide that — so `"coast"` says *aim at the sea* and lets the
+ * compiler resolve it once the land exists.
+ */
+export const COAST_ANCHOR = "coast";
+
+/**
+ * One waypoint of a `course`: a fractional coordinate, or the string `"coast"`
+ * in the first or last position of a carve verb's course.
+ */
+export type CourseWaypoint = FractionalPoint | typeof COAST_ANCHOR;
+
+/** Carve verbs placed along a `course` — the ones `"coast"` is legal on. */
+export const COAST_ANCHOR_VERBS: readonly EditVerbName[] = ["valley", "river"];
+
 /** A palette value: a block name, or a weighted mix resolved per column. */
 export type PaletteValue = string | { readonly mix: readonly (readonly [string, number])[] };
 
@@ -127,7 +145,7 @@ export interface EditParams {
   readonly strength?: number;
   readonly at?: FractionalPoint;
   readonly zone?: ZoneToken;
-  readonly course?: readonly FractionalPoint[];
+  readonly course?: readonly CourseWaypoint[];
   readonly width?: number;
   readonly height?: number;
   readonly radius?: number;

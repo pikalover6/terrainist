@@ -972,6 +972,7 @@ describe("resolvePondChains", () => {
       calderas: [],
       basins: [],
       courses: [{ editId: "riv", verb: "river", flooded: "auto", samples }],
+      carves: [{ editId: "riv", verb: "river", flooded: "auto", coastAnchored: false }],
       diagnostics: [],
       order: ["riv"],
       footprints: [{ editId: "riv", verb: "river", bits, count }],

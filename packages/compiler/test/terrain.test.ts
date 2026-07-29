@@ -169,7 +169,11 @@ describe("compileTerrain", () => {
   it("never leaves an unstable fluid block", () => {
     expect(first.stats.unstableFluidBlocks).toBe(0);
     expect(first.stats.floatingTrees).toBe(0);
-    expect(first.diagnostics).toEqual([]);
+    // Nothing may fail or warn. Notes are allowed and one is expected: this
+    // fixture's `inlet` valley is aimed inland of the coast this seed produced,
+    // which is exactly the situation LOAM-T113 exists to name.
+    expect(first.diagnostics.filter((d) => d.severity !== "note")).toEqual([]);
+    expect(first.diagnostics.map((d) => d.code)).toEqual(["LOAM-T113"]);
   });
 
   it("records heightfield and edit markers", () => {

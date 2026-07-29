@@ -59,6 +59,12 @@ export const TERRAIN_DIAGNOSTICS = {
   FLOATING_VEGETATION: "LOAM-T111",
   /** G4.5a — a `river` with no sea to reach, demoted to a chain of ponds. */
   RIVER_PONDED: "LOAM-T112",
+  /**
+   * G5.1 — a carve that asked to flood (`flooded: "auto"`) ended up with no
+   * ocean-connected water at all, because its course points away from where the
+   * coast actually fell.
+   */
+  CARVE_DRY: "LOAM-T113",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec
