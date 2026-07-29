@@ -71,6 +71,15 @@ export interface BuiltBuilding {
   readonly blockCount: number;
   /** World Y of the local `y = 0` plane — the walkable ground floor. */
   readonly floorY: number;
+  /** Cellar headroom actually dug, in blocks; 0 when there is none. */
+  readonly basementDepth: number;
+  /**
+   * The cellar's walkable plane in world Y — where a tunnel arriving at this
+   * building has to meet it. Absent when the building has no cellar.
+   */
+  readonly basementFloorY?: number;
+  /** The cellar's enclosed interior, in world columns. */
+  readonly basementInterior?: Rect;
 }
 
 /** Result of the building pass. */
@@ -119,6 +128,7 @@ export function buildBuildings(
     });
 
     const [sizeX, , sizeZ] = job.size;
+    const cellar = result.meta.basementDepth;
     const rotated = rotateOps(result.ops, placement.yaw, sizeX, sizeZ);
     const [tx, , tz] = placement.translation;
     // Local y = 0 is the walkable floor, which sits one block *above* the
@@ -164,6 +174,18 @@ export function buildBuildings(
       meta: result.meta,
       blockCount: count,
       floorY,
+      basementDepth: cellar,
+      ...(cellar === 0
+        ? {}
+        : {
+            basementFloorY: floorY - cellar,
+            basementInterior: {
+              x0: placement.footprint.x0 + 1,
+              z0: placement.footprint.z0 + 1,
+              x1: placement.footprint.x1 - 1,
+              z1: placement.footprint.z1 - 1,
+            },
+          }),
     });
   }
 

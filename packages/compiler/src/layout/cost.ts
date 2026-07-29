@@ -12,7 +12,8 @@
  */
 
 import {
-  isTier1,
+  isImplementedConstraint,
+  isTier2,
   strengthOf,
   weightOf,
   type CanonicalConstraint,
@@ -99,8 +100,12 @@ export function evaluateConstraint(
   ctx: EvalContext,
   demoted: boolean,
 ): ConstraintEval {
-  if (!isTier1(constraint.type)) return OK;
-  const hard = !demoted && strengthOf(constraint) === "hard";
+  if (!isImplementedConstraint(constraint.type)) return OK;
+  // §4 `connected`: pass 3 contributes a *soft* proximity cost whatever the
+  // declared strength, because the thing the strength governs — the connector
+  // existing — is decided in pass 6, not here. Treating the declared `hard`
+  // as a domain restriction would veto every placement in the region.
+  const hard = !demoted && !isTier2(constraint.type) && strengthOf(constraint) === "hard";
   const weight = weightOf(constraint);
 
   switch (constraint.type) {
@@ -114,6 +119,8 @@ export function evaluateConstraint(
       return adjacentEval(constraint, candidate, ctx, hard, weight);
     case "facing":
       return facingEval(constraint, candidate, ctx, hard, weight);
+    case "connected":
+      return connectedEval(constraint, candidate, ctx, weight);
     // `not_overlapping`, `clearance` and `terrain_conform` are enforced
     // structurally by the solver (overlap tests, pad edits), not as costs.
     default:
@@ -325,6 +332,44 @@ function faceExtent(a: Rect, b: Rect): number {
     Math.min(a.x1 - a.x0 + 1, b.x1 - b.x0 + 1),
     Math.min(a.z1 - a.z0 + 1, b.z1 - b.z0 + 1),
   );
+}
+
+/**
+ * `connected` — the pass-3 half of a connector (§4 `connected`).
+ *
+ * A tunnel is dug, block by block, between two cellars, so its length is a real
+ * cost: every block of it is stone removed, lining laid and a walk the player
+ * has to make. The solver cannot dig it — that is pass 6 — but it *can* stop
+ * putting the two ends at opposite corners of the map, and that is all this
+ * term does: a normalized nearest-face distance, weighted, exactly comparable
+ * with `distance` and the coarse terms.
+ *
+ * Deliberately not a hard bound. `maxLength` belongs to the router, which is
+ * the only thing that knows the route the ground actually allows; failing a
+ * placement here for a distance the router might have managed would trade a
+ * buildable world for a demotion diagnostic.
+ */
+function connectedEval(
+  constraint: CanonicalConstraint,
+  candidate: Candidate,
+  ctx: EvalContext,
+  weight: number,
+): ConstraintEval {
+  const target = constraint["to"];
+  if (typeof target !== "string") return OK;
+  const ids = resolveTargets(target, ctx.self, ctx.nodes);
+  const rects = ids
+    .map((id) => ctx.placed.get(id))
+    .filter((p): p is Placement => p !== undefined)
+    .map((p) => p.footprint);
+  // The other end is not placed yet; the local-improvement pass scores this in
+  // full once it is, exactly as `distance` does.
+  if (rects.length === 0) return OK;
+
+  let nearest = Number.POSITIVE_INFINITY;
+  for (const r of rects) nearest = Math.min(nearest, rectGap(candidate.rect, r));
+  if (nearest === 0) return OK;
+  return { feasible: true, cost: (weight * nearest) / ctx.frameNorm, satisfied: true };
 }
 
 /**

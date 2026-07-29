@@ -38,8 +38,11 @@ import {
 import {
   CONSTRAINT_FIELDS,
   COMMON_CONSTRAINT_FIELDS,
+  CONNECTED_VIA_IMPLEMENTED,
   canonicalize,
+  isImplementedVia,
   isTier1,
+  isTier2,
   resolveTypeKey,
   type ConstraintType,
 } from "./constraints.js";
@@ -176,6 +179,10 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
   }
 
   const seenIds = new Set<string>();
+  /** Sibling id → what kind of node it is, for `connected` target resolution. */
+  const siblings = new Map<string, string>();
+  /** Every `connected` constraint seen, resolved against `siblings` afterwards. */
+  const connections: ConnectedRef[] = [];
   let heightfields = 0;
   let climates = 0;
   let plazas = 0;
@@ -194,6 +201,16 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       }
       seenIds.add(raw["id"]);
     }
+    if (typeof raw["id"] === "string" && typeof raw["kind"] === "string") {
+      siblings.set(
+        raw["id"],
+        raw["kind"] === "primitive"
+          ? "primitive"
+          : typeof raw["generator"] === "string"
+            ? raw["generator"]
+            : "generator",
+      );
+    }
 
     if (raw["kind"] === "primitive") {
       plazas++;
@@ -207,7 +224,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
           ),
         );
       }
-      validatePlazaNode(out, childPath, raw);
+      validatePlazaNode(out, childPath, raw, connections);
       continue;
     }
 
@@ -225,7 +242,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
 
     const generator = raw["generator"];
     if (typeof generator === "string" && (STRUCTURE_GENERATORS as readonly string[]).includes(generator)) {
-      validateStructureNode(out, childPath, raw);
+      validateStructureNode(out, childPath, raw, connections);
       continue;
     }
     if (
@@ -271,6 +288,8 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
     }
   }
 
+  resolveConnections(out, connections, siblings);
+
   if (heightfields !== 1) {
     out.push(
       error(
@@ -301,7 +320,12 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
 /* structure nodes                                                             */
 /* -------------------------------------------------------------------------- */
 
-function validateStructureNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+function validateStructureNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
   unknownKeys(out, node, path, STRUCTURE_KEYS, "structure node");
   checkBooleans(out, path, node, ["optional"]);
   checkTags(out, path, node["tags"]);
@@ -328,11 +352,16 @@ function validateStructureNode(out: LoamDiagnostic[], path: string, node: Obj): 
   }
 
   validateBoxEnvelope(out, path, node["envelope"]);
-  validateConstraints(out, path, node["constraints"]);
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
 }
 
-function validatePlazaNode(out: LoamDiagnostic[], path: string, node: Obj): void {
+function validatePlazaNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
   unknownKeys(out, node, path, ["id", "kind", "envelope", "params", "constraints", "ports", "optional", "seedSalt", "tags"], "plaza node");
   checkBooleans(out, path, node, ["optional"]);
   checkTags(out, path, node["tags"]);
@@ -363,7 +392,7 @@ function validatePlazaNode(out: LoamDiagnostic[], path: string, node: Obj): void
     checkFootprintSize(out, `${path}.envelope`, envelope["size"], "region");
   }
 
-  validateConstraints(out, path, node["constraints"]);
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
 }
 
@@ -535,7 +564,13 @@ function checkFootprintSize(
 /* constraints (§4 subset)                                                     */
 /* -------------------------------------------------------------------------- */
 
-function validateConstraints(out: LoamDiagnostic[], path: string, constraints: unknown): void {
+function validateConstraints(
+  out: LoamDiagnostic[],
+  path: string,
+  constraints: unknown,
+  selfId: unknown,
+  connections: ConnectedRef[],
+): void {
   if (constraints === undefined) return;
   if (!Array.isArray(constraints)) {
     out.push(
@@ -627,18 +662,202 @@ function validateConstraints(out: LoamDiagnostic[], path: string, constraints: u
     unknownKeys(out, c as Obj, at, allowed, `a "${resolved.type}" constraint`);
     checkCommonFields(out, at, c as Obj);
 
+    if (isTier2(resolved.type)) {
+      validateConnected(out, at, c as Obj, selfId, connections);
+      continue;
+    }
+
     if (!isTier1(resolved.type)) {
       out.push(
         warning(
           "CONSTRAINT_NOT_IMPLEMENTED",
           at,
           `"${resolved.type}" is a valid Loam v0.2 constraint that the layout solver does not implement yet; it is parsed and ignored`,
-          `express the same intent with an implemented constraint if placement matters — the solver understands: zone, at, adjacent_to, distance, facing, not_overlapping, clearance, terrain_conform`,
+          `express the same intent with an implemented constraint if placement matters — the solver understands: zone, at, adjacent_to, distance, facing, not_overlapping, clearance, terrain_conform, connected`,
         ),
       );
       continue;
     }
     validateTier1(out, at, resolved.type, c as Obj);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* `connected` (§4, tier 2)                                                    */
+/* -------------------------------------------------------------------------- */
+
+/** One `connected` constraint, held back for the sibling-resolution pass. */
+interface ConnectedRef {
+  readonly at: string;
+  readonly selfId: string | undefined;
+  readonly to: string;
+  readonly via: string;
+}
+
+/**
+ * Check one `connected` constraint's own fields, and record it for
+ * {@link resolveConnections}.
+ *
+ * Only `via: "tunnel"` is realized. Anything else parses, is scored as the same
+ * soft proximity term, and says so — a `via: "road"` between two houses is
+ * already what a `road.network@0` node does, and quietly building a second,
+ * constraint-driven lane on top of the network's would be worse than the
+ * warning.
+ */
+function validateConnected(
+  out: LoamDiagnostic[],
+  at: string,
+  c: Obj,
+  selfId: unknown,
+  connections: ConnectedRef[],
+): void {
+  const to = c["to"];
+  if (typeof to !== "string" || to.trim() === "") {
+    out.push(
+      error(
+        "BAD_CONSTRAINT",
+        at,
+        `"connected" needs a "to" selector naming the other end, got ${describe(to)}`,
+        'write { "connected": "town_hall", "via": "tunnel" } — the primary argument of a "connected" constraint is the node it reaches',
+      ),
+    );
+    return;
+  }
+
+  const via = c["via"];
+  if (via !== undefined && typeof via !== "string") {
+    out.push(
+      error(
+        "BAD_CONSTRAINT",
+        at,
+        `"via" must name a connector kind, got ${describe(via)}`,
+        'write "via": "tunnel" — the only kind this compiler builds; road, path, bridge, rail, stair and canal parse but are not realized',
+      ),
+    );
+    return;
+  }
+  // §4 `connected`: `via` defaults from the port types. This profile has no
+  // port-pair inference yet, so an unstated `via` reads as the kind it builds.
+  const kind = typeof via === "string" ? via : "tunnel";
+
+  for (const key of ["style", "prefer"] as const) {
+    const v = c[key];
+    if (v !== undefined && typeof v !== "string") {
+      out.push(error("BAD_CONSTRAINT", at, `"${key}" must be a string, got ${describe(v)}`, `omit "${key}" — it is carried but not read yet`));
+    }
+  }
+  checkNumbers(out, at, c, {
+    width: { min: 1, max: 16, int: true },
+    height: { min: 2, max: 16, int: true },
+    maxGrade: { min: 0, max: 4 },
+    maxLength: { min: 1, max: 4096, int: true },
+  });
+  checkBooleans(out, at, c, ["bidirectional"]);
+  for (const key of ["from"] as const) {
+    const v = c[key];
+    if (v !== undefined && typeof v !== "string") {
+      out.push(error("BAD_CONSTRAINT", at, `"${key}" must be a port ref, got ${describe(v)}`, `write "${key}": "self#tunnel_stub", or omit it and let the compiler pick the cellar wall facing the other end`));
+    }
+  }
+
+  if (!isImplementedVia(kind)) {
+    out.push(
+      warning(
+        "CONSTRAINT_NOT_IMPLEMENTED",
+        at,
+        `"connected" with via "${kind}" is valid Loam v0.2, but this compiler only builds ${CONNECTED_VIA_IMPLEMENTED.join(", ")} connectors; the pair is still pulled together, and nothing is built between them`,
+        kind === "road" || kind === "path"
+          ? 'add both nodes to a road.network@0 node\'s "anchors" — that is what routes lanes between doors'
+          : 'use "via": "tunnel" for an underground connection',
+      ),
+    );
+    return;
+  }
+
+  connections.push({
+    at,
+    selfId: typeof selfId === "string" ? selfId : undefined,
+    to: to.trim(),
+    via: kind,
+  });
+}
+
+/**
+ * Resolve every recorded `connected` target against the root's children.
+ *
+ * §4 makes both endpoints existing and compatible a **hard precondition**, not
+ * a cost, so all three failures here are errors: a target nobody declared, a
+ * node connected to itself, and a target that is not something a tunnel can end
+ * inside. Each carries the fix, because "unknown target" without the list of
+ * ids that *are* there is the least useful diagnostic a compiler can emit.
+ */
+function resolveConnections(
+  out: LoamDiagnostic[],
+  connections: readonly ConnectedRef[],
+  siblings: ReadonlyMap<string, string>,
+): void {
+  if (connections.length === 0) return;
+  const buildings = [...siblings.entries()]
+    .filter(([, kind]) => kind === "building.grammar@0")
+    .map(([id]) => id);
+
+  for (const ref of connections) {
+    // §4.2 selectors: only a bare sibling id (or `^.id`) resolves here; a tag
+    // set or a port ref names its node through the same leaf.
+    const bare = ref.to.startsWith("^.") ? ref.to.slice(2) : ref.to;
+    const leaf = (bare.split("#")[0] as string).split(".").pop() as string;
+
+    if (ref.to.startsWith("#tag:")) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          ref.at,
+          `"connected" was given the tag set "${ref.to}"; a tunnel has exactly two ends, so its target must name one node`,
+          `name a single building, e.g. "connected": "${buildings[0] ?? "town_hall"}" — one constraint per tunnel`,
+        ),
+      );
+      continue;
+    }
+
+    if (leaf === ref.selfId) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          ref.at,
+          `"${leaf}" is connected to itself`,
+          `point "connected" at the other end of the tunnel${buildings.length > 1 ? `, e.g. "${(buildings.find((id) => id !== leaf) as string)}"` : " — this document declares only one building, so there is nothing to connect it to"}`,
+        ),
+      );
+      continue;
+    }
+
+    const kind = siblings.get(leaf);
+    if (kind === undefined) {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          ref.at,
+          `"connected" names "${ref.to}", which is not a child of the root`,
+          buildings.length === 0
+            ? "declare the building this tunnel reaches as a building.grammar@0 child of the root first"
+            : `use one of the ids that exist: ${buildings.join(", ")}`,
+        ),
+      );
+      continue;
+    }
+
+    if (kind !== "building.grammar@0") {
+      out.push(
+        error(
+          "BAD_CONSTRAINT",
+          ref.at,
+          `"connected" names "${leaf}", which is a ${kind === "primitive" ? "plaza" : kind} — a tunnel has to end inside something with a cellar`,
+          buildings.length === 0
+            ? "point it at a building.grammar@0 node; only buildings get the cellar a tunnel opens into"
+            : `point it at a building instead: ${buildings.join(", ")}`,
+        ),
+      );
+    }
   }
 }
 
@@ -939,7 +1158,6 @@ const BUILDING_NUMS: Readonly<Record<string, NumSpec>> = {
   roofPitch: { min: 0, max: 4 },
   windowRatio: { min: 0, max: 1 },
   furnish: { min: 0, max: 1 },
-  basement: { min: 0, max: 8, int: true },
   variance: { min: 0, max: 1 },
   decayOverride: { min: 0, max: 1 },
 };
@@ -960,6 +1178,7 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
     "building.grammar@0 params",
   );
   checkNumbers(out, at, params, BUILDING_NUMS);
+  validateBasementParam(out, at, params["basement"]);
   checkEnumParam(out, at, params, "footprint", BUILDING_FOOTPRINTS);
   checkEnumParam(out, at, params, "interior", BUILDING_INTERIORS);
   for (const key of ["roof", "windowRhythm", "wallSymbol", "trimSymbol", "roofSymbol"]) {
@@ -973,6 +1192,39 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
     if (v !== undefined && !isObject(v)) {
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
+  }
+}
+
+/** Cellar depths this grammar digs, in blocks of headroom. */
+export const BASEMENT_DEPTH_RANGE = [3, 5] as const;
+
+/**
+ * `basement`: `true`, or `{ "depth": 3..5 }`.
+ *
+ * The bare-number form (`"basement": 4`) is accepted as the same thing, because
+ * the v0.2 catalog types the param as an int and a document written against the
+ * catalog must not be rejected for it.
+ */
+function validateBasementParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined || typeof value === "boolean") return;
+  const [lo, hi] = BASEMENT_DEPTH_RANGE;
+  const fix = `write "basement": true for the default ${lo + 1}-high cellar, or "basement": { "depth": ${lo + 1} } to set its headroom (${lo}..${hi})`;
+  if (typeof value === "number") {
+    if (value === 0) return; // "no cellar", spelled as a depth.
+    if (!Number.isInteger(value) || value < lo || value > hi) {
+      out.push(error("STRUCTURE_PARAM", at, `"basement" depth must be an integer in ${lo}..${hi} (or 0 for none), got ${describe(value)}`, fix));
+    }
+    return;
+  }
+  if (!isObject(value)) {
+    out.push(error("STRUCTURE_PARAM", at, `"basement" must be a boolean or an object, got ${describe(value)}`, fix));
+    return;
+  }
+  unknownKeys(out, value, `${at}.basement`, ["depth"], "a basement");
+  const depth = value["depth"];
+  if (depth === undefined) return;
+  if (typeof depth !== "number" || !Number.isInteger(depth) || depth < lo || depth > hi) {
+    out.push(error("STRUCTURE_PARAM", `${at}.basement`, `"depth" must be an integer in ${lo}..${hi}, got ${describe(depth)}`, fix));
   }
 }
 

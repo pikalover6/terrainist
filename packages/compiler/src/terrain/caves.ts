@@ -57,6 +57,17 @@ export interface CavePlan {
   readonly chambers: number;
   /** True when at least one node asked for decoration. */
   readonly decorate: boolean;
+  /**
+   * 1 for a column whose air the *structure* pass owns — a tunnel bore.
+   *
+   * The roof rule below is the carver's contract with the surface, and a
+   * gallery dug between two cellars is not the carver's. Its own thickness rule
+   * lives in {@link checkTunnelIntegrity}, which knows where the portals are;
+   * this flag is how the carver's validator is told to leave it alone.
+   */
+  readonly structuralColumns?: Uint8Array;
+  /** 1 for a tunnel portal column, where the roof is thin by design. */
+  readonly portalColumns?: Uint8Array;
 }
 
 /** One `cave.carver@0` node, as the compiler hands it to this pass. */
@@ -388,6 +399,7 @@ export function checkCaveIntegrity(plan: ColumnPlan): CaveIntegrityReport {
   }
   const nearFluid = dilate(fluid, region.width, region.depth, CAVE_FLUID_SHELL_BLOCKS);
   const nearOcean = dilate(plan.oceanMask, region.width, region.depth, CAVE_OCEAN_KEEPOUT_BLOCKS);
+  const structural = caves.structuralColumns;
 
   const sample = (breach: CaveBreach): void => {
     if (samples.length < MAX_CAVE_SAMPLES) samples.push(breach);
@@ -429,6 +441,7 @@ export function checkCaveIntegrity(plan: ColumnPlan): CaveIntegrityReport {
         }
 
         if (entrance) continue;
+        if (structural !== undefined && structural[idx] === 1) continue;
         if (hi >= surface) {
           surfaceBreaches++;
           sample({ x, y: hi, z, detail: `reaches y ${hi}, removing the surface block at y ${surface}` });

@@ -25,6 +25,7 @@ import {
   type Region,
 } from "@terrainist/stdlib";
 import {
+  isImplementedConstraint,
   strengthOf,
   weightOf,
   warning,
@@ -541,10 +542,7 @@ function commit(
 }
 
 function isImplemented(c: CanonicalConstraint): boolean {
-  return [
-    "zone", "at", "adjacent_to", "distance", "facing",
-    "not_overlapping", "clearance", "terrain_conform",
-  ].includes(c.type);
+  return isImplementedConstraint(c.type);
 }
 
 function coarseReports(node: LayoutNodeInput, ctx: EvalContext): CoarseReport[] {

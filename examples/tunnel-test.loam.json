@@ -1,0 +1,193 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "tunnel_test",
+    "worldSeed": 5512407,
+    "prompt": "a chapel and a town hall on opposite sides of a ridge, joined by an underground tunnel, with one cottage that has nothing to do with it",
+    "spawn": { "zone": "center" }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Tunnel test — two cellars under one ridge",
+    "note": "No sea anywhere in the region: the tunnel router's water rules are exercised by the tarn in the west, not by a coastline.",
+    "envelope": { "shape": "region", "size": [256, 256] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Rolling inland country, well above any waterline",
+        "params": {
+          "baseHeight": 86,
+          "amplitude": 14,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.0055,
+          "gain": 0.48,
+          "lacunarity": 2.0,
+          "erosionPasses": 1,
+          "cliffThreshold": 58,
+          "soilDepth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The ridge the tunnel runs under — the whole point of the fixture",
+            "params": {
+              "verb": "ridge",
+              "course": [[0.0, 0.5], [0.35, 0.46], [0.65, 0.54], [1.0, 0.5]],
+              "width": 70,
+              "height": 30,
+              "profile": "rounded",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "north_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the chapel stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [0.5, 0.2],
+              "radius": 46,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the town hall stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [0.5, 0.8],
+              "radius": 46,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A tarn well off the line, so the router's four-block water shell has something to dodge",
+            "params": {
+              "verb": "basin",
+              "at": [0.12, 0.5],
+              "radius": 24,
+              "depth": 12,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and green",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chapel on the north shelf",
+        "envelope": { "shape": "box", "size": [11, 12, 13], "padding": 1 },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": { "depth": 4 }
+        },
+        "constraints": [
+          { "zone": "north" },
+          { "connected": "town_hall", "via": "tunnel" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 24 }
+        ],
+        "ports": {
+          "main_door": { "type": "door", "face": "south", "tags": ["primary"] },
+          "crypt_stair": { "type": "tunnel_stub", "face": "south", "width": 3, "height": 3 }
+        },
+        "tags": ["civic", "hall"]
+      },
+      {
+        "id": "town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The town hall on the south shelf — its cellar is implied by the tunnel",
+        "envelope": { "shape": "box", "size": [13, 12, 11], "padding": 1 },
+        "params": { "floors": 1, "floorHeight": 6, "roof": "hip", "windowRhythm": "regular" },
+        "constraints": [
+          { "zone": "south" },
+          { "clearance": 2 },
+          { "terrain_conform": "flatten", "reference": "median", "blend": 5, "maxSlope": 24 }
+        ],
+        "ports": { "main_door": { "type": "door", "face": "north", "tags": ["primary"] } },
+        "tags": ["civic", "hall"]
+      },
+      {
+        "id": "cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A bystander: no cellar, no tunnel, and the router has to route around it",
+        "envelope": { "shape": "box", "size": [9, 8, 8] },
+        "params": { "floors": 1, "roof": "gable", "windowRhythm": "dense" },
+        "constraints": [
+          { "zone": "east" },
+          { "distance": "town_hall", "min": 10 },
+          { "terrain_conform": "cut_fill", "reference": "median", "blend": 3 }
+        ],
+        "ports": { "door": { "type": "door", "face": "west", "tags": ["primary"] } },
+        "tags": ["house"]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "Lanes over the ridge, so the tunnel has a surface route to be shorter than",
+        "params": {
+          "anchors": ["chapel", "town_hall", "cottage"],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse woodland, so the ridge reads as ground rather than as a model",
+        "params": {
+          "area": { "all": true },
+          "density": 0.2,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [2, 130],
+          "edgeFalloff": 10,
+          "avoidTags": ["structure", "road"],
+          "species": [
+            { "id": "ridge_oak", "weight": 3, "shape": "oak_round" },
+            { "id": "ridge_birch", "weight": 1, "shape": "birch_slim" }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -40,8 +40,16 @@ export type StructureGenerator = (typeof STRUCTURE_GENERATORS)[number];
  */
 export const SETTLEMENT_EXCLUDED_GENERATORS = ["cave.carver@0"] as const;
 
-/** Port types the profile implements. Other v0.2 types parse with `LOAM-T206`. */
-export const PORT_TYPES = ["door", "road_stub"] as const;
+/**
+ * Port types the profile implements. Other v0.2 types parse with `LOAM-T206`.
+ *
+ * `tunnel_stub` joined the set with the underground connective pass: it is the
+ * one port type whose *position* is not on the node's above-ground shell, so it
+ * is resolved by the tunnel pass against the building's cellar rather than by
+ * the generic port geometry — but it is resolved, and a document that declares
+ * one gets the opening it asked for.
+ */
+export const PORT_TYPES = ["door", "road_stub", "tunnel_stub"] as const;
 
 /** A port type the profile implements. */
 export type PortType = (typeof PORT_TYPES)[number];

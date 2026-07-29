@@ -80,12 +80,18 @@ import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
 import {
   caveDiagnostics,
+  tunnelDiagnostics,
   checkFloatingVegetation,
   checkFluidStability,
   validatorDiagnostics,
 } from "./validate.js";
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
-import { buildStructures, type StructurePassResult, type StructureStats } from "../structures/index.js";
+import {
+  buildStructures,
+  checkTunnelIntegrity,
+  type StructurePassResult,
+  type StructureStats,
+} from "../structures/index.js";
 
 /** Default `lavaFlows` for a volcano edit that does not name one. */
 export const DEFAULT_LAVA_FLOWS = 2;
@@ -549,9 +555,11 @@ async function compileValidated(
   const fluids = checkFluidStability(plan);
   const floating = checkFloatingVegetation(plan, trees);
   const caveIntegrity = checkCaveIntegrity(plan);
+  const tunnelIntegrity = checkTunnelIntegrity(plan, structures?.tunnels ?? [], structures?.buildings ?? []);
   diagnostics.push(
     ...validatorDiagnostics(fluids, floating, { allowUnstable: options.allowUnstable ?? false }),
     ...caveDiagnostics(caveIntegrity, rootPath),
+    ...tunnelDiagnostics(tunnelIntegrity, rootPath),
   );
   const validatorsMs = now() - t5;
 

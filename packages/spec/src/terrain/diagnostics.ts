@@ -133,6 +133,12 @@ export const TERRAIN_DIAGNOSTICS = {
   UNSATISFIABLE: "LOAM-E406",
   /** §4.9.4 — a coarse `mode: "center"` fighting `centered_in`/`on_axis`. */
   COMPETING_PLACEMENT: "LOAM-W167",
+
+  // --- the connective pass (§4 `connected`, pass 6) ------------------------
+  /** §4 `connected` — no route between the two ends, or past `maxLength`. */
+  TUNNEL_UNROUTABLE: "LOAM-E180",
+  /** A gallery came too near water, or left too little rock over its ceiling. */
+  TUNNEL_INTEGRITY: "LOAM-W408",
 } as const;
 
 /** Symbolic diagnostic name. */

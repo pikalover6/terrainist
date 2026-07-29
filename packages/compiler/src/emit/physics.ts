@@ -77,6 +77,19 @@ export interface PhysicsContext {
       readonly floorLevels?: readonly number[];
     };
   }[];
+  /**
+   * Tunnels, as the two cellar cells each one has to join.
+   *
+   * The walking agent is pointed at `from` and has to reach `to`. That single
+   * assertion covers the whole chain — the cellar ladder, the doorway through
+   * the cellar wall, every stair flight in the gallery and the ladder at the
+   * far end — because the agent has no other way to get there.
+   */
+  readonly tunnels?: readonly {
+    readonly id?: string;
+    readonly from: { readonly x: number; readonly y: number; readonly z: number };
+    readonly to: { readonly x: number; readonly y: number; readonly z: number };
+  }[];
   /** Road centre lines; bridge decks are exempt from the flush-road rule. */
   readonly roads?: readonly {
     readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
@@ -119,6 +132,7 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "interior.blocked_column",
   "traversal.no_start",
   "traversal.unreachable",
+  "traversal.tunnel",
   "connection.stale",
   "road.proud",
   "dripstone.unattached",
@@ -146,6 +160,17 @@ const BODY_BLOCKING =
 
 /** Blocks that a foot may rest on even though they are not full cubes. */
 const STANDABLE_PARTIAL = /(_slab|_stairs)$/;
+
+/**
+ * Blocks that are not full cubes but whose *top* face is solid and flush.
+ *
+ * A dirt path is fifteen sixteenths tall with a full square top: vanilla lets a
+ * player walk it and lets a fence, a torch or a lamp post stand on it, and a
+ * road made of them is the whole point of `road.surface`. Treating them as
+ * unsupportive made the porch lamp of any building whose doorstep met a lane
+ * read as a lamp standing on air — a lint finding with no defect under it.
+ */
+const SOLID_TOP = /^(dirt_path|farmland)$/;
 
 /**
  * Blocks that stand on whatever is under them and fall over without it.
@@ -480,6 +505,37 @@ export async function lintWorldPhysics(
     }
   }
 
+  // --- the tunnels ---------------------------------------------------------
+  // Underground, so no other rule sees them: the interior rules are bounded by
+  // a building's footprint and the road rules by a route's surface. A gallery
+  // whose stair flights are a jump, whose doorway is a block short or whose
+  // frame posts block the walkway is a gallery nobody can use, and this is the
+  // only check that would notice.
+  for (const tunnel of context.tunnels ?? []) {
+    const from = nearestStandable(tunnel.from);
+    const to = nearestStandable(tunnel.to);
+    if (from === null || to === null) {
+      const anchor = from ?? tunnel.from;
+      add(
+        "traversal.tunnel",
+        anchor.x,
+        anchor.y,
+        anchor.z,
+        `${tunnel.id ?? "tunnel"}: no standable cell at ${from === null ? "the near" : "the far"} end`,
+      );
+      continue;
+    }
+    if (!walk(from).has(`${to.x},${to.y},${to.z}`)) {
+      add(
+        "traversal.tunnel",
+        from.x,
+        from.y,
+        from.z,
+        `${tunnel.id ?? "tunnel"}: no walking route to the far cellar at ${to.x},${to.y},${to.z}`,
+      );
+    }
+  }
+
   // --- connection states ---------------------------------------------------
   // Recompute every connective block against the world as read back, and diff.
   // A non-zero diff means the state on disk disagrees with the neighbourhood,
@@ -558,12 +614,22 @@ export async function lintWorldPhysics(
   // heightmap nobody asked for.
   const top = context.terrainTop;
   if (top !== undefined) {
+    // A building owns every column of its own footprint, from the roof down to
+    // the bottom of its cellar: the pad levelled the ground there, the skirt
+    // replaced it, and a cellar deliberately hollows it out. The rule is about
+    // what an *interior cave* did to the terrain, so a footprint is not its
+    // business — and without this the first cellar ever dug reads as 150
+    // breaches.
+    const owned = context.buildings ?? [];
     for (let j = 0; j < top.depth; j++) {
       const z = top.z0 + j;
       for (let i = 0; i < top.width; i++) {
         const idx = j * top.width + i;
         if (top.entrances[idx] === 1) continue;
         const x = top.x0 + i;
+        if (owned.some((b) => x >= b.footprint.x0 && x <= b.footprint.x1 && z >= b.footprint.z0 && z <= b.footprint.z1)) {
+          continue;
+        }
         const expected = top.ground[idx] as number;
         if (expected < minY || expected > maxY) continue;
         // The property is precisely "the cave did not eat this column's surface
@@ -606,7 +672,8 @@ export async function lintWorldPhysics(
     const id = stateAt(x, y, z);
     if (id === 0) return false;
     if (stack.isFullCube(id)) return true;
-    return STANDABLE_PARTIAL.test(nameAt(x, y, z));
+    const name = nameAt(x, y, z);
+    return STANDABLE_PARTIAL.test(name) || SOLID_TOP.test(name);
   }
 
   /**
@@ -744,6 +811,30 @@ export async function lintWorldPhysics(
     return null;
   }
 
+  /**
+   * The cell itself if a player fits in it, else the nearest of its four
+   * neighbours that one does.
+   *
+   * A tunnel endpoint is the cellar cell in front of the opening, which the
+   * compiler computed from geometry rather than read back — and the cellar's
+   * own decoration may have put a barrel there. Nudging one block is the honest
+   * amount of slack: it still proves the gallery reaches the room.
+   */
+  function nearestStandable(
+    at: { x: number; y: number; z: number },
+  ): { x: number; y: number; z: number } | null {
+    if (standable(at.x, at.y, at.z)) return at;
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      if (standable(at.x + dx, at.y, at.z + dz)) return { x: at.x + dx, y: at.y, z: at.z + dz };
+    }
+    return null;
+  }
+
   /** True when a ladder anywhere in this column's band is fixed to it. */
   function ladderBacking(x: number, lo: number, hi: number, z: number): boolean {
     for (let y = lo; y <= hi; y++) {
@@ -765,7 +856,7 @@ export async function lintWorldPhysics(
       if (stack.isFullCube(id)) return true;
       const name = nameAt(x, by, z);
       if (AIR.has(name)) return false;
-      if (STANDABLE_PARTIAL.test(name)) return true;
+      if (STANDABLE_PARTIAL.test(name) || SOLID_TOP.test(name)) return true;
       if (!needsGround(name)) return false;
     }
     return false;

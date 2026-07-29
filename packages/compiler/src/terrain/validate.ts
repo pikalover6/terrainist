@@ -18,6 +18,8 @@
 
 import { type LoamDiagnostic, error, warning } from "@terrainist/spec";
 
+import type { TunnelIntegrityReport } from "../structures/tunnels.js";
+
 import type { CaveIntegrityReport } from "./caves.js";
 import type { ColumnPlan } from "./columns.js";
 import { FluidKind } from "./columns.js";
@@ -157,6 +159,42 @@ export function caveDiagnostics(
         "this is a compiler defect: interior caves must leave the heightmap alone, and only an " +
           '"entrances" mouth may open the surface. Report it; lowering the node\'s "yRange" upper ' +
           "bound may work around it meanwhile.",
+      ),
+    );
+  }
+  return out;
+}
+
+/** Turn a tunnel integrity report into profile diagnostics. */
+export function tunnelDiagnostics(
+  report: TunnelIntegrityReport,
+  nodePath: string,
+): LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  if (report.fluidBreaches === 0 && report.roofBreaches === 0) return out;
+  const where = report.samples
+    .map((s) => `${s.tunnelId} (${s.x}, ${s.y}, ${s.z}): ${s.detail}`)
+    .join("; ");
+  if (report.fluidBreaches > 0) {
+    out.push(
+      error(
+        "TUNNEL_INTEGRITY",
+        nodePath,
+        `${report.fluidBreaches} tunnel bore cell${report.fluidBreaches === 1 ? "" : "s"} break the ` +
+          `four-block shell around water, lava or the sea — e.g. ${where}`,
+        "this is a compiler defect, not a document one: the tunnel router's obstacle mask is supposed " +
+          "to make it unreachable. Report it. Moving one of the two buildings may work around it meanwhile.",
+      ),
+    );
+  }
+  if (report.roofBreaches > 0) {
+    out.push(
+      error(
+        "TUNNEL_INTEGRITY",
+        nodePath,
+        `${report.roofBreaches} tunnel bore cell${report.roofBreaches === 1 ? "" : "s"} leave less rock ` +
+          `over the ceiling than the roof margin, away from a portal — e.g. ${where}`,
+        "this is a compiler defect: the router's legality test carries the same margin. Report it.",
       ),
     );
   }

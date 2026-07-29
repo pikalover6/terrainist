@@ -207,7 +207,23 @@ export const BUILDING_STYLE_DEFAULTS: Readonly<Record<string, string>> = Object.
   "light.torch": "torch",
   "chimney.block": "cobblestone",
   "chimney.rim": "cobblestone_wall",
+  "cellar.floor": "stone_bricks",
+  "cellar.wall": "stone_bricks",
+  "cellar.wall_cracked": "cracked_stone_bricks",
+  "cellar.crate": "barrel",
+  "cellar.cobweb": "cobweb",
 });
+
+/** Cellar headroom when `basement` is asked for without a depth. */
+export const DEFAULT_BASEMENT_DEPTH = 4;
+
+/** Shallowest and deepest cellar this grammar digs. */
+export const MIN_BASEMENT_DEPTH = 3;
+/** Deepest cellar this grammar digs. */
+export const MAX_BASEMENT_DEPTH = 5;
+
+/** Share of cellar masonry that comes up cracked. */
+const CELLAR_CRACK_SHARE = 0.28;
 
 /** Most of a granary floor that hay bales may stand on. */
 const GRANARY_HAY_SHARE = 0.25;
@@ -293,6 +309,14 @@ export interface BuildingParams {
   readonly trimSymbol?: string;
   /** Block id overriding the whole `roof.*` family. */
   readonly roofSymbol?: string;
+  /**
+   * Cellar headroom in blocks, or 0 for none.
+   *
+   * Resolved by the caller — `true`, `{ depth }` and the bare int of the v0.2
+   * catalog all mean the same thing here, and the profile validator is where
+   * that spelling is settled.
+   */
+  readonly basement?: number;
 }
 
 /** Lowest story height that still fits a two-block door plus a lintel. */
@@ -372,6 +396,18 @@ export interface BuildingMeta {
   readonly floorLevels: readonly number[];
   /** Y of the lowest step of each inter-story stair run. */
   readonly stairRuns: readonly number[];
+  /**
+   * Cellar headroom actually dug, in blocks; 0 when the building has none.
+   *
+   * The cellar's walkable plane is `-basementDepth` and its floor slab is at
+   * `-(basementDepth + 1)`, so `floorLevels[0]` is that slab whenever this is
+   * non-zero — which is what makes the traversal lint walk down there.
+   */
+  readonly basementDepth: number;
+  /** The cellar's enclosed interior; the footprint interior when it has one. */
+  readonly basementInterior: LocalRect | null;
+  /** Local column of the cellar ladder, or `null` without a cellar. */
+  readonly basementAccess: { readonly x: number; readonly z: number } | null;
   readonly windowCount: number;
   readonly lanternCount: number;
   /** Ops emitted into the one-block apron ring outside the footprint. */
@@ -461,7 +497,13 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         );
   const windowShape = resolveWindowShape(params.windowShape, choice, storyHeight);
 
-  const foundationDepth = Math.max(0, Math.round(request.foundationDepth ?? 1));
+  // The cellar is dug before the skirt is measured, because the two share the
+  // same ground: a skirt sunk through a cellar would fill the room it stands in.
+  const cellar =
+    params.basement === undefined || params.basement <= 0
+      ? 0
+      : clamp(Math.round(params.basement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
+  const foundationDepth = Math.max(Math.max(0, Math.round(request.foundationDepth ?? 1)), cellar + 1);
 
   const cells = new Map<string, LocalVoxelOp>();
   const put: Put = (x, y, z, block, props) => {
@@ -494,7 +536,10 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       : (style["foundation.primary"] as string);
 
   // --- foundation skirt ----------------------------------------------------
+  // The cellar's band (`-1 .. -(cellar + 1)`) is skipped: `emitCellar` owns it,
+  // and it emits its own floor slab where the skirt's deepest course would be.
   for (let d = 1; d <= foundationDepth; d++) {
+    if (cellar > 0 && d <= cellar + 1) continue;
     for (let z = 0; z < sz; z++) {
       for (let x = 0; x < sx; x++) put(x, -d, z, foundationAt(x, -d, z));
     }
@@ -600,10 +645,23 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   }
 
   // --- upper floors + stairs, and the ceiling ------------------------------
-  const floorLevels: number[] = [0];
+  const cellarInterior = cellar > 0 && hasInterior ? interior : null;
+  // The cellar ladder stands in the *south-east* interior corner, and the
+  // inter-storey flight in the north-west one. That is not decoration: both
+  // need a hole in the plane they pass through and a solid wall at their back,
+  // and putting them in the same corner would have the flight's stairwell eat
+  // the ladder's backing.
+  const cellarAccess =
+    cellarInterior === null ? null : { x: cellarInterior.x1, z: cellarInterior.z1 };
+  const floorLevels: number[] = cellar > 0 ? [-(cellar + 1), 0] : [0];
   const stairRuns: number[] = [];
   /** Ground-floor columns the stair run occupies; furniture must keep off. */
   const stairColumns = new Set<string>();
+  if (cellarAccess !== null) {
+    stairColumns.add(`${cellarAccess.x},${cellarAccess.z}`);
+    if (cellarAccess.x - 1 >= interior.x0) stairColumns.add(`${cellarAccess.x - 1},${cellarAccess.z}`);
+    if (cellarAccess.z - 1 >= interior.z0) stairColumns.add(`${cellarAccess.x},${cellarAccess.z - 1}`);
+  }
   for (let s = 1; s < floors; s++) {
     const level = s * storyHeight;
     floorLevels.push(level);
@@ -763,6 +821,26 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     : 0;
   if (door !== null) apronOps += emitPorchLamp(put, style, door, sx, sz);
 
+  // --- the cellar ----------------------------------------------------------
+  // Last, deliberately: it punches a hole through the ground-floor plane and
+  // runs a ladder up through it, and every earlier stage may have written into
+  // the columns it needs. Emitting it here makes "the way down wins" a property
+  // of the order rather than of nine `if`s in the stages above.
+  let cellarLanterns = 0;
+  if (cellarInterior !== null && cellarAccess !== null) {
+    cellarLanterns = emitCellar({
+      put,
+      style,
+      grammar,
+      choice,
+      sx,
+      sz,
+      depth: cellar,
+      interior: cellarInterior,
+      access: cellarAccess,
+    });
+  }
+
   return {
     ops: sortOps([...cells.values()]),
     meta: {
@@ -777,8 +855,11 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       interior,
       floorLevels,
       stairRuns,
+      basementDepth: cellarInterior === null ? 0 : cellar,
+      basementInterior: cellarInterior,
+      basementAccess: cellarAccess,
       windowCount,
-      lanternCount,
+      lanternCount: lanternCount + cellarLanterns,
       apronOps,
       furnitureCount,
       chimney,
@@ -1661,6 +1742,11 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
       interior: shaft,
       floorLevels: [0, platformY],
       stairRuns: [1],
+      // v0.2 §7 `basement`: not yet for `watchtower` — the shaft archetype's
+      // ladder already owns the one interior column a cellar hatch would need.
+      basementDepth: 0,
+      basementInterior: null,
+      basementAccess: null,
       windowCount: 0,
       lanternCount,
       apronOps: door === null ? 0 : 1,
@@ -1689,6 +1775,113 @@ function opposite(c: Cardinal): Cardinal {
  * one cell further along the wall.
  */
 const SOLID_BACKING = /(planks|_log$|_wood$|bricks?$|cobblestone$|stone$|_block$|deepslate$|terracotta$|sandstone$|_tiles$|glass$)/;
+
+/* -------------------------------------------------------------------------- */
+/* the cellar                                                                  */
+/* -------------------------------------------------------------------------- */
+
+interface CellarRequest {
+  readonly put: Put;
+  readonly style: Readonly<Record<string, string>>;
+  readonly grammar: Seed256;
+  readonly choice: Seed256;
+  readonly sx: number;
+  readonly sz: number;
+  /** Headroom, in blocks: the room spans `-depth .. -1`. */
+  readonly depth: number;
+  readonly interior: LocalRect;
+  readonly access: { readonly x: number; readonly z: number };
+}
+
+/**
+ * Dig a cellar under the footprint and give it a way in.
+ *
+ * The geometry, and why each piece is the shape it is:
+ *
+ * - **The room** spans `y = -depth … -1`. Its ceiling is the ground-floor
+ *   plane the building already laid at `y = 0`, which is what a hanging lantern
+ *   down here hangs from — so the cellar needs no ceiling of its own, and gets
+ *   none.
+ * - **The floor slab** at `-(depth + 1)` is masonry across the whole footprint,
+ *   because the walls stand on it and the skirt above stops at the room.
+ * - **The walls** are the footprint perimeter, stone brick with a
+ *   position-keyed share of it cracked. Perimeter, not interior-plus-one: the
+ *   cellar is exactly as wide as the building, so a tunnel arriving at the
+ *   outside of that wall is arriving at the outside of the building.
+ * - **The ladder** runs from the cellar floor up *past* the ground-floor plane
+ *   to `y = +1`, in the south-east interior corner, facing west so its back is
+ *   fixed to the east wall — solid at every course it passes. Running one
+ *   block past the plane is what lets a player step onto it rather than into
+ *   it, and the plane's cell in that column is the ladder, not floor: the hole
+ *   and the way through it are the same block.
+ *
+ * Returns the number of lanterns hung, for the meta count.
+ */
+function emitCellar(r: CellarRequest): number {
+  const { put, style, grammar, choice, sx, sz, depth, interior, access } = r;
+  const masonry = (x: number, y: number, z: number): string =>
+    positionFloat(grammar, x, y, z) < CELLAR_CRACK_SHARE
+      ? (style["cellar.wall_cracked"] as string)
+      : (style["cellar.wall"] as string);
+
+  // --- the floor slab ------------------------------------------------------
+  const slabY = -(depth + 1);
+  for (let z = 0; z < sz; z++) {
+    for (let x = 0; x < sx; x++) put(x, slabY, z, masonry(x, slabY, z));
+  }
+
+  // --- the room ------------------------------------------------------------
+  for (let d = 1; d <= depth; d++) {
+    const y = -d;
+    for (let z = 0; z < sz; z++) {
+      for (let x = 0; x < sx; x++) {
+        const inside = x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
+        put(x, y, z, inside ? "air" : masonry(x, y, z));
+      }
+    }
+  }
+
+  // --- the ladder ----------------------------------------------------------
+  // `facing: "west"` fixes the rungs to the cell at `x + 1`: the east wall,
+  // which is masonry below the plane and timber above it, and solid at every
+  // course in between.
+  for (let y = -depth; y <= 1; y++) put(access.x, y, access.z, "ladder", { facing: "west" });
+
+  // --- light ---------------------------------------------------------------
+  // One lantern, hung from the ground-floor plane at the room's centre. It is
+  // the only light down here, so it is placed rather than drawn: a cellar that
+  // came up dark by chance would be a mob farm under someone's kitchen.
+  const cx = Math.floor((interior.x0 + interior.x1) / 2);
+  const cz = Math.floor((interior.z0 + interior.z1) / 2);
+  put(cx, -1, cz, style["light.lantern"] as string, { hanging: "true" });
+
+  // --- what a cellar is for ------------------------------------------------
+  // Barrels on the floor and cobwebs under the beams, both position-keyed and
+  // both kept off the ladder's column and the two cells that reach it — the
+  // approach a player needs is the one thing the decoration may not take.
+  const floorY = -depth;
+  const reserved = new Set([
+    `${access.x},${access.z}`,
+    `${access.x - 1},${access.z}`,
+    `${access.x},${access.z - 1}`,
+    `${cx},${cz}`,
+  ]);
+  for (let z = interior.z0; z <= interior.z1; z++) {
+    for (let x = interior.x0; x <= interior.x1; x++) {
+      if (reserved.has(`${x},${z}`)) continue;
+      const wall =
+        x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
+      if (wall && positionFloat(choice, x, floorY, z) < 0.22) {
+        put(x, floorY, z, style["cellar.crate"] as string);
+      } else if (positionFloat(choice, z, floorY, x) < 0.1) {
+        // Under the beams, never at head height on the floor: a cobweb a player
+        // has to wade through to cross their own cellar is a bug, not a mood.
+        put(x, -1, z, style["cellar.cobweb"] as string);
+      }
+    }
+  }
+  return 1;
+}
 
 /** The footprint perimeter, in canonical (z, x) order. */
 export function perimeter(sx: number, sz: number): { x: number; z: number }[] {

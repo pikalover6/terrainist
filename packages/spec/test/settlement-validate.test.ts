@@ -195,12 +195,18 @@ describe("settlement profile — constraints", () => {
     expect(result.document).toBeDefined();
   });
 
-  it("passes every non-tier-1 registry type through as W407, and none of tier 1", () => {
+  it("passes every unimplemented registry type through as W407, and none of the implemented ones", () => {
+    // `connected` is the one tier-2 type: the solver costs it and the
+    // connective pass realizes it, so a bare `{ "type": "connected" }` gets an
+    // error for its missing target rather than a W407 pass-through.
     for (const type of CONSTRAINT_REGISTRY) {
-      const result = validateSettlementDocument(doc([building({ constraints: [{ type }] })]));
+      const result = validateSettlementDocument(doc([building({ constraints: [{ type, to: "other" }] })]));
       const hasW407 = result.diagnostics.some((d) => d.code === "LOAM-W407");
-      const tier1 = ["zone", "at", "adjacent_to", "distance", "facing", "not_overlapping", "clearance", "terrain_conform"];
-      expect(hasW407).toBe(!tier1.includes(type));
+      const implemented = [
+        "zone", "at", "adjacent_to", "distance", "facing",
+        "not_overlapping", "clearance", "terrain_conform", "connected",
+      ];
+      expect(hasW407, type).toBe(!implemented.includes(type));
     }
   });
 
@@ -269,9 +275,15 @@ describe("settlement profile — ports", () => {
   });
 
   it("warns on a valid v0.2 port type the profile does not resolve", () => {
-    const result = validateSettlementDocument(doc([building({ ports: { cellar: { type: "tunnel_stub", face: "north" } } })]));
+    const result = validateSettlementDocument(doc([building({ ports: { berth: { type: "dock", face: "north" } } })]));
     const w = result.diagnostics.find((d) => d.code === "LOAM-T206");
     expect(w?.name).toBe("PORT_FEATURE_NOT_IMPLEMENTED");
+    expect(result.document).toBeDefined();
+  });
+
+  it("resolves a tunnel_stub without complaint — the cellar port is implemented", () => {
+    const result = validateSettlementDocument(doc([building({ ports: { cellar: { type: "tunnel_stub", face: "north" } } })]));
+    expect(result.diagnostics.filter((d) => d.code === "LOAM-T206")).toEqual([]);
     expect(result.document).toBeDefined();
   });
 
@@ -369,5 +381,134 @@ describe("constraint registry", () => {
     expect(weightOf({ type: "facing", target: "x" })).toBe(2);
     expect(weightOf({ type: "align", target: "x" })).toBe(1);
     expect(weightOf({ type: "facing", target: "x", weight: 5 })).toBe(5);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe("settlement profile — the `connected` constraint", () => {
+  /** A second building, so a `connected` constraint has somewhere to point. */
+  function chapel(patch: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      id: "chapel",
+      kind: "generator",
+      generator: "building.grammar@0",
+      envelope: { shape: "box", size: [11, 9, 12] },
+      ...patch,
+    };
+  }
+
+  const tunnel = { connected: "town_hall", via: "tunnel" };
+
+  it("accepts a tunnel between two buildings, with no warning", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [tunnel] })]),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.document).toBeDefined();
+  });
+
+  it("defaults `via` to the connector it builds", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ connected: "town_hall" }] })]),
+    );
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("passes an unimplemented `via` through as W407, and keeps the document", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ connected: "town_hall", via: "road" }] })]),
+    );
+    const w = result.diagnostics.find((d) => d.code === "LOAM-W407");
+    expect(w?.name).toBe("CONSTRAINT_NOT_IMPLEMENTED");
+    expect(w?.fix).toMatch(/road\.network@0/);
+    expect(result.document).toBeDefined();
+  });
+
+  it("errors, with the ids that do exist, on an unknown target", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ connected: "granary", via: "tunnel" }] })]),
+    );
+    const e = result.diagnostics.find((d) => d.name === "BAD_CONSTRAINT");
+    expect(e?.severity).toBe("error");
+    expect(e?.message).toMatch(/not a child of the root/);
+    expect(e?.fix).toMatch(/town_hall/);
+    expect(result.document).toBeUndefined();
+  });
+
+  it("errors, naming the other end, on a node connected to itself", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ connected: "chapel", via: "tunnel" }] })]),
+    );
+    const e = result.diagnostics.find((d) => d.name === "BAD_CONSTRAINT");
+    expect(e?.message).toMatch(/connected to itself/);
+    expect(e?.fix).toMatch(/town_hall/);
+    expect(result.document).toBeUndefined();
+  });
+
+  it("errors on a target that is not a building", () => {
+    const plaza = {
+      id: "green",
+      kind: "primitive",
+      envelope: { shape: "region", size: [20, 20] },
+    };
+    const result = validateSettlementDocument(
+      doc([plaza, chapel({ constraints: [{ connected: "green", via: "tunnel" }] })]),
+    );
+    const e = result.diagnostics.find((d) => d.name === "BAD_CONSTRAINT");
+    expect(e?.message).toMatch(/plaza/);
+    expect(e?.fix).toMatch(/cellar|building/);
+    expect(result.document).toBeUndefined();
+  });
+
+  it("errors on a tag-set target — a tunnel has exactly two ends", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ connected: "#tag:house", via: "tunnel" }] })]),
+    );
+    const e = result.diagnostics.find((d) => d.name === "BAD_CONSTRAINT");
+    expect(e?.message).toMatch(/two ends/);
+    expect(result.document).toBeUndefined();
+  });
+
+  it("errors on a missing target", () => {
+    const result = validateSettlementDocument(
+      doc([building(), chapel({ constraints: [{ type: "connected", via: "tunnel" }] })]),
+    );
+    expect(names(doc([building(), chapel({ constraints: [{ type: "connected" }] })]))).toContain(
+      "BAD_CONSTRAINT",
+    );
+    expect(result.document).toBeUndefined();
+  });
+
+  it("is hard by default and weighted 1.0, per the v0.2 registry", () => {
+    const resolved = resolveTypeKey(tunnel);
+    expect(resolved.ok && resolved.type).toBe("connected");
+    const c = canonicalize(tunnel, "connected", true);
+    expect(c["to"]).toBe("town_hall");
+    expect(strengthOf(c)).toBe("hard");
+    expect(weightOf(c)).toBe(1);
+  });
+});
+
+describe("settlement profile — the `basement` param", () => {
+  const withBasement = (basement: unknown): unknown =>
+    doc([building({ params: { floors: 1, basement } })]);
+
+  it("accepts true, an object depth, and the catalog's bare int", () => {
+    for (const value of [true, false, { depth: 3 }, { depth: 5 }, 4, 0]) {
+      expect(validateSettlementDocument(withBasement(value)).diagnostics, String(JSON.stringify(value))).toEqual([]);
+    }
+  });
+
+  it("errors, with the fix, on a depth outside 3..5", () => {
+    for (const value of [{ depth: 2 }, { depth: 9 }, 12]) {
+      const d = validateSettlementDocument(withBasement(value)).diagnostics;
+      expect(d[0]?.name).toBe("STRUCTURE_PARAM");
+      expect(d[0]?.fix).toMatch(/"basement": true/);
+    }
+  });
+
+  it("errors on an unknown key inside the object form", () => {
+    expect(names(withBasement({ depth: 4, height: 4 }))).toContain("UNKNOWN_KEY");
   });
 });

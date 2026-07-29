@@ -76,6 +76,45 @@ export const TIER1_CONSTRAINTS = [
 /** A constraint type the solver understands. */
 export type Tier1Constraint = (typeof TIER1_CONSTRAINTS)[number];
 
+/**
+ * Tier 2: types the solver scores but does not *realize* on its own.
+ *
+ * `connected` is the only member, and it is here rather than in tier 1 because
+ * satisfying it is two jobs in two passes (§4 `connected`, pass 3 vs pass 6):
+ * at solve time it is a **soft proximity cost** — pull the pair together so the
+ * connector has a short run — and the connector itself is built by the
+ * connective pass long after placement is frozen. A type that is only half
+ * solved by the solver would be a lie in the tier-1 list.
+ */
+export const TIER2_CONSTRAINTS = ["connected"] as const;
+
+/** A constraint type the solver costs but the connective pass realizes. */
+export type Tier2Constraint = (typeof TIER2_CONSTRAINTS)[number];
+
+/** True when the solver scores `type` but a later pass realizes it. */
+export function isTier2(type: string): type is Tier2Constraint {
+  return (TIER2_CONSTRAINTS as readonly string[]).includes(type);
+}
+
+/** True when some pass of this compiler acts on `type` at all. */
+export function isImplementedConstraint(type: string): boolean {
+  return isTier1(type) || isTier2(type);
+}
+
+/**
+ * The `connected.via` kinds this compiler realizes.
+ *
+ * Everything else in the §4 `via` vocabulary stays a `LOAM-W407`
+ * pass-through — `road` above all, because a `road.network@0` node already
+ * connects doors and a second, constraint-driven road router would fight it.
+ */
+export const CONNECTED_VIA_IMPLEMENTED = ["tunnel"] as const;
+
+/** True when `via` names a connector kind the connective pass builds. */
+export function isImplementedVia(via: string): boolean {
+  return (CONNECTED_VIA_IMPLEMENTED as readonly string[]).includes(via);
+}
+
 /** True when `type` is a v0.2 constraint type. */
 export function isConstraintType(type: string): type is ConstraintType {
   return (CONSTRAINT_REGISTRY as readonly string[]).includes(type);

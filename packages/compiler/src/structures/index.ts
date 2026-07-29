@@ -18,6 +18,7 @@
  */
 
 import {
+  DEFAULT_BASEMENT_DEPTH,
   archetypeOfTags,
   assignMaterials,
   materialKey,
@@ -26,9 +27,11 @@ import {
   seed32,
   streamSeed,
   type BuildingMaterials,
+  type CaveSpans,
   type MaterialTheme,
   type Seed256,
 } from "@terrainist/stdlib";
+import { canonicalize, isImplementedVia, resolveTypeKey } from "@terrainist/spec";
 import type {
   LoamDiagnostic,
   PortDeclaration,
@@ -38,6 +41,7 @@ import type {
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
+import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
@@ -45,11 +49,13 @@ import { buildBuildings, type BuildingJob, type BuiltBuilding, type StructureBlo
 import { buildDoorsteps } from "./doorsteps.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
+import { buildTunnels, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
 export * from "./plaza.js";
 export * from "./roads.js";
+export * from "./tunnels.js";
 
 /** Everything {@link buildStructures} reads. */
 export interface StructurePassInput {
@@ -88,6 +94,16 @@ export interface StructureStats {
   readonly doorstepsStepped: number;
   /** Doors whose approach was cut down to the threshold. */
   readonly doorstepsDropped: number;
+  /** Buildings given a cellar, whether asked for or implied by a tunnel. */
+  readonly cellars: number;
+  /** Tunnels routed and dug. */
+  readonly tunnels: number;
+  /** Blocks of stone the tunnel bores removed. */
+  readonly tunnelCarvedBlocks: number;
+  /** Centre-line cells, summed over every tunnel — the walk, in blocks. */
+  readonly tunnelLength: number;
+  readonly tunnelStairSteps: number;
+  readonly tunnelLanterns: number;
 }
 
 /** What the structure pass produced. */
@@ -97,6 +113,7 @@ export interface StructurePassResult {
   readonly buildings: readonly BuiltBuilding[];
   readonly plaza?: PlazaResult;
   readonly roads?: RoadNetworkResult;
+  readonly tunnels: readonly BuiltTunnel[];
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -109,6 +126,17 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const placementByPath = new Map(input.placements.map((p) => [p.nodePath, p] as const));
   const docNodes = structureNodesOf(input.doc, rootPath);
 
+  // --- what the tunnels imply ----------------------------------------------
+  // Read *before* the buildings are generated, because a building at the end of
+  // a tunnel needs a cellar whether or not it asked for one — the constraint
+  // says the two are connected, and there is nowhere else for a gallery to end.
+  const links = tunnelLinksOf(input.doc, rootPath);
+  const needsCellar = new Set<string>();
+  for (const link of links) {
+    needsCellar.add(link.fromPath);
+    needsCellar.add(link.toPath);
+  }
+
   // --- buildings -----------------------------------------------------------
   const jobs: BuildingJob[] = [];
   const buildingPaths = new Set<string>();
@@ -117,6 +145,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     if (node?.generator !== "building.grammar@0") continue;
     buildingPaths.add(placement.nodePath);
     const params = (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>;
+    const basement = resolveBasementParam(params["basement"], needsCellar.has(placement.nodePath));
     jobs.push({
       nodePath: placement.nodePath,
       placement,
@@ -129,6 +158,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         ...(typeof params["wallSymbol"] === "string" ? { wallSymbol: params["wallSymbol"] } : {}),
         ...(typeof params["trimSymbol"] === "string" ? { trimSymbol: params["trimSymbol"] } : {}),
         ...(typeof params["roofSymbol"] === "string" ? { roofSymbol: params["roofSymbol"] } : {}),
+        ...(basement === 0 ? {} : { basement }),
         archetype:
           typeof params["archetype"] === "string"
             ? params["archetype"]
@@ -156,6 +186,28 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   if (input.occupancy !== undefined) {
     for (const built of buildings.built) claimFootprint(input.occupancy, built);
   }
+
+  // --- tunnels -------------------------------------------------------------
+  // Immediately after the buildings, because it needs their cellars and nothing
+  // else — and immediately *before* the plaza and the roads, because it claims
+  // its portal mouths in the occupancy grid and those two passes read it. A
+  // tunnel that surfaced under a lamp post would leave the post standing on
+  // air, which is exactly what happened when this ran last.
+  const tunnelPass = buildTunnels({
+    links,
+    buildings: buildings.built,
+    placements: input.placements,
+    ports: input.ports,
+    declaredPorts: new Map(input.nodes.map((n) => [n.nodePath, n.ports] as const)),
+    plan: input.plan,
+    stack: input.stack,
+    seed: themeSeed,
+    ...(deal[0] === undefined ? {} : { materials: deal[0] as BuildingMaterials }),
+    ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+  });
+  diagnostics.push(...tunnelPass.diagnostics);
+  blocks.push(...tunnelPass.blocks);
+  if (tunnelPass.tunnels.length > 0) attachTunnelSpans(input.plan, tunnelPass);
 
   // --- the plaza -----------------------------------------------------------
   // Before the roads, so a lane arriving on the green blends into paving that
@@ -221,6 +273,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   return {
     blocks,
     buildings: buildings.built,
+    tunnels: tunnelPass.tunnels,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
@@ -238,7 +291,121 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plazaWell: plaza?.well ?? false,
       doorstepsStepped: doorsteps.stepped,
       doorstepsDropped: doorsteps.dropped,
+      cellars: buildings.built.filter((b) => b.basementDepth > 0).length,
+      tunnels: tunnelPass.tunnels.length,
+      tunnelCarvedBlocks: tunnelPass.tunnels.reduce((sum, t) => sum + t.carvedBlocks, 0),
+      tunnelLength: tunnelPass.tunnels.reduce((sum, t) => sum + t.path.length, 0),
+      tunnelStairSteps: tunnelPass.tunnels.reduce((sum, t) => sum + t.stairSteps, 0),
+      tunnelLanterns: tunnelPass.tunnels.reduce((sum, t) => sum + t.lanterns, 0),
     },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the connective pass's inputs                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Every `connected … via "tunnel"` pair the document declares, deduplicated.
+ *
+ * §4 `connected.bidirectional` defaults true, so declaring the constraint on
+ * one side is enough and declaring it on both is not two tunnels. The pair key
+ * is order-independent for exactly that reason; the first declaration wins the
+ * direction, which decides which end the router starts from and therefore which
+ * end wins the straight line.
+ */
+export function tunnelLinksOf(doc: SettlementDocument, rootPath: string): TunnelLink[] {
+  const out: TunnelLink[] = [];
+  const seen = new Set<string>();
+  for (const child of doc.root.children) {
+    if (child.kind !== "generator" || child.generator !== "building.grammar@0") continue;
+    for (const raw of child.constraints ?? []) {
+      const resolved = resolveTypeKey(raw as Record<string, unknown>);
+      if (!resolved.ok || resolved.type !== "connected") continue;
+      const c = canonicalize(raw as Record<string, unknown>, resolved.type, resolved.shorthand);
+      const target = c["to"];
+      if (typeof target !== "string") continue;
+      const via = typeof c["via"] === "string" ? c["via"] : "tunnel";
+      if (!isImplementedVia(via)) continue;
+      const bare = target.startsWith("^.") ? target.slice(2) : target;
+      const leaf = (bare.split("#")[0] as string).split(".").pop() as string;
+      if (leaf === child.id) continue;
+      const key = [child.id, leaf].sort().join("\u0000");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: `${rootPath}.${child.id}__${leaf}`,
+        fromPath: `${rootPath}.${child.id}`,
+        toPath: `${rootPath}.${leaf}`,
+        ...(typeof c["from"] === "string" ? { fromPort: portNameOf(c["from"]) } : {}),
+        ...(target.includes("#") ? { toPort: portNameOf(target) } : {}),
+        ...(typeof c["maxLength"] === "number" ? { maxLength: c["maxLength"] } : {}),
+      });
+    }
+  }
+  return out;
+}
+
+function portNameOf(ref: string): string {
+  return ref.includes("#") ? (ref.split("#")[1] as string) : ref;
+}
+
+/**
+ * Resolve the `basement` param's three legal spellings to a headroom.
+ *
+ * `implied` is the tunnel pass talking: a building at the end of a `connected`
+ * tunnel gets the default cellar without asking, because the alternative is a
+ * gallery that ends in a wall.
+ */
+export function resolveBasementParam(value: unknown, implied: boolean): number {
+  const fallback = implied ? DEFAULT_BASEMENT_DEPTH : 0;
+  if (value === undefined) return fallback;
+  if (value === true) return DEFAULT_BASEMENT_DEPTH;
+  if (value === false) return fallback;
+  if (typeof value === "number") return value > 0 ? Math.round(value) : fallback;
+  if (typeof value === "object" && value !== null) {
+    const depth = (value as { depth?: unknown }).depth;
+    return typeof depth === "number" ? Math.round(depth) : DEFAULT_BASEMENT_DEPTH;
+  }
+  return fallback;
+}
+
+/**
+ * Fold the tunnel bores into the column plan's carved spans.
+ *
+ * A gallery *is* interior air, so it rides the same mechanism a cave does — one
+ * punch-out per column at emit, one `cave_air` fill, one set of readback rules.
+ * What it adds is `structuralColumns`: the columns whose roof thickness is the
+ * structure pass's business rather than the carver's, which is what keeps
+ * `checkCaveIntegrity` from reporting a cellar's own portal as a breach.
+ */
+function attachTunnelSpans(
+  plan: ColumnPlan,
+  pass: { spans: CaveSpans; columns: Uint8Array; portalColumns: Uint8Array },
+): void {
+  const n = plan.region.width * plan.region.depth;
+  const existing = plan.caves;
+  const spans = existing === undefined ? pass.spans : mergeSpanSets([existing.spans, pass.spans], n);
+  let carvedBlocks = 0;
+  for (let k = 0; k < spans.lo.length; k++) {
+    carvedBlocks += (spans.hi[k] as number) - (spans.lo[k] as number) + 1;
+  }
+  const structuralColumns = existing?.structuralColumns ?? new Uint8Array(n);
+  const portalColumns = existing?.portalColumns ?? new Uint8Array(n);
+  for (let idx = 0; idx < n; idx++) {
+    if (pass.columns[idx] === 1) structuralColumns[idx] = 1;
+    if (pass.portalColumns[idx] === 1) portalColumns[idx] = 1;
+  }
+  plan.caves = {
+    spans,
+    entranceColumns: existing?.entranceColumns ?? new Uint8Array(n),
+    markers: existing?.markers ?? [],
+    carvedBlocks,
+    systems: existing?.systems ?? 0,
+    chambers: existing?.chambers ?? 0,
+    decorate: existing?.decorate ?? false,
+    structuralColumns,
+    portalColumns,
   };
 }
 
