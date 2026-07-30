@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tailscaled *)",
+      "Bash(tailscale *)",
+      "Bash(/usr/local/bin/tailscaled *)",
+      "Bash(/usr/local/bin/tailscale *)"
+    ]
+  }
+}
