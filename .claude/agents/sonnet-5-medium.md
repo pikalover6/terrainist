@@ -1,4 +1,5 @@
 ---
+name: sonnet-5-medium
 description: >-
   Sonnet 5 at medium reasoning effort. Generic general-purpose subagent —
   no fixed role; use for any task where this model/effort combination

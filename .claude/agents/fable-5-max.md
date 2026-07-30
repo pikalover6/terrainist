@@ -1,4 +1,5 @@
 ---
+name: fable-5-max
 description: >-
   Fable 5 at max reasoning effort. Generic general-purpose subagent —
   no fixed role; use for any task where this model/effort combination

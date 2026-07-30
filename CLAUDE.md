@@ -16,26 +16,48 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
 
 ## Development workflow (session orchestration)
 
-- **Claude Fable 5 is the orchestrator** — it plans, delegates, integrates,
-  and verifies; it does not grind through bulk implementation itself.
-- **Implementation work is delegated to Opus 5 subagents at low reasoning
-  effort** ("opus 5 low") by default — scaffolding, well-specified coding
-  tasks, mechanical changes.
-- **Design/spec-heavy work gets Opus 5 at default (high) reasoning**, run as
-  an independent agent. Design agents write docs only and never touch code
-  that parallel work has in flight.
-- **Subagent effort control** (corrected 2026-07-29, measured on the wire):
-  stock Claude Code DOES honor `effort:` in `.claude/agents/*.md`
-  frontmatter — named levels only (integers silently dropped; loader caches
-  at session start). The repo ships `impl-opus-low` / `design-opus-high`
-  agent types in `.claude/agents/`. Kai's local harness additionally
-  carries https://github.com/pikalover6/claude-subagents-effort, which adds
-  the Agent tool's per-invocation `effort` param (vanilla lacks only that).
-  New boxes need stock CC + this repo, no patch. Verify after CC updates
-  with `tools/cc-effort-probe/` (free, offline).
-- This is the *development* workflow. The *production* worldgen pipeline
-  (Opus 5 planner + GLM 5.2 implementers via OpenRouter) is a separate
-  concern — see `docs/DESIGN.md`.
+**Standing workflow (Kai, 2026-07-29):** a **Fable 5 session at high
+effort is the orchestrator** — it plans, delegates, integrates, and
+verifies; it does not grind through bulk implementation itself. It runs
+**up to 3 concurrent Opus 5 LOW implementer subagents** for scaffolding,
+well-specified coding tasks, and mechanical changes. Design/spec-heavy
+work goes to a single **Opus 5 HIGH** subagent, which writes docs only and
+never touches code that parallel work has in flight.
+
+### How to spawn subagents at a chosen model + reasoning effort
+
+The repo commits a generic 15-type agent matrix in `.claude/agents/`:
+`opus-5-*`, `fable-5-*`, `sonnet-5-*` × `low|medium|high|xhigh|max`.
+Dispatch with the Agent tool by setting `subagent_type` to the type name —
+e.g. `subagent_type: "opus-5-low"` — and the child runs as that model at
+that effort. This works on **stock** Claude Code (including Claude Code
+Cloud); no patched binary is required. So the standing workflow is:
+implementation → `opus-5-low` (≤3 concurrent); design → `opus-5-high`.
+
+Facts behind this (measured live on the wire + token counts, 2026-07-29;
+probe + full tables in `tools/cc-effort-probe/`):
+
+- Stock CC honors `effort:` in `.claude/agents/*.md` frontmatter; the
+  effort lands as `output_config.effort` on the child's requests and
+  changes real behavior (3 vs 3,994 output tokens on an identical task at
+  low vs xhigh). The parent session's effort is unaffected.
+- Three SILENT traps, all guarded by
+  `packages/spec/test/agent-defs.test.ts`: frontmatter `name:` is
+  MANDATORY (filename is not a fallback — without it the definition is
+  silently ignored, which looks exactly like "effort is broken"); effort
+  must be a named level (integers silently send nothing); definitions are
+  cached at session start (mid-session edits are no-ops).
+- Kai's local laptop harness additionally carries
+  https://github.com/pikalover6/claude-subagents-effort, which adds a
+  per-invocation `effort` param on the Agent tool — a convenience, not a
+  dependency; prefer the committed agent types so behavior is identical
+  everywhere.
+- After a Claude Code update, re-verify with `tools/cc-effort-probe/`
+  (offline mode is free; `live` mode spends ~4 real requests).
+
+This is the *development* workflow. The *production* worldgen pipeline
+(GLM 5.2 authoring via OpenRouter) is a separate concern — see
+`docs/DESIGN.md`.
 
 ## Ground rules
 
