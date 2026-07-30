@@ -31,6 +31,12 @@ import {
   type ReviewEvent,
   type ReviewManifest,
 } from "../src/review-import.js";
+import {
+  buildFreeRoamSession,
+  parsePositionFix,
+  renderFreeRoamMarkdown,
+  type FreeRoamReport,
+} from "../src/review-freeroam.js";
 
 const scratch: string[] = [];
 
@@ -428,5 +434,166 @@ describe("a v2 session", () => {
     expect(md).toContain("the inn's roof is wrong");
     // The shortlist sits with the note, not somewhere else in the document.
     expect(md.indexOf("structures: world.hall")).toBeLessThan(md.indexOf("the inn's roof is wrong"));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* free roam                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A free-roam session: no plates, no buttons, just a reviewer flying around a
+ * generated world and pasting F3+C positions into chat.
+ *
+ * The wrinkles that matter here are different from the rig's. A note typed
+ * before the reviewer thought to paste a position has nowhere to go; a
+ * `VERDICT` line typed out of habit means nothing without a station; and the
+ * last window has no arrival to close it, so it has to be closed by hand or it
+ * swallows every screenshot taken for the rest of the day.
+ */
+const ROAM_LOG = [
+  chat("18:30:00", "<kai> where even am I"),
+  chat("18:30:05", "<kai> /execute in minecraft:overworld run tp @s 100.50 70.00 -200.25 -90.00 12.00"),
+  chat("18:30:10", "<kai> the cliff face is a sheer wall"),
+  chat("18:30:15", "Saved screenshot as 2026-07-29_18.30.15.png"),
+  chat("18:30:20", "VERDICT nothing_here fail"),
+  chat("18:30:30", "<kai> execute in overworld run tp @s 320 64 15"),
+  chat("18:30:40", "<kai> the plaza reads well from the road"),
+  chat("18:30:50", "Set own game mode to Spectator Mode"),
+  "",
+].join("\n");
+
+const ROAM_REPORT = {
+  name: "demo",
+  markers: [{ id: "ridge.peak", name: "peak", x: 110, y: 72, z: -190 }],
+  layout: {
+    placements: [
+      { nodePath: "world.plaza", id: "plaza", anchor: { x: 318, z: 12 }, foundationY: 64 },
+      { nodePath: "world.inn", id: "inn", anchor: { x: -400, z: 900 }, foundationY: 64 },
+    ],
+  },
+} as unknown as FreeRoamReport;
+
+describe("free-roam position fixes", () => {
+  it("parses an F3+C paste with or without the slash and the namespace", () => {
+    expect(parsePositionFix("/execute in minecraft:overworld run tp @s 1.5 64.0 -2.25 -90.00 12.00")).toEqual({
+      dimension: "minecraft:overworld",
+      x: 1.5,
+      y: 64,
+      z: -2.25,
+      yaw: -90,
+      pitch: 12,
+    });
+    // No slash, bare dimension, no facing, and extra whitespace.
+    expect(parsePositionFix("execute  in   the_nether  run tp @s  -8 31 -8 ")).toEqual({
+      dimension: "minecraft:the_nether",
+      x: -8,
+      y: 31,
+      z: -8,
+    });
+    expect(parsePositionFix("/execute in minecraft:the_end run tp @s 0 60 0")?.dimension).toBe(
+      "minecraft:the_end",
+    );
+    expect(parsePositionFix("the cliff face is a sheer wall")).toBeUndefined();
+    expect(parsePositionFix("/tp @s 1 2 3")).toBeUndefined();
+  });
+});
+
+describe("a free-roam session", () => {
+  const events = parseClientLog(ROAM_LOG, "latest.log", DAY);
+  const session = buildFreeRoamSession({
+    events,
+    logs: ["latest.log"],
+    world: "demo",
+    reportPath: "/tmp/demo.report.json",
+    report: ROAM_REPORT,
+  });
+
+  it("emits its own format so a consumer can tell the two modes apart", () => {
+    expect(session.format).toBe("terrainist-freeroam-session/1");
+  });
+
+  it("opens a sighting per fix and files the notes that follow it", () => {
+    expect(session.sightings).toHaveLength(2);
+    expect(session.sightings[0]?.position).toEqual({ x: 100.5, y: 70, z: -200.25 });
+    expect(session.sightings[0]?.notes.map((n) => n.text)).toEqual(["the cliff face is a sheer wall"]);
+    expect(session.sightings[1]?.notes.map((n) => n.text)).toEqual([
+      "the plaza reads well from the road",
+    ]);
+    // The fix itself is an anchor, not a note about one.
+    expect(session.totals.notes).toBe(3);
+  });
+
+  it("puts a note typed before the first fix aside rather than guessing", () => {
+    expect(session.unassigned.comments.map((c) => c.text)).toEqual(["where even am I"]);
+  });
+
+  it("ignores a VERDICT line instead of inventing a station for it", () => {
+    expect(session.sightings.flatMap((s) => s.notes).map((n) => n.text)).not.toContain(
+      "VERDICT nothing_here fail",
+    );
+    expect(session.totals.sightings).toBe(2);
+  });
+
+  it("joins each sighting to the nearest thing in the compile report", () => {
+    expect(session.sightings[0]?.nearest).toMatchObject({ kind: "marker", name: "ridge.peak" });
+    expect(session.sightings[1]?.nearest).toMatchObject({
+      kind: "structure",
+      name: "plaza",
+      nodePath: "world.plaza",
+    });
+    expect(session.sightings[1]?.nearest?.distance).toBeCloseTo(Math.hypot(2, 0, 3), 2);
+    expect(session.totals.joined).toBe(2);
+  });
+
+  it("works with no report at all — the sighting simply has no join", () => {
+    const bare = buildFreeRoamSession({ events, world: "demo" });
+    expect(bare.sightings[0]?.nearest).toBeUndefined();
+    expect(bare.totals.joined).toBe(0);
+    expect(bare.source.report).toBeNull();
+    // A report that is missing everything the join reads must degrade, not throw.
+    const empty = buildFreeRoamSession({ events, report: {} as FreeRoamReport });
+    expect(empty.totals.joined).toBe(0);
+  });
+
+  it("closes the last window, so a shot taken afterwards belongs to nobody", async () => {
+    const dir = await scratchDir("roam");
+    for (const name of [
+      "2026-07-29_18.29.00.png", // before the first fix
+      "2026-07-29_18.30.12.png", // inside the first sighting
+      "2026-07-29_18.30.35.png", // inside the second
+      "2026-07-29_18.31.30.png", // after the session's last log line
+    ]) {
+      await writeFile(path.join(dir, name), "");
+    }
+
+    const windowed = buildFreeRoamSession({
+      events,
+      screenshots: await readScreenshots(dir),
+      screenshotDir: dir,
+      world: "demo",
+    });
+    expect(windowed.sightings[0]?.screenshots.map((s) => s.file)).toEqual([
+      // The file found on disk and the client's own announcement from the same
+      // window, in time order; the announced one is not counted twice.
+      "2026-07-29_18.30.12.png",
+      "2026-07-29_18.30.15.png",
+    ]);
+    expect(windowed.sightings[1]?.screenshots.map((s) => s.file)).toEqual(["2026-07-29_18.30.35.png"]);
+    expect(windowed.unassigned.screenshots.map((s) => s.file)).toEqual([
+      "2026-07-29_18.29.00.png",
+      "2026-07-29_18.31.30.png",
+    ]);
+    expect(windowed.totals.screenshots).toBe(5);
+  });
+
+  it("renders the notes in the order they were made, under their coordinates", () => {
+    const md = renderFreeRoamMarkdown(session);
+    expect(md).toContain("# Free-roam review");
+    expect(md).toContain("- world: **demo**");
+    expect(md).toContain("101, 70, -200");
+    expect(md).toContain("near **plaza**");
+    expect(md.indexOf("the cliff face")).toBeLessThan(md.indexOf("the plaza reads well"));
+    expect(md).toContain("## Before the first position fix");
   });
 });

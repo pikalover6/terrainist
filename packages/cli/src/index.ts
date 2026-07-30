@@ -16,7 +16,8 @@
  *   wired for walking a change rather than reading about it.
  * - **`catalog`** — the structure registry, as text or `--json`.
  * - **`review-import`** — fold an in-game session's logs and screenshots into
- *   one session file.
+ *   one session file. With `--world` it runs in free-roam mode instead, where
+ *   an F3+C position pasted into chat anchors the notes that follow it.
  * - **`emit <spec.json>`** — the pre-Loam spike emitter, kept because the
  *   golden pyramid still goes through it.
  * - **`render <worldDir>`** — a deterministic top-down PNG, or the whole
@@ -68,6 +69,13 @@ import {
 } from "./generate.js";
 import { defaultSavesDir, installWorld } from "./install.js";
 import {
+  buildFreeRoamSession,
+  readCompileReport,
+  renderFreeRoamMarkdown,
+  reportCandidatePaths,
+  type FreeRoamReport,
+} from "./review-freeroam.js";
+import {
   buildSession,
   readClientLog,
   readManifest,
@@ -98,6 +106,7 @@ Usage:
   terrainist terrarium [--out <dir>] [--no-zip]
   terrainist review-import [--log <file>]... [--screenshots <dir>]
                            [--manifest <file>] [--out <session.json>]
+                           [--world <name>] [--report <file.json>]
   terrainist catalog [--json] [--category <name>] [--status <name>]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
@@ -168,6 +177,14 @@ review-import options:
   --manifest <file> The Terrarium manifest, to attach each station's
                     provenance. Both terrainist-terrarium/2 and the older
                     terrainist-review-rig/1 are read.
+  --world <name>    Free-roam mode: review a whole generated world instead of
+                    a station rig. There are no plates or verdict buttons —
+                    press F3+C in game and paste the copied teleport command
+                    into chat, and every note typed after it is filed against
+                    that position.
+  --report <file>   A "terrainist compile --report" JSON, so each position is
+                    joined to the nearest structure or marker. Free-roam only;
+                    without one the mode still works, just without the join.
   --out <file>      Session JSON to write (default: review-session.json). A
                     markdown summary is written alongside it as <file>.md.
 
@@ -350,11 +367,78 @@ export function defaultLogsDir(): string {
   return path.join(home, ".minecraft", "logs");
 }
 
+/**
+ * Free-roam half of `review-import`: fold, join, write, summarise.
+ *
+ * Resolving a report from `--world` is best effort by design — there is no
+ * world registry, so the conventional paths are tried and the absence of one is
+ * *said out loud* rather than silently producing a session with no joins.
+ */
+async function writeFreeRoamSession(opts: {
+  events: readonly ReviewEvent[];
+  screenshots?: readonly ReviewScreenshot[];
+  screenshotDir?: string;
+  logs: readonly string[];
+  world: string;
+  reportPath?: string;
+  outFile: string;
+}): Promise<number> {
+  let reportPath: string | undefined;
+  let report: FreeRoamReport | undefined;
+  if (opts.reportPath !== undefined) {
+    reportPath = path.resolve(opts.reportPath);
+    report = await readCompileReport(reportPath);
+  } else {
+    for (const candidate of reportCandidatePaths(opts.world)) {
+      try {
+        report = await readCompileReport(candidate);
+        reportPath = path.resolve(candidate);
+        break;
+      } catch {
+        // Not there, or not JSON: keep looking, and fall through to no join.
+      }
+    }
+  }
+
+  const session = buildFreeRoamSession({
+    events: opts.events,
+    ...(opts.screenshots === undefined ? {} : { screenshots: opts.screenshots }),
+    logs: opts.logs.map((l) => path.resolve(l)),
+    screenshotDir: opts.screenshotDir === undefined ? undefined : path.resolve(opts.screenshotDir),
+    world: opts.world,
+    reportPath,
+    report,
+  });
+
+  const outPath = path.resolve(opts.outFile);
+  const summaryPath = `${outPath.replace(/\.json$/, "")}.md`;
+  await mkdir(path.dirname(outPath), { recursive: true });
+  await writeFile(outPath, `${JSON.stringify(session, null, 2)}\n`);
+  await writeFile(summaryPath, renderFreeRoamMarkdown(session));
+
+  const t = session.totals;
+  console.log(
+    [
+      `imported ${opts.logs.length} log(s) — free-roam review of ${opts.world}`,
+      `  sightings  ${t.sightings} position fix(es)`,
+      reportPath === undefined
+        ? "  report     none found — sightings have no structure join"
+        : `  report     ${reportPath} (${t.joined} joined)`,
+      `  notes      ${t.notes} note(s), ${t.screenshots} screenshot(s)`,
+      `  session    ${outPath}`,
+      `  summary    ${summaryPath}`,
+    ].join("\n"),
+  );
+  return 0;
+}
+
 /** `terrainist review-import` — a client log back into a session document. */
 export async function runReviewImport(args: readonly string[]): Promise<number> {
   const logs: string[] = [];
   let screenshotDir: string | undefined;
   let manifestPath: string | undefined;
+  let world: string | undefined;
+  let reportPath: string | undefined;
   let outFile = "review-session.json";
 
   for (let i = 0; i < args.length; i++) {
@@ -372,6 +456,14 @@ export async function runReviewImport(args: readonly string[]): Promise<number> 
       if (value === undefined) throw new Error("--manifest requires a file");
       manifestPath = value;
       i++;
+    } else if (arg === "--world") {
+      if (value === undefined) throw new Error("--world requires a name");
+      world = value;
+      i++;
+    } else if (arg === "--report") {
+      if (value === undefined) throw new Error("--report requires a file");
+      reportPath = value;
+      i++;
     } else if (arg === "--out" || arg === "-o") {
       if (value === undefined) throw new Error("--out requires a file path");
       outFile = value;
@@ -388,6 +480,18 @@ export async function runReviewImport(args: readonly string[]): Promise<number> 
 
   let screenshots: ReviewScreenshot[] | undefined;
   if (screenshotDir !== undefined) screenshots = await readScreenshots(screenshotDir);
+
+  if (world !== undefined) {
+    return await writeFreeRoamSession({
+      logs,
+      world,
+      ...(reportPath === undefined ? {} : { reportPath }),
+      ...(screenshots === undefined ? {} : { screenshots }),
+      ...(screenshotDir === undefined ? {} : { screenshotDir }),
+      events,
+      outFile,
+    });
+  }
 
   let manifest: ReviewManifest | undefined;
   if (manifestPath !== undefined) manifest = await readManifest(manifestPath);
@@ -926,6 +1030,22 @@ export {
   renderSessionMarkdown,
   screenshotTime,
 } from "./review-import.js";
+export {
+  buildFreeRoamSession,
+  joinCandidates,
+  parsePositionFix,
+  readCompileReport,
+  renderFreeRoamMarkdown,
+  reportCandidatePaths,
+} from "./review-freeroam.js";
+export type {
+  FreeRoamInput,
+  FreeRoamJoin,
+  FreeRoamReport,
+  FreeRoamSession,
+  FreeRoamSighting,
+  PositionFix,
+} from "./review-freeroam.js";
 export type {
   ReviewComment,
   ReviewEvent,
