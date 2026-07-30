@@ -601,11 +601,24 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 2 | mine head | `mine_head`, `mineshaft`, `mine`, `pithead` |
 | 3 | watchtower | `lookout`, `tower`, `watchtower` |
 | 4 | breadth | see the breadth table below |
-| 5 | extended | see the extended table below |
-| 6 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 7 | fallback | anything else → cottage |
+| 5 | town | see the town table below |
+| 6 | extended | see the extended table below |
+| 7 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 8 | fallback | anything else → cottage |
 
-**Extended (table 5)**
+**Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
+them a **plain rect** envelope or the exterior work refuses and you get the
+ordinary house shell. It sits *between* the breadth table and the extended one,
+so it never takes a tag an older table already answers to: bare `hall` still
+means a great hall (table 7) and `archive` still means a library (table 6).
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| town_hall | `town_hall`, `townhall`, `moot_hall`, `city_hall` | masonry plinth, quoins and string course, a clock-and-bell gable over the front bay, council chamber inside; tall paired lights | `[13, 16, 13]`, 2 floors |
+| school | `school`, `schoolhouse`, `academy` | rows of desks and seats facing a dark board across the end wall, a modest bell cote; regular single windows | `[11, 12, 15]`, 1–2 floors |
+| bathhouse | `bathhouse`, `baths`, `sauna`, `hammam` | pools written into the floor plane inside a solid coping, smooth stone and quartz walls, steam braziers and benches; sparse windows, hip roof | `[13, 11, 13]`, 1 floor |
+
+**Extended (table 6)**
 
 | archetype | tags | what it gets |
 |---|---|---|

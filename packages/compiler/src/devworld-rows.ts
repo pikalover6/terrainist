@@ -28,6 +28,7 @@ import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
+import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 
@@ -93,6 +94,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...BLITZ_EXHIBIT_ROWS,
   ...UNDERGROUND_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
+  ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
   ...SEED_EXHIBIT_ROWS,
   ...BREAKPOINT_EXHIBIT_ROWS,

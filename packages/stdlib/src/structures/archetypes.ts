@@ -33,6 +33,12 @@ import {
 
 export * from "./archetypes-blitz.js";
 
+import {
+  TOWN_BUILDING_ARCHETYPES,
+  furnishTown,
+  townArchetypeOfTags,
+} from "./archetypes-town.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -59,6 +65,7 @@ export const BUILDING_ARCHETYPES = [
   "watchtower",
   ...EXTENDED_BUILDING_ARCHETYPES,
   ...BLITZ_BUILDING_ARCHETYPES,
+  ...TOWN_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
 ] as const;
@@ -85,6 +92,12 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // and a pagoda would never reach its own building if this ran second.
   const blitz = blitzArchetypeOfTags(tags);
   if (blitz !== null) return blitz;
+  // The town wave, between the breadth table and the extended one: the tables
+  // below it are greedy, and a document tagged `academy` would otherwise never
+  // reach a school. It claims only compounds — bare `hall` still belongs to the
+  // original table, where it means a great hall.
+  const town = townArchetypeOfTags(tags);
+  if (town !== null) return town;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -395,6 +408,7 @@ export function furnish(r: FurnishRequest): number {
   };
   n += furnishExtended(ctx);
   n += furnishBlitz(ctx);
+  n += furnishTown(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);

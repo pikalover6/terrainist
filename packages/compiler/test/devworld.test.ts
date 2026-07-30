@@ -48,6 +48,7 @@ import { BLITZ_BUILDING_ARCHETYPES, EXTENDED_BUILDING_ARCHETYPES } from "@terrai
 import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
 import { BLITZ_ROW_LENGTH } from "../src/exhibits/blitz.js";
 import { HIGHRISE_EXHIBIT_ROWS, HIGHRISE_ROW_LENGTH } from "../src/exhibits/highrise.js";
+import { TOWN_EXHIBIT_ROWS } from "../src/exhibits/town.js";
 import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
 import {
   MAX_BASEMENT_DEPTH,
@@ -114,6 +115,7 @@ describe("dev world grid", () => {
     const breakpoints = BREAKPOINT_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const tall = HIGHRISE_EXHIBIT_ROWS.length * HIGHRISE_ROW_LENGTH;
     const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    const town = TOWN_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -121,7 +123,8 @@ describe("dev world grid", () => {
         2 * 7 +
         SEED_SWEEP_LENGTH +
         breakpoints +
-        underground,
+        underground +
+        town,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

@@ -257,9 +257,15 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- civic ------------------------------------------------------------- */
   civ("library", "Library", "implemented", { tags: ["village"] }),
-  civ("town_hall", "Town hall", "not_started", { wave: 1 }),
+  civ("town_hall", "Town hall", "implemented", {
+    wave: 1,
+    note: "Masonry plinth, quoins and string course, a clock-and-bell gable over the front bay, and a council chamber inside.",
+  }),
   civ("courthouse", "Courthouse", "not_started", { wave: 2 }),
-  civ("school", "School", "not_started", { wave: 1 }),
+  civ("school", "School", "implemented", {
+    wave: 1,
+    note: "Rows of desks and seats facing a dark board across the end wall, with a modest bell cote over the roof.",
+  }),
   civ("university_hall", "University hall"),
   civ("hospital", "Hospital"),
   civ("infirmary", "Infirmary", "not_started", { wave: 2 }),
@@ -268,7 +274,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   civ("fire_station", "Fire station"),
   civ("post_office", "Post office", "not_started", { wave: 2 }),
   civ("orphanage", "Orphanage"),
-  civ("bathhouse", "Bathhouse", "not_started", { wave: 1 }),
+  civ("bathhouse", "Bathhouse", "implemented", {
+    wave: 1,
+    note: "Pools written into the floor plane inside a solid coping, smooth stone and quartz walls, steam braziers and benches.",
+  }),
   civ("museum", "Museum"),
   civ("archive", "Archive"),
   civ("embassy", "Embassy"),

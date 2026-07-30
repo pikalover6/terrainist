@@ -31,6 +31,7 @@
  */
 
 import { blitzFacadeDefaults } from "./archetypes-blitz.js";
+import { townFacadeDefaults } from "./archetypes-town.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -125,6 +126,13 @@ export function archetypeFacadeDefaults(
       // The breadth wave keeps its own tendencies in its own file; falling
       // through to it here is what lets a keep ask for the roof shape whose
       // height its battlement is going to take over.
+      // The town wave first, then the breadth wave: both are "not one of mine",
+      // and neither answers to the other's names, so the order is only a
+      // question of which file is asked first.
+      {
+        const town = townFacadeDefaults(archetype);
+        if (town.roof !== undefined) return town;
+      }
       return blitzFacadeDefaults(archetype);
   }
 }
