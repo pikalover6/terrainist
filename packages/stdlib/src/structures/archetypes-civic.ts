@@ -123,12 +123,11 @@ export function archetypeFacadeDefaults(
     case "bakery":
       return { windowShape: "single", windowRhythm: "regular", roof: "gable" };
     default:
-      // The breadth wave keeps its own tendencies in its own file; falling
-      // through to it here is what lets a keep ask for the roof shape whose
-      // height its battlement is going to take over.
-      // The town wave first, then the breadth wave: both are "not one of mine",
-      // and neither answers to the other's names, so the order is only a
-      // question of which file is asked first.
+      // Each later wave keeps its own tendencies in its own file; falling
+      // through to them here is what lets a keep ask for the roof shape whose
+      // height its battlement is going to take over, and a town hall for the
+      // one its clock gable stands in front of. The order between the two is
+      // arbitrary — neither answers to the other's names.
       {
         const town = townFacadeDefaults(archetype);
         if (town.roof !== undefined) return town;
