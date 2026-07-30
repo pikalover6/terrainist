@@ -1,0 +1,3 @@
+# Throwaway sandboxes written by probe.py (SCRATCH = this directory).
+# Each run recreates them; they hold session transcripts and .claude.json configs.
+sandbox-*/
