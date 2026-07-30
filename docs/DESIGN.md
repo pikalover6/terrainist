@@ -353,6 +353,42 @@ overnight program has been walked in the Minecraft client.** The physics lint
 and the readback validators are the strongest statement available without
 that, and their whole history is that a human found things they could not see.
 
+## Status (2026-07-30, cloud session: provenance + wave 1 of the catalog)
+
+Run while Kai's first real Terrarium session was in progress; the Terrarium
+fixes stayed parked as agreed, and nothing here touches the three diagnosed
+bugs. Orchestrated per the standing workflow: three `opus-5-low` implementer
+tracks in worktrees, seams merged by the orchestrator.
+
+- **Baseline/provenance (queued item 2).** A `Provenance` type in the
+  compiler and a `gitProvenance()` helper in the CLI (the split keeps the
+  compiler pure — provenance always arrives as an input). Stamped into the
+  two sidecars only: the `compile --report` JSON and the Terrarium manifest
+  (additive optional field, no format bump, no wall-clock; the byte-identity
+  test still holds). `terrainist install --channel <name>` installs as
+  `<world>_<name>` and rewrites `LevelName` to match, so a nightly and a
+  baseline build sit side by side in the world list. The moving `baseline`
+  tag itself is a convention to start exercising: tag after each joint
+  review, build Terrarium worlds from it.
+- **The orphaned blitz exhibit.** `BLITZ_EXHIBIT_ROWS` was exported by W2 and
+  never registered, so the ten blitz archetypes had no dev-world exhibit at
+  their own footprints — which is why they were never spotted as unwalked.
+  Registered now; the blitz archetypes leave the base grid for the same
+  reason the extended ones did (duplicate row labels).
+- **Catalog wave 1 — nine archetypes, three tracks.** Town: `town_hall`,
+  `school`, `bathhouse`. Trade: `tavern`, `general_store`, `apothecary`.
+  Vernacular: `alpine_chalet`, `saltbox_house`, `dutch_gable_house`. All are
+  fit-outs under the blitz design law, each wave in its own file with its own
+  exhibit rows, tag tables inserted between blitz and extended, kit-doc
+  tables added. The catalog gains an optional `wave` number so parallel
+  tracks stop picking the same corners: wave 1 is the above, wave 2 stamps
+  the next nine (`tudor_row`, `mediterranean_villa`, `trullo`, `courthouse`,
+  `post_office`, `infirmary`, `sawmill`, `kiln`, `tannery`).
+
+**89 implemented / 440.** Everything above is code-complete, physics-lint
+clean and unwalked — wave 1's buildings join the queue for joint in-game
+review with Kai.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
