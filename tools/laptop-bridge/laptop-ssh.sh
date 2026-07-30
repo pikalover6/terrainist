@@ -17,21 +17,34 @@ LAPTOP_HOST=${LAPTOP_HOST:-100.67.165.113}   # kais-macbook-air-2
 LAPTOP_USER=${LAPTOP_USER:-kaihoward}
 SOCKS_PORT=${SOCKS_PORT:-1055}
 
+# The sandbox reaps background daemons between turns; revive tailscaled
+# from its persisted state if the SOCKS port is closed (rejoin needs no
+# re-auth).
+if ! nc -z localhost "$SOCKS_PORT" 2>/dev/null; then
+  "$(dirname "$0")/bridge-up.sh" >&2
+fi
+
 KEY_FILE="$HOME/.ssh/laptop_bridge_key"
 if [ -n "${LAPTOP_SSH_KEY:-}" ]; then
-  if [ ! -f "$KEY_FILE" ]; then
-    mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
-    umask 077
-    printf '%s\n' "$LAPTOP_SSH_KEY" > "$KEY_FILE"
+  mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
+  umask 077
+  printf '%s\n' "$LAPTOP_SSH_KEY" > "$KEY_FILE"
+fi
+if ! [ -f "$KEY_FILE" ] || ! grep -q "PRIVATE KEY" "$KEY_FILE"; then
+  # LAPTOP_SSH_KEY absent or not a private key (e.g. the .pub was pasted
+  # into the secret by mistake) -> fall back to the session-local keypair.
+  if [ -f "$HOME/.ssh/claude_cloud_session" ]; then
+    [ -n "${LAPTOP_SSH_KEY:-}" ] &&
+      echo "warn: LAPTOP_SSH_KEY is not a private key; using session key" >&2
+    KEY_FILE="$HOME/.ssh/claude_cloud_session"
+  else
+    echo "no usable key: set LAPTOP_SSH_KEY to the PRIVATE key contents" >&2
+    exit 1
   fi
-elif [ -f "$HOME/.ssh/claude_cloud_session" ]; then
-  KEY_FILE="$HOME/.ssh/claude_cloud_session"
-else
-  echo "no key: set LAPTOP_SSH_KEY or create ~/.ssh/claude_cloud_session" >&2
-  exit 1
 fi
 
 exec ssh -i "$KEY_FILE" \
+  -o IdentitiesOnly=yes \
   -o ProxyCommand="nc -X 5 -x localhost:${SOCKS_PORT} %h %p" \
   -o StrictHostKeyChecking=accept-new \
   -o ConnectTimeout=15 \
