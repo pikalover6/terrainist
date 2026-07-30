@@ -122,10 +122,11 @@ describe("physics lint — the dev world", () => {
       buildings: dev.buildings as never,
       props: dev.props as never,
     });
-    // Five minutes, not two. The dev world grew by ten archetype rows and four
+    // Fifteen minutes. The dev world grew by ten archetype rows and four
     // prop rows in the breadth round, and the lint reads every one of them back
-    // off disk: the budget is a fact about how big the showroom is.
-  }, 300_000);
+    // off disk. Five minutes covered it on a fast laptop; the 4-vCPU cloud
+    // containers (CC Cloud, GitHub Actions runners) need the headroom.
+  }, 900_000);
 
   it("finds nothing wrong, under every rule", () => {
     expect(summarize(report)).toBe("");

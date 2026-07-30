@@ -1,2 +1,7 @@
 packages:
   - "packages/*"
+
+# Inter-package deps are declared as "*" (npm-workspace style). pnpm 10 no
+# longer links those to the workspace by default — it goes to the registry
+# and fails on the private @terrainist/* names. This restores the linking.
+linkWorkspacePackages: true
