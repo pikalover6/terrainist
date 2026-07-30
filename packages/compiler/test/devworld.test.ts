@@ -43,9 +43,10 @@ import {
   contextGroundAt,
   planContextSection,
 } from "../src/devworld-rows.js";
-import { EXTENDED_BUILDING_ARCHETYPES } from "@terrainist/stdlib";
+import { BLITZ_BUILDING_ARCHETYPES, EXTENDED_BUILDING_ARCHETYPES } from "@terrainist/stdlib";
 
 import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
+import { BLITZ_ROW_LENGTH } from "../src/exhibits/blitz.js";
 import { HIGHRISE_EXHIBIT_ROWS, HIGHRISE_ROW_LENGTH } from "../src/exhibits/highrise.js";
 import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
 import {
@@ -115,6 +116,7 @@ describe("dev world grid", () => {
     const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
+        BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
         tall +
         2 * 7 +
         SEED_SWEEP_LENGTH +

@@ -102,6 +102,14 @@ export interface StructureEntry {
   readonly tags?: readonly string[];
   /** A sentence for a reader who needs to know why the entry is worded so. */
   readonly note?: string;
+  /**
+   * Build-order wave. Before three parallel tracks pick their corners, the
+   * orchestrator stamps the next wave here — an entry with a wave number is
+   * claimed, an entry without one is open. Once an entry is `implemented` the
+   * number stays as the record of which wave built it. Ids are the stable
+   * keys; a wave is a field added beside them, never a reordering.
+   */
+  readonly wave?: number;
 }
 
 /**
@@ -151,6 +159,7 @@ function group(
     readonly note?: string;
     /** Overrides the group's kind for this entry alone. */
     readonly kind?: StructureKind;
+    readonly wave?: number;
   },
 ) => StructureEntry {
   return (id, name, status = "not_started", extra = {}) => ({
@@ -161,6 +170,7 @@ function group(
     status,
     ...(extra.tags === undefined ? {} : { tags: extra.tags }),
     ...(extra.note === undefined ? {} : { note: extra.note }),
+    ...(extra.wave === undefined ? {} : { wave: extra.wave }),
   });
 }
 
@@ -226,39 +236,39 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- vernacular / regional -------------------------------------------- */
   ver("stilt_house", "Stilt house", "not_started", { tags: ["water", "tropical"] }),
   ver("adobe_pueblo", "Adobe pueblo"),
-  ver("tudor_row", "Tudor row"),
-  ver("mediterranean_villa", "Mediterranean villa"),
+  ver("tudor_row", "Tudor row", "not_started", { wave: 2 }),
+  ver("mediterranean_villa", "Mediterranean villa", "not_started", { wave: 2 }),
   ver("cycladic_house", "Cycladic house"),
   ver("riad", "Riad"),
   ver("hanok", "Hanok"),
   ver("machiya", "Machiya townhouse"),
-  ver("trullo", "Trullo"),
+  ver("trullo", "Trullo", "not_started", { wave: 2 }),
   ver("sod_house", "Sod house"),
   ver("igloo", "Igloo"),
-  ver("alpine_chalet", "Alpine chalet"),
+  ver("alpine_chalet", "Alpine chalet", "not_started", { wave: 1 }),
   ver("thatched_roundhouse", "Thatched roundhouse"),
-  ver("dutch_gable_house", "Dutch gable house"),
+  ver("dutch_gable_house", "Dutch gable house", "not_started", { wave: 1 }),
   ver("colonial_veranda_house", "Colonial veranda house"),
   ver("hacienda", "Hacienda"),
-  ver("saltbox_house", "Saltbox house"),
+  ver("saltbox_house", "Saltbox house", "not_started", { wave: 1 }),
   ver("fachwerk_barn", "Fachwerk barn"),
   ver("cave_dwelling", "Cave dwelling", "not_started", { tags: ["cliff"] }),
   ver("wat_pavilion", "Wat pavilion"),
 
   /* --- civic ------------------------------------------------------------- */
   civ("library", "Library", "implemented", { tags: ["village"] }),
-  civ("town_hall", "Town hall"),
-  civ("courthouse", "Courthouse"),
-  civ("school", "School"),
+  civ("town_hall", "Town hall", "not_started", { wave: 1 }),
+  civ("courthouse", "Courthouse", "not_started", { wave: 2 }),
+  civ("school", "School", "not_started", { wave: 1 }),
   civ("university_hall", "University hall"),
   civ("hospital", "Hospital"),
-  civ("infirmary", "Infirmary"),
+  civ("infirmary", "Infirmary", "not_started", { wave: 2 }),
   civ("prison", "Prison"),
   civ("police_station", "Police station"),
   civ("fire_station", "Fire station"),
-  civ("post_office", "Post office"),
+  civ("post_office", "Post office", "not_started", { wave: 2 }),
   civ("orphanage", "Orphanage"),
-  civ("bathhouse", "Bathhouse"),
+  civ("bathhouse", "Bathhouse", "not_started", { wave: 1 }),
   civ("museum", "Museum"),
   civ("archive", "Archive"),
   civ("embassy", "Embassy"),
@@ -274,12 +284,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   com("warehouse", "Warehouse", "implemented", { tags: ["village", "storage"] }),
   com("marketplace", "Marketplace", "not_started", { tags: ["open-air"] }),
   com("shop_row", "Shop row"),
-  com("general_store", "General store"),
-  com("tavern", "Tavern"),
+  com("general_store", "General store", "not_started", { wave: 1 }),
+  com("tavern", "Tavern", "not_started", { wave: 1 }),
   com("brewery", "Brewery"),
   com("distillery", "Distillery"),
   com("butchery", "Butchery"),
-  com("apothecary", "Apothecary"),
+  com("apothecary", "Apothecary", "not_started", { wave: 1 }),
   com("bank", "Bank"),
   com("counting_house", "Counting house"),
   com("pawnshop", "Pawnshop"),
@@ -294,13 +304,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- industrial -------------------------------------------------------- */
   ind("smithy", "Smithy", "implemented", { tags: ["village", "craft"] }),
-  ind("sawmill", "Sawmill"),
+  ind("sawmill", "Sawmill", "not_started", { wave: 2 }),
   ind("quarry", "Quarry", "not_started", { tags: ["excavation"] }),
-  ind("kiln", "Kiln"),
+  ind("kiln", "Kiln", "not_started", { wave: 2 }),
   ind("brickworks", "Brickworks"),
   ind("foundry", "Foundry"),
   ind("blast_furnace_works", "Blast furnace works"),
-  ind("tannery", "Tannery"),
+  ind("tannery", "Tannery", "not_started", { wave: 2 }),
   ind("glassworks", "Glassworks"),
   ind("textile_mill", "Textile mill"),
   ind("papermill", "Paper mill"),

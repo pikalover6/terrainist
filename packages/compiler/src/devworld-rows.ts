@@ -23,6 +23,7 @@
  */
 
 import { ARCHETYPE_EXHIBIT_ROWS } from "./exhibits/archetypes.js";
+import { BLITZ_EXHIBIT_ROWS } from "./exhibits/blitz.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
@@ -85,6 +86,11 @@ export {
  */
 export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCHETYPE_EXHIBIT_ROWS,
+  // The W2 breadth blitz. Its prop rows were registered in `exhibits/props.ts`
+  // from the start, but this building spread was missed when the round landed —
+  // so the ten blitz archetypes had no exhibit at their own footprints until
+  // now.
+  ...BLITZ_EXHIBIT_ROWS,
   ...UNDERGROUND_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
