@@ -77,6 +77,7 @@ import { applyConnectionStates, type ConnectionStats } from "./emit/connections.
 import { EMIT_MINECRAFT_VERSION } from "./emit/world.js";
 import { loadPrismarine, WORLD_MIN_Y, type EmitChunk, type PrismarineStack } from "./emit/prismarine.js";
 import { writeWorldFiles } from "./emit/write.js";
+import type { Provenance } from "./provenance.js";
 import { FluidKind, type ColumnPlan } from "./terrain/columns.js";
 import {
   buildBuildings,
@@ -907,6 +908,15 @@ export interface TerrariumManifest {
   readonly multiStationCount: number;
   readonly spawn: TerrariumManifestStation;
   readonly stations: readonly TerrariumManifestStation[];
+  /**
+   * The checkout that built this world, when the caller supplied it.
+   *
+   * Additive and optional, so no format bump: a v2 reader that has never heard
+   * of the field ignores it, and one that wants it finds it. It exists so a
+   * review session held a week later can be joined back to the exact commit —
+   * and can tell a `baseline` build from a nightly one.
+   */
+  readonly provenance?: Provenance;
 }
 
 /**
@@ -983,6 +993,7 @@ export function terrariumManifest(
   plan: TerrariumPlan,
   stack: PrismarineStack,
   compiled?: ReadonlyMap<string, CompiledMiniStation>,
+  provenance?: Provenance,
 ): TerrariumManifest {
   const byId = stationIndex(plan);
   const entry = (s: TerrariumStation): TerrariumManifestStation => {
@@ -1022,6 +1033,7 @@ export function terrariumManifest(
     multiStationCount: plan.multi.length,
     spawn: entry(plan.spawn),
     stations: plan.stations.map(entry),
+    ...(provenance === undefined ? {} : { provenance }),
   };
 }
 
@@ -1129,7 +1141,10 @@ export function stationIndex(plan: TerrariumPlan): Map<string, TerrariumStation>
  * Build the Terrarium and write it into `outDir/terrarium`, with its manifest
  * alongside.
  */
-export async function buildTerrarium(outDir: string): Promise<TerrariumResult> {
+export async function buildTerrarium(
+  outDir: string,
+  provenance?: Provenance,
+): Promise<TerrariumResult> {
   const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
   const plan = planTerrarium();
   const byId = stationIndex(plan);
@@ -1350,7 +1365,7 @@ export async function buildTerrarium(outDir: string): Promise<TerrariumResult> {
     gameRules: TERRARIUM_GAME_RULES,
   });
 
-  const manifest = terrariumManifest(plan, stack, compiled);
+  const manifest = terrariumManifest(plan, stack, compiled, provenance);
   const manifestPath = path.join(path.resolve(outDir), TERRARIUM_MANIFEST_NAME);
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 

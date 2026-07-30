@@ -109,6 +109,42 @@ describe("installWorld", () => {
     expect({ ...installed, LastPlayed: original["LastPlayed"] }).toEqual(original);
   });
 
+  /**
+   * A channel has to rename *both* names. The folder keeps the two builds
+   * apart on disk; `LevelName` — baked into level.dat at emit time — is what
+   * the world list shows, and leaving it alone would put two identically
+   * labelled saves in front of the reviewer.
+   */
+  it("suffixes the folder and the in-game name for a channel", async () => {
+    const saves = await scratchDir("saves-channel");
+    const base = path.basename(sourceWorld);
+    const result = await installWorld({
+      worldDir: sourceWorld,
+      savesDir: saves,
+      channel: "nightly",
+      now: 1_700_000_000_456,
+    });
+
+    expect(result.folderName).toBe(`${base}_nightly`);
+    expect(result.renamed).toBe(false);
+    expect(result.installedPath).toBe(path.join(path.resolve(saves), `${base}_nightly`));
+
+    const original = await levelData(sourceWorld);
+    const installed = await levelData(result.installedPath);
+    expect(installed["LevelName"]).toBe(`${base}_nightly`);
+    expect(original["LevelName"]).not.toBe(installed["LevelName"]);
+    // LastPlayed and LevelName, and nothing else.
+    expect({
+      ...installed,
+      LastPlayed: original["LastPlayed"],
+      LevelName: original["LevelName"],
+    }).toEqual(original);
+    // Two channels of the same world live side by side.
+    const other = await installWorld({ worldDir: sourceWorld, savesDir: saves, channel: "baseline" });
+    expect(other.folderName).toBe(`${base}_baseline`);
+    expect((await levelData(other.installedPath))["LevelName"]).toBe(`${base}_baseline`);
+  });
+
   it("refuses to overwrite, appending -2 and -3", async () => {
     const saves = await scratchDir("saves-collide");
     const first = await installWorld({ worldDir: sourceWorld, savesDir: saves });

@@ -68,6 +68,7 @@ import {
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
+import type { Provenance } from "../provenance.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
@@ -175,6 +176,15 @@ export interface CompileTerrainOptions {
   readonly skipEmit?: boolean;
   /** Receives the pipeline's output just before emit. See {@link CompileTerrainOptions.skipEmit}. */
   readonly onArtifacts?: (artifacts: CompileArtifacts) => void;
+  /**
+   * Git provenance for the checkout doing the compiling, copied into the
+   * report verbatim.
+   *
+   * An *input*, never read here: the compiler shells out to nothing and reads
+   * no environment, so the same document and seed compile to the same world on
+   * any machine. Only the report (a sidecar) carries it.
+   */
+  readonly provenance?: Provenance;
 }
 
 /**
@@ -283,6 +293,8 @@ export interface LayoutOutcome {
 export interface TerrainCompileReport {
   readonly name: string;
   readonly prompt?: string;
+  /** The checkout that produced this report; present when the caller passed it. */
+  readonly provenance?: Provenance;
   readonly worldSeed: string;
   readonly markers: readonly Marker[];
   readonly stats: CompileStats;
@@ -685,6 +697,7 @@ async function compileValidated(
   const report: TerrainCompileReport = {
     name: doc.meta.name,
     ...(doc.meta.prompt === undefined ? {} : { prompt: doc.meta.prompt }),
+    ...(options.provenance === undefined ? {} : { provenance: options.provenance }),
     worldSeed: worldSeed.toString(),
     markers,
     stats: {

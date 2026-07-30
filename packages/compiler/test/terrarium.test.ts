@@ -46,6 +46,7 @@ import {
   terrariumArrivalCommand,
   terrariumButtons,
   terrariumCells,
+  terrariumManifest,
   stationIndex,
   type TerrariumManifest,
   type TerrariumResult,
@@ -357,6 +358,37 @@ describe("the world itself", () => {
     expect(path.basename(file)).toBe("terrarium.manifest.json");
     expect(parsed.stations).toHaveLength(rig.stationCount);
     expect(parsed).toEqual(manifest);
+  });
+
+  /**
+   * Provenance is an *argument*, never a read: the manifest builder stays pure,
+   * so the same plan plus the same provenance is the same manifest, and a
+   * caller that has no repository gets a manifest with no provenance key at
+   * all rather than a field full of nulls.
+   */
+  it("carries provenance only when the caller supplies it", () => {
+    const plan = planTerrarium();
+    const bare = terrariumManifest(plan, stack);
+    expect(bare.provenance).toBeUndefined();
+    expect(Object.keys(bare)).not.toContain("provenance");
+
+    const stamped = terrariumManifest(plan, stack, undefined, {
+      commit: "a".repeat(40),
+      branch: "main",
+      dirty: false,
+      baseline: "b".repeat(40),
+      isBaseline: false,
+    });
+    expect(stamped.provenance).toEqual({
+      commit: "a".repeat(40),
+      branch: "main",
+      dirty: false,
+      baseline: "b".repeat(40),
+      isBaseline: false,
+    });
+    // Everything else is untouched — provenance is additive, hence no format bump.
+    expect({ ...stamped, provenance: undefined }).toEqual({ ...bare, provenance: undefined });
+    expect(stamped.format).toBe(TERRARIUM_MANIFEST_FORMAT);
   });
 });
 

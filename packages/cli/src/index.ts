@@ -68,6 +68,7 @@ import {
   writeDocument,
 } from "./generate.js";
 import { defaultSavesDir, installWorld } from "./install.js";
+import { gitProvenance } from "./provenance.js";
 import {
   buildFreeRoamSession,
   readCompileReport,
@@ -100,6 +101,7 @@ Usage:
                                  [--kit settlement|terrain] [--compile-rounds N]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
+                                [--channel <name>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist devworld [--out <dir>] [--no-zip]
@@ -139,6 +141,10 @@ install options:
                     rewrites level.dat on quit and the world gen settings it
                     keeps in data/minecraft/ have already been deleted.
   --force           Replace even if the save looks open. For a stale lock only.
+  --channel <name>  Install as <world>_<name> (e.g. "nightly", "baseline") and
+                    rewrite the in-game world name to match, so two channels of
+                    the same world sit side by side and are told apart in the
+                    world list.
   Stamps level.dat's LastPlayed with the current time — the only place
   Terrainist reads the wall clock.
 
@@ -329,7 +335,8 @@ export async function runTerrarium(args: readonly string[]): Promise<number> {
     }
   }
 
-  const result = await buildTerrarium(path.resolve(outDir));
+  const provenance = await gitProvenance();
+  const result = await buildTerrarium(path.resolve(outDir), provenance ?? undefined);
   const zipPath = zip ? await zipWorld(result.worldDir) : undefined;
 
   const kinds = new Map<string, number>();
@@ -607,7 +614,14 @@ export async function runCompile(args: readonly string[]): Promise<number> {
     : "world";
   const worldDir = path.join(path.resolve(outDir), name);
 
-  const result = await compileTerrain(parsed, { outDir: worldDir, allowUnstable });
+  // Read here, not in the compiler: the compiler shells out to nothing, so the
+  // checkout's identity has to be handed to it as an input.
+  const provenance = await gitProvenance();
+  const result = await compileTerrain(parsed, {
+    outDir: worldDir,
+    allowUnstable,
+    ...(provenance === null ? {} : { provenance }),
+  });
 
   if (!result.ok) {
     console.error(`terrainist: ${result.diagnostics.length} problem(s) in ${docPath}\n`);
@@ -650,6 +664,11 @@ function printCompileReport(
     `  spawn      [${emit.spawn.join(", ")}]`,
     `  timings    ${Object.entries(timings).map(([k, v]) => `${k} ${v.toFixed(0)}ms`).join("  ")}`,
   ];
+  if (report.provenance !== undefined) {
+    const p = report.provenance;
+    const marks = [p.isBaseline ? "baseline" : p.branch, ...(p.dirty ? ["dirty"] : [])];
+    lines.push(`  built from ${p.commit.slice(0, 12)} (${marks.join(", ")})`);
+  }
   if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
   if (reportPath !== undefined) lines.push(`  report     ${path.resolve(reportPath)}`);
   console.log(lines.join("\n"));
@@ -787,6 +806,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   let savesDir: string | undefined;
   let replace = false;
   let force = false;
+  let channel: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -794,6 +814,11 @@ export async function runInstall(args: readonly string[]): Promise<number> {
       const value = args[i + 1];
       if (value === undefined) throw new Error("--saves requires a directory");
       savesDir = value;
+      i++;
+    } else if (arg === "--channel") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--channel requires a name");
+      channel = value;
       i++;
     } else if (arg === "--replace") {
       replace = true;
@@ -815,6 +840,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
     replace,
     force,
     ...(savesDir === undefined ? {} : { savesDir }),
+    ...(channel === undefined ? {} : { channel }),
   });
 
   const lines = [
@@ -1015,7 +1041,8 @@ if (entry !== undefined && import.meta.url === pathToFileURL(entry).href) {
   );
 }
 
-export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed } from "./install.js";
+export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed, stampLevelDat } from "./install.js";
+export { BASELINE_TAG, gitProvenance } from "./provenance.js";
 export type { InstallOptions, InstallResult } from "./install.js";
 export { parseGenerateArgs, seedFromPrompt } from "./generate.js";
 export {

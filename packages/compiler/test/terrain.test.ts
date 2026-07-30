@@ -219,6 +219,33 @@ describe("compileTerrain", () => {
     expect(second.stats.treeBlockCount).toBe(first.stats.treeBlockCount);
   });
 
+  /**
+   * Provenance reaches the report only as an option. The compiler never asks
+   * git anything itself — that would make a compile depend on the machine it
+   * ran on — and the report simply omits the key when the caller passed none.
+   */
+  it("copies caller-supplied provenance into the report, and omits it otherwise", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "terrainist-prov-"));
+    scratch.push(dir);
+    const provenance = {
+      commit: "c".repeat(40),
+      branch: "main",
+      dirty: true,
+      baseline: "d".repeat(40),
+      isBaseline: false,
+    } as const;
+    const result = await compileTerrain(smallDocument(), {
+      outDir: path.join(dir, "golden_isle"),
+      skipEmit: true,
+      provenance,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.report.provenance).toEqual(provenance);
+    // The default path (compileTo) passes none.
+    expect(first.provenance).toBeUndefined();
+  });
+
   it("reports diagnostics instead of throwing on an invalid document", async () => {
     const result = await compileTerrain({ loam: "0.1" }, { outDir: path.join(tmpdir(), "unused") });
     expect(result.ok).toBe(false);

@@ -56,6 +56,17 @@ export interface InstallOptions {
    * stale lock; it is never what you want while the game is actually running.
    */
   readonly force?: boolean;
+  /**
+   * Install under `<name>_<channel>` instead of `<name>`, e.g. `nightly`.
+   *
+   * Both halves of the rename matter. The folder name keeps two builds of the
+   * same world side by side on disk; the *display* name in the world list is a
+   * separate string baked into `level.dat` at emit time, so without rewriting
+   * that too both saves read as "terrarium" in game and the reviewer cannot
+   * tell which one they are walking. The stamping pass rewrites `LevelName` to
+   * match the folder.
+   */
+  readonly channel?: string;
 }
 
 /** The default Minecraft saves directory for this platform. */
@@ -83,7 +94,12 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
   await assertIsWorld(worldDir);
   await mkdir(savesDir, { recursive: true });
 
-  const requested = path.basename(worldDir);
+  const channel =
+    options.channel === undefined || options.channel === "" ? undefined : options.channel;
+  const requested =
+    channel === undefined
+      ? path.basename(worldDir)
+      : `${path.basename(worldDir)}_${channel}`;
   const replace = options.replace === true;
   const folderName = replace ? requested : await freeName(savesDir, requested);
   const installedPath = path.join(savesDir, folderName);
@@ -109,7 +125,11 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
   await cp(worldDir, installedPath, { recursive: true, errorOnExist: true, force: false });
 
   const lastPlayed = options.now ?? Date.now();
-  await stampLastPlayed(path.join(installedPath, "level.dat"), lastPlayed);
+  await stampLevelDat(
+    path.join(installedPath, "level.dat"),
+    lastPlayed,
+    channel === undefined ? undefined : folderName,
+  );
 
   return {
     installedPath,
@@ -129,6 +149,22 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
  * does next.
  */
 export async function stampLastPlayed(levelDatPath: string, millis: number): Promise<void> {
+  await stampLevelDat(levelDatPath, millis);
+}
+
+/**
+ * Rewrite `LastPlayed`, and `LevelName` too when one is given.
+ *
+ * Same parse/mutate/re-serialize discipline as {@link stampLastPlayed}, which
+ * is now a thin alias. `levelName` undefined leaves the display name exactly
+ * as emit wrote it, so the no-channel install still touches one tag and one
+ * tag only.
+ */
+export async function stampLevelDat(
+  levelDatPath: string,
+  millis: number,
+  levelName?: string,
+): Promise<void> {
   const nbt = require("prismarine-nbt") as {
     parseUncompressed(buf: Buffer): NbtNode;
     writeUncompressed(value: NbtNode): Buffer;
@@ -143,6 +179,9 @@ export async function stampLastPlayed(levelDatPath: string, millis: number): Pro
     type: "long",
     value: millisToLong(millis),
   };
+  if (levelName !== undefined) {
+    (data.value as Record<string, NbtNode>)["LevelName"] = { type: "string", value: levelName };
+  }
 
   await writeFile(levelDatPath, zlib.gzipSync(nbt.writeUncompressed(root)));
 }
