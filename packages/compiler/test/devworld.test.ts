@@ -53,6 +53,7 @@ import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
 import { BLITZ_ROW_LENGTH } from "../src/exhibits/blitz.js";
 import { HIGHRISE_EXHIBIT_ROWS, HIGHRISE_ROW_LENGTH } from "../src/exhibits/highrise.js";
 import { TOWN_EXHIBIT_ROWS } from "../src/exhibits/town.js";
+import { TRADE_EXHIBIT_ROWS, TRADE_ROW_LENGTH } from "../src/exhibits/trade.js";
 import { VERNACULAR_ROW_LENGTH } from "../src/exhibits/vernacular.js";
 import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
 import {
@@ -121,11 +122,15 @@ describe("dev world grid", () => {
     const tall = HIGHRISE_EXHIBIT_ROWS.length * HIGHRISE_ROW_LENGTH;
     const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const town = TOWN_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    // The trade wave's rows are prefixed (`trade_tavern`), so they are extra
+    // rows rather than replacements for the base grid's own.
+    const trade = TRADE_EXHIBIT_ROWS.length * TRADE_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
         VERNACULAR_BUILDING_ARCHETYPES.length * VERNACULAR_ROW_LENGTH +
         tall +
+        trade +
         2 * 7 +
         SEED_SWEEP_LENGTH +
         breakpoints +

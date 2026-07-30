@@ -39,6 +39,15 @@ import {
   townArchetypeOfTags,
 } from "./archetypes-town.js";
 
+// The trade wave is *not* re-exported here: `structures/index.ts` exports it
+// directly, and exporting it twice through the same barrel is an ambiguity
+// TypeScript resolves by dropping the names.
+import {
+  TRADE_BUILDING_ARCHETYPES,
+  furnishTrade,
+  tradeArchetypeOfTags,
+} from "./archetypes-trade.js";
+
 import {
   VERNACULAR_BUILDING_ARCHETYPES,
   furnishVernacular,
@@ -74,6 +83,7 @@ export const BUILDING_ARCHETYPES = [
   ...EXTENDED_BUILDING_ARCHETYPES,
   ...BLITZ_BUILDING_ARCHETYPES,
   ...TOWN_BUILDING_ARCHETYPES,
+  ...TRADE_BUILDING_ARCHETYPES,
   ...VERNACULAR_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -107,6 +117,12 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // original table, where it means a great hall.
   const town = townArchetypeOfTags(tags);
   if (town !== null) return town;
+  // The trade table, for the reason every later table goes earlier: the older
+  // ones are greedy. `trade` and `inn` mean inn down there and `store` means
+  // granary, so this table claims none of those three — only `tavern`, `shop`
+  // and their kin.
+  const trade = tradeArchetypeOfTags(tags);
+  if (trade !== null) return trade;
   // The vernacular wave, for the same reason: its archetypes are all houses,
   // and every table below it is greedier about dwellings than it is.
   const regional = vernacularArchetypeOfTags(tags);
@@ -422,6 +438,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishExtended(ctx);
   n += furnishBlitz(ctx);
   n += furnishTown(ctx);
+  n += furnishTrade(ctx);
   n += furnishVernacular(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);

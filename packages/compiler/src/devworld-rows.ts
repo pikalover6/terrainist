@@ -29,6 +29,7 @@ import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
+import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
@@ -93,6 +94,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   // so the ten blitz archetypes had no exhibit at their own footprints until
   // now.
   ...BLITZ_EXHIBIT_ROWS,
+  ...TRADE_EXHIBIT_ROWS,
   ...UNDERGROUND_EXHIBIT_ROWS,
   ...VERNACULAR_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,

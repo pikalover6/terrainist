@@ -602,16 +602,17 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 3 | watchtower | `lookout`, `tower`, `watchtower` |
 | 4 | breadth | see the breadth table below |
 | 5 | town | see the town table below |
-| 6 | vernacular | see the vernacular table below |
-| 7 | extended | see the extended table below |
-| 8 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 9 | fallback | anything else → cottage |
+| 6 | trade | see the trade table below |
+| 7 | vernacular | see the vernacular table below |
+| 8 | extended | see the extended table below |
+| 9 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 10 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
 ordinary house shell. It sits *between* the breadth table and the extended one,
 so it never takes a tag an older table already answers to: bare `hall` still
-means a great hall (table 7) and `archive` still means a library (table 6).
+means a great hall (table 9) and `archive` still means a library (table 8).
 
 | archetype | tags | what it gets | envelope that works |
 |---|---|---|---|
@@ -619,7 +620,7 @@ means a great hall (table 7) and `archive` still means a library (table 6).
 | school | `school`, `schoolhouse`, `academy` | rows of desks and seats facing a dark board across the end wall, a modest bell cote; regular single windows | `[11, 12, 15]`, 1–2 floors |
 | bathhouse | `bathhouse`, `baths`, `sauna`, `hammam` | pools written into the floor plane inside a solid coping, smooth stone and quartz walls, steam braziers and benches; sparse windows, hip roof | `[13, 11, 13]`, 1 floor |
 
-**Extended (table 6)**
+**Extended (table 8)**
 
 | archetype | tags | what it gets |
 |---|---|---|
@@ -649,7 +650,21 @@ ordinary house shell instead.
 | windpump | `windpump` | a pumping tower with sails, hip roof | `[7, 14, 7]`, 1 floor |
 | mine_head | `mine_head`, `mineshaft`, `mine`, `pithead` | headframe hut, winch, laddered shaft down into a mine-style cellar | `[9, 12, 9]`, 1 floor |
 
-**Vernacular (table 5)** — regional re-clads of the ordinary house shell.
+**Trade (table 6)** — the commercial fit-outs. They sit **after** the breadth
+and town tables and **before** the extended and original ones, and they
+deliberately claim none of the older tables' words: `trade` and `inn` still
+mean the inn, `store` still means the granary, and `market`/`stall`/`vendor`
+still mean the market stall. Only the store's awning touches the outside, so
+these work on a `wing` envelope too — the wainscot band is simply skipped on
+one.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| tavern | `tavern`, `pub`, `alehouse` | bar counter and stools down the far wall, trestle tables, stacked barrels, a fire, a timber wainscot band; regular single windows, gable roof | `[13, 11, 13]`, 1–2 floors |
+| general_store | `general_store`, `shop`, `grocer`, `emporium` | stock walls of barrels, shelves and chests, a service counter, crates in the back corner, an awning over the door; dense mullioned shopfront, gable roof | `[13, 10, 11]`, 1–2 floors |
+| apothecary | `apothecary`, `pharmacy`, `herbalist`, `alchemist` | a stone bench carrying brewing stands, a cauldron, candle-topped bottle shelves, herb pots at the sills, a stone wainscot; paired mullioned lights, gable roof | `[9, 10, 9]`, 1 floor |
+
+**Vernacular (table 7)** — regional re-clads of the ordinary house shell.
 They sit *after* the breadth table and *before* the extended one, and they
 claim only regional tags: `house` still means cottage, `townhouse` is
 reserved. Like the breadth wave they rebuild the exterior, so give them a
