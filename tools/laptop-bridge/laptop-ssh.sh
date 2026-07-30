@@ -14,7 +14,7 @@
 set -euo pipefail
 
 LAPTOP_HOST=${LAPTOP_HOST:-100.67.165.113}   # kais-macbook-air-2
-LAPTOP_USER=${LAPTOP_USER:-kai}
+LAPTOP_USER=${LAPTOP_USER:-kaihoward}
 SOCKS_PORT=${SOCKS_PORT:-1055}
 
 KEY_FILE="$HOME/.ssh/laptop_bridge_key"

@@ -43,16 +43,18 @@ if ! tailscale --socket="$TS_SOCK" status >/dev/null 2>&1; then
     --tun=userspace-networking \
     --socks5-server="localhost:${SOCKS_PORT}" \
     >>"${TS_STATE_DIR}/tailscaled.log" 2>&1 &
+  disown
   sleep 3
 fi
 
 # --- 3. Join the tailnet ----------------------------------------------------
-if tailscale --socket="$TS_SOCK" status 2>/dev/null | grep -qv '^Logged out'; then
-  if tailscale --socket="$TS_SOCK" status >/dev/null 2>&1; then
-    log "already joined:"
-    tailscale --socket="$TS_SOCK" status
-    exit 0
-  fi
+# BackendState is "Running" once joined; "NeedsLogin" when not yet authed.
+state=$(tailscale --socket="$TS_SOCK" status --json 2>/dev/null |
+  grep -o '"BackendState": *"[^"]*"' | cut -d'"' -f4 || true)
+if [ "$state" = "Running" ]; then
+  log "already joined:"
+  tailscale --socket="$TS_SOCK" status
+  exit 0
 fi
 
 if [ -n "${TS_AUTHKEY:-}" ]; then

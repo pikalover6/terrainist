@@ -38,7 +38,13 @@ container interactively.
 | `LAPTOP_SSH_KEY` | Private key whose public half is in `~/.ssh/authorized_keys` on the Mac (`ssh-keygen -t ed25519 -f ~/.ssh/claude_cloud -N ""`). |
 
 Optional overrides: `LAPTOP_HOST` (default `100.67.165.113`), `LAPTOP_USER`
-(the Mac account's short name), `SOCKS_PORT` (default 1055), `TS_VERSION`.
+(default `kaihoward`), `SOCKS_PORT` (default 1055), `TS_VERSION`.
+
+Cloud environments have **no dedicated secrets store** — environment
+variables are readable by anyone using the environment (fine here: Kai's
+personal account). Keep only the two bootstrap secrets above in env vars;
+all other keys (OpenRouter, Tripo, …) live on the laptop and are fetched
+over the bridge. GitHub Actions secrets are not reachable from sessions.
 
 Until the secrets exist, the fallback flow works: interactive login URL for
 Tailscale, and a session-local keypair (`~/.ssh/claude_cloud_session`)
@@ -46,9 +52,15 @@ whose `.pub` Kai appends to `authorized_keys` — see `laptop-ssh.sh`.
 
 ## Mac-side prerequisites (one-time)
 
-1. Tailscale app installed and logged in.
-2. System Settings → General → Sharing → **Remote Login: On**.
-3. The bridge public key in `~/.ssh/authorized_keys`.
+1. Tailscale app installed and logged in. (Done 2026-07-30.)
+2. System Settings → General → Sharing → **Remote Login: On**. (Done.)
+3. The bridge public key in `~/.ssh/authorized_keys`. (Done for the
+   2026-07-30 session key; repeat for the durable `LAPTOP_SSH_KEY` half.)
+4. For remote `git pull`: `gh auth login` + `gh auth setup-git` (the Mac
+   currently has no working non-interactive GitHub credential).
+
+Mac facts: user `kaihoward`, repo at `~/dev/terrainist`, Node via Homebrew
+— prefix remote commands with `export PATH=/opt/homebrew/bin:$PATH`.
 
 ## Permissions
 
