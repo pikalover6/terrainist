@@ -573,6 +573,9 @@ function attachTunnelSpans(
     systems: existing?.systems ?? 0,
     chambers: existing?.chambers ?? 0,
     decorate: existing?.decorate ?? false,
+    // Carried through so a tunnel merging into the cave plan does not cost the
+    // carver's spans their style, and with it their dressing.
+    ...(existing?.styleByColumn === undefined ? {} : { styleByColumn: existing.styleByColumn }),
     structuralColumns,
     portalColumns,
   };

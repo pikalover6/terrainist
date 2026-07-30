@@ -289,12 +289,13 @@ change the landscape you wrote above. `"params": {}` accepts every default.
   "kind": "generator",
   "generator": "cave.carver@0",
   "params": {
+    "style": "worm",
     "density": 0.35,
     "frequency": 0.012,
     "radius": [2, 5],
     "yRange": [-32, 48],
     "verticality": 0.3,
-    "chambers": { "count": 3, "radius": 8, "chance": 0.4 },
+    "chambers": { "count": 3, "radius": 8, "chance": 0.4, "spacing": 70 },
     "entrances": 2,
     "decorate": true
   }
@@ -303,14 +304,34 @@ change the landscape you wrote above. `"params": {}` accepts every default.
 
 | param | default | range | what it does |
 |---|---|---|---|
+| `style` | `worm` | `worm`, `cheese`, `spaghetti`, `ravine`, `chamber_network` | the shape of the systems — see the table below. |
 | `density` | 0.3 | 0..1 | how many worm systems the region carries — one per ≈9000 blocks of area at `1`, capped at 64. |
 | `frequency` | 0.012 | 0..0.5 | scale of the field steering the worms. Smaller = long, lazy tunnels. |
 | `radius` | `[2, 5]` | `[min, max]` ints 1..12 | tunnel radius in blocks, min ≤ max. |
 | `yRange` | `[-32, 48]` | `[min, max]` ints −63..200 | **absolute world Y**, not a depth below the surface. |
 | `verticality` | 0.3 | 0..1 | how willingly a worm climbs and dives. 0 = near-horizontal galleries. |
-| `chambers` | `{count: 3, radius: 8, chance: 0.4}` | `count` 0..64 int, `radius` 3..24, `chance` 0..1 | ellipsoid rooms opened along the worms. |
+| `chambers` | `{count: 3, radius: 8, chance: 0.4, spacing: 70}` | `count` 0..64 int, `radius` 3..24, `chance` 0..1, `spacing` 8..256 | ellipsoid rooms. `spacing` is how many blocks of walked path lie between two chances at a room; for `chamber_network` it is the connector length between rooms and `chance` does not apply. |
 | `entrances` | 0 | `true`/`false` or int 0..8 | daylight mouths. Each one needs a hillside no steeper than 26° with a cave already running near it, and publishes a `cave_mouth` marker. Without this the system is sealed. |
-| `decorate` | true | bool | gravel floor patches, stalagmites and stalactites, moss, mushrooms, cobwebs. |
+| `decorate` | true | bool | dressing **chosen by the style**: dripstone or gravel floor patches, stalagmites and stalactites, moss, mushrooms, glow lichen on the ceiling, cobwebs. |
+
+### The styles
+
+| `style` | what you get | reach for it when |
+|---|---|---|
+| `worm` | the default: branching tubes of `radius`, steered by a low-frequency wander field, with occasional oblate chambers. | a normal cave system. |
+| `cheese` | clusters of large rounded voids, only incidentally joined — rooms, not pipes. Dressed with gravel and moss, lichen-lit. | "pockets", "hollows", "a honeycombed hill". |
+| `spaghetti` | many long, thin, fast-turning tubes over a wide area. Dry, gravelly, cobwebbed. | "riddled with narrow passages", "a warren". |
+| `ravine` | tall narrow vertical slots on a near-level course — the cross-section is stretched upward instead of widened. Gravel floors, lichen. | "a rift", "a chasm", "a crack running under the hill". |
+| `chamber_network` | rooms first: large ellipsoid caverns joined by short straight connectors of length `chambers.spacing`. The show cave — the most dripstone, moss and lichen of any style. | "great halls", "a network of caverns". |
+
+`lava_tube` from the v0.2 §7 enum is **not** carved, and asking for it is a
+`LOAM-T114`: a dry tube would not be a lava tube, and lava in a cave cannot
+satisfy the profile's zero-unstable-fluids rule. Use `chamber_network` or
+`cheese` instead.
+
+Give `radius` some room before reaching for a wide style: `ravine` and
+`spaghetti` deliberately use only the thin end of the `[min, max]` range, and
+`cheese` blobs are sized off the top of it.
 
 Rules and honest limits:
 
@@ -319,10 +340,12 @@ Rules and honest limits:
   ocean. A cave will simply not go where it would flood.
 - 4 blocks of rock are always left between a ceiling and the surface, except at
   an entrance mouth.
-- Five params from the v0.2 §7 table are **rejected**, each with a
-  `LOAM-T114`: `style` (only the worm style is carved), `lavaLevel` and
-  `waterTable` (no fluid in caves yet), `surfaceOpenings` (this profile spells
-  it `entrances`) and `protectTags`.
+- Four params from the v0.2 §7 table are **rejected**, each with a
+  `LOAM-T114`: `lavaLevel` and `waterTable` (no fluid in caves yet),
+  `surfaceOpenings` (this profile spells it `entrances`) and `protectTags`.
+- Every style goes through the same water gate and the same roof margin, so a
+  `ravine` under a shallow ridge is simply shorter than one under a massif —
+  it is clipped, never allowed to breach.
 - Caves take no `constraints` and no `ports`, like every terrain generator.
 
 ---

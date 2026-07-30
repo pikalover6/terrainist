@@ -1,0 +1,157 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "cave_styles",
+    "worldSeed": 4471903,
+    "prompt": "one big hill carrying every cave style at once, so they can be compared underground",
+    "spawn": { "at": [0.5, 0.5] }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Cave styles — one hill, four styles under it",
+    "envelope": { "shape": "region", "size": [192, 192] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "A tall inland massif, deep enough for a ravine to fit under it",
+        "note": "No ocean: the water rules are exercised by the tarn, and the height is what gives the taller styles room under the four-block roof.",
+        "params": {
+          "baseHeight": 92,
+          "amplitude": 20,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.006,
+          "gain": 0.5,
+          "lacunarity": 2.0,
+          "erosionPasses": 1,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "the_massif",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The hill every style runs under",
+            "params": {
+              "verb": "peak",
+              "at": [0.5, 0.5],
+              "radius": 80,
+              "height": 52,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "north_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A tarn, so every style has the four-block water shell to dodge",
+            "params": {
+              "verb": "basin",
+              "at": [0.2, 0.22],
+              "radius": 24,
+              "depth": 12,
+              "water": true,
+              "irregularity": 0.15
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and damp",
+        "params": { "forceTheme": "temperate" }
+      },
+      {
+        "id": "cheese_pockets",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "Large rounded voids, low connectivity",
+        "params": {
+          "style": "cheese",
+          "density": 0.5,
+          "radius": [3, 6],
+          "yRange": [30, 70],
+          "verticality": 0.3,
+          "chambers": { "count": 3, "radius": 9, "chance": 0.4, "spacing": 60 },
+          "decorate": true
+        }
+      },
+      {
+        "id": "spaghetti_tubes",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "Long thin winding tubes, high frequency",
+        "params": {
+          "style": "spaghetti",
+          "density": 0.6,
+          "frequency": 0.02,
+          "radius": [2, 5],
+          "yRange": [16, 84],
+          "verticality": 0.45,
+          "chambers": { "count": 0, "radius": 6, "chance": 0, "spacing": 40 },
+          "entrances": 1,
+          "decorate": true
+        }
+      },
+      {
+        "id": "the_rift",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "A tall narrow slot cut through the massif",
+        "params": {
+          "style": "ravine",
+          "density": 0.35,
+          "radius": [2, 4],
+          "yRange": [20, 96],
+          "verticality": 0.25,
+          "chambers": { "count": 1, "radius": 7, "chance": 0.3, "spacing": 90 },
+          "decorate": true
+        }
+      },
+      {
+        "id": "the_halls",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "Rooms joined by short connectors",
+        "params": {
+          "style": "chamber_network",
+          "density": 0.4,
+          "radius": [2, 4],
+          "yRange": [24, 76],
+          "verticality": 0.2,
+          "chambers": { "count": 8, "radius": 10, "chance": 1.0, "spacing": 34 },
+          "entrances": 1,
+          "decorate": true
+        }
+      },
+      {
+        "id": "hill_wood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "A thin wood over the massif",
+        "params": {
+          "area": { "all": true },
+          "density": 0.25,
+          "spacing": 3,
+          "clumping": 0.4,
+          "maxSlope": 34,
+          "elevation": [1, 130],
+          "edgeFalloff": 10,
+          "species": [
+            { "id": "hill_oak", "weight": 3, "shape": "oak_round" },
+            { "id": "hill_spruce", "weight": 1, "shape": "spruce_tall" }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -248,13 +248,18 @@ export interface ForestNode extends NodeBase {
 }
 
 /**
- * Ellipsoid chambers along a cave system's worms.
+ * The `cave.carver@0` styles this profile carves.
  *
- * `spacing` from the v0.2 §7 table is not implemented: chambers are opened at a
- * fixed step interval along each worm, gated by `chance`, so the knob that
- * actually varies the result is how *often* one is taken rather than how far
- * apart two are guaranteed to be.
+ * `lava_tube` from the v0.2 §7 enum is missing on purpose: a dry tube is a lie
+ * about its name, and a wet one cannot satisfy the profile's zero-unstable-
+ * fluids rule. The five below are all dry.
  */
+export const CAVE_STYLES = ["worm", "cheese", "spaghetti", "ravine", "chamber_network"] as const;
+
+/** One of {@link CAVE_STYLES}. */
+export type CaveStyle = (typeof CAVE_STYLES)[number];
+
+/** Ellipsoid chambers along a cave system. */
 export interface CaveChamberParams {
   /** Upper bound on chambers opened across the whole node. */
   readonly count?: number;
@@ -262,23 +267,34 @@ export interface CaveChamberParams {
   readonly radius?: number;
   /** 0..1 — probability a chamber opportunity is taken. */
   readonly chance?: number;
+  /**
+   * Blocks of walked path between two chamber opportunities.
+   *
+   * For the walking styles this is how far apart two rooms *can* be, with
+   * `chance` deciding whether the opportunity is taken; for `chamber_network`
+   * it is the connector length between rooms, and `chance` does not apply.
+   */
+  readonly spacing?: number;
 }
 
 /**
  * Params of `cave.carver@0` in this profile — an honest subset of the v0.2 §7
  * table.
  *
- * Implemented: `density`, `radius`, `yRange`, `verticality`, `chambers`,
- * `decorate`, plus `frequency` (the wander field's spatial frequency, which §7
- * leaves implicit) and `entrances` (v0.2's `surfaceOpenings`, accepting a
- * boolean as well as a count).
+ * Implemented: `style` (every value of the §7 enum except `lava_tube`),
+ * `density`, `radius`, `yRange`, `verticality`, `chambers` (including
+ * `spacing`), `decorate`, plus `frequency` (the wander field's spatial
+ * frequency, which §7 leaves implicit) and `entrances` (v0.2's
+ * `surfaceOpenings`, accepting a boolean as well as a count).
  *
- * Not implemented, and rejected rather than silently ignored: `style`,
- * `lavaLevel`, `waterTable` (a cave that carries fluid cannot satisfy the
- * profile's zero-unstable-fluids invariant without a fill solver of its own)
- * and `protectTags` (the terrain profile has no occupancy to protect).
+ * Not implemented, and rejected rather than silently ignored: `lavaLevel`,
+ * `waterTable` (a cave that carries fluid cannot satisfy the profile's
+ * zero-unstable-fluids invariant without a fill solver of its own) and
+ * `protectTags` (the terrain profile has no occupancy to protect).
  */
 export interface CaveParams {
+  /** Which shape the systems take. Default `worm`. */
+  readonly style?: CaveStyle;
   /** 0..1 — how many worm systems the region carries. */
   readonly density?: number;
   /** Spatial frequency of the field that steers the worms. */

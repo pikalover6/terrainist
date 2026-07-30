@@ -379,6 +379,14 @@ export function canopyCover(plan: ColumnPlan, trees: readonly TreePlacement[]): 
 function trunkMask(plan: ColumnPlan, trees: readonly TreePlacement[]): Uint8Array {
   const { region } = plan;
   const mask = new Uint8Array(region.width * region.depth);
+  // A cave mouth has eaten the surface block of the columns it opens, so there
+  // is nothing under them for a moss carpet or a flower to stand on. Folding
+  // that into the same mask the trunks use keeps every surface-decor loop
+  // honest without each one having to remember the cave pass exists.
+  const entrances = plan.caves?.entranceColumns;
+  if (entrances !== undefined) {
+    for (let idx = 0; idx < mask.length; idx++) if (entrances[idx] === 1) mask[idx] = 1;
+  }
   for (const tree of trees) {
     const span = tree.mega ? 2 : 1;
     for (let dz = 0; dz < span; dz++) {

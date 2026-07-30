@@ -29,6 +29,7 @@ import type { ColumnPlan } from "../src/terrain/columns.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 
 const EXAMPLE = fileURLToPath(new URL("../../../examples/caverns-test.loam.json", import.meta.url));
+const STYLES_EXAMPLE = fileURLToPath(new URL("../../../examples/cave-styles.loam.json", import.meta.url));
 
 const scratch: string[] = [];
 let stack: PrismarineStack;
@@ -37,11 +38,14 @@ let plan: ColumnPlan;
 let worldDir: string;
 let lint: PhysicsReport;
 
-async function compile(label: string): Promise<{ dir: string; report: TerrainCompileReport; plan: ColumnPlan }> {
+async function compile(
+  label: string,
+  example = EXAMPLE,
+): Promise<{ dir: string; report: TerrainCompileReport; plan: ColumnPlan }> {
   const root = await mkdtemp(path.join(tmpdir(), `terrainist-caves-${label}-`));
   scratch.push(root);
   const dir = path.join(root, "caverns_test");
-  const doc = JSON.parse(await readFile(EXAMPLE, "utf8")) as unknown;
+  const doc = JSON.parse(await readFile(example, "utf8")) as unknown;
   let captured: ColumnPlan | undefined;
   const result = await compileTerrain(doc, { outDir: dir, onColumnPlan: (p) => (captured = p) });
   if (!result.ok) {
@@ -152,4 +156,75 @@ describe("caverns physics readback", () => {
       .slice(0, 4)
       .map((f) => `${f.block} at ${f.x},${f.y},${f.z}: ${f.detail}`);
   }
+});
+
+/**
+ * The style fixture: four `cave.carver@0` nodes, one per new style, under a
+ * single massif.
+ *
+ * The point of compiling it here rather than only unit-testing the carver is
+ * that the *dressing* is style-driven — glow lichen and gravel floors are new
+ * block choices, and the physics readback is the only thing that can say
+ * whether a lichen ended up glued to air.
+ */
+describe("every cave style, end to end", () => {
+  let styles: { dir: string; report: TerrainCompileReport; plan: ColumnPlan };
+  let styleLint: PhysicsReport;
+
+  beforeAll(async () => {
+    styles = await compile("styles", STYLES_EXAMPLE);
+    styleLint = await lintWorldPhysics(styles.dir, stack, {
+      minY: 0,
+      maxY: 180,
+      terrainTop: {
+        x0: styles.plan.region.x0,
+        z0: styles.plan.region.z0,
+        width: styles.plan.region.width,
+        depth: styles.plan.region.depth,
+        ground: styles.plan.ground,
+        entrances: styles.plan.caves?.entranceColumns ?? new Uint8Array(styles.plan.ground.length),
+      },
+    });
+  }, 300_000);
+
+  it("compiles clean, with no diagnostics and no unstable fluid", () => {
+    expect(styles.report.diagnostics.map((d) => `${d.severity} ${d.name}`)).toEqual([]);
+    expect(styles.report.stats.unstableFluidBlocks).toBe(0);
+  });
+
+  it("carves with every style, and records which style owns which column", () => {
+    const byColumn = styles.plan.caves?.styleByColumn;
+    expect(byColumn).toBeDefined();
+    const seen = new Set<number>();
+    for (const ordinal of byColumn as Uint8Array) if (ordinal > 0) seen.add(ordinal);
+    // cheese, spaghetti, ravine and chamber_network — ordinals 2, 3, 4, 5.
+    expect([...seen].sort((a, b) => a - b)).toEqual([2, 3, 4, 5]);
+  });
+
+  it("dresses the new styles with gravel floors and glow lichen", () => {
+    const counts = styles.report.stats.caves.decorCounts;
+    expect(counts["gravel"] as number).toBeGreaterThan(0);
+    expect(counts["lichen"] as number).toBeGreaterThan(0);
+    expect(counts["floor"] as number).toBeGreaterThan(0);
+  });
+
+  it("keeps the plan's cave invariants for every style", () => {
+    const integrity = checkCaveIntegrity(styles.plan);
+    expect(integrity.samples).toEqual([]);
+    expect(integrity.fluidBreaches).toBe(0);
+    expect(integrity.surfaceBreaches).toBe(0);
+  });
+
+  it("passes every physics rule, dripstone and lichen attachment included", () => {
+    const offenders = Object.entries(styleLint.counts).filter(([, n]) => n > 0);
+    expect(offenders).toEqual([]);
+  });
+
+  it("compiles byte-identically twice", async () => {
+    const again = await compile("styles-repeat", STYLES_EXAMPLE);
+    expect(again.report.stats.caves).toEqual(styles.report.stats.caves);
+    expect([...again.plan.caves!.spans.lo]).toEqual([...styles.plan.caves!.spans.lo]);
+    expect([...again.plan.caves!.spans.hi]).toEqual([...styles.plan.caves!.spans.hi]);
+    expect([...again.plan.caves!.spans.offsets]).toEqual([...styles.plan.caves!.spans.offsets]);
+  }, 300_000);
 });

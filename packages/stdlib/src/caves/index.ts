@@ -44,8 +44,8 @@ export const CAVE_ROOF_THICKNESS = 4;
 /** Lowest Y a cave may occupy: one above the bedrock floor. */
 export const CAVE_FLOOR_Y = -63;
 
-/** Steps between chamber opportunities along a worm. */
-const CHAMBER_INTERVAL = 44;
+/** Default distance, in blocks of walked path, between chamber opportunities. */
+export const CHAMBER_SPACING_DEFAULT = 70;
 
 /** Region area, in blocks, that carries one cave system at `density: 1`. */
 const AREA_PER_SYSTEM = 9_000;
@@ -62,8 +62,124 @@ export const ENTRANCE_MAX_ROOF = 24;
 /** Minimum spacing between two entrance mouths, in blocks. */
 export const ENTRANCE_SPACING = 28;
 
+/**
+ * The cave shapes this profile carves.
+ *
+ * `lava_tube` from the v0.2 §7 enum is deliberately absent: a tube without lava
+ * in it is a lie, and lava in it is blocked by the profile's zero-unstable-
+ * fluids rule. The five below are all dry.
+ */
+export type CaveStyle = "worm" | "cheese" | "spaghetti" | "ravine" | "chamber_network";
+
+/** Every implemented style, in the order the spec's enum lists them. */
+export const CAVE_STYLES: readonly CaveStyle[] = Object.freeze([
+  "worm",
+  "cheese",
+  "spaghetti",
+  "ravine",
+  "chamber_network",
+]);
+
+/**
+ * The per-style knobs the generic machinery reads.
+ *
+ * Every style ends up in the same {@link carveSphere}, so every style goes
+ * through the same band gate; what a style gets to choose is how many walkers
+ * it launches, how far and how straight they walk, how fat they are and how
+ * squashed or stretched their cross-section is. `worm`'s row is exactly the
+ * constants the carver used before styles existed, which is what makes it the
+ * compatibility anchor: same draws, same order, byte-identical spans.
+ */
+interface StyleTuning {
+  /** `[min, max]` walkers launched from one system origin. */
+  readonly walkers: readonly [number, number];
+  /** `[min, max]` steps one walker takes. */
+  readonly steps: readonly [number, number];
+  /** Multiplier on `params.frequency` for the wander field. */
+  readonly frequencyScale: number;
+  /** How hard the wander field turns the bearing. */
+  readonly yawDrift: number;
+  /** Per-step gaussian wobble on the bearing. */
+  readonly yawJitter: number;
+  /** Fraction of `[radius.min, radius.max]` this style actually uses. */
+  readonly girth: readonly [number, number];
+  /** Vertical squash (<1, oblate) or stretch (>1, a slot) of the cross-section. */
+  readonly flattenY: number;
+  /** Blocks walked per step. */
+  readonly stepLength: number;
+  /** Multiplier on `verticality` for the pitch bound. */
+  readonly pitchScale: number;
+}
+
+const STYLE_TUNING: Readonly<Record<CaveStyle, StyleTuning>> = Object.freeze({
+  // The historical carver, unchanged.
+  worm: Object.freeze({
+    walkers: [2, 3] as readonly [number, number],
+    steps: [90, 220] as readonly [number, number],
+    frequencyScale: 1,
+    yawDrift: 0.55,
+    yawJitter: 0.12,
+    girth: [0, 1] as readonly [number, number],
+    flattenY: 1,
+    stepLength: 1.6,
+    pitchScale: 0.9,
+  }),
+  // Long, thin, high-frequency: many walkers, a fast-turning field, and only
+  // the bottom third of the radius range.
+  spaghetti: Object.freeze({
+    walkers: [3, 5] as readonly [number, number],
+    steps: [170, 330] as readonly [number, number],
+    frequencyScale: 3.5,
+    yawDrift: 0.8,
+    yawJitter: 0.22,
+    girth: [0, 0.3] as readonly [number, number],
+    flattenY: 1,
+    stepLength: 1.3,
+    pitchScale: 1,
+  }),
+  // A tall narrow slot: a nearly level walk whose cross-section is stretched
+  // vertically instead of widened horizontally.
+  ravine: Object.freeze({
+    walkers: [1, 2] as readonly [number, number],
+    steps: [80, 160] as readonly [number, number],
+    frequencyScale: 0.6,
+    yawDrift: 0.3,
+    yawJitter: 0.07,
+    girth: [0, 0.25] as readonly [number, number],
+    flattenY: 3.4,
+    stepLength: 1.8,
+    pitchScale: 0.3,
+  }),
+  // Blob clusters; the walker fields are unused, `carveCheese` drives it.
+  cheese: Object.freeze({
+    walkers: [1, 1] as readonly [number, number],
+    steps: [5, 9] as readonly [number, number],
+    frequencyScale: 1,
+    yawDrift: 0,
+    yawJitter: 0,
+    girth: [0.6, 1] as readonly [number, number],
+    flattenY: 0.85,
+    stepLength: 1,
+    pitchScale: 0.4,
+  }),
+  // Chambers first, connectors second; `carveNetwork` drives it.
+  chamber_network: Object.freeze({
+    walkers: [1, 1] as readonly [number, number],
+    steps: [2, 4] as readonly [number, number],
+    frequencyScale: 1,
+    yawDrift: 0,
+    yawJitter: 0,
+    girth: [0, 0.4] as readonly [number, number],
+    flattenY: 1,
+    stepLength: 1.5,
+    pitchScale: 0.35,
+  }),
+});
+
 /** `cave.carver@0` params, after defaulting. */
 export interface CaveParams {
+  /** Which shape the systems take. */
+  readonly style: CaveStyle;
   /** 0..1 — how many worm systems the region carries. */
   readonly density: number;
   /** Spatial frequency of the field that steers the worms. */
@@ -79,6 +195,8 @@ export interface CaveParams {
     readonly count: number;
     readonly radius: number;
     readonly chance: number;
+    /** Blocks of walked path between two chamber opportunities. */
+    readonly spacing: number;
   };
   /** Number of daylight mouths to force. `true`/`false` normalize to 1/0. */
   readonly entrances: number;
@@ -88,18 +206,25 @@ export interface CaveParams {
 
 /** The `cave.carver@0` defaults. */
 export const CAVE_DEFAULTS: CaveParams = Object.freeze({
+  style: "worm",
   density: 0.3,
   frequency: 0.012,
   radius: [2, 5] as readonly [number, number],
   yRange: [-32, 48] as readonly [number, number],
   verticality: 0.3,
-  chambers: Object.freeze({ count: 3, radius: 8, chance: 0.4 }),
+  chambers: Object.freeze({
+    count: 3,
+    radius: 8,
+    chance: 0.4,
+    spacing: CHAMBER_SPACING_DEFAULT,
+  }),
   entrances: 0,
   decorate: true,
 });
 
 /** Raw (validated but undefaulted) cave params, as the profile hands them over. */
 export interface CaveParamsInput {
+  readonly style?: CaveStyle;
   readonly density?: number;
   readonly frequency?: number;
   readonly radius?: readonly [number, number];
@@ -109,6 +234,7 @@ export interface CaveParamsInput {
     readonly count?: number;
     readonly radius?: number;
     readonly chance?: number;
+    readonly spacing?: number;
   };
   readonly entrances?: number | boolean;
   readonly decorate?: boolean;
@@ -119,6 +245,7 @@ export function resolveCaveParams(input: CaveParamsInput | undefined): CaveParam
   const p = input ?? {};
   const entrances = p.entrances;
   return {
+    style: p.style ?? CAVE_DEFAULTS.style,
     density: p.density ?? CAVE_DEFAULTS.density,
     frequency: p.frequency ?? CAVE_DEFAULTS.frequency,
     radius: p.radius ?? CAVE_DEFAULTS.radius,
@@ -128,6 +255,7 @@ export function resolveCaveParams(input: CaveParamsInput | undefined): CaveParam
       count: p.chambers?.count ?? CAVE_DEFAULTS.chambers.count,
       radius: p.chambers?.radius ?? CAVE_DEFAULTS.chambers.radius,
       chance: p.chambers?.chance ?? CAVE_DEFAULTS.chambers.chance,
+      spacing: p.chambers?.spacing ?? CAVE_DEFAULTS.chambers.spacing,
     },
     entrances:
       entrances === undefined
@@ -238,18 +366,22 @@ export function carveCaves(request: CaveCarveRequest): CaveCarveResult {
   let systems = 0;
   let chambers = 0;
 
+  const tuning = STYLE_TUNING[params.style];
+
   for (let s = 0; s < systemTarget; s++) {
     const origin = pickOrigin(rng, region, bandLo, bandHi);
     if (origin === null) continue;
     systems++;
-    // Two or three worms leave every system origin, so a system reads as a
-    // branching network rather than one lonely pipe.
-    const worms = rng.int(2, 3);
-    for (let w = 0; w < worms; w++) {
-      chambers += runWorm({
+    // Two or three walkers leave every system origin, so a system reads as a
+    // branching network rather than one lonely pipe. How many, and what a
+    // walker *is*, is the style's business.
+    const walkers = rng.int(tuning.walkers[0], tuning.walkers[1]);
+    for (let w = 0; w < walkers; w++) {
+      const run: WormRun = {
         rng,
         region,
         params,
+        tuning,
         bandLo,
         bandHi,
         acc,
@@ -257,7 +389,13 @@ export function carveCaves(request: CaveCarveRequest): CaveCarveResult {
         girthSeed,
         origin,
         chambersLeft: params.chambers.count - chambers,
-      });
+      };
+      chambers +=
+        params.style === "cheese"
+          ? runCheese(run)
+          : params.style === "chamber_network"
+            ? runNetwork(run)
+            : runWorm(run);
     }
   }
 
@@ -420,6 +558,7 @@ interface WormRun {
   readonly rng: Rng;
   readonly region: Region;
   readonly params: CaveParams;
+  readonly tuning: StyleTuning;
   readonly bandLo: Int32Array;
   readonly bandHi: Int32Array;
   readonly acc: Map<number, number[]>;
@@ -441,10 +580,14 @@ interface WormRun {
  * gallery.
  */
 function runWorm(run: WormRun): number {
-  const { rng, region, params, bandLo, bandHi, acc, wanderSeed, girthSeed, origin } = run;
+  const { rng, region, params, tuning, bandLo, bandHi, acc, wanderSeed, girthSeed, origin } = run;
   const [rMin, rMax] = params.radius;
-  const maxPitch = params.verticality * 0.9;
-  const steps = rng.int(90, 220);
+  const rLo = rMin + (rMax - rMin) * tuning.girth[0];
+  const rHi = rMin + (rMax - rMin) * tuning.girth[1];
+  const frequency = params.frequency * tuning.frequencyScale;
+  const stride = chamberStride(params.chambers.spacing, tuning.stepLength);
+  const maxPitch = params.verticality * tuning.pitchScale;
+  const steps = rng.int(tuning.steps[0], tuning.steps[1]);
 
   let x = origin.x;
   let y = origin.y;
@@ -454,13 +597,13 @@ function runWorm(run: WormRun): number {
   let opened = 0;
 
   for (let step = 0; step < steps; step++) {
-    const drift = fbm2(wanderSeed, x * params.frequency, z * params.frequency, {
+    const drift = fbm2(wanderSeed, x * frequency, z * frequency, {
       octaves: 3,
       frequency: 1,
       lacunarity: 2,
       gain: 0.5,
     });
-    yaw += drift * 0.55 + rng.gaussian() * 0.12;
+    yaw += drift * tuning.yawDrift + rng.gaussian() * tuning.yawJitter;
     pitch = clamp(pitch + drift * 0.18 + rng.gaussian() * 0.06, -maxPitch, maxPitch);
 
     const girth = fbm2(girthSeed, x * 0.05, z * 0.05, {
@@ -469,14 +612,14 @@ function runWorm(run: WormRun): number {
       lacunarity: 2,
       gain: 0.5,
     });
-    const radius = rMin + (rMax - rMin) * clamp(0.5 + 0.5 * girth, 0, 1);
+    const radius = rLo + (rHi - rLo) * clamp(0.5 + 0.5 * girth, 0, 1);
 
-    carveSphere(acc, region, bandLo, bandHi, x, y, z, radius, 1);
+    carveSphere(acc, region, bandLo, bandHi, x, y, z, radius, tuning.flattenY);
 
     if (
       run.chambersLeft - opened > 0 &&
       step > 0 &&
-      step % CHAMBER_INTERVAL === 0 &&
+      step % stride === 0 &&
       rng.float() < params.chambers.chance
     ) {
       // A chamber is an oblate ellipsoid: wide, and about two-thirds as tall,
@@ -487,9 +630,10 @@ function runWorm(run: WormRun): number {
     }
 
     const horizontal = cos(pitch);
-    x = Math.round(x + cos(yaw) * horizontal * 1.6);
-    z = Math.round(z + sin(yaw) * horizontal * 1.6);
-    y = Math.round(y + sin(pitch) * 1.6);
+    const len = tuning.stepLength;
+    x = Math.round(x + cos(yaw) * horizontal * len);
+    z = Math.round(z + sin(yaw) * horizontal * len);
+    y = Math.round(y + sin(pitch) * len);
 
     // Leaving the region or the band's reach ends the run rather than sliding
     // along the wall: a worm pinned to an edge makes a trench, not a cave.
@@ -503,6 +647,143 @@ function runWorm(run: WormRun): number {
     y = clamp(y, lo, hi);
   }
   return opened;
+}
+
+/**
+ * Steps between two chamber opportunities, from a spacing in blocks.
+ *
+ * Rounded rather than floored so the historical 44-step interval falls straight
+ * out of the default spacing (70 blocks / 1.6 blocks per step = 43.75 → 44),
+ * which is what keeps every pre-`spacing` world byte-identical.
+ */
+function chamberStride(spacing: number, stepLength: number): number {
+  return Math.max(1, Math.round(spacing / stepLength));
+}
+
+/**
+ * `cheese` — a cluster of large rounded voids with only incidental connectivity.
+ *
+ * A short drunkard's walk with *big* strides drops one oblate blob per stop.
+ * Because a stride is on the order of the blob radius, consecutive blobs touch
+ * or nearly touch while distant ones do not, which is the "swiss cheese" read:
+ * roomy pockets joined here and there rather than a graph of tunnels. There is
+ * no wander field involved — a blob has no bearing to steer.
+ */
+function runCheese(run: WormRun): number {
+  const { rng, region, params, tuning, bandLo, bandHi, acc, origin } = run;
+  const [rMin, rMax] = params.radius;
+  const rLo = rMin + (rMax - rMin) * tuning.girth[0];
+  const rHi = rMin + (rMax - rMin) * tuning.girth[1];
+  const blobs = rng.int(tuning.steps[0], tuning.steps[1]);
+  const drop = Math.max(2, Math.round(params.verticality * 8));
+
+  let x = origin.x;
+  let y = origin.y;
+  let z = origin.z;
+  let opened = 0;
+
+  for (let b = 0; b < blobs; b++) {
+    // A blob is 1.3–2.6× the nominal tunnel radius: this is the style whose
+    // whole point is that a void is a room, not a pipe.
+    const radius = (rLo + (rHi - rLo) * rng.float()) * (1.3 + 0.5 * rng.float()) + 2;
+    carveSphere(acc, region, bandLo, bandHi, x, y, z, radius, tuning.flattenY);
+
+    if (run.chambersLeft - opened > 0 && rng.float() < params.chambers.chance) {
+      carveSphere(acc, region, bandLo, bandHi, x, y, z, params.chambers.radius, 0.62);
+      opened++;
+    }
+
+    const reach = Math.round(radius * (1.1 + rng.float()));
+    x += rng.int(-reach, reach);
+    z += rng.int(-reach, reach);
+    y += rng.int(-drop, drop);
+
+    const next = stepInside(region, bandLo, bandHi, x, y, z);
+    if (next === null) break;
+    y = next;
+  }
+  return opened;
+}
+
+/**
+ * `chamber_network` — chambers as the primary feature, short connectors between.
+ *
+ * Alternates "open a room" with "bore a straight-ish connector of about
+ * `chambers.spacing` blocks to the next room site". `spacing` is load-bearing
+ * here rather than a gate on a probability: it *is* the edge length of the
+ * graph. Chambers still count against `chambers.count`, so the knob that caps
+ * the node's caverns caps this style's node count too.
+ */
+function runNetwork(run: WormRun): number {
+  const { rng, region, params, tuning, bandLo, bandHi, acc, origin } = run;
+  const [rMin, rMax] = params.radius;
+  const connectorRadius = Math.max(1.5, rMin + (rMax - rMin) * tuning.girth[1]);
+  const edge = Math.max(params.chambers.radius * 2 + 4, params.chambers.spacing);
+  const rooms = rng.int(tuning.steps[0], tuning.steps[1]);
+  const maxPitch = params.verticality * tuning.pitchScale;
+
+  let x = origin.x;
+  let y = origin.y;
+  let z = origin.z;
+  let opened = 0;
+
+  for (let r = 0; r < rooms; r++) {
+    if (run.chambersLeft - opened <= 0) break;
+    // Rooms vary a little in size so a network does not read as a stamp.
+    const radius = params.chambers.radius * (0.75 + 0.5 * rng.float());
+    carveSphere(acc, region, bandLo, bandHi, x, y, z, radius, 0.62);
+    opened++;
+
+    // --- the connector to the next room ------------------------------------
+    const yaw = rng.float() * TAU;
+    const pitch = (rng.float() * 2 - 1) * maxPitch;
+    const horizontal = cos(pitch);
+    const steps = Math.max(1, Math.round(edge / tuning.stepLength));
+    let bored = 0;
+    for (let s = 1; s <= steps; s++) {
+      const nx = Math.round(x + cos(yaw) * horizontal * tuning.stepLength * s);
+      const nz = Math.round(z + sin(yaw) * horizontal * tuning.stepLength * s);
+      const ny = Math.round(y + sin(pitch) * tuning.stepLength * s);
+      const inside = stepInside(region, bandLo, bandHi, nx, ny, nz);
+      if (inside === null) break;
+      carveSphere(acc, region, bandLo, bandHi, nx, inside, nz, connectorRadius, 1);
+      bored = s;
+    }
+    if (bored < steps) break;
+    x = Math.round(x + cos(yaw) * horizontal * tuning.stepLength * steps);
+    z = Math.round(z + sin(yaw) * horizontal * tuning.stepLength * steps);
+    y = Math.round(y + sin(pitch) * tuning.stepLength * steps);
+    const settled = stepInside(region, bandLo, bandHi, x, y, z);
+    if (settled === null) break;
+    y = settled;
+  }
+  return opened;
+}
+
+/**
+ * Clamp `y` into the band of column `(x, z)`, or `null` if the walker has left
+ * the region or reached a column no cave may enter.
+ *
+ * The one place the new styles' walks decide whether to keep going, and the
+ * same test the worm makes at the end of each step — so a blob cluster and a
+ * chamber network stop at a lake shore for exactly the reason a worm does.
+ */
+function stepInside(
+  region: Region,
+  bandLo: Int32Array,
+  bandHi: Int32Array,
+  x: number,
+  y: number,
+  z: number,
+): number | null {
+  const i = x - region.x0;
+  const j = z - region.z0;
+  if (i < 1 || j < 1 || i >= region.width - 1 || j >= region.depth - 1) return null;
+  const idx = j * region.width + i;
+  const lo = bandLo[idx] as number;
+  const hi = bandHi[idx] as number;
+  if (hi < lo) return null;
+  return clamp(y, lo, hi);
 }
 
 /**
