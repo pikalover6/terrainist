@@ -548,6 +548,9 @@ if __name__ == "__main__":
     if which in ("all", "5"):
         out["5-patched-tool-param-low"] = run_scenario(
             "patched-param", None, param_effort="low",
-            binary="/Users/kaihoward/.local/share/claude-subagents-effort/claude2-2.1.220")
+            binary=os.environ.get(
+                "CC_PATCHED_BINARY",
+                "/Users/kaihoward/.local/share/claude-subagents-effort/claude2-2.1.220",
+            ))
     print("\n" + "=" * 74)
     print(json.dumps(out, indent=2))
