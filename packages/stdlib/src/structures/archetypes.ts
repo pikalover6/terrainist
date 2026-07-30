@@ -39,6 +39,14 @@ import {
   townArchetypeOfTags,
 } from "./archetypes-town.js";
 
+import {
+  VERNACULAR_BUILDING_ARCHETYPES,
+  furnishVernacular,
+  vernacularArchetypeOfTags,
+} from "./archetypes-vernacular.js";
+
+export * from "./archetypes-vernacular.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -66,6 +74,7 @@ export const BUILDING_ARCHETYPES = [
   ...EXTENDED_BUILDING_ARCHETYPES,
   ...BLITZ_BUILDING_ARCHETYPES,
   ...TOWN_BUILDING_ARCHETYPES,
+  ...VERNACULAR_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
 ] as const;
@@ -98,6 +107,10 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // original table, where it means a great hall.
   const town = townArchetypeOfTags(tags);
   if (town !== null) return town;
+  // The vernacular wave, for the same reason: its archetypes are all houses,
+  // and every table below it is greedier about dwellings than it is.
+  const regional = vernacularArchetypeOfTags(tags);
+  if (regional !== null) return regional;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -409,6 +422,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishExtended(ctx);
   n += furnishBlitz(ctx);
   n += furnishTown(ctx);
+  n += furnishVernacular(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);

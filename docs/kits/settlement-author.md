@@ -602,9 +602,10 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 3 | watchtower | `lookout`, `tower`, `watchtower` |
 | 4 | breadth | see the breadth table below |
 | 5 | town | see the town table below |
-| 6 | extended | see the extended table below |
-| 7 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 8 | fallback | anything else → cottage |
+| 6 | vernacular | see the vernacular table below |
+| 7 | extended | see the extended table below |
+| 8 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 9 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -647,6 +648,19 @@ ordinary house shell instead.
 | mausoleum | `mausoleum`, `tomb`, `sepulchre` | windowless masonry, hip roof; pairs with a `crypt` cellar | `[9, 8, 9]`, 1 floor |
 | windpump | `windpump` | a pumping tower with sails, hip roof | `[7, 14, 7]`, 1 floor |
 | mine_head | `mine_head`, `mineshaft`, `mine`, `pithead` | headframe hut, winch, laddered shaft down into a mine-style cellar | `[9, 12, 9]`, 1 floor |
+
+**Vernacular (table 5)** — regional re-clads of the ordinary house shell.
+They sit *after* the breadth table and *before* the extended one, and they
+claim only regional tags: `house` still means cottage, `townhouse` is
+reserved. Like the breadth wave they rebuild the exterior, so give them a
+**plain rect** envelope — a `wing` makes the rebuild refuse and you get the
+ordinary house shell instead.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| alpine_chalet | `chalet`, `alpine` | boxed spruce-log corners, banded courses, a deep apron eave, shutters beside the lights, a hearth and benches inside | `[13, 11, 11]`, 1–2 floors |
+| saltbox_house | `saltbox` | the asymmetric gable rebuilt off-centre — short front pitch, long shallow back one — over a clapboard re-clad and a colonial parlour | `[9, 13, 15]`, 1–2 floors; **deep in z** |
+| dutch_gable_house | `dutch_gable`, `canal_house`, `stepped_gable` | brick re-clad, roof rebuilt front-to-back under a stepped parapet gable with a hoist beam, tall regular lights, a merchant counter | `[9, 16, 11]`, 1–2 floors; **narrow and tall** |
 
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is

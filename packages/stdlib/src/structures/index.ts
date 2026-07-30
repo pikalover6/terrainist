@@ -27,3 +27,4 @@ export * from "./aircraft.js";
 export * from "./ships.js";
 export * from "./props-blitz.js";
 export * from "./archetypes-town.js";
+export * from "./archetypes-vernacular.js";

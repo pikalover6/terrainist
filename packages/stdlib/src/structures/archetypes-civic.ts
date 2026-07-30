@@ -32,6 +32,7 @@
 
 import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { townFacadeDefaults } from "./archetypes-town.js";
+import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -122,17 +123,19 @@ export function archetypeFacadeDefaults(
       return { windowShape: "mullion", windowRhythm: "paired", roof: "gable" };
     case "bakery":
       return { windowShape: "single", windowRhythm: "regular", roof: "gable" };
-    default:
+    default: {
       // Each later wave keeps its own tendencies in its own file; falling
       // through to them here is what lets a keep ask for the roof shape whose
-      // height its battlement is going to take over, and a town hall for the
-      // one its clock gable stands in front of. The order between the two is
-      // arbitrary — neither answers to the other's names.
-      {
-        const town = townFacadeDefaults(archetype);
-        if (town.roof !== undefined) return town;
-      }
-      return blitzFacadeDefaults(archetype);
+      // height its battlement is going to take over, a town hall the one its
+      // clock gable stands in front of, and a saltbox the ridge it is about to
+      // rebuild. The order between the waves is arbitrary — no two of them
+      // answer to the same names.
+      const town = townFacadeDefaults(archetype);
+      if (town.roof !== undefined) return town;
+      const blitz = blitzFacadeDefaults(archetype);
+      if (blitz.roof !== undefined) return blitz;
+      return vernacularFacadeDefaults(archetype);
+    }
   }
 }
 
