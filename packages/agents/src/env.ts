@@ -88,3 +88,23 @@ export function loadOpenRouterKey(repoRoot?: string): string {
   }
   return key.trim();
 }
+
+/**
+ * The Tripo3D API key, from the process environment or the repo `.env`.
+ *
+ * Same two-source precedence and the same invariant as
+ * {@link loadOpenRouterKey}: the value is never logged and never appears in the
+ * thrown message, which says only where to put the key.
+ */
+export function loadTripoKey(repoRoot?: string): string {
+  const fromProcess = process.env["TRIPO_API_KEY"];
+  if (fromProcess !== undefined && fromProcess.trim() !== "") return fromProcess.trim();
+
+  const key = readDotEnv(repoRoot)["TRIPO_API_KEY"];
+  if (key === undefined || key.trim() === "") {
+    throw new Error(
+      "@terrainist/agents: no TRIPO_API_KEY — add `TRIPO_API_KEY=tsk_...` to the repo-root .env or export it",
+    );
+  }
+  return key.trim();
+}
