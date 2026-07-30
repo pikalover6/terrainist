@@ -24,10 +24,15 @@ Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
 - **Design/spec-heavy work gets Opus 5 at default (high) reasoning**, run as
   an independent agent. Design agents write docs only and never touch code
   that parallel work has in flight.
-- **The harness itself is patched**: Kai's Claude Code carries
-  https://github.com/pikalover6/claude-subagents-effort (adds the Agent
-  tool's `effort` param, which vanilla lacks). Pinned to a Claude Code
-  version — re-verify after CC updates. See docs/HANDOFF-2026-07-29.md.
+- **Subagent effort control** (corrected 2026-07-29, measured on the wire):
+  stock Claude Code DOES honor `effort:` in `.claude/agents/*.md`
+  frontmatter — named levels only (integers silently dropped; loader caches
+  at session start). The repo ships `impl-opus-low` / `design-opus-high`
+  agent types in `.claude/agents/`. Kai's local harness additionally
+  carries https://github.com/pikalover6/claude-subagents-effort, which adds
+  the Agent tool's per-invocation `effort` param (vanilla lacks only that).
+  New boxes need stock CC + this repo, no patch. Verify after CC updates
+  with `tools/cc-effort-probe/` (free, offline).
 - This is the *development* workflow. The *production* worldgen pipeline
   (Opus 5 planner + GLM 5.2 implementers via OpenRouter) is a separate
   concern — see `docs/DESIGN.md`.
