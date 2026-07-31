@@ -713,19 +713,18 @@ function fitFactoryHall(ctx: FitOutContext, c: PropCounter): void {
     c.put1(it.x1, z, "iron_block");
   });
 
-  // The drive shaft: a line under the plate, hung off the ceiling above it.
+  // The drive shaft: a line under the plate. A stripped log run and not a
+  // fence one — a fence's support chain walks DOWN to solid, so a fence in
+  // mid-air fails the lint no matter what hangs above it (the lint caught
+  // exactly this in the Terrarium). A continuous run of full cubes is legal
+  // by every rule — each log touches the next, so none has six air faces —
+  // and line shafting was always a turned log anyway.
   const shaftY = ctx.storyHeight - 1;
   if (shaftY >= 3) {
-    const fence = ctx.style["wall.fence"] as string;
+    const log = ctx.style["wall.log"] as string | undefined;
+    const shaft = log ?? "stripped_oak_wood";
     for (let z = it.z0 + 1; z <= it.z1 - 1; z++) {
-      if (ctx.blockAt(lamp.x, shaftY + 1, z) === undefined) continue;
-      c.stack(lamp.x, z, shaftY, fence, {
-        north: "false",
-        south: "false",
-        east: "false",
-        west: "false",
-        waterlogged: "false",
-      });
+      c.stack(lamp.x, z, shaftY, shaft, { axis: "z" });
     }
   }
 
