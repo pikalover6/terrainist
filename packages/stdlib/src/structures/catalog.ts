@@ -242,6 +242,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "The house shell re-clad in plaster panels between dark studwork, with a trapdoor jetty course in the apron at each storey line.",
   }),
   ver("mediterranean_villa", "Mediterranean villa", "implemented", {
+    wave: 2,
     tags: ["stucco", "terrace"],
     note: "Smooth-sandstone stucco with a terracotta cornice, and the roof replaced by a parapeted terrace with a corner pergola.",
   }),
