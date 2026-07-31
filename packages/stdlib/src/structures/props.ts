@@ -66,6 +66,7 @@ import {
   isRelicProp,
   relicPropFootprint,
 } from "./props-relics.js";
+import {
   SPECTACLE_PROP_GENERATORS,
   SPECTACLE_PROP_NAMES,
   isSpectacleProp,

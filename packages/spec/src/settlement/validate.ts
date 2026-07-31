@@ -1815,6 +1815,13 @@ export const SETTLEMENT_PROP_NAMES = [
   "helter_skelter",
   "midway_arch",
   "shooting_gallery",
+  "standing_stones",
+  "henge",
+  "monolith",
+  "burial_mound",
+  "dig_site",
+  "fossil_dig",
+  "shattered_obelisk",
   // Wave 6D: spectacle and oddities. The wave's other six entries are
   // buildings; these five are things you walk past rather than into.
   "ferris_wheel",
