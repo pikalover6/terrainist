@@ -276,7 +276,8 @@ describe("institution buildings", () => {
     expect(has(build("mint"), "anvil"), "the presses").toBe(true);
     expect(has(build("mint"), "iron_block"), "the strongroom trim").toBe(true);
     expect(has(build("customs_house"), "barrel"), "the bonded store").toBe(true);
-    expect(has(build("customs_house", BIG, { floors: 1 }), "chain"), "the scales").toBe(true);
+    // Iron bars, not `chain` — the 1.21.11 block table has no chain entry.
+    expect(has(build("customs_house", BIG, { floors: 1 }), "iron_bars"), "the scales").toBe(true);
     expect(has(build("bank"), "iron_bars"), "the grille").toBe(true);
     expect(has(build("bank"), "iron_block"), "the strongroom").toBe(true);
     expect(has(build("counting_house"), "lectern"), "the master's ledger").toBe(true);
