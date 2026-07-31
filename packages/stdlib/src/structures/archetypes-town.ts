@@ -534,7 +534,15 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
   if (pool !== null) {
     // The divider: a course of the coping down the middle of a wide pool, so a
     // large room reads as a hot bath and a cold one rather than as a pond.
-    const divider = pool.z1 - pool.z0 >= 3 ? Math.floor((pool.z0 + pool.z1) / 2) : null;
+    // Never on the room's centre row: the shell hangs its ceiling light there,
+    // at head height in a three-course storey, and the divider is a walkway —
+    // one whose west end the stair flight already crowds. A divider under the
+    // lantern had its whole west half sealed; one row over, it walks clear.
+    const zc = Math.floor((it.z0 + it.z1) / 2);
+    let divider: number | null = pool.z1 - pool.z0 >= 3 ? Math.floor((pool.z0 + pool.z1) / 2) : null;
+    if (divider !== null && divider === zc) {
+      divider = divider + 1 <= pool.z1 ? divider + 1 : divider - 1;
+    }
     for (let z = pool.z0; z <= pool.z1; z++) {
       for (let x = pool.x0; x <= pool.x1; x++) {
         if (z === divider) {
