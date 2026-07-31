@@ -918,6 +918,39 @@ granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to a
 also the tag `{"distance": "#tag:house"}` and the road network select on.
 There is no `archetype` param; writing one is an error.
 
+**Wave 5B (table 13) — commerce and civic.** Twelve buildings: seven
+commercial, three civic and two residential. Only the shop row rebuilds part of
+the exterior (the shopfront piers and cornice on its street face), so give
+*that* one a **plain rect** envelope; the rest are pure interiors and take a
+`wing` happily. Three of them lay a **seat or stall field** — auction house,
+food court, university hall, and the spice market's souk lane — which means
+their side wall rows are the field's clear lane and carry nothing solid; give
+those depth for the rows and width for the three-column aisle.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| shopping_mall | `shopping_mall`, `mall` | distinct shop-bay stock down both wall rows with fence piers between bays, a painted three-column promenade off the lantern, planters at its head | `[15, 13, 19]`, 1–2 floors |
+| department_store | `department_store` | timber counters per department with wool-bust mannequins standing on them, stacked stock walls between, haberdashery looms across the far wall | `[15, 13, 17]`, 1–2 floors |
+| food_court | `food_court` | counter stalls of smoker, cauldron and timber under a row of menu banners, and one shared seating field of tables and seats on the school's aisle discipline | `[15, 12, 19]`, 1–2 floors |
+| auction_house | `auction_house`, `auction` | a slab rostrum with the auctioneer's lectern in the middle of it under red sold-banners, flat seat rows, lot tables at the door end | `[13, 14, 19]`, 1–2 floors |
+| caravanserai | `caravanserai`, `khan` | traveller cells of chest and fence partition down both wall rows, carpet-topped pack-saddle racks, a hay store and a well at the head, the court left empty | `[15, 12, 17]`, 1–2 floors |
+| spice_market | `spice_market`, `souk`, `bazaar` | a souk lane of dense terracotta-and-wool sack stalls, lanterns standing only on the sacks, trapdoor and iron-bar hanging bunches on the walls | `[13, 12, 17]`, 1–2 floors |
+| shop_row | `shop_row`, `parade` | stone-brick piers every fourth column of the street face under a slab cornice, over counter-and-crate bays down both wall rows | `[11, 13, 19]`, 1–2 floors; **plain rect** |
+| university_hall | `university_hall`, `university`, `college` | a slab dais and lectern between book walls, flat rows off a three-column aisle, a trapdoor gallery rail run high on both side walls | `[15, 15, 19]`, 1–2 floors |
+| embassy | `embassy`, `consulate` | a timber reception desk and lectern under a flag wall of banners, waiting benches backed to both side walls, an iron-trimmed records corner | `[13, 14, 17]`, 1–2 floors |
+| council_chamber | `council_chamber`, `council` | a ring of wall-row benches broken at the aisle, a board set either side of the lantern column and never under it, the speaker's dais at the head | `[13, 13, 15]`, 1–2 floors |
+| boarding_house | `boarding_house`, `lodging_house` | bed-and-chest bays with fence partitions down one range only, the other left as the corridor, a shared kitchen range under the house-rules banner | `[13, 13, 17]`, 1–2 floors |
+| gate_lodge | `gate_lodge`, `gatekeepers_lodge` | one cosy room: a watch seat turned back down the room at the door, a small board, a cot head-to-wall, a trapdoor key rack by the entry | `[9, 11, 11]`, 1 floor |
+
+Wave 5B claims **no** tag an earlier table owns, and the near misses are worth
+stating because every one of them would have been a silent theft: `market`,
+`stall` and `vendor` are still the **market stall's**; `shop`, `grocer` and
+`emporium` the **general store's** and bare `store` the **granary's**; `trade`
+and `inn` still reach the **inn**; bare `hall` is still the **great hall** and
+`academy` the **school**; `court` is the **courthouse's**; `lodging` is the
+high-rise **hotel's** and `hospice` the **almshouse's**. Bare `lodge` is left
+unclaimed — the gate lodge is a compound only.
+
 #### The tall grammar — skyscrapers, hotels, apartment blocks
 
 A high-rise tag switches the building onto a different grammar: a switchback

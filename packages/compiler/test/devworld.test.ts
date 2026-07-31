@@ -35,6 +35,8 @@ import {
   UNDERGROUND_EXHIBIT_ROWS,
   INSTITUTION_EXHIBIT_ROWS,
   INSTITUTION_ROW_LENGTH,
+  COMMERCE_EXHIBIT_ROWS,
+  COMMERCE_ROW_LENGTH,
   LEISURE_EXHIBIT_ROWS,
   LEISURE_ROW_LENGTH,
   HOMESTEAD_EXHIBIT_ROWS,
@@ -158,6 +160,8 @@ describe("dev world grid", () => {
     const residential = RESIDENTIAL_EXHIBIT_ROWS.length * RESIDENTIAL_ROW_LENGTH;
     // Wave 4B, faith and memorial: prefixed (`faith_stupa`) for the same reason.
     const faith = FAITH_EXHIBIT_ROWS.length * FAITH_ROW_LENGTH;
+    // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
+    const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -176,7 +180,8 @@ describe("dev world grid", () => {
         regional +
         homestead +
         residential +
-        faith,
+        faith +
+        commerce,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

@@ -276,10 +276,18 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A row of identical bays down one range, each a bed and a chest with a fence partition between it and the next, and one shared hearth room across the far wall.",
   }),
   res("servants_quarters", "Servants' quarters", "not_started", { wave: 5 }),
-  res("gate_lodge", "Gate lodge", "not_started", { wave: 5 }),
+  res("gate_lodge", "Gate lodge", "implemented", {
+    wave: 5,
+    tags: ["gatehouse"],
+    note: "One cosy room: a watch seat on the far wall turned back down the room at the door, a small board beside it, a cot head-to-wall, and a trapdoor key rack by the entry.",
+  }),
   res("houseboat", "Houseboat", "not_started", { tags: ["water"] }),
   res("shepherds_bothy", "Shepherd's bothy", "not_started", { wave: 5 }),
-  res("boarding_house", "Boarding house", "not_started", { wave: 5 }),
+  res("boarding_house", "Boarding house", "implemented", {
+    wave: 5,
+    tags: ["lodging_house"],
+    note: "The inn's residential cousin: bed-and-chest bays with fence partitions down one range only, the other left as the corridor, a shared kitchen range across the far wall under the house-rules banner.",
+  }),
 
   /* --- vernacular / regional -------------------------------------------- */
   ver("stilt_house", "Stilt house", "implemented", {
@@ -376,7 +384,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 1,
     note: "Rows of desks and seats facing a dark board across the end wall, with a modest bell cote over the roof.",
   }),
-  civ("university_hall", "University hall", "not_started", { wave: 5 }),
+  civ("university_hall", "University hall", "implemented", {
+    wave: 5,
+    tags: ["civic", "university"],
+    note: "The lecture hall's grand parent: a slab dais and lectern between book walls, flat rows off a three-column aisle, a trapdoor gallery rail run high on both side walls.",
+  }),
   civ("hospital", "Hospital", "implemented", {
     wave: 3,
     tags: ["civic", "cots"],
@@ -422,7 +434,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Chiseled-stone plinths carrying position-chosen exhibits up both walls behind a fence rope, and a banner-hung gallery wall with an accession lectern.",
   }),
   civ("archive", "Archive"),
-  civ("embassy", "Embassy", "not_started", { wave: 5 }),
+  civ("embassy", "Embassy", "implemented", {
+    wave: 5,
+    tags: ["civic", "consulate"],
+    note: "A timber reception desk and lectern under a flag wall of banners, waiting benches backed to both side walls, and an iron-trimmed records corner by the door.",
+  }),
   civ("guildhall", "Guildhall", "implemented", {
     wave: 3,
     tags: ["civic", "hall"],
@@ -443,14 +459,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["civic", "benches"],
     note: "Ranks of looms and crafting benches up one wall, meagre cots up the other, and barrel stores with an overseer's desk at the far end.",
   }),
-  civ("council_chamber", "Council chamber", "not_started", { wave: 5 }),
+  civ("council_chamber", "Council chamber", "implemented", {
+    wave: 5,
+    tags: ["civic", "council"],
+    note: "A ring of wall-row benches broken at the aisle, a board set either side of the lantern column and never under it, and the speaker's dais and lectern at the head.",
+  }),
 
   /* --- commercial -------------------------------------------------------- */
   com("market_stall", "Market stall", "implemented", { tags: ["village"] }),
   com("bakery", "Bakery", "implemented", { tags: ["village"] }),
   com("warehouse", "Warehouse", "implemented", { tags: ["village", "storage"] }),
   com("marketplace", "Marketplace", "not_started", { tags: ["open-air"] }),
-  com("shop_row", "Shop row", "not_started", { wave: 5 }),
+  com("shop_row", "Shop row", "implemented", {
+    wave: 5,
+    tags: ["parade"],
+    note: "Stone-brick piers every fourth column of the street face under a slab cornice — the repeating shopfront bay — over counter-and-crate bays down both wall rows.",
+  }),
   com("general_store", "General store", "implemented", {
     wave: 1,
     note: "Stock walls of barrels, shelves and chests, a service counter and an apron awning over the door.",
@@ -492,21 +516,44 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["desks"],
     note: "Two ranks of ledger desks with clerks stools turned away from the desk they read, a masters lectern, bookshelves and a strongbox corner.",
   }),
-  com("auction_house", "Auction house", "not_started", { wave: 5 }),
+  com("auction_house", "Auction house", "implemented", {
+    wave: 5,
+    tags: ["auction"],
+    note: "A slab rostrum with the auctioneer's lectern in the middle of it under red sold-banners, flat seat rows off a three-column aisle, lot tables at the door end.",
+  }),
   com("trading_post", "Trading post", "implemented", {
     wave: 3,
     tags: ["trade"],
     note: "Mixed goods walls cycling barrels, chests and hay, a timber trade counter across the far wall and a banner over the middle of it.",
   }),
-  com("caravanserai", "Caravanserai", "not_started", { wave: 5 }),
+  com("caravanserai", "Caravanserai", "implemented", {
+    wave: 5,
+    tags: ["khan", "trade"],
+    note: "The courtyard house gone mercantile: traveller cells of chest and fence partition down both wall rows, carpet-topped pack-saddle racks, a hay store and a well at the head, the court left empty.",
+  }),
   com("tea_house", "Tea house", "implemented", {
     wave: 3,
     note: "Low slab tables in the side bays with a seat either side turned by the backrest rule, a kettle counter on the far wall and pots at the windows.",
   }),
-  com("spice_market", "Spice market", "not_started", { wave: 5 }),
-  com("shopping_mall", "Shopping mall", "not_started", { wave: 5 }),
-  com("department_store", "Department store", "not_started", { wave: 5 }),
-  com("food_court", "Food court", "not_started", { wave: 5 }),
+  com("spice_market", "Spice market", "implemented", {
+    wave: 5,
+    tags: ["souk", "bazaar"],
+    note: "A souk lane of dense terracotta-and-wool sack stalls off the lantern aisle, warm lanterns standing only on the sacks, trapdoor and iron-bar hanging bunches on the walls.",
+  }),
+  com("shopping_mall", "Shopping mall", "implemented", {
+    wave: 5,
+    tags: ["mall"],
+    note: "A galleried retail hall: distinct shop-bay stock down both wall rows with fence piers between bays, a painted three-column promenade off the lantern, planters at its head.",
+  }),
+  com("department_store", "Department store", "implemented", {
+    wave: 5,
+    note: "Timber counters per department up both walls with wool-bust mannequins standing on them, stacked stock walls between, haberdashery looms across the far wall.",
+  }),
+  com("food_court", "Food court", "implemented", {
+    wave: 5,
+    tags: ["food"],
+    note: "Counter stalls of smoker, cauldron and timber across the far wall under a row of menu banners, and one shared seating field of tables and backrest-rule seats on the school's aisle discipline.",
+  }),
 
   /* --- industrial -------------------------------------------------------- */
   ind("smithy", "Smithy", "implemented", { tags: ["village", "craft"] }),

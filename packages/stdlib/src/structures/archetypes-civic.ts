@@ -40,6 +40,7 @@ import { wave2FacadeDefaults } from "./archetypes-wave2.js";
 import { worksFacadeDefaults } from "./archetypes-works.js";
 import { institutionFacadeDefaults } from "./archetypes-institution.js";
 import { leisureFacadeDefaults } from "./archetypes-leisure.js";
+import { commerceFacadeDefaults } from "./archetypes-commerce.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
@@ -168,6 +169,10 @@ export function archetypeFacadeDefaults(
       // Wave 4B, faith and memorial.
       const faith = faithFacadeDefaults(archetype);
       if (Object.keys(faith).length > 0) return faith;
+      // Wave five B, commerce and civic — appended, and the regional houses
+      // stay the tail of the chain.
+      const commerce = commerceFacadeDefaults(archetype);
+      if (Object.keys(commerce).length > 0) return commerce;
       return regionalFacadeDefaults(archetype);
     }
   }

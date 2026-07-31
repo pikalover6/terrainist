@@ -113,6 +113,14 @@ import {
 export * from "./archetypes-residential.js";
 
 import {
+  COMMERCE_BUILDING_ARCHETYPES,
+  commerceArchetypeOfTags,
+  furnishCommerce,
+} from "./archetypes-commerce.js";
+
+export * from "./archetypes-commerce.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -155,6 +163,7 @@ export const BUILDING_ARCHETYPES = [
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
   ...RESIDENTIAL_BUILDING_ARCHETYPES,
+  ...COMMERCE_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -233,6 +242,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // Mediterranean villa's and `apartment` the tall grammar's.
   const residential = residentialArchetypeOfTags(tags);
   if (residential !== null) return residential;
+  // Wave five B, commerce and civic. Immediately after the dwellings and well
+  // before the extended table, for the reason every later wave sits here: the
+  // tables below are greedy. It claims nothing an earlier one claims —
+  // `market`, `stall` and `vendor` still reach the market stall, `shop` and
+  // `grocer` the general store, bare `store` the granary, `trade` and `inn`
+  // the inn, bare `hall` the great hall, `court` the courthouse, `academy` the
+  // school, `lodging` the hotel and `hospice` the almshouse.
+  const commerce = commerceArchetypeOfTags(tags);
+  if (commerce !== null) return commerce;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -615,6 +633,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishLeisure(ctx);
   n += furnishHomestead(ctx);
   n += furnishResidential(ctx);
+  n += furnishCommerce(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
