@@ -763,7 +763,11 @@ function fitSpiceMarket(ctx: FitOutContext, c: PropCounter): void {
     rack(ctx, c, it.x0, z, "east");
     rack(ctx, c, it.x1, z, "west");
   }
-  const barY = Math.min(2, ctx.storyHeight - 1);
+  // The bunch bar hangs under the plate, never at head height: at y=2 in a
+  // three-course storey it sealed the door-row corners into pockets (the
+  // lint caught two markets). Where no course clears a head, no bar.
+  const barY = ctx.storyHeight - 1;
+  if (barY < 3) return;
   for (let x = it.x0 + 1; x <= it.x1 - 1; x += 3) {
     c.stack(x, nearZ, barY, "iron_bars", {
       north: "false",

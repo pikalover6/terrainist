@@ -619,7 +619,10 @@ function fitBrickworks(ctx: FitOutContext, c: PropCounter): void {
     if (!c.put1(it.x0, z, "bricks")) return;
     if (ctx.storyHeight >= 4) c.stack(it.x0, z, 2, "brick_slab", { type: "bottom", waterlogged: "false" });
   });
-  rack(ctx, c, it.x1, "west", 2);
+  // The shelf rack sits at y=2 — head height under a three-course storey,
+  // where it turns the open wall-row cells beneath it into sealed pockets
+  // (the lint caught three brickworks). Racks only where a head clears them.
+  if (ctx.storyHeight >= 4) rack(ctx, c, it.x1, "west", 2);
   // The slip tubs and the barrows, up the east wall.
   wallRun(ctx, 3, 1, (z) => {
     c.put1(it.x1, z, "cauldron", { level: "0" });

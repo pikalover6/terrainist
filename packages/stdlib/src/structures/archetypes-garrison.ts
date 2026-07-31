@@ -614,12 +614,17 @@ function fitCastle(ctx: FitOutContext, c: PropCounter): void {
     c.n += 1;
     // The turrets: one course proud of the merlons, at the four angles, and
     // only when the envelope has the course to spare.
+    // A turret is a column, not a lone capstone: a single block one course
+    // proud of the merlons has air on all six faces wherever the crenellation
+    // pattern left the corner low — the lint caught six of them. Build the
+    // corner up continuously from the deck so every course stands on the one
+    // below it.
     const turretY = deck + 3;
     if (turretY <= plan.top) {
       const stone = masonry(ctx);
       for (const cx of [0, plan.sx - 1]) {
         for (const cz of [0, plan.sz - 1]) {
-          c.raw(cx, turretY, cz, stone(cx, turretY, cz));
+          for (let y = deck + 1; y <= turretY; y++) c.raw(cx, y, cz, stone(cx, y, cz));
         }
       }
     }
