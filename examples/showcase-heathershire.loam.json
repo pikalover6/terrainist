@@ -1,0 +1,3090 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "heathershire",
+    "worldSeed": 90310774,
+    "prompt": "Heathershire, a dense countryside shire packed with everything a shire has. A village high street runs off a green with a moot hall, an inn, a terraced row and the parish's charitable houses, dressed with lamp posts, benches, a fountain and the whole clutter of street furniture. North of it a manor and its mansion sit behind a gated drive with stables and a dovecote; west, farm country crowds a windmill, an oast, a silo and a dozen yards together. An eastern show-hamlet ring stands one house from each of eighteen building traditions on its own plot, from an igloo to a hacienda. A drovers' camp squats on the south-west moor, and the Heather Water runs south to a broad with a houseboat moored on it.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:cobblestone",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Heathershire: a shire packed edge to edge",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Gentle shire country falling south to a broad water",
+        "params": {
+          "amplitude": 20,
+          "baseHeight": 82,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "lacunarity": 2,
+          "erosionPasses": 3,
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the village and its green sit on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 110,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "manor_lawn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The manor's level lawn",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.17
+              ],
+              "radius": 92,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "farm_flats",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The flat fields of the farm country",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.16,
+                0.34
+              ],
+              "radius": 118,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "hamlet_ring_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the world-vernacular ring stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.85,
+                0.5
+              ],
+              "radius": 118,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "drover_moor",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The flat moor the drovers camp on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.76
+              ],
+              "radius": 96,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "the_broad",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The broad — the wide water at the shire's southern edge",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.86
+              ],
+              "radius": 66,
+              "depth": 28,
+              "water": true,
+              "profile": "rounded",
+              "irregularity": 0.15
+            }
+          },
+          {
+            "id": "heather_water",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The Heather Water, running down the shire to the broad",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.62,
+                  0.1
+                ],
+                [
+                  0.58,
+                  0.38
+                ],
+                [
+                  0.54,
+                  0.6
+                ],
+                [
+                  0.5,
+                  0.78
+                ]
+              ],
+              "width": 11,
+              "depth": 6,
+              "meander": 0.6,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild, damp, green",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "The village green",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "great_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The moot hall at the head of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              14
+            ]
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hall",
+          "civic"
+        ]
+      },
+      {
+        "id": "the_drovers_rest",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The inn on the high street",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              14
+            ]
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "high_street_terrace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A terraced row down the high street",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "terraced_row",
+          "house"
+        ]
+      },
+      {
+        "id": "merchants_townhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The merchant's townhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "townhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "shire_almshouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The almshouse behind the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "almshouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_boarding_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The boarding house for market folk",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "boarding_house",
+          "house"
+        ]
+      },
+      {
+        "id": "carters_dormitory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The carters' dormitory",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dormitory",
+          "house"
+        ]
+      },
+      {
+        "id": "green_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A cottage on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "the_long_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The old longhouse at the street's end",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            21
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "longhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "heather_manor",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Heather Manor at the head of the drive",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "manor_house",
+          "house"
+        ]
+      },
+      {
+        "id": "the_mansion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The new mansion beside the old manor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mansion",
+          "house"
+        ]
+      },
+      {
+        "id": "drive_gate_lodge",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The gate lodge at the foot of the drive",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gate_lodge",
+          "house"
+        ]
+      },
+      {
+        "id": "manor_servants",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The servants' quarters behind the manor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "servants_quarters",
+          "house"
+        ]
+      },
+      {
+        "id": "factors_courtyard_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The factor's courtyard house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "courtyard_house",
+          "house"
+        ]
+      },
+      {
+        "id": "manor_stables",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The manor stables",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "horse_stable"
+        ]
+      },
+      {
+        "id": "manor_dovecote",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The dovecote on the manor lawn",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dovecote"
+        ]
+      },
+      {
+        "id": "hollow_farmhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Hollow Farm's farmhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farmhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "great_barn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The great barn",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barn"
+        ]
+      },
+      {
+        "id": "shire_granary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The granary on staddle ground",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "grain_silo",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The grain silo",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "silo"
+        ]
+      },
+      {
+        "id": "heath_windmill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The windmill on the heath",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "windmill"
+        ]
+      },
+      {
+        "id": "market_greenhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The market gardener's glasshouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "greenhouse"
+        ]
+      },
+      {
+        "id": "bee_apiary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The apiary in the clover",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apiary"
+        ]
+      },
+      {
+        "id": "hen_coop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chicken coop in the yard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "chicken_coop"
+        ]
+      },
+      {
+        "id": "hop_oast",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The oast house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            17,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hop_kiln"
+        ]
+      },
+      {
+        "id": "cider_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The cider press house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cider_press"
+        ]
+      },
+      {
+        "id": "root_cellar",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The root cellar mound at the yard's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "root_cellar_mound"
+        ]
+      },
+      {
+        "id": "hanok_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A hanok on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hanok",
+          "house"
+        ]
+      },
+      {
+        "id": "machiya_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A machiya on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "machiya",
+          "house"
+        ]
+      },
+      {
+        "id": "riad_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A riad on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "riad",
+          "house"
+        ]
+      },
+      {
+        "id": "cycladic_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A cycladic house on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cycladic_house",
+          "house"
+        ]
+      },
+      {
+        "id": "pueblo_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "An adobe pueblo on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "adobe_pueblo",
+          "house"
+        ]
+      },
+      {
+        "id": "tudor_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A tudor row on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tudor_row",
+          "house"
+        ]
+      },
+      {
+        "id": "igloo_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "An igloo on the cold side of the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "igloo",
+          "house"
+        ]
+      },
+      {
+        "id": "roundhouse_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A thatched roundhouse on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "thatched_roundhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "fachwerk_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A fachwerk barn on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "fachwerk"
+        ]
+      },
+      {
+        "id": "chalet_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "An alpine chalet on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "chalet",
+          "house"
+        ]
+      },
+      {
+        "id": "dutch_gable_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A dutch gable house on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dutch_gable",
+          "house"
+        ]
+      },
+      {
+        "id": "stilt_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A stilt house at the water end of the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "stilt_house",
+          "house"
+        ]
+      },
+      {
+        "id": "veranda_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A colonial veranda house on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "colonial_veranda_house",
+          "house"
+        ]
+      },
+      {
+        "id": "hacienda_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A hacienda on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hacienda",
+          "house"
+        ]
+      },
+      {
+        "id": "villa_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A mediterranean villa on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mediterranean_villa",
+          "house"
+        ]
+      },
+      {
+        "id": "saltbox_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A saltbox house on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "saltbox",
+          "house"
+        ]
+      },
+      {
+        "id": "trullo_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A trullo on the ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trullo",
+          "house"
+        ]
+      },
+      {
+        "id": "sod_house_plot",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A sod house on the moor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "sod_house",
+          "house"
+        ]
+      },
+      {
+        "id": "bank_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A one-room hut by the water",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hut",
+          "house"
+        ]
+      },
+      {
+        "id": "valley_cabin",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A log cabin up the valley",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "log_cabin",
+          "house"
+        ]
+      },
+      {
+        "id": "shepherds_bothy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The shepherd's bothy above the bank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "shepherds_bothy",
+          "house"
+        ]
+      },
+      {
+        "id": "riverside_bungalow",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A bungalow on the riverside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 230
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bungalow",
+          "house"
+        ]
+      },
+      {
+        "id": "green_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The fountain on the green",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "jitter": 0.04
+        }
+      },
+      {
+        "id": "green_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A bench on the green",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "green_planter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A planter on the green",
+        "params": {
+          "prop": "planter",
+          "zone": "center",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "green_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The well head on the green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.07
+        }
+      },
+      {
+        "id": "green_flagpole",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The flagpole on the green",
+        "params": {
+          "prop": "flagpole",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "green_drinking_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A drinking fountain on the green",
+        "params": {
+          "prop": "drinking_fountain",
+          "zone": "center",
+          "jitter": 0.09
+        }
+      },
+      {
+        "id": "cross_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The notice board at the crossroads",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "cross_signpost",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The signpost at the crossroads",
+        "params": {
+          "prop": "signpost",
+          "zone": "center",
+          "jitter": 0.11
+        }
+      },
+      {
+        "id": "cross_mailbox",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The mailbox at the crossroads",
+        "params": {
+          "prop": "mailbox",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "cross_phone_box",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The phone box at the crossroads",
+        "params": {
+          "prop": "phone_box",
+          "zone": "center",
+          "jitter": 0.13
+        }
+      },
+      {
+        "id": "cross_bus_shelter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The bus shelter at the crossroads",
+        "params": {
+          "prop": "bus_shelter",
+          "zone": "center",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "street_lamp_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A lamp post up the high street",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "street_litter_bin",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A litter bin on the high street",
+        "params": {
+          "prop": "litter_bin",
+          "zone": "center",
+          "jitter": 0.17
+        }
+      },
+      {
+        "id": "street_bicycle_rack",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A bicycle rack on the high street",
+        "params": {
+          "prop": "bicycle_rack",
+          "zone": "center",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "street_bollards",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A bollard run along the kerb",
+        "params": {
+          "prop": "bollard_row",
+          "zone": "center",
+          "jitter": 0.19,
+          "length": 11
+        }
+      },
+      {
+        "id": "shop_awning_street",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A shop awning on the high street",
+        "params": {
+          "prop": "shop_awning",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "sandwich_board_street",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A sandwich board outside the shop",
+        "params": {
+          "prop": "sandwich_board",
+          "zone": "center",
+          "jitter": 0.21
+        }
+      },
+      {
+        "id": "market_barrow_green",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A market barrow on the green",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "inn_hitching_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A hitching post outside the inn",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center",
+          "jitter": 0.23
+        }
+      },
+      {
+        "id": "inn_horse_trough",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A horse trough outside the inn",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "center",
+          "jitter": 0.24
+        }
+      },
+      {
+        "id": "yard_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A scarecrow in the field",
+        "params": {
+          "prop": "scarecrow",
+          "zone": "west",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "yard_clothesline",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A clothesline in the farm yard",
+        "params": {
+          "prop": "clothesline",
+          "zone": "west",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "yard_dog_kennel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The farm dog's kennel",
+        "params": {
+          "prop": "dog_kennel",
+          "zone": "west",
+          "jitter": 0.24
+        }
+      },
+      {
+        "id": "yard_log_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A log pile against the barn",
+        "params": {
+          "prop": "log_pile",
+          "zone": "west",
+          "jitter": 0.26
+        }
+      },
+      {
+        "id": "drover_campsite",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The drovers' camp",
+        "params": {
+          "prop": "campsite",
+          "zone": "southwest",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "drover_tent",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A drover's tent",
+        "params": {
+          "prop": "tent",
+          "zone": "southwest",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "drover_yurt",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A yurt at the camp",
+        "params": {
+          "prop": "yurt",
+          "zone": "southwest",
+          "jitter": 0.26
+        }
+      },
+      {
+        "id": "drover_caravan",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A caravan at the camp",
+        "params": {
+          "prop": "caravan",
+          "zone": "southwest",
+          "jitter": 0.3
+        }
+      },
+      {
+        "id": "moored_houseboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A houseboat moored on the broad",
+        "params": {
+          "prop": "houseboat",
+          "zone": "south",
+          "jitter": 0.2,
+          "on": "water"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The high street and the lanes off it",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "great_hall",
+            "great_barn",
+            "heath_windmill"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "shire_hedgerows",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Hedgerow oaks over the whole shire",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.1,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "hedge_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "hedge_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "river_alders",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Alder and birch along the water",
+        "params": {
+          "area": {
+            "zone": "south"
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "bank_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
