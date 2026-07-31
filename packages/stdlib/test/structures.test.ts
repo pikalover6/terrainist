@@ -800,22 +800,38 @@ describe("material themes", () => {
     expect(meta.chimney).toBe(true);
     const at = new Map(ops.map((o) => [key(o), o] as const));
     const fires = ops.filter((o) => o.block === "campfire").sort((a, b) => a.y - b.y);
-    // Two: the hearth in the wall face, and the fire in the chimney head.
+    // Two: the hearth inside the room, and the fire in the chimney head.
     expect(fires.length).toBe(2);
 
     // --- the hearth --------------------------------------------------------
     const hearth = fires[0] as { x: number; y: number; z: number };
     expect(hearth.y).toBe(1);
-    // It is in the wall plane, which is the whole point: a flue is a piece of
-    // wall, and the version that stood it on an interior column put a
-    // cobblestone pillar through the middle of a smithy and three courses of
-    // it over a bed.
-    const onWall =
-      hearth.x === 0 || hearth.x === 8 || hearth.z === 0 || hearth.z === 8;
-    expect(onWall).toBe(true);
-    // Standing on the course below it, with its flue directly above.
+    // It is strictly *inside* the interior, not in the wall plane: a campfire
+    // is neither full nor opaque, and standing one in the exterior wall left a
+    // see-through hole in the wall at floor level.
+    expect(hearth.x).toBeGreaterThanOrEqual(meta.interior.x0);
+    expect(hearth.x).toBeLessThanOrEqual(meta.interior.x1);
+    expect(hearth.z).toBeGreaterThanOrEqual(meta.interior.z0);
+    expect(hearth.z).toBeLessThanOrEqual(meta.interior.z1);
+    // Standing on the floor course below it.
     expect(at.has(`${hearth.x},0,${hearth.z}`)).toBe(true);
-    expect(at.get(`${hearth.x},2,${hearth.z}`)?.block).toBe(PINNED["chimney.block"]);
+    // …with the chimney breast solid behind it: the wall cell it faces is the
+    // flue block, at floor level and in the course above, so the wall plane
+    // has no gap. The flue is one of the four neighbours of the hearth cell.
+    const breast = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]
+      .map(([dx, dz]) => ({ x: hearth.x + (dx as number), z: hearth.z + (dz as number) }))
+      .filter(
+        (c) =>
+          at.get(`${c.x},1,${c.z}`)?.block === PINNED["chimney.block"] &&
+          at.get(`${c.x},2,${c.z}`)?.block === PINNED["chimney.block"] &&
+          (c.x === 0 || c.x === 8 || c.z === 0 || c.z === 8),
+      );
+    expect(breast.length).toBe(1);
 
     // --- no interior cell is a full column ---------------------------------
     for (let z = meta.interior.z0; z <= meta.interior.z1; z++) {

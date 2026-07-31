@@ -1822,8 +1822,10 @@ function fillGableEnds(
 }
 
 /**
- * A cobblestone chimney: a flue **in the wall**, a hearth opening on its inside
- * face, and a corbelled head with a fire in it above the ridge.
+ * A cobblestone chimney: a flue **in the wall**, a fire on the floor of the
+ * room directly in front of it, and a corbelled head with a fire in it above
+ * the ridge. The wall plane itself stays solid all the way up — the fire is a
+ * hearth you stand in front of, backed by a solid chimney breast.
  *
  * The shaft used to stand on an interior column, and it was as bad as that
  * sounds: a walkthrough found a full cobblestone pillar running floor to
@@ -1893,9 +1895,12 @@ function emitChimney(
 
   const corbelY = roofTop + 1;
   for (let y = 0; y <= corbelY - 1; y++) put(cx, y, cz, block);
-  // The fireplace: an opening in the wall face at floor level, standing on the
-  // course below it, with the flue it vents into directly above.
-  put(cx, 1, cz, "campfire", {
+  // The fireplace: the fire sits *inside* the room, one cell in front of the
+  // flue, standing on the floor with the chimney breast solid behind it. The
+  // earlier version put the campfire in the wall cell itself — a non-full,
+  // non-opaque block in the exterior wall plane, i.e. a see-through hole in
+  // the wall at floor level, which is exactly what it looked like in game.
+  put(hearth.x, 1, hearth.z, "campfire", {
     lit: "true",
     facing: opposite(face),
     signal_fire: "false",
