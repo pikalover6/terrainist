@@ -445,6 +445,15 @@ containers (deps, build, ssh client for the bridge).
 Everything here is code-complete and physics-lint clean; nothing new has
 been walked. The next Terrarium session runs on v3.
 
+**Standing infrastructure debt (2026-07-31):** the one-shot dev-world
+physics lint outgrew per-push CI at wave 4 — the build+walk blew a full
+hour on CI hardware while all 1413 other tests stayed green. It is now
+env-gated (`TERRAINIST_DEVWORLD_PHYSICS=1`) and belongs to baseline
+promotion; the per-push physics gate is the Terrarium lint (every
+archetype across its whole exhibit gradient, minutes, zero on every
+rule). Sharding the walk per-building would bring the dev-world pass back
+to CI.
+
 **Queued for the next e2e round (Kai, 2026-07-31):** side-by-side authored
 worlds, GLM 5.2 high vs **GPT 5.6 Luna max** — Luna's API price just dropped
 80%, making it a live replacement candidate if quality holds at the lower

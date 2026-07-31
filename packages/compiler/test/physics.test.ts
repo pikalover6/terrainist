@@ -109,7 +109,20 @@ describe("physics lint — the hillside village", () => {
   });
 });
 
-describe("physics lint — the dev world", () => {
+// The one-shot dev-world lint outgrew per-push CI at wave 4: the beforeAll
+// build+walk blew a full hour on CI hardware while every other suite stayed
+// green, and the grid grows every wave. The per-push physics gate is the
+// TERRARIUM lint (every archetype × its whole exhibit gradient, minutes, zero
+// on every rule); this whole-dev-world pass runs where it belongs — at
+// baseline promotion and on demand:
+//
+//   TERRAINIST_DEVWORLD_PHYSICS=1 npx vitest run packages/compiler/test/physics.test.ts
+//
+// Sharding the walk per-building would bring it back to CI; flagged in
+// docs/DESIGN.md as the standing infrastructure debt.
+describe.skipIf(process.env["TERRAINIST_DEVWORLD_PHYSICS"] !== "1")(
+  "physics lint — the dev world",
+  () => {
   let report: PhysicsReport;
 
   beforeAll(async () => {
@@ -159,7 +172,8 @@ describe("physics lint — the dev world", () => {
     expect(seen.has("water"), "the fountain's bowl").toBe(true);
     expect(dev.props.length, "props placed").toBeGreaterThan(0);
   });
-});
+  },
+);
 
 describe("the walking agent", () => {
   /**
