@@ -6,3 +6,5 @@ out/
 .env
 .claude/*
 !.claude/agents/
+!.claude/settings.json
+!.claude/hooks/
