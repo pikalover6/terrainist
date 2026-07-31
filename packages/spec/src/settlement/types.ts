@@ -184,6 +184,61 @@ export interface PlazaNode extends StructureBase {
   readonly params?: Readonly<Record<string, unknown>>;
 }
 
+/* -------------------------------------------------------------------------- */
+/* districts (fabric v2, F1)                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** How a district's street skeleton is drawn. */
+export const DISTRICT_FABRICS = ["grid", "organic"] as const;
+
+/** A street-skeleton fabric. */
+export type DistrictFabric = (typeof DISTRICT_FABRICS)[number];
+
+/** How much of a district's lot supply is actually built on. */
+export const DISTRICT_DENSITIES = ["low", "medium", "high"] as const;
+
+/** A district density. */
+export type DistrictDensity = (typeof DISTRICT_DENSITIES)[number];
+
+/** Params a `district` node carries. */
+export interface DistrictParams {
+  readonly fabric: DistrictFabric;
+  readonly density: DistrictDensity;
+  /** Archetype names the auto-infill draws from, in declaration order. */
+  readonly mix: readonly string[];
+  /** Preferred block size between street centre lines, in blocks. A hint. */
+  readonly blockSize?: number;
+  /** Leave one central block unbuilt as a square. */
+  readonly plaza?: boolean;
+}
+
+/**
+ * A `district`: a composite whose *void* is authored and whose solid follows.
+ *
+ * Unlike every other node in the profile, a district is not a thing that is
+ * placed among other things — it is a piece of ground that gets a street
+ * skeleton first, then blocks, then lots, and only then buildings. Its
+ * `children` are **landmarks**: ordinary `building.grammar@0` nodes that claim
+ * the lots big enough to hold them. Everything else on the block is infilled
+ * from {@link DistrictParams.mix}.
+ *
+ * The node itself goes through the ordinary layout solve as a single footprint,
+ * so `zone`, `at`, `distance` and the rest still say *where the district is*.
+ * What the solver never sees is anything inside it.
+ */
+export interface DistrictNode extends StructureBase {
+  readonly kind: "district";
+  readonly envelope: RegionEnvelope;
+  readonly params: DistrictParams;
+  /** Landmark buildings, in document order. */
+  readonly children?: readonly StructureNode[];
+}
+
+/** True for a `district` node. */
+export function isDistrictNode(node: SettlementChildNode): node is DistrictNode {
+  return node.kind === "district";
+}
+
 /** Any node the settlement profile allows below the root. */
 export type SettlementChildNode =
   | HeightfieldNode
@@ -191,11 +246,17 @@ export type SettlementChildNode =
   | ForestNode
   | StructureNode
   | PropNode
-  | PlazaNode;
+  | PlazaNode
+  | DistrictNode;
 
 /** True for the nodes the layout solver places. */
-export function isPlaceableNode(node: SettlementChildNode): node is StructureNode | PlazaNode {
+export function isPlaceableNode(
+  node: SettlementChildNode,
+): node is StructureNode | PlazaNode | DistrictNode {
   if (node.kind === "primitive") return true;
+  // A district is placed as one footprint — the fabric pass then subdivides
+  // what the solver reserved. See {@link DistrictNode}.
+  if (node.kind === "district") return true;
   // A prop node is deliberately not placeable: it is resolved coarsely by the
   // structure pass against the finished ground, not by the solver.
   return (STRUCTURE_GENERATORS as readonly string[]).includes(node.generator);

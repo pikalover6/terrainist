@@ -48,7 +48,10 @@ import {
   resolveTypeKey,
   type ConstraintType,
 } from "./constraints.js";
+import { isKnownArchetype, nearestArchetypes } from "./archetypes.js";
 import {
+  DISTRICT_DENSITIES,
+  DISTRICT_FABRICS,
   HORIZONTAL_FACES,
   PORT_TYPES,
   SETTLEMENT_EXCLUDED_GENERATORS,
@@ -209,9 +212,11 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
         raw["id"],
         raw["kind"] === "primitive"
           ? "primitive"
-          : typeof raw["generator"] === "string"
-            ? raw["generator"]
-            : "generator",
+          : raw["kind"] === "district"
+            ? "district"
+            : typeof raw["generator"] === "string"
+              ? raw["generator"]
+              : "generator",
       );
     }
 
@@ -231,13 +236,18 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       continue;
     }
 
+    if (raw["kind"] === "district") {
+      validateDistrictNode(out, childPath, raw, connections);
+      continue;
+    }
+
     if (raw["kind"] !== "generator") {
       out.push(
         error(
           "STRUCTURE_NODE_SHAPE",
           childPath,
-          `children of the root must have "kind": "generator" or "kind": "primitive", got ${describe(raw["kind"])}`,
-          'set "kind": "generator" for a terrain or structure generator, or "kind": "primitive" for the plaza — the settlement profile has no nested composites',
+          `children of the root must have "kind": "generator", "kind": "primitive" or "kind": "district", got ${describe(raw["kind"])}`,
+          'set "kind": "generator" for a terrain or structure generator, "kind": "primitive" for the plaza, or "kind": "district" for a street-fabric quarter — the settlement profile has no other composites',
         ),
       );
       continue;
@@ -407,6 +417,272 @@ function validatePlazaNode(
 
   validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
+}
+
+/* -------------------------------------------------------------------------- */
+/* districts (fabric v2, F1)                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Keys a `district` node may carry. */
+const DISTRICT_KEYS = [
+  "id",
+  "kind",
+  "envelope",
+  "params",
+  "children",
+  "constraints",
+  "ports",
+  "optional",
+  "seedSalt",
+  "tags",
+] as const;
+
+/** Keys a district's `params` may carry. */
+const DISTRICT_PARAM_KEYS = ["fabric", "density", "mix", "blockSize", "plaza"] as const;
+
+/**
+ * Block size a district may ask for, in blocks between street centre lines.
+ *
+ * The floor is two lot depths plus an avenue: below it there is no block left
+ * to subdivide once the carriageway and its sidewalks are taken out, and the
+ * skeleton degenerates into pavement. The ceiling is a superblock — past it
+ * the "district" is a field with four roads round it, which the ordinary
+ * solver already does better.
+ */
+export const DISTRICT_MIN_BLOCK = 16;
+export const DISTRICT_MAX_BLOCK = 96;
+
+/** Longest `mix` this profile reads; past it the cycle is not a mix, it is noise. */
+export const DISTRICT_MAX_MIX = 24;
+
+/**
+ * Validate a `district` node.
+ *
+ * The shape is deliberately narrow. A district owns its interior completely —
+ * the street skeleton decides where its buildings go — so the only things it
+ * accepts are the fabric knobs, an envelope saying how much ground it covers,
+ * constraints saying where that ground is, and landmark children.
+ */
+function validateDistrictNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, DISTRICT_KEYS, "district node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  // --- envelope ------------------------------------------------------------
+  const envelope = node["envelope"];
+  if (!isObject(envelope)) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `a district needs a region envelope, got ${describe(envelope)}`,
+        'add "envelope": { "shape": "region", "size": [140, 120] } — a district is a piece of ground, so its size has two elements',
+      ),
+    );
+  } else {
+    unknownKeys(out, envelope, `${path}.envelope`, ["shape", "size", "follows"], "district envelope");
+    if (envelope["shape"] !== "region") {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `the district envelope "shape" must be "region", got ${describe(envelope["shape"])}`,
+          'set "shape": "region" — a district is ground the fabric pass subdivides, not a box',
+        ),
+      );
+    }
+    checkFootprintSize(out, `${path}.envelope`, envelope["size"], "region");
+  }
+
+  // --- params --------------------------------------------------------------
+  const params = node["params"];
+  if (!isObject(params)) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        path,
+        `a district needs "params", got ${describe(params)}`,
+        'write "params": { "fabric": "grid", "density": "high", "mix": ["office", "apartment_block"] } — a district with no fabric and no mix has nothing to build',
+      ),
+    );
+  } else {
+    validateDistrictParams(out, `${path}.params`, params);
+  }
+
+  // --- landmark children ---------------------------------------------------
+  const children = node["children"];
+  if (children !== undefined) {
+    if (!Array.isArray(children)) {
+      out.push(
+        error(
+          "STRUCTURE_NODE_SHAPE",
+          path,
+          `"children" must be an array of landmark buildings, got ${describe(children)}`,
+          'write "children": [ { "id": "tower", "kind": "generator", "generator": "building.grammar@0", ... } ] — or drop the key entirely and let the mix fill every lot',
+        ),
+      );
+    } else {
+      const seen = new Set<string>();
+      for (const [index, raw] of children.entries()) {
+        const childPath = `${path}.${isObject(raw) && typeof raw["id"] === "string" ? raw["id"] : `children[${index}]`}`;
+        if (!isObject(raw)) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `each district child must be a building node object, got ${describe(raw)}`,
+              "replace this array entry with a building.grammar@0 generator node",
+            ),
+          );
+          continue;
+        }
+        checkId(out, path, raw["id"], `children[${index}]`);
+        if (typeof raw["id"] === "string") {
+          if (seen.has(raw["id"])) {
+            out.push(
+              error(
+                "DUPLICATE_ID",
+                childPath,
+                `two landmarks of "${path}" share the id "${raw["id"]}"`,
+                `rename one of them — sibling ids must be unique (e.g. "${raw["id"]}_2")`,
+              ),
+            );
+          }
+          seen.add(raw["id"]);
+        }
+        if (raw["kind"] !== "generator" || raw["generator"] !== "building.grammar@0") {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `a district's children are landmark buildings; this one is ${describe(raw["generator"] ?? raw["kind"])}`,
+              'give every district child "kind": "generator" and "generator": "building.grammar@0" — roads, plazas and props belong under the root, not inside a district',
+            ),
+          );
+          continue;
+        }
+        validateStructureNode(out, childPath, raw, connections);
+      }
+    }
+  }
+
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+/** Validate a district's `params` object. */
+function validateDistrictParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, DISTRICT_PARAM_KEYS, "district params");
+
+  for (const [key, allowed, example] of [
+    ["fabric", DISTRICT_FABRICS, "grid"],
+    ["density", DISTRICT_DENSITIES, "high"],
+  ] as const) {
+    const v = params[key];
+    if (v === undefined) {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"${key}" is required on a district`,
+          `set "${key}": "${example}" — one of: ${allowed.join(", ")}`,
+        ),
+      );
+    } else if (typeof v !== "string" || !(allowed as readonly string[]).includes(v)) {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"${key}" must be one of ${allowed.join(", ")}, got ${describe(v)}`,
+          `set "${key}": "${example}"`,
+        ),
+      );
+    }
+  }
+
+  checkBooleans(out, at, params, ["plaza"]);
+  checkNumbers(out, at, params, {
+    blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
+  });
+
+  validateDistrictMix(out, at, params["mix"]);
+}
+
+/**
+ * Validate a district's `mix`.
+ *
+ * An unknown name is an **error**, not a warning, and that is the one place
+ * this profile is stricter than its usual rule. Everywhere else a name the
+ * compiler does not implement degrades to something visible — a constraint is
+ * reported as ignored, a port type as unresolved. A misspelt archetype degrades
+ * to *a hundred cottages*, silently, in a district the author asked to be an
+ * office quarter. There is no recovery worth having, so it stops the compile
+ * and the near-misses come with it.
+ */
+function validateDistrictMix(out: LoamDiagnostic[], at: string, mix: unknown): void {
+  if (mix === undefined) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        '"mix" is required on a district — it is what the auto-infill builds',
+        'write "mix": ["office", "apartment_block", "shop_row"] — archetype names, in the proportion you want them cycled',
+      ),
+    );
+    return;
+  }
+  if (!Array.isArray(mix) || mix.length === 0) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix" must be a non-empty array of archetype names, got ${describe(mix)}`,
+        'write "mix": ["townhouse", "shop_row"] — the infill cycles these across the lots the landmarks did not claim',
+      ),
+    );
+    return;
+  }
+  if (mix.length > DISTRICT_MAX_MIX) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix" has ${mix.length} entries; this profile reads at most ${DISTRICT_MAX_MIX}`,
+        `keep the ${DISTRICT_MAX_MIX} archetypes that carry the district's character — past that the block reads as noise rather than as a mix`,
+      ),
+    );
+  }
+  for (const [index, name] of mix.entries()) {
+    if (typeof name !== "string") {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"mix"[${index}] must be an archetype name, got ${describe(name)}`,
+          'every entry is a string, e.g. "mix": ["office", "hotel"]',
+        ),
+      );
+      continue;
+    }
+    if (isKnownArchetype(name)) continue;
+    const near = nearestArchetypes(name);
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix"[${index}] names "${name}", which is not a building archetype`,
+        near.length === 0
+          ? `replace it with an archetype the grammar knows — the vocabulary is the same one "params.archetype" and the building tags draw on`
+          : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+      ),
+    );
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1325,11 +1601,12 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       "floors", "floorHeight", "footprint", "bays", "roof", "roofPitch",
       "wallSymbol", "trimSymbol", "roofSymbol", "windowRhythm", "windowRatio",
       "entrance", "interior", "furnish", "basement", "tower", "variance", "decayOverride",
-      "wing",
+      "wing", "archetype",
     ],
     "building.grammar@0 params",
   );
   checkNumbers(out, at, params, BUILDING_NUMS);
+  validateArchetypeParam(out, at, params["archetype"]);
   validateBasementParam(out, at, params["basement"]);
   validateWingParam(out, at, params["wing"]);
   checkEnumParam(out, at, params, "footprint", BUILDING_FOOTPRINTS);
@@ -1346,6 +1623,44 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
   }
+}
+
+/**
+ * Validate `params.archetype`, the explicit spelling of what a building is for.
+ *
+ * The grammar has always read this key — `archetypeOfTags` is only the
+ * *fallback* for a node that does not name one — and until fabric v2 the
+ * validator rejected it as unknown, which meant the one unambiguous way to say
+ * "this is a bakery" was the one way a document could not say it. Districts
+ * made the gap untenable: their `mix` is a list of these names, and an author
+ * who can name an archetype for an infill lot but not for a landmark would be
+ * right to be confused.
+ */
+function validateArchetypeParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  if (typeof value !== "string") {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"archetype" must be an archetype name, got ${describe(value)}`,
+        'write "archetype": "bakery" — or drop the key and let the node\'s "tags" imply one',
+      ),
+    );
+    return;
+  }
+  if (isKnownArchetype(value)) return;
+  const near = nearestArchetypes(value);
+  out.push(
+    error(
+      "STRUCTURE_PARAM",
+      at,
+      `"archetype" names "${value}", which is not a building archetype`,
+      near.length === 0
+        ? 'drop "archetype" and let the node\'s "tags" choose one'
+        : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+    ),
+  );
 }
 
 /** Shortest shared run between a wing and the main block, in cells. */

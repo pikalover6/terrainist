@@ -56,7 +56,9 @@ import {
   deriveTerrainProducts,
   layoutNodesFrom,
   registerRoadCorridors,
+  solveDistricts,
   solveLayout,
+  type DistrictProduct,
   type LayoutNodeInput,
   type RouteCorridor,
   type OccupancyGrid,
@@ -299,6 +301,16 @@ export interface LayoutOutcome {
   readonly placements: readonly Placement[];
   readonly ports: readonly ResolvedPort[];
   readonly padEdits: readonly PadEdit[];
+  /**
+   * The fabric pass's output, one entry per `district` node.
+   *
+   * `report.layout.districts[i].streets` is **the** {@link StreetGraph} product:
+   * the pinned contract F4's streetscape and the road pass code against. It is
+   * here rather than under `structures` because the graph is a layout decision —
+   * it exists before a single block does, and it is what the placements inside
+   * the district were derived from.
+   */
+  readonly districts?: readonly DistrictProduct[];
   /** Per-building geometry and the routed road network. */
   readonly structures?: StructurePassResult;
 }
@@ -444,6 +456,8 @@ async function compileValidated(
   /** Frozen at substage 3b, read by the solver and again by the road router. */
   let corridors: readonly RouteCorridor[] = [];
   let products: TerrainProductIndex | undefined;
+  /** `building.grammar@0` params for the fabric pass's own buildings. */
+  let districtParams: ReadonlyMap<string, Readonly<Record<string, unknown>>> | undefined;
   const tLayout = now();
   if (isSettlement(doc)) {
     const extraction = layoutNodesFrom(doc, worldSeed);
@@ -486,14 +500,22 @@ async function compileValidated(
     });
     diagnostics.push(...solved.diagnostics);
     occupancy = solved.occupancy;
-    layoutOutcome = {
-      report: solved.report,
+
+    // --- substage 3g: the district fabric (F1) -----------------------------
+    // The solver's pads go in *first*, because a district levels its own ground
+    // and the fabric pass reads that ground to seat every building it lays. Run
+    // the other way round, each tower would be founded on the hill the district
+    // was about to erase.
+    if (solved.padEdits.length > 0) applyPadEdits(terrain.field, solved.padEdits);
+    const fabric = solveDistricts({
+      doc,
+      worldSeed,
+      field: terrain.field,
       placements: solved.placements,
-      ports: solved.ports,
-      padEdits: solved.padEdits,
-    };
-    if (solved.padEdits.length > 0) {
-      applyPadEdits(terrain.field, solved.padEdits);
+    });
+    diagnostics.push(...fabric.diagnostics);
+    if (fabric.padEdits.length > 0) applyPadEdits(terrain.field, fabric.padEdits);
+    if (solved.padEdits.length + fabric.padEdits.length > 0) {
       classification = classify(terrain.field, terrain.params, {
         temperature: climate.temperature,
         noFlood: terrain.edits.noFlood,
@@ -501,6 +523,18 @@ async function compileValidated(
         footprints: terrain.edits.footprints,
       });
     }
+    // The fabric's buildings need solver nodes so the structure pass can build
+    // them; they need no *occupancy* of their own, because the district's own
+    // footprint was claimed by the solve and every one of them is inside it.
+    if (fabric.nodes.length > 0) layoutNodes = [...extraction.nodes, ...fabric.nodes];
+    districtParams = fabric.params;
+    layoutOutcome = {
+      report: solved.report,
+      placements: [...solved.placements, ...fabric.placements],
+      ports: [...solved.ports, ...fabric.ports],
+      padEdits: [...solved.padEdits, ...fabric.padEdits],
+      ...(fabric.districts.length === 0 ? {} : { districts: fabric.districts }),
+    };
   }
   const layoutMs = now() - tLayout;
 
@@ -571,6 +605,8 @@ async function compileValidated(
       palette,
       stack,
       ...(occupancy === undefined ? {} : { occupancy }),
+      ...(layoutOutcome.districts === undefined ? {} : { districts: layoutOutcome.districts }),
+      ...(districtParams === undefined ? {} : { paramsByPath: districtParams }),
       // §4.9.6: the pass-6 router prefers the polygon that was frozen at 3b.
       ...(corridors.some((c) => c.kind === "road")
         ? { roadCorridor: corridorMask(region, corridors.filter((c) => c.kind === "road")) }

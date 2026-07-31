@@ -97,6 +97,16 @@ export const TERRAIN_DIAGNOSTICS = {
   GENERATOR_NOT_IMPLEMENTED: "LOAM-T208",
   /** G4b `road.network@0` — a route between two anchors has no legal path. */
   ROAD_UNROUTABLE: "LOAM-T209",
+  /**
+   * F1 `district` — a field of the district node is missing, malformed, or
+   * names something the grammar does not know (an unspellable `mix` entry).
+   */
+  DISTRICT_PARAM: "LOAM-T210",
+  /**
+   * F1 `district` — the envelope is too small to hold a street skeleton at
+   * all: fewer than two streets on an axis, or no block deep enough for a lot.
+   */
+  DISTRICT_TOO_SMALL: "LOAM-T211",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */

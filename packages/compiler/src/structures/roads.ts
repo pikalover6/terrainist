@@ -36,6 +36,7 @@ import { warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
+import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
@@ -225,6 +226,17 @@ export interface RoadNetworkInput {
   readonly keepClear?: Uint8Array;
   /** Node paths that are buildings (their footprints are hard obstacles). */
   readonly buildingPaths: ReadonlySet<string>;
+  /**
+   * Node paths the network must actually *reach*. Defaults to `buildingPaths`.
+   *
+   * The two lists came apart when districts arrived. A district's infill is
+   * hundreds of buildings, every one of them with a door — and every one of
+   * them already on a street, because that is what the fabric pass is for.
+   * Routing a lane from each of them to the village hub would cut the district
+   * to ribbons and cost an A* search per house. They stay obstacles; they stop
+   * being destinations.
+   */
+  readonly anchorPaths?: ReadonlySet<string>;
   /** Updated with a `road` tag for every surfaced column. */
   readonly occupancy?: OccupancyGrid;
   /**
@@ -330,9 +342,10 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const blocks: StructureBlock[] = [];
 
   // --- anchors, in document order ------------------------------------------
+  const anchorPaths = input.anchorPaths ?? input.buildingPaths;
   const anchors: RoadAnchor[] = [];
   for (const placement of input.placements) {
-    if (!input.buildingPaths.has(placement.nodePath)) continue;
+    if (!anchorPaths.has(placement.nodePath)) continue;
     const anchor = approachOf(placement, input.ports);
     if (anchor === null) continue;
     if (!inside(region, anchor.x, anchor.z)) continue;
@@ -450,6 +463,107 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   }
 
   return { blocks, routes, surfacedColumns, bridgeColumns, roadColumns: road, width, diagnostics, unrouted };
+}
+
+/* -------------------------------------------------------------------------- */
+/* district streets (fabric v2, F1)                                            */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link surfaceStreetGraph} reads. */
+export interface StreetSurfaceInput {
+  /** The skeletons to surface, one per district, in document order. */
+  readonly graphs: readonly StreetGraph[];
+  /** Mutated in place, exactly as the road pass mutates it. */
+  readonly plan: ColumnPlan;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /** Footprints no street may cut into — every building, district or not. */
+  readonly placements: readonly Placement[];
+  readonly buildingPaths: ReadonlySet<string>;
+  readonly occupancy?: OccupancyGrid;
+}
+
+/** What the street surfacing wrote. */
+export interface StreetSurfaceResult {
+  readonly blocks: readonly StructureBlock[];
+  readonly surfacedColumns: number;
+  /** 1 for a column this pass surfaced, row-major over the plan's region. */
+  readonly road: Uint8Array;
+}
+
+/**
+ * Grade and surface a district's streets.
+ *
+ * **Streets are roads.** They get the same 1-Lipschitz grade, the same
+ * `@road.surface` centre and `@road.shoulder` edge, the same shoulder blend and
+ * the same occupancy claim as a lane between two villages, because a player
+ * cannot tell the difference and neither should the emitter. What they do not
+ * get is the router: a street's centre line was decided by the fabric pass
+ * before a single building existed, which is the whole inversion — the road
+ * pass finds its way *between* districts, and inside one the way was the first
+ * thing drawn.
+ *
+ * Grading is nearly a formality here, and deliberately so: a district's own pad
+ * levelled its ground before this pass ran, so the profile is flat and the
+ * shoulder blend has nothing to do. It is run anyway, because a district on the
+ * edge of its own apron is exactly where "nearly" stops being true.
+ */
+export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResult {
+  const { plan, occupancy } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+
+  const water = buildBridgeableMask(plan);
+  const blocked = new Uint8Array(cells);
+  for (let k = 0; k < cells; k++) {
+    if (plan.fluidKind[k] !== FluidKind.NONE) blocked[k] = 1;
+  }
+  for (const placement of input.placements) {
+    if (!input.buildingPaths.has(placement.nodePath)) continue;
+    stamp(region, blocked, placement.footprint, 1);
+  }
+
+  const road = new Uint8Array(cells);
+  const roadY = new Int32Array(cells);
+  const bridged = new Uint8Array(cells);
+  const paved = new Uint8Array(cells);
+  const states = resolveRoadStates(input.palette, input.stack);
+  const blocks: StructureBlock[] = [];
+
+  for (const graph of input.graphs) {
+    for (const segment of graph.segments) {
+      const path = segment.path.filter((c) => inside(region, c.x, c.z));
+      if (path.length === 0) continue;
+      const profile = gradeProfile(
+        path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
+        plan.seaLevel,
+        ROAD_FILL_BAND,
+      );
+      const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+      surfaceRoute(
+        region,
+        plan,
+        blocked,
+        road,
+        roadY,
+        surfaced,
+        segment.width,
+        states,
+        occupancy,
+        paved,
+        water,
+        bridged,
+      );
+    }
+  }
+
+  blendShoulders(region, plan, road, roadY, blocked, paved);
+
+  let surfacedColumns = 0;
+  for (let k = 0; k < cells; k++) {
+    if (road[k] === 1) surfacedColumns++;
+  }
+  return { blocks, surfacedColumns, road };
 }
 
 /* -------------------------------------------------------------------------- */

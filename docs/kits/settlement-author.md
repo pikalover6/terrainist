@@ -457,7 +457,7 @@ stops well below the summit so the cone stays bare.
 
 ## 9. The settlement layer
 
-Four node kinds, all children of the root. The first two are placed by the
+Five node kinds, all children of the root. The first three are placed by the
 **layout solver** rather than by you; a prop is placed coarsely, and the roads
 are routed last:
 
@@ -465,11 +465,13 @@ are routed last:
 |---|---|---|
 | `plaza` (`"kind": "primitive"`) | 0 or 1 | an open paved area: the green, the market, the quay |
 | `building.grammar@0` | any number | one building |
+| `district` (`"kind": "district"`) | any number | a quarter with its own street grid, blocks and lots |
 | `prop.place@0` | any number | one boat, cart, pier, fountain… — the evidence people live here |
 | `road.network@0` | 0 or 1 | the lanes joining everything |
 
 A structure node may carry `constraints`, `ports`, `tags`, `optional`,
-`envelope`, `params`, `label` and `seedSalt` — and no `children`.
+`envelope`, `params`, `label` and `seedSalt` — and no `children`. A `district`
+is the exception: its `children` are the landmark buildings inside it.
 
 **You never say where a building goes.** You say what it must be near, what it
 faces, and how much room it needs; the solver searches the real terrain for a
@@ -1396,6 +1398,110 @@ reaches every dwelling. Add a specific id (`"great_hall"`, `"lighthouse"`) for
 an outlying building that must be connected. A route that cannot be found —
 water, lava or a wall of houses in the way — is reported as `LOAM-T209` and
 that building is simply left unconnected.
+
+### `district` — a quarter with a street grid
+
+Everything above places buildings and then joins them with lanes. A **district**
+does the opposite: it draws the streets first, cuts the ground between them into
+blocks, subdivides the blocks into lots, and puts a building on each lot with its
+door on the street. That is the difference between a village and a town — a
+village is buildings with paths between them, a town is a street with buildings
+along it.
+
+Reach for a district when you want **city fabric**: a downtown, a terraced
+quarter, a planned new town, an industrial estate. Keep using plain
+`building.grammar@0` nodes with constraints for anything where the individual
+buildings matter more than the street they are on — a hamlet, a farmstead, a
+monastery on a hill.
+
+```json
+{
+  "id": "downtown",
+  "kind": "district",
+  "label": "the business district, towers over a grid of mid-rise blocks",
+  "envelope": { "shape": "region", "size": [180, 160] },
+  "params": {
+    "fabric": "grid",
+    "density": "high",
+    "mix": ["office", "apartment_block", "shop_row", "department_store"],
+    "blockSize": 38,
+    "plaza": true
+  },
+  "constraints": [
+    { "zone": "center" },
+    { "terrain_conform": "flatten", "reference": "median", "blend": 8 }
+  ],
+  "tags": ["downtown", "urban"],
+  "children": [
+    {
+      "id": "tower",
+      "kind": "generator",
+      "generator": "building.grammar@0",
+      "label": "the tower the skyline is built around",
+      "envelope": { "shape": "box", "size": [21, 76, 19] },
+      "params": { "archetype": "skyscraper", "floors": 18 },
+      "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+      "tags": ["landmark"]
+    },
+    {
+      "id": "opera",
+      "kind": "generator",
+      "generator": "building.grammar@0",
+      "envelope": { "shape": "box", "size": [25, 22, 19] },
+      "params": { "archetype": "opera_house", "floors": 3 },
+      "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+      "tags": ["landmark", "civic"]
+    }
+  ]
+}
+```
+
+| field | values | notes |
+|---|---|---|
+| `envelope` | `{"shape": "region", "size": [x, z]}` | **required**; 38 × 38 is the hard floor, 140+ before a grid reads as one |
+| `params.fabric` | `grid`, `organic` | **required**; `grid` is a planned town, `organic` the same grid let go of |
+| `params.density` | `low`, `medium`, `high` | **required**; drives lot size, coverage and storeys together |
+| `params.mix` | non-empty array of archetype names | **required**; what the auto-infill builds |
+| `params.blockSize` | 16..96 | optional hint: blocks between street centre lines. Omit and the density chooses |
+| `params.plaza` | bool | optional: keep the central block open as a square |
+| `constraints` | as any other node | say **where the district is**, not what is in it |
+| `children` | `building.grammar@0` nodes | the landmarks — everything else is infilled |
+
+**What `density` actually does**, so you pick the right one:
+
+| | lot depth | storeys | lots built on | reads as |
+|---|---|---|---|---|
+| `high` | ~13–17 | 3–8 | almost all | downtown: continuous street walls, party walls, mid-rise |
+| `medium` | ~13–16 | 2–4 | about three in five | a town centre with gaps and yards |
+| `low` | ~12–15 | 1–2 | about one in three | a garden suburb: detached, set back, plenty of green |
+
+**The `mix` vocabulary** is the same list of archetype names that
+`params.archetype` and the building tags draw on — `office`, `townhouse`,
+`shop_row`, `warehouse`, `terraced_row`, `machiya`, and the other two hundred.
+A name the grammar does not know is a compile **error** (`LOAM-T210`) with the
+near-misses listed, because the alternative is a district of silent cottages.
+Order matters only as declaration order; the infill draws from the list by a
+hash of each lot's position, so a two-entry mix does not alternate in stripes.
+
+Rules worth knowing before you write one:
+
+- **Landmarks are placed by frontage, not by constraints.** A landmark takes the
+  lot run — or the whole block — that fits it with the least waste, biggest
+  landmark first. Constraints on a district child are reported as ignored
+  (`LOAM-W407`); if a building's position really matters, take it out of the
+  district and give it constraints under the root.
+- **You still never write coordinates.** The district's own constraints put it
+  on the map; the streets and lots come from its envelope.
+- Give a district `terrain_conform: "flatten"`. A district levels its ground —
+  a city grid on a hillside is a staircase — and a generous `blend` (6–10) is
+  what keeps the edge from being a cliff.
+- The district's streets are surfaced by the same road machinery as
+  `road.network@0`, so a `lanes` node routed between districts joins the grid
+  rather than running alongside it. Anchor the lanes on the district's id.
+- A district smaller than 38 × 38 is a `LOAM-T211` error: there is no room for
+  two crossing streets and a block between them. Anything under ~100 on a side
+  is one or two blocks, which reads as a courtyard rather than a quarter — below
+  that scale, write the buildings out and let the solver place them.
 
 ### `prop.place@0`
 

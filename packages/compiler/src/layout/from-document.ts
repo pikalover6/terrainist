@@ -13,6 +13,7 @@ import {
   note,
   resolveTypeKey,
   type CanonicalConstraint,
+  type DistrictNode,
   type LoamDiagnostic,
   type PlazaNode,
   type SettlementDocument,
@@ -53,6 +54,11 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
 
     if (child.kind === "primitive") {
       nodes.push(plazaInput(child, nodePath, seed));
+      continue;
+    }
+
+    if (child.kind === "district") {
+      nodes.push(districtInput(child, nodePath, seed));
       continue;
     }
 
@@ -110,6 +116,34 @@ function plazaInput(node: PlazaNode, nodePath: string, seed: Seed256): LayoutNod
     flexible: false,
     padding: 0,
     // A plaza is symmetric ground; rotating it would only churn the seed.
+    rotations: [0],
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    seed,
+  };
+}
+
+/**
+ * A district, as the solver sees it: **one footprint and nothing else.**
+ *
+ * The solver's whole job for a district is to decide where it sits — against
+ * `zone`, `at`, `distance`, the water and the slopes, exactly as for any other
+ * node. What is inside it is not the solver's business, so the node carries no
+ * ports, no rotations worth trying (a fabric is drawn against world axes; the
+ * streets would only have to be un-rotated again) and a height of 1, because
+ * the pad it emits is what the fabric pass then builds on.
+ */
+function districtInput(node: DistrictNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+  const [w, d] = node.envelope.size ?? [128, 128];
+  return {
+    id: node.id,
+    nodePath,
+    kind: "district",
+    size: [w, 1, d],
+    flexible: false,
+    padding: 0,
     rotations: [0],
     constraints: canonicalConstraints(node.constraints),
     ports: node.ports ?? {},

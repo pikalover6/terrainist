@@ -70,24 +70,12 @@ import { index, inside } from "./roads.js";
 /* -------------------------------------------------------------------------- */
 
 /** One street, a 4-connected polyline in world column space. */
-export interface StreetSegment {
-  readonly id: string;
-  /** Width class: avenue 7, street 5, lane 3 (carriageway columns). */
-  readonly kind: "avenue" | "street" | "lane";
-  readonly width: number;
-  readonly path: readonly { readonly x: number; readonly z: number }[];
-}
-export interface StreetIntersection {
-  readonly x: number;
-  readonly z: number;
-  readonly segments: readonly string[]; // segment ids meeting here
-}
-export interface StreetGraph {
-  readonly segments: readonly StreetSegment[];
-  readonly intersections: readonly StreetIntersection[];
-  /** Sidewalk band width per side (columns); 2 downtown, 1 elsewhere. */
-  readonly sidewalk: number;
-}
+// The pinned fabric contract, owned by F1's street skeleton. This file was
+// written against a verbatim copy while the two tracks ran in parallel; the
+// copy collapsed into this import at integration.
+import type { StreetGraph, StreetIntersection, StreetSegment } from "../layout/streets.js";
+
+export type { StreetGraph, StreetIntersection, StreetSegment };
 
 /* -------------------------------------------------------------------------- */
 /* tuning                                                                      */

@@ -21,8 +21,15 @@ export interface LayoutNodeInput {
   readonly id: string;
   /** Dotted path from the root, e.g. `"world.town_hall"`. */
   readonly nodePath: string;
-  /** `generator` for a structure node, `primitive` for the plaza. */
-  readonly kind: "generator" | "primitive";
+  /**
+   * `generator` for a structure node, `primitive` for the plaza, `district`
+   * for a fabric quarter.
+   *
+   * The third value is load-bearing in exactly one place: the structure pass
+   * finds the plaza by looking for the one `primitive`, and a district that
+   * called itself one would be paved as a village green.
+   */
+  readonly kind: "generator" | "primitive" | "district";
   /** `building.grammar@0` / `road.network@0`; absent for the plaza. */
   readonly generator?: string;
   /** Requested footprint and height, in blocks. */
