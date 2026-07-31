@@ -891,8 +891,14 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["highrise", "balcony"],
     note: "Tall massing with projecting slab-and-bar balconies.",
   }),
-  mod("penthouse", "Penthouse", "not_started", { wave: 5 }),
-  mod("atrium_block", "Atrium block", "not_started", { wave: 5 }),
+  mod("penthouse", "Penthouse", "implemented", {
+    wave: 5,
+    note: "The top-floor flat at house scale: a parapeted roof terrace with planters, a wide glass band, a sparse open plan.",
+  }),
+  mod("atrium_block", "Atrium block", "implemented", {
+    wave: 5,
+    note: "A light-well core: a painted court and gallery ring, corner planting, a glazed roof light inset from the eave.",
+  }),
   mod("glass_pavilion", "Glass pavilion", "implemented", {
     wave: 4,
     note: "The greenhouse domesticated: sill-rule glazing, a solid glass deck, an open plan.",
@@ -927,14 +933,26 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
       "Iron server racks on the bank aisle discipline with levers standing on them, a checkered raised-floor grid, cooling cauldrons and an ops desk.",
   }),
   mod("corporate_campus", "Corporate campus"),
-  mod("modern_villa", "Modern villa", "not_started", { wave: 5 }),
+  mod("modern_villa", "Modern villa", "implemented", {
+    wave: 5,
+    note: "Flat-roofed minimalism: a white re-clad, a four-course glass band, a wall-backed floating-stair read, sparse furniture.",
+  }),
   mod("billboard_tower", "Billboard tower"),
 
   /* --- science / education ---------------------------------------------- */
   sci("observatory", "Observatory", "implemented", { note: "A stepped dome with an open slit, and an instrument under it." }),
-  sci("telescope_dome", "Telescope dome", "not_started", { wave: 5 }),
-  sci("planetarium", "Planetarium", "not_started", { wave: 5 }),
-  sci("alchemy_lab", "Alchemy laboratory", "not_started", { wave: 5 }),
+  sci("telescope_dome", "Telescope dome", "implemented", {
+    wave: 5,
+    note: "The modern white dome: a smooth-quartz corbel with a two-cell shutter, a pier-mounted instrument and a control desk.",
+  }),
+  sci("planetarium", "Planetarium", "implemented", {
+    wave: 5,
+    note: "The dome inverted: a closed dark shell with glowstone stars in the masonry, a projector pedestal and a ring of inward seats.",
+  }),
+  sci("alchemy_lab", "Alchemy laboratory", "implemented", {
+    wave: 5,
+    note: "The apothecary gone arcane: brewing benches with candles, a bottle wall, a distillation run and chalk circles in the floor plane.",
+  }),
   sci("laboratory", "Laboratory", "implemented", {
     wave: 4,
     note: "Stone benches with brewing stands, an iron fume-hood canopy and a chalk board.",
@@ -943,13 +961,31 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "The school at scale: a board, a lectern on a dais, flat rows off a three-column aisle.",
   }),
-  sci("botanical_garden", "Botanical garden", "not_started", { wave: 5 }),
-  sci("herbarium", "Herbarium", "not_started", { wave: 5 }),
-  sci("aviary", "Aviary", "not_started", { wave: 5 }),
+  sci("botanical_garden", "Botanical garden", "implemented", {
+    wave: 5,
+    note: "The glass pavilion grown up: full sill-rule glazing, raised planter rows, gravel path discipline and a rimmed pond where the predicate holds.",
+  }),
+  sci("herbarium", "Herbarium", "implemented", {
+    wave: 5,
+    note: "Specimen presses and hung drying racks in trapdoors, potted rows off the aisle and a cataloguing lectern.",
+  }),
+  sci("aviary", "Aviary", "implemented", {
+    wave: 5,
+    note: "Iron-bar cages built core-first round solid planting - never round the route - with fence perches and a green floor plane.",
+  }),
   sci("aquarium", "Aquarium"),
-  sci("weather_station", "Weather station", "not_started", { wave: 5 }),
-  sci("seed_vault", "Seed vault", "not_started", { wave: 5 }),
-  sci("field_station", "Field station", "not_started", { wave: 5 }),
+  sci("weather_station", "Weather station", "implemented", {
+    wave: 5,
+    note: "A roof mast carrying a lightning rod, a grounded apron pole with a banner windsock, a chart desk and a barometer wall.",
+  }),
+  sci("seed_vault", "Seed vault", "implemented", {
+    wave: 5,
+    note: "The bunker civil: an iron-trimmed door face, a frost band at the plate, barrel shelf rows under banner labels and backup lanterns.",
+  }),
+  sci("field_station", "Field station", "implemented", {
+    wave: 5,
+    note: "The hut scientific: a bunk, sample shelves, an observer-and-lever radio on a bench and a map table.",
+  }),
 
   /* --- transport: land --------------------------------------------------- */
   land("cart", "Handcart", "implemented", { tags: ["prop"] }),

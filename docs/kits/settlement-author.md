@@ -823,6 +823,38 @@ pottery kiln (the brickworks borrows its core but not its name); `foundry` and
 smithy; `shop` and `store` still reach the general store and the granary; and
 `auditorium` still reaches the lecture hall, so the conference centre answers to
 `conference_center` and `convention_center` only.
+**Wave 5D (table 11) — science and modern living.** Twelve buildings: nine
+scientific and three modern. The **two domes** (telescope dome, planetarium)
+rebuild the roof with a corbel, so they want a **plain rect** and **height** —
+give them twenty or more of envelope Y, or the rebuild refuses and you get the
+ordinary house shell. The **three modern** ones (penthouse, atrium block, modern
+villa) rebuild the roof as a flat deck instead, which needs only the one course
+a flat roof already leaves, but they still want the plain rect.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| telescope_dome | `telescope_dome`, `dome_observatory` | the modern white dome: a smooth-quartz corbel with a **two-cell** shutter, a white re-clad drum, a pier-mounted instrument off the lantern, a control desk | `[15, 20, 15]`, 1–2 floors |
+| planetarium | `planetarium`, `star_dome` | the dome inverted: a closed deepslate shell with glowstone stars **in** the masonry, a dark upper wall band, a projector pedestal and a ring of seats facing **inward** | `[15, 20, 15]`, 1–2 floors |
+| alchemy_lab | `alchemy_lab`, `alchemy` | brewing benches with candles up both walls, a bottle wall of shelving under glass, a distillation run and chalk circles in the floor plane | `[13, 13, 17]`, 1–2 floors |
+| herbarium | `herbarium` | specimen presses (bench plus trapdoor) and hung drying racks, potted rows either side of the aisle, a cataloguing lectern | `[13, 12, 17]`, 1–2 floors |
+| aviary | `aviary`, `birdhouse` | two iron-bar cages in the far corners, each built **core first** round solid planting, with fence perches and a mossy floor plane | `[15, 13, 17]`, 1–2 floors; **≥ 7 interior wide** for the cages |
+| botanical_garden | `botanical_garden`, `botanic`, `arboretum` | full sill-rule glazing, moss planter rows on the bank discipline, gravel paths, and a rimmed pond **only** where the inset predicate holds | `[15, 13, 19]`, 1–2 floors |
+| seed_vault | `seed_vault`, `genebank` | an iron-trimmed door face, a packed-ice frost band at the plate, barrel shelf rows under banner labels, backup lanterns on tall storeys | `[13, 12, 15]`, 1–2 floors |
+| weather_station | `weather_station`, `met_station` | a roof deck with a solid mast carrying a lightning rod, a grounded apron pole with a banner windsock, a chart desk and a barometer wall of buttons and levers | `[13, 15, 13]`, 1–2 floors |
+| field_station | `field_station`, `research_station` | a bunk, sample shelves, an observer-and-lever radio on the wall and a map-table desk run | `[11, 11, 13]`, 1 floor |
+| penthouse | `penthouse` | a quartz roof terrace with a slab parapet and planters in its gaps, a three-course glass band, a sparse open plan and a painted floor | `[15, 13, 15]`, 1–2 floors |
+| atrium_block | `atrium_block`, `atrium` | a painted court and gallery ring, corner planting off the lanes, and a glazed roof light inset two cells from the eave on the deck | `[17, 14, 17]`, 1–2 floors |
+| modern_villa | `modern_villa`, `minimalist` | a white concrete re-clad, a four-course glass band, a flat deck, a wall-backed floating-stair read and very little furniture | `[15, 13, 17]`, 1–2 floors |
+
+Wave 5D claims **no** tag an earlier table owns, and five of the near misses are
+worth stating because each would have been a silent theft: `observatory`,
+`telescope` and `astronomy` remain the **blitz observatory's** (that one is the
+historic stepped dome with a one-cell slit; this wave's is the modern white one);
+`alchemist` — with `apothecary`, `pharmacy` and `herbalist` — remains the **trade
+apothecary's**; `lab` and `laboratory` remain **wave 4C's laboratory's**; bare
+`villa` remains the **Mediterranean villa's** (table 6); and bare `garden` and
+bare `station` are left unclaimed for the catalog's formal gardens and its
+railway station.
 
 **Wave 4B (table 10) — faith and memorial.** Twelve buildings: eleven religious
 and one memorial. Seven of them rebuild part of the shell's exterior (cathedral,

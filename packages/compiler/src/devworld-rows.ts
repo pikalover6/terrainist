@@ -35,6 +35,7 @@ import { COMMERCE_EXHIBIT_ROWS } from "./exhibits/commerce.js";
 import { LEISURE_EXHIBIT_ROWS } from "./exhibits/leisure.js";
 import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
 import { RESIDENTIAL_EXHIBIT_ROWS } from "./exhibits/residential.js";
+import { SCIENCE_EXHIBIT_ROWS } from "./exhibits/science.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
 import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
@@ -124,6 +125,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...GARRISON_EXHIBIT_ROWS,
   ...FAITH_EXHIBIT_ROWS,
   ...COMMERCE_EXHIBIT_ROWS,
+  ...SCIENCE_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -183,6 +185,8 @@ export {
   COMMERCE_ROW_LENGTH,
   commerceSizeFor,
 } from "./exhibits/commerce.js";
+/** The wave-5D science rows, for tests that assert on the gradient itself. */
+export { SCIENCE_EXHIBIT_ROWS, SCIENCE_ROW_LENGTH, scienceSizeFor } from "./exhibits/science.js";
 /** The wave-4C leisure rows, for tests that assert on the gradient itself. */
 export { LEISURE_EXHIBIT_ROWS, LEISURE_ROW_LENGTH, leisureSizeFor } from "./exhibits/leisure.js";
 /** The wave-5C industry rows, for tests that assert on the gradient itself. */

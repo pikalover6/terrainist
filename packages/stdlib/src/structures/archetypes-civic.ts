@@ -43,6 +43,7 @@ import { leisureFacadeDefaults } from "./archetypes-leisure.js";
 import { commerceFacadeDefaults } from "./archetypes-commerce.js";
 
 import { industryFacadeDefaults } from "./archetypes-industry.js";
+import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
@@ -172,6 +173,9 @@ export function archetypeFacadeDefaults(
       // Wave five A, the garrison — appended before the regional tail.
       const garrison = garrisonFacadeDefaults(archetype);
       if (Object.keys(garrison).length > 0) return garrison;
+      // Wave 5D — science and modern living.
+      const science = scienceFacadeDefaults(archetype);
+      if (Object.keys(science).length > 0) return science;
       // Wave 4B, faith and memorial.
       const faith = faithFacadeDefaults(archetype);
       if (Object.keys(faith).length > 0) return faith;

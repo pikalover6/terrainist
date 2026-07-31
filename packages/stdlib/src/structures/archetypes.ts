@@ -137,6 +137,14 @@ import {
 export * from "./archetypes-garrison.js";
 
 import {
+  SCIENCE_BUILDING_ARCHETYPES,
+  furnishScience,
+  scienceArchetypeOfTags,
+} from "./archetypes-science.js";
+
+export * from "./archetypes-science.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -182,6 +190,7 @@ export const BUILDING_ARCHETYPES = [
   ...COMMERCE_BUILDING_ARCHETYPES,
   ...INDUSTRY_BUILDING_ARCHETYPES,
   ...GARRISON_BUILDING_ARCHETYPES,
+  ...SCIENCE_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -285,6 +294,14 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // barracks, and bare `beacon`/`beacon_spire` are left for the fantasy track.
   const garrison = garrisonArchetypeOfTags(tags);
   if (garrison !== null) return garrison;
+  // Wave 5D, science and modern living: after the dwellings and before the
+  // extended table, for the reason every later wave sits here — the tables
+  // below are greedy. It claims nothing an earlier one claims: `observatory`,
+  // `telescope` and `astronomy` still reach the blitz observatory, `alchemist`
+  // the trade apothecary, `lab`/`laboratory` wave 4C's laboratory, and bare
+  // `villa` the Mediterranean one.
+  const science = scienceArchetypeOfTags(tags);
+  if (science !== null) return science;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -670,6 +687,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishCommerce(ctx);
   n += furnishIndustry(ctx);
   n += furnishGarrison(ctx);
+  n += furnishScience(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
