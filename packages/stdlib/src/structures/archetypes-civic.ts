@@ -35,6 +35,7 @@ import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
+import { worksFacadeDefaults } from "./archetypes-works.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -141,7 +142,9 @@ export function archetypeFacadeDefaults(
       if (Object.keys(trade).length > 0) return trade;
       const regional = vernacularFacadeDefaults(archetype);
       if (Object.keys(regional).length > 0) return regional;
-      return wave2FacadeDefaults(archetype);
+      const wave2 = wave2FacadeDefaults(archetype);
+      if (Object.keys(wave2).length > 0) return wave2;
+      return worksFacadeDefaults(archetype);
     }
   }
 }

@@ -700,6 +700,33 @@ Three tags wave two deliberately does **not** claim, because an earlier table
 owns them: `mill` (the windmill), `gate` (the gatehouse) and `hospital` (a
 catalog id with no generator behind it — asking for one gets you a cottage).
 
+**Wave 3B (table 9) — food and craft works.** Twelve buildings: six shops and
+six works. Every one is a **pure interior fit-out** — none of them rebuilds the
+exterior — so all twelve are happy on a `wing` footprint as well as on a plain
+rect. The genre rule is that the machinery lives on the wall rows and the middle
+of the floor stays empty, which is what makes a works walkable.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| brewery | `brewery`, `brewhouse` | mash-tun cauldrons and hay grain sacks up one wall, stacked maturing barrels up the other, a brewing bench across the end | `[11, 12, 15]`, 1–2 floors |
+| distillery | `distillery`, `still` | a waxed-copper still with a lightning-rod condenser arm, bottle racks one side, the cask store the other | `[11, 12, 15]`, 1–2 floors |
+| butchery | `butchery`, `butcher` | stripped-log chopping stumps and iron-bar hanging racks, smokers and brine cauldrons opposite, a cold store at the end | `[11, 11, 13]`, 1 floor |
+| tea_house | `tea_house`, `teahouse` | low slab tables in the side bays with a seat either side, a kettle counter on the far wall, pots at the windows | `[13, 11, 13]`, 1 floor |
+| trading_post | `trading_post`, `outpost` | goods walls cycling barrels, chests and hay, a timber trade counter and a banner over the middle of it | `[13, 11, 13]`, 1 floor |
+| pawnshop | `pawnshop`, `pawn` | a slab counter with an iron-bar grille on it, the strongbox behind, shelves of pledges up the sides | `[11, 11, 11]`, 1 floor |
+| cooperage | `cooperage`, `cooper` | casks stacked open and shut up one wall, stave racks and posts up the other, a smithing-table hooping bench | `[11, 11, 15]`, 1 floor |
+| glassworks | `glassworks`, `glassblower` | a furnace bank on the far wall, stacked sand stores one side, finished glass on trapdoor shelves the other | `[11, 12, 15]`, 1–2 floors |
+| papermill | `papermill`, `paper_mill` | pulp cauldrons and drying racks, quartz-slab reams opposite, a cartography-table press at the end | `[11, 11, 17]`, 1 floor |
+| textile_mill | `textile_mill`, `weaver`, `loom` | a run of looms facing dye cauldrons and fleece stacked in three colours, more looms at the end | `[11, 12, 17]`, 1–2 floors |
+| cannery | `cannery` | a full-length slab bench down one wall, brine cauldrons and barrel intake down the other, sealing furnaces across the end | `[11, 11, 17]`, 1 floor |
+| foundry | `foundry`, `casting` | blast furnaces and furnaces alternating across the end, anvils and ingot stock up one side, an open casting floor | `[13, 12, 15]`, 1–2 floors |
+
+Wave 3B deliberately claims **no** short tag: `trade` is the inn's, `store`,
+`shop` and `grocer` the granary's and general store's, `market`, `stall` and
+`vendor` the market stall's, `mill`, `sawmill`, `kiln` and `tannery` the
+windmill's and wave two's, and `craft` and `smithy` the smithy's. Ask for a
+works by its own name.
+
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
 also the tag `{"distance": "#tag:house"}` and the road network select on.

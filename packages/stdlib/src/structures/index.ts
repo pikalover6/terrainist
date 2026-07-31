@@ -30,3 +30,4 @@ export * from "./archetypes-town.js";
 export * from "./archetypes-trade.js";
 export * from "./archetypes-vernacular.js";
 export * from "./archetypes-wave2.js";
+export * from "./archetypes-works.js";

@@ -35,6 +35,8 @@ import {
   UNDERGROUND_EXHIBIT_ROWS,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
+  WORKS_EXHIBIT_ROWS,
+  WORKS_ROW_LENGTH,
   PROP_EXHIBIT_PLAN,
   SEED_SWEEP_LENGTH,
   SEED_SWEEP_ROW_LABEL,
@@ -129,6 +131,8 @@ describe("dev world grid", () => {
     // prefixed the same way.
     const trade = TRADE_EXHIBIT_ROWS.length * TRADE_ROW_LENGTH;
     const wave2 = WAVE2_EXHIBIT_ROWS.length * WAVE2_ROW_LENGTH;
+    // Wave 3B's works rows are prefixed (`works_foundry`) for the same reason.
+    const works = WORKS_EXHIBIT_ROWS.length * WORKS_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -140,7 +144,8 @@ describe("dev world grid", () => {
         breakpoints +
         underground +
         town +
-        wave2,
+        wave2 +
+        works,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
