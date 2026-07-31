@@ -286,7 +286,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note:
       "Plain bunks up one wall row with barrel racks between the cot heads, a shared table on the far row in the storey's own idiom, a wash cauldron and a crafting table. Honest and spare.",
   }),
-  res("houseboat", "Houseboat", "not_started", { wave: 6, tags: ["water"] }),
+  res("houseboat", "Houseboat", "implemented", {
+    wave: 6,
+    kind: "prop",
+    tags: ["water"],
+    note:
+      "Built on the W2 watercraft template rather than in the building grammar: a blunt barge hull that displaces water instead of boxing it in, a glazed cabin amidships under a slab roof with a chimney and roof planters, a fore-deck table, a railed after-deck and iron-bar moorings.",
+  }),
   res("boarding_house", "Boarding house", "implemented", {
     wave: 5,
     tags: ["lodging_house"],
@@ -810,7 +816,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note:
       "A block-built figure on a chiseled plinth off the lantern column, flanking benches with their backrests to the walls, and red wall banners with unlit candles under them.",
   }),
-  mem("memorial_garden", "Memorial garden", "not_started", { wave: 6 }),
+  mem("memorial_garden", "Memorial garden", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "Compound prop on the graveyard's precedent: a cross path, four planted beds hedged in persistent leaves, a slab-capped monument with a carpet wreath, two benches with their backrests turned away from it and a low wall along two edges.",
+  }),
   mem("gravedigger_hut", "Gravedigger's hut", "implemented", {
     wave: 5,
     tags: ["modest", "tools"],
@@ -884,14 +895,23 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "Fur rugs in the floor plane, trapdoor ski racks and a log mantel with fence antlers.",
   }),
-  lei("bandstand", "Bandstand", "not_started", { wave: 6 }),
+  lei("bandstand", "Bandstand", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "Prop: a paved octagonal pad, eight log pillars with a fence rail between them and one arc left open as the way in, and a stepped conical roof closing on a solid finial with a flag standing on it.",
+  }),
   lei("clubhouse", "Clubhouse", "implemented", {
     wave: 4,
     note: "A trophy shelf and banner honours board, lounge chairs and tables, a short bar.",
   }),
 
   /* --- amusement --------------------------------------------------------- */
-  amu("ferris_wheel", "Ferris wheel", "not_started", { wave: 6 }),
+  amu("ferris_wheel", "Ferris wheel", "implemented", {
+    wave: 6,
+    note:
+      "Two log A-frames carrying a log axle, a trapdoor-and-wool rim on four axis spokes in the frames' own plane, and four gondola boxes hung under the lower arc on iron-bar links. No centre post: at this diameter the rim's own bottom cell lands in that column.",
+  }),
   amu("carousel", "Carousel", "implemented"),
   amu("roller_coaster", "Roller coaster", "not_started", { tags: ["rail"] }),
   amu("helter_skelter", "Helter skelter", "implemented", {
@@ -899,21 +919,41 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A striped tower core with twenty-four stair treads spiralling down two laps of the ring around it, a cone crown with a solid cap and a stone entrance arch at the foot; every tread is orthogonally against the core, so the slide is supported cell by cell.",
   }),
   amu("swing_boats", "Swing boats", "implemented", { wave: 4 }),
-  amu("big_top", "Big top", "not_started", { wave: 6 }),
+  amu("big_top", "Big top", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "The shell re-roofed as a great striped wool cone closing on a SOLID cap with a banner finial, king poles inside the crown rather than through the room, a sand ring recoloured into the floor plane and tiered benches on both wall rows.",
+  }),
   amu("fairground_stall", "Fairground stall", "implemented", { wave: 4 }),
   amu("shooting_gallery", "Shooting gallery", "implemented", {
     wave: 5,
     note: "A booth: plank counter on two log posts, a concrete back wall with three button-on-white-concrete target reads, a prize shelf under the eaves and a striped canopy with two hanging lanterns.",
   }),
-  amu("hall_of_mirrors", "Hall of mirrors", "not_started", { wave: 6 }),
-  amu("funhouse", "Funhouse", "not_started", { wave: 6 }),
+  amu("hall_of_mirrors", "Hall of mirrors", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A checkerboard floor plane, a mirror band of glass panes written into the wall ring over white and light-grey backing courses, and a glass-pane comb maze whose fingers leave a corridor open at both ends.",
+  }),
+  amu("funhouse", "Funhouse", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A tilted-floor read of bright bands and set-in top slabs written entirely into the floor plane, a spinning-tunnel of concentric wool rings on the far wall, and a deliberately mismatched trim round the doorway.",
+  }),
   amu("ticket_booth", "Ticket booth", "implemented", { wave: 4 }),
   amu("midway_arch", "Midway arch", "implemented", {
     wave: 5,
     note: "Two striped pillar towers with a continuous block span between them, standing banners along the span and iron-bar bunting plus hung lanterns beneath it - no cube in the arch has six air faces.",
   }),
   amu("prize_wheel", "Prize wheel", "implemented", { wave: 4 }),
-  amu("dodgems_pavilion", "Dodgems pavilion", "not_started", { wave: 6 }),
+  amu("dodgems_pavilion", "Dodgems pavilion", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "An open hall: a blackstone arena painted into the floor plane inside a full-block yellow kerb (never a raised rail across a one-wide walkway), a stripped-log power grid at the plate, and stair-and-trapdoor dodgem cars parked on the wall rows.",
+  }),
 
   /* --- modern / high-rise ------------------------------------------------ */
   mod("skyscraper", "Skyscraper", "implemented", {
@@ -1011,7 +1051,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 5,
     note: "Iron-bar cages built core-first round solid planting - never round the route - with fence perches and a green floor plane.",
   }),
-  sci("aquarium", "Aquarium", "not_started", { wave: 6 }),
+  sci("aquarium", "Aquarium", "implemented", {
+    wave: 6,
+    note:
+      "The bathhouse pool predicate verbatim - water in the floor plane, inset one cell, inside a dark-prismarine rim - plus wall tanks written into the wall ring as glass over blue concrete with dry coral specimens. The tanks are deliberately NOT fluid: a wall tank cannot be proved sealed on every envelope.",
+  }),
   sci("weather_station", "Weather station", "implemented", {
     wave: 5,
     note: "A roof mast carrying a lightning rod, a grounded apron pole with a banner windsock, a chart desk and a barometer wall.",
@@ -1392,7 +1436,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     kind: "prop",
     note: "Compound prop: a mega trunk it grows itself, a deck, a hut and a ladder.",
   }),
-  fan("hedge_maze", "Hedge maze", "not_started", { wave: 6 }),
+  fan("hedge_maze", "Hedge maze", "implemented", {
+    wave: 6,
+    note:
+      "Built as a BUILDING so the maze can be proved walkable: persistent oak-leaf hedges on coarse-dirt beds in a comb whose fingers leave a corridor open at both ends, every cell taken through the ground floor's own connectivity guard, in a mossy walled garden with grounded apron urns.",
+  }),
   fan("mushroom_house", "Mushroom house", "implemented", {
     wave: 4,
     note:
@@ -1419,8 +1467,18 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note:
       "A great open hall in blackstone and basalt with a scorched floor recolour, an open-sided nest crescent of hay and bone laid off the lantern column, and a sparing hoard corner.",
   }),
-  fan("floating_platform", "Floating island platform", "not_started", { wave: 6 }),
-  fan("portal_frame", "Portal frame", "not_started", { wave: 6 }),
+  fan("floating_platform", "Floating island platform", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "Prop. The trick is a disguised stem: a one-column end-stone core veiled on all four sides with iron bars (never chain), carrying a disc that oversails it by three cells in every direction - the eye reads the overhang, not the thread under it.",
+  }),
+  fan("portal_frame", "Portal frame", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "Prop: an obsidian and crying-obsidian rectangle with a chiseled-deepslate keystone and a DELIBERATELY empty interior - no portal block anywhere - over four deepslate rune pedestals with amethyst clusters on them.",
+  }),
   fan("crystal_shrine", "Crystal shrine", "implemented", {
     wave: 5,
     tags: ["amethyst", "focus"],

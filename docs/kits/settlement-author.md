@@ -1054,6 +1054,49 @@ grammar for one would get a shell with a door in it. They are listed in the
 prop table below, and **none of their names is a building tag**: writing
 `"henge"` in a node's tags gets a cottage, not a henge. Place them with
 `prop.place`.
+**Wave 6D (table 18) — spectacle: the buildings you go *into* to be amazed.**
+Six of them, and the wave's other six entries are deliberately *not* buildings:
+the ferris wheel, bandstand, memorial garden, portal frame and floating
+platform are props, and the houseboat is a hull. The split is decided by one
+question — does a body walk around inside it? The **hedge maze** is the
+interesting call and it went the building way on purpose: a maze built as a
+compound of props is a maze nothing can prove walkable, and built as a building
+every hedge cell goes through the ground floor's own connectivity guard and the
+whole storey is then walked from the door.
+
+Both mazes here — the hedge and the mirrors — are drawn as a **comb**: fingers
+along z with a corridor left open at *both* ends, so no single blocked cell
+(the shell's own hanging lantern, the stair reserve, the door approach) can
+strand anything. A serpentine is prettier and any one of those three cuts it in
+half.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| big_top | `big_top`, `circus_tent`, `marquee` | the shell re-roofed as a great striped wool cone on a **solid** cap with a banner finial, king poles inside the crown (never floor-to-cap — that is a blocked column), a sand ring recoloured into the floor plane, tiered benches on both wall rows | `[17, 21, 17]`, 1–2 floors; **tall, square** |
+| hall_of_mirrors | `hall_of_mirrors`, `mirror_maze`, `mirror_hall` | a checkerboard floor plane, a mirror band of glass panes written into the **wall ring** over white and light-grey backing courses, and a glass-pane comb maze | `[11, 12, 19]`, 1–2 floors; **long** |
+| funhouse | `funhouse`, `fun_house` | a tilted-floor read of bright bands and set-in top slabs written entirely into the floor plane, a spinning tunnel of concentric wool rings on the far wall, a deliberately mismatched trim round the doorway | `[13, 13, 15]`, 1–2 floors |
+| dodgems_pavilion | `dodgems`, `dodgems_pavilion`, `bumper_cars` | an open hall: a blackstone arena painted into the floor plane inside a full-block kerb, a stripped-log power grid at the plate, stair-and-trapdoor cars parked on the wall rows | `[15, 12, 15]`, 1–2 floors; **square** |
+| aquarium | `aquarium`, `oceanarium`, `fish_house` | the bathhouse pool predicate verbatim inside a dark-prismarine rim, plus wall tanks written into the wall ring as glass over blue concrete with dry coral specimens and wall-banner labels | `[15, 13, 15]`, 1–2 floors; **square** |
+| hedge_maze | `hedge_maze`, `maze`, `hedges` | persistent oak-leaf hedges on coarse-dirt beds in a comb, in a mossy walled garden with grounded apron urns and a bench at the far end | `[13, 12, 19]`, 1–2 floors; **long** |
+
+**The aquarium's fluid decision, stated once.** The **centre pool is real
+water** and is the bathhouse argument unchanged: into the floor plane at
+`y = 0`, in a rect inset one cell from the interior, so under every water cell
+is the foundation skirt, beside every water cell is pool or written floor, and
+no prop ever stands on one. The **wall tanks are not water**, and that is
+deliberate rather than a shortcut: for the fluid rule a tank's water would have
+to be enclosed on *every* face including its top, and a tank's top course is
+the head-height course the shell hangs its lantern in — provably sealed on one
+envelope and open on the next. So the tanks are glass fronted over blue
+concrete, which reads as water through glass at any distance and is, block for
+block, not a fluid.
+
+Wave 6D claims **no** tag an earlier table owns. Bare **`tent` is the nomadic
+vocabulary's** (the big top answers to `big_top`, `circus_tent`, `marquee`);
+bare **`hall` is still the great hall's**; bare **`arcade` is the leisure
+wave's**; bare **`pavilion`** belongs to the leisure and arcana pavilions; bare
+**`museum` and `zoo` are the institution wave's**; and **`labyrinth` is an
+underground catalog entry**, so the hedge maze claims `maze` and `hedges` only.
 
 **Wave 4A (table 11) — the dwellings.** Twelve houses, from a one-room hut to
 a mansion. Most are **pure interior fit-outs** and are happy on a `wing`
@@ -1403,6 +1446,12 @@ plaza rather than one big one.
 | `dig_site` | 11×4×9 | ground, flat | a roped trench as a shallow recolour, a finds table and a spoil heap |
 | `fossil_dig` | 11×4×9 | ground, flat | the dig site with bone-block ribs half-exposed in the bed |
 | `shattered_obelisk` | 11×7×5 | ground, flat | a ragged stump, the fallen upper section lying beside it, and a scatter |
+| `ferris_wheel` | 3×16×13 | ground, flat | the fair's landmark — two A-frames, a log axle, a rim on axis spokes and four gondolas hung on bar links; **no centre post**, because at this diameter the rim's own bottom lands in that column |
+| `bandstand` | 9×10×9 | ground, flat | an open octagonal stand: paved pad, log pillars, a fence rail with one arc left open as the way in, a stepped cone on a solid finial |
+| `memorial_garden` | 9×5×9 | ground, flat | compound: a cross path, four hedged and planted beds, a slab-capped monument with a carpet wreath, two benches and a low wall |
+| `portal_frame` | 4×6×3 | ground | an obsidian and crying-obsidian rectangle with a keystone and a **deliberately empty** interior — no portal block — over four rune pedestals |
+| `floating_platform` | 7×8×7 | ground | reads as a floating island and is not: a one-column end-stone stem veiled in iron bars carries a disc that oversails it by three cells every way |
+| `houseboat` | 17×9×9 | **water** | a moored home barge on the hull template: glazed cabin amidships, slab roof with a chimney and planters, a fore-deck table, a railed after-deck and bar moorings |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask

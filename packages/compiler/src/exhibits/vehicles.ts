@@ -189,6 +189,15 @@ export const VEHICLE_EXHIBIT_PLAN: readonly {
     cells: [
       { prop: "container_ship", params: { yaw: 0 } },
       { prop: "container_ship", params: { yaw: 90 } },
+    // Wave 6D. The houseboat is a hull rather than a building — a dwelling on
+    // open water is the watercraft template's question, not the building
+    // grammar's — so it shows here, in water, with the rest of the fleet.
+    row: "moorings",
+    water: true,
+    cells: [
+      { prop: "houseboat", params: { yaw: 0 } },
+      { prop: "houseboat", params: { yaw: 90 } },
+      { prop: "houseboat", params: { yaw: 180 } },
     ],
   },
   {

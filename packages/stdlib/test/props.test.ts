@@ -149,6 +149,14 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   dig_site: [{}],
   fossil_dig: [{}],
   shattered_obelisk: [{}],
+  // Wave 6D: spectacle. Their own properties are held in
+  // props-spectacle.test.ts; here they walk the catalog-wide checks.
+  ferris_wheel: [{}],
+  bandstand: [{}],
+  memorial_garden: [{}],
+  portal_frame: [{}],
+  floating_platform: [{}],
+  houseboat: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

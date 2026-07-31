@@ -49,6 +49,7 @@ import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
 import { arcanaFacadeDefaults } from "./archetypes-arcana.js";
 import { relicFacadeDefaults } from "./archetypes-relic.js";
+import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
@@ -199,6 +200,9 @@ export function archetypeFacadeDefaults(
       // Wave 6E, the relics — appended, and the regional houses stay the tail.
       const relic = relicFacadeDefaults(archetype);
       if (Object.keys(relic).length > 0) return relic;
+      // Wave 6D, spectacle — appended, and the regional houses stay the tail.
+      const spectacle = spectacleFacadeDefaults(archetype);
+      if (Object.keys(spectacle).length > 0) return spectacle;
       return regionalFacadeDefaults(archetype);
     }
   }

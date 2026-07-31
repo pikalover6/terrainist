@@ -41,6 +41,7 @@ import { AMUSEMENT_PROP_EXHIBIT_PLAN } from "./amusement.js";
 import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
 import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
 import { RELIC_PROP_EXHIBIT_PLAN } from "./relic-props.js";
+import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
 import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
@@ -152,6 +153,10 @@ export const PROP_EXHIBIT_PLAN: readonly {
   ...AMUSEMENT_PROP_EXHIBIT_PLAN,
   ...WAYSIDE_PROP_EXHIBIT_PLAN,
   ...RELIC_PROP_EXHIBIT_PLAN,
+  // Wave 6D's five dry-ground props. Its sixth, the houseboat, is a hull and
+  // shows in the **vehicle** grid with the rest of the fleet — that grid is
+  // where the water is.
+  ...SPECTACLE_PROP_EXHIBIT_PLAN,
 ]);
 
 /**

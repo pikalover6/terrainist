@@ -169,6 +169,14 @@ import {
 export * from "./archetypes-relic.js";
 
 import {
+  SPECTACLE_BUILDING_ARCHETYPES,
+  furnishSpectacle,
+  spectacleArchetypeOfTags,
+} from "./archetypes-spectacle.js";
+
+export * from "./archetypes-spectacle.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -218,6 +226,7 @@ export const BUILDING_ARCHETYPES = [
   ...SCIENCE_BUILDING_ARCHETYPES,
   ...ARCANA_BUILDING_ARCHETYPES,
   ...RELIC_BUILDING_ARCHETYPES,
+  ...SPECTACLE_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -359,6 +368,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // still falls through to a cottage.
   const relic = relicArchetypeOfTags(tags);
   if (relic !== null) return relic;
+  // Wave 6D, spectacle: the buildings you go *into* to be amazed. It sits here
+  // for the reason every later wave sits high — the tables below are greedy —
+  // and it claims nothing an earlier one claims: bare `tent` is still the
+  // nomadic vocabulary's, bare `hall` the great hall's, bare `arcade` the
+  // leisure wave's, bare `pavilion` the leisure/arcana pavilions', bare
+  // `museum` and `zoo` the institution wave's, and `labyrinth` the underground
+  // catalog's.
+  const spectacle = spectacleArchetypeOfTags(tags);
+  if (spectacle !== null) return spectacle;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -748,6 +766,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishScience(ctx);
   n += furnishArcana(ctx);
   n += furnishRelic(ctx);
+  n += furnishSpectacle(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);

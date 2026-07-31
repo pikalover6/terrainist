@@ -1765,6 +1765,10 @@ export const SETTLEMENT_PROP_NAMES = [
   "passenger_car",
   "freight_car",
   "caboose",
+  // Wave 6D. A houseboat is a dwelling, but a dwelling on open water is the
+  // watercraft template's question rather than the building grammar's, so it
+  // is a hull and lives with the fleet.
+  "houseboat",
   // The breadth wave: street furniture, works, camps, yards and smallcraft.
   "bench",
   "planter",
@@ -1811,6 +1815,13 @@ export const SETTLEMENT_PROP_NAMES = [
   "helter_skelter",
   "midway_arch",
   "shooting_gallery",
+  // Wave 6D: spectacle and oddities. The wave's other six entries are
+  // buildings; these five are things you walk past rather than into.
+  "ferris_wheel",
+  "bandstand",
+  "memorial_garden",
+  "portal_frame",
+  "floating_platform",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

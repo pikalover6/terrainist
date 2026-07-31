@@ -531,7 +531,7 @@ describe("the prop exhibits", () => {
   });
 
   it("digs a stable pond for the harbour row and places every boat in it", () => {
-    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 256 }, stack);
+    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack);
     const result = buildPropExhibits(plan, stack, 20260728n, 0, 0);
     expect(result.pondColumns).toBeGreaterThan(0);
     expect(checkFluidStability(plan).unstable).toBe(0);
@@ -547,7 +547,7 @@ describe("the prop exhibits", () => {
   it("places every exhibit, with no diagnostics, deterministically", () => {
     const build = (): ReturnType<typeof buildPropExhibits> =>
       buildPropExhibits(
-        devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 256 }, stack),
+        devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack),
         stack,
         20260728n,
         0,
@@ -560,7 +560,7 @@ describe("the prop exhibits", () => {
   });
 
   it("gives the rail exhibits shapes the pass can resolve in a real chunk map", () => {
-    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 256 }, stack);
+    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack);
     const result = buildPropExhibits(plan, stack, 20260728n, 0, 0);
     const map = new Map<string, EmitChunk>();
     const chunkAt = (x: number, z: number): EmitChunk => {
