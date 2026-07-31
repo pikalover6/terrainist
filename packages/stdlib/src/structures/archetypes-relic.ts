@@ -355,8 +355,34 @@ function crumbleWalls(
   clad: (x: number, y: number, z: number) => string,
 ): Map<string, number> {
   const heads = new Map<string, number>();
+  // The wall the stair flight leans on survives with it. A two-storey shell
+  // runs its flight up an interior wall row before decay ever gets here, and
+  // a step whose flanking wall crumbled is a stair with air on every side —
+  // so every ring column beside a flight step keeps at least the step's own
+  // height plus a course. Roof stairs sit above the eave plate and are not
+  // flight steps, hence the `y <= wallTop` bound.
+  const stairMin = new Map<string, number>();
+  const it = ctx.interior;
+  for (let z = it.z0; z <= it.z1; z++) {
+    for (let x = it.x0; x <= it.x1; x++) {
+      for (let y = 1; y <= plan.wallTop; y++) {
+        const op = ctx.blockAt(x, y, z);
+        if (op === undefined || !op.block.endsWith("_stairs")) continue;
+        for (const [nx, nz] of [
+          [x - 1, z],
+          [x + 1, z],
+          [x, z - 1],
+          [x, z + 1],
+        ] as const) {
+          const key = `${nx},${nz}`;
+          stairMin.set(key, Math.max(stairMin.get(key) ?? 0, y + 1));
+        }
+      }
+    }
+  }
   for (const cell of ringOf(plan.sx, plan.sz)) {
-    const h = crumbleHeight(ctx, plan, style, cell.x, cell.z);
+    const floor = stairMin.get(`${cell.x},${cell.z}`) ?? 0;
+    const h = Math.max(crumbleHeight(ctx, plan, style, cell.x, cell.z), floor);
     heads.set(`${cell.x},${cell.z}`, h);
     // Clear from the top of the envelope DOWN to the survivor. A whole run, so
     // nothing is ever left with air above it and air below it. The door column
@@ -409,6 +435,20 @@ function breakRoof(
       for (let z = -1; z <= plan.sz; z++) {
         ctx.put(x, y, z, "air");
       }
+    }
+  }
+  // The eave course itself sits AT the plate, one cell outside the footprint —
+  // outside the ring the crumble walks and below the band this loop clears. A
+  // wall that crumbled under its own eave left that overhang stair floating,
+  // so the plate course is cleared everywhere except the ring, where the
+  // surviving wall heads live.
+  for (let x = -1; x <= plan.sx; x++) {
+    for (let z = -1; z <= plan.sz; z++) {
+      const onRing =
+        x >= 0 && x < plan.sx && z >= 0 && z < plan.sz &&
+        (x === 0 || x === plan.sx - 1 || z === 0 || z === plan.sz - 1);
+      if (onRing) continue;
+      ctx.put(x, plan.wallTop, z, "air");
     }
   }
   const salt = saltOf(ctx.archetype);
@@ -540,6 +580,27 @@ function trimLadders(ctx: FitOutContext, plan: RelicPlan): void {
 }
 
 /**
+ * A ruin has no lantern. The shell hangs one from the ceiling before decay
+ * runs, and the decay takes the ceiling — leaving a lit lamp dangling from
+ * open sky, which is both the `unsupported.lantern` finding and a building
+ * that reads inhabited. Every hanging lantern whose support is gone goes.
+ */
+function dropDeadLanterns(ctx: FitOutContext, plan: RelicPlan): void {
+  const it = ctx.interior;
+  for (let z = it.z0; z <= it.z1; z++) {
+    for (let x = it.x0; x <= it.x1; x++) {
+      for (let y = 1; y <= plan.top + 2; y++) {
+        const op = ctx.blockAt(x, y, z);
+        if (op === undefined || op.block !== "lantern") continue;
+        if (op.props?.["hanging"] !== "true") continue;
+        const above = ctx.blockAt(x, y + 1, z);
+        if (above === undefined || above.block === "air") ctx.put(x, y, z, "air");
+      }
+    }
+  }
+}
+
+/**
  * A grounded spill in the apron: rubble that has fallen *out* of the building.
  *
  * The apron-post ground rule, in the form a ruin needs it. On conformed
@@ -655,9 +716,13 @@ export function furnishRelic(ctx: FitOutContext): number {
       break;
   }
   // After every decay pass: no rung of the shell's ladders may outlive the
-  // wall that backs it.
+  // wall that backs it, and no lantern may hang from the ceiling the decay
+  // just removed.
   const plan = relicPlan(ctx);
-  if (plan !== null) trimLadders(ctx, plan);
+  if (plan !== null) {
+    trimLadders(ctx, plan);
+    dropDeadLanterns(ctx, plan);
+  }
   return c.n;
 }
 
@@ -823,6 +888,17 @@ function fitCollapsedTower(ctx: FitOutContext, c: PropCounter): void {
       },
     );
     breakRoof(ctx, c, plan, heads, ctx.style["stone.slab"] as string);
+    // The deck goes with the tower. The shell's upper platform was fed by a
+    // ladder whose backing wall has just crumbled, and a deck no ladder
+    // reaches is a floating disc the walking agent is rightly unable to get
+    // to — a collapsed tower is a stump, not a treehouse. Everything in the
+    // interior above the ground storey's head course is cleared.
+    const it = ctx.interior;
+    for (let z = it.z0; z <= it.z1; z++) {
+      for (let x = it.x0; x <= it.x1; x++) {
+        for (let y = 3; y <= plan.top + 2; y++) ctx.put(x, y, z, "air");
+      }
+    }
     spill(ctx, c, plan, "cobblestone");
     vines(ctx, c, plan, 20);
   }

@@ -736,8 +736,11 @@ export function furnish(r: FurnishRequest): number {
       // the end wall.
       const mid = Math.floor((x0 + x1) / 2);
       for (let z = z0 + 1; z <= z1 - 1; z++) {
-        place(mid, z, style["wall.fence"] as string);
-        if (free(mid, z)) {
+        // The plate is the table top and the fence is its trestle: the plate
+        // goes on ONLY where the trestle landed. `place` may refuse a cell
+        // (reserved, or it would cut the room in two), and a plate written
+        // over that refusal is a table top floating on air.
+        if (place(mid, z, style["wall.fence"] as string)) {
           put(mid, 2, z, "oak_pressure_plate", { powered: "false" });
           n++;
         }

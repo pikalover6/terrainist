@@ -23,6 +23,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { passableBlock } from "./helpers/walkability.js";
+
 import {
   BUILDING_ARCHETYPES,
   BUILDING_STYLE_DEFAULTS,
@@ -108,9 +110,11 @@ function indexOf(ops: readonly LocalVoxelOp[]): Map<string, LocalVoxelOp> {
 function freeCells(result: ReturnType<typeof generateBuilding>): string[] {
   const at = indexOf(result.ops);
   const free: string[] = [];
+  // Physics-true: a carpet or plate is a route, and a cell whose head course
+  // is blocked (a low-slung lantern, the flight's second step) is no demand.
   for (const cell of result.meta.floorCells) {
-    const standing = at.get(`${cell.x},1,${cell.z}`);
-    if (standing !== undefined && standing.block !== "air") continue;
+    if (!passableBlock(at.get(`${cell.x},1,${cell.z}`)?.block)) continue;
+    if (!passableBlock(at.get(`${cell.x},2,${cell.z}`)?.block)) continue;
     free.push(`${cell.x},${cell.z}`);
   }
   return free;

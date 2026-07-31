@@ -70,6 +70,20 @@ const AIR = new Set(["air", "cave_air", "void_air"]);
 const PASSABLE_NON_CUBE =
   /(^(torch|ladder|vine|chain|lever|tripwire|tripwire_hook|cobweb|snow|lily_pad|flower_pot|scaffolding|end_rod|lightning_rod|rail|powered_rail|detector_rail|activator_rail|water|lava|kelp|seagrass|sugar_cane|bamboo|fire|soul_fire|redstone_wire|comparator|repeater|tripwire)$)|(^potted_)|(_torch|_door|_trapdoor|_sign|_banner|_carpet|_button|_pressure_plate|_sapling|_head|_skull|_rail|_candle|_sprout|_roots|_fan|_bush|_grass|_fern|_tulip|_orchid|_daisy|_lily|_poppy|_dandelion|_amethyst_bud|_cluster|_plate)$/;
 
+/**
+ * Can a player's body occupy a cell holding this block?
+ *
+ * The physics lint's `passableAt`, by name alone, for tests that build their
+ * own free-cell sets: air and decorations pass, `BODY_BLOCKING` refuses, and
+ * anything unrecognised is treated as a full cube — the safe direction.
+ */
+export function passableBlock(block: string | undefined): boolean {
+  if (block === undefined || AIR.has(block)) return true;
+  if (block.endsWith("wall_torch")) return true;
+  if (BODY_BLOCKING.test(block)) return false;
+  return PASSABLE_NON_CUBE.test(block);
+}
+
 /* -------------------------------------------------------------------------- */
 /* inputs                                                                      */
 /* -------------------------------------------------------------------------- */

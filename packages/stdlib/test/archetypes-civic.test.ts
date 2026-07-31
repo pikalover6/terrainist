@@ -13,6 +13,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { passableBlock } from "./helpers/walkability.js";
+
 import {
   BUILDING_ARCHETYPES,
   BUILDING_STYLE_DEFAULTS,
@@ -162,16 +164,22 @@ describe("extended archetypes", () => {
   });
 
   it("leaves every ground floor one walkable region", () => {
+    // The metric matches the walk the physics lint runs: a carpet or a
+    // pressure plate is a route, not an obstacle, and a cell whose head course
+    // is blocked (under the stair flight's second step, under a low-slung
+    // lantern) is not a cell the demand covers — a player cannot stand in it.
     for (const archetype of BUILDING_ARCHETYPES) {
       if (archetype === "watchtower") continue; // a shaft, not a room
       for (const size of [BIG, [9, 11, 9], [17, 13, 11]] as const) {
         const { ops, meta } = build(archetype, size);
         const { interior } = meta;
-        const taken = new Set(ops.filter((o) => o.y === 1).map((o) => `${o.x},${o.z}`));
+        const at = new Map(ops.map((o) => [`${o.x},${o.y},${o.z}`, o]));
         const free: string[] = [];
         for (let z = interior.z0; z <= interior.z1; z++) {
           for (let x = interior.x0; x <= interior.x1; x++) {
-            if (!taken.has(`${x},${z}`)) free.push(`${x},${z}`);
+            if (!passableBlock(at.get(`${x},1,${z}`)?.block)) continue;
+            if (!passableBlock(at.get(`${x},2,${z}`)?.block)) continue;
+            free.push(`${x},${z}`);
           }
         }
         expect(free.length, `${archetype} ${size.join("x")}`).toBeGreaterThan(2);
@@ -316,6 +324,10 @@ describe("upper floors", () => {
   it("keeps every upper storey walkable and the stair head reachable", () => {
     for (const archetype of BUILDING_ARCHETYPES) {
       if (archetype === "watchtower") continue;
+      // A collapsed tower strips its own deck: the ladder that fed it lost its
+      // backing wall to the crumble, and a deck no ladder reaches is exactly
+      // the floating-disc defect the ruin law exists to prevent.
+      if (archetype === "collapsed_tower") continue;
       for (const size of [TWO_STOREY, [11, 15, 13], [17, 19, 15]] as const) {
         const { ops, meta } = build(archetype, size, { floors: 2, floorHeight: 5 });
         const { interior } = meta;
