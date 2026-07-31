@@ -196,6 +196,14 @@ export interface StreetscapeContext {
   readonly palette?: Palette;
   /** Node path for diagnostics. */
   readonly nodePath?: string;
+  /**
+   * Columns already carrying someone else's blocks — building aprons above
+   * all. A shop's porch lamp lands one cell outside its footprint, which on a
+   * build-to-line lot IS the sidewalk; a planter scattered onto the same
+   * column overwrote the lamp post and left its lantern standing on a
+   * trapdoor. A prop whose ops touch any avoided column is skipped whole.
+   */
+  readonly avoid?: (x: number, z: number) => boolean;
 }
 
 /** One prop this pass planted, in world columns. */
@@ -664,6 +672,16 @@ function emitProp(
   });
   const [sizeX, , sizeZ] = generated.meta.size;
   const ops = rotateOps(generated.ops, yaw, sizeX, sizeZ);
+
+  // All or nothing against foreign ops: clipping single columns is fine for
+  // the masks (a pad row lost to the carriageway is invisible) but a prop
+  // half-overwritten by a building's apron fixture is a support-chain finding.
+  if (ctx.avoid !== undefined) {
+    for (const op of ops as readonly LocalVoxelOp[]) {
+      if (op.y === 0 && !keepLocalFloor) continue;
+      if (ctx.avoid(originX + op.x, originZ + op.z)) return undefined;
+    }
+  }
 
   let count = 0;
   for (const op of ops as readonly LocalVoxelOp[]) {

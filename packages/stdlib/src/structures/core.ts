@@ -1341,7 +1341,9 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
       })
     : 0;
-  if (door !== null) apronOps += emitPorchLamp(put, style, door, sx, sz);
+  if (door !== null) {
+    apronOps += emitPorchLamp(put, style, door, sx, sz, (x, y, z) => cells.has(`${x},${y},${z}`));
+  }
 
   // --- the cellar ----------------------------------------------------------
   // Last, deliberately: it punches a hole through the ground-floor plane and
@@ -1642,12 +1644,25 @@ function emitPorchLamp(
   door: { x: number; z: number; face: Cardinal },
   sx: number,
   sz: number,
+  occupied: (x: number, y: number, z: number) => boolean,
 ): number {
   const [ox, oz] = cardinalStep(door.face);
   const alongZ = door.x === 0 || door.x === sx - 1;
   const side = alongZ ? { x: 0, z: 1 } : { x: 1, z: 0 };
-  const lx = door.x + ox + side.x;
-  const lz = door.z + oz + side.z;
+  // The post's column must be genuinely empty: a window shutter juts one cell
+  // into the apron at head height, and a shop row put one exactly where the
+  // lamp's upper post went — the shutter overwrote the post and left the
+  // lantern's support chain standing on a trapdoor. Occupied on one side of
+  // the door, the lamp crosses to the other; occupied on both, no lamp.
+  let lx = door.x + ox + side.x;
+  let lz = door.z + oz + side.z;
+  const columnFree = (x: number, z: number): boolean =>
+    !occupied(x, 0, z) && !occupied(x, 1, z) && !occupied(x, 2, z);
+  if (!columnFree(lx, lz)) {
+    lx = door.x + ox - side.x;
+    lz = door.z + oz - side.z;
+    if (!columnFree(lx, lz)) return 0;
+  }
   // Only the apron ring; a corner-of-the-apron lamp is fine, a stray one is not.
   if (lx < -1 || lx > sx || lz < -1 || lz > sz) return 0;
   put(lx, 0, lz, style["wall.fence"] as string);

@@ -440,6 +440,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     // The F4 seam, filled: curbs, sidewalk paving, lamps, crossings and the
     // district's furniture. The kit is read off the contract itself — a
     // two-column sidewalk is the downtown band, one column is a village lane.
+    // Columns the buildings pass already wrote (porch lamps and shutters jut
+    // one cell into the apron, which on a build-to-line lot is the sidewalk)
+    // are off limits to the dressing, whole-prop.
+    const builtColumns = new Set<string>();
+    for (const b of blocks) builtColumns.add(`${b.x},${b.z}`);
     for (const district of districts) {
       const dressed = dressStreets(district.streets, {
         plan: input.plan,
@@ -448,6 +453,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         furniture: district.streets.sidewalk >= 2 ? "downtown" : "village",
         palette: input.palette,
         nodePath: district.nodePath,
+        avoid: (x, z) => builtColumns.has(`${x},${z}`),
       });
       blocks.push(...dressed.blocks);
       diagnostics.push(...dressed.diagnostics);
