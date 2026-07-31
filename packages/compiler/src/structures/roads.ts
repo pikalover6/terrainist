@@ -39,7 +39,15 @@ import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
-import type { Palette } from "../terrain/palette.js";
+import { detailSeed, hash2 } from "../terrain/detail.js";
+import {
+  STREET_CARRIAGEWAY_SYMBOL,
+  STREET_CARRIAGEWAY_WORN_SYMBOL,
+  STREET_LANE_SYMBOL,
+  STREET_MARKING_SYMBOL,
+  streetMaterials,
+  type Palette,
+} from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
 
@@ -481,6 +489,13 @@ export interface StreetSurfaceInput {
   readonly placements: readonly Placement[];
   readonly buildingPaths: ReadonlySet<string>;
   readonly occupancy?: OccupancyGrid;
+  /**
+   * The settlement's material theme id, which chooses the street materials
+   * when the document declares no `street.*` symbols of its own.
+   */
+  readonly theme?: string;
+  /** Node seed the wear mix and the dash phase hang off. */
+  readonly seed?: Seed256;
 }
 
 /** What the street surfacing wrote. */
@@ -494,11 +509,21 @@ export interface StreetSurfaceResult {
 /**
  * Grade and surface a district's streets.
  *
- * **Streets are roads.** They get the same 1-Lipschitz grade, the same
- * `@road.surface` centre and `@road.shoulder` edge, the same shoulder blend and
- * the same occupancy claim as a lane between two villages, because a player
- * cannot tell the difference and neither should the emitter. What they do not
- * get is the router: a street's centre line was decided by the fabric pass
+ * **Streets are roads geometrically, and are not roads materially.** They get
+ * the same 1-Lipschitz grade, the same shoulder blend and the same occupancy
+ * claim as a lane between two villages. What they do *not* share is the
+ * surface: this pass used to write `@road.surface` and `@road.shoulder` on the
+ * theory that "a player cannot tell the difference", and the first walk of the
+ * headline city falsified that in about ten seconds — a downtown avenue was
+ * dirt path with a gravel verge, exactly like a farm track. Streets are now
+ * surfaced from the `street.*` material class (see {@link streetMaterials}),
+ * chosen per segment by width class: avenues and streets get the carriageway
+ * with its worn patching and, on avenues, a dashed centre line; lanes get the
+ * rougher back-lane surface. The verge is the carriageway itself, not gravel —
+ * inside a district the sidewalk band already covers that edge, and a gravel
+ * fringe between tarmac and sidewalk is a seam nobody asked for.
+ *
+ * What they do not get is the router: a street's centre line was decided by the fabric pass
  * before a single building existed, which is the whole inversion — the road
  * pass finds its way *between* districts, and inside one the way was the first
  * thing drawn.
@@ -527,8 +552,11 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const roadY = new Int32Array(cells);
   const bridged = new Uint8Array(cells);
   const paved = new Uint8Array(cells);
-  const states = resolveRoadStates(input.palette, input.stack);
+  const rural = resolveRoadStates(input.palette, input.stack);
+  const urban = resolveStreetStates(input.palette, input.stack, rural, input.theme, input.seed);
   const blocks: StructureBlock[] = [];
+  /** Avenue centre lines, kept until every segment has been surfaced. */
+  const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
 
   for (const graph of input.graphs) {
     for (const segment of graph.segments) {
@@ -548,14 +576,21 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         roadY,
         surfaced,
         segment.width,
-        states,
+        urban[segment.kind],
         occupancy,
         paved,
         water,
         bridged,
       );
+      if (segment.kind === "avenue") {
+        avenues.push({ cells: markableCells(surfaced, graph, segment.width) });
+      }
     }
   }
+
+  // After every segment: a street laid later crosses an earlier one, and a
+  // dash painted before that crossing would simply be overwritten.
+  paintCentreLines(region, plan, road, paved, water, urban, avenues);
 
   blendShoulders(region, plan, road, roadY, blocked, paved);
 
@@ -1324,6 +1359,158 @@ function resolveRoadStates(palette: Palette, stack: PrismarineStack): RoadStates
         fallback("oak_planks")),
     pier: palette.has("road.pier") ? palette.state("road.pier") : fallback("oak_log"),
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* urban street surfacing (U1)                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Share of carriageway columns painted in the worn tone.
+ *
+ * Low on purpose. Above roughly a fifth the two tones stop reading as patched
+ * asphalt and start reading as noise; below a tenth the road is a flat slab
+ * again. An eighth is the middle of that window.
+ */
+export const STREET_WEAR_CHANCE = 0.12;
+
+/** Hash salt for the wear draw — positional only, never a sequential RNG. */
+const STREET_WEAR_SALT = 0x5f;
+
+/** Painted columns per dash. */
+export const MARKING_DASH = 2;
+/** Dash period along the centre line: two painted, three clear. */
+export const MARKING_PERIOD = 5;
+
+/**
+ * Columns of centre line kept clear either side of a junction's carriageway.
+ *
+ * It has to cover the zebra the streetscape lays on every approach, plus a
+ * column of breathing room: `CROSSING_SETBACK` (1) + `CROSSING_DEPTH` (2) + 1.
+ * The constants are duplicated rather than imported because `streetscape.ts`
+ * imports *this* module, and the cycle is not worth a shared constants file.
+ */
+export const MARKING_JUNCTION_CLEAR = 4;
+
+/** The surfacing states for each street width class, plus the paint. */
+interface StreetStateSet {
+  readonly avenue: RoadStates;
+  readonly street: RoadStates;
+  readonly lane: RoadStates;
+  /** `street.marking` — the dashed centre line. */
+  readonly marking: number;
+}
+
+/**
+ * Resolve the urban material class.
+ *
+ * Precedence is palette symbol, then theme table, then the rural states —
+ * so `style.palettes` still overrides everything and a document that declares
+ * nothing gets a street that matches the buildings beside it.
+ *
+ * The verge deliberately reuses the carriageway: see the note on
+ * {@link surfaceStreetGraph}.
+ */
+function resolveStreetStates(
+  palette: Palette,
+  stack: PrismarineStack,
+  rural: RoadStates,
+  theme: string | undefined,
+  seed: Seed256 | undefined,
+): StreetStateSet {
+  const materials = streetMaterials(theme);
+  const named = (name: string, fallback: number): number =>
+    stack.blockByName(name.replace(/^minecraft:/, ""))?.stateId ?? fallback;
+  const at = (
+    symbol: string,
+    name: string,
+    fallback: number,
+  ): ((x: number, z: number) => number) => {
+    if (palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
+    const id = named(name, fallback);
+    return () => id;
+  };
+
+  const body = at(STREET_CARRIAGEWAY_SYMBOL, materials.carriageway, rural.surface(0, 0));
+  const worn = at(STREET_CARRIAGEWAY_WORN_SYMBOL, materials.worn, body(0, 0));
+  const lane = at(STREET_LANE_SYMBOL, materials.lane, body(0, 0));
+  // No wall clock, no `Math.random`, no transcendentals: the wear draw is the
+  // column's own hash, so the same document and seed give the same patching
+  // forever, whatever order the segments were walked in.
+  const wearSeed = seed === undefined ? 0x5157_2ea1 : detailSeed(seed, "street.wear");
+  const carriageway = (x: number, z: number): number =>
+    hash2(wearSeed, x, z, STREET_WEAR_SALT) < STREET_WEAR_CHANCE ? worn(x, z) : body(x, z);
+
+  const paved: RoadStates = { ...rural, surface: carriageway, shoulder: carriageway };
+  return {
+    avenue: paved,
+    street: paved,
+    lane: { ...rural, surface: lane, shoulder: lane },
+    marking: palette.has(STREET_MARKING_SYMBOL)
+      ? palette.state(STREET_MARKING_SYMBOL)
+      : named(materials.marking, body(0, 0)),
+  };
+}
+
+/**
+ * The centre-line columns of one avenue: dashed, and clear of every junction.
+ *
+ * A dash laid through an intersection is a dash under the zebra the
+ * streetscape paints there, and the zebra has to win — the streetscape runs
+ * after this pass and would overwrite it anyway, but leaving the line out
+ * altogether is what a real stop line looks like.
+ */
+function markableCells(
+  path: readonly { x: number; z: number; y: number }[],
+  graph: StreetGraph,
+  width: number,
+): { x: number; z: number }[] {
+  let widest = width;
+  for (const s of graph.segments) if (s.width > widest) widest = s.width;
+  const clear = ((widest - 1) >> 1) + MARKING_JUNCTION_CLEAR;
+  const out: { x: number; z: number }[] = [];
+  for (const [i, cell] of path.entries()) {
+    if (i % MARKING_PERIOD >= MARKING_DASH) continue;
+    let nearJunction = false;
+    for (const j of graph.intersections) {
+      if (Math.abs(cell.x - j.x) <= clear && Math.abs(cell.z - j.z) <= clear) {
+        nearJunction = true;
+        break;
+      }
+    }
+    if (nearJunction) continue;
+    out.push({ x: cell.x, z: cell.z });
+  }
+  return out;
+}
+
+/**
+ * Paint the collected avenue centre lines.
+ *
+ * The guard is exact rather than approximate: a column is repainted only when
+ * its current surface is *still* the carriageway state this pass would write
+ * there. Anything else — a graded step, a plaza, a lane that crossed later —
+ * already owns the column and keeps it.
+ */
+function paintCentreLines(
+  region: Region,
+  plan: ColumnPlan,
+  road: Uint8Array,
+  paved: Uint8Array,
+  water: Uint8Array,
+  states: StreetStateSet,
+  avenues: readonly { readonly cells: readonly { x: number; z: number }[] }[],
+): void {
+  for (const avenue of avenues) {
+    for (const cell of avenue.cells) {
+      if (!inside(region, cell.x, cell.z)) continue;
+      const idx = index(region, cell.x, cell.z);
+      if (road[idx] !== 1 || paved[idx] === 1 || water[idx] === 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      if (plan.surface[idx] !== states.avenue.surface(cell.x, cell.z)) continue;
+      plan.surface[idx] = states.marking;
+    }
+  }
 }
 
 /**

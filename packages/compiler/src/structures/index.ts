@@ -434,6 +434,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       stack: input.stack,
       placements: input.placements,
       buildingPaths,
+      theme: theme.id,
+      seed: themeSeed,
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     blocks.push(...streets.blocks);

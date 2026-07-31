@@ -38,10 +38,14 @@ import {
 } from "../src/terrain/columns.js";
 import { decorate } from "../src/terrain/decorate.js";
 import {
+  MODERN_STREET_MATERIALS,
   NON_SYMBOL_PALETTE_KEYS,
   PALETTE_THEME_KEY,
+  STREET_MATERIALS_BY_THEME,
   resolvePalette,
+  streetMaterials,
 } from "../src/terrain/palette.js";
+import { ALL_MATERIAL_THEMES } from "@terrainist/stdlib";
 import {
   checkFloatingVegetation,
   checkFluidStability,
@@ -842,5 +846,31 @@ describe("the palette resolver and the theme key", () => {
   it("keeps one name for the key the reader and the resolver share", () => {
     expect(PALETTE_THEME_KEY).toBe("theme");
     expect(NON_SYMBOL_PALETTE_KEYS.has(PALETTE_THEME_KEY)).toBe(true);
+  });
+
+  /**
+   * Every street material must exist in the pinned version. A theme naming a
+   * block the pinned version does not have fails silently — the fallback is a
+   * *different block*, not an error — which is exactly how a theme once ended
+   * up quietly missing its stairs.
+   */
+  it("names only real 1.21.11 blocks in every theme's street materials", () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    for (const [theme, materials] of Object.entries(STREET_MATERIALS_BY_THEME)) {
+      for (const block of Object.values(materials)) {
+        expect(
+          { theme, block, known: stack.blockByName(block.replace(/^minecraft:/, "")) !== undefined },
+        ).toEqual({ theme, block, known: true });
+      }
+    }
+  });
+
+  it("covers every material theme and falls back to the modern set", () => {
+    for (const theme of ALL_MATERIAL_THEMES) {
+      expect(STREET_MATERIALS_BY_THEME[theme.id]).toBeDefined();
+      expect(streetMaterials(theme.id)).toBe(STREET_MATERIALS_BY_THEME[theme.id]);
+    }
+    expect(streetMaterials(undefined)).toBe(MODERN_STREET_MATERIALS);
+    expect(streetMaterials("no_such_theme")).toBe(MODERN_STREET_MATERIALS);
   });
 });

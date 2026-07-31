@@ -102,6 +102,104 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "plaza.well_wall": "minecraft:cobblestone_wall",
 });
 
+/* -------------------------------------------------------------------------- */
+/* urban street materials (U1)                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The four symbols a **district street** is surfaced from.
+ *
+ * A rural lane and a downtown avenue used to be the same two blocks — dirt
+ * path with a gravel verge — on the theory that "a player cannot tell the
+ * difference". A player walked the headline city and told the difference
+ * immediately. So a street has its own material class, chosen by the
+ * segment's width class:
+ *
+ * - `carriageway` is the tarmac body of an avenue or a street;
+ * - `carriageway.worn` is a second, close tone mixed in at a low positional
+ *   frequency, so the road reads as patched asphalt rather than one flat slab;
+ * - `marking` is the dashed centre line, painted on avenues only;
+ * - `lane.surface` is what a back lane gets — older, rougher, no markings.
+ *
+ * These are **not** members of {@link DEFAULT_PALETTE}: their default depends
+ * on the settlement's material theme, and the palette is resolved long before
+ * a theme is drawn. The street pass asks the palette first (so
+ * `style.palettes` still overrides everything) and falls back to the theme
+ * table below. That is the same "symbol, else named default" idiom the
+ * streetscape's `street.crossing.*` symbols already use.
+ */
+export interface StreetMaterials {
+  readonly carriageway: string;
+  readonly worn: string;
+  readonly marking: string;
+  readonly lane: string;
+}
+
+/** Palette symbol names for {@link StreetMaterials}, in the same order. */
+export const STREET_CARRIAGEWAY_SYMBOL = "street.carriageway";
+/** @see STREET_CARRIAGEWAY_SYMBOL */
+export const STREET_CARRIAGEWAY_WORN_SYMBOL = "street.carriageway.worn";
+/** @see STREET_CARRIAGEWAY_SYMBOL */
+export const STREET_MARKING_SYMBOL = "street.marking";
+/** @see STREET_CARRIAGEWAY_SYMBOL */
+export const STREET_LANE_SYMBOL = "street.lane.surface";
+
+/**
+ * Concrete tarmac and painted lines — the modern default.
+ *
+ * Every block name here is checked against the pinned 1.21.11 block table by
+ * a test, because a theme whose stair or slab variant does not exist in the
+ * pinned version has bitten this codebase before.
+ */
+export const MODERN_STREET_MATERIALS: StreetMaterials = Object.freeze({
+  carriageway: "minecraft:gray_concrete",
+  worn: "minecraft:light_gray_concrete",
+  marking: "minecraft:white_concrete",
+  lane: "minecraft:cobblestone",
+});
+
+/**
+ * Street materials per material theme id (`@terrainist/stdlib`'s themes).
+ *
+ * The rustic themes get stone, not concrete: a timber village with a poured
+ * concrete avenue reads as two worlds spliced together. Each one keeps the
+ * same *structure* — a body, a close second tone, a paler line, a rougher
+ * back lane — so the wear mix and the centre line read identically whatever
+ * the theme is.
+ */
+export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>> =
+  Object.freeze({
+    // Cobbled market town: cobble body, mossy patching, a pale stone-brick
+    // centre course, gravel back lanes.
+    temperate_timber: Object.freeze({
+      carriageway: "minecraft:cobblestone",
+      worn: "minecraft:mossy_cobblestone",
+      marking: "minecraft:stone_bricks",
+      lane: "minecraft:gravel",
+    }),
+    // Northern pine: the local rock is deepslate, so the street is too.
+    boreal_pine: Object.freeze({
+      carriageway: "minecraft:cobbled_deepslate",
+      worn: "minecraft:deepslate_bricks",
+      marking: "minecraft:polished_diorite",
+      lane: "minecraft:gravel",
+    }),
+    // Chalk downs: pale, dry, andesite-and-smooth-stone.
+    birchwood_downs: Object.freeze({
+      carriageway: "minecraft:andesite",
+      worn: "minecraft:cobblestone",
+      marking: "minecraft:smooth_stone",
+      lane: "minecraft:coarse_dirt",
+    }),
+    modern_city: MODERN_STREET_MATERIALS,
+  });
+
+/** The street materials for a theme id; the modern set when it is unknown. */
+export function streetMaterials(themeId: string | undefined): StreetMaterials {
+  if (themeId === undefined) return MODERN_STREET_MATERIALS;
+  return STREET_MATERIALS_BY_THEME[themeId] ?? MODERN_STREET_MATERIALS;
+}
+
 /** A palette symbol resolved down to block state ids. */
 export type ResolvedSymbol =
   | { readonly kind: "single"; readonly stateId: number }
