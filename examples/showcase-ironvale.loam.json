@@ -1,0 +1,2304 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "ironvale",
+    "worldSeed": 17760331,
+    "prompt": "Ironvale is a cramped industrial valley given over entirely to work. A railway runs the length of the trough with a station, an engine shed, a signal box and an omnibus hub around one hard yard, and rolling stock standing on the sidings. West of the yard a smoky bank of works climbs the shelf \u2014 forge, foundry, blast furnace, kilns, mills and a ropewalk \u2014 while generating plants, a gasworks and a coal tipple sit east under a moor of wind turbines and solar panels. A reservoir in the southeast feeds a water tower, a cistern, a well house and a pumping station. Underneath everything is a second town: a mine head whose working runs back under the collier's shelf, catacombs off the old toll road, sewers and cistern halls beneath the streets, a subway platform, a bunker and a silo shaft.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Ironvale \u2014 a rail town of works over a complete underground",
+    "note": "A showcase document: deliberately dense, exhibiting the industrial, energy, waterworks, transport and underground slices of the structure catalog in one valley.",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "The Ironvale trough: a broad valley between two low moors",
+        "params": {
+          "baseHeight": 82,
+          "amplitude": 11,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.0042,
+          "gain": 0.46,
+          "lacunarity": 2.0,
+          "erosionPasses": 1,
+          "cliffThreshold": 56,
+          "soilDepth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_trough",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the valley floor the railway follows, west to east",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.02,
+                  0.5
+                ],
+                [
+                  0.3,
+                  0.48
+                ],
+                [
+                  0.7,
+                  0.52
+                ],
+                [
+                  0.98,
+                  0.5
+                ]
+              ],
+              "width": 150,
+              "depth": 9,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "station_flat",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the level yard the station, the shed and the rolling stock stand on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 105,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "works_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the smoky shelf the works bank is built on, west of the yard",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.42
+              ],
+              "radius": 95,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collier_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the lower shelf of the mine and the cooperages, southwest",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.22,
+                0.78
+              ],
+              "radius": 80,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "power_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northeastern moor the turbines and the array stand on",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.62,
+                  0.22
+                ],
+                [
+                  0.8,
+                  0.16
+                ],
+                [
+                  0.98,
+                  0.22
+                ]
+              ],
+              "width": 90,
+              "height": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "plant_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the level ground under the generating plants, east",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.82,
+                0.5
+              ],
+              "radius": 80,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "waterworks_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the shelf the waterworks four stand on, southeast",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.8,
+                0.8
+              ],
+              "radius": 70,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "the_reservoir",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the reservoir the waterworks draw from",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.62,
+                0.88
+              ],
+              "radius": 34,
+              "depth": 11,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "mine_spur",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the spur of high moor the working runs under, southwest to south",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.18,
+                  0.82
+                ],
+                [
+                  0.32,
+                  0.86
+                ],
+                [
+                  0.48,
+                  0.84
+                ]
+              ],
+              "width": 70,
+              "height": 12,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_yard",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flat coaching ground north of the line",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.42,
+                0.18
+              ],
+              "radius": 78,
+              "height": 3,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "A damp temperate valley",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0013,
+          "humidityFrequency": 0.0017
+        }
+      },
+      {
+        "id": "station_yard",
+        "kind": "primitive",
+        "label": "the station yard, the town's one open space",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "train_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Ironvale Central: the platform and ticket hall on the yard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            21
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "adjacent_to": "station_yard",
+            "gap": [
+              2,
+              14
+            ]
+          },
+          {
+            "facing": "station_yard"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "train_station",
+          "rail"
+        ]
+      },
+      {
+        "id": "signal_box",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the signal box at the throat of the yard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2,
+          "floorHeight": 4,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "signal_box",
+          "rail"
+        ]
+      },
+      {
+        "id": "transit_hub",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the omnibus hub across the yard from the platforms",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "transit_hub",
+          "rail"
+        ]
+      },
+      {
+        "id": "subway_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the underground station, its ticket hall beside the yard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 4,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "connected": "transit_hub",
+            "via": "tunnel",
+            "style": "dressed"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "subway_station",
+          "deep"
+        ]
+      },
+      {
+        "id": "roundhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the engine shed north of the running line",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            21
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "roundhouse",
+          "rail"
+        ]
+      },
+      {
+        "id": "coach_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the carriage house on the old coaching ground, its bone vault below",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "ossuary"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "coach_house",
+          "rail"
+        ]
+      },
+      {
+        "id": "toll_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the toll house on the north road, over the old burial vault",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 4,
+          "roof": "hip",
+          "basement": {
+            "depth": 5,
+            "style": "crypt"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "connected": "coach_house",
+            "via": "tunnel",
+            "style": "crypt"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "toll_house",
+          "rail"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smithy at the head of the works bank, its plain cellar under it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "plain"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "works"
+        ]
+      },
+      {
+        "id": "sawmill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the sawmill, log stores down one side",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "sawmill",
+          "works"
+        ]
+      },
+      {
+        "id": "kiln",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the pottery kiln",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "kiln",
+          "works"
+        ]
+      },
+      {
+        "id": "brickworks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the brickyard and its drying stacks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "brickworks",
+          "works"
+        ]
+      },
+      {
+        "id": "foundry",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the foundry's casting floor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "foundry",
+          "works"
+        ]
+      },
+      {
+        "id": "blast_furnace_works",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the blast furnace, the loudest thing in the valley",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "blast_furnace_works",
+          "works"
+        ]
+      },
+      {
+        "id": "tannery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tannery downwind, over a barred under-room",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "dungeon_room"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tannery",
+          "works"
+        ]
+      },
+      {
+        "id": "glassworks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glassworks over a vaulted undercroft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "undercroft"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "glassworks",
+          "works"
+        ]
+      },
+      {
+        "id": "textile_mill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the textile mill, looms facing the dye vats",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "textile_mill",
+          "works"
+        ]
+      },
+      {
+        "id": "papermill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the paper mill and its drying racks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "papermill",
+          "works"
+        ]
+      },
+      {
+        "id": "cannery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the cannery, its bottle cellar beneath",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cannery",
+          "works"
+        ]
+      },
+      {
+        "id": "cooperage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the cooperage by the water, with a cove under the floor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "smugglers_cove"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cooperage",
+          "works"
+        ]
+      },
+      {
+        "id": "ropewalk",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the ropewalk, all length and no width",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            21
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ropewalk",
+          "works"
+        ]
+      },
+      {
+        "id": "charcoal_burner",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the collier's yard, a hermit's grotto cut under it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "hermit_grotto"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "charcoal_burner",
+          "works"
+        ]
+      },
+      {
+        "id": "factory_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the factory hall south of the line",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            19
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "factory_hall",
+          "works"
+        ]
+      },
+      {
+        "id": "machine_shop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the machine shop, lathes and tool boards",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "machine_shop",
+          "works"
+        ]
+      },
+      {
+        "id": "refinery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the refinery, tanks and pipe runs, no flame anywhere",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "refinery",
+          "works"
+        ]
+      },
+      {
+        "id": "substation",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the substation, transformers behind their fence",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "substation",
+          "energy"
+        ]
+      },
+      {
+        "id": "gasworks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gasworks, banded like the holder it is",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gasworks",
+          "energy"
+        ]
+      },
+      {
+        "id": "steam_plant",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the steam plant and its turbine shaft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            19
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "steam_plant",
+          "energy"
+        ]
+      },
+      {
+        "id": "coal_tipple",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the coal tipple over the sidings",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "coal_tipple",
+          "energy"
+        ]
+      },
+      {
+        "id": "biomass_shed",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the biomass shed, its root cellar below",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "root_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "biomass_shed",
+          "energy"
+        ]
+      },
+      {
+        "id": "battery_shed",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the battery shed over the works strongroom",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "battery_shed",
+          "energy"
+        ]
+      },
+      {
+        "id": "water_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the water tower over the reservoir shelf",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            21,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "water_tower",
+          "water"
+        ]
+      },
+      {
+        "id": "cistern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the covered cistern beside the reservoir",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cistern",
+          "water"
+        ]
+      },
+      {
+        "id": "well",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the well house on the shelf, the town's cistern hall under it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "basement": {
+            "depth": 5,
+            "style": "cistern_hall"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "well",
+          "water"
+        ]
+      },
+      {
+        "id": "pumping_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the pumping station, the sewer channel running under it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 5,
+          "roof": "hip",
+          "basement": {
+            "depth": 4,
+            "style": "sewer_network"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "pumping_station",
+          "water"
+        ]
+      },
+      {
+        "id": "mine_head",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mine head on the collier's shelf, its working running east under the spur to the machine shop",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "connected": "machine_shop",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head",
+          "deep"
+        ]
+      },
+      {
+        "id": "bunker_complex",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the works bunker on the eastern shelf",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 4,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bunker_complex",
+          "deep"
+        ]
+      },
+      {
+        "id": "underground_silo",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the silo hatch south of the line",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 4,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "underground_silo",
+          "deep"
+        ]
+      },
+      {
+        "id": "rail_line_yard",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the running line through the yard",
+        "params": {
+          "prop": "rail_line",
+          "zone": "center",
+          "length": 40,
+          "yaw": 90,
+          "jitter": 0.1,
+          "platform": true
+        }
+      },
+      {
+        "id": "rail_line_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the western approach road-bed",
+        "params": {
+          "prop": "rail_line",
+          "zone": "west",
+          "length": 32,
+          "yaw": 90,
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "locomotive",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the tank engine standing at the platform",
+        "params": {
+          "prop": "locomotive",
+          "zone": "center",
+          "yaw": 90,
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "passenger_car",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a passenger carriage behind it",
+        "params": {
+          "prop": "passenger_car",
+          "zone": "center",
+          "yaw": 90,
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "freight_car",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a gondola wagon on the coal road",
+        "params": {
+          "prop": "freight_car",
+          "zone": "east",
+          "yaw": 90,
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "caboose",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the brake van at the end of the rake",
+        "params": {
+          "prop": "caboose",
+          "zone": "east",
+          "yaw": 90,
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "station_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a hand cart on the yard",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "carriers_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a carrier's covered wagon on the works road",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "west",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "omnibus_stop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the omnibus stop outside the hub",
+        "params": {
+          "prop": "bus_stop",
+          "zone": "center",
+          "jitter": 0.24
+        }
+      },
+      {
+        "id": "north_stagecoach",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a stagecoach standing on the coaching ground",
+        "params": {
+          "prop": "stagecoach",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "north_milestone",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the milestone where the toll road forks",
+        "params": {
+          "prop": "milestone",
+          "zone": "north",
+          "jitter": 0.28
+        }
+      },
+      {
+        "id": "wind_turbine_one",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a turbine on the northeastern moor",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "northeast",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "wind_turbine_two",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a second turbine further along the ridge",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "northeast",
+          "jitter": 0.3
+        }
+      },
+      {
+        "id": "solar_array",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the panel array on the moor's south slope",
+        "params": {
+          "prop": "solar_array",
+          "zone": "northeast",
+          "jitter": 0.3
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the works roads, tying the yard to every quarter",
+        "params": {
+          "anchors": [
+            "station_yard",
+            "train_station",
+            "transit_hub",
+            "#tag:works",
+            "#tag:energy",
+            "#tag:water",
+            "#tag:rail",
+            "#tag:deep"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "valley_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "thin scrub on the slopes; the valley floor is all works",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.14,
+          "spacing": 5,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            140
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road"
+          ],
+          "species": [
+            {
+              "id": "valley_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "valley_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
