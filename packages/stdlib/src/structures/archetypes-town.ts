@@ -424,8 +424,13 @@ function fitSchool(ctx: FitOutContext, c: PropCounter): void {
   }
 
   // The desks. Rows across the room, two cells apart so a child can get out of
-  // one, with the middle column left as the aisle to the board.
-  const aisle = Math.floor((it.x0 + it.x1) / 2);
+  // one, with one column left as the aisle to the board. The aisle runs one
+  // column off the room's centre line, not on it: the centre column is where
+  // the shell hangs its ceiling light, which in a three-course storey sits at
+  // head height — and desks under a low ceiling cannot be stepped over, so an
+  // aisle under the lantern is an aisle the walking agent cannot use.
+  const centre = Math.floor((it.x0 + it.x1) / 2);
+  const aisle = Math.max(it.x0, centre - 1);
   const first = boardNorth ? it.z0 + 2 : it.z0;
   const last = boardNorth ? it.z1 : it.z1 - 2;
   const slabBlock = ctx.style["stone.slab"] as string;
