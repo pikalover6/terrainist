@@ -9,6 +9,11 @@
       "zone": "south"
     }
   },
+  "style": {
+    "palettes": {
+      "theme": "modern_city"
+    }
+  },
   "root": {
     "id": "world",
     "kind": "composite",
