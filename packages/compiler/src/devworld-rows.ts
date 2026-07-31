@@ -27,6 +27,7 @@ import { BLITZ_EXHIBIT_ROWS } from "./exhibits/blitz.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
+import { HOMESTEAD_EXHIBIT_ROWS } from "./exhibits/homestead.js";
 import { INSTITUTION_EXHIBIT_ROWS } from "./exhibits/institution.js";
 import { LEISURE_EXHIBIT_ROWS } from "./exhibits/leisure.js";
 import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
@@ -112,6 +113,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...INSTITUTION_EXHIBIT_ROWS,
   ...LEISURE_EXHIBIT_ROWS,
   ...REGIONAL_EXHIBIT_ROWS,
+  ...HOMESTEAD_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -173,6 +175,13 @@ export {
   REGIONAL_ROW_LENGTH,
   regionalSizeFor,
 } from "./exhibits/regional.js";
+
+/** The wave-four homestead rows, for tests that assert on the gradient. */
+export {
+  HOMESTEAD_EXHIBIT_ROWS,
+  HOMESTEAD_ROW_LENGTH,
+  homesteadSizeFor,
+} from "./exhibits/homestead.js";
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

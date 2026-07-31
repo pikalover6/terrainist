@@ -33,6 +33,7 @@
 import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
+import { homesteadFacadeDefaults } from "./archetypes-homestead.js";
 import { regionalFacadeDefaults } from "./archetypes-regional.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
@@ -155,6 +156,10 @@ export function archetypeFacadeDefaults(
       // Wave 4C — leisure, modern and science interiors.
       const leisure = leisureFacadeDefaults(archetype);
       if (Object.keys(leisure).length > 0) return leisure;
+      // Wave four D, the homestead — appended, and the regional houses stay
+      // the tail of the chain.
+      const homestead = homesteadFacadeDefaults(archetype);
+      if (Object.keys(homestead).length > 0) return homestead;
       return regionalFacadeDefaults(archetype);
     }
   }

@@ -863,23 +863,55 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   rur("granary", "Granary", "implemented", { tags: ["village", "store"] }),
   rur("windmill", "Windmill", "implemented", { tags: ["village", "mill"] }),
   rur("farmstead", "Farmstead"),
-  rur("silo", "Silo", "not_started", { wave: 4 }),
+  rur("silo", "Silo", "implemented", {
+    wave: 4,
+    note:
+      "Banded stone-brick re-clad under a corbelled cap, hay grain columns behind inspection hatches and a filling head of trapdoors near the plate.",
+  }),
   rur("greenhouse", "Greenhouse", "implemented", { note: "Glazed walls and roof over farmland beds written into the floor plane." }),
-  rur("apiary", "Apiary", "not_started", { wave: 4 }),
-  rur("chicken_coop", "Chicken coop", "not_started", { wave: 4 }),
+  rur("apiary", "Apiary", "implemented", {
+    wave: 4,
+    note:
+      "Hay skeps on grounded fence pedestals and real beehives in the apron ring, honeycomb-flecked walls and a cauldron extraction bench inside.",
+  }),
+  rur("chicken_coop", "Chicken coop", "implemented", {
+    wave: 4,
+    note:
+      "A low birch-and-oak house of trapdoor nesting cubbies over hay, floor-standing fence roosts, feed barrels and a hay nest in the apron.",
+  }),
   rur("pigsty", "Pigsty"),
   rur("sheepfold", "Sheepfold"),
   rur("cattle_pen", "Cattle pen"),
-  rur("stable", "Stable", "not_started", { wave: 4 }),
-  rur("dovecote", "Dovecote", "not_started", { wave: 4 }),
+  rur("stable", "Stable", "implemented", {
+    wave: 4,
+    note:
+      "Fence-and-gate stall partitions down one wall row off an off-centre corridor, hay-net trapdoors, a tack wall of chests and barrels and a cauldron trough in the apron.",
+  }),
+  rur("dovecote", "Dovecote", "implemented", {
+    wave: 4,
+    note:
+      "A slim stone tower whose faces are a dense nesting-hole trapdoor grid, a corbelled cone with a perch finial and a ladder up the inside.",
+  }),
   rur("orchard", "Orchard"),
   rur("vineyard", "Vineyard"),
   rur("terraced_field", "Terraced field"),
-  rur("hop_kiln", "Hop kiln", "not_started", { wave: 4 }),
+  rur("hop_kiln", "Hop kiln", "implemented", {
+    wave: 4,
+    note:
+      "The oast: a brick corbel cone on a solid cap under a white cowl, a slatted drying-floor band under the plate and a furnace at the base.",
+  }),
   rur("threshing_floor", "Threshing floor"),
   rur("hayrick", "Hayrick"),
-  rur("cider_press", "Cider press", "not_started", { wave: 4 }),
-  rur("root_cellar_mound", "Root cellar mound", "not_started", { wave: 4 }),
+  rur("cider_press", "Cider press", "implemented", {
+    wave: 4,
+    note:
+      "A fence screw under a slab platen beside its catching cauldron, apple barrels along the far row and a bottle shelf of trapdoors.",
+  }),
+  rur("root_cellar_mound", "Root cellar mound", "implemented", {
+    wave: 4,
+    note:
+      "Cobble-and-mud retaining walls under a shallow grass-surfaced corbel mound, shelved with barrels and crates under lidded hatches. It does not dig.",
+  }),
 
   /* --- fantasy / whimsy ---------------------------------------------------- */
   fan("wizard_tower", "Wizard's tower", "implemented", { note: "Glowstone-set masonry under a steep cone." }),
@@ -889,10 +921,26 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Compound prop: a mega trunk it grows itself, a deck, a hut and a ladder.",
   }),
   fan("hedge_maze", "Hedge maze"),
-  fan("mushroom_house", "Mushroom house", "not_started", { wave: 4 }),
-  fan("witch_hut", "Witch's hut", "not_started", { wave: 4 }),
-  fan("hobbit_hole", "Hobbit hole", "not_started", { wave: 4 }),
-  fan("gingerbread_cottage", "Gingerbread cottage", "not_started", { wave: 4 }),
+  fan("mushroom_house", "Mushroom house", "implemented", {
+    wave: 4,
+    note:
+      "A corbelled red-mushroom cap closing on a solid cap block, over spotted mushroom-stem walls; a stool, a table and shroom stores inside.",
+  }),
+  fan("witch_hut", "Witch's hut", "implemented", {
+    wave: 4,
+    note:
+      "Swamp spruce over a dark under-course under a crooked saltbox ridge, with a corner cauldron, potion bookshelves and a carpet cushion.",
+  }),
+  fan("hobbit_hole", "Hobbit hole", "implemented", {
+    wave: 4,
+    note:
+      "A stripped-log ring trimming the doorway round, a turf corbel roof over mud walls, and a settle, a rug and a pantry inside.",
+  }),
+  fan("gingerbread_cottage", "Gingerbread cottage", "implemented", {
+    wave: 4,
+    note:
+      "Brown biscuit walls with white icing courses and pink and lime candy dots, a quartz icing eave in the apron and a sweets counter with a cake.",
+  }),
   fan("dragon_roost", "Dragon roost"),
   fan("floating_platform", "Floating island platform"),
   fan("portal_frame", "Portal frame"),

@@ -96,6 +96,14 @@ import {
 
 export * from "./archetypes-leisure.js";
 
+import {
+  HOMESTEAD_BUILDING_ARCHETYPES,
+  furnishHomestead,
+  homesteadArchetypeOfTags,
+} from "./archetypes-homestead.js";
+
+export * from "./archetypes-homestead.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -126,6 +134,7 @@ export const BUILDING_ARCHETYPES = [
   ...TRADE_BUILDING_ARCHETYPES,
   ...VERNACULAR_BUILDING_ARCHETYPES,
   ...WAVE2_BUILDING_ARCHETYPES,
+  ...HOMESTEAD_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
@@ -203,6 +212,14 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
   // `villa`, `trullo` and `half_timber` still belong to the vernacular waves.
+  // Wave four D, the homestead. It sits after the institutions and before the
+  // regional houses for the same reason every later wave sits high: the tables
+  // below are greedy. It claims nothing an earlier table claims — bare
+  // `stable` and `byre` still reach the extended barn, bare `mill` the
+  // windmill, bare `kiln` wave two's pottery kiln, bare `hut` the residential
+  // track's own, and `house` still falls through to a cottage.
+  const homestead = homesteadArchetypeOfTags(tags);
+  if (homestead !== null) return homestead;
   const regionalWave = regionalArchetypeOfTags(tags);
   if (regionalWave !== null) return regionalWave;
   // The extended table is consulted before the original one, not after: the
@@ -562,6 +579,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishWorks(ctx);
   n += furnishInstitution(ctx);
   n += furnishLeisure(ctx);
+  n += furnishHomestead(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);

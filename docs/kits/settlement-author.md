@@ -610,6 +610,11 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 11 | extended | see the extended table below |
 | 12 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
 | 13 | fallback | anything else → cottage |
+| 10 | homestead | see the homestead table below |
+| 11 | wave 3C regional | see the regional table below |
+| 12 | extended | see the extended table below |
+| 13 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 14 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -785,6 +790,7 @@ bathhouse's** (table 5) — this wave's dry sauna answers to `dry_sauna` and
 `ski_lodge` only. Bare `pavilion` is left unclaimed.
 
 **Wave 3C (table 10) — the regional houses.** Twelve dwellings from twelve
+**Wave 3C (table 11) — the regional houses.** Twelve dwellings from twelve
 traditions. Every one of them rebuilds part of the shell's exterior, so give
 them a **plain rect** envelope: a `wing` makes the re-clad and the roof rebuild
 refuse, and you get the ordinary house shell instead. The four with corbelled
@@ -812,6 +818,36 @@ and `byre` still reach the extended barn — the fachwerk barn answers to
 `fachwerk` only — bare `roundhouse` stays unclaimed (it is the *engine*
 roundhouse, a locomotive shed), and `house`, `villa`, `trullo`, `half_timber`,
 `chalet`, `saltbox` and `dutch_gable` all still belong to their own tables.
+
+**Wave 4D (table 10) — the homestead.** Eight rural yards and four fantasy
+houses. Every one rebuilds part of the shell's exterior, so give them a **plain
+rect** envelope: a `wing` makes the re-clad and the roof rebuild refuse and you
+get the ordinary house shell instead. The six with corbelled roofs (silo,
+dovecote, hop kiln, root cellar, mushroom house, hobbit hole) also want
+**height** — the cone is drawn in the room between the eave plate and the roof
+top, and a short envelope closes itself in two courses.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| stable | `horse_stable`, `stables`, `stalls` | fence-and-gate stall partitions down one wall row off an off-centre corridor, hay-net trapdoors, a tack wall, a cauldron trough in the apron | `[13, 13, 19]`, 1–2 floors |
+| silo | `silo`, `grain_silo` | banded stone-brick re-clad under a corbelled cap, hay grain columns behind inspection hatches, a filling head near the plate | `[9, 18, 9]`, 1 floor; **tall** |
+| dovecote | `dovecote`, `columbarium`, `pigeon_loft` | a slim stone tower faced in a dense nesting-hole trapdoor grid, a cone with a perch finial, a ladder up the inside | `[9, 18, 9]`, 1 floor; **tall** |
+| chicken_coop | `chicken_coop`, `coop`, `henhouse` | trapdoor nesting cubbies over hay, floor-standing fence roosts, feed barrels, a hay nest in the apron | `[11, 11, 13]`, 1 floor |
+| apiary | `apiary`, `bee_house`, `beeyard` | hay skeps on grounded fence pedestals and real beehives in the apron, honeycomb-flecked walls, a cauldron extraction bench | `[13, 13, 13]`, 1–2 floors |
+| hop_kiln | `hop_kiln`, `oast`, `oast_house` | a brick corbel cone on a solid cap under a white cowl, a slatted drying-floor band, a furnace at the base | `[11, 17, 11]`, 1 floor; **tall** |
+| cider_press | `cider_press`, `cidery`, `press_house` | a fence screw under a slab platen beside its catching cauldron, apple barrels, a bottle shelf | `[13, 13, 15]`, 1–2 floors |
+| root_cellar_mound | `root_cellar_mound`, `root_cellar` | cobble-and-mud walls under a shallow grass corbel mound, barrels and crates under lidded hatches — **it does not dig** | `[11, 14, 11]`, 1 floor |
+| witch_hut | `witch_hut`, `witch`, `witches_hut` | swamp spruce over a dark under-course under a crooked saltbox ridge, a corner cauldron, potion bookshelves, a carpet cushion | `[11, 14, 13]`, 1–2 floors |
+| mushroom_house | `mushroom_house`, `mushroom`, `toadstool` | a corbelled red-mushroom cap on a solid cap block over spotted mushroom-stem walls, a stool and a table inside | `[11, 16, 11]`, 1 floor; **tall** |
+| hobbit_hole | `hobbit_hole`, `hobbit`, `burrow` | a stripped-log ring trimming the doorway round, a turf corbel roof over mud walls, a settle, a rug and a pantry | `[11, 16, 11]`, 1 floor; **tall** |
+| gingerbread_cottage | `gingerbread_cottage`, `gingerbread`, `candy` | brown biscuit walls with white icing courses and candy dots, a quartz icing eave, a sweets counter with a cake | `[11, 14, 13]`, 1–2 floors |
+
+Wave 4D claims **no** tag an earlier table owns. In particular bare `stable`
+and `byre` still reach the extended barn (the stable answers to `horse_stable`,
+`stables` and `stalls`), bare `mill` is still the windmill's and bare `kiln`
+wave two's pottery kiln (the oast answers to `hop_kiln` and `oast`), bare `hut`
+belongs to the residential track, bare `cellar` to the underground catalog, and
+`house` still falls through to a cottage.
 
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is

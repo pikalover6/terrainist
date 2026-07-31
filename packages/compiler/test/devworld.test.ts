@@ -37,6 +37,8 @@ import {
   INSTITUTION_ROW_LENGTH,
   LEISURE_EXHIBIT_ROWS,
   LEISURE_ROW_LENGTH,
+  HOMESTEAD_EXHIBIT_ROWS,
+  HOMESTEAD_ROW_LENGTH,
   REGIONAL_EXHIBIT_ROWS,
   REGIONAL_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -146,6 +148,8 @@ describe("dev world grid", () => {
     const leisure = LEISURE_EXHIBIT_ROWS.length * LEISURE_ROW_LENGTH;
     // Wave three's regional rows are prefixed (`reg_igloo`) for the same reason.
     const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
+    // Wave four D, the homestead: prefixed (`home_dovecote`) for the same reason.
+    const homestead = HOMESTEAD_EXHIBIT_ROWS.length * HOMESTEAD_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -161,7 +165,8 @@ describe("dev world grid", () => {
         works +
         institutions +
         leisure +
-        regional,
+        regional +
+        homestead,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
