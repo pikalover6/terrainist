@@ -465,3 +465,86 @@ authoring stays cheap-model-first.
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
+
+## Fabric v2 + precincts (RATIFIED with Kai, 2026-07-31)
+
+**The diagnosis (Kai, from the first showcase walk):** structures land but
+worlds don't. The solver treats a settlement as a bag of buildings with
+pairwise constraints, which produces correct buildings randomly sprinkled
+on a lawn: no urban fabric, bare ground to the walls, a jarring edge
+against the dense forests, planes resting on grass, ships at random
+headings. North-star benchmark: a dense modern waterfront city should read
+like the Miami/Brickell reference — landmark towers over blocks of
+mid-rise fabric on a real street grid.
+
+**The inversion:** the void defines the solid. Streets first; streets
+define blocks; blocks subdivide into lots; buildings align to lot
+frontage; leftover ground is *treated*, never bare.
+
+### The four workstreams
+
+1. **F1 — fabric core.** New settlement node kind `district`: a composite
+   whose envelope gets a street skeleton BEFORE placement (`fabric:
+   "grid"` → orthogonal grid with jitter; `"organic"` → relaxed/deformed
+   grid). Blocks are the faces of the street graph; lots subdivide block
+   perimeters; the district's child nodes are LANDMARKS placed on chosen
+   lots; remaining lots are AUTO-INFILLED from a `mix` of archetypes at a
+   `density`. Every lot placement is frontage-aligned: door faces its
+   street, facade on the build-to line. The skeleton is handed to the
+   existing road pass for grading/surfacing (streets are roads — one
+   surface pipeline) and exposed as a product for dressing.
+2. **F2 — ground treatment.** Lot dressing by district type (paved
+   forecourts/sidewalk aprons downtown, fenced gardens in villages, gravel
+   in industry); settlement-wide ground paint (worn paths, plaza
+   gradients); and a clearing-transition band — meadow, scattered trees,
+   stumps — between any settlement and dense forest.
+3. **F3 — precinct kits.** Generator family `precinct.*@0`: deterministic
+   compound layout from an envelope + params, the building grammar's
+   philosophy at settlement scale. First two: `precinct.airport@0`
+   (runway axis → parallel taxiway → apron grid with aircraft parked at
+   stands, aligned; terminal + tower fronting the apron; hangars on the
+   taxiway; windsock at the threshold) and `precinct.harbour@0` (quay
+   wall along the real shoreline → piers perpendicular → ships moored
+   parallel to pier axes with consistent heading → cranes on the quay,
+   warehouses fronting the quay road).
+4. **F4 — streetscape.** Sidewalks + curbs as bands beside every street,
+   lamp posts at fixed spacing, crossings at intersections, benches and
+   street furniture drawn from the district type. Driven entirely by the
+   street-graph product.
+
+### The pinned StreetGraph contract (F1 produces, F4 and roads consume)
+
+```ts
+/** One street, a 4-connected polyline in world column space. */
+export interface StreetSegment {
+  readonly id: string;
+  /** Width class: avenue 7, street 5, lane 3 (carriageway columns). */
+  readonly kind: "avenue" | "street" | "lane";
+  readonly width: number;
+  readonly path: readonly { readonly x: number; readonly z: number }[];
+}
+export interface StreetIntersection {
+  readonly x: number;
+  readonly z: number;
+  readonly segments: readonly string[]; // segment ids meeting here
+}
+export interface StreetGraph {
+  readonly segments: readonly StreetSegment[];
+  readonly intersections: readonly StreetIntersection[];
+  /** Sidewalk band width per side (columns); 2 downtown, 1 elsewhere. */
+  readonly sidewalk: number;
+}
+```
+Lives in `packages/compiler/src/layout/streets.ts`. Blocks/lots are
+internal to F1; the graph above is the only cross-team surface.
+
+### Sequencing & authoring contract
+
+F1–F4 land as parallel tracks (F4 codes against the contract with a
+fixture); the road pass keeps its successive-shortest-path role BETWEEN
+districts and precincts — fabric replaces it only INSIDE a district.
+After integration: one headline handwritten world (dense modern
+waterfront city, Miami reference) ships first, then the five showcase
+worlds re-author onto the new contract, then the GLM/Luna/DeepSeek
+side-by-sides run — model comparisons before fabric v2 would measure the
+old solver's ceiling, not the models.
