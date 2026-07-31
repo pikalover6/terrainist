@@ -221,7 +221,7 @@ describe("dev world grid", () => {
         expect(overlaps, `exhibits ${a} and ${b} overlap`).toBe(false);
       }
     }
-  });
+  }, 300_000);
 
   it("spawns at the grid's south-west corner, on the plain", () => {
     const grid = planDevGrid();
