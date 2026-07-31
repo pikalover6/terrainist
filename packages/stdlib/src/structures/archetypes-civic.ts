@@ -41,6 +41,7 @@ import { worksFacadeDefaults } from "./archetypes-works.js";
 import { institutionFacadeDefaults } from "./archetypes-institution.js";
 import { leisureFacadeDefaults } from "./archetypes-leisure.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
+import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -164,6 +165,9 @@ export function archetypeFacadeDefaults(
       // Wave four A, the dwellings.
       const residential = residentialFacadeDefaults(archetype);
       if (Object.keys(residential).length > 0) return residential;
+      // Wave 4B, faith and memorial.
+      const faith = faithFacadeDefaults(archetype);
+      if (Object.keys(faith).length > 0) return faith;
       return regionalFacadeDefaults(archetype);
     }
   }

@@ -112,6 +112,14 @@ import {
 
 export * from "./archetypes-residential.js";
 
+import {
+  FAITH_BUILDING_ARCHETYPES,
+  faithArchetypeOfTags,
+  furnishFaith,
+} from "./archetypes-faith.js";
+
+export * from "./archetypes-faith.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -147,6 +155,7 @@ export const BUILDING_ARCHETYPES = [
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
   ...RESIDENTIAL_BUILDING_ARCHETYPES,
+  ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -224,6 +233,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // Mediterranean villa's and `apartment` the tall grammar's.
   const residential = residentialArchetypeOfTags(tags);
   if (residential !== null) return residential;
+  // Wave 4B, faith and memorial, straight after the institutions and well
+  // before the extended table — which is the table it must not be behind, for
+  // once not because that one is greedy but because it is *right*: `temple`,
+  // `shrine`, `chapel` and `worship` all mean church down there and stay the
+  // church's. This table claims only its own names, and `tomb`/`sepulchre`
+  // remain the breadth mausoleum's — the tomb here answers to
+  // `burial_chamber` and `cist`.
+  const faith = faithArchetypeOfTags(tags);
+  if (faith !== null) return faith;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -597,6 +615,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishLeisure(ctx);
   n += furnishHomestead(ctx);
   n += furnishResidential(ctx);
+  n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);

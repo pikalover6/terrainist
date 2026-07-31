@@ -615,6 +615,10 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 12 | extended | see the extended table below |
 | 13 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
 | 14 | fallback | anything else → cottage |
+| 10 | faith (wave 4B) | see the faith table below |
+| 11 | extended | see the extended table below |
+| 12 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 13 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -788,6 +792,36 @@ bathhouse's** (table 5) — this wave's dry sauna answers to `dry_sauna` and
 `store`, `shop` and `grocer` still reach the granary and the general store; and
 `lodging` still reaches the high-rise hotel, so the ski lodge answers to
 `ski_lodge` only. Bare `pavilion` is left unclaimed.
+**Wave 4B (table 10) — faith and memorial.** Twelve buildings: eleven religious
+and one memorial. Seven of them rebuild part of the shell's exterior (cathedral,
+abbey, stupa, ziggurat, bell tower, minaret, tomb), so give *those* a **plain
+rect** envelope — a `wing` makes the re-clad and the roof rebuild refuse and you
+get the ordinary house shell instead. The stupa, the ziggurat and the two towers
+also want **height**: the dome, the tiers and the cone are all drawn in the room
+between the eave plate and the roof top, and a short envelope closes itself in
+two courses.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| cathedral | `cathedral`, `minster`, `basilica` | apron buttresses with weathered heads, a three-column centre aisle, side-aisle pew blocks turned to the altar, a crossing band and a steeple | `[15, 17, 21]`, 1–2 floors; **long in z** |
+| monastery | `monastery`, `friary` | a refectory board with benches down one column, scriptorium desks and stools on the far wall, fence cell partitions | `[13, 13, 19]`, 1–2 floors |
+| abbey | `abbey` | a carpet aisle with **two facing ranks of choir stalls**, an altar, a cloister-walk slab cornice in the apron | `[13, 15, 19]`, 1–2 floors |
+| cloister | `cloister`, `garth` | an open garth of grass with planted corners and a well head off the lantern column, arcade posts on the wall rows | `[15, 12, 15]`, 1 floor |
+| hermitage | `hermitage`, `hermit` | one austere cell: a cot, a lectern and a shrine niche re-clad into the far wall with a candle under it | `[9, 10, 9]`, 1 floor |
+| mosque | `mosque`, `masjid` | a mihrab niche with an arch suggestion in the qibla wall, carpet prayer rows across the floor either side of a centre walk, a two-step minbar. No figural decor at all | `[15, 14, 15]`, 1 floor |
+| synagogue | `synagogue`, `shul` | a bimah dais with a reading lectern beside the lantern column, an ark cabinet with doors on the far wall, bench ranks turned to the bimah | `[13, 13, 15]`, 1 floor |
+| stupa | `stupa` | a corbelled solid dome on an apron plinth ring, a solid core with a clear circumambulation lane round it, a spire finial on the cap | `[13, 17, 13]`, 1 floor; **tall** |
+| ziggurat | `ziggurat` | two to three stepped terraces rebuilt over the shell with a shrine cell on the crown, a processional runner and altar inside | `[15, 16, 15]`, 1 floor; **tall** |
+| bell_tower | `bell_tower`, `campanile`, `belfry` | a masonry shaft with a trapdoor louvre band in the apron and the bell hung under the ceiling plane beside the lantern | `[9, 18, 9]`, 1 floor; **tall and thin** |
+| minaret | `minaret` | the bell tower slimmed: a trapdoor balcony ring near the top and a corbelled cone closing on a solid cap with a spike finial | `[7, 20, 7]`, 1 floor; **tall and thin** |
+| tomb | `burial_chamber`, `cist` | the mausoleum's quieter cousin: sealed masonry with an apron plinth course, a slab cist off the lantern column, unlit candles | `[9, 9, 11]`, 1 floor |
+
+Wave 4B claims **no** tag an earlier table owns, and the near misses are the
+whole story of the wave: `church`, `chapel`, `temple`, `shrine` and `worship`
+all still reach the **church** (table 11); `tomb` and `sepulchre` are still the
+**mausoleum's** (table 4), which is why the tomb here answers to
+`burial_chamber` and `cist`; `tower` is still the **watchtower's**; and `pagoda`
+is still the breadth table's.
 
 **Wave 3C (table 10) — the regional houses.** Twelve dwellings from twelve
 **Wave 3C (table 11) — the regional houses.** Twelve dwellings from twelve

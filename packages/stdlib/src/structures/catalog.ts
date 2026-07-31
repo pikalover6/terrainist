@@ -610,23 +610,56 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- religious / monuments -------------------------------------------- */
   rel("church", "Church", "implemented", { tags: ["village", "steeple"] }),
-  rel("cathedral", "Cathedral", "not_started", { wave: 4 }),
+  rel("cathedral", "Cathedral", "implemented", {
+    wave: 4,
+    note: "The church idiom writ large: apron buttresses, a three-column centre aisle with side-aisle pew blocks, a crossing band and a steeple.",
+  }),
   rel("chapel", "Chapel"),
-  rel("monastery", "Monastery", "not_started", { wave: 4 }),
-  rel("abbey", "Abbey", "not_started", { wave: 4 }),
-  rel("cloister", "Cloister", "not_started", { wave: 4 }),
-  rel("hermitage", "Hermitage", "not_started", { wave: 4 }),
-  rel("mosque", "Mosque", "not_started", { wave: 4 }),
-  rel("minaret", "Minaret", "not_started", { wave: 4 }),
-  rel("synagogue", "Synagogue", "not_started", { wave: 4 }),
+  rel("monastery", "Monastery", "implemented", {
+    wave: 4,
+    note: "Refectory table run with benches, scriptorium desks along the far wall, fence cell partitions.",
+  }),
+  rel("abbey", "Abbey", "implemented", {
+    wave: 4,
+    note: "Nave with two facing ranks of choir stalls either side of the aisle, an altar, and a cloister-walk slab cornice.",
+  }),
+  rel("cloister", "Cloister", "implemented", {
+    wave: 4,
+    note: "Open garth with planted corners and a well head off the lantern column, arcaded walk of fence posts on the wall rows.",
+  }),
+  rel("hermitage", "Hermitage", "implemented", {
+    wave: 4,
+    note: "One austere cell: cot, lectern and a shrine niche re-clad into the far wall.",
+  }),
+  rel("mosque", "Mosque", "implemented", {
+    wave: 4,
+    note: "Mihrab niche with an arch suggestion in the qibla wall, carpet prayer rows across the floor, a two-step minbar. No figural decor.",
+  }),
+  rel("minaret", "Minaret", "implemented", {
+    wave: 4,
+    note: "The bell tower slimmed: masonry shaft, a trapdoor balcony ring near the top, a corbelled cone on a solid cap with a spike finial.",
+  }),
+  rel("synagogue", "Synagogue", "implemented", {
+    wave: 4,
+    note: "Central bimah dais with a reading lectern, an ark cabinet with doors on the far wall, bench ranks turned to the bimah.",
+  }),
   rel("pagoda", "Pagoda", "implemented", { note: "Three to five stacked eave tiers replacing the shell roof." }),
-  rel("stupa", "Stupa", "not_started", { wave: 4 }),
-  rel("ziggurat", "Ziggurat", "not_started", { wave: 4 }),
+  rel("stupa", "Stupa", "implemented", {
+    wave: 4,
+    note: "Corbelled solid dome on a plinth ring, a solid core with a clear circumambulation lane round it, spire finial.",
+  }),
+  rel("ziggurat", "Ziggurat", "implemented", {
+    wave: 4,
+    note: "Two to three stepped terraces rebuilt over the shell, with a shrine cell on the crown.",
+  }),
   rel("temple", "Temple"),
   rel("shrine", "Shrine"),
   rel("altar_stone", "Altar stone"),
   rel("wayside_cross", "Wayside cross"),
-  rel("bell_tower", "Bell tower", "not_started", { wave: 4 }),
+  rel("bell_tower", "Bell tower", "implemented", {
+    wave: 4,
+    note: "Tall masonry shaft with a trapdoor louvre band and the bell hung under the ceiling plane at the head of it.",
+  }),
   rel("obelisk", "Obelisk"),
   rel("colossus", "Colossus"),
 
@@ -637,7 +670,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Compound prop: fenced yard, seeded headstone variety, corner mausoleum.",
   }),
   mem("mausoleum", "Mausoleum", "implemented"),
-  mem("tomb", "Tomb", "not_started", { wave: 4 }),
+  mem("tomb", "Tomb", "implemented", {
+    wave: 4,
+    note: "The mausoleum's quieter cousin: sealed masonry with an apron plinth course, a slab cist and unlit candles.",
+  }),
   mem("cenotaph", "Cenotaph"),
   mem("war_memorial", "War memorial"),
   mem("memorial_garden", "Memorial garden"),
