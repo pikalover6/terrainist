@@ -428,16 +428,17 @@ function fitSchool(ctx: FitOutContext, c: PropCounter): void {
   }
 
   // The desks. Rows across the room, two cells apart so a child can get out
-  // of one, with the two middle columns left as the aisle to the board. Two,
-  // not one: the shell hangs its ceiling light over the room's centre — one
-  // of the two middle columns, and which one depends on the parity of the
-  // width — and in a three-course storey the lantern sits at head height.
-  // Desks under a low ceiling cannot be stepped over, so a single aisle that
-  // guessed the wrong column would run straight into the lantern. A pair
-  // always contains one clear column.
+  // of one, with the three middle columns left as the aisle to the board.
+  // Three, not one: the shell hangs its ceiling light over the room's centre
+  // — one of the two middle columns, by width parity — and in a three-course
+  // storey the lantern sits at head height, where a desk row under a low
+  // ceiling cannot be stepped over. A one-column aisle that guessed wrong ran
+  // straight into the lantern, and a two-column aisle still left a sealed
+  // pocket where the lantern's row met the desks beside it. Three columns
+  // always leave two clear ones past the light, whichever cell it hangs in.
   const centre = Math.floor((it.x0 + it.x1) / 2);
   const aisle = Math.max(it.x0, centre - 1);
-  const inAisle = (x: number): boolean => x === aisle || x === centre;
+  const inAisle = (x: number): boolean => x >= aisle && x <= centre + 1;
   const first = boardNorth ? it.z0 + 2 : it.z0;
   const last = boardNorth ? it.z1 : it.z1 - 2;
   const slabBlock = ctx.style["stone.slab"] as string;
@@ -597,16 +598,21 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
   }
   // The changing benches, along the walkway on two corners. A bench is a
   // bottom stair with its backrest to the wall, and a stair is a half-step
-  // the walking agent can mount — a bench never cuts the ring the way a full
-  // block would.
-  if (!inPool(it.x1, it.z0)) {
+  // the walking agent can mount — so a bench never cuts the one-wide ring the
+  // way a full block would, PROVIDED there is headroom to stand on it. Under
+  // a three-course storey with a floor plane overhead there is none: the
+  // mounted head lands in the storey above's floor, the bench turns back into
+  // a wall, and the two-storey bathhouses came back with sealed arcs. So the
+  // ring gets benches only when a stander on one fits.
+  const benchHeadroom = ctx.floors < 2 || ctx.storyHeight >= 4;
+  if (benchHeadroom && !inPool(it.x1, it.z0)) {
     c.put1(it.x1, it.z0, ctx.style["stair.interior"] as string, {
       facing: "east",
       half: "bottom",
       shape: "straight",
     });
   }
-  if (!inPool(it.x0, it.z1)) {
+  if (benchHeadroom && !inPool(it.x0, it.z1)) {
     c.put1(it.x0, it.z1, ctx.style["stair.interior"] as string, {
       facing: "west",
       half: "bottom",
@@ -615,12 +621,14 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
   }
   // A bench run along the west walkway, spaced so the room never narrows to
   // nothing between a bench and the water.
-  for (let z = it.z0 + 1; z <= it.z1 - 1; z += 2) {
-    if (inPool(it.x0, z)) continue;
-    c.put1(it.x0, z, ctx.style["stair.interior"] as string, {
-      facing: "west",
-      half: "bottom",
-      shape: "straight",
-    });
+  if (benchHeadroom) {
+    for (let z = it.z0 + 1; z <= it.z1 - 1; z += 2) {
+      if (inPool(it.x0, z)) continue;
+      c.put1(it.x0, z, ctx.style["stair.interior"] as string, {
+        facing: "west",
+        half: "bottom",
+        shape: "straight",
+      });
+    }
   }
 }
