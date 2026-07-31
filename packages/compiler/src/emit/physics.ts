@@ -1163,7 +1163,11 @@ export async function lintWorldPhysics(
       if (AIR.has(name)) continue;
       // Plants, snow, loose decor and tree canopy are not "the ground".
       if (name.endsWith("_leaves") || name.endsWith("_log") || name.endsWith("_wood")) continue;
-      if (!stack.isFullCube(id)) continue;
+      // A dirt path IS the ground — fifteen sixteenths tall with a solid flush
+      // top, same as the SOLID_TOP carve-out in supportAt. Skipping it made
+      // every road with worn shoulders read one block proud of ground that a
+      // player stands on level with the lane.
+      if (!stack.isFullCube(id) && !SOLID_TOP.test(name)) continue;
       return y;
     }
     return null;
