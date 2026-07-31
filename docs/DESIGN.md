@@ -548,3 +548,179 @@ waterfront city, Miami reference) ships first, then the five showcase
 worlds re-author onto the new contract, then the GLM/Luna/DeepSeek
 side-by-sides run — model comparisons before fabric v2 would measure the
 old solver's ceiling, not the models.
+
+---
+
+## Fabric v3 — the city (RATIFIED with Kai, 2026-07-31)
+
+### Diagnosis
+
+Fabric v2 inverted "buildings first" into "streets first", and it worked:
+Bayline is a real settlement rather than a bag of buildings on a lawn. Kai
+walked it and returned a harder verdict — *"it looks entirely like something
+generated procedurally… the settlements are all just rectangles with simple
+grid layouts, buildings are also often touching each other, and the use of the
+path block is kind of weird for a city. It's also really small compared to what
+an actual minecraft city would be."*
+
+Three structural causes, none of them tunable:
+
+1. **The grid is the only thing the generator can express.** `buildStreetGraph`
+   picks line positions per axis and draws each line edge-to-edge across a
+   rectangle; `fabric: "organic"` is the same construction with ±6 jitter. No
+   code path can produce a diagonal, a curve, a T-junction, a dead end or a
+   non-rectangular block, and a district's outline is its authored envelope
+   rect. Rectangles containing rectangles, by construction.
+2. **A dense street wall cannot be built.** `LOT_SIDE_GAP.high = 0` and each lot
+   raises an independent four-walled shell, so neighbours meet as two boxes back
+   to back. Cities are made of continuous frontage — shared party walls, one
+   cornice line, varied bays — and that primitive does not exist.
+3. **City streets are surfaced as farm tracks.** `surfaceStreetGraph` uses
+   `road.surface` (`dirt_path`) and `road.shoulder` (`gravel`), identical to a
+   lane between two villages.
+
+Plus scale: a 512² region with a 200×170 downtown at `blockSize` 40 is about
+five city blocks by four.
+
+### The principle
+
+Authored-looking cities do not come from more randomness. They come from
+**hierarchy and consequence**: arterials that go somewhere, districts that
+differ *because of where they are*, a skyline that peaks, irregularity with a
+visible cause (the river bent the grid; a diagonal cut through and left wedge
+lots; the old core kept its lanes), and — at eye level — continuous frontage
+with incident every few blocks. One rule applied everywhere at one frequency is
+the thing that reads as generated, and jitter does not cure it.
+
+### The seven tracks
+
+- **U1 — urban materials.** Road classes: avenue/street tarmac with dashed
+  centre lines and positional wear patching, cobbled lanes, gutters, kerbs.
+  Rural `road.network@0` keeps the dirt palette.
+- **U2 — the continuous street wall.** A run of lots on one block face becomes
+  one terrace assembly: shared party walls, bays 6–12 wide, storey counts that
+  snap to a shared cornice with deliberate steps, a continuous ground-floor
+  shopfront band (door + awning per bay), per-bay roofs and facade materials,
+  distinct corner units, and the block interior left as courtyard/alley.
+- **U3 — scale probe.** Measurement only: compile time, RSS, output size and
+  counts at 768²/1024²/1536²/2048², with a CPU profile and a failure point.
+- **C1 — the city plan layer.** Arterials first, districts as the residue. The
+  big one; see the contract below.
+- **C2 — the skyline field.** A prominence field driving storeys, setbacks and
+  rooftop kit, replacing the flat `INFILL_FLOORS.high = [3, 8]` mesa.
+- **C3 — the life pass.** A dedicated eye-level stage: awnings, hanging signs,
+  balconies, AC units, fire escapes, alley clutter, kerbside vehicles, market
+  stalls, street trees, lit interiors.
+- **C4 — set pieces and vistas.** Per city, a handful of authored anchors placed
+  with axis relationships: a boulevard terminating on a landmark, a bridge on
+  the river, a hillside stair district, a waterfront promenade.
+
+### Pinned contract — CityPlan (C1 produces; C2/C3/C4 consume)
+
+Lives in `packages/compiler/src/layout/city.ts`. This is the only cross-track
+surface; a cell's internal subdivision stays private to C1 exactly as blocks and
+lots stayed private to F1.
+
+```ts
+/** Radians are not used anywhere in this contract. Angles are degrees. */
+export type DistrictCharacter =
+  | "core" | "grid" | "rowhouse" | "lanes"
+  | "industrial" | "civic" | "park" | "waterfront";
+
+/** A city-scale road. Drawn before any district exists. */
+export interface Arterial {
+  readonly id: string;
+  readonly kind: "boulevard" | "drive" | "diagonal" | "ring" | "spine";
+  /** Carriageway columns. Wider than any StreetSegment: 9–13. */
+  readonly width: number;
+  /** Carriageway centre line, 4-connected, cell by cell — same shape as
+   *  StreetSegment["path"], so every existing consumer walks it unchanged. */
+  readonly path: readonly { readonly x: number; readonly z: number }[];
+  /** Where this arterial visually ends. C4 seats a landmark on it. */
+  readonly termini: readonly {
+    readonly at: { readonly x: number; readonly z: number };
+    /** Heading the viewer looks along, degrees, 0 = +Z, quantised to 15. */
+    readonly heading: number;
+  }[];
+}
+
+/** One face of the arterial network: an arbitrary polygon, not a rect. */
+export interface DistrictCell {
+  readonly id: string;
+  readonly character: DistrictCharacter;
+  /** 1 inside the cell. Row-major over `bounds`, NOT over the region. */
+  readonly mask: Uint8Array;
+  /** Tight bounding box of the mask, in world columns. */
+  readonly bounds: Rect;
+  /** Columns inside the mask. */
+  readonly area: number;
+  /** Local grid rotation about the bounds centre, degrees, quantised to 15. */
+  readonly orientation: number;
+  readonly blockSize: number;
+  readonly density: "low" | "medium" | "high";
+  /** Salt for this cell's palette drift, so fabric changes as you walk. */
+  readonly paletteSalt: string;
+}
+
+export interface CityPlan {
+  readonly bounds: Rect;
+  readonly arterials: readonly Arterial[];
+  readonly cells: readonly DistrictCell[];
+  /** 1 on any arterial carriageway column, row-major over the region. */
+  readonly arterialMask: Uint8Array;
+}
+```
+
+`StreetGraphInput` gains two **optional, backwards-compatible** fields so a
+cell's local fabric can be clipped and rotated; an authored rectangular district
+that passes neither behaves exactly as it does today:
+
+```ts
+readonly mask?: Uint8Array;      // 1 = inside; a segment leaving the mask ends there
+readonly orientation?: number;   // degrees about the bounds centre, quantised to 15
+```
+
+### Pinned contract — ProminenceField (C2)
+
+Lives in `packages/compiler/src/layout/prominence.ts`. A pure, positional
+function so it can be called from both the per-lot infill draw and a terrace's
+per-bay heights without either owning it.
+
+```ts
+export interface ProminenceField {
+  /** 0..1. Drives storeys, setbacks, rooftop kit and facade richness. */
+  at(x: number, z: number): number;
+  /** Storeys for a lot or bay whose street corner is (x, z). */
+  storeys(x: number, z: number, ctx: {
+    readonly density: "low" | "medium" | "high";
+    readonly character?: DistrictCharacter;
+    readonly archetype: string;
+  }): number;
+}
+export function buildProminenceField(input: ProminenceInput): ProminenceField;
+```
+
+### Pinned contract — the life pass (C3)
+
+Lives in `packages/compiler/src/structures/life.ts`. Strictly **additive** and
+strictly **last**: it may only write into columns nothing else claimed, via the
+same all-or-nothing `avoid` predicate the streetscape pass already takes, so a
+prop that would clip a building or block the reserved walk lane is dropped whole
+rather than half-written.
+
+```ts
+export function dressLife(input: LifePassInput): {
+  readonly blocks: StructureBlock[];
+  readonly diagnostics: Diagnostic[];
+  readonly stats: Readonly<Record<string, number>>;
+};
+```
+
+### Sequencing
+
+U1/U2/U3 are already in flight and are no-regret under any version of C1. C1
+lands next as the long pole; C2, C3 and C4 code against the contracts above with
+fixtures, exactly as F4 coded against `StreetGraph` before F1 existed. The road
+pass keeps its role BETWEEN settlements; arterials replace it INSIDE a city.
+Three handwritten worlds ship on the result: the Miami reference re-authored,
+plus two more chosen to exercise what a rectangle never could.
