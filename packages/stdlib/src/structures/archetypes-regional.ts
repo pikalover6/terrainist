@@ -1081,8 +1081,15 @@ function fitColonialVerandaHouse(ctx: FitOutContext, c: PropCounter): void {
       if (onWayIn(ctx, cell.x, cell.z)) continue;
       const onX = cell.x === -1 || cell.x === plan.sx;
       const along = onX ? cell.z : cell.x;
-      // The posts, every other bay, from the ground to under the canopy.
+      // The posts, every other bay, from the ground to under the canopy —
+      // and from the *actual* ground: on a platform the apron sits one lower
+      // than on conformed terrain, and a post column starting on air fails
+      // the support-chain rule (the stilt-house lesson, same fix).
       if (along % 2 === 0) {
+        if (ctx.blockAt(cell.x, 0, cell.z) === undefined) {
+          ctx.put(cell.x, 0, cell.z, fence);
+          c.n++;
+        }
         for (let y = 1; y < canopyY; y++) {
           ctx.put(cell.x, y, cell.z, fence);
           c.n++;
