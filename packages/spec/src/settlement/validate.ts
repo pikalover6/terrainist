@@ -1750,6 +1750,21 @@ export const SETTLEMENT_PROP_NAMES = [
   "fishing_trawler",
   "drydock",
   "buoy",
+  // Wave 6: three more machines for the airfield, five more hulls, and the
+  // first rolling stock. Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "hot_air_balloon",
+  "seaplane",
+  "glider",
+  "junk",
+  "gondola",
+  "barge",
+  "paddle_steamer",
+  "container_ship",
+  "locomotive",
+  "passenger_car",
+  "freight_car",
+  "caboose",
   // The breadth wave: street furniture, works, camps, yards and smallcraft.
   "bench",
   "planter",

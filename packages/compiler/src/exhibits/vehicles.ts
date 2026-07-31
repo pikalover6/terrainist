@@ -149,6 +149,49 @@ export const VEHICLE_EXHIBIT_PLAN: readonly {
     ],
   },
   {
+    // Wave 6's rolling stock. An ordinary **land** row: every craft in
+    // `railcraft.ts` carries its own ballast bed and rail, so a train needs no
+    // pad concept the grid did not already have — the row is `water: false`
+    // like the airfield, and the track arrives with the vehicle.
+    row: "rolling stock",
+    water: false,
+    cells: [
+      { prop: "locomotive", params: { yaw: 0 } },
+      { prop: "locomotive", params: { yaw: 90 } },
+      { prop: "passenger_car", params: { yaw: 0 } },
+      { prop: "freight_car", params: { yaw: 0 } },
+      { prop: "caboose", params: { yaw: 180 } },
+    ],
+  },
+  {
+    row: "sport aircraft",
+    water: false,
+    cells: [
+      { prop: "hot_air_balloon", params: { yaw: 0 } },
+      { prop: "seaplane", params: { yaw: 0 } },
+      { prop: "seaplane", params: { yaw: 90 } },
+      { prop: "glider", params: { yaw: 0 } },
+    ],
+  },
+  {
+    row: "river craft",
+    water: true,
+    cells: [
+      { prop: "junk", params: { yaw: 0 } },
+      { prop: "paddle_steamer", params: { yaw: 0 } },
+      { prop: "barge", params: { yaw: 90 } },
+      { prop: "gondola", params: { yaw: 0 } },
+    ],
+  },
+  {
+    row: "container terminal",
+    water: true,
+    cells: [
+      { prop: "container_ship", params: { yaw: 0 } },
+      { prop: "container_ship", params: { yaw: 90 } },
+    ],
+  },
+  {
     row: "shipyard",
     water: false,
     cells: [

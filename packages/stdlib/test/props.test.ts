@@ -61,6 +61,20 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   // of the catalog, which is what makes those checks exhaustive.
   airliner: [{}],
   cargo_plane: [{}],
+  // Wave 6's twelve: four rail, five water, three air, none of them
+  // parameterised. Their own properties are held in `vehicles-wave6.test.ts`.
+  locomotive: [{}],
+  passenger_car: [{}],
+  freight_car: [{}],
+  caboose: [{}],
+  junk: [{}],
+  gondola: [{}],
+  barge: [{}],
+  paddle_steamer: [{}],
+  container_ship: [{}],
+  hot_air_balloon: [{}],
+  seaplane: [{}],
+  glider: [{}],
   biplane: [{}],
   light_plane: [{}],
   airship: [{}],

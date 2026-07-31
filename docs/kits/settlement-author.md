@@ -1271,6 +1271,18 @@ target, skipping anything already built.
 | `fishing_trawler` | 18×12×7 | water | booms and nets |
 | `drydock` | `length`×8×15 | ground, flat | `length` 16..64 (34); an open cradle a hull sits in |
 | `buoy` | 3×5×3 | water | the smallest thing that floats |
+| `locomotive` | 22×12×7 | ground, flat | tank engine; carries its own ballast and rail, so it needs no `rail_line` under it |
+| `passenger_car` | 20×9×7 | ground, flat | walkable: stair benches either side of the aisle, roof walk |
+| `freight_car` | 16×6×7 | ground, flat | open-top gondola wagon with a seeded load |
+| `caboose` | 14×11×7 | ground, flat | cupola, fenced end platforms, stove pipe |
+| `junk` | 26×21×9 | water | three battened lugsails, two-stage poop |
+| `gondola` | 15×7×3 | water | the narrowest hull there is; ferro at the stem |
+| `barge` | 24×8×9 | water | open hold rows, tiller hut aft |
+| `paddle_steamer` | 28×14×11 | water | side paddle boxes, twin stacks, promenade rails |
+| `container_ship` | 46×18×13 | water | the modern giant, at the galleon's extents — needs the same basin |
+| `hot_air_balloon` | 11×20×11 | ground | moored: the envelope is carried on a mast down to the basket and the ground |
+| `seaplane` | 15×10×15 | ground | the light aeroplane on floats; beached rather than afloat |
+| `glider` | 18×8×25 | ground, flat | span 25 — wider than it is long; one wingtip rests on the grass |
 
 **Street furniture, yards and camps.** These are the cheap, small things that
 make a place look inhabited; scatter three or four of the little ones around a

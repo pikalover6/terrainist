@@ -183,7 +183,7 @@ export function buildHull(
 }
 
 /** A mast: a log column, stepped on the deck, with a masthead lantern. */
-function mast(ctx: PropContext, x: number, z: number, from: number, to: number): void {
+export function mast(ctx: PropContext, x: number, z: number, from: number, to: number): void {
   for (let y = from; y <= to; y++) ctx.put(x, y, z, ctx.palette.log, { axis: "y" });
 }
 
@@ -195,7 +195,7 @@ function mast(ctx: PropContext, x: number, z: number, from: number, to: number):
  * head, which is both the right shape and the thing that keeps the top course
  * of wool attached to something.
  */
-function squareSail(
+export function squareSail(
   ctx: PropContext,
   x: number,
   mastZ: number,
@@ -216,12 +216,12 @@ function squareSail(
 }
 
 /** The cloth this hull's canvas is cut from, drawn off its own seed. */
-function clothOf(ctx: PropContext, stream: string): string {
+export function clothOf(ctx: PropContext, stream: string): string {
   return SAIL_WOOLS[ctx.rng(`${stream}.cloth`).int(0, SAIL_WOOLS.length - 1)] as string;
 }
 
 /** The timber this hull is planked in: the theme's, or its stripped variant. */
-function hullTimber(ctx: PropContext, stream: string): { hull: string; deck: string } {
+export function hullTimber(ctx: PropContext, stream: string): { hull: string; deck: string } {
   const dark = ctx.rng(`${stream}.timber`).float() < 0.5;
   return dark
     ? { hull: ctx.palette.log, deck: ctx.palette.planks }
