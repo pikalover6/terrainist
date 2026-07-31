@@ -349,6 +349,7 @@ function corbel(
   block: (x: number, y: number, z: number) => string,
   cap: string,
   courses = 1,
+  finial?: string,
 ): number {
   let n = 0;
   let capY = plan.base;
@@ -374,9 +375,14 @@ function corbel(
       }
     }
   }
+  // The cap slab must be a solid block: a partial one (a fence, a slab) in
+  // the middle of the rect has nothing under it but the cone's hollow, and
+  // the lint's support-chain rule rightly calls it floating. The one place a
+  // partial block belongs is the finial — a single spike standing on the
+  // solid cap.
   slab(ctx, capY, rect.x0, rect.x1, rect.z0, rect.z1, cap);
   if (capY + 1 <= plan.top) {
-    ctx.put((rect.x0 + rect.x1) >> 1, capY + 1, (rect.z0 + rect.z1) >> 1, cap);
+    ctx.put((rect.x0 + rect.x1) >> 1, capY + 1, (rect.z0 + rect.z1) >> 1, finial ?? cap);
     n++;
   }
   return n;
@@ -1033,7 +1039,7 @@ function fitThatchedRoundhouse(ctx: FitOutContext, c: PropCounter): void {
   const roof = roofPlan(ctx);
   if (roof !== null) {
     clearRoof(ctx, roof);
-    c.n += corbel(ctx, roof, () => "hay_block", "spruce_fence", 1);
+    c.n += corbel(ctx, roof, () => "hay_block", "hay_block", 1, "spruce_fence");
   }
 
   const it = ctx.interior;
