@@ -293,6 +293,53 @@ describe("generateBuilding — structural sanity", () => {
     }
   });
 
+  it("lays a cottage bed head-to-the-wall, foot into the room", () => {
+    const c = CASES[0] as Case;
+    const { ops, meta } = build(c, { params: { ...c.params, archetype: "cottage" } });
+    const { interior } = meta;
+    const beds = ops.filter((o) => o.block === "red_bed" && o.y === 1);
+    const foot = beds.find((o) => o.props?.["part"] === "foot") as LocalVoxelOp;
+    const head = beds.find((o) => o.props?.["part"] === "head") as LocalVoxelOp;
+    expect(foot).toBeDefined();
+    expect(head).toBeDefined();
+    const inside = (x: number, z: number): boolean =>
+      x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
+    const [dx, dz] = cardinalStep(head.props?.["facing"] as never);
+    // The head stands at the wall: one more step along `facing` leaves the room.
+    expect(inside(head.x + dx, head.z + dz)).toBe(false);
+    // And the foot points into the room, not into a wall.
+    expect(inside(foot.x, foot.z)).toBe(true);
+    expect(inside(foot.x - dx, foot.z - dz)).toBe(true);
+  });
+
+  it("turns an inn's stair-chairs towards the table", () => {
+    const { ops } = generateBuilding({
+      size: [11, 9, 11],
+      params: { floors: 1, floorHeight: 5, archetype: "inn" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const chairs = ops.filter(
+      (o) => o.block === PINNED["stair.interior"] && o.y === 1 && o.props?.["half"] === "bottom",
+    );
+    const tables = new Set(
+      ops.filter((o) => o.block === PINNED["wall.fence"] && o.y === 1).map((o) => `${o.x},${o.z}`),
+    );
+    expect(tables.size).toBeGreaterThan(0);
+    let seated = 0;
+    for (const chair of chairs) {
+      // A stair's `facing` is where its backrest stands, so the seat opens the
+      // other way: the table must lie OPPOSITE the chair's `facing`.
+      const [dx, dz] = cardinalStep(chair.props?.["facing"] as never);
+      if (!tables.has(`${chair.x - dx},${chair.z - dz}`)) continue;
+      seated++;
+      // ...and never the other way round, which is the bug this guards.
+      expect(tables.has(`${chair.x + dx},${chair.z + dz}`)).toBe(false);
+    }
+    expect(seated).toBe(chairs.length);
+    expect(seated).toBeGreaterThan(0);
+  });
+
   it("lights every storey", () => {
     for (const c of CASES) {
       const { ops, meta } = build(c);
@@ -546,6 +593,27 @@ describe("material themes", () => {
       expect(height).toBeGreaterThanOrEqual(1);
       expect(height).toBeLessThanOrEqual(3);
       expect(height).toBeLessThan(meta.params.storyHeight - 1);
+    }
+
+    // Bales read as deliberate stores, not scatter: no pile is a lone bale
+    // stranded on its own, every pile is level, and the upper course of a pile
+    // lies along the wall it stands against.
+    const heightAt = new Map<string, number>();
+    for (const cell of columns) {
+      heightAt.set(cell, hay.filter((o) => `${o.x},${o.z}` === cell).length);
+    }
+    for (const cell of columns) {
+      const [x, z] = cell.split(",").map(Number) as [number, number];
+      const neighbours = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
+        .map(([dx, dz]) => `${x + dx},${z + dz}`)
+        .filter((k) => columns.has(k));
+      expect(neighbours.length, `isolated bale at ${cell}`).toBeGreaterThan(0);
+      // A pile is level — its cells all carry the same number of bales.
+      for (const k of neighbours) expect(heightAt.get(k), `${cell} vs ${k}`).toBe(heightAt.get(cell));
+      const onXWall = z === interior.z0 || z === interior.z1;
+      for (const bale of hay.filter((o) => `${o.x},${o.z}` === cell)) {
+        expect(bale.props?.["axis"]).toBe(bale.y === 1 ? "y" : onXWall ? "x" : "z");
+      }
     }
 
     // Every free floor cell is still 4-connected to every other one.

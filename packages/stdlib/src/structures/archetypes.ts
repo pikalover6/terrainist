@@ -311,7 +311,13 @@ export function furnish(r: FurnishRequest): number {
 
   switch (r.archetype) {
     case "cottage": {
-      placeBed(x0, z0, "south", "red_bed");
+      // Head to the wall, foot into the room — the same idiom the upper-storey
+      // `beds()` uses. `facing` names the direction from foot to head, so a bed
+      // standing at the north edge of the room takes `facing: "north"` with its
+      // foot one cell south of the headboard. The first version anchored the
+      // foot at the north-west interior corner and faced it *south*, which put
+      // the headboard in the middle of the floor and the foot against the wall.
+      placeBed(x0, z0 + 1, "north", "red_bed");
       place(x1, z0, "chest", { facing: "west", type: "single" });
       place(x1, z1, "crafting_table");
       place(x1 - 1 >= x0 ? x1 - 1 : x1, z1, "barrel", { facing: "up", open: "false" });
@@ -329,8 +335,15 @@ export function furnish(r: FurnishRequest): number {
           put(tx, 2, tz, "oak_pressure_plate", { powered: "false" });
           n++;
         }
-        place(tx - 1, tz, style["stair.interior"] as string, { facing: "east", half: "bottom" });
-        place(tx + 1, tz, style["stair.interior"] as string, { facing: "west", half: "bottom" });
+        // RULE: a stair-chair's `facing` points AWAY from the thing it faces.
+        // A stair's `facing` is the direction its HIGH half — the backrest —
+        // stands in; the seat opens the opposite way. So the chair *west* of
+        // the table takes `facing: "west"` (back to the west, seat opening
+        // east, towards the table) and the chair east of it takes "east".
+        // This pair was exactly inverted, and both chairs sat with their backs
+        // to the table.
+        place(tx - 1, tz, style["stair.interior"] as string, { facing: "west", half: "bottom" });
+        place(tx + 1, tz, style["stair.interior"] as string, { facing: "east", half: "bottom" });
       }
       place(x1, z0, "barrel", { facing: "up", open: "false" });
       place(x1, z0 + 1, "barrel", { facing: "up", open: "false" });
@@ -358,30 +371,54 @@ export function furnish(r: FurnishRequest): number {
       // high along the walls, leaving the floor of the room open.
       const cap = Math.max(1, Math.floor(w * d * GRANARY_HAY_SHARE));
       let stacks = 0;
-      for (let z = z0; z <= z1 && stacks < cap; z++) {
-        for (let x = x0; x <= x1 && stacks < cap; x++) {
-          const wallAdjacent = x === x0 || x === x1 || z === z0 || z === z1;
-          if (!wallAdjacent) continue;
-          // Corners and their two neighbours stay bare. A bale on each side of
-          // a corner leaves the corner itself boxed in, and a floor cell you
-          // can see and not reach is the same defect as the checkerboard, only
-          // one cell wide.
-          const nearCorner =
-            ((x === x0 || x === x1) && (z <= z0 + 1 || z >= z1 - 1)) ||
-            ((z === z0 || z === z1) && (x <= x0 + 1 || x >= x1 - 1));
-          if (nearCorner) continue;
-          // Spaced along the wall so the piles read as separate heaps.
-          if ((x + z * 2) % 3 !== 0) continue;
-          if (!free(x, z)) continue;
-          if (!take([[x, z]], "hay_block")) continue;
-          // Never up to the ceiling: a pile that reaches the joists is a
-          // column through the room, which is the defect one door along.
-          const height = Math.max(1, Math.min(1 + ((x * 5 + z * 3) % 3), r.storyHeight - 2));
-          for (let h = 0; h < height; h++) {
-            put(x, 1 + h, z, "hay_block", { axis: h === 0 ? "y" : (x + z) % 2 === 0 ? "x" : "z" });
-            n++;
+      // Bales are *stores*, so they go down as neat rectangular piles rather
+      // than as single bales dropped one every third cell — the old
+      // `(x + z * 2) % 3` pattern, which reads in game as random scatter. Each
+      // pile is a 1x2 run of cells along one wall, laid level and with one
+      // shared axis, and a pile is only drawn when BOTH of its cells are
+      // legal — a half-laid pile is the lone stranded bale all over again.
+      // Everything here is derived from position; no RNG.
+      const walls = [
+        { fixed: z0, along: "x" as const },
+        { fixed: z1, along: "x" as const },
+        { fixed: x0, along: "z" as const },
+        { fixed: x1, along: "z" as const },
+      ];
+      /** Corners and their neighbours stay bare: a bale each side of a corner
+       * boxes the corner in, and a floor cell you can see and not reach is the
+       * checkerboard defect one cell wide. */
+      const nearCorner = (x: number, z: number): boolean =>
+        ((x === x0 || x === x1) && (z <= z0 + 1 || z >= z1 - 1)) ||
+        ((z === z0 || z === z1) && (x <= x0 + 1 || x >= x1 - 1));
+      for (const wall of walls) {
+        if (stacks >= cap) break;
+        const onXWall = wall.along === "x";
+        const lo = onXWall ? x0 : z0;
+        const hi = onXWall ? x1 : z1;
+        // Runs of two with a two-cell gap between them, anchored to the room
+        // so both ends of a wall read the same way.
+        for (let t = lo; t + 1 <= hi && stacks + 2 <= cap; t += 4) {
+          const cells: [number, number][] = [
+            onXWall ? [t, wall.fixed] : [wall.fixed, t],
+            onXWall ? [t + 1, wall.fixed] : [wall.fixed, t + 1],
+          ];
+          if (cells.some(([cx, cz]) => nearCorner(cx, cz) || !free(cx, cz))) continue;
+          if (!take(cells, "hay_block")) continue;
+          // Two-high wherever the ceiling allows, single elsewhere, and never
+          // up to the joists: a pile that reaches them is a column through the
+          // room, which is the defect one door along.
+          const height = Math.max(
+            1,
+            Math.min(1 + (((t - lo) / 4 + wall.fixed) % 2 === 0 ? 1 : 0), r.storyHeight - 2),
+          );
+          for (const [cx, cz] of cells) {
+            for (let h = 0; h < height; h++) {
+              // The upper course lies along the wall, the whole pile matching.
+              put(cx, 1 + h, cz, "hay_block", { axis: h === 0 ? "y" : onXWall ? "x" : "z" });
+              n++;
+            }
+            stacks++;
           }
-          stacks++;
         }
       }
       place(x1, z1, "composter", { level: "0" });
