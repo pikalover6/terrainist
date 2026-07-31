@@ -179,7 +179,7 @@ describe("wave-two archetypes", () => {
       const entry = structureById(a);
       expect(entry, a).toBeDefined();
       expect(entry?.status, a).toBe("implemented");
-      expect(entry?.note, a).toMatch(/^Wave 2\./);
+      expect(entry?.wave, a).toBe(2);
     }
     // The near miss, restated as data: `hospital` is in the catalog and is not
     // implemented, because nothing builds it.
