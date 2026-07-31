@@ -389,6 +389,62 @@ tracks in worktrees, seams merged by the orchestrator.
 clean and unwalked — wave 1's buildings join the queue for joint in-game
 review with Kai.
 
+## Status (2026-07-31, same session: the field-fix round, wave 2, Terrarium v3)
+
+Kai's real Terrarium session came in mid-stream (chat log harvested over the
+laptop bridge; his rule: **chat text is authoritative over the verdict
+buttons**). Every reported defect was root-caused and fixed:
+
+- **Hearth** — the campfire sat in the exterior wall plane (a see-through
+  gap in every hearth-bearing archetype); it now stands one cell inward
+  before a solid chimney breast.
+- **Bed** — cottage beds now lie head-to-wall.
+- **The seat rule** — a stair's `facing` is its backrest. Every stair-seat
+  in the codebase opened away from its focus (inn tables, keep halls,
+  gatehouse, gym, church pews, gallery benches, library chair, and the
+  wave-1 rooms); all flipped, rule documented at each site.
+- **Keep tables** — the trestle idiom (fence + pressure plate) is refused
+  by the stack guard in three-course storeys, so big keeps had no tables;
+  short storeys now use the slab idiom.
+- **Wizard tower** — the enchanting table gets its bookshelf arc (a fixed
+  corner had put it where the stair flight lands).
+- **Greenhouse** — glazing starts at sill height, the plank roof is
+  actually cleared for glass, and crops sit in raised planters out of
+  boot-reach.
+- **Pots** — every decorative bare `flower_pot` (renders empty) became a
+  positional `potted_*` pick.
+- **Granary** — hay restacked into deliberate whole piles; a stranded
+  single bale is now impossible by construction.
+
+The deeper find of the round: **the walking agent vs. the ceiling light.**
+The shell hangs its lantern over the room's centre — head height in a
+three-course storey — and the fit-out guard does not model head-height
+blocks. Four seals fell out of that, each fixed at the geometry: the
+school's aisle (now three middle columns plus a clear perimeter lane), the
+bathhouse walkway (braziers and cauldron moved onto pool-corner pedestals;
+benches only where a stander has headroom), and the pool divider (never on
+the lantern row). A latent inn defect surfaced too: chairs placed even when
+their table's cell was refused.
+
+**Wave 2 landed as a batch-size trial** — one implementer, all nine entries
+(`tudor_row`, `mediterranean_villa`, `trullo`, `courthouse`, `post_office`,
+`infirmary`, `sawmill`, `kiln`, `tannery`), with the field lessons baked
+into the brief. Verdict: nine per agent is comfortable; the errors that
+occur are per-archetype, not per-batch. **98 implemented / 440.**
+
+**Terrarium v3** (Kai's streamlined spec): reviewer spawns in spectator
+(`GameType 3`), pass/fail command blocks are gone — chat and screenshots
+are the record — and each station has two fly-through teleport cubes (lime
+pad = next, red = prev, offset from the landing), whose command chains emit
+the same `>> STATION <id>` markers `review-import` parses. `doMobSpawning`
+was already off; now asserted (the sheep in Kai's frames were the reason).
+
+The `.claude/hooks/session-start.sh` SessionStart hook now readies cloud
+containers (deps, build, ssh client for the bridge).
+
+Everything here is code-complete and physics-lint clean; nothing new has
+been walked. The next Terrarium session runs on v3.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
