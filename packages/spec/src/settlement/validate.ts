@@ -53,6 +53,7 @@ import {
   PORT_TYPES,
   SETTLEMENT_EXCLUDED_GENERATORS,
   STRUCTURE_GENERATORS,
+  isPrecinctGenerator,
   V02_FACES,
   V02_PORT_TYPES,
   YAWS,
@@ -343,7 +344,7 @@ function validateStructureNode(
         "STRUCTURE_NODE_SHAPE",
         path,
         "structure nodes have no children in the settlement profile",
-        'remove "children" — building.grammar@0 and road.network@0 emit their own geometry; declare siblings under the root instead',
+        'remove "children" — building.grammar@0, road.network@0 and the precinct kits emit their own geometry; declare siblings under the root instead',
       ),
     );
   }
@@ -354,6 +355,8 @@ function validateStructureNode(
     out.push(error("BAD_TYPE", path, `"params" must be an object, got ${describe(params)}`, 'use "params": {} to accept every generator default'));
   } else if (isObject(params)) {
     if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params);
+    else if (generator === "precinct.airport@0") validateAirportParams(out, `${path}.params`, params);
+    else if (generator === "precinct.harbour@0") validateHarbourParams(out, `${path}.params`, params);
     else validateRoadParams(out, `${path}.params`, params);
   }
 
@@ -361,6 +364,7 @@ function validateStructureNode(
   if (generator === "building.grammar@0") {
     validateHighriseEnvelope(out, path, node, isObject(params) ? params : {});
   }
+  if (isPrecinctGenerator(generator)) validatePrecinctEnvelope(out, path, node, generator);
   validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
 }
@@ -1994,6 +1998,94 @@ function validatePropParams(out: LoamDiagnostic[], at: string, params: Obj): voi
         `"on" must be "water" or "ground", got ${describe(on)}`,
         'write "on": "water" to put the prop on the nearest suitable water columns — boats declare it by default',
       ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* precinct.*@0                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Smallest `precinct.airport@0` envelope, as `[long, cross]`. */
+export const AIRPORT_MIN_ENVELOPE = Object.freeze([120, 80] as const);
+
+/** Smallest `precinct.harbour@0` envelope, as `[quay, reach]`. */
+export const HARBOUR_MIN_ENVELOPE = Object.freeze([64, 48] as const);
+
+/**
+ * A precinct's envelope, checked against the kit's minimum.
+ *
+ * Rejected here rather than at compile time because a precinct that does not
+ * fit builds *nothing* — the kits refuse to emit half a layout — and an author
+ * would much rather be told the number to change than be handed an empty box
+ * and a warning. The compiler checks it again against the *placed* footprint,
+ * which is the one the solver may have shrunk.
+ */
+function validatePrecinctEnvelope(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  generator: string,
+): void {
+  const envelope = node["envelope"];
+  const min = generator === "precinct.airport@0" ? AIRPORT_MIN_ENVELOPE : HARBOUR_MIN_ENVELOPE;
+  const kind = generator === "precinct.airport@0" ? "an aerodrome" : "a harbour";
+  if (!isObject(envelope) || !Array.isArray(envelope["size"])) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `${generator} needs an explicit box envelope; ${kind} is a piece of ground, not a building`,
+        `add "envelope": { "shape": "box", "size": [${min[0]}, 24, ${min[1]}] }`,
+      ),
+    );
+    return;
+  }
+  const size = envelope["size"] as unknown[];
+  const x = typeof size[0] === "number" ? size[0] : 0;
+  const z = typeof size[2] === "number" ? size[2] : 0;
+  const long = Math.max(x, z);
+  const cross = Math.min(x, z);
+  if (long < min[0] || cross < min[1]) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        `${path}.envelope`,
+        `${generator} was given a ${x}×${z} footprint; ${kind} needs at least ${min[0]}×${min[1]} (either way round)`,
+        `set "size": [${min[0]}, ${(envelope["size"] as unknown[])[1] ?? 24}, ${min[1]}] or larger — the kit refuses to build a partial compound`,
+      ),
+    );
+  }
+}
+
+/** `precinct.airport@0` params. */
+function validateAirportParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, ["stands", "hangars", "terminal"], "precinct.airport@0 params");
+  checkNumbers(out, at, params, {
+    stands: { min: 1, max: 12, int: true },
+    hangars: { min: 0, max: 4, int: true },
+  });
+  checkBooleans(out, at, params, ["terminal"]);
+}
+
+/** `precinct.harbour@0` params. */
+function validateHarbourParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, ["piers", "ships"], "precinct.harbour@0 params");
+  checkNumbers(out, at, params, { piers: { min: 1, max: 8, int: true } });
+  const ships = params["ships"];
+  if (ships !== undefined && ships !== "fill" && typeof ships !== "number") {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"ships" must be a count or the token "fill", got ${describe(ships)}`,
+        'write "ships": "fill" to moor one hull at every pier, or "ships": 2 for a quieter port',
+      ),
+    );
+  }
+  if (typeof ships === "number" && (!Number.isInteger(ships) || ships < 0 || ships > 8)) {
+    out.push(
+      error("STRUCTURE_PARAM", at, `"ships" must be a whole number from 0 to 8, got ${describe(ships)}`, 'write "ships": 3'),
     );
   }
 }

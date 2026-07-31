@@ -205,6 +205,16 @@ export interface LayoutRequest {
    */
   readonly hazardMask?: Uint8Array;
   /**
+   * The same mask with the *water* taken out: 1 only where a column is lava or
+   * caldera.
+   *
+   * Read by `precinct.harbour@0` and nothing else. A quay is built across the
+   * waterline by definition, so the ordinary hazard mask — which calls every
+   * ocean and lake column unusable ground — would veto every candidate a
+   * harbour could possibly want. Lava is still lava.
+   */
+  readonly amphibiousHazardMask?: Uint8Array;
+  /**
    * Route corridors registered at substage 3b (§4.9.6), in document order.
    *
    * Frozen by the time the solver sees them: it costs structures against them,

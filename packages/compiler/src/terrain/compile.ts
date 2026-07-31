@@ -478,6 +478,9 @@ async function compileValidated(
       rootPath,
       nodes: extraction.nodes,
       hazardMask: buildHazardMask(region, classification, terrain.edits.calderas),
+      amphibiousHazardMask: buildHazardMask(region, classification, terrain.edits.calderas, {
+        water: false,
+      }),
       corridors,
       products,
     });
@@ -1018,10 +1021,13 @@ function buildHazardMask(
   region: Region,
   classification: Classification,
   calderas: readonly { readonly lava: boolean; readonly columns: Int32Array }[],
+  options: { readonly water?: boolean } = {},
 ): Uint8Array {
   const mask = new Uint8Array(region.width * region.depth);
-  for (let k = 0; k < mask.length; k++) {
-    if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) mask[k] = 1;
+  if (options.water !== false) {
+    for (let k = 0; k < mask.length; k++) {
+      if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) mask[k] = 1;
+    }
   }
   for (const caldera of calderas) {
     if (!caldera.lava) continue;

@@ -2019,6 +2019,108 @@ and a lighthouse `on` the coastline finish it.
 
 ---
 
+## 11b. Precincts
+
+A **precinct** is a whole compound from one node: you give it an envelope and a
+handful of params, and the compiler lays out the ground works, the vehicles and
+the buildings inside it deterministically. Use one whenever the prompt asks for
+an *installation* rather than a collection of buildings — an airfield, a port.
+
+Why this exists: a settlement solver places buildings against each other, which
+is exactly the wrong tool for a compound whose whole meaning is internal
+geometry. Three aeroplanes with `near` constraints come out as three aeroplanes
+on the grass at three unrelated headings. A `precinct.airport@0` comes out as an
+apron with aircraft on the stands, nose out, all facing the same way, because
+that is arithmetic and the kit does the arithmetic.
+
+Both kits:
+
+- are **structure nodes** — `"kind": "generator"`, a box `envelope`,
+  `constraints`, `tags` — and the solver reserves their footprint like any
+  other node's, so nothing else can land on them;
+- expose a **landside road anchor** automatically. Name the precinct's id in a
+  `road.network@0`'s `anchors` and the lane arrives at its gate;
+- **refuse to build a partial compound.** An envelope below the kit's minimum is
+  a hard error with the number to change, not a half-laid airfield;
+- put their buildings through the ordinary buildings pass, so a terminal gets
+  the settlement's material theme, a foundation and a doorstep like a cottage.
+
+Do **not** also declare `prop.place@0` aircraft, ships, piers or runways for a
+precinct: it places its own, and yours would compete with them for ground.
+
+### `precinct.airport@0`
+
+Bands run across the envelope's **short** axis from the airside edge inwards:
+margin, runway, strip, taxiway, fillet, apron of stands, forecourt, terminal
+frontage. The runway therefore lies on the long axis; aircraft are parked one to
+a stand, nose out towards the taxiway, every one of them on the same heading;
+hangars take the ends of the apron; the terminal and control tower front the
+apron with their doors landside, which is where the road arrives.
+
+| param | type | default | meaning |
+| --- | --- | --- | --- |
+| `stands` | integer 1–12 | `5` | Aircraft stands to cut across the apron. Fewer are cut if the frontage cannot hold them at 16 columns each. |
+| `hangars` | integer 0–4 | `2` | Hangars, taken from the apron ends alternately. `0` gives the whole apron to stands. |
+| `terminal` | boolean | `true` | `false` drops the terminal, the tower and the frontage band — a bare airstrip. |
+
+Minimum envelope **120 × 80** (either way round). The aircraft drawn onto each
+stand are whichever of the catalog's craft fit that stand's box, chosen from the
+node's own seed — so a bigger apron gets bigger aeroplanes without you asking.
+
+```json
+{
+  "id": "aerodrome",
+  "kind": "generator",
+  "generator": "precinct.airport@0",
+  "label": "the county aerodrome",
+  "envelope": { "shape": "box", "size": [140, 24, 92] },
+  "params": { "stands": 4, "hangars": 2 },
+  "constraints": [{ "zone": "center" }],
+  "tags": ["precinct", "airfield"]
+}
+```
+
+### `precinct.harbour@0`
+
+The one node whose footprint is *meant* to straddle the waterline: the solver
+lets a harbour reach below sea level and prefers a box that is part water and
+mostly land, and the kit then reads the shoreline that is actually there. A
+retaining course is laid along that shoreline, a quay surface behind it, piers
+run out perpendicular at even spacing along the quay, and one hull is moored
+alongside each pier — every ship on the same heading, parallel to the pier axes,
+afloat with real water under the hull. Cranes stand on the quay, and a warehouse
+and boathouse front it.
+
+| param | type | default | meaning |
+| --- | --- | --- | --- |
+| `piers` | integer 1–8 | `3` | Piers run out from the quay, evenly spaced along the usable shoreline. |
+| `ships` | integer 0–8 or `"fill"` | `"fill"` | Hulls moored. `"fill"` means one per pier. |
+
+Minimum envelope **64 × 48**. Give the node a coarse `zone` on the side of the
+map where the water is; the solver does the rest. If the envelope ends up with
+no water in it — a landlocked map, a sea level that never floods — the compile
+fails with `LOAM-E170` naming the fix, rather than building a quay facing a
+field.
+
+```json
+{
+  "id": "port",
+  "kind": "generator",
+  "generator": "precinct.harbour@0",
+  "label": "the working quay, its piers and its moorings",
+  "envelope": { "shape": "box", "size": [96, 16, 72] },
+  "params": { "piers": 3, "ships": "fill" },
+  "constraints": [{ "zone": "south" }],
+  "tags": ["precinct", "harbour"]
+}
+```
+
+Add `"precinct"` to every `scatter.forest@0`'s `avoidTags` when a document uses
+one, so the woods stop at the fence rather than growing through the apron.
+
+
+---
+
 ## 12. Composing a settlement
 
 The lessons that cost us the most iterations:

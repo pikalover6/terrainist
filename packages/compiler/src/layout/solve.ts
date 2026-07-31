@@ -92,6 +92,15 @@ const IMPROVEMENT_EPSILON = 1e-9;
 /** How far above sea level a footprint's lowest column must sit. */
 const MIN_FREEBOARD = 1;
 
+/**
+ * What a  candidate is charged for not meeting the water.
+ *
+ * Far above the [0, 1] band every normalized constraint cost lives in, so a dry
+ * candidate loses to any wet one, and two dry candidates are still ranked
+ * against each other by their ordinary costs.
+ */
+const AMPHIBIOUS_COST = 50;
+
 /** Fraction of the candidate pool drawn from the coarse zero-cost region. */
 const COARSE_SAMPLE_SHARE = 0.7;
 
@@ -383,11 +392,31 @@ function scoreCandidate(
   request: LayoutRequest,
   demoted: ReadonlySet<number>,
 ): Scored {
-  const stats = footprintStats(request.field, request.classification, candidate.rect, request.hazardMask);
+  const amphibious = node.generator === "precinct.harbour@0";
+  const hazardMask = amphibious
+    ? (request.amphibiousHazardMask ?? undefined)
+    : request.hazardMask;
+  const stats = footprintStats(request.field, request.classification, candidate.rect, hazardMask);
   const slopeLimit = maxSlopeOf(node);
-  const veto = terrainFeasible(stats, slopeLimit, request.seaLevel + MIN_FREEBOARD);
+  // A harbour is the one node type that is *supposed* to straddle the
+  // waterline: the freeboard veto — no footprint may reach below sea level —
+  // is what a quay exists to overcome, and applying it here would push every
+  // port inland until it had no water to face. Its slope and hazard vetoes
+  // still apply; only the water floor is lifted.
+  const floorY = amphibious ? -Infinity : request.seaLevel + MIN_FREEBOARD;
+  const veto = terrainFeasible(stats, slopeLimit, floorY);
   let feasible = veto === null;
   let penalty = veto === null ? 0 : veto === "too_steep" ? stats.maxSlope - slopeLimit : 1000;
+
+  // …and the other half of the same rule: a harbour that does not *straddle*
+  // the waterline is not a harbour. Lifting the freeboard veto only says water
+  // is allowed; this says it is required, which is what stops the solver from
+  // doing the sensible-for-a-cottage thing and sliding the box up the beach
+  // onto the flattest ground it can find. The median has to be *above* water:
+  // a box that is mostly sea has no room behind its quay for the sheds and the
+  // road, and a harbour with no landward side is a jetty.
+  const touchesWater = stats.min < request.seaLevel;
+  const hasLand = stats.median > request.seaLevel;
 
   // `not_overlapping` is implicit between all siblings (§4.4).
   if (!allowsOverlap(node)) {
@@ -403,7 +432,12 @@ function scoreCandidate(
     }
   }
 
-  let soft = 0;
+  // Charged as a *cost*, not a veto. A veto would be honest and would also
+  // report every dry candidate as an unsatisfied hard constraint, which lands
+  // in the author's diagnostics as "nothing satisfies this node" on a document
+  // that placed its port perfectly. A cost an order of magnitude above every
+  // normalized constraint cost buys the same outcome and says nothing.
+  let soft = amphibious ? amphibiousCost(touchesWater, hasLand) : 0;
   const evals: { index: number; cost: number; satisfied: boolean; feasible: boolean }[] = [];
   for (const [index, constraint] of node.constraints.entries()) {
     const result = evaluateConstraint(constraint, index, candidate, ctx, demoted.has(index));
@@ -451,6 +485,20 @@ function scoreCandidate(
 
   const terrain = terrainCost(stats, slopeLimit);
   return { candidate, stats, terrain, soft, total: terrain + soft, feasible, evals, penalty };
+}
+
+/**
+ * What a harbour candidate is charged for its relationship with the sea.
+ *
+ * Two tiers, because the two failures are not equally bad: a box with no water
+ * in it cannot be a harbour at all, while a box that is nearly all water is a
+ * harbour with no room behind its quay — buildable, just poorer. Ranking them
+ * rather than vetoing both is what lets the solver take the best shore
+ * available on a map whose coast is steep.
+ */
+function amphibiousCost(touchesWater: boolean, hasLand: boolean): number {
+  if (!touchesWater) return AMPHIBIOUS_COST;
+  return hasLand ? 0 : AMPHIBIOUS_COST / 2;
 }
 
 /** True when the node declares an `along` (or desugared `beside`) constraint. */
@@ -753,6 +801,11 @@ const LEVELLING_MODES = new Set(["flatten", "cut_fill", "terrace"]);
 
 /** The pad edit for one placement, or `null` when the node does not touch the ground. */
 export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | null {
+  // A harbour is the one placed node whose footprint is *meant* to be half
+  // water. Levelling it to one plane would raise the sea bed to the median
+  // ground of the box and there would be no harbour left to build, so the quay
+  // grades its own strip in the structure pass, against the waterline it finds.
+  if (node.generator === "precinct.harbour@0") return null;
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {

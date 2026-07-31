@@ -46,6 +46,7 @@ import type {
 } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
+import { resolvePorts } from "../layout/ports.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -64,6 +65,12 @@ import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
+import {
+  buildPrecincts,
+  isPrecinctGenerator,
+  type PrecinctJob,
+  type PrecinctPassResult,
+} from "./precincts.js";
 import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
@@ -71,6 +78,7 @@ export * from "./buildings.js";
 export * from "./doorsteps.js";
 export * from "./grounds.js";
 export * from "./plaza.js";
+export * from "./precincts.js";
 export * from "./props.js";
 export * from "./roads.js";
 export * from "./tunnels.js";
@@ -143,6 +151,15 @@ export interface StructureStats {
   readonly dressedColumns: number;
   /** Columns speckled with worn path paint (F2). */
   readonly wornColumns: number;
+  /** Precinct compounds laid out, by kit. */
+  readonly airports: number;
+  readonly harbours: number;
+  /** Apron stands cut, and aircraft parked on them. */
+  readonly standsCut: number;
+  readonly aircraftParked: number;
+  /** Piers run out from a quay, and hulls moored alongside them. */
+  readonly piersBuilt: number;
+  readonly shipsMoored: number;
 }
 
 /** What the structure pass produced. */
@@ -156,6 +173,7 @@ export interface StructurePassResult {
   readonly props: readonly PlacedProp[];
   /** F2's ground treatment: what each lot got, and how much ground it took. */
   readonly grounds?: GroundPassResult;
+  readonly precincts?: PrecinctPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -193,6 +211,38 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       if (!impliedStyle.has(path)) impliedStyle.set(path, implied);
     }
   }
+
+  // --- precincts -----------------------------------------------------------
+  // First of everything, and it has to be: a precinct grades its own apron or
+  // quay, and every pass after this one — the buildings that front it, the
+  // props parked on it, the roads that arrive at it — measures the ground it
+  // left behind. It also *produces* buildings and props, which are folded into
+  // the ordinary job lists below so that a terminal gets the village theme, a
+  // foundation and a doorstep exactly like a cottage does.
+  const precinctJobs: PrecinctJob[] = [];
+  for (const placement of input.placements) {
+    const node = byId.get(placement.nodePath);
+    if (node?.generator === undefined || !isPrecinctGenerator(node.generator)) continue;
+    precinctJobs.push({
+      nodePath: placement.nodePath,
+      generator: node.generator,
+      placement,
+      params: (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>,
+      seed: node.seed,
+      tags: node.tags,
+      ports: node.ports as Readonly<Record<string, PortDeclaration>>,
+    });
+  }
+  const precincts =
+    precinctJobs.length === 0
+      ? undefined
+      : buildPrecincts({
+          jobs: precinctJobs,
+          plan: input.plan,
+          stack: input.stack,
+          ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+        });
+  if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
 
   // --- buildings -----------------------------------------------------------
   const jobs: BuildingJob[] = [];
@@ -237,6 +287,26 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
   }
 
+  // The precinct's own buildings, appended after the document's so that adding
+  // an aerodrome never reshuffles the material deal of the houses in the town.
+  const precinctPorts: ResolvedPort[] = [];
+  if (precincts !== undefined) {
+    precinctPorts.push(...precincts.ports);
+    for (const spec of precincts.buildings) {
+      buildingPaths.add(spec.nodePath);
+      jobs.push({
+        nodePath: spec.nodePath,
+        placement: spec.placement,
+        size: spec.size,
+        params: { archetype: spec.archetype },
+        ports: spec.ports,
+        seed: nodeSeed(input.worldSeed, spec.nodePath, ""),
+        tags: spec.tags,
+      });
+      precinctPorts.push(...resolvePorts(spec.placement, spec.size, spec.ports));
+    }
+  }
+
   // --- the village theme ---------------------------------------------------
   // One theme for the settlement, drawn from the root node's seed, then one
   // distinct (wood, stone, roof) triple dealt to each building in document
@@ -249,7 +319,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
 
   const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
-  const blocks: StructureBlock[] = [...buildings.blocks];
+  const blocks: StructureBlock[] = [...(precincts?.blocks ?? []), ...buildings.blocks];
   if (input.occupancy !== undefined) {
     for (const built of buildings.built) claimFootprint(input.occupancy, built);
   }
@@ -315,8 +385,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       palette: input.palette,
       stack: input.stack,
       placements: input.placements,
-      ports: input.ports,
-      buildingPaths,
+      // The precinct approach ports are appended, not merged: the road pass
+      // reads a placement's ports by node path, and a precinct has no shell for
+      // the generic resolver to hang a stub on, so the kit states its own.
+      ports: precinctPorts.length === 0 ? input.ports : [...input.ports, ...precinctPorts],
+      buildingPaths: precinctAnchors(buildingPaths, precincts),
       ...(plazaPlacement === undefined ? {} : { plaza: plazaPlacement }),
       ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
@@ -336,6 +409,19 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // Document order is load-bearing in exactly one direction: a `pier` placed
   // earlier is the anchor a later `at: "pier"` boat moors to.
   const propJobs: PropJob[] = [];
+  // The precinct's props first, and in its own layout order: a pier has to be
+  // placed before the hull that moors beside it, and both were sited by the kit
+  // against the ground it graded a moment ago.
+  for (const spec of precincts?.props ?? []) {
+    const seed: Seed256 = nodeSeed(input.worldSeed, spec.nodePath, "");
+    propJobs.push({
+      nodePath: spec.nodePath,
+      prop: spec.prop,
+      params: spec.params,
+      seed,
+      materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
+    });
+  }
   for (const child of input.doc.root.children) {
     if (!isPropNode(child)) continue;
     const nodePath = `${rootPath}.${child.id}`;
@@ -423,6 +509,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     tunnels: tunnelPass.tunnels,
     props: props.placed,
     grounds,
+    ...(precincts === undefined ? {} : { precincts }),
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
@@ -452,8 +539,30 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       propWaterLeaks: propFluids.leaks.length,
       dressedColumns: grounds.dressedColumns,
       wornColumns: grounds.wornColumns,
+      airports: precincts?.stats.airports ?? 0,
+      harbours: precincts?.stats.harbours ?? 0,
+      standsCut: precincts?.stats.stands ?? 0,
+      aircraftParked: precincts?.stats.aircraft ?? 0,
+      piersBuilt: precincts?.stats.piers ?? 0,
+      shipsMoored: precincts?.stats.ships ?? 0,
     },
   };
+}
+
+/**
+ * The set of node paths the road pass may anchor to.
+ *
+ * Buildings, plus every precinct — a precinct is not a building, but it is a
+ * destination, and a port with no road to it is the same defect as a door with
+ * no path. Returns the original set unchanged when there are no precincts, so
+ * a town without one routes exactly as it always did.
+ */
+function precinctAnchors(
+  buildingPaths: ReadonlySet<string>,
+  precincts: PrecinctPassResult | undefined,
+): ReadonlySet<string> {
+  if (precincts === undefined || precincts.anchorPaths.length === 0) return buildingPaths;
+  return new Set([...buildingPaths, ...precincts.anchorPaths]);
 }
 
 /**
@@ -631,8 +740,14 @@ function structureNodesOf(
   const out = new Map<string, StructureNode>();
   for (const child of doc.root.children) {
     if (child.kind !== "generator") continue;
-    if (child.generator !== "building.grammar@0" && child.generator !== "road.network@0") continue;
-    out.set(`${rootPath}.${child.id}`, child);
+    if (
+      child.generator !== "building.grammar@0" &&
+      child.generator !== "road.network@0" &&
+      !isPrecinctGenerator(child.generator)
+    ) {
+      continue;
+    }
+    out.set(`${rootPath}.${child.id}`, child as StructureNode);
   }
   return out;
 }

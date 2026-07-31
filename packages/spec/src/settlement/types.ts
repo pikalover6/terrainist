@@ -24,7 +24,28 @@ import type {
 import type { CanonicalConstraint } from "./constraints.js";
 
 /** Generators the settlement profile adds on top of the terrain set. */
-export const STRUCTURE_GENERATORS = ["building.grammar@0", "road.network@0"] as const;
+export const STRUCTURE_GENERATORS = [
+  "building.grammar@0",
+  "road.network@0",
+  // The precinct kits (F3). They are structure nodes in every sense the solver
+  // cares about — a box, a yaw, a footprint it reserves like any other — and
+  // differ only in what the structure pass does with the box once it is placed:
+  // a whole compound of ground works, props and buildings, laid out
+  // deterministically rather than solved.
+  "precinct.airport@0",
+  "precinct.harbour@0",
+] as const;
+
+/** The `precinct.*@0` family, which lays out a compound from one envelope. */
+export const PRECINCT_GENERATORS = ["precinct.airport@0", "precinct.harbour@0"] as const;
+
+/** A precinct generator id. */
+export type PrecinctGenerator = (typeof PRECINCT_GENERATORS)[number];
+
+/** True for a node that is one of the precinct kits. */
+export function isPrecinctGenerator(generator: string): generator is PrecinctGenerator {
+  return (PRECINCT_GENERATORS as readonly string[]).includes(generator);
+}
 
 /** A structure generator id. */
 export type StructureGenerator = (typeof STRUCTURE_GENERATORS)[number];
