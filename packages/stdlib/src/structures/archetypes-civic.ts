@@ -41,6 +41,7 @@ import { worksFacadeDefaults } from "./archetypes-works.js";
 import { institutionFacadeDefaults } from "./archetypes-institution.js";
 import { leisureFacadeDefaults } from "./archetypes-leisure.js";
 import { commerceFacadeDefaults } from "./archetypes-commerce.js";
+import { terminusFacadeDefaults } from "./archetypes-terminus.js";
 
 import { industryFacadeDefaults } from "./archetypes-industry.js";
 import { scienceFacadeDefaults } from "./archetypes-science.js";
@@ -187,6 +188,10 @@ export function archetypeFacadeDefaults(
       // Wave 5C — industry and modern works.
       const industry = industryFacadeDefaults(archetype);
       if (Object.keys(industry).length > 0) return industry;
+      // Wave six A — the transport buildings, appended, and the regional
+      // houses stay the tail of the chain.
+      const terminus = terminusFacadeDefaults(archetype);
+      if (Object.keys(terminus).length > 0) return terminus;
       // Wave 5E, arcana — appended, and the regional houses stay the tail.
       const arcana = arcanaFacadeDefaults(archetype);
       if (Object.keys(arcana).length > 0) return arcana;

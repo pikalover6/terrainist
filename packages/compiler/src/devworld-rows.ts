@@ -38,6 +38,7 @@ import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
 import { RESIDENTIAL_EXHIBIT_ROWS } from "./exhibits/residential.js";
 import { SCIENCE_EXHIBIT_ROWS } from "./exhibits/science.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
+import { TERMINUS_EXHIBIT_ROWS } from "./exhibits/terminus.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
 import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
@@ -128,6 +129,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...COMMERCE_EXHIBIT_ROWS,
   ...SCIENCE_EXHIBIT_ROWS,
   ...ARCANA_EXHIBIT_ROWS,
+  // Wave six A, the transport buildings.
+  ...TERMINUS_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -187,6 +190,12 @@ export {
   COMMERCE_ROW_LENGTH,
   commerceSizeFor,
 } from "./exhibits/commerce.js";
+/** The wave-6A transport rows, for tests that assert on the gradient itself. */
+export {
+  TERMINUS_EXHIBIT_ROWS,
+  TERMINUS_ROW_LENGTH,
+  terminusSizeFor,
+} from "./exhibits/terminus.js";
 /** The wave-5D science rows, for tests that assert on the gradient itself. */
 export { SCIENCE_EXHIBIT_ROWS, SCIENCE_ROW_LENGTH, scienceSizeFor } from "./exhibits/science.js";
 /** The wave-4C leisure rows, for tests that assert on the gradient itself. */

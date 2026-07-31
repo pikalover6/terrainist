@@ -121,6 +121,14 @@ import {
 export * from "./archetypes-commerce.js";
 
 import {
+  TERMINUS_BUILDING_ARCHETYPES,
+  furnishTerminus,
+  terminusArchetypeOfTags,
+} from "./archetypes-terminus.js";
+
+export * from "./archetypes-terminus.js";
+
+import {
   INDUSTRY_BUILDING_ARCHETYPES,
   furnishIndustry,
   industryArchetypeOfTags,
@@ -196,6 +204,7 @@ export const BUILDING_ARCHETYPES = [
   ...LEISURE_BUILDING_ARCHETYPES,
   ...RESIDENTIAL_BUILDING_ARCHETYPES,
   ...COMMERCE_BUILDING_ARCHETYPES,
+  ...TERMINUS_BUILDING_ARCHETYPES,
   ...INDUSTRY_BUILDING_ARCHETYPES,
   ...GARRISON_BUILDING_ARCHETYPES,
   ...SCIENCE_BUILDING_ARCHETYPES,
@@ -287,6 +296,17 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // school, `lodging` the hotel and `hospice` the almshouse.
   const commerce = commerceArchetypeOfTags(tags);
   if (commerce !== null) return commerce;
+  // Wave six A, the transport buildings, straight after the commerce table and
+  // well before the extended table, for the reason every later wave sits here:
+  // the tables below are greedy. It claims nothing an earlier table claims —
+  // `tower` is still the watchtower's and `tower_block` the tall grammar's,
+  // `beacon`/`beacon_spire`/`beacon_tower` still reach the fantasy spire and
+  // wave 5A's tower, `depot` still reaches the warehouse, and `gym` the blitz
+  // gym. Bare `station` and bare `roundhouse` were both left unclaimed by the
+  // tables above (wave 5D and wave three say so in their own docs) and are
+  // claimed here.
+  const terminus = terminusArchetypeOfTags(tags);
+  if (terminus !== null) return terminus;
   // Wave 5C, industry and modern works, straight after the dwellings and well
   // before the extended table: it claims nothing an earlier table claims —
   // `kiln` still reaches wave two's, `foundry` and `casting` wave 3B's, `mill`
@@ -703,6 +723,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishHomestead(ctx);
   n += furnishResidential(ctx);
   n += furnishCommerce(ctx);
+  n += furnishTerminus(ctx);
   n += furnishIndustry(ctx);
   n += furnishGarrison(ctx);
   n += furnishScience(ctx);

@@ -1100,6 +1100,61 @@ and `inn` still reach the **inn**; bare `hall` is still the **great hall** and
 high-rise **hotel's** and `hospice` the **almshouse's**. Bare `lodge` is left
 unclaimed — the gate lodge is a compound only.
 
+**Wave 6A (table 14) — the transport buildings.** Twelve buildings: three rail,
+three road, two air, three water and a climbing wall. Eleven of the twelve sit
+in catalog groups whose default kind is `prop` (`transport-land`,
+`transport-water`, `transport-air`); each carries a `kind: "building"` override
+in its catalog entry, because they are implemented here as *building* archetypes
+— a station is a shell with a room in it, not a model dropped on the ground.
+
+Three of them rebuild part of the exterior — the **control tower** (concrete
+shaft, roof deck, radar), the **lighthouse** (banded courses, gallery, lamp) and
+the **coach house** (wide-door trim on its street face) — so give *those* a
+**plain rect** envelope and, for the two towers, height to spare above the
+plate; the rest are pure interiors and take a `wing` happily. The **airport
+terminal** lays a seat field on the school's aisle discipline, so its side wall
+rows are the field's clear lane and carry nothing solid: give it depth for the
+rows and width for the three-column aisle. The **boathouse** writes a water slip
+into its floor plane, inset one cell from the interior on every side, and needs
+the room for a walkway all the way round it.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| train_station | `train_station`, `railway_station`, `station` | a rail line laid on the floor cells of one wall row (rails are passable) beside a painted platform edge, waiting benches down the other, a ticket counter and clerk's window under a departure board and a glazed clock roundel | `[15, 13, 21]`, 1–2 floors |
+| signal_box | `signal_box`, `signal_cabin` | a timber frame desk across the head with the levers standing on it where the storey has four courses and wall-face switches where it has three, dense mullions on every side, a stool, a stove and the register | `[9, 13, 11]`, 1–2 floors |
+| roundhouse | `roundhouse`, `engine_shed`, `engine_roundhouse` | short rail stubs off the head wall on alternate columns, an inspection pit read as a floor-plane recolour (never a hole), trapdoor tool walls down both sides, a fitter's bench and anvil | `[15, 14, 21]`, 1–2 floors |
+| coach_house | `coach_house`, `carriage_house` | the middle of the room left open for the carriage that is not there, tack racks and harness chests on the wall rows, a hay corner, stone-brick piers under a slab cornice on the wide door face | `[13, 13, 15]`, 1–2 floors; **plain rect** |
+| toll_house | `toll_house`, `tollbooth`, `toll_gate` | a toll counter with a window seat in the middle of it, a strongbox chest under an iron grille, the rate board on the wall, and a barrier outside on grounded apron posts with a trapdoor arm | `[9, 11, 11]`, 1 floor |
+| transit_hub | `transit_hub`, `bus_station`, `hub` | bay benches down both wall rows over painted bay markers, a route wall of banners over the enquiries counter, a kiosk corner by the way in | `[15, 12, 17]`, 1–2 floors |
+| control_tower | `control_tower`, `air_traffic_control` | a concrete shaft re-clad plinth to plate, a glazed top from the facade defaults, console desks with passable wall-face switches, a radar dish on a continuous column raised from the solid roof deck | `[11, 18, 11]`, 1–2 floors; **plain rect** |
+| airport_terminal | `airport_terminal`, `terminal`, `airport` | check-in counters across the head, departure rows on the school's aisle discipline, gates read as painted floor bands under numbered banners, baggage barrows by the door | `[15, 13, 21]`, 1–2 floors |
+| boathouse | `boathouse`, `boat_shed` | a hall over a water slip — the bathhouse's boxed-pool predicate, inset one cell on every side and rimmed with a solid coping — a hauled-out stair-and-slab rowboat standing on the rim, trapdoor oar racks | `[13, 14, 17]`, 1–2 floors |
+| shipyard | `shipyard`, `drydock` | a stripped-log keel offset off the lantern lane, ribs standing on solid floor beside it and rising only where the storey has the height, fence-and-slab scaffolds, plank stores down one range | `[13, 15, 19]`, 1–2 floors |
+| lighthouse | `lighthouse`, `pharos` | white-and-red terracotta bands from plinth to plate, a solid gallery deck with a parapet over the plate, a sea-lantern lamp on a continuous column, a keeper's room below | `[11, 20, 11]`, 1–2 floors; **plain rect** |
+| climbing_wall | `climbing_wall`, `bouldering` | scattered stone-button holds up one tall wall face (bracketed only to full blocks, never glazing), wool crash mats painted into the floor plane, a top ledge of a slab on a post | `[13, 15, 15]`, 1–2 floors |
+
+Wave 6A claims **no** tag an earlier table owns, and two of its claims are worth
+stating because they look like thefts and are not:
+
+- **bare `station` is this table's**, by the train station. Wave 5D left it
+  free on purpose — its own two are compounds (`weather_station`/`met_station`,
+  `field_station`/`research_station`) and its module docs say in as many words
+  that a railway station stays free to claim the bare word later. This is that
+  later, and `weather_station`, `field_station` and `research_station` all still
+  reach wave 5D;
+- **bare `roundhouse` is the ENGINE shed's.** Wave three's hut answers to
+  `thatched_roundhouse` and `wattle` only, and its module docs name bare
+  `roundhouse` as "an unimplemented catalog id — an *engine* roundhouse, which
+  is a locomotive shed and not a hut". So the shed takes it, with `engine_shed`
+  and `engine_roundhouse` beside it.
+
+The near misses are the usual discipline: `tower` is still the **watchtower's**
+and `tower_block` the **tall grammar's** (so the control tower is a compound);
+`beacon`, `beacon_spire` and `beacon_tower` are the fantasy spire's and wave
+5A's, so the lighthouse reaches for no beacon word at all; `depot` is still the
+**warehouse's**; `gym` the **blitz gym's**; and `dock`, `wharf` and `slip` are
+left unclaimed for the catalog's quay and slipway.
+
 #### The tall grammar — skyscrapers, hotels, apartment blocks
 
 A high-rise tag switches the building onto a different grammar: a switchback
