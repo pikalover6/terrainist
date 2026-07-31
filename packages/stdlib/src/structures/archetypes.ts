@@ -244,11 +244,12 @@ export function furnish(r: FurnishRequest): number {
     const [dx, dz] = cardinalStep(door.face);
     return !((x === door.x && z === door.z) || (x === door.x - dx && z === door.z - dz));
   };
-  const place = (x: number, z: number, block: string, props?: Record<string, string>): void => {
-    if (!free(x, z)) return;
-    if (!take([[x, z]], block)) return;
+  const place = (x: number, z: number, block: string, props?: Record<string, string>): boolean => {
+    if (!free(x, z)) return false;
+    if (!take([[x, z]], block)) return false;
     put(x, 1, z, block, props);
     n++;
+    return true;
   };
   /**
    * Lay a bed, both halves or neither.
@@ -330,7 +331,9 @@ export function furnish(r: FurnishRequest): number {
         const tx = x0 + 1 + i * 2;
         const tz = z0 + 1 + (i % 2);
         if (tx > x1 - 1 || tz > z1 - 1) continue;
-        place(tx, tz, style["wall.fence"] as string);
+        // No table, no chairs: a refused fence cell (the hearth, a reserve)
+        // must not leave a pair of seats drawn up to nothing.
+        if (!place(tx, tz, style["wall.fence"] as string)) continue;
         if (free(tx, tz)) {
           put(tx, 2, tz, "oak_pressure_plate", { powered: "false" });
           n++;
