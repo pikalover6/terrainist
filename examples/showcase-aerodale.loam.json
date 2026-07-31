@@ -1,0 +1,2143 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "aerodale",
+    "worldSeed": 20260731,
+    "prompt": "Aerodale is a dense modern resort city laid out on five shelves of gentle upland. A glass downtown of towers, offices, a hotel, apartments, a penthouse terrace, an atrium block and a brutalist civic slab rings a paved plaza, with the car park, filling station, corner shop and data centre out on the service road and a villa on the hill above. East of it a wide apron carries the airfield: a runway, hangars, the whole parked fleet from a biplane to an airliner, an airship at its mooring mast, and the control tower and terminal fronting the strip. North, a science campus climbs a shelf of domes, laboratories, glasshouses and a seed vault. South along the lake runs a leisure strip of theatres, baths, gyms and a lido, and west the fairground packs a big top, a ferris wheel and a full midway. It is deliberately crowded: this is a city built to be walked end to end in an afternoon.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:smooth_stone",
+      "plaza.cobble": "minecraft:smooth_stone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Aerodale, a dense modern resort city",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle upland shelves above a southern lake",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 16,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.45,
+          "erosionPasses": 3,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.85
+        },
+        "children": [
+          {
+            "id": "downtown_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the shelf downtown stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.46
+              ],
+              "radius": 110,
+              "height": 6,
+              "rim": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "airfield_apron",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flat apron east of town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.85,
+                0.5
+              ],
+              "radius": 130,
+              "height": 5,
+              "rim": 8,
+              "profile": "rounded",
+              "irregularity": 0.08
+            }
+          },
+          {
+            "id": "campus_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the science campus shelf",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.35,
+                0.16
+              ],
+              "radius": 130,
+              "height": 14,
+              "rim": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "fair_field",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the fairground field",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.17,
+                0.68
+              ],
+              "radius": 145,
+              "height": 4,
+              "rim": 10,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "leisure_terrace",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the lakeside terrace",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.62,
+                0.84
+              ],
+              "radius": 120,
+              "height": 4,
+              "rim": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "resort_lake",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the resort lake",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.88,
+                0.88
+              ],
+              "radius": 60,
+              "depth": 12,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "temperate, dry uplands",
+        "params": {
+          "forceTheme": "temperate",
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "verges",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "birch and oak on the untouched ground between the districts",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "street_oak",
+              "shape": "oak_round",
+              "weight": 2
+            },
+            {
+              "id": "park_birch",
+              "shape": "birch_slim",
+              "weight": 3
+            }
+          ]
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the downtown plaza",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            32,
+            32
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "aerodale_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the twelve-storey glass tower on the plaza",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            16,
+            52,
+            16
+          ]
+        },
+        "params": {
+          "floors": 12,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "skyscraper",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "meridian_offices",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the corporate offices north of the plaza",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            40,
+            15
+          ]
+        },
+        "params": {
+          "floors": 8,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "office",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "grand_hotel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the resort hotel on the plaza",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            36,
+            15
+          ]
+        },
+        "params": {
+          "floors": 7,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "hotel",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "harbourview_flats",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the apartment block behind the hotel",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            32,
+            13
+          ]
+        },
+        "params": {
+          "floors": 6,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 70
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "apartment_block",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "skyline_penthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the penthouse terrace on the plaza's west side",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "penthouse",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "civic_atrium",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glazed atrium block",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "atrium_block",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "plaza_pavilion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glass pavilion on the plaza edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "glass_pavilion",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "concrete_block",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the brutalist civic block",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "brutalist_block",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "congress_center",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the conference centre off the plaza",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "conference_center",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ring_car_park",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the multi-storey car park on the ring road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 30,
+            "max": 130
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "parking_garage",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ring_filling_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the filling station on the ring road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 30,
+            "max": 140
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "gas_station",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ring_corner_shop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the convenience store beside the pumps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 30,
+            "max": 140
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "convenience_store",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ring_data_center",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the data centre on the ring road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 30,
+            "max": 150
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "data_center",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "hill_villa",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a modern villa on the hill above the ring road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 40,
+            "max": 170
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "modern_villa",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "field_control_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the control tower over the apron",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            18,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 60,
+            "max": 220
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "control_tower",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "air_terminal",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the airport terminal fronting the apron",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            21
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 60,
+            "max": 220
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "airport_terminal",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "old_observatory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stepped observatory on the campus summit",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            15,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 60,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "observatory",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "white_dome",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the modern telescope dome",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            20,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 60,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "telescope_dome",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "star_dome",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the planetarium",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            20,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 60,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "planetarium",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "alchemy_wing",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the alchemy laboratory",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "alchemy_lab",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "main_laboratory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the main laboratory",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "laboratory",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "lecture_theatre",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the lecture hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "lecture_hall",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "glass_gardens",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the botanical garden on the campus slope",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "botanical_garden",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "herbarium_wing",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the herbarium",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "herbarium",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "campus_aviary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the aviary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "aviary",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "campus_aquarium",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the aquarium",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "aquarium",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "met_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the weather station",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 240
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "weather_station",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "cold_seed_vault",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the seed vault dug into the slope",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 240
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "seed_vault",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "upland_field_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the field station at the edge of the campus",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 240
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "field_station",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "lakeside_theatre",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the theatre on the leisure strip",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "theater",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "opera_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the opera house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "opera_house",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "picture_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the cinema",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "cinema",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ballroom",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dance hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "dance_hall",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "resort_gym",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gym",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "gym",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "boxing_club",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the boxing gym",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "boxing_gym",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "bathing_pavilion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the lakeside bathing pavilion",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "bathing_pavilion",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "dry_sauna",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dry sauna beside the baths",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "dry_sauna",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "climbing_centre",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the climbing wall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "climbing_wall",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "ski_lodge",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the ski lodge above the lake",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 240
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "ski_lodge",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "resort_clubhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the clubhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "clubhouse",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "big_top",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the big top at the centre of the fairground",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            21,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "big_top",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "mirror_maze",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the hall of mirrors",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "hall_of_mirrors",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "funhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the funhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "funhouse",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "dodgems",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dodgems pavilion",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 50,
+            "max": 230
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "dodgems_pavilion",
+          "aerodale"
+        ]
+      },
+      {
+        "id": "main_runway_a",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the runway strip",
+        "params": {
+          "prop": "runway",
+          "zone": "east",
+          "jitter": 0.05,
+          "length": 48,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "main_runway_b",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the runway strip continued",
+        "params": {
+          "prop": "runway",
+          "zone": "east",
+          "jitter": 0.08,
+          "length": 48,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "hangar_one",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the hangar off the apron",
+        "params": {
+          "prop": "hangar",
+          "zone": "east",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "parked_airliner",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the airliner at the stand",
+        "params": {
+          "prop": "airliner",
+          "zone": "east",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "parked_freighter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the cargo plane at the freight stand",
+        "params": {
+          "prop": "cargo_plane",
+          "zone": "east",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "mooring_mast",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the zeppelin mast",
+        "params": {
+          "prop": "zeppelin_mast",
+          "zone": "east",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "moored_airship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the airship at the mast",
+        "params": {
+          "prop": "airship",
+          "zone": "east",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "club_biplane",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the biplane on the grass",
+        "params": {
+          "prop": "biplane",
+          "zone": "east",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "club_light_plane",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the light aeroplane",
+        "params": {
+          "prop": "light_plane",
+          "zone": "east",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "beached_seaplane",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the seaplane on its trolley",
+        "params": {
+          "prop": "seaplane",
+          "zone": "east",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "parked_glider",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the glider with a wingtip down",
+        "params": {
+          "prop": "glider",
+          "zone": "east",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "tethered_balloon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the moored hot air balloon",
+        "params": {
+          "prop": "hot_air_balloon",
+          "zone": "east",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "airfield_helipad",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the helipad beside the apron",
+        "params": {
+          "prop": "helipad",
+          "zone": "east",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "lido_pool",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the open-air swimming pool",
+        "params": {
+          "prop": "swimming_pool",
+          "zone": "south",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "lakeside_bandstand",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the bandstand on the promenade",
+        "params": {
+          "prop": "bandstand",
+          "zone": "south",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "promenade_gazebo",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the gazebo on the promenade",
+        "params": {
+          "prop": "gazebo",
+          "zone": "south",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "fair_arch",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the midway arch",
+        "params": {
+          "prop": "midway_arch",
+          "zone": "west",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "big_wheel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the ferris wheel",
+        "params": {
+          "prop": "ferris_wheel",
+          "zone": "west",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "fair_carousel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the carousel",
+        "params": {
+          "prop": "carousel",
+          "zone": "west",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "fair_helter_skelter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the helter skelter",
+        "params": {
+          "prop": "helter_skelter",
+          "zone": "southwest",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "fair_swing_boats",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the swing boats",
+        "params": {
+          "prop": "swing_boats",
+          "zone": "west",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "midway_stall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a striped stall on the midway",
+        "params": {
+          "prop": "fairground_stall",
+          "zone": "southwest",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "midway_gallery",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the shooting gallery",
+        "params": {
+          "prop": "shooting_gallery",
+          "zone": "southwest",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "midway_kiosk",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the ticket booth",
+        "params": {
+          "prop": "ticket_booth",
+          "zone": "west",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "midway_wheel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the prize wheel",
+        "params": {
+          "prop": "prize_wheel",
+          "zone": "southwest",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "plaza_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the fountain on the plaza",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "streets",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the boulevards joining every district to the plaza",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:aerodale"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}
