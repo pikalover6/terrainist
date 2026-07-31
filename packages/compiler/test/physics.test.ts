@@ -126,8 +126,9 @@ describe("physics lint — the dev world", () => {
     // prop rows in the breadth round, and the lint reads every one of them back
     // off disk. Five minutes covered it on a fast laptop; the 4-vCPU cloud
     // containers (CC Cloud, GitHub Actions runners) need the headroom.
-  }, 1_800_000); // 900s fit the wave-1 dev world; three waves later the grid is
-// half again as big, and the 4-vCPU cloud box needs the headroom.
+  }, 3_600_000); // 900s fit the wave-1 dev world; the wave-4 grid is over twice
+// that and the 4-vCPU cloud box needs the hour. Flagged for Kai: the one-shot
+// dev-world lint does not scale another doubling — it wants sharding.
 
   it("finds nothing wrong, under every rule", () => {
     expect(summarize(report)).toBe("");

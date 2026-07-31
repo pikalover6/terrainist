@@ -337,14 +337,14 @@ describe("manifest ↔ world alignment", () => {
         expect(text).toContain(station.multi.title);
       }
     }
-  });
+  }, 120_000);
 
   it("writes a block entity for every sign and command block, and nothing else", async () => {
     const entities = await readEntityMap(rig.worldDir);
     expect(entities.size).toBe(rig.blockEntityCount);
     const ids = new Set([...entities.values()].map((e) => e["id"]));
     expect([...ids].sort()).toEqual(["minecraft:command_block", "minecraft:sign"]);
-  });
+  }, 120_000);
 });
 
 describe("the world itself", () => {

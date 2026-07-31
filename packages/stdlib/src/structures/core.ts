@@ -1714,6 +1714,24 @@ function emitRoof(
         }
       }
     }
+    // The last ring is three wide on odd spans, and a ring has a hole in the
+    // middle. The cap layer sits one above that hole — which held as long as
+    // the ridge slab above the cap always fit, but a tall tower's height
+    // budget can clip that slab, and then the cap is a full cube with six air
+    // faces: the lint's floating.isolated, at the top of a bell tower. Fill
+    // the hole under the cap so the cap stands on roof, not on air — inside
+    // the roof shell, invisible, and true to the documented invariant that
+    // the layers union to the footprint.
+    const lastK = layers - 1;
+    if (lastK >= 0) {
+      const hx0 = rx0 + lastK + 1;
+      const hx1 = rx1 - lastK - 1;
+      const hz0 = rz0 + lastK + 1;
+      const hz1 = rz1 - lastK - 1;
+      for (let x = hx0; x <= hx1; x++) {
+        for (let z = hz0; z <= hz1; z++) put(x, base + lastK, z, solid);
+      }
+    }
     const capY = base + layers;
     const capped = capRect(put, solid, capY, rx0 + layers, rx1 - layers, rz0 + layers, rz1 - layers);
     if (capped !== null) {
