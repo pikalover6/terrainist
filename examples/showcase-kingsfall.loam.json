@@ -1,0 +1,2999 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "kingsfall",
+    "worldSeed": 4471903,
+    "prompt": "Kingsfall: the dense capital of an old kingdom, packed onto one upland shelf. A fortified citadel of castle, keep, gatehouse, barbican and bastion stands inside a curtain-wall circuit with its barracks, armoury and arsenal in the bailey, and a guard line of watchtowers, bunker, pillbox, checkpoint and beacon tower holds the northern peak. East of the walls a faith quarter crowds thirteen houses of worship — cathedral, abbey, monastery, cloister, mosque and minaret, synagogue, pagoda, stupa, ziggurat and bell tower — around a great square. South-east the memorial vale is one continuous necropolis of mausoleum, tomb, cenotaph, war memorial, urn wall and pyre platform under a graveyard wall. West and south lie the fallen elder city on its megalith-strewn moor and a fantastical wood of wizards' towers, a dragon roost on the crag and a dwarven gate into the hillside.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": {
+        "mix": [
+          [
+            "minecraft:cobblestone",
+            3
+          ],
+          [
+            "minecraft:mossy_cobblestone",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Kingsfall and its quarters",
+    "note": "A dense showcase of the old-kingdom register: citadel, faith quarter, memorial vale, elder ruins and a fantastical wood.",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "The old kingdom's high country: a citadel hill above moor, wood and vale",
+        "params": {
+          "baseHeight": 86,
+          "amplitude": 20,
+          "seaLevel": 63,
+          "octaves": 4,
+          "frequency": 0.0038,
+          "gain": 0.46,
+          "lacunarity": 2,
+          "erosionPasses": 2,
+          "cliffThreshold": 58,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.98,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.08
+          }
+        },
+        "children": [
+          {
+            "id": "citadel_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The citadel hill in the middle of the kingdom",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 96,
+              "height": 16,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "signal_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The northern signal peak the beacon tower stands on",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.1
+              ],
+              "radius": 44,
+              "height": 30,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "watch_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf below the peak where the guard line sits",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.2
+              ],
+              "radius": 72,
+              "height": 6,
+              "rim": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "faith_terrace",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The eastern terrace the faith quarter is laid out on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.84,
+                0.42
+              ],
+              "radius": 92,
+              "height": 8,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "memorial_vale",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The sheltered vale of the dead, south-east under the hill",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.82,
+                0.84
+              ],
+              "radius": 82,
+              "height": 4,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "elder_moor",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The open moor the elder city fell on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.84
+              ],
+              "radius": 92,
+              "height": 3,
+              "rim": 18,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "wood_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf under the fantastical wood",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.16,
+                0.4
+              ],
+              "radius": 88,
+              "height": 7,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "dragon_crag",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The crag at the wood's northern head",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.12,
+                0.12
+              ],
+              "radius": 40,
+              "height": 28,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Cold, damp uplands",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "citadel_yard",
+        "kind": "primitive",
+        "label": "The bailey yard inside the curtain wall",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "castle",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "Kingsfall Castle, the great work on the hill",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            17,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 6,
+            "max": 60
+          },
+          {
+            "facing": "citadel_yard"
+          },
+          {
+            "clearance": 3
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "fortress",
+          "stronghold"
+        ]
+      },
+      {
+        "id": "great_keep",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The old keep behind the castle",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "castle",
+            "min": 14,
+            "max": 60
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 4,
+            "max": 70
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "keep"
+        ]
+      },
+      {
+        "id": "citadel_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The citadel gatehouse, where the road comes in",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 8,
+            "max": 74
+          },
+          {
+            "distance": "castle",
+            "min": 16
+          },
+          {
+            "facing": "citadel_yard"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse"
+        ]
+      },
+      {
+        "id": "outer_barbican",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The barbican beyond the gate",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_gatehouse",
+            "min": 14,
+            "max": 54
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 14,
+            "max": 96
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "outer_gate",
+          "gateworks"
+        ]
+      },
+      {
+        "id": "north_bastion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The northern bastion of the circuit",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 16,
+            "max": 96
+          },
+          {
+            "distance": "great_keep",
+            "min": 14
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bastion"
+        ]
+      },
+      {
+        "id": "garrison_barracks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The garrison barracks in the bailey",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 4,
+            "max": 64
+          },
+          {
+            "distance": "castle",
+            "min": 10
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barracks"
+        ]
+      },
+      {
+        "id": "citadel_armory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The armoury off the bailey",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 4,
+            "max": 72
+          },
+          {
+            "distance": "garrison_barracks",
+            "min": 10
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "armory"
+        ]
+      },
+      {
+        "id": "citadel_arsenal",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The arsenal, powder kept apart",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "citadel_yard",
+            "min": 8,
+            "max": 88
+          },
+          {
+            "distance": "citadel_armory",
+            "min": 12
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "arsenal"
+        ]
+      },
+      {
+        "id": "curtain_wall_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's northern run",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "north",
+          "length": 28,
+          "yaw": 0,
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "curtain_wall_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's eastern run",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "center",
+          "length": 28,
+          "yaw": 90,
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "curtain_wall_3",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's southern run",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "center",
+          "length": 28,
+          "yaw": 0,
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "curtain_wall_4",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The curtain wall's western run",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "center",
+          "length": 28,
+          "yaw": 90,
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "peak_beacon_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The beacon tower on the signal peak",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "optional": true,
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "on": "@terrain:peak",
+            "band": 60,
+            "strength": "soft"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 7,
+            "maxSlope": 40
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "beacon_tower"
+        ]
+      },
+      {
+        "id": "north_watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The north watchtower on the guard line",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "peak_beacon_tower",
+            "min": 20,
+            "max": 110
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower"
+        ]
+      },
+      {
+        "id": "road_checkpoint",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The checkpoint on the north road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "north_watchtower",
+            "min": 14,
+            "max": 90
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "checkpoint"
+        ]
+      },
+      {
+        "id": "north_guard_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The sentry post above the road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "road_checkpoint",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "guard_post"
+        ]
+      },
+      {
+        "id": "moor_pillbox",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A pillbox watching the western approach",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "north_guard_post",
+            "min": 20
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "pillbox"
+        ]
+      },
+      {
+        "id": "hill_bunker",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The bunker cut into the guard line's shoulder",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "north_watchtower",
+            "min": 24
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bunker"
+        ]
+      },
+      {
+        "id": "cathedral",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The cathedral over the faith square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            17,
+            21
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 24
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cathedral"
+        ]
+      },
+      {
+        "id": "parish_church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The parish church on the close",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "cathedral",
+            "min": 6,
+            "max": 70
+          },
+          {
+            "distance": "cathedral",
+            "min": 12
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church"
+        ]
+      },
+      {
+        "id": "bell_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The campanile beside the cathedral",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "cathedral",
+            "min": 8,
+            "max": 44
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bell_tower"
+        ]
+      },
+      {
+        "id": "monastery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The monastery north of the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "cathedral",
+            "min": 20
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "monastery"
+        ]
+      },
+      {
+        "id": "abbey",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The abbey and its choir",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "monastery",
+            "min": 14,
+            "max": 90
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "abbey"
+        ]
+      },
+      {
+        "id": "cloister",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The cloister garth between abbey and monastery",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "abbey",
+            "min": 8,
+            "max": 50
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cloister"
+        ]
+      },
+      {
+        "id": "hermitage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The hermit's cell on the quarter's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "cloister",
+            "min": 20
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hermitage"
+        ]
+      },
+      {
+        "id": "great_mosque",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The mosque on the square's south side",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "cathedral",
+            "min": 6,
+            "max": 76
+          },
+          {
+            "distance": "cathedral",
+            "min": 20
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mosque"
+        ]
+      },
+      {
+        "id": "minaret",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The minaret beside the mosque",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            20,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "great_mosque",
+            "min": 8,
+            "max": 40
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "minaret"
+        ]
+      },
+      {
+        "id": "synagogue",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The synagogue on the eastern close",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "cathedral",
+            "min": 10,
+            "max": 88
+          },
+          {
+            "distance": "great_mosque",
+            "min": 16
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "synagogue"
+        ]
+      },
+      {
+        "id": "pagoda",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The pagoda of the eastern envoys",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "synagogue",
+            "min": 18
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "pagoda"
+        ]
+      },
+      {
+        "id": "stupa",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The stupa on its circumambulation ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            17,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "pagoda",
+            "min": 12,
+            "max": 70
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 24
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "stupa"
+        ]
+      },
+      {
+        "id": "ziggurat",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The ziggurat of the elder rite",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            16,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "cathedral",
+            "min": 16,
+            "max": 110
+          },
+          {
+            "distance": "cathedral",
+            "min": 24
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 24
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ziggurat"
+        ]
+      },
+      {
+        "id": "great_mausoleum",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The mausoleum of the royal house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 1,
+          "basement": {
+            "depth": 4,
+            "style": "crypt"
+          },
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "stupa",
+            "min": 24
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 22
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mausoleum"
+        ]
+      },
+      {
+        "id": "old_tomb",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A sealed tomb in the vale",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "great_mausoleum",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 22
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "burial_chamber"
+        ]
+      },
+      {
+        "id": "cenotaph",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The cenotaph at the vale's head",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "old_tomb",
+            "min": 12,
+            "max": 70
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cenotaph"
+        ]
+      },
+      {
+        "id": "war_memorial",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The war memorial and its wreath ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "cenotaph",
+            "min": 14,
+            "max": 90
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "war_memorial"
+        ]
+      },
+      {
+        "id": "urn_wall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The wall of urns",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "war_memorial",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "urn_wall"
+        ]
+      },
+      {
+        "id": "remembrance_arch",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The arch of remembrance over the vale road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "urn_wall",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "remembrance_arch"
+        ]
+      },
+      {
+        "id": "pyre_platform",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The pyre platform at the vale's foot",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "remembrance_arch",
+            "min": 14,
+            "max": 80
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "pyre_platform"
+        ]
+      },
+      {
+        "id": "gravedigger_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The gravedigger's hut by the yard gate",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "great_mausoleum",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gravedigger_hut"
+        ]
+      },
+      {
+        "id": "vale_graveyard",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The graveyard under the vale wall",
+        "params": {
+          "prop": "graveyard",
+          "zone": "southeast",
+          "yaw": 0,
+          "jitter": 0.3
+        }
+      },
+      {
+        "id": "vale_garden",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The memorial garden beside the cenotaph",
+        "params": {
+          "prop": "memorial_garden",
+          "zone": "southeast",
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "vale_statue",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A statue on its plinth at the vale gate",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "south",
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "ruined_keep",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The elder city's fallen keep",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            13,
+            17
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ruined_keep"
+        ]
+      },
+      {
+        "id": "ruined_church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The roofless nave on the moor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "ruined_keep",
+            "min": 16,
+            "max": 100
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ruined_church"
+        ]
+      },
+      {
+        "id": "collapsed_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A leaning tower stub",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            17,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "ruined_church",
+            "min": 14,
+            "max": 90
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "collapsed_tower"
+        ]
+      },
+      {
+        "id": "overgrown_villa",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The overgrown villa in the moor grass",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "ruined_keep",
+            "min": 20
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "overgrown_villa"
+        ]
+      },
+      {
+        "id": "ruined_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A crofter's ruin at the moor's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "overgrown_villa",
+            "min": 12,
+            "max": 90
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ruined_cottage"
+        ]
+      },
+      {
+        "id": "moor_standing_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A ring of standing stones on the moor",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "southwest",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "moor_henge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "The great henge above the ruins",
+        "params": {
+          "prop": "henge",
+          "zone": "south",
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "moor_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A leaning monolith",
+        "params": {
+          "prop": "monolith",
+          "zone": "southwest",
+          "jitter": 0.6
+        }
+      },
+      {
+        "id": "moor_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A wayside cairn on the moor track",
+        "params": {
+          "prop": "cairn",
+          "zone": "west",
+          "jitter": 0.6
+        }
+      },
+      {
+        "id": "moor_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A burial mound of the elder kings",
+        "params": {
+          "prop": "burial_mound",
+          "zone": "southwest",
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "moor_dig",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "An antiquarian dig in the ruins",
+        "params": {
+          "prop": "dig_site",
+          "zone": "southwest",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "moor_fossils",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A fossil dig in the moor bank",
+        "params": {
+          "prop": "fossil_dig",
+          "zone": "west",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "moor_obelisk",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A shattered obelisk beside the road",
+        "params": {
+          "prop": "shattered_obelisk",
+          "zone": "south",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "wizard_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The wizard's tower over the wood",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            20,
+            9
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "wizard_tower"
+        ]
+      },
+      {
+        "id": "alchemists_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The alchemist's tower and its still",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "wizard_tower",
+            "min": 14,
+            "max": 80
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 32
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "alchemists_tower"
+        ]
+      },
+      {
+        "id": "hedge_maze",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The hedge maze in the wood's walled garden",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "wizard_tower",
+            "min": 16,
+            "max": 100
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hedge_maze"
+        ]
+      },
+      {
+        "id": "witch_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The witch's hut in the deep wood",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "wizard_tower",
+            "min": 20
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "witch_hut"
+        ]
+      },
+      {
+        "id": "mushroom_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A toadstool house among the ferns",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "witch_hut",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house"
+        ]
+      },
+      {
+        "id": "hobbit_hole",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A burrow dug into the shelf bank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "hedge_maze",
+            "min": 12,
+            "max": 90
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hobbit_hole"
+        ]
+      },
+      {
+        "id": "gingerbread_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The gingerbread cottage in the clearing",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "mushroom_house",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gingerbread_cottage"
+        ]
+      },
+      {
+        "id": "dragon_roost",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The dragon roost on the crag",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            15,
+            21
+          ],
+          "padding": 1
+        },
+        "params": {
+          "floors": 2
+        },
+        "optional": true,
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "on": "@terrain:peak",
+            "band": 70,
+            "strength": "soft"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 40
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dragon_roost"
+        ]
+      },
+      {
+        "id": "crystal_shrine",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The crystal shrine under the crag",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "dragon_roost",
+            "min": 20,
+            "max": 120
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "crystal_shrine"
+        ]
+      },
+      {
+        "id": "dwarven_gate",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The dwarven gate into the hillside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 6
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "alchemists_tower",
+            "min": 16,
+            "max": 110
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dwarven_gate"
+        ]
+      },
+      {
+        "id": "beacon_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The beacon spire at the wood's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            21,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "floorHeight": 7
+        },
+        "optional": true,
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "dwarven_gate",
+            "min": 16
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "beacon_spire"
+        ]
+      },
+      {
+        "id": "wood_treehouse",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A treehouse in the fantastical wood",
+        "params": {
+          "prop": "treehouse",
+          "zone": "northwest",
+          "yaw": 0,
+          "jitter": 0.4
+        }
+      },
+      {
+        "id": "wood_portal",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "An empty portal frame among the trees",
+        "params": {
+          "prop": "portal_frame",
+          "zone": "west",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "wood_platform",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A floating platform above the wood shelf",
+        "params": {
+          "prop": "floating_platform",
+          "zone": "west",
+          "jitter": 0.5
+        }
+      },
+      {
+        "id": "kings_road",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The king's road: gate to faith quarter to vale, and the moor track west",
+        "params": {
+          "anchors": [
+            "citadel_yard",
+            "citadel_gatehouse",
+            "outer_barbican",
+            "cathedral",
+            "great_mausoleum",
+            "ruined_keep",
+            "wizard_tower",
+            "road_checkpoint"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "curvature": 0.4,
+          "bridgeThreshold": 24,
+          "lanterns": true,
+          "lanternSpacing": 13
+        }
+      },
+      {
+        "id": "fantastical_wood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "The fantastical wood on the western shelf",
+        "params": {
+          "area": {
+            "zone": "west"
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            4,
+            150
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wood_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wood_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "crag_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Spruce on the crag under the dragon roost",
+        "params": {
+          "area": {
+            "zone": "northwest"
+          },
+          "density": 0.2,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 36,
+          "elevation": [
+            4,
+            160
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "crag_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "vale_yews",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Dark cover around the memorial vale",
+        "params": {
+          "area": {
+            "zone": "southeast"
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 30,
+          "elevation": [
+            3,
+            130
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "vale_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Thin cover everywhere else",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            3,
+            150
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
