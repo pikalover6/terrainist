@@ -57,6 +57,14 @@ import {
 export * from "./archetypes-vernacular.js";
 
 import {
+  REGIONAL_BUILDING_ARCHETYPES,
+  furnishRegional,
+  regionalArchetypeOfTags,
+} from "./archetypes-regional.js";
+
+export * from "./archetypes-regional.js";
+
+import {
   WAVE2_BUILDING_ARCHETYPES,
   furnishWave2,
   wave2ArchetypeOfTags,
@@ -112,6 +120,7 @@ export const BUILDING_ARCHETYPES = [
   ...WAVE2_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
+  ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
 ] as const;
@@ -172,6 +181,12 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // infirmary's — so the position is about the greedy tables below.
   const institution = institutionArchetypeOfTags(tags);
   if (institution !== null) return institution;
+  // Wave three's regional houses, immediately before the extended table and
+  // after wave two: it claims nothing an earlier table claims — `barn` still
+  // reaches the extended barn, `house` still falls through to a cottage, and
+  // `villa`, `trullo` and `half_timber` still belong to the vernacular waves.
+  const regionalWave = regionalArchetypeOfTags(tags);
+  if (regionalWave !== null) return regionalWave;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -528,6 +543,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishWave2(ctx);
   n += furnishWorks(ctx);
   n += furnishInstitution(ctx);
+  n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);

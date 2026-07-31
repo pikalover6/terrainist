@@ -33,6 +33,7 @@
 import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
+import { regionalFacadeDefaults } from "./archetypes-regional.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
 import { worksFacadeDefaults } from "./archetypes-works.js";
@@ -148,7 +149,9 @@ export function archetypeFacadeDefaults(
       const works = worksFacadeDefaults(archetype);
       if (Object.keys(works).length > 0) return works;
       // Wave three A, the institutions — last link in the chain.
-      return institutionFacadeDefaults(archetype);
+      const institutions = institutionFacadeDefaults(archetype);
+      if (Object.keys(institutions).length > 0) return institutions;
+      return regionalFacadeDefaults(archetype);
     }
   }
 }

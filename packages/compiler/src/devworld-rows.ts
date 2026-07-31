@@ -28,6 +28,7 @@ import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { INSTITUTION_EXHIBIT_ROWS } from "./exhibits/institution.js";
+import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
 import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
@@ -108,6 +109,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...WAVE2_EXHIBIT_ROWS,
   ...WORKS_EXHIBIT_ROWS,
   ...INSTITUTION_EXHIBIT_ROWS,
+  ...REGIONAL_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -161,6 +163,12 @@ export {
   INSTITUTION_ROW_LENGTH,
   institutionSizeFor,
 } from "./exhibits/institution.js";
+/** The wave-three regional rows, for tests that assert on the gradient. */
+export {
+  REGIONAL_EXHIBIT_ROWS,
+  REGIONAL_ROW_LENGTH,
+  regionalSizeFor,
+} from "./exhibits/regional.js";
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

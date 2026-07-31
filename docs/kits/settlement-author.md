@@ -752,6 +752,35 @@ Wave 3B deliberately claims **no** short tag: `trade` is the inn's, `store`,
 windmill's and wave two's, and `craft` and `smithy` the smithy's. Ask for a
 works by its own name.
 
+**Wave 3C (table 10) — the regional houses.** Twelve dwellings from twelve
+traditions. Every one of them rebuilds part of the shell's exterior, so give
+them a **plain rect** envelope: a `wing` makes the re-clad and the roof rebuild
+refuse, and you get the ordinary house shell instead. The four with corbelled
+roofs (hanok, sod house, igloo, roundhouse) also want **height** — the cone is
+drawn in the room between the eave plate and the roof top, and a short envelope
+closes itself in two courses.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| hanok | `hanok` | dark post-and-beam bands on white plaster, a tiered deepslate corbel roof, a stair course in the apron for the upturned eave, low tables inside | `[13, 15, 11]`, 1–2 floors |
+| machiya | `machiya` | a koshi lattice of trapdoors over the street face, stripped-spruce walls, a shop front at the door end and the living room behind it | `[9, 13, 17]`, 1–2 floors; **narrow and deep** |
+| riad | `riad` | plain sandstone outside; inside a boxed-in 2x2 floor basin, carpet corners, lattice trim under the plate, potted plants | `[13, 12, 13]`, 1–2 floors; **≥ 11 wide for the basin** |
+| cycladic_house | `cycladic_house`, `cycladic`, `whitewash` | whitewashed concrete, a level parapeted roof terrace, a blue band at the plate and blue-trimmed shutters in the apron | `[11, 12, 11]`, 1–2 floors |
+| adobe_pueblo | `adobe_pueblo`, `adobe`, `pueblo` | two-tone terracotta render, a flat stepped-parapet terrace, stripped-log vigas protruding through the wall plane | `[13, 12, 11]`, 1–2 floors |
+| stilt_house | `stilt_house`, `stilts` | jungle-plank re-clad, fence stilt posts and a trapdoor porch trim in the apron — the raised-floor read, on ordinary ground and with **no water** | `[11, 12, 11]`, 1–2 floors |
+| sod_house | `sod_house`, `sod`, `turf` | coarse-dirt and packed-mud turf walls under a shallow grass-surfaced corbel; one humble room | `[9, 13, 9]`, 1 floor |
+| igloo | `igloo` | a snow-block dome capped in packed ice over a snow drum, with a tunnel-mouth porch flanking the doorstep | `[9, 16, 9]`, 1 floor; **tall** |
+| thatched_roundhouse | `thatched_roundhouse`, `wattle` | stripped-log posts with packed-mud wattle, a deep hay cone closing on a spruce finial, the centre floor left open | `[9, 16, 9]`, 1 floor; **tall** |
+| colonial_veranda_house | `colonial_veranda_house`, `veranda`, `colonial` | a posted veranda under a slab canopy in the apron, birch clapboard banded white at each storey line, a parlour inside | `[13, 14, 13]`, 1–2 floors |
+| hacienda | `hacienda` | sandstone stucco under a terracotta eave course, hitching posts and a trough in the apron on the door face | `[15, 13, 13]`, 1–2 floors |
+| fachwerk_barn | `fachwerk_barn`, `fachwerk` | X-braced dark timber on white infill at barn scale, hay along the side walls, the threshing floor clear | `[15, 15, 19]`, 1–2 floors |
+
+Wave 3C claims **no** tag an earlier table owns. In particular `barn`, `stable`
+and `byre` still reach the extended barn — the fachwerk barn answers to
+`fachwerk` only — bare `roundhouse` stays unclaimed (it is the *engine*
+roundhouse, a locomotive shed), and `house`, `villa`, `trullo`, `half_timber`,
+`chalet`, `saltbox` and `dutch_gable` all still belong to their own tables.
+
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
 also the tag `{"distance": "#tag:house"}` and the road network select on.

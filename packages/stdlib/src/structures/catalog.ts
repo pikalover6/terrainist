@@ -234,8 +234,15 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   res("boarding_house", "Boarding house"),
 
   /* --- vernacular / regional -------------------------------------------- */
-  ver("stilt_house", "Stilt house", "not_started", { wave: 3, tags: ["water", "tropical"] }),
-  ver("adobe_pueblo", "Adobe pueblo", "not_started", { wave: 3 }),
+  ver("stilt_house", "Stilt house", "implemented", {
+    wave: 3,
+    tags: ["water", "tropical"],
+    note: "Jungle-plank re-clad over a dark under-plinth, with fence stilt posts and a trapdoor porch trim in the apron ring — the raised-floor read, on ordinary ground.",
+  }),
+  ver("adobe_pueblo", "Adobe pueblo", "implemented", {
+    wave: 3,
+    note: "Two-tone terracotta render under a flat stepped-parapet terrace, with stripped-log vigas protruding through the wall plane at the plate.",
+  }),
   ver("tudor_row", "Tudor row", "implemented", {
     wave: 2,
     tags: ["row", "half-timber"],
@@ -246,33 +253,63 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["stucco", "terrace"],
     note: "Smooth-sandstone stucco with a terracotta cornice, and the roof replaced by a parapeted terrace with a corner pergola.",
   }),
-  ver("cycladic_house", "Cycladic house", "not_started", { wave: 3 }),
-  ver("riad", "Riad", "not_started", { wave: 3 }),
-  ver("hanok", "Hanok", "not_started", { wave: 3 }),
-  ver("machiya", "Machiya townhouse", "not_started", { wave: 3 }),
+  ver("cycladic_house", "Cycladic house", "implemented", {
+    wave: 3,
+    note: "Whitewashed concrete re-clad under a level parapeted terrace, with a blue band at the plate and blue-trimmed shutters in the apron.",
+  }),
+  ver("riad", "Riad", "implemented", {
+    wave: 3,
+    note: "Plain sandstone outside, and inside a 2x2 basin written into the floor plane with a solid rim, carpet corners and lattice trim under the plate.",
+  }),
+  ver("hanok", "Hanok", "implemented", {
+    wave: 3,
+    note: "Dark post-and-beam bands on white plaster under a tiered deepslate corbel, with a stair course in the apron for the upturned eave.",
+  }),
+  ver("machiya", "Machiya townhouse", "implemented", {
+    wave: 3,
+    note: "A koshi lattice of trapdoors over the street face, stripped-spruce walls, and a shop front at the door end with the living room behind it.",
+  }),
   ver("trullo", "Trullo", "implemented", {
     wave: 2,
     tags: ["drystone", "conical"],
     note: "A corbelled drystone cone — rings one course higher and one cell further in — closing on a capstone over a single room.",
   }),
-  ver("sod_house", "Sod house", "not_started", { wave: 3 }),
-  ver("igloo", "Igloo", "not_started", { wave: 3 }),
+  ver("sod_house", "Sod house", "implemented", {
+    wave: 3,
+    note: "Coarse-dirt and packed-mud turf walls under a shallow grass-surfaced corbel — one room, a bed, a chest and a pot.",
+  }),
+  ver("igloo", "Igloo", "implemented", {
+    wave: 3,
+    note: "A snow-block dome corbelled over a snow drum and capped in packed ice, with a tunnel-mouth porch flanking the doorstep.",
+  }),
   ver("alpine_chalet", "Alpine chalet", "implemented", {
     wave: 1,
     note: "Timber re-clad of the building shell: boxed spruce-log corners, banded courses, a deep apron eave and shutters beside the lights.",
   }),
-  ver("thatched_roundhouse", "Thatched roundhouse", "not_started", { wave: 3 }),
+  ver("thatched_roundhouse", "Thatched roundhouse", "implemented", {
+    wave: 3,
+    note: "Stripped-log posts with packed-mud wattle between them, under a deep hay cone closing on a spruce finial; the centre floor left open.",
+  }),
   ver("dutch_gable_house", "Dutch gable house", "implemented", {
     wave: 1,
     note: "Brick re-clad with the roof rebuilt front-to-back under a stepped parapet gable and a hoist beam over the facade.",
   }),
-  ver("colonial_veranda_house", "Colonial veranda house", "not_started", { wave: 3 }),
-  ver("hacienda", "Hacienda", "not_started", { wave: 3 }),
+  ver("colonial_veranda_house", "Colonial veranda house", "implemented", {
+    wave: 3,
+    note: "A posted veranda under a slab canopy in the apron, birch clapboard banded white at each storey line, and a parlour inside.",
+  }),
+  ver("hacienda", "Hacienda", "implemented", {
+    wave: 3,
+    note: "Sandstone stucco under a terracotta eave course, with hitching posts and a trough in the apron on the door face.",
+  }),
   ver("saltbox_house", "Saltbox house", "implemented", {
     wave: 1,
     note: "The signature asymmetric gable rebuilt off-centre — a short front pitch and a long shallow one down the back — over a clapboard re-clad.",
   }),
-  ver("fachwerk_barn", "Fachwerk barn", "not_started", { wave: 3 }),
+  ver("fachwerk_barn", "Fachwerk barn", "implemented", {
+    wave: 3,
+    note: "The tudor idiom at barn scale — X-braced dark timber on white infill — with hay piled along the side walls and the threshing floor left clear.",
+  }),
   ver("cave_dwelling", "Cave dwelling", "not_started", { tags: ["cliff"] }),
   ver("wat_pavilion", "Wat pavilion"),
 

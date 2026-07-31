@@ -35,6 +35,8 @@ import {
   UNDERGROUND_EXHIBIT_ROWS,
   INSTITUTION_EXHIBIT_ROWS,
   INSTITUTION_ROW_LENGTH,
+  REGIONAL_EXHIBIT_ROWS,
+  REGIONAL_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -138,6 +140,8 @@ describe("dev world grid", () => {
     // Wave three A, the institutions: prefixed (`inst_prison`) for the same
     // reason, so they too are extra rows rather than replacements.
     const institutions = INSTITUTION_EXHIBIT_ROWS.length * INSTITUTION_ROW_LENGTH;
+    // Wave three's regional rows are prefixed (`reg_igloo`) for the same reason.
+    const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -150,8 +154,9 @@ describe("dev world grid", () => {
         underground +
         town +
         wave2 +
-        works,
-        institutions,
+        works +
+        institutions +
+        regional,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
