@@ -1766,6 +1766,19 @@ export const SETTLEMENT_PROP_NAMES = [
   "treehouse",
   "cairn",
   "carousel",
+  // Wave 4: street furniture — the small, cheap density props.
+  "well_head",
+  "notice_board",
+  "hitching_post",
+  "horse_trough",
+  "lamp_post",
+  "litter_bin",
+  "drinking_fountain",
+  "flagpole",
+  "bollard_row",
+  "sandwich_board",
+  "dog_kennel",
+  "log_pile",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

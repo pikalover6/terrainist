@@ -909,24 +909,60 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   street("clothesline", "Clothesline", "implemented"),
   street("scarecrow", "Scarecrow", "implemented"),
   street("market_barrow", "Market barrow", "implemented"),
-  street("well_head", "Well head", "not_started", { wave: 4 }),
-  street("notice_board", "Notice board", "not_started", { wave: 4 }),
+  street("well_head", "Well head", "implemented", {
+    wave: 4,
+    note: "Stone ring with a coping course, a windlass axle on two posts, a bucket on an iron line and a pitched roof; the water is a cauldron, so there is no fluid to leak.",
+  }),
+  street("notice_board", "Notice board", "implemented", {
+    wave: 4,
+    note: "Two posts under a plank board, a sheet of open trapdoors for the notices and a small roof - the paper read without a sign block entity.",
+  }),
   street("signpost", "Signpost", "implemented"),
-  street("hitching_post", "Hitching post", "not_started", { wave: 4 }),
-  street("horse_trough", "Horse trough", "not_started", { wave: 4 }),
-  street("lamp_post", "Lamp post", "not_started", { wave: 4 }),
-  street("litter_bin", "Litter bin", "not_started", { wave: 4 }),
+  street("hitching_post", "Hitching post", "implemented", {
+    wave: 4,
+    note: "Two fence posts with a stripped-log rail between them and an iron ring plate on each head; the rail is a log so it is a beam, not an unsupported fence.",
+  }),
+  street("horse_trough", "Horse trough", "implemented", {
+    wave: 4,
+    note: "A hollowed stone trough - solid floor, wall ring, two cauldrons in the hollow: a filled trough that cannot spill.",
+  }),
+  street("lamp_post", "Lamp post", "implemented", {
+    wave: 4,
+    note: "Paved pad, fence column, two bottom-slab arms with a lantern hung under each, and a third lantern standing on the head.",
+  }),
+  street("litter_bin", "Litter bin", "implemented", {
+    wave: 4,
+    note: "A composter and a barrel on a paved corner, with a slab kerb and a trapdoor lid half off the composter.",
+  }),
   street("bicycle_rack", "Bicycle rack"),
   street("bus_shelter", "Bus shelter"),
   street("phone_box", "Phone box"),
   street("mailbox", "Mailbox"),
-  street("drinking_fountain", "Drinking fountain", "not_started", { wave: 4 }),
-  street("flagpole", "Flagpole", "not_started", { wave: 4 }),
-  street("bollard_row", "Bollard row", "not_started", { wave: 4 }),
+  street("drinking_fountain", "Drinking fountain", "implemented", {
+    wave: 4,
+    note: "Pedestal, cauldron basin and a back plate with an open-trapdoor spout pointing at the water.",
+  }),
+  street("flagpole", "Flagpole", "implemented", {
+    wave: 4,
+    note: "Stone pad with corner stumps, a seven-block fence pole and a seed-drawn standing banner at the masthead.",
+  }),
+  street("bollard_row", "Bollard row", "implemented", {
+    wave: 4,
+    note: "A parameterised run of short stone posts along a kerb; length 5..33 (9), with a bollard always at both ends.",
+  }),
   street("shop_awning", "Shop awning"),
-  street("sandwich_board", "Sandwich board", "not_started", { wave: 4 }),
-  street("dog_kennel", "Dog kennel", "not_started", { wave: 4 }),
-  street("log_pile", "Log pile", "not_started", { wave: 4 }),
+  street("sandwich_board", "Sandwich board", "implemented", {
+    wave: 4,
+    note: "The A-frame outside a shop: two pairs of leaning trapdoors on a slab base, 2x2x2 - the smallest prop in the catalog.",
+  }),
+  street("dog_kennel", "Dog kennel", "implemented", {
+    wave: 4,
+    note: "A plank box with a south doorway, a pitched roof, a pressure-plate bowl inside and a name banner on the ridge.",
+  }),
+  street("log_pile", "Log pile", "implemented", {
+    wave: 4,
+    note: "A stacked cord of firewood running along x between four chocks, crowned by a narrower top course.",
+  }),
 
   /* --- nomadic / temporary ------------------------------------------------ */
   nom("tent", "Tent", "implemented"),

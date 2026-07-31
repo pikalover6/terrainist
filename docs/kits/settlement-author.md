@@ -1056,6 +1056,18 @@ plaza rather than one big one.
 | `swimming_pool` | 13×7×9, sunk 4 | ground, flat | the basin is dug 4 below grade |
 | `carousel` | 11×7×11 | ground, flat | — |
 | `curtain_wall` | `length`×6×3 | ground | `length` 6..64 (16); a repeatable rampart run — place several end to end, with a `gatehouse` building for the gate |
+| `well_head` | 3×6×3 | ground | roofed well, windlass and bucket; the water is a cauldron, so it never leaks |
+| `notice_board` | 3×4×2 | ground | posts, board and a sheet of notices under a small roof |
+| `hitching_post` | 4×3×1 | ground | post, rail and iron rings — put it outside an inn or a stable |
+| `horse_trough` | 4×2×3 | ground | a filled stone trough; pairs with `hitching_post` |
+| `lamp_post` | 3×7×3 | ground | two hung lanterns and one standing — the cheapest way to light a lane |
+| `litter_bin` | 2×3×2 | ground | composter and barrel on a paved corner |
+| `drinking_fountain` | 3×4×3 | ground | pedestal, basin and spout |
+| `flagpole` | 3×9×3 | ground | banner colour drawn from the node seed |
+| `bollard_row` | `length`×2×1 | ground | `length` 5..33 (9); a kerb run, always terminated at both ends |
+| `sandwich_board` | 2×2×2 | ground | the smallest prop there is — an A-frame outside a shop |
+| `dog_kennel` | 3×5×3 | ground | box, doorway, bowl and a name banner on the ridge |
+| `log_pile` | 5×3×3 | ground | stacked firewood between chocks; good against a wall or a woodshed |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask

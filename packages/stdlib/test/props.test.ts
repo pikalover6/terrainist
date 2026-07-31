@@ -93,6 +93,20 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   treehouse: [{}],
   cairn: [{}],
   carousel: [{}],
+  // Wave 4: street furniture. Their own properties are held in
+  // props-street.test.ts; here they walk the catalog-wide checks.
+  well_head: [{}],
+  notice_board: [{}],
+  hitching_post: [{}],
+  horse_trough: [{}],
+  lamp_post: [{}],
+  litter_bin: [{}],
+  drinking_fountain: [{}],
+  flagpole: [{}],
+  bollard_row: [{}, { length: 5 }, { length: 33 }],
+  sandwich_board: [{}],
+  dog_kennel: [{}],
+  log_pile: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

@@ -38,6 +38,7 @@ import type { Rect } from "../layout/frames.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { buildProps, type PropJob, type PropPassResult } from "../structures/props.js";
 import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
+import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -144,6 +145,7 @@ export const PROP_EXHIBIT_PLAN: readonly {
     ],
   },
   ...BLITZ_PROP_EXHIBIT_PLAN,
+  ...STREET_PROP_EXHIBIT_PLAN,
 ]);
 
 /**
