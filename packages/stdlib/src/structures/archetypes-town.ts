@@ -427,21 +427,24 @@ function fitSchool(ctx: FitOutContext, c: PropCounter): void {
     }
   }
 
-  // The desks. Rows across the room, two cells apart so a child can get out of
-  // one, with one column left as the aisle to the board. The aisle runs one
-  // column off the room's centre line, not on it: the centre column is where
-  // the shell hangs its ceiling light, which in a three-course storey sits at
-  // head height — and desks under a low ceiling cannot be stepped over, so an
-  // aisle under the lantern is an aisle the walking agent cannot use.
+  // The desks. Rows across the room, two cells apart so a child can get out
+  // of one, with the two middle columns left as the aisle to the board. Two,
+  // not one: the shell hangs its ceiling light over the room's centre — one
+  // of the two middle columns, and which one depends on the parity of the
+  // width — and in a three-course storey the lantern sits at head height.
+  // Desks under a low ceiling cannot be stepped over, so a single aisle that
+  // guessed the wrong column would run straight into the lantern. A pair
+  // always contains one clear column.
   const centre = Math.floor((it.x0 + it.x1) / 2);
   const aisle = Math.max(it.x0, centre - 1);
+  const inAisle = (x: number): boolean => x === aisle || x === centre;
   const first = boardNorth ? it.z0 + 2 : it.z0;
   const last = boardNorth ? it.z1 : it.z1 - 2;
   const slabBlock = ctx.style["stone.slab"] as string;
   const seat = ctx.style["stair.interior"] as string;
   for (let z = first; z <= last; z += 2) {
     for (let x = it.x0; x <= it.x1; x++) {
-      if (x === aisle) continue;
+      if (inAisle(x)) continue;
       // The desk: a slab on the floor plane's own level, which reads as a
       // writing surface rather than as a block in the way.
       if (!c.put1(x, z, slabBlock, { type: "bottom", waterlogged: "false" })) continue;
@@ -450,7 +453,7 @@ function fitSchool(ctx: FitOutContext, c: PropCounter): void {
     const seatZ = boardNorth ? z + 1 : z - 1;
     if (seatZ < it.z0 || seatZ > it.z1) continue;
     for (let x = it.x0; x <= it.x1; x += 2) {
-      if (x === aisle) continue;
+      if (inAisle(x)) continue;
       c.put1(x, seatZ, seat, { facing, half: "bottom", shape: "straight" });
     }
   }
@@ -553,20 +556,49 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
     }
   }
 
-  // The steam: campfires in two corners of the walkway, whose smoke is the
-  // only moving thing this grammar can put in a room. Never on a pool cell —
-  // `put1` writes at `y = 1`, and the cell under a corner of the walkway is
-  // coping, not water.
-  const braziers: readonly (readonly [number, number])[] = [
-    [it.x0, it.z0],
-    [it.x1, it.z1],
-  ];
-  for (const [bx, bz] of braziers) {
-    if (inPool(bx, bz)) continue;
-    c.put1(bx, bz, "campfire", { lit: "true", signal_fire: "false", facing: "north", waterlogged: "false" });
+  // The steam: braziers on pedestals carved out of the pool's own corners —
+  // a coping post rising from the water with a campfire on top. Deliberately
+  // NOT on the walkway: the pool is inset one cell, so the walkway around it
+  // is always one cell wide, and a body-blocking prop on a one-wide ring cuts
+  // it — the walking agent found whole arcs of small bathhouses unreachable.
+  // A pool cell is never walkable anyway, so a pedestal there costs nothing,
+  // and replacing a water corner with solid stone keeps every remaining water
+  // cell bounded by solid or water — the fluid argument is unchanged.
+  if (pool !== null) {
+    const pedestal = (px: number, pz: number, top: string, props?: Record<string, string>): void => {
+      ctx.put(px, 0, pz, "smooth_stone");
+      ctx.put(px, 1, pz, top, props);
+      c.n += 2;
+    };
+    pedestal(pool.x0, pool.z0, "campfire", {
+      lit: "true",
+      signal_fire: "false",
+      facing: "north",
+      waterlogged: "false",
+    });
+    pedestal(pool.x1, pool.z1, "campfire", {
+      lit: "true",
+      signal_fire: "false",
+      facing: "north",
+      waterlogged: "false",
+    });
+    // The attendant's cauldron on a third pedestal, by the pool's near edge.
+    pedestal(pool.x1, pool.z0, "cauldron", { level: "3" });
+  } else {
+    // No pool, no pedestals: an open changing room, where the guard's own
+    // connectivity check is enough to keep corner props from sealing anything.
+    c.put1(it.x0, it.z0, "campfire", {
+      lit: "true",
+      signal_fire: "false",
+      facing: "north",
+      waterlogged: "false",
+    });
+    c.put1(it.x1, it.z1 - 1 >= it.z0 ? it.z1 - 1 : it.z1, "cauldron", { level: "3" });
   }
-  // The changing benches, along the walkway on the two remaining corners, and
-  // the attendant's cauldron and store.
+  // The changing benches, along the walkway on two corners. A bench is a
+  // bottom stair with its backrest to the wall, and a stair is a half-step
+  // the walking agent can mount — a bench never cuts the ring the way a full
+  // block would.
   if (!inPool(it.x1, it.z0)) {
     c.put1(it.x1, it.z0, ctx.style["stair.interior"] as string, {
       facing: "east",
@@ -590,8 +622,5 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
       half: "bottom",
       shape: "straight",
     });
-  }
-  if (!inPool(it.x1, it.z1 - 1 >= it.z0 ? it.z1 - 1 : it.z1)) {
-    c.put1(it.x1, it.z1 - 1 >= it.z0 ? it.z1 - 1 : it.z1, "cauldron", { level: "3" });
   }
 }
