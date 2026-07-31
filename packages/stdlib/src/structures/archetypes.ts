@@ -56,6 +56,14 @@ import {
 
 export * from "./archetypes-vernacular.js";
 
+import {
+  WAVE2_BUILDING_ARCHETYPES,
+  furnishWave2,
+  wave2ArchetypeOfTags,
+} from "./archetypes-wave2.js";
+
+export * from "./archetypes-wave2.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -85,6 +93,7 @@ export const BUILDING_ARCHETYPES = [
   ...TOWN_BUILDING_ARCHETYPES,
   ...TRADE_BUILDING_ARCHETYPES,
   ...VERNACULAR_BUILDING_ARCHETYPES,
+  ...WAVE2_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
 ] as const;
@@ -127,6 +136,11 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // and every table below it is greedier about dwellings than it is.
   const regional = vernacularArchetypeOfTags(tags);
   if (regional !== null) return regional;
+  // Wave two, last of the new tables. It claims no tag any earlier table
+  // claims — `mill` still reaches the windmill and `gate` the gatehouse — so
+  // its position is about the greedy tables *below* it, not the ones above.
+  const wave2 = wave2ArchetypeOfTags(tags);
+  if (wave2 !== null) return wave2;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -480,6 +494,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishTown(ctx);
   n += furnishTrade(ctx);
   n += furnishVernacular(ctx);
+  n += furnishWave2(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);

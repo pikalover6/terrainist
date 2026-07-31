@@ -34,6 +34,7 @@ import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
+import { wave2FacadeDefaults } from "./archetypes-wave2.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -129,16 +130,18 @@ export function archetypeFacadeDefaults(
       // through to them here is what lets a keep ask for the roof shape whose
       // height its battlement is going to take over, a town hall the one its
       // clock gable stands in front of, a shopfront the glass it is mostly
-      // made of, and a saltbox the ridge it is about to rebuild. The order
-      // between the waves is arbitrary — no two of them answer to the same
-      // names.
+      // made of, and a saltbox the ridge it is about to rebuild. The chain is
+      // ordered, each link answers `{}` for anything not its own, and the
+      // first non-empty answer wins — no two waves answer to the same names.
       const town = townFacadeDefaults(archetype);
       if (Object.keys(town).length > 0) return town;
       const blitz = blitzFacadeDefaults(archetype);
       if (Object.keys(blitz).length > 0) return blitz;
       const trade = tradeFacadeDefaults(archetype);
       if (Object.keys(trade).length > 0) return trade;
-      return vernacularFacadeDefaults(archetype);
+      const regional = vernacularFacadeDefaults(archetype);
+      if (Object.keys(regional).length > 0) return regional;
+      return wave2FacadeDefaults(archetype);
     }
   }
 }

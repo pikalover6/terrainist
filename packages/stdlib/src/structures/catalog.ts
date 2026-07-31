@@ -236,13 +236,24 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- vernacular / regional -------------------------------------------- */
   ver("stilt_house", "Stilt house", "not_started", { tags: ["water", "tropical"] }),
   ver("adobe_pueblo", "Adobe pueblo"),
-  ver("tudor_row", "Tudor row", "not_started", { wave: 2 }),
-  ver("mediterranean_villa", "Mediterranean villa", "not_started", { wave: 2 }),
+  ver("tudor_row", "Tudor row", "implemented", {
+    wave: 2,
+    tags: ["row", "half-timber"],
+    note: "The house shell re-clad in plaster panels between dark studwork, with a trapdoor jetty course in the apron at each storey line.",
+  }),
+  ver("mediterranean_villa", "Mediterranean villa", "implemented", {
+    tags: ["stucco", "terrace"],
+    note: "Smooth-sandstone stucco with a terracotta cornice, and the roof replaced by a parapeted terrace with a corner pergola.",
+  }),
   ver("cycladic_house", "Cycladic house"),
   ver("riad", "Riad"),
   ver("hanok", "Hanok"),
   ver("machiya", "Machiya townhouse"),
-  ver("trullo", "Trullo", "not_started", { wave: 2 }),
+  ver("trullo", "Trullo", "implemented", {
+    wave: 2,
+    tags: ["drystone", "conical"],
+    note: "A corbelled drystone cone — rings one course higher and one cell further in — closing on a capstone over a single room.",
+  }),
   ver("sod_house", "Sod house"),
   ver("igloo", "Igloo"),
   ver("alpine_chalet", "Alpine chalet", "implemented", {
@@ -270,18 +281,30 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 1,
     note: "Masonry plinth, quoins and string course, a clock-and-bell gable over the front bay, and a council chamber inside.",
   }),
-  civ("courthouse", "Courthouse", "not_started", { wave: 2 }),
+  civ("courthouse", "Courthouse", "implemented", {
+    wave: 2,
+    tags: ["civic", "bench"],
+    note: "A dais and lectern at the far end, short bar rails from each side wall, and gallery benches either side of a two-column aisle.",
+  }),
   civ("school", "School", "implemented", {
     wave: 1,
     note: "Rows of desks and seats facing a dark board across the end wall, with a modest bell cote over the roof.",
   }),
   civ("university_hall", "University hall"),
   civ("hospital", "Hospital"),
-  civ("infirmary", "Infirmary", "not_started", { wave: 2 }),
+  civ("infirmary", "Infirmary", "implemented", {
+    wave: 2,
+    tags: ["civic", "cots"],
+    note: "Cots head-to-wall up the side walls with banner screens between them, and an apothecary corner of brewing stand and cauldron.",
+  }),
   civ("prison", "Prison"),
   civ("police_station", "Police station"),
   civ("fire_station", "Fire station"),
-  civ("post_office", "Post office", "not_started", { wave: 2 }),
+  civ("post_office", "Post office", "implemented", {
+    wave: 2,
+    tags: ["civic", "counter"],
+    note: "A timber counter with a sign along the far wall, stacked barrels as pigeonholes up the sides, and parcel chests by the door.",
+  }),
   civ("orphanage", "Orphanage"),
   civ("bathhouse", "Bathhouse", "implemented", {
     wave: 1,
@@ -331,13 +354,25 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- industrial -------------------------------------------------------- */
   ind("smithy", "Smithy", "implemented", { tags: ["village", "craft"] }),
-  ind("sawmill", "Sawmill", "not_started", { wave: 2 }),
+  ind("sawmill", "Sawmill", "implemented", {
+    wave: 2,
+    tags: ["craft", "timber"],
+    note: "A run of saw benches down one wall facing stacked log stores down the other, with the sawyer's deck left open between them.",
+  }),
   ind("quarry", "Quarry", "not_started", { tags: ["excavation"] }),
-  ind("kiln", "Kiln", "not_started", { wave: 2 }),
+  ind("kiln", "Kiln", "implemented", {
+    wave: 2,
+    tags: ["craft", "fire"],
+    note: "A brick core with its fire in the mouth, kept on the wall row so the fire never pinches the floor, and trapdoor drying racks.",
+  }),
   ind("brickworks", "Brickworks"),
   ind("foundry", "Foundry"),
   ind("blast_furnace_works", "Blast furnace works"),
-  ind("tannery", "Tannery", "not_started", { wave: 2 }),
+  ind("tannery", "Tannery", "implemented", {
+    wave: 2,
+    tags: ["craft", "leather"],
+    note: "Soaking vats and liquor cauldrons up one wall, stretching frames of stripped log up the other, and a drying line under the plate.",
+  }),
   ind("glassworks", "Glassworks"),
   ind("textile_mill", "Textile mill"),
   ind("papermill", "Paper mill"),

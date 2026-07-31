@@ -33,6 +33,7 @@ import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
+import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
 export type { DevExhibitCell, DevExhibitRow } from "./exhibits/types.js";
@@ -102,6 +103,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...FOOTPRINT_EXHIBIT_ROWS,
   ...SEED_EXHIBIT_ROWS,
   ...BREAKPOINT_EXHIBIT_ROWS,
+  ...WAVE2_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -143,6 +145,9 @@ export {
 
 /** The breakpoint rows, for tests that assert on the thresholds themselves. */
 export { BREAKPOINT_EXHIBIT_ROWS, exactRoofHeight } from "./exhibits/breakpoints.js";
+
+/** The wave-two rows, for tests that assert on the gradient itself. */
+export { WAVE2_EXHIBIT_ROWS, WAVE2_ROW_LENGTH, wave2SizeFor } from "./exhibits/wave2.js";
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

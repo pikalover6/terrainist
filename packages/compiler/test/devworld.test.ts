@@ -33,6 +33,8 @@ import {
   CONTEXT_YAWS,
   EXTRA_EXHIBIT_ROWS,
   UNDERGROUND_EXHIBIT_ROWS,
+  WAVE2_EXHIBIT_ROWS,
+  WAVE2_ROW_LENGTH,
   PROP_EXHIBIT_PLAN,
   SEED_SWEEP_LENGTH,
   SEED_SWEEP_ROW_LABEL,
@@ -123,8 +125,10 @@ describe("dev world grid", () => {
     const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const town = TOWN_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     // The trade wave's rows are prefixed (`trade_tavern`), so they are extra
-    // rows rather than replacements for the base grid's own.
+    // rows rather than replacements for the base grid's own; wave two's are
+    // prefixed the same way.
     const trade = TRADE_EXHIBIT_ROWS.length * TRADE_ROW_LENGTH;
+    const wave2 = WAVE2_EXHIBIT_ROWS.length * WAVE2_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -135,7 +139,8 @@ describe("dev world grid", () => {
         SEED_SWEEP_LENGTH +
         breakpoints +
         underground +
-        town,
+        town +
+        wave2,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

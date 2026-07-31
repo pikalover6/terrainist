@@ -604,15 +604,16 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 5 | town | see the town table below |
 | 6 | trade | see the trade table below |
 | 7 | vernacular | see the vernacular table below |
-| 8 | extended | see the extended table below |
-| 9 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 10 | fallback | anything else → cottage |
+| 8 | wave two | see the wave-two table below |
+| 9 | extended | see the extended table below |
+| 10 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 11 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
 ordinary house shell. It sits *between* the breadth table and the extended one,
 so it never takes a tag an older table already answers to: bare `hall` still
-means a great hall (table 9) and `archive` still means a library (table 8).
+means a great hall (table 10) and `archive` still means a library (table 9).
 
 | archetype | tags | what it gets | envelope that works |
 |---|---|---|---|
@@ -620,7 +621,7 @@ means a great hall (table 9) and `archive` still means a library (table 8).
 | school | `school`, `schoolhouse`, `academy` | rows of desks and seats facing a dark board across the end wall, a modest bell cote; regular single windows | `[11, 12, 15]`, 1–2 floors |
 | bathhouse | `bathhouse`, `baths`, `sauna`, `hammam` | pools written into the floor plane inside a solid coping, smooth stone and quartz walls, steam braziers and benches; sparse windows, hip roof | `[13, 11, 13]`, 1 floor |
 
-**Extended (table 8)**
+**Extended (table 9)**
 
 | archetype | tags | what it gets |
 |---|---|---|
@@ -676,6 +677,28 @@ ordinary house shell instead.
 | alpine_chalet | `chalet`, `alpine` | boxed spruce-log corners, banded courses, a deep apron eave, shutters beside the lights, a hearth and benches inside | `[13, 11, 11]`, 1–2 floors |
 | saltbox_house | `saltbox` | the asymmetric gable rebuilt off-centre — short front pitch, long shallow back one — over a clapboard re-clad and a colonial parlour | `[9, 13, 15]`, 1–2 floors; **deep in z** |
 | dutch_gable_house | `dutch_gable`, `canal_house`, `stepped_gable` | brick re-clad, roof rebuilt front-to-back under a stepped parapet gable with a hoist beam, tall regular lights, a merchant counter | `[9, 16, 11]`, 1–2 floors; **narrow and tall** |
+
+**Wave 2 (table 8)** — three vernacular houses, three civic buildings and
+three works. The vernacular three rebuild the shell's exterior, so give *those*
+a **plain rect** envelope: a `wing` makes the rebuild refuse and you get the
+ordinary house shell instead. The civic and industrial six are interior
+fit-outs and are happy on any footprint.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| tudor_row | `tudor_row`, `half_timber` | white plaster panels in dark studwork, banded at each storey line, with a trapdoor jetty course in the apron; regular single lights | `[9, 14, 15]`, 2 floors |
+| mediterranean_villa | `mediterranean_villa`, `villa` | smooth-sandstone stucco, a terracotta cornice, and a parapeted roof terrace with a corner pergola | `[13, 12, 11]`, 2 floors |
+| trullo | `trullo` | drystone drum under a corbelled cone closing on a capstone; sparse single lights | `[9, 16, 9]`, 1 floor |
+| courthouse | `courthouse`, `court`, `tribunal` | a dais and lectern at the far end, short bar rails, gallery benches either side of a two-column aisle, slab cornice | `[11, 13, 17]`, 1 floor |
+| post_office | `post_office`, `post` | a timber counter with a sign, stacked barrels as pigeonholes up both side walls, parcel chests by the door | `[11, 11, 13]`, 1 floor |
+| infirmary | `infirmary`, `clinic` | cots head-to-wall with banner screens between them, and an apothecary of brewing stand and cauldron | `[11, 11, 15]`, 1 floor |
+| sawmill | `sawmill`, `lumber_mill` | a run of saw benches down one wall, stacked log stores down the other, an open deck between | `[11, 11, 17]`, 1 floor |
+| kiln | `kiln`, `pottery_kiln` | a brick core with its fire in the mouth against the far wall, furnaces beside it, trapdoor drying racks | `[9, 12, 11]`, 1 floor |
+| tannery | `tannery`, `tanner` | soaking vats and liquor cauldrons up one wall, stretching frames up the other, a drying line under the plate | `[11, 11, 13]`, 1 floor |
+
+Three tags wave two deliberately does **not** claim, because an earlier table
+owns them: `mill` (the windmill), `gate` (the gatehouse) and `hospital` (a
+catalog id with no generator behind it — asking for one gets you a cottage).
 
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
