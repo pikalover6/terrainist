@@ -72,7 +72,14 @@ import type { Provenance } from "../provenance.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
-import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes, type StructureClip } from "./clip.js";
+import {
+  DECOR_APRON,
+  clipTrees,
+  makeStructureClip,
+  roadCorridorBoxes,
+  structureBoxes,
+  type StructureClip,
+} from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
 import {
   buildCavePlan,
@@ -95,6 +102,7 @@ import {
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
 import {
   buildStructures,
+  buildTransitionBand,
   checkTunnelIntegrity,
   roadParamsOf,
   type StructurePassResult,
@@ -271,6 +279,12 @@ export interface CompileStats {
   readonly clearedColumns: number;
   /** Trees dropped for losing too much of themselves to a building. */
   readonly clippedTrees: number;
+  /** Trees felled by the F2 clearing transition band. */
+  readonly felledTrees: number;
+  /** Stumps the band left standing where it felled. */
+  readonly transitionStumps: number;
+  /** Fallen logs the band laid where it felled. */
+  readonly transitionLogs: number;
   /** Voxels withheld from surviving trees at emit. */
   readonly clippedTreeBlocks: number;
   /** Ponds formed by demoting a sealess river, per river edit. */
@@ -615,7 +629,26 @@ async function compileValidated(
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
   const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip);
-  const trees = clipped?.trees ?? scatter.trees;
+  const standing = clipped?.trees ?? scatter.trees;
+  // --- pass 6b: the clearing transition band (fabric v2, F2) ---------------
+  // A post-pass over the planted forest, and it has to be: whether a settlement
+  // abuts dense wood is not answerable before the wood exists. It fells the
+  // inner band outright, keeps one tree in six through the outer band, and
+  // leaves stumps and fallen logs where it took them.
+  const transition =
+    clearing === undefined || clearing.hulls.length === 0
+      ? undefined
+      : buildTransitionBand({
+          plan,
+          hulls: clearing.hulls,
+          trees: standing,
+          palette,
+          stack,
+          seed: seed32(nodeSeed(worldSeed, rootPath, "transition")),
+          ...(occupancy === undefined ? {} : { occupancy }),
+          avoid: transitionAvoid(clip, layoutOutcome?.placements ?? []),
+        });
+  const trees = transition?.trees ?? standing;
   const decoration = decorate({
     plan,
     classification,
@@ -664,7 +697,7 @@ async function compileValidated(
   const emitInput = {
     plan,
     trees,
-    decor: [...caveDecor.blocks, ...decoration.blocks],
+    decor: [...caveDecor.blocks, ...decoration.blocks, ...(transition?.blocks ?? [])],
     ...(structures === undefined ? {} : { structures: structures.blocks }),
     ...(clip === undefined ? {} : { clip }),
     stack,
@@ -730,6 +763,9 @@ async function compileValidated(
       lavaFlowColumns,
       clearedColumns: clearing?.clearedColumns ?? 0,
       clippedTrees: clipped?.dropped ?? 0,
+      felledTrees: transition?.felled ?? 0,
+      transitionStumps: transition?.stumps ?? 0,
+      transitionLogs: transition?.logs ?? 0,
       clippedTreeBlocks: clipped?.clippedBlocks ?? 0,
       pondChains: Object.fromEntries(
         terrain.ponds.map((p) => [p.editId, p.ponds] as const).sort(([a], [b]) => (a < b ? -1 : 1)),
@@ -1033,6 +1069,36 @@ function toEdit(node: EditNode): TerrainEdit {
     ...(p.irregularity === undefined ? {} : { irregularity: p.irregularity }),
     ...(p.meander === undefined ? {} : { meander: p.meander }),
     ...(p.flooded === undefined ? {} : { flooded: p.flooded }),
+  };
+}
+
+/**
+ * The ground the transition band may not dress.
+ *
+ * The decoration clip's apron covers the buildings, the lanes and the plaza;
+ * the placement rects cover everything else the solver put down (a placed
+ * primitive has no `BuiltBuilding` and so no box). Both are grown by
+ * {@link DECOR_APRON}, which is the same distance the undergrowth pass keeps
+ * its deadwood at — a fallen log against a garden wall is one defect, not two.
+ */
+function transitionAvoid(
+  clip: StructureClip | undefined,
+  placements: readonly { readonly footprint: { x0: number; z0: number; x1: number; z1: number } }[],
+): (x: number, z: number) => boolean {
+  const rects = placements.map((p) => p.footprint);
+  return (x, z) => {
+    if (clip?.inApron(x, z) === true) return true;
+    for (const r of rects) {
+      if (
+        x >= r.x0 - DECOR_APRON &&
+        x <= r.x1 + DECOR_APRON &&
+        z >= r.z0 - DECOR_APRON &&
+        z <= r.z1 + DECOR_APRON
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 }
 

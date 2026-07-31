@@ -60,6 +60,7 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { buildDoorsteps } from "./doorsteps.js";
+import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
@@ -68,6 +69,7 @@ import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } f
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
+export * from "./grounds.js";
 export * from "./plaza.js";
 export * from "./props.js";
 export * from "./roads.js";
@@ -137,6 +139,10 @@ export interface StructureStats {
   readonly propsUnplaced: number;
   /** Water blocks the props wrote that could flow. Zero is required. */
   readonly propWaterLeaks: number;
+  /** Columns rewritten by lot dressing (F2). */
+  readonly dressedColumns: number;
+  /** Columns speckled with worn path paint (F2). */
+  readonly wornColumns: number;
 }
 
 /** What the structure pass produced. */
@@ -148,6 +154,8 @@ export interface StructurePassResult {
   readonly roads?: RoadNetworkResult;
   readonly tunnels: readonly BuiltTunnel[];
   readonly props: readonly PlacedProp[];
+  /** F2's ground treatment: what each lot got, and how much ground it took. */
+  readonly grounds?: GroundPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -392,11 +400,29 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   blocks.push(...doorsteps.blocks);
 
+  // --- ground treatment (F2) -----------------------------------------------
+  // Dead last, and that is the whole design: every other pass has by now
+  // declared the ground it owns — roads, plaza, doorsteps, footprints, props —
+  // so this one can treat what is left without ever having to guess.
+  const grounds = buildGrounds({
+    buildings: buildings.built,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+    seed: seed32(streamSeed(themeSeed, "grounds")),
+    ...(roads === undefined ? {} : { roadColumns: roads.roadColumns }),
+    ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
+    doorstepColumns: doorsteps.touched,
+    ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+  });
+  blocks.push(...grounds.blocks);
+
   return {
     blocks,
     buildings: buildings.built,
     tunnels: tunnelPass.tunnels,
     props: props.placed,
+    grounds,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     diagnostics,
@@ -424,6 +450,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,
+      dressedColumns: grounds.dressedColumns,
+      wornColumns: grounds.wornColumns,
     },
   };
 }

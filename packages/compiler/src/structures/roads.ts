@@ -253,6 +253,14 @@ export interface RoadNetworkResult {
   readonly routes: readonly RoadRoute[];
   /** Every column the network surfaced. */
   readonly surfacedColumns: number;
+  /**
+   * 1 on every column that counts as road — surfaced lane, shoulder, bridge
+   * deck and the plaza cells a route crossed. Row-major over the plan region.
+   *
+   * Handed out so a later ground pass can meet a lane without guessing where
+   * one is: F2's lot aprons abut it and its worn paint fans out from it.
+   */
+  readonly roadColumns: Uint8Array;
   /** Of those, the columns carried on a bridge deck over water. */
   readonly bridgeColumns: number;
   /** The surfaced width the pass used, for the canopy clip. */
@@ -334,7 +342,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // --- the hub -------------------------------------------------------------
   const hub = pickHub(input, anchors, region, blocked);
   if (hub === null || anchors.length === 0) {
-    return { blocks, routes, surfacedColumns: 0, bridgeColumns: 0, width, diagnostics, unrouted };
+    return { blocks, routes, surfacedColumns: 0, bridgeColumns: 0, roadColumns: road, width, diagnostics, unrouted };
   }
   road[index(region, hub.x, hub.z)] = 1;
 
@@ -441,7 +449,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     if (bridged[k] === 1) bridgeColumns++;
   }
 
-  return { blocks, routes, surfacedColumns, bridgeColumns, width, diagnostics, unrouted };
+  return { blocks, routes, surfacedColumns, bridgeColumns, roadColumns: road, width, diagnostics, unrouted };
 }
 
 /* -------------------------------------------------------------------------- */
