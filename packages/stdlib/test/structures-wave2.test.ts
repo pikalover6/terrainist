@@ -41,6 +41,7 @@ import {
   wave2FacadeDefaults,
   type LocalVoxelOp,
 } from "../src/index.js";
+import { assertNoPockets, walkabilityReport } from "./helpers/walkability.js";
 
 /* -------------------------------------------------------------------------- */
 /* harness                                                                     */
@@ -76,29 +77,6 @@ function build(
   });
 }
 
-/** Is every cell of a set 4-reachable from every other one? */
-function oneRegion(free: readonly string[]): boolean {
-  if (free.length === 0) return true;
-  const open = new Set(free);
-  const seen = new Set([free[0] as string]);
-  const queue = [free[0] as string];
-  while (queue.length > 0) {
-    const [x, z] = (queue.pop() as string).split(",").map(Number) as [number, number];
-    for (const [dx, dz] of [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ] as const) {
-      const k = `${x + dx},${z + dz}`;
-      if (!open.has(k) || seen.has(k)) continue;
-      seen.add(k);
-      queue.push(k);
-    }
-  }
-  return seen.size === open.size;
-}
-
 /** An op index, keyed by cell. Air is a *written* op and counts as empty. */
 function indexOf(ops: readonly LocalVoxelOp[]): Map<string, LocalVoxelOp> {
   const map = new Map<string, LocalVoxelOp>();
@@ -106,17 +84,6 @@ function indexOf(ops: readonly LocalVoxelOp[]): Map<string, LocalVoxelOp> {
   return map;
 }
 
-/** The ground floor's free cells, as the physics lint would read them. */
-function freeCells(result: ReturnType<typeof generateBuilding>): string[] {
-  const at = indexOf(result.ops);
-  const free: string[] = [];
-  for (const cell of result.meta.floorCells) {
-    const standing = at.get(`${cell.x},1,${cell.z}`);
-    if (standing !== undefined && standing.block !== "air") continue;
-    free.push(`${cell.x},${cell.z}`);
-  }
-  return free;
-}
 
 const has = (result: ReturnType<typeof generateBuilding>, block: string): boolean =>
   result.ops.some((op) => op.block === block);
@@ -208,15 +175,20 @@ describe("wave-two buildings", () => {
     }
   });
 
-  it("leaves every ground floor one walkable region", () => {
+  /**
+   * Stronger than the harness this test used to carry: the shared detector
+   * walks a 1x2 body from the door cell, so head-height blocks, stair mounts
+   * and drops are all modelled — and a region connected to itself but not to
+   * the way in now fails, where 4-connectivity of the empty cells passed it.
+   */
+  it("leaves every ground floor walkable from the door, with no pockets", () => {
     for (const a of WAVE2_BUILDING_ARCHETYPES) {
       for (const size of SIZES) {
         for (const floors of [1, 2]) {
           const result = build(a, size, { floors });
-          const free = freeCells(result);
           const label = `${a} ${size.join("x")} floors=${floors}`;
-          expect(free.length, label).toBeGreaterThan(3);
-          expect(oneRegion(free), `${label} is one region`).toBe(true);
+          const report = assertNoPockets(result, { label });
+          expect(report.reachable.length, label).toBeGreaterThan(3);
         }
       }
     }
@@ -236,9 +208,13 @@ describe("wave-two buildings", () => {
       for (const size of SIZES) {
         const result = build(a, size);
         const it = result.meta.interior;
-        const lamp = `${Math.floor((it.x0 + it.x1) / 2)},${Math.floor((it.z0 + it.z1) / 2)}`;
-        const free = freeCells(result).filter((k) => k !== lamp);
-        expect(oneRegion(free), `${a} ${size.join("x")} without the lantern cell`).toBe(true);
+        const lamp: readonly [number, number] = [
+          Math.floor((it.x0 + it.x1) / 2),
+          Math.floor((it.z0 + it.z1) / 2),
+        ];
+        const label = `${a} ${size.join("x")} without the lantern cell`;
+        const report = walkabilityReport(result, { exclude: [lamp] });
+        expect(report.pocket, `${label}\n${report.map}`).toEqual([]);
       }
     }
   });

@@ -1055,6 +1055,10 @@ plaza rather than one big one.
 | `graveyard` | 15×6×13 | ground, flat | fenced yard, varied headstones, a corner mausoleum |
 | `swimming_pool` | 13×7×9, sunk 4 | ground, flat | the basin is dug 4 below grade |
 | `carousel` | 11×7×11 | ground, flat | — |
+| `fairground_stall` | 5×6×3 | ground | a striped stall: counter, prize shelf, awning |
+| `ticket_booth` | 3×5×3 | ground | a one-cell kiosk with a window and a till |
+| `prize_wheel` | 1×10×7 | ground | one block thick — face it across the midway |
+| `swing_boats` | 7×7×3 | ground | two boats hung from an A-frame crossbar |
 | `curtain_wall` | `length`×6×3 | ground | `length` 6..64 (16); a repeatable rampart run — place several end to end, with a `gatehouse` building for the gate |
 | `well_head` | 3×6×3 | ground | roofed well, windlass and bucket; the water is a cauldron, so it never leaks |
 | `notice_board` | 3×4×2 | ground | posts, board and a sheet of notices under a small roof |

@@ -234,6 +234,10 @@ describe("dev world grid", () => {
     // difference between a fast test and a timeout — so the pairs are counted
     // and only the failures are asserted on. The assertion is identical; what
     // changed is that passing pairs cost a comparison rather than a matcher.
+    // One assertion for the whole grid, not one per pair: the pair loop is
+    // quadratic in the number of exhibits and an `expect` call per pair put
+    // the test over its timeout as the grid grew. The collected list says
+    // exactly as much as the per-pair message did.
     const clashes: string[] = [];
     for (let a = 0; a < boxes.length; a++) {
       for (let b = a + 1; b < boxes.length; b++) {

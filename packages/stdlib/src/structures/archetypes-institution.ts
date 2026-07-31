@@ -837,7 +837,10 @@ function fitCustomsHouse(ctx: FitOutContext, c: PropCounter): void {
     for (let x = it.x0 + 2; x <= it.x1 - 2; x += 2) {
       if (ctx.blockAt(x, lineY, lamp.z) !== undefined) continue;
       if (ctx.blockAt(x, lineY + 1, lamp.z) === undefined) continue;
-      ctx.put(x, lineY, lamp.z, "chain", { axis: "y", waterlogged: "false" });
+      // Iron bars, not `chain`: the 1.21.11 block table has no chain entry,
+      // so a chain op is dropped with a BAD_PALETTE warning and the scales
+      // simply never appeared. Bars hang the same read.
+      ctx.put(x, lineY, lamp.z, "iron_bars");
       c.n++;
     }
   }

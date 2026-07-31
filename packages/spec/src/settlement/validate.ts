@@ -1779,6 +1779,10 @@ export const SETTLEMENT_PROP_NAMES = [
   "sandwich_board",
   "dog_kennel",
   "log_pile",
+  "fairground_stall",
+  "ticket_booth",
+  "prize_wheel",
+  "swing_boats",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
