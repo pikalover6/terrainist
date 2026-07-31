@@ -515,8 +515,11 @@ function fitTheater(ctx: FitOutContext, c: PropCounter): void {
 
   dais(ctx, c, end.z, new Set([it.x0, it.x1]));
   // The wings: a curtain at each end of the proscenium.
-  c.put1(it.x0, end.z, "red_banner", { rotation: end.look === "north" ? "8" : "0" });
-  c.put1(it.x1, end.z, "red_banner", { rotation: end.look === "north" ? "8" : "0" });
+  // Wall banners, not standing ones — the opera-house lesson: a floor cell
+  // beside an unmountable dais is a sealed pocket.
+  ctx.put(it.x0, 2, end.z, "red_wall_banner", { facing: "east" });
+  ctx.put(it.x1, 2, end.z, "red_wall_banner", { facing: "west" });
+  c.n += 2;
   seatBank(ctx, c, end);
   // Backstage: the property chest and the costume barrel, both on the near
   // corners so the lane round the house stays clear.
@@ -562,8 +565,13 @@ function fitOperaHouse(ctx: FitOutContext, c: PropCounter): void {
   );
 
   dais(ctx, c, end.z, new Set([it.x0, it.x1]));
-  c.put1(it.x0, end.z, "red_banner", { rotation: end.look === "north" ? "8" : "0" });
-  c.put1(it.x1, end.z, "red_banner", { rotation: end.look === "north" ? "8" : "0" });
+  // The wing curtains: wall banners on the side walls over the stage corners
+  // — on the walls and not standing on the floor, because a floor cell beside
+  // an unmountable dais is a sealed pocket the walking agent flags, and a
+  // curtain hangs anyway.
+  ctx.put(it.x0, 2, end.z, "red_wall_banner", { facing: "east" });
+  ctx.put(it.x1, 2, end.z, "red_wall_banner", { facing: "west" });
+  c.n += 2;
   seatBank(ctx, c, end);
 
   // The boxes: a chest for the party's things and a seat beside it, on each

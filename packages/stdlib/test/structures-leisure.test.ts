@@ -274,7 +274,7 @@ describe("wave 4C buildings", () => {
 
   it("builds the thing each archetype is for", () => {
     // Leisure.
-    expect(has(build("theater"), "red_banner"), "wing curtains").toBe(true);
+    expect(has(build("theater"), "red_wall_banner"), "wing curtains").toBe(true);
     expect(has(build("opera_house"), "quartz_block"), "the proscenium").toBe(true);
     expect(has(build("opera_house"), "red_concrete"), "the runner").toBe(true);
     expect(has(build("cinema"), "white_concrete"), "the screen").toBe(true);

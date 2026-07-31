@@ -1699,6 +1699,11 @@ function emitRoof(
       const z0 = rz0 + k;
       const z1 = rz1 - k;
       if (x0 > x1 || z0 > z1) break;
+      // A single-cell ring is the apex, and the apex has no in-ring
+      // neighbours: without a block under it, it is a full cube with air on
+      // all six faces the moment the ridge slab above it gets height-clipped
+      // — the bell-tower lesson. Stand it on roof before placing it.
+      if (x0 === x1 && z0 === z1) put(x0, y - 1, z0, solid);
       for (let x = x0; x <= x1; x++) {
         for (let z = z0; z <= z1; z++) {
           if (x !== x0 && x !== x1 && z !== z0 && z !== z1) continue;
