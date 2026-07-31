@@ -145,6 +145,14 @@ import {
 export * from "./archetypes-science.js";
 
 import {
+  ARCANA_BUILDING_ARCHETYPES,
+  arcanaArchetypeOfTags,
+  furnishArcana,
+} from "./archetypes-arcana.js";
+
+export * from "./archetypes-arcana.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -191,6 +199,7 @@ export const BUILDING_ARCHETYPES = [
   ...INDUSTRY_BUILDING_ARCHETYPES,
   ...GARRISON_BUILDING_ARCHETYPES,
   ...SCIENCE_BUILDING_ARCHETYPES,
+  ...ARCANA_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -302,6 +311,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `villa` the Mediterranean one.
   const science = scienceArchetypeOfTags(tags);
   if (science !== null) return science;
+  // Wave 5E, arcana: the fantastical and the remembered. Straight after the
+  // dwellings and well before the extended table, and it claims nothing an
+  // earlier one claims — `alchemist` is still the apothecary's, `wizard` and
+  // `arcane` the wizard tower's, bare `shrine` and `temple` the church's, bare
+  // `beacon` the parallel military track's, `tomb` and `sepulchre` the
+  // mausoleum's, `columbarium` the dovecote's, and bare `sauna`, `baths` and
+  // `hammam` the bathhouse's.
+  const arcana = arcanaArchetypeOfTags(tags);
+  if (arcana !== null) return arcana;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -688,6 +706,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishIndustry(ctx);
   n += furnishGarrison(ctx);
   n += furnishScience(ctx);
+  n += furnishArcana(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);

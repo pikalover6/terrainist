@@ -46,6 +46,7 @@ import { industryFacadeDefaults } from "./archetypes-industry.js";
 import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
+import { arcanaFacadeDefaults } from "./archetypes-arcana.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
@@ -186,6 +187,9 @@ export function archetypeFacadeDefaults(
       // Wave 5C — industry and modern works.
       const industry = industryFacadeDefaults(archetype);
       if (Object.keys(industry).length > 0) return industry;
+      // Wave 5E, arcana — appended, and the regional houses stay the tail.
+      const arcana = arcanaFacadeDefaults(archetype);
+      if (Object.keys(arcana).length > 0) return arcana;
       return regionalFacadeDefaults(archetype);
     }
   }

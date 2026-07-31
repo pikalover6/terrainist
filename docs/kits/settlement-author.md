@@ -946,6 +946,52 @@ and `byre` still reach the extended barn (the stable answers to `horse_stable`,
 wave two's pottery kiln (the oast answers to `hop_kiln` and `oast`), bare `hut`
 belongs to the residential track, bare `cellar` to the underground catalog, and
 `house` still falls through to a cottage.
+
+**Wave 5E (table 13) — arcana: the fantastical and the remembered.** Twelve
+buildings: five fantasy, five memorial, a bathing pavilion and servants'
+quarters. Two shapes matter. The **towers** (alchemist's tower, beacon spire)
+want **height**: the cone is corbelled out of the room between the eave plate
+and the roof top, and a short envelope closes itself in two courses. The
+**remembrance arch** wants height *in the storey* rather than in the envelope —
+its crown is drawn at the top interior course, and it is **refused outright
+under a four-course storey**, because an arch you cannot walk under is a wall.
+The **bathing pavilion** wants a generous square, because its pool is inset one
+cell all round and a narrow room leaves no bathers' side.
+
+Every monument here is a **shell with a memorial in it**, never a solid plug:
+the cist, the figure, the dais and the arch all stand off the lantern column,
+and every one of the twelve is held to the shared pocket detector at three
+envelopes across one and two storeys.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| alchemists_tower | `alchemists_tower`, `alchemy_tower`, `alchemists` | copper-banded stone brick under a corbelled cone on a solid cap with a lightning-rod vent; a brewing stand, the still, specimen shelves behind hatch fronts, a reading press | `[9, 19, 9]`, 1 floor; **tall** |
+| dragon_roost | `dragon_roost`, `dragon`, `roost` | blackstone-and-basalt charred trim, a scorched floor recolour, an open-sided nest crescent of hay and bone off the lantern column, a sparing gold hoard corner | `[17, 15, 21]`, 1–2 floors; **big** |
+| crystal_shrine | `crystal_shrine`, `crystal`, `amethyst_shrine` | an amethyst pedestal with a cluster on it standing off the lantern column, purpur-and-quartz trim, kneeling benches whose backrests point away from the crystal | `[11, 13, 13]`, 1–2 floors |
+| dwarven_gate | `dwarven_gate`, `dwarven`, `deep_gate` | a deepslate megalith trim round the doorway with a chiseled rune band, grounded brazier pedestals in the apron, a forge hall of anvil, smithing table and lit furnace | `[15, 13, 13]`, 1–2 floors |
+| beacon_spire | `beacon_spire`, `spire` | a slim corbelled cone closing on a **solid** cap with a sea-lantern crown standing on it, and a keeper's room below | `[7, 21, 7]`, 1 floor; **tall** |
+| cenotaph | `cenotaph` | a sealed masonry shell round a slab-lidded cist off the lantern column, a green-carpet wreath ring, a name wall of chiseled stone with wall banners | `[11, 12, 13]`, 1–2 floors |
+| war_memorial | `war_memorial`, `memorial` | a block-built figure on a chiseled plinth off the lantern column, flanking benches with their backrests to the walls, red wall banners and unlit candles | `[11, 12, 13]`, 1–2 floors |
+| urn_wall | `urn_wall`, `urns`, `urn_niches` | trapdoor-fronted niches from the second course to the plate up both interior wall rows, a clear aisle between them, unlit candles and a register lectern | `[9, 12, 17]`, 1 floor; **long** |
+| remembrance_arch | `remembrance_arch`, `memorial_arch`, `triumphal_arch` | a continuous **full-block** crown spanning wall to wall at the top interior course with piers under it, a names band, a carpet processional runner | `[13, 15, 15]`, 1–2 floors; **needs a four-course storey** |
+| pyre_platform | `pyre_platform`, `pyre` | a log-cribbed dais with slab tops off the lantern column carrying an **unlit** campfire, mourners' benches back on the wall rows | `[13, 12, 13]`, 1–2 floors |
+| bathing_pavilion | `bathing_pavilion`, `bath_pavilion` | the bathhouse's exact pool argument in an airier quartz room: water in the floor plane inside a smooth-quartz coping, pedestals carved from the pool corners, a divider off the lantern row, benches only where a stander fits | `[13, 13, 13]`, 1–2 floors; **square** |
+| servants_quarters | `servants_quarters`, `servants` | plain bunks up one wall row with barrel racks between the cot heads, a shared table on the far row in the storey's own idiom, a wash cauldron and a crafting table | `[11, 12, 17]`, 1–2 floors |
+
+Wave 5E claims **no** tag an earlier table owns, and every near miss is worth
+stating because each would have been a silent theft. Bare **`alchemist` is the
+apothecary's** (table 6); **`wizard`, `arcane` and `sorcerer` are the wizard
+tower's**; bare **`shrine` and `temple` mean church** (table 11), which is why
+the crystal shrine answers to `crystal_shrine` and `crystal`; bare **`beacon`
+is left free** for the military beacon tower and the lighthouse, so the spire
+claims only `beacon_spire` and `spire`; **`tomb`, `sepulchre` and `mausoleum`**
+stay the mausoleum's and wave 4B tomb's; **`columbarium` is the dovecote's**
+(table 12, the older sense of the word) and `ossuary` the underground
+catalog's, so the urn wall answers to `urn_wall` and `urns`; bare **`baths`,
+`sauna` and `hammam` are the bathhouse's**; bare `arch` is never claimed at all,
+because a bridge is full of them; and `house` still falls through to a cottage
+with `hall` still the great hall's.
+
 **Wave 4A (table 11) — the dwellings.** Twelve houses, from a one-room hut to
 a mansion. Most are **pure interior fit-outs** and are happy on a `wing`
 footprint as well as a plain rect; the four that touch the shell — the

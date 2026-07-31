@@ -275,11 +275,16 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["charity", "cells"],
     note: "A row of identical bays down one range, each a bed and a chest with a fence partition between it and the next, and one shared hearth room across the far wall.",
   }),
-  res("servants_quarters", "Servants' quarters", "not_started", { wave: 5 }),
   res("gate_lodge", "Gate lodge", "implemented", {
     wave: 5,
     tags: ["gatehouse"],
     note: "One cosy room: a watch seat on the far wall turned back down the room at the door, a small board beside it, a cot head-to-wall, and a trapdoor key rack by the entry.",
+  }),
+  res("servants_quarters", "Servants' quarters", "implemented", {
+    wave: 5,
+    tags: ["lodging", "spare"],
+    note:
+      "Plain bunks up one wall row with barrel racks between the cot heads, a shared table on the far row in the storey's own idiom, a wash cauldron and a crafting table. Honest and spare.",
   }),
   res("houseboat", "Houseboat", "not_started", { tags: ["water"] }),
   res("boarding_house", "Boarding house", "implemented", {
@@ -793,17 +798,42 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "The mausoleum's quieter cousin: sealed masonry with an apron plinth course, a slab cist and unlit candles.",
   }),
-  mem("cenotaph", "Cenotaph", "not_started", { wave: 5 }),
-  mem("war_memorial", "War memorial", "not_started", { wave: 5 }),
+  mem("cenotaph", "Cenotaph", "implemented", {
+    wave: 5,
+    tags: ["monument", "empty tomb"],
+    note:
+      "A sealed masonry shell round a slab-lidded cist laid off the lantern column, a green-carpet wreath ring on the floor cells and a name wall of chiseled stone with wall banners.",
+  }),
+  mem("war_memorial", "War memorial", "implemented", {
+    wave: 5,
+    tags: ["monument", "plinth"],
+    note:
+      "A block-built figure on a chiseled plinth off the lantern column, flanking benches with their backrests to the walls, and red wall banners with unlit candles under them.",
+  }),
   mem("memorial_garden", "Memorial garden"),
-  mem("urn_wall", "Urn wall", "not_started", { wave: 5 }),
-  mem("remembrance_arch", "Remembrance arch", "not_started", { wave: 5 }),
   mem("gravedigger_hut", "Gravedigger's hut", "implemented", {
     wave: 5,
     tags: ["modest", "tools"],
     note: "Tool racks up one wall row, a slab coffin bench down the other, a lime composter and a fire at the far wall, and one lantern's comfort by the door.",
   }),
-  mem("pyre_platform", "Funeral pyre platform", "not_started", { wave: 5 }),
+  mem("urn_wall", "Urn wall", "implemented", {
+    wave: 5,
+    tags: ["niches", "columbarium"],
+    note:
+      "Trapdoor-fronted niches from the second course to the plate up both interior wall rows, a clear aisle between them, unlit candles and a register lectern. Tags `urn_wall`/`urns` \u2014 `columbarium` is the dovecote's.",
+  }),
+  mem("remembrance_arch", "Remembrance arch", "implemented", {
+    wave: 5,
+    tags: ["monument", "arch"],
+    note:
+      "A continuous full-block crown spanning wall to wall at the top interior course with piers under it, a names band, and a carpet processional runner. Refused outright under a four-course storey.",
+  }),
+  mem("pyre_platform", "Funeral pyre platform", "implemented", {
+    wave: 5,
+    tags: ["monument", "unlit"],
+    note:
+      "A log-cribbed dais with slab tops off the lantern column carrying an UNLIT campfire, and mourners' benches back on the wall rows so the ring round it stays walkable.",
+  }),
 
   /* --- leisure / sport --------------------------------------------------- */
   lei("gazebo", "Gazebo", "implemented", { tags: ["prop", "plaza"] }),
@@ -833,7 +863,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   // A basin sunk into the ground with no interior to walk: a prop, not a shell.
   lei("swimming_pool", "Swimming pool", "implemented", { tags: ["water"], kind: "prop" }),
-  lei("bathing_pavilion", "Bathing pavilion", "not_started", { wave: 5 }),
+  lei("bathing_pavilion", "Bathing pavilion", "implemented", {
+    wave: 5,
+    tags: ["water", "garden"],
+    note:
+      "The bathhouse's airier cousin on the bathhouse's exact pool argument: water in the floor plane inside a smooth-quartz coping, pedestals carved from the pool corners, a divider off the lantern row and benches only where a stander fits. Tags `bathing_pavilion`/`bath_pavilion` \u2014 bare `baths`/`sauna`/`hammam` are the bathhouse's.",
+  }),
   lei("sauna", "Sauna", "implemented", {
     wave: 4,
     note: "The bathhouse's dry cousin: flat slab bench tiers and a brazier plinth, no water. Tags `dry_sauna`/`sweat_lodge` \u2014 bare `sauna` is the bathhouse's.",
@@ -1250,7 +1285,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- fantasy / whimsy ---------------------------------------------------- */
   fan("wizard_tower", "Wizard's tower", "implemented", { note: "Glowstone-set masonry under a steep cone." }),
-  fan("alchemists_tower", "Alchemist's tower", "not_started", { wave: 5 }),
+  fan("alchemists_tower", "Alchemist's tower", "implemented", {
+    wave: 5,
+    tags: ["tower", "lab"],
+    note:
+      "Copper-banded stone brick under a corbelled cone on a solid cap with a lightning-rod vent; a brewing stand, the still, specimen shelves behind hatch fronts and a reading press. Tags `alchemists_tower`/`alchemy_tower` \u2014 bare `alchemist` is the apothecary's.",
+  }),
   fan("treehouse", "Treehouse", "implemented", {
     kind: "prop",
     note: "Compound prop: a mega trunk it grows itself, a deck, a hut and a ladder.",
@@ -1276,13 +1316,33 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note:
       "Brown biscuit walls with white icing courses and pink and lime candy dots, a quartz icing eave in the apron and a sweets counter with a cake.",
   }),
-  fan("dragon_roost", "Dragon roost", "not_started", { wave: 5 }),
+  fan("dragon_roost", "Dragon roost", "implemented", {
+    wave: 5,
+    tags: ["hall", "charred"],
+    note:
+      "A great open hall in blackstone and basalt with a scorched floor recolour, an open-sided nest crescent of hay and bone laid off the lantern column, and a sparing hoard corner.",
+  }),
   fan("floating_platform", "Floating island platform"),
   fan("portal_frame", "Portal frame"),
-  fan("crystal_shrine", "Crystal shrine", "not_started", { wave: 5 }),
+  fan("crystal_shrine", "Crystal shrine", "implemented", {
+    wave: 5,
+    tags: ["amethyst", "focus"],
+    note:
+      "An amethyst pedestal with a cluster on it, standing off the lantern column, in purpur-and-quartz trim, with kneeling benches whose backrests point away from the crystal.",
+  }),
   fan("elven_bridge", "Elven bridge"),
-  fan("dwarven_gate", "Dwarven gate", "not_started", { wave: 5 }),
-  fan("beacon_spire", "Beacon spire", "not_started", { wave: 5 }),
+  fan("dwarven_gate", "Dwarven gate", "implemented", {
+    wave: 5,
+    tags: ["gate", "forge"],
+    note:
+      "A deepslate megalith trim round the doorway with a chiseled rune band, grounded brazier pedestals in the apron, and a forge hall of anvil, smithing table and lit furnace inside.",
+  }),
+  fan("beacon_spire", "Beacon spire", "implemented", {
+    wave: 5,
+    tags: ["tower", "light"],
+    note:
+      "A slim corbelled cone closing on a SOLID smooth-stone cap with a sea-lantern crown standing on it, and a keeper's room below. Tags `beacon_spire`/`spire` \u2014 bare `beacon` is left free.",
+  }),
   fan("giant_chessboard", "Giant chessboard"),
   fan("fairy_ring", "Fairy ring"),
   fan("clock_tower", "Clock tower"),

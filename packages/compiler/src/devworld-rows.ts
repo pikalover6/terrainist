@@ -25,6 +25,7 @@
 import { ARCHETYPE_EXHIBIT_ROWS } from "./exhibits/archetypes.js";
 import { BLITZ_EXHIBIT_ROWS } from "./exhibits/blitz.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
+import { ARCANA_EXHIBIT_ROWS } from "./exhibits/arcana.js";
 import { FAITH_EXHIBIT_ROWS } from "./exhibits/faith.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { GARRISON_EXHIBIT_ROWS } from "./exhibits/garrison.js";
@@ -126,6 +127,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...FAITH_EXHIBIT_ROWS,
   ...COMMERCE_EXHIBIT_ROWS,
   ...SCIENCE_EXHIBIT_ROWS,
+  ...ARCANA_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -222,6 +224,9 @@ export {
 } from "./exhibits/garrison.js";
 /** The wave-4B faith rows, for tests that assert on the gradient. */
 export { FAITH_EXHIBIT_ROWS, FAITH_ROW_LENGTH, faithSizeFor } from "./exhibits/faith.js";
+
+/** The wave-5E arcana rows, for tests that assert on the gradient. */
+export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

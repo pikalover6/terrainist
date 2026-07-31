@@ -44,3 +44,4 @@ export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";
 export * from "./archetypes-homestead.js";
 export * from "./archetypes-faith.js";
+export * from "./archetypes-arcana.js";

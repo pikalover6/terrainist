@@ -51,6 +51,8 @@ import {
   RESIDENTIAL_ROW_LENGTH,
   GARRISON_EXHIBIT_ROWS,
   GARRISON_ROW_LENGTH,
+  ARCANA_EXHIBIT_ROWS,
+  ARCANA_ROW_LENGTH,
   FAITH_EXHIBIT_ROWS,
   FAITH_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -174,6 +176,8 @@ describe("dev world grid", () => {
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
     const science = SCIENCE_EXHIBIT_ROWS.length * SCIENCE_ROW_LENGTH;
+    // Wave 5E, arcana: prefixed (`arc_cenotaph`) for the same reason.
+    const arcana = ARCANA_EXHIBIT_ROWS.length * ARCANA_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -195,8 +199,8 @@ describe("dev world grid", () => {
         residential +
         faith +
         commerce +
-        garrison +
-        science,
+        garrison + science +
+        arcana,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
