@@ -157,6 +157,7 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   portal_frame: [{}],
   floating_platform: [{}],
   houseboat: [{}],
+  helipad: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

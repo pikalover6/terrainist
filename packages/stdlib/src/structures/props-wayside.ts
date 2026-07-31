@@ -69,6 +69,9 @@ export const WAYSIDE_PROP_NAMES = [
   "helter_skelter",
   "midway_arch",
   "shooting_gallery",
+  // Wave six, the one piece of the air group that is a prop rather than a
+  // building: a marked pad on the ground.
+  "helipad",
 ] as const;
 
 /** One of the props this file builds. */
@@ -101,6 +104,10 @@ export const SKELTER_H = 12;
 export const MIDWAY_W = 9;
 /** Shooting gallery width — a seven-cell counter. */
 export const GALLERY_W = 7;
+/** Helipad span, in x and z: a disc of radius four, in its bounding square. */
+export const HELIPAD_SPAN = 9;
+/** Helipad disc radius, from the centre cell. */
+export const HELIPAD_R = 4;
 
 /** The declared box of one of this file's props, before it is generated. */
 export function waysidePropFootprint(prop: WaysidePropName): {
@@ -139,8 +146,10 @@ export function waysidePropFootprint(prop: WaysidePropName): {
     case "midway_arch":
       return ground([MIDWAY_W, 7, 3]);
     case "shooting_gallery":
-    default:
       return ground([GALLERY_W, 6, 3]);
+    case "helipad":
+    default:
+      return ground([HELIPAD_SPAN, 5, HELIPAD_SPAN]);
   }
 }
 
@@ -736,6 +745,74 @@ const shootingGallery: PropGenerator = ({ put, palette }) => {
   return { ops: NO_OPS, meta: metaOf("shooting_gallery") };
 };
 
+/**
+ * `helipad` — a marked circle on the ground, edge lights, and a mast.
+ *
+ * Everything about this prop is *flat*, which is the point: a helipad that
+ * stands up is a bandstand. The three pieces:
+ *
+ * - **the disc**, drawn by `dx² + dz² <= r²` and nothing else — no transcendental
+ *   is involved, which is both the house rule and the only way the same pad is
+ *   drawn on every machine. Grey concrete, with a white ring one cell in so the
+ *   pad reads as a target rather than as a patio.
+ * - **the mark**: a white `H` in the middle, three cells tall, drawn cell by
+ *   cell into the pad plane. It costs no height at all.
+ * - **the edge lights and the mast.** Lights are lanterns standing at the four
+ *   cardinal edges of the disc, each on a pad cell — a standing lantern needs a
+ *   full block beneath it and every one of these has one. The mast is a
+ *   three-course column of full cubes in one corner, on a pad cell laid under
+ *   it for the purpose, with a wall banner at its head for the windsock: a
+ *   banner hung on a full cube, never on a fence, and never a `chain`.
+ */
+const helipad: PropGenerator = ({ put, palette }) => {
+  const span = HELIPAD_SPAN;
+  const c = (span - 1) / 2;
+  const inDisc = (x: number, z: number): boolean => {
+    const dx = x - c;
+    const dz = z - c;
+    return dx * dx + dz * dz <= HELIPAD_R * HELIPAD_R;
+  };
+
+  // --- the disc and its ring ----------------------------------------------
+  for (let z = 0; z < span; z++) {
+    for (let x = 0; x < span; x++) {
+      if (!inDisc(x, z)) continue;
+      const dx = x - c;
+      const dz = z - c;
+      const d2 = dx * dx + dz * dz;
+      // The ring: the outermost band of the disc, in white.
+      put(x, 0, z, d2 > (HELIPAD_R - 1) * (HELIPAD_R - 1) ? "white_concrete" : "gray_concrete");
+    }
+  }
+
+  // --- the mark ------------------------------------------------------------
+  for (const dz of [-1, 0, 1]) {
+    put(c - 1, 0, c + dz, "white_concrete");
+    put(c + 1, 0, c + dz, "white_concrete");
+  }
+  put(c, 0, c, "white_concrete");
+
+  // --- the edge lights -----------------------------------------------------
+  for (const [x, z] of [
+    [c, c - HELIPAD_R],
+    [c, c + HELIPAD_R],
+    [c - HELIPAD_R, c],
+    [c + HELIPAD_R, c],
+  ] as const) {
+    put(x, 1, z, palette.lantern, { hanging: "false" });
+  }
+
+  // --- the mast, and the windsock on it ------------------------------------
+  // The corner is outside the disc, so the pad cell under the mast is laid
+  // here rather than assumed: every course of the mast stands on the one
+  // below it, and the bottom one stands on concrete.
+  put(0, 0, 0, "gray_concrete");
+  for (let y = 1; y <= 3; y++) put(0, y, 0, "light_gray_concrete");
+  put(0, 3, 1, "orange_wall_banner", { facing: "south" });
+
+  return { ops: NO_OPS, meta: metaOf("helipad") };
+};
+
 /* -------------------------------------------------------------------------- */
 /* registry                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -759,6 +836,7 @@ export const WAYSIDE_PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = 
   helter_skelter: helterSkelter,
   midway_arch: midwayArch,
   shooting_gallery: shootingGallery,
+  helipad,
 });
 
 /* -------------------------------------------------------------------------- */
@@ -823,6 +901,9 @@ export const WAYSIDE_PROP_EXHIBIT_PLAN: readonly {
       { prop: "midway_arch", params: { yaw: 90 } },
       { prop: "shooting_gallery", params: { yaw: 0 } },
       { prop: "shooting_gallery", params: { yaw: 180 } },
+      // The pad is symmetric but its mast is not, so it is worth two yaws.
+      { prop: "helipad", params: { yaw: 0 } },
+      { prop: "helipad", params: { yaw: 90 } },
     ],
   },
 ]);

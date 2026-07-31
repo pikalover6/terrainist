@@ -619,6 +619,7 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 11 | extended | see the extended table below |
 | 12 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
 | 13 | fallback | anything else → cottage |
+| 10 | the depths (wave 6) | `bunker_complex`/`fallout_shelter`, `subway_station`/`metro_station`/`underground_station`, `underground_silo`/`missile_silo` — see the depths table below |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -661,6 +662,20 @@ ordinary house shell instead.
 | mausoleum | `mausoleum`, `tomb`, `sepulchre` | windowless masonry, hip roof; pairs with a `crypt` cellar | `[9, 8, 9]`, 1 floor |
 | windpump | `windpump` | a pumping tower with sails, hip roof | `[7, 14, 7]`, 1 floor |
 | mine_head | `mine_head`, `mineshaft`, `mine`, `pithead` | headframe hut, winch, laddered shaft down into a mine-style cellar | `[9, 12, 9]`, 1 floor |
+
+**The depths (wave six)** — three buildings whose subject is what is
+*underneath* them. Each is an **entrance** above ground and digs itself a
+five-deep cellar dressed in its own style when your document says nothing
+about a basement; `"basement": 0` still means none, and an explicit
+`"basement": {...}` still wins. Every tag is a compound, because the bare
+words are already taken: `bunker` is the garrison's, `silo` the homestead's,
+and bare `station` belongs to nobody.
+
+| archetype | tags | what you get | good size |
+|---|---|---|---|
+| bunker_complex | `bunker_complex`, `fallout_shelter` | concrete blockhouse over a `bunker_hold` cellar: duty desk, furnace, stores, a blast-door corner | `[11, 10, 11]`, 1 floor |
+| subway_station | `subway_station`, `metro_station`, `underground_station` | ticket hall over a `subway_platform` cellar: benches, a ticket line, a line-colour banner | `[13, 11, 13]`, 1 floor |
+| underground_silo | `underground_silo`, `missile_silo` | hatch hut over a `silo_shaft` cellar: an anvil, a crate and a copper band at head height | `[11, 11, 11]`, 1 floor |
 
 **Trade (table 6)** — the commercial fit-outs. They sit **after** the breadth
 and town tables and **before** the extended and original ones, and they
@@ -1452,6 +1467,7 @@ plaza rather than one big one.
 | `portal_frame` | 4×6×3 | ground | an obsidian and crying-obsidian rectangle with a keystone and a **deliberately empty** interior — no portal block — over four rune pedestals |
 | `floating_platform` | 7×8×7 | ground | reads as a floating island and is not: a one-column end-stone stem veiled in iron bars carries a disc that oversails it by three cells every way |
 | `houseboat` | 17×9×9 | **water** | a moored home barge on the hull template: glazed cabin amidships, slab roof with a chimney and planters, a fore-deck table, a railed after-deck and bar moorings |
+| `helipad` | 9×5×9 | ground | a marked concrete disc — white ring, a painted H, four edge lanterns and a corner mast with a windsock |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask
@@ -1636,6 +1652,27 @@ unless a tunnel implies one.
 | `vault` | iron-barred strongroom, chests, a lantern — under a hall or a bank |
 | `wine_cellar` | racked barrels and bottles — under an inn |
 | `mine` | a rough working: timber, rails, ore in the walls — under a mine head |
+| `ossuary` | bone in the walls and in the niches, bone stacks on the floor — a crypt that ran out of room |
+| `undercroft` | dry vaulted stone: a springer course round the wall, crates, a working table. Wants `"depth": 4` or 5 — at 3 the springers are dropped |
+| `dungeon_room` | mossy cobble, iron bars set into the wall, straw and a cauldron. The bars are never across the way out |
+| `root_cellar` | packed mud and coarse dirt, board shelves in the wall with jars and crates, sacks and a composter |
+| `cistern_hall` | a boxed tank of water sunk into the floor slab, with a lit walk all round it |
+| `smugglers_cove` | rough mossy cobble with the chests **hidden in the wall niches** rather than stood on the floor |
+| `hermit_grotto` | natural stone in three shades: a cot, a lectern, a composter and a candle shrine |
+| `sewer_network` | a brick channel with a contained water runnel sunk into the floor and slab grates over it |
+| `bunker_hold` | poured concrete, bunks, a stove and stores — what `bunker_complex` digs for itself |
+| `subway_platform` | tile, a rail down the platform and benches — what `subway_station` digs for itself |
+| `silo_shaft` | deepslate and a copper band — what `underground_silo` digs for itself |
+
+Two of these write **water**, and both write it the only way this compiler
+ever writes a fluid: *sunk into the cellar's own floor slab*, so that beside
+every water cell is the slab the cellar laid solid under the whole footprint
+and beneath it is a course the style writes itself. You cannot get an open
+pool in a cellar by asking for one, and that is deliberate.
+
+The last three are named here for completeness — you may ask for them — but
+their real job is to be what the three **depths archetypes** dress themselves
+in. See the wave-six table below.
 
 **Tunnel styles** — `"style"` on the `connected` constraint itself:
 

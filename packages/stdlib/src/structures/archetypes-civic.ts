@@ -44,6 +44,7 @@ import { commerceFacadeDefaults } from "./archetypes-commerce.js";
 import { terminusFacadeDefaults } from "./archetypes-terminus.js";
 
 import { industryFacadeDefaults } from "./archetypes-industry.js";
+import { depthsFacadeDefaults } from "./archetypes-depths.js";
 import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
@@ -180,6 +181,9 @@ export function archetypeFacadeDefaults(
       // Wave 5D — science and modern living.
       const science = scienceFacadeDefaults(archetype);
       if (Object.keys(science).length > 0) return science;
+      // Wave six, the depths: three entrances over what they are named for.
+      const depths = depthsFacadeDefaults(archetype);
+      if (Object.keys(depths).length > 0) return depths;
       // Wave 4B, faith and memorial.
       const faith = faithFacadeDefaults(archetype);
       if (Object.keys(faith).length > 0) return faith;

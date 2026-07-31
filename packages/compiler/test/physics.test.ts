@@ -67,7 +67,12 @@ beforeAll(async () => {
     props: built.placedProps,
     blocks: built.blocks,
   };
-}, 120_000);
+  // The budget is the dev world's build time, and the dev world grows every
+  // wave: wave six's rows — plus three new base-grid archetypes, each of which
+  // digs itself a cellar — took the old 120s hook past its limit. Raised
+  // rather than trimmed: this hook builds two whole worlds, and what hangs off
+  // it is the lint that has to see all of them.
+}, 600_000);
 
 afterAll(async () => {
   for (const dir of scratch) await rm(dir, { recursive: true, force: true });

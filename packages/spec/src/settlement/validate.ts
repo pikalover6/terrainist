@@ -1556,7 +1556,27 @@ export const BASEMENT_DEPTH_RANGE = [3, 5] as const;
  * else — same shell, same ladder, same walkable plane — which is why this is a
  * param of `basement` rather than an archetype of its own.
  */
-export const CELLAR_STYLE_VALUES = ["plain", "crypt", "vault", "wine_cellar", "mine"] as const;
+export const CELLAR_STYLE_VALUES = [
+  "plain",
+  "crypt",
+  "vault",
+  "wine_cellar",
+  "mine",
+  // Wave six. The first eight are rooms an author asks for by name; the last
+  // three are what the depths archetypes dress themselves in, listed because a
+  // value the grammar accepts and the validator refuses is the worst of both.
+  "ossuary",
+  "undercroft",
+  "dungeon_room",
+  "root_cellar",
+  "cistern_hall",
+  "smugglers_cove",
+  "hermit_grotto",
+  "sewer_network",
+  "bunker_hold",
+  "subway_platform",
+  "silo_shaft",
+] as const;
 
 /** How a `connected … via "tunnel"` gallery may be dug. */
 export const TUNNEL_STYLE_VALUES = ["dressed", "mine", "crypt"] as const;
@@ -1815,6 +1835,8 @@ export const SETTLEMENT_PROP_NAMES = [
   "helter_skelter",
   "midway_arch",
   "shooting_gallery",
+  // Wave six, the one air-group prop.
+  "helipad",
   "standing_stones",
   "henge",
   "monolith",

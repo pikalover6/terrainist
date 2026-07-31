@@ -184,6 +184,14 @@ import {
 
 export * from "./archetypes-faith.js";
 
+import {
+  DEPTHS_BUILDING_ARCHETYPES,
+  depthsArchetypeOfTags,
+  furnishDepths,
+} from "./archetypes-depths.js";
+
+export * from "./archetypes-depths.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -231,6 +239,7 @@ export const BUILDING_ARCHETYPES = [
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
+  ...DEPTHS_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -349,6 +358,11 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `villa` the Mediterranean one.
   const science = scienceArchetypeOfTags(tags);
   if (science !== null) return science;
+  // Wave six, the depths. Every claim it makes is a compound, so its position
+  // in the chain is very nearly free: `bunker` stays the garrison's, `silo`
+  // the homestead's, and bare `station` stays unclaimed by anybody.
+  const depths = depthsArchetypeOfTags(tags);
+  if (depths !== null) return depths;
   // Wave 5E, arcana: the fantastical and the remembered. Straight after the
   // dwellings and well before the extended table, and it claims nothing an
   // earlier one claims — `alchemist` is still the apothecary's, `wizard` and
@@ -770,6 +784,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
+  n += furnishDepths(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
   return n;

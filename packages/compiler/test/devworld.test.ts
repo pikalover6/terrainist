@@ -59,6 +59,8 @@ import {
   RELIC_ROW_LENGTH,
   SPECTACLE_EXHIBIT_ROWS,
   SPECTACLE_ROW_LENGTH,
+  DEPTHS_EXHIBIT_ROWS,
+  DEPTHS_ROW_LENGTH,
   FAITH_EXHIBIT_ROWS,
   FAITH_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -190,6 +192,8 @@ describe("dev world grid", () => {
     const relic = RELIC_EXHIBIT_ROWS.length * RELIC_ROW_LENGTH;
     // Wave 6D, spectacle: prefixed (`spec_big_top`) for the same reason.
     const spectacle = SPECTACLE_EXHIBIT_ROWS.length * SPECTACLE_ROW_LENGTH;
+    // Wave six, the depths: prefixed (`depth_bunker_complex`) for the same reason.
+    const depths = DEPTHS_EXHIBIT_ROWS.length * DEPTHS_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -215,7 +219,8 @@ describe("dev world grid", () => {
         arcana +
         terminus +
         relic +
-        spectacle,
+        spectacle +
+        depths,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

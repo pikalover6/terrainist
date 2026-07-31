@@ -57,7 +57,10 @@ describe("wayside props", () => {
       const entry = structureById(p);
       expect(entry, p).toBeDefined();
       expect(entry?.status, p).toBe("implemented");
-      expect(entry?.wave, p).toBe(5);
+      // Wave five built the first twelve; wave six added the helipad to the
+      // same file, because a marked pad on the ground is a wayside prop
+      // whatever group the catalog files it under.
+      expect(entry?.wave === 5 || entry?.wave === 6, p).toBe(true);
       expect(entry?.kind, p).toBe("prop");
       expect(STRUCTURE_CATALOG.filter((e) => e.id === p), p).toHaveLength(1);
     }
@@ -325,5 +328,27 @@ describe("wayside props", () => {
     expect(has("shooting_gallery", "white_concrete"), "the target discs").toBe(true);
     expect(has("shooting_gallery", "hay_block"), "the prizes").toBe(true);
     expect(has("shooting_gallery", "red_wool"), "the canopy stripe").toBe(true);
+
+    // --- the pad (wave six) ------------------------------------------------
+    // A disc, not a square: the bounding box's corners are empty except the
+    // one the mast stands on, and the disc's own edge is white.
+    const pad = indexOf(opsOf("helipad"));
+    expect(pad.get("8,0,0"), "the pad is a disc, not a square").toBeUndefined();
+    expect(pad.get("8,0,8"), "the pad is a disc, not a square").toBeUndefined();
+    expect(pad.get("4,0,0")?.block, "the ring").toBe("white_concrete");
+    expect(pad.get("4,0,4")?.block, "the middle of the H").toBe("white_concrete");
+    expect(pad.get("4,0,2")?.block, "inside the ring").toBe("gray_concrete");
+    // Four edge lights, each standing on a pad cell.
+    const lights = opsOf("helipad").filter((op) => op.block.endsWith("lantern"));
+    expect(lights, "four edge lights").toHaveLength(4);
+    for (const l of lights) {
+      expect(l.props?.["hanging"], "an edge light stands, it does not hang").toBe("false");
+      expect(pad.get(`${l.x},0,${l.z}`), `pad under the light at ${l.x},${l.z}`).toBeDefined();
+    }
+    // The mast, and the windsock hung off its head — a banner, never a sign,
+    // and on a full cube, never a fence.
+    expect(pad.get("0,0,0")?.block, "the mast's own footing").toBe("gray_concrete");
+    expect(pad.get("0,3,0")?.block, "the mast head").toBe("light_gray_concrete");
+    expect(pad.get("0,3,1")?.block, "the windsock").toBe("orange_wall_banner");
   });
 });

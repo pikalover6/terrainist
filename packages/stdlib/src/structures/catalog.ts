@@ -134,6 +134,20 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   "wine_cellar",
   "mineshaft",
   "ore_chamber",
+  // Wave six. Eight more cellar styles, on exactly the same footing as the
+  // crypt: each is a `"basement": { "style": ... }` and not a node, and each is
+  // named here because an author needs to know they can ask for it. The wave's
+  // other four entries are deliberately NOT here -- `bunker_complex`,
+  // `subway_station` and `underground_silo` are real archetypes and `helipad`
+  // is a real prop, so the live registries back those four directly.
+  "ossuary",
+  "undercroft",
+  "dungeon_room",
+  "root_cellar",
+  "cistern_hall",
+  "smugglers_cove",
+  "hermit_grotto",
+  "sewer_network",
 ]);
 
 /**
@@ -1237,7 +1251,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Check-in counters across the head, departure rows on the school's aisle discipline, gates read as painted floor bands under numbered banners, and baggage barrows by the way in.",
   }),
   air("runway", "Runway", "implemented", { tags: ["prop", "linear"] }),
-  air("helipad", "Helipad", "not_started", { wave: 6 }),
+  air("helipad", "Helipad", "implemented", {
+    wave: 6,
+    tags: ["prop"],
+    note: "prop.place@0: a marked concrete disc with a white ring and an H, four edge lanterns, and a corner mast carrying a wall-banner windsock.",
+  }),
   air("windsock", "Windsock"),
 
   /* --- infrastructure ---------------------------------------------------- */
@@ -1603,9 +1621,21 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["grammar-stage", "style"],
     note: '"basement": { "style": "crypt" } — niches, coffin, cobwebs. A cellar style, not a node.',
   }),
-  und("ossuary", "Ossuary", "not_started", { wave: 6 }),
-  und("undercroft", "Undercroft", "not_started", { wave: 6 }),
-  und("dungeon_room", "Dungeon room", "not_started", { wave: 6 }),
+  und("ossuary", "Ossuary", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "ossuary" } - bone in the walls, skulls and bone blocks in the niches, bone stacks on the floor.',
+  }),
+  und("undercroft", "Undercroft", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "undercroft" } - dry vaulted stone with a course of stair springers, crates and a working table. The springers want a cellar 4 deep or more.',
+  }),
+  und("dungeon_room", "Dungeon room", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "dungeon_room" } - mossy cobble, iron bars set into the wall ring, straw and a cauldron. The bars are never across the way out.',
+  }),
   und("vault", "Vault", "implemented", {
     tags: ["grammar-stage", "style"],
     note: '"basement": { "style": "vault" } — bar gate, dense chests and barrels.',
@@ -1614,14 +1644,49 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["grammar-stage", "style"],
     note: '"basement": { "style": "wine_cellar" } — stacked barrel walls and a bottle gesture.',
   }),
-  und("root_cellar", "Root cellar", "not_started", { wave: 6 }),
-  und("smugglers_cove", "Smugglers' cove", "not_started", { wave: 6 }),
-  und("sewer_network", "Sewer network", "not_started", { wave: 6 }),
-  und("cistern_hall", "Cistern hall", "not_started", { wave: 6 }),
-  und("bunker_complex", "Bunker complex", "not_started", { wave: 6 }),
-  und("subway_station", "Subway station", "not_started", { wave: 6 }),
-  und("hermit_grotto", "Hermit's grotto", "not_started", { wave: 6 }),
-  und("underground_silo", "Underground silo", "not_started", { wave: 6 }),
+  und("root_cellar", "Root cellar", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "root_cellar" } - packed mud and coarse dirt, board shelves cut into the wall with jars and crates on them, sacks and a composter.',
+  }),
+  und("smugglers_cove", "Smugglers\' cove", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "smugglers_cove" } - rough mossy cobble with the chests hidden in wall niches rather than stood on the floor.',
+  }),
+  und("sewer_network", "Sewer network", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "sewer_network" } - a brick channel with a contained water runnel sunk into the floor slab and slab grates over it. The NETWORK is deliberately not built: a network of galleries is tunnel machinery, and a cellar style is one room.',
+  }),
+  und("cistern_hall", "Cistern hall", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "cistern_hall" } - a boxed tank sunk into the floor slab with a lit walk round it. The bathhouse pool predicate, taken underground.',
+  }),
+  und("bunker_complex", "Bunker complex", "implemented", {
+    wave: 6,
+    kind: "building",
+    tags: ["village", "underground", "archetype"],
+    note: "building.grammar@0 archetype: a concrete blockhouse that digs itself a `bunker`-style cellar - the mine head\'s pattern, entrance above and archetype below.",
+  }),
+  und("subway_station", "Subway station", "implemented", {
+    wave: 6,
+    kind: "building",
+    tags: ["village", "underground", "archetype", "transport"],
+    note: "building.grammar@0 archetype: a ticket hall over a `subway`-style cellar - platform, rail and tile. Tags: subway_station/metro_station/underground_station; bare `station` stays unclaimed.",
+  }),
+  und("hermit_grotto", "Hermit\'s grotto", "implemented", {
+    wave: 6,
+    tags: ["grammar-stage", "style"],
+    note: '"basement": { "style": "hermit_grotto" } - natural stone in three shades, a cot, a lectern, a composter and a candle shrine.',
+  }),
+  und("underground_silo", "Underground silo", "implemented", {
+    wave: 6,
+    kind: "building",
+    tags: ["village", "underground", "archetype"],
+    note: "building.grammar@0 archetype: a hatch hut over a `silo`-style cellar - deepslate, a copper band and a shaft read. Tags: underground_silo/missile_silo; bare `silo` is the homestead\'s.",
+  }),
 ]);
 
 /* -------------------------------------------------------------------------- */

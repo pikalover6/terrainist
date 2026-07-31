@@ -49,6 +49,8 @@ import {
   cellarDressing,
   cellarSecondAccent,
   dressCellar,
+  defaultBasementDepth,
+  defaultCellarStyle,
   resolveCellarStyle,
   type CellarStyle,
 } from "./underground.js";
@@ -847,17 +849,22 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
 
   // The cellar is dug before the skirt is measured, because the two share the
   // same ground: a skirt sunk through a cellar would fill the room it stands in.
+  // An archetype may dig itself a cellar the document never asked for — the
+  // depths archetypes are entrances, and an entrance to nothing is a shed.
+  // `undefined` means "say nothing"; an explicit `0` still means "no cellar".
+  const askedBasement = params.basement ?? defaultBasementDepth(archetype) ?? undefined;
   const cellar =
-    params.basement === undefined || params.basement <= 0
+    askedBasement === undefined || askedBasement <= 0
       ? 0
-      : clamp(Math.round(params.basement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
+      : clamp(Math.round(askedBasement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
   const foundationDepth = Math.max(Math.max(0, Math.round(request.foundationDepth ?? 1)), cellar + 1);
   // The style, resolved once beside the depth. A mine head's cellar is the
   // bottom of its own shaft, so it dresses itself when the document says
   // nothing — every other archetype stays plain unless asked.
+  const archetypeCellarStyle = defaultCellarStyle(archetype);
   const cellarStyle: CellarStyle =
-    params.cellarStyle === undefined && archetype === "mine_head"
-      ? "mine"
+    params.cellarStyle === undefined && archetypeCellarStyle !== null
+      ? archetypeCellarStyle
       : resolveCellarStyle(params.cellarStyle);
 
   const cells = new Map<string, LocalVoxelOp>();

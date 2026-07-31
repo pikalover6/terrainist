@@ -42,7 +42,30 @@ import type { Cardinal, LocalRect, Put } from "./core.js";
  * this here" — a parish (crypt), a treasury (vault), a vintner (wine_cellar),
  * a mining company (mine).
  */
-export const CELLAR_STYLES = ["plain", "crypt", "vault", "wine_cellar", "mine"] as const;
+export const CELLAR_STYLES = [
+  "plain",
+  "crypt",
+  "vault",
+  "wine_cellar",
+  "mine",
+  // Wave six, the underground. The first eight are author-facing rooms — each
+  // one is the catalog id of the same name, so a document that asks for an
+  // `ossuary` gets the room the catalog promised it. The last three are the
+  // depths archetypes' own dressings: an author may still name them, but their
+  // real job is to be what `bunker_complex`, `subway_station` and
+  // `underground_silo` dig under themselves when the document says nothing.
+  "ossuary",
+  "undercroft",
+  "dungeon_room",
+  "root_cellar",
+  "cistern_hall",
+  "smugglers_cove",
+  "hermit_grotto",
+  "sewer_network",
+  "bunker_hold",
+  "subway_platform",
+  "silo_shaft",
+] as const;
 
 /** One cellar style. */
 export type CellarStyle = (typeof CELLAR_STYLES)[number];
@@ -92,6 +115,35 @@ export function cellarDressing(style: CellarStyle): CellarDressing | null {
       return { primary: "bricks", accent: "cracked_stone_bricks", accentShare: 0.14 };
     case "mine":
       return { primary: "cobblestone", accent: "andesite", accentShare: 0.35 };
+    /* --- wave six ---------------------------------------------------------- */
+    // Bone in the wall, not just on the shelves: an ossuary is a crypt whose
+    // contents ran out of niches and became the masonry.
+    case "ossuary":
+      return { primary: "stone_bricks", accent: "bone_block", accentShare: 0.3 };
+    // Vaulted stone, swept and dry — the undercroft is the one room down here
+    // that is still in use, so it is the only one with no moss in it.
+    case "undercroft":
+      return { primary: "stone_bricks", accent: "polished_andesite", accentShare: 0.22 };
+    case "dungeon_room":
+      return { primary: "cobblestone", accent: "mossy_cobblestone", accentShare: 0.38 };
+    // Earth, boarded: a root cellar is a hole in the ground with shelves in it,
+    // and `packed_mud` is the only mud this compiler may write.
+    case "root_cellar":
+      return { primary: "packed_mud", accent: "coarse_dirt", accentShare: 0.28 };
+    case "cistern_hall":
+      return { primary: "stone_bricks", accent: "mossy_stone_bricks", accentShare: 0.2 };
+    case "smugglers_cove":
+      return { primary: "cobblestone", accent: "mossy_cobblestone", accentShare: 0.2 };
+    case "hermit_grotto":
+      return { primary: "stone", accent: "mossy_cobblestone", accentShare: 0.3 };
+    case "sewer_network":
+      return { primary: "bricks", accent: "mossy_stone_bricks", accentShare: 0.3 };
+    case "bunker_hold":
+      return { primary: "gray_concrete", accent: "light_gray_concrete", accentShare: 0.26 };
+    case "subway_platform":
+      return { primary: "smooth_stone", accent: "light_gray_concrete", accentShare: 0.3 };
+    case "silo_shaft":
+      return { primary: "deepslate_bricks", accent: "deepslate_tiles", accentShare: 0.32 };
     default:
       return null;
   }
@@ -105,7 +157,23 @@ export function cellarDressing(style: CellarStyle): CellarDressing | null {
  * wall, and the cracks are what make it a ruin.
  */
 export function cellarSecondAccent(style: CellarStyle): string | null {
-  return style === "crypt" ? "cracked_stone_bricks" : null;
+  switch (style) {
+    case "crypt":
+      return "cracked_stone_bricks";
+    // Bone, cracks and stone: an ossuary reads as older than the crypt it grew
+    // out of, and the third block is what does it.
+    case "ossuary":
+      return "cracked_stone_bricks";
+    // A grotto is a hole a person moved into, so the wall wants to look
+    // *natural* rather than aged — three stones, no brickwork.
+    case "hermit_grotto":
+      return "andesite";
+    // Water has been running down these for a century.
+    case "sewer_network":
+      return "cracked_stone_bricks";
+    default:
+      return null;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -216,7 +284,16 @@ export function dressCellar(r: CellarDressRequest): CellarDressResult {
   // one above it, with a slab shelf laid on the floor of the recess. It costs
   // the room no floor, so it needs no guard — and it is the one gesture that
   // makes a crypt read as a crypt from the ladder.
-  const nicheStyles: ReadonlySet<CellarStyle> = new Set<CellarStyle>(["crypt"]);
+  const nicheStyles: ReadonlySet<CellarStyle> = new Set<CellarStyle>([
+    "crypt",
+    // Four wave-six rooms are niched, and all four for the crypt's own reason:
+    // the alcove costs the floor nothing, so it is the cheapest way to make a
+    // room read as *lined* — with bones, with jars, with stashed crates.
+    "ossuary",
+    "root_cellar",
+    "smugglers_cove",
+    "hermit_grotto",
+  ]);
   if (nicheStyles.has(r.style)) {
     const ring = wallRing(rect);
     for (const [i, cell] of ring.entries()) {
@@ -243,13 +320,8 @@ export function dressCellar(r: CellarDressRequest): CellarDressResult {
       // Drawn once per niche from its own position, so the same cellar draws
       // the same crypt every time and two crypts never draw the same one.
       const draw = positionFloat(choice, cell.x, floorY, cell.z);
-      if (draw < 0.34) {
-        put(cell.x, floorY + 1, cell.z, "skeleton_skull", { rotation: rotationOf(cell.out) });
-      } else if (draw < 0.55) {
-        put(cell.x, floorY + 1, cell.z, "candle", { candles: "1", lit: "false", waterlogged: "false" });
-      } else if (draw < 0.72) {
-        put(cell.x, floorY + 1, cell.z, "cobweb");
-      }
+      const shelved = nicheContent(r.style, draw, cell.out);
+      if (shelved !== null) put(cell.x, floorY + 1, cell.z, shelved.block, shelved.props);
     }
   }
 
@@ -369,6 +441,258 @@ export function dressCellar(r: CellarDressRequest): CellarDressResult {
       scatterCobwebs(r, 0.08);
       break;
     }
+
+    /* --- wave six: the underground ---------------------------------------- */
+
+    case "ossuary": {
+      // The niches did the work. What the floor adds is the stacks: bone
+      // blocks laid in pairs against the walls, each pair through the guard,
+      // so a room too small for them is simply a lined room with nothing in
+      // the middle — which is also what a small ossuary is.
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.72) continue;
+        if (place(x, z, "bone_block", { axis: draw < 0.86 ? "x" : "z" })) {
+          put(x, floorY + 1, z, "bone_block", { axis: "y" });
+          furniture++;
+        }
+      }
+      scatterCobwebs(r, 0.1);
+      break;
+    }
+
+    case "undercroft": {
+      // Vaulting, spelled as it can be spelled without costing floor: a course
+      // of upside-down stair springers ringing the wall one below the ceiling,
+      // which from the middle of the room reads as the start of an arch. They
+      // are cut into the *wall* ring, so they take nothing from the plan.
+      // …and only where there is headroom for it. A springer two courses over
+      // the walk plane is a springer; one course over it is a stair through a
+      // player's head, and the shallowest legal cellar is exactly that tight.
+      const springer = -2;
+      if (springer >= floorY + 2) {
+        for (const cell of wallRing(rect)) {
+          const [dx, dz] = STEP[cell.out];
+          const ix = cell.x - dx;
+          const iz = cell.z - dz;
+          if (ix < interior.x0 || ix > interior.x1 || iz < interior.z0 || iz > interior.z1) continue;
+          if (r.blocked?.has(`${ix},${iz}`) === true) continue;
+          // **Never the ladder's own column.** The ladder runs from the walk
+          // plane up past the ground floor, and a springer set into that column
+          // is a block in the middle of the climb: the whole cellar goes
+          // unreachable, and the physics lint says so in a hundred lines.
+          if (ix === access.x && iz === access.z) continue;
+          put(ix, springer, iz, "stone_brick_stairs", {
+            facing: cell.out,
+            half: "top",
+            shape: "straight",
+          });
+        }
+      }
+      // Crates and a working table down one side: the undercroft is a store
+      // that someone still walks into.
+      for (let z = interior.z0; z <= interior.z1; z += 2) {
+        if (r.blocked?.has(`${interior.x0},${z}`) === true) continue;
+        place(interior.x0, z, "barrel", { facing: "up", open: "false" });
+      }
+      place(interior.x1, interior.z0, "cartography_table");
+      break;
+    }
+
+    case "dungeon_room": {
+      // Cells: iron bars set into the perimeter wall at a spacing, two courses
+      // high. A bar in the wall ring costs no floor and cannot lock anyone in
+      // — the same reason the vault's gate stands beside the ladder and never
+      // across it.
+      const ring = wallRing(rect);
+      for (const [i, cell] of ring.entries()) {
+        if (i % 4 !== 0) continue;
+        if (cell.x === access.x && cell.z === access.z) continue;
+        for (const dy of [0, 1]) {
+          put(cell.x, floorY + dy, cell.z, "iron_bars", {
+            north: "false",
+            east: "false",
+            south: "false",
+            west: "false",
+            waterlogged: "false",
+          });
+        }
+      }
+      // What is in a cell: straw to lie on, and a bucket that is a cauldron.
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.8) continue;
+        place(x, z, draw < 0.92 ? "hay_block" : "cauldron", draw < 0.92 ? { axis: "x" } : { level: "0" });
+      }
+      scatterCobwebs(r, 0.12);
+      break;
+    }
+
+    case "root_cellar": {
+      // The niches are the shelves and carry the jars. The floor gets the
+      // sacks and the composter — a cool store is a room you put things down
+      // in and walk out of.
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.62) continue;
+        place(x, z, draw < 0.8 ? "hay_block" : draw < 0.9 ? "composter" : "barrel",
+          draw < 0.8 ? { axis: "y" } : draw < 0.9 ? { level: "0" } : { facing: "up", open: "false" });
+      }
+      break;
+    }
+
+    case "cistern_hall": {
+      // The bathhouse's pool predicate, taken underground and **sunk**: the
+      // water goes into the floor slab rather than onto the walk plane, so
+      // beneath every water cell is masonry this pass writes itself, beside it
+      // is the slab the cellar already laid solid across the whole footprint,
+      // and above it is the room's own air. Nothing about that depends on the
+      // seed, the theme or the terrain — which is the whole of the argument.
+      const basin = sinkRect(interior, 1);
+      if (basin !== null) sinkFluid(r, basin, "water");
+      // The kerb: a lantern-lit post at each corner of the basin, on the walk
+      // plane and through the guard, so the hall reads as a tank with a walk
+      // round it rather than as a hole.
+      for (const [x, z] of [
+        [basin === null ? interior.x0 : basin.x0 - 1, basin === null ? interior.z0 : basin.z0 - 1],
+        [basin === null ? interior.x1 : basin.x1 + 1, basin === null ? interior.z1 : basin.z1 + 1],
+      ] as const) {
+        if (x < interior.x0 || x > interior.x1 || z < interior.z0 || z > interior.z1) continue;
+        if (place(x, z, "chiseled_stone_bricks")) {
+          put(x, floorY + 1, z, "lantern", { hanging: "false", waterlogged: "false" });
+          furniture++;
+        }
+      }
+      break;
+    }
+
+    case "sewer_network": {
+      // A brick channel, not a network: this is one room, and a room cannot be
+      // a network. The runnel is the same sunk-fluid construction the cistern
+      // uses, one cell wide down the long axis, so the water is boxed by the
+      // slab on every side and by masonry beneath.
+      const runnel = runnelRect(interior);
+      if (runnel !== null) sinkFluid(r, runnel, "water");
+      // Grates over the channel at a spacing: a bottom slab written into the
+      // **walk plane** spans the trench, so a player crosses the runnel on it
+      // rather than round it. The runnel is short of both ends of the room
+      // anyway — a channel that spanned wall to wall would cut the floor in
+      // two, and no spacing of grates is worth that risk.
+      if (runnel !== null) {
+        for (let z = runnel.z0; z <= runnel.z1; z += 3) {
+          for (let x = runnel.x0; x <= runnel.x1; x++) {
+            put(x, floorY, z, "stone_brick_slab", { type: "bottom", waterlogged: "false" });
+          }
+        }
+      }
+      scatterCobwebs(r, 0.1);
+      break;
+    }
+
+    case "smugglers_cove": {
+      // Rough stone and stashes. The chests are in the niches — hidden, which
+      // is the whole read — and the floor keeps its crates and a barrel of
+      // something the excise never saw.
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.7) continue;
+        place(x, z, draw < 0.85 ? "barrel" : "chest",
+          draw < 0.85 ? { facing: "up", open: "false" } : { facing: facingInward(interior, x, z), type: "single" });
+      }
+      scatterCobwebs(r, 0.14);
+      break;
+    }
+
+    case "hermit_grotto": {
+      // One person lives here. A cot, a lectern, a pot, and a shrine of
+      // chiselled stone under a candle — the smallest inhabited room this
+      // grammar builds, and every piece of it goes through the guard.
+      place(interior.x0, interior.z0, "hay_block", { axis: "x" });
+      place(interior.x0, interior.z0 + 1 <= interior.z1 ? interior.z0 + 1 : interior.z0, "lectern", {
+        facing: "east",
+        has_book: "true",
+      });
+      place(interior.x1, interior.z1, "composter", { level: "0" });
+      if (place(interior.x1, interior.z0, "chiseled_stone_bricks")) {
+        put(interior.x1, floorY + 1, interior.z0, "candle", {
+          candles: "3",
+          lit: "false",
+          waterlogged: "false",
+        });
+        furniture++;
+      }
+      scatterCobwebs(r, 0.06);
+      break;
+    }
+
+    case "bunker_hold": {
+      // Concrete rooms: bunks, a stove and stores against the walls. Nothing
+      // in the middle, because a bunker's middle is the corridor.
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.55) continue;
+        place(
+          x,
+          z,
+          draw < 0.74 ? "barrel" : draw < 0.86 ? "furnace" : "crafting_table",
+          draw < 0.74
+            ? { facing: "up", open: "false" }
+            : draw < 0.86
+              ? { facing: facingInward(interior, x, z), lit: "false" }
+              : undefined,
+        );
+      }
+      break;
+    }
+
+    case "subway_platform": {
+      // A platform and a line. The rail runs down the long axis on the walk
+      // plane — a rail is passable, so it takes nothing from the room — and
+      // the benches are stairs against the wall, through the guard.
+      const line = runnelRect(interior);
+      if (line !== null) {
+        for (let z = line.z0; z <= line.z1; z++) {
+          for (let x = line.x0; x <= line.x1; x++) {
+            if (x === access.x && z === access.z) continue;
+            if (x === center.x && z === center.z) continue;
+            if (r.blocked?.has(`${x},${z}`) === true) continue;
+            put(x, floorY, z, "rail", { shape: "north_south", waterlogged: "false" });
+          }
+        }
+      }
+      for (let z = interior.z0 + 1; z <= interior.z1 - 1; z += 3) {
+        if (r.blocked?.has(`${interior.x0},${z}`) === true) continue;
+        place(interior.x0, z, "smooth_stone_stairs", {
+          facing: "east",
+          half: "bottom",
+          shape: "straight",
+        });
+      }
+      break;
+    }
+
+    case "silo_shaft": {
+      // The bottom of a deep shaft: a banded ring in the wall at head height
+      // and hardware on the floor. The band is a wall-ring course, so the
+      // cylinder reads without costing the room a cell.
+      for (const cell of wallRing(rect)) {
+        put(cell.x, floorY + 2, cell.z, "cut_copper");
+      }
+      for (const [x, z] of wallAdjacent(interior)) {
+        if (r.blocked?.has(`${x},${z}`) === true) continue;
+        const draw = positionFloat(choice, x, floorY, z);
+        if (draw < 0.78) continue;
+        place(x, z, draw < 0.9 ? "barrel" : "anvil",
+          draw < 0.9 ? { facing: "up", open: "false" } : { facing: facingInward(interior, x, z) });
+      }
+      break;
+    }
+
     default:
       break;
   }
@@ -378,7 +702,142 @@ export function dressCellar(r: CellarDressRequest): CellarDressResult {
 
 /** The slab a style's niche shelf is cut from. */
 function slabOf(style: CellarStyle): string {
-  return style === "mine" ? "cobblestone_slab" : "stone_brick_slab";
+  switch (style) {
+    case "mine":
+    case "smugglers_cove":
+    case "hermit_grotto":
+      return "cobblestone_slab";
+    // A root cellar's shelves are boards, because a root cellar's shelves are
+    // boards. Everything else is dressed stone.
+    case "root_cellar":
+      return "oak_slab";
+    default:
+      return "stone_brick_slab";
+  }
+}
+
+/**
+ * What stands on a niche shelf, or `null` for an empty one.
+ *
+ * One draw per niche, position-keyed by the caller, so the same room draws the
+ * same contents forever and two rooms never draw the same ones. Everything
+ * here rests on the shelf slab directly beneath it — a niche is the one place
+ * in a cellar where "supported" is true by construction.
+ */
+function nicheContent(
+  style: CellarStyle,
+  draw: number,
+  out: Cardinal,
+): { readonly block: string; readonly props?: Record<string, string> } | null {
+  switch (style) {
+    case "ossuary":
+      // Denser than the crypt, and bone where the crypt has candles: the
+      // difference between a tomb and a store of the dead.
+      if (draw < 0.5) return { block: "skeleton_skull", props: { rotation: rotationOf(out) } };
+      if (draw < 0.85) return { block: "bone_block", props: { axis: "y" } };
+      return { block: "cobweb" };
+    case "root_cellar":
+      // Jars and crates on the boards.
+      if (draw < 0.45) return { block: "decorated_pot", props: { facing: "north", waterlogged: "false" } };
+      if (draw < 0.8) return { block: "barrel", props: { facing: "up", open: "false" } };
+      return null;
+    case "smugglers_cove":
+      // The stash, and the read is that it is *in the wall*.
+      if (draw < 0.4) {
+        return { block: "chest", props: { facing: opposite(out), type: "single" } };
+      }
+      if (draw < 0.66) return { block: "barrel", props: { facing: "up", open: "false" } };
+      return { block: "cobweb" };
+    case "hermit_grotto":
+      if (draw < 0.3) return { block: "candle", props: { candles: "2", lit: "false", waterlogged: "false" } };
+      if (draw < 0.5) return { block: "decorated_pot", props: { facing: "north", waterlogged: "false" } };
+      return null;
+    default:
+      // The crypt's own draw, unchanged.
+      if (draw < 0.34) return { block: "skeleton_skull", props: { rotation: rotationOf(out) } };
+      if (draw < 0.55) {
+        return { block: "candle", props: { candles: "1", lit: "false", waterlogged: "false" } };
+      }
+      if (draw < 0.72) return { block: "cobweb" };
+      return null;
+  }
+}
+
+/** The cardinal facing back into the room from a wall whose outward face is `out`. */
+function opposite(out: Cardinal): Cardinal {
+  switch (out) {
+    case "north":
+      return "south";
+    case "south":
+      return "north";
+    case "west":
+      return "east";
+    default:
+      return "west";
+  }
+}
+
+/** Every interior cell that touches the wall, in canonical (z, x) order. */
+function wallAdjacent(interior: LocalRect): (readonly [number, number])[] {
+  const out: (readonly [number, number])[] = [];
+  for (let z = interior.z0; z <= interior.z1; z++) {
+    for (let x = interior.x0; x <= interior.x1; x++) {
+      if (x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1) {
+        out.push([x, z] as const);
+      }
+    }
+  }
+  return out;
+}
+
+/** The interior inset by `by` on every side, or `null` when nothing is left. */
+function sinkRect(interior: LocalRect, by: number): LocalRect | null {
+  const rect = {
+    x0: interior.x0 + by,
+    z0: interior.z0 + by,
+    x1: interior.x1 - by,
+    z1: interior.z1 - by,
+  };
+  if (rect.x1 < rect.x0 || rect.z1 < rect.z0) return null;
+  return rect;
+}
+
+/**
+ * The one-cell channel down the room's long axis, clear of both ends.
+ *
+ * `null` when the room is too small to hold a channel and still have a floor
+ * either side of it — a runnel you have to stand in is a flooded cellar.
+ */
+function runnelRect(interior: LocalRect): LocalRect | null {
+  if (interior.x1 - interior.x0 < 2 || interior.z1 - interior.z0 < 2) return null;
+  const x = Math.floor((interior.x0 + interior.x1) / 2);
+  return { x0: x, x1: x, z0: interior.z0 + 1, z1: interior.z1 - 1 };
+}
+
+/**
+ * Sink a fluid into the cellar's floor slab, boxed on every side.
+ *
+ * The whole fluid-safety argument, and it is structural rather than statistical:
+ *
+ * - the fluid goes at `floorY - 1`, which is the **floor slab** the cellar laid
+ *   solid across its entire footprint, so every cell beside a fluid cell at
+ *   that level is either more fluid or that slab;
+ * - beneath it, at `floorY - 2`, this pass writes a course of its own masonry
+ *   under the whole basin, so nothing can fall out of the bottom;
+ * - above it is the room's air, and a source block does not climb.
+ *
+ * The caller must hand a rect strictly inside the interior, which is inside the
+ * footprint by one more cell — that inset is what makes the first bullet true.
+ */
+function sinkFluid(r: CellarDressRequest, basin: LocalRect, fluid: string): void {
+  const dressing = cellarDressing(r.style);
+  const bed = dressing === null ? "stone_bricks" : dressing.primary;
+  for (let z = basin.z0; z <= basin.z1; z++) {
+    for (let x = basin.x0; x <= basin.x1; x++) {
+      r.put(x, r.floorY - 2, z, bed);
+      r.put(x, r.floorY - 1, z, fluid, { level: "0" });
+    }
+  }
 }
 
 /** A skull's `rotation` for the wall it is set against — it faces the room. */
@@ -457,6 +916,52 @@ export const CELLAR_PLAIN_CRACK_SHARE = PLAIN_CRACK_SHARE;
  * hole in the ground here.
  */
 export const UNDERGROUND_ARCHETYPES = ["mine_head"] as const;
+
+/**
+ * The cellar style an archetype dresses itself in when the document is silent.
+ *
+ * `null` for everything not listed, which is every archetype whose cellar is a
+ * cellar: a cottage with a basement gets the plain grey box, as it always did.
+ * The four here are the ones **whose whole point is what is underneath them** —
+ * a mine head over anything but a working, or a missile silo over a barrel and
+ * a cobweb, is a hut with a misleading name.
+ *
+ * This is the one place the mapping lives, so `core.ts` reads it rather than
+ * carrying a second copy of the same opinion.
+ */
+export function defaultCellarStyle(archetype: string | undefined): CellarStyle | null {
+  switch (archetype) {
+    case "mine_head":
+      return "mine";
+    case "bunker_complex":
+      return "bunker_hold";
+    case "subway_station":
+      return "subway_platform";
+    case "underground_silo":
+      return "silo_shaft";
+    default:
+      return null;
+  }
+}
+
+/**
+ * The cellar depth an archetype digs when the document does not ask for one.
+ *
+ * Only the depths archetypes, and for the reason their catalog entries give:
+ * the surface piece is an *entrance*. A bunker complex with no basement is a
+ * concrete shed. `mine_head` is deliberately **not** here — it has shipped
+ * without a forced cellar since G4 and a document that asks for one gets one.
+ */
+export function defaultBasementDepth(archetype: string | undefined): number | null {
+  switch (archetype) {
+    case "bunker_complex":
+    case "subway_station":
+    case "underground_silo":
+      return 5;
+    default:
+      return null;
+  }
+}
 
 /** Map a node's tags onto this module's archetypes, or `null`. */
 export function undergroundArchetypeOfTags(tags: readonly string[]): "mine_head" | null {
