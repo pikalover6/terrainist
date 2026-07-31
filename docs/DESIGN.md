@@ -445,6 +445,14 @@ containers (deps, build, ssh client for the bridge).
 Everything here is code-complete and physics-lint clean; nothing new has
 been walked. The next Terrarium session runs on v3.
 
+**Queued for the next e2e round (Kai, 2026-07-31):** side-by-side authored
+worlds, GLM 5.2 high vs **GPT 5.6 Luna max** — Luna's API price just dropped
+80%, making it a live replacement candidate if quality holds at the lower
+cost. Needs the Mac awake (OpenRouter key) and Kai reviewing; verify the
+Luna model id against OpenRouter's catalog (`verifyModelAvailable`) before
+the first run. This does not change the standing decision that production
+authoring stays cheap-model-first.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
