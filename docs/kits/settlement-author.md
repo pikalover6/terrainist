@@ -848,6 +848,36 @@ and `byre` still reach the extended barn (the stable answers to `horse_stable`,
 wave two's pottery kiln (the oast answers to `hop_kiln` and `oast`), bare `hut`
 belongs to the residential track, bare `cellar` to the underground catalog, and
 `house` still falls through to a cottage.
+**Wave 4A (table 11) — the dwellings.** Twelve houses, from a one-room hut to
+a mansion. Most are **pure interior fit-outs** and are happy on a `wing`
+footprint as well as a plain rect; the four that touch the shell — the
+townhouse and terraced row (wall re-clad), the log cabin (wall re-clad) and the
+bungalow (an apron porch) — want a **plain rect**, and quietly keep the
+ordinary house shell otherwise. The three with a long board (farmhouse, manor,
+mansion) need **nine interior columns and seven of depth** or they get a room
+with no long table rather than a room cut in half by one; the mansion's *double*
+range needs thirteen, and the dormitory's second bunk range seven.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| farmhouse | `farmhouse`, `farmstead` | a kitchen range of smoker, cauldron and furnace across the far wall, a stacked larder up one side, a boot room by the door, a board down the other side | `[13, 13, 15]`, 1–2 floors |
+| townhouse | `townhouse`, `town_house` | brick re-clad banded in stone with a slab cornice in the apron; a carpeted stair-hall runner and a parlour of table, chair and bookshelf | `[9, 14, 15]`, 1–2 floors; **narrow-fronted** |
+| terraced_row | `terraced_row`, `terrace` | stone-brick party piers every fourth column between plinth and eaves bands — the repeating bay read — over a modest one-table interior | `[9, 13, 17]`, 1–2 floors |
+| manor_house | `manor_house`, `manor` | a trapdoor dado panelling both side walls, a long board off the middle column, a study of lectern and bookshelves | `[13, 14, 17]`, 1–2 floors |
+| mansion | `mansion`, `estate_house` | a double range of boards either side of an empty middle column, carpeted galleries up both wall rows, a state end of lectern between bookshelves | `[15, 15, 17]`, 1–2 floors; **≥ 15 wide for the double range** |
+| longhouse | `longhouse`, `mead_hall` | mead benches up both wall rows with their backrests to the wall, banner shields between the runs, a hearth and ale barrels at the head | `[11, 13, 21]`, 1–2 floors; **long** |
+| bungalow | `bungalow`, `ranch_house` | a posted porch under a slab canopy along the door face of the apron, and one comfortable storey inside | `[13, 11, 13]`, 1 floor |
+| hut | `hut`, `shack` | one room and nothing spare: a cot, a hearth fire with a stool turned to it, a tool chest | `[9, 11, 9]`, 1 floor |
+| log_cabin | `log_cabin`, `cabin` | every wall course re-clad in horizontal logs with interlocked corners, fur carpets up one wall row, a fire and a crafting corner | `[11, 12, 13]`, 1–2 floors |
+| courtyard_house | `courtyard_house`, `courtyard` | a fence colonnade down both wall rows, a planted pot at each interior corner, a cauldron well — and the middle left deliberately empty | `[13, 12, 13]`, 1–2 floors |
+| dormitory | `dormitory`, `dorm` | bunk ranges head-to-wall up both walls, barrel lockers in the gaps between cot heads, one broad aisle | `[13, 12, 19]`, 1–2 floors |
+| almshouse | `almshouse`, `hospice` | a row of identical bays down one range — a bed, a chest and a fence partition each — and one shared hearth room | `[11, 12, 19]`, 1–2 floors |
+
+Wave 4A claims **no** tag an earlier table owns, and the four near misses are
+worth stating: `house` is still the **cottage** (and is still the tag the road
+network selects on), bare `hall` is still the great hall, `villa` and `riad`
+still belong to their own houses, and `apartment`, `flats` and `tenement` are
+still the tall grammar's apartment block. A `hut` is the bare tag only.
 
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is

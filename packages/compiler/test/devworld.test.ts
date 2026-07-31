@@ -41,6 +41,8 @@ import {
   HOMESTEAD_ROW_LENGTH,
   REGIONAL_EXHIBIT_ROWS,
   REGIONAL_ROW_LENGTH,
+  RESIDENTIAL_EXHIBIT_ROWS,
+  RESIDENTIAL_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -150,6 +152,8 @@ describe("dev world grid", () => {
     const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
     // Wave four D, the homestead: prefixed (`home_dovecote`) for the same reason.
     const homestead = HOMESTEAD_EXHIBIT_ROWS.length * HOMESTEAD_ROW_LENGTH;
+    // Wave four A's dwellings are prefixed (`resi_hut`) for the same reason.
+    const residential = RESIDENTIAL_EXHIBIT_ROWS.length * RESIDENTIAL_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -166,7 +170,8 @@ describe("dev world grid", () => {
         institutions +
         leisure +
         regional +
-        homestead,
+        homestead +
+        residential,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
@@ -218,14 +223,23 @@ describe("dev world grid", () => {
       // from the envelope the row was laid out against.
       ...grid.context.cells.map((c) => contextFootprint(c)),
     ];
+    // The pair check is quadratic in the number of exhibits, and the grid
+    // grows every wave. An `expect` per pair is orders of magnitude more
+    // expensive than the comparison it wraps — at this size that alone is the
+    // difference between a fast test and a timeout — so the pairs are counted
+    // and only the failures are asserted on. The assertion is identical; what
+    // changed is that passing pairs cost a comparison rather than a matcher.
+    const clashes: string[] = [];
     for (let a = 0; a < boxes.length; a++) {
       for (let b = a + 1; b < boxes.length; b++) {
         const p = boxes[a] as (typeof boxes)[number];
         const q = boxes[b] as (typeof boxes)[number];
-        const overlaps = p.x0 <= q.x1 && q.x0 <= p.x1 && p.z0 <= q.z1 && q.z0 <= p.z1;
-        expect(overlaps, `exhibits ${a} and ${b} overlap`).toBe(false);
+        if (p.x0 <= q.x1 && q.x0 <= p.x1 && p.z0 <= q.z1 && q.z0 <= p.z1) {
+          clashes.push(`exhibits ${a} and ${b} overlap`);
+        }
       }
     }
+    expect(clashes).toEqual([]);
   }, 300_000);
 
   it("spawns at the grid's south-west corner, on the plain", () => {

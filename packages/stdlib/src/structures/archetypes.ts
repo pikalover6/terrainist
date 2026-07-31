@@ -104,6 +104,14 @@ import {
 
 export * from "./archetypes-homestead.js";
 
+import {
+  RESIDENTIAL_BUILDING_ARCHETYPES,
+  furnishResidential,
+  residentialArchetypeOfTags,
+} from "./archetypes-residential.js";
+
+export * from "./archetypes-residential.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -138,6 +146,7 @@ export const BUILDING_ARCHETYPES = [
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
+  ...RESIDENTIAL_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -208,6 +217,13 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // *below* it.
   const leisure = leisureArchetypeOfTags(tags);
   if (leisure !== null) return leisure;
+  // Wave four A's dwellings, after the institutions and before the extended
+  // table for the reason every later wave sits here: the tables below are
+  // greedy. It claims nothing an earlier one claims — `house` still falls
+  // through to a cottage, `hall` is still the great hall's, `villa` the
+  // Mediterranean villa's and `apartment` the tall grammar's.
+  const residential = residentialArchetypeOfTags(tags);
+  if (residential !== null) return residential;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -580,6 +596,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishInstitution(ctx);
   n += furnishLeisure(ctx);
   n += furnishHomestead(ctx);
+  n += furnishResidential(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
