@@ -351,10 +351,12 @@ function fitTownHall(ctx: FitOutContext, c: PropCounter): void {
   for (let z = from; z <= to; z++) {
     if (c.put1(mid, z, fence)) c.stack(mid, z, 2, "oak_pressure_plate", { powered: "false" });
   }
-  // Benches either side, turned in on the table.
+  // Benches either side, turned in on the table. A stair-chair's `facing` is
+  // the direction of its high half — the backrest — so it points AWAY from
+  // the thing the sitter faces.
   for (let z = from; z <= to; z += 2) {
-    c.put1(mid - 1, z, chair, { facing: "east", half: "bottom", shape: "straight" });
-    c.put1(mid + 1, z, chair, { facing: "west", half: "bottom", shape: "straight" });
+    c.put1(mid - 1, z, chair, { facing: "west", half: "bottom", shape: "straight" });
+    c.put1(mid + 1, z, chair, { facing: "east", half: "bottom", shape: "straight" });
   }
   // The lectern at the head, facing down the table.
   c.put1(mid, headZ, "lectern", {
@@ -396,7 +398,9 @@ function fitSchool(ctx: FitOutContext, c: PropCounter): void {
   // the way in.
   const boardNorth = ctx.door === null || ctx.door.z > (it.z0 + it.z1) / 2;
   const boardZ = boardNorth ? it.z0 : it.z1;
-  const facing: Cardinal = boardNorth ? "north" : "south";
+  // Seat facing: the backrest (a stair's `facing` side) points AWAY from the
+  // board the class faces.
+  const facing: Cardinal = boardNorth ? "south" : "north";
 
   if (plan !== null) {
     // The board: the interior face of the end wall, gone dark, between the
@@ -565,14 +569,14 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
   // the attendant's cauldron and store.
   if (!inPool(it.x1, it.z0)) {
     c.put1(it.x1, it.z0, ctx.style["stair.interior"] as string, {
-      facing: "west",
+      facing: "east",
       half: "bottom",
       shape: "straight",
     });
   }
   if (!inPool(it.x0, it.z1)) {
     c.put1(it.x0, it.z1, ctx.style["stair.interior"] as string, {
-      facing: "east",
+      facing: "west",
       half: "bottom",
       shape: "straight",
     });
@@ -582,7 +586,7 @@ function fitBathhouse(ctx: FitOutContext, c: PropCounter): void {
   for (let z = it.z0 + 1; z <= it.z1 - 1; z += 2) {
     if (inPool(it.x0, z)) continue;
     c.put1(it.x0, z, ctx.style["stair.interior"] as string, {
-      facing: "east",
+      facing: "west",
       half: "bottom",
       shape: "straight",
     });

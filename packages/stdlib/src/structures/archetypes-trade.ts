@@ -373,11 +373,13 @@ function fitTavern(ctx: FitOutContext, c: PropCounter): void {
     if (c.put1(midX, z, fence)) {
       c.stack(midX, z, 2, "oak_pressure_plate", { powered: "false" });
     }
+    // A stair-chair's `facing` is its backrest side — it points AWAY from the
+    // table the drinker faces.
     if (midX - 1 >= it.x0) {
-      c.put1(midX - 1, z, chair, { facing: "east", half: "bottom", shape: "straight" });
+      c.put1(midX - 1, z, chair, { facing: "west", half: "bottom", shape: "straight" });
     }
     if (midX + 1 <= it.x1) {
-      c.put1(midX + 1, z, chair, { facing: "west", half: "bottom", shape: "straight" });
+      c.put1(midX + 1, z, chair, { facing: "east", half: "bottom", shape: "straight" });
     }
   }
 
