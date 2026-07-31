@@ -262,7 +262,7 @@ describe("wave-5C industry buildings", () => {
   it("builds the thing each archetype is for", () => {
     // Industrial.
     expect(has(build("brickworks"), "bricks"), "the kiln core").toBe(true);
-    expect(has(build("brickworks"), "mud"), "the clay bays").toBe(true);
+    expect(has(build("brickworks"), "packed_mud"), "the clay bays").toBe(true);
     expect(has(build("blast_furnace_works"), "blast_furnace"), "the bank").toBe(true);
     expect(has(build("blast_furnace_works"), "waxed_copper_block"), "the tuyeres").toBe(true);
     expect(has(build("factory_hall"), "smithing_table"), "the machine rows").toBe(true);

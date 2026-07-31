@@ -588,12 +588,12 @@ function fitBrickworks(ctx: FitOutContext, c: PropCounter): void {
   c.n += floorPaint(
     ctx,
     { x0: it.x0, z0: bayZ0, x1: it.x0 + 1, z1: bayZ1 },
-    (x, z) => ((x + z) % 3 === 0 ? "clay" : "mud"),
+    (x, z) => ((x + z) % 3 === 0 ? "clay" : "packed_mud"),
   );
   c.n += floorPaint(
     ctx,
     { x0: it.x1 - 1, z0: bayZ0, x1: it.x1, z1: bayZ1 },
-    (x, z) => ((x + z) % 3 === 0 ? "clay" : "mud"),
+    (x, z) => ((x + z) % 3 === 0 ? "clay" : "packed_mud"),
   );
 
   // The kiln core, on the far wall row, with its mouth over the middle of it.
