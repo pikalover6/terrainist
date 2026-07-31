@@ -754,8 +754,15 @@ function fitMachineShop(ctx: FitOutContext, c: PropCounter): void {
     c.put1(it.x0, z, "stonecutter", { facing: "east" });
   });
   // The work lights, between the lathes and out of the floor's way entirely.
+  // A wall torch brackets to a FULL block: a window pane at that course is
+  // "something there" but nothing a bracket holds to — the lint caught two
+  // machine shops with torches on their glazing. Occupied is not enough; the
+  // bracket cell must not be glass.
   wallRun(ctx, 4, 1, (z) => {
-    if (ctx.blockAt(it.x0 - 1, 2, z) === undefined) return;
+    const bracket = ctx.blockAt(it.x0 - 1, 2, z);
+    if (bracket === undefined) return;
+    const name = bracket.block;
+    if (name.includes("glass") || name.includes("pane")) return;
     c.stack(it.x0, z, 2, "wall_torch", { facing: "east" });
   });
 
