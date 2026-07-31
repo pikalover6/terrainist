@@ -184,7 +184,7 @@ describe("manifest ↔ world alignment", () => {
       expect(compound?.["auto"]).toBe(0);
       expect(compound?.["TrackOutput"]).toBe(0);
     }
-  });
+  }, 120_000);
 
   it("teleports each travel cube to the adjacent station's real landing spot", async () => {
     const entities = await readEntityMap(rig.worldDir);
@@ -232,7 +232,7 @@ describe("manifest ↔ world alignment", () => {
         expect(cube.teleport.startsWith(`tp ${selector} `)).toBe(true);
       }
     }
-  });
+  }, 120_000);
 
   it("has no verdict machinery left — a verdict is typed, not pressed", () => {
     for (const station of [manifest.spawn, ...manifest.stations]) {

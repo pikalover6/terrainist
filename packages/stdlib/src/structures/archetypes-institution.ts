@@ -828,11 +828,15 @@ function fitCustomsHouse(ctx: FitOutContext, c: PropCounter): void {
     powered: "false",
   });
 
-  // The scales: a chain under the plate, clear of the floor entirely.
+  // The scales: a chain under the plate, clear of the floor entirely. A
+  // chain hangs from the block above it, and over the middle of a
+  // single-storey hall the eave plate is not there — the gable's slope is —
+  // so each link is placed only where something actually holds it up.
   const lineY = ctx.wallTop - 1;
   if (ctx.floors === 1 && lineY >= 3) {
     for (let x = it.x0 + 2; x <= it.x1 - 2; x += 2) {
       if (ctx.blockAt(x, lineY, lamp.z) !== undefined) continue;
+      if (ctx.blockAt(x, lineY + 1, lamp.z) === undefined) continue;
       ctx.put(x, lineY, lamp.z, "chain", { axis: "y", waterlogged: "false" });
       c.n++;
     }
