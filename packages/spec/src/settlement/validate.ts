@@ -1750,6 +1750,7 @@ export const SETTLEMENT_PROP_NAMES = [
   "fishing_trawler",
   "drydock",
   "buoy",
+  "houseboat",
   // Wave 6: three more machines for the airfield, five more hulls, and the
   // first rolling stock. Order matches `PROP_NAMES` in the stdlib, which
   // `compiler/test/props.test.ts` asserts element by element.
@@ -1768,7 +1769,6 @@ export const SETTLEMENT_PROP_NAMES = [
   // Wave 6D. A houseboat is a dwelling, but a dwelling on open water is the
   // watercraft template's question rather than the building grammar's, so it
   // is a hull and lives with the fleet.
-  "houseboat",
   // The breadth wave: street furniture, works, camps, yards and smallcraft.
   "bench",
   "planter",
