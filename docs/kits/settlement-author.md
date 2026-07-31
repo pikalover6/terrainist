@@ -605,9 +605,10 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 6 | trade | see the trade table below |
 | 7 | vernacular | see the vernacular table below |
 | 8 | wave two | see the wave-two table below |
-| 9 | extended | see the extended table below |
-| 10 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 11 | fallback | anything else → cottage |
+| 9 | institutions | see the institution table below |
+| 10 | extended | see the extended table below |
+| 11 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 12 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -696,9 +697,33 @@ fit-outs and are happy on any footprint.
 | kiln | `kiln`, `pottery_kiln` | a brick core with its fire in the mouth against the far wall, furnaces beside it, trapdoor drying racks | `[9, 12, 11]`, 1 floor |
 | tannery | `tannery`, `tanner` | soaking vats and liquor cauldrons up one wall, stretching frames up the other, a drying line under the plate | `[11, 11, 13]`, 1 floor |
 
-Three tags wave two deliberately does **not** claim, because an earlier table
-owns them: `mill` (the windmill), `gate` (the gatehouse) and `hospital` (a
-catalog id with no generator behind it — asking for one gets you a cottage).
+Two tags wave two deliberately does **not** claim, because an earlier table
+owns them: `mill` (the windmill) and `gate` (the gatehouse). It also left
+`hospital` alone; the institutions table below now owns it.
+
+**Institutions (table 9)** — wave three A: ten civic buildings and two
+commercial ones, the things a town gets once it has institutions. All twelve
+are interior fit-outs and are happy on any footprint; five of them (museum,
+police station, mint, customs house, bank) also add a slab cornice in the
+apron, which needs a **plain rect** envelope or it simply does not run. The
+table sits straight after wave two and takes no tag an older table answers to:
+bare `hall` is still a great hall, `court` still the courthouse, `clinic` still
+the infirmary, `archive` still the library and `vault` still a cellar style.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| museum | `museum`, `gallery` | chiseled-stone plinths with position-chosen exhibits on them behind a fence rope, a banner-hung gallery wall, accession lectern | `[13, 13, 15]`, 1 floor |
+| guildhall | `guildhall`, `guild` | a top table and warden's lectern across the far end, guild colours up both walls, two ranks of benches | `[13, 14, 17]`, 1 floor |
+| prison | `prison`, `jail`, `gaol` | iron-bar cell fronts down one wall with a door gap every third cell, heavy trim opposite, corridor off the centre line | `[11, 11, 17]`, 1 floor |
+| police_station | `police_station`, `police`, `constabulary` | a front desk of cartography table and day book, one barred corner cell, notice banners by the door | `[13, 11, 13]`, 1 floor |
+| fire_station | `fire_station`, `firehouse` | a muster bell, cauldron water butts up one wall, trapdoor ladder racks up the other, an empty appliance bay | `[13, 12, 15]`, 1 floor |
+| hospital | `hospital`, `ward` | wards of cots head-to-wall up both walls, banner screens between the bays, a dispensary on the far wall | `[13, 12, 17]`, 1 floor |
+| workhouse | `workhouse`, `poorhouse` | ranks of looms and crafting benches up one wall, meagre cots up the other, barrel stores and an overseer's desk | `[11, 12, 17]`, 1 floor |
+| orphanage | `orphanage` | small beds head-to-wall, a furnace hearth and matron's chest, a carpet play mat | `[11, 12, 15]`, 1 floor |
+| mint | `mint`, `coinage` | an iron-trimmed strongroom corner with coin chests, anvil and smithing-table presses, an assay counter | `[11, 12, 13]`, 1 floor |
+| customs_house | `customs_house`, `customs` | a bonded store of stacked barrels, a fence tally line, ledger desks, chains hung over the weighing hall (single storey only) | `[13, 12, 13]`, 1 floor |
+| bank | `bank`, `strongroom` | a counter under an iron-bar grille with one teller's window, an iron strongroom corner, lockbox barrels | `[13, 13, 13]`, 1 floor |
+| counting_house | `counting_house`, `countinghouse` | two ranks of ledger desks with clerks' stools turned away from the desk they read, bookshelves, a strongbox corner | `[13, 11, 15]`, 1 floor |
 
 **Wave 3B (table 9) — food and craft works.** Twelve buildings: six shops and
 six works. Every one is a **pure interior fit-out** — none of them rebuilds the

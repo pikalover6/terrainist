@@ -292,32 +292,72 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Rows of desks and seats facing a dark board across the end wall, with a modest bell cote over the roof.",
   }),
   civ("university_hall", "University hall"),
-  civ("hospital", "Hospital", "not_started", { wave: 3 }),
+  civ("hospital", "Hospital", "implemented", {
+    wave: 3,
+    tags: ["civic", "cots"],
+    note: "Wards of cots head-to-wall up both side walls with banner screens between the bays, and a dispensary of brewing stand and cauldron on the far wall.",
+  }),
   civ("infirmary", "Infirmary", "implemented", {
     wave: 2,
     tags: ["civic", "cots"],
     note: "Cots head-to-wall up the side walls with banner screens between them, and an apothecary corner of brewing stand and cauldron.",
   }),
-  civ("prison", "Prison", "not_started", { wave: 3 }),
-  civ("police_station", "Police station", "not_started", { wave: 3 }),
-  civ("fire_station", "Fire station", "not_started", { wave: 3 }),
+  civ("prison", "Prison", "implemented", {
+    wave: 3,
+    tags: ["civic", "bars"],
+    note: "A run of iron-bar cell fronts down one wall with a door gap every third cell, and the corridor kept off the centre line.",
+  }),
+  civ("police_station", "Police station", "implemented", {
+    wave: 3,
+    tags: ["civic", "counter"],
+    note: "A front desk of cartography table and day-book lectern, one barred corner cell, and notice banners by the door.",
+  }),
+  civ("fire_station", "Fire station", "implemented", {
+    wave: 3,
+    tags: ["civic", "bell"],
+    note: "A muster bell on the far wall, cauldron water butts up one side and trapdoor ladder racks up the other, with the appliance bay left empty.",
+  }),
   civ("post_office", "Post office", "implemented", {
     wave: 2,
     tags: ["civic", "counter"],
     note: "A timber counter with a sign along the far wall, stacked barrels as pigeonholes up the sides, and parcel chests by the door.",
   }),
-  civ("orphanage", "Orphanage", "not_started", { wave: 3 }),
+  civ("orphanage", "Orphanage", "implemented", {
+    wave: 3,
+    tags: ["civic", "beds"],
+    note: "Small beds head-to-wall, a furnace hearth and matron's chest on the far wall, and a carpet play mat inset clear of both side lanes.",
+  }),
   civ("bathhouse", "Bathhouse", "implemented", {
     wave: 1,
     note: "Pools written into the floor plane inside a solid coping, smooth stone and quartz walls, steam braziers and benches.",
   }),
-  civ("museum", "Museum", "not_started", { wave: 3 }),
+  civ("museum", "Museum", "implemented", {
+    wave: 3,
+    tags: ["civic", "exhibits"],
+    note: "Chiseled-stone plinths carrying position-chosen exhibits up both walls behind a fence rope, and a banner-hung gallery wall with an accession lectern.",
+  }),
   civ("archive", "Archive"),
   civ("embassy", "Embassy"),
-  civ("guildhall", "Guildhall", "not_started", { wave: 3 }),
-  civ("mint", "Mint", "not_started", { wave: 3 }),
-  civ("customs_house", "Customs house", "not_started", { wave: 3 }),
-  civ("workhouse", "Workhouse", "not_started", { wave: 3 }),
+  civ("guildhall", "Guildhall", "implemented", {
+    wave: 3,
+    tags: ["civic", "hall"],
+    note: "A top table and warden's lectern across the far end, guild colours up both walls, and two ranks of benches turned away from the table they face.",
+  }),
+  civ("mint", "Mint", "implemented", {
+    wave: 3,
+    tags: ["civic", "strongroom"],
+    note: "An iron-trimmed strongroom corner with coin chests, anvil and smithing-table presses up one wall, and an assay counter along the far wall.",
+  }),
+  civ("customs_house", "Customs house", "implemented", {
+    wave: 3,
+    tags: ["civic", "counter"],
+    note: "A bonded store of stacked barrels, a fence tally line, ledger desks on the far wall and chains hung over the weighing hall on a single-storey plan.",
+  }),
+  civ("workhouse", "Workhouse", "implemented", {
+    wave: 3,
+    tags: ["civic", "benches"],
+    note: "Ranks of looms and crafting benches up one wall, meagre cots up the other, and barrel stores with an overseer's desk at the far end.",
+  }),
   civ("council_chamber", "Council chamber"),
 
   /* --- commercial -------------------------------------------------------- */
@@ -353,11 +393,19 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 1,
     note: "A stone bench carrying brewing stands, a cauldron, candle-topped bottle shelves and herb pots at the windows.",
   }),
-  com("bank", "Bank", "not_started", { wave: 3 }),
-  com("counting_house", "Counting house", "not_started", { wave: 3 }),
   com("pawnshop", "Pawnshop", "implemented", {
     wave: 3,
     note: "A slab counter with an iron-bar grille standing on it, the strongbox behind, and shelves of unredeemed pledges up the side walls.",
+  }),
+  com("bank", "Bank", "implemented", {
+    wave: 3,
+    tags: ["counter", "strongroom"],
+    note: "A counter under an iron-bar grille with one unbarred teller's window, an iron-trimmed strongroom corner, and lockbox barrels in the hall.",
+  }),
+  com("counting_house", "Counting house", "implemented", {
+    wave: 3,
+    tags: ["desks"],
+    note: "Two ranks of ledger desks with clerks stools turned away from the desk they read, a masters lectern, bookshelves and a strongbox corner.",
   }),
   com("auction_house", "Auction house"),
   com("trading_post", "Trading post", "implemented", {

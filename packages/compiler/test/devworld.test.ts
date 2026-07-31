@@ -33,6 +33,8 @@ import {
   CONTEXT_YAWS,
   EXTRA_EXHIBIT_ROWS,
   UNDERGROUND_EXHIBIT_ROWS,
+  INSTITUTION_EXHIBIT_ROWS,
+  INSTITUTION_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -133,6 +135,9 @@ describe("dev world grid", () => {
     const wave2 = WAVE2_EXHIBIT_ROWS.length * WAVE2_ROW_LENGTH;
     // Wave 3B's works rows are prefixed (`works_foundry`) for the same reason.
     const works = WORKS_EXHIBIT_ROWS.length * WORKS_ROW_LENGTH;
+    // Wave three A, the institutions: prefixed (`inst_prison`) for the same
+    // reason, so they too are extra rows rather than replacements.
+    const institutions = INSTITUTION_EXHIBIT_ROWS.length * INSTITUTION_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
         BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
@@ -146,6 +151,7 @@ describe("dev world grid", () => {
         town +
         wave2 +
         works,
+        institutions,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

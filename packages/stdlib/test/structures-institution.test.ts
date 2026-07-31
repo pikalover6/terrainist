@@ -1,25 +1,19 @@
 /**
- * Archetype wave two: nine buildings, held to the earlier waves' contract.
+ * Archetype wave three A: the twelve institutions, on wave two's contract.
  *
- * The tests are deliberately the *same* tests the breadth wave was held to,
- * because a new archetype that needs a new kind of guarantee is a new
- * archetype nobody can reason about:
+ * Deliberately the *same* tests the earlier waves were held to — a new
+ * archetype that needs a new kind of guarantee is a new archetype nobody can
+ * reason about:
  *
  * - it registers, resolves, and reads off a node's tags without stealing one
  *   an earlier table already claims;
  * - it puts something in the room it built, and the room stays one walkable
  *   region — across one and two storeys and three envelope sizes;
  * - nothing it builds leaves the envelope the solver reserved;
+ * - the lantern column is never the only route;
+ * - a seat's `facing` is its backrest;
+ * - no pot is a bare `flower_pot`, and no signage is a sign block;
  * - the same seed gives the same ops, forever.
- *
- * Plus three that are new, one per field lesson this wave was written against:
- *
- * - **the lantern column.** The shell hangs a light over the middle of the
- *   room at head height. Removing that column from the floor must leave the
- *   remainder one region, or the room's only route runs through a light;
- * - **the seat rule.** A stair's `facing` is its high half — the backrest. The
- *   courthouse gallery therefore faces *away* from the bench;
- * - **no bare pots.** `flower_pot` renders empty. Every pot is a `potted_*`.
  */
 
 import { describe, expect, it } from "vitest";
@@ -27,18 +21,17 @@ import { describe, expect, it } from "vitest";
 import {
   BUILDING_ARCHETYPES,
   BUILDING_STYLE_DEFAULTS,
+  INSTITUTION_BUILDING_ARCHETYPES,
   ROOF_FLOURISH_RISE,
   STRUCTURE_CATALOG,
-  WAVE2_BUILDING_ARCHETYPES,
   archetypeFacadeDefaults,
   archetypeOfTags,
   generateBuilding,
-  isWave2Archetype,
+  institutionFacadeDefaults,
+  isInstitutionArchetype,
   nodeSeed,
-  pottedAt,
   resolveArchetype,
   structureById,
-  wave2FacadeDefaults,
   type LocalVoxelOp,
 } from "../src/index.js";
 
@@ -46,12 +39,12 @@ import {
 /* harness                                                                     */
 /* -------------------------------------------------------------------------- */
 
-const S = nodeSeed(0xa11e2n, "world.wave2");
-const OTHER = nodeSeed(0xa11e2n, "world.wave2.other");
+const S = nodeSeed(0x1a5717n, "world.institution");
+const OTHER = nodeSeed(0x1a5717n, "world.institution.other");
 const PINNED = BUILDING_STYLE_DEFAULTS;
 
 /** A plan every archetype here has room for its whole fit-out on. */
-const BIG: readonly [number, number, number] = [13, 17, 15];
+const BIG: readonly [number, number, number] = [13, 17, 17];
 /** Three envelopes, from generous to tight. */
 const SIZES: readonly (readonly [number, number, number])[] = [BIG, [11, 13, 13], [9, 11, 9]];
 
@@ -61,7 +54,7 @@ function build(
   extra: Record<string, unknown> = {},
   seed = S,
 ): ReturnType<typeof generateBuilding> {
-  const facade = wave2FacadeDefaults(archetype);
+  const facade = institutionFacadeDefaults(archetype);
   return generateBuilding({
     size,
     params: {
@@ -125,71 +118,71 @@ const has = (result: ReturnType<typeof generateBuilding>, block: string): boolea
 /* registry                                                                    */
 /* -------------------------------------------------------------------------- */
 
-describe("wave-two archetypes", () => {
+describe("institution archetypes", () => {
   it("registers every one of them, and answers to its own name", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       expect(BUILDING_ARCHETYPES as readonly string[]).toContain(a);
       expect(resolveArchetype(a)).toBe(a);
-      expect(isWave2Archetype(a)).toBe(true);
+      expect(isInstitutionArchetype(a)).toBe(true);
     }
-    expect(isWave2Archetype("cottage")).toBe(false);
+    expect(isInstitutionArchetype("cottage")).toBe(false);
     expect(new Set(BUILDING_ARCHETYPES).size).toBe(BUILDING_ARCHETYPES.length);
   });
 
   it("reads each one off a node's tags, without stealing another's", () => {
-    expect(archetypeOfTags(["tudor_row"])).toBe("tudor_row");
-    expect(archetypeOfTags(["half_timber"])).toBe("tudor_row");
-    expect(archetypeOfTags(["villa"])).toBe("mediterranean_villa");
-    expect(archetypeOfTags(["trullo"])).toBe("trullo");
+    expect(archetypeOfTags(["museum"])).toBe("museum");
+    expect(archetypeOfTags(["gallery"])).toBe("museum");
+    expect(archetypeOfTags(["guildhall"])).toBe("guildhall");
+    expect(archetypeOfTags(["guild"])).toBe("guildhall");
+    expect(archetypeOfTags(["jail"])).toBe("prison");
+    expect(archetypeOfTags(["gaol"])).toBe("prison");
+    expect(archetypeOfTags(["police"])).toBe("police_station");
+    expect(archetypeOfTags(["constabulary"])).toBe("police_station");
+    expect(archetypeOfTags(["firehouse"])).toBe("fire_station");
+    expect(archetypeOfTags(["hospital"])).toBe("hospital");
+    expect(archetypeOfTags(["ward"])).toBe("hospital");
+    expect(archetypeOfTags(["poorhouse"])).toBe("workhouse");
+    expect(archetypeOfTags(["orphanage"])).toBe("orphanage");
+    expect(archetypeOfTags(["coinage"])).toBe("mint");
+    expect(archetypeOfTags(["customs"])).toBe("customs_house");
+    expect(archetypeOfTags(["bank"])).toBe("bank");
+    expect(archetypeOfTags(["strongroom"])).toBe("bank");
+    expect(archetypeOfTags(["countinghouse"])).toBe("counting_house");
+    // The near misses. Each of these belongs to a table this wave did not
+    // touch, and claiming any of them would have been a silent theft.
+    expect(archetypeOfTags(["hall"])).toBe("hall");
     expect(archetypeOfTags(["court"])).toBe("courthouse");
-    expect(archetypeOfTags(["tribunal"])).toBe("courthouse");
-    expect(archetypeOfTags(["post"])).toBe("post_office");
     expect(archetypeOfTags(["clinic"])).toBe("infirmary");
-    expect(archetypeOfTags(["sawmill"])).toBe("sawmill");
-    expect(archetypeOfTags(["lumber_mill"])).toBe("sawmill");
-    expect(archetypeOfTags(["kiln"])).toBe("kiln");
-    expect(archetypeOfTags(["tanner"])).toBe("tannery");
-    // The tables above and below still win the tags that are theirs. Each of
-    // these is a near miss this wave deliberately did not claim.
+    expect(archetypeOfTags(["archive"])).toBe("library");
     expect(archetypeOfTags(["mill"])).toBe("windmill");
     expect(archetypeOfTags(["gate"])).toBe("gatehouse");
-    expect(archetypeOfTags(["tower"])).toBe("watchtower");
-    expect(archetypeOfTags(["temple"])).toBe("church");
-    // `hospital` was a catalog id with no generator when this wave shipped, so
-    // wave two left it unclaimed. **Wave three A implements it**
-    // (`archetypes-institution.ts`), and the tag is now the hospital's own —
-    // still not the infirmary's, which is the invariant this line guards.
-    expect(archetypeOfTags(["hospital"])).toBe("hospital");
     expect(archetypeOfTags(["nothing_in_particular"])).toBe("cottage");
   });
 
   it("gives every archetype a facade tendency, reachable from the shared entry", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
-      const facade = wave2FacadeDefaults(a);
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
+      const facade = institutionFacadeDefaults(a);
       expect(facade.roof, a).toBeDefined();
       expect(facade.windowRhythm, a).toBeDefined();
-      // The dispatch chain: `archetypeFacadeDefaults` must fall through to us.
       expect(archetypeFacadeDefaults(a), a).toEqual(facade);
     }
-    expect(wave2FacadeDefaults("cottage")).toEqual({});
-    // And it must not have broken the waves it falls through.
+    expect(institutionFacadeDefaults("cottage")).toEqual({});
+    // And it must not have broken the links it falls through.
     expect(archetypeFacadeDefaults("keep").roof).toBe("hip");
     expect(archetypeFacadeDefaults("church").roof).toBe("gable");
+    expect(archetypeFacadeDefaults("trullo").roof).toBe("hip");
+    expect(archetypeFacadeDefaults("courthouse").roof).toBe("hip");
   });
 
-  it("is claimed by the catalog, and only where a generator answers", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+  it("is claimed by the catalog, as wave three and implemented", () => {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       const entry = structureById(a);
       expect(entry, a).toBeDefined();
       expect(entry?.status, a).toBe("implemented");
-      expect(entry?.wave, a).toBe(2);
+      expect(entry?.wave, a).toBe(3);
+      expect(entry?.note, a).toBeDefined();
+      expect(STRUCTURE_CATALOG.filter((e) => e.id === a), a).toHaveLength(1);
     }
-    // Restated as data: `hospital` is in the catalog and *is* implemented as
-    // of wave three A, by a generator in another file — and it is not this
-    // wave's, which is what the entry's wave number says.
-    expect(structureById("hospital")?.status).toBe("implemented");
-    expect(structureById("hospital")?.wave).toBe(3);
-    expect(STRUCTURE_CATALOG.filter((e) => e.id === "kiln")).toHaveLength(1);
   });
 });
 
@@ -197,9 +190,9 @@ describe("wave-two archetypes", () => {
 /* the buildings                                                               */
 /* -------------------------------------------------------------------------- */
 
-describe("wave-two buildings", () => {
+describe("institution buildings", () => {
   it("puts something in every room it builds", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       const result = build(a);
       expect(result.meta.furnitureCount, a).toBeGreaterThan(0);
       expect(result.meta.lanternCount, a).toBeGreaterThanOrEqual(1);
@@ -209,7 +202,7 @@ describe("wave-two buildings", () => {
   });
 
   it("leaves every ground floor one walkable region", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       for (const size of SIZES) {
         for (const floors of [1, 2]) {
           const result = build(a, size, { floors });
@@ -222,17 +215,9 @@ describe("wave-two buildings", () => {
     }
   });
 
-  /**
-   * The lantern lesson, as a property.
-   *
-   * `core.ts` hangs a lantern over the middle column of the room at head
-   * height, so that column is not walk-through. A fit-out whose only route
-   * crosses it has built a room with a wall in the middle of it — which is
-   * exactly what a walkthrough of the earlier waves found. Deleting the column
-   * from the free set must leave the rest connected.
-   */
+  /** The lantern lesson, as a property: its column is never the only route. */
   it("never routes the floor through the column the lantern hangs in", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       for (const size of SIZES) {
         const result = build(a, size);
         const it = result.meta.interior;
@@ -244,7 +229,7 @@ describe("wave-two buildings", () => {
   });
 
   it("keeps the floor plane unbroken under every archetype", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       const result = build(a);
       const at = indexOf(result.ops);
       for (const cell of result.meta.floorCells) {
@@ -256,7 +241,7 @@ describe("wave-two buildings", () => {
   });
 
   it("stays inside the envelope, in plan and in height", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       for (const size of SIZES) {
         const result = build(a, size);
         const [sx, , sz] = result.meta.size;
@@ -274,84 +259,69 @@ describe("wave-two buildings", () => {
   });
 
   it("builds the thing each archetype is for", () => {
-    // Vernacular.
-    expect(has(build("tudor_row", BIG, { floors: 2 }), "dark_oak_log"), "studwork").toBe(true);
-    expect(has(build("tudor_row"), "white_terracotta"), "plaster").toBe(true);
-    expect(has(build("mediterranean_villa"), "smooth_sandstone"), "stucco").toBe(true);
-    expect(has(build("mediterranean_villa"), "sandstone_wall"), "parapet").toBe(true);
-    expect(has(build("mediterranean_villa"), "terracotta"), "cornice").toBe(true);
-    expect(has(build("trullo"), "chiseled_stone_bricks"), "capstone").toBe(true);
-    expect(has(build("trullo"), "white_bed"), "the one room").toBe(true);
-    // Civic.
-    expect(has(build("courthouse"), "lectern"), "the bench").toBe(true);
-    expect(has(build("post_office"), "white_banner"), "the standard").toBe(true);
-    expect(has(build("post_office"), "barrel"), "pigeonholes").toBe(true);
-    expect(has(build("infirmary"), "white_bed"), "cots").toBe(true);
-    expect(has(build("infirmary"), "brewing_stand"), "the apothecary").toBe(true);
-    expect(has(build("infirmary"), "white_banner"), "the screens").toBe(true);
-    // Industrial.
-    expect(has(build("sawmill"), "stonecutter"), "the saw run").toBe(true);
-    expect(has(build("kiln"), "bricks"), "the kiln core").toBe(true);
-    expect(has(build("tannery"), "brown_terracotta"), "the vats").toBe(true);
-    expect(has(build("tannery"), "cauldron"), "the liquor").toBe(true);
-  });
-
-  /**
-   * The corbel, as a measurement rather than as a block name.
-   *
-   * A trullo's cone rises one course per inset. Counting distinct courses of
-   * masonry above the eave plate is what distinguishes it from a hip roof
-   * dropped on a stone box.
-   */
-  it("corbels a trullo cone over the drum", () => {
-    const result = build("trullo", [11, 20, 11]);
-    const base = result.meta.wallTop + 1;
-    const courses = new Set(
-      result.ops.filter((op) => op.y >= base && op.block !== "air").map((op) => op.y),
-    );
-    expect(courses.size).toBeGreaterThanOrEqual(3);
+    expect(has(build("museum"), "chiseled_stone_bricks"), "plinths").toBe(true);
+    expect(has(build("guildhall"), "yellow_banner"), "the colours").toBe(true);
+    expect(has(build("guildhall"), "lectern"), "the warden's book").toBe(true);
+    expect(has(build("prison"), "iron_bars"), "the cell fronts").toBe(true);
+    expect(has(build("police_station"), "cartography_table"), "the front desk").toBe(true);
+    expect(has(build("police_station"), "iron_bars"), "the one cell").toBe(true);
+    expect(has(build("fire_station"), "bell"), "the muster bell").toBe(true);
+    expect(has(build("fire_station"), "cauldron"), "the water butts").toBe(true);
+    expect(has(build("hospital"), "white_bed"), "the wards").toBe(true);
+    expect(has(build("hospital"), "brewing_stand"), "the dispensary").toBe(true);
+    expect(has(build("workhouse"), "loom"), "the work benches").toBe(true);
+    expect(has(build("workhouse"), "brown_bed"), "the meagre cots").toBe(true);
+    expect(has(build("orphanage"), "red_bed"), "the small beds").toBe(true);
+    expect(has(build("orphanage"), "white_carpet"), "the play mat").toBe(true);
+    expect(has(build("mint"), "anvil"), "the presses").toBe(true);
+    expect(has(build("mint"), "iron_block"), "the strongroom trim").toBe(true);
+    expect(has(build("customs_house"), "barrel"), "the bonded store").toBe(true);
+    expect(has(build("customs_house", BIG, { floors: 1 }), "chain"), "the scales").toBe(true);
+    expect(has(build("bank"), "iron_bars"), "the grille").toBe(true);
+    expect(has(build("bank"), "iron_block"), "the strongroom").toBe(true);
+    expect(has(build("counting_house"), "lectern"), "the master's ledger").toBe(true);
+    expect(has(build("counting_house"), "bookshelf"), "the ledgers").toBe(true);
   });
 
   /**
    * The seat rule, stated the only way it can be checked: geometrically.
    *
-   * A stair's `facing` names its **high half** — the backrest. So a gallery
-   * bench looking at a bench on the north wall carries `facing: "south"`. The
-   * old, wrong convention would put the whole public with its back to the
-   * judge, and it is invisible in a block list; this asserts the direction.
+   * A stair's `facing` names its **high half** — the backrest. A clerk reading
+   * a ledger at the far end of the room therefore carries the cardinal *away*
+   * from it, and the old, wrong convention is invisible in a block list.
    */
-  it("turns courtroom benches away from the bench they face", () => {
-    const result = build("courthouse", [11, 13, 17]);
+  it("turns counting-house stools away from the desks they read", () => {
+    const result = build("counting_house", [13, 11, 17]);
     const it = result.meta.interior;
     const door = result.meta.door;
     expect(door).not.toBeNull();
-    // The dais is at the end furthest from the door; the gallery looks at it.
-    const daisNorth = (door?.z ?? it.z1) > (it.z0 + it.z1) / 2;
-    const expected = daisNorth ? "south" : "north";
-    const benches = result.ops.filter(
+    const farNorth = (door?.z ?? it.z1) > (it.z0 + it.z1) / 2;
+    const expected = farNorth ? "south" : "north";
+    const stools = result.ops.filter(
       (op) => op.y === 1 && op.block.endsWith("_stairs") && op.props?.["half"] === "bottom",
     );
-    expect(benches.length).toBeGreaterThan(4);
-    for (const bench of benches) {
-      expect(bench.props?.["facing"], `bench at ${bench.x},${bench.z}`).toBe(expected);
+    expect(stools.length).toBeGreaterThan(2);
+    for (const stool of stools) {
+      expect(stool.props?.["facing"], `stool at ${stool.x},${stool.z}`).toBe(expected);
     }
   });
 
-  /** Every pot has a plant in it: a bare `flower_pot` renders empty. */
-  it("never places a bare flower pot", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+  /** Every pot has a plant in it, and no signage is a sign block. */
+  it("never places a bare flower pot or a sign", () => {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       for (const size of SIZES) {
-        expect(has(build(a, size), "flower_pot"), `${a} ${size.join("x")}`).toBe(false);
+        const result = build(a, size);
+        expect(has(result, "flower_pot"), `${a} ${size.join("x")} pot`).toBe(false);
+        expect(
+          result.ops.some((op) => op.block.endsWith("_sign")),
+          `${a} ${size.join("x")} sign`,
+        ).toBe(false);
       }
-    }
-    // And the chooser only ever names a real potted block.
-    for (let x = -4; x <= 4; x++) {
-      for (let z = -4; z <= 4; z++) expect(pottedAt(x, z)).toMatch(/^potted_[a-z_]+$/);
     }
   });
 
   it("is deterministic, and reseeds cosmetically", () => {
-    for (const a of WAVE2_BUILDING_ARCHETYPES) {
+    for (const a of INSTITUTION_BUILDING_ARCHETYPES) {
       const once = JSON.stringify(build(a).ops);
       expect(JSON.stringify(build(a).ops), a).toBe(once);
       const other = build(a, BIG, {}, OTHER);

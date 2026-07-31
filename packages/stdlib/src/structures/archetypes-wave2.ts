@@ -95,8 +95,9 @@ export function isWave2Archetype(value: string): value is Wave2BuildingArchetype
  *
  * - `mill` belongs to the **windmill** and is not claimed here; a sawmill
  *   answers to `sawmill` and `lumber_mill`;
- * - `hospital` is a separate, unimplemented catalog id and stays unclaimed;
- *   the infirmary takes `infirmary` and `clinic` only;
+ * - `hospital` is not claimed here; the infirmary takes `infirmary` and
+ *   `clinic` only. (It was an unimplemented catalog id when this wave shipped;
+ *   wave three A's institutions now own it — see `archetypes-institution.ts`.)
  * - `gate` belongs to the **gatehouse**, so the courthouse takes `court` and
  *   `tribunal` rather than anything shorter.
  */

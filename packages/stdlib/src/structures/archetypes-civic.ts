@@ -36,6 +36,7 @@ import { tradeFacadeDefaults } from "./archetypes-trade.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
 import { worksFacadeDefaults } from "./archetypes-works.js";
+import { institutionFacadeDefaults } from "./archetypes-institution.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -144,7 +145,10 @@ export function archetypeFacadeDefaults(
       if (Object.keys(regional).length > 0) return regional;
       const wave2 = wave2FacadeDefaults(archetype);
       if (Object.keys(wave2).length > 0) return wave2;
-      return worksFacadeDefaults(archetype);
+      const works = worksFacadeDefaults(archetype);
+      if (Object.keys(works).length > 0) return works;
+      // Wave three A, the institutions — last link in the chain.
+      return institutionFacadeDefaults(archetype);
     }
   }
 }

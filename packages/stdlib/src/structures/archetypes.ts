@@ -72,6 +72,14 @@ import {
 
 export * from "./archetypes-works.js";
 
+import {
+  INSTITUTION_BUILDING_ARCHETYPES,
+  furnishInstitution,
+  institutionArchetypeOfTags,
+} from "./archetypes-institution.js";
+
+export * from "./archetypes-institution.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -103,6 +111,7 @@ export const BUILDING_ARCHETYPES = [
   ...VERNACULAR_BUILDING_ARCHETYPES,
   ...WAVE2_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
+  ...INSTITUTION_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
 ] as const;
@@ -157,6 +166,12 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // its position is about what is *under* it, not what is over it.
   const works = worksArchetypeOfTags(tags);
   if (works !== null) return works;
+  // The institutions, straight after wave two and for the same reason: they
+  // claim only compounds and words no earlier table wants — `hall` still means
+  // a great hall down there, `court` is the courthouse's and `clinic` the
+  // infirmary's — so the position is about the greedy tables below.
+  const institution = institutionArchetypeOfTags(tags);
+  if (institution !== null) return institution;
   // The extended table is consulted before the original one, not after: the
   // original is greedy (`trade` → inn, `store` → granary) and would otherwise
   // swallow `market` and `storehouse` before either reached its own building.
@@ -512,6 +527,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishVernacular(ctx);
   n += furnishWave2(ctx);
   n += furnishWorks(ctx);
+  n += furnishInstitution(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
