@@ -37,6 +37,8 @@ import {
   INSTITUTION_ROW_LENGTH,
   COMMERCE_EXHIBIT_ROWS,
   COMMERCE_ROW_LENGTH,
+  INDUSTRY_EXHIBIT_ROWS,
+  INDUSTRY_ROW_LENGTH,
   LEISURE_EXHIBIT_ROWS,
   LEISURE_ROW_LENGTH,
   HOMESTEAD_EXHIBIT_ROWS,
@@ -152,6 +154,8 @@ describe("dev world grid", () => {
     const institutions = INSTITUTION_EXHIBIT_ROWS.length * INSTITUTION_ROW_LENGTH;
     // Wave 4C's leisure, modern and science rows are prefixed (`lei_cinema`).
     const leisure = LEISURE_EXHIBIT_ROWS.length * LEISURE_ROW_LENGTH;
+    // Wave 5C's industry and modern rows are prefixed (`indy_refinery`).
+    const industry = INDUSTRY_EXHIBIT_ROWS.length * INDUSTRY_ROW_LENGTH;
     // Wave three's regional rows are prefixed (`reg_igloo`) for the same reason.
     const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
     // Wave four D, the homestead: prefixed (`home_dovecote`) for the same reason.
@@ -177,6 +181,7 @@ describe("dev world grid", () => {
         works +
         institutions +
         leisure +
+        industry +
         regional +
         homestead +
         residential +

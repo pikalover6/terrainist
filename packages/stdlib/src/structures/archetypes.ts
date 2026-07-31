@@ -121,6 +121,14 @@ import {
 export * from "./archetypes-commerce.js";
 
 import {
+  INDUSTRY_BUILDING_ARCHETYPES,
+  furnishIndustry,
+  industryArchetypeOfTags,
+} from "./archetypes-industry.js";
+
+export * from "./archetypes-industry.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -164,6 +172,7 @@ export const BUILDING_ARCHETYPES = [
   ...LEISURE_BUILDING_ARCHETYPES,
   ...RESIDENTIAL_BUILDING_ARCHETYPES,
   ...COMMERCE_BUILDING_ARCHETYPES,
+  ...INDUSTRY_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -251,6 +260,13 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // school, `lodging` the hotel and `hospice` the almshouse.
   const commerce = commerceArchetypeOfTags(tags);
   if (commerce !== null) return commerce;
+  // Wave 5C, industry and modern works, straight after the dwellings and well
+  // before the extended table: it claims nothing an earlier table claims —
+  // `kiln` still reaches wave two's, `foundry` and `casting` wave 3B's, `mill`
+  // the windmill, `craft` the smithy, `shop` and `store` the general store and
+  // the granary, and `auditorium` the lecture hall.
+  const industry = industryArchetypeOfTags(tags);
+  if (industry !== null) return industry;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -634,6 +650,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishHomestead(ctx);
   n += furnishResidential(ctx);
   n += furnishCommerce(ctx);
+  n += furnishIndustry(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);

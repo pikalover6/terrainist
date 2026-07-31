@@ -42,6 +42,7 @@ import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
+import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
 export type { DevExhibitCell, DevExhibitRow } from "./exhibits/types.js";
@@ -115,6 +116,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...WORKS_EXHIBIT_ROWS,
   ...INSTITUTION_EXHIBIT_ROWS,
   ...LEISURE_EXHIBIT_ROWS,
+  ...INDUSTRY_EXHIBIT_ROWS,
   ...REGIONAL_EXHIBIT_ROWS,
   ...HOMESTEAD_EXHIBIT_ROWS,
   ...RESIDENTIAL_EXHIBIT_ROWS,
@@ -181,6 +183,12 @@ export {
 } from "./exhibits/commerce.js";
 /** The wave-4C leisure rows, for tests that assert on the gradient itself. */
 export { LEISURE_EXHIBIT_ROWS, LEISURE_ROW_LENGTH, leisureSizeFor } from "./exhibits/leisure.js";
+/** The wave-5C industry rows, for tests that assert on the gradient itself. */
+export {
+  INDUSTRY_EXHIBIT_ROWS,
+  INDUSTRY_ROW_LENGTH,
+  industrySizeFor,
+} from "./exhibits/industry.js";
 /** The wave-three regional rows, for tests that assert on the gradient. */
 export {
   REGIONAL_EXHIBIT_ROWS,

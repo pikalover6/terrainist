@@ -568,13 +568,21 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["craft", "fire"],
     note: "A brick core with its fire in the mouth, kept on the wall row so the fire never pinches the floor, and trapdoor drying racks.",
   }),
-  ind("brickworks", "Brickworks", "not_started", { wave: 5 }),
+  ind("brickworks", "Brickworks", "implemented", {
+    wave: 5,
+    note:
+      "A wave-two kiln core on the far wall with its fire in the mouth, brick drying stacks and trapdoor shelves, and clay pits read as mud-and-clay floor bays.",
+  }),
   ind("foundry", "Foundry", "implemented", {
     wave: 3,
     tags: ["craft", "fire"],
     note: "Blast furnaces and furnaces alternating across the far wall, anvils and ingot stock up one side, and the casting floor left completely open.",
   }),
-  ind("blast_furnace_works", "Blast furnace works", "not_started", { wave: 5 }),
+  ind("blast_furnace_works", "Blast furnace works", "implemented", {
+    wave: 5,
+    note:
+      "A blast-furnace bank set into a deepslate core with waxed-copper tuyeres standing on the masonry, slag barrels, and a slab charging deck where a body fits on it.",
+  }),
   ind("tannery", "Tannery", "implemented", {
     wave: 2,
     tags: ["craft", "leather"],
@@ -605,12 +613,32 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["craft", "timber"],
     note: "Finished casks stacked open and shut up one wall, stave racks and posts up the other, and a smithing-table hooping bench at the end.",
   }),
-  ind("ropewalk", "Ropewalk", "not_started", { wave: 5 }),
-  ind("charcoal_burner", "Charcoal burner", "not_started", { wave: 5 }),
+  ind("ropewalk", "Ropewalk", "implemented", {
+    wave: 5,
+    note:
+      "Wool rope lines run at working height between fence posts down both walls, log-and-iron-bar winding drums at the far end, and coil stacks by the door.",
+  }),
+  ind("charcoal_burner", "Charcoal burner", "implemented", {
+    wave: 5,
+    note:
+      "A coarse-dirt burn pile against the far wall closing on a solid turf cap, a podzol clearing in the floor plane, log stores and the collier's corner.",
+  }),
   ind("salt_pans", "Salt pans"),
-  ind("factory_hall", "Factory hall", "not_started", { wave: 5 }),
-  ind("machine_shop", "Machine shop", "not_started", { wave: 5 }),
-  ind("refinery", "Refinery", "not_started", { wave: 5 }),
+  ind("factory_hall", "Factory hall", "implemented", {
+    wave: 5,
+    note:
+      "Smithing and fletching benches alternating up both walls, a fence drive shaft hung off the ceiling down the middle, and a clocking desk by the door.",
+  }),
+  ind("machine_shop", "Machine shop", "implemented", {
+    wave: 5,
+    note:
+      "Stonecutter lathes up one wall, trapdoor tool boards and swarf barrels up the other, wall-torch work lights, and a grindstone-and-anvil bench end.",
+  }),
+  ind("refinery", "Refinery", "implemented", {
+    wave: 5,
+    note:
+      "Iron tank pedestals on both wall rows with waxed-copper pipe courses standing on them, catch cauldrons between, a lever control desk - and no flame at all.",
+  }),
   ind("container_yard", "Container yard", "not_started", { tags: ["modern", "port"] }),
   ind("gantry_crane", "Gantry crane"),
   ind("scrapyard", "Scrapyard"),
@@ -821,15 +849,35 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "The greenhouse domesticated: sill-rule glazing, a solid glass deck, an open plan.",
   }),
-  mod("brutalist_block", "Brutalist block", "not_started", { wave: 5 }),
-  mod("conference_center", "Conference centre", "not_started", { wave: 5 }),
-  mod("parking_garage", "Parking garage", "not_started", { wave: 5 }),
-  mod("gas_station", "Filling station", "not_started", { wave: 5 }),
+  mod("brutalist_block", "Brutalist block", "implemented", {
+    wave: 5,
+    note:
+      "Gray concrete over the whole wall field with polished fins every third column and bands at plinth and plate, small openings, an honest interior.",
+  }),
+  mod("conference_center", "Conference centre", "implemented", {
+    wave: 5,
+    note:
+      "A slab stage dais with banner flanks, flat seat rows turned away from the stage off a three-column aisle, breakout tables and a lobby.",
+  }),
+  mod("parking_garage", "Parking garage", "implemented", {
+    wave: 5,
+    note:
+      "Gray-and-white bay stripes in the floor plane, a stair ramp run against one wall where the storey allows, a concrete trim course, and a barrier arm beside the door.",
+  }),
+  mod("gas_station", "Filling station", "implemented", {
+    wave: 5,
+    note:
+      "A forecourt canopy in the apron on grounded posts over iron-and-lever pumps, a convenience-store shop corner, and a wall-banner price board.",
+  }),
   mod("convenience_store", "Convenience store", "implemented", {
     wave: 4,
     note: "Shelf gondolas on the seat-bank aisle discipline, a grilled counter, cold cabinets.",
   }),
-  mod("data_center", "Data centre", "not_started", { wave: 5 }),
+  mod("data_center", "Data centre", "implemented", {
+    wave: 5,
+    note:
+      "Iron server racks on the bank aisle discipline with levers standing on them, a checkered raised-floor grid, cooling cauldrons and an ops desk.",
+  }),
   mod("corporate_campus", "Corporate campus"),
   mod("modern_villa", "Modern villa", "not_started", { wave: 5 }),
   mod("billboard_tower", "Billboard tower"),

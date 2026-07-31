@@ -792,6 +792,38 @@ bathhouse's** (table 5) — this wave's dry sauna answers to `dry_sauna` and
 `store`, `shop` and `grocer` still reach the granary and the general store; and
 `lodging` still reaches the high-rise hotel, so the ski lodge answers to
 `ski_lodge` only. Bare `pavilion` is left unclaimed.
+**Wave 5C (table 11) — industry and modern works.** Twelve buildings: seven
+industrial and five modern. The industrial seven are read **down their length**
+— intake at the door end, machinery up the walls, the fire at the far end — so
+give them **depth**; the ropewalk wants the most depth of anything in the
+catalog, because a rope walk *is* its length. Two of them build outside the
+walls: the **gas station**'s forecourt canopy lives in the apron and the
+**brutalist block** re-clads its whole wall field, so give *those two* a **plain
+rect** — a `wing` makes both refuse and you get the ordinary shell instead.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| brickworks | `brickworks`, `brickyard` | a wave-two kiln core with its fire in the mouth, brick drying stacks and shelves, clay pits read as mud-and-clay floor bays | `[11, 12, 15]`, 1–2 floors |
+| blast_furnace_works | `blast_furnace_works`, `blast_furnace` | a blast-furnace bank in a deepslate core, waxed-copper tuyeres on the masonry, slag barrels, a slab charging deck | `[13, 13, 15]`, 1–2 floors |
+| factory_hall | `factory_hall`, `factory` | smithing and fletching benches alternating up both walls, a fence drive shaft hung off the ceiling, a clocking desk | `[13, 13, 19]`, 1–2 floors; **shaft needs storey ≥ 4** |
+| machine_shop | `machine_shop`, `machinist` | stonecutter lathes, trapdoor tool boards, wall-torch work lights, swarf barrels, a grindstone-and-anvil end | `[11, 12, 15]`, 1–2 floors |
+| refinery | `refinery`, `oil_refinery` | iron tank pedestals with waxed-copper pipe courses standing on them, catch cauldrons, a lever control desk — **no flame at all** | `[13, 12, 17]`, 1–2 floors |
+| charcoal_burner | `charcoal_burner`, `charcoal`, `collier` | a coarse-dirt burn pile against the far wall closing on a **solid** turf cap, a podzol clearing, log stores, the collier's corner | `[13, 11, 13]`, 1 floor |
+| ropewalk | `ropewalk`, `ropery` | wool rope lines run at working height between fence posts down both walls, log-and-bar winding drums, coil stacks | `[11, 11, 21]`, 1 floor; **depth is the point** |
+| parking_garage | `parking_garage`, `car_park` | gray-and-white bay stripes in the floor plane, a stair ramp against one wall, a concrete trim course, a barrier arm by the door | `[15, 13, 17]`, 1–2 floors; **ramp needs storey ≥ 4** |
+| gas_station | `gas_station`, `filling_station`, `petrol_station` | a forecourt canopy in the apron on **grounded** posts over iron-and-lever pumps, a shop corner, a wall-banner price board | `[13, 11, 13]`, 1 floor; **plain rect** |
+| data_center | `data_center`, `datacenter`, `server_farm` | iron server racks on the bank aisle discipline with levers on them, a checkered raised-floor grid, cooling cauldrons, an ops desk | `[15, 12, 17]`, 1–2 floors |
+| conference_center | `conference_center`, `convention_center` | a slab stage dais with banner flanks, flat seat rows off a three-column aisle, breakout tables, a lobby | `[15, 14, 19]`, 1–2 floors |
+| brutalist_block | `brutalist_block`, `brutalist` | gray concrete over the whole wall field, polished fins every third column, bands at plinth and plate, an honest interior | `[15, 15, 15]`, 1–2 floors; **plain rect** |
+
+Wave 5C claims **no** tag an earlier table owns, and the near misses are worth
+stating because each would have been a silent theft: `kiln` is still wave two's
+pottery kiln (the brickworks borrows its core but not its name); `foundry` and
+`casting` are still wave 3B's; `mill` still reaches the windmill and `craft` the
+smithy; `shop` and `store` still reach the general store and the granary; and
+`auditorium` still reaches the lecture hall, so the conference centre answers to
+`conference_center` and `convention_center` only.
+
 **Wave 4B (table 10) — faith and memorial.** Twelve buildings: eleven religious
 and one memorial. Seven of them rebuild part of the shell's exterior (cathedral,
 abbey, stupa, ziggurat, bell tower, minaret, tomb), so give *those* a **plain

@@ -41,6 +41,8 @@ import { worksFacadeDefaults } from "./archetypes-works.js";
 import { institutionFacadeDefaults } from "./archetypes-institution.js";
 import { leisureFacadeDefaults } from "./archetypes-leisure.js";
 import { commerceFacadeDefaults } from "./archetypes-commerce.js";
+
+import { industryFacadeDefaults } from "./archetypes-industry.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
@@ -173,6 +175,9 @@ export function archetypeFacadeDefaults(
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);
       if (Object.keys(commerce).length > 0) return commerce;
+      // Wave 5C — industry and modern works.
+      const industry = industryFacadeDefaults(archetype);
+      if (Object.keys(industry).length > 0) return industry;
       return regionalFacadeDefaults(archetype);
     }
   }

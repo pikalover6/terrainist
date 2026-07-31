@@ -36,6 +36,7 @@ export * from "./archetypes-wave2.js";
 export * from "./archetypes-works.js";
 export * from "./archetypes-institution.js";
 export * from "./archetypes-leisure.js";
+export * from "./archetypes-industry.js";
 export * from "./archetypes-residential.js";
 export * from "./archetypes-commerce.js";
 export * from "./archetypes-regional.js";
