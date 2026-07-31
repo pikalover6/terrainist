@@ -40,6 +40,7 @@ import { buildProps, type PropJob, type PropPassResult } from "../structures/pro
 import { AMUSEMENT_PROP_EXHIBIT_PLAN } from "./amusement.js";
 import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
 import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
+import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -148,6 +149,7 @@ export const PROP_EXHIBIT_PLAN: readonly {
   ...BLITZ_PROP_EXHIBIT_PLAN,
   ...STREET_PROP_EXHIBIT_PLAN,
   ...AMUSEMENT_PROP_EXHIBIT_PLAN,
+  ...WAYSIDE_PROP_EXHIBIT_PLAN,
 ]);
 
 /**

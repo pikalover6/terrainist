@@ -111,6 +111,20 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   ticket_booth: [{}],
   prize_wheel: [{}],
   swing_boats: [{}],
+  // Wave 5: the wayside. Their own properties are held in
+  // props-wayside.test.ts; here they walk the catalog-wide checks.
+  bus_shelter: [{}],
+  phone_box: [{}],
+  mailbox: [{}],
+  bicycle_rack: [{}],
+  shop_awning: [{}],
+  milestone: [{}],
+  bus_stop: [{}],
+  stagecoach: [{}],
+  yurt: [{}],
+  helter_skelter: [{}],
+  midway_arch: [{}],
+  shooting_gallery: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

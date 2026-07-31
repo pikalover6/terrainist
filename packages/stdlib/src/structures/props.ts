@@ -60,6 +60,12 @@ import {
   isStreetProp,
   streetPropFootprint,
 } from "./props-street.js";
+import {
+  WAYSIDE_PROP_GENERATORS,
+  WAYSIDE_PROP_NAMES,
+  isWaysideProp,
+  waysidePropFootprint,
+} from "./props-wayside.js";
 import { type BuildingMaterials } from "./themes.js";
 // The two transport families live in files of their own — an airliner and a
 // galleon are each longer than everything above put together — and are merged
@@ -89,6 +95,7 @@ export const PROP_NAMES = [
   ...BLITZ_PROP_NAMES,
   ...STREET_PROP_NAMES,
   ...AMUSEMENT_PROP_NAMES,
+  ...WAYSIDE_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -403,6 +410,7 @@ export function propFootprint(
   if (isBlitzProp(prop)) return blitzPropFootprint(prop, params);
   if (isStreetProp(prop)) return streetPropFootprint(prop, params);
   if (isAmusementProp(prop)) return amusementPropFootprint(prop);
+  if (isWaysideProp(prop)) return waysidePropFootprint(prop);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -934,6 +942,7 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...BLITZ_PROP_GENERATORS,
   ...STREET_PROP_GENERATORS,
   ...AMUSEMENT_PROP_GENERATORS,
+  ...WAYSIDE_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

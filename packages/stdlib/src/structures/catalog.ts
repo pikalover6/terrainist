@@ -780,15 +780,24 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   amu("ferris_wheel", "Ferris wheel"),
   amu("carousel", "Carousel", "implemented"),
   amu("roller_coaster", "Roller coaster", "not_started", { tags: ["rail"] }),
-  amu("helter_skelter", "Helter skelter", "not_started", { wave: 5 }),
+  amu("helter_skelter", "Helter skelter", "implemented", {
+    wave: 5,
+    note: "A striped tower core with twenty-four stair treads spiralling down two laps of the ring around it, a cone crown with a solid cap and a stone entrance arch at the foot; every tread is orthogonally against the core, so the slide is supported cell by cell.",
+  }),
   amu("swing_boats", "Swing boats", "implemented", { wave: 4 }),
   amu("big_top", "Big top"),
   amu("fairground_stall", "Fairground stall", "implemented", { wave: 4 }),
-  amu("shooting_gallery", "Shooting gallery", "not_started", { wave: 5 }),
+  amu("shooting_gallery", "Shooting gallery", "implemented", {
+    wave: 5,
+    note: "A booth: plank counter on two log posts, a concrete back wall with three button-on-white-concrete target reads, a prize shelf under the eaves and a striped canopy with two hanging lanterns.",
+  }),
   amu("hall_of_mirrors", "Hall of mirrors"),
   amu("funhouse", "Funhouse"),
   amu("ticket_booth", "Ticket booth", "implemented", { wave: 4 }),
-  amu("midway_arch", "Midway arch", "not_started", { wave: 5 }),
+  amu("midway_arch", "Midway arch", "implemented", {
+    wave: 5,
+    note: "Two striped pillar towers with a continuous block span between them, standing banners along the span and iron-bar bunting plus hung lanterns beneath it - no cube in the arch has six air faces.",
+  }),
   amu("prize_wheel", "Prize wheel", "implemented", { wave: 4 }),
   amu("dodgems_pavilion", "Dodgems pavilion"),
 
@@ -859,16 +868,25 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   land("signal_box", "Signal box"),
   land("level_crossing", "Level crossing"),
   land("tram_line", "Tram line"),
-  land("bus_stop", "Bus stop", "not_started", { wave: 5 }),
+  land("bus_stop", "Bus stop", "implemented", {
+    wave: 5,
+    note: "The shelter's cheap cousin: a fence pole with a banner flag, an open-trapdoor timetable and a two-seat stair bench on a small paved pad.",
+  }),
   land("transit_hub", "Transit hub"),
-  land("stagecoach", "Stagecoach", "not_started", { wave: 5 }),
+  land("stagecoach", "Stagecoach", "implemented", {
+    wave: 5,
+    note: "The caravan's grander cousin: an enclosed body with trapdoor doors and glass, four two-course trapdoor wheels on stripped-log axles, a driver's box, a drawbar and a fence luggage rail standing on the roof slabs.",
+  }),
   land("coach_house", "Coach house"),
   land("toll_house", "Toll house"),
   land("stone_bridge", "Stone bridge"),
   land("timber_bridge", "Timber bridge"),
   land("suspension_bridge", "Suspension bridge"),
   land("tunnel_portal", "Road tunnel portal"),
-  land("milestone", "Milestone", "not_started", { wave: 5 }),
+  land("milestone", "Milestone", "implemented", {
+    wave: 5,
+    note: "A single carved waypost - mossy cobble plinth with corner walls and moss carpet, two courses of chiselled stone and a slab cap.",
+  }),
 
   /* --- transport: water -------------------------------------------------- */
   water("rowboat", "Rowboat", "implemented", { tags: ["prop", "small"] }),
@@ -981,10 +999,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "A composter and a barrel on a paved corner, with a slab kerb and a trapdoor lid half off the composter.",
   }),
-  street("bicycle_rack", "Bicycle rack", "not_started", { wave: 5 }),
-  street("bus_shelter", "Bus shelter", "not_started", { wave: 5 }),
-  street("phone_box", "Phone box", "not_started", { wave: 5 }),
-  street("mailbox", "Mailbox", "not_started", { wave: 5 }),
+  street("bicycle_rack", "Bicycle rack", "implemented", {
+    wave: 5,
+    note: "Three low hoops - fence posts with a trapdoor laid over each head - on a two-cell paved strip.",
+  }),
+  street("bus_shelter", "Bus shelter", "implemented", {
+    wave: 5,
+    note: "Three sides of glass pane on a paved pad, a slab roof, a stair bench and a route banner standing on a masonry footing set into the ridge.",
+  }),
+  street("phone_box", "Phone box", "implemented", {
+    wave: 5,
+    note: "The classic one-cell kiosk: red concrete plinth, three courses of glass, a lantern hung from the terracotta cap and a slab crown - the narrowest prop in the catalog, and the silhouette is the read.",
+  }),
+  street("mailbox", "Mailbox", "implemented", {
+    wave: 5,
+    note: "A fence post under a concrete head with an iron trapdoor lid and a second iron trapdoor standing off its face for the slot.",
+  }),
   street("drinking_fountain", "Drinking fountain", "implemented", {
     wave: 4,
     note: "Pedestal, cauldron basin and a back plate with an open-trapdoor spout pointing at the water.",
@@ -997,7 +1027,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "A parameterised run of short stone posts along a kerb; length 5..33 (9), with a bollard always at both ends.",
   }),
-  street("shop_awning", "Shop awning", "not_started", { wave: 5 }),
+  street("shop_awning", "Shop awning", "implemented", {
+    wave: 5,
+    note: "A freestanding striped canopy on two grounded log posts over a paved pad - the fairground stall's canopy with no counter, no back wall and no wares, so the silhouette is distinct from it.",
+  }),
   street("sandwich_board", "Sandwich board", "implemented", {
     wave: 4,
     note: "The A-frame outside a shop: two pairs of leaning trapdoors on a slab base, 2x2x2 - the smallest prop in the catalog.",
@@ -1013,7 +1046,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- nomadic / temporary ------------------------------------------------ */
   nom("tent", "Tent", "implemented"),
-  nom("yurt", "Yurt", "not_started", { wave: 5 }),
+  nom("yurt", "Yurt", "implemented", {
+    wave: 5,
+    note: "The tent's round cousin: a two-band wool cylinder, a shallow cone to a SOLID centre cap, a carpet rug floor, a doorway with a trapdoor flap and a campfire on a stone pedestal; the smoke hole is a gap one course below the cap with nothing above it.",
+  }),
   nom("caravan", "Caravan", "implemented"),
   nom("wagon_circle", "Wagon circle"),
   nom("campsite", "Campsite", "implemented", { note: "Compound prop: two tents, a caravan, a fire and the seating round it." }),

@@ -1783,6 +1783,19 @@ export const SETTLEMENT_PROP_NAMES = [
   "ticket_booth",
   "prize_wheel",
   "swing_boats",
+  // Wave 5: the wayside — kerb, road, pitch and midway.
+  "bus_shelter",
+  "phone_box",
+  "mailbox",
+  "bicycle_rack",
+  "shop_awning",
+  "milestone",
+  "bus_stop",
+  "stagecoach",
+  "yurt",
+  "helter_skelter",
+  "midway_arch",
+  "shooting_gallery",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

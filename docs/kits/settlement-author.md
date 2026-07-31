@@ -1105,6 +1105,18 @@ plaza rather than one big one.
 | `sandwich_board` | 2×2×2 | ground | the smallest prop there is — an A-frame outside a shop |
 | `dog_kennel` | 3×5×3 | ground | box, doorway, bowl and a name banner on the ridge |
 | `log_pile` | 5×3×3 | ground | stacked firewood between chocks; good against a wall or a woodshed |
+| `bus_shelter` | 5×5×3 | ground | three sides of glass, a slab roof, a bench and a route banner |
+| `phone_box` | 1×7×1 | ground | the narrowest prop there is — a red kiosk you read by its silhouette |
+| `mailbox` | 1×5×2 | ground | post, iron-trimmed head and a slot; scatter these along a street |
+| `bicycle_rack` | 5×3×2 | ground | three low hoops on a paved strip |
+| `shop_awning` | 5×4×3 | ground | a striped canopy on two posts — no counter, so it is not a stall |
+| `milestone` | 3×4×3 | ground | a carved waypost on a mossy plinth; put one where two roads meet |
+| `bus_stop` | 3×5×2 | ground | pole, flag, timetable and a bench — line a road with them |
+| `stagecoach` | 7×7×3 | ground | enclosed coach on four wheels, driver's box, luggage rail and drawbar |
+| `yurt` | 7×6×7 | ground, flat | round wool tent with a stove and a smoke hole; a camp of these reads nomadic |
+| `helter_skelter` | 7×12×7 | ground, flat | the fair's tallest piece — a slide spiralling down a striped tower |
+| `midway_arch` | 9×7×3 | ground | the gate into a fair; put the other amusements behind it |
+| `shooting_gallery` | 7×6×3 | ground | counter, three targets, prize shelf and a striped canopy |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask
