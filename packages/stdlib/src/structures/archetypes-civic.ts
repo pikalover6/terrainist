@@ -199,6 +199,23 @@ function planZ(interior: LocalRect): number {
   return interior.z1 + 2;
 }
 
+/**
+ * A *decorated* flower pot, chosen from the cell's coordinates.
+ *
+ * A bare `flower_pot` in the world is an **empty** pot: in game it reads as
+ * "a pot with just dirt in it", which is what Kai reported walking the
+ * cottages. Every decorative pot this file places therefore goes down as a
+ * `potted_*` variant. The pick is position-derived — the same idiom as
+ * `pottedOf` in `core.ts`, restated locally because that helper is not
+ * exported — so it stays deterministic with no seed and no randomness.
+ */
+function pottedPlant(x: number, z: number): string {
+  const pots = ["potted_poppy", "potted_dandelion", "potted_azure_bluet", "potted_cornflower"];
+  // Non-negative regardless of sign; the local frame is non-negative anyway.
+  const i = (((x * 3 + z * 7) % pots.length) + pots.length) % pots.length;
+  return pots[i] as string;
+}
+
 /* -------------------------------------------------------------------------- */
 /* the walkability guard                                                       */
 /* -------------------------------------------------------------------------- */
@@ -457,7 +474,17 @@ function fitChurch(ctx: FitOutContext, c: PropCounter): void {
   // on the way in.
   const altarNorth = ctx.door === null ? true : ctx.door.z > (it.z0 + it.z1) / 2;
   const altarZ = altarNorth ? it.z0 : it.z1;
-  const pewFacing: Cardinal = altarNorth ? "north" : "south";
+  /**
+   * THE STAIR-SEAT RULE, obeyed by every seat in this file: a stair's
+   * `facing` is the direction of its **high half** — the backrest. So a
+   * stair used as a chair must face *away* from whatever the sitter looks
+   * at. A pew whose altar is to the north therefore faces **south**; the
+   * old code faced it north, which put the backrest against the altar and
+   * sat the congregation with their backs to it.
+   */
+  const pewFacing: Cardinal = altarNorth ? "south" : "north";
+  /** Which way a sitter on those pews looks. */
+  const towardAltar: Cardinal = altarNorth ? "north" : "south";
 
   // The aisle.
   for (let z = it.z0; z <= it.z1; z++) c.put1(mid, z, "red_carpet");
@@ -480,9 +507,10 @@ function fitChurch(ctx: FitOutContext, c: PropCounter): void {
     c.stack(mid, altarZ, 2, "white_candle", { candles: "1", lit: "false", waterlogged: "false" });
   }
   if (mid - 1 >= it.x0) {
-    c.put1(mid - 1, altarZ, "lectern", { facing: pewFacing === "north" ? "south" : "north", has_book: "false", powered: "false" });
+    // The lectern faces the congregation, i.e. back down the nave.
+    c.put1(mid - 1, altarZ, "lectern", { facing: towardAltar === "north" ? "south" : "north", has_book: "false", powered: "false" });
   }
-  if (mid + 1 <= it.x1) c.put1(mid + 1, altarZ, "flower_pot");
+  if (mid + 1 <= it.x1) c.put1(mid + 1, altarZ, pottedPlant(mid + 1, altarZ));
 
   emitSteeple(ctx, c);
 }
@@ -595,8 +623,9 @@ function fitMarketStall(ctx: FitOutContext, c: PropCounter): void {
   }
   c.put1(it.x1, it.z1, "barrel", { facing: "up", open: "false" });
   c.put1(it.x0, it.z1, "composter", { level: "3" });
-  // Goods on the counter: a crate at one end, a scale at the other.
-  c.stack(it.x0, it.z0, 2, "flower_pot");
+  // Goods on the counter: a potted plant for sale at one end, a bale at the
+  // other. (A bare `flower_pot` here was an empty pot — nothing to buy.)
+  c.stack(it.x0, it.z0, 2, pottedPlant(it.x0, it.z0));
   c.stack(it.x1, it.z0, 2, "hay_block", { axis: "y" });
 
   if (door === null) return;
@@ -637,8 +666,10 @@ function fitLibrary(ctx: FitOutContext, c: PropCounter): void {
     }
   }
   c.put1(mid, mz, "lectern", { facing: "south", has_book: "false", powered: "false" });
+  // The reader's chair sits south of the lectern and looks north at it, so by
+  // the stair-seat rule its backrest — its `facing` — points south.
   c.put1(mid, mz + 1 <= it.z1 ? mz + 1 : mz, style["stair.interior"] as string, {
-    facing: "north",
+    facing: "south",
     half: "bottom",
     shape: "straight",
   });
@@ -950,7 +981,7 @@ function furnishStorey(ctx: FitOutContext, plan: FloorPlan, level: number, store
     case "cottage": {
       beds("red_bed", storey === 1 ? 2 : 1);
       put(it.x1, it.z1, "chest", { facing: "west", type: "single" });
-      put(it.x0, it.z1, "flower_pot");
+      put(it.x0, it.z1, pottedPlant(it.x0, it.z1));
       break;
     }
     case "hall": {
@@ -972,15 +1003,16 @@ function furnishStorey(ctx: FitOutContext, plan: FloorPlan, level: number, store
       break;
     }
     case "church": {
-      // A gallery at the back of the nave, benches facing the altar.
+      // A gallery at the back of the nave, benches looking north up it toward
+      // the altar end — so, by the stair-seat rule, backrests to the south.
       for (let x = it.x0; x <= it.x1; x += 2) {
         put(x, it.z1, style["stair.interior"] as string, {
-          facing: "north",
+          facing: "south",
           half: "bottom",
           shape: "straight",
         });
       }
-      put(it.x1, it.z0, "flower_pot");
+      put(it.x1, it.z0, pottedPlant(it.x1, it.z0));
       break;
     }
     case "granary":

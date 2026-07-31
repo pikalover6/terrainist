@@ -409,3 +409,77 @@ describe("facade tendencies", () => {
     expect(meta.windowCount).toBeGreaterThan(0);
   });
 });
+
+describe("field-report fixes", () => {
+  /** Which archetypes/sizes place a decorative pot at all. */
+  const POT_CASES: readonly { archetype: string; floors: number }[] = [
+    { archetype: "church", floors: 1 },
+    { archetype: "church", floors: 2 },
+    { archetype: "market_stall", floors: 1 },
+    { archetype: "cottage", floors: 2 },
+  ];
+
+  it("never leaves a decorative pot empty", () => {
+    // A bare `flower_pot` is an *empty* pot — in game it reads as a pot with
+    // just dirt in it. Every pot this file places must be a `potted_*`.
+    for (const { archetype, floors } of POT_CASES) {
+      for (const size of [BIG, [9, 15, 11], [17, 15, 15]] as const) {
+        const { ops } = build(archetype, size, { floors });
+        expect(
+          ops.filter((o) => o.block === "flower_pot"),
+          `${archetype}/${floors}/${size.join("x")}`,
+        ).toHaveLength(0);
+      }
+    }
+  });
+
+  it("places a potted plant at each known decoration site", () => {
+    const seen = new Set<string>();
+    for (const { archetype, floors } of POT_CASES) {
+      const { ops } = build(archetype, BIG, { floors });
+      const pots = ops.filter((o) => o.block.startsWith("potted_"));
+      expect(pots.length, archetype).toBeGreaterThan(0);
+      for (const p of pots) seen.add(p.block);
+    }
+    // The pick is position-derived, so a spread of buildings shows more than
+    // one variant — proof it is not a hard-coded single plant.
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it("sits the congregation facing the altar, not away from it", () => {
+    // A stair's `facing` is its high half — the backrest — so a seat's facing
+    // points AWAY from what the sitter looks at. The lectern at the altar
+    // looks back down the nave, so pew backrests and the lectern agree.
+    for (const size of [BIG, [11, 15, 15], [9, 15, 13]] as const) {
+      const { ops } = build("church", size, { floors: 2 });
+      const lectern = ops.find((o) => o.block === "lectern" && o.y === 1);
+      expect(lectern, size.join("x")).toBeDefined();
+      const nave = (lectern as LocalVoxelOp).props?.facing;
+      const stair = PINNED["stair.interior"] as string;
+      const pews = ops.filter((o) => o.block === stair && o.props?.shape === "straight");
+      expect(pews.length, size.join("x")).toBeGreaterThan(0);
+      for (const pew of pews) {
+        expect(pew.props?.facing, `pew at ${pew.x},${pew.y},${pew.z}`).toBe(nave);
+      }
+    }
+  });
+
+  it("sits the library reader facing the lectern", () => {
+    const { ops } = build("library", BIG);
+    const lectern = ops.find((o) => o.block === "lectern" && o.y === 1) as LocalVoxelOp;
+    const stair = PINNED["stair.interior"] as string;
+    // The reader's chair, not the staircase: the stair adjacent to the lectern.
+    const chair = ops.find(
+      (o) =>
+        o.block === stair &&
+        o.y === 1 &&
+        Math.abs(o.x - lectern.x) + Math.abs(o.z - lectern.z) === 1,
+    ) as LocalVoxelOp;
+    expect(chair, "reader's chair beside the lectern").toBeDefined();
+    // The chair stands beside the lectern and looks at it, so its backrest —
+    // its `facing` — points the same way the lectern does (the lectern faces
+    // the reader). Compared in the rotated frame, which is what ships.
+    expect(Math.abs(chair.x - lectern.x) + Math.abs(chair.z - lectern.z)).toBe(1);
+    expect(chair.props?.facing).toBe(lectern.props?.facing);
+  });
+});
