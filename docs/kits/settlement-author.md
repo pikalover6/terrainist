@@ -606,9 +606,10 @@ reaches the tall grammar and a `storehouse` reaches the warehouse.
 | 7 | vernacular | see the vernacular table below |
 | 8 | wave two | see the wave-two table below |
 | 9 | institutions | see the institution table below |
-| 10 | extended | see the extended table below |
-| 11 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
-| 12 | fallback | anything else → cottage |
+| 10 | leisure & modern | see the wave-4C table below |
+| 11 | extended | see the extended table below |
+| 12 | original | `hall`, then `trade`/`inn`, then `craft`/`smithy`, then `store`/`granary` |
+| 13 | fallback | anything else → cottage |
 
 **Town (table 5)** — the civic wave, and fit-outs like the breadth ones: give
 them a **plain rect** envelope or the exterior work refuses and you get the
@@ -751,6 +752,37 @@ Wave 3B deliberately claims **no** short tag: `trade` is the inn's, `store`,
 `vendor` the market stall's, `mill`, `sawmill`, `kiln` and `tannery` the
 windmill's and wave two's, and `craft` and `smithy` the smithy's. Ask for a
 works by its own name.
+
+**Wave 4C (table 10) — leisure, modern and science interiors.** Twelve rooms
+whose whole read is what is *in* them. The four with seat banks (theatre, opera
+house, cinema, lecture hall) want **depth**: the bank lays alternate rows with a
+clear lane round the field and a three-column aisle off the lantern, so a short
+envelope gets two rows of seats and a long one gets six. The three that rebuild
+part of the exterior (opera house, cinema, glass pavilion) want a **plain rect**
+— a `wing` makes the re-clad refuse.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| theater | `theater`, `theatre` | a slab stage dais across the far end, banner wing curtains, flat seat rows turned away from the stage, a backstage corner | `[13, 14, 19]`, 1–2 floors |
+| opera_house | `opera_house`, `opera` | the theatre plus a quartz proscenium band, chest-and-seat side boxes and a red runner written into the floor plane | `[15, 15, 19]`, 1–2 floors |
+| cinema | `cinema`, `movie_theater` | a pale screen on a black end wall, seat rows, a projector plinth at the back of the aisle, a concessions lobby corner | `[13, 12, 19]`, 1–2 floors |
+| dance_hall | `dance_hall`, `ballroom` | a striped sprung floor in the floor plane, a band dais with a jukebox and a note block, wall benches and bunting | `[15, 13, 17]`, 1–2 floors |
+| boxing_gym | `boxing_gym`, `boxing` | wool mats, a slab ring in the middle with fence corner posts standing on it, hanging bag targets, a bench row | `[15, 12, 15]`, 1 floor; **≥ 9 interior for the ring** |
+| sauna | `dry_sauna`, `sweat_lodge` | flat slab bench tiers up both side walls, a brazier on a plinth at the far wall, an empty cauldron — and **no water at all** | `[11, 11, 13]`, 1–2 floors |
+| ski_lodge | `ski_lodge` | fur rugs in the floor plane, trapdoor ski racks on both side walls, a stripped-log mantel with fence antlers on it, a lounge corner | `[15, 14, 15]`, 1–2 floors |
+| clubhouse | `clubhouse`, `club` | a trophy shelf with a gold cup, a banner honours board, lounge chairs and low tables down the sides, a short bar | `[13, 13, 15]`, 1–2 floors |
+| glass_pavilion | `glass_pavilion` | sill-rule glazing over the whole wall field, a solid glass roof deck with a pane rail, planted corners and an open plan | `[13, 12, 13]`, 1–2 floors |
+| convenience_store | `convenience_store`, `corner_shop` | shelf gondolas on the seat-bank aisle discipline, a timber counter with an iron-bar grille, iron-trapdoor cold cabinets, stacked crates | `[11, 11, 15]`, 1 floor |
+| laboratory | `laboratory`, `lab` | smooth-stone benches with brewing stands on them, an iron-trapdoor fume hood, specimen bookshelves and a dark chalk board | `[13, 12, 17]`, 1–2 floors |
+| lecture_hall | `lecture_hall`, `auditorium` | the school at scale: a dark board, a lectern on a slab dais, flat rows off a three-column aisle | `[15, 14, 19]`, 1–2 floors |
+
+Wave 4C claims **no** tag an earlier table owns, and four of the near misses are
+worth stating because each would have been a silent theft: bare **`sauna` is the
+bathhouse's** (table 5) — this wave's dry sauna answers to `dry_sauna` and
+`sweat_lodge`; `gym`, `gymnasium` and `fitness` still reach the blitz gym;
+`store`, `shop` and `grocer` still reach the granary and the general store; and
+`lodging` still reaches the high-rise hotel, so the ski lodge answers to
+`ski_lodge` only. Bare `pavilion` is left unclaimed.
 
 **Wave 3C (table 10) — the regional houses.** Twelve dwellings from twelve
 traditions. Every one of them rebuilds part of the shell's exterior, so give

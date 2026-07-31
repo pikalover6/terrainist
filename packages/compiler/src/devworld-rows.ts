@@ -28,6 +28,7 @@ import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { INSTITUTION_EXHIBIT_ROWS } from "./exhibits/institution.js";
+import { LEISURE_EXHIBIT_ROWS } from "./exhibits/leisure.js";
 import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
@@ -109,6 +110,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...WAVE2_EXHIBIT_ROWS,
   ...WORKS_EXHIBIT_ROWS,
   ...INSTITUTION_EXHIBIT_ROWS,
+  ...LEISURE_EXHIBIT_ROWS,
   ...REGIONAL_EXHIBIT_ROWS,
 ]);
 
@@ -163,6 +165,8 @@ export {
   INSTITUTION_ROW_LENGTH,
   institutionSizeFor,
 } from "./exhibits/institution.js";
+/** The wave-4C leisure rows, for tests that assert on the gradient itself. */
+export { LEISURE_EXHIBIT_ROWS, LEISURE_ROW_LENGTH, leisureSizeFor } from "./exhibits/leisure.js";
 /** The wave-three regional rows, for tests that assert on the gradient. */
 export {
   REGIONAL_EXHIBIT_ROWS,

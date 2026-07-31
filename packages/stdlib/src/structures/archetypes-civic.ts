@@ -38,6 +38,7 @@ import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
 import { worksFacadeDefaults } from "./archetypes-works.js";
 import { institutionFacadeDefaults } from "./archetypes-institution.js";
+import { leisureFacadeDefaults } from "./archetypes-leisure.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -151,6 +152,9 @@ export function archetypeFacadeDefaults(
       // Wave three A, the institutions — last link in the chain.
       const institutions = institutionFacadeDefaults(archetype);
       if (Object.keys(institutions).length > 0) return institutions;
+      // Wave 4C — leisure, modern and science interiors.
+      const leisure = leisureFacadeDefaults(archetype);
+      if (Object.keys(leisure).length > 0) return leisure;
       return regionalFacadeDefaults(archetype);
     }
   }

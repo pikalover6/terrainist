@@ -88,6 +88,14 @@ import {
 
 export * from "./archetypes-institution.js";
 
+import {
+  LEISURE_BUILDING_ARCHETYPES,
+  furnishLeisure,
+  leisureArchetypeOfTags,
+} from "./archetypes-leisure.js";
+
+export * from "./archetypes-leisure.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 import {
   UNDERGROUND_ARCHETYPES,
@@ -120,6 +128,7 @@ export const BUILDING_ARCHETYPES = [
   ...WAVE2_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
+  ...LEISURE_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -181,6 +190,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // infirmary's — so the position is about the greedy tables below.
   const institution = institutionArchetypeOfTags(tags);
   if (institution !== null) return institution;
+  // Wave 4C's leisure, modern and science interiors, immediately after the
+  // institutions and for the same reason: it claims nothing an earlier table
+  // claims — `sauna` still reaches the bathhouse (this file's dry one answers
+  // to `dry_sauna`), `gym` still reaches the blitz gym, `store`, `shop` and
+  // `grocer` still reach the granary and the general store, and `lodging`
+  // still reaches the hotel — so the position is about the greedy tables
+  // *below* it.
+  const leisure = leisureArchetypeOfTags(tags);
+  if (leisure !== null) return leisure;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -543,6 +561,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishWave2(ctx);
   n += furnishWorks(ctx);
   n += furnishInstitution(ctx);
+  n += furnishLeisure(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishWing(ctx);

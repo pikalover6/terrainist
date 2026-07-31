@@ -603,23 +603,47 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   lei("stadium", "Stadium"),
   lei("arena", "Arena"),
   lei("amphitheater", "Amphitheatre"),
-  lei("theater", "Theatre", "not_started", { wave: 4 }),
-  lei("opera_house", "Opera house", "not_started", { wave: 4 }),
-  lei("cinema", "Cinema", "not_started", { wave: 4 }),
-  lei("dance_hall", "Dance hall", "not_started", { wave: 4 }),
+  lei("theater", "Theatre", "implemented", {
+    wave: 4,
+    note: "A slab stage dais, banner wing curtains and flat seat rows facing it.",
+  }),
+  lei("opera_house", "Opera house", "implemented", {
+    wave: 4,
+    note: "The theatre plus a quartz proscenium, side boxes and a red floor runner.",
+  }),
+  lei("cinema", "Cinema", "implemented", {
+    wave: 4,
+    note: "A pale screen on a dark end wall, seat rows and a projector plinth at the back.",
+  }),
+  lei("dance_hall", "Dance hall", "implemented", {
+    wave: 4,
+    note: "A striped sprung floor, a band dais with jukebox and note block, wall benches.",
+  }),
   lei("gym", "Gymnasium", "implemented", { note: "Wool mats, a glass mirror wall, anvils and a hanging bag." }),
-  lei("boxing_gym", "Boxing gym", "not_started", { wave: 4 }),
+  lei("boxing_gym", "Boxing gym", "implemented", {
+    wave: 4,
+    note: "Wool mats, a slab ring with fence corner posts on it, hanging bags and a bench row.",
+  }),
   // A basin sunk into the ground with no interior to walk: a prop, not a shell.
   lei("swimming_pool", "Swimming pool", "implemented", { tags: ["water"], kind: "prop" }),
   lei("bathing_pavilion", "Bathing pavilion"),
-  lei("sauna", "Sauna", "not_started", { wave: 4 }),
+  lei("sauna", "Sauna", "implemented", {
+    wave: 4,
+    note: "The bathhouse's dry cousin: flat slab bench tiers and a brazier plinth, no water. Tags `dry_sauna`/`sweat_lodge` \u2014 bare `sauna` is the bathhouse's.",
+  }),
   lei("tennis_court", "Tennis court"),
   lei("bowling_green", "Bowling green"),
   lei("racetrack", "Racetrack"),
   lei("climbing_wall", "Climbing wall"),
-  lei("ski_lodge", "Ski lodge", "not_started", { wave: 4 }),
+  lei("ski_lodge", "Ski lodge", "implemented", {
+    wave: 4,
+    note: "Fur rugs in the floor plane, trapdoor ski racks and a log mantel with fence antlers.",
+  }),
   lei("bandstand", "Bandstand"),
-  lei("clubhouse", "Clubhouse", "not_started", { wave: 4 }),
+  lei("clubhouse", "Clubhouse", "implemented", {
+    wave: 4,
+    note: "A trophy shelf and banner honours board, lounge chairs and tables, a short bar.",
+  }),
 
   /* --- amusement --------------------------------------------------------- */
   amu("ferris_wheel", "Ferris wheel"),
@@ -653,12 +677,18 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   mod("penthouse", "Penthouse"),
   mod("atrium_block", "Atrium block"),
-  mod("glass_pavilion", "Glass pavilion", "not_started", { wave: 4 }),
+  mod("glass_pavilion", "Glass pavilion", "implemented", {
+    wave: 4,
+    note: "The greenhouse domesticated: sill-rule glazing, a solid glass deck, an open plan.",
+  }),
   mod("brutalist_block", "Brutalist block"),
   mod("conference_center", "Conference centre"),
   mod("parking_garage", "Parking garage"),
   mod("gas_station", "Filling station"),
-  mod("convenience_store", "Convenience store", "not_started", { wave: 4 }),
+  mod("convenience_store", "Convenience store", "implemented", {
+    wave: 4,
+    note: "Shelf gondolas on the seat-bank aisle discipline, a grilled counter, cold cabinets.",
+  }),
   mod("data_center", "Data centre"),
   mod("corporate_campus", "Corporate campus"),
   mod("modern_villa", "Modern villa"),
@@ -669,8 +699,14 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   sci("telescope_dome", "Telescope dome"),
   sci("planetarium", "Planetarium"),
   sci("alchemy_lab", "Alchemy laboratory"),
-  sci("laboratory", "Laboratory", "not_started", { wave: 4 }),
-  sci("lecture_hall", "Lecture hall", "not_started", { wave: 4 }),
+  sci("laboratory", "Laboratory", "implemented", {
+    wave: 4,
+    note: "Stone benches with brewing stands, an iron fume-hood canopy and a chalk board.",
+  }),
+  sci("lecture_hall", "Lecture hall", "implemented", {
+    wave: 4,
+    note: "The school at scale: a board, a lectern on a dais, flat rows off a three-column aisle.",
+  }),
   sci("botanical_garden", "Botanical garden"),
   sci("herbarium", "Herbarium"),
   sci("aviary", "Aviary"),

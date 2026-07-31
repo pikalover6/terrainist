@@ -35,6 +35,8 @@ import {
   UNDERGROUND_EXHIBIT_ROWS,
   INSTITUTION_EXHIBIT_ROWS,
   INSTITUTION_ROW_LENGTH,
+  LEISURE_EXHIBIT_ROWS,
+  LEISURE_ROW_LENGTH,
   REGIONAL_EXHIBIT_ROWS,
   REGIONAL_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -140,6 +142,8 @@ describe("dev world grid", () => {
     // Wave three A, the institutions: prefixed (`inst_prison`) for the same
     // reason, so they too are extra rows rather than replacements.
     const institutions = INSTITUTION_EXHIBIT_ROWS.length * INSTITUTION_ROW_LENGTH;
+    // Wave 4C's leisure, modern and science rows are prefixed (`lei_cinema`).
+    const leisure = LEISURE_EXHIBIT_ROWS.length * LEISURE_ROW_LENGTH;
     // Wave three's regional rows are prefixed (`reg_igloo`) for the same reason.
     const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
     expect(extra).toBe(
@@ -156,6 +160,7 @@ describe("dev world grid", () => {
         wave2 +
         works +
         institutions +
+        leisure +
         regional,
     );
     const grid = planDevGrid();
