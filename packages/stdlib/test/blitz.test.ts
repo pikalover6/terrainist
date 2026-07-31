@@ -245,10 +245,156 @@ describe("breadth archetypes", () => {
     // flare. Three of them at least, which is what makes it a pagoda.
     const tiers = new Set(
       result.ops
-        .filter((op) => op.y >= base && op.props?.["half"] === "top" && op.block.endsWith("_stairs"))
+        .filter(
+          (op) => op.y >= base && op.props?.["half"] === "top" && op.block.endsWith("_stairs"),
+        )
         .map((op) => op.y),
     );
     expect(tiers.size).toBeGreaterThanOrEqual(3);
+  });
+
+  /* -- the field-report round ---------------------------------------------- */
+
+  /** Every envelope the dev-world gradients actually produce for an archetype. */
+  const GRADIENT: readonly (readonly [readonly [number, number, number], number])[] = [
+    ...Array.from({ length: 7 }, (_, c) => [[7 + c, 8, 7 + (c % 3)], c < 4 ? 1 : 2] as const),
+    ...Array.from({ length: 4 }, (_, c) => [[11 + c, 15 + c, 11 + c], c < 2 ? 1 : 2] as const),
+  ];
+
+  /** Unit step of a cardinal, as the grammar writes them. */
+  const STEP: Record<string, readonly [number, number]> = {
+    north: [0, -1],
+    south: [0, 1],
+    east: [1, 0],
+    west: [-1, 0],
+  };
+
+  it("lays a hall table at every envelope, with the benches drawn up to it", () => {
+    for (const [size, floors] of GRADIENT) {
+      const result = build("keep", size, { floors });
+      const at = indexOf(result.ops);
+      const room = new Set(result.meta.floorCells.map((cell) => `${cell.x},${cell.z}`));
+      // A table cell is either idiom: a trestle (post plus a top) or a slab.
+      const board = new Set<string>();
+      for (const op of result.ops) {
+        if (op.y !== 1) continue;
+        const over = at.get(`${op.x},2,${op.z}`);
+        const trestle = op.block.endsWith("_fence") && over?.block === "oak_pressure_plate";
+        const table = op.block.endsWith("_slab") && op.props?.["type"] === "top";
+        if (trestle || table) board.add(`${op.x},${op.z}`);
+      }
+      const where = `keep ${size.join("x")} floors=${floors}`;
+      expect(board.size, `${where}: no table`).toBeGreaterThan(0);
+      // Every bench sits beside a cell the board reached, and opens onto it.
+      const chairs = result.ops.filter(
+        (op) => op.y === 1 && op.block.endsWith("_stairs") && op.props?.["half"] === "bottom",
+      );
+      expect(chairs.length, `${where}: no benches`).toBeGreaterThan(0);
+      // A bench in the aisle either side of the board is a bench of the hall's
+      // own set, and it must open onto a cell the board actually reached.
+      const columns = new Set([...board].map((cell) => Number(cell.split(",")[0])));
+      for (const chair of chairs) {
+        if (!room.has(`${chair.x},${chair.z}`)) continue;
+        if (!columns.has(chair.x + 1) && !columns.has(chair.x - 1)) continue;
+        const [dx, dz] = STEP[chair.props?.["facing"] as string] as readonly [number, number];
+        // The seat opens the way the backrest does not.
+        expect(
+          board.has(`${chair.x - dx},${chair.z - dz}`),
+          `${where}: bench at ${chair.x},${chair.z} faces no table`,
+        ).toBe(true);
+      }
+      // At least one bench actually faces the board — the alignment bug.
+      const drawn = chairs.filter((chair) => {
+        const [dx, dz] = STEP[chair.props?.["facing"] as string] as readonly [number, number];
+        return board.has(`${chair.x - dx},${chair.z - dz}`);
+      });
+      expect(drawn.length, `${where}: no bench faces the table`).toBeGreaterThan(0);
+    }
+  });
+
+  it("seats every chair with its backrest to the wall, never its seat", () => {
+    // A stair's `facing` names the side its *high* half — the backrest — is
+    // on. So the cell the seat opens onto is the one *opposite* `facing`, and
+    // that cell has to be somewhere a sitter could be looking: inside the room.
+    for (const a of ["keep", "gatehouse", "barracks", "gym"] as const) {
+      for (const floors of [1, 2]) {
+        const result = build(a, BIG, { floors });
+        const room = new Set(result.meta.floorCells.map((cell) => `${cell.x},${cell.z}`));
+        for (const op of result.ops) {
+          if (op.y !== 1 || !op.block.endsWith("_stairs")) continue;
+          if (op.props?.["half"] !== "bottom") continue;
+          if (!room.has(`${op.x},${op.z}`)) continue;
+          const [dx, dz] = STEP[op.props?.["facing"] as string] as readonly [number, number];
+          expect(
+            room.has(`${op.x - dx},${op.z - dz}`),
+            `${a} floors=${floors}: chair at ${op.x},${op.z} opens into the wall`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("glazes the greenhouse from the sill up, and roofs it in glass alone", () => {
+    for (const [size, floors] of GRADIENT) {
+      const result = build("greenhouse", size, { floors });
+      const where = `greenhouse ${size.join("x")} floors=${floors}`;
+      const wallTop = result.meta.wallTop;
+      const wallGlass = result.ops.filter((op) => op.block === "glass" && op.y <= wallTop);
+      expect(wallGlass.length, `${where}: no glazing`).toBeGreaterThan(0);
+      // The plinth: nothing glazed at the floor plane or the course above it.
+      for (const op of wallGlass) {
+        expect(op.y, `${where}: glass at ${op.x},${op.y},${op.z}`).toBeGreaterThanOrEqual(2);
+        // …and never level with a storey's floor plane.
+        const storey = result.meta.params.storyHeight as number;
+        expect(storey, `${where}: storey height`).toBeGreaterThan(0);
+        expect(op.y % storey, `${where}: glass on a floor plane`).not.toBe(0);
+      }
+      // The roof is glass, and the plank one it replaced is gone.
+      const above = result.ops.filter((op) => op.y > wallTop && op.block !== "air");
+      expect(
+        above.some((op) => op.block === "glass"),
+        `${where}: no glass roof`,
+      ).toBe(true);
+      for (const op of above) {
+        expect(
+          /_planks$|_log$|_slab$|_stairs$/.test(op.block),
+          `${where}: ${op.block} left on the roof at ${op.x},${op.y},${op.z}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("gives the wizard's enchanting table a setting of bookshelves", () => {
+    for (const size of [BIG, [9, 17, 9], [11, 15, 11]] as const) {
+      for (const floors of [1, 2]) {
+        const result = build("wizard_tower", size, { floors });
+        const where = `wizard_tower ${size.join("x")} floors=${floors}`;
+        const table = result.ops.find((op) => op.block === "enchanting_table");
+        expect(table, `${where}: no enchanting table`).toBeDefined();
+        const near = result.ops.filter(
+          (op) =>
+            op.block === "bookshelf" &&
+            Math.abs(op.x - (table as LocalVoxelOp).x) <= 1 &&
+            Math.abs(op.z - (table as LocalVoxelOp).z) <= 1,
+        );
+        expect(near.length, `${where}: shelves round the table`).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
+  it("plants every decorative pot it sets down", () => {
+    // A bare `flower_pot` is an *empty* pot in game: the "dirt" Kai saw.
+    for (const a of ["pagoda", "mausoleum"] as const) {
+      for (const [size, floors] of GRADIENT) {
+        const result = build(a, size, { floors });
+        expect(
+          result.ops.some((op) => op.block === "flower_pot"),
+          `${a} ${size.join("x")}: bare pot`,
+        ).toBe(false);
+      }
+      const potted = build(a, BIG).ops.filter((op) => op.block.startsWith("potted_"));
+      expect(potted.length, `${a}: nothing planted`).toBeGreaterThan(0);
+    }
   });
 
   it("is deterministic, and reseeds cosmetically", () => {
@@ -321,12 +467,19 @@ describe("breadth props", () => {
 
   it("scales the curtain wall with its length param and keeps its stair", () => {
     for (const length of [6, 16, 32]) {
-      const result = generateProp({ prop: "curtain_wall", seed: SEED, params: { length } });
+      const result = generateProp({
+        prop: "curtain_wall",
+        seed: SEED,
+        params: { length },
+      });
       expect(result.meta.size[0], `length ${length}`).toBe(length);
       const stairs = result.ops.filter((op) => op.block.endsWith("_stairs"));
       expect(stairs.length, `length ${length} stair`).toBeGreaterThanOrEqual(3);
       // The merlon course exists at every length.
-      expect(result.ops.some((op) => op.y === 5), `length ${length} merlons`).toBe(true);
+      expect(
+        result.ops.some((op) => op.y === 5),
+        `length ${length} merlons`,
+      ).toBe(true);
     }
   });
 
@@ -358,12 +511,18 @@ describe("breadth props", () => {
       expect(cell.y).toBeLessThanOrEqual(POOL_WATER_Y);
     }
     // The pieces that make it a pool rather than a tank.
-    expect(result.ops.some((op) => op.block === "ladder"), "ladder").toBe(true);
+    expect(
+      result.ops.some((op) => op.block === "ladder"),
+      "ladder",
+    ).toBe(true);
     expect(
       result.ops.some((op) => op.block.endsWith("_stained_glass")),
       "lane ropes",
     ).toBe(true);
-    expect(result.ops.some((op) => op.y === 2 && op.block.endsWith("_slab")), "board").toBe(true);
+    expect(
+      result.ops.some((op) => op.y === 2 && op.block.endsWith("_slab")),
+      "board",
+    ).toBe(true);
   });
 
   it("grows the treehouse a trunk, a deck and a way up it", () => {
@@ -378,13 +537,19 @@ describe("breadth props", () => {
       expect(backing, `backing at y ${y}`).toBeDefined();
       expect(backing?.block.endsWith("_log"), `backing at y ${y} is trunk`).toBe(true);
     }
-    expect(result.ops.some((op) => op.block.endsWith("_leaves")), "canopy").toBe(true);
+    expect(
+      result.ops.some((op) => op.block.endsWith("_leaves")),
+      "canopy",
+    ).toBe(true);
   });
 
   it("lays a graveyard out as a yard: fence, path, plots and a mausoleum", () => {
     const result = generateProp({ prop: "graveyard", seed: SEED });
     const kinds = new Set(result.ops.map((op) => op.block));
-    expect([...kinds].some((k) => k.endsWith("_fence")), "fence").toBe(true);
+    expect(
+      [...kinds].some((k) => k.endsWith("_fence")),
+      "fence",
+    ).toBe(true);
     expect(kinds.has("podzol"), "grave mounds").toBe(true);
     expect(kinds.has("chiseled_stone_bricks"), "the sarcophagus").toBe(true);
     // Headstone variety: the four shapes are drawn, so more than one of the
@@ -397,8 +562,14 @@ describe("breadth props", () => {
     const result = generateProp({ prop: "campsite", seed: SEED });
     const kinds = result.ops.map((op) => op.block);
     expect(kinds).toContain("campfire");
-    expect(kinds.some((k) => k.endsWith("_wool")), "canvas").toBe(true);
-    expect(kinds.some((k) => k === "glass_pane"), "the caravan's window").toBe(true);
+    expect(
+      kinds.some((k) => k.endsWith("_wool")),
+      "canvas",
+    ).toBe(true);
+    expect(
+      kinds.some((k) => k === "glass_pane"),
+      "the caravan's window",
+    ).toBe(true);
     expect(result.ops.filter((op) => op.block === "white_carpet").length, "bedrolls").toBe(4);
   });
 });
