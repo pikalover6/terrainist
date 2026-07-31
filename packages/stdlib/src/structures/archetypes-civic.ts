@@ -45,6 +45,7 @@ import { terminusFacadeDefaults } from "./archetypes-terminus.js";
 
 import { industryFacadeDefaults } from "./archetypes-industry.js";
 import { depthsFacadeDefaults } from "./archetypes-depths.js";
+import { utilityFacadeDefaults } from "./archetypes-utility.js";
 import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
@@ -198,6 +199,9 @@ export function archetypeFacadeDefaults(
       // houses stay the tail of the chain.
       const terminus = terminusFacadeDefaults(archetype);
       if (Object.keys(terminus).length > 0) return terminus;
+      // Wave 6C — waterworks and energy.
+      const utility = utilityFacadeDefaults(archetype);
+      if (Object.keys(utility).length > 0) return utility;
       // Wave 5E, arcana — appended, and the regional houses stay the tail.
       const arcana = arcanaFacadeDefaults(archetype);
       if (Object.keys(arcana).length > 0) return arcana;
@@ -405,8 +409,22 @@ export function wholeFloorPlan(
   // the wing off from the main block and call the remainder connected.
   const cells: string[] = [];
   const consider = (x: number, z: number): void => {
+    // No floor, no cell: the basement ladder shaft is a hole in the y = 0
+    // plane, and counting it as open floor let the guard route connectivity
+    // *across* it — a route the walking agent does not have, because stepping
+    // into the shaft is a four-block fall. The shell writes the floor plane
+    // under every true interior cell, so a missing y = 0 always means a hole.
+    const floor = blockAt(x, 0, z);
+    if (floor === undefined || floor.block === "air") return;
     const standing = blockAt(x, 1, z);
     if (standing !== undefined && !isPassable(standing.block)) return;
+    // Head clearance, the same both-courses rule the physics walk applies: a
+    // cell under the stair flight's second step (or under a low-slung lantern)
+    // has floor and an open standing course, but a player cannot stand in it.
+    // Counting it as open let an airport route its whole west lane through the
+    // one cell beside the flight — a route the walking agent does not have.
+    const head = blockAt(x, 2, z);
+    if (head !== undefined && !isPassable(head.block)) return;
     cells.push(`${x},${z}`);
   };
   if (floorCells === undefined) {

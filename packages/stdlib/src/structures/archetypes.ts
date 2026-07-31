@@ -137,6 +137,14 @@ import {
 export * from "./archetypes-industry.js";
 
 import {
+  UTILITY_BUILDING_ARCHETYPES,
+  furnishUtility,
+  utilityArchetypeOfTags,
+} from "./archetypes-utility.js";
+
+export * from "./archetypes-utility.js";
+
+import {
   GARRISON_BUILDING_ARCHETYPES,
   furnishGarrison,
   garrisonArchetypeOfTags,
@@ -230,6 +238,7 @@ export const BUILDING_ARCHETYPES = [
   ...COMMERCE_BUILDING_ARCHETYPES,
   ...TERMINUS_BUILDING_ARCHETYPES,
   ...INDUSTRY_BUILDING_ARCHETYPES,
+  ...UTILITY_BUILDING_ARCHETYPES,
   ...GARRISON_BUILDING_ARCHETYPES,
   ...SCIENCE_BUILDING_ARCHETYPES,
   ...ARCANA_BUILDING_ARCHETYPES,
@@ -341,6 +350,13 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // the granary, and `auditorium` the lecture hall.
   const industry = industryArchetypeOfTags(tags);
   if (industry !== null) return industry;
+  // Wave 6C, waterworks and energy, straight after wave 5C for the same
+  // reason: the tables below are greedy, and it claims nothing an earlier one
+  // claims — `well_head` is still the street prop's, bare `tower` still the
+  // watchtower's, `bath`/`baths` still the bathhouse's, `gas_station` still
+  // wave 5C's, and `barn`, `granary` and `store` still their own tables'.
+  const utility = utilityArchetypeOfTags(tags);
+  if (utility !== null) return utility;
   // Wave five A's garrison, straight after the dwellings and before the
   // extended table, for the reason every later wave sits here: the tables
   // below are greedy. It claims nothing an earlier table claims — `castle`,
@@ -776,6 +792,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishCommerce(ctx);
   n += furnishTerminus(ctx);
   n += furnishIndustry(ctx);
+  n += furnishUtility(ctx);
   n += furnishGarrison(ctx);
   n += furnishScience(ctx);
   n += furnishArcana(ctx);

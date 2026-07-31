@@ -838,6 +838,48 @@ pottery kiln (the brickworks borrows its core but not its name); `foundry` and
 smithy; `shop` and `store` still reach the general store and the granary; and
 `auditorium` still reaches the lecture hall, so the conference centre answers to
 `conference_center` and `convention_center` only.
+**Wave 6C (table 12) — waterworks and energy.** Twelve entries, and the first
+thing to know is that **two of them are props, not buildings**: `wind_turbine`
+and `solar_array` have no inside, so they are placed with `prop.place@0` like the
+windpump and the bollard row, not asked for as archetypes. The other ten are
+ordinary shells with a fit-out. Three of them build **outside** the walls — the
+**water tower**'s tank sits on a rebuilt roof deck, the **gasworks** re-clads its
+whole wall field and the **coal tipple** stands its trestle in the apron — so
+give *those three* a **plain rect**; a `wing` makes all three refuse and you get
+the ordinary shell instead. The water tower additionally wants **height**: its
+tank is rebuilt above the eave plate, so give it twenty or more of envelope Y.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| water_tower | `water_tower`, `watertower` | a solid roof deck carrying an iron-banded tank that rises course on course from it and closes on a full-block cap, grounded corner legs, an apron ladder, and a valve house of cauldrons inside | `[13, 21, 13]`, 1–2 floors; **plain rect, and height over the plate** |
+| cistern | `cistern`, `reservoir` | the bathhouse pool verbatim as storage: water in the floor plane inset one cell, a smooth-stone rim, a slab divider off the lantern row, measuring posts in the pool's own corners, and a walkway that carries nothing | `[15, 12, 17]`, 1–2 floors; **≥ 5 interior each way for a pool** |
+| well | `well`, `well_house` | a covered well house: a cauldron draw hole with a dressed coping, two fence posts under a log windlass axle, an iron-bar rope on tall storeys, a bucket bench | `[11, 12, 13]`, 1–2 floors |
+| pumping_station | `pumping_station`, `pump_house`, `waterworks` | a flywheel hub on a solid post with trapdoor spokes, iron pump-rod columns, a gauge wall of buttons and levers on solid masonry, an unlit boiler corner | `[13, 13, 17]`, 1–2 floors |
+| substation | `substation`, `transformer_station` | transformer tanks with lightning rods standing on them, a fence run of insulators, yellow warning banners, a gravel-and-andesite yard in the floor plane | `[15, 12, 15]`, 1–2 floors; **rods need storey ≥ 4** |
+| gasworks | `gasworks`, `gasholder`, `gasometer` | the gasholder read on the outside — the wall field re-clad in stone with iron banding every third course — over a retort bench of unlit furnaces and tar cauldrons | `[15, 15, 15]`, 1–2 floors; **plain rect** |
+| steam_plant | `steam_plant`, `powerhouse` | a boiler bank of furnaces with an iron steam drum standing on each, a waxed-copper header, condenser cauldrons, a stripped-log turbine shaft under the plate | `[13, 14, 19]`, 1–2 floors; **shaft needs storey ≥ 4** |
+| biomass_shed | `biomass_shed`, `biomass` | four full-block chip bays of coarse dirt, podzol and packed mud in the floor plane, a hopper-and-composter intake run, hay and barrel stores, an unlit boiler corner | `[13, 12, 17]`, 1–2 floors |
+| battery_shed | `battery_shed`, `battery` | rack rows of iron-and-waxed-copper cells up both walls with a stripped-log bus bar laid **on** the racks, a painted plate grid floor, a dial-wall monitoring desk | `[13, 12, 15]`, 1–2 floors |
+| coal_tipple | `coal_tipple`, `tipple` | grounded timber posts up the apron carrying a beam, an elevated bin on the beam closing on a solid cap, a chute of stairs on stepped grounded columns, coal-block bays | `[13, 14, 17]`, 1–2 floors; **plain rect** |
+
+The two props, placed with `prop.place@0`:
+
+| prop | params | what it gets |
+|---|---|---|
+| wind_turbine | `height` 7–21 (default 11) | a continuous white-concrete mast, a hub on its head, and a three-arm rotor drawn outward from the hub — every blade block touching the one inboard — with an iron transformer cabinet on the pad |
+| solar_array | `rows` 1–8 (default 3) | rows of `daylight_detector` panels, one per plinth cube, laid two apart so every pair has a service lane, over a full-block cable trench with an inverter cabinet at its head |
+
+Wave 6C claims **no** tag an earlier table owns, and the near misses are worth
+stating because each would have been a silent theft: **`well_head` remains the
+street prop's** (the ring on the green), so the well *house* answers to `well`
+and `well_house`; bare **`tower` remains the watchtower's**, so the water tower
+answers to `water_tower` and `watertower`; **`windpump` remains the waterworks
+prop's**, and `wind_turbine`/`turbine` are this wave's turbine prop; `bath`,
+`baths` and `sauna` remain the bathhouse's (the cistern borrows that pool block
+for block but not its name); `gas_station`, `filling_station` and
+`petrol_station` remain wave 5C's; and `barn`, `granary` and `store` remain their
+own tables'. Bare `power_station` is left unclaimed.
+
 **Wave 5D (table 11) — science and modern living.** Twelve buildings: nine
 scientific and three modern. The **two domes** (telescope dome, planetarium)
 rebuild the roof with a corbel, so they want a **plain rect** and **height** —

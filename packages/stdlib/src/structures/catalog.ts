@@ -673,19 +673,61 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   ind("scrapyard", "Scrapyard"),
 
   /* --- energy ------------------------------------------------------------ */
-  enr("wind_turbine", "Wind turbine", "not_started", { wave: 6 }),
-  enr("solar_array", "Solar array", "not_started", { wave: 6 }),
+  // A mast with three arms on it has no inside; it goes down the prop
+  // pipeline, exactly as the windpump did.
+  enr("wind_turbine", "Wind turbine", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "A continuous white-concrete mast with a hub on its head and a three-arm rotor drawn outward from it - every blade block touching the one inboard - over a stone pad, with an iron transformer cabinet behind the mast. Tags `wind_turbine`/`turbine`; `windpump` stays the waterworks prop's.",
+  }),
+  enr("solar_array", "Solar array", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note:
+      "Rows of `daylight_detector` panels, each on its own plinth cube, laid two apart so every pair has a service lane; a full-block cable trench along the front and an inverter cabinet at the head of it.",
+  }),
   enr("hydro_station", "Hydroelectric station"),
   enr("cooling_tower", "Cooling tower"),
   enr("transformer_yard", "Transformer yard"),
-  enr("substation", "Substation", "not_started", { wave: 6 }),
-  enr("gasworks", "Gasworks", "not_started", { wave: 6 }),
-  enr("coal_tipple", "Coal tipple", "not_started", { wave: 6 }),
+  enr("substation", "Substation", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A switchyard read inside the walls: transformer tanks with lightning rods standing on them, a fence run of insulators rather than an enclosure, yellow warning banners, and a gravel-and-andesite yard in the floor plane.",
+  }),
+  enr("gasworks", "Gasworks", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "The gasholder read on the OUTSIDE - the wall field re-clad in stone with iron banding every third course - over a retort bench of unlit furnaces and tar cauldrons. Plain rect; an interior drum would be a blocked column.",
+  }),
+  enr("coal_tipple", "Coal tipple", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A mine-side loader: grounded timber posts up the apron carrying a beam, an elevated bin on the beam closing on a solid cap, a chute of stairs on stepped grounded columns, and coal-block bays in the floor plane. Plain rect.",
+  }),
   enr("oil_derrick", "Oil derrick"),
-  enr("steam_plant", "Steam plant", "not_started", { wave: 6 }),
+  enr("steam_plant", "Steam plant", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A boiler bank of furnaces with an iron steam drum standing on each, a waxed-copper header, condenser cauldrons, and a turbine-hall shaft run of stripped log under the plate - never a fence line.",
+  }),
   enr("nuclear_dome", "Reactor dome"),
-  enr("biomass_shed", "Biomass shed", "not_started", { wave: 6 }),
-  enr("battery_shed", "Battery shed", "not_started", { wave: 6 }),
+  enr("biomass_shed", "Biomass shed", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "The barn energetic: four full-block chip bays of coarse dirt, podzol and packed mud in the floor plane, a hopper-and-composter intake run, hay and barrel stores, and an unlit boiler corner.",
+  }),
+  enr("battery_shed", "Battery shed", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "Rack rows of iron-and-waxed-copper cells up both wall rows with a stripped-log bus bar laid ON the racks themselves, a painted plate grid floor, and a dial-wall monitoring desk.",
+  }),
 
   /* --- military / fortification ----------------------------------------- */
   mil("watchtower", "Watchtower", "implemented", { tags: ["village", "lookout"] }),
@@ -1261,10 +1303,30 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- infrastructure ---------------------------------------------------- */
   infra("aqueduct", "Aqueduct"),
   infra("viaduct", "Viaduct"),
-  infra("water_tower", "Water tower", "not_started", { wave: 6 }),
-  infra("cistern", "Cistern", "not_started", { wave: 6 }),
-  infra("well", "Well", "not_started", { wave: 6 }),
-  infra("pumping_station", "Pumping station", "not_started", { wave: 6 }),
+  infra("water_tower", "Water tower", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A rebuilt solid roof deck carrying an iron-banded tank that rises course on course from it and closes on a full-block cap, grounded corner legs, an apron ladder up the west face, and a valve house of cauldrons inside. Plain rect, and wants height over the plate.",
+  }),
+  infra("cistern", "Cistern", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "The bathhouse pool predicate verbatim, as pure storage: water in the floor plane inset one cell from the interior, a smooth-stone rim, a slab divider nudged off the lantern row, measuring posts carved out of the pool's own corners - and an inspection walkway that carries nothing at all.",
+  }),
+  infra("well", "Well", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "The street prop's building cousin: a covered well house with a cauldron draw hole, a dressed coping in the floor plane, two fence posts carrying a log windlass axle, an iron-bar rope on tall storeys, and a bucket bench. Tags `well`/`well_house`; `well_head` stays the prop's.",
+  }),
+  infra("pumping_station", "Pumping station", "implemented", {
+    wave: 6,
+    kind: "building",
+    note:
+      "A flywheel read as a hub on a solid post with trapdoor spokes on the wall beside it, iron pump-rod columns down the far wall, a gauge wall of buttons and levers on solid masonry, and an unlit boiler corner.",
+  }),
   infra("culvert", "Culvert"),
   infra("storm_drain", "Storm drain"),
   infra("retaining_wall", "Retaining wall"),

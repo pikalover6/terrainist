@@ -55,6 +55,12 @@ import {
   isBlitzProp,
 } from "./props-blitz.js";
 import {
+  ENERGY_PROP_GENERATORS,
+  ENERGY_PROP_NAMES,
+  energyPropFootprint,
+  isEnergyProp,
+} from "./props-energy.js";
+import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
   isStreetProp,
@@ -126,6 +132,7 @@ export const PROP_NAMES = [
   ...WAYSIDE_PROP_NAMES,
   ...RELIC_PROP_NAMES,
   ...SPECTACLE_PROP_NAMES,
+  ...ENERGY_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -449,7 +456,7 @@ export function propFootprint(
   if (isWaysideProp(prop)) return waysidePropFootprint(prop);
   if (isRelicProp(prop)) return relicPropFootprint(prop);
   if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
-  if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
+  if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -987,6 +994,7 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...WAYSIDE_PROP_GENERATORS,
   ...RELIC_PROP_GENERATORS,
   ...SPECTACLE_PROP_GENERATORS,
+  ...ENERGY_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

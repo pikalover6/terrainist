@@ -39,6 +39,7 @@ import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { buildProps, type PropJob, type PropPassResult } from "../structures/props.js";
 import { AMUSEMENT_PROP_EXHIBIT_PLAN } from "./amusement.js";
 import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
+import { ENERGY_PROP_EXHIBIT_PLAN } from "./energy-props.js";
 import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
 import { RELIC_PROP_EXHIBIT_PLAN } from "./relic-props.js";
 import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
@@ -150,6 +151,7 @@ export const PROP_EXHIBIT_PLAN: readonly {
   },
   ...BLITZ_PROP_EXHIBIT_PLAN,
   ...STREET_PROP_EXHIBIT_PLAN,
+  ...ENERGY_PROP_EXHIBIT_PLAN,
   ...AMUSEMENT_PROP_EXHIBIT_PLAN,
   ...WAYSIDE_PROP_EXHIBIT_PLAN,
   ...RELIC_PROP_EXHIBIT_PLAN,

@@ -69,7 +69,7 @@ import {
   ROOF_FLOURISH_RISE,
   type FitOutContext,
 } from "./archetypes-civic.js";
-import { cardinalStep, type LocalRect } from "./core.js";
+import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetypes                                                              */
@@ -359,12 +359,14 @@ function crumbleWalls(
     const h = crumbleHeight(ctx, plan, style, cell.x, cell.z);
     heads.set(`${cell.x},${cell.z}`, h);
     // Clear from the top of the envelope DOWN to the survivor. A whole run, so
-    // nothing is ever left with air above it and air below it.
-    if (!protectedColumn(ctx, cell.x, cell.z)) {
-      // Clearing is not building: an air write is not counted, exactly as
-      // wave 5E's `clearRoof` does not count the roof it removes.
-      for (let y = plan.top + 2; y > h; y--) ctx.put(cell.x, y, cell.z, "air");
-    }
+    // nothing is ever left with air above it and air below it. The door column
+    // is protected only to its lintel: what the walk needs is the doorway, and
+    // skipping the whole column left the shell's roof stairs floating above it
+    // once everything around them was gone.
+    const keep = protectedColumn(ctx, cell.x, cell.z) ? Math.max(h, 3) : h;
+    // Clearing is not building: an air write is not counted, exactly as
+    // wave 5E's `clearRoof` does not count the roof it removes.
+    for (let y = plan.top + 2; y > keep; y--) ctx.put(cell.x, y, cell.z, "air");
     // Re-clad the survivors. `y = 1` is the standing course and holds the
     // door frame, so the re-clad starts at 2 and the shell's own plinth stays.
     for (let y = 2; y <= h; y++) {
@@ -399,10 +401,12 @@ function breakRoof(
   heads: Map<string, number>,
   fragment: string,
 ): void {
+  // No protected-column skip here: everything this loop touches is at roof
+  // height, far above the doorway, and skipping the doorstep column left the
+  // eave stair hanging over it with air on every side.
   for (let y = plan.wallTop + 1; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) {
-        if (protectedColumn(ctx, x, z)) continue;
         ctx.put(x, y, z, "air");
       }
     }
@@ -508,6 +512,34 @@ function vines(ctx: FitOutContext, c: PropCounter, plan: RelicPlan, share: numbe
 }
 
 /**
+ * Trim the shell's ladders back to the wall that still backs them.
+ *
+ * A ladder stands on the wall face behind it, rung by rung, and the crumble
+ * never touches interior cells — so a tower whose west wall fell to a stub was
+ * left with six rungs of ladder climbing air. Every rung above a missing
+ * backing block is cleared; the grounded rungs, whose backing is the standing
+ * course, stay.
+ */
+function trimLadders(ctx: FitOutContext, plan: RelicPlan): void {
+  const it = ctx.interior;
+  for (let z = it.z0; z <= it.z1; z++) {
+    for (let x = it.x0; x <= it.x1; x++) {
+      for (let y = 2; y <= plan.top + 2; y++) {
+        const op = ctx.blockAt(x, y, z);
+        if (op === undefined || op.block !== "ladder") continue;
+        const facing = op.props?.["facing"];
+        if (facing === undefined) continue;
+        // A ladder's `facing` points at the climber, away from the wall it
+        // hangs on; the backing block is one step the other way.
+        const [dx, dz] = cardinalStep(facing as Cardinal);
+        const back = ctx.blockAt(x - dx, y, z - dz);
+        if (back === undefined || back.block === "air") ctx.put(x, y, z, "air");
+      }
+    }
+  }
+}
+
+/**
  * A grounded spill in the apron: rubble that has fallen *out* of the building.
  *
  * The apron-post ground rule, in the form a ruin needs it. On conformed
@@ -568,9 +600,23 @@ function offerOnWalls(
   props?: Record<string, string>,
 ): boolean {
   const it = ctx.interior;
+  // A cobweb is the one offer here a player walks *through*: the physics lint
+  // treats its cell as walkable and demands it stay reachable. Taking the cell
+  // out of the plan's open set let the slab chair placed after it seal the web
+  // into a one-cell pocket — legally, because the guard no longer counted the
+  // cell. So a passable block is written without a take: the cell stays open,
+  // and every later take must keep a route to it.
+  const passable = block === "cobweb";
   for (let z = it.z0; z <= it.z1; z++) {
     for (const x of [it.x1, it.x0]) {
       if (protectedColumn(ctx, x, z)) continue;
+      if (passable) {
+        if (!ctx.free(x, z)) continue;
+        if (ctx.blockAt(x, 1, z) !== undefined) continue;
+        ctx.put(x, 1, z, block, props);
+        c.n++;
+        return true;
+      }
       if (c.put1(x, z, block, props)) return true;
     }
   }
@@ -608,6 +654,10 @@ export function furnishRelic(ctx: FitOutContext): number {
       fitOvergrownVilla(ctx, c);
       break;
   }
+  // After every decay pass: no rung of the shell's ladders may outlive the
+  // wall that backs it.
+  const plan = relicPlan(ctx);
+  if (plan !== null) trimLadders(ctx, plan);
   return c.n;
 }
 

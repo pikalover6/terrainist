@@ -50,6 +50,7 @@ import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
+import { UTILITY_EXHIBIT_ROWS } from "./exhibits/utility.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
 export type { DevExhibitCell, DevExhibitRow } from "./exhibits/types.js";
@@ -124,6 +125,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...INSTITUTION_EXHIBIT_ROWS,
   ...LEISURE_EXHIBIT_ROWS,
   ...INDUSTRY_EXHIBIT_ROWS,
+  ...UTILITY_EXHIBIT_ROWS,
   ...REGIONAL_EXHIBIT_ROWS,
   ...HOMESTEAD_EXHIBIT_ROWS,
   ...RESIDENTIAL_EXHIBIT_ROWS,
@@ -212,6 +214,12 @@ export {
   INDUSTRY_ROW_LENGTH,
   industrySizeFor,
 } from "./exhibits/industry.js";
+/** The wave-6C waterworks-and-energy rows, for tests that assert on the gradient. */
+export {
+  UTILITY_EXHIBIT_ROWS,
+  UTILITY_ROW_LENGTH,
+  utilitySizeFor,
+} from "./exhibits/utility.js";
 /** The wave-three regional rows, for tests that assert on the gradient. */
 export {
   REGIONAL_EXHIBIT_ROWS,

@@ -1851,6 +1851,9 @@ export const SETTLEMENT_PROP_NAMES = [
   "memorial_garden",
   "portal_frame",
   "floating_platform",
+  // Wave 6C: the two energy objects that are props rather than buildings.
+  "wind_turbine",
+  "solar_array",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

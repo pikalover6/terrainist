@@ -158,6 +158,10 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   floating_platform: [{}],
   houseboat: [{}],
   helipad: [{}],
+  // Wave 6C: the two energy objects with no inside. Their own properties are
+  // held in structures-utility.test.ts; here they walk the catalog-wide checks.
+  wind_turbine: [{}, { height: 7 }, { height: 21 }],
+  solar_array: [{}, { rows: 1 }, { rows: 8 }],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {
