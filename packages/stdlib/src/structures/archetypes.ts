@@ -161,6 +161,14 @@ import {
 export * from "./archetypes-arcana.js";
 
 import {
+  RELIC_BUILDING_ARCHETYPES,
+  furnishRelic,
+  relicArchetypeOfTags,
+} from "./archetypes-relic.js";
+
+export * from "./archetypes-relic.js";
+
+import {
   FAITH_BUILDING_ARCHETYPES,
   faithArchetypeOfTags,
   furnishFaith,
@@ -209,6 +217,7 @@ export const BUILDING_ARCHETYPES = [
   ...GARRISON_BUILDING_ARCHETYPES,
   ...SCIENCE_BUILDING_ARCHETYPES,
   ...ARCANA_BUILDING_ARCHETYPES,
+  ...RELIC_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
@@ -340,6 +349,16 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `hammam` the bathhouse's.
   const arcana = arcanaArchetypeOfTags(tags);
   if (arcana !== null) return arcana;
+  // Wave 6E, the relics: five ruined buildings. It sits after the commerce and
+  // arcana tables and well before the extended one for the reason every later
+  // wave sits here — the tables below are greedy — and it claims **compounds
+  // only**: bare `ruin` and `ruins` are deliberately left unclaimed (an author
+  // who says only "ruins" has not said what is ruined), bare `abbey` stays
+  // wave 4B's, bare `keep`, `castle` and `tower` stay the garrison's and the
+  // watchtower's, bare `villa` the Mediterranean villa's, and bare `house`
+  // still falls through to a cottage.
+  const relic = relicArchetypeOfTags(tags);
+  if (relic !== null) return relic;
   // Wave 4B, faith and memorial, straight after the institutions and well
   // before the extended table — which is the table it must not be behind, for
   // once not because that one is greedy but because it is *right*: `temple`,
@@ -728,6 +747,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishGarrison(ctx);
   n += furnishScience(ctx);
   n += furnishArcana(ctx);
+  n += furnishRelic(ctx);
   n += furnishFaith(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);

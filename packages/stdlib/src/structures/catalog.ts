@@ -1445,25 +1445,78 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   fan("clock_tower", "Clock tower"),
 
   /* --- ruins / archaeology ------------------------------------------------- */
-  ruin("standing_stones", "Standing stones", "not_started", { wave: 6 }),
-  ruin("henge", "Henge", "not_started", { wave: 6 }),
-  ruin("monolith", "Monolith", "not_started", { wave: 6 }),
+  // Wave 6E's monuments are PROPS, not buildings: a megalith has no room in
+  // it, and the building grammar exists to make rooms. Each therefore carries
+  // a `kind` override, exactly as the graveyard and the cairn already do.
+  ruin("standing_stones", "Standing stones", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "A seeded ring of megalith PAIRS on a turf pad, each stone a stack of two to four courses resting on the pad, with a low altar slab at the centre.",
+  }),
+  ruin("henge", "Henge", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "The big ring: a banked earth rim of full blocks and eight trilithons \u2014 two posts with a LINTEL lying across both, its span one cell so no lintel block is more than a cell from a post head.",
+  }),
+  ruin("monolith", "Monolith", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "One great banded stone that LEANS, read as offset courses \u2014 the 2x2 footprint shifts one cell every third course, so every block still rests on stone \u2014 over a mossy skirt.",
+  }),
   // A heap of stones. There has never been anything to walk into.
   ruin("cairn", "Cairn", "implemented", { kind: "prop" }),
-  ruin("burial_mound", "Burial mound", "not_started", { wave: 6 }),
-  ruin("dig_site", "Dig site", "not_started", { wave: 6 }),
+  ruin("burial_mound", "Burial mound", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "A sod corbel dome closing on a SOLID cap, with a stone-framed doorway READ backed solid \u2014 no interior, because a sealed chamber is a pocket and an open one is a building.",
+  }),
+  ruin("dig_site", "Dig site", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "A roped trench as a shallow recolour of coarse dirt and packed mud (never plain mud), grounded peg-and-rope fences, a finds barrel with a banner marker, and a spoil heap.",
+  }),
   ruin("excavation_trench", "Excavation trench"),
-  ruin("fossil_dig", "Fossil dig", "not_started", { wave: 6 }),
-  ruin("ruined_cottage", "Ruined cottage", "not_started", { wave: 6, tags: ["ruin-of"] }),
-  ruin("ruined_keep", "Ruined keep", "not_started", { wave: 6, tags: ["ruin-of"] }),
-  ruin("ruined_church", "Ruined church", "not_started", { wave: 6, tags: ["ruin-of"] }),
+  ruin("fossil_dig", "Fossil dig", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "The dig site with bone-block ribs half-exposed in the recolour bed: a spine laid flush in the base plane and rib blocks standing one course proud on it.",
+  }),
+  // The ruined *buildings* stay buildings: each is the ordinary shell fit-out
+  // decayed, so each has a room, a door and a walkable floor.
+  ruin("ruined_cottage", "Ruined cottage", "implemented", {
+    wave: 6,
+    tags: ["ruin-of"],
+    note: "The reference decay: an even crumble line two or three courses up, mossy-cobble survivors, the roof gone but for fragments resting on surviving wall heads, rubble heaps and vines.",
+  }),
+  ruin("ruined_keep", "Ruined keep", "implemented", {
+    wave: 6,
+    tags: ["ruin-of"],
+    note: "A structured collapse: the four corners stand to the eave plate and the curtains between them are gone almost to the plinth, in cracked and mossy stone brick over a heavy rubble field.",
+  }),
+  ruin("ruined_church", "Ruined church", "implemented", {
+    wave: 6,
+    tags: ["ruin-of"],
+    note: "A roofless nave with tall survivors and a chiseled band at the third course, and a cold altar stump \u2014 one chiseled block with a slab on it \u2014 at the end furthest from the door.",
+  }),
   ruin("ruined_bridge", "Ruined bridge", "not_started", { tags: ["ruin-of"] }),
   ruin("ruined_aqueduct", "Ruined aqueduct", "not_started", { tags: ["ruin-of"] }),
-  ruin("collapsed_tower", "Collapsed tower", "not_started", { wave: 6, tags: ["ruin-of"] }),
-  ruin("overgrown_villa", "Overgrown villa", "not_started", { wave: 6, tags: ["ruin-of"] }),
+  ruin("collapsed_tower", "Collapsed tower", "implemented", {
+    wave: 6,
+    tags: ["ruin-of"],
+    note: "The one LEANING collapse: the surviving wall height falls off linearly along +x, so the wall head slopes from a standing stub to nothing, with a heavy grounded spill in the apron.",
+  }),
+  ruin("overgrown_villa", "Overgrown villa", "implemented", {
+    wave: 6,
+    tags: ["ruin-of"],
+    note: "The gentlest crumble and the greenest: moss-block survivors, vines on every second inside face, moss carpet on the rubble, and a run of fallen column drums down one wall row.",
+  }),
   ruin("sunken_ship", "Sunken ship", "not_started", { tags: ["ruin-of", "water"] }),
   ruin("ancient_road", "Ancient road"),
-  ruin("shattered_obelisk", "Shattered obelisk", "not_started", { wave: 6 }),
+  ruin("shattered_obelisk", "Shattered obelisk", "implemented", {
+    wave: 6,
+    kind: "prop",
+    note: "The obelisk broken: a ragged 2x2 stump on its plinth, the fallen upper section lying along the pad beside it (every block grounded or on the run), and a scatter of fragments.",
+  }),
 
   /* --- underground --------------------------------------------------------- */
   und("cellar", "Cellar", "implemented", {

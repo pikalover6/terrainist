@@ -61,6 +61,12 @@ import {
   streetPropFootprint,
 } from "./props-street.js";
 import {
+  RELIC_PROP_GENERATORS,
+  RELIC_PROP_NAMES,
+  isRelicProp,
+  relicPropFootprint,
+} from "./props-relics.js";
+import {
   WAYSIDE_PROP_GENERATORS,
   WAYSIDE_PROP_NAMES,
   isWaysideProp,
@@ -112,6 +118,7 @@ export const PROP_NAMES = [
   ...STREET_PROP_NAMES,
   ...AMUSEMENT_PROP_NAMES,
   ...WAYSIDE_PROP_NAMES,
+  ...RELIC_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -433,6 +440,7 @@ export function propFootprint(
   if (isStreetProp(prop)) return streetPropFootprint(prop, params);
   if (isAmusementProp(prop)) return amusementPropFootprint(prop);
   if (isWaysideProp(prop)) return waysidePropFootprint(prop);
+  if (isRelicProp(prop)) return relicPropFootprint(prop);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -968,6 +976,7 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...STREET_PROP_GENERATORS,
   ...AMUSEMENT_PROP_GENERATORS,
   ...WAYSIDE_PROP_GENERATORS,
+  ...RELIC_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

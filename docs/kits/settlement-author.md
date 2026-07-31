@@ -992,6 +992,69 @@ catalog's, so the urn wall answers to `urn_wall` and `urns`; bare **`baths`,
 because a bridge is full of them; and `house` still falls through to a cottage
 with `hall` still the great hall's.
 
+**Wave 6E (table 14) — the relics: five RUINED buildings.** A ruined cottage,
+a ruined keep, a ruined church, a collapsed tower and an overgrown villa.
+
+**THE RUIN LAW.** A ruined building is **the ordinary shell fit-out DECAYED,
+not a second grammar**. There is no ruin builder: the same shell is built, and
+then written over. Decay is five moves, in order — a **crumble line** derived
+from each wall column's own coordinates, with everything above it cleared to
+air **from the top down** (a whole run, never a hole punched in the middle of a
+wall, because that is exactly how a block ends up floating); a **re-clad** of
+the survivors in mossy and cracked variants; the **roof broken to fragments**
+laid only on the head of a wall column that survived to the eave plate, so a
+fragment always has wall beneath it and nothing ever spans the room; **rubble**
+as full blocks on the floor, laid through the same reservation the furniture
+uses, so the room stays walkable *around* the heaps; and **green** — vines on
+the inside faces of surviving walls, and moss carpet on the tops of rubble
+heaps and nowhere else, because a carpet needs ground.
+
+Two things a ruin still guarantees, and they are why it is a building at all:
+**the door and its approach are never decayed** (the walking agent starts in
+the cell inside the door, and so does the traversal lint), and **every open
+interior cell stays reachable from it**. A ruin is also **cold and dry**: no
+fire, no water, no lava.
+
+These want a **plain rect** footprint — the decay is drawn on the wall ring, so
+an L or a T falls back to the interior moves only — and they want **size**: a
+crumble line drawn on a three-course wall has almost nothing to take away, and
+a ruined keep on a small square puts its four surviving corners on top of each
+other.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| ruined_cottage | `ruined_cottage`, `ruined_house`, `derelict_cottage` | the reference decay: an even crumble two or three courses up, mossy-cobble survivors, roof fragments on the surviving heads, rubble, vines, a barrel and a broken chair | `[11, 11, 13]`, 1–2 floors |
+| ruined_keep | `ruined_keep`, `ruined_castle`, `castle_ruin` | a **structured** collapse: the four corners stand to the eave plate and the curtains between them are gone almost to the plinth; cracked and mossy stone brick, a heavy rubble field, cobwebs | `[17, 13, 17]`, 1–2 floors; **big** |
+| ruined_church | `ruined_church`, `ruined_chapel`, `ruined_abbey`, `abbey_ruin` | a roofless nave with tall survivors and a chiseled band at the third course, and a **cold** altar stump — one chiseled block with a slab on it — at the far end | `[13, 15, 19]`, 1–2 floors; **long** |
+| collapsed_tower | `collapsed_tower`, `broken_tower`, `tower_ruin` | the one **leaning** collapse: the surviving wall height falls off linearly along one axis, so the wall head slopes from a standing stub to nothing, with a heavy grounded spill in the apron | `[9, 17, 9]`, 1–2 floors; **tall** |
+| overgrown_villa | `overgrown_villa`, `villa_ruin`, `ruined_villa` | the gentlest crumble and the greenest: moss-block survivors, vines on every second inside face, moss carpet on the rubble, a floor half gone to grass, and a run of fallen column drums down a wall row | `[15, 13, 15]`, 1–2 floors |
+
+Wave 6E claims **compounds only**, and the exclusions are the review. Bare
+**`abbey` is wave 4B's abbey** and bare `church` and `chapel` are the church's,
+so the ruined church answers to `ruined_abbey` and `abbey_ruin`; bare **`keep`,
+`castle` and `tower`** stay the garrison keep's and the watchtower's; bare
+**`villa` is the Mediterranean villa's**; bare `house` still falls through to a
+cottage; and bare **`overgrown` is not claimed at all** — it is an adjective,
+and an overgrown *anything* is a plausible request.
+
+> **OPEN AUTHORING QUESTION (for Kai).** Bare **`ruin` and `ruins` are
+> deliberately UNCLAIMED** and currently fall through to the extended table's
+> `cottage` default. An author who writes only `"ruins"` has not said what is
+> ruined, and any answer this table gave would be a choice made on their
+> behalf: a ruined cottage and a shattered obelisk are both honest readings.
+> The three options are (a) leave it, and require the author to be specific;
+> (b) point both at `ruined_cottage`, the gentlest and most generic of the
+> five; (c) point both at a *seeded pick* among the five, which is the most
+> fun and the least predictable. Nothing changes until Kai chooses.
+
+**The monuments of the same wave are PROPS, not archetypes** — `standing_stones`,
+`henge`, `monolith`, `burial_mound`, `dig_site`, `fossil_dig` and
+`shattered_obelisk`. A megalith has no room in it, and asking the building
+grammar for one would get a shell with a door in it. They are listed in the
+prop table below, and **none of their names is a building tag**: writing
+`"henge"` in a node's tags gets a cottage, not a henge. Place them with
+`prop.place`.
+
 **Wave 4A (table 11) — the dwellings.** Twelve houses, from a one-room hut to
 a mansion. Most are **pure interior fit-outs** and are happy on a `wing`
 footprint as well as a plain rect; the four that touch the shell — the
@@ -1333,6 +1396,13 @@ plaza rather than one big one.
 | `helter_skelter` | 7×12×7 | ground, flat | the fair's tallest piece — a slide spiralling down a striped tower |
 | `midway_arch` | 9×7×3 | ground | the gate into a fair; put the other amusements behind it |
 | `shooting_gallery` | 7×6×3 | ground | counter, three targets, prize shelf and a striped canopy |
+| `standing_stones` | 11×6×11 | ground, flat | a ring of megalith **pairs** on a turf pad, with a low altar at the centre |
+| `henge` | 17×7×17 | ground, flat | the big one: a banked earth rim and eight trilithons (two posts and a lintel) |
+| `monolith` | 5×9×5 | ground | one great banded stone that **leans**, read as offset courses |
+| `burial_mound` | 11×6×11 | ground, flat | a sod dome with a stone doorway *read* — there is no way in, on purpose |
+| `dig_site` | 11×4×9 | ground, flat | a roped trench as a shallow recolour, a finds table and a spoil heap |
+| `fossil_dig` | 11×4×9 | ground, flat | the dig site with bone-block ribs half-exposed in the bed |
+| `shattered_obelisk` | 11×7×5 | ground, flat | a ragged stump, the fallen upper section lying beside it, and a scatter |
 
 **Base** is a hard requirement, not a preference: a `water` prop needs open
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask

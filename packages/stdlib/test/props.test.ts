@@ -139,6 +139,16 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   helter_skelter: [{}],
   midway_arch: [{}],
   shooting_gallery: [{}],
+  // Wave 6E, the monuments. None of them reads a param — a henge's size is the
+  // henge — so one empty case each, which is what makes the exhaustive record
+  // type above the thing that catches a missing prop.
+  standing_stones: [{}],
+  henge: [{}],
+  monolith: [{}],
+  burial_mound: [{}],
+  dig_site: [{}],
+  fossil_dig: [{}],
+  shattered_obelisk: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {
