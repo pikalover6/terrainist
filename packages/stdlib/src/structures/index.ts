@@ -39,6 +39,7 @@ export * from "./archetypes-leisure.js";
 export * from "./archetypes-industry.js";
 export * from "./archetypes-residential.js";
 export * from "./archetypes-commerce.js";
+export * from "./archetypes-garrison.js";
 export * from "./archetypes-regional.js";
 export * from "./archetypes-homestead.js";
 export * from "./archetypes-faith.js";

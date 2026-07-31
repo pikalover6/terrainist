@@ -282,11 +282,15 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "One cosy room: a watch seat on the far wall turned back down the room at the door, a small board beside it, a cot head-to-wall, and a trapdoor key rack by the entry.",
   }),
   res("houseboat", "Houseboat", "not_started", { tags: ["water"] }),
-  res("shepherds_bothy", "Shepherd's bothy", "not_started", { wave: 5 }),
   res("boarding_house", "Boarding house", "implemented", {
     wave: 5,
     tags: ["lodging_house"],
     note: "The inn's residential cousin: bed-and-chest bays with fence partitions down one range only, the other left as the corridor, a shared kitchen range across the far wall under the house-rules banner.",
+  }),
+  res("shepherds_bothy", "Shepherd's bothy", "implemented", {
+    wave: 5,
+    tags: ["stone", "one_room"],
+    note: "A one-room stone hut: a cot against the wall, a hearth with a stool turned to it, a crook rack, and fleece bales of white wool up the other wall row.",
   }),
 
   /* --- vernacular / regional -------------------------------------------- */
@@ -660,28 +664,68 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- military / fortification ----------------------------------------- */
   mil("watchtower", "Watchtower", "implemented", { tags: ["village", "lookout"] }),
-  mil("castle", "Castle", "not_started", { wave: 5 }),
+  mil("castle", "Castle", "implemented", {
+    wave: 5,
+    tags: ["fortress", "hall"],
+    note: "The keep grand: full masonry re-clad, a crenellated fighting deck with corner turrets proud of the merlons, a great-hall board, wall-banner heraldry and an armoury corner. Tags `fortress`/`stronghold` — `castle` and `citadel` remain the keep's.",
+  }),
   mil("keep", "Keep", "implemented", { note: "Masonry re-clad of the building shell, with a fighting deck and a crenellated parapet." }),
   // Linear, not a shell: it follows a line the way a wall or an aqueduct does.
   mil("curtain_wall", "Curtain wall", "implemented", { tags: ["linear"], kind: "infrastructure" }),
   mil("gatehouse", "Gatehouse", "implemented", { note: "The keep's battlement plus a raised portcullis and a machicolation over the gate." }),
-  mil("barbican", "Barbican", "not_started", { wave: 5 }),
-  mil("bastion", "Bastion", "not_started", { wave: 5 }),
+  mil("barbican", "Barbican", "implemented", {
+    wave: 5,
+    tags: ["gate", "outer_work"],
+    note: "The gatehouse's outer work: a masonry arch springing either side of the door head, a machicolation course in the apron with murder-hole trapdoors hung under its soffit, and a guard room. Tags `outer_gate`/`gateworks` — `barbican` itself remains the gatehouse's.",
+  }),
+  mil("bastion", "Bastion", "implemented", {
+    wave: 5,
+    tags: ["angular", "platform"],
+    note: "Angular masonry re-clad with battered plinth courses, a flat gun-platform deck under a parapet, and a powder store of stacked barrels behind wall racks.",
+  }),
   mil("star_fort", "Star fort"),
   mil("motte_and_bailey", "Motte and bailey"),
   mil("palisade", "Palisade"),
   mil("moat", "Moat", "not_started", { tags: ["water"] }),
   mil("drawbridge", "Drawbridge"),
   mil("barracks", "Barracks", "implemented"),
-  mil("armory", "Armory", "not_started", { wave: 5 }),
-  mil("arsenal", "Arsenal", "not_started", { wave: 5 }),
+  mil("armory", "Armory", "implemented", {
+    wave: 5,
+    tags: ["store", "racks"],
+    note: "Rack walls of fence stems under trapdoor boards up both wall rows, a smith's corner of smithing table, iron block and anvil, and crate rows by the door.",
+  }),
+  mil("arsenal", "Arsenal", "implemented", {
+    wave: 5,
+    tags: ["store", "powder"],
+    note: "The armory scaled up: a barrel powder store shut off by an iron-barred partition, stacked shell racks up the other wall, and a loading bench with a seat at the door end.",
+  }),
   mil("drill_yard", "Drill yard"),
   mil("siege_camp", "Siege camp"),
-  mil("bunker", "Bunker", "not_started", { wave: 5 }),
-  mil("pillbox", "Pillbox", "not_started", { wave: 5 }),
-  mil("guard_post", "Guard post", "not_started", { wave: 5 }),
-  mil("checkpoint", "Checkpoint", "not_started", { wave: 5 }),
-  mil("beacon_tower", "Beacon tower", "not_started", { wave: 5 }),
+  mil("bunker", "Bunker", "implemented", {
+    wave: 5,
+    tags: ["modern", "concrete"],
+    note: "A poured-concrete re-clad banded darker at the plinth, firing-slit window rhythm from the facade defaults, a map table and a cot corner.",
+  }),
+  mil("pillbox", "Pillbox", "implemented", {
+    wave: 5,
+    tags: ["modern", "concrete"],
+    note: "One room and nothing spare: a concrete re-clad, a slit rhythm, a mounted position of stair and iron block turned out of the far wall, one crate.",
+  }),
+  mil("guard_post", "Guard post", "implemented", {
+    wave: 5,
+    tags: ["outpost", "brazier"],
+    note: "A grounded brazier pedestal and an alarm bell on the two corners of the door face, a watch bench turned into the room, and a water butt.",
+  }),
+  mil("checkpoint", "Checkpoint", "implemented", {
+    wave: 5,
+    tags: ["outpost", "barrier"],
+    note: "A barrier arm across the apron on the door face — grounded posts with a trapdoor boom between them and the doorstep left clear — lantern posts, and a document desk inside.",
+  }),
+  mil("beacon_tower", "Beacon tower", "implemented", {
+    wave: 5,
+    tags: ["signal", "tower"],
+    note: "The bell tower militarised: masonry re-clad under a crenellated deck, a signal campfire on a solid pedestal at the middle of the deck, and signal banners on the walls below. Tag `beacon_tower` only — `beacon`/`beacon_spire` stay the fantasy track's.",
+  }),
 
   /* --- religious / monuments -------------------------------------------- */
   rel("church", "Church", "implemented", { tags: ["village", "steeple"] }),
@@ -754,7 +798,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mem("memorial_garden", "Memorial garden"),
   mem("urn_wall", "Urn wall", "not_started", { wave: 5 }),
   mem("remembrance_arch", "Remembrance arch", "not_started", { wave: 5 }),
-  mem("gravedigger_hut", "Gravedigger's hut", "not_started", { wave: 5 }),
+  mem("gravedigger_hut", "Gravedigger's hut", "implemented", {
+    wave: 5,
+    tags: ["modest", "tools"],
+    note: "Tool racks up one wall row, a slab coffin bench down the other, a lime composter and a fire at the far wall, and one lantern's comfort by the door.",
+  }),
   mem("pyre_platform", "Funeral pyre platform", "not_started", { wave: 5 }),
 
   /* --- leisure / sport --------------------------------------------------- */

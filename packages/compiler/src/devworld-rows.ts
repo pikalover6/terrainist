@@ -27,6 +27,7 @@ import { BLITZ_EXHIBIT_ROWS } from "./exhibits/blitz.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
 import { FAITH_EXHIBIT_ROWS } from "./exhibits/faith.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
+import { GARRISON_EXHIBIT_ROWS } from "./exhibits/garrison.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
 import { HOMESTEAD_EXHIBIT_ROWS } from "./exhibits/homestead.js";
 import { INSTITUTION_EXHIBIT_ROWS } from "./exhibits/institution.js";
@@ -120,6 +121,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...REGIONAL_EXHIBIT_ROWS,
   ...HOMESTEAD_EXHIBIT_ROWS,
   ...RESIDENTIAL_EXHIBIT_ROWS,
+  ...GARRISON_EXHIBIT_ROWS,
   ...FAITH_EXHIBIT_ROWS,
   ...COMMERCE_EXHIBIT_ROWS,
 ]);
@@ -208,6 +210,12 @@ export {
   RESIDENTIAL_ROW_LENGTH,
   residentialSizeFor,
 } from "./exhibits/residential.js";
+/** The wave-five A garrison rows, for tests that assert on the gradient. */
+export {
+  GARRISON_EXHIBIT_ROWS,
+  GARRISON_ROW_LENGTH,
+  garrisonSizeFor,
+} from "./exhibits/garrison.js";
 /** The wave-4B faith rows, for tests that assert on the gradient. */
 export { FAITH_EXHIBIT_ROWS, FAITH_ROW_LENGTH, faithSizeFor } from "./exhibits/faith.js";
 

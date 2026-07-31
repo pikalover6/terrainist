@@ -47,6 +47,8 @@ import {
   REGIONAL_ROW_LENGTH,
   RESIDENTIAL_EXHIBIT_ROWS,
   RESIDENTIAL_ROW_LENGTH,
+  GARRISON_EXHIBIT_ROWS,
+  GARRISON_ROW_LENGTH,
   FAITH_EXHIBIT_ROWS,
   FAITH_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -162,6 +164,8 @@ describe("dev world grid", () => {
     const homestead = HOMESTEAD_EXHIBIT_ROWS.length * HOMESTEAD_ROW_LENGTH;
     // Wave four A's dwellings are prefixed (`resi_hut`) for the same reason.
     const residential = RESIDENTIAL_EXHIBIT_ROWS.length * RESIDENTIAL_ROW_LENGTH;
+    // Wave five A, the garrison: prefixed (`gar_castle`) for the same reason.
+    const garrison = GARRISON_EXHIBIT_ROWS.length * GARRISON_ROW_LENGTH;
     // Wave 4B, faith and memorial: prefixed (`faith_stupa`) for the same reason.
     const faith = FAITH_EXHIBIT_ROWS.length * FAITH_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
@@ -186,7 +190,8 @@ describe("dev world grid", () => {
         homestead +
         residential +
         faith +
-        commerce,
+        commerce +
+        garrison,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;

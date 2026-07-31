@@ -945,6 +945,45 @@ network selects on), bare `hall` is still the great hall, `villa` and `riad`
 still belong to their own houses, and `apartment`, `flats` and `tenement` are
 still the tall grammar's apartment block. A `hut` is the bare tag only.
 
+**Wave 5A (table 12) — the garrison.** Twelve military buildings and outposts,
+plus two small outbuildings in the same register of work. Five of them rebuild
+the **exterior** — the castle, barbican, bastion and beacon tower (a masonry
+re-clad plus a crenellated fighting deck) and the bunker, pillbox and shepherd's
+bothy (a wall re-clad only) — so give *those* a **plain rect** envelope: a
+`wing` makes the rebuild refuse and you get the ordinary shell instead. The
+castle's great-hall board needs **nine interior columns and seven of depth** or
+it gets a hall with no long table rather than a hall cut in half by one.
+
+| archetype | tags | what it gets | envelope that works |
+|---|---|---|---|
+| castle | `fortress`, `stronghold` | full masonry re-clad, a crenellated fighting deck with corner turrets proud of the merlons, a great-hall board, wall-banner heraldry, an armoury corner | `[15, 17, 17]`, 1–2 floors; **the biggest of the wave** |
+| barbican | `outer_gate`, `gateworks` | the keep's battlement plus a masonry arch either side of the door head, a machicolation course in the apron with murder-hole trapdoors under its soffit, a guard room | `[13, 15, 11]`, 1–2 floors |
+| bastion | `bastion` | battered plinth courses under an angular masonry re-clad, a flat gun-platform deck under a parapet, a powder store of stacked barrels behind wall racks | `[13, 14, 13]`, 1–2 floors |
+| armory | `armory`, `armoury` | rack walls of fence stems under trapdoor boards up both wall rows, a smith's corner of smithing table, iron block and anvil, crate rows by the door | `[11, 12, 17]`, 1–2 floors; **deep** |
+| arsenal | `arsenal` | the armory scaled up: a barrel powder store shut off by an iron-barred partition, stacked shell racks up the other wall, a loading bench at the door end | `[13, 13, 19]`, 1–2 floors; **deep** |
+| bunker | `bunker` | a poured-concrete re-clad banded darker at the plinth, a firing-slit window rhythm, a map table and a cot corner | `[13, 10, 13]`, 1 floor |
+| pillbox | `pillbox` | one room and nothing spare: concrete re-clad, slit rhythm, a mounted position of stair and iron block turned out of the far wall | `[9, 9, 9]`, 1 floor |
+| guard_post | `guard_post`, `sentry_post` | a grounded brazier pedestal and an alarm bell on the two corners of the door face, a watch bench, a water butt | `[9, 11, 9]`, 1 floor |
+| checkpoint | `checkpoint` | a barrier arm across the apron on the door face — grounded posts with a trapdoor boom, doorstep left clear — lantern posts, a document desk | `[11, 11, 11]`, 1 floor |
+| beacon_tower | `beacon_tower` | masonry re-clad under a crenellated deck, a signal campfire on a solid pedestal at the middle of the deck, signal banners on the walls below | `[9, 18, 9]`, 1–2 floors; **narrow and tall** |
+| gravedigger_hut | `gravedigger_hut`, `gravedigger` | tool racks up one wall row, a slab coffin bench down the other, a lime composter and a fire at the far wall, a lantern by the door | `[9, 11, 11]`, 1 floor |
+| shepherds_bothy | `shepherds_bothy`, `bothy` | a one-room stone hut: a cot, a hearth with a stool turned to it, a crook rack, fleece bales of white wool | `[9, 11, 9]`, 1 floor |
+
+Wave 5A claims **no** tag an earlier table owns, and three of the near misses
+shaped its whole vocabulary:
+
+- **`castle`, `citadel`, `keep` and `donjon` are the breadth keep's** and stay
+  there. The castle in this table is the keep grand — a different building at a
+  bigger register — so it answers to `fortress` and `stronghold` only;
+- **`barbican` is the breadth gatehouse's.** The gatehouse claimed it in wave
+  three, and a claim is not moved by a later wave wanting it, so the barbican
+  here answers to **`outer_gate`** and **`gateworks`**. A document tagged
+  `barbican` still gets a gatehouse, which is a correct building;
+- **`beacon` and `beacon_spire` are left alone** for the fantasy track's beacon
+  spire; this tower answers to `beacon_tower` only. `garrison` and `barracks`
+  likewise stay the barracks', `tower` the watchtower's and bare `hut` the
+  residential track's.
+
 So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
 granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
 also the tag `{"distance": "#tag:house"}` and the road network select on.
