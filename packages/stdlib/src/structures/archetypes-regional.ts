@@ -888,6 +888,14 @@ function fitStiltHouse(ctx: FitOutContext, c: PropCounter): void {
       // They are not on the doorstep and they are not on a route the lint
       // walks — the apron is skirt, not floor.
       if (along % 2 === 0) {
+        // On conformed terrain the apron ground fills local y0; on a platform
+        // (the Terrarium) it sits one lower, and a post standing on air fails
+        // the lint's support-chain rule. A second course closes the gap — and
+        // a two-course stilt is a better stilt anyway.
+        if (ctx.blockAt(cell.x, 0, cell.z) === undefined) {
+          ctx.put(cell.x, 0, cell.z, fence);
+          c.n++;
+        }
         ctx.put(cell.x, 1, cell.z, fence);
         c.n++;
       }
@@ -1127,6 +1135,11 @@ function fitHacienda(ctx: FitOutContext, c: PropCounter): void {
         const apron = ox >= -1 && ox <= plan.sx && oz >= -1 && oz <= plan.sz;
         const skirt = ox === -1 || ox === plan.sx || oz === -1 || oz === plan.sz;
         if (!apron || !skirt || onWayIn(ctx, ox, oz)) continue;
+        // Same ground-step rule as the stilt posts: no post stands on air.
+        if (ctx.blockAt(ox, 0, oz) === undefined) {
+          ctx.put(ox, 0, oz, fence);
+          c.n++;
+        }
         ctx.put(ox, 1, oz, fence);
         c.n++;
       }
@@ -1136,7 +1149,9 @@ function fitHacienda(ctx: FitOutContext, c: PropCounter): void {
       ] as const) {
         const skirt = ox === -1 || ox === plan.sx || oz === -1 || oz === plan.sz;
         if (!skirt || onWayIn(ctx, ox, oz)) continue;
-        ctx.put(ox, 1, oz, "cauldron", { level: "3" });
+        // The trough stands on the ground wherever the ground actually is.
+        const troughY = ctx.blockAt(ox, 0, oz) === undefined ? 0 : 1;
+        ctx.put(ox, troughY, oz, "cauldron", { level: "3" });
         c.n++;
         break;
       }
