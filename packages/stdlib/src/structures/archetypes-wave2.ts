@@ -801,19 +801,19 @@ function fitPostOffice(ctx: FitOutContext, c: PropCounter): void {
   let signed = false;
   for (let x = it.x0; x <= it.x1; x++) {
     if (!c.put1(x, end.z, counter, { axis: "x" })) continue;
-    // One sign, over the middle of the counter: a standing sign on a block is
-    // supported, which a wall sign on a window is not.
+    // One banner, over the middle of the counter — a banner and not a sign,
+    // deliberately: a sign block demands a paired block entity the structure
+    // op stream cannot carry, and the physics lint rightly flags the orphan.
+    // A plain banner needs none and reads as the office's standard.
     if (!signed && x === lamp.x) {
-      signed = c.stack(x, end.z, 2, "oak_sign", {
+      signed = c.stack(x, end.z, 2, "white_banner", {
         rotation: end.look === "north" ? "8" : "0",
-        waterlogged: "false",
       });
     }
   }
   if (!signed) {
-    signed = c.stack(it.x0, end.z, 2, "oak_sign", {
+    signed = c.stack(it.x0, end.z, 2, "white_banner", {
       rotation: end.look === "north" ? "8" : "0",
-      waterlogged: "false",
     });
   }
 

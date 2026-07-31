@@ -279,7 +279,7 @@ describe("wave-two buildings", () => {
     expect(has(build("trullo"), "white_bed"), "the one room").toBe(true);
     // Civic.
     expect(has(build("courthouse"), "lectern"), "the bench").toBe(true);
-    expect(has(build("post_office"), "oak_sign"), "the sign").toBe(true);
+    expect(has(build("post_office"), "white_banner"), "the standard").toBe(true);
     expect(has(build("post_office"), "barrel"), "pigeonholes").toBe(true);
     expect(has(build("infirmary"), "white_bed"), "cots").toBe(true);
     expect(has(build("infirmary"), "brewing_stand"), "the apothecary").toBe(true);
