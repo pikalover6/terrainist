@@ -97,6 +97,20 @@ export interface CityPassResult {
  */
 export const LANDMARK_BLOCK_OVERHEAD = 13;
 
+/**
+ * How much bigger than its landmark's block a cell must be to be offered it.
+ *
+ * `blockSize` is the spacing a cell *would* use, not a promise that it owns a
+ * block that size: a cell is an arbitrary polygon and its blocks are the
+ * skeleton clipped to it, so a small wedge and the core quarter can carry the
+ * same nominal number. Ranking on the nominal alone sent three of Bayline's
+ * five landmarks — the tallest tower among them — into cells with no block
+ * that could take them, and dropped them. Raising `blockSize` to compensate
+ * cost 79 buildings and moved which three failed, because the nominal was
+ * never the binding constraint.
+ */
+export const CELL_LANDMARK_SLACK = 1.6;
+
 /** Lay the fabric of every city in the document. */
 export function solveCities(input: DistrictPassInput): CityPassResult {
   const rootPath = input.doc.root.id;
@@ -304,7 +318,19 @@ function layCity(
     for (const landmark of sortedLandmarks) {
       const [w, , d] = landmark.envelope?.size ?? [11, 11, 11];
       const need = Math.max(w as number, d as number);
-      const fits = ranked.filter(({ cell }) => cell.blockSize - LANDMARK_BLOCK_OVERHEAD >= need);
+      const span = need + LANDMARK_BLOCK_OVERHEAD;
+      const fits = ranked.filter(({ cell }) => {
+        if (cell.blockSize - LANDMARK_BLOCK_OVERHEAD < need) return false;
+        // The cell has to be able to *contain* a block that big, not merely to
+        // have chosen that spacing. Its bounding box is the loosest honest
+        // test — a polygon narrower than the block cannot hold it however the
+        // skeleton falls — and the area slack stands in for the fact that the
+        // box is not the cell.
+        const bw = cell.bounds.x1 - cell.bounds.x0 + 1;
+        const bd = cell.bounds.z1 - cell.bounds.z0 + 1;
+        if (Math.min(bw, bd) < span) return false;
+        return cell.area >= span * span * CELL_LANDMARK_SLACK;
+      });
       const pool = fits.length > 0 ? fits : ranked;
       let target = (pool[0] as { index: number }).index;
       let least = Infinity;
