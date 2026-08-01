@@ -38,6 +38,7 @@ import {
   type DistrictCell,
 } from "./city.js";
 import {
+  groundRelief,
   layDistrict,
   medianGround,
   yawFacing,
@@ -110,6 +111,17 @@ export const LANDMARK_BLOCK_OVERHEAD = 13;
  * never the binding constraint.
  */
 export const CELL_LANDMARK_SLACK = 1.6;
+
+/**
+ * Blocks of relief a vista site may carry and still be built on.
+ *
+ * Twice the apron the seating lays, because an apron blends outward from a
+ * levelled footprint: two courses each way is the most fall it can take up
+ * without either standing the building on a plinth or cutting a bank through
+ * its ground floor. Past that the honest answer is that this terminus is not a
+ * building site, which is a different statement from "the city has no room".
+ */
+export const VISTA_MAX_RELIEF = 4;
 
 /** Lay the fabric of every city in the document. */
 export function solveCities(input: DistrictPassInput): CityPassResult {
@@ -588,6 +600,14 @@ function seatSetPieces(args: SeatInput): SeatResult {
     const [rw, rh, rd] = rotatedSize(size, yaw);
     const rect = seatOnAxis(axis, rw, rd);
     if (rect === null) return null;
+    // A vista site is the one piece of ground in a city nobody has levelled:
+    // a cell's terrace stops at the kerb and the arterial corridor keeps
+    // whatever the router climbed over. Seating on the *median* of a slope
+    // buries the uphill half of the building — the hill town's university hall
+    // came out with soil in its ground floor and all 208 of that world's
+    // findings inside it — so a site the two-block apron cannot absorb is
+    // refused, and the landmark goes to the fabric like any other.
+    if (groundRelief(input.field, rect) > VISTA_MAX_RELIEF) return null;
     const childPath = `${nodePath}.${id}`;
     const foundationY = medianGround(input.field, rect);
     const made: Placement = {
