@@ -1,0 +1,30 @@
+prompt     A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls
+seed       601762957916649228
+size       512x512
+model      deepseek/deepseek-v4-flash-0731
+effort     high
+kit        settlement
+
+authored with deepseek/deepseek-v4-flash-0731 in 1 attempt(s)
+  attempt 1   valid
+  tokens     49987 in + 13214 out = 63201  ($0.0033)
+  document   /home/user/terrainist/out/e2e/deepseek-p3/oasis_ruins.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.the_store: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.the_store: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-T209 ROAD_UNROUTABLE at world.lanes: no road could be routed from "world.the_store" to the network hub "world.garden": its approach column is blocked
+  fix: move "world.the_store" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+
+Layout solver report:
+
+  world.the_store: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+
+terrainist: OpenRouter response had no message content

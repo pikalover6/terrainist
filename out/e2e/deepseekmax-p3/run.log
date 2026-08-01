@@ -1,0 +1,8 @@
+prompt     A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls
+seed       601762957916649228
+size       512x512
+model      deepseek/deepseek-v4-flash-0731
+effort     max
+kit        settlement
+
+terrainist: OpenRouter response had no message content

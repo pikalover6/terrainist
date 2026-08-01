@@ -1,0 +1,106 @@
+prompt     A snowbound alpine mining town strung along a steep valley, with a frozen tarn, tunnels into the mountainside, and a timber church above the rooftops
+seed       9444934993714662593
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     48810 in + 30727 out = 79537  ($0.0189)
+  document   /home/user/terrainist/out/e2e/luna-p2/alpine_mine_town.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 12 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_inn: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_inn: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.miners_inn: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.miners_cottage: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.assay_office: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.assay_office: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.timber_church: hard "terrain_conform" constraint [4] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.timber_church: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.timber_church: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.timber_church: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+Layout solver report:
+
+  world.miners_inn: placed after constraint_demoted, constraint_demoted, unsatisfiable (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.33)
+  world.miners_cottage: placed after constraint_demoted, constraint_demoted, unsatisfiable (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.81)
+  world.assay_office: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied along constraint [0] (declared hard, now soft, weight 1, cost 0.24)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.02)
+  world.timber_church: placed after constraint_demoted, constraint_demoted, constraint_demoted, unsatisfiable (388 candidates considered)
+    unsatisfied zone constraint [0] (declared soft, now soft, weight 2, cost 0.87)
+    unsatisfied facing constraint [3] (declared soft, now soft, weight 2, cost 0.50)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     52697 in + 20784 out = 73481  ($0.0134)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E406 UNSATISFIABLE at world.miners_cottage: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E406 UNSATISFIABLE at world.timber_church: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+Layout solver report:
+
+  world.miners_cottage: placed after unsatisfiable (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared soft, now soft, weight 1, cost 0.79)
+  world.timber_church: placed after unsatisfiable (388 candidates considered)
+    unsatisfied zone constraint [0] (declared soft, now soft, weight 2, cost 0.87)
+    unsatisfied facing constraint [3] (declared soft, now soft, weight 2, cost 0.50)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     55733 in + 7971 out = 63704  ($0.0057)
+
+compiled "alpine_mine_town" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/luna-p2/alpine_mine_town
+  seed       9444934993714662593
+  region     512x512 at (-256, -256)
+  heights    21.3..169.0  sea 63  snow line 103.3
+  land       64.7% of columns above sea level
+  biomes     windswept_hills 23.9%, plains 21.6%, deep_cold_ocean 13.6%, snowy_slopes 10.7%, cold_ocean 9.5%, taiga 9.2%, ocean 5.0%, stony_peaks 2.3%, snowy_beach 1.4%, deep_ocean 1.1%, beach 1.0%, forest 0.4%, river 0.3%
+  trees      632 (north_spruce=178, valley_spruce_fill=481)
+  chunks     1024
+  blocks     39149593 (68072 vegetation)
+  markers    79
+  spawn      [0, 139, 0]
+  timings    validate 1ms  field 1509ms  layout 1008ms  climate 130ms  columns 76ms  caves 0ms  structures 4131ms  scatter 3714ms  biomes 36ms  validators 91ms  emit 4813ms  total 15597ms
+  zip        /home/user/terrainist/out/e2e/luna-p2/alpine_mine_town.zip
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.valley_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_cottage: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+
+warning LOAM-E406 UNSATISFIABLE at world.miners_cottage: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+  authoring  3 model run(s), 2 compile-feedback round(s), 157240 in + 59482 out = 216722 tokens ($0.0381)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /home/user/terrainist/out/e2e/luna-p2/alpine_mine_town

@@ -1,0 +1,156 @@
+prompt     A snowbound alpine mining town strung along a steep valley, with a frozen tarn, tunnels into the mountainside, and a timber church above the rooftops
+seed       9444934993714662593
+size       512x512
+model      deepseek/deepseek-v4-flash-0731
+effort     high
+kit        settlement
+
+authored with deepseek/deepseek-v4-flash-0731 in 2 attempt(s)
+  attempt 1   5 problem(s): LOAM-T204 BAD_CONSTRAINT@world.pithead.constraints[0], LOAM-T204 BAD_CONSTRAINT@world.smithy.constraints[0], LOAM-T204 BAD_CONSTRAINT@world.storehouse.constraints[0], LOAM-T204 BAD_CONSTRAINT@world.cottage_shore.constraints[0], LOAM-T204 BAD_CONSTRAINT@world.cottage_field.constraints[0]
+  attempt 2   valid
+  tokens     107800 in + 21952 out = 129752  ($0.0101)
+  document   /home/user/terrainist/out/e2e/deepseek-p2/snowbound_alpine_town.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 26 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.town_green: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.town_green: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pithead: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pithead: hard "connected" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pithead: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.smithy: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.smithy: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.storehouse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.storehouse: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.tavern: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.tavern: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_shore: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_shore: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_shore: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_lane: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_lane: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_lane: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_field: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_field: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_field: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_field: hard "along" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.cottage_field: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.church: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.church: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.church: hard "on" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+
+Layout solver report:
+
+  world.town_green: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+    unsatisfied zone constraint [0] (declared soft, now soft, weight 2, cost 0.89)
+  world.pithead: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied beside constraint [0] (declared hard, now soft, weight 1, cost 0.04)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.28)
+  world.smithy: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied beside constraint [0] (declared hard, now soft, weight 1, cost 0.08)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.45)
+  world.storehouse: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied beside constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.38)
+  world.tavern: placed after constraint_demoted, constraint_demoted, unsatisfiable (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.46)
+  world.cottage_shore: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied beside constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.52)
+  world.cottage_lane: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.53)
+  world.cottage_field: placed after constraint_demoted, constraint_demoted, constraint_demoted, constraint_demoted, unsatisfiable (384 candidates considered)
+    unsatisfied beside constraint [0] (declared hard, now soft, weight 1, cost 0.14)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.59)
+  world.church: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied on constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.63)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     62976 in + 5427 out = 68403  ($0.0025)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E406 UNSATISFIABLE at world.town_green: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E406 UNSATISFIABLE at world.tavern: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E406 UNSATISFIABLE at world.cottage_field: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+Layout solver report:
+
+  world.town_green: placed after unsatisfiable (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.13)
+  world.tavern: placed after unsatisfiable (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared soft, now soft, weight 1, cost 0.46)
+  world.cottage_field: placed after unsatisfiable (384 candidates considered)
+    unsatisfied beside constraint [0] (declared soft, now soft, weight 1, cost 0.14)
+    unsatisfied distance constraint [1] (declared soft, now soft, weight 1, cost 0.59)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     66108 in + 4985 out = 71093  ($0.0023)
+
+compiled "snowbound_alpine_town" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/deepseek-p2/snowbound_alpine_town
+  seed       9444934993714662593
+  region     512x512 at (-256, -256)
+  heights    -9.2..150.5  sea 63  snow line 106.8
+  land       62.9% of columns above sea level
+  biomes     plains 28.8%, taiga 19.5%, windswept_hills 17.0%, cold_ocean 14.2%, deep_cold_ocean 12.9%, snowy_slopes 4.3%, snowy_beach 1.7%, stony_peaks 1.3%, river 0.3%
+  trees      1716 (slope_pines=1699, upper_pines=106)
+  chunks     1024
+  blocks     37333389 (142089 vegetation)
+  markers    80
+  spawn      [0, 104, 0]
+  timings    validate 1ms  field 600ms  layout 296ms  climate 102ms  columns 111ms  caves 0ms  structures 3097ms  scatter 4767ms  biomes 30ms  validators 96ms  emit 4320ms  total 13483ms
+  zip        /home/user/terrainist/out/e2e/deepseek-p2/snowbound_alpine_town.zip
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E406 UNSATISFIABLE at world.town_green: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+warning LOAM-E406 UNSATISFIABLE at world.tavern: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+warning LOAM-E406 UNSATISFIABLE at world.cottage_field: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+  authoring  3 model run(s), 2 compile-feedback round(s), 236884 in + 32364 out = 269248 tokens ($0.0149)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /home/user/terrainist/out/e2e/deepseek-p2/snowbound_alpine_town

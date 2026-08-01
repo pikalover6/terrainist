@@ -1,0 +1,695 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "oasis_ruins",
+    "worldSeed": "601762957916649228",
+    "prompt": "A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:sand",
+      "ground.subsurface": "minecraft:sand",
+      "ground.beach": "minecraft:sand",
+      "ground.cliff": "minecraft:sandstone",
+      "ground.underwater": "minecraft:sand",
+      "road.surface": "minecraft:sand",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:sand",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:sandstone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "a half-abandoned oasis town in the desert",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "flat desert around a low hollow",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 18,
+          "octaves": 4,
+          "frequency": 0.004,
+          "gain": 0.47,
+          "erosionPasses": 2,
+          "cliffThreshold": 58,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flat ground the town stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 100,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "camp_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "flat ground for the caravan camps",
+            "params": {
+              "verb": "plateau",
+              "zone": "northwest",
+              "radius": 55,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "dune_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a low dune ridge across the south",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.82
+                ],
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.9,
+                  0.82
+                ]
+              ],
+              "width": 60,
+              "height": 10,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "garden",
+        "kind": "primitive",
+        "label": "the spring-fed palm garden at the heart of the town",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "the_khan",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the caravanserai, still taking in travellers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "garden",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "garden"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "caravanserai",
+          "house"
+        ]
+      },
+      {
+        "id": "the_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the general store on the garden's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "garden",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "garden"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "general_store"
+        ]
+      },
+      {
+        "id": "the_trading_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "where the caravans trade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "garden",
+            "min": 6,
+            "max": 50
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trading_post"
+        ]
+      },
+      {
+        "id": "the_well",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the covered well",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "garden",
+            "min": 4,
+            "max": 30
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "well"
+        ]
+      },
+      {
+        "id": "ruin_cottage_a",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a ruined house at the edge of the quarter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "garden",
+            "min": 20,
+            "max": 90
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "ruined_cottage"
+        ]
+      },
+      {
+        "id": "ruin_cottage_b",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a second ruin, its roof long gone",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "garden",
+            "min": 20,
+            "max": 90
+          },
+          {
+            "distance": "ruin_cottage_a",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "ruined_cottage"
+        ]
+      },
+      {
+        "id": "ruin_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a collapsed tower leaning into the quarter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            17,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "garden",
+            "min": 24,
+            "max": 100
+          },
+          {
+            "distance": "ruin_cottage_a",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "collapsed_tower"
+        ]
+      },
+      {
+        "id": "ruin_keep",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the old keep, a shell of its walls",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "garden",
+            "min": 30,
+            "max": 110
+          },
+          {
+            "distance": "ruin_tower",
+            "min": 10
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "ruined_keep"
+        ]
+      },
+      {
+        "id": "spring_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the spring that feeds the garden",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "garden_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "way_sign",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "signpost",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "camp_northwest",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a caravan camp beyond the north wall",
+        "params": {
+          "prop": "campsite",
+          "zone": "northwest"
+        }
+      },
+      {
+        "id": "camp_tent_a",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "tent",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "camp_tent_b",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "tent",
+          "zone": "northeast",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "camp_yurt",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a yurt camp on the south road",
+        "params": {
+          "prop": "yurt",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "camp_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a covered wagon parked outside the walls",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "wall_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the north curtain wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "north",
+          "length": 28,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "wall_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the south curtain wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "south",
+          "length": 28,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "wall_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the west curtain wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "west",
+          "length": 28,
+          "yaw": 90
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "sandy lanes from the garden to every door",
+        "params": {
+          "anchors": [
+            "garden",
+            "#tag:house",
+            "the_store",
+            "the_trading_post",
+            "the_well"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "palm_garden",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the date palms ringing the garden",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 44
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.4,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            60
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.1,
+            "flowers": 0.02,
+            "deadwood": 0.05
+          },
+          "species": [
+            {
+              "id": "date_palm",
+              "weight": 4,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "desert_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse scrub across the open desert",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.02,
+          "spacing": 5,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "desert_acacia",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

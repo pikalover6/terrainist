@@ -1,0 +1,831 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "alpine_mine_town",
+    "worldSeed": "9444934993714662593",
+    "prompt": "A snowbound alpine mining town strung along a steep valley, with a frozen tarn, tunnels into the mountainside, and a timber church above the rooftops",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:snow_block",
+      "ground.beach": "minecraft:snow_block",
+      "ground.underwater": "minecraft:gravel",
+      "ground.peak": "minecraft:stone",
+      "liquid.water": "minecraft:ice",
+      "foliage.snow_layer": "minecraft:snow",
+      "wood.spruce_log": "minecraft:spruce_log",
+      "wood.spruce_leaves": "minecraft:spruce_leaves",
+      "road.surface": "minecraft:gravel",
+      "road.shoulder": "minecraft:stone",
+      "plaza.path": "minecraft:spruce_planks",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.border": "minecraft:stone_bricks"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the snowbound alpine mining town",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "high ridges and a steep valley under permanent snow",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 72,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 30,
+            "frequency": 0.0025
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.38
+        },
+        "children": [
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the mountainside above the town",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.08,
+                  0.4
+                ],
+                [
+                  0.33,
+                  0.34
+                ],
+                [
+                  0.62,
+                  0.38
+                ],
+                [
+                  0.92,
+                  0.43
+                ]
+              ],
+              "width": 72,
+              "height": 58,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "south_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the opposing alpine wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.08,
+                  0.82
+                ],
+                [
+                  0.34,
+                  0.86
+                ],
+                [
+                  0.64,
+                  0.82
+                ],
+                [
+                  0.92,
+                  0.77
+                ]
+              ],
+              "width": 68,
+              "height": 52,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shelf for the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.53
+              ],
+              "radius": 96,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "valley_cut",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep dry valley the town follows",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.08,
+                  0.54
+                ],
+                [
+                  0.34,
+                  0.5
+                ],
+                [
+                  0.6,
+                  0.54
+                ],
+                [
+                  0.92,
+                  0.6
+                ]
+              ],
+              "width": 64,
+              "depth": 44,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "frozen_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the frozen mountain tarn",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.24,
+                0.18
+              ],
+              "radius": 52,
+              "depth": 15,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0008,
+          "humidityFrequency": 0.0012,
+          "latitudeGradient": -1,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "town_green",
+        "kind": "primitive",
+        "label": "the snow-covered green between the rooftops",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 7
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "miners_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the miners' inn beside the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              16
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "miners_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a small cottage on the town green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 60
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "foremans_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the foreman's two-storey house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "upper_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage strung along the upper valley",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "along": "valley_cut",
+            "offset": [
+              8,
+              20
+            ],
+            "side": "right",
+            "at": 0.3,
+            "faceRoad": true
+          },
+          {
+            "distance": "town_green",
+            "min": 12,
+            "max": 120
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "lower_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage strung along the lower valley",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "along": "valley_cut",
+            "offset": [
+              8,
+              20
+            ],
+            "side": "left",
+            "at": 0.72,
+            "faceRoad": true
+          },
+          {
+            "distance": "town_green",
+            "min": 12,
+            "max": 120
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smithy for the mine crews",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "along": "valley_cut",
+            "offset": [
+              8,
+              24
+            ],
+            "side": "left",
+            "at": 0.52,
+            "faceRoad": true
+          },
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 60
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "mountain_mine",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mine headframe driven into the mountainside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 80,
+            "side": "any"
+          },
+          {
+            "beside": "valley_cut",
+            "offset": [
+              16,
+              72
+            ],
+            "side": "any"
+          },
+          {
+            "distance": "town_green",
+            "min": 30,
+            "max": 180
+          },
+          {
+            "connected": "assay_office",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head"
+        ]
+      },
+      {
+        "id": "assay_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the assay office at the foot of the workings",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "along": "valley_cut",
+            "offset": [
+              4,
+              32
+            ],
+            "side": "any",
+            "at": 0.56,
+            "faceRoad": true,
+            "strength": "soft"
+          },
+          {
+            "distance": "mountain_mine",
+            "min": 8,
+            "max": 140,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "timber_church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the timber church above the rooftops",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 144,
+            "side": "any",
+            "strength": "soft"
+          },
+          {
+            "distance": "town_green",
+            "min": 18,
+            "max": 200,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "max",
+            "blend": 6,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church",
+          "public"
+        ]
+      },
+      {
+        "id": "valley_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "snow-cleared lanes following the valley",
+        "params": {
+          "anchors": [
+            "town_green",
+            "#tag:house",
+            "smithy",
+            "mountain_mine",
+            "assay_office",
+            "timber_church"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "north_spruce",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "spruce forest on the snowy alpine slopes",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.22,
+          "spacing": 4,
+          "clumping": 0.58,
+          "maxSlope": 36,
+          "elevation": [
+            4,
+            110
+          ],
+          "edgeFalloff": 20,
+          "snowLine": 142,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.15,
+            "flowers": 0.01,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "alpine_spruce",
+              "weight": 3,
+              "shape": "spruce_tall",
+              "minHeight": 8,
+              "maxHeight": 20
+            },
+            {
+              "id": "dwarf_spruce",
+              "weight": 1,
+              "shape": "spruce_squat",
+              "minHeight": 4,
+              "maxHeight": 10
+            }
+          ]
+        }
+      },
+      {
+        "id": "valley_spruce_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse spruce cover beyond the town",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.035,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            92
+          ],
+          "edgeFalloff": 18,
+          "snowLine": 150,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.005,
+            "deadwood": 0.06
+          },
+          "species": [
+            {
+              "id": "valley_spruce",
+              "weight": 1,
+              "shape": "spruce_tall",
+              "minHeight": 6,
+              "maxHeight": 16
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

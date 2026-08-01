@@ -1,0 +1,797 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "oasis_ruins",
+    "worldSeed": "601762957916649228",
+    "prompt": "A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:sand",
+            4
+          ],
+          [
+            "minecraft:red_sand",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:sandstone",
+      "ground.stone": "minecraft:sandstone",
+      "ground.cliff": "minecraft:red_sandstone",
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "ground.peak": "minecraft:sandstone",
+      "liquid.water": "minecraft:water",
+      "wood.spruce_log": "minecraft:jungle_log",
+      "wood.spruce_leaves": "minecraft:jungle_leaves",
+      "road.surface": "minecraft:sandstone",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:smooth_sandstone",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cut_sandstone",
+      "plaza.border": "minecraft:chiseled_sandstone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the half-abandoned oasis town",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "low rolling desert around the oasis",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0038,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 2,
+          "beachWidth": 4,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shelf beneath the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.53
+              ],
+              "radius": 108,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "spring_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the spring-fed basin in the garden",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.41
+              ],
+              "radius": 42,
+              "depth": 10,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "hot dry desert air",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": 0,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "palm_garden",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the dense date-palm garden around the spring",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 80
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.35,
+          "maxSlope": 24,
+          "elevation": [
+            1,
+            40
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.03,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "date_palm",
+              "weight": 3,
+              "shape": "spruce_tall",
+              "minHeight": 8,
+              "maxHeight": 14
+            },
+            {
+              "id": "doum_palm",
+              "weight": 1,
+              "shape": "spruce_squat",
+              "minHeight": 5,
+              "maxHeight": 10
+            }
+          ]
+        }
+      },
+      {
+        "id": "desert_wilds",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse scrub and scattered trees beyond the oasis",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 5,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            1,
+            70
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.04,
+            "flowers": 0.005,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "desert_acacia",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 3,
+              "maxHeight": 8
+            }
+          ]
+        }
+      },
+      {
+        "id": "oasis_green",
+        "kind": "primitive",
+        "label": "the paved green beside the spring garden",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "garden_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a small occupied house beside the palms",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "oasis_green",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "oasis_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "oasis_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the surviving inn on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "oasis_green",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "oasis_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "market_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the little store still serving the oasis",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "distance": "oasis_green",
+            "min": 8,
+            "max": 48
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "general_store",
+          "house"
+        ]
+      },
+      {
+        "id": "oasis_smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the half-used smithy away from the garden",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "oasis_green",
+            "min": 8,
+            "max": 44
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "house"
+        ]
+      },
+      {
+        "id": "ruined_cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage crumbling in the abandoned quarter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "oasis_green",
+            "min": 90,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ruined_cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "overgrown_villa_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the old villa swallowed by green and sand",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "ruined_cottage_east",
+            "min": 14,
+            "max": 55
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "overgrown_villa",
+          "house"
+        ]
+      },
+      {
+        "id": "ruined_keep_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the larger ruin anchoring the dead quarter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "oasis_green",
+            "min": 100,
+            "max": 230
+          },
+          {
+            "distance": "overgrown_villa_east",
+            "min": 20,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 32
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ruined_keep",
+          "house"
+        ]
+      },
+      {
+        "id": "collapsed_tower_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the broken tower at the quarter's edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            17,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "ruined_keep_east",
+            "min": 12,
+            "max": 50
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6,
+            "maxSlope": 32
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "collapsed_tower"
+        ]
+      },
+      {
+        "id": "spring_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the spring head in the palm garden",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "jitter": 0.1,
+          "on": "ground"
+        },
+        "tags": [
+          "spring"
+        ]
+      },
+      {
+        "id": "north_wall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the surviving north wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "north",
+          "jitter": 0.05,
+          "length": 64,
+          "yaw": 0,
+          "on": "ground"
+        },
+        "tags": [
+          "wall"
+        ]
+      },
+      {
+        "id": "south_wall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the southern wall beyond the town gate",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "south",
+          "jitter": 0.05,
+          "length": 64,
+          "yaw": 0,
+          "on": "ground"
+        },
+        "tags": [
+          "wall"
+        ]
+      },
+      {
+        "id": "west_wall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the surviving west wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "west",
+          "jitter": 0.05,
+          "length": 64,
+          "yaw": 90,
+          "on": "ground"
+        },
+        "tags": [
+          "wall"
+        ]
+      },
+      {
+        "id": "east_wall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the wall beside the ruined quarter",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "east",
+          "jitter": 0.05,
+          "length": 64,
+          "yaw": 90,
+          "on": "ground"
+        },
+        "tags": [
+          "wall"
+        ]
+      },
+      {
+        "id": "western_caravan_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a caravan camp outside the western wall",
+        "params": {
+          "prop": "campsite",
+          "zone": "southwest",
+          "jitter": 0.2,
+          "yaw": 0,
+          "on": "ground"
+        },
+        "tags": [
+          "caravan_camp"
+        ]
+      },
+      {
+        "id": "eastern_caravan_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a second caravan camp outside the eastern wall",
+        "params": {
+          "prop": "campsite",
+          "zone": "southeast",
+          "jitter": 0.2,
+          "yaw": 180,
+          "on": "ground"
+        },
+        "tags": [
+          "caravan_camp"
+        ]
+      },
+      {
+        "id": "western_caravan",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the wagons of the western caravan",
+        "params": {
+          "prop": "caravan",
+          "zone": "southwest",
+          "jitter": 0.25,
+          "yaw": 90,
+          "on": "ground"
+        },
+        "tags": [
+          "caravan_camp"
+        ]
+      },
+      {
+        "id": "eastern_caravan",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the wagons of the eastern caravan",
+        "params": {
+          "prop": "caravan",
+          "zone": "southeast",
+          "jitter": 0.25,
+          "yaw": 270,
+          "on": "ground"
+        },
+        "tags": [
+          "caravan_camp"
+        ]
+      },
+      {
+        "id": "oasis_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "sandy lanes from the green toward the ruins and walls",
+        "params": {
+          "anchors": [
+            "oasis_green",
+            "#tag:house",
+            "collapsed_tower_east"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

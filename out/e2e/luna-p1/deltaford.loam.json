@@ -1,0 +1,1516 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "deltaford",
+    "worldSeed": "5701942714392138513",
+    "prompt": "A prosperous river-delta trading city with a walled old town, a working harbour, and farmland on the floodplain",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            5
+          ],
+          [
+            "minecraft:farmland",
+            3
+          ],
+          [
+            "minecraft:dirt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:dirt",
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:sand",
+            3
+          ],
+          [
+            "minecraft:mud",
+            2
+          ]
+        ]
+      },
+      "ground.underwater": "minecraft:gravel",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.border": "minecraft:stone_bricks"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Deltaford, a prosperous river trading city on fertile lowlands",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "low coastal country cut by a branching delta and fertile floodplain",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.38
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 6,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad raised shelf for the old town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.46,
+                0.47
+              ],
+              "radius": 96,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "floodplain_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide low floodplain following the main river",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.08
+                ],
+                [
+                  0.5,
+                  0.25
+                ],
+                [
+                  0.48,
+                  0.45
+                ],
+                "coast"
+              ],
+              "width": 58,
+              "depth": 10,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "main_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep navigable river channel through the delta",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.09
+                ],
+                [
+                  0.49,
+                  0.27
+                ],
+                [
+                  0.48,
+                  0.46
+                ],
+                "coast"
+              ],
+              "width": 18,
+              "depth": 8,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "west_distributary",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western distributary winding through the fields",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.47,
+                  0.42
+                ],
+                [
+                  0.36,
+                  0.53
+                ],
+                [
+                  0.22,
+                  0.66
+                ],
+                "coast"
+              ],
+              "width": 14,
+              "depth": 6,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "east_distributary",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the eastern distributary beside the harbour approaches",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.49,
+                  0.43
+                ],
+                [
+                  0.61,
+                  0.53
+                ],
+                [
+                  0.78,
+                  0.66
+                ],
+                "coast"
+              ],
+              "width": 14,
+              "depth": 6,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "floodplain_fields",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the dry, gently lowered fields between the distributaries",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.46,
+                0.73
+              ],
+              "radius": 110,
+              "depth": 6,
+              "water": false,
+              "profile": "rounded",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0011,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.15,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "north_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "groves beyond the northern floodplain",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.14,
+          "spacing": 3,
+          "clumping": 0.62,
+          "maxSlope": 31,
+          "elevation": [
+            3,
+            86
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.42,
+            "flowers": 0.08,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "delta_birch",
+              "weight": 3,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "floodplain_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees outside the settled fields",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.58,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.28,
+            "flowers": 0.04,
+            "deadwood": 0.025
+          },
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the old town market green",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            32,
+            32
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "old_town"
+        ]
+      },
+      {
+        "id": "town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the council hall facing the old town green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "town_hall",
+          "civic",
+          "old_town"
+        ]
+      },
+      {
+        "id": "guildhall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the merchants guildhall beside the market",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "guildhall",
+          "trade",
+          "old_town"
+        ]
+      },
+      {
+        "id": "old_church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the old town church above the river road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 60
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church",
+          "old_town"
+        ]
+      },
+      {
+        "id": "merchant_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a merchant townhouse on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "townhouse",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "river_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a smaller townhouse along the riverward lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 60
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "townhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "riverside_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the prosperous inn for river traders",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 55
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the riverside smithy serving the port",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "beside": "main_channel",
+            "offset": [
+              6,
+              18
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "trade"
+        ]
+      },
+      {
+        "id": "old_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse leading through the old town wall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 24,
+            "max": 100
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "old_town"
+        ]
+      },
+      {
+        "id": "customs_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the customs house where river cargo is tallied",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "beside": "main_channel",
+            "offset": [
+              6,
+              22
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 18,
+            "max": 110
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "customs_house",
+          "trade"
+        ]
+      },
+      {
+        "id": "quayside_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the warehouse on the delta quay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 32
+          },
+          {
+            "beside": "main_channel",
+            "offset": [
+              4,
+              18
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 20,
+            "max": 130
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "trade"
+        ]
+      },
+      {
+        "id": "counting_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the counting house for merchants and insurers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 70
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "counting_house",
+          "trade"
+        ]
+      },
+      {
+        "id": "bank",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stone bank backing the river trade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              12
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bank",
+          "trade"
+        ]
+      },
+      {
+        "id": "farmhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the floodplain farmstead beyond the city walls",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular",
+          "basement": {
+            "depth": 4,
+            "style": "root_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "plaza",
+            "min": 70,
+            "max": 190
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farmhouse",
+          "house",
+          "farm"
+        ]
+      },
+      {
+        "id": "greenhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glass growing house in the fertile fields",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "farmhouse",
+            "min": 10,
+            "max": 45
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 26
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "greenhouse",
+          "farm"
+        ]
+      },
+      {
+        "id": "granary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the granary raised above the floodplain fields",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "farmhouse",
+            "min": 12,
+            "max": 70
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "granary",
+          "farm"
+        ]
+      },
+      {
+        "id": "harbour_boathouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the boathouse beside the working quay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 28
+          },
+          {
+            "beside": "main_channel",
+            "offset": [
+              6,
+              20
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "boathouse",
+          "trade"
+        ]
+      },
+      {
+        "id": "harbour_lighthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the optional light marking the delta mouth",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 18
+          },
+          {
+            "distance": "plaza",
+            "min": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lighthouse"
+        ]
+      },
+      {
+        "id": "wall_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the northern curtain wall of the old town",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "north",
+          "length": 60,
+          "yaw": 0,
+          "jitter": 0.08
+        },
+        "tags": [
+          "old_town",
+          "wall"
+        ]
+      },
+      {
+        "id": "wall_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the southern curtain wall and river gate approach",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "south",
+          "length": 60,
+          "yaw": 0,
+          "jitter": 0.08
+        },
+        "tags": [
+          "old_town",
+          "wall"
+        ]
+      },
+      {
+        "id": "wall_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the western curtain wall",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "west",
+          "length": 60,
+          "yaw": 90,
+          "jitter": 0.08
+        },
+        "tags": [
+          "old_town",
+          "wall"
+        ]
+      },
+      {
+        "id": "wall_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the eastern curtain wall toward the quays",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "east",
+          "length": 60,
+          "yaw": 90,
+          "jitter": 0.08
+        },
+        "tags": [
+          "old_town",
+          "wall"
+        ]
+      },
+      {
+        "id": "harbour_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the long working pier at the delta mouth",
+        "params": {
+          "prop": "pier",
+          "zone": "southeast",
+          "length": 20,
+          "width": 3,
+          "jitter": 0.12
+        },
+        "tags": [
+          "harbour",
+          "shore"
+        ]
+      },
+      {
+        "id": "trade_cog",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a merchant cog moored at the pier",
+        "params": {
+          "prop": "cog",
+          "at": "pier",
+          "on": "water"
+        },
+        "tags": [
+          "harbour",
+          "trade"
+        ]
+      },
+      {
+        "id": "harbour_ferry",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the ferry linking the delta banks",
+        "params": {
+          "prop": "ferry",
+          "at": "pier",
+          "on": "water"
+        },
+        "tags": [
+          "harbour",
+          "transport"
+        ]
+      },
+      {
+        "id": "fishing_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a fishing sloop among the working boats",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier",
+          "on": "water"
+        },
+        "tags": [
+          "harbour",
+          "fishing"
+        ]
+      },
+      {
+        "id": "harbour_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a small rowboat tied inside the harbour",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier",
+          "on": "water"
+        },
+        "tags": [
+          "harbour"
+        ]
+      },
+      {
+        "id": "harbour_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a buoy marking the navigable channel",
+        "params": {
+          "prop": "buoy",
+          "zone": "southeast",
+          "jitter": 0.28,
+          "on": "water"
+        },
+        "tags": [
+          "harbour",
+          "navigation"
+        ]
+      },
+      {
+        "id": "quay_bollards",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "bollards along the cargo quay",
+        "params": {
+          "prop": "bollard_row",
+          "zone": "southeast",
+          "length": 24,
+          "yaw": 0,
+          "on": "ground"
+        },
+        "tags": [
+          "harbour",
+          "quay"
+        ]
+      },
+      {
+        "id": "field_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a scarecrow among the floodplain crops",
+        "params": {
+          "prop": "scarecrow",
+          "zone": "southwest",
+          "jitter": 0.25,
+          "on": "ground"
+        },
+        "tags": [
+          "farm"
+        ]
+      },
+      {
+        "id": "field_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a farm cart beside the harvested fields",
+        "params": {
+          "prop": "cart",
+          "zone": "southwest",
+          "jitter": 0.22,
+          "on": "ground"
+        },
+        "tags": [
+          "farm"
+        ]
+      },
+      {
+        "id": "farm_clothesline",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a clothesline behind the floodplain farmstead",
+        "params": {
+          "prop": "clothesline",
+          "zone": "southwest",
+          "jitter": 0.18,
+          "on": "ground"
+        },
+        "tags": [
+          "farm"
+        ]
+      },
+      {
+        "id": "town_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the roofed well on the old town green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.12,
+          "on": "ground"
+        },
+        "tags": [
+          "old_town",
+          "public"
+        ]
+      },
+      {
+        "id": "market_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a market barrow on the trading square",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.2,
+          "on": "ground"
+        },
+        "tags": [
+          "market",
+          "trade"
+        ]
+      },
+      {
+        "id": "town_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a bench beneath the market lamps",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.24,
+          "on": "ground"
+        },
+        "tags": [
+          "old_town",
+          "public"
+        ]
+      },
+      {
+        "id": "city_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lanes connecting the old town, river trade and fields",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "town_hall",
+            "guildhall",
+            "old_church",
+            "old_gatehouse",
+            "customs_house",
+            "quayside_warehouse",
+            "counting_house",
+            "bank",
+            "harbour_boathouse",
+            "granary"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14,
+          "curvature": 0.18,
+          "maxGrade": 2,
+          "junctionStyle": "plaza"
+        }
+      }
+    ]
+  }
+}

@@ -13,7 +13,8 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
-const root = path.resolve(process.argv[2] ?? "out/e2e");
+const positional = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const root = path.resolve(positional[0] ?? "out/e2e");
 
 /**
  * Count generator nodes by family anywhere in an authored document.
@@ -52,7 +53,8 @@ function parseLog(log) {
   const diagnostics = { error: 0, warning: 0, info: 0 };
   for (const m of log.matchAll(/^(error|warning|info) LOAM-/gm)) diagnostics[m[1]]++;
   return {
-    model: attempts?.[1],
+    model: attempts?.[1] ?? /^model\s+(\S+)$/m.exec(log)?.[1],
+    effort: /^effort\s+(\S+)$/m.exec(log)?.[1],
     authorAttempts: attempts === null ? undefined : Number(attempts[2]),
     revisionRounds: usage === null ? revisions.length : Number(usage[2]),
     revisionAttempts: revisions.map((m) => Number(m[2])),
@@ -62,6 +64,9 @@ function parseLog(log) {
     cost: usage?.[6] !== undefined ? Number(usage[6]) : costs.reduce((a, b) => a + b, 0),
     diagnostics,
     physicsLint: /PHYSICS LINT FAILED/.test(log),
+    // The provider returns 200 with finish_reason "error" and a null message;
+    // narrowCompletion only sees the missing content. See comparison.md.
+    providerError: /no message content/.test(log),
   };
 }
 
@@ -92,13 +97,25 @@ for (const name of (await readdir(root, { withFileTypes: true }))
   const logFile = files.find((f) => f === "run.log");
   if (logFile !== undefined) Object.assign(row, parseLog(await readFile(path.join(dir, logFile), "utf8")));
 
-  const docFile = files.find((f) => f.endsWith(".loam.json"));
+  // A re-run leaves the previous attempt's document beside the new one (the
+  // model picks meta.name, so the filename changes). Newest wins.
+  const newest = async (suffix) => {
+    const matches = files.filter((f) => f.endsWith(suffix));
+    if (matches.length === 0) return undefined;
+    const stamped = await Promise.all(
+      matches.map(async (f) => ({ f, mtime: (await stat(path.join(dir, f))).mtimeMs })),
+    );
+    stamped.sort((a, b) => b.mtime - a.mtime);
+    return stamped[0].f;
+  };
+
+  const docFile = await newest(".loam.json");
   if (docFile !== undefined) {
     row.doc = docFile;
     row.nodes = countNodes(JSON.parse(await readFile(path.join(dir, docFile), "utf8")));
   }
 
-  const zipFile = files.find((f) => f.endsWith(".zip"));
+  const zipFile = await newest(".zip");
   if (zipFile !== undefined) {
     row.zip = zipFile;
     row.zipBytes = await sizeOf(path.join(dir, zipFile));
@@ -107,4 +124,36 @@ for (const name of (await readdir(root, { withFileTypes: true }))
   rows.push(row);
 }
 
-console.log(JSON.stringify(rows, null, 2));
+if (!process.argv.includes("--markdown")) {
+  console.log(JSON.stringify(rows, null, 2));
+  process.exit(0);
+}
+
+/* The comparison table, ready to paste into comparison.md. */
+const n = (v) => (v === undefined || Number.isNaN(v) ? "—" : String(v));
+const money = (v) => (v === undefined ? "—" : `$${v.toFixed(4)}`);
+const mib = (v) => (v === undefined ? "—" : `${(v / 1024 / 1024).toFixed(2)} MiB`);
+
+const header = [
+  "| Run | Model | Effort | Outcome | Author attempts | Revision rounds | err/warn | terrain/building/prop/road nodes | Tokens | Cost | Wall clock | Zip |",
+  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+];
+const body = rows.map((r) => {
+  const outcome =
+    r.exitCode === 0
+      ? "ok"
+      : r.physicsLint
+        ? "physics lint"
+        : r.providerError
+          ? "provider error"
+          : r.exitCode === undefined
+            ? "no run"
+            : "failed";
+  const nodes =
+    r.nodes === undefined
+      ? "—"
+      : `${r.nodes.terrain}/${r.nodes.building}/${r.nodes.prop}/${r.nodes.road}`;
+  const d = r.diagnostics;
+  return `| ${r.run} | ${r.model ?? "—"} | ${r.effort ?? "—"} | ${outcome} | ${n(r.authorAttempts)} | ${n(r.revisionRounds)} | ${d === undefined ? "—" : `${d.error}/${d.warning}`} | ${nodes} | ${n(r.totalTokens)} | ${money(r.cost)} | ${n(r.seconds)}s | ${mib(r.zipBytes)} |`;
+});
+console.log([...header, ...body].join("\n"));

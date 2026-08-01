@@ -1,0 +1,62 @@
+prompt     A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls
+seed       601762957916649228
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     48809 in + 36196 out = 85005  ($0.0222)
+  document   /home/user/terrainist/out/e2e/luna-p3/oasis_ruins.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 6 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.garden_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.garden_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_inn: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_inn: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_smithy: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_smithy: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+
+Layout solver report:
+
+  world.garden_cottage: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.oasis_inn: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+  world.oasis_smithy: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     52188 in + 7854 out = 60042  ($0.0056)
+
+compiled "oasis_ruins" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/luna-p3/oasis_ruins
+  seed       601762957916649228
+  region     512x512 at (-256, -256)
+  heights    66.6..85.4  sea 63  snow line 85.4
+  land       100.0% of columns above sea level
+  biomes     stony_peaks 38.0%, forest 33.7%, windswept_hills 23.9%, plains 3.0%, river 1.2%, beach 0.3%
+  trees      3686 (palm_garden=485, desert_wilds=3370)
+  chunks     1024
+  blocks     37373093 (249430 vegetation)
+  markers    8
+  spawn      [0, 85, 0]
+  timings    validate 1ms  field 245ms  layout 210ms  climate 101ms  columns 1669ms  caves 0ms  structures 1914ms  scatter 3560ms  biomes 20ms  validators 7ms  emit 4285ms  total 12093ms
+  zip        /home/user/terrainist/out/e2e/luna-p3/oasis_ruins.zip
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.oasis_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+  authoring  2 model run(s), 1 compile-feedback round(s), 100997 in + 44050 out = 145047 tokens ($0.0278)
+
+next: terrainist install /home/user/terrainist/out/e2e/luna-p3/oasis_ruins
