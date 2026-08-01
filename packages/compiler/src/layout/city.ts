@@ -215,8 +215,36 @@ export const WATERFRONT_REACH = 7;
 /** Share of a cell's boundary that must be near water for `waterfront`. */
 export const WATERFRONT_SHARE = 0.14;
 
-/** Relief across a cell, in blocks, past which it is given over to a park. */
+/**
+ * Relief across a cell, in blocks, past which it is given over to a park.
+ *
+ * A **floor**, not the test. Read on its own it says "steep ground is a park",
+ * which is true of a city on a plain and catastrophic for one on a hill: an
+ * upland town's every quarter clears 13 blocks of relief, so every cell became
+ * a park and the town built nothing at all — 37k columns of street and one
+ * building. What actually makes a park is ground that is steep *for this
+ * town*, so the absolute floor is paired with {@link PARK_RELIEF_RATIO}.
+ */
 export const PARK_RELIEF = 13;
+
+/**
+ * How much steeper than its town's median cell a cell must be to be a park.
+ *
+ * On a plain the median is a block or two, so anything clearing the absolute
+ * floor clears this many times over and the rule behaves exactly as it did. On
+ * a hill town the median is most of the floor already, and only the genuinely
+ * broken ground is given up.
+ */
+export const PARK_RELIEF_RATIO = 1.6;
+
+/**
+ * Most of a town's cells that may be parks, whatever the ground says.
+ *
+ * The backstop. Relief is a property of the landform and a determined enough
+ * landform could still take every quarter; a town is a thing with buildings in
+ * it, so the steepest cells win the parks and the rest are built on.
+ */
+export const PARK_MAX_SHARE = 0.34;
 
 /** Below this fraction of its own bounding box a cell is an awkward shape. */
 export const PARK_COMPACTNESS = 0.5;
@@ -1231,11 +1259,24 @@ function assign(metrics: readonly CellMetrics[], size: string): DistrictCharacte
       a.m.area !== b.m.area ? b.m.area - a.m.area : a.m.bounds.z0 - b.m.bounds.z0,
     );
 
-  // 1. Parks: the ground decided this one. A cell the terrain made steep, or a
-  //    wedge the diagonal left that nothing rectangular fits into.
-  for (const { m, i } of order) {
-    if (m.relief >= PARK_RELIEF || (m.compactness < PARK_COMPACTNESS && m.area < LANES_AREA * 3)) {
+  // 1. Parks: the ground decided this one. A cell the terrain made steep *for
+  //    this town*, or a wedge the diagonal left that nothing rectangular fits
+  //    into. Steepness is judged against the town's own median cell, because
+  //    an absolute threshold makes every quarter of a hill town a park.
+  const reliefs = metrics.map((m) => m.relief).sort((a, b) => a - b);
+  const medianRelief = reliefs.length === 0 ? 0 : (reliefs[reliefs.length >> 1] as number);
+  const reliefBar = Math.max(PARK_RELIEF, medianRelief * PARK_RELIEF_RATIO);
+  const parkBudget = Math.max(1, Math.floor(metrics.length * PARK_MAX_SHARE));
+  // Steepest first, so when the budget binds it is the worst ground that goes.
+  const byRelief = metrics
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => (a.m.relief !== b.m.relief ? b.m.relief - a.m.relief : a.i - b.i));
+  let parks = 0;
+  for (const { m, i } of byRelief) {
+    if (parks >= parkBudget) break;
+    if (m.relief >= reliefBar || (m.compactness < PARK_COMPACTNESS && m.area < LANES_AREA * 3)) {
       out[i] = "park";
+      parks++;
     }
   }
 

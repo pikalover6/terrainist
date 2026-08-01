@@ -43,7 +43,7 @@
           "scaleReference": 512,
           "continentalness": {
             "frequency": 0.001,
-            "seaFraction": 0.24
+            "seaFraction": 0.32
           },
           "cliffThreshold": 76,
           "soilDepth": 4,
@@ -107,7 +107,7 @@
           "coastal": true,
           "diagonals": 2,
           "ring": true,
-          "blockSize": 36,
+          "blockSize": 46,
           "mix": [
             "office",
             "apartment_block",
@@ -207,9 +207,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                23,
-                90,
-                21
+                21,
+                88,
+                19
               ]
             },
             "params": {
@@ -237,9 +237,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                40,
-                30,
-                30
+                34,
+                28,
+                26
               ]
             },
             "params": {
@@ -327,9 +327,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                22,
-                44,
-                20
+                19,
+                42,
+                17
               ]
             },
             "params": {
