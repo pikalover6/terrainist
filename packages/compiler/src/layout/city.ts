@@ -59,6 +59,10 @@ import {
   smoothRoute,
 } from "../structures/roads.js";
 
+// The district fabric's own floor on a footprint axis. Imported rather than
+// restated so `CELL_MIN_BUILDING` cannot drift away from it again: `district.ts`
+// does not import this module, so the direction is one-way.
+import { MIN_INFILL_SIDE } from "./district.js";
 import { clampInt, type Point2, type Rect } from "./frames.js";
 import {
   carriagewayCells,
@@ -282,29 +286,42 @@ export const CHARACTER_KIT: Readonly<
 /**
  * The smallest block a city cell will ask for, whatever its character.
  *
- * Not an aesthetic floor — a **safety** one, and it is worth spelling out
- * because the number looks arbitrary. Below roughly this spacing the block
- * subdivision starts producing seven-deep parcels, and a seven-deep building
- * with three storeys in it comes out of the grammar with pockets its own stair
- * cannot reach: `showcase-bayline.loam.json` with nothing changed but
- * `blockSize: 33` on its (ordinary, pre-C1) districts lints 62
- * `traversal.unreachable` findings. That is a building-grammar bug and it is
- * not C1's to fix, but C1 must not be the thing that walks into it, so a
- * quarter that wants to feel tight gets its tightness from an organic skeleton
- * and a turned grid rather than from a smaller block.
+ * **This was 30, and the 30 was a quarantine.** Below roughly that spacing the
+ * block subdivision starts producing seven- and eight-deep parcels, and the
+ * building grammar could not lay a climbable tower out in one: the high-rise's
+ * switchback cut its own plate in two whenever the interior was exactly
+ * `coreDepthFor(storeyHeight)` deep, and the city's life pass hung room
+ * lanterns in a shaft the tower never published. Both are fixed (U8, in
+ * `stdlib/src/structures/highrise.ts`), and the quarantine came down with them.
+ *
+ * What is left is a **fabric** floor rather than a safety one: a block much
+ * under twenty columns cannot hold a lot, a back and a road, so the subdivision
+ * declines it anyway and the cell comes out as open ground. Twenty is where
+ * that starts, with the evidence being that everything above it is clean —
+ * `showcase-bayline.loam.json` lints **zero** physics findings at every legal
+ * `blockSize` from 16 to 40, and `c1-harbourtown.loam.json` lints zero with its
+ * city node driven to `blockSize: 20`, which puts every cell on this clamp.
+ *
+ * So a quarter that wants to feel tight may now *be* tight — `lanes` gets its
+ * 31 rather than being pushed back up to 30 — as well as taking its character
+ * from an organic skeleton and a turned grid.
  */
-export const CELL_MIN_BLOCK = 30;
+export const CELL_MIN_BLOCK = 20;
 
 /**
  * Smallest footprint axis a city cell hands the building grammar.
  *
- * Three blocks above the district default, and the extra three are a
- * quarantine rather than a preference — see {@link CELL_MIN_BLOCK} and
- * `CellFabric.minBuilding`. A parcel this pass declines is open ground, which
- * the ground-treatment pass dresses; a building the grammar cannot lay out is
- * a physics finding.
+ * The district default, and no longer three blocks above it. The extra three
+ * were the other half of the {@link CELL_MIN_BLOCK} quarantine; with the
+ * grammar fixed the honest number is the grammar's own floor, which is
+ * `MIN_INFILL_SIDE` — itself `HIGHRISE_MIN_WIDTH`, the narrowest plan that
+ * still fits a core and a plate beside it. Swept clean over 30,576
+ * (archetype × width × depth × storeys × storey-height) combinations.
+ *
+ * A parcel this pass declines is open ground, which the ground-treatment pass
+ * dresses; a building the grammar cannot lay out is a physics finding.
  */
-export const CELL_MIN_BUILDING = 10;
+export const CELL_MIN_BUILDING = MIN_INFILL_SIDE;
 
 /** The block size the {@link CHARACTER_KIT} numbers are stated against. */
 export const CHARACTER_BLOCK_BASE = 40;

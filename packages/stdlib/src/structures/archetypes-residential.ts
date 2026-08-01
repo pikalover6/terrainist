@@ -58,7 +58,7 @@
  *   signage is a banner.
  */
 
-import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
+import { bracketedTo, cardinalStep, type Cardinal, type LocalRect } from "./core.js";
 import {
   PropCounter,
   ROOF_FLOURISH_RISE,
@@ -568,13 +568,21 @@ function fitTownhouse(ctx: FitOutContext, c: PropCounter): void {
   const plan = wallPlan(ctx);
   if (plan !== null) {
     const band = ctx.style["foundation.primary"] as string;
+    // A quoin is a stair, and a stair is not a face. Any wall cell something
+    // is already bolted to stays a full cube — otherwise the brick pattern
+    // pulls the wall out from behind the shallow-plan ladder `core.ts` fell
+    // back to, which is `unsupported.ladder` on a backing that pass explicitly
+    // claimed. The pattern is a pure function of position, so skipping a cell
+    // here is still deterministic and opposite walls still agree.
+    const quoin = (x: number, y: number, z: number): boolean =>
+      (x * 3 + y * 5 + z * 7) % 11 === 0 && !bracketedTo(ctx.blockAt, x, y, z);
     c.n += reclad(ctx, plan, 2, ctx.wallTop - 1, (x, y, z) => {
       if (y === 2 || y === ctx.wallTop - 1) return band;
-      return (x * 3 + y * 5 + z * 7) % 11 === 0 ? "brick_stairs" : "bricks";
+      return quoin(x, y, z) ? "brick_stairs" : "bricks";
     },
     (x, y, z) => {
       if (y === 2 || y === ctx.wallTop - 1) return undefined;
-      if ((x * 3 + y * 5 + z * 7) % 11 !== 0) return undefined;
+      if (!quoin(x, y, z)) return undefined;
       // A stair in the wall field is a quoin: it needs a facing, and it faces
       // out of the wall it stands in.
       const facing: Cardinal = x === 0 ? "west" : x === plan.sx - 1 ? "east" : z === 0 ? "north" : "south";

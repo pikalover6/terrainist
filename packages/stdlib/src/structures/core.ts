@@ -366,6 +366,49 @@ export const ROOF_PITCH_SHARE = 0.55;
 /** Floors this grammar builds. */
 export const MAX_FLOORS = 2;
 
+/**
+ * Blocks that hang on the face of the block behind them.
+ *
+ * `facing` on every one of these names the direction the fixture *points*, so
+ * the block it is bolted to is one step the other way — which is exactly how
+ * `physics.ts` reads them for the `unsupported.*` rules.
+ */
+const BRACKETED = /(^ladder$|wall_torch$|_wall_sign$|_wall_banner$|_wall_fan$|_wall_head$|_wall_skull$)/;
+
+/**
+ * Is something bolted to the face of this cell?
+ *
+ * A re-clad that swaps one full cube for another is free, but the moment it
+ * puts a **stair, slab or pane** in the wall field it can pull the face out
+ * from under a fixture that was hung on it three stages earlier — and that is
+ * `unsupported.ladder`, silently, on a wall the ladder pass explicitly claimed.
+ * The shallow-plan cottage found it: below the depth a flight needs, `core.ts`
+ * falls back to a ladder against the west wall and claims the backing, and the
+ * townhouse's brick quoins then re-clad one course of that backing into a
+ * stair.
+ *
+ * Cheap and exact: the wall vocabulary is small, so the four horizontal
+ * neighbours are asked directly whether they point *at* this cell.
+ */
+export function bracketedTo(
+  blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined,
+  x: number,
+  y: number,
+  z: number,
+): boolean {
+  for (const facing of ["north", "south", "east", "west"] as const) {
+    const [dx, dz] = cardinalStep(facing);
+    // A fixture at `cell` with this facing hangs on `cell - step`. So the
+    // fixture that would hang on *us* sits one step along `facing`.
+    const op = blockAt(x + dx, y, z + dz);
+    if (op === undefined) continue;
+    if (!BRACKETED.test(op.block)) continue;
+    if ((op.props?.["facing"] ?? "north") !== facing) continue;
+    return true;
+  }
+  return false;
+}
+
 /** Resolved, clamped params — what the geometry actually used. */
 export interface ResolvedBuildingParams {
   readonly floors: number;
@@ -1319,9 +1362,22 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       // leaves its rungs fixed to glass — an `unsupported.ladder` finding, and
       // in game a ladder that pops off the wall. So the backing is claimed
       // first. A blank wall behind a ladder is architecture, not a patch.
+      //
+      // ...and the backing is not always *available*, which is the second half
+      // of the same lesson and the one a shallow plan finds. `backWall` refuses
+      // the doorway — a wall block in a door opening is a walled-up front door
+      // — and the ladder used to be nailed up regardless, leaving three courses
+      // of rungs hanging on a door leaf (`unsupported.ladder`, and in game a
+      // ladder on the floor). The north-west interior corner has *two* walls
+      // behind it, so when the west one is the doorway the ladder turns and
+      // takes the north one instead. Only one of the two can be the door.
+      const westIsDoor = door !== null && door.x === interior.x0 - 1 && door.z === interior.z0;
+      const ladderBack = westIsDoor
+        ? { x: interior.x0, z: interior.z0 - 1, facing: "south" as const }
+        : { x: interior.x0 - 1, z: interior.z0, facing: "east" as const };
       for (let y = base + 1; y <= level + 1; y++) {
-        backWall(interior.x0 - 1, y, interior.z0);
-        put(interior.x0, y, interior.z0, "ladder", { facing: "east" });
+        backWall(ladderBack.x, y, ladderBack.z);
+        put(interior.x0, y, interior.z0, "ladder", { facing: ladderBack.facing });
       }
       // ...and so does the cell beside it, which is the only way *to* the
       // approach: a smithy put an anvil there and walled the flight off from

@@ -441,6 +441,21 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   const stairRuns: number[] = [];
   /** Columns the core occupies on the ground floor; the lobby keeps off them. */
   const coreColumns = new Set<string>();
+  /**
+   * Every column of the shaft, on every storey — published as
+   * {@link BuildingMeta.stairColumns}.
+   *
+   * Not the same set as {@link coreColumns}, and the difference is the whole
+   * point. `coreColumns` is a *ground-floor* reservation for the lobby fit-out,
+   * so it only ever carries the first flight's column. The city's life pass
+   * needs the other one too: it hangs room lanterns at head height, and its
+   * `nearStair` guard reads exactly this set. A tower that published nothing
+   * got no guard at all — a lantern landed in the cell beside the bottom tread,
+   * the walking agent needs two clear voxels over the cell it mounts *from*,
+   * and the whole shaft above the lobby came back `traversal.unreachable`.
+   * `core.ts` and `terrace.ts` have always published theirs; this one did not.
+   */
+  const shaftColumns = new Set<string>();
   /** Interior columns that are partition wall, not floor. */
   const partitionColumns = new Set<string>();
 
@@ -457,10 +472,29 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
     const up = (s - 1) % 2 === 0;
     const runLength = storey;
     // The flight's own column, and the well it needs cut in the plate it
-    // arrives at: approach cell through top tread, inclusive.
+    // arrives at: **the treads, and only the treads**.
+    //
+    // The approach cell — the one at the foot of the flight, on the plate
+    // below — keeps its floor, and that is the fix for the defect this file
+    // shipped with. Cutting it as well made the well `runLength + 2` cells
+    // long, which is `coreDepthFor(storey)`: the whole depth of the core. In a
+    // plan exactly that deep the two core columns then had no cell to spare
+    // between them, and the flight *above* — which stands in the other column
+    // and blocks three cells of it — cut the two cells south of itself off
+    // from every route. That is `traversal.unreachable` on every other storey
+    // of any tower whose interior is exactly `coreDepthFor(storey)` deep, and
+    // it is why a 33-block city block could not be built.
+    //
+    // Keeping the approach cell is safe because `canSwitchback` already
+    // demands `storey >= 4`. A player standing on the approach at `base + 1`
+    // needs `base + 3` clear to mount the first tread; the plate they are
+    // mounting toward is at `base + storey`, which is `base + 4` at the
+    // tightest. On a three-high storey the plate *would* be in the way — which
+    // is exactly the case `core.ts` documents, and exactly the case the
+    // switchback never takes.
     const colX = canSwitchback ? (up ? cx : cx + 1) : cx;
-    const holeZ0 = canSwitchback ? (up ? cz0 : cz0 + 1) : cz0;
-    const holeZ1 = canSwitchback ? (up ? cz0 + runLength : cz0 + runLength + 1) : cz0;
+    const holeZ0 = canSwitchback ? cz0 + 1 : cz0;
+    const holeZ1 = canSwitchback ? cz0 + runLength : cz0;
 
     // The plate, with the well left out of it.
     const tier = tierOf(s);
@@ -505,8 +539,11 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
         // a staircase and a spiral of blocks hanging in a stairwell.
         put(colX, y - 1, z, wall);
         put(colX, y, z, stair, { facing, half: "bottom", shape: "straight" });
+        shaftColumns.add(`${colX},${z}`);
         if (base === 0) coreColumns.add(`${colX},${z}`);
       }
+      shaftColumns.add(`${colX},${up ? cz0 : cz0 + runLength + 1}`);
+      shaftColumns.add(`${colX},${up ? cz0 + runLength + 1 : cz0}`);
       // The approach cell and the landing at the far end, both of which have to
       // stay clear of the lobby fit-out on the ground floor.
       if (base === 0) {
@@ -529,6 +566,8 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
         put(cx - 1, y, cz0, wall);
         put(cx, y, cz0, "ladder", { facing: "east" });
       }
+      shaftColumns.add(`${cx},${cz0}`);
+      if (cx + 1 <= interior.x1) shaftColumns.add(`${cx + 1},${cz0}`);
       if (base === 0) {
         coreColumns.add(`${cx},${cz0}`);
         if (cx + 1 <= interior.x1) coreColumns.add(`${cx + 1},${cz0}`);
@@ -662,6 +701,7 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
         storey,
         cx,
         coreColumns,
+        counterZ: counterRowOf(interior, door),
       });
     }
     // The lobby counter: three cells of desk against the wall opposite the
@@ -684,7 +724,22 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
       const lx = Math.min(cx + 2, room.x1);
       const lz = Math.floor((room.z0 + room.z1) / 2);
       const y = (s + 1) * storey - 1;
-      put(lx, y, lz, style["light.lantern"] as string, { hanging: "true" });
+      if (storey >= 4) {
+        put(lx, y, lz, style["light.lantern"] as string, { hanging: "true" });
+      } else {
+        // On a three-high storey the cell under the plate is **head height**,
+        // and `cx + 2` is the corridor — the single column between the two core
+        // flights and the room band. A hanging lantern there is a body-blocking
+        // cell in a one-cell passage, which severs the plate: the bays north of
+        // it and the bays south of it stop being the same room, and every cell
+        // on the far side comes back `traversal.unreachable`. `core.ts` met the
+        // same defect in a one-cell-wide cottage and answered it the same way —
+        // a light a player can walk through. A torch standing on the plate
+        // lights the corridor without standing in it, and it is supported by
+        // the floor it stands on rather than by a plate that may be a stair
+        // well two courses up.
+        put(lx, s * storey + 1, lz, style["light.torch"] as string);
+      }
       lanternCount++;
     }
   }
@@ -718,6 +773,7 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
     cells: r.shell.cells,
     floorCells,
     floorLevels,
+    stairColumns: shaftColumns,
     stairRuns,
     basementDepth: 0,
     basementInterior: null,
@@ -808,6 +864,8 @@ interface OfficeRequest {
   readonly storey: number;
   readonly cx: number;
   readonly coreColumns: ReadonlySet<string>;
+  /** The lobby counter's row on the ground floor, or `null` when it has none. */
+  readonly counterZ: number | null;
 }
 
 /**
@@ -832,6 +890,14 @@ function fitOfficePlate(r: OfficeRequest): number {
     // meeting at a corner is a one-cell room with no way into it.
     for (let z = interior.z0 + 2; z <= interior.z1 - 1; z += 3) {
       if (s === 0 && r.coreColumns.has(`${interior.x1},${z}`)) continue;
+      // Two clear cells from the counter, whichever end it is on. The `z0 + 2`
+      // start above was this rule written for one case only — a south door,
+      // which puts the counter on `z0`. A door on any other face puts it on
+      // `z1`, and there the desk at `z1 - 1` pinched the corner cell at
+      // `(x1, z1)` between its own end and the counter — a `traversal
+      // .unreachable` finding on every tower whose entrance was not on the
+      // south and whose plate was shallow enough for the two to meet.
+      if (s === 0 && r.counterZ !== null && Math.abs(z - r.counterZ) <= 1) continue;
       put(interior.x1, level + 1, z, desk, { type: "top" });
       n++;
     }
@@ -1074,13 +1140,28 @@ interface CounterRequest {
   readonly door: { readonly x: number; readonly z: number; readonly face: Cardinal } | null;
 }
 
+/**
+ * Which interior row the reception counter stands on, or `null` for no counter.
+ *
+ * Published because the desk run has to know: a top slab is not a cell a body
+ * fits in, so a desk one cell diagonally off the counter's end pinches the
+ * corner between them out of the room.
+ */
+function counterRowOf(
+  interior: LocalRect,
+  door: { readonly face: Cardinal } | null,
+): number | null {
+  if (door === null) return null;
+  return door.face === "south" ? interior.z0 : interior.z1;
+}
+
 /** The reception counter: three top slabs against the wall away from the door. */
 function fitLobbyCounter(r: CounterRequest): number {
   const { put, style, interior, door } = r;
   if (door === null) return 0;
   const counter = style["stone.slab"] as string;
   // Against the face opposite the way in, so a visitor walks towards it.
-  const z = door.face === "south" ? interior.z0 : interior.z1;
+  const z = counterRowOf(interior, door) as number;
   const x0 = Math.max(interior.x0 + 1, Math.floor((interior.x0 + interior.x1) / 2) - 1);
   // Never as far as the far wall: the counter's end and the wall would pinch
   // the corner cell between them out of the room.
