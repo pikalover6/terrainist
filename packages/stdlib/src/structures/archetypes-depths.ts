@@ -188,7 +188,7 @@ function fitSubwayStation(ctx: FitOutContext, c: PropCounter): void {
   const it = ctx.interior;
   // Benches: stairs against the west wall, facing into the hall.
   for (let z = it.z0 + 1; z <= it.z1 - 1; z += 2) {
-    c.put1(it.x0, z, "smooth_stone_stairs", { facing: "east", half: "bottom", shape: "straight" });
+    c.put1(it.x0, z, "stone_stairs", { facing: "east", half: "bottom", shape: "straight" });
   }
   // The ticket line: two lecterns at the east wall, which is the closest this
   // grammar gets to a barrier a player can walk round.

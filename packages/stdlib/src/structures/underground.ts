@@ -667,7 +667,7 @@ export function dressCellar(r: CellarDressRequest): CellarDressResult {
       }
       for (let z = interior.z0 + 1; z <= interior.z1 - 1; z += 3) {
         if (r.blocked?.has(`${interior.x0},${z}`) === true) continue;
-        place(interior.x0, z, "smooth_stone_stairs", {
+        place(interior.x0, z, "stone_stairs", {
           facing: "east",
           half: "bottom",
           shape: "straight",

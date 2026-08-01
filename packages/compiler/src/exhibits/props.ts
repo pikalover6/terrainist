@@ -285,6 +285,15 @@ export function buildPropExhibits(
   worldSeed: bigint,
   x0 = 0,
   z0 = 0,
+  /**
+   * Build every cell in this theme instead of the one its column names.
+   *
+   * The theme × prop sweep's one hook: it needs the whole grid in one palette,
+   * and it must reach the palette the way a document does — through
+   * `pickTheme`'s override — rather than through a path of its own. Omitted
+   * everywhere else, so the dev world's per-column themes are untouched.
+   */
+  themeOverride?: string,
 ): PropExhibitResult {
   const grid = planPropExhibits(x0, z0);
   let pondColumns = 0;
@@ -295,7 +304,7 @@ export function buildPropExhibits(
   const jobs: PropJob[] = grid.exhibits.map((e) => {
     const nodePath = `dev.props.${e.row}.${e.id}`;
     const seed = nodeSeed(worldSeed, nodePath, "");
-    const theme = pickTheme(seed, e.theme);
+    const theme = pickTheme(seed, themeOverride ?? e.theme);
     const materials = assignMaterials(theme, 1, seed)[0] as BuildingMaterials;
     return {
       nodePath,

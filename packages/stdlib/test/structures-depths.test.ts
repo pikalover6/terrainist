@@ -447,7 +447,7 @@ describe("wave six archetypes — the depths", () => {
     expect(bunker.has("iron_block"), "the blast-door corner").toBe(true);
     expect(bunker.has("crafting_table"), "the duty desk").toBe(true);
     const subway = build("subway_station").ops;
-    expect(names(subway).has("smooth_stone_stairs"), "the benches").toBe(true);
+    expect(names(subway).has("stone_stairs"), "the benches").toBe(true);
     expect(names(subway).has("lectern"), "the ticket line").toBe(true);
     expect(
       subway.some((op) => op.block.endsWith("_banner")),

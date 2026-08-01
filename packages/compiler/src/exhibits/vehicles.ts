@@ -302,6 +302,8 @@ export function buildVehicleExhibits(
   worldSeed: bigint,
   x0 = 0,
   z0 = 0,
+  /** Build every cell in this theme instead of its column's — see `props.ts`. */
+  themeOverride?: string,
 ): VehicleExhibitResult {
   const grid = planVehicleExhibits(x0, z0);
   let pondColumns = 0;
@@ -312,7 +314,7 @@ export function buildVehicleExhibits(
   const jobs: PropJob[] = grid.exhibits.map((e) => {
     const nodePath = `dev.vehicles.${e.row.replace(/\s+/g, "_")}.${e.id}`;
     const seed = nodeSeed(worldSeed, nodePath, "");
-    const theme = pickTheme(seed, e.theme);
+    const theme = pickTheme(seed, themeOverride ?? e.theme);
     const materials = assignMaterials(theme, 1, seed)[0] as BuildingMaterials;
     return {
       nodePath,
