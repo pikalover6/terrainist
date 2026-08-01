@@ -201,6 +201,11 @@ import {
 export * from "./archetypes-depths.js";
 
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
+// Not re-exported here: `structures/index.ts` exports the terrace directly, and
+// exporting it twice through the same barrel is an ambiguity TypeScript
+// resolves by dropping the names — the same trap the trade wave documents.
+import { TERRACE_ARCHETYPES } from "./terrace.js";
+
 import {
   UNDERGROUND_ARCHETYPES,
   furnishMineHead,
@@ -249,6 +254,10 @@ export const BUILDING_ARCHETYPES = [
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
   ...DEPTHS_BUILDING_ARCHETYPES,
+  // Last, and with no tag table of its own: the terrace is asked for by name
+  // by the district fabric, and `terrace`/`terraced_row` already belong to
+  // wave 4A's single house with party piers. See `terrace.ts`.
+  ...TERRACE_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */

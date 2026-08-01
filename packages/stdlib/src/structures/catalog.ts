@@ -244,6 +244,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["row", "urban"],
     note: "Stone-brick party piers every fourth column between plinth and eaves bands — the repeating bay read of a row built as one building — over a modest one-table interior.",
   }),
+  res("terrace", "Terrace (street wall)", "implemented", {
+    tags: ["row", "urban", "fabric"],
+    note: "A run of bays sharing party walls — one wall between neighbours, not two — under a stepped cornice, over a continuous shopfront band with a door and an awning per bay. Distinct from `terraced_row`, which is one house wearing the look of a row; this is the row.",
+  }),
   res("manor_house", "Manor house", "implemented", {
     wave: 4,
     tags: ["gentry", "hall"],

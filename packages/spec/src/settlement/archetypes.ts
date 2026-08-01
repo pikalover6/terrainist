@@ -81,6 +81,9 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "hacienda", "fachwerk_barn", "skyscraper", "office",
   "hotel", "apartment_block", "mine_head", "bunker_complex",
   "subway_station", "underground_silo",
+  // The terrace, last for the same reason it is last in `stdlib`: it is the
+  // newest wave, and this list's order is `BUILDING_ARCHETYPES`'s order.
+  "terrace",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

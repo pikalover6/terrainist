@@ -44,7 +44,16 @@ import {
   emitHighrise,
   isHighriseArchetype,
 } from "./highrise.js";
-import { pickTheme, styleOf, type BuildingMaterials } from "./themes.js";
+import {
+  TERRACE_MAX_FLOORS,
+  TERRACE_STOREY_HEIGHT,
+  emitTerrace,
+  isTerraceArchetype,
+  planTerrace,
+  type TerraceBay,
+  type TerraceBayPlan,
+} from "./terrace.js";
+import { pickTheme, styleOf, type BuildingMaterials, type MaterialTheme } from "./themes.js";
 import {
   cellarDressing,
   cellarSecondAccent,
@@ -329,6 +338,19 @@ export interface BuildingParams {
    * document is never failed by the grammar) when it does not validate.
    */
   readonly wing?: BuildingWing;
+  /**
+   * The bays of a terrace, low-x to high-x along the frontage.
+   *
+   * Read only by `archetype: "terrace"`, and only as a *request*: the frontage
+   * is cut by {@link planTerrace}, which clamps each pitch into the terrace's
+   * range, stops when the frontage runs out and draws its own for any bay the
+   * list did not describe. A terrace with no `bays` at all is a legal, if
+   * regular, one — every bay takes `floors`.
+   */
+  readonly bays?: readonly TerraceBay[];
+  /** True when the terrace's low-x / high-x end stands at an intersection. */
+  readonly cornerStart?: boolean;
+  readonly cornerEnd?: boolean;
 }
 
 /** Lowest story height that still fits a two-block door plus a lintel. */
@@ -372,6 +394,16 @@ export interface BuildingRequest {
   readonly seed: Seed256;
   /** The theme triple this building was dealt, if the caller assigned one. */
   readonly materials?: BuildingMaterials;
+  /**
+   * The whole village palette the triple was dealt from.
+   *
+   * Only the terrace reads it, and it needs it for a reason no other emitter
+   * has: a terrace is several buildings, so one triple is not enough — each bay
+   * takes its own from the same theme, which is what makes a run read as a
+   * street rather than as one long building painted one colour. Absent, the
+   * terrace falls back to varying the facade within the style map it was given.
+   */
+  readonly theme?: MaterialTheme;
   /** Symbol → block id overrides, applied over the theme and the defaults. */
   readonly style?: Readonly<Record<string, string>>;
   /** The resolved `door` port; omitted means the grammar picks the south face. */
@@ -700,6 +732,29 @@ export interface BuildingMeta {
   /** The door's column and face; `null` when the footprint was too small. */
   readonly door: { readonly x: number; readonly z: number; readonly face: Cardinal } | null;
   /**
+   * **Every** street door, when the building has more than one.
+   *
+   * Absent for the buildings that have exactly one, which is all of them bar
+   * the terrace — a terrace has a door per bay, and the party walls mean no one
+   * of them reaches the rest of the run. {@link BuildingMeta.door} stays the
+   * first of them, so nothing that only wanted "the front door" has to change.
+   */
+  readonly doors?: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly face: Cardinal;
+  }[];
+  /**
+   * The bays of a terrace, as {@link planTerrace} resolved them.
+   *
+   * Absent for everything else. It is here rather than kept private because a
+   * terrace is the one building whose *contents* a reader of the compile report
+   * has to be able to see: "seventy buildings" and "seventy terraces of two
+   * hundred and twenty-four bays" are very different worlds, and only this
+   * tells them apart.
+   */
+  readonly terraceBays?: readonly TerraceBayPlan[];
+  /**
    * The enclosed interior of the **main** rect, inclusive; empty when the
    * footprint is 2 or less.
    *
@@ -727,6 +782,21 @@ export interface BuildingMeta {
    * so a wing gets floor, ceiling and light but no furniture in this version.
    */
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
+  /**
+   * Floor cells **per storey**, aligned with {@link BuildingMeta.floorLevels}.
+   *
+   * Absent when every storey has the same plan, which was every building until
+   * the terrace: there the run's bays differ in height, so at the fifth level a
+   * six-storey bay is a room and the three-storey bay beside it is a roof.
+   * Consumers that ask "which columns is this storey's floor made of" — the
+   * physics lint's blocked-column and traversal rules both do — must prefer
+   * this when it is present, or they will demand a walking route onto the roof
+   * of every short bay in the street.
+   */
+  readonly floorCellsByLevel?: readonly (readonly {
+    readonly x: number;
+    readonly z: number;
+  }[])[];
   /** Y of each story's floor plane, lowest first. */
   readonly floorLevels: readonly number[];
   /** Y of the lowest step of each inter-story stair run. */
@@ -917,6 +987,55 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
       shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
       params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype, cellarStyle },
+    });
+  }
+
+  // The terrace is a different building for the opposite reason to the tower:
+  // not one shell taller, but *several shells sharing their walls*. Dispatched
+  // here, on the same footing as the watchtower and the high-rise, because
+  // every stage below this line assumes one room behind one perimeter — and a
+  // street wall is n rooms behind n + 1 wall lines.
+  if (isTerraceArchetype(archetype)) {
+    const terraceStorey = clamp(
+      Math.round(params.floorHeight ?? TERRACE_STOREY_HEIGHT),
+      MIN_STORY_HEIGHT,
+      MAX_STORY_HEIGHT,
+    );
+    const plan = planTerrace({
+      sx,
+      storeyHeight: terraceStorey,
+      ...(params.bays === undefined ? {} : { bays: params.bays }),
+      floors: clamp(Math.round(params.floors ?? 2), 1, TERRACE_MAX_FLOORS),
+      archetype: params.archetype ?? "shop_row",
+      ...(params.cornerStart === undefined ? {} : { cornerStart: params.cornerStart }),
+      ...(params.cornerEnd === undefined ? {} : { cornerEnd: params.cornerEnd }),
+      stream: streamSeed(request.seed, "terrace"),
+    });
+    return emitTerrace({
+      put,
+      cells,
+      style,
+      grammar,
+      choice,
+      sx,
+      sy,
+      sz,
+      foundationDepth,
+      materials,
+      ...(request.theme === undefined ? {} : { theme: request.theme }),
+      plan,
+      // A terrace fills its envelope: a wing on a street wall is a second
+      // street wall, which is a second node, not a carved footprint.
+      footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
+      shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
+      params: {
+        floors: plan.bays.reduce((m, b) => Math.max(m, b.floors), 1),
+        storyHeight: terraceStorey,
+        roof: "flat",
+        windowRhythm: rhythm,
+        windowShape,
+        archetype,
+      },
     });
   }
 

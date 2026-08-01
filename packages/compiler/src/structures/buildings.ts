@@ -24,6 +24,8 @@ import {
   type BuildingMeta,
   type BuildingParams,
   type BuildingWing,
+  type MaterialTheme,
+  type TerraceBay,
   type Cardinal,
   type LocalVoxelOp,
   type Seed256,
@@ -59,6 +61,8 @@ export interface BuildingJob {
   readonly tags: readonly string[];
   /** The theme triple this building was dealt, if the caller assigned one. */
   readonly materials?: BuildingMaterials;
+  /** The whole palette the triple came from; only the terrace reads it. */
+  readonly theme?: MaterialTheme;
   /** Block-id overrides for the grammar's material symbols. */
   readonly style?: Readonly<Record<string, string>>;
 }
@@ -112,6 +116,17 @@ export interface BuiltBuilding {
    * this column inside this building".
    */
   readonly interiorCells: ReadonlySet<string>;
+  /**
+   * The enclosed floor columns **per storey**, aligned with
+   * `meta.floorLevels`.
+   *
+   * Absent when every storey has the same plan, which is every building bar the
+   * terrace. There the run's bays differ in height, so above the shortest bay's
+   * eave the building's floor is a strict subset of its ground floor — and a
+   * consumer that asks "which columns is this storey made of" and gets the
+   * ground floor's answer will call every short bay's roof unreachable floor.
+   */
+  readonly interiorCellsByLevel?: readonly ReadonlySet<string>[];
   /**
    * What the apron needs to stay off the air, kept for a second look later.
    *
@@ -172,6 +187,7 @@ export function buildBuildings(
       foundationDepth: skirtDepth(plan, job.placement),
       ...(door === null ? {} : { door }),
       ...(job.materials === undefined ? {} : { materials: job.materials }),
+      ...(job.theme === undefined ? {} : { theme: job.theme }),
       ...(job.style === undefined ? {} : { style: job.style }),
     });
   });
@@ -255,6 +271,11 @@ export function buildBuildings(
       blockCount: count,
       cells,
       interiorCells: worldCells(job, result.meta.floorCells),
+      ...(result.meta.floorCellsByLevel === undefined
+        ? {}
+        : {
+            interiorCellsByLevel: result.meta.floorCellsByLevel.map((cs) => worldCells(job, cs)),
+          }),
       apron: { floor: apronFloor, skirt: skirtState, filled },
       floorY,
       basementDepth: cellar,
@@ -547,6 +568,40 @@ export function wingParamOf(value: unknown): BuildingWing | undefined {
   if (typeof wx !== "number" || typeof wz !== "number" || typeof offset !== "number") return undefined;
   if (side !== "north" && side !== "east" && side !== "south" && side !== "west") return undefined;
   return { size: [wx, wz], side, offset };
+}
+
+/**
+ * Read a document's `bays` param into the terrace grammar's shape.
+ *
+ * The same contract `wingParamOf` has, for the same reason: the params
+ * whitelist in `structures/index.ts` is deliberately explicit, so a param the
+ * grammar cannot read never reaches it by accident, and a *defective* one
+ * becomes `undefined` here rather than an exception. A terrace that gets
+ * nothing draws its own bays, so dropping a malformed list costs the run its
+ * variety and never its geometry.
+ *
+ * Entries missing a usable `width` or `floors` are dropped rather than
+ * defaulted: a half-described bay in the middle of a list would silently shift
+ * every bay after it, and a shorter list is honestly handled — the planner
+ * draws the rest.
+ */
+export function terraceBaysParamOf(value: unknown): readonly TerraceBay[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+  const out: TerraceBay[] = [];
+  for (const entry of value as unknown[]) {
+    if (entry === null || typeof entry !== "object") continue;
+    const raw = entry as Record<string, unknown>;
+    const width = raw["width"];
+    const floors = raw["floors"];
+    if (typeof width !== "number" || typeof floors !== "number") continue;
+    const archetype = raw["archetype"];
+    out.push({
+      width,
+      floors,
+      ...(typeof archetype === "string" ? { archetype } : {}),
+    });
+  }
+  return out.length === 0 ? undefined : out;
 }
 
 /** Resolve one op to a state id, remembering names the block table refuses. */

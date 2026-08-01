@@ -15,8 +15,12 @@
  *    at a depth the density chooses, with the corners assigned to one side;
  * 4. **landmarks** — the district's own children, largest first, each claiming
  *    the run of lots that wastes the least ground;
- * 5. **infill** — every remaining lot, filled from `mix` until the coverage
- *    matches the density.
+ * 5. **the street wall** — every maximal run of consecutive unclaimed lots on
+ *    one block face becomes a *terrace*: one node of N bays sharing party
+ *    walls, which is what a dense block is actually made of. See
+ *    {@link terraceRuns};
+ * 6. **infill** — every lot the terraces left, filled from `mix` until the
+ *    coverage matches the density.
  *
  * Every building this pass produces is an ordinary {@link Placement} with an
  * ordinary `building.grammar@0` node behind it, so it flows through the
@@ -29,19 +33,26 @@
  * every per-lot decision (which archetype, whether it is built at all, how many
  * floors) is a **positional** draw keyed on the lot's own street-facing corner,
  * so it does not depend on iteration order, on how many lots came before, or on
- * anything the author later adds elsewhere in the document.
+ * anything the author later adds elsewhere in the document. The same holds one
+ * scale up: a terrace's bay widths, storeys and materials are hashes of the
+ * run's own start column and of the offset along it, never of a counter or of
+ * an index into a list of runs.
  */
 
 import {
   HIGHRISE_MAX_WIDTH,
   HIGHRISE_MIN_WIDTH,
+  TERRACE_MIN_FRONTAGE,
   isHighriseArchetype,
   nodeSeed,
+  planTerrace,
   positionFloat,
   positionInt,
   streamSeed,
+  terraceMinDepth,
   type HeightField,
   type Seed256,
+  type TerraceBay,
 } from "@terrainist/stdlib";
 import {
   error,
@@ -138,6 +149,57 @@ export const MAX_LANDMARK_RUN = 4;
 export const STREET_PROBE_SLACK = 10;
 
 /* -------------------------------------------------------------------------- */
+/* the street wall                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Longest terrace, in columns of frontage, per density.
+ *
+ * Downtown the cap is architectural rather than structural: past about forty
+ * columns a single unbroken run stops reading as a street and starts reading as
+ * a wall, so a longer face is cut into two terraces with a passage between them
+ * (see {@link TERRACE_PASSAGE}). At `medium` the cap is shorter because the
+ * quarter it describes is a row-house neighbourhood, where a run of two or
+ * three houses and then a gap is the actual grain.
+ *
+ * `low` is 0, which reads as "never": a village is detached houses in gardens,
+ * and a street wall through one would be a town centre dropped into a hamlet.
+ */
+export const TERRACE_MAX_FRONTAGE: Readonly<Record<DistrictDensity, number>> = Object.freeze({
+  high: 46,
+  medium: 27,
+  low: 0,
+});
+
+/**
+ * Columns left between two terraces cut from the same block face.
+ *
+ * Three, and deliberately readable as something rather than as a mistake: at
+ * three columns with buildings four or more storeys either side it is a
+ * pedestrian passage / light well, which is exactly what a gap in a real street
+ * wall is. One column would be a crack and seven would be a missing building.
+ */
+export const TERRACE_PASSAGE = 3;
+
+/** Fewest lots a terrace is cut from; one lot on its own is just a building. */
+export const TERRACE_MIN_LOTS = 2;
+
+/**
+ * Share of terraces the fabric actually builds, per density.
+ *
+ * High density is a continuous street wall by definition. At medium the run
+ * that was *not* built is what makes the next one read as a terrace rather than
+ * as the whole block — and the lots it gives back are not wasted: they fall
+ * through to the ordinary per-lot infill, with its own coverage draw and its
+ * own side gaps, which is a detached house between two rows.
+ */
+export const TERRACE_COVERAGE: Readonly<Record<DistrictDensity, number>> = Object.freeze({
+  high: 1,
+  medium: 0.72,
+  low: 0,
+});
+
+/* -------------------------------------------------------------------------- */
 /* products                                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -149,6 +211,12 @@ export interface DistrictStats {
   /** Landmarks that found no lot run big enough. */
   readonly landmarksUnplaced: number;
   readonly infill: number;
+  /** Terraces cut from runs of consecutive lots on one block face. */
+  readonly terraces: number;
+  /** Bays across every terrace — the buildings a player counts on the street. */
+  readonly terraceBays: number;
+  /** Lots the terraces claimed; they are *not* also counted in `infill`. */
+  readonly terraceLots: number;
   /**
    * Parcels the pass could not build on: off the envelope, cut through by an
    * organic street, or narrower than {@link MIN_INFILL_SIDE} after the side gap.
@@ -399,6 +467,23 @@ function layDistrict(
   });
 
   const infillStream = streamSeed(seed, "repeat");
+
+  // --- the street wall ------------------------------------------------------
+  // Between the landmarks and the per-lot infill, and both halves of that are
+  // load-bearing. After the landmarks, because a terrace may not eat the lot
+  // the cathedral wanted. Before the infill, because every lot a terrace claims
+  // is a lot the per-lot path must not also build on — and a terrace is the
+  // *default* for a dense face, not a special case of it.
+  const terraces = terraceRuns(lots, claimed, p, nodePath, input.worldSeed, seed);
+  let terraceBays = 0;
+  let terraceLots = 0;
+  for (const terrace of terraces) {
+    for (const lot of terrace.lots) claimed.add(lot.id);
+    terraceLots += terrace.lots.length;
+    terraceBays += terrace.bays;
+    built.push(terrace.built);
+  }
+
   let infilled = 0;
   for (const lot of lots) {
     if (claimed.has(lot.id)) continue;
@@ -499,6 +584,9 @@ function layDistrict(
         landmarks: landmarks.length - unplaced,
         landmarksUnplaced: unplaced,
         infill: infilled,
+        terraces: terraces.length,
+        terraceBays,
+        terraceLots,
         lotsDropped: dropped,
         plazaLots,
         carriagewayColumns,
@@ -1094,6 +1182,252 @@ function unionRect(rects: readonly Rect[]): Rect {
       z0: Math.min(out.z0, r.z0),
       x1: Math.max(out.x1, r.x1),
       z1: Math.max(out.z1, r.z1),
+    };
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the street wall                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** One terrace, ready to be pushed onto the built list. */
+interface Terrace {
+  readonly lots: readonly Lot[];
+  readonly bays: number;
+  readonly built: BuiltLot;
+}
+
+/**
+ * Group the unclaimed lots into terraces — the continuous street wall.
+ *
+ * ## Why this exists at all
+ *
+ * At `high` density {@link LOT_SIDE_GAP} is zero, so the per-lot path built
+ * every lot's building flush to its lot edge. That is the right *position* and
+ * the wrong *building*: each one was an independent shell with its own four
+ * walls, so two neighbours came out as two boxes with their walls back to back.
+ * Kai walked the first Bayline and reported exactly that. A dense block is not
+ * detached boxes at zero spacing; it is one terrace of N bays sharing party
+ * walls, and that is a different generator ({@link planTerrace},
+ * `stdlib/structures/terrace.ts`), not a different gap.
+ *
+ * ## What a run is
+ *
+ * A maximal sequence of consecutive unclaimed lots on the **same block face** —
+ * same `block`, same `face`, consecutive `order`. Grouping by face rather than
+ * by position in the lot list matters: the list is sorted row-major over the
+ * whole district, so two strips of different blocks can interleave in it.
+ *
+ * A run longer than {@link TERRACE_MAX_FRONTAGE} is cut into two or more
+ * terraces with {@link TERRACE_PASSAGE} columns between them, which reads as a
+ * pedestrian passage rather than as a missing building. A chunk too short or
+ * too shallow for the terrace grammar is simply not claimed, and falls through
+ * to the per-lot infill exactly as it would have before.
+ *
+ * ## Determinism
+ *
+ * Every draw is positional and keyed on the run's **own** geometry: the node
+ * seed is `hash(worldSeed, "…terrace_<x>_<z>")` off the chunk's min corner, and
+ * the bay pitches, storeys, archetypes and doors inside it are hashes of that
+ * seed and of the offset along the run. Nothing is keyed on a counter or on an
+ * index into a list of runs, so adding a landmark elsewhere in the district
+ * leaves every terrace it does not touch byte-identical.
+ */
+function terraceRuns(
+  lots: readonly Lot[],
+  claimed: ReadonlySet<string>,
+  params: DistrictParams,
+  nodePath: string,
+  worldSeed: bigint,
+  districtSeed: Seed256,
+): Terrace[] {
+  const density = params.density;
+  const maxFrontage = TERRACE_MAX_FRONTAGE[density];
+  if (maxFrontage <= 0) return [];
+  const coverage = TERRACE_COVERAGE[density];
+  const stream = streamSeed(districtSeed, "repeat");
+
+  // Group by block face, in the lot list's own order so the grouping is a pure
+  // function of the subdivision rather than of a hash iteration.
+  const faces = new Map<string, Lot[]>();
+  for (const lot of lots) {
+    if (claimed.has(lot.id)) continue;
+    const key = `${lot.block}:${lot.face}`;
+    const group = faces.get(key);
+    if (group === undefined) faces.set(key, [lot]);
+    else group.push(lot);
+  }
+
+  const out: Terrace[] = [];
+  for (const group of faces.values()) {
+    const strip = [...group].sort((a, b) => a.order - b.order);
+    // Maximal consecutive-`order` runs: a landmark in the middle of a face
+    // breaks the street wall, which is exactly what a landmark is for.
+    let run: Lot[] = [];
+    const flush = (): void => {
+      if (run.length >= TERRACE_MIN_LOTS) out.push(...cutRun(run));
+      run = [];
+    };
+    for (const lot of strip) {
+      const last = run[run.length - 1];
+      if (last !== undefined && lot.order !== last.order + 1) flush();
+      run.push(lot);
+    }
+    flush();
+  }
+  return out;
+
+  /** Cut one run into terraces short enough to read as a street. */
+  function cutRun(run: readonly Lot[]): Terrace[] {
+    const along = (run[0] as Lot).face === "north" || (run[0] as Lot).face === "south";
+    const width = (lot: Lot): number =>
+      along ? lot.rect.x1 - lot.rect.x0 + 1 : lot.rect.z1 - lot.rect.z0 + 1;
+
+    const chunks: Lot[][] = [];
+    let chunk: Lot[] = [];
+    let span = 0;
+    for (const lot of run) {
+      const w = width(lot);
+      if (chunk.length > 0 && span + w > maxFrontage) {
+        chunks.push(chunk);
+        chunk = [];
+        span = 0;
+      }
+      chunk.push(lot);
+      span += w;
+    }
+    if (chunk.length > 0) chunks.push(chunk);
+
+    const made: Terrace[] = [];
+    for (const [i, part] of chunks.entries()) {
+      if (part.length < TERRACE_MIN_LOTS) continue;
+      const terrace = makeTerrace(part, along, i > 0);
+      if (terrace === null) continue;
+      made.push(terrace);
+    }
+    return made;
+  }
+
+  /** Turn one chunk of lots into a terrace node, or `null` when it cannot be. */
+  function makeTerrace(chunk: readonly Lot[], along: boolean, passage: boolean): Terrace | null {
+    const face = (chunk[0] as Lot).face;
+    const whole = unionRect(chunk.map((l) => l.rect));
+    // The passage: the second and later terraces of a cut run give up their
+    // low-side columns, so the gap lands *between* the two runs rather than
+    // being shared out by the centring in `seat`.
+    const rect: Rect = !passage
+      ? whole
+      : along
+        ? { ...whole, x0: whole.x0 + TERRACE_PASSAGE }
+        : { ...whole, z0: whole.z0 + TERRACE_PASSAGE };
+
+    const gap = LOT_SIDE_GAP[density] as number;
+    const frontage = (along ? rect.x1 - rect.x0 : rect.z1 - rect.z0) + 1;
+    const depth = (along ? rect.z1 - rect.z0 : rect.x1 - rect.x0) + 1;
+    const across = frontage - 2 * gap;
+    const back = Math.min(depth - gap, MAX_INFILL_DEPTH);
+    if (across < TERRACE_MIN_FRONTAGE || back < terraceMinDepth(FLOOR_HEIGHT)) return null;
+
+    const id = `terrace_${rect.x0}_${rect.z0}`;
+    const path = `${nodePath}.${id}`;
+    const seed = nodeSeed(worldSeed, path, "");
+    if (coverage < 1 && positionFloat(stream, rect.x0, 2, rect.z0) >= coverage) return null;
+
+    // Phase one: where the party walls fall. Seeded from this terrace's own
+    // node seed, which is a hash of its own min corner — so the frontage is cut
+    // the same way whenever a run starts at the same world column.
+    const skeleton = planTerrace({
+      sx: across,
+      storeyHeight: FLOOR_HEIGHT,
+      floors: 1,
+      stream: streamSeed(seed, "terrace"),
+      ...(chunk[0]?.corner === true ? { cornerStart: true } : {}),
+      ...(chunk[chunk.length - 1]?.corner === true ? { cornerEnd: true } : {}),
+    });
+    if (skeleton.bays.length === 0) return null;
+
+    // Phase two: what each bay is and how tall. The storeys are drawn around
+    // one height for the whole run rather than independently per bay — a street
+    // wall is a *wall*, and independent draws over a five-storey range give a
+    // skyline of teeth. The generator's cornice snap then merges the neighbours
+    // that came out within one of each other, so what survives is a few long
+    // cornice lines with deliberate steps between them.
+    const [lo, hi] = INFILL_FLOORS[density];
+    const startCol = along ? rect.x0 : rect.z0;
+    const otherCol = along ? rect.z0 : rect.x0;
+    const base = positionInt(stream, startCol, 3, otherCol, lo, hi);
+    const bays: TerraceBay[] = skeleton.bays.map((bay) => {
+      const col = startCol + bay.wall0;
+      const interior = bay.x1 - bay.x0 + 1;
+      const floors = Math.min(hi, Math.max(lo, base + positionInt(stream, col, 4, otherCol, -1, 2)));
+      const archetype = pickArchetype(params.mix, interior, stream, col, otherCol);
+      return {
+        width: bay.wall1 - bay.wall0,
+        floors,
+        ...(archetype === null ? {} : { archetype }),
+      };
+    });
+
+    const tallest = bays.reduce((m, b) => Math.max(m, b.floors), 1);
+    // Height the envelope reserves. The parapet, the party-wall upstands and a
+    // corner finial all stand over the eave line, and the solver's box has to
+    // hold them: a node whose ops leave its own envelope is a node the
+    // occupancy grid, the canopy clip and the pad all disagree with.
+    const height = tallest * FLOOR_HEIGHT + 12;
+
+    return {
+      lots: chunk,
+      bays: bays.length,
+      built: {
+        nodePath: path,
+        id,
+        rect,
+        face,
+        size: [across, height, back],
+        ports: terracePorts(skeleton, across),
+        params: {
+          archetype: "terrace",
+          face,
+          bays,
+          floorHeight: FLOOR_HEIGHT,
+          ...(chunk[0]?.corner === true ? { cornerStart: true } : {}),
+          ...(chunk[chunk.length - 1]?.corner === true ? { cornerEnd: true } : {}),
+        },
+        tags: ["district", "terrace", "street_wall"],
+        seed,
+        frontPort: "door",
+      },
+    };
+  }
+}
+
+/**
+ * One door port per bay, on the street face.
+ *
+ * The terrace grammar puts a door in every bay, and a door the doorstep pass
+ * cannot see is a door with a one-block step in front of it — which is a jump.
+ * So every one of them is declared, at the column {@link planTerrace} chose,
+ * and the two callers agree because they call the same planner with the same
+ * seed rather than each deriving the columns their own way.
+ *
+ * `at[0]` is a fraction of the face, and the half-column offset is what makes
+ * the round trip exact: `resolvePort` takes `floor(u · (sx − 1))`, so aiming at
+ * the middle of the column survives any float error a division introduces.
+ */
+function terracePorts(
+  plan: ReturnType<typeof planTerrace>,
+  sx: number,
+): Readonly<Record<string, PortDeclaration>> {
+  const span = Math.max(1, sx - 1);
+  const out: Record<string, PortDeclaration> = {};
+  for (const [i, bay] of plan.bays.entries()) {
+    const u = Math.min(1, (bay.doorX + 0.5) / span);
+    out[i === 0 ? "door" : `door_${i}`] = {
+      type: "door",
+      face: "south",
+      at: [u, 0],
+      ...(i === 0 ? { tags: ["primary"] } : {}),
     };
   }
   return out;

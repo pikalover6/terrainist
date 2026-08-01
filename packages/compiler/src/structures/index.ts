@@ -56,6 +56,7 @@ import { PALETTE_THEME_KEY, type Palette } from "../terrain/palette.js";
 
 import {
   buildBuildings,
+  terraceBaysParamOf,
   underpinAprons,
   wingParamOf,
   type BuildingJob,
@@ -183,6 +184,16 @@ export interface StructureStats {
   readonly propsUnplaced: number;
   /** Water blocks the props wrote that could flow. Zero is required. */
   readonly propWaterLeaks: number;
+  /**
+   * Lamps, benches and planters the F4 streetscape dressed the sidewalks with.
+   *
+   * Reported because "streetlights everywhere" is a thing a document asks for
+   * and nothing else in the report would notice it disappearing: the dressing
+   * skips any column a building already wrote in, so a facade that reaches into
+   * the apron — a terrace's awning does — trades furniture for architecture,
+   * and that trade is worth being able to see.
+   */
+  readonly streetFurniture: number;
   /** Columns rewritten by lot dressing (F2). */
   readonly dressedColumns: number;
   /** Columns speckled with worn path paint (F2). */
@@ -323,6 +334,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       impliedStyle.get(placement.nodePath),
     );
     const wing = wingParamOf(params["wing"]);
+    const bays = terraceBaysParamOf(params["bays"]);
     jobs.push({
       nodePath: placement.nodePath,
       placement,
@@ -341,6 +353,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         // defective shape becomes `undefined` rather than an exception — the
         // profile validator is what tells the author about it, with a hint.
         ...(wing === undefined ? {} : { wing }),
+        // The terrace's bays, read through `terraceBaysParamOf` for the same
+        // reason: a defective list becomes `undefined` here rather than an
+        // exception, and the terrace grammar draws its own bays when it gets
+        // nothing. The two corner flags travel with them.
+        ...(bays === undefined ? {} : { bays }),
+        ...(params["cornerStart"] === true ? { cornerStart: true } : {}),
+        ...(params["cornerEnd"] === true ? { cornerEnd: true } : {}),
         archetype:
           typeof params["archetype"] === "string"
             ? params["archetype"]
@@ -380,7 +399,16 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const themeSeed: Seed256 = nodeSeed(input.worldSeed, rootPath, "");
   const theme: MaterialTheme = pickTheme(themeSeed, themeOverride(input.doc));
   const deal = assignMaterials(theme, jobs.length, themeSeed);
-  const themed = jobs.map((job, i) => ({ ...job, materials: deal[i] as BuildingMaterials }));
+  // The whole palette rides along beside the triple, not instead of it. Only
+  // the terrace reads it, and it reads it for a reason no other building has:
+  // a terrace is several buildings, so one triple cannot clothe it — each bay
+  // takes its own from the same theme, which is what makes a run read as a
+  // street rather than as one long building painted one colour.
+  const themed = jobs.map((job, i) => ({
+    ...job,
+    materials: deal[i] as BuildingMaterials,
+    theme,
+  }));
 
   const jobTags = new Map(jobs.map((job) => [job.nodePath, job.tags] as const));
 
@@ -443,6 +471,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // street rather than running alongside it.
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
+  let streetFurniture = 0;
   if (districts.length > 0) {
     streets = surfaceStreetGraph({
       graphs: districts.map((d) => d.streets),
@@ -475,6 +504,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         avoid: (x, z) => builtColumns.has(`${x},${z}`),
       });
       blocks.push(...dressed.blocks);
+      streetFurniture += dressed.props.length;
       diagnostics.push(...dressed.diagnostics);
       // Kept for C3: the life pass needs the walk lane it must not touch and
       // the carriageway it parks against, and re-deriving either from the
@@ -701,6 +731,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,
+      streetFurniture,
       dressedColumns: grounds.dressedColumns,
       wornColumns: grounds.wornColumns,
       airports: precincts?.stats.airports ?? 0,

@@ -277,13 +277,26 @@ describe("the district fabric", () => {
     },
   ];
 
-  it("produces a real placement, node and door port per building", () => {
+  it("produces a real placement, node and a door port per way in", () => {
     const laid = layFabric(HIGH, LANDMARKS);
     expect(laid.districts).toHaveLength(1);
     expect(laid.placements.length).toBeGreaterThan(20);
     expect(laid.nodes).toHaveLength(laid.placements.length);
-    expect(laid.ports.filter((p) => p.type === "door")).toHaveLength(laid.placements.length);
     for (const node of laid.nodes) expect(node.generator).toBe("building.grammar@0");
+    // One door port per *door*, not per building. A terrace is one node with a
+    // door per bay, and every one of them has to be declared or the doorstep
+    // pass leaves it with a one-block step — which is a jump, not a threshold.
+    const doors = laid.ports.filter((p) => p.type === "door");
+    expect(doors.length).toBeGreaterThanOrEqual(laid.placements.length);
+    const byPath = new Map<string, number>();
+    for (const port of doors) byPath.set(port.nodePath, (byPath.get(port.nodePath) ?? 0) + 1);
+    expect(byPath.size).toBe(laid.placements.length);
+    for (const placement of laid.placements) {
+      const count = byPath.get(placement.nodePath) ?? 0;
+      const bays = laid.params.get(placement.nodePath)?.["bays"];
+      if (Array.isArray(bays)) expect(count, placement.nodePath).toBe(bays.length);
+      else expect(count, placement.nodePath).toBe(1);
+    }
   });
 
   it("puts every door on a sidewalk column beside its own street", () => {
@@ -352,19 +365,31 @@ describe("the district fabric", () => {
     }
   });
 
-  it("infills only from the declared mix, and leaves the landmarks their own", () => {
+  it("fills only from the declared mix, and leaves the landmarks their own", () => {
     const laid = layFabric(HIGH, LANDMARKS);
-    let infilled = 0;
+    let fromMix = 0;
     for (const [nodePath, params] of laid.params) {
-      if (!nodePath.includes(".infill_")) {
-        // A landmark keeps whatever the document gave it.
-        expect(["skyscraper", "museum"]).toContain(params["archetype"]);
+      if (nodePath.includes(".infill_")) {
+        fromMix++;
+        expect(HIGH.mix).toContain(params["archetype"]);
         continue;
       }
-      infilled++;
-      expect(HIGH.mix).toContain(params["archetype"]);
+      if (nodePath.includes(".terrace_")) {
+        // A terrace is one node of many buildings, so the mix steers its
+        // *bays*. Every one of them still comes from the declared list.
+        expect(params["archetype"]).toBe("terrace");
+        const bays = params["bays"] as readonly { archetype?: string }[];
+        expect(Array.isArray(bays)).toBe(true);
+        for (const bay of bays) {
+          fromMix++;
+          expect(HIGH.mix).toContain(bay.archetype);
+        }
+        continue;
+      }
+      // A landmark keeps whatever the document gave it.
+      expect(["skyscraper", "museum"]).toContain(params["archetype"]);
     }
-    expect(infilled).toBeGreaterThan(20);
+    expect(fromMix).toBeGreaterThan(20);
   });
 
   it("builds more of a high-density envelope than a low-density one", () => {
@@ -373,9 +398,17 @@ describe("the district fabric", () => {
     const dense = high.districts[0]?.stats;
     const sparse = low.districts[0]?.stats;
     if (dense === undefined || sparse === undefined) throw new Error("no district");
-    expect(dense.infill / dense.lots).toBeGreaterThan(0.8);
-    expect(sparse.infill / sparse.lots).toBeLessThan(0.5);
-    expect(dense.infill / dense.lots).toBeGreaterThan(sparse.infill / sparse.lots);
+    // Share of the parcels the fabric built on, however it built on them: a
+    // terrace claims whole runs of lots, so counting only the per-lot infill
+    // stopped being a measure of density the moment the street wall landed.
+    const built = (d: typeof dense): number => (d.infill + d.terraceLots) / d.lots;
+    expect(built(dense)).toBeGreaterThan(0.8);
+    expect(built(sparse)).toBeLessThan(0.5);
+    expect(built(dense)).toBeGreaterThan(built(sparse));
+    // ...and the *way* it built on them differs, which is the point: downtown
+    // is a street wall, the village is detached houses.
+    expect(dense.terraces).toBeGreaterThan(0);
+    expect(sparse.terraces).toBe(0);
   });
 
   it("gives a high-density district a tall skyline and a low-density one a low roofline", () => {
@@ -476,6 +509,162 @@ describe("the mix vocabulary", () => {
     );
     expect(good.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
     expect(good.document).toBeDefined();
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 2b. the street wall                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The terrace pass — U2.
+ *
+ * The fabric's answer to "buildings are also often touching each other". At
+ * `high` the default for a run of consecutive lots on one block face is a
+ * *terrace*, not N detached shells at zero spacing; at `medium` it is shorter
+ * runs with real gaps; at `low` it never happens at all.
+ *
+ * What is asserted here is the layout side of that: which lots a terrace
+ * claims, that it claims each of them exactly once, that its bays come from the
+ * mix, that its door ports land where the grammar's doors are, and that none of
+ * it moves when something else in the district does. The geometry of the run
+ * itself — the party wall, the cornice, the shopfront — is
+ * `stdlib/test/terrace.test.ts`.
+ */
+describe("the street wall", () => {
+  const HIGH_WALL = { fabric: "grid", density: "high", mix: ["office", "apartment_block", "shop_row"] };
+  const MED_WALL = { fabric: "grid", density: "medium", mix: ["townhouse", "shop_row"] };
+  const LOW_WALL = { fabric: "grid", density: "low", mix: ["townhouse", "cottage"] };
+
+  const LANDMARKS_HERE = [
+    {
+      id: "spire",
+      kind: "generator",
+      generator: "building.grammar@0",
+      envelope: { shape: "box", size: [21, 60, 15] },
+      params: { archetype: "skyscraper", floors: 14 },
+      ports: { door: { type: "door", face: "south", tags: ["primary"] } },
+      tags: ["landmark"],
+    },
+  ];
+
+  const terracesOf = (laid: DistrictPassResult): Placement[] =>
+    laid.placements.filter((p) => p.nodePath.includes(".terrace_"));
+
+  it("makes the street wall the default downtown and never builds one in a village", () => {
+    const high = layFabric(HIGH_WALL).districts[0]?.stats;
+    const medium = layFabric(MED_WALL).districts[0]?.stats;
+    const low = layFabric(LOW_WALL).districts[0]?.stats;
+    if (high === undefined || medium === undefined || low === undefined) throw new Error("no district");
+    expect(high.terraces).toBeGreaterThan(5);
+    expect(high.terraceBays).toBeGreaterThan(high.terraces * 2);
+    // Downtown, almost every parcel is part of a run.
+    expect(high.terraceLots / high.lots).toBeGreaterThan(0.5);
+    expect(high.infill).toBeLessThan(high.terraceLots);
+    // A row-house quarter still has terraces, and still has gaps between them.
+    expect(medium.terraces).toBeGreaterThan(0);
+    expect(medium.infill).toBeGreaterThan(0);
+    // A village is detached houses in gardens.
+    expect(low.terraces).toBe(0);
+    expect(low.terraceBays).toBe(0);
+  });
+
+  it("claims each lot once: a terrace's ground is nobody else's", () => {
+    const laid = layFabric(HIGH_WALL, LANDMARKS_HERE);
+    for (const a of laid.placements) {
+      for (const b of laid.placements) {
+        if (a === b) continue;
+        expect(
+          overlaps(a.footprint, b.footprint),
+          `${a.nodePath} overlaps ${b.nodePath}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("declares one door port per bay, at the column the grammar puts a door in", () => {
+    const laid = layFabric(HIGH_WALL);
+    const terraces = terracesOf(laid);
+    expect(terraces.length).toBeGreaterThan(5);
+    for (const placement of terraces) {
+      const params = laid.params.get(placement.nodePath) as Record<string, unknown>;
+      const bays = params["bays"] as readonly { width: number; floors: number }[];
+      const ports = laid.ports.filter((p) => p.nodePath === placement.nodePath);
+      expect(ports, placement.nodePath).toHaveLength(bays.length);
+      for (const port of ports) {
+        expect(port.type).toBe("door");
+        // Resolved onto the building's own footprint, on the street side.
+        expect(port.position[0]).toBeGreaterThanOrEqual(placement.footprint.x0);
+        expect(port.position[0]).toBeLessThanOrEqual(placement.footprint.x1);
+        expect(port.position[2]).toBeGreaterThanOrEqual(placement.footprint.z0);
+        expect(port.position[2]).toBeLessThanOrEqual(placement.footprint.z1);
+      }
+      // Every door is a different column: two ports on one leaf would mean the
+      // planner and the port table disagree about where the bays are.
+      const columns = new Set(ports.map((p) => `${p.position[0]},${p.position[2]}`));
+      expect(columns.size, placement.nodePath).toBe(bays.length);
+    }
+  });
+
+  it("sizes the envelope to hold the parapet the grammar builds over it", () => {
+    const laid = layFabric(HIGH_WALL);
+    for (const placement of terracesOf(laid)) {
+      const params = laid.params.get(placement.nodePath) as Record<string, unknown>;
+      const bays = params["bays"] as readonly { floors: number }[];
+      const tallest = bays.reduce((m, b) => Math.max(m, b.floors), 1);
+      const floorHeight = params["floorHeight"] as number;
+      expect(placement.size[1]).toBeGreaterThan(tallest * floorHeight);
+    }
+  });
+
+  it("caps a run's length and keeps the block core open behind it", () => {
+    // Two properties of one rectangle: no terrace is longer than the frontage
+    // cap (a longer face is cut, with a passage between the parts), and none is
+    // deeper than `MAX_INFILL_DEPTH`, so the middle of every block it fronts
+    // stays open ground for the F2 treatment.
+    for (const blockSize of [40, 90]) {
+      const laid = layFabric({ ...HIGH_WALL, blockSize });
+      const terraces = terracesOf(laid);
+      expect(terraces.length, `blockSize ${blockSize}`).toBeGreaterThan(0);
+      for (const placement of terraces) {
+        const width = placement.footprint.x1 - placement.footprint.x0 + 1;
+        const depth = placement.footprint.z1 - placement.footprint.z0 + 1;
+        expect(Math.max(width, depth), placement.nodePath).toBeLessThanOrEqual(46);
+        expect(Math.min(width, depth), placement.nodePath).toBeLessThanOrEqual(16);
+      }
+    }
+  });
+
+  it("is positional: a landmark elsewhere leaves the rest of the street alone", () => {
+    // The invariant the whole pass is written around. Adding a building to the
+    // document may take the lots it stands on out of a run — that is what a
+    // landmark is — but every terrace it did not touch has to come out
+    // byte-identical, because its bays, heights and materials are hashes of its
+    // own start column and not of a counter.
+    const bare = layFabric(HIGH_WALL);
+    const withLandmark = layFabric(HIGH_WALL, LANDMARKS_HERE);
+    const index = (r: DistrictPassResult): Map<string, string> =>
+      new Map(
+        r.placements
+          .filter((p) => p.nodePath.includes(".terrace_"))
+          .map((p) => [p.nodePath, JSON.stringify([p, r.params.get(p.nodePath)])]),
+      );
+    const before = index(bare);
+    const after = index(withLandmark);
+    let shared = 0;
+    for (const [path, snapshot] of after) {
+      const was = before.get(path);
+      if (was === undefined) continue; // a run the landmark broke: expected.
+      shared++;
+      expect(snapshot, path).toBe(was);
+    }
+    expect(shared, "the landmark did not leave any terrace untouched").toBeGreaterThan(5);
+  });
+
+  it("lays the same street wall twice", () => {
+    const a = layFabric(HIGH_WALL, LANDMARKS_HERE);
+    const b = layFabric(HIGH_WALL, LANDMARKS_HERE);
+    expect(JSON.stringify([...a.params])).toBe(JSON.stringify([...b.params]));
   });
 });
 

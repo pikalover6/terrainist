@@ -117,6 +117,16 @@ export interface WalkabilityOptions {
   readonly exclude?: readonly (readonly [number, number])[];
   /** An explicit start, when the fixture has no door. */
   readonly start?: { readonly x: number; readonly z: number };
+  /**
+   * The storey the walk *begins* on, when it is not the storey being checked.
+   *
+   * The doors are on the ground floor, so asking "can a player reach the third
+   * storey" means starting there and climbing — which is exactly what the
+   * physics lint does: one flood from the door cells, then every storey's own
+   * floor cells checked against it. Defaults to {@link WalkabilityOptions.level}
+   * so a single-storey check is unchanged.
+   */
+  readonly startLevel?: number;
 }
 
 /** How the walk classified one floor cell. */
@@ -214,50 +224,63 @@ export function walkabilityReport(
 
   const level = opts.level ?? 0;
   const feetY = level + 1;
+  const startFeetY = (opts.startLevel ?? level) + 1;
 
   const excluded = new Set((opts.exclude ?? []).map(([x, z]) => `${x},${z}`));
   const floor = result.meta.floorCells.filter((c) => !excluded.has(`${c.x},${c.z}`));
   const inRoom = new Set(floor.map((c) => `${c.x},${c.z}`));
 
-  // --- the start: the interior cell beside the lower half of a door ---------
-  let start: { x: number; y: number; z: number } | null = null;
+  // --- the starts: the interior cells beside the lower half of every door ---
+  //
+  // Every door, not the first one found — which mirrors the change
+  // `physics.ts` made for the same reason. A terrace is one building with a
+  // door per bay and a party wall between each pair of them, so no single door
+  // reaches the whole of it, and "reachable from *a* street door" is the
+  // property a building with more than one way in actually has. For a building
+  // with one door this is the same single start and the same flood.
+  const starts: { x: number; y: number; z: number }[] = [];
+  const seenStart = new Set<string>();
   if (opts.start !== undefined) {
-    start = { x: opts.start.x, y: feetY, z: opts.start.z };
+    starts.push({ x: opts.start.x, y: startFeetY, z: opts.start.z });
   } else {
     for (const op of result.ops) {
-      if (op.y !== feetY) continue;
+      if (op.y !== startFeetY) continue;
       if (!op.block.endsWith("_door")) continue;
       if ((op.props?.["half"] ?? "lower") !== "lower") continue;
       for (const [dx, dz] of NEIGHBOURS) {
         const nx = op.x + dx;
         const nz = op.z + dz;
         if (!inRoom.has(`${nx},${nz}`)) continue;
-        if (!standable(nx, feetY, nz)) continue;
-        start = { x: nx, y: feetY, z: nz };
+        if (!standable(nx, startFeetY, nz)) continue;
+        const key = `${nx},${nz}`;
+        if (!seenStart.has(key)) {
+          seenStart.add(key);
+          starts.push({ x: nx, y: startFeetY, z: nz });
+        }
         break;
       }
-      if (start !== null) break;
     }
     // Fall back to the recorded door column when the door block is a plain
     // gap (an archway archetype): the cell inside it is still the way in.
-    if (start === null && result.meta.door != null) {
+    if (starts.length === 0 && result.meta.door != null) {
       const d = result.meta.door;
       for (const [dx, dz] of NEIGHBOURS) {
         const nx = d.x + dx;
         const nz = d.z + dz;
-        if (inRoom.has(`${nx},${nz}`) && standable(nx, feetY, nz)) {
-          start = { x: nx, y: feetY, z: nz };
+        if (inRoom.has(`${nx},${nz}`) && standable(nx, startFeetY, nz)) {
+          starts.push({ x: nx, y: startFeetY, z: nz });
           break;
         }
       }
     }
   }
+  const start: { x: number; y: number; z: number } | null = starts[0] ?? null;
 
   // --- flood ---------------------------------------------------------------
   const seen = new Set<string>();
   if (start !== null) {
-    seen.add(`${start.x},${start.y},${start.z}`);
-    const queue: { x: number; y: number; z: number }[] = [start];
+    for (const s of starts) seen.add(`${s.x},${s.y},${s.z}`);
+    const queue: { x: number; y: number; z: number }[] = [...starts];
     const visit = (x: number, y: number, z: number): void => {
       const key = `${x},${y},${z}`;
       if (seen.has(key)) return;
