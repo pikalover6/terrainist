@@ -357,6 +357,15 @@ export interface LifeBuilding {
   readonly cells: ReadonlySet<string>;
   /** The enclosed room columns, as `"x,z"` world keys. */
   readonly interiorCells?: ReadonlySet<string>;
+  /**
+   * The columns a storey-to-storey flight climbs through, as `"x,z"` keys.
+   *
+   * Never lit. A room lantern hangs at `ceiling - 1`, which clears a player
+   * standing on a flat floor and does not clear one climbing past it two treads
+   * up — and a blocked flight is not a cosmetic defect, it seals every storey
+   * above it. This sealed all 4,103 upper-storey cells of Bayline's terraces.
+   */
+  readonly stairCells?: ReadonlySet<string>;
   /** World Y of the ground-floor walking plane. */
   readonly floorY: number;
   /** World Y of the topmost wall course. */
@@ -2199,6 +2208,26 @@ function dressOpenGround(
  * Variation is per building *and* per storey: a tower with every window lit is
  * as dead as a tower with none.
  */
+/**
+ * Whether `(x, z)` is a stair column or touches one.
+ *
+ * The ring matters as much as the flight. A room lantern hangs at `foot + 2`,
+ * one block over the head of a player standing on that storey's floor — and
+ * exactly at the head height of one climbing the tread below it. A flight
+ * arrives and leaves through the columns beside its own, so guarding only the
+ * treads still sealed the storeys above.
+ */
+function nearStair(building: LifeBuilding, x: number, z: number): boolean {
+  const stairs = building.stairCells;
+  if (stairs === undefined) return false;
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      if (stairs.has(`${x + dx},${z + dz}`)) return true;
+    }
+  }
+  return false;
+}
+
 function lightRooms(
   building: LifeBuilding,
   input: LifePassInput,
@@ -2225,6 +2254,7 @@ function lightRooms(
     // this track exists to remove. Two per cent to nine, per storey.
     const density = LIT_ROOM_MIN + (LIT_ROOM_MAX - LIT_ROOM_MIN) * lit / Math.max(rules.litRooms, 1e-6);
     for (const [x, z] of columns) {
+      if (nearStair(building, x, z)) continue;
       if (hash2(seed, x, z + level * 211, 2) >= density) continue;
       // The walkable plane. `floorLevels` names a storey's *floor*, and whether
       // that index is the deck itself or the air standing on it depends on the

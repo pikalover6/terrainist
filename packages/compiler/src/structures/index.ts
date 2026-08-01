@@ -761,6 +761,7 @@ function lifeBuildingOf(built: BuiltBuilding, tags: readonly string[]): LifeBuil
     footprint: built.footprint,
     cells: built.cells,
     interiorCells: built.interiorCells,
+    ...(built.stairCells === undefined ? {} : { stairCells: built.stairCells }),
     floorY: built.floorY,
     wallTopY: built.floorY + built.meta.wallTop,
     // A cellar's floor is in `floorLevels` too, and a lantern hung down there

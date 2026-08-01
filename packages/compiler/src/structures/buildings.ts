@@ -128,6 +128,14 @@ export interface BuiltBuilding {
    */
   readonly interiorCellsByLevel?: readonly ReadonlySet<string>[];
   /**
+   * Columns a storey-to-storey flight climbs through, as `"x,z"` world keys.
+   *
+   * Absent for a building whose grammar declares none. A later pass that hangs
+   * anything in a room must keep off these: the headroom over a landing is not
+   * the headroom over a flight, and two treads up is where the difference bites.
+   */
+  readonly stairCells?: ReadonlySet<string>;
+  /**
    * What the apron needs to stay off the air, kept for a second look later.
    *
    * The skirt and the apron underpinning are both measured against the ground
@@ -271,6 +279,17 @@ export function buildBuildings(
       blockCount: count,
       cells,
       interiorCells: worldCells(job, result.meta.floorCells),
+      ...(result.meta.stairColumns === undefined
+        ? {}
+        : {
+            stairCells: worldCells(
+              job,
+              [...result.meta.stairColumns].map((k) => {
+                const [x, z] = k.split(",").map(Number) as [number, number];
+                return { x, z };
+              }),
+            ),
+          }),
       ...(result.meta.floorCellsByLevel === undefined
         ? {}
         : {

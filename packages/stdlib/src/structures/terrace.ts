@@ -784,6 +784,7 @@ export function emitTerrace(r: TerraceRequest): BuildingResult {
     floorCellsByLevel: byLevel,
     floorLevels: levels,
     stairRuns,
+    stairColumns,
     basementDepth: 0,
     basementInterior: null,
     basementAccess: null,

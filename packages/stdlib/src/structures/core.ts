@@ -783,6 +783,16 @@ export interface BuildingMeta {
    */
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /**
+   * Columns a storey-to-storey flight climbs through, as `"x,z"` local keys.
+   *
+   * Published so a *later* pass can keep off them. A flat floor's headroom and
+   * a staircase's are not the same volume: anything hung two blocks over a
+   * landing clears a standing player and still decapitates one two treads up,
+   * which is how the life pass's room lanterns sealed every upper storey of
+   * every terrace behind an unwalkable flight.
+   */
+  readonly stairColumns?: ReadonlySet<string>;
+  /**
    * Floor cells **per storey**, aligned with {@link BuildingMeta.floorLevels}.
    *
    * Absent when every storey has the same plan, which was every building until
@@ -1501,6 +1511,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       floorCells: shell.interiorCells,
       floorLevels,
       stairRuns,
+      stairColumns,
       basementDepth: cellarInterior === null ? 0 : cellar,
       basementInterior: cellarInterior,
       basementAccess: cellarAccess,
