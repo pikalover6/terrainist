@@ -23,6 +23,8 @@ import { applyLevelPad } from "@terrainist/stdlib";
 
 import type { PadEdit } from "./types.js";
 
+export * from "./city.js";
+export * from "./city-pass.js";
 export * from "./corridors.js";
 export * from "./cost.js";
 export * from "./district.js";

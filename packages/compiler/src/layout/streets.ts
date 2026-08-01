@@ -118,6 +118,26 @@ export interface StreetGraphInput {
   readonly blockSize: number;
   /** Sidewalk band per side, in columns. */
   readonly sidewalk: number;
+  /**
+   * 1 = inside; a segment leaving the mask **ends there** (C1).
+   *
+   * Row-major over {@link StreetGraphInput.bounds}. Absent for an authored
+   * rectangular district, and its absence is load-bearing: the unmasked,
+   * unrotated construction below is byte-for-byte the one fabric v2 shipped.
+   *
+   * The dead ends and T-junctions this produces are the point, not a defect.
+   * A grid clipped to an arbitrary polygon is what a real quarter looks like
+   * where a boulevard cut across it, and a segment that simply stops at the
+   * cell edge is a street that meets the boulevard.
+   */
+  readonly mask?: Uint8Array;
+  /**
+   * Local grid rotation about the bounds centre, degrees, quantised to 15.
+   *
+   * Only 0…75 are meaningful — a square grid is symmetric under a quarter
+   * turn — and 0 (or absent) keeps the world-axis construction.
+   */
+  readonly orientation?: number;
 }
 
 /** Why a district could not be given a skeleton. */
@@ -150,6 +170,108 @@ export const MIN_DISTRICT_SPAN = 2 * (STREET_WIDTH.street + 2 * 2) + 20;
 export const MIN_BLOCK_SPACING = 16;
 
 /**
+ * Shortest run of clipped street kept, in cells.
+ *
+ * A three-cell stub poking into the corner of a cell is not a street, it is a
+ * paving accident, and every one of them would be surfaced and dressed with a
+ * lamp post. Below this the run is dropped and the ground goes back to the
+ * block.
+ */
+export const MIN_CLIPPED_RUN = 10;
+
+/* -------------------------------------------------------------------------- */
+/* rotation, without trigonometry                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `[sin, cos] × 4096` at every 15°, index `k` = `15k` degrees, 0 = +Z.
+ *
+ * A table rather than `Math.sin` because worldgen may not call a transcendental
+ * function: `sin` is not required to be correctly rounded and two runtimes may
+ * disagree in the last bit, which is exactly the kind of difference that turns
+ * "same spec, same seed, same world" into a lie. Quantising every angle in the
+ * C1 contract to 15° is what makes the table possible.
+ *
+ * Heading θ points along `(sin θ, cos θ)`: θ = 0 is +Z, θ = 90 is +X.
+ */
+export const TRIG_SCALE = 4096;
+
+/** `[sinθ, cosθ] × {@link TRIG_SCALE}`, θ = 15 · index. */
+export const TRIG_15: readonly (readonly [number, number])[] = Object.freeze([
+  [0, 4096],
+  [1060, 3956],
+  [2048, 3547],
+  [2896, 2896],
+  [3547, 2048],
+  [3956, 1060],
+  [4096, 0],
+  [3956, -1060],
+  [3547, -2048],
+  [2896, -2896],
+  [2048, -3547],
+  [1060, -3956],
+  [0, -4096],
+  [-1060, -3956],
+  [-2048, -3547],
+  [-2896, -2896],
+  [-3547, -2048],
+  [-3956, -1060],
+  [-4096, 0],
+  [-3956, 1060],
+  [-3547, 2048],
+  [-2896, 2896],
+  [-2048, 3547],
+  [-1060, 3956],
+] as const);
+
+/**
+ * The 15°-quantised heading of a direction vector, in degrees, 0 = +Z.
+ *
+ * The nearest table entry by dot product — which is the nearest angle, because
+ * every entry is (near enough) a unit vector and `argmax cos(θ − φ)` is
+ * `argmin |θ − φ|`. Integer arithmetic throughout; ties break to the lower
+ * heading, so a due-diagonal is always reported as the same one of its two
+ * equidistant neighbours.
+ */
+export function quantizeHeading(dx: number, dz: number): number {
+  if (dx === 0 && dz === 0) return 0;
+  let bestK = 0;
+  let best = -Infinity;
+  for (const [k, entry] of TRIG_15.entries()) {
+    const dot = dx * (entry[0] as number) + dz * (entry[1] as number);
+    if (dot > best) {
+      best = dot;
+      bestK = k;
+    }
+  }
+  return bestK * 15;
+}
+
+/** Round a heading to the nearest 15°, into `[0, 360)`. */
+export function snapHeading(degrees: number): number {
+  const k = Math.round(degrees / 15);
+  return ((k % 24) + 24) % 24 * 15;
+}
+
+/**
+ * Rotate a local grid offset into world space.
+ *
+ * The local `v` axis maps onto the heading `θ` — so a cell whose orientation is
+ * the heading of the boulevard beside it gets streets running *parallel* to
+ * that boulevard, which is the whole reason the field exists.
+ */
+export function rotateOffset(u: number, v: number, degrees: number): Point2 {
+  const k = (((Math.round(degrees / 15) % 24) + 24) % 24) as number;
+  const entry = TRIG_15[k] as readonly [number, number];
+  const sin = entry[0];
+  const cos = entry[1];
+  return {
+    x: Math.round((u * cos + v * sin) / TRIG_SCALE),
+    z: Math.round((-u * sin + v * cos) / TRIG_SCALE),
+  };
+}
+
+/**
  * Draw a district's street skeleton.
  *
  * Both fabrics come from the same construction — a set of line positions per
@@ -174,6 +296,15 @@ export function buildStreetGraph(input: StreetGraphInput): StreetGraphResult {
 
   const spacing = Math.max(MIN_BLOCK_SPACING, input.blockSize);
   const jitter = new Rng(streamSeed(input.seed, "layout"));
+
+  // C1: a cell of a city plan is an arbitrary polygon at an arbitrary angle,
+  // and neither is expressible by the edge-to-edge construction below. It gets
+  // its own generator — and only it does, so that an authored rectangular
+  // district that passes neither field still walks exactly the code fabric v2
+  // shipped and produces exactly the same bytes.
+  if (input.mask !== undefined || (input.orientation ?? 0) % 360 !== 0) {
+    return clippedGraph(input, spacing, jitter);
+  }
 
   // Lines first, both axes, in a fixed order (x then z) so a district's grid
   // does not move when an unrelated pass draws from the same node seed.
@@ -206,6 +337,141 @@ export function buildStreetGraph(input: StreetGraphInput): StreetGraphResult {
 /** Avenue every {@link AVENUE_EVERY} lines, street otherwise. */
 function classOf(index: number): StreetSegment["kind"] {
   return index % AVENUE_EVERY === 0 ? "avenue" : "street";
+}
+
+/* -------------------------------------------------------------------------- */
+/* the clipped, rotated fabric (fabric v3, C1)                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The same grid, drawn in a rotated frame and cut to a mask.
+ *
+ * Two differences from the world-axis construction, and they are the two things
+ * that stop a city reading as one rectangle full of smaller rectangles:
+ *
+ * 1. **The frame turns.** Lines are laid out in a `(u, v)` frame rotated about
+ *    the bounds centre and mapped back to world columns through
+ *    {@link rotateOffset}, so two neighbouring cells whose orientations differ
+ *    by 15° meet at 15° instead of continuing one global grid.
+ * 2. **A line stops where the cell does.** Every line is cut into maximal runs
+ *    inside the mask, and each run is its own segment. A run that ends inside
+ *    the bounds is a dead end or a T-junction onto the arterial the mask edge
+ *    follows — which is what the fabric is *for*, not a hole in it.
+ *
+ * The frame is sized to the bounds' diagonal so a rotated grid still covers
+ * every corner, and lines that miss the mask entirely simply produce no runs.
+ */
+function clippedGraph(input: StreetGraphInput, spacing: number, jitter: Rng): StreetGraphResult {
+  const { bounds, sidewalk, mask } = input;
+  const orientation = ((Math.round((input.orientation ?? 0) / 15) % 24) + 24) % 24 * 15;
+  const cx = Math.floor((bounds.x0 + bounds.x1) / 2);
+  const cz = Math.floor((bounds.z0 + bounds.z1) / 2);
+  const width = bounds.x1 - bounds.x0 + 1;
+  const depth = bounds.z1 - bounds.z0 + 1;
+  // Half the bounds' diagonal, rounded up: the smallest square frame centred on
+  // the cell that still contains it at any rotation.
+  const half = Math.ceil(Math.sqrt(width * width + depth * depth) / 2) + 2;
+
+  const uLines = linePositions(-half, half, spacing, input.fabric, jitter, sidewalk);
+  const vLines = linePositions(-half, half, spacing, input.fabric, jitter, sidewalk);
+  if (uLines.length < 2 || vLines.length < 2) {
+    return {
+      ok: false,
+      reason: `a ${width} × ${depth} cell at blockSize ${input.blockSize} yields ${uLines.length} × ${vLines.length} streets; a fabric needs at least two on each axis`,
+      fix: `lower "params.blockSize" (or drop it and let the density choose) so the streets fit, or grow "envelope.size"`,
+    };
+  }
+
+  const wander = streamSeed(input.seed, "jitter");
+  const inside = (p: Point2): boolean => {
+    if (p.x < bounds.x0 || p.x > bounds.x1 || p.z < bounds.z0 || p.z > bounds.z1) return false;
+    if (mask === undefined) return true;
+    return mask[(p.z - bounds.z0) * width + (p.x - bounds.x0)] === 1;
+  };
+
+  const segments: StreetSegment[] = [];
+  const draw = (base: string, kind: StreetSegment["kind"], fixed: number, alongV: boolean): void => {
+    const raw: Point2[] = [];
+    for (let t = -half; t <= half; t++) {
+      let offset = 0;
+      if (input.fabric === "organic") {
+        const anchor = Math.floor(t / ORGANIC_WAVELENGTH) * ORGANIC_WAVELENGTH;
+        const a = organicOffset(wander, base, anchor);
+        const b = organicOffset(wander, base, anchor + ORGANIC_WAVELENGTH);
+        const mix = (t - anchor) / ORGANIC_WAVELENGTH;
+        offset = Math.round(a + (b - a) * mix);
+      }
+      const local = alongV
+        ? rotateOffset(fixed + offset, t, orientation)
+        : rotateOffset(t, fixed + offset, orientation);
+      raw.push({ x: cx + local.x, z: cz + local.z });
+    }
+    for (const [r, run] of runsOf(densify4(raw), inside).entries()) {
+      segments.push({
+        id: r === 0 ? base : `${base}_${r}`,
+        kind,
+        width: STREET_WIDTH[kind],
+        path: run,
+      });
+    }
+  };
+
+  for (const [i, u] of uLines.entries()) draw(`ns${i}`, classOf(i), u, true);
+  for (const [j, v] of vLines.entries()) draw(`ew${j}`, classOf(j), v, false);
+
+  if (segments.length === 0) {
+    return {
+      ok: false,
+      reason: `no street line survives the clip of this ${width} × ${depth} cell — the shape is thinner than one block of fabric everywhere`,
+      fix: "nothing to change in the document: a cell this thin is dropped and its ground is left for the ground treatment pass",
+    };
+  }
+
+  return { ok: true, graph: { segments, intersections: intersectionsOf(segments), sidewalk } };
+}
+
+/**
+ * Make a nearly-connected walk 4-connected, dropping repeats.
+ *
+ * A rotated line steps by `(−sinθ, cosθ)` per cell of the local frame, so two
+ * consecutive rounded samples differ by at most one on each axis — they may be
+ * equal (dropped), orthogonal (kept) or diagonal, and a diagonal gets the
+ * intervening orthogonal cell inserted. Every consumer of a `path` walks it
+ * assuming 4-connectivity, so this is not cosmetic.
+ */
+export function densify4(raw: readonly Point2[]): Point2[] {
+  const out: Point2[] = [];
+  for (const cell of raw) {
+    const previous = out[out.length - 1];
+    if (previous === undefined) {
+      out.push(cell);
+      continue;
+    }
+    if (previous.x === cell.x && previous.z === cell.z) continue;
+    if (previous.x !== cell.x && previous.z !== cell.z) {
+      // Turn on the x axis first, always: an arbitrary but fixed choice, so the
+      // staircase of a 45° street leans the same way along its whole length.
+      out.push({ x: cell.x, z: previous.z });
+    }
+    out.push(cell);
+  }
+  return out;
+}
+
+/** Maximal runs of a path that lie inside the cell, longest-first order kept. */
+function runsOf(path: readonly Point2[], inside: (p: Point2) => boolean): Point2[][] {
+  const out: Point2[][] = [];
+  let current: Point2[] = [];
+  for (const cell of path) {
+    if (inside(cell)) {
+      current.push(cell);
+      continue;
+    }
+    if (current.length >= MIN_CLIPPED_RUN) out.push(current);
+    current = [];
+  }
+  if (current.length >= MIN_CLIPPED_RUN) out.push(current);
+  return out;
 }
 
 /**
@@ -432,12 +698,32 @@ export function headingOf(
  *
  * The inter-district road pass's anchor list: a lane arriving from the next
  * district should meet a street where the street already ends, not somewhere
- * convenient. Pure — nothing is wired to it in F1.
+ * convenient.
+ *
+ * `mask` extends the same idea to a C1 cell, whose boundary is a polygon rather
+ * than the bounds rectangle: a clipped street ends *inside* the bounds, on the
+ * mask edge, and that end is exactly the T-junction onto the arterial. Without
+ * this the cell's whole street network would look interior and the road pass
+ * would have nothing to anchor to — which is the invariant that makes a city's
+ * connectivity structural rather than something to be checked for afterwards.
  */
-export function boundaryEndpoints(graph: StreetGraph, bounds: Rect): Point2[] {
+export function boundaryEndpoints(graph: StreetGraph, bounds: Rect, mask?: Uint8Array): Point2[] {
   const out: Point2[] = [];
+  const stride = bounds.x1 - bounds.x0 + 1;
+  const outside = (x: number, z: number): boolean => {
+    if (x < bounds.x0 || x > bounds.x1 || z < bounds.z0 || z > bounds.z1) return true;
+    if (mask === undefined) return false;
+    return mask[(z - bounds.z0) * stride + (x - bounds.x0)] !== 1;
+  };
   const onEdge = (p: Point2): boolean =>
-    p.x <= bounds.x0 || p.x >= bounds.x1 || p.z <= bounds.z0 || p.z >= bounds.z1;
+    p.x <= bounds.x0 ||
+    p.x >= bounds.x1 ||
+    p.z <= bounds.z0 ||
+    p.z >= bounds.z1 ||
+    outside(p.x + 1, p.z) ||
+    outside(p.x - 1, p.z) ||
+    outside(p.x, p.z + 1) ||
+    outside(p.x, p.z - 1);
   for (const segment of graph.segments) {
     const first = segment.path[0];
     const last = segment.path[segment.path.length - 1];

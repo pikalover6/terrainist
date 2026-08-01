@@ -123,6 +123,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * codes and cost every small world two revision rounds it could not satisfy.
    */
   LIFE_PASS_EMPTY: "LOAM-T212",
+   * C1 `city` — a field of the city node is missing, malformed, or names
+   * something the grammar does not know (an unspellable `mix` entry, a
+   * character key outside the eight).
+   */
+  CITY_PARAM: "LOAM-T213",
+  /**
+   * C1 `city` — the envelope is too small to hold an arterial armature: the
+   * plan cannot draw a spine and leave a district cell either side of it.
+   */
+  CITY_TOO_SMALL: "LOAM-T214",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */

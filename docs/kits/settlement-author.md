@@ -457,7 +457,7 @@ stops well below the summit so the cone stays bare.
 
 ## 9. The settlement layer
 
-Five node kinds, all children of the root. The first three are placed by the
+Six node kinds, all children of the root. The first four are placed by the
 **layout solver** rather than by you; a prop is placed coarsely, and the roads
 are routed last:
 
@@ -466,12 +466,14 @@ are routed last:
 | `plaza` (`"kind": "primitive"`) | 0 or 1 | an open paved area: the green, the market, the quay |
 | `building.grammar@0` | any number | one building |
 | `district` (`"kind": "district"`) | any number | a quarter with its own street grid, blocks and lots |
+| `city` (`"kind": "city"`) | any number | a whole city: arterials first, quarters as the residue |
 | `prop.place@0` | any number | one boat, cart, pier, fountain… — the evidence people live here |
 | `road.network@0` | 0 or 1 | the lanes joining everything |
 
 A structure node may carry `constraints`, `ports`, `tags`, `optional`,
 `envelope`, `params`, `label` and `seedSalt` — and no `children`. A `district`
-is the exception: its `children` are the landmark buildings inside it.
+and a `city` are the exceptions: their `children` are the landmark buildings
+inside them.
 
 **You never say where a building goes.** You say what it must be near, what it
 faces, and how much room it needs; the solver searches the real terrain for a
@@ -1502,6 +1504,115 @@ Rules worth knowing before you write one:
   two crossing streets and a block between them. Anything under ~100 on a side
   is one or two blocks, which reads as a courtyard rather than a quarter — below
   that scale, write the buildings out and let the solver place them.
+
+### `city` — a whole city, planned from its arterials down
+
+A `district` is one quarter and you author its rectangle. A **city** is the
+level above: you author *ground and intent*, and the plan layer draws the
+armature — a drive along the real shoreline, a spine down the long axis, a
+diagonal cut across the fabric, a ring where there is room — and then takes the
+**faces of that armature** as its districts.
+
+That inversion is the whole point. Those faces are arbitrary polygons, not
+rectangles: a diagonal crossing a grid leaves wedge lots and triangular corners,
+a bay bends the quarter that fronts it, and each quarter's grid is turned to run
+parallel to the boulevard beside it, so two neighbours meet at 15° or 45°
+instead of continuing one map-wide grid. None of that is expressible as a list
+of rectangles, which is why the node does not let you write one.
+
+Reach for a city when the answer is "a city" — several square hundreds of
+blocks, more than one kind of quarter, a waterfront. Keep using `district` for a
+single quarter, and keep using both together: a hand-pinned `district` beside a
+`city` still works exactly as it always did, and is how you say "and *this* bit
+is mine".
+
+```json
+{
+  "id": "harbourtown",
+  "kind": "city",
+  "label": "a coastal city on the bay, cut by a diagonal boulevard",
+  "envelope": { "shape": "region", "size": [440, 400] },
+  "params": {
+    "size": "large",
+    "coastal": true,
+    "diagonals": 1,
+    "mix": ["office", "apartment_block", "shop_row", "townhouse", "convenience_store"],
+    "characters": {
+      "core": ["office", "hotel", "department_store"],
+      "industrial": ["warehouse", "granary", "machine_shop"],
+      "waterfront": ["shop_row", "apartment_block", "food_court"],
+      "lanes": ["townhouse", "cottage", "shop_row"]
+    }
+  },
+  "tags": ["city", "urban"],
+  "children": [
+    {
+      "id": "spire_one",
+      "kind": "generator",
+      "generator": "building.grammar@0",
+      "label": "the tallest tower on the skyline",
+      "envelope": { "shape": "box", "size": [21, 78, 19] },
+      "params": { "archetype": "skyscraper", "floors": 18 },
+      "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+      "tags": ["landmark"]
+    }
+  ]
+}
+```
+
+| field | values | notes |
+|---|---|---|
+| `envelope` | `{"shape": "region", "size": [x, z]}` | **required**; 200 × 200 is the hard floor (`LOAM-T214`), 350+ before the armature has room to be interesting |
+| `params.size` | `small`, `medium`, `large` | **required**; how much armature gets drawn, and how many industrial quarters |
+| `params.mix` | non-empty array of archetype names | **required**; what a quarter builds from unless `characters` names it |
+| `params.characters` | object keyed by character | optional per-quarter mixes; keys are the eight characters below. An unknown key is an error (`LOAM-T213`) |
+| `params.coastal` | bool | optional; omit for "coastal if the ground is". `true` on dry ground gets a note, not a failure |
+| `params.diagonals` | 0..2 | optional; the default is 1, or 2 for a `large` city |
+| `params.ring` | bool | optional; the default is "if the footprint is at least 260 on its short axis" |
+| `params.blockSize` | 16..96 | optional hint, scaled per character — 40 is the number the table is written against |
+| `constraints` | as any other node | say **where the city is**. It is allowed to straddle the waterline; nothing else but a harbour is |
+| `children` | `building.grammar@0` nodes | the landmarks, spread across the quarters that carry the skyline |
+
+**The eight characters.** Every cell of the plan gets one, from *where it is and
+what its ground is like* — never from a draw, because a park in the middle of
+downtown is exactly the flavour of wrongness that reads as generated:
+
+| character | how a cell gets it | what it builds |
+|---|---|---|
+| `park` | the ground made it steep, or the diagonal left it an awkward wedge | nothing: open ground for the treatment pass |
+| `core` | the biggest cell near the middle | the densest blocks, a square, the tallest landmarks |
+| `industrial` | out on the edge, away from the middle; by the water if it can be | big blocks, medium density |
+| `waterfront` | its frontage is on the water | an organic skeleton, medium density |
+| `civic` | the biggest cell still unspoken for | large blocks, a square |
+| `lanes` | small, or crooked | an organic skeleton at the tightest spacing |
+| `grid` | ordinary, near the middle | the plain dense grid |
+| `rowhouse` | ordinary, further out | tight blocks, high density |
+
+Rules worth knowing before you write one:
+
+- **You cannot enumerate the quarters, and that is deliberate.** There is no key
+  that names a district, a street or a coordinate. A plan you list out is the
+  rectangle problem again with more typing. Pin what you actually care about
+  with a `district` node beside the city.
+- **Do not give a city `terrain_conform: "flatten"`.** A district levels its
+  ground; a city must not, or it would raise the sea bed inside its own bay and
+  bulldoze the shoreline its drive was going to follow. Each *quarter* levels
+  itself to one terrace and the boulevards ramp between them, which is how a
+  city steps down a hill.
+- **Landmarks go where they fit.** The biggest landmark goes to the
+  highest-ranked quarter whose *blocks* can hold it — core, then civic, then the
+  waterfront — and the rest are spread out so the skyline peaks in more than one
+  place. A landmark too big for any quarter is a `LOAM-E170` warning; give it a
+  smaller envelope or raise `params.blockSize`.
+- **Precinct kits inside a city are parsed and not yet laid.** A
+  `precinct.harbour@0` or `precinct.airport@0` written as a child of a city
+  validates and reports a `LOAM-T208` note. Write it as a **sibling** of the
+  city instead, with a `distance` constraint to keep it beside the right edge —
+  that is what every shipped world does and the solver scores the shore for it.
+- Anchor a `road.network@0` on the city's id to bring lanes in from outside; the
+  arterials and the quarter streets are surfaced by the same road machinery, so
+  a lane arriving from the next settlement joins the boulevard rather than
+  running alongside it.
 
 ### `prop.place@0`
 

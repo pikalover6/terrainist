@@ -56,8 +56,10 @@ import {
   deriveTerrainProducts,
   layoutNodesFrom,
   registerRoadCorridors,
+  solveCities,
   solveDistricts,
   solveLayout,
+  type CityProduct,
   type DistrictProduct,
   type LayoutNodeInput,
   type RouteCorridor,
@@ -311,6 +313,16 @@ export interface LayoutOutcome {
    * the district were derived from.
    */
   readonly districts?: readonly DistrictProduct[];
+  /**
+   * C1's city plans, one per `city` node — the pinned {@link CityPlan} contract
+   * C2's skyline, C3's life pass and C4's set pieces code against.
+   *
+   * Beside `districts` rather than under them because the two are different
+   * layers of the same idea: `districts` here holds one entry per *cell*, which
+   * is the fabric each face of the armature was given, while this holds the
+   * armature itself and the characters it assigned.
+   */
+  readonly cities?: readonly CityProduct[];
   /** Per-building geometry and the routed road network. */
   readonly structures?: StructurePassResult;
 }
@@ -507,16 +519,34 @@ async function compileValidated(
     // the other way round, each tower would be founded on the hill the district
     // was about to erase.
     if (solved.padEdits.length > 0) applyPadEdits(terrain.field, solved.padEdits);
-    const fabric = solveDistricts({
+    // Where the water is, as the layout stage can know it: there is no column
+    // plan yet, and C1's shoreline drive has to follow a real shore. The union
+    // of the ocean and lake masks is exactly what `buildColumnPlan` will turn
+    // into `fluidKind` two stages later.
+    const wetColumns = new Uint8Array(region.width * region.depth);
+    for (let k = 0; k < wetColumns.length; k++) {
+      if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) wetColumns[k] = 1;
+    }
+    const fabricInput = {
       doc,
       worldSeed,
       field: terrain.field,
       seaLevel: terrain.params.seaLevel,
       placements: solved.placements,
-    });
+      water: wetColumns,
+      seaLevel: terrain.params.seaLevel,
+    };
+    const fabric = solveDistricts(fabricInput);
     diagnostics.push(...fabric.diagnostics);
-    if (fabric.padEdits.length > 0) applyPadEdits(terrain.field, fabric.padEdits);
-    if (solved.padEdits.length + fabric.padEdits.length > 0) {
+    // --- substage 3h: the city plan (C1) -----------------------------------
+    // A second pass at the same stage rather than a branch inside the first:
+    // a city's cells *are* districts and are laid by the same code, but the
+    // armature that produced them is drawn before any of them exists.
+    const cityFabric = solveCities(fabricInput);
+    diagnostics.push(...cityFabric.diagnostics);
+    const fabricPads = [...fabric.padEdits, ...cityFabric.padEdits];
+    if (fabricPads.length > 0) applyPadEdits(terrain.field, fabricPads);
+    if (solved.padEdits.length + fabricPads.length > 0) {
       classification = classify(terrain.field, terrain.params, {
         temperature: climate.temperature,
         noFlood: terrain.edits.noFlood,
@@ -527,14 +557,17 @@ async function compileValidated(
     // The fabric's buildings need solver nodes so the structure pass can build
     // them; they need no *occupancy* of their own, because the district's own
     // footprint was claimed by the solve and every one of them is inside it.
-    if (fabric.nodes.length > 0) layoutNodes = [...extraction.nodes, ...fabric.nodes];
-    districtParams = fabric.params;
+    const fabricNodes = [...fabric.nodes, ...cityFabric.nodes];
+    if (fabricNodes.length > 0) layoutNodes = [...extraction.nodes, ...fabricNodes];
+    districtParams = new Map([...fabric.params, ...cityFabric.params]);
+    const allDistricts = [...fabric.districts, ...cityFabric.districts];
     layoutOutcome = {
       report: solved.report,
-      placements: [...solved.placements, ...fabric.placements],
-      ports: [...solved.ports, ...fabric.ports],
-      padEdits: [...solved.padEdits, ...fabric.padEdits],
-      ...(fabric.districts.length === 0 ? {} : { districts: fabric.districts }),
+      placements: [...solved.placements, ...fabric.placements, ...cityFabric.placements],
+      ports: [...solved.ports, ...fabric.ports, ...cityFabric.ports],
+      padEdits: [...solved.padEdits, ...fabricPads],
+      ...(allDistricts.length === 0 ? {} : { districts: allDistricts }),
+      ...(cityFabric.cities.length === 0 ? {} : { cities: cityFabric.cities }),
     };
   }
   const layoutMs = now() - tLayout;
@@ -607,6 +640,7 @@ async function compileValidated(
       stack,
       ...(occupancy === undefined ? {} : { occupancy }),
       ...(layoutOutcome.districts === undefined ? {} : { districts: layoutOutcome.districts }),
+      ...(layoutOutcome.cities === undefined ? {} : { cities: layoutOutcome.cities }),
       ...(districtParams === undefined ? {} : { paramsByPath: districtParams }),
       // §4.9.6: the pass-6 router prefers the polygon that was frozen at 3b.
       ...(corridors.some((c) => c.kind === "road")

@@ -239,6 +239,101 @@ export function isDistrictNode(node: SettlementChildNode): node is DistrictNode 
   return node.kind === "district";
 }
 
+/* -------------------------------------------------------------------------- */
+/* cities (fabric v3, C1)                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The eight characters a district cell can take.
+ *
+ * The same list the compiler's `DistrictCharacter` union spells (C1's pinned
+ * `CityPlan` contract); it is restated here because the *author* may address a
+ * character by name — `params.characters.industrial` names the mix a port
+ * quarter builds from — and the spec package cannot import the compiler.
+ * `packages/spec/test/settlement-validate.test.ts` holds the two in step.
+ */
+export const DISTRICT_CHARACTERS = [
+  "core",
+  "grid",
+  "rowhouse",
+  "lanes",
+  "industrial",
+  "civic",
+  "park",
+  "waterfront",
+] as const;
+
+/** A district-cell character. */
+export type DistrictCharacterName = (typeof DISTRICT_CHARACTERS)[number];
+
+/** How much city the plan draws. */
+export const CITY_SIZES = ["small", "medium", "large"] as const;
+
+/** A city size. */
+export type CitySize = (typeof CITY_SIZES)[number];
+
+/** Most diagonals a city plan will cut through its own fabric. */
+export const CITY_MAX_DIAGONALS = 2;
+
+/**
+ * Params a `city` node carries.
+ *
+ * Deliberately *not* a list of districts. An author says "a medium coastal
+ * city, one diagonal, these landmarks" and the plan layer answers with an
+ * armature and whatever cells fall out of it — which is the whole inversion C1
+ * exists for. Pinning a particular quarter by hand is still available and
+ * unchanged: write an ordinary `district` node beside the city.
+ */
+export interface CityParams {
+  readonly size: CitySize;
+  /** Archetypes the ordinary infill draws from, in declaration order. */
+  readonly mix: readonly string[];
+  /**
+   * Per-character mix overrides. A character the author does not name builds
+   * from {@link CityParams.mix}.
+   */
+  readonly characters?: Readonly<Partial<Record<DistrictCharacterName, readonly string[]>>>;
+  /**
+   * Draw a shoreline drive. Omitted means "if the footprint has a coast" —
+   * `false` suppresses the drive even on the water, `true` asks for one and
+   * reports a note when there is no shore to follow.
+   */
+  readonly coastal?: boolean;
+  /** Diagonals cut through the fabric, 0..{@link CITY_MAX_DIAGONALS}. */
+  readonly diagonals?: number;
+  /** Draw a ring road. Omitted means "if the footprint is big enough". */
+  readonly ring?: boolean;
+  /** Preferred block size between street centre lines. A hint; cells drift. */
+  readonly blockSize?: number;
+}
+
+/**
+ * A `city`: **arterials first, districts as the residue.**
+ *
+ * One level of inversion above {@link DistrictNode}. A district authors a
+ * rectangle and fills it with a grid; a city authors nothing but its ground and
+ * its landmarks, and the plan layer draws a drive along the real shoreline, a
+ * spine along the long axis, a diagonal through the middle and a ring where
+ * there is room for one — then takes the faces of that armature as its
+ * districts. Those faces are arbitrary polygons meeting at whatever angle the
+ * arterial that borders them runs at, which is what a rectangle can never be.
+ *
+ * `children` are the things that *must* exist: landmark buildings, and precinct
+ * kits (a harbour, an airport) that each claim a whole cell.
+ */
+export interface CityNode extends StructureBase {
+  readonly kind: "city";
+  readonly envelope: RegionEnvelope;
+  readonly params: CityParams;
+  /** Landmarks and precincts, in document order. */
+  readonly children?: readonly StructureNode[];
+}
+
+/** True for a `city` node. */
+export function isCityNode(node: SettlementChildNode): node is CityNode {
+  return node.kind === "city";
+}
+
 /** Any node the settlement profile allows below the root. */
 export type SettlementChildNode =
   | HeightfieldNode
@@ -247,16 +342,20 @@ export type SettlementChildNode =
   | StructureNode
   | PropNode
   | PlazaNode
-  | DistrictNode;
+  | DistrictNode
+  | CityNode;
 
 /** True for the nodes the layout solver places. */
 export function isPlaceableNode(
   node: SettlementChildNode,
-): node is StructureNode | PlazaNode | DistrictNode {
+): node is StructureNode | PlazaNode | DistrictNode | CityNode {
   if (node.kind === "primitive") return true;
   // A district is placed as one footprint — the fabric pass then subdivides
   // what the solver reserved. See {@link DistrictNode}.
   if (node.kind === "district") return true;
+  // …and a city likewise, one level up: the solver reserves the ground, the
+  // city plan draws the arterials across it and the cells are the residue.
+  if (node.kind === "city") return true;
   // A prop node is deliberately not placeable: it is resolved coarsely by the
   // structure pass against the finished ground, not by the solver.
   return (STRUCTURE_GENERATORS as readonly string[]).includes(node.generator);

@@ -285,6 +285,16 @@ export interface DistrictPassInput {
   readonly seaLevel?: number;
   /** The solver's placements, in document order. */
   readonly placements: readonly Placement[];
+  /**
+   * 1 where a column holds water, row-major over `field.region`.
+   *
+   * Read only by C1's city pass, which routes a shoreline drive and has to know
+   * where the shore is. There is no column plan this early, so the caller
+   * unions the classification's ocean and lake masks — the same two the column
+   * pass turns into `fluidKind` a few stages later.
+   */
+  readonly water?: Uint8Array;
+  readonly seaLevel?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -322,8 +332,67 @@ export function solveDistricts(input: DistrictPassInput): DistrictPassResult {
   return { nodes, placements, ports, padEdits, params, districts, diagnostics };
 }
 
+/**
+ * A city cell's overrides, when this "district" is one face of a {@link CityPlan}.
+ *
+ * C1 reuses the whole of this pass rather than growing a second fabric: a cell
+ * *is* a district, just one whose outline is an arbitrary polygon at an
+ * arbitrary angle and whose knobs were decided by where it sits rather than by
+ * an author. Everything below — blocks, lots, landmarks, infill, frontage
+ * seating — is untouched by the distinction.
+ */
+export interface CellFabric {
+  /** 1 inside the cell, row-major over the placement's footprint. */
+  readonly mask: Uint8Array;
+  /**
+   * The same mask pulled back by the sidewalk band.
+   *
+   * Streets are clipped to `mask` so they run right up to the arterial and can
+   * be picked up as anchors there; *lots* are held inside `lotMask` so a facade
+   * is never built hard against a boulevard's carriageway.
+   */
+  readonly lotMask: Uint8Array;
+  /** Degrees about the footprint centre, quantised to 15. */
+  readonly orientation: number;
+  readonly blockSize: number;
+  readonly density: DistrictDensity;
+  /**
+   * One foundation level for the whole cell, overriding the per-building median.
+   *
+   * A city has no city-wide pad — levelling one would raise the sea bed inside
+   * its own bay — so without this each building takes its own median and two
+   * neighbours on a gentle slope end up a block apart. At `LOT_SIDE_GAP.high`
+   * of zero those two share a wall column, the second one built wins it, and
+   * the first is left with a ladder attached to nothing and a flower pot
+   * hanging in the air. A quarter is one terrace; the *city* is the thing that
+   * steps.
+   */
+  readonly foundationY?: number;
+  /**
+   * Smallest footprint axis the auto-infill will build on, overriding
+   * {@link MIN_INFILL_SIDE}.
+   *
+   * A city plan produces blocks of every shape, including the narrow ones an
+   * authored `blockSize` never asks for, and the grammar has a bug at that
+   * end: a seven- or eight-block building with three storeys in it comes out
+   * with interior pockets its own stair cannot reach — reproducible on
+   * `showcase-bayline.loam.json` with nothing changed but `blockSize: 33`,
+   * which lints 62 `traversal.unreachable`. Until that is fixed where it lives,
+   * a city declines the parcel rather than shipping the building.
+   */
+  readonly minBuilding?: number;
+  /**
+   * Where the cell's landmark children hang in the node tree.
+   *
+   * The author wrote them as children of the *city*, so that is where their
+   * node paths — and every diagnostic naming one — must stay, even though the
+   * cell they landed in is what actually placed them.
+   */
+  readonly landmarkBase?: string;
+}
+
 /** One district's fabric. */
-interface LaidDistrict {
+export interface LaidDistrict {
   readonly nodes: readonly LayoutNodeInput[];
   readonly placements: readonly Placement[];
   readonly ports: readonly ResolvedPort[];
@@ -332,14 +401,15 @@ interface LaidDistrict {
   readonly product: DistrictProduct;
 }
 
-function layDistrict(
+export function layDistrict(
   node: DistrictNode,
   nodePath: string,
   placement: Placement,
   input: DistrictPassInput,
   diagnostics: LoamDiagnostic[],
+  cell?: CellFabric,
 ): LaidDistrict | null {
-  const p = node.params;
+  const p = cell === undefined ? node.params : { ...node.params, density: cell.density };
   const density = p.density;
   const bounds = placement.footprint;
   const seed = nodeSeed(input.worldSeed, nodePath, node.seedSalt ?? "");
@@ -349,8 +419,9 @@ function layDistrict(
     bounds,
     fabric: p.fabric,
     seed,
-    blockSize: p.blockSize ?? (BLOCK_SIZE_BY_DENSITY[density] as number),
+    blockSize: cell?.blockSize ?? p.blockSize ?? (BLOCK_SIZE_BY_DENSITY[density] as number),
     sidewalk: sidewalkWidth,
+    ...(cell === undefined ? {} : { mask: cell.mask, orientation: cell.orientation }),
   });
   if (!skeleton.ok) {
     diagnostics.push(error("DISTRICT_TOO_SMALL", nodePath, skeleton.reason, skeleton.fix));
@@ -370,6 +441,12 @@ function layDistrict(
   // --- blocks --------------------------------------------------------------
   const blocked = new Uint8Array(grid.cells);
   for (let k = 0; k < grid.cells; k++) blocked[k] = carriageway[k] === 1 || sidewalk[k] === 1 ? 1 : 0;
+  // Ground outside the cell is somebody else's — the boulevard's, the bay's, or
+  // the next quarter's. Blocking it here is what makes a lot stop at the cell
+  // edge without the subdivision knowing anything about city plans.
+  if (cell !== undefined) {
+    for (let k = 0; k < grid.cells; k++) if (cell.lotMask[k] !== 1) blocked[k] = 1;
+  }
   const blocks = blocksOf(grid, blocked);
 
   // --- the reserved square -------------------------------------------------
@@ -413,7 +490,7 @@ function layDistrict(
   // --- landmarks, then infill ----------------------------------------------
   const claimed = new Set<string>();
   const built: BuiltLot[] = [];
-  const landmarks = landmarksOf(node, nodePath, input.worldSeed, diagnostics);
+  const landmarks = landmarksOf(node, cell?.landmarkBase ?? nodePath, input.worldSeed, diagnostics);
   let unplaced = 0;
   for (const landmark of landmarks) {
     const site = claimSite(lots, blockSites, claimed, landmark);
@@ -492,7 +569,7 @@ function layDistrict(
     if (positionFloat(infillStream, lot.rect.x0, 0, lot.rect.z0) >= (LOT_COVERAGE[p.density] as number)) {
       continue;
     }
-    const filled = infillLot(lot, p, infillStream, prominence);
+    const filled = infillLot(lot, p, infillStream, prominence, cell?.minBuilding ?? MIN_INFILL_SIDE);
     if (filled === null) {
       dropped++;
       continue;
@@ -523,7 +600,7 @@ function layDistrict(
     const yaw = yawFacing(frontFace(item.ports, item.frontPort), item.face);
     const [rw, rh, rd] = rotatedSize(item.size, yaw);
     const rect = seat(item.rect, item.face, rw, rd);
-    const foundationY = medianGround(input.field, rect);
+    const foundationY = cell?.foundationY ?? medianGround(input.field, rect);
     const made: Placement = {
       nodePath: item.nodePath,
       id: item.id,
@@ -1461,6 +1538,7 @@ function infillLot(
   params: DistrictParams,
   stream: Seed256,
   prominence: ProminenceField,
+  minSide: number = MIN_INFILL_SIDE,
 ): Infill | null {
   const density = params.density;
   const x = lot.rect.x0;
@@ -1472,7 +1550,7 @@ function infillLot(
 
   let across = frontage - 2 * gap;
   let back = Math.min(depth - gap, MAX_INFILL_DEPTH);
-  if (across < MIN_INFILL_SIDE || back < MIN_INFILL_SIDE) return null;
+  if (across < minSide || back < minSide) return null;
 
   const archetype = pickArchetype(params.mix, across, stream, x, z);
   if (archetype === null) return null;

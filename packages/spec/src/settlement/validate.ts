@@ -50,6 +50,9 @@ import {
 } from "./constraints.js";
 import { isKnownArchetype, nearestArchetypes } from "./archetypes.js";
 import {
+  CITY_MAX_DIAGONALS,
+  CITY_SIZES,
+  DISTRICT_CHARACTERS,
   DISTRICT_DENSITIES,
   DISTRICT_FABRICS,
   HORIZONTAL_FACES,
@@ -214,9 +217,11 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
           ? "primitive"
           : raw["kind"] === "district"
             ? "district"
-            : typeof raw["generator"] === "string"
-              ? raw["generator"]
-              : "generator",
+            : raw["kind"] === "city"
+              ? "city"
+              : typeof raw["generator"] === "string"
+                ? raw["generator"]
+                : "generator",
       );
     }
 
@@ -241,13 +246,18 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       continue;
     }
 
+    if (raw["kind"] === "city") {
+      validateCityNode(out, childPath, raw, connections);
+      continue;
+    }
+
     if (raw["kind"] !== "generator") {
       out.push(
         error(
           "STRUCTURE_NODE_SHAPE",
           childPath,
-          `children of the root must have "kind": "generator", "kind": "primitive" or "kind": "district", got ${describe(raw["kind"])}`,
-          'set "kind": "generator" for a terrain or structure generator, "kind": "primitive" for the plaza, or "kind": "district" for a street-fabric quarter — the settlement profile has no other composites',
+          `children of the root must have "kind": "generator", "kind": "primitive", "kind": "district" or "kind": "city", got ${describe(raw["kind"])}`,
+          'set "kind": "generator" for a terrain or structure generator, "kind": "primitive" for the plaza, "kind": "district" for one street-fabric quarter, or "kind": "city" for a whole arterial-first city — the settlement profile has no other composites',
         ),
       );
       continue;
@@ -677,6 +687,323 @@ function validateDistrictMix(out: LoamDiagnostic[], at: string, mix: unknown): v
         "DISTRICT_PARAM",
         at,
         `"mix"[${index}] names "${name}", which is not a building archetype`,
+        near.length === 0
+          ? `replace it with an archetype the grammar knows — the vocabulary is the same one "params.archetype" and the building tags draw on`
+          : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+      ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* cities (fabric v3, C1)                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Keys a `city` node may carry. */
+const CITY_KEYS = [
+  "id",
+  "kind",
+  "envelope",
+  "params",
+  "children",
+  "constraints",
+  "ports",
+  "optional",
+  "seedSalt",
+  "tags",
+] as const;
+
+/** Keys a city's `params` may carry. */
+const CITY_PARAM_KEYS = [
+  "size",
+  "mix",
+  "characters",
+  "coastal",
+  "diagonals",
+  "ring",
+  "blockSize",
+] as const;
+
+/**
+ * Smallest city envelope, per axis, in blocks.
+ *
+ * A city is an *armature* plus the faces it leaves behind, and the smallest
+ * armature worth drawing is a spine with one cell either side of it. A spine is
+ * thirteen columns; a cell that can hold a fabric is another thirty-eight
+ * (`MIN_DISTRICT_SPAN`) — twice, plus margins. Below this the author wants one
+ * `district`, which is a node that already exists and does the job better.
+ */
+export const CITY_MIN_SPAN = 200;
+
+/**
+ * Validate a `city` node.
+ *
+ * The shape is narrower than a district's, deliberately: a district authors a
+ * rectangle and its fabric; a city authors *ground and intent*. There is no key
+ * here that names a quarter, a street or a coordinate, and there is no way to
+ * add one — a plan the author enumerates is the rectangle problem again with
+ * more typing.
+ */
+function validateCityNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, CITY_KEYS, "city node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  // --- envelope ------------------------------------------------------------
+  const envelope = node["envelope"];
+  if (!isObject(envelope)) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `a city needs a region envelope, got ${describe(envelope)}`,
+        `add "envelope": { "shape": "region", "size": [${CITY_MIN_SPAN + 60}, ${CITY_MIN_SPAN + 20}] } — a city is a piece of ground, so its size has two elements`,
+      ),
+    );
+  } else {
+    unknownKeys(out, envelope, `${path}.envelope`, ["shape", "size", "follows"], "city envelope");
+    if (envelope["shape"] !== "region") {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `the city envelope "shape" must be "region", got ${describe(envelope["shape"])}`,
+          'set "shape": "region" — a city is ground the plan layer cuts up, not a box',
+        ),
+      );
+    }
+    checkFootprintSize(out, `${path}.envelope`, envelope["size"], "region");
+    const size = envelope["size"];
+    if (Array.isArray(size) && size.length >= 2) {
+      const [w, d] = size as unknown[];
+      if (typeof w === "number" && typeof d === "number" && (w < CITY_MIN_SPAN || d < CITY_MIN_SPAN)) {
+        out.push(
+          error(
+            "CITY_TOO_SMALL",
+            `${path}.envelope`,
+            `a city needs at least ${CITY_MIN_SPAN} blocks on each axis to hold an arterial and a district cell either side of it; this one is ${w} × ${d}`,
+            `grow "envelope.size" to at least [${CITY_MIN_SPAN}, ${CITY_MIN_SPAN}] — or express this as a single "kind": "district" node, which is what one quarter of fabric is`,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- params --------------------------------------------------------------
+  const params = node["params"];
+  if (!isObject(params)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        path,
+        `a city needs "params", got ${describe(params)}`,
+        'write "params": { "size": "medium", "mix": ["office", "apartment_block", "shop_row"] } — a city with no size and no mix has nothing to build',
+      ),
+    );
+  } else {
+    validateCityParams(out, `${path}.params`, params);
+  }
+
+  // --- landmark and precinct children --------------------------------------
+  const children = node["children"];
+  if (children !== undefined) {
+    if (!Array.isArray(children)) {
+      out.push(
+        error(
+          "STRUCTURE_NODE_SHAPE",
+          path,
+          `"children" must be an array of landmarks and precincts, got ${describe(children)}`,
+          'write "children": [ { "id": "tower", "kind": "generator", "generator": "building.grammar@0", ... } ] — or drop the key entirely and let the plan infill every cell',
+        ),
+      );
+    } else {
+      const seen = new Set<string>();
+      for (const [index, raw] of children.entries()) {
+        const childPath = `${path}.${isObject(raw) && typeof raw["id"] === "string" ? raw["id"] : `children[${index}]`}`;
+        if (!isObject(raw)) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `each city child must be a building or precinct node object, got ${describe(raw)}`,
+              "replace this array entry with a building.grammar@0 or precinct.*@0 generator node",
+            ),
+          );
+          continue;
+        }
+        checkId(out, path, raw["id"], `children[${index}]`);
+        if (typeof raw["id"] === "string") {
+          if (seen.has(raw["id"])) {
+            out.push(
+              error(
+                "DUPLICATE_ID",
+                childPath,
+                `two children of "${path}" share the id "${raw["id"]}"`,
+                `rename one of them — sibling ids must be unique (e.g. "${raw["id"]}_2")`,
+              ),
+            );
+          }
+          seen.add(raw["id"]);
+        }
+        const generator = raw["generator"];
+        const allowed =
+          raw["kind"] === "generator" &&
+          typeof generator === "string" &&
+          (generator === "building.grammar@0" || isPrecinctGenerator(generator));
+        if (!allowed) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `a city's children are landmark buildings and precinct kits; this one is ${describe(raw["generator"] ?? raw["kind"])}`,
+              'give every city child "kind": "generator" and either "generator": "building.grammar@0" or one of the precinct.*@0 kits — roads, plazas, props and nested districts belong under the root, not inside a city',
+            ),
+          );
+          continue;
+        }
+        validateStructureNode(out, childPath, raw, connections);
+      }
+    }
+  }
+
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+/** Validate a city's `params` object. */
+function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, CITY_PARAM_KEYS, "city params");
+
+  const size = params["size"];
+  if (size === undefined) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        '"size" is required on a city — it is what decides how much armature gets drawn',
+        `set "size": "medium" — one of: ${CITY_SIZES.join(", ")}`,
+      ),
+    );
+  } else if (typeof size !== "string" || !(CITY_SIZES as readonly string[]).includes(size)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"size" must be one of ${CITY_SIZES.join(", ")}, got ${describe(size)}`,
+        'set "size": "medium"',
+      ),
+    );
+  }
+
+  checkBooleans(out, at, params, ["coastal", "ring"]);
+  checkNumbers(out, at, params, {
+    diagonals: { min: 0, max: CITY_MAX_DIAGONALS, int: true },
+    blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
+  });
+
+  validateCityMix(out, at, "mix", params["mix"], true);
+  validateCityCharacters(out, at, params["characters"]);
+}
+
+/**
+ * Validate the per-character mix table.
+ *
+ * A key outside the eight characters is an **error** for the same reason a
+ * misspelt archetype is: `"industral": [...]` is not a mix the plan will
+ * quietly ignore in one quarter, it is a whole port district silently built out
+ * of the default mix, and nothing in the finished world says so.
+ */
+function validateCityCharacters(out: LoamDiagnostic[], at: string, characters: unknown): void {
+  if (characters === undefined) return;
+  if (!isObject(characters)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"characters" must be an object keyed by district character, got ${describe(characters)}`,
+        `write "characters": { "industrial": ["warehouse", "factory"] } — the keys are: ${DISTRICT_CHARACTERS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, characters, `${at}.characters`, DISTRICT_CHARACTERS, "city characters");
+  for (const key of DISTRICT_CHARACTERS) {
+    const value = characters[key];
+    if (value === undefined) continue;
+    validateCityMix(out, `${at}.characters`, key, value, false);
+  }
+}
+
+/**
+ * Validate one archetype list on a city — the default `mix`, or one character's
+ * override. The rules are the district's, restated against the city's keys so
+ * the `fix` names a field the author can actually find.
+ */
+function validateCityMix(
+  out: LoamDiagnostic[],
+  at: string,
+  key: string,
+  mix: unknown,
+  required: boolean,
+): void {
+  if (mix === undefined) {
+    if (!required) return;
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        '"mix" is required on a city — it is what every cell the author did not name builds from',
+        'write "mix": ["office", "apartment_block", "shop_row"] — archetype names, in the proportion you want them cycled',
+      ),
+    );
+    return;
+  }
+  if (!Array.isArray(mix) || mix.length === 0) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}" must be a non-empty array of archetype names, got ${describe(mix)}`,
+        `write "${key}": ["townhouse", "shop_row"] — the infill cycles these across the cell's lots`,
+      ),
+    );
+    return;
+  }
+  if (mix.length > DISTRICT_MAX_MIX) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}" has ${mix.length} entries; this profile reads at most ${DISTRICT_MAX_MIX}`,
+        `keep the ${DISTRICT_MAX_MIX} archetypes that carry the quarter's character — past that the block reads as noise rather than as a mix`,
+      ),
+    );
+  }
+  for (const [index, name] of mix.entries()) {
+    if (typeof name !== "string") {
+      out.push(
+        error(
+          "CITY_PARAM",
+          at,
+          `"${key}"[${index}] must be an archetype name, got ${describe(name)}`,
+          `every entry is a string, e.g. "${key}": ["office", "hotel"]`,
+        ),
+      );
+      continue;
+    }
+    if (isKnownArchetype(name)) continue;
+    const near = nearestArchetypes(name);
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}"[${index}] names "${name}", which is not a building archetype`,
         near.length === 0
           ? `replace it with an archetype the grammar knows — the vocabulary is the same one "params.archetype" and the building tags draw on`
           : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,

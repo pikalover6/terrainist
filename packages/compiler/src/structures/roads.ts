@@ -258,6 +258,17 @@ export interface RoadNetworkInput {
   readonly corridor?: Uint8Array;
 }
 
+/**
+ * The only thing the router actually reads off a column plan.
+ *
+ * Narrowed from `ColumnPlan` on purpose, and it is the whole reason C1's city
+ * plan can reuse this router rather than grow a second one: arterials are
+ * routed in the **layout** stage, where the composed heightfield exists and the
+ * column plan does not. Every caller that has a real `ColumnPlan` still passes
+ * one — it satisfies this shape structurally.
+ */
+export type RouteGround = { readonly ground: Int32Array };
+
 /** One routed road. */
 export interface RoadRoute {
   readonly from: string;
@@ -481,6 +492,21 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
 export interface StreetSurfaceInput {
   /** The skeletons to surface, one per district, in document order. */
   readonly graphs: readonly StreetGraph[];
+  /**
+   * C1's city arterials, surfaced through this same pass and deliberately so.
+   *
+   * An arterial is a street that happens to be eleven columns wide: it wants
+   * the same grade, the same materials and the same shoulder blend a street
+   * gets, and forking a third surfacing path would be the third place a change
+   * of road palette has to be made. The one thing it gets that a street does
+   * not is a **bridge deck** — a district's grid never crosses water, and a
+   * city's drive is expected to.
+   */
+  readonly arterials?: readonly {
+    readonly id: string;
+    readonly width: number;
+    readonly path: readonly { readonly x: number; readonly z: number }[];
+  }[];
   /** Mutated in place, exactly as the road pass mutates it. */
   readonly plan: ColumnPlan;
   readonly palette: Palette;
@@ -504,6 +530,10 @@ export interface StreetSurfaceResult {
   readonly surfacedColumns: number;
   /** 1 for a column this pass surfaced, row-major over the plan's region. */
   readonly road: Uint8Array;
+  /** Of those, columns carried on an arterial bridge deck over water. */
+  readonly bridgeColumns: number;
+  /** Arterial carriageway columns, of the total. */
+  readonly arterialColumns: number;
 }
 
 /**
@@ -558,6 +588,42 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   /** Avenue centre lines, kept until every segment has been surfaced. */
   const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
 
+  // Arterials first: a city street *meets* a boulevard rather than the other
+  // way round, and the wider carriageway should be the one that survives where
+  // the two bands overlap.
+  const arterialMask = new Uint8Array(cells);
+  for (const arterial of input.arterials ?? []) {
+    const path = arterial.path.filter((c) => inside(region, c.x, c.z));
+    if (path.length === 0) continue;
+    const profile = gradeProfile(
+      path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
+      plan.seaLevel,
+      ROAD_FILL_BAND,
+      // A deck has to clear the water it spans; a dry cell keeps the plain floor.
+      path.map((c) => {
+        const k = index(region, c.x, c.z);
+        return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
+      }),
+    );
+    const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+    surfaceRoute(
+      region,
+      plan,
+      blocked,
+      road,
+      roadY,
+      surfaced,
+      arterial.width,
+      states,
+      occupancy,
+      paved,
+      water,
+      bridged,
+    );
+    buildBridgeDeck(region, plan, surfaced, arterial.width, states, blocks, water);
+  }
+  for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
+
   for (const graph of input.graphs) {
     for (const segment of graph.segments) {
       const path = segment.path.filter((c) => inside(region, c.x, c.z));
@@ -595,10 +661,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   blendShoulders(region, plan, road, roadY, blocked, paved);
 
   let surfacedColumns = 0;
+  let bridgeColumns = 0;
+  let arterialColumns = 0;
   for (let k = 0; k < cells; k++) {
     if (road[k] === 1) surfacedColumns++;
+    if (bridged[k] === 1) bridgeColumns++;
+    if (arterialMask[k] === 1) arterialColumns++;
   }
-  return { blocks, surfacedColumns, road };
+  return { blocks, surfacedColumns, road, bridgeColumns, arterialColumns };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -639,7 +709,9 @@ function buildBlockedMask(input: RoadNetworkInput, water: Uint8Array): Uint8Arra
  * Run lengths are read off the rows and the columns in two linear sweeps, so
  * this is O(cells) and, being a pure function of the fluid mask, deterministic.
  */
-export function buildBridgeableMask(plan: ColumnPlan): Uint8Array {
+export function buildBridgeableMask(
+  plan: { readonly region: Region; readonly fluidKind: Uint8Array },
+): Uint8Array {
   const { region, fluidKind } = plan;
   const n = region.width * region.depth;
   const wet = new Uint8Array(n);
@@ -856,13 +928,26 @@ export function routeTo(
   region: Region,
   blocked: Uint8Array,
   road: Uint8Array,
-  plan: ColumnPlan,
+  plan: RouteGround,
   start: { x: number; z: number },
-  costs: { water?: Uint8Array; wallHug?: Uint8Array; corridor?: Uint8Array } = {},
+  costs: {
+    water?: Uint8Array;
+    wallHug?: Uint8Array;
+    corridor?: Uint8Array;
+    /** One-off charge for leaving dry land. Default {@link ROAD_BRIDGE_ENTRY}. */
+    bridgeEntry?: number;
+    /** Charge per further water cell. Default {@link ROAD_WATER_COST}. */
+    waterCost?: number;
+  } = {},
 ): { x: number; z: number }[] | null {
   const water = costs.water;
   const wallHug = costs.wallHug;
   const corridor = costs.corridor;
+  // A city arterial is *expected* to bridge: the whole reason a waterfront
+  // city reads as one is that its boulevards cross the water rather than
+  // detouring round the head of it. The defaults stay the village lane's.
+  const bridgeEntry = costs.bridgeEntry ?? ROAD_BRIDGE_ENTRY;
+  const waterCost = costs.waterCost ?? ROAD_WATER_COST;
   const cells = region.width * region.depth;
   const states = cells * DIR_STATES;
   const goal = index(region, start.x, start.z);
@@ -932,7 +1017,7 @@ export function routeTo(
       // not a cost the route pays.
       const drop = wetHere || wetNext ? 0 : Math.abs((plan.ground[nIdx] as number) - here);
       let cost = (diagonal ? ROAD_DIAGONAL_COST : ROAD_BASE_COST) + ROAD_SLOPE_COST * drop;
-      if (wetNext) cost += ROAD_WATER_COST + (wetHere ? 0 : ROAD_BRIDGE_ENTRY);
+      if (wetNext) cost += waterCost + (wetHere ? 0 : bridgeEntry);
       if (wallHug !== undefined && wallHug[nIdx] === 1) cost += ROAD_WALL_HUG_COST;
       // A 45° kink is half a turn — which is exactly what buys flowing lanes
       // instead of staircases, because the search can now bend gently.
@@ -1083,7 +1168,7 @@ export function smoothRoute(
   region: Region,
   blocked: Uint8Array,
   road: Uint8Array,
-  plan: ColumnPlan,
+  plan: RouteGround,
   path: readonly { x: number; z: number }[],
   reach: number = ROAD_SMOOTH_REACH,
   water?: Uint8Array,
@@ -1179,7 +1264,7 @@ function lineLegal(
 /** Total absolute ground change along a run of cells — its "steepness bill". */
 function roughness(
   region: Region,
-  plan: ColumnPlan,
+  plan: RouteGround,
   cells: readonly { x: number; z: number }[],
 ): number {
   let sum = 0;

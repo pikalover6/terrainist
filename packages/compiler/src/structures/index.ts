@@ -47,6 +47,7 @@ import type {
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { resolvePorts } from "../layout/ports.js";
+import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
 import { dressStreets } from "./streetscape.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
@@ -129,6 +130,14 @@ export interface StructurePassInput {
    */
   readonly districts?: readonly DistrictProduct[];
   /**
+   * C1's city plans, one per `city` node.
+   *
+   * Only the arterials are read here: they are surfaced through the same pass
+   * that surfaces streets, before it, so a street *meets* a boulevard. The
+   * cells themselves already arrived as ordinary entries in `districts`.
+   */
+  readonly cities?: readonly CityProduct[];
+  /**
    * `building.grammar@0` params for placements that have no document node.
    *
    * Every auto-infilled building in a district is a real placement with no line
@@ -178,6 +187,14 @@ export interface StructureStats {
   readonly districtBuildings: number;
   /** Columns surfaced as district streets. */
   readonly streetColumns: number;
+  /** C1 city plans laid. */
+  readonly cities: number;
+  /** Arterials drawn across them, of every kind. */
+  readonly arterials: number;
+  /** Of `streetColumns`, the ones that are arterial carriageway. */
+  readonly arterialColumns: number;
+  /** Of those, the ones carried on a bridge deck over water. */
+  readonly arterialBridgeColumns: number;
   /** Props built by `prop.place@0`. */
   readonly props: number;
   /** Prop nodes the placer could find no site for. */
@@ -251,10 +268,15 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const placementByPath = new Map(input.placements.map((p) => [p.nodePath, p] as const));
   const docNodes = structureNodesOf(input.doc, rootPath);
   const districts = input.districts ?? [];
+  const cities = input.cities ?? [];
   /** Every building the fabric pass produced, by node path. */
   const districtPaths = new Set<string>();
-  for (const district of districts) {
-    const prefix = `${district.nodePath}.`;
+  // A city's own prefix as well as each cell's: a landmark the author wrote as
+  // a child of the city keeps its `world.city.spire` path however deep in the
+  // plan it actually landed, and it is still on a street rather than a
+  // destination the road router must reach.
+  for (const owner of [...districts.map((d) => d.nodePath), ...cities.map((c) => c.nodePath)]) {
+    const prefix = `${owner}.`;
     for (const placement of input.placements) {
       if (placement.nodePath.startsWith(prefix)) districtPaths.add(placement.nodePath);
     }
@@ -487,9 +509,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
   let streetFurniture = 0;
-  if (districts.length > 0) {
+  const arterials = cities.flatMap((c) => c.plan.arterials);
+  if (districts.length > 0 || arterials.length > 0) {
     streets = surfaceStreetGraph({
       graphs: districts.map((d) => d.streets),
+      ...(arterials.length === 0
+        ? {}
+        : { arterials: arterials.map((a) => ({ id: a.id, width: a.width, path: a.path })) }),
       plan: input.plan,
       palette: input.palette,
       stack: input.stack,
@@ -743,6 +769,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       districts: districts.length,
       districtBuildings: districtPaths.size,
       streetColumns: streets?.surfacedColumns ?? 0,
+      cities: cities.length,
+      arterials: arterials.length,
+      arterialColumns: streets?.arterialColumns ?? 0,
+      arterialBridgeColumns: streets?.bridgeColumns ?? 0,
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,
@@ -979,16 +1009,28 @@ function structureNodesOf(
   rootPath: string,
 ): Map<string, StructureNode> {
   const out = new Map<string, StructureNode>();
-  for (const child of doc.root.children) {
-    if (child.kind !== "generator") continue;
+  const take = (node: StructureNode, path: string): void => {
     if (
-      child.generator !== "building.grammar@0" &&
-      child.generator !== "road.network@0" &&
-      !isPrecinctGenerator(child.generator)
+      node.generator !== "building.grammar@0" &&
+      node.generator !== "road.network@0" &&
+      !isPrecinctGenerator(node.generator)
     ) {
+      return;
+    }
+    out.set(path, node);
+  };
+  for (const child of doc.root.children) {
+    // C1: a precinct written as a child of a `city` is placed by the city pass
+    // against the cell it claimed, but its *params* still live in the document
+    // and the precinct kit reads them from here.
+    if (child.kind === "city") {
+      for (const grand of child.children ?? []) {
+        take(grand, `${rootPath}.${child.id}.${grand.id}`);
+      }
       continue;
     }
-    out.set(`${rootPath}.${child.id}`, child as StructureNode);
+    if (child.kind !== "generator") continue;
+    take(child as StructureNode, `${rootPath}.${child.id}`);
   }
   return out;
 }

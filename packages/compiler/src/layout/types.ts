@@ -29,9 +29,20 @@ export interface LayoutNodeInput {
    * finds the plaza by looking for the one `primitive`, and a district that
    * called itself one would be paved as a village green.
    */
-  readonly kind: "generator" | "primitive" | "district";
+  readonly kind: "generator" | "primitive" | "district" | "city";
   /** `building.grammar@0` / `road.network@0`; absent for the plaza. */
   readonly generator?: string;
+  /**
+   * The node may straddle the waterline: the freeboard veto is lifted and the
+   * amphibious hazard mask is used. A harbour and a city, and nothing else.
+   */
+  readonly amphibious?: boolean;
+  /**
+   * …and it is *scored against* a candidate with no water in it. Separate from
+   * {@link LayoutNodeInput.amphibious} because an inland city is allowed to
+   * touch the water and must not be dragged towards it.
+   */
+  readonly wantsWater?: boolean;
   /** Requested footprint and height, in blocks. */
   readonly size: readonly [number, number, number];
   /** Smallest acceptable footprint when `flexible`; defaults to `size`. */

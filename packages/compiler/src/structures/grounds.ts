@@ -412,6 +412,22 @@ function reservedMask(input: GroundPassInput, cells: number): Uint8Array {
         mask[index(region, x, z)] = 1;
       }
     }
+    // …and the apron columns the building itself stood something in.
+    //
+    // A window box is a fence on the ground *outside* the wall with a pot on
+    // top of it, and a porch lamp is two fence posts and a lantern; both live
+    // one column into the apron and neither is in the footprint. Without this
+    // the lot dressing plants a garden flower in that exact column, the flower
+    // is written after the fence and wins, and the pot above it is left
+    // hanging — `unsupported.chain`, found by C1's probe world and reproducible
+    // anywhere a building with a window box gets a soft-ground lot.
+    for (const key of built.apron?.floor?.keys() ?? []) {
+      const comma = key.indexOf(",");
+      const x = Number(key.slice(0, comma));
+      const z = Number(key.slice(comma + 1));
+      if (!inside(region, x, z)) continue;
+      mask[index(region, x, z)] = 1;
+    }
   }
   return mask;
 }

@@ -13,6 +13,7 @@ import {
   note,
   resolveTypeKey,
   type CanonicalConstraint,
+  type CityNode,
   type DistrictNode,
   type LoamDiagnostic,
   type PlazaNode,
@@ -59,6 +60,11 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
 
     if (child.kind === "district") {
       nodes.push(districtInput(child, nodePath, seed));
+      continue;
+    }
+
+    if (child.kind === "city") {
+      nodes.push(cityInput(child, nodePath, seed));
       continue;
     }
 
@@ -149,6 +155,40 @@ function districtInput(node: DistrictNode, nodePath: string, seed: Seed256): Lay
     ports: node.ports ?? {},
     optional: node.optional === true,
     tags: node.tags ?? [],
+    seed,
+  };
+}
+
+/**
+ * A city, as the solver sees it: **one amphibious footprint and nothing else.**
+ *
+ * Two things separate it from a district, and both come from the same fact —
+ * a city is placed *against the coast*, not merely near it.
+ *
+ * `amphibious` lifts the freeboard veto so a candidate footprint may reach
+ * below sea level; `wantsWater` is only set when the author asked for a coastal
+ * city, so an inland one is not pushed towards a lake it never mentioned.
+ * And no pad: levelling a whole city to one plane would raise the sea bed
+ * inside its own bay and there would be no waterfront left to build on. Each
+ * building levels its own footprint, as it always did, and the arterials and
+ * streets grade themselves — which is also what lets a city step down a hill.
+ */
+function cityInput(node: CityNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+  const [w, d] = node.envelope.size ?? [320, 320];
+  return {
+    id: node.id,
+    nodePath,
+    kind: "city",
+    size: [w, 1, d],
+    flexible: false,
+    padding: 0,
+    rotations: [0],
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    amphibious: true,
+    ...(node.params.coastal === true ? { wantsWater: true } : {}),
     seed,
   };
 }

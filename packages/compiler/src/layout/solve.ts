@@ -92,6 +92,9 @@ const IMPROVEMENT_EPSILON = 1e-9;
 /** How far above sea level a footprint's lowest column must sit. */
 const MIN_FREEBOARD = 1;
 
+/** Slope veto for a `city` footprint — see {@link scoreCandidate}. */
+const CITY_MAX_SLOPE = 82;
+
 /**
  * What a  candidate is charged for not meeting the water.
  *
@@ -392,12 +395,19 @@ function scoreCandidate(
   request: LayoutRequest,
   demoted: ReadonlySet<number>,
 ): Scored {
-  const amphibious = node.generator === "precinct.harbour@0";
+  const amphibious = node.generator === "precinct.harbour@0" || node.amphibious === true;
   const hazardMask = amphibious
     ? (request.amphibiousHazardMask ?? undefined)
     : request.hazardMask;
   const stats = footprintStats(request.field, request.classification, candidate.rect, hazardMask);
-  const slopeLimit = maxSlopeOf(node);
+  // A city is *ground*, not a building. A four-hundred-block footprint over
+  // real terrain contains some cliff almost by definition, and vetoing on the
+  // worst column in it reports every candidate as infeasible — which does not
+  // stop the node being placed, it just drops it to the least-violating
+  // position, i.e. a coin toss, with an `UNSATISFIABLE` warning the author
+  // cannot act on. Slope still *costs* (`terrainCost` reads the mean), and C1
+  // gives the cells the ground made steep over to parks.
+  const slopeLimit = node.kind === "city" ? CITY_MAX_SLOPE : maxSlopeOf(node);
   // A harbour is the one node type that is *supposed* to straddle the
   // waterline: the freeboard veto — no footprint may reach below sea level —
   // is what a quay exists to overcome, and applying it here would push every
@@ -437,7 +447,10 @@ function scoreCandidate(
   // in the author's diagnostics as "nothing satisfies this node" on a document
   // that placed its port perfectly. A cost an order of magnitude above every
   // normalized constraint cost buys the same outcome and says nothing.
-  let soft = amphibious ? amphibiousCost(touchesWater, hasLand) : 0;
+  // Wanting water is not the same as tolerating it: a harbour that found no
+  // shore is not a harbour, an inland city that found no shore is a city.
+  const wantsWater = node.generator === "precinct.harbour@0" || node.wantsWater === true;
+  let soft = wantsWater ? amphibiousCost(touchesWater, hasLand) : 0;
   const evals: { index: number; cost: number; satisfied: boolean; feasible: boolean }[] = [];
   for (const [index, constraint] of node.constraints.entries()) {
     const result = evaluateConstraint(constraint, index, candidate, ctx, demoted.has(index));
@@ -806,6 +819,12 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // ground of the box and there would be no harbour left to build, so the quay
   // grades its own strip in the structure pass, against the waterline it finds.
   if (node.generator === "precinct.harbour@0") return null;
+  // A city is the other one, and for the same reason one level up: levelling a
+  // whole city to a single plane would raise the sea bed inside its own bay,
+  // erase the shoreline its drive was going to follow, and flatten the hill the
+  // stair district was going to climb. Its buildings still level their own
+  // footprints and its arterials still grade themselves; the *land* survives.
+  if (node.kind === "city") return null;
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {
