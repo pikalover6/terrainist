@@ -305,7 +305,54 @@ export interface CityParams {
   readonly ring?: boolean;
   /** Preferred block size between street centre lines. A hint; cells drift. */
   readonly blockSize?: number;
+  /**
+   * The set pieces (C4): the handful of anchors placed for their *relationship*
+   * to the plan rather than sprinkled through it.
+   *
+   * Omitted means "seat what the ground offers", which is the intended default
+   * — a boulevard that ends on nothing is the thing this exists to fix, and an
+   * author should not have to ask. `false` suppresses the track outright.
+   */
+  readonly setPieces?: boolean | CitySetPieces;
 }
+
+/** The five kinds of anchor a city seats. */
+export const SET_PIECE_KINDS = [
+  "landmark",
+  "bridge",
+  "promenade",
+  "stair",
+  "square",
+] as const;
+
+/** One set-piece kind, as the authoring surface spells it. */
+export type SetPieceKindName = (typeof SET_PIECE_KINDS)[number];
+
+/** Most anchors one city may seat. */
+export const SET_PIECE_MAX_COUNT = 6;
+
+/** Fewest anchors it is worth asking for. */
+export const SET_PIECE_MIN_COUNT = 1;
+
+/** The long spelling of {@link CityParams.setPieces}. */
+export interface CitySetPieces {
+  /** Cap on anchors of every kind together, 1..{@link SET_PIECE_MAX_COUNT}. */
+  readonly max?: number;
+  /** When present, only these kinds are considered. Declaration order is free. */
+  readonly kinds?: readonly SetPieceKindName[];
+}
+
+/**
+ * Arterial kinds a landmark's `params.vista` may name.
+ *
+ * A ring is deliberately absent: it is a closed loop, so it has no end to stand
+ * at and look down, and `Arterial.termini` is empty for one. Naming it is an
+ * authoring error with a fix rather than a request that silently does nothing.
+ */
+export const VISTA_ARTERIALS = ["spine", "boulevard", "diagonal", "drive"] as const;
+
+/** An arterial kind a vista pin may name. */
+export type VistaArterialName = (typeof VISTA_ARTERIALS)[number];
 
 /**
  * A `city`: **arterials first, districts as the residue.**

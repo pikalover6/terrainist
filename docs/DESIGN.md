@@ -741,6 +741,46 @@ plus two more chosen to exercise what a rectangle never could.
 - **`DistrictCharacter` lives in `layout/prominence.ts`** (C2) rather than
   `layout/city.ts`, because the skyline field shipped first. C1's `city.ts`
   imports it from there instead of restating it.
+- **C4 splits in two, and `CityProduct` grows two fields.** `layout/vistas.ts`
+  is the planner — it reads a finished `CityPlan` and answers with `VistaAxis`
+  and `SetPiece` records, writing no blocks and seating no node;
+  `structures/setpieces.ts` lays the blocks, between the ground treatment (F2)
+  and the life pass (C3). `CityProduct` carries `vistas` and `setPieces` so both
+  the report and the structure pass read one truth. `CityPlan` itself is
+  **unchanged**: C4 consumes `Arterial.termini` exactly as pinned.
+- **A terminating landmark is seated by the city pass, not by the cell fabric**
+  (C4). It stands on the arterial corridor at the end of an axis — ground no
+  cell owns — so `city-pass.ts` builds its placement, node, ports and pad
+  directly, exactly as `district.ts` does for a landmark that claimed a lot, and
+  then punches the footprint out of every overlapping cell's `lotMask`. That
+  punch is the only moment in the pipeline at which a district can be told "not
+  here", which is also how the civic square is held open.
+- **The life pass's occupancy machinery is exported, not re-implemented** (C4).
+  `buildLifeWorld`, `Planter` and the four `PlaceRule`s are now `export`ed from
+  `structures/life.ts` and the set-piece pass writes through them. Two additive
+  passes over one finished world have to agree voxel for voxel on what "already
+  taken" means; a second `solidAt` is a second answer to the only question
+  either of them asks. Same argument `city.ts` makes for reusing the road
+  pass's router.
+- **The bridge already had a deck.** C4's first draft put a parapet on the
+  carriageway edge at `half`; `buildBridgeDeck` already lays a deck one column
+  wider each side with a **fence rail** on that extra column, out of **top
+  slabs** — so the draft narrowed the road, built a second rail inboard of the
+  first, and asked `solidAt` for support on a half block that does not report
+  any. What shipped instead adds only what was missing (pylons at the abutments,
+  lamps on the existing rail, a balustrade carrying the line onto the bank) and
+  finds its support with a "top *occupied* voxel" probe that rejects a fluid
+  surface — the fix for the one `unsupported.chain` finding this track produced.
+- **The hillside stair is re-seated against the finished ground.** The plan
+  chooses its strip on the heightfield as it stands *before* the quarters are
+  levelled — the only field the layout stage has, since a cell's terrace pad is
+  computed in the same function and applied a stage later. The structure pass
+  therefore treats the strip as a direction and a rough place, sweeps a
+  ten-column window on the emitted ground, and builds the steepest flight that
+  is actually climbable: `need[k] = max(g[k] + 1, need[k+1] − 1)` taken
+  backwards, refused whole if the bottom step ends up out of reach or any column
+  would need more than four courses. Laying a stair block on every column — the
+  obvious construction — fixes nothing and makes a two-block riser worse.
 
 ### U6 — landform that scales, and precincts that find their coast (2026-08-01)
 

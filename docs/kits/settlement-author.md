@@ -1570,6 +1570,7 @@ is mine".
 | `params.diagonals` | 0..2 | optional; the default is 1, or 2 for a `large` city |
 | `params.ring` | bool | optional; the default is "if the footprint is at least 260 on its short axis" |
 | `params.blockSize` | 16..96 | optional hint, scaled per character — 40 is the number the table is written against |
+| `params.setPieces` | bool, or `{ max, kinds }` | optional; the anchors (below). Omit for "seat what the ground offers", which is the intended default |
 | `constraints` | as any other node | say **where the city is**. It is allowed to straddle the waterline; nothing else but a harbour is |
 | `children` | `building.grammar@0` nodes | the landmarks, spread across the quarters that carry the skyline |
 
@@ -1613,6 +1614,89 @@ Rules worth knowing before you write one:
   arterials and the quarter streets are surfaced by the same road machinery, so
   a lane arriving from the next settlement joins the boulevard rather than
   running alongside it.
+
+#### Set pieces and vista axes
+
+Everything above makes *fabric*. What makes a city read as **intended** rather
+than generated is a handful of things placed for their relationship to the plan:
+a boulevard that ends on something, a bridge that is an event rather than a
+crossing, a stair up a bank you otherwise could not climb.
+
+The plan seats three to six of these on its own, and you do not have to ask. Per
+city it looks for one of each of five kinds, best first:
+
+| kind | where it goes | what gets built |
+|---|---|---|
+| `landmark` | on a **vista axis**: the end of an arterial with a long straight approach and dry, level ground to reserve | a building squared to the axis, so its facade closes the view of everyone walking down the road. Yours if you pinned one, otherwise a cathedral / station / opera house / university hall / courthouse from a per-city rotation |
+| `bridge` | where an arterial already crosses water | masonry pylons at both abutments, lamps down the span on the deck's own rail, and a balustrade carrying the rail line onto the bank |
+| `promenade` | the longest run of shoreline drive with the water on **one** side | a sea wall, lamps at a pitch, benches facing the water |
+| `stair` | the steepest climbable bank inside the city | a paved flight with a balustrade and lanterns, laid so no riser on it is more than one block |
+| `square` | the middle of the civic (or core, or grid) quarter | a 27 × 27 void **held open before the quarter is subdivided**, with a lamp inset from each corner and a monument on a plinth at the centre |
+
+A kind is skipped when the ground does not offer it, and that is the normal
+case: a flat inland city gets no stair, promenade or bridge, and says so by
+simply not having them.
+
+```json
+"params": {
+  "size": "large",
+  "mix": ["office", "apartment_block", "shop_row"],
+  "setPieces": { "max": 4, "kinds": ["landmark", "bridge", "square"] }
+}
+```
+
+| field | values | notes |
+|---|---|---|
+| `setPieces` | `false` | no anchors at all for this city |
+| `setPieces` | `true`, or omitted | the default: up to six, every kind considered |
+| `setPieces.max` | 1..6 | cap across all kinds together. Past six a city stops having anchors and starts having furniture (`LOAM-T215`) |
+| `setPieces.kinds` | non-empty array from the five above | a filter, not a weighting: listing a kind twice is an error (`LOAM-T215`) |
+
+**"Put the cathedral at the end of the main boulevard."** That is
+`params.vista` on a landmark inside the city, and it is the only way to address
+a set piece by hand:
+
+```json
+{
+  "id": "the_minster",
+  "kind": "generator",
+  "generator": "building.grammar@0",
+  "envelope": { "shape": "box", "size": [15, 17, 21] },
+  "params": { "archetype": "cathedral", "floors": 2, "vista": "spine" },
+  "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
+  "tags": ["landmark"]
+}
+```
+
+| `params.vista` | meaning |
+|---|---|
+| omitted / `false` | an ordinary landmark: spread into a quarter with the others |
+| `true` | seat it on whichever vista axis the plan rates highest |
+| `"spine"`, `"boulevard"`, `"diagonal"`, `"drive"` | seat it at the end of an arterial of that kind |
+
+Notice that neither spelling names a coordinate — the same rule the rest of the
+node is written under. Things worth knowing:
+
+- **You always win.** A pinned landmark is offered every axis before the plan
+  chooses a building for any of them, so the plan never competes with you for a
+  street. Two pins take two different axes, in document order.
+- **`"vista": "ring"` is an error** (`LOAM-T216`): a ring road is a closed loop,
+  so it has no end to stand at and look down.
+- **`vista` only means something inside a `city`** (`LOAM-T216`). A district or
+  a root-level building has no arterials, so nothing would ever read it.
+- **A landmark too big for any axis is not dropped** — it falls back into the
+  ordinary distribution and reports `LOAM-T217`. The reserve is at most 30
+  blocks along the axis and 31 across, so a footprint inside about 21 × 15 is
+  comfortable; the five archetypes the plan picks from are all in that range.
+- **The facade squares to the axis, not to the heading.** Arterial headings are
+  quantised to 15° and buildings rotate in quarter turns, so the facade takes
+  the *nearest cardinal*. A boulevard at 75° drifts across the frame as you walk
+  it; the plan only keeps an axis whose site is still framed by the road 24
+  cells out, which is what that drift is measured against.
+- **The square is a hole, not a leftover.** It is punched out of the quarter's
+  lot mask before the quarter is subdivided — the one moment at which a district
+  can be told "not here" — so the buildings around it front onto it. Streets may
+  still cross it, which is what a real civic square looks like.
 
 ### `prop.place@0`
 

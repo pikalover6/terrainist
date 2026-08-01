@@ -426,8 +426,13 @@ export interface LifeResult {
 /* the local op vocabulary                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** One block a recipe wants, relative to the recipe's own anchor. */
-interface LifeOp {
+/**
+ * One block a recipe wants, relative to the recipe's own anchor.
+ *
+ * Exported because C4's set-piece pass writes through the same {@link Planter}
+ * — see the note on {@link buildLifeWorld} for why that reuse is not optional.
+ */
+export interface LifeOp {
   readonly dx: number;
   readonly dy: number;
   readonly dz: number;
@@ -435,7 +440,8 @@ interface LifeOp {
   readonly props?: Readonly<Record<string, string>>;
 }
 
-const op = (
+/** Build one {@link LifeOp}. */
+export const op = (
   dx: number,
   dy: number,
   dz: number,
@@ -459,7 +465,7 @@ const key3 = (x: number, y: number, z: number): string => `${x},${y},${z}`;
  * block I am hanging off" is a lookup, and a recipe that cannot prove its own
  * support declines to place.
  */
-interface LifeWorld {
+export interface LifeWorld {
   readonly region: Region;
   /**
    * True when the caller declared this column off limits.
@@ -492,7 +498,38 @@ interface LifeWorld {
   wet(x: number, z: number): boolean;
 }
 
-function buildWorld(input: LifePassInput): LifeWorld {
+/**
+ * Everything {@link buildLifeWorld} needs: the finished plan and what has
+ * already been written into it.
+ *
+ * A structural subset of {@link LifePassInput} rather than the whole thing, so
+ * a caller that has no buildings and no street masks — C4's set-piece pass has
+ * neither — can still ask the same questions of the same world.
+ */
+export interface LifeWorldInput {
+  readonly plan: ColumnPlan;
+  readonly stack: PrismarineStack;
+  readonly existing?: readonly StructureBlock[];
+  readonly avoid?: (x: number, z: number) => boolean;
+  readonly keepClear?: ReadonlySet<string>;
+}
+
+/**
+ * The occupancy view every additive pass shares.
+ *
+ * Exported for C4. Two passes writing eye-level detail into the same finished
+ * world must agree, voxel for voxel, on what "already taken" means — the
+ * codebase has already shipped the failure that comes of them not agreeing (a
+ * lantern left standing over a column another prop had taken the post out of),
+ * and a second implementation of `solidAt` is a second answer to the only
+ * question that matters here. This is `city.ts`'s "a second router is a second
+ * set of bugs" argument, applied to occupancy.
+ */
+export function buildLifeWorld(input: LifeWorldInput): LifeWorld {
+  return buildWorld(input);
+}
+
+function buildWorld(input: LifeWorldInput): LifeWorld {
   const plan = input.plan;
   const region = plan.region;
   // The emitted world, indexed **by column and then by height**.
@@ -669,7 +706,7 @@ export function frontageRuns(
 /* -------------------------------------------------------------------------- */
 
 /** Where a recipe's ops may land, and what must already be true there. */
-interface PlaceRule {
+export interface PlaceRule {
   /** Columns the ops touch must be unclaimed by every earlier pass. */
   readonly requireFreeColumn: boolean;
   /** Every op voxel must currently be empty. */
@@ -696,7 +733,7 @@ interface PlaceRule {
   readonly onCarriageway?: boolean;
 }
 
-const GROUND_RULE: PlaceRule = { requireFreeColumn: true, requireEmptyVoxel: true };
+export const GROUND_RULE: PlaceRule = { requireFreeColumn: true, requireEmptyVoxel: true };
 
 /**
  * The rule for a fitting bolted to a wall above head height.
@@ -717,7 +754,7 @@ const GROUND_RULE: PlaceRule = { requireFreeColumn: true, requireEmptyVoxel: tru
  * to prevent is a prop overwriting another prop's blocks, and a voxel test
  * forbids that directly rather than by proxy.
  */
-const FACADE_RULE: PlaceRule = {
+export const FACADE_RULE: PlaceRule = {
   requireFreeColumn: false,
   requireEmptyVoxel: true,
   clearance: 1,
@@ -735,7 +772,7 @@ const FACADE_RULE: PlaceRule = {
  * air above each of them must be empty, so a crate can sit under an eave but
  * never inside a lamp post, which is the collision the rule exists to forbid.
  */
-const PAVEMENT_RULE: PlaceRule = {
+export const PAVEMENT_RULE: PlaceRule = {
   requireFreeColumn: false,
   requireEmptyVoxel: true,
   clearance: 1,
@@ -749,7 +786,7 @@ const PARKING_RULE: PlaceRule = {
 };
 
 /** For a fitting that attaches to something this pass already planted. */
-const ATTACHED_RULE: PlaceRule = {
+export const ATTACHED_RULE: PlaceRule = {
   requireFreeColumn: false,
   requireEmptyVoxel: true,
   padAbove: false,
@@ -765,7 +802,7 @@ const ATTACHED_RULE: PlaceRule = {
  * the post out of — is not a bug you find by reading; it is a bug you make
  * impossible.
  */
-class Planter {
+export class Planter {
   readonly blocks: StructureBlock[] = [];
   readonly stats = new Map<string, number>();
   private readonly mine = new Set<string>();

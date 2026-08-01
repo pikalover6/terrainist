@@ -68,6 +68,7 @@ import { buildDoorsteps } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
+import { dressSetPieces } from "./setpieces.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
 import {
@@ -94,6 +95,7 @@ export * from "./life.js";
 export * from "./grounds.js";
 export * from "./plaza.js";
 export * from "./precincts.js";
+export * from "./setpieces.js";
 export * from "./props.js";
 export * from "./roads.js";
 export * from "./tunnels.js";
@@ -705,6 +707,41 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   blocks.push(...grounds.blocks);
 
+  // --- the set pieces (C4) -------------------------------------------------
+  // After the ground treatment and before the life pass, and both halves are
+  // load-bearing. After F2, because a parapet, a stair tread and a monument
+  // plinth all stand on the *finished* ground. Before C3, because the life
+  // pass is contractually last and is handed the emitted block list — run this
+  // after it and a bridge pylon would be free to grow through an awning C3 had
+  // already proved the support for.
+  const setPieceCities = cities
+    .filter((c) => c.setPieces.length > 0)
+    .map((c) => ({ nodePath: c.nodePath, setPieces: c.setPieces }));
+  const setPieces =
+    setPieceCities.length === 0
+      ? undefined
+      : dressSetPieces({
+          plan: input.plan,
+          stack: input.stack,
+          seed: themeSeed,
+          nodePath: rootPath,
+          cities: setPieceCities,
+          existing: blocks,
+          ...(roads === undefined
+            ? {}
+            : {
+                avoid: (x: number, z: number): boolean => {
+                  const region = input.plan.region;
+                  if (!inside(region, x, z)) return false;
+                  return (roads as RoadNetworkResult).roadColumns[index(region, x, z)] === 1;
+                },
+              }),
+        });
+  if (setPieces !== undefined) {
+    diagnostics.push(...setPieces.diagnostics);
+    blocks.push(...setPieces.blocks);
+  }
+
   // --- the life pass (C3) --------------------------------------------------
   // After *everything*, including the ground treatment, and that is the whole
   // contract: this stage adds eye-level incident into columns nobody else
@@ -785,6 +822,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       aircraftParked: precincts?.stats.aircraft ?? 0,
       piersBuilt: precincts?.stats.piers ?? 0,
       shipsMoored: precincts?.stats.ships ?? 0,
+      ...(setPieces?.stats ?? {}),
       ...life.stats,
     },
   };

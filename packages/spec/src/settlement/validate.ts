@@ -57,8 +57,12 @@ import {
   DISTRICT_FABRICS,
   HORIZONTAL_FACES,
   PORT_TYPES,
+  SET_PIECE_KINDS,
+  SET_PIECE_MAX_COUNT,
+  SET_PIECE_MIN_COUNT,
   SETTLEMENT_EXCLUDED_GENERATORS,
   STRUCTURE_GENERATORS,
+  VISTA_ARTERIALS,
   isPrecinctGenerator,
   V02_FACES,
   V02_PORT_TYPES,
@@ -352,6 +356,15 @@ function validateStructureNode(
   path: string,
   node: Obj,
   connections: ConnectedRef[],
+  /**
+   * True when this node is a child of a `city`.
+   *
+   * The only thing that reads it is `params.vista` (C4), which is meaningless
+   * anywhere else — a vista axis is the end of an arterial, and a district or a
+   * root-level building has none. Threaded rather than inferred from the path
+   * because a path is a string and an id may be spelt anything.
+   */
+  inCity = false,
 ): void {
   unknownKeys(out, node, path, STRUCTURE_KEYS, "structure node");
   checkBooleans(out, path, node, ["optional"]);
@@ -374,7 +387,7 @@ function validateStructureNode(
   if (params !== undefined && !isObject(params)) {
     out.push(error("BAD_TYPE", path, `"params" must be an object, got ${describe(params)}`, 'use "params": {} to accept every generator default'));
   } else if (isObject(params)) {
-    if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params);
+    if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params, inCity);
     else if (generator === "precinct.airport@0") validateAirportParams(out, `${path}.params`, params);
     else if (generator === "precinct.harbour@0") validateHarbourParams(out, `${path}.params`, params);
     else validateRoadParams(out, `${path}.params`, params);
@@ -722,6 +735,7 @@ const CITY_PARAM_KEYS = [
   "diagonals",
   "ring",
   "blockSize",
+  "setPieces",
 ] as const;
 
 /**
@@ -867,7 +881,7 @@ function validateCityNode(
           );
           continue;
         }
-        validateStructureNode(out, childPath, raw, connections);
+        validateStructureNode(out, childPath, raw, connections, true);
       }
     }
   }
@@ -909,6 +923,90 @@ function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): voi
 
   validateCityMix(out, at, "mix", params["mix"], true);
   validateCityCharacters(out, at, params["characters"]);
+  validateSetPiecesParam(out, at, params["setPieces"]);
+}
+
+/**
+ * Validate `params.setPieces` (C4).
+ *
+ * Two spellings on purpose. `false` is the whole answer for "not on this city",
+ * and it is the one an author reaches for most; the object form exists for the
+ * two knobs that are genuinely worth turning — how many anchors, and which
+ * kinds. Neither spelling names a coordinate, a quarter or a street, which is
+ * the constraint the `city` node was designed under: an enumerated plan is the
+ * rectangle problem again with more typing.
+ */
+function validateSetPiecesParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined || typeof value === "boolean") return;
+  const path = `${at}.setPieces`;
+  if (!isObject(value)) {
+    out.push(
+      error(
+        "CITY_SET_PIECES",
+        path,
+        `"setPieces" must be a boolean or an object, got ${describe(value)}`,
+        `write "setPieces": false to turn the anchors off, or "setPieces": { "max": 4, "kinds": ["landmark", "bridge"] } — the kinds are: ${SET_PIECE_KINDS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, value, path, ["max", "kinds"], "city setPieces");
+  const max = value["max"];
+  if (max !== undefined) {
+    if (
+      typeof max !== "number" ||
+      !Number.isInteger(max) ||
+      max < SET_PIECE_MIN_COUNT ||
+      max > SET_PIECE_MAX_COUNT
+    ) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          path,
+          `"setPieces.max" must be an integer between ${SET_PIECE_MIN_COUNT} and ${SET_PIECE_MAX_COUNT}, got ${describe(max)}`,
+          `write "setPieces": { "max": 4 } — past ${SET_PIECE_MAX_COUNT} anchors a city stops having anchors and starts having furniture`,
+        ),
+      );
+    }
+  }
+  const kinds = value["kinds"];
+  if (kinds === undefined) return;
+  if (!Array.isArray(kinds) || kinds.length === 0) {
+    out.push(
+      error(
+        "CITY_SET_PIECES",
+        path,
+        `"setPieces.kinds" must be a non-empty array of kind names, got ${describe(kinds)}`,
+        `write "setPieces": { "kinds": ["landmark", "square"] } — or drop the key to consider all of: ${SET_PIECE_KINDS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  const seen = new Set<string>();
+  for (const [index, raw] of kinds.entries()) {
+    if (typeof raw !== "string" || !(SET_PIECE_KINDS as readonly string[]).includes(raw)) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          `${path}.kinds[${index}]`,
+          `"${describe(raw)}" is not a set-piece kind`,
+          `use one of: ${SET_PIECE_KINDS.join(", ")}`,
+        ),
+      );
+      continue;
+    }
+    if (seen.has(raw)) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          `${path}.kinds[${index}]`,
+          `"${raw}" is listed twice in "setPieces.kinds"`,
+          `delete the duplicate — the list is a filter, not a weighting, so repeating a kind asks for nothing extra`,
+        ),
+      );
+    }
+    seen.add(raw);
+  }
 }
 
 /**
@@ -1919,7 +2017,12 @@ const BUILDING_NUMS: Readonly<Record<string, NumSpec>> = {
 const BUILDING_FOOTPRINTS = ["rect", "l_shape", "t_shape", "u_shape", "cross", "courtyard", "irregular"] as const;
 const BUILDING_INTERIORS = ["none", "open", "rooms", "hall", "warehouse"] as const;
 
-function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+function validateBuildingParams(
+  out: LoamDiagnostic[],
+  at: string,
+  params: Obj,
+  inCity = false,
+): void {
   unknownKeys(
     out,
     params,
@@ -1928,10 +2031,11 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       "floors", "floorHeight", "footprint", "bays", "roof", "roofPitch",
       "wallSymbol", "trimSymbol", "roofSymbol", "windowRhythm", "windowRatio",
       "entrance", "interior", "furnish", "basement", "tower", "variance", "decayOverride",
-      "wing", "archetype",
+      "wing", "archetype", "vista",
     ],
     "building.grammar@0 params",
   );
+  validateVistaParam(out, at, params["vista"], inCity);
   checkNumbers(out, at, params, BUILDING_NUMS);
   validateArchetypeParam(out, at, params["archetype"]);
   validateBasementParam(out, at, params["basement"]);
@@ -1950,6 +2054,61 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
   }
+}
+
+/**
+ * Validate `params.vista` (C4) — "put this at the end of the main boulevard".
+ *
+ * The one authoring surface for the terminating landmark, and it is deliberately
+ * *relational*: `true` says "seat this on whichever axis the plan rates
+ * highest", and a string names the **kind** of arterial to close. Neither names
+ * a coordinate, which is the rule the whole `city` node is written under.
+ *
+ * An author-pinned landmark always wins the axis it asks for. The plan chooses
+ * a building only for an axis nobody claimed.
+ */
+function validateVistaParam(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  inCity: boolean,
+): void {
+  if (value === undefined) return;
+  if (typeof value !== "boolean" && typeof value !== "string") {
+    out.push(
+      error(
+        "VISTA_PIN",
+        at,
+        `"vista" must be true, false, or the kind of arterial to close, got ${describe(value)}`,
+        `write "vista": true to take whichever axis the plan rates highest, or name one of: ${VISTA_ARTERIALS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  if (typeof value === "string" && !(VISTA_ARTERIALS as readonly string[]).includes(value)) {
+    out.push(
+      error(
+        "VISTA_PIN",
+        at,
+        value === "ring"
+          ? '"vista": "ring" names a closed loop, which has no end to stand at and look down'
+          : `"vista" names "${value}", which is not an arterial kind a vista can close`,
+        `use one of: ${VISTA_ARTERIALS.join(", ")} — or "vista": true to take whichever axis the plan rates highest`,
+      ),
+    );
+    return;
+  }
+  // `false` is the default; writing it anywhere is inert and harmless.
+  if (value === false) return;
+  if (inCity) return;
+  out.push(
+    error(
+      "VISTA_PIN",
+      at,
+      '"vista" only means something on a landmark inside a "kind": "city" node — a vista axis is the end of an arterial, and only a city draws arterials',
+      'move this node into the city\'s "children", or drop "vista" and place the building with an ordinary constraint',
+    ),
+  );
 }
 
 /**

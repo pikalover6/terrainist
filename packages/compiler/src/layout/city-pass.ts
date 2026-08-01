@@ -16,6 +16,7 @@
 
 import { nodeSeed, type Seed256 } from "@terrainist/stdlib";
 import {
+  SET_PIECE_KINDS,
   error,
   isCityNode,
   isPrecinctGenerator,
@@ -24,6 +25,8 @@ import {
   type CityNode,
   type DistrictNode,
   type LoamDiagnostic,
+  type PortDeclaration,
+  type SetPieceKindName,
   type StructureNode,
 } from "@terrainist/spec";
 
@@ -37,12 +40,24 @@ import {
 import {
   layDistrict,
   medianGround,
+  yawFacing,
   type DistrictPassInput,
   type DistrictProduct,
 } from "./district.js";
 import type { Rect } from "./frames.js";
+import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import { MIN_DISTRICT_SPAN, SIDEWALK_BY_DENSITY } from "./streets.js";
 import type { LayoutNodeInput, PadEdit, Placement, ResolvedPort } from "./types.js";
+import {
+  SET_PIECE_MAX,
+  planVistas,
+  seatOnAxis,
+  terminatingLandmark,
+  type SetPiece,
+  type SetPieceKind,
+  type SetPieceParams,
+  type VistaAxis,
+} from "./vistas.js";
 
 /** One city's plan, as the compile report carries it. */
 export interface CityProduct {
@@ -56,6 +71,10 @@ export interface CityProduct {
    * precinct note in {@link solveCities}'s per-city pass.
    */
   readonly precinctCells: number;
+  /** C4's vista axes, in the order the plan rated them. */
+  readonly vistas: readonly VistaAxis[];
+  /** C4's seated anchors. The structure pass dresses the ones that need it. */
+  readonly setPieces: readonly SetPiece[];
 }
 
 /** What the city pass hands back — the district pass's shape, plus the plans. */
@@ -163,12 +182,27 @@ function layCity(
     );
   }
 
+  // --- C4: where the intent goes -------------------------------------------
+  // Planned here, off the finished armature and before anything is seated, so
+  // the axes are a function of the plan alone: which landmark ends up closing
+  // one, or whether any does, cannot move it.
+  const vistaPlan = planVistas({
+    plan,
+    field: input.field,
+    ...(input.water === undefined ? {} : { water: input.water }),
+    seaLevel: input.seaLevel ?? 63,
+    seed,
+    params: resolveSetPieceParams(node.params.setPieces),
+  });
+
   // --- what the author put in the city -------------------------------------
   const landmarks: StructureNode[] = [];
+  const pinned: StructureNode[] = [];
   const precincts: StructureNode[] = [];
   for (const child of node.children ?? []) {
     const structure = child as StructureNode;
     if (isPrecinctGenerator(structure.generator)) precincts.push(structure);
+    else if (vistaPinOf(structure) !== null) pinned.push(structure);
     else landmarks.push(structure);
   }
 
@@ -206,6 +240,40 @@ function layCity(
       ),
     );
   }
+
+  // --- C4: the set pieces ---------------------------------------------------
+  // Before the cells are laid, and that ordering is the whole of the track. A
+  // terminating landmark and a civic square are the only two things in a city
+  // that take ground *away* from the fabric; every other set piece is dressing
+  // added later over ground somebody else already owns. Ask for the ground
+  // after the quarters have been subdivided and the answer is a building
+  // standing in a terrace.
+  const seated = seatSetPieces({
+    node,
+    nodePath,
+    plan,
+    seed,
+    input,
+    pinned,
+    vistas: vistaPlan.axes,
+    diagnostics,
+  });
+  nodes.push(...seated.nodes);
+  placements.push(...seated.placements);
+  ports.push(...seated.ports);
+  padEdits.push(...seated.padEdits);
+  for (const [path, p] of seated.params) params.set(path, p);
+  // A landmark the author pinned that could take no axis is still a landmark:
+  // it falls back into the ordinary distribution rather than being dropped.
+  landmarks.push(...seated.unclaimed);
+  const setPieces: SetPiece[] = [...seated.pieces, ...vistaPlan.pieces];
+  // Ground the fabric may not have. The seated footprints get a collar so a
+  // terrace does not come up hard against a cathedral's buttress; the square
+  // is exact, because its edge *is* the frontage that faces it.
+  const reserved: Rect[] = [
+    ...seated.reserved.map((r) => grow(r, SET_PIECE_COLLAR)),
+    ...vistaPlan.pieces.filter((p) => p.kind === "square").map((p) => p.site),
+  ];
 
   // --- landmarks are spread across the cells that carry the skyline --------
   const buildable = plan.cells
@@ -335,7 +403,11 @@ function layCity(
     const cellDiagnostics: LoamDiagnostic[] = [];
     const laid = layDistrict(synthetic, cellPath, seat, input, cellDiagnostics, {
       mask: cell.mask,
-      lotMask: erode(cell.mask, width, depth, sidewalk),
+      lotMask: withoutReserved(
+        erode(cell.mask, width, depth, sidewalk),
+        cell.bounds,
+        reserved,
+      ),
       orientation: cell.orientation,
       blockSize: cell.blockSize,
       density: cell.density,
@@ -372,8 +444,325 @@ function layCity(
       stats: planned.stats,
       openCells: open,
       precinctCells: 0,
+      vistas: seated.vistas,
+      setPieces,
     },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* C4 — set pieces and vista axes                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns of slack kept around a seated set piece before the fabric may build.
+ *
+ * Two, and it is the same number the district's own landmark pad uses. Zero
+ * would let a terrace's party wall arrive flush against a cathedral's buttress
+ * on a lot the subdivision never knew was contested; more would ring every
+ * anchor with a moat, which is its own kind of generated-looking.
+ */
+export const SET_PIECE_COLLAR = 2;
+
+/** Read `params.setPieces` into the planner's shape, defaulted. */
+export function resolveSetPieceParams(raw: CityNode["params"]["setPieces"]): SetPieceParams {
+  if (raw === false) return { enabled: false, max: 0 };
+  if (raw === undefined || raw === true) return { enabled: true, max: SET_PIECE_MAX };
+  const max = typeof raw.max === "number" ? Math.round(raw.max) : SET_PIECE_MAX;
+  const kinds = raw.kinds?.filter((k): k is SetPieceKindName =>
+    (SET_PIECE_KINDS as readonly string[]).includes(k),
+  );
+  return {
+    enabled: max > 0,
+    max: Math.max(0, Math.min(SET_PIECE_MAX, max)),
+    ...(kinds === undefined || kinds.length === 0
+      ? {}
+      : { kinds: kinds as readonly SetPieceKind[] }),
+  };
+}
+
+/**
+ * What a landmark's `params.vista` asks for: any axis, or one arterial kind.
+ *
+ * `null` for a node that is not pinned at all, which is the ordinary case and
+ * the one the caller branches on.
+ */
+export function vistaPinOf(node: StructureNode): true | string | null {
+  const value = (node.params ?? {})["vista"];
+  if (value === true) return true;
+  if (typeof value === "string" && value.length > 0) return value;
+  return null;
+}
+
+/** The door a plan-chosen landmark declares, on its own local south. */
+const VISTA_PORTS: Readonly<Record<string, PortDeclaration>> = Object.freeze({
+  door: Object.freeze({ type: "door", face: "south", tags: Object.freeze(["primary"]) }),
+});
+
+interface SeatInput {
+  readonly node: CityNode;
+  readonly nodePath: string;
+  readonly plan: CityPlan;
+  readonly seed: Seed256;
+  readonly input: DistrictPassInput;
+  readonly pinned: readonly StructureNode[];
+  readonly vistas: readonly VistaAxis[];
+  readonly diagnostics: LoamDiagnostic[];
+}
+
+interface SeatResult {
+  readonly nodes: readonly LayoutNodeInput[];
+  readonly placements: readonly Placement[];
+  readonly ports: readonly ResolvedPort[];
+  readonly padEdits: readonly PadEdit[];
+  readonly params: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+  readonly pieces: readonly SetPiece[];
+  /** The axes, with `closedBy` filled in where one was. */
+  readonly vistas: readonly VistaAxis[];
+  /** Footprints the fabric must leave alone. */
+  readonly reserved: readonly Rect[];
+  /** Pinned landmarks that took no axis, for the ordinary distribution. */
+  readonly unclaimed: readonly StructureNode[];
+}
+
+/**
+ * Close every vista axis: the author's landmarks first, then the plan's.
+ *
+ * **Author-pinned wins.** A document that says "the cathedral goes at the end
+ * of the main boulevard" has already made the decision this pass would
+ * otherwise make, and a plan that competes with it puts two landmarks on one
+ * street. So the pinned nodes are offered every axis in the plan's own rating
+ * order — filtered to the arterial kind when they named one — and only the
+ * axes nobody asked for get a building chosen for them.
+ */
+function seatSetPieces(args: SeatInput): SeatResult {
+  const { nodePath, seed, input, diagnostics } = args;
+  const nodes: LayoutNodeInput[] = [];
+  const placements: Placement[] = [];
+  const ports: ResolvedPort[] = [];
+  const padEdits: PadEdit[] = [];
+  const params = new Map<string, Readonly<Record<string, unknown>>>();
+  const pieces: SetPiece[] = [];
+  const reserved: Rect[] = [];
+  const unclaimed: StructureNode[] = [];
+  const axes = args.vistas.map((a) => ({ ...a }) as VistaAxis & { closedBy?: string; authored?: boolean });
+  const taken = new Set<string>();
+  const usedIds = new Set<string>((args.node.children ?? []).map((c) => c.id));
+
+  const seat = (
+    axis: VistaAxis,
+    id: string,
+    size: readonly [number, number, number],
+    declared: Readonly<Record<string, PortDeclaration>>,
+    nodeParams: Readonly<Record<string, unknown>>,
+    tags: readonly string[],
+    salt: string,
+  ): Rect | null => {
+    const yaw = yawFacing(frontFace(declared, undefined), axis.facing);
+    const [rw, rh, rd] = rotatedSize(size, yaw);
+    const rect = seatOnAxis(axis, rw, rd);
+    if (rect === null) return null;
+    const childPath = `${nodePath}.${id}`;
+    const foundationY = medianGround(input.field, rect);
+    const made: Placement = {
+      nodePath: childPath,
+      id,
+      translation: [rect.x0, foundationY, rect.z0],
+      yaw,
+      mirror: false,
+      size: [rw, rh, rd],
+      footprint: rect,
+      anchor: { x: rect.x0 + ((rw - 1) >> 1), z: rect.z0 + ((rd - 1) >> 1) },
+      foundationY,
+    };
+    nodes.push({
+      id,
+      nodePath: childPath,
+      kind: "generator",
+      generator: "building.grammar@0",
+      size,
+      flexible: false,
+      padding: 0,
+      rotations: [yaw],
+      constraints: [],
+      ports: declared,
+      optional: false,
+      tags,
+      seed: nodeSeed(input.worldSeed, childPath, salt),
+    });
+    placements.push(made);
+    ports.push(...resolvePorts(made, size, declared));
+    // The same pad a district gives its own landmarks. The arterial corridor is
+    // the one strip of a city nobody levels — a cell's terrace stops at the
+    // kerb — so without this the building would sit on whatever the router
+    // happened to climb over on its way to the boundary.
+    padEdits.push({ nodePath: childPath, footprint: rect, targetY: foundationY, apron: 2 });
+    params.set(childPath, nodeParams);
+    return rect;
+  };
+
+  // --- the author's pins ----------------------------------------------------
+  for (const landmark of args.pinned) {
+    const want = vistaPinOf(landmark);
+    if (want === null) continue;
+    const size = landmarkSize(landmark);
+    const declared = landmark.ports ?? VISTA_PORTS;
+    let claimed: (VistaAxis & { closedBy?: string; authored?: boolean }) | null = null;
+    for (const axis of axes) {
+      if (taken.has(axis.id)) continue;
+      if (typeof want === "string" && axis.arterialKind !== want) continue;
+      const yaw = yawFacing(frontFace(declared, undefined), axis.facing);
+      const [rw, , rd] = rotatedSize(size, yaw);
+      if (seatOnAxis(axis, rw, rd) === null) continue;
+      claimed = axis;
+      break;
+    }
+    if (claimed === null) {
+      diagnostics.push(
+        warning(
+          "VISTA_UNCLAIMED",
+          `${nodePath}.${landmark.id}`,
+          typeof want === "string"
+            ? `no "${want}" in this city has an end with room for this landmark's ${size[0]} × ${size[2]} footprint, so it is placed on an ordinary frontage instead`
+            : `every vista axis this city has is either already claimed or too small for this landmark's ${size[0]} × ${size[2]} footprint, so it is placed on an ordinary frontage instead`,
+          typeof want === "string"
+            ? 'write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"'
+            : 'shrink "envelope.size", or drop "vista" — the plan will choose its own building for the axis',
+        ),
+      );
+      unclaimed.push(landmark);
+      continue;
+    }
+    const rect = seat(
+      claimed,
+      landmark.id,
+      size,
+      declared,
+      landmark.params ?? {},
+      landmark.tags ?? [],
+      landmark.seedSalt ?? "",
+    );
+    if (rect === null) {
+      unclaimed.push(landmark);
+      continue;
+    }
+    taken.add(claimed.id);
+    reserved.push(rect);
+    (claimed as { closedBy?: string }).closedBy = `${nodePath}.${landmark.id}`;
+    (claimed as { authored?: boolean }).authored = true;
+    pieces.push({
+      id: `${claimed.id}_landmark`,
+      kind: "landmark",
+      site: rect,
+      detail: `"${landmark.id}" closes the ${claimed.arterialKind} "${claimed.arterialId}", framed for ${claimed.run} columns of approach`,
+      axisId: claimed.id,
+      facing: claimed.facing,
+      nodePath: `${nodePath}.${landmark.id}`,
+    });
+  }
+
+  // --- and the plan's, for the axes nobody asked for -----------------------
+  let ordinal = 0;
+  for (const axis of axes) {
+    if (taken.has(axis.id)) continue;
+    let placed = false;
+    // Walk the whole rotation before giving up: an axis whose reserve is too
+    // shallow for a cathedral may still take a courthouse, and a vista closed
+    // by a small building is a vista.
+    for (let attempt = 0; attempt < 5 && !placed; attempt++) {
+      const choice = terminatingLandmark(seed, ordinal + attempt);
+      const id = uniqueId(usedIds, `vista_${choice.archetype}`);
+      const rect = seat(
+        axis,
+        id,
+        choice.size,
+        VISTA_PORTS,
+        { archetype: choice.archetype, floors: choice.floors },
+        ["landmark", "vista", choice.archetype],
+        `c4:${axis.id}`,
+      );
+      if (rect === null) {
+        usedIds.delete(id);
+        continue;
+      }
+      placed = true;
+      ordinal++;
+      taken.add(axis.id);
+      reserved.push(rect);
+      (axis as { closedBy?: string }).closedBy = `${nodePath}.${id}`;
+      pieces.push({
+        id: `${axis.id}_landmark`,
+        kind: "landmark",
+        site: rect,
+        detail: `${article(choice.archetype)} ${choice.archetype} closes the ${axis.arterialKind} "${axis.arterialId}", framed for ${axis.run} columns of approach`,
+        axisId: axis.id,
+        facing: axis.facing,
+        nodePath: `${nodePath}.${id}`,
+        archetype: choice.archetype,
+      });
+    }
+  }
+
+  return { nodes, placements, ports, padEdits, params, pieces, vistas: axes, reserved, unclaimed };
+}
+
+/** The unrotated footprint a city landmark asks for. */
+function landmarkSize(node: StructureNode): readonly [number, number, number] {
+  const declared = node.envelope?.size;
+  if (declared !== undefined && declared.length === 3) {
+    return declared as readonly [number, number, number];
+  }
+  const floors = typeof (node.params ?? {})["floors"] === "number"
+    ? ((node.params ?? {})["floors"] as number)
+    : 2;
+  return [11, Math.max(4, Math.round(floors * 4)), 11];
+}
+
+/** A node id nothing else in this city has taken, reserving it as it goes. */
+function uniqueId(used: Set<string>, base: string): string {
+  let id = base;
+  let n = 2;
+  while (used.has(id)) id = `${base}_${n++}`;
+  used.add(id);
+  return id;
+}
+
+/** "a" or "an", for a report line a human reads. */
+function article(word: string): string {
+  return "aeiou".includes(word[0] ?? "") ? "an" : "a";
+}
+
+/** A rect grown by `margin` columns on every side. */
+function grow(rect: Rect, margin: number): Rect {
+  return {
+    x0: rect.x0 - margin,
+    z0: rect.z0 - margin,
+    x1: rect.x1 + margin,
+    z1: rect.z1 + margin,
+  };
+}
+
+/**
+ * A lot mask with the set pieces punched out of it.
+ *
+ * The only moment in the whole pipeline at which a district can be told "not
+ * here". After this the cell subdivides, and the subdivision has no vocabulary
+ * for ground that is spoken for — which is exactly why the reservation has to
+ * be a hole in the mask rather than a veto somewhere downstream.
+ */
+function withoutReserved(mask: Uint8Array, bounds: Rect, reserved: readonly Rect[]): Uint8Array {
+  if (reserved.length === 0) return mask;
+  const stride = bounds.x1 - bounds.x0 + 1;
+  for (const rect of reserved) {
+    const x0 = Math.max(bounds.x0, rect.x0);
+    const x1 = Math.min(bounds.x1, rect.x1);
+    const z0 = Math.max(bounds.z0, rect.z0);
+    const z1 = Math.min(bounds.z1, rect.z1);
+    for (let z = z0; z <= z1; z++) {
+      for (let x = x0; x <= x1; x++) mask[(z - bounds.z0) * stride + (x - bounds.x0)] = 0;
+    }
+  }
+  return mask;
 }
 
 /* -------------------------------------------------------------------------- */

@@ -134,6 +134,37 @@ export const TERRAIN_DIAGNOSTICS = {
    * plan cannot draw a spine and leave a district cell either side of it.
    */
   CITY_TOO_SMALL: "LOAM-T214",
+  /**
+   * C4 `city` — `params.setPieces` is malformed: not a boolean or object, a
+   * `max` outside 1..6, or a `kinds` entry outside the five kinds.
+   */
+  CITY_SET_PIECES: "LOAM-T215",
+  /**
+   * C4 — `params.vista` on a landmark is malformed, names an arterial kind
+   * that has no terminus to stand at (a ring), or is written on a building
+   * that is not a child of a `city`, where nothing would ever read it.
+   */
+  VISTA_PIN: "LOAM-T216",
+  /**
+   * C4 — a landmark pinned with `params.vista` could not take an axis: every
+   * axis was already claimed, or the node does not fit the ground reserved at
+   * the end of any of them. A warning, because the landmark is still built —
+   * it just goes wherever the fabric would have put it.
+   */
+  VISTA_UNCLAIMED: "LOAM-T217",
+  /**
+   * C4 — there were set pieces to dress and none of them took.
+   *
+   * Informational, and deliberately its own code rather than a borrowed one.
+   * What it diagnoses is a pass-ordering or occupancy fact, not anything the
+   * document can change: the same mistake `LIFE_PASS_EMPTY` was created to undo
+   * when it was first spelt `LOAM-E170` and cost the authoring loop two model
+   * calls per world. It is also only raised when there was something *other
+   * than a landmark* to build — a landmark is a building the grammar put up
+   * three passes earlier, so a city whose only anchors are landmarks writing no
+   * blocks here is the expected outcome, not a report.
+   */
+  SET_PIECES_EMPTY: "LOAM-T218",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
