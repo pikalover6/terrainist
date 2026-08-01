@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-5.6-luna",
+  "effort": "max",
+  "attempts": 1,
+  "boxes": 457,
+  "usage": {
+    "promptTokens": 828,
+    "completionTokens": 57916,
+    "totalTokens": 58744
+  },
+  "costUsd": 0.034832
+}
