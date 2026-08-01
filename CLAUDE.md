@@ -29,9 +29,10 @@ Kai's MacBook (Kai-approved, informed decision). Everything lives in
   half in the Mac's `authorized_keys`). Cloud environments have NO
   dedicated secrets store — these two bootstrap secrets are deliberately
   the only ones there. Other keys (OpenRouter, Tripo, …) belong on the
-  Mac, fetched over the bridge at session start; they then persist in the
-  container for the whole session, so the Mac only needs to be awake at
-  fetch time and for actual bridge work.
+  Mac at `~/.terrainist-secrets.env` (`OPENROUTER=`, `TRIPO=`), fetched
+  over the bridge at session start; they then persist in the container for
+  the whole session, so the Mac only needs to be awake at fetch time and
+  for actual bridge work.
 - **Mac facts:** user `kaihoward`, tailnet IP `100.67.165.113`, repo at
   `~/dev/terrainist`, Node/gh via Homebrew — prefix remote commands with
   `export PATH=/opt/homebrew/bin:$PATH`. `gh` is authed with insecure
@@ -96,6 +97,19 @@ This is the *development* workflow. The *production* worldgen pipeline
 - Deterministic everything: same spec + seed → byte-identical world. No
   wall-clock, no unseeded randomness; RNG seeds derive from
   `hash(worldSeed, nodePath)`.
+- **No platform transcendentals** in worldgen — no `Math.sin`/`cos`/`exp`/
+  `pow`. Use `packages/stdlib/src/math/`, or express the thing in integer
+  and rational arithmetic (C1's 15° angles are a 24-entry table; C2's decay
+  is rational in squared distances). Enforced by
+  `packages/stdlib/test/no-math-transcendentals.test.ts`.
+- **The physics lint must read back zero on every shipped world**
+  (`packages/compiler/src/emit/physics.ts`, 26 rules). It is a gate, not a
+  report: a world with findings does not ship or install.
+- **Never run the full monorepo suite casually** — ~10 minutes on 4 vCPUs,
+  and it OOMs under agent contention (exit 144 is a kill, not a failure).
+  Use scoped `vitest` runs while iterating; CI is the clean gate.
+- Tripo work is **offline-tested by construction**: no test may touch the
+  network or require `TRIPO_API_KEY`. CI cannot reach either.
 - LLMs never emit absolute coordinates — placement comes from envelopes,
   constraints, and ports resolved by the layout solver.
 - Target: Minecraft Java, latest release (26.2 as of 2026-07). Emit format
@@ -118,6 +132,17 @@ This is the *development* workflow. The *production* worldgen pipeline
   every shipped world lints zero on every physics rule; but **nothing has been
   walked in the client** — do not iterate on visuals without Kai. See the
   dated status blocks in `docs/DESIGN.md` for what each round added.
+- **Status (2026-08-01): fabric v2 and fabric v3 are shipped and merged**
+  (PR #4). A settlement is no longer a bag of buildings: arterials are drawn
+  on real terrain first, the faces of that network become non-rectangular
+  district cells with their own orientation and palette, streets cut each
+  cell into blocks, blocks into lots, and a run of lots on one block face
+  becomes a single terrace with shared party walls. A prominence field gives
+  the skyline a peak; a life pass dresses eye level; set pieces close vistas.
+  Three headline worlds ship at 1024²: `world-bayline` (Miami reference),
+  `world-meridian` (diagonal metropolis), `world-oldharrow` (hill town).
+  Bayline and Meridian are installed and lint zero. **Still not walked in the
+  client.** See the fabric v2 / v3 sections at the end of `docs/DESIGN.md`.
 - **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
   indefinitely — production authoring is pure GLM 5.2 (cheapness is a core
   goal); escalate only if GLM hits a hard capability wall. The

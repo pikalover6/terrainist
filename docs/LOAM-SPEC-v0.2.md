@@ -5391,6 +5391,38 @@ A kit id is `loam-kit/<role>@<loamVersion>-<buildHash8>`, e.g.
 
 ---
 
+### 12.2 Profile extensions built since ratification (2026-08-01)
+
+v0.2 is the **core** language and is unchanged. Everything below is
+settlement-profile vocabulary added after ratification; it is normative in
+`docs/kits/settlement-author.md` and `docs/LOAM-TERRAIN-PROFILE-v0.md`, not
+here. Recorded so a reader of this document knows the profiles have moved
+and where to look.
+
+| addition | what it is | where it is specified |
+|---|---|---|
+| `kind: "district"` | fabric v2 — streets first, then blocks, lots and frontage-aligned buildings. `fabric`, `density`, `mix`, `blockSize`, `plaza`. | settlement kit, "The district" |
+| `kind: "city"` | fabric v3 — an arterial armature drawn on real terrain, with the faces of that network as district cells. `size`, `coastal`, `diagonals`, `ring`, `blockSize`, `mix`, `characters`, `setPieces`. Quarters cannot be enumerated by hand, deliberately. | settlement kit, "The city" |
+| `params.vista` on a landmark | pins a building to the end of an arterial so a boulevard terminates on it. | settlement kit, C4 section |
+| `precinct.harbour@0`, `precinct.airport@0` | semi-deterministic mini-settlements with real internal organisation. The harbour seeks its own coastline and reports `LOAM-W409` when it moves. | settlement kit, §11b |
+| archetype `terrace` | a whole block face as one assembly of bays with shared party walls, rather than N detached shells. | settlement kit, archetype table |
+| `terrain.heightfield@0.scaleReference` | the region extent the node's frequencies were tuned at, so a landform scales with the world instead of getting finer. Omitted, output is byte-identical to before it existed. | terrain profile |
+| `LOAM-T212`…`T218`, `LOAM-W409`, `LOAM-T117` | the diagnostics those features raise. | `packages/spec/src/terrain/diagnostics.ts` |
+
+Two lessons from building them are worth carrying into any future
+vocabulary, because both cost real money before they were understood:
+
+1. **A diagnostic's code, not its severity, decides whether it reaches the
+   authoring loop.** `LOAM-E170` is in the CLI's feedback set by code; a
+   compiler-ordering note that borrowed it sent every small world two
+   revision rounds the model could not possibly satisfy. A finding no
+   document edit can fix needs its own code.
+2. **A capacity question must be asked of the thing, not of its
+   parameters.** Ranking cells for a landmark by their nominal `blockSize`
+   dropped three of five landmarks, because a polygon and the core quarter
+   can carry the same nominal number. The same shape of error put a market
+   stall on a graded step and a university hall inside a hillside.
+
 *End of Loam v0.2. Ratified 2026-07-28 against `docs/DESIGN.md`. Review targets,
 in order of value: §4.9 (coarse placement — the cost model and the corridor
 contract are the parts most likely to need tuning against real worlds), §7.0 and
