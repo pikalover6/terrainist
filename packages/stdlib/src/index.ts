@@ -30,7 +30,7 @@ import { deriveNoiseSeeds } from "./noise/index.js";
 import { nodeSeed, resolveWorldSeed } from "./determinism/index.js";
 import {
   buildBaseField,
-  resolveHeightfieldParams,
+  resolveHeightfieldParamsForRegion,
   type HeightField,
   type HeightfieldParams,
   type Region,
@@ -100,7 +100,10 @@ export interface TerrainFieldResult {
  */
 export function buildTerrainField(request: TerrainFieldRequest): TerrainFieldResult {
   const worldSeed = resolveWorldSeed(request.worldSeed);
-  const params = resolveHeightfieldParams(request.params);
+  // Resolved *against the region*: `scaleReference`, when the document opts in,
+  // is what stops the coastline from wandering off the moment the same world is
+  // compiled at another size. Documents that omit it get their params verbatim.
+  const params = resolveHeightfieldParamsForRegion(request.params, request.region);
   const node = nodeSeed(worldSeed, request.nodePath, request.seedSalt ?? "");
   const seeds = deriveNoiseSeeds(node);
   const field = buildBaseField({ region: request.region, params, seeds });

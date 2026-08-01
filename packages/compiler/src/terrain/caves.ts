@@ -24,12 +24,15 @@
 
 import {
   CAVE_ROOF_THICKNESS,
+  CAVE_STYLES,
   carveCaves,
+  caveAirAt,
   dilate,
   emptyCaveSpans,
   resolveCaveParams,
   type CaveParams,
   type CaveSpans,
+  type CaveStyle,
   type Classification,
   type Marker,
   type Seed256,
@@ -57,6 +60,18 @@ export interface CavePlan {
   readonly chambers: number;
   /** True when at least one node asked for decoration. */
   readonly decorate: boolean;
+  /**
+   * Per column, `styleOrdinal + 1` of the cave node that carved it — 0 where no
+   * cave node did.
+   *
+   * The dressing is style-driven, and a document may hold several cave nodes of
+   * different styles whose spans have already been merged into one set by the
+   * time the dressing runs. Recording the style per column is what lets a
+   * ravine get gravel floors while the worm system next door keeps dripstone.
+   * Where two nodes overlap, the later node in document order wins; that is a
+   * cosmetic tie-break, and the spans themselves are still order-independent.
+   */
+  readonly styleByColumn?: Uint8Array;
   /**
    * 1 for a column whose air the *structure* pass owns — a tunnel bore.
    *
@@ -105,6 +120,7 @@ export function buildCavePlan(
       systems: 0,
       chambers: 0,
       decorate: false,
+      styleByColumn: new Uint8Array(n),
     };
   }
 
@@ -118,6 +134,7 @@ export function buildCavePlan(
   }
 
   const spanSets: CaveSpans[] = [];
+  const styleByColumn = new Uint8Array(n);
   const entranceColumns = new Uint8Array(n);
   const markers: Marker[] = [];
   let systems = 0;
@@ -137,8 +154,12 @@ export function buildCavePlan(
       nodeId: node.nodePath,
     });
     spanSets.push(result.spans);
+    const styleOrdinal = CAVE_STYLES.indexOf(node.params.style) + 1;
     for (let idx = 0; idx < n; idx++) {
       if (result.entranceColumns[idx] === 1) entranceColumns[idx] = 1;
+      if ((result.spans.offsets[idx + 1] as number) > (result.spans.offsets[idx] as number)) {
+        styleByColumn[idx] = styleOrdinal;
+      }
     }
     markers.push(...result.markers);
     systems += result.systems;
@@ -146,13 +167,13 @@ export function buildCavePlan(
     if (node.params.decorate) decorate = true;
   }
 
-  const spans = mergeSpanSets(spanSets, n);
+  const spans = closeIsolatedPillars(mergeSpanSets(spanSets, n), region);
   let carvedBlocks = 0;
   for (let k = 0; k < spans.lo.length; k++) {
     carvedBlocks += (spans.hi[k] as number) - (spans.lo[k] as number) + 1;
   }
 
-  return { spans, entranceColumns, markers, carvedBlocks, systems, chambers, decorate };
+  return { spans, entranceColumns, markers, carvedBlocks, systems, chambers, decorate, styleByColumn };
 }
 
 /** Union several span sets over the same region, re-merging per column. */
@@ -186,6 +207,77 @@ export function mergeSpanSets(sets: readonly CaveSpans[], columns: number): Cave
   return { offsets, lo: Int32Array.from(outLo), hi: Int32Array.from(outHi) };
 }
 
+/**
+ * Dissolve one-block rock slabs that nothing holds on to.
+ *
+ * The stdlib deliberately keeps a one-block slab between two spans of a column
+ * rather than merging them, because that slab is what a stalagmite at `lo` and a
+ * stalactite at `hi` are anchored to. But a slab whose four lateral neighbours
+ * are *also* air is a stone block floating in a void — the `floating.isolated`
+ * physics rule's exact definition, and a thing a player reads as a compiler bug
+ * rather than as geology. It only shows up where two systems pass each other,
+ * which is why it took a document with four cave nodes to surface it.
+ *
+ * Removing the slab merges the two spans, which is safe on every count: the
+ * merged span still ends in rock at `lo - 1` and `hi + 1`, and both halves were
+ * already inside the same column's carve band, so neither the fluid shell nor
+ * the roof margin can move. The pass runs to a fixpoint because opening one
+ * slab can leave a neighbouring one isolated in turn; it is a no-op on any world
+ * that had no isolated slab to begin with.
+ */
+export function closeIsolatedPillars(spans: CaveSpans, region: ColumnPlan["region"]): CaveSpans {
+  const columns = region.width * region.depth;
+  let current = spans;
+
+  for (let pass = 0; pass < 8; pass++) {
+    const doomed: number[] = [];
+    for (let j = 0; j < region.depth; j++) {
+      for (let i = 0; i < region.width; i++) {
+        const idx = j * region.width + i;
+        const end = current.offsets[idx + 1] as number;
+        for (let k = current.offsets[idx] as number; k + 1 < end; k++) {
+          const gapY = (current.hi[k] as number) + 1;
+          if ((current.lo[k + 1] as number) !== gapY + 1) continue;
+          if (
+            i > 0 &&
+            i + 1 < region.width &&
+            j > 0 &&
+            j + 1 < region.depth &&
+            caveAirAt(current, idx - 1, gapY) &&
+            caveAirAt(current, idx + 1, gapY) &&
+            caveAirAt(current, idx - region.width, gapY) &&
+            caveAirAt(current, idx + region.width, gapY)
+          ) {
+            doomed.push(idx, k);
+          }
+        }
+      }
+    }
+    if (doomed.length === 0) break;
+
+    const drop = new Set<number>();
+    for (let d = 1; d < doomed.length; d += 2) drop.add(doomed[d] as number);
+    const offsets = new Int32Array(columns + 1);
+    const lo: number[] = [];
+    const hi: number[] = [];
+    for (let idx = 0; idx < columns; idx++) {
+      offsets[idx] = lo.length;
+      const end = current.offsets[idx + 1] as number;
+      for (let k = current.offsets[idx] as number; k < end; k++) {
+        if (k > (current.offsets[idx] as number) && drop.has(k - 1)) {
+          hi[hi.length - 1] = current.hi[k] as number;
+          continue;
+        }
+        lo.push(current.lo[k] as number);
+        hi.push(current.hi[k] as number);
+      }
+    }
+    offsets[columns] = lo.length;
+    current = { offsets, lo: Int32Array.from(lo), hi: Int32Array.from(hi) };
+  }
+  return current;
+}
+
 /* -------------------------------------------------------------------------- */
 /* dressing                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -196,8 +288,100 @@ const MIN_DRESSED_HEIGHT = 3;
 /** Height at or above which a two-block dripstone spike may be placed. */
 const TALL_SPAN_HEIGHT = 6;
 
-/** Chance a cave floor column is dripstone rather than the surrounding rock. */
-const FLOOR_PATCH_CHANCE = 0.3;
+/**
+ * What one style's dressing looks like.
+ *
+ * The `f`-thresholds are cumulative over a single position-keyed draw, so a
+ * column gets at most one of stalagmite / moss / mushroom; that is the shape the
+ * pass has always had, and keeping it is what lets `worm`'s row below reproduce
+ * the pre-style dressing block for block.
+ */
+interface CaveDecorStyle {
+  /** Chance the floor block under a span is replaced with a cave material. */
+  readonly floorPatch: number;
+  /** Of those patches, the share laid as gravel rather than dripstone block. */
+  readonly gravelShare: number;
+  /** Cumulative thresholds on the floor draw: stalagmite < moss < mushroom. */
+  readonly stalagmite: number;
+  readonly moss: number;
+  readonly mushroom: number;
+  /** Within the mushroom band, below this it is brown, above it red. */
+  readonly redMushroomAt: number;
+  /** Chance a ceiling grows a stalactite. */
+  readonly stalactite: number;
+  /** Chance a ceiling carries glow lichen. Zero for `worm`, which predates it. */
+  readonly lichen: number;
+  readonly cobweb: number;
+}
+
+/**
+ * The dressing per cave style.
+ *
+ * `worm` is frozen at the numbers the pass used before styles existed — it is
+ * the compatibility anchor, and re-rolling every existing world to sprinkle
+ * lichen through it is not a trade worth making. The four new styles are where
+ * the v0.2 §7 promise of "dripstone, glow lichen, gravel floors *from the
+ * style*" is actually kept: a ravine floor is washed gravel, a cheese pocket is
+ * mossy and lichen-lit, spaghetti is dry and cobwebbed, a chamber network is
+ * the show cave.
+ */
+const CAVE_DECOR: Readonly<Record<CaveStyle, CaveDecorStyle>> = Object.freeze({
+  worm: Object.freeze({
+    floorPatch: 0.3,
+    gravelShare: 0,
+    stalagmite: 0.06,
+    moss: 0.12,
+    mushroom: 0.155,
+    redMushroomAt: 0.14,
+    stalactite: 0.07,
+    lichen: 0,
+    cobweb: 0.004,
+  }),
+  cheese: Object.freeze({
+    floorPatch: 0.4,
+    gravelShare: 0.55,
+    stalagmite: 0.04,
+    moss: 0.2,
+    mushroom: 0.26,
+    redMushroomAt: 0.235,
+    stalactite: 0.04,
+    lichen: 0.1,
+    cobweb: 0.002,
+  }),
+  spaghetti: Object.freeze({
+    floorPatch: 0.18,
+    gravelShare: 0.8,
+    stalagmite: 0.05,
+    moss: 0.09,
+    mushroom: 0.105,
+    redMushroomAt: 0.098,
+    stalactite: 0.06,
+    lichen: 0.05,
+    cobweb: 0.01,
+  }),
+  ravine: Object.freeze({
+    floorPatch: 0.45,
+    gravelShare: 0.9,
+    stalagmite: 0.03,
+    moss: 0.1,
+    mushroom: 0.12,
+    redMushroomAt: 0.11,
+    stalactite: 0.05,
+    lichen: 0.12,
+    cobweb: 0.003,
+  }),
+  chamber_network: Object.freeze({
+    floorPatch: 0.3,
+    gravelShare: 0.35,
+    stalagmite: 0.07,
+    moss: 0.16,
+    mushroom: 0.2,
+    redMushroomAt: 0.185,
+    stalactite: 0.08,
+    lichen: 0.14,
+    cobweb: 0.003,
+  }),
+});
 
 /** Block states the cave dressing places, resolved once. */
 interface CaveStates {
@@ -206,6 +390,10 @@ interface CaveStates {
   readonly cobweb: number;
   readonly brownMushroom: number;
   readonly redMushroom: number;
+  /** Washed gravel, the alternative cave floor. */
+  readonly gravel: number;
+  /** `glow_lichen` with its single face on the ceiling above it. */
+  readonly lichen: number;
   /** `pointed_dripstone` by `[direction][thickness]`. */
   readonly spike: Readonly<Record<"up" | "down", Readonly<Record<"tip" | "frustum", number>>>>;
 }
@@ -224,6 +412,20 @@ function resolveCaveStates(palette: Palette, stack: PrismarineStack): CaveStates
     cobweb: palette.state("cave.cobweb"),
     brownMushroom: palette.state("foliage.brown_mushroom"),
     redMushroom: palette.state("foliage.red_mushroom"),
+    gravel: stack.blockByName("gravel")?.stateId ?? palette.state("cave.floor"),
+    // A multiface block names the faces it is stuck to. `up: true` is the face
+    // on the *top* of this block position, i.e. the one glued to the ceiling
+    // block above — which the span invariant guarantees is solid rock.
+    lichen:
+      stack.blockStateOf("glow_lichen", {
+        down: "false",
+        up: "true",
+        north: "false",
+        south: "false",
+        east: "false",
+        west: "false",
+        waterlogged: "false",
+      }) ?? fallback,
     spike: {
       up: { tip: spike("up", "tip"), frustum: spike("up", "frustum") },
       down: { tip: spike("down", "tip"), frustum: spike("down", "frustum") },
@@ -268,10 +470,12 @@ export function decorateCaves(
   const caves = plan.caves;
   const counts: Record<string, number> = {
     floor: 0,
+    gravel: 0,
     stalagmite: 0,
     stalactite: 0,
     moss: 0,
     mushroom: 0,
+    lichen: 0,
     cobweb: 0,
   };
   if (caves === undefined || !caves.decorate) return { blocks: [], counts };
@@ -281,6 +485,8 @@ export function decorateCaves(
   const floorSeed = detailSeed(seed, "caves.floor");
   const ceilSeed = detailSeed(seed, "caves.ceiling");
   const webSeed = detailSeed(seed, "caves.cobweb");
+  const lichenSeed = detailSeed(seed, "caves.lichen");
+  const styleByColumn = caves.styleByColumn;
   const blocks: DecorBlock[] = [];
 
   for (let j = 0; j < region.depth; j++) {
@@ -290,6 +496,8 @@ export function decorateCaves(
       const idx = j * region.width + i;
       const end = caves.spans.offsets[idx + 1] as number;
       const surface = ground[idx] as number;
+      const ordinal = styleByColumn === undefined ? 1 : styleByColumn[idx] ?? 0;
+      const style = CAVE_DECOR[(CAVE_STYLES[Math.max(0, ordinal - 1)] ?? "worm") as CaveStyle];
 
       for (let k = caves.spans.offsets[idx] as number; k < end; k++) {
         const lo = caves.spans.lo[k] as number;
@@ -299,25 +507,29 @@ export function decorateCaves(
         const tall = height >= TALL_SPAN_HEIGHT;
 
         // --- the floor ------------------------------------------------------
-        if (hash3(floorSeed, x, lo, z, 1) < FLOOR_PATCH_CHANCE) {
-          blocks.push({ x, y: lo - 1, z, stateId: states.floor });
-          counts["floor"] = (counts["floor"] as number) + 1;
+        if (hash3(floorSeed, x, lo, z, 1) < style.floorPatch) {
+          // Gravel is the style's own floor: a washed ravine bottom or a
+          // spaghetti tube reads as loose stone, not as a dripstone grotto.
+          const gravel =
+            style.gravelShare > 0 && hash3(floorSeed, x, lo, z, 5) < style.gravelShare;
+          blocks.push({ x, y: lo - 1, z, stateId: gravel ? states.gravel : states.floor });
+          counts[gravel ? "gravel" : "floor"] = (counts[gravel ? "gravel" : "floor"] as number) + 1;
         }
 
         const f = hash3(floorSeed, x, lo, z, 2);
-        if (f < 0.06) {
+        if (f < style.stalagmite) {
           blocks.push({ x, y: lo, z, stateId: tall ? states.spike.up.frustum : states.spike.up.tip });
           if (tall) blocks.push({ x, y: lo + 1, z, stateId: states.spike.up.tip });
           counts["stalagmite"] = (counts["stalagmite"] as number) + 1;
-        } else if (f < 0.12) {
+        } else if (f < style.moss) {
           blocks.push({ x, y: lo, z, stateId: states.moss });
           counts["moss"] = (counts["moss"] as number) + 1;
-        } else if (f < 0.155) {
+        } else if (f < style.mushroom) {
           blocks.push({
             x,
             y: lo,
             z,
-            stateId: f < 0.14 ? states.brownMushroom : states.redMushroom,
+            stateId: f < style.redMushroomAt ? states.brownMushroom : states.redMushroom,
           });
           counts["mushroom"] = (counts["mushroom"] as number) + 1;
         }
@@ -325,14 +537,20 @@ export function decorateCaves(
         // --- the ceiling ----------------------------------------------------
         // A mouth column has open sky over it; there is nothing up there for a
         // stalactite to hold on to.
-        if (hi < surface && hash3(ceilSeed, x, hi, z, 3) < 0.07) {
+        if (hi < surface && hash3(ceilSeed, x, hi, z, 3) < style.stalactite) {
           blocks.push({ x, y: hi, z, stateId: tall ? states.spike.down.frustum : states.spike.down.tip });
           if (tall) blocks.push({ x, y: hi - 1, z, stateId: states.spike.down.tip });
           counts["stalactite"] = (counts["stalactite"] as number) + 1;
+        } else if (hi < surface && style.lichen > 0 && hash3(lichenSeed, x, hi, z, 6) < style.lichen) {
+          // Only where no spike already occupies the ceiling block, and only
+          // under real rock — a mouth column has open sky, and lichen glued to
+          // nothing is a block that pops on the first tick.
+          blocks.push({ x, y: hi, z, stateId: states.lichen });
+          counts["lichen"] = (counts["lichen"] as number) + 1;
         }
 
         // --- cobwebs --------------------------------------------------------
-        if (hash3(webSeed, x, lo, z, 4) < 0.004) {
+        if (hash3(webSeed, x, lo, z, 4) < style.cobweb) {
           blocks.push({ x, y: lo + 1, z, stateId: states.cobweb });
           counts["cobweb"] = (counts["cobweb"] as number) + 1;
         }

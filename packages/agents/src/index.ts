@@ -39,7 +39,82 @@ export {
   OPENROUTER_BASE_URL,
 } from "./config.js";
 
-export { findRepoRoot, loadOpenRouterKey, parseEnv, readDotEnv } from "./env.js";
+export {
+  findRepoRoot,
+  loadOpenRouterKey,
+  loadTripoKey,
+  parseEnv,
+  readDotEnv,
+} from "./env.js";
+
+export {
+  ASSET_ARTIFACT_MISSING,
+  ASSET_KEY_PREFIX,
+  ASSET_LOCK_FILENAME,
+  ASSET_LOCK_KIND,
+  ASSET_LOCK_LOAM_VERSION,
+  AssetArtifactMissingError,
+  AssetLockFormatError,
+  artifactPathFor,
+  assetCacheKey,
+  canonicalJson,
+  emptyAssetLock,
+  loadAssetLock,
+  narrowAssetLock,
+  saveAssetLock,
+  serializeAssetLock,
+  sha256Hex,
+  toHex,
+  withAssetEntry,
+  resolveAsset,
+} from "./asset-lock.js";
+export type {
+  AssetCacheKey,
+  AssetCacheKeyInputs,
+  AssetLock,
+  AssetLockEntry,
+  AssetResolution,
+  JsonValue,
+  ResolveAssetOptions,
+} from "./asset-lock.js";
+
+export {
+  TRIPO_BALANCE_URL,
+  TRIPO_BASE_URL,
+  TRIPO_ERROR_BODY_LIMIT,
+  TRIPO_FAILURE_STATUSES,
+  TRIPO_IMAGE_TASK_TYPE,
+  TRIPO_MAX_POLL_ATTEMPTS,
+  TRIPO_MODEL_VERSION,
+  TRIPO_POLL_INTERVAL_MS,
+  TRIPO_SUCCESS_STATUS,
+  TRIPO_TASK_STATUS_URL,
+  TRIPO_TASK_URL,
+  TRIPO_TEXT_TASK_TYPE,
+  VOXELIZER_VERSION,
+} from "./tripo-config.js";
+
+export {
+  TripoPollTimeoutError,
+  TripoTaskFailedError,
+  fetchMeshBytes,
+  generateMesh,
+  getTaskStatus,
+  pollTask,
+  submitImageTask,
+  submitTextTask,
+  verifyTripoAvailable,
+} from "./tripo.js";
+export type {
+  SleepLike,
+  TripoClientOptions,
+  TripoCompletedTask,
+  TripoImageTaskRequest,
+  TripoPollOptions,
+  TripoTask,
+  TripoTaskStatus,
+  TripoTextTaskRequest,
+} from "./tripo.js";
 
 export { extractJson, stripFences } from "./json.js";
 export type { JsonExtraction } from "./json.js";

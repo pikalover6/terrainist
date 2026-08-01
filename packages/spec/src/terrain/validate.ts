@@ -23,8 +23,9 @@ import {
   type NumSpec,
   type Obj,
 } from "../checks.js";
-import { type LoamDiagnostic, error, hasErrors } from "./diagnostics.js";
+import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
+  CAVE_STYLES,
   CLIMATE_THEMES,
   COAST_ANCHOR,
   COAST_ANCHOR_VERBS,
@@ -36,6 +37,7 @@ import {
   PROFILE_GENERATORS,
   TREE_SHAPES,
   ZONE_TOKENS,
+  type CaveStyle,
   type ClimateTheme,
   type EditVerbName,
   type TerrainDocument,
@@ -116,6 +118,7 @@ const CAVE_CHAMBER_NUMS: Readonly<Record<string, NumSpec>> = {
   count: { min: 0, max: 64, int: true },
   radius: { min: 3, max: 24 },
   chance: { min: 0, max: 1 },
+  spacing: { min: 8, max: 256 },
 };
 
 /**
@@ -127,7 +130,6 @@ const CAVE_CHAMBER_NUMS: Readonly<Record<string, NumSpec>> = {
  * knob did nothing.
  */
 const CAVE_UNIMPLEMENTED: Readonly<Record<string, string>> = Object.freeze({
-  style: 'this profile carves the "worm" style only — remove "style", or express the shape you want with "radius", "verticality" and "chambers"',
   lavaLevel: 'remove "lavaLevel" — a cave that carries fluid cannot satisfy the profile\'s zero-unstable-fluids rule yet',
   waterTable: 'remove "waterTable" — flooded caves are not implemented; for surface water use a "basin" edit with "water": true',
   surfaceOpenings: 'this profile spells it "entrances" — write "entrances": 2 (or true) instead',
@@ -694,9 +696,27 @@ export function validateCaveNode(out: LoamDiagnostic[], path: string, node: Obj)
     out,
     params,
     `${path}.params`,
-    ["density", "frequency", "radius", "yRange", "verticality", "chambers", "entrances", "decorate", ...Object.keys(CAVE_UNIMPLEMENTED)],
+    ["style", "density", "frequency", "radius", "yRange", "verticality", "chambers", "entrances", "decorate", ...Object.keys(CAVE_UNIMPLEMENTED)],
     "cave.carver@0 params",
   );
+
+  const style = params["style"];
+  if (style !== undefined && !(CAVE_STYLES as readonly string[]).includes(style as CaveStyle)) {
+    // `lava_tube` is the one §7 value an author is likely to have read and
+    // reached for, so it gets its own reason rather than the enum list.
+    const fix =
+      style === "lava_tube"
+        ? 'the "lava_tube" style is not carved — a dry tube would not be one, and lava in a cave cannot satisfy the profile\'s zero-unstable-fluids rule. Try "style": "chamber_network" or "cheese"'
+        : `set "style" to one of: ${CAVE_STYLES.join(", ")} — or omit it for the default "worm"`;
+    out.push(
+      error(
+        style === "lava_tube" ? "PARAM_NOT_IMPLEMENTED" : "BAD_ENUM",
+        `${path}.params`,
+        `"style" must be a cave style this profile carves, got ${describe(style)}`,
+        fix,
+      ),
+    );
+  }
   checkNumbers(out, `${path}.params`, params, CAVE_NUMS);
   checkBooleans(out, `${path}.params`, params, ["decorate"]);
 
@@ -716,10 +736,7 @@ export function validateCaveNode(out: LoamDiagnostic[], path: string, node: Obj)
     if (!isObject(chambers)) {
       out.push(error("BAD_TYPE", `${path}.params.chambers`, `"chambers" must be an object, got ${describe(chambers)}`, 'write "chambers": { "count": 3, "radius": 8, "chance": 0.4 }, or omit it'));
     } else {
-      unknownKeys(out, chambers, `${path}.params.chambers`, ["count", "radius", "chance"], "chambers");
-      if (chambers["spacing"] !== undefined) {
-        out.push(error("PARAM_NOT_IMPLEMENTED", `${path}.params.chambers`, '"chambers.spacing" is not implemented', 'remove "spacing" — chambers are gated by "chance" along each worm instead'));
-      }
+      unknownKeys(out, chambers, `${path}.params.chambers`, ["count", "radius", "chance", "spacing"], "chambers");
       checkNumbers(out, `${path}.params.chambers`, chambers, CAVE_CHAMBER_NUMS);
     }
   }
@@ -869,6 +886,59 @@ export function validateForestNode(out: LoamDiagnostic[], path: string, node: Ob
   }
 }
 
+/**
+ * `scaleReference` — the region extent this node's frequencies were tuned at.
+ *
+ * Checked by hand rather than through {@link HEIGHTFIELD_NUMS} because the
+ * generic "must be a number in 16..4096" is true and useless: the whole point
+ * of the parameter is a *relationship* between two numbers the author wrote in
+ * different places, and the fix hint has to say so or nobody will guess it.
+ *
+ * The third check is the one that actually earns its keep. A `scaleReference`
+ * on a node with no `frequency`, no `warp` and no `continentalness` scales
+ * nothing but the default frequency, which is almost never what an author who
+ * typed the word "scale" was after — and it fails *silently*, by producing a
+ * perfectly ordinary world at every size.
+ */
+function validateScaleReference(out: LoamDiagnostic[], path: string, params: Obj): void {
+  const raw = params["scaleReference"];
+  if (raw === undefined) return;
+  const at = `${path}.params`;
+  const fix =
+    'set "scaleReference" to the region size these frequencies were tuned at, e.g. 512 — the compiler ' +
+    'then divides them by (the region\'s longest side ÷ scaleReference), so a 1024-wide world gets the ' +
+    "same coastline at twice the size instead of twice as much of it";
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    out.push(error("BAD_TYPE", at, `"scaleReference" must be a finite number, got ${describe(raw)}`, fix));
+    return;
+  }
+  if (!Number.isInteger(raw) || raw < 16 || raw > 4096) {
+    out.push(
+      error(
+        "PARAM_OUT_OF_RANGE",
+        at,
+        `"scaleReference" is ${raw}; it names a region extent in blocks and must be a whole number in 16..4096, like the root envelope's "size"`,
+        fix,
+      ),
+    );
+    return;
+  }
+  const scalable =
+    params["frequency"] !== undefined ||
+    params["warp"] !== undefined ||
+    params["continentalness"] !== undefined;
+  if (!scalable) {
+    out.push(
+      warning(
+        "SCALE_REFERENCE_INERT",
+        at,
+        `"scaleReference": ${raw} is declared but this heightfield sets no "frequency", "warp" or "continentalness" for it to scale`,
+        'give the node the spatial parameters you want sized to the world — at minimum "frequency" — or drop "scaleReference"',
+      ),
+    );
+  }
+}
+
 function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: Obj): void {
   unknownKeys(
     out,
@@ -878,11 +948,13 @@ function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: 
       "seaLevel", "baseHeight", "amplitude", "octaves", "frequency", "lacunarity", "gain",
       "ridged", "warp", "erosionPasses", "curve", "continentalness",
       "cliffThreshold", "soilDepth", "beachWidth", "snowLineFraction",
+      "scaleReference",
     ],
     "terrain.heightfield@0 params",
   );
   checkNumbers(out, `${path}.params`, params, HEIGHTFIELD_NUMS);
   checkBooleans(out, `${path}.params`, params, ["ridged"]);
+  validateScaleReference(out, path, params);
 
   const warp = params["warp"];
   if (warp !== undefined) {

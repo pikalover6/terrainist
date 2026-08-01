@@ -1,0 +1,630 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "bayline1024",
+    "worldSeed": "20260801",
+    "prompt": "A dense modern waterfront city on a subtropical bay: a high-rise downtown of glass towers standing over continuous mid-rise blocks on a street grid, split from its sister quarter by a river running down to the bay, with road bridges joining the two. A working harbour with piers and moored ships on the bayfront, a small city airport inland with aircraft on the apron, a leafy row-house quarter up the shore, and a palm-fringed waterfront park between the towers and the water. Streets with sidewalks, streetlights and crossings everywhere; the city should read full of life from any rooftop.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Bayline @ 1024x1024",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a flat coastal plain with the sea to the south and east",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 71,
+          "amplitude": 9,
+          "octaves": 4,
+          "frequency": 0.004,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "erosionPasses": 1,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.34
+          },
+          "cliffThreshold": 70,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "the_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the river between downtown and midtown, down to the bay",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.44,
+                  0.06
+                ],
+                [
+                  0.45,
+                  0.3
+                ],
+                [
+                  0.47,
+                  0.55
+                ],
+                [
+                  0.5,
+                  0.75
+                ],
+                "coast"
+              ],
+              "width": 20,
+              "depth": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "subtropical, green, maritime",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "downtown",
+        "kind": "district",
+        "label": "the tower district: glass landmarks over continuous mid-rise blocks",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            400,
+            340
+          ]
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "office",
+            "apartment_block",
+            "hotel",
+            "shop_row",
+            "department_store"
+          ],
+          "blockSize": 40,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "downtown",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "spire_one",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tallest tower on the skyline",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                78,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 18
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "spire_two",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "its slightly shorter twin",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                64,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 14
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "bay_hotel",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the bayfront hotel",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                48,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "hotel",
+              "floors": 10
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "congress_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the convention centre on the plaza",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                29,
+                20,
+                23
+              ]
+            },
+            "params": {
+              "archetype": "conference_center",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "midtown",
+        "kind": "district",
+        "label": "the west-bank quarter across the river",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            340,
+            300
+          ]
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "apartment_block",
+            "office",
+            "shop_row",
+            "convenience_store",
+            "food_court"
+          ],
+          "blockSize": 38
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "city_museum",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the museum anchoring the west bank",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                25,
+                18,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "museum",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "grand_cinema",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the picture palace",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                16,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "cinema",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "shoreside",
+        "kind": "district",
+        "label": "the row-house quarter up the shore",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            300,
+            240
+          ]
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "medium",
+          "mix": [
+            "townhouse",
+            "terraced_row",
+            "apartment_block",
+            "shop_row"
+          ],
+          "blockSize": 36
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "shore_school",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the neighbourhood school",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                14,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "school",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "shore_library",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the branch library",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                17,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "library",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "port_bayline",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the working harbour on the bayfront",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            104,
+            16,
+            76
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "city_airport",
+        "kind": "generator",
+        "generator": "precinct.airport@0",
+        "label": "the city airport inland",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            150,
+            24,
+            94
+          ]
+        },
+        "params": {
+          "stands": 5,
+          "hangars": 2
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          }
+        ],
+        "tags": [
+          "precinct",
+          "airfield"
+        ]
+      },
+      {
+        "id": "palm_garden",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glasshouse garden",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            19,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "botanical_garden",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "park"
+        ],
+        "constraints": [
+          {
+            "zone": "south"
+          }
+        ]
+      },
+      {
+        "id": "park_bandstand",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the bandstand on the lawn",
+        "params": {
+          "prop": "bandstand",
+          "zone": "south"
+        },
+        "tags": [
+          "park"
+        ]
+      },
+      {
+        "id": "park_lido",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the lido pool by the water",
+        "params": {
+          "prop": "swimming_pool",
+          "zone": "south"
+        },
+        "tags": [
+          "park"
+        ]
+      },
+      {
+        "id": "streets",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the boulevards joining the quarters, bridging the river",
+        "params": {
+          "anchors": [
+            "downtown",
+            "midtown",
+            "shoreside",
+            "port_bayline",
+            "city_airport",
+            "palm_garden"
+          ]
+        }
+      },
+      {
+        "id": "north_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "a broadleaf fringe on the inland edge",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "spacing": 5,
+          "clumping": 0.6,
+          "maxSlope": 30,
+          "elevation": [
+            3,
+            110
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "district",
+            "precinct",
+            "park"
+          ],
+          "species": [
+            {
+              "id": "bay_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "bay_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -33,6 +33,42 @@ import {
   CONTEXT_YAWS,
   EXTRA_EXHIBIT_ROWS,
   UNDERGROUND_EXHIBIT_ROWS,
+  INSTITUTION_EXHIBIT_ROWS,
+  INSTITUTION_ROW_LENGTH,
+  COMMERCE_EXHIBIT_ROWS,
+  COMMERCE_ROW_LENGTH,
+  INDUSTRY_EXHIBIT_ROWS,
+  INDUSTRY_ROW_LENGTH,
+  UTILITY_EXHIBIT_ROWS,
+  UTILITY_ROW_LENGTH,
+  LEISURE_EXHIBIT_ROWS,
+  SCIENCE_EXHIBIT_ROWS,
+  SCIENCE_ROW_LENGTH,
+  TERMINUS_EXHIBIT_ROWS,
+  TERMINUS_ROW_LENGTH,
+  LEISURE_ROW_LENGTH,
+  HOMESTEAD_EXHIBIT_ROWS,
+  HOMESTEAD_ROW_LENGTH,
+  REGIONAL_EXHIBIT_ROWS,
+  REGIONAL_ROW_LENGTH,
+  RESIDENTIAL_EXHIBIT_ROWS,
+  RESIDENTIAL_ROW_LENGTH,
+  GARRISON_EXHIBIT_ROWS,
+  GARRISON_ROW_LENGTH,
+  ARCANA_EXHIBIT_ROWS,
+  ARCANA_ROW_LENGTH,
+  RELIC_EXHIBIT_ROWS,
+  RELIC_ROW_LENGTH,
+  SPECTACLE_EXHIBIT_ROWS,
+  SPECTACLE_ROW_LENGTH,
+  DEPTHS_EXHIBIT_ROWS,
+  DEPTHS_ROW_LENGTH,
+  FAITH_EXHIBIT_ROWS,
+  FAITH_ROW_LENGTH,
+  WAVE2_EXHIBIT_ROWS,
+  WAVE2_ROW_LENGTH,
+  WORKS_EXHIBIT_ROWS,
+  WORKS_ROW_LENGTH,
   PROP_EXHIBIT_PLAN,
   SEED_SWEEP_LENGTH,
   SEED_SWEEP_ROW_LABEL,
@@ -43,10 +79,18 @@ import {
   contextGroundAt,
   planContextSection,
 } from "../src/devworld-rows.js";
-import { EXTENDED_BUILDING_ARCHETYPES } from "@terrainist/stdlib";
+import {
+  BLITZ_BUILDING_ARCHETYPES,
+  EXTENDED_BUILDING_ARCHETYPES,
+  VERNACULAR_BUILDING_ARCHETYPES,
+} from "@terrainist/stdlib";
 
 import { ARCHETYPE_ROW_LENGTH } from "../src/exhibits/archetypes.js";
+import { BLITZ_ROW_LENGTH } from "../src/exhibits/blitz.js";
 import { HIGHRISE_EXHIBIT_ROWS, HIGHRISE_ROW_LENGTH } from "../src/exhibits/highrise.js";
+import { TOWN_EXHIBIT_ROWS } from "../src/exhibits/town.js";
+import { TRADE_EXHIBIT_ROWS, TRADE_ROW_LENGTH } from "../src/exhibits/trade.js";
+import { VERNACULAR_ROW_LENGTH } from "../src/exhibits/vernacular.js";
 import { exactRoofHeight, STAIR_MIN_DEPTH } from "../src/exhibits/breakpoints.js";
 import {
   MAX_BASEMENT_DEPTH,
@@ -113,13 +157,76 @@ describe("dev world grid", () => {
     const breakpoints = BREAKPOINT_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
     const tall = HIGHRISE_EXHIBIT_ROWS.length * HIGHRISE_ROW_LENGTH;
     const underground = UNDERGROUND_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    const town = TOWN_EXHIBIT_ROWS.reduce((sum, r) => sum + r.cells.length, 0);
+    // The trade wave's rows are prefixed (`trade_tavern`), so they are extra
+    // rows rather than replacements for the base grid's own; wave two's are
+    // prefixed the same way.
+    const trade = TRADE_EXHIBIT_ROWS.length * TRADE_ROW_LENGTH;
+    const wave2 = WAVE2_EXHIBIT_ROWS.length * WAVE2_ROW_LENGTH;
+    // Wave 3B's works rows are prefixed (`works_foundry`) for the same reason.
+    const works = WORKS_EXHIBIT_ROWS.length * WORKS_ROW_LENGTH;
+    // Wave three A, the institutions: prefixed (`inst_prison`) for the same
+    // reason, so they too are extra rows rather than replacements.
+    const institutions = INSTITUTION_EXHIBIT_ROWS.length * INSTITUTION_ROW_LENGTH;
+    // Wave 4C's leisure, modern and science rows are prefixed (`lei_cinema`).
+    const leisure = LEISURE_EXHIBIT_ROWS.length * LEISURE_ROW_LENGTH;
+    // Wave 5C's industry and modern rows are prefixed (`indy_refinery`).
+    const industry = INDUSTRY_EXHIBIT_ROWS.length * INDUSTRY_ROW_LENGTH;
+    // Wave 6C, waterworks and energy: prefixed (`util_cistern`) for the same
+    // reason, so they too are extra rows rather than replacements.
+    const utility = UTILITY_EXHIBIT_ROWS.length * UTILITY_ROW_LENGTH;
+    // Wave three's regional rows are prefixed (`reg_igloo`) for the same reason.
+    const regional = REGIONAL_EXHIBIT_ROWS.length * REGIONAL_ROW_LENGTH;
+    // Wave four D, the homestead: prefixed (`home_dovecote`) for the same reason.
+    const homestead = HOMESTEAD_EXHIBIT_ROWS.length * HOMESTEAD_ROW_LENGTH;
+    // Wave four A's dwellings are prefixed (`resi_hut`) for the same reason.
+    const residential = RESIDENTIAL_EXHIBIT_ROWS.length * RESIDENTIAL_ROW_LENGTH;
+    // Wave five A, the garrison: prefixed (`gar_castle`) for the same reason.
+    const garrison = GARRISON_EXHIBIT_ROWS.length * GARRISON_ROW_LENGTH;
+    // Wave 4B, faith and memorial: prefixed (`faith_stupa`) for the same reason.
+    const faith = FAITH_EXHIBIT_ROWS.length * FAITH_ROW_LENGTH;
+    // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
+    const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
+    // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
+    const science = SCIENCE_EXHIBIT_ROWS.length * SCIENCE_ROW_LENGTH;
+    // Wave 5E, arcana: prefixed (`arc_cenotaph`) for the same reason.
+    const arcana = ARCANA_EXHIBIT_ROWS.length * ARCANA_ROW_LENGTH;
+    // Wave 6A, the transport buildings: prefixed (`term_boathouse`).
+    const terminus = TERMINUS_EXHIBIT_ROWS.length * TERMINUS_ROW_LENGTH;
+    // Wave 6E, the relics: prefixed (`ruin_ruined_keep`) for the same reason.
+    const relic = RELIC_EXHIBIT_ROWS.length * RELIC_ROW_LENGTH;
+    // Wave 6D, spectacle: prefixed (`spec_big_top`) for the same reason.
+    const spectacle = SPECTACLE_EXHIBIT_ROWS.length * SPECTACLE_ROW_LENGTH;
+    // Wave six, the depths: prefixed (`depth_bunker_complex`) for the same reason.
+    const depths = DEPTHS_EXHIBIT_ROWS.length * DEPTHS_ROW_LENGTH;
     expect(extra).toBe(
       EXTENDED_BUILDING_ARCHETYPES.length * ARCHETYPE_ROW_LENGTH +
+        BLITZ_BUILDING_ARCHETYPES.length * BLITZ_ROW_LENGTH +
+        VERNACULAR_BUILDING_ARCHETYPES.length * VERNACULAR_ROW_LENGTH +
         tall +
+        trade +
         2 * 7 +
         SEED_SWEEP_LENGTH +
         breakpoints +
-        underground,
+        underground +
+        town +
+        wave2 +
+        works +
+        institutions +
+        leisure +
+        industry +
+        utility +
+        regional +
+        homestead +
+        residential +
+        faith +
+        commerce +
+        garrison + science +
+        arcana +
+        terminus +
+        relic +
+        spectacle +
+        depths,
     );
     const grid = planDevGrid();
     const expected = BASE_ARCHETYPE_ROWS.length * DEV_ROW_LENGTH + 3 * DEV_THEMES.length + extra;
@@ -171,15 +278,28 @@ describe("dev world grid", () => {
       // from the envelope the row was laid out against.
       ...grid.context.cells.map((c) => contextFootprint(c)),
     ];
+    // The pair check is quadratic in the number of exhibits, and the grid
+    // grows every wave. An `expect` per pair is orders of magnitude more
+    // expensive than the comparison it wraps — at this size that alone is the
+    // difference between a fast test and a timeout — so the pairs are counted
+    // and only the failures are asserted on. The assertion is identical; what
+    // changed is that passing pairs cost a comparison rather than a matcher.
+    // One assertion for the whole grid, not one per pair: the pair loop is
+    // quadratic in the number of exhibits and an `expect` call per pair put
+    // the test over its timeout as the grid grew. The collected list says
+    // exactly as much as the per-pair message did.
+    const clashes: string[] = [];
     for (let a = 0; a < boxes.length; a++) {
       for (let b = a + 1; b < boxes.length; b++) {
         const p = boxes[a] as (typeof boxes)[number];
         const q = boxes[b] as (typeof boxes)[number];
-        const overlaps = p.x0 <= q.x1 && q.x0 <= p.x1 && p.z0 <= q.z1 && q.z0 <= p.z1;
-        expect(overlaps, `exhibits ${a} and ${b} overlap`).toBe(false);
+        if (p.x0 <= q.x1 && q.x0 <= p.x1 && p.z0 <= q.z1 && q.z0 <= p.z1) {
+          clashes.push(`exhibits ${a} and ${b} overlap`);
+        }
       }
     }
-  });
+    expect(clashes).toEqual([]);
+  }, 300_000);
 
   it("spawns at the grid's south-west corner, on the plain", () => {
     const grid = planDevGrid();

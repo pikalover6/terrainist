@@ -1,0 +1,137 @@
+{
+  "size": 2048,
+  "variant": "terrain-verbatim",
+  "wallMs": 451156,
+  "peakRssMB": 3192.8,
+  "peakHeapMB": 2299.9,
+  "ok": true,
+  "timings": {
+    "validate": 7.341000000014901,
+    "field": 4336.139000000432,
+    "layout": 196093.3030000003,
+    "climate": 1361.498999999836,
+    "columns": 302.7250000005588,
+    "caves": 0.03199999965727329,
+    "structures": 119100.96300000045,
+    "scatter": 52015.599000000395,
+    "biomes": 287.7510000001639,
+    "validators": 45.3980000000447,
+    "emit": 76504.75700000022,
+    "total": 451155.3269999996
+  },
+  "emitSplit": {
+    "fillMs": 39292.8,
+    "connectionsMs": 13667.3,
+    "regionWriteMs": 23544.7
+  },
+  "stats": {
+    "columns": 4194304,
+    "chunkCount": 16384,
+    "blockCount": 568507000,
+    "structureBlockCount": 5499007,
+    "treeCount": 60243,
+    "regionFiles": 16
+  },
+  "city": {
+    "placements": 3221,
+    "structureBlocks": 5499007,
+    "districts": [
+      {
+        "nodePath": "world.downtown",
+        "bounds": [
+          null,
+          null
+        ],
+        "carriagewayBytes": 544000,
+        "stats": {
+          "blocks": 378,
+          "lots": 1689,
+          "landmarks": 4,
+          "landmarksUnplaced": 0,
+          "infill": 1536,
+          "lotsDropped": 59,
+          "plazaLots": 4,
+          "carriagewayColumns": 150382,
+          "sidewalkColumns": 91536
+        }
+      },
+      {
+        "nodePath": "world.midtown",
+        "bounds": [
+          null,
+          null
+        ],
+        "carriagewayBytes": 408000,
+        "stats": {
+          "blocks": 306,
+          "lots": 1321,
+          "landmarks": 2,
+          "landmarksUnplaced": 0,
+          "infill": 1182,
+          "lotsDropped": 33,
+          "plazaLots": 0,
+          "carriagewayColumns": 120787,
+          "sidewalkColumns": 71888
+        }
+      },
+      {
+        "nodePath": "world.shoreside",
+        "bounds": [
+          null,
+          null
+        ],
+        "carriagewayBytes": 288000,
+        "stats": {
+          "blocks": 238,
+          "lots": 866,
+          "landmarks": 2,
+          "landmarksUnplaced": 0,
+          "infill": 489,
+          "lotsDropped": 53,
+          "plazaLots": 0,
+          "carriagewayColumns": 86800,
+          "sidewalkColumns": 51560
+        }
+      }
+    ],
+    "structureStats": {
+      "theme": "temperate_timber",
+      "distinctMaterials": 12,
+      "buildingCount": 3220,
+      "buildingBlocks": 5474833,
+      "roadRoutes": 2,
+      "roadColumns": 6469,
+      "roadBridgeColumns": 13,
+      "unroutedAnchors": 0,
+      "plazaColumns": 0,
+      "plazaBenches": 0,
+      "plazaWell": false,
+      "doorstepsStepped": 1676,
+      "doorstepsDropped": 0,
+      "cellars": 0,
+      "tunnels": 0,
+      "tunnelCarvedBlocks": 0,
+      "tunnelLength": 0,
+      "tunnelStairSteps": 0,
+      "tunnelLanterns": 0,
+      "tunnelJunctions": 0,
+      "districts": 3,
+      "districtBuildings": 3215,
+      "streetColumns": 207587,
+      "props": 18,
+      "propsUnplaced": 0,
+      "propWaterLeaks": 0,
+      "dressedColumns": 116728,
+      "wornColumns": 2924,
+      "airports": 1,
+      "harbours": 1,
+      "standsCut": 5,
+      "aircraftParked": 5,
+      "piersBuilt": 4,
+      "shipsMoored": 4
+    }
+  },
+  "errors": 0,
+  "warnings": 5,
+  "outputBytes": 67490445
+}

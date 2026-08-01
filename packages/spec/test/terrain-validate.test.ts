@@ -532,13 +532,24 @@ describe("G2.5b materials and lushness params", () => {
     const water = expectDiagnostic(withCaves({ waterTable: 20 }), "PARAM_NOT_IMPLEMENTED");
     expect(water.fix).toContain("basin");
     expectDiagnostic(withCaves({ lavaLevel: -48 }), "PARAM_NOT_IMPLEMENTED");
-    expectDiagnostic(withCaves({ style: "spaghetti" }), "PARAM_NOT_IMPLEMENTED");
     expectDiagnostic(withCaves({ protectTags: ["building"] }), "PARAM_NOT_IMPLEMENTED");
-    const spacing = expectDiagnostic(
-      withCaves({ chambers: { count: 2, spacing: 40 } }),
-      "PARAM_NOT_IMPLEMENTED",
-    );
-    expect(spacing.fix).toContain("chance");
+  });
+
+  it("accepts every carved style, and says why lava_tube is not one of them", () => {
+    for (const style of ["worm", "cheese", "spaghetti", "ravine", "chamber_network"]) {
+      expect(codesOf(validateTerrainDocument(withCaves({ style })).diagnostics)).toEqual([]);
+    }
+    const lava = expectDiagnostic(withCaves({ style: "lava_tube" }), "PARAM_NOT_IMPLEMENTED");
+    expect(lava.fix).toContain("chamber_network");
+    const bogus = expectDiagnostic(withCaves({ style: "swiss" }), "BAD_ENUM");
+    expect(bogus.fix).toContain("spaghetti");
+  });
+
+  it("accepts chambers.spacing and range-checks it", () => {
+    expect(
+      codesOf(validateTerrainDocument(withCaves({ chambers: { count: 2, spacing: 40 } })).diagnostics),
+    ).toEqual([]);
+    expectDiagnostic(withCaves({ chambers: { spacing: 2 } }), "PARAM_OUT_OF_RANGE");
   });
 
   it("rejects an unknown cave param outright", () => {

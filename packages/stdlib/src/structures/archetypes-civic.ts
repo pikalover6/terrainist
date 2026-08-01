@@ -31,6 +31,28 @@
  */
 
 import { blitzFacadeDefaults } from "./archetypes-blitz.js";
+import { townFacadeDefaults } from "./archetypes-town.js";
+import { tradeFacadeDefaults } from "./archetypes-trade.js";
+import { homesteadFacadeDefaults } from "./archetypes-homestead.js";
+import { regionalFacadeDefaults } from "./archetypes-regional.js";
+import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
+import { wave2FacadeDefaults } from "./archetypes-wave2.js";
+import { worksFacadeDefaults } from "./archetypes-works.js";
+import { institutionFacadeDefaults } from "./archetypes-institution.js";
+import { leisureFacadeDefaults } from "./archetypes-leisure.js";
+import { commerceFacadeDefaults } from "./archetypes-commerce.js";
+import { terminusFacadeDefaults } from "./archetypes-terminus.js";
+
+import { industryFacadeDefaults } from "./archetypes-industry.js";
+import { depthsFacadeDefaults } from "./archetypes-depths.js";
+import { utilityFacadeDefaults } from "./archetypes-utility.js";
+import { scienceFacadeDefaults } from "./archetypes-science.js";
+import { residentialFacadeDefaults } from "./archetypes-residential.js";
+import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
+import { arcanaFacadeDefaults } from "./archetypes-arcana.js";
+import { relicFacadeDefaults } from "./archetypes-relic.js";
+import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
+import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
@@ -121,11 +143,76 @@ export function archetypeFacadeDefaults(
       return { windowShape: "mullion", windowRhythm: "paired", roof: "gable" };
     case "bakery":
       return { windowShape: "single", windowRhythm: "regular", roof: "gable" };
-    default:
-      // The breadth wave keeps its own tendencies in its own file; falling
-      // through to it here is what lets a keep ask for the roof shape whose
-      // height its battlement is going to take over.
-      return blitzFacadeDefaults(archetype);
+    default: {
+      // Each later wave keeps its own tendencies in its own file; falling
+      // through to them here is what lets a keep ask for the roof shape whose
+      // height its battlement is going to take over, a town hall the one its
+      // clock gable stands in front of, a shopfront the glass it is mostly
+      // made of, and a saltbox the ridge it is about to rebuild. The chain is
+      // ordered, each link answers `{}` for anything not its own, and the
+      // first non-empty answer wins — no two waves answer to the same names.
+      const town = townFacadeDefaults(archetype);
+      if (Object.keys(town).length > 0) return town;
+      const blitz = blitzFacadeDefaults(archetype);
+      if (Object.keys(blitz).length > 0) return blitz;
+      const trade = tradeFacadeDefaults(archetype);
+      if (Object.keys(trade).length > 0) return trade;
+      const regional = vernacularFacadeDefaults(archetype);
+      if (Object.keys(regional).length > 0) return regional;
+      const wave2 = wave2FacadeDefaults(archetype);
+      if (Object.keys(wave2).length > 0) return wave2;
+      const works = worksFacadeDefaults(archetype);
+      if (Object.keys(works).length > 0) return works;
+      // Wave three A, the institutions.
+      const institutions = institutionFacadeDefaults(archetype);
+      if (Object.keys(institutions).length > 0) return institutions;
+      // Wave 4C — leisure, modern and science interiors.
+      const leisure = leisureFacadeDefaults(archetype);
+      if (Object.keys(leisure).length > 0) return leisure;
+      // Wave four D, the homestead — appended, and the regional houses stay
+      // the tail of the chain.
+      const homestead = homesteadFacadeDefaults(archetype);
+      if (Object.keys(homestead).length > 0) return homestead;
+      // Wave four A, the dwellings.
+      const residential = residentialFacadeDefaults(archetype);
+      if (Object.keys(residential).length > 0) return residential;
+      // Wave five A, the garrison — appended before the regional tail.
+      const garrison = garrisonFacadeDefaults(archetype);
+      if (Object.keys(garrison).length > 0) return garrison;
+      // Wave 5D — science and modern living.
+      const science = scienceFacadeDefaults(archetype);
+      if (Object.keys(science).length > 0) return science;
+      // Wave six, the depths: three entrances over what they are named for.
+      const depths = depthsFacadeDefaults(archetype);
+      if (Object.keys(depths).length > 0) return depths;
+      // Wave 4B, faith and memorial.
+      const faith = faithFacadeDefaults(archetype);
+      if (Object.keys(faith).length > 0) return faith;
+      // Wave five B, commerce and civic — appended, and the regional houses
+      // stay the tail of the chain.
+      const commerce = commerceFacadeDefaults(archetype);
+      if (Object.keys(commerce).length > 0) return commerce;
+      // Wave 5C — industry and modern works.
+      const industry = industryFacadeDefaults(archetype);
+      if (Object.keys(industry).length > 0) return industry;
+      // Wave six A — the transport buildings, appended, and the regional
+      // houses stay the tail of the chain.
+      const terminus = terminusFacadeDefaults(archetype);
+      if (Object.keys(terminus).length > 0) return terminus;
+      // Wave 6C — waterworks and energy.
+      const utility = utilityFacadeDefaults(archetype);
+      if (Object.keys(utility).length > 0) return utility;
+      // Wave 5E, arcana — appended, and the regional houses stay the tail.
+      const arcana = arcanaFacadeDefaults(archetype);
+      if (Object.keys(arcana).length > 0) return arcana;
+      // Wave 6E, the relics — appended, and the regional houses stay the tail.
+      const relic = relicFacadeDefaults(archetype);
+      if (Object.keys(relic).length > 0) return relic;
+      // Wave 6D, spectacle — appended, and the regional houses stay the tail.
+      const spectacle = spectacleFacadeDefaults(archetype);
+      if (Object.keys(spectacle).length > 0) return spectacle;
+      return regionalFacadeDefaults(archetype);
+    }
   }
 }
 
@@ -183,6 +270,23 @@ function planX(interior: LocalRect): number {
 /** Plan depth. See {@link planX}. */
 function planZ(interior: LocalRect): number {
   return interior.z1 + 2;
+}
+
+/**
+ * A *decorated* flower pot, chosen from the cell's coordinates.
+ *
+ * A bare `flower_pot` in the world is an **empty** pot: in game it reads as
+ * "a pot with just dirt in it", which is what Kai reported walking the
+ * cottages. Every decorative pot this file places therefore goes down as a
+ * `potted_*` variant. The pick is position-derived — the same idiom as
+ * `pottedOf` in `core.ts`, restated locally because that helper is not
+ * exported — so it stays deterministic with no seed and no randomness.
+ */
+function pottedPlant(x: number, z: number): string {
+  const pots = ["potted_poppy", "potted_dandelion", "potted_azure_bluet", "potted_cornflower"];
+  // Non-negative regardless of sign; the local frame is non-negative anyway.
+  const i = (((x * 3 + z * 7) % pots.length) + pots.length) % pots.length;
+  return pots[i] as string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -305,8 +409,22 @@ export function wholeFloorPlan(
   // the wing off from the main block and call the remainder connected.
   const cells: string[] = [];
   const consider = (x: number, z: number): void => {
+    // No floor, no cell: the basement ladder shaft is a hole in the y = 0
+    // plane, and counting it as open floor let the guard route connectivity
+    // *across* it — a route the walking agent does not have, because stepping
+    // into the shaft is a four-block fall. The shell writes the floor plane
+    // under every true interior cell, so a missing y = 0 always means a hole.
+    const floor = blockAt(x, 0, z);
+    if (floor === undefined || floor.block === "air") return;
     const standing = blockAt(x, 1, z);
     if (standing !== undefined && !isPassable(standing.block)) return;
+    // Head clearance, the same both-courses rule the physics walk applies: a
+    // cell under the stair flight's second step (or under a low-slung lantern)
+    // has floor and an open standing course, but a player cannot stand in it.
+    // Counting it as open let an airport route its whole west lane through the
+    // one cell beside the flight — a route the walking agent does not have.
+    const head = blockAt(x, 2, z);
+    if (head !== undefined && !isPassable(head.block)) return;
     cells.push(`${x},${z}`);
   };
   if (floorCells === undefined) {
@@ -443,7 +561,17 @@ function fitChurch(ctx: FitOutContext, c: PropCounter): void {
   // on the way in.
   const altarNorth = ctx.door === null ? true : ctx.door.z > (it.z0 + it.z1) / 2;
   const altarZ = altarNorth ? it.z0 : it.z1;
-  const pewFacing: Cardinal = altarNorth ? "north" : "south";
+  /**
+   * THE STAIR-SEAT RULE, obeyed by every seat in this file: a stair's
+   * `facing` is the direction of its **high half** — the backrest. So a
+   * stair used as a chair must face *away* from whatever the sitter looks
+   * at. A pew whose altar is to the north therefore faces **south**; the
+   * old code faced it north, which put the backrest against the altar and
+   * sat the congregation with their backs to it.
+   */
+  const pewFacing: Cardinal = altarNorth ? "south" : "north";
+  /** Which way a sitter on those pews looks. */
+  const towardAltar: Cardinal = altarNorth ? "north" : "south";
 
   // The aisle.
   for (let z = it.z0; z <= it.z1; z++) c.put1(mid, z, "red_carpet");
@@ -466,9 +594,10 @@ function fitChurch(ctx: FitOutContext, c: PropCounter): void {
     c.stack(mid, altarZ, 2, "white_candle", { candles: "1", lit: "false", waterlogged: "false" });
   }
   if (mid - 1 >= it.x0) {
-    c.put1(mid - 1, altarZ, "lectern", { facing: pewFacing === "north" ? "south" : "north", has_book: "false", powered: "false" });
+    // The lectern faces the congregation, i.e. back down the nave.
+    c.put1(mid - 1, altarZ, "lectern", { facing: towardAltar === "north" ? "south" : "north", has_book: "false", powered: "false" });
   }
-  if (mid + 1 <= it.x1) c.put1(mid + 1, altarZ, "flower_pot");
+  if (mid + 1 <= it.x1) c.put1(mid + 1, altarZ, pottedPlant(mid + 1, altarZ));
 
   emitSteeple(ctx, c);
 }
@@ -581,8 +710,9 @@ function fitMarketStall(ctx: FitOutContext, c: PropCounter): void {
   }
   c.put1(it.x1, it.z1, "barrel", { facing: "up", open: "false" });
   c.put1(it.x0, it.z1, "composter", { level: "3" });
-  // Goods on the counter: a crate at one end, a scale at the other.
-  c.stack(it.x0, it.z0, 2, "flower_pot");
+  // Goods on the counter: a potted plant for sale at one end, a bale at the
+  // other. (A bare `flower_pot` here was an empty pot — nothing to buy.)
+  c.stack(it.x0, it.z0, 2, pottedPlant(it.x0, it.z0));
   c.stack(it.x1, it.z0, 2, "hay_block", { axis: "y" });
 
   if (door === null) return;
@@ -623,8 +753,10 @@ function fitLibrary(ctx: FitOutContext, c: PropCounter): void {
     }
   }
   c.put1(mid, mz, "lectern", { facing: "south", has_book: "false", powered: "false" });
+  // The reader's chair sits south of the lectern and looks north at it, so by
+  // the stair-seat rule its backrest — its `facing` — points south.
   c.put1(mid, mz + 1 <= it.z1 ? mz + 1 : mz, style["stair.interior"] as string, {
-    facing: "north",
+    facing: "south",
     half: "bottom",
     shape: "straight",
   });
@@ -936,7 +1068,7 @@ function furnishStorey(ctx: FitOutContext, plan: FloorPlan, level: number, store
     case "cottage": {
       beds("red_bed", storey === 1 ? 2 : 1);
       put(it.x1, it.z1, "chest", { facing: "west", type: "single" });
-      put(it.x0, it.z1, "flower_pot");
+      put(it.x0, it.z1, pottedPlant(it.x0, it.z1));
       break;
     }
     case "hall": {
@@ -958,15 +1090,16 @@ function furnishStorey(ctx: FitOutContext, plan: FloorPlan, level: number, store
       break;
     }
     case "church": {
-      // A gallery at the back of the nave, benches facing the altar.
+      // A gallery at the back of the nave, benches looking north up it toward
+      // the altar end — so, by the stair-seat rule, backrests to the south.
       for (let x = it.x0; x <= it.x1; x += 2) {
         put(x, it.z1, style["stair.interior"] as string, {
-          facing: "north",
+          facing: "south",
           half: "bottom",
           shape: "straight",
         });
       }
-      put(it.x1, it.z0, "flower_pot");
+      put(it.x1, it.z0, pottedPlant(it.x1, it.z0));
       break;
     }
     case "granary":

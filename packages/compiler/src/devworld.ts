@@ -39,8 +39,10 @@ import {
   assignMaterials,
   nodeSeed,
   pickTheme,
+  BLITZ_BUILDING_ARCHETYPES,
   BUILDING_ARCHETYPES,
   EXTENDED_BUILDING_ARCHETYPES,
+  VERNACULAR_BUILDING_ARCHETYPES,
   type BuildingArchetype,
   type BuildingMaterials,
   type BuildingParams,
@@ -108,10 +110,18 @@ export { DEV_ROOFS, DEV_THEMES } from "./devworld-rows.js";
  * The original six. The seven extended archetypes get rows of their own from
  * `exhibits/archetypes.ts`, on footprints shaped like the buildings they are —
  * a church is a nave, a market stall is barely a room — and putting them in
- * both places would give the grid two rows with the same label.
+ * both places would give the grid two rows with the same label. The ten
+ * breadth-blitz archetypes are excluded for the same reason — their rows come
+ * from `exhibits/blitz.ts`, and a keep at nine by seven with a mullioned
+ * window is not a keep — and the three vernacular ones likewise:
+ * `exhibits/vernacular.ts` gives them rows on footprints their re-roofs need
+ * (a saltbox has to be deep or its long slope has nowhere to fall).
  */
 export const BASE_ARCHETYPE_ROWS: readonly BuildingArchetype[] = BUILDING_ARCHETYPES.filter(
-  (a) => !(EXTENDED_BUILDING_ARCHETYPES as readonly string[]).includes(a),
+  (a) =>
+    !(EXTENDED_BUILDING_ARCHETYPES as readonly string[]).includes(a) &&
+    !(BLITZ_BUILDING_ARCHETYPES as readonly string[]).includes(a) &&
+    !(VERNACULAR_BUILDING_ARCHETYPES as readonly string[]).includes(a),
 );
 
 /** One exhibit: what it is, and where the grid put it. */

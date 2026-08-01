@@ -44,11 +44,22 @@ import {
   emitHighrise,
   isHighriseArchetype,
 } from "./highrise.js";
-import { pickTheme, styleOf, type BuildingMaterials } from "./themes.js";
+import {
+  TERRACE_MAX_FLOORS,
+  TERRACE_STOREY_HEIGHT,
+  emitTerrace,
+  isTerraceArchetype,
+  planTerrace,
+  type TerraceBay,
+  type TerraceBayPlan,
+} from "./terrace.js";
+import { pickTheme, styleOf, type BuildingMaterials, type MaterialTheme } from "./themes.js";
 import {
   cellarDressing,
   cellarSecondAccent,
   dressCellar,
+  defaultBasementDepth,
+  defaultCellarStyle,
   resolveCellarStyle,
   type CellarStyle,
 } from "./underground.js";
@@ -327,6 +338,19 @@ export interface BuildingParams {
    * document is never failed by the grammar) when it does not validate.
    */
   readonly wing?: BuildingWing;
+  /**
+   * The bays of a terrace, low-x to high-x along the frontage.
+   *
+   * Read only by `archetype: "terrace"`, and only as a *request*: the frontage
+   * is cut by {@link planTerrace}, which clamps each pitch into the terrace's
+   * range, stops when the frontage runs out and draws its own for any bay the
+   * list did not describe. A terrace with no `bays` at all is a legal, if
+   * regular, one — every bay takes `floors`.
+   */
+  readonly bays?: readonly TerraceBay[];
+  /** True when the terrace's low-x / high-x end stands at an intersection. */
+  readonly cornerStart?: boolean;
+  readonly cornerEnd?: boolean;
 }
 
 /** Lowest story height that still fits a two-block door plus a lintel. */
@@ -341,6 +365,49 @@ export const ROOF_RESERVE = 3;
 export const ROOF_PITCH_SHARE = 0.55;
 /** Floors this grammar builds. */
 export const MAX_FLOORS = 2;
+
+/**
+ * Blocks that hang on the face of the block behind them.
+ *
+ * `facing` on every one of these names the direction the fixture *points*, so
+ * the block it is bolted to is one step the other way — which is exactly how
+ * `physics.ts` reads them for the `unsupported.*` rules.
+ */
+const BRACKETED = /(^ladder$|wall_torch$|_wall_sign$|_wall_banner$|_wall_fan$|_wall_head$|_wall_skull$)/;
+
+/**
+ * Is something bolted to the face of this cell?
+ *
+ * A re-clad that swaps one full cube for another is free, but the moment it
+ * puts a **stair, slab or pane** in the wall field it can pull the face out
+ * from under a fixture that was hung on it three stages earlier — and that is
+ * `unsupported.ladder`, silently, on a wall the ladder pass explicitly claimed.
+ * The shallow-plan cottage found it: below the depth a flight needs, `core.ts`
+ * falls back to a ladder against the west wall and claims the backing, and the
+ * townhouse's brick quoins then re-clad one course of that backing into a
+ * stair.
+ *
+ * Cheap and exact: the wall vocabulary is small, so the four horizontal
+ * neighbours are asked directly whether they point *at* this cell.
+ */
+export function bracketedTo(
+  blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined,
+  x: number,
+  y: number,
+  z: number,
+): boolean {
+  for (const facing of ["north", "south", "east", "west"] as const) {
+    const [dx, dz] = cardinalStep(facing);
+    // A fixture at `cell` with this facing hangs on `cell - step`. So the
+    // fixture that would hang on *us* sits one step along `facing`.
+    const op = blockAt(x + dx, y, z + dz);
+    if (op === undefined) continue;
+    if (!BRACKETED.test(op.block)) continue;
+    if ((op.props?.["facing"] ?? "north") !== facing) continue;
+    return true;
+  }
+  return false;
+}
 
 /** Resolved, clamped params — what the geometry actually used. */
 export interface ResolvedBuildingParams {
@@ -370,6 +437,16 @@ export interface BuildingRequest {
   readonly seed: Seed256;
   /** The theme triple this building was dealt, if the caller assigned one. */
   readonly materials?: BuildingMaterials;
+  /**
+   * The whole village palette the triple was dealt from.
+   *
+   * Only the terrace reads it, and it needs it for a reason no other emitter
+   * has: a terrace is several buildings, so one triple is not enough — each bay
+   * takes its own from the same theme, which is what makes a run read as a
+   * street rather than as one long building painted one colour. Absent, the
+   * terrace falls back to varying the facade within the style map it was given.
+   */
+  readonly theme?: MaterialTheme;
   /** Symbol → block id overrides, applied over the theme and the defaults. */
   readonly style?: Readonly<Record<string, string>>;
   /** The resolved `door` port; omitted means the grammar picks the south face. */
@@ -698,6 +775,29 @@ export interface BuildingMeta {
   /** The door's column and face; `null` when the footprint was too small. */
   readonly door: { readonly x: number; readonly z: number; readonly face: Cardinal } | null;
   /**
+   * **Every** street door, when the building has more than one.
+   *
+   * Absent for the buildings that have exactly one, which is all of them bar
+   * the terrace — a terrace has a door per bay, and the party walls mean no one
+   * of them reaches the rest of the run. {@link BuildingMeta.door} stays the
+   * first of them, so nothing that only wanted "the front door" has to change.
+   */
+  readonly doors?: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly face: Cardinal;
+  }[];
+  /**
+   * The bays of a terrace, as {@link planTerrace} resolved them.
+   *
+   * Absent for everything else. It is here rather than kept private because a
+   * terrace is the one building whose *contents* a reader of the compile report
+   * has to be able to see: "seventy buildings" and "seventy terraces of two
+   * hundred and twenty-four bays" are very different worlds, and only this
+   * tells them apart.
+   */
+  readonly terraceBays?: readonly TerraceBayPlan[];
+  /**
    * The enclosed interior of the **main** rect, inclusive; empty when the
    * footprint is 2 or less.
    *
@@ -725,6 +825,31 @@ export interface BuildingMeta {
    * so a wing gets floor, ceiling and light but no furniture in this version.
    */
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
+  /**
+   * Columns a storey-to-storey flight climbs through, as `"x,z"` local keys.
+   *
+   * Published so a *later* pass can keep off them. A flat floor's headroom and
+   * a staircase's are not the same volume: anything hung two blocks over a
+   * landing clears a standing player and still decapitates one two treads up,
+   * which is how the life pass's room lanterns sealed every upper storey of
+   * every terrace behind an unwalkable flight.
+   */
+  readonly stairColumns?: ReadonlySet<string>;
+  /**
+   * Floor cells **per storey**, aligned with {@link BuildingMeta.floorLevels}.
+   *
+   * Absent when every storey has the same plan, which was every building until
+   * the terrace: there the run's bays differ in height, so at the fifth level a
+   * six-storey bay is a room and the three-storey bay beside it is a roof.
+   * Consumers that ask "which columns is this storey's floor made of" — the
+   * physics lint's blocked-column and traversal rules both do — must prefer
+   * this when it is present, or they will demand a walking route onto the roof
+   * of every short bay in the street.
+   */
+  readonly floorCellsByLevel?: readonly (readonly {
+    readonly x: number;
+    readonly z: number;
+  }[])[];
   /** Y of each story's floor plane, lowest first. */
   readonly floorLevels: readonly number[];
   /** Y of the lowest step of each inter-story stair run. */
@@ -847,17 +972,22 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
 
   // The cellar is dug before the skirt is measured, because the two share the
   // same ground: a skirt sunk through a cellar would fill the room it stands in.
+  // An archetype may dig itself a cellar the document never asked for — the
+  // depths archetypes are entrances, and an entrance to nothing is a shed.
+  // `undefined` means "say nothing"; an explicit `0` still means "no cellar".
+  const askedBasement = params.basement ?? defaultBasementDepth(archetype) ?? undefined;
   const cellar =
-    params.basement === undefined || params.basement <= 0
+    askedBasement === undefined || askedBasement <= 0
       ? 0
-      : clamp(Math.round(params.basement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
+      : clamp(Math.round(askedBasement), MIN_BASEMENT_DEPTH, MAX_BASEMENT_DEPTH);
   const foundationDepth = Math.max(Math.max(0, Math.round(request.foundationDepth ?? 1)), cellar + 1);
   // The style, resolved once beside the depth. A mine head's cellar is the
   // bottom of its own shaft, so it dresses itself when the document says
   // nothing — every other archetype stays plain unless asked.
+  const archetypeCellarStyle = defaultCellarStyle(archetype);
   const cellarStyle: CellarStyle =
-    params.cellarStyle === undefined && archetype === "mine_head"
-      ? "mine"
+    params.cellarStyle === undefined && archetypeCellarStyle !== null
+      ? archetypeCellarStyle
       : resolveCellarStyle(params.cellarStyle);
 
   const cells = new Map<string, LocalVoxelOp>();
@@ -910,6 +1040,55 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
       shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
       params: { floors, storyHeight, roof, windowRhythm: rhythm, windowShape, archetype, cellarStyle },
+    });
+  }
+
+  // The terrace is a different building for the opposite reason to the tower:
+  // not one shell taller, but *several shells sharing their walls*. Dispatched
+  // here, on the same footing as the watchtower and the high-rise, because
+  // every stage below this line assumes one room behind one perimeter — and a
+  // street wall is n rooms behind n + 1 wall lines.
+  if (isTerraceArchetype(archetype)) {
+    const terraceStorey = clamp(
+      Math.round(params.floorHeight ?? TERRACE_STOREY_HEIGHT),
+      MIN_STORY_HEIGHT,
+      MAX_STORY_HEIGHT,
+    );
+    const plan = planTerrace({
+      sx,
+      storeyHeight: terraceStorey,
+      ...(params.bays === undefined ? {} : { bays: params.bays }),
+      floors: clamp(Math.round(params.floors ?? 2), 1, TERRACE_MAX_FLOORS),
+      archetype: params.archetype ?? "shop_row",
+      ...(params.cornerStart === undefined ? {} : { cornerStart: params.cornerStart }),
+      ...(params.cornerEnd === undefined ? {} : { cornerEnd: params.cornerEnd }),
+      stream: streamSeed(request.seed, "terrace"),
+    });
+    return emitTerrace({
+      put,
+      cells,
+      style,
+      grammar,
+      choice,
+      sx,
+      sy,
+      sz,
+      foundationDepth,
+      materials,
+      ...(request.theme === undefined ? {} : { theme: request.theme }),
+      plan,
+      // A terrace fills its envelope: a wing on a street wall is a second
+      // street wall, which is a second node, not a carved footprint.
+      footprint: { sx, sz, main: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 }, wing: null },
+      shell: fp.wing === null ? shell : traceShell(resolveFootprint(sx, sz)),
+      params: {
+        floors: plan.bays.reduce((m, b) => Math.max(m, b.floors), 1),
+        storyHeight: terraceStorey,
+        roof: "flat",
+        windowRhythm: rhythm,
+        windowShape,
+        archetype,
+      },
     });
   }
 
@@ -1183,9 +1362,22 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       // leaves its rungs fixed to glass — an `unsupported.ladder` finding, and
       // in game a ladder that pops off the wall. So the backing is claimed
       // first. A blank wall behind a ladder is architecture, not a patch.
+      //
+      // ...and the backing is not always *available*, which is the second half
+      // of the same lesson and the one a shallow plan finds. `backWall` refuses
+      // the doorway — a wall block in a door opening is a walled-up front door
+      // — and the ladder used to be nailed up regardless, leaving three courses
+      // of rungs hanging on a door leaf (`unsupported.ladder`, and in game a
+      // ladder on the floor). The north-west interior corner has *two* walls
+      // behind it, so when the west one is the doorway the ladder turns and
+      // takes the north one instead. Only one of the two can be the door.
+      const westIsDoor = door !== null && door.x === interior.x0 - 1 && door.z === interior.z0;
+      const ladderBack = westIsDoor
+        ? { x: interior.x0, z: interior.z0 - 1, facing: "south" as const }
+        : { x: interior.x0 - 1, z: interior.z0, facing: "east" as const };
       for (let y = base + 1; y <= level + 1; y++) {
-        backWall(interior.x0 - 1, y, interior.z0);
-        put(interior.x0, y, interior.z0, "ladder", { facing: "east" });
+        backWall(ladderBack.x, y, ladderBack.z);
+        put(interior.x0, y, interior.z0, "ladder", { facing: ladderBack.facing });
       }
       // ...and so does the cell beside it, which is the only way *to* the
       // approach: a smithy put an anvil there and walled the flight off from
@@ -1334,7 +1526,9 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
       })
     : 0;
-  if (door !== null) apronOps += emitPorchLamp(put, style, door, sx, sz);
+  if (door !== null) {
+    apronOps += emitPorchLamp(put, style, door, sx, sz, (x, y, z) => cells.has(`${x},${y},${z}`));
+  }
 
   // --- the cellar ----------------------------------------------------------
   // Last, deliberately: it punches a hole through the ground-floor plane and
@@ -1373,6 +1567,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       floorCells: shell.interiorCells,
       floorLevels,
       stairRuns,
+      stairColumns,
       basementDepth: cellarInterior === null ? 0 : cellar,
       basementInterior: cellarInterior,
       basementAccess: cellarAccess,
@@ -1635,12 +1830,25 @@ function emitPorchLamp(
   door: { x: number; z: number; face: Cardinal },
   sx: number,
   sz: number,
+  occupied: (x: number, y: number, z: number) => boolean,
 ): number {
   const [ox, oz] = cardinalStep(door.face);
   const alongZ = door.x === 0 || door.x === sx - 1;
   const side = alongZ ? { x: 0, z: 1 } : { x: 1, z: 0 };
-  const lx = door.x + ox + side.x;
-  const lz = door.z + oz + side.z;
+  // The post's column must be genuinely empty: a window shutter juts one cell
+  // into the apron at head height, and a shop row put one exactly where the
+  // lamp's upper post went — the shutter overwrote the post and left the
+  // lantern's support chain standing on a trapdoor. Occupied on one side of
+  // the door, the lamp crosses to the other; occupied on both, no lamp.
+  let lx = door.x + ox + side.x;
+  let lz = door.z + oz + side.z;
+  const columnFree = (x: number, z: number): boolean =>
+    !occupied(x, 0, z) && !occupied(x, 1, z) && !occupied(x, 2, z);
+  if (!columnFree(lx, lz)) {
+    lx = door.x + ox - side.x;
+    lz = door.z + oz - side.z;
+    if (!columnFree(lx, lz)) return 0;
+  }
   // Only the apron ring; a corner-of-the-apron lamp is fine, a stray one is not.
   if (lx < -1 || lx > sx || lz < -1 || lz > sz) return 0;
   put(lx, 0, lz, style["wall.fence"] as string);
@@ -1699,6 +1907,11 @@ function emitRoof(
       const z0 = rz0 + k;
       const z1 = rz1 - k;
       if (x0 > x1 || z0 > z1) break;
+      // A single-cell ring is the apex, and the apex has no in-ring
+      // neighbours: without a block under it, it is a full cube with air on
+      // all six faces the moment the ridge slab above it gets height-clipped
+      // — the bell-tower lesson. Stand it on roof before placing it.
+      if (x0 === x1 && z0 === z1) put(x0, y - 1, z0, solid);
       for (let x = x0; x <= x1; x++) {
         for (let z = z0; z <= z1; z++) {
           if (x !== x0 && x !== x1 && z !== z0 && z !== z1) continue;
@@ -1712,6 +1925,24 @@ function emitRoof(
           const facing: Cardinal = onZ ? (z === z0 ? "south" : "north") : x === x0 ? "east" : "west";
           put(x, y, z, stairs, { facing, half: "bottom", shape: "straight" });
         }
+      }
+    }
+    // The last ring is three wide on odd spans, and a ring has a hole in the
+    // middle. The cap layer sits one above that hole — which held as long as
+    // the ridge slab above the cap always fit, but a tall tower's height
+    // budget can clip that slab, and then the cap is a full cube with six air
+    // faces: the lint's floating.isolated, at the top of a bell tower. Fill
+    // the hole under the cap so the cap stands on roof, not on air — inside
+    // the roof shell, invisible, and true to the documented invariant that
+    // the layers union to the footprint.
+    const lastK = layers - 1;
+    if (lastK >= 0) {
+      const hx0 = rx0 + lastK + 1;
+      const hx1 = rx1 - lastK - 1;
+      const hz0 = rz0 + lastK + 1;
+      const hz1 = rz1 - lastK - 1;
+      for (let x = hx0; x <= hx1; x++) {
+        for (let z = hz0; z <= hz1; z++) put(x, base + lastK, z, solid);
       }
     }
     const capY = base + layers;
@@ -1822,8 +2053,10 @@ function fillGableEnds(
 }
 
 /**
- * A cobblestone chimney: a flue **in the wall**, a hearth opening on its inside
- * face, and a corbelled head with a fire in it above the ridge.
+ * A cobblestone chimney: a flue **in the wall**, a fire on the floor of the
+ * room directly in front of it, and a corbelled head with a fire in it above
+ * the ridge. The wall plane itself stays solid all the way up — the fire is a
+ * hearth you stand in front of, backed by a solid chimney breast.
  *
  * The shaft used to stand on an interior column, and it was as bad as that
  * sounds: a walkthrough found a full cobblestone pillar running floor to
@@ -1893,9 +2126,12 @@ function emitChimney(
 
   const corbelY = roofTop + 1;
   for (let y = 0; y <= corbelY - 1; y++) put(cx, y, cz, block);
-  // The fireplace: an opening in the wall face at floor level, standing on the
-  // course below it, with the flue it vents into directly above.
-  put(cx, 1, cz, "campfire", {
+  // The fireplace: the fire sits *inside* the room, one cell in front of the
+  // flue, standing on the floor with the chimney breast solid behind it. The
+  // earlier version put the campfire in the wall cell itself — a non-full,
+  // non-opaque block in the exterior wall plane, i.e. a see-through hole in
+  // the wall at floor level, which is exactly what it looked like in game.
+  put(hearth.x, 1, hearth.z, "campfire", {
     lit: "true",
     facing: opposite(face),
     signal_fire: "false",

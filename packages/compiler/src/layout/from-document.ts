@@ -13,6 +13,8 @@ import {
   note,
   resolveTypeKey,
   type CanonicalConstraint,
+  type CityNode,
+  type DistrictNode,
   type LoamDiagnostic,
   type PlazaNode,
   type SettlementDocument,
@@ -53,6 +55,16 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
 
     if (child.kind === "primitive") {
       nodes.push(plazaInput(child, nodePath, seed));
+      continue;
+    }
+
+    if (child.kind === "district") {
+      nodes.push(districtInput(child, nodePath, seed));
+      continue;
+    }
+
+    if (child.kind === "city") {
+      nodes.push(cityInput(child, nodePath, seed));
       continue;
     }
 
@@ -115,6 +127,68 @@ function plazaInput(node: PlazaNode, nodePath: string, seed: Seed256): LayoutNod
     ports: node.ports ?? {},
     optional: node.optional === true,
     tags: node.tags ?? [],
+    seed,
+  };
+}
+
+/**
+ * A district, as the solver sees it: **one footprint and nothing else.**
+ *
+ * The solver's whole job for a district is to decide where it sits — against
+ * `zone`, `at`, `distance`, the water and the slopes, exactly as for any other
+ * node. What is inside it is not the solver's business, so the node carries no
+ * ports, no rotations worth trying (a fabric is drawn against world axes; the
+ * streets would only have to be un-rotated again) and a height of 1, because
+ * the pad it emits is what the fabric pass then builds on.
+ */
+function districtInput(node: DistrictNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+  const [w, d] = node.envelope.size ?? [128, 128];
+  return {
+    id: node.id,
+    nodePath,
+    kind: "district",
+    size: [w, 1, d],
+    flexible: false,
+    padding: 0,
+    rotations: [0],
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    seed,
+  };
+}
+
+/**
+ * A city, as the solver sees it: **one amphibious footprint and nothing else.**
+ *
+ * Two things separate it from a district, and both come from the same fact —
+ * a city is placed *against the coast*, not merely near it.
+ *
+ * `amphibious` lifts the freeboard veto so a candidate footprint may reach
+ * below sea level; `wantsWater` is only set when the author asked for a coastal
+ * city, so an inland one is not pushed towards a lake it never mentioned.
+ * And no pad: levelling a whole city to one plane would raise the sea bed
+ * inside its own bay and there would be no waterfront left to build on. Each
+ * building levels its own footprint, as it always did, and the arterials and
+ * streets grade themselves — which is also what lets a city step down a hill.
+ */
+function cityInput(node: CityNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+  const [w, d] = node.envelope.size ?? [320, 320];
+  return {
+    id: node.id,
+    nodePath,
+    kind: "city",
+    size: [w, 1, d],
+    flexible: false,
+    padding: 0,
+    rotations: [0],
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    amphibious: true,
+    ...(node.params.coastal === true ? { wantsWater: true } : {}),
     seed,
   };
 }

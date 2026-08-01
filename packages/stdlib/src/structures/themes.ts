@@ -180,8 +180,16 @@ export const MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
  *
  * `WoodSet` is a shape, not a claim about trees: what the grammar asks of it is
  * a wall surface, a frame member, an accent, a stair, a slab, a railing, a door
- * and a trapdoor. Concrete and quartz answer every one of those, and the
- * `iron_bars` railing is what a balcony and a stairwell guard want anyway.
+ * and a trapdoor. Concrete and quartz answer every one of those.
+ *
+ * The railing is a **wall**, not `iron_bars`, and the reason is load-bearing.
+ * The grammar treats the `fence` role as a *post you can stand something on* —
+ * a potted plant, a porch lamp, a pressure plate — and the physics lint agrees
+ * with vanilla that a fence or a wall carries a support chain down to the
+ * ground while iron bars do not. Every one of those decorations came out
+ * floating the first time this theme was asked to build an actual settlement
+ * rather than the high-rise exhibit row (489 `unsupported.chain` findings on
+ * the headline city). A parapet also reads better on concrete than bars do.
  */
 const CONCRETE_LIGHT: WoodSet = {
   id: "concrete_light",
@@ -190,7 +198,7 @@ const CONCRETE_LIGHT: WoodSet = {
   stripped: "smooth_quartz",
   stairs: "quartz_stairs",
   slab: "quartz_slab",
-  fence: "iron_bars",
+  fence: "diorite_wall",
   door: "birch_door",
   trapdoor: "iron_trapdoor",
 };
@@ -202,7 +210,7 @@ const CONCRETE_WHITE: WoodSet = {
   stripped: "quartz_block",
   stairs: "smooth_quartz_stairs",
   slab: "smooth_quartz_slab",
-  fence: "iron_bars",
+  fence: "diorite_wall",
   door: "birch_door",
   trapdoor: "iron_trapdoor",
 };
@@ -214,7 +222,7 @@ const CONCRETE_BLUE: WoodSet = {
   stripped: "light_gray_concrete",
   stairs: "quartz_stairs",
   slab: "quartz_slab",
-  fence: "iron_bars",
+  fence: "andesite_wall",
   door: "birch_door",
   trapdoor: "iron_trapdoor",
 };

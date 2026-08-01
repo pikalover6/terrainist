@@ -61,6 +61,20 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   // of the catalog, which is what makes those checks exhaustive.
   airliner: [{}],
   cargo_plane: [{}],
+  // Wave 6's twelve: four rail, five water, three air, none of them
+  // parameterised. Their own properties are held in `vehicles-wave6.test.ts`.
+  locomotive: [{}],
+  passenger_car: [{}],
+  freight_car: [{}],
+  caboose: [{}],
+  junk: [{}],
+  gondola: [{}],
+  barge: [{}],
+  paddle_steamer: [{}],
+  container_ship: [{}],
+  hot_air_balloon: [{}],
+  seaplane: [{}],
+  glider: [{}],
   biplane: [{}],
   light_plane: [{}],
   airship: [{}],
@@ -93,6 +107,61 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   treehouse: [{}],
   cairn: [{}],
   carousel: [{}],
+  // Wave 4: street furniture. Their own properties are held in
+  // props-street.test.ts; here they walk the catalog-wide checks.
+  well_head: [{}],
+  notice_board: [{}],
+  hitching_post: [{}],
+  horse_trough: [{}],
+  lamp_post: [{}],
+  litter_bin: [{}],
+  drinking_fountain: [{}],
+  flagpole: [{}],
+  bollard_row: [{}, { length: 5 }, { length: 33 }],
+  sandwich_board: [{}],
+  dog_kennel: [{}],
+  log_pile: [{}],
+  fairground_stall: [{}],
+  ticket_booth: [{}],
+  prize_wheel: [{}],
+  swing_boats: [{}],
+  // Wave 5: the wayside. Their own properties are held in
+  // props-wayside.test.ts; here they walk the catalog-wide checks.
+  bus_shelter: [{}],
+  phone_box: [{}],
+  mailbox: [{}],
+  bicycle_rack: [{}],
+  shop_awning: [{}],
+  milestone: [{}],
+  bus_stop: [{}],
+  stagecoach: [{}],
+  yurt: [{}],
+  helter_skelter: [{}],
+  midway_arch: [{}],
+  shooting_gallery: [{}],
+  // Wave 6E, the monuments. None of them reads a param — a henge's size is the
+  // henge — so one empty case each, which is what makes the exhaustive record
+  // type above the thing that catches a missing prop.
+  standing_stones: [{}],
+  henge: [{}],
+  monolith: [{}],
+  burial_mound: [{}],
+  dig_site: [{}],
+  fossil_dig: [{}],
+  shattered_obelisk: [{}],
+  // Wave 6D: spectacle. Their own properties are held in
+  // props-spectacle.test.ts; here they walk the catalog-wide checks.
+  ferris_wheel: [{}],
+  bandstand: [{}],
+  memorial_garden: [{}],
+  portal_frame: [{}],
+  floating_platform: [{}],
+  houseboat: [{}],
+  helipad: [{}],
+  // Wave 6C: the two energy objects with no inside. Their own properties are
+  // held in structures-utility.test.ts; here they walk the catalog-wide checks.
+  wind_turbine: [{}, { height: 7 }, { height: 21 }],
+  solar_array: [{}, { rows: 1 }, { rows: 8 }],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

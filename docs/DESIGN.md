@@ -353,6 +353,467 @@ overnight program has been walked in the Minecraft client.** The physics lint
 and the readback validators are the strongest statement available without
 that, and their whole history is that a human found things they could not see.
 
+## Status (2026-07-30, cloud session: provenance + wave 1 of the catalog)
+
+Run while Kai's first real Terrarium session was in progress; the Terrarium
+fixes stayed parked as agreed, and nothing here touches the three diagnosed
+bugs. Orchestrated per the standing workflow: three `opus-5-low` implementer
+tracks in worktrees, seams merged by the orchestrator.
+
+- **Baseline/provenance (queued item 2).** A `Provenance` type in the
+  compiler and a `gitProvenance()` helper in the CLI (the split keeps the
+  compiler pure — provenance always arrives as an input). Stamped into the
+  two sidecars only: the `compile --report` JSON and the Terrarium manifest
+  (additive optional field, no format bump, no wall-clock; the byte-identity
+  test still holds). `terrainist install --channel <name>` installs as
+  `<world>_<name>` and rewrites `LevelName` to match, so a nightly and a
+  baseline build sit side by side in the world list. The moving `baseline`
+  tag itself is a convention to start exercising: tag after each joint
+  review, build Terrarium worlds from it.
+- **The orphaned blitz exhibit.** `BLITZ_EXHIBIT_ROWS` was exported by W2 and
+  never registered, so the ten blitz archetypes had no dev-world exhibit at
+  their own footprints — which is why they were never spotted as unwalked.
+  Registered now; the blitz archetypes leave the base grid for the same
+  reason the extended ones did (duplicate row labels).
+- **Catalog wave 1 — nine archetypes, three tracks.** Town: `town_hall`,
+  `school`, `bathhouse`. Trade: `tavern`, `general_store`, `apothecary`.
+  Vernacular: `alpine_chalet`, `saltbox_house`, `dutch_gable_house`. All are
+  fit-outs under the blitz design law, each wave in its own file with its own
+  exhibit rows, tag tables inserted between blitz and extended, kit-doc
+  tables added. The catalog gains an optional `wave` number so parallel
+  tracks stop picking the same corners: wave 1 is the above, wave 2 stamps
+  the next nine (`tudor_row`, `mediterranean_villa`, `trullo`, `courthouse`,
+  `post_office`, `infirmary`, `sawmill`, `kiln`, `tannery`).
+
+**89 implemented / 440.** Everything above is code-complete, physics-lint
+clean and unwalked — wave 1's buildings join the queue for joint in-game
+review with Kai.
+
+## Status (2026-07-31, same session: the field-fix round, wave 2, Terrarium v3)
+
+Kai's real Terrarium session came in mid-stream (chat log harvested over the
+laptop bridge; his rule: **chat text is authoritative over the verdict
+buttons**). Every reported defect was root-caused and fixed:
+
+- **Hearth** — the campfire sat in the exterior wall plane (a see-through
+  gap in every hearth-bearing archetype); it now stands one cell inward
+  before a solid chimney breast.
+- **Bed** — cottage beds now lie head-to-wall.
+- **The seat rule** — a stair's `facing` is its backrest. Every stair-seat
+  in the codebase opened away from its focus (inn tables, keep halls,
+  gatehouse, gym, church pews, gallery benches, library chair, and the
+  wave-1 rooms); all flipped, rule documented at each site.
+- **Keep tables** — the trestle idiom (fence + pressure plate) is refused
+  by the stack guard in three-course storeys, so big keeps had no tables;
+  short storeys now use the slab idiom.
+- **Wizard tower** — the enchanting table gets its bookshelf arc (a fixed
+  corner had put it where the stair flight lands).
+- **Greenhouse** — glazing starts at sill height, the plank roof is
+  actually cleared for glass, and crops sit in raised planters out of
+  boot-reach.
+- **Pots** — every decorative bare `flower_pot` (renders empty) became a
+  positional `potted_*` pick.
+- **Granary** — hay restacked into deliberate whole piles; a stranded
+  single bale is now impossible by construction.
+
+The deeper find of the round: **the walking agent vs. the ceiling light.**
+The shell hangs its lantern over the room's centre — head height in a
+three-course storey — and the fit-out guard does not model head-height
+blocks. Four seals fell out of that, each fixed at the geometry: the
+school's aisle (now three middle columns plus a clear perimeter lane), the
+bathhouse walkway (braziers and cauldron moved onto pool-corner pedestals;
+benches only where a stander has headroom), and the pool divider (never on
+the lantern row). A latent inn defect surfaced too: chairs placed even when
+their table's cell was refused.
+
+**Wave 2 landed as a batch-size trial** — one implementer, all nine entries
+(`tudor_row`, `mediterranean_villa`, `trullo`, `courthouse`, `post_office`,
+`infirmary`, `sawmill`, `kiln`, `tannery`), with the field lessons baked
+into the brief. Verdict: nine per agent is comfortable; the errors that
+occur are per-archetype, not per-batch. **98 implemented / 440.**
+
+**Terrarium v3** (Kai's streamlined spec): reviewer spawns in spectator
+(`GameType 3`), pass/fail command blocks are gone — chat and screenshots
+are the record — and each station has two fly-through teleport cubes (lime
+pad = next, red = prev, offset from the landing), whose command chains emit
+the same `>> STATION <id>` markers `review-import` parses. `doMobSpawning`
+was already off; now asserted (the sheep in Kai's frames were the reason).
+
+The `.claude/hooks/session-start.sh` SessionStart hook now readies cloud
+containers (deps, build, ssh client for the bridge).
+
+Everything here is code-complete and physics-lint clean; nothing new has
+been walked. The next Terrarium session runs on v3.
+
+**Standing infrastructure debt (2026-07-31):** the one-shot dev-world
+physics lint outgrew per-push CI at wave 4 — the build+walk blew a full
+hour on CI hardware while all 1413 other tests stayed green. It is now
+env-gated (`TERRAINIST_DEVWORLD_PHYSICS=1`) and belongs to baseline
+promotion; the per-push physics gate is the Terrarium lint (every
+archetype across its whole exhibit gradient, minutes, zero on every
+rule). Sharding the walk per-building would bring the dev-world pass back
+to CI.
+
+**Queued for the next e2e round (Kai, 2026-07-31):** side-by-side authored
+worlds, GLM 5.2 high vs **GPT 5.6 Luna max** — Luna's API price just dropped
+80%, making it a live replacement candidate if quality holds at the lower
+cost. Needs the Mac awake (OpenRouter key) and Kai reviewing; verify the
+Luna model id against OpenRouter's catalog (`verifyModelAvailable`) before
+the first run. This does not change the standing decision that production
+authoring stays cheap-model-first.
+
 ## Keys
 
 OpenRouter + Tripo keys provided by Kai when needed (G3 / G6).
+
+## Fabric v2 + precincts (RATIFIED with Kai, 2026-07-31)
+
+**The diagnosis (Kai, from the first showcase walk):** structures land but
+worlds don't. The solver treats a settlement as a bag of buildings with
+pairwise constraints, which produces correct buildings randomly sprinkled
+on a lawn: no urban fabric, bare ground to the walls, a jarring edge
+against the dense forests, planes resting on grass, ships at random
+headings. North-star benchmark: a dense modern waterfront city should read
+like the Miami/Brickell reference — landmark towers over blocks of
+mid-rise fabric on a real street grid.
+
+**The inversion:** the void defines the solid. Streets first; streets
+define blocks; blocks subdivide into lots; buildings align to lot
+frontage; leftover ground is *treated*, never bare.
+
+### The four workstreams
+
+1. **F1 — fabric core.** New settlement node kind `district`: a composite
+   whose envelope gets a street skeleton BEFORE placement (`fabric:
+   "grid"` → orthogonal grid with jitter; `"organic"` → relaxed/deformed
+   grid). Blocks are the faces of the street graph; lots subdivide block
+   perimeters; the district's child nodes are LANDMARKS placed on chosen
+   lots; remaining lots are AUTO-INFILLED from a `mix` of archetypes at a
+   `density`. Every lot placement is frontage-aligned: door faces its
+   street, facade on the build-to line. The skeleton is handed to the
+   existing road pass for grading/surfacing (streets are roads — one
+   surface pipeline) and exposed as a product for dressing.
+2. **F2 — ground treatment.** Lot dressing by district type (paved
+   forecourts/sidewalk aprons downtown, fenced gardens in villages, gravel
+   in industry); settlement-wide ground paint (worn paths, plaza
+   gradients); and a clearing-transition band — meadow, scattered trees,
+   stumps — between any settlement and dense forest.
+3. **F3 — precinct kits.** Generator family `precinct.*@0`: deterministic
+   compound layout from an envelope + params, the building grammar's
+   philosophy at settlement scale. First two: `precinct.airport@0`
+   (runway axis → parallel taxiway → apron grid with aircraft parked at
+   stands, aligned; terminal + tower fronting the apron; hangars on the
+   taxiway; windsock at the threshold) and `precinct.harbour@0` (quay
+   wall along the real shoreline → piers perpendicular → ships moored
+   parallel to pier axes with consistent heading → cranes on the quay,
+   warehouses fronting the quay road).
+4. **F4 — streetscape.** Sidewalks + curbs as bands beside every street,
+   lamp posts at fixed spacing, crossings at intersections, benches and
+   street furniture drawn from the district type. Driven entirely by the
+   street-graph product.
+
+### The pinned StreetGraph contract (F1 produces, F4 and roads consume)
+
+```ts
+/** One street, a 4-connected polyline in world column space. */
+export interface StreetSegment {
+  readonly id: string;
+  /** Width class: avenue 7, street 5, lane 3 (carriageway columns). */
+  readonly kind: "avenue" | "street" | "lane";
+  readonly width: number;
+  readonly path: readonly { readonly x: number; readonly z: number }[];
+}
+export interface StreetIntersection {
+  readonly x: number;
+  readonly z: number;
+  readonly segments: readonly string[]; // segment ids meeting here
+}
+export interface StreetGraph {
+  readonly segments: readonly StreetSegment[];
+  readonly intersections: readonly StreetIntersection[];
+  /** Sidewalk band width per side (columns); 2 downtown, 1 elsewhere. */
+  readonly sidewalk: number;
+}
+```
+Lives in `packages/compiler/src/layout/streets.ts`. Blocks/lots are
+internal to F1; the graph above is the only cross-team surface.
+
+### Sequencing & authoring contract
+
+F1–F4 land as parallel tracks (F4 codes against the contract with a
+fixture); the road pass keeps its successive-shortest-path role BETWEEN
+districts and precincts — fabric replaces it only INSIDE a district.
+After integration: one headline handwritten world (dense modern
+waterfront city, Miami reference) ships first, then the five showcase
+worlds re-author onto the new contract, then the GLM/Luna/DeepSeek
+side-by-sides run — model comparisons before fabric v2 would measure the
+old solver's ceiling, not the models.
+
+---
+
+## Fabric v3 — the city (RATIFIED with Kai, 2026-07-31)
+
+### Diagnosis
+
+Fabric v2 inverted "buildings first" into "streets first", and it worked:
+Bayline is a real settlement rather than a bag of buildings on a lawn. Kai
+walked it and returned a harder verdict — *"it looks entirely like something
+generated procedurally… the settlements are all just rectangles with simple
+grid layouts, buildings are also often touching each other, and the use of the
+path block is kind of weird for a city. It's also really small compared to what
+an actual minecraft city would be."*
+
+Three structural causes, none of them tunable:
+
+1. **The grid is the only thing the generator can express.** `buildStreetGraph`
+   picks line positions per axis and draws each line edge-to-edge across a
+   rectangle; `fabric: "organic"` is the same construction with ±6 jitter. No
+   code path can produce a diagonal, a curve, a T-junction, a dead end or a
+   non-rectangular block, and a district's outline is its authored envelope
+   rect. Rectangles containing rectangles, by construction.
+2. **A dense street wall cannot be built.** `LOT_SIDE_GAP.high = 0` and each lot
+   raises an independent four-walled shell, so neighbours meet as two boxes back
+   to back. Cities are made of continuous frontage — shared party walls, one
+   cornice line, varied bays — and that primitive does not exist.
+3. **City streets are surfaced as farm tracks.** `surfaceStreetGraph` uses
+   `road.surface` (`dirt_path`) and `road.shoulder` (`gravel`), identical to a
+   lane between two villages.
+
+Plus scale: a 512² region with a 200×170 downtown at `blockSize` 40 is about
+five city blocks by four.
+
+### The principle
+
+Authored-looking cities do not come from more randomness. They come from
+**hierarchy and consequence**: arterials that go somewhere, districts that
+differ *because of where they are*, a skyline that peaks, irregularity with a
+visible cause (the river bent the grid; a diagonal cut through and left wedge
+lots; the old core kept its lanes), and — at eye level — continuous frontage
+with incident every few blocks. One rule applied everywhere at one frequency is
+the thing that reads as generated, and jitter does not cure it.
+
+### The seven tracks
+
+- **U1 — urban materials.** Road classes: avenue/street tarmac with dashed
+  centre lines and positional wear patching, cobbled lanes, gutters, kerbs.
+  Rural `road.network@0` keeps the dirt palette.
+- **U2 — the continuous street wall.** A run of lots on one block face becomes
+  one terrace assembly: shared party walls, bays 6–12 wide, storey counts that
+  snap to a shared cornice with deliberate steps, a continuous ground-floor
+  shopfront band (door + awning per bay), per-bay roofs and facade materials,
+  distinct corner units, and the block interior left as courtyard/alley.
+- **U3 — scale probe.** Measurement only: compile time, RSS, output size and
+  counts at 768²/1024²/1536²/2048², with a CPU profile and a failure point.
+- **C1 — the city plan layer.** Arterials first, districts as the residue. The
+  big one; see the contract below.
+- **C2 — the skyline field.** A prominence field driving storeys, setbacks and
+  rooftop kit, replacing the flat `INFILL_FLOORS.high = [3, 8]` mesa.
+- **C3 — the life pass.** A dedicated eye-level stage: awnings, hanging signs,
+  balconies, AC units, fire escapes, alley clutter, kerbside vehicles, market
+  stalls, street trees, lit interiors.
+- **C4 — set pieces and vistas.** Per city, a handful of authored anchors placed
+  with axis relationships: a boulevard terminating on a landmark, a bridge on
+  the river, a hillside stair district, a waterfront promenade.
+
+### Pinned contract — CityPlan (C1 produces; C2/C3/C4 consume)
+
+Lives in `packages/compiler/src/layout/city.ts`. This is the only cross-track
+surface; a cell's internal subdivision stays private to C1 exactly as blocks and
+lots stayed private to F1.
+
+```ts
+/** Radians are not used anywhere in this contract. Angles are degrees. */
+export type DistrictCharacter =
+  | "core" | "grid" | "rowhouse" | "lanes"
+  | "industrial" | "civic" | "park" | "waterfront";
+
+/** A city-scale road. Drawn before any district exists. */
+export interface Arterial {
+  readonly id: string;
+  readonly kind: "boulevard" | "drive" | "diagonal" | "ring" | "spine";
+  /** Carriageway columns. Wider than any StreetSegment: 9–13. */
+  readonly width: number;
+  /** Carriageway centre line, 4-connected, cell by cell — same shape as
+   *  StreetSegment["path"], so every existing consumer walks it unchanged. */
+  readonly path: readonly { readonly x: number; readonly z: number }[];
+  /** Where this arterial visually ends. C4 seats a landmark on it. */
+  readonly termini: readonly {
+    readonly at: { readonly x: number; readonly z: number };
+    /** Heading the viewer looks along, degrees, 0 = +Z, quantised to 15. */
+    readonly heading: number;
+  }[];
+}
+
+/** One face of the arterial network: an arbitrary polygon, not a rect. */
+export interface DistrictCell {
+  readonly id: string;
+  readonly character: DistrictCharacter;
+  /** 1 inside the cell. Row-major over `bounds`, NOT over the region. */
+  readonly mask: Uint8Array;
+  /** Tight bounding box of the mask, in world columns. */
+  readonly bounds: Rect;
+  /** Columns inside the mask. */
+  readonly area: number;
+  /** Local grid rotation about the bounds centre, degrees, quantised to 15. */
+  readonly orientation: number;
+  readonly blockSize: number;
+  readonly density: "low" | "medium" | "high";
+  /** Salt for this cell's palette drift, so fabric changes as you walk. */
+  readonly paletteSalt: string;
+}
+
+export interface CityPlan {
+  readonly bounds: Rect;
+  readonly arterials: readonly Arterial[];
+  readonly cells: readonly DistrictCell[];
+  /** 1 on any arterial carriageway column, row-major over the region. */
+  readonly arterialMask: Uint8Array;
+}
+```
+
+`StreetGraphInput` gains two **optional, backwards-compatible** fields so a
+cell's local fabric can be clipped and rotated; an authored rectangular district
+that passes neither behaves exactly as it does today:
+
+```ts
+readonly mask?: Uint8Array;      // 1 = inside; a segment leaving the mask ends there
+readonly orientation?: number;   // degrees about the bounds centre, quantised to 15
+```
+
+### Pinned contract — ProminenceField (C2)
+
+Lives in `packages/compiler/src/layout/prominence.ts`. A pure, positional
+function so it can be called from both the per-lot infill draw and a terrace's
+per-bay heights without either owning it.
+
+```ts
+export interface ProminenceField {
+  /** 0..1. Drives storeys, setbacks, rooftop kit and facade richness. */
+  at(x: number, z: number): number;
+  /** Storeys for a lot or bay whose street corner is (x, z). */
+  storeys(x: number, z: number, ctx: {
+    readonly density: "low" | "medium" | "high";
+    readonly character?: DistrictCharacter;
+    readonly archetype: string;
+  }): number;
+}
+export function buildProminenceField(input: ProminenceInput): ProminenceField;
+```
+
+### Pinned contract — the life pass (C3)
+
+Lives in `packages/compiler/src/structures/life.ts`. Strictly **additive** and
+strictly **last**: it may only write into columns nothing else claimed, via the
+same all-or-nothing `avoid` predicate the streetscape pass already takes, so a
+prop that would clip a building or block the reserved walk lane is dropped whole
+rather than half-written.
+
+```ts
+export function dressLife(input: LifePassInput): {
+  readonly blocks: StructureBlock[];
+  readonly diagnostics: Diagnostic[];
+  readonly stats: Readonly<Record<string, number>>;
+};
+```
+
+### Sequencing
+
+U1/U2/U3 are already in flight and are no-regret under any version of C1. C1
+lands next as the long pole; C2, C3 and C4 code against the contracts above with
+fixtures, exactly as F4 coded against `StreetGraph` before F1 existed. The road
+pass keeps its role BETWEEN settlements; arterials replace it INSIDE a city.
+Three handwritten worlds ship on the result: the Miami reference re-authored,
+plus two more chosen to exercise what a rectangle never could.
+
+### Contract amendments during implementation
+
+- **The life pass tests occupancy per voxel, not per column** (C3). The pinned
+  contract said "columns nothing else claimed", which turned out to be far too
+  coarse in practice: the building grammar's eaves and shutters already claim a
+  block in nearly every street-facing apron column, so under the literal column
+  rule Bayline took **50** awnings. Tested voxel by voxel with a block of
+  clearance it takes **1,069**, and the voxel test is strictly *stricter* about
+  what it forbids — it rules out overlap directly rather than by proxy. The
+  all-or-nothing rule is unchanged, and `avoid`/`keepClear` remain an absolute
+  veto with no voxel exemption. One documented exemption exists: interior room
+  lights write inside a building's own column, guarded so the lantern never
+  sits in the player's 1×2 body and always hangs off a valid support chain.
+- **`DistrictCharacter` lives in `layout/prominence.ts`** (C2) rather than
+  `layout/city.ts`, because the skyline field shipped first. C1's `city.ts`
+  imports it from there instead of restating it.
+- **C4 splits in two, and `CityProduct` grows two fields.** `layout/vistas.ts`
+  is the planner — it reads a finished `CityPlan` and answers with `VistaAxis`
+  and `SetPiece` records, writing no blocks and seating no node;
+  `structures/setpieces.ts` lays the blocks, between the ground treatment (F2)
+  and the life pass (C3). `CityProduct` carries `vistas` and `setPieces` so both
+  the report and the structure pass read one truth. `CityPlan` itself is
+  **unchanged**: C4 consumes `Arterial.termini` exactly as pinned.
+- **A terminating landmark is seated by the city pass, not by the cell fabric**
+  (C4). It stands on the arterial corridor at the end of an axis — ground no
+  cell owns — so `city-pass.ts` builds its placement, node, ports and pad
+  directly, exactly as `district.ts` does for a landmark that claimed a lot, and
+  then punches the footprint out of every overlapping cell's `lotMask`. That
+  punch is the only moment in the pipeline at which a district can be told "not
+  here", which is also how the civic square is held open.
+- **The life pass's occupancy machinery is exported, not re-implemented** (C4).
+  `buildLifeWorld`, `Planter` and the four `PlaceRule`s are now `export`ed from
+  `structures/life.ts` and the set-piece pass writes through them. Two additive
+  passes over one finished world have to agree voxel for voxel on what "already
+  taken" means; a second `solidAt` is a second answer to the only question
+  either of them asks. Same argument `city.ts` makes for reusing the road
+  pass's router.
+- **The bridge already had a deck.** C4's first draft put a parapet on the
+  carriageway edge at `half`; `buildBridgeDeck` already lays a deck one column
+  wider each side with a **fence rail** on that extra column, out of **top
+  slabs** — so the draft narrowed the road, built a second rail inboard of the
+  first, and asked `solidAt` for support on a half block that does not report
+  any. What shipped instead adds only what was missing (pylons at the abutments,
+  lamps on the existing rail, a balustrade carrying the line onto the bank) and
+  finds its support with a "top *occupied* voxel" probe that rejects a fluid
+  surface — the fix for the one `unsupported.chain` finding this track produced.
+- **The hillside stair is re-seated against the finished ground.** The plan
+  chooses its strip on the heightfield as it stands *before* the quarters are
+  levelled — the only field the layout stage has, since a cell's terrace pad is
+  computed in the same function and applied a stage later. The structure pass
+  therefore treats the strip as a direction and a rough place, sweeps a
+  ten-column window on the emitted ground, and builds the steepest flight that
+  is actually climbable: `need[k] = max(g[k] + 1, need[k+1] − 1)` taken
+  backwards, refused whole if the bottom step ends up out of reach or any column
+  would need more than four courses. Laying a stair block on every column — the
+  obvious construction — fixes nothing and makes a two-block riser worse.
+
+### U6 — landform that scales, and precincts that find their coast (2026-08-01)
+
+U3's scale probe turned up a ship blocker rather than a performance number:
+Bayline compiled at 768² and 1536² **hard-failed** on `LOAM-E170`, the harbour
+finding seven or eight columns of shoreline where it needed sixteen. The cause
+was not the harbour. Holding `frequency` fixed while the region grows means the
+coastline does not scale with the world — it gets relatively finer and moves
+somewhere else — so whether the sea happened to intersect a `zone: "south"` box
+was luck. Our 512² world was partly a lucky draw.
+
+Two independent fixes, both landed:
+
+1. **`terrain.heightfield@0.scaleReference`** (opt-in; see
+   `docs/LOAM-TERRAIN-PROFILE-v0.md`). Declares the region extent the node's
+   frequencies were tuned at; the compiler divides them by the region's own
+   scale factor and multiplies `warp.amount` by it. Since regions are centred on
+   the origin this is an exact similarity transform: at `k = 2` the world is the
+   same coastline at twice the size. Omitted, the resolver hands back the
+   identical parameter object, so every world shipped before U6 emits
+   byte-identically — verified by hashing Bayline, Deltamere, Kingsfall and
+   `precinct-harbour` before and after.
+2. **`precinct.harbour@0` seeks its coast.** When the solver's box holds no quay
+   the kit censuses the world's shoreline once (16-block summed-area tables),
+   ranks every aligned box of its own size, reads the best sixteen exactly and
+   seats itself on the winner — scoring the longest *unbroken* quay run, water
+   under the pier tips and dry ground behind the wall, biased toward the
+   author's zone rather than confined to it. A hard `zone`/`at`/`within` pin
+   still fails in place (`LOAM-E170`, "pinned to its envelope"); a world with no
+   coast anywhere still fails, saying so instead of blaming the envelope. A move
+   reports `LOAM-W409` and is substituted into the placement list every later
+   pass reads, so the roads arrive at the quay that exists.
+
+The acceptance test for the searched path is deliberately the *old* one — the
+search is reachable only from states that used to be hard errors — which is what
+makes the byte-identity claim structural rather than lucky.

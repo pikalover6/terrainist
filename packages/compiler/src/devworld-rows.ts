@@ -23,12 +23,34 @@
  */
 
 import { ARCHETYPE_EXHIBIT_ROWS } from "./exhibits/archetypes.js";
+import { BLITZ_EXHIBIT_ROWS } from "./exhibits/blitz.js";
 import { BREAKPOINT_EXHIBIT_ROWS } from "./exhibits/breakpoints.js";
+import { DEPTHS_EXHIBIT_ROWS } from "./exhibits/depths.js";
+import { ARCANA_EXHIBIT_ROWS } from "./exhibits/arcana.js";
+import { RELIC_EXHIBIT_ROWS } from "./exhibits/relic.js";
+import { SPECTACLE_EXHIBIT_ROWS } from "./exhibits/spectacle.js";
+import { FAITH_EXHIBIT_ROWS } from "./exhibits/faith.js";
 import { FOOTPRINT_EXHIBIT_ROWS } from "./exhibits/footprints.js";
+import { GARRISON_EXHIBIT_ROWS } from "./exhibits/garrison.js";
 import { HIGHRISE_EXHIBIT_ROWS } from "./exhibits/highrise.js";
+import { HOMESTEAD_EXHIBIT_ROWS } from "./exhibits/homestead.js";
+import { INSTITUTION_EXHIBIT_ROWS } from "./exhibits/institution.js";
+import { COMMERCE_EXHIBIT_ROWS } from "./exhibits/commerce.js";
+import { LEISURE_EXHIBIT_ROWS } from "./exhibits/leisure.js";
+import { REGIONAL_EXHIBIT_ROWS } from "./exhibits/regional.js";
+import { RESIDENTIAL_EXHIBIT_ROWS } from "./exhibits/residential.js";
+import { SCIENCE_EXHIBIT_ROWS } from "./exhibits/science.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
+import { TERMINUS_EXHIBIT_ROWS } from "./exhibits/terminus.js";
+import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
+import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
+import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
+import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
+import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
+import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
+import { UTILITY_EXHIBIT_ROWS } from "./exhibits/utility.js";
 
 export { DEV_ROOFS, DEV_THEMES } from "./exhibits/types.js";
 export type { DevExhibitCell, DevExhibitRow } from "./exhibits/types.js";
@@ -85,11 +107,38 @@ export {
  */
 export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCHETYPE_EXHIBIT_ROWS,
+  // The W2 breadth blitz. Its prop rows were registered in `exhibits/props.ts`
+  // from the start, but this building spread was missed when the round landed —
+  // so the ten blitz archetypes had no exhibit at their own footprints until
+  // now.
+  ...BLITZ_EXHIBIT_ROWS,
+  ...TRADE_EXHIBIT_ROWS,
   ...UNDERGROUND_EXHIBIT_ROWS,
+  ...VERNACULAR_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
+  ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
   ...SEED_EXHIBIT_ROWS,
   ...BREAKPOINT_EXHIBIT_ROWS,
+  ...WAVE2_EXHIBIT_ROWS,
+  ...WORKS_EXHIBIT_ROWS,
+  ...INSTITUTION_EXHIBIT_ROWS,
+  ...LEISURE_EXHIBIT_ROWS,
+  ...INDUSTRY_EXHIBIT_ROWS,
+  ...UTILITY_EXHIBIT_ROWS,
+  ...REGIONAL_EXHIBIT_ROWS,
+  ...HOMESTEAD_EXHIBIT_ROWS,
+  ...RESIDENTIAL_EXHIBIT_ROWS,
+  ...GARRISON_EXHIBIT_ROWS,
+  ...FAITH_EXHIBIT_ROWS,
+  ...COMMERCE_EXHIBIT_ROWS,
+  ...SCIENCE_EXHIBIT_ROWS,
+  ...ARCANA_EXHIBIT_ROWS,
+  // Wave six A, the transport buildings.
+  ...TERMINUS_EXHIBIT_ROWS,
+  ...RELIC_EXHIBIT_ROWS,
+  ...SPECTACLE_EXHIBIT_ROWS,
+  ...DEPTHS_EXHIBIT_ROWS,
 ]);
 
 /**
@@ -131,6 +180,87 @@ export {
 
 /** The breakpoint rows, for tests that assert on the thresholds themselves. */
 export { BREAKPOINT_EXHIBIT_ROWS, exactRoofHeight } from "./exhibits/breakpoints.js";
+
+/** The wave-two rows, for tests that assert on the gradient itself. */
+export { WAVE2_EXHIBIT_ROWS, WAVE2_ROW_LENGTH, wave2SizeFor } from "./exhibits/wave2.js";
+
+/** The wave-3B works rows, for tests that assert on the gradient itself. */
+export { WORKS_EXHIBIT_ROWS, WORKS_ROW_LENGTH, worksSizeFor } from "./exhibits/works.js";
+/** The institution rows, for tests that assert on the gradient itself. */
+export {
+  INSTITUTION_EXHIBIT_ROWS,
+  INSTITUTION_ROW_LENGTH,
+  institutionSizeFor,
+} from "./exhibits/institution.js";
+/** The wave-5B commerce rows, for tests that assert on the gradient itself. */
+export {
+  COMMERCE_EXHIBIT_ROWS,
+  COMMERCE_ROW_LENGTH,
+  commerceSizeFor,
+} from "./exhibits/commerce.js";
+/** The wave-6A transport rows, for tests that assert on the gradient itself. */
+export {
+  TERMINUS_EXHIBIT_ROWS,
+  TERMINUS_ROW_LENGTH,
+  terminusSizeFor,
+} from "./exhibits/terminus.js";
+/** The wave-5D science rows, for tests that assert on the gradient itself. */
+export { SCIENCE_EXHIBIT_ROWS, SCIENCE_ROW_LENGTH, scienceSizeFor } from "./exhibits/science.js";
+/** The wave-4C leisure rows, for tests that assert on the gradient itself. */
+export { LEISURE_EXHIBIT_ROWS, LEISURE_ROW_LENGTH, leisureSizeFor } from "./exhibits/leisure.js";
+/** The wave-5C industry rows, for tests that assert on the gradient itself. */
+export {
+  INDUSTRY_EXHIBIT_ROWS,
+  INDUSTRY_ROW_LENGTH,
+  industrySizeFor,
+} from "./exhibits/industry.js";
+/** The wave-6C waterworks-and-energy rows, for tests that assert on the gradient. */
+export {
+  UTILITY_EXHIBIT_ROWS,
+  UTILITY_ROW_LENGTH,
+  utilitySizeFor,
+} from "./exhibits/utility.js";
+/** The wave-three regional rows, for tests that assert on the gradient. */
+export {
+  REGIONAL_EXHIBIT_ROWS,
+  REGIONAL_ROW_LENGTH,
+  regionalSizeFor,
+} from "./exhibits/regional.js";
+
+/** The wave-four homestead rows, for tests that assert on the gradient. */
+export {
+  HOMESTEAD_EXHIBIT_ROWS,
+  HOMESTEAD_ROW_LENGTH,
+  homesteadSizeFor,
+} from "./exhibits/homestead.js";
+/** The wave-four A residential rows, for tests that assert on the gradient. */
+export {
+  RESIDENTIAL_EXHIBIT_ROWS,
+  RESIDENTIAL_ROW_LENGTH,
+  residentialSizeFor,
+} from "./exhibits/residential.js";
+/** The wave-five A garrison rows, for tests that assert on the gradient. */
+export {
+  GARRISON_EXHIBIT_ROWS,
+  GARRISON_ROW_LENGTH,
+  garrisonSizeFor,
+} from "./exhibits/garrison.js";
+/** The wave-4B faith rows, for tests that assert on the gradient. */
+export { FAITH_EXHIBIT_ROWS, FAITH_ROW_LENGTH, faithSizeFor } from "./exhibits/faith.js";
+
+/** The wave-5E arcana rows, for tests that assert on the gradient. */
+export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";
+
+/** The wave-6E relic rows, for tests that assert on the gradient. */
+export { RELIC_EXHIBIT_ROWS, RELIC_ROW_LENGTH, relicSizeFor } from "./exhibits/relic.js";
+/** The wave-6D spectacle rows, for tests that assert on the gradient. */
+export {
+  SPECTACLE_EXHIBIT_ROWS,
+  SPECTACLE_ROW_LENGTH,
+  spectacleSizeFor,
+} from "./exhibits/spectacle.js";
+/** The wave-six depths rows, for tests that assert on the gradient. */
+export { DEPTHS_EXHIBIT_ROWS, DEPTHS_ROW_LENGTH, depthsSizeFor } from "./exhibits/depths.js";
 
 /** The seed sweep, for the same reason. */
 export { SEED_EXHIBIT_ROWS, SEED_SWEEP_LENGTH, SEED_SWEEP_ROW_LABEL } from "./exhibits/seeds.js";

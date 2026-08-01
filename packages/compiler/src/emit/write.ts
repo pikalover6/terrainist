@@ -32,6 +32,13 @@ export interface WriteWorldInput {
   readonly stack: PrismarineStack;
   /** Game-rule overrides for `level.dat`; see {@link LevelDatOptions.gameRules}. */
   readonly gameRules?: Readonly<Record<string, boolean | number>>;
+  /**
+   * Default game mode for `level.dat`; creative (1) when omitted.
+   *
+   * Only the Terrarium sets it — it opens in spectator (3), because a reviewer
+   * is looking rather than building. See {@link LevelDatOptions.gameType}.
+   */
+  readonly gameType?: number;
 }
 
 /** What the write step produced. */
@@ -85,6 +92,7 @@ export async function writeWorldFiles(input: WriteWorldInput): Promise<WriteWorl
         minecraftVersion: input.stack.minecraftVersion,
         dataVersion: input.stack.dataVersion,
         ...(input.gameRules === undefined ? {} : { gameRules: input.gameRules }),
+        ...(input.gameType === undefined ? {} : { gameType: input.gameType }),
       }),
     ),
   );

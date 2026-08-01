@@ -1,0 +1,17 @@
+{
+  "size": 1536,
+  "variant": "terrain-verbatim",
+  "wallMs": 146985,
+  "peakRssMB": 1622.7,
+  "peakHeapMB": 0,
+  "ok": false,
+  "diagnostics": [
+    "LOAM-T208: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass",
+    "LOAM-E404: hard \"terrain_conform\" constraint [1] was demoted to soft so this node could be placed",
+    "LOAM-E406: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position",
+    "LOAM-E170: precinct.harbour@0 found only 7 columns of usable shoreline inside its envelope; a quay needs at least 16, with 7 columns of dry land behind it",
+    "LOAM-E170: no site within 48 blocks fits the bandstand",
+    "LOAM-E170: no site within 48 blocks fits the swimming_pool"
+  ],
+  "outputBytes": 0
+}

@@ -56,7 +56,11 @@ import {
   deriveTerrainProducts,
   layoutNodesFrom,
   registerRoadCorridors,
+  solveCities,
+  solveDistricts,
   solveLayout,
+  type CityProduct,
+  type DistrictProduct,
   type LayoutNodeInput,
   type RouteCorridor,
   type OccupancyGrid,
@@ -68,10 +72,18 @@ import {
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
+import type { Provenance } from "../provenance.js";
 
 import { biomeForColumn } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
-import { clipTrees, makeStructureClip, roadCorridorBoxes, structureBoxes, type StructureClip } from "./clip.js";
+import {
+  DECOR_APRON,
+  clipTrees,
+  makeStructureClip,
+  roadCorridorBoxes,
+  structureBoxes,
+  type StructureClip,
+} from "./clip.js";
 import { buildClimateFields, resolveClimateParams } from "./climate.js";
 import {
   buildCavePlan,
@@ -94,6 +106,7 @@ import {
 import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
 import {
   buildStructures,
+  buildTransitionBand,
   checkTunnelIntegrity,
   roadParamsOf,
   type StructurePassResult,
@@ -175,6 +188,15 @@ export interface CompileTerrainOptions {
   readonly skipEmit?: boolean;
   /** Receives the pipeline's output just before emit. See {@link CompileTerrainOptions.skipEmit}. */
   readonly onArtifacts?: (artifacts: CompileArtifacts) => void;
+  /**
+   * Git provenance for the checkout doing the compiling, copied into the
+   * report verbatim.
+   *
+   * An *input*, never read here: the compiler shells out to nothing and reads
+   * no environment, so the same document and seed compile to the same world on
+   * any machine. Only the report (a sidecar) carries it.
+   */
+  readonly provenance?: Provenance;
 }
 
 /**
@@ -261,6 +283,12 @@ export interface CompileStats {
   readonly clearedColumns: number;
   /** Trees dropped for losing too much of themselves to a building. */
   readonly clippedTrees: number;
+  /** Trees felled by the F2 clearing transition band. */
+  readonly felledTrees: number;
+  /** Stumps the band left standing where it felled. */
+  readonly transitionStumps: number;
+  /** Fallen logs the band laid where it felled. */
+  readonly transitionLogs: number;
   /** Voxels withheld from surviving trees at emit. */
   readonly clippedTreeBlocks: number;
   /** Ponds formed by demoting a sealess river, per river edit. */
@@ -275,6 +303,26 @@ export interface LayoutOutcome {
   readonly placements: readonly Placement[];
   readonly ports: readonly ResolvedPort[];
   readonly padEdits: readonly PadEdit[];
+  /**
+   * The fabric pass's output, one entry per `district` node.
+   *
+   * `report.layout.districts[i].streets` is **the** {@link StreetGraph} product:
+   * the pinned contract F4's streetscape and the road pass code against. It is
+   * here rather than under `structures` because the graph is a layout decision —
+   * it exists before a single block does, and it is what the placements inside
+   * the district were derived from.
+   */
+  readonly districts?: readonly DistrictProduct[];
+  /**
+   * C1's city plans, one per `city` node — the pinned {@link CityPlan} contract
+   * C2's skyline, C3's life pass and C4's set pieces code against.
+   *
+   * Beside `districts` rather than under them because the two are different
+   * layers of the same idea: `districts` here holds one entry per *cell*, which
+   * is the fabric each face of the armature was given, while this holds the
+   * armature itself and the characters it assigned.
+   */
+  readonly cities?: readonly CityProduct[];
   /** Per-building geometry and the routed road network. */
   readonly structures?: StructurePassResult;
 }
@@ -283,6 +331,8 @@ export interface LayoutOutcome {
 export interface TerrainCompileReport {
   readonly name: string;
   readonly prompt?: string;
+  /** The checkout that produced this report; present when the caller passed it. */
+  readonly provenance?: Provenance;
   readonly worldSeed: string;
   readonly markers: readonly Marker[];
   readonly stats: CompileStats;
@@ -418,6 +468,8 @@ async function compileValidated(
   /** Frozen at substage 3b, read by the solver and again by the road router. */
   let corridors: readonly RouteCorridor[] = [];
   let products: TerrainProductIndex | undefined;
+  /** `building.grammar@0` params for the fabric pass's own buildings. */
+  let districtParams: ReadonlyMap<string, Readonly<Record<string, unknown>>> | undefined;
   const tLayout = now();
   if (isSettlement(doc)) {
     const extraction = layoutNodesFrom(doc, worldSeed);
@@ -452,19 +504,48 @@ async function compileValidated(
       rootPath,
       nodes: extraction.nodes,
       hazardMask: buildHazardMask(region, classification, terrain.edits.calderas),
+      amphibiousHazardMask: buildHazardMask(region, classification, terrain.edits.calderas, {
+        water: false,
+      }),
       corridors,
       products,
     });
     diagnostics.push(...solved.diagnostics);
     occupancy = solved.occupancy;
-    layoutOutcome = {
-      report: solved.report,
+
+    // --- substage 3g: the district fabric (F1) -----------------------------
+    // The solver's pads go in *first*, because a district levels its own ground
+    // and the fabric pass reads that ground to seat every building it lays. Run
+    // the other way round, each tower would be founded on the hill the district
+    // was about to erase.
+    if (solved.padEdits.length > 0) applyPadEdits(terrain.field, solved.padEdits);
+    // Where the water is, as the layout stage can know it: there is no column
+    // plan yet, and C1's shoreline drive has to follow a real shore. The union
+    // of the ocean and lake masks is exactly what `buildColumnPlan` will turn
+    // into `fluidKind` two stages later.
+    const wetColumns = new Uint8Array(region.width * region.depth);
+    for (let k = 0; k < wetColumns.length; k++) {
+      if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) wetColumns[k] = 1;
+    }
+    const fabricInput = {
+      doc,
+      worldSeed,
+      field: terrain.field,
+      seaLevel: terrain.params.seaLevel,
       placements: solved.placements,
-      ports: solved.ports,
-      padEdits: solved.padEdits,
+      water: wetColumns,
     };
-    if (solved.padEdits.length > 0) {
-      applyPadEdits(terrain.field, solved.padEdits);
+    const fabric = solveDistricts(fabricInput);
+    diagnostics.push(...fabric.diagnostics);
+    // --- substage 3h: the city plan (C1) -----------------------------------
+    // A second pass at the same stage rather than a branch inside the first:
+    // a city's cells *are* districts and are laid by the same code, but the
+    // armature that produced them is drawn before any of them exists.
+    const cityFabric = solveCities(fabricInput);
+    diagnostics.push(...cityFabric.diagnostics);
+    const fabricPads = [...fabric.padEdits, ...cityFabric.padEdits];
+    if (fabricPads.length > 0) applyPadEdits(terrain.field, fabricPads);
+    if (solved.padEdits.length + fabricPads.length > 0) {
       classification = classify(terrain.field, terrain.params, {
         temperature: climate.temperature,
         noFlood: terrain.edits.noFlood,
@@ -472,6 +553,21 @@ async function compileValidated(
         footprints: terrain.edits.footprints,
       });
     }
+    // The fabric's buildings need solver nodes so the structure pass can build
+    // them; they need no *occupancy* of their own, because the district's own
+    // footprint was claimed by the solve and every one of them is inside it.
+    const fabricNodes = [...fabric.nodes, ...cityFabric.nodes];
+    if (fabricNodes.length > 0) layoutNodes = [...extraction.nodes, ...fabricNodes];
+    districtParams = new Map([...fabric.params, ...cityFabric.params]);
+    const allDistricts = [...fabric.districts, ...cityFabric.districts];
+    layoutOutcome = {
+      report: solved.report,
+      placements: [...solved.placements, ...fabric.placements, ...cityFabric.placements],
+      ports: [...solved.ports, ...fabric.ports, ...cityFabric.ports],
+      padEdits: [...solved.padEdits, ...fabricPads],
+      ...(allDistricts.length === 0 ? {} : { districts: allDistricts }),
+      ...(cityFabric.cities.length === 0 ? {} : { cities: cityFabric.cities }),
+    };
   }
   const layoutMs = now() - tLayout;
 
@@ -542,6 +638,9 @@ async function compileValidated(
       palette,
       stack,
       ...(occupancy === undefined ? {} : { occupancy }),
+      ...(layoutOutcome.districts === undefined ? {} : { districts: layoutOutcome.districts }),
+      ...(layoutOutcome.cities === undefined ? {} : { cities: layoutOutcome.cities }),
+      ...(districtParams === undefined ? {} : { paramsByPath: districtParams }),
       // §4.9.6: the pass-6 router prefers the polygon that was frozen at 3b.
       ...(corridors.some((c) => c.kind === "road")
         ? { roadCorridor: corridorMask(region, corridors.filter((c) => c.kind === "road")) }
@@ -603,7 +702,26 @@ async function compileValidated(
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
   const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip);
-  const trees = clipped?.trees ?? scatter.trees;
+  const standing = clipped?.trees ?? scatter.trees;
+  // --- pass 6b: the clearing transition band (fabric v2, F2) ---------------
+  // A post-pass over the planted forest, and it has to be: whether a settlement
+  // abuts dense wood is not answerable before the wood exists. It fells the
+  // inner band outright, keeps one tree in six through the outer band, and
+  // leaves stumps and fallen logs where it took them.
+  const transition =
+    clearing === undefined || clearing.hulls.length === 0
+      ? undefined
+      : buildTransitionBand({
+          plan,
+          hulls: clearing.hulls,
+          trees: standing,
+          palette,
+          stack,
+          seed: seed32(nodeSeed(worldSeed, rootPath, "transition")),
+          ...(occupancy === undefined ? {} : { occupancy }),
+          avoid: transitionAvoid(clip, layoutOutcome?.placements ?? []),
+        });
+  const trees = transition?.trees ?? standing;
   const decoration = decorate({
     plan,
     classification,
@@ -652,7 +770,7 @@ async function compileValidated(
   const emitInput = {
     plan,
     trees,
-    decor: [...caveDecor.blocks, ...decoration.blocks],
+    decor: [...caveDecor.blocks, ...decoration.blocks, ...(transition?.blocks ?? [])],
     ...(structures === undefined ? {} : { structures: structures.blocks }),
     ...(clip === undefined ? {} : { clip }),
     stack,
@@ -685,6 +803,7 @@ async function compileValidated(
   const report: TerrainCompileReport = {
     name: doc.meta.name,
     ...(doc.meta.prompt === undefined ? {} : { prompt: doc.meta.prompt }),
+    ...(options.provenance === undefined ? {} : { provenance: options.provenance }),
     worldSeed: worldSeed.toString(),
     markers,
     stats: {
@@ -717,6 +836,9 @@ async function compileValidated(
       lavaFlowColumns,
       clearedColumns: clearing?.clearedColumns ?? 0,
       clippedTrees: clipped?.dropped ?? 0,
+      felledTrees: transition?.felled ?? 0,
+      transitionStumps: transition?.stumps ?? 0,
+      transitionLogs: transition?.logs ?? 0,
       clippedTreeBlocks: clipped?.clippedBlocks ?? 0,
       pondChains: Object.fromEntries(
         terrain.ponds.map((p) => [p.editId, p.ponds] as const).sort(([a], [b]) => (a < b ? -1 : 1)),
@@ -969,10 +1091,13 @@ function buildHazardMask(
   region: Region,
   classification: Classification,
   calderas: readonly { readonly lava: boolean; readonly columns: Int32Array }[],
+  options: { readonly water?: boolean } = {},
 ): Uint8Array {
   const mask = new Uint8Array(region.width * region.depth);
-  for (let k = 0; k < mask.length; k++) {
-    if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) mask[k] = 1;
+  if (options.water !== false) {
+    for (let k = 0; k < mask.length; k++) {
+      if (classification.oceanMask[k] === 1 || classification.lakeMask[k] === 1) mask[k] = 1;
+    }
   }
   for (const caldera of calderas) {
     if (!caldera.lava) continue;
@@ -1020,6 +1145,36 @@ function toEdit(node: EditNode): TerrainEdit {
     ...(p.irregularity === undefined ? {} : { irregularity: p.irregularity }),
     ...(p.meander === undefined ? {} : { meander: p.meander }),
     ...(p.flooded === undefined ? {} : { flooded: p.flooded }),
+  };
+}
+
+/**
+ * The ground the transition band may not dress.
+ *
+ * The decoration clip's apron covers the buildings, the lanes and the plaza;
+ * the placement rects cover everything else the solver put down (a placed
+ * primitive has no `BuiltBuilding` and so no box). Both are grown by
+ * {@link DECOR_APRON}, which is the same distance the undergrowth pass keeps
+ * its deadwood at — a fallen log against a garden wall is one defect, not two.
+ */
+function transitionAvoid(
+  clip: StructureClip | undefined,
+  placements: readonly { readonly footprint: { x0: number; z0: number; x1: number; z1: number } }[],
+): (x: number, z: number) => boolean {
+  const rects = placements.map((p) => p.footprint);
+  return (x, z) => {
+    if (clip?.inApron(x, z) === true) return true;
+    for (const r of rects) {
+      if (
+        x >= r.x0 - DECOR_APRON &&
+        x <= r.x1 + DECOR_APRON &&
+        z >= r.z0 - DECOR_APRON &&
+        z <= r.z1 + DECOR_APRON
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 }
 

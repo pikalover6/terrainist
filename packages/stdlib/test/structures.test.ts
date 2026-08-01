@@ -293,6 +293,53 @@ describe("generateBuilding — structural sanity", () => {
     }
   });
 
+  it("lays a cottage bed head-to-the-wall, foot into the room", () => {
+    const c = CASES[0] as Case;
+    const { ops, meta } = build(c, { params: { ...c.params, archetype: "cottage" } });
+    const { interior } = meta;
+    const beds = ops.filter((o) => o.block === "red_bed" && o.y === 1);
+    const foot = beds.find((o) => o.props?.["part"] === "foot") as LocalVoxelOp;
+    const head = beds.find((o) => o.props?.["part"] === "head") as LocalVoxelOp;
+    expect(foot).toBeDefined();
+    expect(head).toBeDefined();
+    const inside = (x: number, z: number): boolean =>
+      x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
+    const [dx, dz] = cardinalStep(head.props?.["facing"] as never);
+    // The head stands at the wall: one more step along `facing` leaves the room.
+    expect(inside(head.x + dx, head.z + dz)).toBe(false);
+    // And the foot points into the room, not into a wall.
+    expect(inside(foot.x, foot.z)).toBe(true);
+    expect(inside(foot.x - dx, foot.z - dz)).toBe(true);
+  });
+
+  it("turns an inn's stair-chairs towards the table", () => {
+    const { ops } = generateBuilding({
+      size: [11, 9, 11],
+      params: { floors: 1, floorHeight: 5, archetype: "inn" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const chairs = ops.filter(
+      (o) => o.block === PINNED["stair.interior"] && o.y === 1 && o.props?.["half"] === "bottom",
+    );
+    const tables = new Set(
+      ops.filter((o) => o.block === PINNED["wall.fence"] && o.y === 1).map((o) => `${o.x},${o.z}`),
+    );
+    expect(tables.size).toBeGreaterThan(0);
+    let seated = 0;
+    for (const chair of chairs) {
+      // A stair's `facing` is where its backrest stands, so the seat opens the
+      // other way: the table must lie OPPOSITE the chair's `facing`.
+      const [dx, dz] = cardinalStep(chair.props?.["facing"] as never);
+      if (!tables.has(`${chair.x - dx},${chair.z - dz}`)) continue;
+      seated++;
+      // ...and never the other way round, which is the bug this guards.
+      expect(tables.has(`${chair.x + dx},${chair.z + dz}`)).toBe(false);
+    }
+    expect(seated).toBe(chairs.length);
+    expect(seated).toBeGreaterThan(0);
+  });
+
   it("lights every storey", () => {
     for (const c of CASES) {
       const { ops, meta } = build(c);
@@ -548,6 +595,27 @@ describe("material themes", () => {
       expect(height).toBeLessThan(meta.params.storyHeight - 1);
     }
 
+    // Bales read as deliberate stores, not scatter: no pile is a lone bale
+    // stranded on its own, every pile is level, and the upper course of a pile
+    // lies along the wall it stands against.
+    const heightAt = new Map<string, number>();
+    for (const cell of columns) {
+      heightAt.set(cell, hay.filter((o) => `${o.x},${o.z}` === cell).length);
+    }
+    for (const cell of columns) {
+      const [x, z] = cell.split(",").map(Number) as [number, number];
+      const neighbours = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
+        .map(([dx, dz]) => `${x + dx},${z + dz}`)
+        .filter((k) => columns.has(k));
+      expect(neighbours.length, `isolated bale at ${cell}`).toBeGreaterThan(0);
+      // A pile is level — its cells all carry the same number of bales.
+      for (const k of neighbours) expect(heightAt.get(k), `${cell} vs ${k}`).toBe(heightAt.get(cell));
+      const onXWall = z === interior.z0 || z === interior.z1;
+      for (const bale of hay.filter((o) => `${o.x},${o.z}` === cell)) {
+        expect(bale.props?.["axis"]).toBe(bale.y === 1 ? "y" : onXWall ? "x" : "z");
+      }
+    }
+
     // Every free floor cell is still 4-connected to every other one.
     const free: string[] = [];
     for (let z = interior.z0; z <= interior.z1; z++) {
@@ -732,22 +800,38 @@ describe("material themes", () => {
     expect(meta.chimney).toBe(true);
     const at = new Map(ops.map((o) => [key(o), o] as const));
     const fires = ops.filter((o) => o.block === "campfire").sort((a, b) => a.y - b.y);
-    // Two: the hearth in the wall face, and the fire in the chimney head.
+    // Two: the hearth inside the room, and the fire in the chimney head.
     expect(fires.length).toBe(2);
 
     // --- the hearth --------------------------------------------------------
     const hearth = fires[0] as { x: number; y: number; z: number };
     expect(hearth.y).toBe(1);
-    // It is in the wall plane, which is the whole point: a flue is a piece of
-    // wall, and the version that stood it on an interior column put a
-    // cobblestone pillar through the middle of a smithy and three courses of
-    // it over a bed.
-    const onWall =
-      hearth.x === 0 || hearth.x === 8 || hearth.z === 0 || hearth.z === 8;
-    expect(onWall).toBe(true);
-    // Standing on the course below it, with its flue directly above.
+    // It is strictly *inside* the interior, not in the wall plane: a campfire
+    // is neither full nor opaque, and standing one in the exterior wall left a
+    // see-through hole in the wall at floor level.
+    expect(hearth.x).toBeGreaterThanOrEqual(meta.interior.x0);
+    expect(hearth.x).toBeLessThanOrEqual(meta.interior.x1);
+    expect(hearth.z).toBeGreaterThanOrEqual(meta.interior.z0);
+    expect(hearth.z).toBeLessThanOrEqual(meta.interior.z1);
+    // Standing on the floor course below it.
     expect(at.has(`${hearth.x},0,${hearth.z}`)).toBe(true);
-    expect(at.get(`${hearth.x},2,${hearth.z}`)?.block).toBe(PINNED["chimney.block"]);
+    // …with the chimney breast solid behind it: the wall cell it faces is the
+    // flue block, at floor level and in the course above, so the wall plane
+    // has no gap. The flue is one of the four neighbours of the hearth cell.
+    const breast = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]
+      .map(([dx, dz]) => ({ x: hearth.x + (dx as number), z: hearth.z + (dz as number) }))
+      .filter(
+        (c) =>
+          at.get(`${c.x},1,${c.z}`)?.block === PINNED["chimney.block"] &&
+          at.get(`${c.x},2,${c.z}`)?.block === PINNED["chimney.block"] &&
+          (c.x === 0 || c.x === 8 || c.z === 0 || c.z === 8),
+      );
+    expect(breast.length).toBe(1);
 
     // --- no interior cell is a full column ---------------------------------
     for (let z = meta.interior.z0; z <= meta.interior.z1; z++) {

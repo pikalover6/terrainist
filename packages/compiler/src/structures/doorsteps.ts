@@ -57,6 +57,12 @@ export interface DoorstepResult {
   readonly dropped: number;
   /** Doors that were already flush. */
   readonly flush: number;
+  /**
+   * 1 on every column this pass rewrote or built on, row-major over the plan
+   * region — the ground in front of a door, which no later ground treatment
+   * may repaint.
+   */
+  readonly touched: Uint8Array;
 }
 
 /** The four cardinals, as `(dx, dz)` and the block-state name of each. */
@@ -75,6 +81,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   let stepped = 0;
   let dropped = 0;
   let flush = 0;
+  const touched = new Uint8Array(region.width * region.depth);
 
   const stepState = palette.has("road.step")
     ? palette.state("road.step")
@@ -120,6 +127,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       if (!inside(region, x, z) || claimed(x, z)) break;
       const idx = index(region, x, z);
       if (plan.fluidKind[idx] !== FluidKind.NONE) break;
+      touched[idx] = 1;
       const g = plan.ground[idx] as number;
 
       if (g >= y) {
@@ -158,5 +166,5 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     else flush++;
   }
 
-  return { blocks, stepped, dropped, flush };
+  return { blocks, stepped, dropped, flush, touched };
 }

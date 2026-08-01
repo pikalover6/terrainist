@@ -24,6 +24,8 @@ import {
   type BuildingMeta,
   type BuildingParams,
   type BuildingWing,
+  type MaterialTheme,
+  type TerraceBay,
   type Cardinal,
   type LocalVoxelOp,
   type Seed256,
@@ -59,6 +61,8 @@ export interface BuildingJob {
   readonly tags: readonly string[];
   /** The theme triple this building was dealt, if the caller assigned one. */
   readonly materials?: BuildingMaterials;
+  /** The whole palette the triple came from; only the terrace reads it. */
+  readonly theme?: MaterialTheme;
   /** Block-id overrides for the grammar's material symbols. */
   readonly style?: Readonly<Record<string, string>>;
 }
@@ -112,6 +116,25 @@ export interface BuiltBuilding {
    * this column inside this building".
    */
   readonly interiorCells: ReadonlySet<string>;
+  /**
+   * The enclosed floor columns **per storey**, aligned with
+   * `meta.floorLevels`.
+   *
+   * Absent when every storey has the same plan, which is every building bar the
+   * terrace. There the run's bays differ in height, so above the shortest bay's
+   * eave the building's floor is a strict subset of its ground floor — and a
+   * consumer that asks "which columns is this storey made of" and gets the
+   * ground floor's answer will call every short bay's roof unreachable floor.
+   */
+  readonly interiorCellsByLevel?: readonly ReadonlySet<string>[];
+  /**
+   * Columns a storey-to-storey flight climbs through, as `"x,z"` world keys.
+   *
+   * Absent for a building whose grammar declares none. A later pass that hangs
+   * anything in a room must keep off these: the headroom over a landing is not
+   * the headroom over a flight, and two treads up is where the difference bites.
+   */
+  readonly stairCells?: ReadonlySet<string>;
   /**
    * What the apron needs to stay off the air, kept for a second look later.
    *
@@ -172,6 +195,7 @@ export function buildBuildings(
       foundationDepth: skirtDepth(plan, job.placement),
       ...(door === null ? {} : { door }),
       ...(job.materials === undefined ? {} : { materials: job.materials }),
+      ...(job.theme === undefined ? {} : { theme: job.theme }),
       ...(job.style === undefined ? {} : { style: job.style }),
     });
   });
@@ -188,6 +212,20 @@ export function buildBuildings(
   const cellSets = jobs.map((job, k) =>
     worldCells(job, (results[k] as ReturnType<typeof generateBuilding>).meta.cells),
   );
+
+  // One index over every claimed cell, so the apron test below is a single
+  // lookup instead of a scan across every other building (which made the pass
+  // quadratic in building count).
+  //
+  // Membership is all this needs, so a set of keys is enough — no owner index,
+  // and so nothing that duplicate ownership could confuse. The test is only
+  // ever reached for a key the *current* building does not own (`!inFootprint`
+  // is checked first, against this same key space), so "some cell set other
+  // than mine contains this key" and "any cell set contains this key" are the
+  // same question, whether one building claims it or five do. Membership tests
+  // only: the set is never iterated, so no decision depends on its order.
+  const claimedCells = new Set<string>();
+  for (const set of cellSets) for (const key of set) claimedCells.add(key);
 
   for (const [index, job] of jobs.entries()) {
     const { placement } = job;
@@ -212,7 +250,7 @@ export function buildBuildings(
       const z = tz + op.z;
       const key = `${x},${z}`;
       const inFootprint = cells.has(key);
-      if (!inFootprint && cellSets.some((s, k) => k !== index && s.has(key))) continue;
+      if (!inFootprint && claimedCells.has(key)) continue;
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
       const y = floorY + op.y;
@@ -241,6 +279,22 @@ export function buildBuildings(
       blockCount: count,
       cells,
       interiorCells: worldCells(job, result.meta.floorCells),
+      ...(result.meta.stairColumns === undefined
+        ? {}
+        : {
+            stairCells: worldCells(
+              job,
+              [...result.meta.stairColumns].map((k) => {
+                const [x, z] = k.split(",").map(Number) as [number, number];
+                return { x, z };
+              }),
+            ),
+          }),
+      ...(result.meta.floorCellsByLevel === undefined
+        ? {}
+        : {
+            interiorCellsByLevel: result.meta.floorCellsByLevel.map((cs) => worldCells(job, cs)),
+          }),
       apron: { floor: apronFloor, skirt: skirtState, filled },
       floorY,
       basementDepth: cellar,
@@ -533,6 +587,40 @@ export function wingParamOf(value: unknown): BuildingWing | undefined {
   if (typeof wx !== "number" || typeof wz !== "number" || typeof offset !== "number") return undefined;
   if (side !== "north" && side !== "east" && side !== "south" && side !== "west") return undefined;
   return { size: [wx, wz], side, offset };
+}
+
+/**
+ * Read a document's `bays` param into the terrace grammar's shape.
+ *
+ * The same contract `wingParamOf` has, for the same reason: the params
+ * whitelist in `structures/index.ts` is deliberately explicit, so a param the
+ * grammar cannot read never reaches it by accident, and a *defective* one
+ * becomes `undefined` here rather than an exception. A terrace that gets
+ * nothing draws its own bays, so dropping a malformed list costs the run its
+ * variety and never its geometry.
+ *
+ * Entries missing a usable `width` or `floors` are dropped rather than
+ * defaulted: a half-described bay in the middle of a list would silently shift
+ * every bay after it, and a shorter list is honestly handled — the planner
+ * draws the rest.
+ */
+export function terraceBaysParamOf(value: unknown): readonly TerraceBay[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+  const out: TerraceBay[] = [];
+  for (const entry of value as unknown[]) {
+    if (entry === null || typeof entry !== "object") continue;
+    const raw = entry as Record<string, unknown>;
+    const width = raw["width"];
+    const floors = raw["floors"];
+    if (typeof width !== "number" || typeof floors !== "number") continue;
+    const archetype = raw["archetype"];
+    out.push({
+      width,
+      floors,
+      ...(typeof archetype === "string" ? { archetype } : {}),
+    });
+  }
+  return out.length === 0 ? undefined : out;
 }
 
 /** Resolve one op to a state id, remembering names the block table refuses. */

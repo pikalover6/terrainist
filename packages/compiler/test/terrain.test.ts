@@ -38,10 +38,14 @@ import {
 } from "../src/terrain/columns.js";
 import { decorate } from "../src/terrain/decorate.js";
 import {
+  MODERN_STREET_MATERIALS,
   NON_SYMBOL_PALETTE_KEYS,
   PALETTE_THEME_KEY,
+  STREET_MATERIALS_BY_THEME,
   resolvePalette,
+  streetMaterials,
 } from "../src/terrain/palette.js";
+import { ALL_MATERIAL_THEMES } from "@terrainist/stdlib";
 import {
   checkFloatingVegetation,
   checkFluidStability,
@@ -217,6 +221,33 @@ describe("compileTerrain", () => {
     expect(second.stats.treeCount).toBe(first.stats.treeCount);
     expect(second.stats.treesPerNode).toEqual(first.stats.treesPerNode);
     expect(second.stats.treeBlockCount).toBe(first.stats.treeBlockCount);
+  });
+
+  /**
+   * Provenance reaches the report only as an option. The compiler never asks
+   * git anything itself — that would make a compile depend on the machine it
+   * ran on — and the report simply omits the key when the caller passed none.
+   */
+  it("copies caller-supplied provenance into the report, and omits it otherwise", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "terrainist-prov-"));
+    scratch.push(dir);
+    const provenance = {
+      commit: "c".repeat(40),
+      branch: "main",
+      dirty: true,
+      baseline: "d".repeat(40),
+      isBaseline: false,
+    } as const;
+    const result = await compileTerrain(smallDocument(), {
+      outDir: path.join(dir, "golden_isle"),
+      skipEmit: true,
+      provenance,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.report.provenance).toEqual(provenance);
+    // The default path (compileTo) passes none.
+    expect(first.provenance).toBeUndefined();
   });
 
   it("reports diagnostics instead of throwing on an invalid document", async () => {
@@ -815,5 +846,31 @@ describe("the palette resolver and the theme key", () => {
   it("keeps one name for the key the reader and the resolver share", () => {
     expect(PALETTE_THEME_KEY).toBe("theme");
     expect(NON_SYMBOL_PALETTE_KEYS.has(PALETTE_THEME_KEY)).toBe(true);
+  });
+
+  /**
+   * Every street material must exist in the pinned version. A theme naming a
+   * block the pinned version does not have fails silently — the fallback is a
+   * *different block*, not an error — which is exactly how a theme once ended
+   * up quietly missing its stairs.
+   */
+  it("names only real 1.21.11 blocks in every theme's street materials", () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    for (const [theme, materials] of Object.entries(STREET_MATERIALS_BY_THEME)) {
+      for (const block of Object.values(materials)) {
+        expect(
+          { theme, block, known: stack.blockByName(block.replace(/^minecraft:/, "")) !== undefined },
+        ).toEqual({ theme, block, known: true });
+      }
+    }
+  });
+
+  it("covers every material theme and falls back to the modern set", () => {
+    for (const theme of ALL_MATERIAL_THEMES) {
+      expect(STREET_MATERIALS_BY_THEME[theme.id]).toBeDefined();
+      expect(streetMaterials(theme.id)).toBe(STREET_MATERIALS_BY_THEME[theme.id]);
+    }
+    expect(streetMaterials(undefined)).toBe(MODERN_STREET_MATERIALS);
+    expect(streetMaterials("no_such_theme")).toBe(MODERN_STREET_MATERIALS);
   });
 });

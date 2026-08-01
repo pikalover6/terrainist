@@ -46,6 +46,10 @@ import type {
 } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
+import { resolvePorts } from "../layout/ports.js";
+import type { CityProduct } from "../layout/city-pass.js";
+import type { DistrictProduct } from "../layout/district.js";
+import { dressStreets } from "./streetscape.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -53,6 +57,7 @@ import { PALETTE_THEME_KEY, type Palette } from "../terrain/palette.js";
 
 import {
   buildBuildings,
+  terraceBaysParamOf,
   underpinAprons,
   wingParamOf,
   type BuildingJob,
@@ -60,15 +65,37 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { buildDoorsteps } from "./doorsteps.js";
+import { buildGrounds, type GroundPassResult } from "./grounds.js";
+import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
+import { dressSetPieces } from "./setpieces.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
-import { buildRoadNetwork, type RoadNetworkResult, type RoadParams } from "./roads.js";
+import {
+  buildPrecincts,
+  isPrecinctGenerator,
+  type PrecinctJob,
+  type PrecinctPassResult,
+} from "./precincts.js";
+import {
+  buildRoadNetwork,
+  index,
+  inside,
+  surfaceStreetGraph,
+  type RoadNetworkResult,
+  type RoadParams,
+  type StreetSurfaceResult,
+} from "./roads.js";
+import type { StreetscapeResult } from "./streetscape.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
+export * from "./life.js";
+export * from "./grounds.js";
 export * from "./plaza.js";
+export * from "./precincts.js";
+export * from "./setpieces.js";
 export * from "./props.js";
 export * from "./roads.js";
 export * from "./tunnels.js";
@@ -96,6 +123,31 @@ export interface StructurePassInput {
    * constraints to string a corridor through.
    */
   readonly roadCorridor?: Uint8Array;
+  /**
+   * The fabric pass's output, one entry per `district` node.
+   *
+   * Its street skeletons are surfaced by the road machinery before the
+   * inter-district network is routed, and handed to {@link dressStreets} — the
+   * F4 seam — immediately afterwards.
+   */
+  readonly districts?: readonly DistrictProduct[];
+  /**
+   * C1's city plans, one per `city` node.
+   *
+   * Only the arterials are read here: they are surfaced through the same pass
+   * that surfaces streets, before it, so a street *meets* a boulevard. The
+   * cells themselves already arrived as ordinary entries in `districts`.
+   */
+  readonly cities?: readonly CityProduct[];
+  /**
+   * `building.grammar@0` params for placements that have no document node.
+   *
+   * Every auto-infilled building in a district is a real placement with no line
+   * of JSON behind it: its archetype and storey count were chosen by the fabric
+   * pass, and this is how they reach the grammar. Consulted only for paths the
+   * document itself does not carry, so an authored node always wins.
+   */
+  readonly paramsByPath?: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
 }
 
 /** Aggregate numbers about what the structure pass built. */
@@ -131,12 +183,58 @@ export interface StructureStats {
   readonly tunnelLanterns: number;
   /** Shared chambers dug where two galleries crossed. */
   readonly tunnelJunctions: number;
+  /** Districts whose fabric was laid. */
+  readonly districts: number;
+  /** Buildings the fabric pass produced — landmarks plus auto-infill. */
+  readonly districtBuildings: number;
+  /** Columns surfaced as district streets. */
+  readonly streetColumns: number;
+  /** C1 city plans laid. */
+  readonly cities: number;
+  /** Arterials drawn across them, of every kind. */
+  readonly arterials: number;
+  /** Of `streetColumns`, the ones that are arterial carriageway. */
+  readonly arterialColumns: number;
+  /** Of those, the ones carried on a bridge deck over water. */
+  readonly arterialBridgeColumns: number;
   /** Props built by `prop.place@0`. */
   readonly props: number;
   /** Prop nodes the placer could find no site for. */
   readonly propsUnplaced: number;
   /** Water blocks the props wrote that could flow. Zero is required. */
   readonly propWaterLeaks: number;
+  /**
+   * Lamps, benches and planters the F4 streetscape dressed the sidewalks with.
+   *
+   * Reported because "streetlights everywhere" is a thing a document asks for
+   * and nothing else in the report would notice it disappearing: the dressing
+   * skips any column a building already wrote in, so a facade that reaches into
+   * the apron — a terrace's awning does — trades furniture for architecture,
+   * and that trade is worth being able to see.
+   */
+  readonly streetFurniture: number;
+  /** Columns rewritten by lot dressing (F2). */
+  readonly dressedColumns: number;
+  /** Columns speckled with worn path paint (F2). */
+  readonly wornColumns: number;
+  /** Precinct compounds laid out, by kit. */
+  readonly airports: number;
+  readonly harbours: number;
+  /** Apron stands cut, and aircraft parked on them. */
+  readonly standsCut: number;
+  readonly aircraftParked: number;
+  /** Piers run out from a quay, and hulls moored alongside them. */
+  readonly piersBuilt: number;
+  readonly shipsMoored: number;
+  /**
+   * The life pass's own counters, one per prop kind plus `lifeTotal` and
+   * `lifeBlocks`.
+   *
+   * Open rather than enumerated: the whole point of C3 is that its vocabulary
+   * grows, and a fixed field per awning kind would make adding one a
+   * three-file change for no reader's benefit.
+   */
+  readonly [lifeStat: string]: number | string | boolean;
 }
 
 /** What the structure pass produced. */
@@ -146,8 +244,20 @@ export interface StructurePassResult {
   readonly buildings: readonly BuiltBuilding[];
   readonly plaza?: PlazaResult;
   readonly roads?: RoadNetworkResult;
+  /**
+   * The district street skeletons, as surfaced.
+   *
+   * `streets` here is the *surfacing*; the graphs themselves live on
+   * `report.layout.districts[i].streets`, which is the pinned F4 contract.
+   */
+  readonly streets?: StreetSurfaceResult;
+  /** The fabric pass's per-district products, carried through for the report. */
+  readonly districts: readonly DistrictProduct[];
   readonly tunnels: readonly BuiltTunnel[];
   readonly props: readonly PlacedProp[];
+  /** F2's ground treatment: what each lot got, and how much ground it took. */
+  readonly grounds?: GroundPassResult;
+  readonly precincts?: PrecinctPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -159,6 +269,20 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const byId = new Map(input.nodes.map((n) => [n.nodePath, n] as const));
   const placementByPath = new Map(input.placements.map((p) => [p.nodePath, p] as const));
   const docNodes = structureNodesOf(input.doc, rootPath);
+  const districts = input.districts ?? [];
+  const cities = input.cities ?? [];
+  /** Every building the fabric pass produced, by node path. */
+  const districtPaths = new Set<string>();
+  // A city's own prefix as well as each cell's: a landmark the author wrote as
+  // a child of the city keeps its `world.city.spire` path however deep in the
+  // plan it actually landed, and it is still on a street rather than a
+  // destination the road router must reach.
+  for (const owner of [...districts.map((d) => d.nodePath), ...cities.map((c) => c.nodePath)]) {
+    const prefix = `${owner}.`;
+    for (const placement of input.placements) {
+      if (placement.nodePath.startsWith(prefix)) districtPaths.add(placement.nodePath);
+    }
+  }
 
   // --- what the tunnels imply ----------------------------------------------
   // Read *before* the buildings are generated, because a building at the end of
@@ -186,20 +310,70 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     }
   }
 
+  // --- precincts -----------------------------------------------------------
+  // First of everything, and it has to be: a precinct grades its own apron or
+  // quay, and every pass after this one — the buildings that front it, the
+  // props parked on it, the roads that arrive at it — measures the ground it
+  // left behind. It also *produces* buildings and props, which are folded into
+  // the ordinary job lists below so that a terminal gets the village theme, a
+  // foundation and a doorstep exactly like a cottage does.
+  const precinctJobs: PrecinctJob[] = [];
+  for (const placement of input.placements) {
+    const node = byId.get(placement.nodePath);
+    if (node?.generator === undefined || !isPrecinctGenerator(node.generator)) continue;
+    precinctJobs.push({
+      nodePath: placement.nodePath,
+      generator: node.generator,
+      placement,
+      params: (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>,
+      seed: node.seed,
+      tags: node.tags,
+      ports: node.ports as Readonly<Record<string, PortDeclaration>>,
+      constraints: node.constraints as readonly Readonly<Record<string, unknown>>[],
+    });
+  }
+  const precincts =
+    precinctJobs.length === 0
+      ? undefined
+      : buildPrecincts({
+          jobs: precinctJobs,
+          plan: input.plan,
+          stack: input.stack,
+          ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+        });
+  if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
+
+  /**
+   * The placements every pass after this one reads.
+   *
+   * Identical to the solver's list except where a precinct reseated itself — a
+   * harbour that had to go and find the coast. Substituting here rather than
+   * mutating the solver's record keeps one truth in play downstream: the roads
+   * route to the quay that was built, the props measure the ground that was
+   * graded, and nothing is left arriving at an empty box.
+   */
+  const placements =
+    precincts === undefined || precincts.relocations.size === 0
+      ? input.placements
+      : input.placements.map((p) => precincts.relocations.get(p.nodePath) ?? p);
+
   // --- buildings -----------------------------------------------------------
   const jobs: BuildingJob[] = [];
   const buildingPaths = new Set<string>();
-  for (const placement of input.placements) {
+  for (const placement of placements) {
     const node = byId.get(placement.nodePath);
     if (node?.generator !== "building.grammar@0") continue;
     buildingPaths.add(placement.nodePath);
-    const params = (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>;
+    const params = (docNodes.get(placement.nodePath)?.params ??
+      input.paramsByPath?.get(placement.nodePath) ??
+      {}) as Record<string, unknown>;
     const basement = resolveBasementParam(params["basement"], needsCellar.has(placement.nodePath));
     const cellarStyle = resolveBasementStyle(
       params["basement"],
       impliedStyle.get(placement.nodePath),
     );
     const wing = wingParamOf(params["wing"]);
+    const bays = terraceBaysParamOf(params["bays"]);
     jobs.push({
       nodePath: placement.nodePath,
       placement,
@@ -218,6 +392,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         // defective shape becomes `undefined` rather than an exception — the
         // profile validator is what tells the author about it, with a hint.
         ...(wing === undefined ? {} : { wing }),
+        // The terrace's bays, read through `terraceBaysParamOf` for the same
+        // reason: a defective list becomes `undefined` here rather than an
+        // exception, and the terrace grammar draws its own bays when it gets
+        // nothing. The two corner flags travel with them.
+        ...(bays === undefined ? {} : { bays }),
+        ...(params["cornerStart"] === true ? { cornerStart: true } : {}),
+        ...(params["cornerEnd"] === true ? { cornerEnd: true } : {}),
         archetype:
           typeof params["archetype"] === "string"
             ? params["archetype"]
@@ -229,6 +410,26 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
   }
 
+  // The precinct's own buildings, appended after the document's so that adding
+  // an aerodrome never reshuffles the material deal of the houses in the town.
+  const precinctPorts: ResolvedPort[] = [];
+  if (precincts !== undefined) {
+    precinctPorts.push(...precincts.ports);
+    for (const spec of precincts.buildings) {
+      buildingPaths.add(spec.nodePath);
+      jobs.push({
+        nodePath: spec.nodePath,
+        placement: spec.placement,
+        size: spec.size,
+        params: { archetype: spec.archetype },
+        ports: spec.ports,
+        seed: nodeSeed(input.worldSeed, spec.nodePath, ""),
+        tags: spec.tags,
+      });
+      precinctPorts.push(...resolvePorts(spec.placement, spec.size, spec.ports));
+    }
+  }
+
   // --- the village theme ---------------------------------------------------
   // One theme for the settlement, drawn from the root node's seed, then one
   // distinct (wood, stone, roof) triple dealt to each building in document
@@ -237,11 +438,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const themeSeed: Seed256 = nodeSeed(input.worldSeed, rootPath, "");
   const theme: MaterialTheme = pickTheme(themeSeed, themeOverride(input.doc));
   const deal = assignMaterials(theme, jobs.length, themeSeed);
-  const themed = jobs.map((job, i) => ({ ...job, materials: deal[i] as BuildingMaterials }));
+  // The whole palette rides along beside the triple, not instead of it. Only
+  // the terrace reads it, and it reads it for a reason no other building has:
+  // a terrace is several buildings, so one triple cannot clothe it — each bay
+  // takes its own from the same theme, which is what makes a run read as a
+  // street rather than as one long building painted one colour.
+  const themed = jobs.map((job, i) => ({
+    ...job,
+    materials: deal[i] as BuildingMaterials,
+    theme,
+  }));
+
+  const jobTags = new Map(jobs.map((job) => [job.nodePath, job.tags] as const));
 
   const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
-  const blocks: StructureBlock[] = [...buildings.blocks];
+  const blocks: StructureBlock[] = [...(precincts?.blocks ?? []), ...buildings.blocks];
   if (input.occupancy !== undefined) {
     for (const built of buildings.built) claimFootprint(input.occupancy, built);
   }
@@ -255,7 +467,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const tunnelPass = buildTunnels({
     links,
     buildings: buildings.built,
-    placements: input.placements,
+    placements,
     ports: input.ports,
     declaredPorts: new Map(input.nodes.map((n) => [n.nodePath, n.ports] as const)),
     plan: input.plan,
@@ -289,6 +501,66 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks.push(...plaza.blocks);
   }
 
+  // --- district streets ----------------------------------------------------
+  // Before the inter-district roads and after the buildings, and both halves of
+  // that are load-bearing. After the buildings, because a street may not cut
+  // into a facade it was drawn to meet. Before the roads, because a lane
+  // arriving from the next district should *join* the street grid, and the
+  // router discounts existing road cells — which is exactly how a lane finds a
+  // street rather than running alongside it.
+  let streets: StreetSurfaceResult | undefined;
+  const streetMasks: LifeStreets[] = [];
+  let streetFurniture = 0;
+  const arterials = cities.flatMap((c) => c.plan.arterials);
+  if (districts.length > 0 || arterials.length > 0) {
+    streets = surfaceStreetGraph({
+      graphs: districts.map((d) => d.streets),
+      ...(arterials.length === 0
+        ? {}
+        : { arterials: arterials.map((a) => ({ id: a.id, width: a.width, path: a.path })) }),
+      plan: input.plan,
+      palette: input.palette,
+      stack: input.stack,
+      placements,
+      buildingPaths,
+      theme: theme.id,
+      seed: themeSeed,
+      ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+    });
+    blocks.push(...streets.blocks);
+    // The F4 seam, filled: curbs, sidewalk paving, lamps, crossings and the
+    // district's furniture. The kit is read off the contract itself — a
+    // two-column sidewalk is the downtown band, one column is a village lane.
+    // Columns the buildings pass already wrote (porch lamps and shutters jut
+    // one cell into the apron, which on a build-to-line lot is the sidewalk)
+    // are off limits to the dressing, whole-prop.
+    const builtColumns = new Set<string>();
+    for (const b of blocks) builtColumns.add(`${b.x},${b.z}`);
+    for (const district of districts) {
+      const dressed: StreetscapeResult = dressStreets(district.streets, {
+        plan: input.plan,
+        stack: input.stack,
+        seed: nodeSeed(input.worldSeed, district.nodePath, ""),
+        furniture: district.streets.sidewalk >= 2 ? "downtown" : "village",
+        palette: input.palette,
+        nodePath: district.nodePath,
+        avoid: (x, z) => builtColumns.has(`${x},${z}`),
+      });
+      blocks.push(...dressed.blocks);
+      streetFurniture += dressed.props.length;
+      diagnostics.push(...dressed.diagnostics);
+      // Kept for C3: the life pass needs the walk lane it must not touch and
+      // the carriageway it parks against, and re-deriving either from the
+      // graph would be the same rasterization with a second chance to differ.
+      streetMasks.push({
+        nodePath: district.nodePath,
+        bounds: district.bounds,
+        graph: district.streets,
+        masks: dressed.masks,
+      });
+    }
+  }
+
   // --- roads ---------------------------------------------------------------
   // §4.9.6: `road.network@0` reserved its route corridor at substage 3b, and
   // `roadCorridor` is that reservation — but it is still not a *placed* node,
@@ -306,9 +578,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plan: input.plan,
       palette: input.palette,
       stack: input.stack,
-      placements: input.placements,
-      ports: input.ports,
-      buildingPaths,
+      placements,
+      // The precinct approach ports are appended, not merged: the road pass
+      // reads a placement's ports by node path, and a precinct has no shell for
+      // the generic resolver to hang a stub on, so the kit states its own.
+      ports: precinctPorts.length === 0 ? input.ports : [...input.ports, ...precinctPorts],
+      buildingPaths: precinctAnchors(buildingPaths, precincts),
+      // A district's own buildings are obstacles, never destinations — they are
+      // already on a street; a precinct's landside anchor IS a destination.
+      // See `RoadNetworkInput.anchorPaths`.
+      ...(districtPaths.size === 0
+        ? {}
+        : {
+            anchorPaths: new Set(
+              [...precinctAnchors(buildingPaths, precincts)].filter((p) => !districtPaths.has(p)),
+            ),
+          }),
       ...(plazaPlacement === undefined ? {} : { plaza: plazaPlacement }),
       ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
@@ -328,6 +613,19 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // Document order is load-bearing in exactly one direction: a `pier` placed
   // earlier is the anchor a later `at: "pier"` boat moors to.
   const propJobs: PropJob[] = [];
+  // The precinct's props first, and in its own layout order: a pier has to be
+  // placed before the hull that moors beside it, and both were sited by the kit
+  // against the ground it graded a moment ago.
+  for (const spec of precincts?.props ?? []) {
+    const seed: Seed256 = nodeSeed(input.worldSeed, spec.nodePath, "");
+    propJobs.push({
+      nodePath: spec.nodePath,
+      prop: spec.prop,
+      params: spec.params,
+      seed,
+      materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
+    });
+  }
   for (const child of input.doc.root.children) {
     if (!isPropNode(child)) continue;
     const nodePath = `${rootPath}.${child.id}`;
@@ -392,13 +690,97 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   blocks.push(...doorsteps.blocks);
 
+  // --- ground treatment (F2) -----------------------------------------------
+  // Dead last, and that is the whole design: every other pass has by now
+  // declared the ground it owns — roads, plaza, doorsteps, footprints, props —
+  // so this one can treat what is left without ever having to guess.
+  const grounds = buildGrounds({
+    buildings: buildings.built,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+    seed: seed32(streamSeed(themeSeed, "grounds")),
+    ...(roads === undefined ? {} : { roadColumns: roads.roadColumns }),
+    ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
+    doorstepColumns: doorsteps.touched,
+    ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+  });
+  blocks.push(...grounds.blocks);
+
+  // --- the set pieces (C4) -------------------------------------------------
+  // After the ground treatment and before the life pass, and both halves are
+  // load-bearing. After F2, because a parapet, a stair tread and a monument
+  // plinth all stand on the *finished* ground. Before C3, because the life
+  // pass is contractually last and is handed the emitted block list — run this
+  // after it and a bridge pylon would be free to grow through an awning C3 had
+  // already proved the support for.
+  const setPieceCities = cities
+    .filter((c) => c.setPieces.length > 0)
+    .map((c) => ({ nodePath: c.nodePath, setPieces: c.setPieces }));
+  const setPieces =
+    setPieceCities.length === 0
+      ? undefined
+      : dressSetPieces({
+          plan: input.plan,
+          stack: input.stack,
+          seed: themeSeed,
+          nodePath: rootPath,
+          cities: setPieceCities,
+          existing: blocks,
+          ...(roads === undefined
+            ? {}
+            : {
+                avoid: (x: number, z: number): boolean => {
+                  const region = input.plan.region;
+                  if (!inside(region, x, z)) return false;
+                  return (roads as RoadNetworkResult).roadColumns[index(region, x, z)] === 1;
+                },
+              }),
+        });
+  if (setPieces !== undefined) {
+    diagnostics.push(...setPieces.diagnostics);
+    blocks.push(...setPieces.blocks);
+  }
+
+  // --- the life pass (C3) --------------------------------------------------
+  // After *everything*, including the ground treatment, and that is the whole
+  // contract: this stage adds eye-level incident into columns nobody else
+  // claimed, so "nobody else claimed" has to be a finished fact rather than a
+  // prediction. It is handed the emitted block list rather than a summary,
+  // because a recipe that brackets an awning to a wall has to be able to ask
+  // whether that particular wall is a full cube at that particular height.
+  const life = dressLife({
+    plan: input.plan,
+    stack: input.stack,
+    seed: themeSeed,
+    nodePath: rootPath,
+    buildings: buildings.built.map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
+    districts: streetMasks,
+    existing: blocks,
+    ...(roads === undefined
+      ? {}
+      : {
+          avoid: (x: number, z: number): boolean => {
+            const region = input.plan.region;
+            if (!inside(region, x, z)) return false;
+            return (roads as RoadNetworkResult).roadColumns[index(region, x, z)] === 1;
+          },
+        }),
+  });
+  diagnostics.push(...life.diagnostics);
+  blocks.push(...life.blocks);
+
   return {
     blocks,
     buildings: buildings.built,
     tunnels: tunnelPass.tunnels,
     props: props.placed,
+    grounds,
+    ...(precincts === undefined ? {} : { precincts }),
+    districts,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
+    ...(streets === undefined ? {} : { streets }),
     diagnostics,
     stats: {
       theme: theme.id,
@@ -421,11 +803,75 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       tunnelStairSteps: tunnelPass.tunnels.reduce((sum, t) => sum + t.stairSteps, 0),
       tunnelLanterns: tunnelPass.tunnels.reduce((sum, t) => sum + t.lanterns, 0),
       tunnelJunctions: tunnelPass.tunnels.reduce((sum, t) => sum + t.junctions.length, 0),
+      districts: districts.length,
+      districtBuildings: districtPaths.size,
+      streetColumns: streets?.surfacedColumns ?? 0,
+      cities: cities.length,
+      arterials: arterials.length,
+      arterialColumns: streets?.arterialColumns ?? 0,
+      arterialBridgeColumns: streets?.bridgeColumns ?? 0,
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,
+      streetFurniture,
+      dressedColumns: grounds.dressedColumns,
+      wornColumns: grounds.wornColumns,
+      airports: precincts?.stats.airports ?? 0,
+      harbours: precincts?.stats.harbours ?? 0,
+      standsCut: precincts?.stats.stands ?? 0,
+      aircraftParked: precincts?.stats.aircraft ?? 0,
+      piersBuilt: precincts?.stats.piers ?? 0,
+      shipsMoored: precincts?.stats.ships ?? 0,
+      ...(setPieces?.stats ?? {}),
+      ...life.stats,
     },
   };
+}
+
+/**
+ * Adapt a built building into the flat view the life pass reads.
+ *
+ * The life pass takes a *view*, not `BuiltBuilding` itself, for the same reason
+ * F4 took a `StreetGraph` rather than a district: it has to be constructible by
+ * hand in a test, and half of `BuiltBuilding` — apron floors, skirt states,
+ * cellar cell sets — is meaningless to a pass that only ever writes outside the
+ * walls.
+ */
+function lifeBuildingOf(built: BuiltBuilding, tags: readonly string[]): LifeBuilding {
+  const archetype = built.meta.params.archetype;
+  return {
+    nodePath: built.nodePath,
+    footprint: built.footprint,
+    cells: built.cells,
+    interiorCells: built.interiorCells,
+    ...(built.stairCells === undefined ? {} : { stairCells: built.stairCells }),
+    floorY: built.floorY,
+    wallTopY: built.floorY + built.meta.wallTop,
+    // A cellar's floor is in `floorLevels` too, and a lantern hung down there
+    // is a lantern nobody sees; everything at or below the ground plane is
+    // dropped rather than special-cased downstream.
+    floorLevels: built.meta.floorLevels
+      .map((y) => built.floorY + y)
+      .filter((y) => y >= built.floorY),
+    ...(archetype === undefined ? {} : { archetype }),
+    tags,
+  };
+}
+
+/**
+ * The set of node paths the road pass may anchor to.
+ *
+ * Buildings, plus every precinct — a precinct is not a building, but it is a
+ * destination, and a port with no road to it is the same defect as a door with
+ * no path. Returns the original set unchanged when there are no precincts, so
+ * a town without one routes exactly as it always did.
+ */
+function precinctAnchors(
+  buildingPaths: ReadonlySet<string>,
+  precincts: PrecinctPassResult | undefined,
+): ReadonlySet<string> {
+  if (precincts === undefined || precincts.anchorPaths.length === 0) return buildingPaths;
+  return new Set([...buildingPaths, ...precincts.anchorPaths]);
 }
 
 /**
@@ -573,6 +1019,9 @@ function attachTunnelSpans(
     systems: existing?.systems ?? 0,
     chambers: existing?.chambers ?? 0,
     decorate: existing?.decorate ?? false,
+    // Carried through so a tunnel merging into the cave plan does not cost the
+    // carver's spans their style, and with it their dressing.
+    ...(existing?.styleByColumn === undefined ? {} : { styleByColumn: existing.styleByColumn }),
     structuralColumns,
     portalColumns,
   };
@@ -598,10 +1047,28 @@ function structureNodesOf(
   rootPath: string,
 ): Map<string, StructureNode> {
   const out = new Map<string, StructureNode>();
+  const take = (node: StructureNode, path: string): void => {
+    if (
+      node.generator !== "building.grammar@0" &&
+      node.generator !== "road.network@0" &&
+      !isPrecinctGenerator(node.generator)
+    ) {
+      return;
+    }
+    out.set(path, node);
+  };
   for (const child of doc.root.children) {
+    // C1: a precinct written as a child of a `city` is placed by the city pass
+    // against the cell it claimed, but its *params* still live in the document
+    // and the precinct kit reads them from here.
+    if (child.kind === "city") {
+      for (const grand of child.children ?? []) {
+        take(grand, `${rootPath}.${child.id}.${grand.id}`);
+      }
+      continue;
+    }
     if (child.kind !== "generator") continue;
-    if (child.generator !== "building.grammar@0" && child.generator !== "road.network@0") continue;
-    out.set(`${rootPath}.${child.id}`, child);
+    take(child as StructureNode, `${rootPath}.${child.id}`);
   }
   return out;
 }

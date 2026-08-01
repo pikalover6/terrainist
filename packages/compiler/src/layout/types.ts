@@ -21,10 +21,28 @@ export interface LayoutNodeInput {
   readonly id: string;
   /** Dotted path from the root, e.g. `"world.town_hall"`. */
   readonly nodePath: string;
-  /** `generator` for a structure node, `primitive` for the plaza. */
-  readonly kind: "generator" | "primitive";
+  /**
+   * `generator` for a structure node, `primitive` for the plaza, `district`
+   * for a fabric quarter.
+   *
+   * The third value is load-bearing in exactly one place: the structure pass
+   * finds the plaza by looking for the one `primitive`, and a district that
+   * called itself one would be paved as a village green.
+   */
+  readonly kind: "generator" | "primitive" | "district" | "city";
   /** `building.grammar@0` / `road.network@0`; absent for the plaza. */
   readonly generator?: string;
+  /**
+   * The node may straddle the waterline: the freeboard veto is lifted and the
+   * amphibious hazard mask is used. A harbour and a city, and nothing else.
+   */
+  readonly amphibious?: boolean;
+  /**
+   * …and it is *scored against* a candidate with no water in it. Separate from
+   * {@link LayoutNodeInput.amphibious} because an inland city is allowed to
+   * touch the water and must not be dragged towards it.
+   */
+  readonly wantsWater?: boolean;
   /** Requested footprint and height, in blocks. */
   readonly size: readonly [number, number, number];
   /** Smallest acceptable footprint when `flexible`; defaults to `size`. */
@@ -204,6 +222,16 @@ export interface LayoutRequest {
    * solver runs before any block exists.
    */
   readonly hazardMask?: Uint8Array;
+  /**
+   * The same mask with the *water* taken out: 1 only where a column is lava or
+   * caldera.
+   *
+   * Read by `precinct.harbour@0` and nothing else. A quay is built across the
+   * waterline by definition, so the ordinary hazard mask — which calls every
+   * ocean and lake column unusable ground — would veto every candidate a
+   * harbour could possibly want. Lava is still lava.
+   */
+  readonly amphibiousHazardMask?: Uint8Array;
   /**
    * Route corridors registered at substage 3b (§4.9.6), in document order.
    *

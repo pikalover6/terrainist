@@ -48,11 +48,22 @@ import {
   resolveTypeKey,
   type ConstraintType,
 } from "./constraints.js";
+import { isKnownArchetype, nearestArchetypes } from "./archetypes.js";
 import {
+  CITY_MAX_DIAGONALS,
+  CITY_SIZES,
+  DISTRICT_CHARACTERS,
+  DISTRICT_DENSITIES,
+  DISTRICT_FABRICS,
   HORIZONTAL_FACES,
   PORT_TYPES,
+  SET_PIECE_KINDS,
+  SET_PIECE_MAX_COUNT,
+  SET_PIECE_MIN_COUNT,
   SETTLEMENT_EXCLUDED_GENERATORS,
   STRUCTURE_GENERATORS,
+  VISTA_ARTERIALS,
+  isPrecinctGenerator,
   V02_FACES,
   V02_PORT_TYPES,
   YAWS,
@@ -208,9 +219,13 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
         raw["id"],
         raw["kind"] === "primitive"
           ? "primitive"
-          : typeof raw["generator"] === "string"
-            ? raw["generator"]
-            : "generator",
+          : raw["kind"] === "district"
+            ? "district"
+            : raw["kind"] === "city"
+              ? "city"
+              : typeof raw["generator"] === "string"
+                ? raw["generator"]
+                : "generator",
       );
     }
 
@@ -230,13 +245,23 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
       continue;
     }
 
+    if (raw["kind"] === "district") {
+      validateDistrictNode(out, childPath, raw, connections);
+      continue;
+    }
+
+    if (raw["kind"] === "city") {
+      validateCityNode(out, childPath, raw, connections);
+      continue;
+    }
+
     if (raw["kind"] !== "generator") {
       out.push(
         error(
           "STRUCTURE_NODE_SHAPE",
           childPath,
-          `children of the root must have "kind": "generator" or "kind": "primitive", got ${describe(raw["kind"])}`,
-          'set "kind": "generator" for a terrain or structure generator, or "kind": "primitive" for the plaza — the settlement profile has no nested composites',
+          `children of the root must have "kind": "generator", "kind": "primitive", "kind": "district" or "kind": "city", got ${describe(raw["kind"])}`,
+          'set "kind": "generator" for a terrain or structure generator, "kind": "primitive" for the plaza, "kind": "district" for one street-fabric quarter, or "kind": "city" for a whole arterial-first city — the settlement profile has no other composites',
         ),
       );
       continue;
@@ -331,6 +356,15 @@ function validateStructureNode(
   path: string,
   node: Obj,
   connections: ConnectedRef[],
+  /**
+   * True when this node is a child of a `city`.
+   *
+   * The only thing that reads it is `params.vista` (C4), which is meaningless
+   * anywhere else — a vista axis is the end of an arterial, and a district or a
+   * root-level building has none. Threaded rather than inferred from the path
+   * because a path is a string and an id may be spelt anything.
+   */
+  inCity = false,
 ): void {
   unknownKeys(out, node, path, STRUCTURE_KEYS, "structure node");
   checkBooleans(out, path, node, ["optional"]);
@@ -343,7 +377,7 @@ function validateStructureNode(
         "STRUCTURE_NODE_SHAPE",
         path,
         "structure nodes have no children in the settlement profile",
-        'remove "children" — building.grammar@0 and road.network@0 emit their own geometry; declare siblings under the root instead',
+        'remove "children" — building.grammar@0, road.network@0 and the precinct kits emit their own geometry; declare siblings under the root instead',
       ),
     );
   }
@@ -353,7 +387,9 @@ function validateStructureNode(
   if (params !== undefined && !isObject(params)) {
     out.push(error("BAD_TYPE", path, `"params" must be an object, got ${describe(params)}`, 'use "params": {} to accept every generator default'));
   } else if (isObject(params)) {
-    if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params);
+    if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params, inCity);
+    else if (generator === "precinct.airport@0") validateAirportParams(out, `${path}.params`, params);
+    else if (generator === "precinct.harbour@0") validateHarbourParams(out, `${path}.params`, params);
     else validateRoadParams(out, `${path}.params`, params);
   }
 
@@ -361,6 +397,7 @@ function validateStructureNode(
   if (generator === "building.grammar@0") {
     validateHighriseEnvelope(out, path, node, isObject(params) ? params : {});
   }
+  if (isPrecinctGenerator(generator)) validatePrecinctEnvelope(out, path, node, generator);
   validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
 }
@@ -403,6 +440,674 @@ function validatePlazaNode(
 
   validateConstraints(out, path, node["constraints"], node["id"], connections);
   validatePorts(out, path, node["ports"]);
+}
+
+/* -------------------------------------------------------------------------- */
+/* districts (fabric v2, F1)                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Keys a `district` node may carry. */
+const DISTRICT_KEYS = [
+  "id",
+  "kind",
+  "envelope",
+  "params",
+  "children",
+  "constraints",
+  "ports",
+  "optional",
+  "seedSalt",
+  "tags",
+] as const;
+
+/** Keys a district's `params` may carry. */
+const DISTRICT_PARAM_KEYS = ["fabric", "density", "mix", "blockSize", "plaza"] as const;
+
+/**
+ * Block size a district may ask for, in blocks between street centre lines.
+ *
+ * The floor is two lot depths plus an avenue: below it there is no block left
+ * to subdivide once the carriageway and its sidewalks are taken out, and the
+ * skeleton degenerates into pavement. The ceiling is a superblock — past it
+ * the "district" is a field with four roads round it, which the ordinary
+ * solver already does better.
+ */
+export const DISTRICT_MIN_BLOCK = 16;
+export const DISTRICT_MAX_BLOCK = 96;
+
+/** Longest `mix` this profile reads; past it the cycle is not a mix, it is noise. */
+export const DISTRICT_MAX_MIX = 24;
+
+/**
+ * Validate a `district` node.
+ *
+ * The shape is deliberately narrow. A district owns its interior completely —
+ * the street skeleton decides where its buildings go — so the only things it
+ * accepts are the fabric knobs, an envelope saying how much ground it covers,
+ * constraints saying where that ground is, and landmark children.
+ */
+function validateDistrictNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, DISTRICT_KEYS, "district node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  // --- envelope ------------------------------------------------------------
+  const envelope = node["envelope"];
+  if (!isObject(envelope)) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `a district needs a region envelope, got ${describe(envelope)}`,
+        'add "envelope": { "shape": "region", "size": [140, 120] } — a district is a piece of ground, so its size has two elements',
+      ),
+    );
+  } else {
+    unknownKeys(out, envelope, `${path}.envelope`, ["shape", "size", "follows"], "district envelope");
+    if (envelope["shape"] !== "region") {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `the district envelope "shape" must be "region", got ${describe(envelope["shape"])}`,
+          'set "shape": "region" — a district is ground the fabric pass subdivides, not a box',
+        ),
+      );
+    }
+    checkFootprintSize(out, `${path}.envelope`, envelope["size"], "region");
+  }
+
+  // --- params --------------------------------------------------------------
+  const params = node["params"];
+  if (!isObject(params)) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        path,
+        `a district needs "params", got ${describe(params)}`,
+        'write "params": { "fabric": "grid", "density": "high", "mix": ["office", "apartment_block"] } — a district with no fabric and no mix has nothing to build',
+      ),
+    );
+  } else {
+    validateDistrictParams(out, `${path}.params`, params);
+  }
+
+  // --- landmark children ---------------------------------------------------
+  const children = node["children"];
+  if (children !== undefined) {
+    if (!Array.isArray(children)) {
+      out.push(
+        error(
+          "STRUCTURE_NODE_SHAPE",
+          path,
+          `"children" must be an array of landmark buildings, got ${describe(children)}`,
+          'write "children": [ { "id": "tower", "kind": "generator", "generator": "building.grammar@0", ... } ] — or drop the key entirely and let the mix fill every lot',
+        ),
+      );
+    } else {
+      const seen = new Set<string>();
+      for (const [index, raw] of children.entries()) {
+        const childPath = `${path}.${isObject(raw) && typeof raw["id"] === "string" ? raw["id"] : `children[${index}]`}`;
+        if (!isObject(raw)) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `each district child must be a building node object, got ${describe(raw)}`,
+              "replace this array entry with a building.grammar@0 generator node",
+            ),
+          );
+          continue;
+        }
+        checkId(out, path, raw["id"], `children[${index}]`);
+        if (typeof raw["id"] === "string") {
+          if (seen.has(raw["id"])) {
+            out.push(
+              error(
+                "DUPLICATE_ID",
+                childPath,
+                `two landmarks of "${path}" share the id "${raw["id"]}"`,
+                `rename one of them — sibling ids must be unique (e.g. "${raw["id"]}_2")`,
+              ),
+            );
+          }
+          seen.add(raw["id"]);
+        }
+        if (raw["kind"] !== "generator" || raw["generator"] !== "building.grammar@0") {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `a district's children are landmark buildings; this one is ${describe(raw["generator"] ?? raw["kind"])}`,
+              'give every district child "kind": "generator" and "generator": "building.grammar@0" — roads, plazas and props belong under the root, not inside a district',
+            ),
+          );
+          continue;
+        }
+        validateStructureNode(out, childPath, raw, connections);
+      }
+    }
+  }
+
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+/** Validate a district's `params` object. */
+function validateDistrictParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, DISTRICT_PARAM_KEYS, "district params");
+
+  for (const [key, allowed, example] of [
+    ["fabric", DISTRICT_FABRICS, "grid"],
+    ["density", DISTRICT_DENSITIES, "high"],
+  ] as const) {
+    const v = params[key];
+    if (v === undefined) {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"${key}" is required on a district`,
+          `set "${key}": "${example}" — one of: ${allowed.join(", ")}`,
+        ),
+      );
+    } else if (typeof v !== "string" || !(allowed as readonly string[]).includes(v)) {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"${key}" must be one of ${allowed.join(", ")}, got ${describe(v)}`,
+          `set "${key}": "${example}"`,
+        ),
+      );
+    }
+  }
+
+  checkBooleans(out, at, params, ["plaza"]);
+  checkNumbers(out, at, params, {
+    blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
+  });
+
+  validateDistrictMix(out, at, params["mix"]);
+}
+
+/**
+ * Validate a district's `mix`.
+ *
+ * An unknown name is an **error**, not a warning, and that is the one place
+ * this profile is stricter than its usual rule. Everywhere else a name the
+ * compiler does not implement degrades to something visible — a constraint is
+ * reported as ignored, a port type as unresolved. A misspelt archetype degrades
+ * to *a hundred cottages*, silently, in a district the author asked to be an
+ * office quarter. There is no recovery worth having, so it stops the compile
+ * and the near-misses come with it.
+ */
+function validateDistrictMix(out: LoamDiagnostic[], at: string, mix: unknown): void {
+  if (mix === undefined) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        '"mix" is required on a district — it is what the auto-infill builds',
+        'write "mix": ["office", "apartment_block", "shop_row"] — archetype names, in the proportion you want them cycled',
+      ),
+    );
+    return;
+  }
+  if (!Array.isArray(mix) || mix.length === 0) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix" must be a non-empty array of archetype names, got ${describe(mix)}`,
+        'write "mix": ["townhouse", "shop_row"] — the infill cycles these across the lots the landmarks did not claim',
+      ),
+    );
+    return;
+  }
+  if (mix.length > DISTRICT_MAX_MIX) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix" has ${mix.length} entries; this profile reads at most ${DISTRICT_MAX_MIX}`,
+        `keep the ${DISTRICT_MAX_MIX} archetypes that carry the district's character — past that the block reads as noise rather than as a mix`,
+      ),
+    );
+  }
+  for (const [index, name] of mix.entries()) {
+    if (typeof name !== "string") {
+      out.push(
+        error(
+          "DISTRICT_PARAM",
+          at,
+          `"mix"[${index}] must be an archetype name, got ${describe(name)}`,
+          'every entry is a string, e.g. "mix": ["office", "hotel"]',
+        ),
+      );
+      continue;
+    }
+    if (isKnownArchetype(name)) continue;
+    const near = nearestArchetypes(name);
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"mix"[${index}] names "${name}", which is not a building archetype`,
+        near.length === 0
+          ? `replace it with an archetype the grammar knows — the vocabulary is the same one "params.archetype" and the building tags draw on`
+          : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+      ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* cities (fabric v3, C1)                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Keys a `city` node may carry. */
+const CITY_KEYS = [
+  "id",
+  "kind",
+  "envelope",
+  "params",
+  "children",
+  "constraints",
+  "ports",
+  "optional",
+  "seedSalt",
+  "tags",
+] as const;
+
+/** Keys a city's `params` may carry. */
+const CITY_PARAM_KEYS = [
+  "size",
+  "mix",
+  "characters",
+  "coastal",
+  "diagonals",
+  "ring",
+  "blockSize",
+  "setPieces",
+] as const;
+
+/**
+ * Smallest city envelope, per axis, in blocks.
+ *
+ * A city is an *armature* plus the faces it leaves behind, and the smallest
+ * armature worth drawing is a spine with one cell either side of it. A spine is
+ * thirteen columns; a cell that can hold a fabric is another thirty-eight
+ * (`MIN_DISTRICT_SPAN`) — twice, plus margins. Below this the author wants one
+ * `district`, which is a node that already exists and does the job better.
+ */
+export const CITY_MIN_SPAN = 200;
+
+/**
+ * Validate a `city` node.
+ *
+ * The shape is narrower than a district's, deliberately: a district authors a
+ * rectangle and its fabric; a city authors *ground and intent*. There is no key
+ * here that names a quarter, a street or a coordinate, and there is no way to
+ * add one — a plan the author enumerates is the rectangle problem again with
+ * more typing.
+ */
+function validateCityNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, CITY_KEYS, "city node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  // --- envelope ------------------------------------------------------------
+  const envelope = node["envelope"];
+  if (!isObject(envelope)) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `a city needs a region envelope, got ${describe(envelope)}`,
+        `add "envelope": { "shape": "region", "size": [${CITY_MIN_SPAN + 60}, ${CITY_MIN_SPAN + 20}] } — a city is a piece of ground, so its size has two elements`,
+      ),
+    );
+  } else {
+    unknownKeys(out, envelope, `${path}.envelope`, ["shape", "size", "follows"], "city envelope");
+    if (envelope["shape"] !== "region") {
+      out.push(
+        error(
+          "BAD_ENVELOPE",
+          `${path}.envelope`,
+          `the city envelope "shape" must be "region", got ${describe(envelope["shape"])}`,
+          'set "shape": "region" — a city is ground the plan layer cuts up, not a box',
+        ),
+      );
+    }
+    checkFootprintSize(out, `${path}.envelope`, envelope["size"], "region");
+    const size = envelope["size"];
+    if (Array.isArray(size) && size.length >= 2) {
+      const [w, d] = size as unknown[];
+      if (typeof w === "number" && typeof d === "number" && (w < CITY_MIN_SPAN || d < CITY_MIN_SPAN)) {
+        out.push(
+          error(
+            "CITY_TOO_SMALL",
+            `${path}.envelope`,
+            `a city needs at least ${CITY_MIN_SPAN} blocks on each axis to hold an arterial and a district cell either side of it; this one is ${w} × ${d}`,
+            `grow "envelope.size" to at least [${CITY_MIN_SPAN}, ${CITY_MIN_SPAN}] — or express this as a single "kind": "district" node, which is what one quarter of fabric is`,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- params --------------------------------------------------------------
+  const params = node["params"];
+  if (!isObject(params)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        path,
+        `a city needs "params", got ${describe(params)}`,
+        'write "params": { "size": "medium", "mix": ["office", "apartment_block", "shop_row"] } — a city with no size and no mix has nothing to build',
+      ),
+    );
+  } else {
+    validateCityParams(out, `${path}.params`, params);
+  }
+
+  // --- landmark and precinct children --------------------------------------
+  const children = node["children"];
+  if (children !== undefined) {
+    if (!Array.isArray(children)) {
+      out.push(
+        error(
+          "STRUCTURE_NODE_SHAPE",
+          path,
+          `"children" must be an array of landmarks and precincts, got ${describe(children)}`,
+          'write "children": [ { "id": "tower", "kind": "generator", "generator": "building.grammar@0", ... } ] — or drop the key entirely and let the plan infill every cell',
+        ),
+      );
+    } else {
+      const seen = new Set<string>();
+      for (const [index, raw] of children.entries()) {
+        const childPath = `${path}.${isObject(raw) && typeof raw["id"] === "string" ? raw["id"] : `children[${index}]`}`;
+        if (!isObject(raw)) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `each city child must be a building or precinct node object, got ${describe(raw)}`,
+              "replace this array entry with a building.grammar@0 or precinct.*@0 generator node",
+            ),
+          );
+          continue;
+        }
+        checkId(out, path, raw["id"], `children[${index}]`);
+        if (typeof raw["id"] === "string") {
+          if (seen.has(raw["id"])) {
+            out.push(
+              error(
+                "DUPLICATE_ID",
+                childPath,
+                `two children of "${path}" share the id "${raw["id"]}"`,
+                `rename one of them — sibling ids must be unique (e.g. "${raw["id"]}_2")`,
+              ),
+            );
+          }
+          seen.add(raw["id"]);
+        }
+        const generator = raw["generator"];
+        const allowed =
+          raw["kind"] === "generator" &&
+          typeof generator === "string" &&
+          (generator === "building.grammar@0" || isPrecinctGenerator(generator));
+        if (!allowed) {
+          out.push(
+            error(
+              "STRUCTURE_NODE_SHAPE",
+              childPath,
+              `a city's children are landmark buildings and precinct kits; this one is ${describe(raw["generator"] ?? raw["kind"])}`,
+              'give every city child "kind": "generator" and either "generator": "building.grammar@0" or one of the precinct.*@0 kits — roads, plazas, props and nested districts belong under the root, not inside a city',
+            ),
+          );
+          continue;
+        }
+        validateStructureNode(out, childPath, raw, connections, true);
+      }
+    }
+  }
+
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+/** Validate a city's `params` object. */
+function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, CITY_PARAM_KEYS, "city params");
+
+  const size = params["size"];
+  if (size === undefined) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        '"size" is required on a city — it is what decides how much armature gets drawn',
+        `set "size": "medium" — one of: ${CITY_SIZES.join(", ")}`,
+      ),
+    );
+  } else if (typeof size !== "string" || !(CITY_SIZES as readonly string[]).includes(size)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"size" must be one of ${CITY_SIZES.join(", ")}, got ${describe(size)}`,
+        'set "size": "medium"',
+      ),
+    );
+  }
+
+  checkBooleans(out, at, params, ["coastal", "ring"]);
+  checkNumbers(out, at, params, {
+    diagonals: { min: 0, max: CITY_MAX_DIAGONALS, int: true },
+    blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
+  });
+
+  validateCityMix(out, at, "mix", params["mix"], true);
+  validateCityCharacters(out, at, params["characters"]);
+  validateSetPiecesParam(out, at, params["setPieces"]);
+}
+
+/**
+ * Validate `params.setPieces` (C4).
+ *
+ * Two spellings on purpose. `false` is the whole answer for "not on this city",
+ * and it is the one an author reaches for most; the object form exists for the
+ * two knobs that are genuinely worth turning — how many anchors, and which
+ * kinds. Neither spelling names a coordinate, a quarter or a street, which is
+ * the constraint the `city` node was designed under: an enumerated plan is the
+ * rectangle problem again with more typing.
+ */
+function validateSetPiecesParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined || typeof value === "boolean") return;
+  const path = `${at}.setPieces`;
+  if (!isObject(value)) {
+    out.push(
+      error(
+        "CITY_SET_PIECES",
+        path,
+        `"setPieces" must be a boolean or an object, got ${describe(value)}`,
+        `write "setPieces": false to turn the anchors off, or "setPieces": { "max": 4, "kinds": ["landmark", "bridge"] } — the kinds are: ${SET_PIECE_KINDS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, value, path, ["max", "kinds"], "city setPieces");
+  const max = value["max"];
+  if (max !== undefined) {
+    if (
+      typeof max !== "number" ||
+      !Number.isInteger(max) ||
+      max < SET_PIECE_MIN_COUNT ||
+      max > SET_PIECE_MAX_COUNT
+    ) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          path,
+          `"setPieces.max" must be an integer between ${SET_PIECE_MIN_COUNT} and ${SET_PIECE_MAX_COUNT}, got ${describe(max)}`,
+          `write "setPieces": { "max": 4 } — past ${SET_PIECE_MAX_COUNT} anchors a city stops having anchors and starts having furniture`,
+        ),
+      );
+    }
+  }
+  const kinds = value["kinds"];
+  if (kinds === undefined) return;
+  if (!Array.isArray(kinds) || kinds.length === 0) {
+    out.push(
+      error(
+        "CITY_SET_PIECES",
+        path,
+        `"setPieces.kinds" must be a non-empty array of kind names, got ${describe(kinds)}`,
+        `write "setPieces": { "kinds": ["landmark", "square"] } — or drop the key to consider all of: ${SET_PIECE_KINDS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  const seen = new Set<string>();
+  for (const [index, raw] of kinds.entries()) {
+    if (typeof raw !== "string" || !(SET_PIECE_KINDS as readonly string[]).includes(raw)) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          `${path}.kinds[${index}]`,
+          `"${describe(raw)}" is not a set-piece kind`,
+          `use one of: ${SET_PIECE_KINDS.join(", ")}`,
+        ),
+      );
+      continue;
+    }
+    if (seen.has(raw)) {
+      out.push(
+        error(
+          "CITY_SET_PIECES",
+          `${path}.kinds[${index}]`,
+          `"${raw}" is listed twice in "setPieces.kinds"`,
+          `delete the duplicate — the list is a filter, not a weighting, so repeating a kind asks for nothing extra`,
+        ),
+      );
+    }
+    seen.add(raw);
+  }
+}
+
+/**
+ * Validate the per-character mix table.
+ *
+ * A key outside the eight characters is an **error** for the same reason a
+ * misspelt archetype is: `"industral": [...]` is not a mix the plan will
+ * quietly ignore in one quarter, it is a whole port district silently built out
+ * of the default mix, and nothing in the finished world says so.
+ */
+function validateCityCharacters(out: LoamDiagnostic[], at: string, characters: unknown): void {
+  if (characters === undefined) return;
+  if (!isObject(characters)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"characters" must be an object keyed by district character, got ${describe(characters)}`,
+        `write "characters": { "industrial": ["warehouse", "factory"] } — the keys are: ${DISTRICT_CHARACTERS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, characters, `${at}.characters`, DISTRICT_CHARACTERS, "city characters");
+  for (const key of DISTRICT_CHARACTERS) {
+    const value = characters[key];
+    if (value === undefined) continue;
+    validateCityMix(out, `${at}.characters`, key, value, false);
+  }
+}
+
+/**
+ * Validate one archetype list on a city — the default `mix`, or one character's
+ * override. The rules are the district's, restated against the city's keys so
+ * the `fix` names a field the author can actually find.
+ */
+function validateCityMix(
+  out: LoamDiagnostic[],
+  at: string,
+  key: string,
+  mix: unknown,
+  required: boolean,
+): void {
+  if (mix === undefined) {
+    if (!required) return;
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        '"mix" is required on a city — it is what every cell the author did not name builds from',
+        'write "mix": ["office", "apartment_block", "shop_row"] — archetype names, in the proportion you want them cycled',
+      ),
+    );
+    return;
+  }
+  if (!Array.isArray(mix) || mix.length === 0) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}" must be a non-empty array of archetype names, got ${describe(mix)}`,
+        `write "${key}": ["townhouse", "shop_row"] — the infill cycles these across the cell's lots`,
+      ),
+    );
+    return;
+  }
+  if (mix.length > DISTRICT_MAX_MIX) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}" has ${mix.length} entries; this profile reads at most ${DISTRICT_MAX_MIX}`,
+        `keep the ${DISTRICT_MAX_MIX} archetypes that carry the quarter's character — past that the block reads as noise rather than as a mix`,
+      ),
+    );
+  }
+  for (const [index, name] of mix.entries()) {
+    if (typeof name !== "string") {
+      out.push(
+        error(
+          "CITY_PARAM",
+          at,
+          `"${key}"[${index}] must be an archetype name, got ${describe(name)}`,
+          `every entry is a string, e.g. "${key}": ["office", "hotel"]`,
+        ),
+      );
+      continue;
+    }
+    if (isKnownArchetype(name)) continue;
+    const near = nearestArchetypes(name);
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"${key}"[${index}] names "${name}", which is not a building archetype`,
+        near.length === 0
+          ? `replace it with an archetype the grammar knows — the vocabulary is the same one "params.archetype" and the building tags draw on`
+          : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+      ),
+    );
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1312,7 +2017,12 @@ const BUILDING_NUMS: Readonly<Record<string, NumSpec>> = {
 const BUILDING_FOOTPRINTS = ["rect", "l_shape", "t_shape", "u_shape", "cross", "courtyard", "irregular"] as const;
 const BUILDING_INTERIORS = ["none", "open", "rooms", "hall", "warehouse"] as const;
 
-function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+function validateBuildingParams(
+  out: LoamDiagnostic[],
+  at: string,
+  params: Obj,
+  inCity = false,
+): void {
   unknownKeys(
     out,
     params,
@@ -1321,11 +2031,13 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       "floors", "floorHeight", "footprint", "bays", "roof", "roofPitch",
       "wallSymbol", "trimSymbol", "roofSymbol", "windowRhythm", "windowRatio",
       "entrance", "interior", "furnish", "basement", "tower", "variance", "decayOverride",
-      "wing",
+      "wing", "archetype", "vista",
     ],
     "building.grammar@0 params",
   );
+  validateVistaParam(out, at, params["vista"], inCity);
   checkNumbers(out, at, params, BUILDING_NUMS);
+  validateArchetypeParam(out, at, params["archetype"]);
   validateBasementParam(out, at, params["basement"]);
   validateWingParam(out, at, params["wing"]);
   checkEnumParam(out, at, params, "footprint", BUILDING_FOOTPRINTS);
@@ -1342,6 +2054,99 @@ function validateBuildingParams(out: LoamDiagnostic[], at: string, params: Obj):
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
   }
+}
+
+/**
+ * Validate `params.vista` (C4) — "put this at the end of the main boulevard".
+ *
+ * The one authoring surface for the terminating landmark, and it is deliberately
+ * *relational*: `true` says "seat this on whichever axis the plan rates
+ * highest", and a string names the **kind** of arterial to close. Neither names
+ * a coordinate, which is the rule the whole `city` node is written under.
+ *
+ * An author-pinned landmark always wins the axis it asks for. The plan chooses
+ * a building only for an axis nobody claimed.
+ */
+function validateVistaParam(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  inCity: boolean,
+): void {
+  if (value === undefined) return;
+  if (typeof value !== "boolean" && typeof value !== "string") {
+    out.push(
+      error(
+        "VISTA_PIN",
+        at,
+        `"vista" must be true, false, or the kind of arterial to close, got ${describe(value)}`,
+        `write "vista": true to take whichever axis the plan rates highest, or name one of: ${VISTA_ARTERIALS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  if (typeof value === "string" && !(VISTA_ARTERIALS as readonly string[]).includes(value)) {
+    out.push(
+      error(
+        "VISTA_PIN",
+        at,
+        value === "ring"
+          ? '"vista": "ring" names a closed loop, which has no end to stand at and look down'
+          : `"vista" names "${value}", which is not an arterial kind a vista can close`,
+        `use one of: ${VISTA_ARTERIALS.join(", ")} — or "vista": true to take whichever axis the plan rates highest`,
+      ),
+    );
+    return;
+  }
+  // `false` is the default; writing it anywhere is inert and harmless.
+  if (value === false) return;
+  if (inCity) return;
+  out.push(
+    error(
+      "VISTA_PIN",
+      at,
+      '"vista" only means something on a landmark inside a "kind": "city" node — a vista axis is the end of an arterial, and only a city draws arterials',
+      'move this node into the city\'s "children", or drop "vista" and place the building with an ordinary constraint',
+    ),
+  );
+}
+
+/**
+ * Validate `params.archetype`, the explicit spelling of what a building is for.
+ *
+ * The grammar has always read this key — `archetypeOfTags` is only the
+ * *fallback* for a node that does not name one — and until fabric v2 the
+ * validator rejected it as unknown, which meant the one unambiguous way to say
+ * "this is a bakery" was the one way a document could not say it. Districts
+ * made the gap untenable: their `mix` is a list of these names, and an author
+ * who can name an archetype for an infill lot but not for a landmark would be
+ * right to be confused.
+ */
+function validateArchetypeParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  if (typeof value !== "string") {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"archetype" must be an archetype name, got ${describe(value)}`,
+        'write "archetype": "bakery" — or drop the key and let the node\'s "tags" imply one',
+      ),
+    );
+    return;
+  }
+  if (isKnownArchetype(value)) return;
+  const near = nearestArchetypes(value);
+  out.push(
+    error(
+      "STRUCTURE_PARAM",
+      at,
+      `"archetype" names "${value}", which is not a building archetype`,
+      near.length === 0
+        ? 'drop "archetype" and let the node\'s "tags" choose one'
+        : `did you mean ${near.map((n) => `"${n}"`).join(", ")}?`,
+    ),
+  );
 }
 
 /** Shortest shared run between a wing and the main block, in cells. */
@@ -1556,7 +2361,27 @@ export const BASEMENT_DEPTH_RANGE = [3, 5] as const;
  * else — same shell, same ladder, same walkable plane — which is why this is a
  * param of `basement` rather than an archetype of its own.
  */
-export const CELLAR_STYLE_VALUES = ["plain", "crypt", "vault", "wine_cellar", "mine"] as const;
+export const CELLAR_STYLE_VALUES = [
+  "plain",
+  "crypt",
+  "vault",
+  "wine_cellar",
+  "mine",
+  // Wave six. The first eight are rooms an author asks for by name; the last
+  // three are what the depths archetypes dress themselves in, listed because a
+  // value the grammar accepts and the validator refuses is the worst of both.
+  "ossuary",
+  "undercroft",
+  "dungeon_room",
+  "root_cellar",
+  "cistern_hall",
+  "smugglers_cove",
+  "hermit_grotto",
+  "sewer_network",
+  "bunker_hold",
+  "subway_platform",
+  "silo_shaft",
+] as const;
 
 /** How a `connected … via "tunnel"` gallery may be dug. */
 export const TUNNEL_STYLE_VALUES = ["dressed", "mine", "crypt"] as const;
@@ -1750,6 +2575,25 @@ export const SETTLEMENT_PROP_NAMES = [
   "fishing_trawler",
   "drydock",
   "buoy",
+  "houseboat",
+  // Wave 6: three more machines for the airfield, five more hulls, and the
+  // first rolling stock. Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "hot_air_balloon",
+  "seaplane",
+  "glider",
+  "junk",
+  "gondola",
+  "barge",
+  "paddle_steamer",
+  "container_ship",
+  "locomotive",
+  "passenger_car",
+  "freight_car",
+  "caboose",
+  // Wave 6D. A houseboat is a dwelling, but a dwelling on open water is the
+  // watercraft template's question rather than the building grammar's, so it
+  // is a hull and lives with the fleet.
   // The breadth wave: street furniture, works, camps, yards and smallcraft.
   "bench",
   "planter",
@@ -1766,6 +2610,55 @@ export const SETTLEMENT_PROP_NAMES = [
   "treehouse",
   "cairn",
   "carousel",
+  // Wave 4: street furniture — the small, cheap density props.
+  "well_head",
+  "notice_board",
+  "hitching_post",
+  "horse_trough",
+  "lamp_post",
+  "litter_bin",
+  "drinking_fountain",
+  "flagpole",
+  "bollard_row",
+  "sandwich_board",
+  "dog_kennel",
+  "log_pile",
+  "fairground_stall",
+  "ticket_booth",
+  "prize_wheel",
+  "swing_boats",
+  // Wave 5: the wayside — kerb, road, pitch and midway.
+  "bus_shelter",
+  "phone_box",
+  "mailbox",
+  "bicycle_rack",
+  "shop_awning",
+  "milestone",
+  "bus_stop",
+  "stagecoach",
+  "yurt",
+  "helter_skelter",
+  "midway_arch",
+  "shooting_gallery",
+  // Wave six, the one air-group prop.
+  "helipad",
+  "standing_stones",
+  "henge",
+  "monolith",
+  "burial_mound",
+  "dig_site",
+  "fossil_dig",
+  "shattered_obelisk",
+  // Wave 6D: spectacle and oddities. The wave's other six entries are
+  // buildings; these five are things you walk past rather than into.
+  "ferris_wheel",
+  "bandstand",
+  "memorial_garden",
+  "portal_frame",
+  "floating_platform",
+  // Wave 6C: the two energy objects that are props rather than buildings.
+  "wind_turbine",
+  "solar_array",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
@@ -1906,6 +2799,94 @@ function validatePropParams(out: LoamDiagnostic[], at: string, params: Obj): voi
         `"on" must be "water" or "ground", got ${describe(on)}`,
         'write "on": "water" to put the prop on the nearest suitable water columns — boats declare it by default',
       ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* precinct.*@0                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Smallest `precinct.airport@0` envelope, as `[long, cross]`. */
+export const AIRPORT_MIN_ENVELOPE = Object.freeze([120, 80] as const);
+
+/** Smallest `precinct.harbour@0` envelope, as `[quay, reach]`. */
+export const HARBOUR_MIN_ENVELOPE = Object.freeze([64, 48] as const);
+
+/**
+ * A precinct's envelope, checked against the kit's minimum.
+ *
+ * Rejected here rather than at compile time because a precinct that does not
+ * fit builds *nothing* — the kits refuse to emit half a layout — and an author
+ * would much rather be told the number to change than be handed an empty box
+ * and a warning. The compiler checks it again against the *placed* footprint,
+ * which is the one the solver may have shrunk.
+ */
+function validatePrecinctEnvelope(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  generator: string,
+): void {
+  const envelope = node["envelope"];
+  const min = generator === "precinct.airport@0" ? AIRPORT_MIN_ENVELOPE : HARBOUR_MIN_ENVELOPE;
+  const kind = generator === "precinct.airport@0" ? "an aerodrome" : "a harbour";
+  if (!isObject(envelope) || !Array.isArray(envelope["size"])) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        path,
+        `${generator} needs an explicit box envelope; ${kind} is a piece of ground, not a building`,
+        `add "envelope": { "shape": "box", "size": [${min[0]}, 24, ${min[1]}] }`,
+      ),
+    );
+    return;
+  }
+  const size = envelope["size"] as unknown[];
+  const x = typeof size[0] === "number" ? size[0] : 0;
+  const z = typeof size[2] === "number" ? size[2] : 0;
+  const long = Math.max(x, z);
+  const cross = Math.min(x, z);
+  if (long < min[0] || cross < min[1]) {
+    out.push(
+      error(
+        "BAD_ENVELOPE",
+        `${path}.envelope`,
+        `${generator} was given a ${x}×${z} footprint; ${kind} needs at least ${min[0]}×${min[1]} (either way round)`,
+        `set "size": [${min[0]}, ${(envelope["size"] as unknown[])[1] ?? 24}, ${min[1]}] or larger — the kit refuses to build a partial compound`,
+      ),
+    );
+  }
+}
+
+/** `precinct.airport@0` params. */
+function validateAirportParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, ["stands", "hangars", "terminal"], "precinct.airport@0 params");
+  checkNumbers(out, at, params, {
+    stands: { min: 1, max: 12, int: true },
+    hangars: { min: 0, max: 4, int: true },
+  });
+  checkBooleans(out, at, params, ["terminal"]);
+}
+
+/** `precinct.harbour@0` params. */
+function validateHarbourParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, ["piers", "ships"], "precinct.harbour@0 params");
+  checkNumbers(out, at, params, { piers: { min: 1, max: 8, int: true } });
+  const ships = params["ships"];
+  if (ships !== undefined && ships !== "fill" && typeof ships !== "number") {
+    out.push(
+      error(
+        "STRUCTURE_PARAM",
+        at,
+        `"ships" must be a count or the token "fill", got ${describe(ships)}`,
+        'write "ships": "fill" to moor one hull at every pier, or "ships": 2 for a quieter port',
+      ),
+    );
+  }
+  if (typeof ships === "number" && (!Number.isInteger(ships) || ships < 0 || ships > 8)) {
+    out.push(
+      error("STRUCTURE_PARAM", at, `"ships" must be a whole number from 0 to 8, got ${describe(ships)}`, 'write "ships": 3'),
     );
   }
 }

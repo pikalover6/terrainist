@@ -49,6 +49,12 @@ export const SHIP_PROP_NAMES = [
   "fishing_trawler",
   "drydock",
   "buoy",
+  // Wave 6D. A houseboat is a *dwelling*, and the catalog files it under
+  // residential — but it is a dwelling that floats, and the one thing this
+  // vocabulary has that knows how to displace water rather than trap it is the
+  // hull builder in this file. So it is built here, and the catalog entry
+  // carries a `kind: "prop"` override to say so at the entry that makes it.
+  "houseboat",
 ] as const;
 
 /** A transport-water prop name. */
@@ -85,6 +91,7 @@ export const SHIP_FOOTPRINTS: Readonly<
   tugboat: () => ({ size: [12, 10, 7], minY: -1, base: "water" }),
   fishing_trawler: () => ({ size: [18, 12, 7], minY: -1, base: "water" }),
   buoy: () => ({ size: [3, 5, 3], minY: -1, base: "water" }),
+  houseboat: () => ({ size: [17, 9, 9], minY: -1, base: "water" }),
   drydock: (params) => ({
     size: [
       intParam(params, "length", DRYDOCK_LENGTH.fallback, DRYDOCK_LENGTH.lo, DRYDOCK_LENGTH.hi),
@@ -183,7 +190,7 @@ export function buildHull(
 }
 
 /** A mast: a log column, stepped on the deck, with a masthead lantern. */
-function mast(ctx: PropContext, x: number, z: number, from: number, to: number): void {
+export function mast(ctx: PropContext, x: number, z: number, from: number, to: number): void {
   for (let y = from; y <= to; y++) ctx.put(x, y, z, ctx.palette.log, { axis: "y" });
 }
 
@@ -195,7 +202,7 @@ function mast(ctx: PropContext, x: number, z: number, from: number, to: number):
  * head, which is both the right shape and the thing that keeps the top course
  * of wool attached to something.
  */
-function squareSail(
+export function squareSail(
   ctx: PropContext,
   x: number,
   mastZ: number,
@@ -216,12 +223,12 @@ function squareSail(
 }
 
 /** The cloth this hull's canvas is cut from, drawn off its own seed. */
-function clothOf(ctx: PropContext, stream: string): string {
+export function clothOf(ctx: PropContext, stream: string): string {
   return SAIL_WOOLS[ctx.rng(`${stream}.cloth`).int(0, SAIL_WOOLS.length - 1)] as string;
 }
 
 /** The timber this hull is planked in: the theme's, or its stripped variant. */
-function hullTimber(ctx: PropContext, stream: string): { hull: string; deck: string } {
+export function hullTimber(ctx: PropContext, stream: string): { hull: string; deck: string } {
   const dark = ctx.rng(`${stream}.timber`).float() < 0.5;
   return dark
     ? { hull: ctx.palette.log, deck: ctx.palette.planks }
@@ -787,6 +794,111 @@ const buoy: PropGenerator = (ctx) => {
 };
 
 /* -------------------------------------------------------------------------- */
+/* the moored home                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `houseboat` — wave 6D. A home on a barge, moored rather than under way.
+ *
+ * **Why this is a boat and not a building.** The building grammar owns a shell
+ * on ground: an envelope, a foundation skirt, a door on a wall face, a
+ * walkable interior a lint walks from that door. None of those is true of a
+ * dwelling that sits on open water, and forcing one into the grammar means
+ * either a house standing on a lake bed or a floor plane with water under it —
+ * both of which the fluid rules would rightly refuse. The W2 watercraft
+ * template already answers exactly the question a houseboat asks: how do you
+ * put a structure on water without trapping a pocket under it. So the barge is
+ * a **water prop**, built on {@link buildHull} like every other hull here, and
+ * the catalog entry keeps its residential category with a `kind` override.
+ *
+ * The barge is a blunt rectangle — a houseboat has no bow worth speaking of —
+ * with a cabin amidships, a glazed clerestory, a slab roof with a planter and a
+ * chimney on it, an open fore-deck with a table, and a railed after-deck. The
+ * mooring is a bollard at each end with an `iron_bars` line to the deck ring:
+ * no `chain`, for the reason the file header gives.
+ *
+ * Against the lint: every hull cell is solid at `y = 0` and `y = −1` and no op
+ * writes air, so the barge displaces water rather than boxing it in; the
+ * bulwark, the rails and the roof planter all stand on the deck or on the
+ * course below them; and there is no sign block anywhere on it — the name board
+ * is a wall banner on the cabin's forward face.
+ */
+const houseboat: PropGenerator = (ctx) => {
+  const { put, palette } = ctx;
+  // half 4, and only one column of taper at each end: a barge, not a yacht.
+  const spec: HullSpec = { length: 17, half: 4, bow: 2, stern: 2 };
+  const cz = 4;
+  const timber = hullTimber(ctx, "houseboat");
+  const paint = ctx.rng("houseboat.paint").float() < 0.5 ? "green_concrete" : "blue_concrete";
+  buildHull(ctx, spec, { centreZ: cz, hull: paint, deck: timber.deck, bulwark: paint });
+
+  // --- the cabin -----------------------------------------------------------
+  // Amidships, leaving a fore-deck and an after-deck. The walls stand on the
+  // deck course; the clerestory is a band of panes at head height, which is
+  // what makes a barge read as somebody's home rather than as a container.
+  const x0 = 4;
+  const x1 = 12;
+  for (let x = x0; x <= x1; x++) {
+    for (let dz = -3; dz <= 3; dz++) {
+      const z = cz + dz;
+      const wall = Math.abs(dz) === 3 || x === x0 || x === x1;
+      if (!wall) continue;
+      // The doorway: a gap in the forward wall, on the centre line, open for
+      // both courses a body needs rather than just the one over its head.
+      if (x === x0 && dz === 0) {
+        put(x, 3, z, palette.log, { axis: "y" });
+        continue;
+      }
+      put(x, 1, z, palette.planks);
+      put(x, 2, z, (x + dz) % 2 === 0 ? "glass_pane" : palette.planks);
+      put(x, 3, z, palette.log, { axis: "y" });
+    }
+  }
+  // The roof: slabs across the cabin, with a solid ridge course under the
+  // chimney so nothing on top of it is standing on a half block's edge.
+  for (let x = x0; x <= x1; x++) {
+    for (let dz = -3; dz <= 3; dz++) {
+      put(x, 4, cz + dz, palette.roofSlab, { type: "bottom", waterlogged: "false" });
+    }
+  }
+  for (let dz = -1; dz <= 1; dz++) put(10, 4, cz + dz, palette.stoneAccent);
+  for (let y = 5; y <= 6; y++) put(10, y, cz, palette.stoneAccent);
+  // The roof planter, and the name board on the forward face.
+  for (const dz of [-2, 2] as const) {
+    put(6, 4, cz + dz, palette.stoneAccent);
+    // A **potted** plant, never a bare `flower_pot`: a bare pot renders empty.
+    put(6, 5, cz + dz, dz < 0 ? "potted_poppy" : "potted_cornflower");
+  }
+  put(x0, 2, cz - 1, "white_wall_banner", { facing: "west" });
+
+  // --- the decks -----------------------------------------------------------
+  // Fore-deck: a table and two seats, backrests turned away from the board.
+  put(2, 1, cz, palette.fence);
+  put(2, 2, cz, "oak_pressure_plate", { powered: "false" });
+  for (const dz of [-1, 1] as const) {
+    put(2, 1, cz + dz, palette.stairs, {
+      facing: dz < 0 ? "north" : "south",
+      half: "bottom",
+      shape: "straight",
+    });
+  }
+  // After-deck: a rail across it and a lantern on a post.
+  for (let dz = -2; dz <= 2; dz++) put(15, 1, cz + dz, palette.fence);
+  put(14, 1, cz, palette.log, { axis: "y" });
+  put(14, 2, cz, palette.lantern, { hanging: "false" });
+
+  // --- the moorings --------------------------------------------------------
+  // A bollard at each end with a bar line down to the deck: iron bars, never
+  // `chain`, and each line touches the bollard beside it.
+  for (const x of [0, spec.length - 1] as const) {
+    put(x, 1, cz, palette.stripped, { axis: "y" });
+    put(x, 2, cz, "iron_bars");
+  }
+
+  return done("houseboat");
+};
+
+/* -------------------------------------------------------------------------- */
 /* registry                                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -803,4 +915,5 @@ export const SHIP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   fishing_trawler: trawler,
   drydock,
   buoy,
+  houseboat,
 });

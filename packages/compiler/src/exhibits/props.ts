@@ -37,7 +37,13 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { buildProps, type PropJob, type PropPassResult } from "../structures/props.js";
+import { AMUSEMENT_PROP_EXHIBIT_PLAN } from "./amusement.js";
 import { BLITZ_PROP_EXHIBIT_PLAN } from "./blitz.js";
+import { ENERGY_PROP_EXHIBIT_PLAN } from "./energy-props.js";
+import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
+import { RELIC_PROP_EXHIBIT_PLAN } from "./relic-props.js";
+import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
+import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -144,6 +150,15 @@ export const PROP_EXHIBIT_PLAN: readonly {
     ],
   },
   ...BLITZ_PROP_EXHIBIT_PLAN,
+  ...STREET_PROP_EXHIBIT_PLAN,
+  ...ENERGY_PROP_EXHIBIT_PLAN,
+  ...AMUSEMENT_PROP_EXHIBIT_PLAN,
+  ...WAYSIDE_PROP_EXHIBIT_PLAN,
+  ...RELIC_PROP_EXHIBIT_PLAN,
+  // Wave 6D's five dry-ground props. Its sixth, the houseboat, is a hull and
+  // shows in the **vehicle** grid with the rest of the fleet — that grid is
+  // where the water is.
+  ...SPECTACLE_PROP_EXHIBIT_PLAN,
 ]);
 
 /**
@@ -270,6 +285,15 @@ export function buildPropExhibits(
   worldSeed: bigint,
   x0 = 0,
   z0 = 0,
+  /**
+   * Build every cell in this theme instead of the one its column names.
+   *
+   * The theme × prop sweep's one hook: it needs the whole grid in one palette,
+   * and it must reach the palette the way a document does — through
+   * `pickTheme`'s override — rather than through a path of its own. Omitted
+   * everywhere else, so the dev world's per-column themes are untouched.
+   */
+  themeOverride?: string,
 ): PropExhibitResult {
   const grid = planPropExhibits(x0, z0);
   let pondColumns = 0;
@@ -280,7 +304,7 @@ export function buildPropExhibits(
   const jobs: PropJob[] = grid.exhibits.map((e) => {
     const nodePath = `dev.props.${e.row}.${e.id}`;
     const seed = nodeSeed(worldSeed, nodePath, "");
-    const theme = pickTheme(seed, e.theme);
+    const theme = pickTheme(seed, themeOverride ?? e.theme);
     const materials = assignMaterials(theme, 1, seed)[0] as BuildingMaterials;
     return {
       nodePath,

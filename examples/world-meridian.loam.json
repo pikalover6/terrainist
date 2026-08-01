@@ -1,0 +1,424 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "meridian",
+    "worldSeed": "77310244",
+    "prompt": "A dense metropolis on a lakefront: a tight rectilinear grid with two great diagonal avenues slashing across it, wedge-shaped flatiron blocks where they cut the corners, a park cell held open in the middle of the density, a ring road, and the skyline peaking hard over the core and again on the water.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "theme": "modern_city"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Meridian \u2014 the diagonal metropolis, to prove a cut grid makes blocks a rectangle cannot",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a broad flat shelf above a lake to the east",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 71,
+          "amplitude": 6,
+          "octaves": 3,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.48,
+          "erosionPasses": 1,
+          "scaleReference": 512,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.32
+          },
+          "cliffThreshold": 76,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "the_cut",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a canal running inland from the lake",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.2,
+                  0.34
+                ],
+                [
+                  0.42,
+                  0.4
+                ],
+                [
+                  0.66,
+                  0.45
+                ],
+                "coast"
+              ],
+              "width": 14,
+              "depth": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "continental temperate",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0014,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "meridian",
+        "kind": "city",
+        "label": "the metropolis: lake drive, spine, two diagonals, ring",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            900,
+            820
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 2,
+          "ring": true,
+          "blockSize": 46,
+          "mix": [
+            "office",
+            "apartment_block",
+            "shop_row",
+            "department_store",
+            "convenience_store"
+          ],
+          "characters": {
+            "core": [
+              "skyscraper",
+              "office",
+              "hotel",
+              "department_store",
+              "bank"
+            ],
+            "waterfront": [
+              "skyscraper",
+              "hotel",
+              "apartment_block",
+              "shop_row"
+            ],
+            "civic": [
+              "opera_house",
+              "university_hall",
+              "courthouse",
+              "museum",
+              "library"
+            ],
+            "grid": [
+              "office",
+              "apartment_block",
+              "shop_row",
+              "cinema",
+              "post_office"
+            ],
+            "rowhouse": [
+              "terraced_row",
+              "townhouse",
+              "shop_row",
+              "bakery"
+            ],
+            "lanes": [
+              "shop_row",
+              "food_court",
+              "townhouse",
+              "tavern"
+            ],
+            "industrial": [
+              "warehouse",
+              "factory_hall",
+              "machine_shop",
+              "papermill"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "children": [
+          {
+            "id": "meridian_one",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tallest tower in the core",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                25,
+                104,
+                23
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 24
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "lakeside_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the second peak, on the water",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                88,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 21
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "union_terminal",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the station terminating a diagonal avenue",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                34,
+                28,
+                26
+              ]
+            },
+            "params": {
+              "archetype": "train_station",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "the_opera",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the opera house on the civic square",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                30,
+                32,
+                26
+              ]
+            },
+            "params": {
+              "archetype": "opera_house",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "meridian_university",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the university hall on the park's edge",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                32,
+                28,
+                26
+              ]
+            },
+            "params": {
+              "archetype": "university_hall",
+              "floors": 4
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "the_exchange",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the bank on the flatiron corner where the diagonals cross",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                42,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "bank",
+              "floors": 9
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lake_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the lake wharves",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            112,
+            18,
+            84
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "meridian",
+            "max": 240,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "precinct"
+        ]
+      },
+      {
+        "id": "outer_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "a thin belt outside the ring",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.07,
+          "spacing": 5,
+          "clumping": 0.6,
+          "maxSlope": 32,
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "district",
+            "city",
+            "precinct",
+            "park"
+          ],
+          "species": [
+            {
+              "id": "meridian_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "meridian_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -24,7 +24,28 @@ import type {
 import type { CanonicalConstraint } from "./constraints.js";
 
 /** Generators the settlement profile adds on top of the terrain set. */
-export const STRUCTURE_GENERATORS = ["building.grammar@0", "road.network@0"] as const;
+export const STRUCTURE_GENERATORS = [
+  "building.grammar@0",
+  "road.network@0",
+  // The precinct kits (F3). They are structure nodes in every sense the solver
+  // cares about — a box, a yaw, a footprint it reserves like any other — and
+  // differ only in what the structure pass does with the box once it is placed:
+  // a whole compound of ground works, props and buildings, laid out
+  // deterministically rather than solved.
+  "precinct.airport@0",
+  "precinct.harbour@0",
+] as const;
+
+/** The `precinct.*@0` family, which lays out a compound from one envelope. */
+export const PRECINCT_GENERATORS = ["precinct.airport@0", "precinct.harbour@0"] as const;
+
+/** A precinct generator id. */
+export type PrecinctGenerator = (typeof PRECINCT_GENERATORS)[number];
+
+/** True for a node that is one of the precinct kits. */
+export function isPrecinctGenerator(generator: string): generator is PrecinctGenerator {
+  return (PRECINCT_GENERATORS as readonly string[]).includes(generator);
+}
 
 /** A structure generator id. */
 export type StructureGenerator = (typeof STRUCTURE_GENERATORS)[number];
@@ -163,6 +184,203 @@ export interface PlazaNode extends StructureBase {
   readonly params?: Readonly<Record<string, unknown>>;
 }
 
+/* -------------------------------------------------------------------------- */
+/* districts (fabric v2, F1)                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** How a district's street skeleton is drawn. */
+export const DISTRICT_FABRICS = ["grid", "organic"] as const;
+
+/** A street-skeleton fabric. */
+export type DistrictFabric = (typeof DISTRICT_FABRICS)[number];
+
+/** How much of a district's lot supply is actually built on. */
+export const DISTRICT_DENSITIES = ["low", "medium", "high"] as const;
+
+/** A district density. */
+export type DistrictDensity = (typeof DISTRICT_DENSITIES)[number];
+
+/** Params a `district` node carries. */
+export interface DistrictParams {
+  readonly fabric: DistrictFabric;
+  readonly density: DistrictDensity;
+  /** Archetype names the auto-infill draws from, in declaration order. */
+  readonly mix: readonly string[];
+  /** Preferred block size between street centre lines, in blocks. A hint. */
+  readonly blockSize?: number;
+  /** Leave one central block unbuilt as a square. */
+  readonly plaza?: boolean;
+}
+
+/**
+ * A `district`: a composite whose *void* is authored and whose solid follows.
+ *
+ * Unlike every other node in the profile, a district is not a thing that is
+ * placed among other things — it is a piece of ground that gets a street
+ * skeleton first, then blocks, then lots, and only then buildings. Its
+ * `children` are **landmarks**: ordinary `building.grammar@0` nodes that claim
+ * the lots big enough to hold them. Everything else on the block is infilled
+ * from {@link DistrictParams.mix}.
+ *
+ * The node itself goes through the ordinary layout solve as a single footprint,
+ * so `zone`, `at`, `distance` and the rest still say *where the district is*.
+ * What the solver never sees is anything inside it.
+ */
+export interface DistrictNode extends StructureBase {
+  readonly kind: "district";
+  readonly envelope: RegionEnvelope;
+  readonly params: DistrictParams;
+  /** Landmark buildings, in document order. */
+  readonly children?: readonly StructureNode[];
+}
+
+/** True for a `district` node. */
+export function isDistrictNode(node: SettlementChildNode): node is DistrictNode {
+  return node.kind === "district";
+}
+
+/* -------------------------------------------------------------------------- */
+/* cities (fabric v3, C1)                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The eight characters a district cell can take.
+ *
+ * The same list the compiler's `DistrictCharacter` union spells (C1's pinned
+ * `CityPlan` contract); it is restated here because the *author* may address a
+ * character by name — `params.characters.industrial` names the mix a port
+ * quarter builds from — and the spec package cannot import the compiler.
+ * `packages/spec/test/settlement-validate.test.ts` holds the two in step.
+ */
+export const DISTRICT_CHARACTERS = [
+  "core",
+  "grid",
+  "rowhouse",
+  "lanes",
+  "industrial",
+  "civic",
+  "park",
+  "waterfront",
+] as const;
+
+/** A district-cell character. */
+export type DistrictCharacterName = (typeof DISTRICT_CHARACTERS)[number];
+
+/** How much city the plan draws. */
+export const CITY_SIZES = ["small", "medium", "large"] as const;
+
+/** A city size. */
+export type CitySize = (typeof CITY_SIZES)[number];
+
+/** Most diagonals a city plan will cut through its own fabric. */
+export const CITY_MAX_DIAGONALS = 2;
+
+/**
+ * Params a `city` node carries.
+ *
+ * Deliberately *not* a list of districts. An author says "a medium coastal
+ * city, one diagonal, these landmarks" and the plan layer answers with an
+ * armature and whatever cells fall out of it — which is the whole inversion C1
+ * exists for. Pinning a particular quarter by hand is still available and
+ * unchanged: write an ordinary `district` node beside the city.
+ */
+export interface CityParams {
+  readonly size: CitySize;
+  /** Archetypes the ordinary infill draws from, in declaration order. */
+  readonly mix: readonly string[];
+  /**
+   * Per-character mix overrides. A character the author does not name builds
+   * from {@link CityParams.mix}.
+   */
+  readonly characters?: Readonly<Partial<Record<DistrictCharacterName, readonly string[]>>>;
+  /**
+   * Draw a shoreline drive. Omitted means "if the footprint has a coast" —
+   * `false` suppresses the drive even on the water, `true` asks for one and
+   * reports a note when there is no shore to follow.
+   */
+  readonly coastal?: boolean;
+  /** Diagonals cut through the fabric, 0..{@link CITY_MAX_DIAGONALS}. */
+  readonly diagonals?: number;
+  /** Draw a ring road. Omitted means "if the footprint is big enough". */
+  readonly ring?: boolean;
+  /** Preferred block size between street centre lines. A hint; cells drift. */
+  readonly blockSize?: number;
+  /**
+   * The set pieces (C4): the handful of anchors placed for their *relationship*
+   * to the plan rather than sprinkled through it.
+   *
+   * Omitted means "seat what the ground offers", which is the intended default
+   * — a boulevard that ends on nothing is the thing this exists to fix, and an
+   * author should not have to ask. `false` suppresses the track outright.
+   */
+  readonly setPieces?: boolean | CitySetPieces;
+}
+
+/** The five kinds of anchor a city seats. */
+export const SET_PIECE_KINDS = [
+  "landmark",
+  "bridge",
+  "promenade",
+  "stair",
+  "square",
+] as const;
+
+/** One set-piece kind, as the authoring surface spells it. */
+export type SetPieceKindName = (typeof SET_PIECE_KINDS)[number];
+
+/** Most anchors one city may seat. */
+export const SET_PIECE_MAX_COUNT = 6;
+
+/** Fewest anchors it is worth asking for. */
+export const SET_PIECE_MIN_COUNT = 1;
+
+/** The long spelling of {@link CityParams.setPieces}. */
+export interface CitySetPieces {
+  /** Cap on anchors of every kind together, 1..{@link SET_PIECE_MAX_COUNT}. */
+  readonly max?: number;
+  /** When present, only these kinds are considered. Declaration order is free. */
+  readonly kinds?: readonly SetPieceKindName[];
+}
+
+/**
+ * Arterial kinds a landmark's `params.vista` may name.
+ *
+ * A ring is deliberately absent: it is a closed loop, so it has no end to stand
+ * at and look down, and `Arterial.termini` is empty for one. Naming it is an
+ * authoring error with a fix rather than a request that silently does nothing.
+ */
+export const VISTA_ARTERIALS = ["spine", "boulevard", "diagonal", "drive"] as const;
+
+/** An arterial kind a vista pin may name. */
+export type VistaArterialName = (typeof VISTA_ARTERIALS)[number];
+
+/**
+ * A `city`: **arterials first, districts as the residue.**
+ *
+ * One level of inversion above {@link DistrictNode}. A district authors a
+ * rectangle and fills it with a grid; a city authors nothing but its ground and
+ * its landmarks, and the plan layer draws a drive along the real shoreline, a
+ * spine along the long axis, a diagonal through the middle and a ring where
+ * there is room for one — then takes the faces of that armature as its
+ * districts. Those faces are arbitrary polygons meeting at whatever angle the
+ * arterial that borders them runs at, which is what a rectangle can never be.
+ *
+ * `children` are the things that *must* exist: landmark buildings, and precinct
+ * kits (a harbour, an airport) that each claim a whole cell.
+ */
+export interface CityNode extends StructureBase {
+  readonly kind: "city";
+  readonly envelope: RegionEnvelope;
+  readonly params: CityParams;
+  /** Landmarks and precincts, in document order. */
+  readonly children?: readonly StructureNode[];
+}
+
+/** True for a `city` node. */
+export function isCityNode(node: SettlementChildNode): node is CityNode {
+  return node.kind === "city";
+}
+
 /** Any node the settlement profile allows below the root. */
 export type SettlementChildNode =
   | HeightfieldNode
@@ -170,11 +388,21 @@ export type SettlementChildNode =
   | ForestNode
   | StructureNode
   | PropNode
-  | PlazaNode;
+  | PlazaNode
+  | DistrictNode
+  | CityNode;
 
 /** True for the nodes the layout solver places. */
-export function isPlaceableNode(node: SettlementChildNode): node is StructureNode | PlazaNode {
+export function isPlaceableNode(
+  node: SettlementChildNode,
+): node is StructureNode | PlazaNode | DistrictNode | CityNode {
   if (node.kind === "primitive") return true;
+  // A district is placed as one footprint — the fabric pass then subdivides
+  // what the solver reserved. See {@link DistrictNode}.
+  if (node.kind === "district") return true;
+  // …and a city likewise, one level up: the solver reserves the ground, the
+  // city plan draws the arterials across it and the cells are the residue.
+  if (node.kind === "city") return true;
   // A prop node is deliberately not placeable: it is resolved coarsely by the
   // structure pass against the finished ground, not by the solver.
   return (STRUCTURE_GENERATORS as readonly string[]).includes(node.generator);

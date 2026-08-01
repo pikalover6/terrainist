@@ -97,6 +97,60 @@ string for full 64-bit seeds. `meta.spawn` is optional; default is the
 `largest_flat` marker closest to the region center that sits ≥ 2 blocks above
 sea level. Spawn resolution is deterministic.
 
+## `terrain.heightfield@0.scaleReference` (U6) — landform that scales with the region
+
+Optional. An integer in 16..4096: **the region extent, in blocks, that this
+node's spatial parameters were tuned at.**
+
+Without it, `frequency` means what it has always meant — cycles per block — and
+the landform does not scale with the world. Compile the same document at 512 and
+at 2048 and you do not get the same coast four times the size; you get four
+times as much coastline, at the same size, in different places. That is the
+right reading for one hand-tuned world and the wrong one for a document that is
+meant to be resized, and it is why a `precinct.harbour@0` authored against a
+512-block bay could hard-fail at 768 with the sea nowhere near its envelope.
+
+With it, every **horizontal length** in the noise stack is re-read relative to
+the region. Let `k = max(width, depth) / scaleReference`; then
+
+| parameter | transform |
+|---|---|
+| `frequency` | `÷ k` |
+| `warp.frequency` | `÷ k` |
+| `warp.amount` | `× k` |
+| `continentalness.frequency` | `÷ k` |
+| everything else | unchanged |
+
+Because the profile's regions are centred on the origin, that is an exact
+similarity transform of the horizontal plane: at `k = 2` the world is the *same
+landform at twice the size*, bay for bay and headland for headland. Vertical
+parameters (`baseHeight`, `amplitude`, `seaLevel`) are deliberately left alone —
+Minecraft's build limit does not scale, so a bigger world should be wider, not
+taller. Dimensionless parameters (`octaves`, `gain`, `lacunarity`, `curve`,
+`seaFraction`) are left alone because scaling them would mean something else.
+
+`terrain.edit@0` children are **not** scaled: a `river` of `width: 14` is an
+authored length in blocks and stays one. A document that resizes its world and
+wants its river to keep its proportions should scale that width itself.
+
+Omitting the parameter is exactly the old behaviour, to the bit — the compiler
+returns the resolved parameter object unmodified rather than multiplying it by
+one. Every world shipped before U6 therefore emits byte-identically.
+
+```json
+"params": { "frequency": 0.004, "scaleReference": 512,
+            "continentalness": { "frequency": 0.0011, "seaFraction": 0.42 } }
+```
+
+Diagnostics:
+
+- **`LOAM-T010`** — `scaleReference` is not a finite number.
+- **`LOAM-T104`** — it is not a whole number in 16..4096. It names a region
+  extent, so it has the same domain as the root envelope's `size`.
+- **`LOAM-T117`** (warning) — it is declared on a node that sets no
+  `frequency`, `warp` or `continentalness`, so there is nothing for it to
+  scale. Inert rather than wrong, which is exactly why it is worth saying.
+
 ## `terrain.edit@0` (new; the "terrain verbs")
 
 A field edit contributes a kernel to the master heightfield **before**

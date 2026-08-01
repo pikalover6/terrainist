@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAVE_DEFAULTS,
   CAVE_FLUID_SHELL,
+  CAVE_STYLES,
   CAVE_OCEAN_KEEPOUT,
   CAVE_ROOF_THICKNESS,
   ENTRANCE_MAX_SLOPE,
@@ -30,6 +31,7 @@ import {
   type CaveCarveRequest,
   type CaveParams,
   type CaveSpans,
+  type CaveStyle,
 } from "../src/caves/index.js";
 import { centeredRegion } from "../src/field/index.js";
 import { nodeSeed } from "../src/determinism/index.js";
@@ -292,5 +294,160 @@ describe("carveCaves", () => {
     expect(withChambers.chambers).toBeLessThanOrEqual(6);
     expect(without.chambers).toBe(0);
     expect(withChambers.carvedBlocks).toBeGreaterThan(without.carvedBlocks);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* styles                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Mean and maximum span height of a carve, the cheapest read on its shape. */
+function heights(spans: CaveSpans): { mean: number; max: number; count: number } {
+  let total = 0;
+  let max = 0;
+  let count = 0;
+  for (const [, lo, hi] of triples(spans)) {
+    const h = hi - lo + 1;
+    total += h;
+    if (h > max) max = h;
+    count++;
+  }
+  return { mean: count === 0 ? 0 : total / count, max, count };
+}
+
+/** Columns a carve touched at all — the horizontal footprint. */
+function footprint(spans: CaveSpans): number {
+  let n = 0;
+  for (let idx = 0; idx + 1 < spans.offsets.length; idx++) {
+    if ((spans.offsets[idx + 1] as number) > (spans.offsets[idx] as number)) n++;
+  }
+  return n;
+}
+
+describe("cave styles", () => {
+  it("defaults to worm, and worm is what an undefaulted request carves", () => {
+    expect(CAVE_DEFAULTS.style).toBe("worm");
+    expect(resolveCaveParams({}).style).toBe("worm");
+    expect(resolveCaveParams({ style: "ravine" }).style).toBe("ravine");
+  });
+
+  it("carves something with every style, deterministically", () => {
+    for (const style of CAVE_STYLES) {
+      const a = carveCaves(request({ params: { style } }));
+      const b = carveCaves(request({ params: { style } }));
+      expect(a.carvedBlocks, style).toBeGreaterThan(0);
+      expect([...a.spans.lo], style).toEqual([...b.spans.lo]);
+      expect([...a.spans.hi], style).toEqual([...b.spans.hi]);
+      expect([...a.spans.offsets], style).toEqual([...b.spans.offsets]);
+    }
+  });
+
+  it("gives each style a different world", () => {
+    const volumes = new Map<CaveStyle, number>();
+    for (const style of CAVE_STYLES) {
+      volumes.set(style, carveCaves(request({ params: { style } })).carvedBlocks);
+    }
+    expect(new Set(volumes.values()).size).toBe(CAVE_STYLES.length);
+  });
+
+  it("keeps every style inside yRange, under the roof margin, and disjoint", () => {
+    for (const style of CAVE_STYLES) {
+      const result = carveCaves(request({ params: { style, yRange: [24, 70] } }));
+      expect(result.carvedBlocks, style).toBeGreaterThan(0);
+      for (const [, lo, hi] of triples(result.spans)) {
+        expect(lo, style).toBeGreaterThanOrEqual(24);
+        expect(hi, style).toBeLessThanOrEqual(70);
+        expect(hi, style).toBeLessThanOrEqual(GROUND - CAVE_ROOF_THICKNESS);
+      }
+      const { region } = request();
+      for (let idx = 0; idx < region.width * region.depth; idx++) {
+        const start = result.spans.offsets[idx] as number;
+        const end = result.spans.offsets[idx + 1] as number;
+        for (let k = start + 1; k < end; k++) {
+          expect(result.spans.lo[k] as number, style).toBeGreaterThan(
+            (result.spans.hi[k - 1] as number) + 1,
+          );
+        }
+      }
+    }
+  });
+
+  it("respects the fluid shell and the ocean keep-out in every style", () => {
+    for (const style of CAVE_STYLES) {
+      // A lake through the middle, and an ocean along the west edge.
+      const req = request({
+        params: { style },
+        wet: (x, z) => z >= -2 && z <= 2 && x > -40,
+        ocean: (x) => x < -50,
+      });
+      const result = carveCaves(req);
+      const { region } = req;
+      for (const [idx, lo] of triples(result.spans)) {
+        const i = idx % region.width;
+        const j = (idx - i) / region.width;
+        const x = region.x0 + i;
+        const z = region.z0 + j;
+        expect(Math.abs(z) > 2 + CAVE_FLUID_SHELL || x <= -40 - CAVE_FLUID_SHELL, style).toBe(true);
+        if (x < -50 + CAVE_OCEAN_KEEPOUT) expect(lo, style).toBeGreaterThan(SEA_LEVEL);
+      }
+    }
+  });
+
+  it("makes a ravine a tall narrow slot and spaghetti a thin wide net", () => {
+    const ravine = heights(carveCaves(request({ params: { style: "ravine" } })).spans);
+    const spaghetti = carveCaves(request({ params: { style: "spaghetti" } }));
+    const worm = carveCaves(request());
+    // A slot is taller per column than a tube of the same nominal radius.
+    expect(ravine.mean).toBeGreaterThan(heights(worm.spans).mean);
+    expect(ravine.max).toBeGreaterThan(10);
+    // Spaghetti trades girth for reach: thinner columns, more of them.
+    expect(heights(spaghetti.spans).mean).toBeLessThan(heights(worm.spans).mean);
+    expect(footprint(spaghetti.spans)).toBeGreaterThan(footprint(worm.spans) / 2);
+  });
+
+  it("makes cheese wide and rounded, and chamber_network mostly chambers", () => {
+    const cheese = carveCaves(request({ params: { style: "cheese" } }));
+    const worm = carveCaves(request());
+    // Blobs are rooms: fewer, fatter columns than a worm net of the same radius.
+    expect(heights(cheese.spans).max).toBeGreaterThan(6);
+    expect(cheese.carvedBlocks / Math.max(1, footprint(cheese.spans))).toBeGreaterThan(
+      worm.carvedBlocks / Math.max(1, footprint(worm.spans)),
+    );
+
+    const halls = carveCaves(
+      request({ params: { style: "chamber_network", chambers: { count: 12, radius: 9, chance: 1, spacing: 30 } } }),
+    );
+    expect(halls.chambers).toBeGreaterThan(0);
+    expect(halls.chambers).toBeLessThanOrEqual(12);
+  });
+});
+
+describe("chambers.spacing", () => {
+  it("defaults to the historical 44-step interval", () => {
+    expect(CAVE_DEFAULTS.chambers.spacing).toBe(70);
+  });
+
+  it("opens more chambers along a worm when the spacing is tight", () => {
+    const params = { chambers: { count: 40, radius: 8, chance: 1 } } as const;
+    const wide = carveCaves(request({ params: { ...params, chambers: { ...params.chambers, spacing: 200 } } }));
+    const tight = carveCaves(request({ params: { ...params, chambers: { ...params.chambers, spacing: 16 } } }));
+    expect(tight.chambers).toBeGreaterThan(wide.chambers);
+    expect(tight.carvedBlocks).toBeGreaterThan(wide.carvedBlocks);
+  });
+
+  it("sets the connector length of a chamber_network", () => {
+    const near = carveCaves(
+      request({ params: { style: "chamber_network", chambers: { count: 6, radius: 6, chance: 1, spacing: 20 } } }),
+    );
+    const far = carveCaves(
+      request({ params: { style: "chamber_network", chambers: { count: 6, radius: 6, chance: 1, spacing: 90 } } }),
+    );
+    // `spacing` is the edge length of the graph, so it decides how far a
+    // network gets before it walks out of the region or into a closed column —
+    // short edges fit more rooms in, long edges spend the budget on corridor.
+    expect(near.chambers).toBeGreaterThan(far.chambers);
+    expect(far.carvedBlocks / Math.max(1, far.chambers)).toBeGreaterThan(
+      near.carvedBlocks / Math.max(1, near.chambers),
+    );
   });
 });

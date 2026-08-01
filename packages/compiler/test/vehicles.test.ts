@@ -20,7 +20,15 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { AIRCRAFT_PROP_NAMES, SHIP_PROP_NAMES, nodeSeed, propFootprint } from "@terrainist/stdlib";
+import {
+  AIRCRAFT6_PROP_NAMES,
+  AIRCRAFT_PROP_NAMES,
+  RAILCRAFT_PROP_NAMES,
+  SHIP6_PROP_NAMES,
+  SHIP_PROP_NAMES,
+  nodeSeed,
+  propFootprint,
+} from "@terrainist/stdlib";
 
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js";
@@ -62,7 +70,13 @@ describe("the vehicle grid", () => {
   it("shows every craft this round added, and lays its rows out without overlap", () => {
     const grid = planVehicleExhibits();
     const shown = new Set(grid.exhibits.map((e) => e.prop));
-    for (const name of [...AIRCRAFT_PROP_NAMES, ...SHIP_PROP_NAMES]) {
+    for (const name of [
+      ...AIRCRAFT_PROP_NAMES,
+      ...SHIP_PROP_NAMES,
+      ...AIRCRAFT6_PROP_NAMES,
+      ...SHIP6_PROP_NAMES,
+      ...RAILCRAFT_PROP_NAMES,
+    ]) {
       expect(shown.has(name), name).toBe(true);
     }
     for (const row of grid.rows) {
@@ -74,6 +88,24 @@ describe("the vehicle grid", () => {
       }
     }
     expect(grid.width).toBeGreaterThan(100);
+  });
+
+  it("puts the rolling stock on a land row, since a train brings its own rail", () => {
+    const rows = planVehicleExhibits().rows;
+    const rail = rows.find((r) => r.row === "rolling stock");
+    expect(rail).toBeDefined();
+    // No pad concept the grid did not already have: `railcraft.ts` draws the
+    // ballast and the rail as part of each craft, so the row is dry.
+    expect((rail as { water: boolean }).water).toBe(false);
+    expect((rail as { pond?: unknown }).pond).toBeUndefined();
+    expect((rail as { cells: readonly unknown[] }).cells.length).toBe(5);
+    // …and the two wave-6 fleets that do float are on wet rows.
+    for (const name of ["river craft", "container terminal"]) {
+      const row = rows.find((r) => r.row === name);
+      expect(row, name).toBeDefined();
+      expect((row as { water: boolean }).water, name).toBe(true);
+      expect((row as { pond?: unknown }).pond, name).toBeDefined();
+    }
   });
 
   it("gives every water row a basin wider than the craft in it", () => {

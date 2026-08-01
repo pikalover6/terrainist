@@ -46,11 +46,13 @@ Kai's MacBook (Kai-approved, informed decision). Everything lives in
 
 ## Development workflow (session orchestration)
 
-**Standing workflow (Kai, 2026-07-29):** a **Fable 5 session at high
-effort is the orchestrator** — it plans, delegates, integrates, and
-verifies; it does not grind through bulk implementation itself. It runs
-**up to 3 concurrent Opus 5 LOW implementer subagents** for scaffolding,
-well-specified coding tasks, and mechanical changes. Design/spec-heavy
+**Standing workflow (Kai, 2026-07-29; concurrency raised 2026-07-31):** a
+**Fable 5 session at high effort is the orchestrator** — it plans,
+delegates, integrates, and verifies; it does not grind through bulk
+implementation itself. It runs **up to 6 concurrent Opus 5 LOW implementer
+subagents** (doubled from 3 by Kai, 2026-07-31 — usage headroom is ample;
+use subagents relatively aggressively when parallel work exists) for
+scaffolding, well-specified coding tasks, and mechanical changes. Design/spec-heavy
 work goes to a single **Opus 5 HIGH** subagent, which writes docs only and
 never touches code that parallel work has in flight.
 

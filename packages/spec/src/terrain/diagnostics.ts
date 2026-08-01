@@ -82,6 +82,12 @@ export const TERRAIN_DIAGNOSTICS = {
    * declared entrance mouth. Interior caves must leave the heightmap alone.
    */
   CAVE_SURFACE_BREACH: "LOAM-T116",
+  /**
+   * U6 — `scaleReference` was declared on a heightfield that has no spatial
+   * parameter for it to act on, so the landform will not scale with the region
+   * however large the world is made. Inert rather than wrong, hence a warning.
+   */
+  SCALE_REFERENCE_INERT: "LOAM-T117",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec
@@ -97,6 +103,68 @@ export const TERRAIN_DIAGNOSTICS = {
   GENERATOR_NOT_IMPLEMENTED: "LOAM-T208",
   /** G4b `road.network@0` — a route between two anchors has no legal path. */
   ROAD_UNROUTABLE: "LOAM-T209",
+  /**
+   * F1 `district` — a field of the district node is missing, malformed, or
+   * names something the grammar does not know (an unspellable `mix` entry).
+   */
+  DISTRICT_PARAM: "LOAM-T210",
+  /**
+   * F1 `district` — the envelope is too small to hold a street skeleton at
+   * all: fewer than two streets on an axis, or no block deep enough for a lot.
+   */
+  DISTRICT_TOO_SMALL: "LOAM-T211",
+  /**
+   * C3 life pass — there was frontage to dress and none of it took.
+   *
+   * Informational, and deliberately **not** `CANNOT_FIT`. What it diagnoses is
+   * this pass running before the streetscape rather than after it, which is a
+   * compiler-ordering defect no edit to the document can repair; borrowing the
+   * author-actionable `LOAM-E170` sent it into the authoring loop's feedback
+   * codes and cost every small world two revision rounds it could not satisfy.
+   */
+  LIFE_PASS_EMPTY: "LOAM-T212",
+  /**
+   * C1 `city` — a field of the city node is missing, malformed, or names
+   * something the grammar does not know (an unspellable `mix` entry, a
+   * character key outside the eight).
+   */
+  CITY_PARAM: "LOAM-T213",
+  /**
+   * C1 `city` — the envelope is too small to hold an arterial armature: the
+   * plan cannot draw a spine and leave a district cell either side of it.
+   */
+  CITY_TOO_SMALL: "LOAM-T214",
+  /**
+   * C4 `city` — `params.setPieces` is malformed: not a boolean or object, a
+   * `max` outside 1..6, or a `kinds` entry outside the five kinds.
+   */
+  CITY_SET_PIECES: "LOAM-T215",
+  /**
+   * C4 — `params.vista` on a landmark is malformed, names an arterial kind
+   * that has no terminus to stand at (a ring), or is written on a building
+   * that is not a child of a `city`, where nothing would ever read it.
+   */
+  VISTA_PIN: "LOAM-T216",
+  /**
+   * C4 — a landmark pinned with `params.vista` could not take an axis: every
+   * axis was already claimed, or the node does not fit the ground reserved at
+   * the end of any of them. A warning, because the landmark is still built —
+   * it just goes wherever the fabric would have put it.
+   */
+  VISTA_UNCLAIMED: "LOAM-T217",
+  /**
+   * C4 — there were set pieces to dress and none of them took.
+   *
+   * Informational, and deliberately its own code rather than a borrowed one.
+   * What it diagnoses is a pass-ordering or occupancy fact, not anything the
+   * document can change: the same mistake `LIFE_PASS_EMPTY` was created to undo
+   * when it was first spelt `LOAM-E170` and cost the authoring loop two model
+   * calls per world. It is also only raised when there was something *other
+   * than a landmark* to build — a landmark is a building the grammar put up
+   * three passes earlier, so a city whose only anchors are landmarks writing no
+   * blocks here is the expected outcome, not a report.
+   */
+  SET_PIECES_EMPTY: "LOAM-T218",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
@@ -139,6 +207,13 @@ export const TERRAIN_DIAGNOSTICS = {
   TUNNEL_UNROUTABLE: "LOAM-E180",
   /** A gallery came too near water, or left too little rock over its ceiling. */
   TUNNEL_INTEGRITY: "LOAM-W408",
+  /**
+   * U6 — a precinct kit seated itself away from the footprint the solver gave
+   * it, because the ground the kit needs is a fact about the world rather than
+   * about the envelope. Emitted by `precinct.harbour@0` when it goes and finds
+   * the coast.
+   */
+  PRECINCT_RESEATED: "LOAM-W409",
 } as const;
 
 /** Symbolic diagnostic name. */

@@ -81,6 +81,20 @@ export interface PhysicsContext {
      */
     readonly interiorCells?: ReadonlySet<string>;
     /**
+     * The building's floor columns **per storey**, aligned with
+     * `meta.floorLevels`.
+     *
+     * Absent for every building whose storeys all have the same plan, which was
+     * every building until the terrace. There the bays of one run differ in
+     * height, so at the fifth level a six-storey bay is a room and the
+     * three-storey bay beside it is a *roof* — and reading one column set for
+     * all levels would have this lint demand a walking route onto the roof of
+     * every short bay in the street. When present it is what
+     * `columnsAt` answers with; when absent the single set is used at every
+     * level, exactly as before.
+     */
+    readonly interiorCellsByLevel?: readonly ReadonlySet<string>[];
+    /**
      * The cellar's own floor columns, as `"x,z"` keys.
      *
      * A cellar is dug under the main rect only, so below the ground floor the
@@ -570,8 +584,20 @@ export async function lintWorldPhysics(
     // `columnsAt` answers "which columns is this storey's floor made of".
     const cellarColumns =
       b.basementCells === undefined ? undefined : columnsOf(b.basementCells);
-    const columnsAt = (level: number): { x: number; z: number }[] =>
-      level < 0 && cellarColumns !== undefined ? cellarColumns : columns;
+    // Per-storey plans, when the building has them. A terrace's bays differ in
+    // height, so "which columns is this storey's floor made of" stops being one
+    // answer for the whole building — and taking the ground floor's answer at
+    // the fifth level would demand a route onto every short bay's roof.
+    const byLevel = b.interiorCellsByLevel?.map((set) => columnsOf(set));
+    const columnsAt = (level: number): { x: number; z: number }[] => {
+      if (level < 0 && cellarColumns !== undefined) return cellarColumns;
+      if (byLevel !== undefined) {
+        const index = levels.indexOf(level);
+        const set = index < 0 ? undefined : byLevel[index];
+        if (set !== undefined) return set;
+      }
+      return columns;
+    };
 
     const bands: { lo: number; hi: number; columns: { x: number; z: number }[] }[] = [];
     for (const [i, level] of levels.entries()) {
@@ -603,8 +629,14 @@ export async function lintWorldPhysics(
     }
 
     // --- the walking agent -------------------------------------------------
-    const start = doorApproach(b, inRoom);
-    if (start === null) {
+    // From **every** street door, not the first one found. A terrace is one
+    // building with a door per bay and a party wall between each pair of them,
+    // so no single door reaches the whole of it — and "reachable from *a*
+    // street door" is the property a building with more than one way in
+    // actually has. Nothing changes for a building with one door: there is
+    // still exactly one start, and the flood from it is the same flood.
+    const starts = doorApproaches(b, inRoom);
+    if (starts.length === 0) {
       const anchor = { x: interior.x0, y: b.floorY + 1, z: interior.z0 };
       add(
         "traversal.no_start",
@@ -615,8 +647,9 @@ export async function lintWorldPhysics(
       );
       continue;
     }
+    const start = starts[0] as { x: number; y: number; z: number };
 
-    const reached = walk(start);
+    const reached = walk(...starts);
     for (const level of levels) {
       const feet = b.floorY + level + 1;
       for (const { x, z } of columnsAt(level)) {
@@ -627,7 +660,9 @@ export async function lintWorldPhysics(
           x,
           feet,
           z,
-          `no walking route from the door cell ${start.x},${start.y},${start.z}`,
+          starts.length === 1
+            ? `no walking route from the door cell ${start.x},${start.y},${start.z}`
+            : `no walking route from any of this building's ${starts.length} street doors`,
         );
       }
     }
@@ -947,9 +982,9 @@ export async function lintWorldPhysics(
    * the one being entered, because a player who cannot lift their head cannot
    * lift their feet either.
    */
-  function walk(start: { x: number; y: number; z: number }): Set<string> {
-    const seen = new Set<string>([`${start.x},${start.y},${start.z}`]);
-    const queue: { x: number; y: number; z: number }[] = [start];
+  function walk(...starts: readonly { x: number; y: number; z: number }[]): Set<string> {
+    const seen = new Set<string>(starts.map((s) => `${s.x},${s.y},${s.z}`));
+    const queue: { x: number; y: number; z: number }[] = [...starts];
     const visit = (x: number, y: number, z: number): void => {
       const key = `${x},${y},${z}`;
       if (seen.has(key)) return;
@@ -1004,11 +1039,13 @@ export async function lintWorldPhysics(
    * on trust: the lower half of a door in the building's shell, then whichever
    * of its four neighbours is an interior cell.
    */
-  function doorApproach(
+  function doorApproaches(
     b: NonNullable<PhysicsContext["buildings"]>[number],
     inRoom: (x: number, z: number) => boolean,
-  ): { x: number; y: number; z: number } | null {
+  ): { x: number; y: number; z: number }[] {
     const y = b.floorY + 1;
+    const found: { x: number; y: number; z: number }[] = [];
+    const seen = new Set<string>();
     // Every column of the envelope, not just its outer ring. A wing puts wall
     // — and can put the door — on a face that is nowhere near the bounding
     // box's edge, and a door the lint cannot find is a building the agent
@@ -1027,11 +1064,16 @@ export async function lintWorldPhysics(
           const nx = x + dx;
           const nz = z + dz;
           if (!inRoom(nx, nz)) continue;
-          if (standable(nx, y, nz)) return { x: nx, y, z: nz };
+          if (!standable(nx, y, nz)) continue;
+          const key = `${nx},${nz}`;
+          if (seen.has(key)) break;
+          seen.add(key);
+          found.push({ x: nx, y, z: nz });
+          break;
         }
       }
     }
-    return null;
+    return found;
   }
 
   /**
@@ -1163,7 +1205,11 @@ export async function lintWorldPhysics(
       if (AIR.has(name)) continue;
       // Plants, snow, loose decor and tree canopy are not "the ground".
       if (name.endsWith("_leaves") || name.endsWith("_log") || name.endsWith("_wood")) continue;
-      if (!stack.isFullCube(id)) continue;
+      // A dirt path IS the ground — fifteen sixteenths tall with a solid flush
+      // top, same as the SOLID_TOP carve-out in supportAt. Skipping it made
+      // every road with worn shoulders read one block proud of ground that a
+      // player stands on level with the lane.
+      if (!stack.isFullCube(id) && !SOLID_TOP.test(name)) continue;
       return y;
     }
     return null;

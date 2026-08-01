@@ -29,6 +29,7 @@ function diag(
 const T105 = diag("LOAM-T105", "BASIN_RIM_NOT_CLOSED");
 const T209 = diag("LOAM-T209", "ROAD_UNROUTABLE");
 const T208 = diag("LOAM-T208", "GENERATOR_NOT_IMPLEMENTED", "note");
+const T212 = diag("LOAM-T212", "LIFE_PASS_EMPTY", "note");
 const T110 = diag("LOAM-T110", "UNSTABLE_FLUID", "error");
 const T111 = diag("LOAM-T111", "FLOATING_VEGETATION", "error");
 const E405 = diag("LOAM-E405", "NODE_DROPPED");
@@ -79,6 +80,14 @@ describe("feedbackDiagnostics", () => {
 
   it("drops the informational notes and the advisory warnings", () => {
     expect(feedbackDiagnostics([T208, W407])).toEqual([]);
+  });
+
+  it("keeps a compiler-ordering note out of the loop the model pays for", () => {
+    // The life pass first reported "planted nothing" as LOAM-E170, which is in
+    // FEEDBACK_CODES by code regardless of severity — so every small world sent
+    // the model two revision rounds asking it to fix a pass-ordering defect no
+    // document edit can reach. Its own code is the fix; this guards the seam.
+    expect(feedbackDiagnostics([T212])).toEqual([]);
   });
 
   it("sends the dry-carve note back even though it is only a note", () => {

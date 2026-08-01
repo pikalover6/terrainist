@@ -37,15 +37,18 @@ import { PHYSICS_RULES, lintWorldPhysics, type PhysicsReport } from "../src/emit
 import { planDevGrid } from "../src/devworld.js";
 import { planPropExhibits } from "../src/devworld-rows.js";
 import {
-  TERRARIUM_BUTTON_SLOTS,
+  TERRARIUM_CUBE_OFFSET,
+  TERRARIUM_CUBE_SIZE,
+  TERRARIUM_GAME_TYPE,
   TERRARIUM_GROUND_Y,
   TERRARIUM_MANIFEST_NAME,
   TERRARIUM_SPAWN_ID,
   buildTerrarium,
   planTerrarium,
   terrariumArrivalCommand,
-  terrariumButtons,
+  terrariumCubes,
   terrariumCells,
+  terrariumManifest,
   stationIndex,
   type TerrariumManifest,
   type TerrariumResult,
@@ -181,47 +184,133 @@ describe("manifest ↔ world alignment", () => {
       expect(compound?.["auto"]).toBe(0);
       expect(compound?.["TrackOutput"]).toBe(0);
     }
-  });
+  }, 120_000);
 
-  it("teleports NEXT and PREV to the adjacent station's real landing spot", async () => {
+  it("teleports each travel cube to the adjacent station's real landing spot", async () => {
     const entities = await readEntityMap(rig.worldDir);
     const plan = rig.plan;
     const byId = stationIndex(plan);
     const manifestById = new Map(manifest.stations.map((s) => [s.id, s]));
 
     for (const station of [plan.spawn, ...plan.stations]) {
-      const buttons = terrariumButtons(station, byId);
-      const zWall = station.platform.z1 - 1;
-      for (const button of buttons) {
-        const x = station.landing.x + (TERRARIUM_BUTTON_SLOTS[button.slot] as number);
-        const compound = entities.get(`${x},${TERRARIUM_GROUND_Y + 1},${zWall}`);
-        expect(compound, `${station.id} ${button.label} block missing`).toBeDefined();
-        expect(compound?.["id"]).toBe("minecraft:command_block");
-        expect(compound?.["Command"]).toBe(button.command);
-        expect(compound?.["auto"]).toBe(0);
-
-        if (button.label !== "NEXT" && button.label !== "PREV") continue;
+      const cubes = terrariumCubes(station, byId);
+      expect(cubes).toHaveLength(2);
+      expect(cubes.map((c) => c.direction)).toEqual(["prev", "next"]);
+      for (const cube of cubes) {
+        expect(cube.target).toBe(cube.direction === "next" ? station.next : station.prev);
+        const target = byId.get(cube.target) as NonNullable<ReturnType<typeof byId.get>>;
         // The load-bearing claim: the coordinates in the command are the
         // *neighbour's* landing spot, as the manifest states it.
-        const target = byId.get(button.label === "NEXT" ? station.next : station.prev);
-        expect(compound?.["Command"]).toBe(`tp @p ${(target as { landing: { tp: string } }).landing.tp}`);
-        const entry = manifestById.get(target?.id as string) ?? manifest.spawn;
-        expect(button.command).toContain(entry.landing.tp);
+        expect(cube.teleport.endsWith(` ${target.landing.tp}`)).toBe(true);
+        const entry = manifestById.get(target.id) ?? manifest.spawn;
+        expect(cube.teleport).toContain(entry.landing.tp);
+        // The marker the harvester joins on is the *destination's*, and it is
+        // the same string the destination's own arrival plate says.
+        expect(cube.marker).toBe(terrariumArrivalCommand(target));
+        expect(cube.marker).toBe(`say >> STATION ${cube.target}`);
+
+        // The chain, on disk: repeating detector, then two conditional chain
+        // blocks, all always-active and all buried under the pad.
+        const roles = ["detect", "teleport", "marker"] as const;
+        for (const [i, slot] of cube.blocks.entries()) {
+          expect(slot.role).toBe(roles[i]);
+          expect(slot.y).toBe(TERRARIUM_GROUND_Y - 1);
+          const compound = entities.get(`${slot.x},${slot.y},${slot.z}`);
+          expect(compound, `${station.id} ${cube.direction} ${slot.role} missing`).toBeDefined();
+          expect(compound?.["id"]).toBe("minecraft:command_block");
+          expect(compound?.["Command"]).toBe(cube[slot.role]);
+          // Always active: there is no redstone underground, and a spectator
+          // cannot press anything.
+          expect(compound?.["auto"]).toBe(1);
+          expect(compound?.["TrackOutput"]).toBe(0);
+        }
+        // The detector and the teleport must agree about the region, exactly.
+        const selector = `@a[x=${cube.region.x0},y=${cube.region.y0},z=${cube.region.z0},dx=${
+          TERRARIUM_CUBE_SIZE - 1
+        },dy=${TERRARIUM_CUBE_SIZE - 1},dz=${TERRARIUM_CUBE_SIZE - 1}]`;
+        expect(cube.detect).toBe(`execute if entity ${selector}`);
+        expect(cube.teleport.startsWith(`tp ${selector} `)).toBe(true);
       }
     }
+  }, 120_000);
+
+  it("has no verdict machinery left — a verdict is typed, not pressed", () => {
+    for (const station of [manifest.spawn, ...manifest.stations]) {
+      expect(station.commands["pass"]).toBeUndefined();
+      expect(station.commands["fail"]).toBeUndefined();
+      expect(Object.keys(station.commands).sort()).toEqual(["arrive", "next", "prev"]);
+      expect(station.commands["arrive"]).toBe(`say >> STATION ${station.id}`);
+    }
+    // No command anywhere in the world says VERDICT, and none teleports `@p`:
+    // the whole rig addresses `@a`, because that is what matches a spectator.
+    const commands = rig.entities
+      .filter((e) => e.id === "minecraft:command_block")
+      .map((e) => (e.data["Command"] as { value: string }).value);
+    expect(commands.some((c) => c.includes("VERDICT"))).toBe(false);
+    expect(commands.some((c) => c.includes("@p"))).toBe(false);
+    expect(manifest.spawn.id).toBe(TERRARIUM_SPAWN_ID);
   });
 
-  it("says the station id in every verdict command", () => {
-    for (const station of manifest.stations) {
-      expect(station.commands["pass"]).toBe(`say VERDICT ${station.id} pass`);
-      expect(station.commands["fail"]).toBe(`say VERDICT ${station.id} fail`);
-      expect(station.commands["arrive"]).toBe(terrariumArrivalCommand(rig.plan.stations[station.index] as never));
+  it("puts two marked travel cubes beside every landing, clear of everything else", async () => {
+    const anvil = stack.openAnvil(path.join(rig.worldDir, "region"));
+    const byId = stationIndex(rig.plan);
+    try {
+      for (const station of [rig.plan.spawn, ...rig.plan.stations]) {
+        const cubes = terrariumCubes(station, byId);
+        for (const cube of cubes) {
+          // Beside the landing, never on it: an arriving teleport must not drop
+          // the player into a cube, or the walk would run away from them.
+          const dx = Math.abs(cube.pad.x0 + 1 - station.landing.x);
+          expect(dx).toBe(TERRARIUM_CUBE_OFFSET);
+          expect(station.landing.x < cube.pad.x0 || station.landing.x > cube.pad.x1).toBe(true);
+          // On its own platform, both pad and cube.
+          expect(cube.pad.x0).toBeGreaterThanOrEqual(station.platform.x0);
+          expect(cube.pad.x1).toBeLessThanOrEqual(station.platform.x1);
+          expect(cube.pad.z0).toBeGreaterThanOrEqual(station.platform.z0);
+          expect(cube.pad.z1).toBeLessThanOrEqual(station.platform.z1);
+          // Clear of the exhibit's own footprint...
+          const s = station.structure;
+          if (s !== undefined) {
+            expect(cube.pad.x1 < s.x0 || cube.pad.x0 > s.x1 || cube.pad.z1 < s.z0 || cube.pad.z0 > s.z1)
+              .toBe(true);
+          }
+          // ...and of the label signs, which stand at landing.x ± 2.
+          for (const sx of [station.landing.x - 2, station.landing.x + 2]) {
+            expect(sx < cube.pad.x0 || sx > cube.pad.x1).toBe(true);
+          }
+          // The two cubes never touch each other.
+          expect(cubes.filter((c) => c.pad.x1 >= cube.pad.x0 && c.pad.x0 <= cube.pad.x1))
+            .toHaveLength(1);
+
+          // And on disk: a solid coloured pad with a glazed eye, and three
+          // courses of air above it that a spectator can fly into.
+          const at = async (x: number, y: number, z: number): Promise<string> => {
+            // Per block, not per pad: a 3x3 pad can straddle a chunk boundary.
+            const chunk = await anvil.load(x >> 4, z >> 4);
+            expect(chunk, `${station.id} cube chunk missing`).not.toBeNull();
+            return stack.blockNameByStateId(
+              (chunk as NonNullable<typeof chunk>).getBlockStateId(
+                x - (x >> 4) * 16,
+                y,
+                z - (z >> 4) * 16,
+              ),
+            );
+          };
+          expect(await at(cube.pad.x0, TERRARIUM_GROUND_Y, cube.pad.z0)).toBe(cube.padBlock);
+          expect(await at(cube.pad.x1, TERRARIUM_GROUND_Y, cube.pad.z1)).toBe(cube.padBlock);
+          expect(await at(cube.pad.x0 + 1, TERRARIUM_GROUND_Y, cube.pad.z0 + 1)).toBe(cube.eyeBlock);
+          for (let y = cube.region.y0; y <= cube.region.y1; y++) {
+            expect(await at(cube.pad.x0 + 1, y, cube.pad.z0 + 1), `${station.id} cube blocked`)
+              .toBe("air");
+          }
+        }
+        // Lime forward, red back — the whole navigation UI, readable in flight.
+        expect(cubes.map((x) => x.padBlock)).toEqual(["red_concrete", "lime_concrete"]);
+      }
+    } finally {
+      await anvil.close();
     }
-    // The spawn platform announces itself and offers only a way in.
-    expect(manifest.spawn.id).toBe(TERRARIUM_SPAWN_ID);
-    expect(manifest.spawn.commands["arrive"]).toBe(`say >> STATION ${TERRARIUM_SPAWN_ID}`);
-    expect(manifest.spawn.commands["pass"]).toBeUndefined();
-  });
+  }, 300_000);
 
   it("labels every station with signs that carry its id and its parameters", async () => {
     const entities = await readEntityMap(rig.worldDir);
@@ -248,14 +337,14 @@ describe("manifest ↔ world alignment", () => {
         expect(text).toContain(station.multi.title);
       }
     }
-  });
+  }, 120_000);
 
   it("writes a block entity for every sign and command block, and nothing else", async () => {
     const entities = await readEntityMap(rig.worldDir);
     expect(entities.size).toBe(rig.blockEntityCount);
     const ids = new Set([...entities.values()].map((e) => e["id"]));
     expect([...ids].sort()).toEqual(["minecraft:command_block", "minecraft:sign"]);
-  });
+  }, 120_000);
 });
 
 describe("the world itself", () => {
@@ -336,7 +425,7 @@ describe("the world itself", () => {
     }
   });
 
-  it("turns command-block output off in level.dat, under the 1.21.9+ rule name", async () => {
+  it("opens in spectator, with mobs and command-block output off", async () => {
     const level = readGzippedNbt(await readFile(rig.levelDatPath)) as {
       Data: { game_rules: Record<string, number>; allowCommands: number; GameType: number };
     };
@@ -344,9 +433,17 @@ describe("the world itself", () => {
     // its keys are namespaced snake_case, not the old camelCase `GameRules`.
     expect(level.Data.game_rules["minecraft:command_block_output"]).toBe(0);
     expect(level.Data.game_rules["minecraft:do_daylight_cycle"]).toBe(0);
-    // Command blocks do nothing at all without these two.
+    // v3: ambient animals wandered into the exhibits in the first real session,
+    // and one sheep is half the frame on a void platform.
+    expect(level.Data.game_rules["minecraft:do_mob_spawning"]).toBe(0);
+    expect(manifest.gameRules["minecraft:do_mob_spawning"]).toBe(false);
+    // Command blocks do nothing at all without this.
     expect(level.Data.allowCommands).toBe(1);
-    expect(level.Data.GameType).toBe(1);
+    // v3: the reviewer flies. 3 is spectator — set as the world's *default*
+    // rather than enforced per tick, so switching to creative for a screenshot
+    // sticks.
+    expect(level.Data.GameType).toBe(3);
+    expect(TERRARIUM_GAME_TYPE).toBe(3);
   });
 
   it("writes the manifest next to the world", async () => {
@@ -357,6 +454,37 @@ describe("the world itself", () => {
     expect(path.basename(file)).toBe("terrarium.manifest.json");
     expect(parsed.stations).toHaveLength(rig.stationCount);
     expect(parsed).toEqual(manifest);
+  });
+
+  /**
+   * Provenance is an *argument*, never a read: the manifest builder stays pure,
+   * so the same plan plus the same provenance is the same manifest, and a
+   * caller that has no repository gets a manifest with no provenance key at
+   * all rather than a field full of nulls.
+   */
+  it("carries provenance only when the caller supplies it", () => {
+    const plan = planTerrarium();
+    const bare = terrariumManifest(plan, stack);
+    expect(bare.provenance).toBeUndefined();
+    expect(Object.keys(bare)).not.toContain("provenance");
+
+    const stamped = terrariumManifest(plan, stack, undefined, {
+      commit: "a".repeat(40),
+      branch: "main",
+      dirty: false,
+      baseline: "b".repeat(40),
+      isBaseline: false,
+    });
+    expect(stamped.provenance).toEqual({
+      commit: "a".repeat(40),
+      branch: "main",
+      dirty: false,
+      baseline: "b".repeat(40),
+      isBaseline: false,
+    });
+    // Everything else is untouched — provenance is additive, hence no format bump.
+    expect({ ...stamped, provenance: undefined }).toEqual({ ...bare, provenance: undefined });
+    expect(stamped.format).toBe(TERRARIUM_MANIFEST_FORMAT);
   });
 });
 
@@ -480,6 +608,22 @@ describe("manifest v2", () => {
     expect(manifest.multiStationCount).toBe(rig.plan.multi.length);
     expect(manifest.stationCount).toBe(manifest.stations.length);
     expect(manifest.world).toBe("terrarium");
+  });
+
+  it("carries the v3 travel cubes additively, without bumping the format", () => {
+    // Additive-only doctrine: the harvester joins on `id` and reads nothing
+    // here, so a v2 reader is unaffected and the format string does not move.
+    expect(manifest.format).toBe("terrainist-terrarium/2");
+    const byId = stationIndex(rig.plan);
+    for (const entry of [manifest.spawn, ...manifest.stations]) {
+      const cubes = entry.cubes as NonNullable<typeof entry.cubes>;
+      expect(cubes, entry.id).toHaveLength(2);
+      const station = byId.get(entry.id) as NonNullable<ReturnType<typeof byId.get>>;
+      expect(cubes).toEqual(terrariumCubes(station, byId));
+      expect(cubes.map((c) => c.target)).toEqual([entry.prev, entry.next]);
+      expect(entry.commands["next"]).toBe((cubes[1] as (typeof cubes)[number]).teleport);
+      expect(entry.commands["prev"]).toBe((cubes[0] as (typeof cubes)[number]).teleport);
+    }
   });
 
   it("gives every multi-station its structures and its whole document, and no single-station either", () => {

@@ -25,8 +25,13 @@ import {
   index,
   routeTo,
   smoothRoute,
+  surfaceStreetGraph,
+  MARKING_DASH,
+  MARKING_PERIOD,
   ROAD_FILL_BAND,
+  type StreetSurfaceResult,
 } from "../src/structures/roads.js";
+import type { StreetGraph } from "../src/layout/streets.js";
 
 const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
 const SEA = 63;
@@ -613,6 +618,144 @@ describe("buildRoadNetwork", () => {
     const b = network(plan(r, (x, z) => 70 + Math.floor((x + z) / 16)));
     expect(JSON.stringify(b.routes)).toBe(JSON.stringify(a.routes));
     expect(JSON.stringify(b.blocks)).toBe(JSON.stringify(a.blocks));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* U1 — urban street materials                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A city street may not be a farm track.
+ *
+ * The properties that matter to a player walking the block: an avenue is
+ * tarmac (not dirt path), the tarmac is patched rather than a flat slab, there
+ * is no gravel fringe where the carriageway meets the sidewalk band, and a
+ * rural lane between two villages is untouched by any of it.
+ */
+describe("district street materials", () => {
+  const AVENUE_WIDTH = 7;
+  const AVENUE_CELLS = 49;
+
+  const nameOf = (stateId: number): string => stack.blockNameByStateId(stateId) ?? "";
+
+  /** One straight avenue and one straight lane, with no junction between. */
+  const graph = (): StreetGraph => {
+    const avenue: { x: number; z: number }[] = [];
+    const lane: { x: number; z: number }[] = [];
+    for (let x = -24; x <= 24; x++) {
+      avenue.push({ x, z: 0 });
+      lane.push({ x, z: 20 });
+    }
+    return {
+      segments: [
+        { id: "main", kind: "avenue", width: AVENUE_WIDTH, path: avenue },
+        { id: "back", kind: "lane", width: 3, path: lane },
+      ],
+      intersections: [],
+      sidewalk: 2,
+    };
+  };
+
+  const surface = (theme: string): { p: ColumnPlan; result: StreetSurfaceResult } => {
+    const p = plan(region());
+    const result = surfaceStreetGraph({
+      graphs: [graph()],
+      plan: p,
+      palette: emptyPalette,
+      stack,
+      placements: [],
+      buildingPaths: new Set<string>(),
+      seed: nodeSeed(11n, "world.downtown"),
+      theme,
+    });
+    return { p, result };
+  };
+
+  /** Every surface block name this pass wrote, with counts. */
+  const written = (p: ColumnPlan, road: Uint8Array): Map<string, number> => {
+    const counts = new Map<string, number>();
+    for (let k = 0; k < road.length; k++) {
+      if (road[k] !== 1) continue;
+      const name = nameOf(p.surface[k] as number);
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    return counts;
+  };
+
+  it("surfaces a modern avenue in concrete, not dirt path", () => {
+    const { p, result } = surface("modern_city");
+    const counts = written(p, result.road);
+    expect(counts.get("gray_concrete") ?? 0).toBeGreaterThan(0);
+    expect(counts.get("dirt_path") ?? 0).toBe(0);
+    // The verge is the carriageway: no gravel fringe against the sidewalk.
+    expect(counts.get("gravel") ?? 0).toBe(0);
+  });
+
+  it("leaves a rural road.network@0 route on dirt path", () => {
+    const p = plan(region());
+    const hall = building("world.hall", -6, -20, 9, 9);
+    const east = building("world.east", 12, 10, 7, 7);
+    const plazaPlacement = building("world.plaza", -4, 12, 10, 10).placement;
+    const result = buildRoadNetwork({
+      nodePath: "world.lanes",
+      params: {},
+      seed: nodeSeed(7n, "world.lanes"),
+      plan: p,
+      palette: emptyPalette,
+      stack,
+      placements: [hall.placement, east.placement, plazaPlacement],
+      ports: [hall.port, east.port],
+      plaza: plazaPlacement,
+      buildingPaths: new Set(["world.hall", "world.east"]),
+    });
+    expect(result.surfacedColumns).toBeGreaterThan(0);
+    const counts = written(p, result.roadColumns);
+    expect(counts.get("dirt_path") ?? 0).toBeGreaterThan(0);
+    expect(counts.get("gray_concrete") ?? 0).toBe(0);
+  });
+
+  it("mixes the worn tone in at a low, positional frequency", () => {
+    const { p, result } = surface("modern_city");
+    const counts = written(p, result.road);
+    const body = counts.get("gray_concrete") as number;
+    const worn = counts.get("light_gray_concrete") as number;
+    const share = worn / (body + worn);
+    expect(share).toBeGreaterThan(0.05);
+    expect(share).toBeLessThan(0.2);
+  });
+
+  it("dashes a centre line down an avenue and nothing down a lane", () => {
+    const { p, result } = surface("modern_city");
+    const counts = written(p, result.road);
+    const painted = counts.get("white_concrete") as number;
+    expect(painted).toBeGreaterThan(0);
+    // Dashed, not solid.
+    expect(painted).toBeLessThan(AVENUE_CELLS * (MARKING_DASH / MARKING_PERIOD) + 2);
+    // The line is on the avenue's own centre column, and nowhere else.
+    for (let k = 0; k < p.surface.length; k++) {
+      if (nameOf(p.surface[k] as number) !== "white_concrete") continue;
+      expect(p.region.z0 + Math.floor(k / p.region.width)).toBe(0);
+    }
+  });
+
+  it("gives a lane its own, rougher surface", () => {
+    const { p, result } = surface("modern_city");
+    expect(written(p, result.road).get("cobblestone") ?? 0).toBeGreaterThan(0);
+  });
+
+  it("follows the material theme", () => {
+    const { p, result } = surface("temperate_timber");
+    const counts = written(p, result.road);
+    expect(counts.get("cobblestone") ?? 0).toBeGreaterThan(0);
+    expect(counts.get("gray_concrete") ?? 0).toBe(0);
+  });
+
+  it("is deterministic: two runs write byte-identical surfaces", () => {
+    const a = surface("modern_city");
+    const b = surface("modern_city");
+    expect(Array.from(b.p.surface)).toEqual(Array.from(a.p.surface));
+    expect(Array.from(b.result.road)).toEqual(Array.from(a.result.road));
   });
 });
 

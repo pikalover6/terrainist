@@ -43,11 +43,47 @@ import { Rng, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import { sortOps, type LocalVoxelOp, type StructureYaw } from "./core.js";
 import {
+  AMUSEMENT_PROP_GENERATORS,
+  AMUSEMENT_PROP_NAMES,
+  amusementPropFootprint,
+  isAmusementProp,
+} from "./props-amusement.js";
+import {
   BLITZ_PROP_GENERATORS,
   BLITZ_PROP_NAMES,
   blitzPropFootprint,
   isBlitzProp,
 } from "./props-blitz.js";
+import {
+  ENERGY_PROP_GENERATORS,
+  ENERGY_PROP_NAMES,
+  energyPropFootprint,
+  isEnergyProp,
+} from "./props-energy.js";
+import {
+  STREET_PROP_GENERATORS,
+  STREET_PROP_NAMES,
+  isStreetProp,
+  streetPropFootprint,
+} from "./props-street.js";
+import {
+  RELIC_PROP_GENERATORS,
+  RELIC_PROP_NAMES,
+  isRelicProp,
+  relicPropFootprint,
+} from "./props-relics.js";
+import {
+  SPECTACLE_PROP_GENERATORS,
+  SPECTACLE_PROP_NAMES,
+  isSpectacleProp,
+  spectaclePropFootprint,
+} from "./props-spectacle.js";
+import {
+  WAYSIDE_PROP_GENERATORS,
+  WAYSIDE_PROP_NAMES,
+  isWaysideProp,
+  waysidePropFootprint,
+} from "./props-wayside.js";
 import { type BuildingMaterials } from "./themes.js";
 // The two transport families live in files of their own — an airliner and a
 // galleon are each longer than everything above put together — and are merged
@@ -56,6 +92,19 @@ import { type BuildingMaterials } from "./themes.js";
 // neither file reads a value of the other at module-evaluation time.
 import { AIRCRAFT_FOOTPRINTS, AIRCRAFT_GENERATORS, AIRCRAFT_PROP_NAMES } from "./aircraft.js";
 import { SHIP_FOOTPRINTS, SHIP_GENERATORS, SHIP_PROP_NAMES } from "./ships.js";
+// Wave 6 adds a third transport family (rolling stock) and a second file to
+// each of the other two. Same contract, same merge point.
+import {
+  AIRCRAFT6_FOOTPRINTS,
+  AIRCRAFT6_GENERATORS,
+  AIRCRAFT6_PROP_NAMES,
+} from "./aircraft-wave6.js";
+import { SHIP6_FOOTPRINTS, SHIP6_GENERATORS, SHIP6_PROP_NAMES } from "./ships-wave6.js";
+import {
+  RAILCRAFT_FOOTPRINTS,
+  RAILCRAFT_GENERATORS,
+  RAILCRAFT_PROP_NAMES,
+} from "./railcraft.js";
 
 /* -------------------------------------------------------------------------- */
 /* the catalog                                                                 */
@@ -74,7 +123,16 @@ export const PROP_NAMES = [
   "statue_plinth",
   ...AIRCRAFT_PROP_NAMES,
   ...SHIP_PROP_NAMES,
+  ...AIRCRAFT6_PROP_NAMES,
+  ...SHIP6_PROP_NAMES,
+  ...RAILCRAFT_PROP_NAMES,
   ...BLITZ_PROP_NAMES,
+  ...STREET_PROP_NAMES,
+  ...AMUSEMENT_PROP_NAMES,
+  ...WAYSIDE_PROP_NAMES,
+  ...RELIC_PROP_NAMES,
+  ...SPECTACLE_PROP_NAMES,
+  ...ENERGY_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -385,8 +443,20 @@ export function propFootprint(
   if (air !== undefined) return { ...air(params), base: "ground" };
   const ship = SHIP_FOOTPRINTS[prop];
   if (ship !== undefined) return ship(params);
+  const air6 = AIRCRAFT6_FOOTPRINTS[prop];
+  if (air6 !== undefined) return { ...air6(), base: "ground" };
+  const ship6 = SHIP6_FOOTPRINTS[prop];
+  if (ship6 !== undefined) return ship6();
+  const rail = RAILCRAFT_FOOTPRINTS[prop];
+  if (rail !== undefined) return { ...rail(), base: "ground" };
 
   if (isBlitzProp(prop)) return blitzPropFootprint(prop, params);
+  if (isStreetProp(prop)) return streetPropFootprint(prop, params);
+  if (isAmusementProp(prop)) return amusementPropFootprint(prop);
+  if (isWaysideProp(prop)) return waysidePropFootprint(prop);
+  if (isRelicProp(prop)) return relicPropFootprint(prop);
+  if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
+  if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -915,7 +985,16 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   statue_plinth: statuePlinth,
   ...AIRCRAFT_GENERATORS,
   ...SHIP_GENERATORS,
+  ...AIRCRAFT6_GENERATORS,
+  ...SHIP6_GENERATORS,
+  ...RAILCRAFT_GENERATORS,
   ...BLITZ_PROP_GENERATORS,
+  ...STREET_PROP_GENERATORS,
+  ...AMUSEMENT_PROP_GENERATORS,
+  ...WAYSIDE_PROP_GENERATORS,
+  ...RELIC_PROP_GENERATORS,
+  ...SPECTACLE_PROP_GENERATORS,
+  ...ENERGY_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

@@ -36,9 +36,18 @@ import { warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
+import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
-import type { Palette } from "../terrain/palette.js";
+import { detailSeed, hash2 } from "../terrain/detail.js";
+import {
+  STREET_CARRIAGEWAY_SYMBOL,
+  STREET_CARRIAGEWAY_WORN_SYMBOL,
+  STREET_LANE_SYMBOL,
+  STREET_MARKING_SYMBOL,
+  streetMaterials,
+  type Palette,
+} from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
 
@@ -225,6 +234,17 @@ export interface RoadNetworkInput {
   readonly keepClear?: Uint8Array;
   /** Node paths that are buildings (their footprints are hard obstacles). */
   readonly buildingPaths: ReadonlySet<string>;
+  /**
+   * Node paths the network must actually *reach*. Defaults to `buildingPaths`.
+   *
+   * The two lists came apart when districts arrived. A district's infill is
+   * hundreds of buildings, every one of them with a door — and every one of
+   * them already on a street, because that is what the fabric pass is for.
+   * Routing a lane from each of them to the village hub would cut the district
+   * to ribbons and cost an A* search per house. They stay obstacles; they stop
+   * being destinations.
+   */
+  readonly anchorPaths?: ReadonlySet<string>;
   /** Updated with a `road` tag for every surfaced column. */
   readonly occupancy?: OccupancyGrid;
   /**
@@ -237,6 +257,17 @@ export interface RoadNetworkInput {
    */
   readonly corridor?: Uint8Array;
 }
+
+/**
+ * The only thing the router actually reads off a column plan.
+ *
+ * Narrowed from `ColumnPlan` on purpose, and it is the whole reason C1's city
+ * plan can reuse this router rather than grow a second one: arterials are
+ * routed in the **layout** stage, where the composed heightfield exists and the
+ * column plan does not. Every caller that has a real `ColumnPlan` still passes
+ * one — it satisfies this shape structurally.
+ */
+export type RouteGround = { readonly ground: Int32Array };
 
 /** One routed road. */
 export interface RoadRoute {
@@ -253,6 +284,14 @@ export interface RoadNetworkResult {
   readonly routes: readonly RoadRoute[];
   /** Every column the network surfaced. */
   readonly surfacedColumns: number;
+  /**
+   * 1 on every column that counts as road — surfaced lane, shoulder, bridge
+   * deck and the plaza cells a route crossed. Row-major over the plan region.
+   *
+   * Handed out so a later ground pass can meet a lane without guessing where
+   * one is: F2's lot aprons abut it and its worn paint fans out from it.
+   */
+  readonly roadColumns: Uint8Array;
   /** Of those, the columns carried on a bridge deck over water. */
   readonly bridgeColumns: number;
   /** The surfaced width the pass used, for the canopy clip. */
@@ -322,9 +361,10 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const blocks: StructureBlock[] = [];
 
   // --- anchors, in document order ------------------------------------------
+  const anchorPaths = input.anchorPaths ?? input.buildingPaths;
   const anchors: RoadAnchor[] = [];
   for (const placement of input.placements) {
-    if (!input.buildingPaths.has(placement.nodePath)) continue;
+    if (!anchorPaths.has(placement.nodePath)) continue;
     const anchor = approachOf(placement, input.ports);
     if (anchor === null) continue;
     if (!inside(region, anchor.x, anchor.z)) continue;
@@ -334,7 +374,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // --- the hub -------------------------------------------------------------
   const hub = pickHub(input, anchors, region, blocked);
   if (hub === null || anchors.length === 0) {
-    return { blocks, routes, surfacedColumns: 0, bridgeColumns: 0, width, diagnostics, unrouted };
+    return { blocks, routes, surfacedColumns: 0, bridgeColumns: 0, roadColumns: road, width, diagnostics, unrouted };
   }
   road[index(region, hub.x, hub.z)] = 1;
 
@@ -441,7 +481,197 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     if (bridged[k] === 1) bridgeColumns++;
   }
 
-  return { blocks, routes, surfacedColumns, bridgeColumns, width, diagnostics, unrouted };
+  return { blocks, routes, surfacedColumns, bridgeColumns, roadColumns: road, width, diagnostics, unrouted };
+}
+
+/* -------------------------------------------------------------------------- */
+/* district streets (fabric v2, F1)                                            */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link surfaceStreetGraph} reads. */
+export interface StreetSurfaceInput {
+  /** The skeletons to surface, one per district, in document order. */
+  readonly graphs: readonly StreetGraph[];
+  /**
+   * C1's city arterials, surfaced through this same pass and deliberately so.
+   *
+   * An arterial is a street that happens to be eleven columns wide: it wants
+   * the same grade, the same materials and the same shoulder blend a street
+   * gets, and forking a third surfacing path would be the third place a change
+   * of road palette has to be made. The one thing it gets that a street does
+   * not is a **bridge deck** — a district's grid never crosses water, and a
+   * city's drive is expected to.
+   */
+  readonly arterials?: readonly {
+    readonly id: string;
+    readonly width: number;
+    readonly path: readonly { readonly x: number; readonly z: number }[];
+  }[];
+  /** Mutated in place, exactly as the road pass mutates it. */
+  readonly plan: ColumnPlan;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /** Footprints no street may cut into — every building, district or not. */
+  readonly placements: readonly Placement[];
+  readonly buildingPaths: ReadonlySet<string>;
+  readonly occupancy?: OccupancyGrid;
+  /**
+   * The settlement's material theme id, which chooses the street materials
+   * when the document declares no `street.*` symbols of its own.
+   */
+  readonly theme?: string;
+  /** Node seed the wear mix and the dash phase hang off. */
+  readonly seed?: Seed256;
+}
+
+/** What the street surfacing wrote. */
+export interface StreetSurfaceResult {
+  readonly blocks: readonly StructureBlock[];
+  readonly surfacedColumns: number;
+  /** 1 for a column this pass surfaced, row-major over the plan's region. */
+  readonly road: Uint8Array;
+  /** Of those, columns carried on an arterial bridge deck over water. */
+  readonly bridgeColumns: number;
+  /** Arterial carriageway columns, of the total. */
+  readonly arterialColumns: number;
+}
+
+/**
+ * Grade and surface a district's streets.
+ *
+ * **Streets are roads geometrically, and are not roads materially.** They get
+ * the same 1-Lipschitz grade, the same shoulder blend and the same occupancy
+ * claim as a lane between two villages. What they do *not* share is the
+ * surface: this pass used to write `@road.surface` and `@road.shoulder` on the
+ * theory that "a player cannot tell the difference", and the first walk of the
+ * headline city falsified that in about ten seconds — a downtown avenue was
+ * dirt path with a gravel verge, exactly like a farm track. Streets are now
+ * surfaced from the `street.*` material class (see {@link streetMaterials}),
+ * chosen per segment by width class: avenues and streets get the carriageway
+ * with its worn patching and, on avenues, a dashed centre line; lanes get the
+ * rougher back-lane surface. The verge is the carriageway itself, not gravel —
+ * inside a district the sidewalk band already covers that edge, and a gravel
+ * fringe between tarmac and sidewalk is a seam nobody asked for.
+ *
+ * What they do not get is the router: a street's centre line was decided by the fabric pass
+ * before a single building existed, which is the whole inversion — the road
+ * pass finds its way *between* districts, and inside one the way was the first
+ * thing drawn.
+ *
+ * Grading is nearly a formality here, and deliberately so: a district's own pad
+ * levelled its ground before this pass ran, so the profile is flat and the
+ * shoulder blend has nothing to do. It is run anyway, because a district on the
+ * edge of its own apron is exactly where "nearly" stops being true.
+ */
+export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResult {
+  const { plan, occupancy } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+
+  const water = buildBridgeableMask(plan);
+  const blocked = new Uint8Array(cells);
+  for (let k = 0; k < cells; k++) {
+    if (plan.fluidKind[k] !== FluidKind.NONE) blocked[k] = 1;
+  }
+  for (const placement of input.placements) {
+    if (!input.buildingPaths.has(placement.nodePath)) continue;
+    stamp(region, blocked, placement.footprint, 1);
+  }
+
+  const road = new Uint8Array(cells);
+  const roadY = new Int32Array(cells);
+  const bridged = new Uint8Array(cells);
+  const paved = new Uint8Array(cells);
+  const rural = resolveRoadStates(input.palette, input.stack);
+  const urban = resolveStreetStates(input.palette, input.stack, rural, input.theme, input.seed);
+  const blocks: StructureBlock[] = [];
+  /** Avenue centre lines, kept until every segment has been surfaced. */
+  const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
+
+  // Arterials first: a city street *meets* a boulevard rather than the other
+  // way round, and the wider carriageway should be the one that survives where
+  // the two bands overlap.
+  const arterialMask = new Uint8Array(cells);
+  for (const arterial of input.arterials ?? []) {
+    const path = arterial.path.filter((c) => inside(region, c.x, c.z));
+    if (path.length === 0) continue;
+    const profile = gradeProfile(
+      path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
+      plan.seaLevel,
+      ROAD_FILL_BAND,
+      // A deck has to clear the water it spans; a dry cell keeps the plain floor.
+      path.map((c) => {
+        const k = index(region, c.x, c.z);
+        return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
+      }),
+    );
+    const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+    surfaceRoute(
+      region,
+      plan,
+      blocked,
+      road,
+      roadY,
+      surfaced,
+      arterial.width,
+      // A boulevard is wider than any avenue, so it takes the widest urban
+      // surface the theme defines rather than the rural one this loop was
+      // written against before street classes existed.
+      urban.avenue,
+      occupancy,
+      paved,
+      water,
+      bridged,
+    );
+    buildBridgeDeck(region, plan, surfaced, arterial.width, urban.avenue, blocks, water);
+  }
+  for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
+
+  for (const graph of input.graphs) {
+    for (const segment of graph.segments) {
+      const path = segment.path.filter((c) => inside(region, c.x, c.z));
+      if (path.length === 0) continue;
+      const profile = gradeProfile(
+        path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
+        plan.seaLevel,
+        ROAD_FILL_BAND,
+      );
+      const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+      surfaceRoute(
+        region,
+        plan,
+        blocked,
+        road,
+        roadY,
+        surfaced,
+        segment.width,
+        urban[segment.kind],
+        occupancy,
+        paved,
+        water,
+        bridged,
+      );
+      if (segment.kind === "avenue") {
+        avenues.push({ cells: markableCells(surfaced, graph, segment.width) });
+      }
+    }
+  }
+
+  // After every segment: a street laid later crosses an earlier one, and a
+  // dash painted before that crossing would simply be overwritten.
+  paintCentreLines(region, plan, road, paved, water, urban, avenues);
+
+  blendShoulders(region, plan, road, roadY, blocked, paved);
+
+  let surfacedColumns = 0;
+  let bridgeColumns = 0;
+  let arterialColumns = 0;
+  for (let k = 0; k < cells; k++) {
+    if (road[k] === 1) surfacedColumns++;
+    if (bridged[k] === 1) bridgeColumns++;
+    if (arterialMask[k] === 1) arterialColumns++;
+  }
+  return { blocks, surfacedColumns, road, bridgeColumns, arterialColumns };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -482,7 +712,9 @@ function buildBlockedMask(input: RoadNetworkInput, water: Uint8Array): Uint8Arra
  * Run lengths are read off the rows and the columns in two linear sweeps, so
  * this is O(cells) and, being a pure function of the fluid mask, deterministic.
  */
-export function buildBridgeableMask(plan: ColumnPlan): Uint8Array {
+export function buildBridgeableMask(
+  plan: { readonly region: Region; readonly fluidKind: Uint8Array },
+): Uint8Array {
   const { region, fluidKind } = plan;
   const n = region.width * region.depth;
   const wet = new Uint8Array(n);
@@ -699,13 +931,26 @@ export function routeTo(
   region: Region,
   blocked: Uint8Array,
   road: Uint8Array,
-  plan: ColumnPlan,
+  plan: RouteGround,
   start: { x: number; z: number },
-  costs: { water?: Uint8Array; wallHug?: Uint8Array; corridor?: Uint8Array } = {},
+  costs: {
+    water?: Uint8Array;
+    wallHug?: Uint8Array;
+    corridor?: Uint8Array;
+    /** One-off charge for leaving dry land. Default {@link ROAD_BRIDGE_ENTRY}. */
+    bridgeEntry?: number;
+    /** Charge per further water cell. Default {@link ROAD_WATER_COST}. */
+    waterCost?: number;
+  } = {},
 ): { x: number; z: number }[] | null {
   const water = costs.water;
   const wallHug = costs.wallHug;
   const corridor = costs.corridor;
+  // A city arterial is *expected* to bridge: the whole reason a waterfront
+  // city reads as one is that its boulevards cross the water rather than
+  // detouring round the head of it. The defaults stay the village lane's.
+  const bridgeEntry = costs.bridgeEntry ?? ROAD_BRIDGE_ENTRY;
+  const waterCost = costs.waterCost ?? ROAD_WATER_COST;
   const cells = region.width * region.depth;
   const states = cells * DIR_STATES;
   const goal = index(region, start.x, start.z);
@@ -775,7 +1020,7 @@ export function routeTo(
       // not a cost the route pays.
       const drop = wetHere || wetNext ? 0 : Math.abs((plan.ground[nIdx] as number) - here);
       let cost = (diagonal ? ROAD_DIAGONAL_COST : ROAD_BASE_COST) + ROAD_SLOPE_COST * drop;
-      if (wetNext) cost += ROAD_WATER_COST + (wetHere ? 0 : ROAD_BRIDGE_ENTRY);
+      if (wetNext) cost += waterCost + (wetHere ? 0 : bridgeEntry);
       if (wallHug !== undefined && wallHug[nIdx] === 1) cost += ROAD_WALL_HUG_COST;
       // A 45° kink is half a turn — which is exactly what buys flowing lanes
       // instead of staircases, because the search can now bend gently.
@@ -926,7 +1171,7 @@ export function smoothRoute(
   region: Region,
   blocked: Uint8Array,
   road: Uint8Array,
-  plan: ColumnPlan,
+  plan: RouteGround,
   path: readonly { x: number; z: number }[],
   reach: number = ROAD_SMOOTH_REACH,
   water?: Uint8Array,
@@ -1022,7 +1267,7 @@ function lineLegal(
 /** Total absolute ground change along a run of cells — its "steepness bill". */
 function roughness(
   region: Region,
-  plan: ColumnPlan,
+  plan: RouteGround,
   cells: readonly { x: number; z: number }[],
 ): number {
   let sum = 0;
@@ -1202,6 +1447,158 @@ function resolveRoadStates(palette: Palette, stack: PrismarineStack): RoadStates
         fallback("oak_planks")),
     pier: palette.has("road.pier") ? palette.state("road.pier") : fallback("oak_log"),
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* urban street surfacing (U1)                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Share of carriageway columns painted in the worn tone.
+ *
+ * Low on purpose. Above roughly a fifth the two tones stop reading as patched
+ * asphalt and start reading as noise; below a tenth the road is a flat slab
+ * again. An eighth is the middle of that window.
+ */
+export const STREET_WEAR_CHANCE = 0.12;
+
+/** Hash salt for the wear draw — positional only, never a sequential RNG. */
+const STREET_WEAR_SALT = 0x5f;
+
+/** Painted columns per dash. */
+export const MARKING_DASH = 2;
+/** Dash period along the centre line: two painted, three clear. */
+export const MARKING_PERIOD = 5;
+
+/**
+ * Columns of centre line kept clear either side of a junction's carriageway.
+ *
+ * It has to cover the zebra the streetscape lays on every approach, plus a
+ * column of breathing room: `CROSSING_SETBACK` (1) + `CROSSING_DEPTH` (2) + 1.
+ * The constants are duplicated rather than imported because `streetscape.ts`
+ * imports *this* module, and the cycle is not worth a shared constants file.
+ */
+export const MARKING_JUNCTION_CLEAR = 4;
+
+/** The surfacing states for each street width class, plus the paint. */
+interface StreetStateSet {
+  readonly avenue: RoadStates;
+  readonly street: RoadStates;
+  readonly lane: RoadStates;
+  /** `street.marking` — the dashed centre line. */
+  readonly marking: number;
+}
+
+/**
+ * Resolve the urban material class.
+ *
+ * Precedence is palette symbol, then theme table, then the rural states —
+ * so `style.palettes` still overrides everything and a document that declares
+ * nothing gets a street that matches the buildings beside it.
+ *
+ * The verge deliberately reuses the carriageway: see the note on
+ * {@link surfaceStreetGraph}.
+ */
+function resolveStreetStates(
+  palette: Palette,
+  stack: PrismarineStack,
+  rural: RoadStates,
+  theme: string | undefined,
+  seed: Seed256 | undefined,
+): StreetStateSet {
+  const materials = streetMaterials(theme);
+  const named = (name: string, fallback: number): number =>
+    stack.blockByName(name.replace(/^minecraft:/, ""))?.stateId ?? fallback;
+  const at = (
+    symbol: string,
+    name: string,
+    fallback: number,
+  ): ((x: number, z: number) => number) => {
+    if (palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
+    const id = named(name, fallback);
+    return () => id;
+  };
+
+  const body = at(STREET_CARRIAGEWAY_SYMBOL, materials.carriageway, rural.surface(0, 0));
+  const worn = at(STREET_CARRIAGEWAY_WORN_SYMBOL, materials.worn, body(0, 0));
+  const lane = at(STREET_LANE_SYMBOL, materials.lane, body(0, 0));
+  // No wall clock, no `Math.random`, no transcendentals: the wear draw is the
+  // column's own hash, so the same document and seed give the same patching
+  // forever, whatever order the segments were walked in.
+  const wearSeed = seed === undefined ? 0x5157_2ea1 : detailSeed(seed, "street.wear");
+  const carriageway = (x: number, z: number): number =>
+    hash2(wearSeed, x, z, STREET_WEAR_SALT) < STREET_WEAR_CHANCE ? worn(x, z) : body(x, z);
+
+  const paved: RoadStates = { ...rural, surface: carriageway, shoulder: carriageway };
+  return {
+    avenue: paved,
+    street: paved,
+    lane: { ...rural, surface: lane, shoulder: lane },
+    marking: palette.has(STREET_MARKING_SYMBOL)
+      ? palette.state(STREET_MARKING_SYMBOL)
+      : named(materials.marking, body(0, 0)),
+  };
+}
+
+/**
+ * The centre-line columns of one avenue: dashed, and clear of every junction.
+ *
+ * A dash laid through an intersection is a dash under the zebra the
+ * streetscape paints there, and the zebra has to win — the streetscape runs
+ * after this pass and would overwrite it anyway, but leaving the line out
+ * altogether is what a real stop line looks like.
+ */
+function markableCells(
+  path: readonly { x: number; z: number; y: number }[],
+  graph: StreetGraph,
+  width: number,
+): { x: number; z: number }[] {
+  let widest = width;
+  for (const s of graph.segments) if (s.width > widest) widest = s.width;
+  const clear = ((widest - 1) >> 1) + MARKING_JUNCTION_CLEAR;
+  const out: { x: number; z: number }[] = [];
+  for (const [i, cell] of path.entries()) {
+    if (i % MARKING_PERIOD >= MARKING_DASH) continue;
+    let nearJunction = false;
+    for (const j of graph.intersections) {
+      if (Math.abs(cell.x - j.x) <= clear && Math.abs(cell.z - j.z) <= clear) {
+        nearJunction = true;
+        break;
+      }
+    }
+    if (nearJunction) continue;
+    out.push({ x: cell.x, z: cell.z });
+  }
+  return out;
+}
+
+/**
+ * Paint the collected avenue centre lines.
+ *
+ * The guard is exact rather than approximate: a column is repainted only when
+ * its current surface is *still* the carriageway state this pass would write
+ * there. Anything else — a graded step, a plaza, a lane that crossed later —
+ * already owns the column and keeps it.
+ */
+function paintCentreLines(
+  region: Region,
+  plan: ColumnPlan,
+  road: Uint8Array,
+  paved: Uint8Array,
+  water: Uint8Array,
+  states: StreetStateSet,
+  avenues: readonly { readonly cells: readonly { x: number; z: number }[] }[],
+): void {
+  for (const avenue of avenues) {
+    for (const cell of avenue.cells) {
+      if (!inside(region, cell.x, cell.z)) continue;
+      const idx = index(region, cell.x, cell.z);
+      if (road[idx] !== 1 || paved[idx] === 1 || water[idx] === 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      if (plan.surface[idx] !== states.avenue.surface(cell.x, cell.z)) continue;
+      plan.surface[idx] = states.marking;
+    }
+  }
 }
 
 /**
