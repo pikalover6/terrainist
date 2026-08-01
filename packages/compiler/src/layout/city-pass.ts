@@ -40,7 +40,7 @@ import {
 import {
   groundRelief,
   layDistrict,
-  medianGround,
+  maxGround,
   yawFacing,
   type DistrictPassInput,
   type DistrictProduct,
@@ -609,7 +609,13 @@ function seatSetPieces(args: SeatInput): SeatResult {
     // refused, and the landmark goes to the fabric like any other.
     if (groundRelief(input.field, rect) > VISTA_MAX_RELIEF) return null;
     const childPath = `${nodePath}.${id}`;
-    const foundationY = medianGround(input.field, rect);
+    // The *highest* ground in the site, not the median. A landmark on the
+    // arterial corridor is not standing on a levelled quarter, and seating it
+    // at the median puts the uphill half of its footprint below grade — soil
+    // inside the ground floor and every interior cell cut off from the door.
+    // Standing it on fill costs at most VISTA_MAX_RELIEF courses of plinth,
+    // which on a terminating landmark reads as a terrace rather than a fault.
+    const foundationY = maxGround(input.field, rect);
     const made: Placement = {
       nodePath: childPath,
       id,

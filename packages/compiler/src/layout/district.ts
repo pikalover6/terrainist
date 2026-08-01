@@ -1647,6 +1647,28 @@ export function seat(lot: Rect, face: HorizontalFace, w: number, d: number): Rec
 
 /** Median ground height under a rectangle of the composed field. */
 /**
+ * Highest ground in `rect`, in blocks.
+ *
+ * What a building stands on when it must not be cut into a bank: seated at
+ * the median of a sloping site, half the footprint ends up below grade and the
+ * uphill soil stands inside the ground floor.
+ */
+export function maxGround(field: HeightField, rect: Rect): number {
+  const region = field.region;
+  let hi = -Infinity;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      const h = field.values[j * region.width + i] as number;
+      if (h > hi) hi = h;
+    }
+  }
+  return hi === -Infinity ? 0 : Math.round(hi);
+}
+
+/**
  * Highest ground in `rect` less the lowest, in blocks.
  *
  * The companion to {@link medianGround}: the median says where to stand a
