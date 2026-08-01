@@ -1637,11 +1637,14 @@ A kind is skipped when the ground does not offer it, and that is the normal
 case: a flat inland city gets no stair, promenade or bridge, and says so by
 simply not having them.
 
+<!-- kit:skeleton -->
 ```json
-"params": {
-  "size": "large",
-  "mix": ["office", "apartment_block", "shop_row"],
-  "setPieces": { "max": 4, "kinds": ["landmark", "bridge", "square"] }
+{
+  "params": {
+    "size": "large",
+    "mix": ["office", "apartment_block", "shop_row"],
+    "setPieces": { "max": 4, "kinds": ["landmark", "bridge", "square"] }
+  }
 }
 ```
 
