@@ -64,6 +64,7 @@ import {
 } from "./buildings.js";
 import { buildDoorsteps } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
+import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
 
@@ -75,15 +76,19 @@ import {
 } from "./precincts.js";
 import {
   buildRoadNetwork,
+  index,
+  inside,
   surfaceStreetGraph,
   type RoadNetworkResult,
   type RoadParams,
   type StreetSurfaceResult,
 } from "./roads.js";
+import type { StreetscapeResult } from "./streetscape.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
+export * from "./life.js";
 export * from "./grounds.js";
 export * from "./plaza.js";
 export * from "./precincts.js";
@@ -191,6 +196,15 @@ export interface StructureStats {
   /** Piers run out from a quay, and hulls moored alongside them. */
   readonly piersBuilt: number;
   readonly shipsMoored: number;
+  /**
+   * The life pass's own counters, one per prop kind plus `lifeTotal` and
+   * `lifeBlocks`.
+   *
+   * Open rather than enumerated: the whole point of C3 is that its vocabulary
+   * grows, and a fixed field per awning kind would make adding one a
+   * three-file change for no reader's benefit.
+   */
+  readonly [lifeStat: string]: number | string | boolean;
 }
 
 /** What the structure pass produced. */
@@ -368,6 +382,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const deal = assignMaterials(theme, jobs.length, themeSeed);
   const themed = jobs.map((job, i) => ({ ...job, materials: deal[i] as BuildingMaterials }));
 
+  const jobTags = new Map(jobs.map((job) => [job.nodePath, job.tags] as const));
+
   const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
   const blocks: StructureBlock[] = [...(precincts?.blocks ?? []), ...buildings.blocks];
@@ -426,6 +442,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // router discounts existing road cells — which is exactly how a lane finds a
   // street rather than running alongside it.
   let streets: StreetSurfaceResult | undefined;
+  const streetMasks: LifeStreets[] = [];
   if (districts.length > 0) {
     streets = surfaceStreetGraph({
       graphs: districts.map((d) => d.streets),
@@ -448,7 +465,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     const builtColumns = new Set<string>();
     for (const b of blocks) builtColumns.add(`${b.x},${b.z}`);
     for (const district of districts) {
-      const dressed = dressStreets(district.streets, {
+      const dressed: StreetscapeResult = dressStreets(district.streets, {
         plan: input.plan,
         stack: input.stack,
         seed: nodeSeed(input.worldSeed, district.nodePath, ""),
@@ -459,6 +476,15 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       });
       blocks.push(...dressed.blocks);
       diagnostics.push(...dressed.diagnostics);
+      // Kept for C3: the life pass needs the walk lane it must not touch and
+      // the carriageway it parks against, and re-deriving either from the
+      // graph would be the same rasterization with a second chance to differ.
+      streetMasks.push({
+        nodePath: district.nodePath,
+        bounds: district.bounds,
+        graph: district.streets,
+        masks: dressed.masks,
+      });
     }
   }
 
@@ -608,6 +634,34 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   blocks.push(...grounds.blocks);
 
+  // --- the life pass (C3) --------------------------------------------------
+  // After *everything*, including the ground treatment, and that is the whole
+  // contract: this stage adds eye-level incident into columns nobody else
+  // claimed, so "nobody else claimed" has to be a finished fact rather than a
+  // prediction. It is handed the emitted block list rather than a summary,
+  // because a recipe that brackets an awning to a wall has to be able to ask
+  // whether that particular wall is a full cube at that particular height.
+  const life = dressLife({
+    plan: input.plan,
+    stack: input.stack,
+    seed: themeSeed,
+    nodePath: rootPath,
+    buildings: buildings.built.map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
+    districts: streetMasks,
+    existing: blocks,
+    ...(roads === undefined
+      ? {}
+      : {
+          avoid: (x: number, z: number): boolean => {
+            const region = input.plan.region;
+            if (!inside(region, x, z)) return false;
+            return (roads as RoadNetworkResult).roadColumns[index(region, x, z)] === 1;
+          },
+        }),
+  });
+  diagnostics.push(...life.diagnostics);
+  blocks.push(...life.blocks);
+
   return {
     blocks,
     buildings: buildings.built,
@@ -655,7 +709,37 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       aircraftParked: precincts?.stats.aircraft ?? 0,
       piersBuilt: precincts?.stats.piers ?? 0,
       shipsMoored: precincts?.stats.ships ?? 0,
+      ...life.stats,
     },
+  };
+}
+
+/**
+ * Adapt a built building into the flat view the life pass reads.
+ *
+ * The life pass takes a *view*, not `BuiltBuilding` itself, for the same reason
+ * F4 took a `StreetGraph` rather than a district: it has to be constructible by
+ * hand in a test, and half of `BuiltBuilding` — apron floors, skirt states,
+ * cellar cell sets — is meaningless to a pass that only ever writes outside the
+ * walls.
+ */
+function lifeBuildingOf(built: BuiltBuilding, tags: readonly string[]): LifeBuilding {
+  const archetype = built.meta.params.archetype;
+  return {
+    nodePath: built.nodePath,
+    footprint: built.footprint,
+    cells: built.cells,
+    interiorCells: built.interiorCells,
+    floorY: built.floorY,
+    wallTopY: built.floorY + built.meta.wallTop,
+    // A cellar's floor is in `floorLevels` too, and a lantern hung down there
+    // is a lantern nobody sees; everything at or below the ground plane is
+    // dropped rather than special-cased downstream.
+    floorLevels: built.meta.floorLevels
+      .map((y) => built.floorY + y)
+      .filter((y) => y >= built.floorY),
+    ...(archetype === undefined ? {} : { archetype }),
+    tags,
   };
 }
 
