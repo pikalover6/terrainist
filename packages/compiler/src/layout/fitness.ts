@@ -35,6 +35,61 @@ export interface FootprintStats {
   readonly columns: number;
 }
 
+/**
+ * Scratch buffer for the footprint heights, reused across calls.
+ *
+ * A district candidate's footprint is the whole district envelope (hundreds of
+ * thousands of columns) and the solver evaluates many candidates, so copying
+ * and comparator-sorting a fresh `number[]` per call dominated both runtime and
+ * GC. The buffer is only ever live inside a single synchronous
+ * {@link footprintStats} call — nothing it holds is read across calls, and
+ * JavaScript's single-threaded, non-reentrant execution means no two calls can
+ * overlap — so there is no state to leak between compiles.
+ */
+let heightScratch = new Float64Array(0);
+
+/**
+ * The k-th smallest of `buf[0..n)`, selected in place (Hoare partition,
+ * median-of-three pivot — deterministic, no randomness).
+ *
+ * Exactly equal to `Array.from(buf.subarray(0, n)).sort((a, b) => a - b)[k]`
+ * for any finite input, including even `n` (the caller passes `n >> 1`, the
+ * upper middle, and that is preserved).
+ */
+function nthSmallest(buf: Float64Array, n: number, k: number): number {
+  let lo = 0;
+  let hi = n - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    const a = buf[lo] as number;
+    const b = buf[hi] as number;
+    const c = buf[mid] as number;
+    let pivot = c;
+    if (a < c) {
+      if (c > b) pivot = a > b ? a : b;
+    } else {
+      if (c < b) pivot = a < b ? a : b;
+    }
+    let i = lo;
+    let j = hi;
+    while (i <= j) {
+      while ((buf[i] as number) < pivot) i++;
+      while ((buf[j] as number) > pivot) j--;
+      if (i <= j) {
+        const t = buf[i] as number;
+        buf[i] = buf[j] as number;
+        buf[j] = t;
+        i++;
+        j--;
+      }
+    }
+    if (k <= j) hi = j;
+    else if (k >= i) lo = i;
+    else return buf[k] as number;
+  }
+  return buf[k] as number;
+}
+
 /** Deviation (blocks) at which the flatness term saturates. */
 export const FLATNESS_SCALE = 8;
 
@@ -52,7 +107,10 @@ export function footprintStats(
   hazardMask?: Uint8Array,
 ): FootprintStats {
   const region = field.region;
-  const heights: number[] = [];
+  const capacity = Math.max(0, rect.x1 - rect.x0 + 1) * Math.max(0, rect.z1 - rect.z0 + 1);
+  if (heightScratch.length < capacity) heightScratch = new Float64Array(capacity);
+  const heights = heightScratch;
+  let n = 0;
   let sum = 0;
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
@@ -71,7 +129,7 @@ export function footprintStats(
       }
       const idx = j * region.width + i;
       const h = field.values[idx] as number;
-      heights.push(h);
+      heights[n++] = h;
       sum += h;
       if (h < min) min = h;
       if (h > max) max = h;
@@ -82,7 +140,6 @@ export function footprintStats(
     }
   }
 
-  const n = heights.length;
   if (n === 0) {
     return {
       median: 0, mean: 0, min: 0, max: 0, deviation: 0,
@@ -91,9 +148,14 @@ export function footprintStats(
   }
   const mean = sum / n;
   let varianceSum = 0;
-  for (const h of heights) varianceSum += (h - mean) * (h - mean);
-  const sorted = heights.slice().sort((a, b) => a - b);
-  const median = sorted[n >> 1] as number;
+  // Accumulated in insertion order, and *before* the selection below permutes
+  // the buffer: floating-point addition is not associative, so a different
+  // visiting order would give a different last bit.
+  for (let k = 0; k < n; k++) {
+    const h = heights[k] as number;
+    varianceSum += (h - mean) * (h - mean);
+  }
+  const median = nthSmallest(heights, n, n >> 1);
 
   return {
     median,

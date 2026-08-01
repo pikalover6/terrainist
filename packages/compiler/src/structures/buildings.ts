@@ -189,6 +189,20 @@ export function buildBuildings(
     worldCells(job, (results[k] as ReturnType<typeof generateBuilding>).meta.cells),
   );
 
+  // One index over every claimed cell, so the apron test below is a single
+  // lookup instead of a scan across every other building (which made the pass
+  // quadratic in building count).
+  //
+  // Membership is all this needs, so a set of keys is enough — no owner index,
+  // and so nothing that duplicate ownership could confuse. The test is only
+  // ever reached for a key the *current* building does not own (`!inFootprint`
+  // is checked first, against this same key space), so "some cell set other
+  // than mine contains this key" and "any cell set contains this key" are the
+  // same question, whether one building claims it or five do. Membership tests
+  // only: the set is never iterated, so no decision depends on its order.
+  const claimedCells = new Set<string>();
+  for (const set of cellSets) for (const key of set) claimedCells.add(key);
+
   for (const [index, job] of jobs.entries()) {
     const { placement } = job;
     const result = results[index] as ReturnType<typeof generateBuilding>;
@@ -212,7 +226,7 @@ export function buildBuildings(
       const z = tz + op.z;
       const key = `${x},${z}`;
       const inFootprint = cells.has(key);
-      if (!inFootprint && cellSets.some((s, k) => k !== index && s.has(key))) continue;
+      if (!inFootprint && claimedCells.has(key)) continue;
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
       const y = floorY + op.y;
