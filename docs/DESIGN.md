@@ -724,3 +724,20 @@ fixtures, exactly as F4 coded against `StreetGraph` before F1 existed. The road
 pass keeps its role BETWEEN settlements; arterials replace it INSIDE a city.
 Three handwritten worlds ship on the result: the Miami reference re-authored,
 plus two more chosen to exercise what a rectangle never could.
+
+### Contract amendments during implementation
+
+- **The life pass tests occupancy per voxel, not per column** (C3). The pinned
+  contract said "columns nothing else claimed", which turned out to be far too
+  coarse in practice: the building grammar's eaves and shutters already claim a
+  block in nearly every street-facing apron column, so under the literal column
+  rule Bayline took **50** awnings. Tested voxel by voxel with a block of
+  clearance it takes **1,069**, and the voxel test is strictly *stricter* about
+  what it forbids — it rules out overlap directly rather than by proxy. The
+  all-or-nothing rule is unchanged, and `avoid`/`keepClear` remain an absolute
+  veto with no voxel exemption. One documented exemption exists: interior room
+  lights write inside a building's own column, guarded so the lantern never
+  sits in the player's 1×2 body and always hangs off a valid support chain.
+- **`DistrictCharacter` lives in `layout/prominence.ts`** (C2) rather than
+  `layout/city.ts`, because the skyline field shipped first. C1's `city.ts`
+  imports it from there instead of restating it.
