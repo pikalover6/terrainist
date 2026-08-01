@@ -80,7 +80,7 @@ import {
   type Region,
   type Seed256,
 } from "@terrainist/stdlib";
-import { warning, type LoamDiagnostic } from "@terrainist/spec";
+import { note, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
@@ -1379,10 +1379,20 @@ export function dressLife(input: LifePassInput): LifeResult {
   // --- 6. lit interiors -----------------------------------------------------
   for (const building of input.buildings) lightRooms(building, input, world, planter);
 
-  if (planter.spent() === 0 && input.buildings.length > 0) {
+  // Only a settlement that *had* frontage and still dressed none of it is
+  // saying anything. A hamlet with one cottage and no street produces no runs
+  // at all, and "nothing to dress" is the correct outcome there, not a defect.
+  //
+  // A note rather than a warning, because the reader who can act on it is a
+  // compiler author, not a document author: what it diagnoses is this pass
+  // running before the streetscape instead of after it, which no edit to the
+  // Loam document can fix. Raised as a warning it fed the authoring loop a
+  // revision request the model could not satisfy, and every small world paid
+  // two extra model calls to fail at it twice.
+  if (planter.spent() === 0 && runs.length > 0) {
     diagnostics.push(
-      warning(
-        "CANNOT_FIT",
+      note(
+        "LIFE_PASS_EMPTY",
         nodePath,
         "the life pass planted nothing: every candidate column was already claimed",
         "this is usually a sign the pass ran before the streetscape rather than after it",

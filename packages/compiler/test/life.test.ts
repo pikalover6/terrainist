@@ -424,7 +424,11 @@ describe("degenerate inputs", () => {
     });
     expect(result.stats["lifeTotal"]).toBe(0);
     expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0]?.code).toBe("LOAM-E170");
+    // Its own informational code, not the author-actionable CANNOT_FIT: what
+    // this reports is a pass-ordering defect, and the authoring loop treats
+    // LOAM-E170 as something the model should rewrite the document to fix.
+    expect(result.diagnostics[0]?.code).toBe("LOAM-T212");
+    expect(result.diagnostics[0]?.severity).toBe("note");
   });
 
   it("street masks alone, with no buildings, plant nothing on the pavement", () => {

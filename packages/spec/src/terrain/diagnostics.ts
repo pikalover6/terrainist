@@ -107,6 +107,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * all: fewer than two streets on an axis, or no block deep enough for a lot.
    */
   DISTRICT_TOO_SMALL: "LOAM-T211",
+  /**
+   * C3 life pass — there was frontage to dress and none of it took.
+   *
+   * Informational, and deliberately **not** `CANNOT_FIT`. What it diagnoses is
+   * this pass running before the streetscape rather than after it, which is a
+   * compiler-ordering defect no edit to the document can repair; borrowing the
+   * author-actionable `LOAM-E170` sent it into the authoring loop's feedback
+   * codes and cost every small world two revision rounds it could not satisfy.
+   */
+  LIFE_PASS_EMPTY: "LOAM-T212",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
