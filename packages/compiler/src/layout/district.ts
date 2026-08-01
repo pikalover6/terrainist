@@ -294,7 +294,6 @@ export interface DistrictPassInput {
    * pass turns into `fluidKind` a few stages later.
    */
   readonly water?: Uint8Array;
-  readonly seaLevel?: number;
 }
 
 /* -------------------------------------------------------------------------- */

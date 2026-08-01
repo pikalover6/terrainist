@@ -614,13 +614,16 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       roadY,
       surfaced,
       arterial.width,
-      states,
+      // A boulevard is wider than any avenue, so it takes the widest urban
+      // surface the theme defines rather than the rural one this loop was
+      // written against before street classes existed.
+      urban.avenue,
       occupancy,
       paved,
       water,
       bridged,
     );
-    buildBridgeDeck(region, plan, surfaced, arterial.width, states, blocks, water);
+    buildBridgeDeck(region, plan, surfaced, arterial.width, urban.avenue, blocks, water);
   }
   for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
 

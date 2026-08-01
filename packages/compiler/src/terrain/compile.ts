@@ -534,7 +534,6 @@ async function compileValidated(
       seaLevel: terrain.params.seaLevel,
       placements: solved.placements,
       water: wetColumns,
-      seaLevel: terrain.params.seaLevel,
     };
     const fabric = solveDistricts(fabricInput);
     diagnostics.push(...fabric.diagnostics);

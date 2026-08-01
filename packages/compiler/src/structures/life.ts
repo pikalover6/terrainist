@@ -841,6 +841,13 @@ class Planter {
       if (this.world.vetoed(x, z)) return false;
       if (rule.requireFreeColumn && this.world.taken(x, z)) return false;
       if (rule.requireEmptyVoxel && !this.world.emptyAt(x, y, z)) return false;
+      // A ground-standing recipe is anchored by one column's stand height, and
+      // every footing it puts down assumes the rest of its footprint sits at
+      // the same level. On graded ground — a city cell ramps between quarters —
+      // the column next door can be a block lower, and the post over it is left
+      // hanging. All-or-nothing, so a stall straddling a step is not built at
+      // all rather than built half in the air.
+      if (anchorsGround && o.dy === 0 && this.world.standY(x, z) !== y) return false;
       for (let up = 1; up <= (rule.clearance ?? 0); up++) {
         if (!this.world.emptyAt(x, y + up, z)) return false;
       }

@@ -72,10 +72,14 @@ import {
 /* the pinned contract                                                         */
 /* -------------------------------------------------------------------------- */
 
-/** Radians are not used anywhere in this contract. Angles are degrees. */
-export type DistrictCharacter =
-  | "core" | "grid" | "rowhouse" | "lanes"
-  | "industrial" | "civic" | "park" | "waterfront";
+// Radians are not used anywhere in this contract. Angles are degrees.
+//
+// `DistrictCharacter` is declared in `prominence.ts` rather than here: the
+// skyline field shipped before this module and the contract amendment in
+// `docs/DESIGN.md` names that file as its home. Re-exported so a consumer of
+// the city plan still gets the whole contract from one import.
+export type { DistrictCharacter } from "./prominence.js";
+import type { DistrictCharacter } from "./prominence.js";
 
 /** A city-scale road. Drawn before any district exists. */
 export interface Arterial {
