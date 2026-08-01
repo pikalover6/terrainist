@@ -111,7 +111,7 @@
           "coastal": true,
           "diagonals": 2,
           "ring": true,
-          "blockSize": 40,
+          "blockSize": 48,
           "mix": [
             "office",
             "apartment_block",
@@ -175,9 +175,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                23,
+                21,
                 96,
-                21
+                19
               ]
             },
             "params": {
@@ -205,9 +205,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                27,
+                25,
                 64,
-                21
+                19
               ]
             },
             "params": {
@@ -235,9 +235,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                21,
+                19,
                 78,
-                19
+                17
               ]
             },
             "params": {
@@ -265,9 +265,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                34,
+                30,
                 26,
-                28
+                24
               ]
             },
             "params": {
@@ -295,9 +295,9 @@
             "envelope": {
               "shape": "box",
               "size": [
-                28,
                 24,
-                24
+                24,
+                20
               ]
             },
             "params": {
