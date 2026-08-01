@@ -52,7 +52,7 @@ import {
   type Seed256,
   type StructureYaw,
 } from "@terrainist/stdlib";
-import { error, type LoamDiagnostic, type PortDeclaration } from "@terrainist/spec";
+import { error, warning, type LoamDiagnostic, type PortDeclaration } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
@@ -108,6 +108,35 @@ export const PIER_LENGTH = 12;
 /** Width of a pier deck. */
 export const PIER_WIDTH = 2;
 
+/** Shortest quay run this kit will build, in columns of shoreline. */
+export const MIN_QUAY_COLUMNS = 16;
+
+/** Cell side of the coarse coast index the harbour search prefilters on. */
+export const COAST_CELL = 16;
+
+/**
+ * How many prefiltered sites the harbour search reads exactly.
+ *
+ * The coarse index ranks thousands of boxes in constant time each and is a
+ * decent but not trustworthy proxy — it counts shoreline columns without
+ * knowing whether they line up into a quay. So the top slice gets read
+ * properly. Sixteen is enough that a merely-unlucky prefilter cannot cost the
+ * harbour a real site, and small enough that the exact pass stays a rounding
+ * error against a compile that already materialized the world.
+ */
+export const COAST_SHORTLIST = 16;
+
+/**
+ * How much a site inside the author's preferred zone is favoured.
+ *
+ * A `zone` on a harbour is a wish about *where in town the port is*, and the
+ * world's actual coastline is a fact. Weighting rather than filtering is what
+ * lets the wish lose gracefully: at 0.5 a site in the requested zone wins any
+ * tie and beats a site a third again as good on the far side of the map, and
+ * loses to one twice as good.
+ */
+export const COAST_ZONE_PREFERENCE = 0.5;
+
 /** Height of a quay crane's mast above the quay, in blocks. */
 export const CRANE_HEIGHT = 9;
 
@@ -128,6 +157,15 @@ export interface PrecinctJob {
   readonly tags: readonly string[];
   /** Ports the document declared on the precinct node. */
   readonly ports: Readonly<Record<string, PortDeclaration>>;
+  /**
+   * The node's canonical constraints, as the solver saw them.
+   *
+   * Read for one question only: did the author *pin* this precinct, or merely
+   * express a preference? A `zone`/`at` the author marked hard (or wrote with
+   * `mode: "contain"`) is an instruction, and `precinct.harbour@0` will fail in
+   * place rather than go looking for a better coast somewhere else.
+   */
+  readonly constraints?: readonly Readonly<Record<string, unknown>>[];
 }
 
 /**
@@ -177,6 +215,16 @@ export interface PrecinctPassResult {
   readonly ports: readonly ResolvedPort[];
   /** Node paths the road pass may treat as anchors. */
   readonly anchorPaths: readonly string[];
+  /**
+   * Precincts that seated themselves somewhere other than where the solver put
+   * them, by node path — a harbour that went and found the coast.
+   *
+   * Handed back rather than applied in place because a {@link Placement} is the
+   * solver's record and this pass does not own it. The caller substitutes these
+   * into the placement list every later pass reads, so the roads arrive at the
+   * quay that exists rather than at the box the quay was supposed to be in.
+   */
+  readonly relocations: ReadonlyMap<string, Placement>;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: PrecinctStats;
 }
@@ -404,6 +452,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
   const props: PrecinctPropSpec[] = [];
   const ports: ResolvedPort[] = [];
   const anchorPaths: string[] = [];
+  const relocations = new Map<string, Placement>();
   const diagnostics: LoamDiagnostic[] = [];
   const states = resolveStates(input.stack);
   let airports = 0;
@@ -428,6 +477,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     props.push(...out.props);
     ports.push(...out.ports);
     anchorPaths.push(job.nodePath);
+    if (out.relocation !== undefined) relocations.set(job.nodePath, out.relocation);
     if (job.generator === "precinct.airport@0") airports++;
     else harbours++;
     stands += out.counts.stands;
@@ -445,6 +495,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     props,
     ports,
     anchorPaths,
+    relocations,
     diagnostics,
     stats: { airports, harbours, stands, aircraft, hangars, piers, ships, cranes, surfacedColumns },
   };
@@ -458,6 +509,8 @@ interface OneResult {
   readonly props: PrecinctPropSpec[];
   readonly ports: ResolvedPort[];
   readonly diagnostics: LoamDiagnostic[];
+  /** Set when the kit seated itself away from the solver's footprint. */
+  readonly relocation?: Placement;
   readonly counts: {
     stands: number;
     aircraft: number;
@@ -817,84 +870,41 @@ const MOORING_FLEET = ["speedboat", "tugboat", "fishing_trawler", "yacht", "cog"
  * Unlike the aerodrome, whose geometry is invented, a harbour's is *found*: the
  * quay follows the shoreline that is actually in the envelope, which is why the
  * first thing this does is read the column plan rather than divide up a
- * rectangle. An envelope with no water in it is not a harbour with a problem,
- * it is not a harbour, and it says so.
+ * rectangle.
+ *
+ * And when the envelope holds no shoreline worth the name, the harbour goes
+ * looking for one. That is the U6 change, and it exists because the old
+ * behaviour made a large world a coin flip: the coastline is a fact about the
+ * seed and the region, the envelope is a wish about the town plan, and the wish
+ * was being enforced as though it were the fact. {@link seekCoast} searches the
+ * whole world for the best qualifying stretch, biased toward wherever the
+ * author asked for the port, and only a world with *no* buildable coast
+ * anywhere still fails — which is a true statement about the document rather
+ * than an accident of where a box landed.
  */
 function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: PrecinctStates): OneResult {
   const { plan } = input;
-  const rect = job.placement.footprint;
+  const placed = job.placement.footprint;
 
-  // --- 1: which way is the sea? --------------------------------------------
-  let waterCount = 0;
-  let waterX = 0;
-  let waterZ = 0;
-  let landCount = 0;
-  let landX = 0;
-  let landZ = 0;
-  for (let z = rect.z0; z <= rect.z1; z++) {
-    for (let x = rect.x0; x <= rect.x1; x++) {
-      const idx = indexOf(plan, x, z);
-      if (idx === undefined) continue;
-      if (plan.fluidKind[idx] === FluidKind.WATER) {
-        waterCount++;
-        waterX += x;
-        waterZ += z;
-      } else if (plan.fluidKind[idx] === FluidKind.NONE) {
-        landCount++;
-        landX += x;
-        landZ += z;
-      }
-    }
+  // --- 1: the shoreline, in the envelope if it is there --------------------
+  // Read exactly as it always was, and accepted on exactly the old test: a
+  // world that compiles today must compile to the same bytes, so the search
+  // below is reachable only from the states that used to be hard errors.
+  let read = readShoreline(plan, placed);
+  let rect = placed;
+  let relocation: Placement | undefined;
+
+  if (!isShoreRead(read)) {
+    if (pinnedInPlace(job)) return empty([pinnedHarbourError(job, read)]);
+    const found = seekCoast(job, input, read);
+    if (found === null) return empty([noCoastAnywhereError(job, read)]);
+    read = found.read;
+    rect = found.rect;
+    relocation = found.placement;
   }
-  if (waterCount === 0 || landCount === 0) {
-    return empty([
-      error(
-        "CANNOT_FIT",
-        job.nodePath,
-        waterCount === 0
-          ? "precinct.harbour@0 was placed on a footprint with no water in it — a quay has nothing to face"
-          : "precinct.harbour@0 was placed entirely in water — a quay has no landward side",
-        'constrain the node to the shore: add {"near": "^.the_sea"} or {"zone": "south"} so the solver puts its envelope across the waterline, and check the heightfield\'s "seaLevel" actually floods there',
-      ),
-    ]);
-  }
-  const dx = waterX / waterCount - landX / landCount;
-  const dz = waterZ / waterCount - landZ / landCount;
-  const sea: Dir =
-    Math.abs(dx) >= Math.abs(dz) ? { dx: dx >= 0 ? 1 : -1, dz: 0 } : { dx: 0, dz: dz >= 0 ? 1 : -1 };
-  const f = frameFacing(rect, sea);
+
+  const { frame: f, sea, shore, waterY } = read;
   const land: Dir = { dx: -sea.dx, dz: -sea.dz };
-
-  // --- 2: where is the waterline? ------------------------------------------
-  // For each line across the quay axis, the first water column walking seaward.
-  // A line with no water, or water pressed against the landward edge, has no
-  // quay on it — a harbour built on the honest shoreline is bumpy, and that is
-  // the point.
-  const shore = new Int32Array(f.uLen).fill(-1);
-  let waterY = Number.NEGATIVE_INFINITY;
-  let shoreLines = 0;
-  for (let u = 0; u < f.uLen; u++) {
-    for (let v = QUAY_DEPTH; v < f.vLen - 4; v++) {
-      const c = at(f, u, v);
-      const idx = indexOf(plan, c.x, c.z);
-      if (idx === undefined) break;
-      if (plan.fluidKind[idx] !== FluidKind.WATER) continue;
-      shore[u] = v;
-      shoreLines++;
-      if (waterY === Number.NEGATIVE_INFINITY) waterY = plan.fluidTop[idx] as number;
-      break;
-    }
-  }
-  if (shoreLines < 16 || waterY === Number.NEGATIVE_INFINITY) {
-    return empty([
-      error(
-        "CANNOT_FIT",
-        job.nodePath,
-        `precinct.harbour@0 found only ${shoreLines} columns of usable shoreline inside its envelope; a quay needs at least 16, with ${QUAY_DEPTH} columns of dry land behind it`,
-        `grow the envelope to at least [${HARBOUR_MIN.quay}, 16, ${HARBOUR_MIN.depth}] and constrain it so the waterline crosses the middle of the box, not its edge`,
-      ),
-    ]);
-  }
   const quayTop = waterY + 1;
 
   const blocks: StructureBlock[] = [];
@@ -1021,14 +1031,16 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     }
   }
 
+  const seated = relocation ?? job.placement;
   const port = approachPort(job, f, f.uLen >> 1, 0, land, quayTop);
   return {
     ok: true,
     blocks,
     buildings,
     props,
-    ports: [port, ...resolvePorts(job.placement, job.placement.size, job.ports)],
-    diagnostics: [],
+    ports: [port, ...resolvePorts(seated, seated.size, job.ports)],
+    diagnostics: relocation === undefined ? [] : [relocatedHarbourNote(job, placed, rect, read)],
+    ...(relocation === undefined ? {} : { relocation }),
     counts: {
       stands: 0,
       aircraft: 0,
@@ -1039,6 +1051,467 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
       surfaced,
     },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* finding a coast                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** A shoreline that can carry a quay, as read off the finished column plan. */
+interface ShoreRead {
+  readonly ok: true;
+  /** The frame whose `+v` points out to sea. */
+  readonly frame: Frame2;
+  readonly sea: Dir;
+  /** Per quay-axis line, the `v` of the first water column, or `-1`. */
+  readonly shore: Int32Array;
+  /** World Y of the water surface the quay is built against. */
+  readonly waterY: number;
+  readonly shoreLines: number;
+}
+
+/** Why a box holds no quay. */
+type ShoreFault = "no_water" | "no_land" | "too_short";
+
+/** A box that cannot carry a quay, and the reason in the author's terms. */
+interface ShoreMiss {
+  readonly ok: false;
+  readonly fault: ShoreFault;
+  readonly shoreLines: number;
+}
+
+function isShoreRead(r: ShoreRead | ShoreMiss): r is ShoreRead {
+  return r.ok;
+}
+
+/**
+ * Read the shoreline out of one box.
+ *
+ * Unchanged in substance from the original in-envelope read — the sea bearing
+ * from the water/land centroids, then the first water column seaward on each
+ * line across it — and deliberately so: this function's acceptance test is what
+ * every shipped world already passes, and the coast search below is only ever
+ * reached from the three ways it can say no.
+ */
+function readShoreline(plan: ColumnPlan, rect: Rect): ShoreRead | ShoreMiss {
+  let waterCount = 0;
+  let waterX = 0;
+  let waterZ = 0;
+  let landCount = 0;
+  let landX = 0;
+  let landZ = 0;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      if (plan.fluidKind[idx] === FluidKind.WATER) {
+        waterCount++;
+        waterX += x;
+        waterZ += z;
+      } else if (plan.fluidKind[idx] === FluidKind.NONE) {
+        landCount++;
+        landX += x;
+        landZ += z;
+      }
+    }
+  }
+  if (waterCount === 0) return { ok: false, fault: "no_water", shoreLines: 0 };
+  if (landCount === 0) return { ok: false, fault: "no_land", shoreLines: 0 };
+
+  const dx = waterX / waterCount - landX / landCount;
+  const dz = waterZ / waterCount - landZ / landCount;
+  const sea: Dir =
+    Math.abs(dx) >= Math.abs(dz) ? { dx: dx >= 0 ? 1 : -1, dz: 0 } : { dx: 0, dz: dz >= 0 ? 1 : -1 };
+  const frame = frameFacing(rect, sea);
+
+  // For each line across the quay axis, the first water column walking seaward.
+  // A line with no water, or water pressed against the landward edge, has no
+  // quay on it — a harbour built on the honest shoreline is bumpy, and that is
+  // the point.
+  const shore = new Int32Array(frame.uLen).fill(-1);
+  let waterY = Number.NEGATIVE_INFINITY;
+  let shoreLines = 0;
+  for (let u = 0; u < frame.uLen; u++) {
+    for (let v = QUAY_DEPTH; v < frame.vLen - 4; v++) {
+      const c = at(frame, u, v);
+      const idx = indexOf(plan, c.x, c.z);
+      if (idx === undefined) break;
+      if (plan.fluidKind[idx] !== FluidKind.WATER) continue;
+      shore[u] = v;
+      shoreLines++;
+      if (waterY === Number.NEGATIVE_INFINITY) waterY = plan.fluidTop[idx] as number;
+      break;
+    }
+  }
+  if (shoreLines < MIN_QUAY_COLUMNS || waterY === Number.NEGATIVE_INFINITY) {
+    return { ok: false, fault: "too_short", shoreLines };
+  }
+  return { ok: true, frame, sea, shore, waterY, shoreLines };
+}
+
+/** How good a shoreline is, once it is known to be a shoreline at all. */
+interface ShoreQuality {
+  /** Longest unbroken run of quay-bearing lines — what a quay actually needs. */
+  readonly longestRun: number;
+  /** Lines with water still under the far end of a pier. */
+  readonly deep: number;
+  /** Lines with a full {@link QUAY_DEPTH} of dry ground behind the wall. */
+  readonly backed: number;
+  readonly score: number;
+}
+
+/**
+ * Score a shoreline on the three things a port needs and a column count does
+ * not measure: that the quay is *continuous*, that the piers reach into water
+ * deep enough to moor against, and that there is land behind the wall for the
+ * sheds and the road.
+ *
+ * The weights say a contiguous column is worth twice a merely useful one, which
+ * is the right ranking: a scatter of thirty isolated wet lines is not a port,
+ * and sixteen in a row is.
+ *
+ * `claimed` is the exact form of the keep-out that the coarse census can only
+ * approximate. A line whose quay strip runs through ground another structure
+ * already holds does not merely score lower — it **breaks the run**, because
+ * the quay is one continuous wall and half of one is not a port.
+ */
+function shoreQuality(
+  plan: ColumnPlan,
+  read: ShoreRead,
+  claimed?: (idx: number) => boolean,
+): ShoreQuality {
+  const { frame, shore } = read;
+  let longestRun = 0;
+  let run = 0;
+  let deep = 0;
+  let backed = 0;
+  for (let u = 0; u < frame.uLen; u++) {
+    const s = shore[u] as number;
+    if (s < 0) {
+      run = 0;
+      continue;
+    }
+
+    let dry = true;
+    let free = true;
+    for (let back = 0; back < QUAY_DEPTH; back++) {
+      const v = s - back;
+      if (v < 0) {
+        if (back > 0) dry = false;
+        break;
+      }
+      const c = at(frame, u, v);
+      const idx = indexOf(plan, c.x, c.z);
+      if (idx === undefined) {
+        dry = false;
+        break;
+      }
+      if (claimed !== undefined && claimed(idx)) free = false;
+      // The shoreline column itself is water by definition; the ones behind it
+      // are the dry ground the quay surface and the sheds stand on.
+      if (back > 0 && plan.fluidKind[idx] !== FluidKind.NONE) dry = false;
+    }
+
+    if (!free) {
+      run = 0;
+      continue;
+    }
+    run++;
+    if (run > longestRun) longestRun = run;
+
+    const tip = at(frame, u, s + PIER_LENGTH);
+    const tipIdx = indexOf(plan, tip.x, tip.z);
+    if (tipIdx !== undefined && plan.fluidKind[tipIdx] === FluidKind.WATER) deep++;
+    if (dry) backed++;
+  }
+  return { longestRun, deep, backed, score: longestRun + 0.5 * deep + 0.5 * backed };
+}
+
+/**
+ * A coarse per-cell census of the world's coast, for the search's prefilter.
+ *
+ * Reading every candidate box exactly would be quadratic in the world's area;
+ * summed-area tables over 16-block cells make a box's shore/water/land/blocked
+ * counts four subtractions each, so the search costs one linear pass over the
+ * plan plus arithmetic.
+ */
+interface CoastIndex {
+  readonly cw: number;
+  readonly cd: number;
+  /** Inclusive-prefix sums, `(cw + 1) × (cd + 1)`. */
+  readonly shore: Int32Array;
+  readonly water: Int32Array;
+  readonly land: Int32Array;
+  /** Columns claimed by *another* structure — a hard veto on a candidate. */
+  readonly blocked: Int32Array;
+}
+
+function buildCoastIndex(plan: ColumnPlan, occupied: Uint8Array | undefined, own: Rect): CoastIndex {
+  const { region } = plan;
+  const cw = Math.ceil(region.width / COAST_CELL);
+  const cd = Math.ceil(region.depth / COAST_CELL);
+  const shore = new Int32Array((cw + 1) * (cd + 1));
+  const water = new Int32Array((cw + 1) * (cd + 1));
+  const land = new Int32Array((cw + 1) * (cd + 1));
+  const blocked = new Int32Array((cw + 1) * (cd + 1));
+  const stride = cw + 1;
+
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    const cj = ((j / COAST_CELL) | 0) + 1;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      const ci = ((i / COAST_CELL) | 0) + 1;
+      const cell = cj * stride + ci;
+      const kind = plan.fluidKind[idx];
+      if (kind === FluidKind.WATER) {
+        water[cell] = (water[cell] as number) + 1;
+        // A shore column is water with dry ground beside it. Counting it on the
+        // water side rather than the land side is what makes the census
+        // insensitive to which way the coast faces.
+        const dry =
+          (i > 0 && plan.fluidKind[idx - 1] === FluidKind.NONE) ||
+          (i < region.width - 1 && plan.fluidKind[idx + 1] === FluidKind.NONE) ||
+          (j > 0 && plan.fluidKind[idx - region.width] === FluidKind.NONE) ||
+          (j < region.depth - 1 && plan.fluidKind[idx + region.width] === FluidKind.NONE);
+        if (dry) shore[cell] = (shore[cell] as number) + 1;
+      } else if (kind === FluidKind.NONE) {
+        land[cell] = (land[cell] as number) + 1;
+      }
+      if (occupied !== undefined && occupied[idx] === 1) {
+        const x = region.x0 + i;
+        const inOwn = x >= own.x0 && x <= own.x1 && z >= own.z0 && z <= own.z1;
+        if (!inOwn) blocked[cell] = (blocked[cell] as number) + 1;
+      }
+    }
+  }
+
+  for (const table of [shore, water, land, blocked]) {
+    for (let cj = 1; cj <= cd; cj++) {
+      for (let ci = 1; ci <= cw; ci++) {
+        const k = cj * stride + ci;
+        table[k] =
+          (table[k] as number) +
+          (table[k - 1] as number) +
+          (table[k - stride] as number) -
+          (table[k - stride - 1] as number);
+      }
+    }
+  }
+  return { cw, cd, shore, water, land, blocked };
+}
+
+/** Sum of one census table over the cells a world rectangle touches. */
+function coastSum(index: CoastIndex, table: Int32Array, region: ColumnPlan["region"], rect: Rect): number {
+  const stride = index.cw + 1;
+  const i0 = Math.max(0, Math.min(index.cw, ((rect.x0 - region.x0) / COAST_CELL) | 0));
+  const j0 = Math.max(0, Math.min(index.cd, ((rect.z0 - region.z0) / COAST_CELL) | 0));
+  const i1 = Math.max(0, Math.min(index.cw, (((rect.x1 - region.x0) / COAST_CELL) | 0) + 1));
+  const j1 = Math.max(0, Math.min(index.cd, (((rect.z1 - region.z0) / COAST_CELL) | 0) + 1));
+  return (
+    (table[j1 * stride + i1] as number) -
+    (table[j0 * stride + i1] as number) -
+    (table[j1 * stride + i0] as number) +
+    (table[j0 * stride + i0] as number)
+  );
+}
+
+/** A site the search is willing to seat a harbour on. */
+interface CoastSite {
+  readonly rect: Rect;
+  readonly read: ShoreRead;
+  readonly placement: Placement;
+}
+
+/** One prefiltered candidate, carried into the exact pass. */
+interface Shortlisted {
+  readonly rect: Rect;
+  readonly bias: number;
+  readonly coarse: number;
+}
+
+/**
+ * How strongly a site is preferred for being near where the author asked.
+ *
+ * `1` at the centre of the solver's box, falling linearly to `0` half a world
+ * away, on Manhattan distance — which is not the prettiest metric but is pure
+ * `+ - * /`, and a placement rule that reached for `Math.hypot` would be a
+ * determinism hazard dressed up as geometry.
+ */
+function zoneBias(region: ColumnPlan["region"], want: Rect, rect: Rect): number {
+  const wx = (want.x0 + want.x1) / 2;
+  const wz = (want.z0 + want.z1) / 2;
+  const cx = (rect.x0 + rect.x1) / 2;
+  const cz = (rect.z0 + rect.z1) / 2;
+  const dist = Math.abs(cx - wx) + Math.abs(cz - wz);
+  const reach = (region.width + region.depth) / 2;
+  if (!(reach > 0)) return 1;
+  const t = dist / reach;
+  return t >= 1 ? 0 : 1 - t;
+}
+
+/**
+ * Find the best stretch of coast in the world for this harbour.
+ *
+ * Three phases, all in a fixed order with no map iteration and no floating
+ * comparison that a tie cannot survive: census the coast once, rank every
+ * 16-aligned box of the harbour's own size in constant time each, then read the
+ * best {@link COAST_SHORTLIST} of them properly and take the winner. Ties break
+ * toward the earlier candidate in the scan, which runs `z` then `x`.
+ *
+ * The author's envelope is not discarded — it is the origin of {@link
+ * zoneBias}, so among sites of comparable quality the one nearest the requested
+ * zone wins.
+ */
+function seekCoast(job: PrecinctJob, input: PrecinctPassInput, _miss: ShoreMiss): CoastSite | null {
+  const { plan } = input;
+  const { region } = plan;
+  const want = job.placement.footprint;
+  const w = want.x1 - want.x0 + 1;
+  const d = want.z1 - want.z0 + 1;
+  if (w > region.width || d > region.depth) return null;
+
+  const occupied = input.occupancy?.mask;
+  const index = buildCoastIndex(plan, occupied, want);
+  const area = w * d;
+  const minWater = area * 0.1;
+  const minLand = area * 0.2;
+  /**
+   * Whether another structure holds this column.
+   *
+   * The solver's own footprint for this harbour is excluded: the box it chose
+   * is the very thing being replaced, and treating it as an obstacle would stop
+   * the search from choosing a site that overlaps it — which is often the right
+   * answer, a nudge of thirty blocks onto the actual waterline.
+   */
+  const claimed =
+    occupied === undefined
+      ? undefined
+      : (idx: number): boolean => {
+          if (occupied[idx] !== 1) return false;
+          const i = idx % region.width;
+          const x = region.x0 + i;
+          const z = region.z0 + (idx - i) / region.width;
+          return !(x >= want.x0 && x <= want.x1 && z >= want.z0 && z <= want.z1);
+        };
+
+  // --- phase 2: rank every aligned box, keep the best few ------------------
+  // Claimed ground is a discount here rather than a veto: at this resolution a
+  // district envelope reads as a solid block of "taken" even where nothing is
+  // built, and vetoing on it would hand back "no coast in this world" for a
+  // world with a perfectly good bay under a district's outline. The exact pass
+  // is where a claim actually stops a quay.
+  const shortlist: Shortlisted[] = [];
+  let worst = 0;
+  for (let z0 = region.z0; z0 + d - 1 <= region.z0 + region.depth - 1; z0 += COAST_CELL) {
+    for (let x0 = region.x0; x0 + w - 1 <= region.x0 + region.width - 1; x0 += COAST_CELL) {
+      const rect: Rect = { x0, z0, x1: x0 + w - 1, z1: z0 + d - 1 };
+      const blocked = coastSum(index, index.blocked, region, rect);
+      if (blocked > area * 0.5) continue;
+      const shore = coastSum(index, index.shore, region, rect);
+      if (shore < MIN_QUAY_COLUMNS) continue;
+      if (coastSum(index, index.water, region, rect) < minWater) continue;
+      if (coastSum(index, index.land, region, rect) < minLand) continue;
+      const bias = zoneBias(region, want, rect);
+      const coarse = shore * (1 + COAST_ZONE_PREFERENCE * bias) * (1 - blocked / area);
+      if (shortlist.length === COAST_SHORTLIST && coarse <= worst) continue;
+      shortlist.push({ rect, bias, coarse });
+      // Strictly-greater keeps the earliest candidate at every tie, which is
+      // what makes the scan order the tie-breaker rather than the sort.
+      shortlist.sort((a, b) => (b.coarse > a.coarse ? 1 : b.coarse < a.coarse ? -1 : 0));
+      if (shortlist.length > COAST_SHORTLIST) shortlist.length = COAST_SHORTLIST;
+      worst = (shortlist[shortlist.length - 1] as Shortlisted).coarse;
+    }
+  }
+
+  // --- phase 3: read the shortlist properly --------------------------------
+  let best: CoastSite | null = null;
+  let bestScore = 0;
+  for (const candidate of shortlist) {
+    const read = readShoreline(plan, candidate.rect);
+    if (!isShoreRead(read)) continue;
+    const quality = shoreQuality(plan, read, claimed);
+    if (quality.longestRun < MIN_QUAY_COLUMNS) continue;
+    if (quality.backed === 0) continue;
+    const score = quality.score * (1 + COAST_ZONE_PREFERENCE * candidate.bias);
+    if (best !== null && score <= bestScore) continue;
+    bestScore = score;
+    const foundationY = read.waterY + 1;
+    best = {
+      rect: candidate.rect,
+      read,
+      placement: {
+        nodePath: job.placement.nodePath,
+        id: job.placement.id,
+        translation: [candidate.rect.x0, foundationY, candidate.rect.z0],
+        yaw: job.placement.yaw,
+        mirror: job.placement.mirror,
+        size: job.placement.size,
+        footprint: candidate.rect,
+        anchor: {
+          x: (candidate.rect.x0 + candidate.rect.x1) >> 1,
+          z: (candidate.rect.z0 + candidate.rect.z1) >> 1,
+        },
+        foundationY,
+      },
+    };
+  }
+  return best;
+}
+
+/**
+ * True when the author pinned this precinct rather than suggested a zone.
+ *
+ * `zone`/`at` are soft by default and `mode: "contain"` or an explicit
+ * `"strength": "hard"` is what turns one into an instruction (§4.5). A pinned
+ * harbour that finds no water is still an error — the author said *here*, and
+ * quietly building the port somewhere else would be the compiler overruling a
+ * decision instead of filling in one that was never made.
+ */
+function pinnedInPlace(job: PrecinctJob): boolean {
+  for (const constraint of job.constraints ?? []) {
+    const type = constraint["type"];
+    if (type !== "zone" && type !== "at" && type !== "within") continue;
+    if (constraint["strength"] === "hard" || constraint["mode"] === "contain") return true;
+    if (type === "within") return true;
+  }
+  return false;
+}
+
+/** What a pinned harbour with no water under it is told. */
+function pinnedHarbourError(job: PrecinctJob, miss: ShoreMiss): LoamDiagnostic {
+  const what =
+    miss.fault === "no_water"
+      ? "there is no water in it"
+      : miss.fault === "no_land"
+        ? "it is entirely water, so a quay would have no landward side"
+        : `it holds only ${miss.shoreLines} columns of usable shoreline and a quay needs ${MIN_QUAY_COLUMNS}`;
+  return error(
+    "CANNOT_FIT",
+    job.nodePath,
+    `precinct.harbour@0 is pinned to its envelope and ${what}; a pinned harbour is not moved to the coast, because the pin says this is where the port goes`,
+    'either drop the hard "zone"/"at"/"within" pin and let the harbour find the shoreline itself, or move the pin to a part of the world the sea reaches — check the heightfield\'s "seaLevel" and "continentalness.seaFraction" actually flood there',
+  );
+}
+
+/** What a *world* with no buildable coast is told. */
+function noCoastAnywhereError(job: PrecinctJob, miss: ShoreMiss): LoamDiagnostic {
+  return error(
+    "CANNOT_FIT",
+    job.nodePath,
+    `precinct.harbour@0 searched the whole region and found no coastline anywhere that can carry a quay: it needs ${MIN_QUAY_COLUMNS} unbroken columns of shoreline with ${QUAY_DEPTH} columns of dry land behind them and open water in front (the best box in its own envelope had ${miss.shoreLines}). This world has no harbour site — the envelope is not the problem`,
+    'give the world a sea to build on: add or widen "continentalness" on terrain.heightfield@0 (a larger "seaFraction", or a lower "frequency" for fewer, bigger bays), or raise "seaLevel" until the coast is a coast rather than a fringe of shallows',
+  );
+}
+
+/** The note a harbour leaves when it seats itself away from its envelope. */
+function relocatedHarbourNote(job: PrecinctJob, want: Rect, got: Rect, read: ShoreRead): LoamDiagnostic {
+  return warning(
+    "PRECINCT_RESEATED",
+    job.nodePath,
+    `precinct.harbour@0 found no quay in the envelope the solver gave it at [${want.x0}, ${want.z0}] and reseated itself on the best coastline in the world, at [${got.x0}, ${got.z0}] — ${read.shoreLines} columns of shoreline facing ${faceOf(read.sea)}`,
+    'nothing to fix if the port is where you want it; to hold it to a particular part of town, mark its "zone" constraint "strength": "hard" and it will fail in place instead of moving',
+  );
 }
 
 /* -------------------------------------------------------------------------- */

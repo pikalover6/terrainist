@@ -23,7 +23,7 @@ import {
   type NumSpec,
   type Obj,
 } from "../checks.js";
-import { type LoamDiagnostic, error, hasErrors } from "./diagnostics.js";
+import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
   CAVE_STYLES,
   CLIMATE_THEMES,
@@ -886,6 +886,59 @@ export function validateForestNode(out: LoamDiagnostic[], path: string, node: Ob
   }
 }
 
+/**
+ * `scaleReference` — the region extent this node's frequencies were tuned at.
+ *
+ * Checked by hand rather than through {@link HEIGHTFIELD_NUMS} because the
+ * generic "must be a number in 16..4096" is true and useless: the whole point
+ * of the parameter is a *relationship* between two numbers the author wrote in
+ * different places, and the fix hint has to say so or nobody will guess it.
+ *
+ * The third check is the one that actually earns its keep. A `scaleReference`
+ * on a node with no `frequency`, no `warp` and no `continentalness` scales
+ * nothing but the default frequency, which is almost never what an author who
+ * typed the word "scale" was after — and it fails *silently*, by producing a
+ * perfectly ordinary world at every size.
+ */
+function validateScaleReference(out: LoamDiagnostic[], path: string, params: Obj): void {
+  const raw = params["scaleReference"];
+  if (raw === undefined) return;
+  const at = `${path}.params`;
+  const fix =
+    'set "scaleReference" to the region size these frequencies were tuned at, e.g. 512 — the compiler ' +
+    'then divides them by (the region\'s longest side ÷ scaleReference), so a 1024-wide world gets the ' +
+    "same coastline at twice the size instead of twice as much of it";
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    out.push(error("BAD_TYPE", at, `"scaleReference" must be a finite number, got ${describe(raw)}`, fix));
+    return;
+  }
+  if (!Number.isInteger(raw) || raw < 16 || raw > 4096) {
+    out.push(
+      error(
+        "PARAM_OUT_OF_RANGE",
+        at,
+        `"scaleReference" is ${raw}; it names a region extent in blocks and must be a whole number in 16..4096, like the root envelope's "size"`,
+        fix,
+      ),
+    );
+    return;
+  }
+  const scalable =
+    params["frequency"] !== undefined ||
+    params["warp"] !== undefined ||
+    params["continentalness"] !== undefined;
+  if (!scalable) {
+    out.push(
+      warning(
+        "SCALE_REFERENCE_INERT",
+        at,
+        `"scaleReference": ${raw} is declared but this heightfield sets no "frequency", "warp" or "continentalness" for it to scale`,
+        'give the node the spatial parameters you want sized to the world — at minimum "frequency" — or drop "scaleReference"',
+      ),
+    );
+  }
+}
+
 function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: Obj): void {
   unknownKeys(
     out,
@@ -895,11 +948,13 @@ function validateHeightfieldParams(out: LoamDiagnostic[], path: string, params: 
       "seaLevel", "baseHeight", "amplitude", "octaves", "frequency", "lacunarity", "gain",
       "ridged", "warp", "erosionPasses", "curve", "continentalness",
       "cliffThreshold", "soilDepth", "beachWidth", "snowLineFraction",
+      "scaleReference",
     ],
     "terrain.heightfield@0 params",
   );
   checkNumbers(out, `${path}.params`, params, HEIGHTFIELD_NUMS);
   checkBooleans(out, `${path}.params`, params, ["ridged"]);
+  validateScaleReference(out, path, params);
 
   const warp = params["warp"];
   if (warp !== undefined) {

@@ -12,6 +12,7 @@ import {
   erode,
   evaluateBaseHeight,
   resolveNoiseStackParams,
+  scaleNoiseStackToRegion,
 } from "../noise/index.js";
 
 // ---------------------------------------------------------------------------
@@ -65,6 +66,22 @@ export const HEIGHTFIELD_DEFAULTS: Readonly<HeightfieldParams> = Object.freeze({
   beachWidth: 4,
   snowLineFraction: 0.8,
 });
+
+/**
+ * Resolve a heightfield's params **for the region it will be built over**.
+ *
+ * The one call every pipeline entry point should use. `resolveHeightfieldParams`
+ * fills in defaults; this additionally applies `scaleReference`, so that a
+ * document which opted in gets a landform sized to its world rather than
+ * chopped out of an infinite one. Without `scaleReference` the two functions
+ * are the same function.
+ */
+export function resolveHeightfieldParamsForRegion(
+  partial: Partial<HeightfieldParams> | undefined,
+  region: Region,
+): HeightfieldParams {
+  return scaleNoiseStackToRegion(resolveHeightfieldParams(partial), region);
+}
 
 /** Fill in defaults for any omitted heightfield parameter. */
 export function resolveHeightfieldParams(
@@ -219,7 +236,7 @@ export function buildBaseFieldForNode(
   params: Partial<HeightfieldParams> | undefined,
   node: Seed256,
 ): { field: HeightField; params: HeightfieldParams; seeds: NoiseSeeds } {
-  const resolved = resolveHeightfieldParams(params);
+  const resolved = resolveHeightfieldParamsForRegion(params, region);
   const seeds = deriveNoiseSeeds(node);
   return { field: buildBaseField({ region, params: resolved, seeds }), params: resolved, seeds };
 }

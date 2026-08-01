@@ -741,3 +741,39 @@ plus two more chosen to exercise what a rectangle never could.
 - **`DistrictCharacter` lives in `layout/prominence.ts`** (C2) rather than
   `layout/city.ts`, because the skyline field shipped first. C1's `city.ts`
   imports it from there instead of restating it.
+
+### U6 — landform that scales, and precincts that find their coast (2026-08-01)
+
+U3's scale probe turned up a ship blocker rather than a performance number:
+Bayline compiled at 768² and 1536² **hard-failed** on `LOAM-E170`, the harbour
+finding seven or eight columns of shoreline where it needed sixteen. The cause
+was not the harbour. Holding `frequency` fixed while the region grows means the
+coastline does not scale with the world — it gets relatively finer and moves
+somewhere else — so whether the sea happened to intersect a `zone: "south"` box
+was luck. Our 512² world was partly a lucky draw.
+
+Two independent fixes, both landed:
+
+1. **`terrain.heightfield@0.scaleReference`** (opt-in; see
+   `docs/LOAM-TERRAIN-PROFILE-v0.md`). Declares the region extent the node's
+   frequencies were tuned at; the compiler divides them by the region's own
+   scale factor and multiplies `warp.amount` by it. Since regions are centred on
+   the origin this is an exact similarity transform: at `k = 2` the world is the
+   same coastline at twice the size. Omitted, the resolver hands back the
+   identical parameter object, so every world shipped before U6 emits
+   byte-identically — verified by hashing Bayline, Deltamere, Kingsfall and
+   `precinct-harbour` before and after.
+2. **`precinct.harbour@0` seeks its coast.** When the solver's box holds no quay
+   the kit censuses the world's shoreline once (16-block summed-area tables),
+   ranks every aligned box of its own size, reads the best sixteen exactly and
+   seats itself on the winner — scoring the longest *unbroken* quay run, water
+   under the pier tips and dry ground behind the wall, biased toward the
+   author's zone rather than confined to it. A hard `zone`/`at`/`within` pin
+   still fails in place (`LOAM-E170`, "pinned to its envelope"); a world with no
+   coast anywhere still fails, saying so instead of blaming the envelope. A move
+   reports `LOAM-W409` and is substituted into the placement list every later
+   pass reads, so the roads arrive at the quay that exists.
+
+The acceptance test for the searched path is deliberately the *old* one — the
+search is reachable only from states that used to be hard errors — which is what
+makes the byte-identity claim structural rather than lucky.

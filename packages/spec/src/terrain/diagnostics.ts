@@ -82,6 +82,12 @@ export const TERRAIN_DIAGNOSTICS = {
    * declared entrance mouth. Interior caves must leave the heightmap alone.
    */
   CAVE_SURFACE_BREACH: "LOAM-T116",
+  /**
+   * U6 — `scaleReference` was declared on a heightfield that has no spatial
+   * parameter for it to act on, so the landform will not scale with the region
+   * however large the world is made. Inert rather than wrong, hence a warning.
+   */
+  SCALE_REFERENCE_INERT: "LOAM-T117",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec
@@ -159,6 +165,13 @@ export const TERRAIN_DIAGNOSTICS = {
   TUNNEL_UNROUTABLE: "LOAM-E180",
   /** A gallery came too near water, or left too little rock over its ceiling. */
   TUNNEL_INTEGRITY: "LOAM-W408",
+  /**
+   * U6 — a precinct kit seated itself away from the footprint the solver gave
+   * it, because the ground the kit needs is a fact about the world rather than
+   * about the envelope. Emitted by `precinct.harbour@0` when it goes and finds
+   * the coast.
+   */
+  PRECINCT_RESEATED: "LOAM-W409",
 } as const;
 
 /** Symbolic diagnostic name. */

@@ -16,12 +16,23 @@ const BASE = 512;
 // because variant A (terrain params verbatim) puts the sea outside the
 // precinct zones and hard-errors. Pass --scale-terrain.
 const SCALE_TERRAIN = process.argv.includes("--scale-terrain");
+// Variant S (U6): the shipped way to do the same thing. One parameter,
+// `scaleReference`, says "these frequencies were tuned at a 512-block region";
+// the compiler divides them by the region's own scale factor, so the landform
+// is the same coastline magnified rather than a finer one somewhere else.
+// Pass --scale-reference.
+const SCALE_REFERENCE = process.argv.includes("--scale-reference");
+const suffix = SCALE_TERRAIN ? "T" : SCALE_REFERENCE ? "S" : "";
 const sizes = process.argv.slice(2).filter((a) => !a.startsWith("--")).map(Number);
 
 for (const N of sizes) {
   const doc = JSON.parse(fs.readFileSync(SRC, "utf8"));
   const k = N / BASE;
-  doc.meta.name = SCALE_TERRAIN ? `baylinet${N}` : `bayline${N}`;
+  doc.meta.name = `bayline${suffix.toLowerCase()}${N}`;
+  if (SCALE_REFERENCE) {
+    const t = doc.root.children.find((c) => c.generator === "terrain.heightfield@0");
+    t.params.scaleReference = BASE;
+  }
   if (SCALE_TERRAIN) {
     const t = doc.root.children.find((c) => c.generator === "terrain.heightfield@0");
     t.params.frequency /= k;
@@ -36,7 +47,7 @@ for (const N of sizes) {
       child.envelope.size = child.envelope.size.map((v) => Math.round(v * k));
     }
   }
-  const p = path.join(OUT, `bayline${SCALE_TERRAIN ? "T" : ""}-${N}.loam.json`);
+  const p = path.join(OUT, `bayline${suffix}-${N}.loam.json`);
   fs.writeFileSync(p, JSON.stringify(doc, null, 2) + "\n");
   console.log(p, N, "districts:", doc.root.children.filter((c) => c.kind === "district").map((c) => c.envelope.size.join("x")).join(" "));
 }

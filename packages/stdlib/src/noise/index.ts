@@ -58,6 +58,30 @@ export interface NoiseStackParams {
   curve: readonly CurvePoint[];
   /** Large-scale land/ocean mask; omitted means "all land". */
   continentalness?: ContinentalnessParams | undefined;
+  /**
+   * The region extent, in blocks, that this node's spatial parameters were
+   * tuned at — the opt-in switch that makes the landform *scale with the
+   * world* instead of tiling across it.
+   *
+   * Omitted (the default) the parameters mean exactly what they have always
+   * meant: `frequency` is cycles per block, and a region twice as wide gets
+   * twice as much coastline rather than a coastline twice as big. That is the
+   * right reading for a single hand-tuned world and the wrong one the moment
+   * the same document is compiled at another size, because the shoreline a
+   * harbour was authored against simply wanders somewhere else.
+   *
+   * Present, every *length* in the stack is re-read relative to the region:
+   * with `k = max(width, depth) / scaleReference`, the frequencies are divided
+   * by `k` and `warp.amount` is multiplied by it. Because the profile's regions
+   * are centred on the origin, that is an exact similarity transform of the
+   * horizontal plane: at `k = 2` the world is the same landform at twice the
+   * size, coast for coast. Vertical parameters (`baseHeight`, `amplitude`,
+   * `seaLevel`) are deliberately untouched — Minecraft's build limit does not
+   * scale, so a bigger world should be wider, not taller.
+   *
+   * @see {@link landformScale}, {@link scaleNoiseStackToRegion}
+   */
+  scaleReference?: number | undefined;
 }
 
 /** Defaults from the §7.5 `terrain.heightfield@0` table. */
@@ -74,6 +98,7 @@ export const NOISE_STACK_DEFAULTS: Readonly<NoiseStackParams> = Object.freeze({
   erosionPasses: 0,
   curve: Object.freeze([]) as readonly CurvePoint[],
   continentalness: undefined,
+  scaleReference: undefined,
 });
 
 /** Fill in defaults for any omitted noise-stack parameter. */
@@ -100,6 +125,8 @@ export function resolveNoiseStackParams(
           seaFraction: clamp01(p.continentalness.seaFraction),
         }
       : undefined,
+    scaleReference:
+      typeof p.scaleReference === "number" && p.scaleReference > 0 ? p.scaleReference : undefined,
   };
   return resolved;
 }
@@ -107,6 +134,63 @@ export function resolveNoiseStackParams(
 function clampInt(v: number, lo: number, hi: number): number {
   const i = Math.floor(v);
   return i < lo ? lo : i > hi ? hi : i;
+}
+
+// ---------------------------------------------------------------------------
+// Landform scaling
+// ---------------------------------------------------------------------------
+
+/**
+ * The factor by which a region magnifies the authored landform.
+ *
+ * `1` whenever the document did not opt in, which is what makes this whole
+ * mechanism byte-invisible to every existing world: {@link
+ * scaleNoiseStackToRegion} returns its input unchanged at `1`, so the noise
+ * stack is evaluated with the very same numbers it always was.
+ *
+ * The region's *longest* side is the extent, so the transform stays isotropic:
+ * a landform must not be stretched by an oblong world, only sized by it.
+ */
+export function landformScale(
+  scaleReference: number | undefined,
+  region: { readonly width: number; readonly depth: number },
+): number {
+  if (scaleReference === undefined || !(scaleReference > 0)) return 1;
+  const extent = region.width > region.depth ? region.width : region.depth;
+  if (!(extent > 0)) return 1;
+  return extent / scaleReference;
+}
+
+/**
+ * Re-express a resolved noise stack's *lengths* for the region it will be
+ * evaluated over.
+ *
+ * Dividing the frequencies by `k` and multiplying the warp displacement by it
+ * is the complete transform, because those four numbers are the only places a
+ * horizontal length enters the stack. Everything else — octave count, gain,
+ * lacunarity, the curve, `seaFraction` — is dimensionless and must not move.
+ *
+ * At `k === 1` the *identical object* comes back, not a copy: the no-op has to
+ * be a no-op all the way down to the float bits, and returning early is the
+ * cheapest possible proof of that.
+ */
+export function scaleNoiseStackToRegion<T extends NoiseStackParams>(
+  params: T,
+  region: { readonly width: number; readonly depth: number },
+): T {
+  const k = landformScale(params.scaleReference, region);
+  if (k === 1) return params;
+  return {
+    ...params,
+    frequency: params.frequency / k,
+    warp: { amount: params.warp.amount * k, frequency: params.warp.frequency / k },
+    continentalness: params.continentalness
+      ? {
+          frequency: params.continentalness.frequency / k,
+          seaFraction: params.continentalness.seaFraction,
+        }
+      : undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------

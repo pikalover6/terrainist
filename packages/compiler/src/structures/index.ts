@@ -305,6 +305,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       seed: node.seed,
       tags: node.tags,
       ports: node.ports as Readonly<Record<string, PortDeclaration>>,
+      constraints: node.constraints as readonly Readonly<Record<string, unknown>>[],
     });
   }
   const precincts =
@@ -318,10 +319,24 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         });
   if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
 
+  /**
+   * The placements every pass after this one reads.
+   *
+   * Identical to the solver's list except where a precinct reseated itself — a
+   * harbour that had to go and find the coast. Substituting here rather than
+   * mutating the solver's record keeps one truth in play downstream: the roads
+   * route to the quay that was built, the props measure the ground that was
+   * graded, and nothing is left arriving at an empty box.
+   */
+  const placements =
+    precincts === undefined || precincts.relocations.size === 0
+      ? input.placements
+      : input.placements.map((p) => precincts.relocations.get(p.nodePath) ?? p);
+
   // --- buildings -----------------------------------------------------------
   const jobs: BuildingJob[] = [];
   const buildingPaths = new Set<string>();
-  for (const placement of input.placements) {
+  for (const placement of placements) {
     const node = byId.get(placement.nodePath);
     if (node?.generator !== "building.grammar@0") continue;
     buildingPaths.add(placement.nodePath);
@@ -428,7 +443,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const tunnelPass = buildTunnels({
     links,
     buildings: buildings.built,
-    placements: input.placements,
+    placements,
     ports: input.ports,
     declaredPorts: new Map(input.nodes.map((n) => [n.nodePath, n.ports] as const)),
     plan: input.plan,
@@ -478,7 +493,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plan: input.plan,
       palette: input.palette,
       stack: input.stack,
-      placements: input.placements,
+      placements,
       buildingPaths,
       theme: theme.id,
       seed: themeSeed,
@@ -535,7 +550,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plan: input.plan,
       palette: input.palette,
       stack: input.stack,
-      placements: input.placements,
+      placements,
       // The precinct approach ports are appended, not merged: the road pass
       // reads a placement's ports by node path, and a precinct has no shell for
       // the generic resolver to hang a stub on, so the kit states its own.
