@@ -61,6 +61,11 @@ import {
 import type { Rect } from "./frames.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import {
+  buildProminenceField,
+  type ProminenceField,
+  type ProminenceLandmark,
+} from "./prominence.js";
+import {
   BLOCK_SIZE_BY_DENSITY,
   SIDEWALK_BY_DENSITY,
   buildStreetGraph,
@@ -101,7 +106,15 @@ export const LOT_SIDE_GAP: Readonly<Record<DistrictDensity, number>> = Object.fr
   low: 2,
 });
 
-/** Storeys the infill builds, per density. */
+/**
+ * Storeys the infill built, per density — **superseded by C2**.
+ *
+ * The flat band is what built a mesa: every lot in a downtown drawing 3..8
+ * uniformly, so the only tall things were the landmarks. `prominence.ts` owns
+ * the storey count now ({@link ProminenceField.storeys}, and `STOREY_RANGE`
+ * there is the range this table used to be). Kept exported because it states
+ * what the fabric used to do and one or two documents still reason about it.
+ */
 export const INFILL_FLOORS: Readonly<Record<DistrictDensity, readonly [number, number]>> =
   Object.freeze({
     high: [3, 8] as const,
@@ -194,6 +207,14 @@ export interface DistrictPassInput {
    * the district was about to erase.
    */
   readonly field: HeightField;
+  /**
+   * The composed sea level, when the document has terrain.
+   *
+   * Read by the skyline field (C2) and nothing else: a column whose ground is
+   * below it is water, and water is a view. Optional because a district is
+   * perfectly well-defined without one — the frontage term simply goes to zero.
+   */
+  readonly seaLevel?: number;
   /** The solver's placements, in document order. */
   readonly placements: readonly Placement[];
 }
@@ -355,6 +376,28 @@ function layDistrict(
     });
   }
 
+  // --- the skyline field (C2) ----------------------------------------------
+  // Built here, between the landmarks and the infill, because it reads the
+  // landmarks and every infill lot reads it. Keyed on the district's bounds,
+  // its seed, the terrain and the *authored* children — never on the lots, so
+  // one more infill building cannot move the height of any other.
+  const prominence = buildProminenceField({
+    bounds,
+    seed,
+    landmarks: built.map(
+      (b): ProminenceLandmark => ({
+        x: Math.floor((b.rect.x0 + b.rect.x1) / 2),
+        z: Math.floor((b.rect.z0 + b.rect.z1) / 2),
+        // A tall landmark bulges harder than a squat one: the spike exists so a
+        // spire is the peak of a cluster rather than a lone chimney.
+        weight: Math.min(1, Math.max(0.35, b.size[1] / (16 * FLOOR_HEIGHT))),
+      }),
+    ),
+    ...(input.seaLevel === undefined
+      ? {}
+      : { water: { field: input.field, seaLevel: input.seaLevel } }),
+  });
+
   const infillStream = streamSeed(seed, "repeat");
   let infilled = 0;
   for (const lot of lots) {
@@ -364,7 +407,7 @@ function layDistrict(
     if (positionFloat(infillStream, lot.rect.x0, 0, lot.rect.z0) >= (LOT_COVERAGE[p.density] as number)) {
       continue;
     }
-    const filled = infillLot(lot, p, infillStream);
+    const filled = infillLot(lot, p, infillStream, prominence);
     if (filled === null) {
       dropped++;
       continue;
@@ -1079,7 +1122,12 @@ interface Infill {
  * hashes of the same column. That is what makes adding a landmark somewhere
  * else in the district leave the rest of the street exactly as it was.
  */
-function infillLot(lot: Lot, params: DistrictParams, stream: Seed256): Infill | null {
+function infillLot(
+  lot: Lot,
+  params: DistrictParams,
+  stream: Seed256,
+  prominence: ProminenceField,
+): Infill | null {
   const density = params.density;
   const x = lot.rect.x0;
   const z = lot.rect.z0;
@@ -1099,8 +1147,7 @@ function infillLot(lot: Lot, params: DistrictParams, stream: Seed256): Infill | 
     back = Math.min(back, HIGHRISE_MAX_WIDTH);
   }
 
-  const [lo, hi] = INFILL_FLOORS[density];
-  const floors = positionInt(stream, x, 1, z, lo, hi);
+  const floors = prominence.storeys(x, z, { density, archetype });
   // The unrotated envelope is stated in the *lot's* frame: `across` runs along
   // the street and `back` away from it, which is what the yaw then rotates into
   // world axes. Stating it any other way would make the door's face depend on

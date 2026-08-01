@@ -30,6 +30,10 @@ import {
   isHighriseArchetype,
   nodeSeed,
   pickTheme,
+  planTiers,
+  resolveFootprint,
+  traceShell,
+  SETBACK_MIN_FLOORS,
   type BuildingResult,
   type LocalVoxelOp,
 } from "../src/index.js";
@@ -222,6 +226,15 @@ const CASES: readonly Case[] = [
   { archetype: "hotel", size: [17, 24, 17], floors: 4 },
   { archetype: "apartment_block", size: [17, 30, 17], floors: 6 },
   { archetype: "apartment_block", size: [13, 20, 15], floors: 3 },
+  // Tall enough to step in — one setback, then two. The terrace a setback
+  // leaves is a standable floor cell of the storey it happens on, so these are
+  // the cases that prove the way out onto it exists.
+  { archetype: "skyscraper", size: [17, 90, 17], floors: 20 },
+  { archetype: "office", size: [21, 70, 19], floors: 16 },
+  // The plan that first caught it: a narrow guest floor, where the terrace door
+  // lands in a row a partition or a bed would otherwise have taken.
+  { archetype: "hotel", size: [12, 58, 11], floors: 14 },
+  { archetype: "apartment_block", size: [15, 44, 15], floors: 10 },
   // Below the core's footprint: the ladder fallback.
   { archetype: "skyscraper", size: [9, 16, 9], floors: 3 },
   // No vertical circulation at all.
@@ -275,6 +288,156 @@ describe("tall archetypes", () => {
         expect(p.y < q.y || (p.y === q.y && (p.z < q.z || (p.z === q.z && p.x < q.x)))).toBe(true);
       }
     }
+  });
+});
+
+describe("setbacks — the stepped massing (C2)", () => {
+  /** The built extent of one storey, measured from the spandrel course. */
+  const extentAt = (result: BuildingResult, storeyIndex: number): { x: number; z: number } => {
+    const y = storeyIndex * HIGHRISE_STOREY_HEIGHT + 1;
+    let x = -1;
+    let z = -1;
+    for (const op of result.ops) {
+      if (op.y !== y) continue;
+      if (op.x > x) x = op.x;
+      if (op.z > z) z = op.z;
+    }
+    return { x, z };
+  };
+
+  it("extrudes one footprint below the threshold", () => {
+    const short = build("skyscraper", [17, 50, 17], SETBACK_MIN_FLOORS - 1);
+    const bottom = extentAt(short, 0);
+    for (let s = 1; s < SETBACK_MIN_FLOORS - 1; s++) {
+      expect(extentAt(short, s), `storey ${s}`).toEqual(bottom);
+    }
+  });
+
+  it("steps in above it, and steps again on a tall enough tower", () => {
+    const tall = build("skyscraper", [17, 90, 17], 20);
+    const widths = new Set<number>();
+    for (let s = 0; s < 20; s++) widths.add(extentAt(tall, s).x);
+    expect(widths.size, "distinct footprint widths up the shaft").toBe(3);
+    // Monotone: a tower steps in going up, never back out.
+    let previous = Number.POSITIVE_INFINITY;
+    for (let s = 0; s < 20; s++) {
+      const w = extentAt(tall, s).x;
+      expect(w).toBeLessThanOrEqual(previous);
+      previous = w;
+    }
+    const single = build("skyscraper", [17, 60, 17], 13);
+    const singleWidths = new Set<number>();
+    for (let s = 0; s < 13; s++) singleWidths.add(extentAt(single, s).x);
+    expect(singleWidths.size).toBe(2);
+  });
+
+  it("never steps the two faces the stair core stands against", () => {
+    for (const floors of [12, 14, 18, 20, 24]) {
+      const tiers = planTiers(traceShell(resolveFootprint(19, 19)), 19, 19, floors, 4);
+      for (const tier of tiers) {
+        expect(tier.interior.x0, `floors ${floors}`).toBe(1);
+        expect(tier.interior.z0, `floors ${floors}`).toBe(1);
+        // …and never below what the switchback needs to keep working.
+        expect(tier.interior.z1 - tier.interior.z0 + 1).toBeGreaterThanOrEqual(
+          coreDepthFor(4) - 1,
+        );
+      }
+    }
+  });
+
+  it("does not step a footprint that cannot pay for it", () => {
+    // Deep enough for the core and nothing more: a step would put the wall
+    // through the stair.
+    const narrow = planTiers(traceShell(resolveFootprint(11, 8)), 11, 8, 20, 4);
+    expect(narrow).toHaveLength(1);
+  });
+
+  it("leaves a way out onto every terrace", () => {
+    const tall = build("skyscraper", [17, 90, 17], 20);
+    const at = indexOps(tall.ops);
+    // Each stepped tier's east wall has exactly one two-course gap in it, at
+    // the storey the step happens on. Without it the terrace is unreachable —
+    // which the traversal test above is what actually proves.
+    const tiers = planTiers(traceShell(resolveFootprint(17, 17)), 17, 17, 20, 4);
+    expect(tiers.length).toBeGreaterThan(1);
+    for (const tier of tiers.slice(1)) {
+      const level = tier.startFloor * HIGHRISE_STOREY_HEIGHT;
+      const wallX = 17 - 1 - tier.inset;
+      const gaps: number[] = [];
+      for (let z = tier.interior.z0; z <= tier.interior.z1; z++) {
+        if (at.has(`${wallX},${level + 1},${z}`)) continue;
+        if (at.has(`${wallX},${level + 2},${z}`)) continue;
+        gaps.push(z);
+      }
+      expect(gaps, `tier at storey ${tier.startFloor}`).toHaveLength(1);
+      // The threshold: solid floor on both sides of the opening.
+      const z = gaps[0] as number;
+      expect(at.has(`${wallX},${level},${z}`)).toBe(true);
+      expect(at.has(`${wallX + 1},${level},${z}`)).toBe(true);
+    }
+  });
+
+  it("keeps every block inside the footprint and its apron", () => {
+    for (const floors of [12, 20, 24]) {
+      const tall = build("skyscraper", [17, 4 * floors + 8, 17], floors);
+      for (const op of tall.ops) {
+        expect(op.x, `floors ${floors}`).toBeGreaterThanOrEqual(-1);
+        expect(op.z, `floors ${floors}`).toBeGreaterThanOrEqual(-1);
+        expect(op.x).toBeLessThanOrEqual(17);
+        expect(op.z).toBeLessThanOrEqual(17);
+      }
+    }
+  });
+});
+
+describe("the rooftop kit (C2)", () => {
+  const roofOps = (result: BuildingResult): LocalVoxelOp[] =>
+    result.ops.filter((o) => o.y > result.meta.wallTop);
+
+  it("scales with the building: a low roof gets a vent, a tower gets a crown", () => {
+    const low = build("office", [15, 30, 15], 4);
+    const mid = build("office", [15, 50, 15], 10);
+    const tall = build("skyscraper", [17, 90, 17], 20);
+    expect(roofOps(low).length).toBeGreaterThan(0);
+    expect(roofOps(mid).length).toBeGreaterThan(roofOps(low).length);
+    expect(roofOps(tall).length).toBeGreaterThan(roofOps(mid).length);
+    // The silhouette, which is the point: the mast on a tall tower stands well
+    // clear of the parapet a short one stops at.
+    expect(low.meta.roofTop - low.meta.wallTop).toBeLessThan(8);
+    expect(tall.meta.roofTop - tall.meta.wallTop).toBeGreaterThan(12);
+  });
+
+  it("stands every rooftop block on something", () => {
+    for (const c of [
+      { a: "skyscraper", size: [17, 90, 17] as const, floors: 20 },
+      { a: "office", size: [15, 50, 15] as const, floors: 10 },
+      { a: "hotel", size: [19, 40, 21] as const, floors: 8 },
+    ]) {
+      const result = build(c.a, c.size, c.floors);
+      const at = indexOps(result.ops);
+      for (const op of roofOps(result)) {
+        const neighbours = [
+          [0, -1, 0],
+          [0, 1, 0],
+          [1, 0, 0],
+          [-1, 0, 0],
+          [0, 0, 1],
+          [0, 0, -1],
+        ].filter(([dx, dy, dz]) =>
+          at.has(`${op.x + (dx as number)},${op.y + (dy as number)},${op.z + (dz as number)}`),
+        );
+        expect(
+          neighbours.length,
+          `${c.a}: ${op.block} at ${op.x},${op.y},${op.z} touches nothing`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("puts the aircraft light at the very top of a tall tower", () => {
+    const tall = build("skyscraper", [17, 90, 17], 20);
+    const top = tall.ops.filter((o) => o.y === tall.meta.roofTop);
+    expect(top.some((o) => o.block.includes("lantern"))).toBe(true);
   });
 });
 

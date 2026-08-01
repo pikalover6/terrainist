@@ -61,6 +61,7 @@ import type {
   Footprint,
   LocalRect,
   LocalVoxelOp,
+  OutlineCell,
   Put,
   ResolvedBuildingParams,
   Shell,
@@ -123,8 +124,8 @@ export function highriseArchetypeOfTags(tags: readonly string[]): HighriseArchet
  * an apartment block any more, it is a tower".
  */
 export const HIGHRISE_MAX_FLOORS: Readonly<Record<HighriseArchetype, number>> = Object.freeze({
-  skyscraper: 20,
-  office: 16,
+  skyscraper: 28,
+  office: 20,
   hotel: 14,
   apartment_block: 10,
 });
@@ -187,6 +188,54 @@ const BALCONY_PERIOD = 5;
 const HOTEL_BAY = 3;
 
 /* -------------------------------------------------------------------------- */
+/* the massing: setbacks                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Storeys from which a tower steps in rather than extruding one footprint.
+ *
+ * Below this the single shaft is right — a six-storey block with a setback is a
+ * wedding cake — and above it a straight extrusion is the thing that reads as
+ * generated: the same rectangle, ninety metres of it, stopping dead.
+ */
+export const SETBACK_MIN_FLOORS = 12;
+
+/** Storeys from which the tower takes a *second* step. */
+export const SETBACK_SECOND_FLOORS = 18;
+
+/** Columns each step takes off the footprint. */
+export const SETBACK_STEP = 2;
+
+/** Total columns the setbacks may take off, however many steps there are. */
+export const SETBACK_MAX_TOTAL = 4;
+
+/** Narrowest interior a stepped-in tier may leave, across the core's axis. */
+const MIN_TIER_INTERIOR_WIDTH = 5;
+
+/**
+ * One storey band of the massing: the footprint the shaft has over that band.
+ *
+ * The steps come off the **east and south** faces only, and that is a
+ * constraint rather than a style: the switchback core stands in the north-west
+ * corner of the interior (`cx = interior.x0`, running from `cz0 = interior.z0`),
+ * so a step taken off the north or the west would move the wall through the
+ * stair. Stepping the other two sides keeps every flight, every landing and
+ * every plate hole exactly where the storey below left them, which is what
+ * makes a stepped tower still a climbable one.
+ */
+interface Tier {
+  /** First storey (0-based) that uses this footprint. */
+  readonly startFloor: number;
+  /** Columns off the east and south faces, relative to the full footprint. */
+  readonly inset: number;
+  readonly interior: LocalRect;
+  readonly ring: readonly OutlineCell[];
+  readonly interiorCells: readonly { readonly x: number; readonly z: number }[];
+  /** Every built column of the tier — ring and interior. */
+  readonly built: ReadonlySet<string>;
+}
+
+/* -------------------------------------------------------------------------- */
 /* the grammar                                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -215,10 +264,22 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   const deck = style["roof.solid"] as string;
   const parapetCap = style["roof.slab"] as string;
 
-  const ring = r.shell.ring;
   const interior: LocalRect = { x0: 1, z0: 1, x1: sx - 2, z1: sz - 2 };
   const hasInterior = interior.x0 <= interior.x1 && interior.z0 <= interior.z1;
   const interiorCells = r.shell.interiorCells;
+
+  // The massing. One tier for anything short of `SETBACK_MIN_FLOORS`, in which
+  // case `tierOf` is a constant and every line below behaves exactly as it did
+  // before setbacks existed.
+  const tiers = planTiers(r.shell, sx, sz, floors, storey);
+  const tierOf = (s: number): Tier => {
+    let out = tiers[0] as Tier;
+    for (const t of tiers) if (s >= t.startFloor) out = t;
+    return out;
+  };
+  const topTier = tiers[tiers.length - 1] as Tier;
+  const interiorAt = (s: number): LocalRect => tierOf(s).interior;
+  const ringAt = (s: number): readonly OutlineCell[] => tierOf(s).ring;
 
   const wallAt = (x: number, y: number, z: number): string =>
     positionFloat(grammar, x, y, z) < ACCENT_SHARE ? accent : wall;
@@ -245,6 +306,37 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   const doorColumns = new Set<string>();
   if (door !== null) doorColumns.add(`${door.x},${door.z}`);
   if (secondLeaf !== null) doorColumns.add(`${secondLeaf.x},${secondLeaf.z}`);
+
+  /* --- the way out onto each setback terrace ------------------------------ */
+  // Two courses of the stepped-in tier's east wall, left open where the terrace
+  // is. Not decoration: the traversal simulation walks every standable cell of
+  // every storey from the front door, and the roof of the tier below *is* a
+  // standable cell of the storey the step happens on. A terrace with no way
+  // onto it is `traversal.unreachable`, and the honest fix is the one a real
+  // building uses — a door.
+  const terraceOpenings = new Set<string>();
+  /** Storeys a tier begins on: the terrace is on them, so a balcony is not. */
+  const stepStoreys = new Set<number>();
+  for (let i = 1; i < tiers.length; i++) {
+    const tier = tiers[i] as Tier;
+    const level = tier.startFloor * storey;
+    const gx = sx - 1 - tier.inset;
+    // Which row the door goes in is not free, and the fit-out decides it. A
+    // guest floor partitions at `z0 + 3k` and beds at `z0 + 1 + 3k`; an office
+    // plate desks at `z0 + 2 + 3k` against the same east wall the door is in.
+    // A door opening onto any of them is a door with a wall, a bed or a desk in
+    // front of it — reported, correctly, as a terrace nobody can reach — so the
+    // row is the one residue this building's own fit-out leaves clear.
+    const room = tier.interior;
+    const clearRow = archetype === "hotel" || archetype === "apartment_block" ? 2 : 1;
+    const middle = Math.floor((room.z0 + room.z1) / 2);
+    let gz = middle;
+    while (gz > room.z0 && (gz - room.z0 - clearRow) % HOTEL_BAY !== 0) gz--;
+    if (gz <= room.z0) gz = middle;
+    terraceOpenings.add(`${gx},${level + 1},${gz}`);
+    terraceOpenings.add(`${gx},${level + 2},${gz}`);
+    stepStoreys.add(tier.startFloor);
+  }
 
   /* --- foundation skirt --------------------------------------------------- */
   for (let d = 1; d <= r.foundationDepth; d++) {
@@ -277,11 +369,13 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   let windowCount = 0;
   for (let s = 0; s < floors; s++) {
     const base = s * storey;
+    const tier = tierOf(s);
     for (let y = base + 1; y <= base + storey; y++) {
       const head = y === base + storey;
       const spandrel = y === base + 1;
-      for (const cell of ring) {
+      for (const cell of tier.ring) {
         const key = `${cell.x},${cell.z}`;
+        if (terraceOpenings.has(`${cell.x},${y},${cell.z}`)) continue;
         if (cell.corner) {
           put(cell.x, y, cell.z, frame, { axis: "y" });
           continue;
@@ -369,9 +463,36 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
     const holeZ1 = canSwitchback ? (up ? cz0 + runLength : cz0 + runLength + 1) : cz0;
 
     // The plate, with the well left out of it.
-    for (const cell of interiorCells) {
+    const tier = tierOf(s);
+    for (const cell of tier.interiorCells) {
       if (cell.x === colX && cell.z >= holeZ0 && cell.z <= holeZ1) continue;
       put(cell.x, level, cell.z, plate);
+    }
+
+    // A step: the tier below stops here, so its roof becomes this storey's
+    // terrace — deck over the ground it kept, and a parapet on the wall head
+    // that is now an edge instead of a course.
+    const below = tierOf(s - 1);
+    if (below !== tier) {
+      // Everything the tier below covered that the plate above does not: the
+      // annulus that becomes the terrace, *and* the columns the stepped-in wall
+      // itself stands on. Miss the second and the doorway onto the terrace has
+      // no threshold — a hole in the floor exactly where the way out is, which
+      // is `traversal.unreachable` for every cell of the terrace.
+      for (const cell of below.interiorCells) {
+        const inside =
+          cell.x >= tier.interior.x0 &&
+          cell.x <= tier.interior.x1 &&
+          cell.z >= tier.interior.z0 &&
+          cell.z <= tier.interior.z1;
+        if (inside) continue;
+        put(cell.x, level, cell.z, deck);
+      }
+      for (const cell of below.ring) {
+        if (tier.built.has(`${cell.x},${cell.z}`)) continue;
+        put(cell.x, level + 1, cell.z, cell.corner ? frame : wall, cell.corner ? { axis: "y" } : undefined);
+        put(cell.x, level + 2, cell.z, parapetCap, { type: "bottom" });
+      }
     }
 
     stairRuns.push(base + 1);
@@ -419,22 +540,27 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   // A closed plate over the top storey first: the parapet stands on it, the
   // plant room stands on it, and without it the top floor's ceiling lights
   // hang from nothing.
+  const roofInterior = topTier.interior;
+  const roofWidth = roofInterior.x1 - roofInterior.x0 + 1;
+  const roofDepth = roofInterior.z1 - roofInterior.z0 + 1;
   if (hasInterior) {
-    for (const cell of interiorCells) put(cell.x, wallTop, cell.z, deck);
+    for (const cell of topTier.interiorCells) put(cell.x, wallTop, cell.z, deck);
   }
   // Parapet: one course of wall on the ring, capped with a slab, so the roof
   // line has a lip rather than stopping dead at the last glazing bar.
-  for (const cell of ring) {
+  for (const cell of topTier.ring) {
     put(cell.x, wallTop + 1, cell.z, cell.corner ? frame : wall, cell.corner ? { axis: "y" } : undefined);
     put(cell.x, wallTop + 2, cell.z, parapetCap, { type: "bottom" });
   }
   let roofTop = wallTop + 2;
+  /** The plant room's footprint, so the rest of the kit keeps off it. */
+  let plantRect: LocalRect | null = null;
   // The plant room: the box every real flat roof has, with a vent hood on it.
-  if (hasInterior && interiorWidth >= 5 && interiorDepth >= 5) {
-    const px0 = Math.max(interior.x0 + 1, Math.floor((interior.x0 + interior.x1) / 2) - 1);
-    const pz0 = Math.max(interior.z0 + 1, Math.floor((interior.z0 + interior.z1) / 2) - 1);
-    const px1 = Math.min(interior.x1 - 1, px0 + 2);
-    const pz1 = Math.min(interior.z1 - 1, pz0 + 2);
+  if (hasInterior && roofWidth >= 5 && roofDepth >= 5) {
+    const px0 = Math.max(roofInterior.x0 + 1, Math.floor((roofInterior.x0 + roofInterior.x1) / 2) - 1);
+    const pz0 = Math.max(roofInterior.z0 + 1, Math.floor((roofInterior.z0 + roofInterior.z1) / 2) - 1);
+    const px1 = Math.min(roofInterior.x1 - 1, px0 + 2);
+    const pz1 = Math.min(roofInterior.z1 - 1, pz0 + 2);
     for (let y = wallTop + 1; y <= wallTop + 3; y++) {
       for (let z = pz0; z <= pz1; z++) {
         for (let x = px0; x <= px1; x++) {
@@ -451,6 +577,22 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
     put(vx, wallTop + 5, vz, style["stone.wall"] as string, { up: "true", waterlogged: "false" });
     put(vx, wallTop + 6, vz, style["light.lantern"] as string, { hanging: "false" });
     roofTop = wallTop + 6;
+    plantRect = { x0: px0, z0: pz0, x1: px1, z1: pz1 };
+  }
+  // The rest of the kit, scaled by how tall the building actually is.
+  if (hasInterior) {
+    roofTop = Math.max(
+      roofTop,
+      dressRoof({
+        put,
+        style,
+        choice,
+        interior: roofInterior,
+        wallTop,
+        floors,
+        avoid: plantRect,
+      }),
+    );
   }
 
   /* --- the lobby ---------------------------------------------------------- */
@@ -489,7 +631,7 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
       furnitureCount += fitHotel({
         put,
         style,
-        interior,
+        interiorAt,
         floors,
         storey,
         cx,
@@ -499,13 +641,23 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
       });
     }
     if (archetype === "apartment_block") {
-      apronOps += fitBalconies({ put, style, ring, floors, storey, sx, sz, doorColumns });
+      apronOps += fitBalconies({
+        put,
+        style,
+        ringAt,
+        floors,
+        storey,
+        sx,
+        sz,
+        doorColumns,
+        skipStoreys: stepStoreys,
+      });
     }
     if (archetype !== "hotel" && archetype !== "apartment_block") {
       furnitureCount += fitOfficePlate({
         put,
         style,
-        interior,
+        interiorAt,
         floors,
         storey,
         cx,
@@ -524,10 +676,13 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   // top one.
   let lanternCount = 0;
   if (hasInterior) {
-    // Clear of both flights of the core, whose plates are holed.
-    const lx = Math.min(cx + 2, interior.x1);
-    const lz = Math.floor((interior.z0 + interior.z1) / 2);
     for (let s = 0; s < floors; s++) {
+      // Clear of both flights of the core, whose plates are holed — and inside
+      // this storey's own tier, because a light hung where the tower has
+      // stepped in is a light hung in the open air.
+      const room = interiorAt(s);
+      const lx = Math.min(cx + 2, room.x1);
+      const lz = Math.floor((room.z0 + room.z1) / 2);
       const y = (s + 1) * storey - 1;
       put(lx, y, lz, style["light.lantern"] as string, { hanging: "true" });
       lanternCount++;
@@ -535,7 +690,20 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
   }
 
   /* --- what was built ----------------------------------------------------- */
-  const floorCells = interiorCells.filter((c) => !partitionColumns.has(`${c.x},${c.z}`));
+  // A stepped tier's wall stands on a column that was floor lower down, so the
+  // same rule the partitions taught applies to it: a wall is not floor. Left in
+  // `floorCells` it is a column solid from plate to plate for every storey above
+  // the step — `interior.blocked_column`, hundreds of times over on one tower.
+  // The terrace *deck* stays in, because a terrace is somewhere you can stand
+  // and the tier's door is what makes it somewhere you can get to.
+  const tierWallColumns = new Set<string>();
+  for (const tier of tiers) {
+    if (tier.inset === 0) continue;
+    for (const cell of tier.ring) tierWallColumns.add(`${cell.x},${cell.z}`);
+  }
+  const floorCells = interiorCells.filter(
+    (c) => !partitionColumns.has(`${c.x},${c.z}`) && !tierWallColumns.has(`${c.x},${c.z}`),
+  );
   const meta: BuildingMeta = {
     params: r.params,
     size: [sx, sy, sz],
@@ -571,7 +739,8 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
 interface HotelRequest {
   readonly put: Put;
   readonly style: Readonly<Record<string, string>>;
-  readonly interior: LocalRect;
+  /** This storey's plate — the tier's, not the tower's, once it has stepped in. */
+  readonly interiorAt: (storeyIndex: number) => LocalRect;
   readonly floors: number;
   readonly storey: number;
   readonly cx: number;
@@ -591,19 +760,20 @@ interface HotelRequest {
  * is wall, and wall is not floor — is applied to every column of it either way.
  */
 function fitHotel(r: HotelRequest): number {
-  const { put, style, interior, floors, storey, cx } = r;
+  const { put, style, floors, storey, cx } = r;
   // Three columns of circulation, not two: `cx` and `cx + 1` are the two
   // flights of the switchback and each of them is a hole in the plate on the
   // storey it arrives at, so neither can be the corridor a room opens onto. A
   // bay whose only western neighbour is a stairwell is a room with no door.
   const roomX0 = cx + 3;
-  if (roomX0 > interior.x1) return 0;
   const wall = style["wall.primary"] as string;
   const beds = ["red_bed", "white_bed", "light_gray_bed", "blue_bed"] as const;
   let n = 0;
 
   for (let s = 1; s < floors; s++) {
     const level = s * storey;
+    const interior = r.interiorAt(s);
+    if (roomX0 > interior.x1) continue;
     // Partitions at every bay line, full height under the plate above. The
     // top course is deliberately included: a partition that stops short is a
     // hotel room with a transom you can walk over.
@@ -632,7 +802,8 @@ function fitHotel(r: HotelRequest): number {
 interface OfficeRequest {
   readonly put: Put;
   readonly style: Readonly<Record<string, string>>;
-  readonly interior: LocalRect;
+  /** This storey's plate — the tier's, not the tower's, once it has stepped in. */
+  readonly interiorAt: (storeyIndex: number) => LocalRect;
   readonly floors: number;
   readonly storey: number;
   readonly cx: number;
@@ -648,12 +819,13 @@ interface OfficeRequest {
  * usable.
  */
 function fitOfficePlate(r: OfficeRequest): number {
-  const { put, style, interior, floors, storey } = r;
+  const { put, style, floors, storey } = r;
   const desk = style["stone.slab"] as string;
-  if (interior.x1 <= r.cx + 1) return 0;
   let n = 0;
   for (let s = 0; s < floors; s++) {
     const level = s * storey;
+    const interior = r.interiorAt(s);
+    if (interior.x1 <= r.cx + 1) continue;
     // From `z0 + 2`, not `z0 + 1`: the lobby counter runs along the `z0` row,
     // and a desk one cell diagonally off its end boxes the corner cell in
     // between them — a top slab is not a cell a player fits in, so two of them
@@ -670,12 +842,21 @@ function fitOfficePlate(r: OfficeRequest): number {
 interface BalconyRequest {
   readonly put: Put;
   readonly style: Readonly<Record<string, string>>;
-  readonly ring: readonly { readonly x: number; readonly z: number; readonly corner: boolean; readonly alongX: boolean; readonly outward: Cardinal }[];
+  /** This storey's outline — the tier's, once the tower has stepped in. */
+  readonly ringAt: (
+    storeyIndex: number,
+  ) => readonly { readonly x: number; readonly z: number; readonly corner: boolean; readonly alongX: boolean; readonly outward: Cardinal }[];
   readonly floors: number;
   readonly storey: number;
   readonly sx: number;
   readonly sz: number;
   readonly doorColumns: ReadonlySet<string>;
+  /**
+   * Storeys that start a tier. No balcony on those: the tier below's roof is
+   * right there, and a rail hung across a terrace is a rail across the only way
+   * round it.
+   */
+  readonly skipStoreys: ReadonlySet<number>;
 }
 
 /**
@@ -687,13 +868,14 @@ interface BalconyRequest {
  * band they hang off, and the bars stand on the slabs.
  */
 function fitBalconies(r: BalconyRequest): number {
-  const { put, style, ring, floors, storey } = r;
+  const { put, style, floors, storey } = r;
   const deckSlab = style["roof.slab"] as string;
   const bars = style["wall.fence"] as string;
   let n = 0;
   for (let s = 1; s < floors; s++) {
+    if (r.skipStoreys.has(s)) continue;
     const level = s * storey;
-    for (const cell of ring) {
+    for (const cell of r.ringAt(s)) {
       if (cell.corner) continue;
       if (r.doorColumns.has(`${cell.x},${cell.z}`)) continue;
       const index = cell.alongX ? cell.x : cell.z;
@@ -711,6 +893,177 @@ function fitBalconies(r: BalconyRequest): number {
     }
   }
   return n;
+}
+
+interface RoofKitRequest {
+  readonly put: Put;
+  readonly style: Readonly<Record<string, string>>;
+  readonly choice: Seed256;
+  /** The top tier's interior — the deck the kit stands on. */
+  readonly interior: LocalRect;
+  readonly wallTop: number;
+  readonly floors: number;
+  /** The plant room, when there is one: nothing else may stand on it. */
+  readonly avoid: LocalRect | null;
+}
+
+/**
+ * The rooftop kit, and the reason a tall building has a silhouette.
+ *
+ * A flat deck with a parapet round it is a plinth. What makes a roof read from
+ * the street two blocks away is the clutter on it — condenser banks, a water
+ * tank, the lift overrun, a mast — and what makes a *skyline* read is that the
+ * clutter scales: a four-storey block gets a vent, and a twenty-five-storey
+ * tower gets a stepped crown with a light on top of it.
+ *
+ * So the kit is gated on storeys, not on taste:
+ *
+ * - **condensers** (always) — two courses of slab, the roof plant of every
+ *   commercial building ever built;
+ * - **a water tank** (6+) — a capped box, offset from centre;
+ * - **a lift overrun** (9+) — the box the stair and the lift come up inside,
+ *   the tallest thing on most real roofs;
+ * - **a mast** (13+) — on the overrun, with the aircraft light on top;
+ * - **signage** (11+) — two courses of accent standing on the parapet cap on
+ *   one face, which is what gives a tower an address at distance;
+ * - **a helipad** (19+, and only on a roof with room for one) — a five-square
+ *   of raised slab with a ring of corner markers.
+ *
+ * Every block stands on the deck or on the thing below it. The rooftop is the
+ * classic source of `floating.isolated` and `unsupported.lantern` findings
+ * precisely because it is the one place a generator stops thinking about
+ * gravity, so nothing here is placed without something under it.
+ */
+function dressRoof(r: RoofKitRequest): number {
+  const { put, style, interior, wallTop, floors } = r;
+  const width = interior.x1 - interior.x0 + 1;
+  const depth = interior.z1 - interior.z0 + 1;
+  if (width < 3 || depth < 3) return wallTop + 2;
+
+  const wall = style["wall.primary"] as string;
+  const accent = style["wall.accent"] as string;
+  const deck = style["roof.solid"] as string;
+  const slab = style["stone.slab"] as string;
+  const cap = style["roof.slab"] as string;
+  const post = style["stone.wall"] as string;
+  const clear = (x0: number, z0: number, x1: number, z1: number): boolean => {
+    if (x0 < interior.x0 || z0 < interior.z0 || x1 > interior.x1 || z1 > interior.z1) return false;
+    const a = r.avoid;
+    if (a === null) return true;
+    return x1 < a.x0 || x0 > a.x1 || z1 < a.z0 || z0 > a.z1;
+  };
+  let top = wallTop + 2;
+
+  // --- condenser banks ------------------------------------------------------
+  // One per five storeys, capped at four, walked along the roof's north edge
+  // and skipped wherever the plant room already stands. Two courses of slab so
+  // they read as boxes rather than as a patch of different floor.
+  const banks = Math.min(4, 1 + Math.floor(floors / 5));
+  let placed = 0;
+  for (let i = 0; i < banks * 2 && placed < banks; i++) {
+    const x0 = interior.x0 + 1 + i * 3;
+    const z0 = interior.z0 + (i % 2 === 0 ? 1 : depth - 3);
+    if (!clear(x0, z0, x0 + 1, z0 + 1)) continue;
+    for (let z = z0; z <= z0 + 1; z++) {
+      for (let x = x0; x <= x0 + 1; x++) {
+        put(x, wallTop + 1, z, slab, { type: "double" });
+        put(x, wallTop + 2, z, cap, { type: "bottom" });
+      }
+    }
+    placed++;
+    top = Math.max(top, wallTop + 2);
+  }
+
+  // --- the water tank -------------------------------------------------------
+  if (floors >= 6 && clear(interior.x1 - 2, interior.z1 - 2, interior.x1, interior.z1)) {
+    for (let y = wallTop + 1; y <= wallTop + 3; y++) {
+      for (let z = interior.z1 - 2; z <= interior.z1; z++) {
+        for (let x = interior.x1 - 2; x <= interior.x1; x++) put(x, y, z, accent);
+      }
+    }
+    for (let z = interior.z1 - 2; z <= interior.z1; z++) {
+      for (let x = interior.x1 - 2; x <= interior.x1; x++) {
+        put(x, wallTop + 4, z, cap, { type: "bottom" });
+      }
+    }
+    top = Math.max(top, wallTop + 4);
+  }
+
+  // --- the lift overrun, and the mast on it ---------------------------------
+  // Over the core's own corner of the plan, which is where the shaft that needs
+  // an overrun actually is.
+  if (floors >= 9 && clear(interior.x0, interior.z0, interior.x0 + 2, interior.z0 + 2)) {
+    const ox1 = interior.x0 + 2;
+    const oz1 = interior.z0 + 2;
+    const height = floors >= 16 ? 5 : 4;
+    for (let y = wallTop + 1; y <= wallTop + height; y++) {
+      for (let z = interior.z0; z <= oz1; z++) {
+        for (let x = interior.x0; x <= ox1; x++) {
+          const edge = x === interior.x0 || x === ox1 || z === interior.z0 || z === oz1;
+          if (edge) put(x, y, z, y === wallTop + height ? accent : wall);
+        }
+      }
+    }
+    for (let z = interior.z0; z <= oz1; z++) {
+      for (let x = interior.x0; x <= ox1; x++) put(x, wallTop + height + 1, z, deck);
+    }
+    top = Math.max(top, wallTop + height + 1);
+
+    if (floors >= 13) {
+      const mx = interior.x0 + 1;
+      const mz = interior.z0 + 1;
+      const mast = Math.min(11, 4 + Math.floor(floors / 3));
+      for (let i = 1; i <= mast; i++) {
+        put(mx, wallTop + height + 1 + i, mz, post, { up: "true", waterlogged: "false" });
+      }
+      put(mx, wallTop + height + mast + 2, mz, style["light.lantern"] as string, {
+        hanging: "false",
+      });
+      top = Math.max(top, wallTop + height + mast + 2);
+    }
+  }
+
+  // --- signage --------------------------------------------------------------
+  // Standing on the parapet cap along the south face, so it faces the street a
+  // door on the south side opens onto. Two courses, three to five bays wide,
+  // and its length is the one thing here the seed chooses.
+  if (floors >= 11) {
+    const z = interior.z1 + 1;
+    const span = 3 + Math.floor(positionFloat(r.choice, interior.x0, wallTop, z) * 3);
+    const x0 = Math.max(interior.x0, Math.floor((interior.x0 + interior.x1) / 2) - (span >> 1));
+    const x1 = Math.min(interior.x1, x0 + span - 1);
+    for (let x = x0; x <= x1; x++) {
+      put(x, wallTop + 3, z, accent);
+      put(x, wallTop + 4, z, x === x0 || x === x1 ? accent : wall);
+    }
+    top = Math.max(top, wallTop + 4);
+  }
+
+  // --- the helipad ----------------------------------------------------------
+  if (floors >= 19 && width >= 11 && depth >= 11) {
+    const x0 = interior.x1 - 5;
+    const z0 = interior.z0 + 2;
+    if (clear(x0, z0, x0 + 4, z0 + 4)) {
+      for (let z = z0; z <= z0 + 4; z++) {
+        for (let x = x0; x <= x0 + 4; x++) {
+          const rim = x === x0 || x === x0 + 4 || z === z0 || z === z0 + 4;
+          put(x, wallTop + 1, z, rim ? cap : slab, { type: rim ? "bottom" : "top" });
+        }
+      }
+      // Four corner markers, so the pad reads as a pad and not as a patch.
+      for (const [dx, dz] of [
+        [0, 0],
+        [4, 0],
+        [0, 4],
+        [4, 4],
+      ] as const) {
+        put(x0 + dx, wallTop + 2, z0 + dz, post, { up: "true", waterlogged: "false" });
+      }
+      top = Math.max(top, wallTop + 2);
+    }
+  }
+
+  return top;
 }
 
 interface CounterRequest {
@@ -739,6 +1092,115 @@ function fitLobbyCounter(r: CounterRequest): number {
     n++;
   }
   return n;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the massing                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The storey bands of the shaft, ground tier first.
+ *
+ * A short tower gets one tier and is byte-identical to what this grammar built
+ * before setbacks existed. A tall one gets one or two steps, placed at 55 % and
+ * 80 % of its height — high enough that the podium reads as the body of the
+ * building and the steps as its crown.
+ *
+ * Every step is bounded by what the plan can still hold: an interior at least
+ * {@link MIN_TIER_INTERIOR_WIDTH} across, and at least `coreDepthFor(storey)`
+ * deep, because the switchback needs its run. A footprint that cannot pay for a
+ * step does not take one.
+ */
+export function planTiers(
+  shell: Shell,
+  sx: number,
+  sz: number,
+  floors: number,
+  storey: number,
+): Tier[] {
+  // The ground tier is the shell exactly as traced, not a re-derivation of it:
+  // a tower that takes no step has to come out byte-identical to the one this
+  // grammar built before setbacks existed.
+  const base: Tier = {
+    startFloor: 0,
+    inset: 0,
+    interior: { x0: 1, z0: 1, x1: sx - 2, z1: sz - 2 },
+    ring: shell.ring,
+    interiorCells: shell.interiorCells,
+    built: new Set(shell.cells.map((c) => `${c.x},${c.z}`)),
+  };
+  const room = Math.min(
+    SETBACK_MAX_TOTAL,
+    sx - 2 - MIN_TIER_INTERIOR_WIDTH,
+    sz - 2 - coreDepthFor(storey),
+  );
+  if (floors < SETBACK_MIN_FLOORS || room < 1) return [base];
+
+  // A step is two columns or it is nothing. One column leaves a terrace exactly
+  // as wide as its own parapet — a ledge, with the door onto it opening into a
+  // wall — so a footprint that can only pay for one column stays a straight
+  // shaft.
+  if (room < SETBACK_STEP) return [base];
+  const insets: number[] =
+    room >= 2 * SETBACK_STEP && floors >= SETBACK_SECOND_FLOORS
+      ? [SETBACK_STEP, 2 * SETBACK_STEP]
+      : [SETBACK_STEP];
+
+  const out: Tier[] = [base];
+  let previousStart = 0;
+  for (const [i, inset] of insets.entries()) {
+    const share = insets.length === 1 ? 0.62 : 0.55 + 0.25 * i;
+    const start = Math.round(floors * share);
+    // Two storeys minimum per tier: a one-storey crown is a hat, and a tier
+    // that starts at the top storey is a parapet with extra steps.
+    if (start < previousStart + 2 || start > floors - 2) continue;
+    out.push(rectTier(start, sx, sz, inset));
+    previousStart = start;
+  }
+  return out;
+}
+
+/**
+ * A rectangular tier: the full footprint with `inset` columns taken off the
+ * east and south faces.
+ *
+ * Traced by hand rather than through `traceShell`, which lives in `core.ts` and
+ * would turn this file's type-only dependency into a runtime import cycle. On a
+ * rect the two agree exactly: same canonical `(z, x)` order, same corner rule,
+ * same `alongX`, and the same north-before-south-before-west-before-east
+ * outward priority.
+ */
+function rectTier(startFloor: number, sx: number, sz: number, inset: number): Tier {
+  const x1 = sx - 1 - inset;
+  const z1 = sz - 1 - inset;
+  const ring: OutlineCell[] = [];
+  const interiorCells: { x: number; z: number }[] = [];
+  const built = new Set<string>();
+  for (let z = 0; z <= z1; z++) {
+    for (let x = 0; x <= x1; x++) {
+      built.add(`${x},${z}`);
+      const onZ = z === 0 || z === z1;
+      const onX = x === 0 || x === x1;
+      if (!onZ && !onX) {
+        interiorCells.push({ x, z });
+        continue;
+      }
+      const blocked: Cardinal[] = [];
+      if (z === 0) blocked.push("north");
+      if (z === z1) blocked.push("south");
+      if (x === 0) blocked.push("west");
+      if (x === x1) blocked.push("east");
+      ring.push({ x, z, blocked, corner: onZ && onX, alongX: onZ, outward: blocked[0] as Cardinal });
+    }
+  }
+  return {
+    startFloor,
+    inset,
+    interior: { x0: 1, z0: 1, x1: x1 - 1, z1: z1 - 1 },
+    ring,
+    interiorCells,
+    built,
+  };
 }
 
 /* -------------------------------------------------------------------------- */

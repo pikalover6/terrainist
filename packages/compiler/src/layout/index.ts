@@ -32,6 +32,7 @@ export * from "./fitness.js";
 export * from "./frames.js";
 export * from "./from-document.js";
 export * from "./ports.js";
+export * from "./prominence.js";
 export * from "./solve.js";
 export * from "./types.js";
 

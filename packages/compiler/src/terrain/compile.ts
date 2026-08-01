@@ -511,6 +511,7 @@ async function compileValidated(
       doc,
       worldSeed,
       field: terrain.field,
+      seaLevel: terrain.params.seaLevel,
       placements: solved.placements,
     });
     diagnostics.push(...fabric.diagnostics);
