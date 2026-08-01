@@ -54,6 +54,8 @@ export interface AuthorRequest {
   readonly kitName?: KitName;
   /** Override the pinned model. */
   readonly model?: string;
+  /** Override the reasoning effort sent to OpenRouter. */
+  readonly reasoningEffort?: string;
   /** Maximum attempts, initial included. */
   readonly maxAttempts?: number;
   /** Injected for tests; defaults to the global `fetch`. */
@@ -76,6 +78,8 @@ export interface ReviseRequest {
   readonly size: number;
   readonly kitName?: KitName;
   readonly model?: string;
+  /** Override the reasoning effort sent to OpenRouter. */
+  readonly reasoningEffort?: string;
   readonly maxAttempts?: number;
   readonly fetchImpl?: FetchLike;
   readonly apiKey?: string;
@@ -152,6 +156,7 @@ export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResul
     size,
     worldSeed: request.worldSeed,
     model: request.model ?? GLM_MODEL_ID,
+    reasoningEffort: request.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
     maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
     ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
   });
@@ -185,6 +190,7 @@ export async function reviseLoamDoc(request: ReviseRequest): Promise<AuthorResul
     size: request.size,
     worldSeed: request.worldSeed,
     model: request.model ?? GLM_MODEL_ID,
+    reasoningEffort: request.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
     maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
     ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
   });
@@ -199,6 +205,7 @@ interface LoopOptions {
   readonly size: number;
   readonly worldSeed: number | string;
   readonly model: string;
+  readonly reasoningEffort: string;
   readonly maxAttempts: number;
   readonly fetchImpl?: FetchLike;
 }
@@ -215,7 +222,7 @@ async function runAuthorLoop(options: LoopOptions): Promise<AuthorResult> {
       model: options.model,
       messages,
       temperature: AUTHORING_TEMPERATURE,
-      reasoningEffort: AUTHORING_REASONING_EFFORT,
+      reasoningEffort: options.reasoningEffort,
       ...(options.fetchImpl === undefined ? {} : { fetchImpl: options.fetchImpl }),
     });
 

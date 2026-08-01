@@ -1,0 +1,723 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "frost_hollow",
+    "worldSeed": "9444934993714662593",
+    "prompt": "A snowbound alpine mining town strung along a steep valley, with a frozen tarn, tunnels into the mountainside, and a timber church above the rooftops",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:snow_block",
+      "ground.underwater": "minecraft:packed_ice"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Frost Hollow — a snowbound mining town in a steep alpine valley",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "ridged alpine mountains with a low snow line",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 96,
+          "amplitude": 78,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": true,
+          "warp": {
+            "amount": 30,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 0.32
+        },
+        "children": [
+          {
+            "id": "the_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep valley the town is strung along",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.06,
+                  0.52
+                ],
+                [
+                  0.28,
+                  0.47
+                ],
+                [
+                  0.52,
+                  0.53
+                ],
+                [
+                  0.76,
+                  0.48
+                ],
+                [
+                  0.94,
+                  0.54
+                ]
+              ],
+              "width": 36,
+              "depth": 52,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "frozen_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the frozen tarn above the town",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.26,
+                0.34
+              ],
+              "radius": 72,
+              "depth": 5,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a level shelf in the valley for the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 110,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "church_knoll",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the knoll the church stands on",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.74,
+                0.24
+              ],
+              "radius": 52,
+              "height": 14,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "latitudeGradient": -0.6,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "alpine_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "hardy spruce clinging to the lower slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.07,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.01,
+            "deadwood": 0.05
+          },
+          "species": [
+            {
+              "id": "alpine_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "scrub_pine",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "town_square",
+        "kind": "primitive",
+        "label": "the mining town's square",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            20,
+            20
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "mine_head",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the headframe over the main shaft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "beside": "the_valley",
+            "offset": [
+              5,
+              18
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "town_square",
+            "min": 12,
+            "max": 55
+          },
+          {
+            "connected": "assay_office",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head"
+        ]
+      },
+      {
+        "id": "assay_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the assay office where the ore is weighed",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "beside": "the_valley",
+            "offset": [
+              5,
+              18
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "mine_head",
+            "min": 12,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "ore_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the ore store, tunnelled back to the mine",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4
+          }
+        },
+        "constraints": [
+          {
+            "beside": "the_valley",
+            "offset": [
+              5,
+              18
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "mine_head",
+            "min": 10,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "connected": "mine_head",
+            "via": "tunnel",
+            "style": "mine",
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse"
+        ]
+      },
+      {
+        "id": "cottage_one",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a miner's cottage by the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_square",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_two",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a two-storey cottage on the lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_square",
+            "gap": [
+              1,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_three",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the far cottage down the valley",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "beside": "the_valley",
+            "offset": [
+              3,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "town_square",
+            "min": 22,
+            "max": 75
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "miners_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the miners' tavern on the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_square",
+            "gap": [
+              2,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "hill_church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the timber church above the rooftops",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "town_square",
+            "min": 25,
+            "max": 100,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 8,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lanes strung along the valley",
+        "params": {
+          "anchors": [
+            "town_square",
+            "#tag:house",
+            "mine_head",
+            "assay_office",
+            "ore_store",
+            "miners_tavern",
+            "hill_church"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "square_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "mine_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cairn",
+          "zone": "east",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "valley_signpost",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "signpost",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "square_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      }
+    ]
+  }
+}

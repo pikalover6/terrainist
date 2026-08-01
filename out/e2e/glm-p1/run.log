@@ -1,0 +1,21 @@
+prompt     A prosperous river-delta trading city with a walled old town, a working harbour, and farmland on the floodplain
+seed       5701942714392138513
+size       512x512
+model      z-ai/glm-5.2
+effort     high
+kit        settlement
+
+authored with z-ai/glm-5.2 in 1 attempt(s)
+  attempt 1   valid
+  tokens     49074 in + 25970 out = 75044  ($0.1830)
+  document   /home/user/terrainist/out/e2e/glm-p1/delta_trade_city.loam.json
+
+
+terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.
+The authored document is legal Loam; the compiler still emitted a world that
+breaks its own invariants. Do not re-prompt: file this against the compiler,
+with the document at /home/user/terrainist/out/e2e/glm-p1/delta_trade_city.loam.json.
+
+error LOAM-T110 UNSTABLE_FLUID at <document>: 77 fluid blocks would flow on the first tick — e.g. water at (-70, 63, -62); water at (-70, 63, -61); water at (-70, 63, -60); water at (-69, 63, -59); water at (-69, 63, -58); water at (-69, 63, -57); water at (-69, 63, -56); water at (-69, 63, -55)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+

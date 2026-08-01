@@ -1,0 +1,70 @@
+prompt     A half-abandoned desert oasis town: a spring-fed palm garden at the centre, a ruined quarter crumbling at the edge, and caravan camps outside the walls
+seed       601762957916649228
+size       512x512
+model      z-ai/glm-5.2
+effort     high
+kit        settlement
+
+authored with z-ai/glm-5.2 in 1 attempt(s)
+  attempt 1   valid
+  tokens     49085 in + 13750 out = 62835  ($0.0365)
+  document   /home/user/terrainist/out/e2e/glm-p3/oasis_ruin.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 9 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_well: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.oasis_well: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.caravanserai: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.caravanserai: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_olive: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_olive: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_olive: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.ruined_cottage_2: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.ruined_cottage_2: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+
+Layout solver report:
+
+  world.oasis_well: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+  world.caravanserai: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.11)
+  world.cottage_olive: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+  world.ruined_cottage_2: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.60)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     52426 in + 3018 out = 55444  ($0.0138)
+
+compiled "oasis_ruin" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/glm-p3/oasis_ruin
+  seed       601762957916649228
+  region     512x512 at (-256, -256)
+  heights    66.4..81.4  sea 63  snow line 80.6
+  land       100.0% of columns above sea level
+  biomes     stony_peaks 45.0%, forest 33.6%, windswept_hills 20.5%, plains 0.6%, beach 0.2%, river 0.1%
+  trees      2178 (oasis_palms=115, desert_scrub=2144)
+  chunks     1024
+  blocks     36623221 (85822 vegetation)
+  markers    8
+  spawn      [0, 79, 0]
+  timings    validate 1ms  field 249ms  layout 186ms  climate 106ms  columns 76ms  caves 0ms  structures 2384ms  scatter 942ms  biomes 24ms  validators 6ms  emit 4130ms  total 8184ms
+  zip        /home/user/terrainist/out/e2e/glm-p3/oasis_ruin.zip
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+  authoring  2 model run(s), 1 compile-feedback round(s), 101511 in + 16768 out = 118279 tokens ($0.0503)
+
+next: terrainist install /home/user/terrainist/out/e2e/glm-p3/oasis_ruin

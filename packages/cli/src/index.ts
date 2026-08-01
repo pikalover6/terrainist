@@ -128,6 +128,7 @@ generate options:
                     layout node — go back to the model for a revision.
   --keep-doc        Keep the authored .loam.json after a successful compile.
   --model <id>      Override the pinned authoring model.
+  --effort <level>  Reasoning effort: low, medium, high (default), xhigh, max.
   Requires OPENROUTER_API_KEY in the repo-root .env or the environment.
 
 install options:
@@ -773,6 +774,7 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
         size: options.size,
         kitName: session.kitName,
         model: options.model,
+        reasoningEffort: options.effort,
       });
     } catch (err) {
       if (err instanceof AuthoringFailedError) {

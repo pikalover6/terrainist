@@ -1,0 +1,108 @@
+prompt     A snowbound alpine mining town strung along a steep valley, with a frozen tarn, tunnels into the mountainside, and a timber church above the rooftops
+seed       9444934993714662593
+size       512x512
+model      z-ai/glm-5.2
+effort     high
+kit        settlement
+
+authored with z-ai/glm-5.2 in 1 attempt(s)
+  attempt 1   valid
+  tokens     49091 in + 12479 out = 61570  ($0.0411)
+  document   /home/user/terrainist/out/e2e/glm-p2/frost_hollow.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 17 problem(s) with the compiled world:
+
+note LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.frozen_tarn: basin rim is not closed; filled to the highest fluid-stable level instead, water surface y=127 over 7 columns
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.assay_office: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.assay_office: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.ore_store: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.ore_store: hard "connected" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.ore_store: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_one: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_one: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_two: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_two: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cottage_two: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_tavern: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_tavern: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.miners_tavern: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hill_church: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hill_church: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.hill_church: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+Layout solver report:
+
+  world.assay_office: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.16)
+  world.ore_store: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.14)
+  world.cottage_one: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.16)
+  world.cottage_two: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+  world.miners_tavern: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.10)
+  world.hill_church: placed after constraint_demoted, constraint_demoted, unsatisfiable (388 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.14)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     52898 in + 3330 out = 56228  ($0.0202)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+note LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.frozen_tarn: basin rim is not closed; filled to the highest fluid-stable level instead, water surface y=139 over 5 columns
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+
+  revision 2 authored in 1 attempt(s)
+  tokens     55282 in + 2243 out = 57525  ($0.0182)
+
+compiled "frost_hollow" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/glm-p2/frost_hollow
+  seed       9444934993714662593
+  region     512x512 at (-256, -256)
+  heights    8.4..181.0  sea 63  snow line 100.8
+  land       81.9% of columns above sea level
+  biomes     windswept_hills 29.6%, snowy_slopes 20.8%, plains 17.1%, cold_ocean 13.1%, stony_peaks 7.8%, taiga 7.3%, deep_cold_ocean 2.6%, snowy_beach 1.5%, ocean 0.1%, beach 0.0%, river 0.0%
+  trees      1188 (alpine_woods=1190)
+  chunks     1024
+  blocks     44346796 (99060 vegetation)
+  markers    77
+  spawn      [0, 181, 0]
+  timings    validate 1ms  field 955ms  layout 438ms  climate 169ms  columns 99ms  caves 0ms  structures 2826ms  scatter 2004ms  biomes 33ms  validators 96ms  emit 4814ms  total 11495ms
+  zip        /home/user/terrainist/out/e2e/glm-p2/frost_hollow.zip
+
+note LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.frozen_tarn: basin rim is not closed; filled to the highest fluid-stable level instead, water surface y=140 over 55 columns
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E180 TUNNEL_UNROUTABLE at world.ore_store__mine_head: no route between the cellars of "world.ore_store" and "world.mine_head" clears the caves, water and foundations between them
+  fix: move one of the two buildings — a shorter or straighter line between them is what this needs; the solver report shows what is pinning each one where it is
+  authoring  3 model run(s), 2 compile-feedback round(s), 157271 in + 18052 out = 175323 tokens ($0.0795)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /home/user/terrainist/out/e2e/glm-p2/frost_hollow

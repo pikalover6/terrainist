@@ -18,6 +18,7 @@ import path from "node:path";
 import {
   authorLoamDoc,
   AuthoringFailedError,
+  AUTHORING_REASONING_EFFORT,
   DEFAULT_KIT,
   GLM_MODEL_ID,
   MAX_COMPILE_ROUNDS,
@@ -36,11 +37,16 @@ export interface GenerateOptions {
   readonly zip: boolean;
   readonly allowUnstable: boolean;
   readonly model: string;
+  /** Reasoning effort sent to OpenRouter. */
+  readonly effort: string;
   /** Which spec kit authors the document. */
   readonly kit: KitName;
   /** How many compile-feedback revision rounds the document gets. */
   readonly compileRounds: number;
 }
+
+/** The reasoning-effort levels OpenRouter's unified `reasoning` parameter accepts. */
+export const EFFORT_LEVELS: readonly string[] = ["low", "medium", "high", "xhigh", "max"];
 
 /** The prompt-derived default seed: BLAKE3 of the prompt, as a decimal string. */
 export function seedFromPrompt(prompt: string): string {
@@ -57,6 +63,7 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
   let zip = true;
   let allowUnstable = false;
   let model = GLM_MODEL_ID;
+  let effort = AUTHORING_REASONING_EFFORT;
   let kit: KitName = DEFAULT_KIT;
   let compileRounds = MAX_COMPILE_ROUNDS;
 
@@ -81,6 +88,12 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
       outDir = next();
     } else if (arg === "--model") {
       model = next();
+    } else if (arg === "--effort") {
+      const value = next();
+      if (!EFFORT_LEVELS.includes(value)) {
+        throw new Error(`--effort must be one of ${EFFORT_LEVELS.join(", ")}`);
+      }
+      effort = value;
     } else if (arg === "--kit") {
       const value = next();
       if (value !== "terrain" && value !== "settlement") {
@@ -121,6 +134,7 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
     zip,
     allowUnstable,
     model,
+    effort,
     kit,
     compileRounds,
   };
@@ -177,6 +191,7 @@ export async function authorAndWriteDocument(
       `seed       ${options.seed}`,
       `size       ${options.size}x${options.size}`,
       `model      ${options.model}`,
+      `effort     ${options.effort}`,
       `kit        ${options.kit}`,
       "",
     ].join("\n"),
@@ -189,6 +204,7 @@ export async function authorAndWriteDocument(
       size: options.size,
       worldSeed: options.seed,
       model: options.model,
+      reasoningEffort: options.effort,
       kitName: options.kit,
     });
   } catch (err) {
