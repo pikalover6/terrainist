@@ -1,0 +1,421 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "oldharrow",
+    "worldSeed": "418827",
+    "prompt": "An old hill town above a river gorge: a tight medieval core of crooked lanes on the high ground, a later grid extension spreading down the slope at its own angle, the river crossed by the town's one great bridge, a cathedral and a keep on the skyline, and terraced houses stepping down to the water meadows.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "theme": "temperate_timber"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Oldharrow \u2014 a hill town, to prove the fabric can follow ground it did not choose",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling upland cut by a river gorge, barely any sea",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 88,
+          "amplitude": 34,
+          "octaves": 5,
+          "frequency": 0.0042,
+          "lacunarity": 2,
+          "gain": 0.52,
+          "erosionPasses": 2,
+          "scaleReference": 512,
+          "continentalness": {
+            "frequency": 0.0009,
+            "seaFraction": 0.08
+          },
+          "cliffThreshold": 88,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "the_harrow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the river, running west to east through its gorge",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.02,
+                  0.62
+                ],
+                [
+                  0.26,
+                  0.66
+                ],
+                [
+                  0.52,
+                  0.7
+                ],
+                [
+                  0.78,
+                  0.67
+                ],
+                [
+                  0.98,
+                  0.63
+                ]
+              ],
+              "width": 18,
+              "depth": 6
+            }
+          },
+          {
+            "id": "the_bluff",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high ground the old town sits on",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.3,
+                  0.34
+                ],
+                [
+                  0.44,
+                  0.4
+                ],
+                [
+                  0.58,
+                  0.44
+                ]
+              ],
+              "width": 120,
+              "height": 20
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "cool temperate uplands",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0013,
+          "humidityFrequency": 0.0017,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "oldharrow",
+        "kind": "city",
+        "label": "the town: a spine over the bluff, a diagonal down the slope, lanes in the core",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            720,
+            640
+          ]
+        },
+        "params": {
+          "size": "medium",
+          "coastal": false,
+          "diagonals": 1,
+          "ring": true,
+          "blockSize": 34,
+          "mix": [
+            "townhouse",
+            "shop_row",
+            "tudor_row",
+            "terraced_row",
+            "cottage"
+          ],
+          "characters": {
+            "core": [
+              "tudor_row",
+              "shop_row",
+              "guildhall",
+              "inn",
+              "townhouse"
+            ],
+            "lanes": [
+              "tudor_row",
+              "shop_row",
+              "bakery",
+              "tavern",
+              "cottage"
+            ],
+            "civic": [
+              "town_hall",
+              "courthouse",
+              "library",
+              "guildhall"
+            ],
+            "rowhouse": [
+              "terraced_row",
+              "townhouse",
+              "cottage"
+            ],
+            "grid": [
+              "townhouse",
+              "shop_row",
+              "post_office",
+              "school"
+            ],
+            "waterfront": [
+              "boathouse",
+              "warehouse",
+              "tavern",
+              "cottage"
+            ],
+            "industrial": [
+              "sawmill",
+              "textile_mill",
+              "cooperage",
+              "warehouse"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "children": [
+          {
+            "id": "harrow_minster",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the cathedral on the bluff, seen from the whole valley",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                30,
+                46,
+                44
+              ]
+            },
+            "params": {
+              "archetype": "cathedral",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "the_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the old keep, the other thing on the skyline",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                26,
+                40,
+                26
+              ]
+            },
+            "params": {
+              "archetype": "keep",
+              "floors": 5
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "guild_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the guildhall on the market square",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                24,
+                20,
+                20
+              ]
+            },
+            "params": {
+              "archetype": "guildhall",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "harrow_moot",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the town hall with its bell",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                22,
+                26,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "town_hall",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "valley_road",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the lane in from the next valley",
+        "params": {
+          "anchors": [
+            "oldharrow",
+            "harrow_mill"
+          ],
+          "width": 3
+        }
+      },
+      {
+        "id": "harrow_mill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the watermill downstream, on its own",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            16,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "sawmill",
+          "floors": 2
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "oldharrow",
+            "min": 60,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "outlier"
+        ]
+      },
+      {
+        "id": "the_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "mixed woodland on every slope the town did not take",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.16,
+          "spacing": 4,
+          "clumping": 0.7,
+          "maxSlope": 40,
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "district",
+            "city",
+            "precinct",
+            "park"
+          ],
+          "species": [
+            {
+              "id": "harrow_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "harrow_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "harrow_spruce",
+              "weight": 2,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

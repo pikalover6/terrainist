@@ -1,0 +1,420 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "bayline",
+    "worldSeed": "20260801",
+    "prompt": "A modern resort city on a wide bay, in the spirit of Miami: a palm-lined shore drive following the water, a diagonal boulevard cutting the downtown grid, towers clustered on the waterfront and stepping down inland, a river crossed by the boulevards, a working harbour and an airport on the landward edge.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "theme": "modern_city"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Bayline \u2014 the fabric v3 headline world, Miami as the benchmark",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a flat sub-tropical coastal plain, sea to the south and east",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 8,
+          "octaves": 4,
+          "frequency": 0.0038,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "erosionPasses": 1,
+          "scaleReference": 512,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.36
+          },
+          "cliffThreshold": 74,
+          "soilDepth": 4,
+          "beachWidth": 6,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "the_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a tidal river down to the bay, for the boulevards to bridge",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.38,
+                  0.02
+                ],
+                [
+                  0.41,
+                  0.24
+                ],
+                [
+                  0.45,
+                  0.46
+                ],
+                [
+                  0.49,
+                  0.66
+                ],
+                "coast"
+              ],
+              "width": 22,
+              "depth": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "warm and humid",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0011,
+          "humidityFrequency": 0.0015,
+          "blendRadius": 12
+        }
+      },
+      {
+        "id": "bayline",
+        "kind": "city",
+        "label": "the city: shore drive, spine, two diagonals, ring",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            880,
+            720
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 2,
+          "ring": true,
+          "blockSize": 40,
+          "mix": [
+            "office",
+            "apartment_block",
+            "shop_row",
+            "hotel",
+            "convenience_store"
+          ],
+          "characters": {
+            "core": [
+              "skyscraper",
+              "office",
+              "hotel",
+              "department_store"
+            ],
+            "waterfront": [
+              "hotel",
+              "apartment_block",
+              "modern_villa",
+              "shop_row"
+            ],
+            "civic": [
+              "conference_center",
+              "museum",
+              "library",
+              "opera_house"
+            ],
+            "industrial": [
+              "warehouse",
+              "factory_hall",
+              "machine_shop"
+            ],
+            "grid": [
+              "office",
+              "apartment_block",
+              "shop_row",
+              "cinema"
+            ],
+            "rowhouse": [
+              "terraced_row",
+              "townhouse",
+              "shop_row"
+            ],
+            "lanes": [
+              "shop_row",
+              "townhouse",
+              "food_court"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "children": [
+          {
+            "id": "bay_spire",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tallest tower, on the water",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                23,
+                96,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 22
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "the_crescent",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a curved resort hotel facing the beach",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                27,
+                64,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "hotel",
+              "floors": 14
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "meridian_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the second peak, inland",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                78,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 18
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "bayline_center",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the convention centre on the civic square",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                34,
+                26,
+                28
+              ]
+            },
+            "params": {
+              "archetype": "conference_center",
+              "floors": 4
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "the_pavilion",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "an art museum terminating a boulevard",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                28,
+                24,
+                24
+              ]
+            },
+            "params": {
+              "archetype": "museum",
+              "floors": 3
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "port_bayline",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the working harbour, west of downtown",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            128,
+            18,
+            92
+          ]
+        },
+        "params": {
+          "piers": 5,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "bayline",
+            "max": 220,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "precinct"
+        ]
+      },
+      {
+        "id": "bayline_international",
+        "kind": "generator",
+        "generator": "precinct.airport@0",
+        "label": "the airport on the landward edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            176,
+            26,
+            108
+          ]
+        },
+        "params": {
+          "stands": 7,
+          "hangars": 3,
+          "terminal": true
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "bayline",
+            "max": 260,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "precinct"
+        ]
+      },
+      {
+        "id": "shore_palms",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse palms and street trees outside the fabric",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.04,
+          "species": [
+            {
+              "id": "bay_palm",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "bay_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "district",
+            "city",
+            "precinct",
+            "park"
+          ]
+        }
+      }
+    ]
+  }
+}
