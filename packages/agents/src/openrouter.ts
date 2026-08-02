@@ -8,8 +8,8 @@
 
 import {
   ATTRIBUTION_HEADERS,
+  AUTHORING_MODEL_ID,
   CHAT_COMPLETIONS_URL,
-  GLM_MODEL_ID,
   MODELS_URL,
 } from "./config.js";
 
@@ -83,7 +83,7 @@ export function sumUsage(parts: readonly Usage[]): Usage {
 /** Run one chat completion. Throws on any non-2xx response. */
 export async function chatComplete(options: ChatOptions): Promise<CompletionResult> {
   const doFetch = options.fetchImpl ?? (globalThis.fetch as FetchLike);
-  const model = options.model ?? GLM_MODEL_ID;
+  const model = options.model ?? AUTHORING_MODEL_ID;
 
   const body: Record<string, unknown> = {
     model,
@@ -125,7 +125,7 @@ export async function verifyModelAvailable(
   options: ClientOptions & { readonly model?: string },
 ): Promise<void> {
   const doFetch = options.fetchImpl ?? (globalThis.fetch as FetchLike);
-  const wanted = options.model ?? GLM_MODEL_ID;
+  const wanted = options.model ?? AUTHORING_MODEL_ID;
 
   const response = await doFetch(MODELS_URL, {
     headers: { Authorization: `Bearer ${options.apiKey}`, ...ATTRIBUTION_HEADERS },
@@ -143,14 +143,34 @@ export async function verifyModelAvailable(
 
   if (ids.includes(wanted)) return;
 
-  const near = ids.filter((id) => /glm|z-ai|zhipu/i.test(id)).sort();
+  const near = nearMatches(wanted, ids);
   throw new Error(
     `OpenRouter has no model "${wanted}". ${
       near.length === 0
-        ? "No GLM/Z.ai models are listed at all."
+        ? `No models from the same family ("${modelFamily(wanted)}") are listed at all.`
         : `Near matches: ${near.join(", ")}`
-    }\nUpdate GLM_MODEL_ID in packages/agents/src/config.ts.`,
+    }\nUpdate AUTHORING_MODEL_ID in packages/agents/src/config.ts (or pass --model).`,
   );
+}
+
+/**
+ * The vendor/family prefix of a model id — `openai/gpt-5.6-luna` → `openai`.
+ *
+ * Used only to make the "pin has gone away" error helpful, so it degrades to
+ * the whole id rather than throwing on unfamiliar shapes.
+ */
+function modelFamily(id: string): string {
+  const slash = id.indexOf("/");
+  return slash === -1 ? id : id.slice(0, slash);
+}
+
+/** Catalog ids plausibly meant as replacements for `wanted`. */
+function nearMatches(wanted: string, ids: readonly string[]): string[] {
+  const family = modelFamily(wanted);
+  const stem = wanted.slice(family.length + 1).split(/[-.]/)[0] ?? "";
+  return ids
+    .filter((id) => id.startsWith(`${family}/`) || (stem.length >= 3 && id.includes(stem)))
+    .sort();
 }
 
 /* -------------------------------------------------------------------------- */

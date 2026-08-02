@@ -677,7 +677,7 @@ function printCompileReport(
 }
 
 /**
- * `terrainist generate "<prompt>"` — author with GLM 5.2, then compile and zip.
+ * `terrainist generate "<prompt>"` — author with the pinned model, then compile and zip.
  *
  * Two loops, in order. The authoring loop (inside `@terrainist/agents`) makes
  * the document *valid*. Then this one makes the *world* good: compile, look at

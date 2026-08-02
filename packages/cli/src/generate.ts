@@ -1,7 +1,8 @@
 /**
  * `terrainist generate` — prompt in, world out.
  *
- * The whole pipeline in one command: GLM 5.2 authors a document against a spec
+ * The whole pipeline in one command: the pinned authoring model (GPT 5.6 Luna
+ * by default, `--model` to override) authors a document against a spec
  * kit (the settlement kit by default, `--kit terrain` for terrain alone), the
  * validator's diagnostics drive any retries, and the resulting document goes
  * through the ordinary compiler and zipper. `runGenerate` then adds the
@@ -18,9 +19,9 @@ import path from "node:path";
 import {
   authorLoamDoc,
   AuthoringFailedError,
+  AUTHORING_MODEL_ID,
   AUTHORING_REASONING_EFFORT,
   DEFAULT_KIT,
-  GLM_MODEL_ID,
   MAX_COMPILE_ROUNDS,
 } from "@terrainist/agents";
 import type { AuthoredDocument as LoamDocument, AuthorResult, KitName } from "@terrainist/agents";
@@ -62,7 +63,7 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
   let keepDoc = false;
   let zip = true;
   let allowUnstable = false;
-  let model = GLM_MODEL_ID;
+  let model = AUTHORING_MODEL_ID;
   let effort = AUTHORING_REASONING_EFFORT;
   let kit: KitName = DEFAULT_KIT;
   let compileRounds = MAX_COMPILE_ROUNDS;

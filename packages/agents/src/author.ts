@@ -29,9 +29,9 @@ import {
 } from "@terrainist/spec";
 
 import {
+  AUTHORING_MODEL_ID,
   AUTHORING_REASONING_EFFORT,
   AUTHORING_TEMPERATURE,
-  GLM_MODEL_ID,
   MAX_AUTHOR_ATTEMPTS,
 } from "./config.js";
 import { loadOpenRouterKey } from "./env.js";
@@ -155,7 +155,7 @@ export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResul
     kitName,
     size,
     worldSeed: request.worldSeed,
-    model: request.model ?? GLM_MODEL_ID,
+    model: request.model ?? AUTHORING_MODEL_ID,
     reasoningEffort: request.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
     maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
     ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
@@ -189,7 +189,7 @@ export async function reviseLoamDoc(request: ReviseRequest): Promise<AuthorResul
     kitName,
     size: request.size,
     worldSeed: request.worldSeed,
-    model: request.model ?? GLM_MODEL_ID,
+    model: request.model ?? AUTHORING_MODEL_ID,
     reasoningEffort: request.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
     maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
     ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),

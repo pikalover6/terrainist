@@ -115,9 +115,9 @@ describe("authorTerrainDoc", () => {
       reasoning: { effort: string };
       messages: { role: string; content: string }[];
     };
-    expect(body.model).toBe("z-ai/glm-5.2");
+    expect(body.model).toBe("openai/gpt-5.6-luna");
     expect(body.temperature).toBe(0);
-    expect(body.reasoning.effort).toBe("high");
+    expect(body.reasoning.effort).toBe("max");
     expect(body.messages[0]).toEqual({ role: "system", content: "KIT" });
     expect(body.messages[1]?.content).toContain("a test world");
   });
