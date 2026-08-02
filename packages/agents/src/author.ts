@@ -13,7 +13,9 @@
  *    house the road network cannot reach, a constraint the solver had to demote.
  *    {@link reviseLoamDoc} continues the same conversation with that report and
  *    asks for a revision. The caller owns the compile; this module only knows
- *    how to carry the text back. Budget: {@link MAX_COMPILE_ROUNDS}.
+ *    how to carry the text back. Budget: {@link MAX_COMPILE_ROUNDS}. The
+ *    conversation it continues is **trimmed** first — see
+ *    {@link trimRevisionConversation}.
  *
  * There is no render critique and no repair pass. If the budgets run out, the
  * kit is wrong and the kit is what gets fixed.
@@ -83,6 +85,11 @@ export interface ReviseRequest {
   readonly maxAttempts?: number;
   readonly fetchImpl?: FetchLike;
   readonly apiKey?: string;
+  /**
+   * Prior rounds kept verbatim; see {@link trimRevisionConversation}.
+   * Defaults to {@link DEFAULT_KEPT_ROUNDS}.
+   */
+  readonly keepRounds?: number;
 }
 
 /** One authoring attempt, for the report. */
@@ -167,18 +174,103 @@ export async function authorTerrainDoc(request: AuthorRequest): Promise<AuthorRe
   return await authorLoamDoc({ ...request, kitName: request.kitName ?? "terrain" });
 }
 
+/* -------------------------------------------------------------------------- */
+/* The revision-conversation trim                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Rounds of the prior conversation kept verbatim, most recent first.
+ *
+ * Zero, and deliberately: {@link reviseLoamDoc} appends the *current* document
+ * and the compiler's *current* findings after the trim, so a kept round would
+ * be a superseded document and diagnostics that have already been acted on.
+ * This is the conservative dial — if a run ever shows the model needs its own
+ * previous reasoning, raise it to 1 and only the older rounds are dropped.
+ */
+export const DEFAULT_KEPT_ROUNDS = 0;
+
+/** Options for {@link trimRevisionConversation}. */
+export interface TrimOptions {
+  /** Rounds (assistant + user pairs) kept verbatim. Default {@link DEFAULT_KEPT_ROUNDS}. */
+  readonly keepRounds?: number;
+}
+
+/** What {@link trimRevisionConversation} produced. */
+export interface TrimmedConversation {
+  readonly messages: readonly ChatMessage[];
+  /** How many turns the marker replaced. Zero means nothing was trimmed. */
+  readonly droppedMessages: number;
+  /** Characters of prompt removed — the whole point of the exercise. */
+  readonly droppedChars: number;
+}
+
+/**
+ * Drop superseded rounds from a revision conversation.
+ *
+ * Compile-feedback rounds used to re-send the entire conversation, so every
+ * rejected attempt and every prior document rode along into every later round:
+ * `out/e2e/comparison.md` measured a 9:1 prompt-to-completion cost ratio, and
+ * the conversation is the part that grows. A revision turn needs the system
+ * kit, the original prompt, the **current** document and the compiler's
+ * **current** diagnostics, and nothing else — the older documents are strictly
+ * superseded by the one that follows them.
+ *
+ * What survives: every leading `system` message (the kit), the first `user`
+ * turn (the original prompt and the caller's pinned requirements), and the last
+ * `keepRounds` rounds. Everything between becomes a **one-line marker**, so the
+ * model is told the turns existed rather than left to infer a gap.
+ *
+ * Pure and deterministic: no clock, no RNG, no mutation of the input. The
+ * sampling temperature is not touched — {@link AUTHORING_TEMPERATURE} stays 0.
+ */
+export function trimRevisionConversation(
+  messages: readonly ChatMessage[],
+  options: TrimOptions = {},
+): TrimmedConversation {
+  const keepRounds = Math.max(0, options.keepRounds ?? DEFAULT_KEPT_ROUNDS);
+
+  let head = 0;
+  while (head < messages.length && messages[head]?.role === "system") head++;
+  // The first user turn carries the prompt and the caller's pinned worldSeed
+  // and size. Losing it would let the model re-invent both.
+  if (head < messages.length && messages[head]?.role === "user") head++;
+
+  const preserved = messages.slice(0, head);
+  const rest = messages.slice(head);
+  const keep = Math.min(rest.length, keepRounds * 2);
+  const dropped = rest.slice(0, rest.length - keep);
+  if (dropped.length === 0) {
+    return { messages: [...messages], droppedMessages: 0, droppedChars: 0 };
+  }
+
+  const supersededDocs = dropped.filter((m) => m.role === "assistant").length;
+  const marker: ChatMessage = {
+    role: "user",
+    content: `[${dropped.length} earlier turn(s) omitted, including ${supersededDocs} superseded document(s) and the diagnostics already applied to them; only the document and findings below are current.]`,
+  };
+
+  return {
+    messages: [...preserved, marker, ...rest.slice(rest.length - keep)],
+    droppedMessages: dropped.length,
+    droppedChars: dropped.reduce((sum, m) => sum + m.content.length, 0) - marker.content.length,
+  };
+}
+
 /**
  * Ask for a revision of a document that validated but compiled badly.
  *
- * The conversation continues rather than restarting: the model still has its
- * own reasoning, the kit, and the original prompt in context, so the revision
- * turn only has to carry what the compiler found.
+ * The conversation continues rather than restarting — the model keeps the kit
+ * and the original prompt — but it continues **trimmed**: see
+ * {@link trimRevisionConversation} for why the superseded rounds go.
  */
 export async function reviseLoamDoc(request: ReviseRequest): Promise<AuthorResult> {
   const kitName = request.kitName ?? DEFAULT_KIT;
   const apiKey = request.apiKey ?? loadOpenRouterKey();
+  const trimmed = trimRevisionConversation(request.messages, {
+    ...(request.keepRounds === undefined ? {} : { keepRounds: request.keepRounds }),
+  });
   const messages: ChatMessage[] = [
-    ...request.messages,
+    ...trimmed.messages,
     { role: "assistant", content: request.previous },
     { role: "user", content: compileFeedbackPrompt(request.feedback) },
   ];
