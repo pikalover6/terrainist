@@ -165,6 +165,20 @@ export const TERRAIN_DIAGNOSTICS = {
    * blocks here is the expected outcome, not a report.
    */
   SET_PIECES_EMPTY: "LOAM-T218",
+  /**
+   * `infra.wall@0` — `params.walls` is malformed: not an object, an unknown
+   * style, or a margin/pitch/height outside its band.
+   */
+  WALL_PARAM: "LOAM-T219",
+  /**
+   * `infra.wall@0` — a wall was asked for and no course could be derived.
+   *
+   * Informational, and its own code for `LIFE_PASS_EMPTY`'s reason: what it
+   * diagnoses is that the settlement's finished footprint was too small or too
+   * scattered to hull, which is a fact about the ground and the placement
+   * rather than anything the document can restate.
+   */
+  WALL_COURSE_EMPTY: "LOAM-T220",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
@@ -214,6 +228,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * the coast.
    */
   PRECINCT_RESEATED: "LOAM-W409",
+
+  // --- the SweptProfile engine (Phase 0 contract 3) ------------------------
+  /** A swept run was refused whole: unclimbable, or past the fill cap. */
+  SWEEP_RUN_REFUSED: "LOAM-W460",
+  /** Columns of a swept run were skipped because something else owned them. */
+  SWEEP_COLUMNS_SKIPPED: "LOAM-W461",
+  /** A swept run met water it has no crossing behaviour for. */
+  SWEEP_CROSSING_UNSPANNED: "LOAM-W462",
+  /** Interval features (towers, piers, lamps) placed along a swept run. */
+  SWEEP_FEATURES_PLACED: "LOAM-I463",
 
   // --- the biome / snow land-use clamp (Phase 0 contract 4) ----------------
   /**

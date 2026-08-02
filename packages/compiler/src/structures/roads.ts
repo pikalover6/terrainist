@@ -50,6 +50,7 @@ import {
 } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
+import { carriagewaySpans, sweptColumns } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* tuning                                                                      */
@@ -1604,10 +1605,22 @@ function paintCentreLines(
 /**
  * Write one route into the column plan.
  *
- * Each centre-line cell claims a band perpendicular to its local heading: the
- * centre lane gets `@road.surface`, the outermost offset the shoulder mix, and
- * any cell where the graded profile steps gets `@road.step` so the change of
- * level reads as a deliberate stair rather than a glitch.
+ * The cross-section is a {@link SweptProfile} band system resolved by the
+ * sweep engine: the centre lane gets `@road.surface`, the outermost band the
+ * shoulder mix, and any cell where the graded profile steps gets `@road.step`
+ * so the change of level reads as a deliberate stair rather than a glitch.
+ *
+ * **The bands come from the true line, not from the raster.** This function
+ * used to walk the rasterized cells and offset each one along its own local
+ * perpendicular. On an axis-aligned run that is exactly right; on a diagonal
+ * avenue it dithers — the perpendicular flips between two orthogonal columns
+ * step by step, so the kerb comes out as a two-block mix rather than one
+ * border course, which is precisely what the first walk of the headline city
+ * showed. `sweptColumns` instead recovers the polyline the raster is a picture
+ * of and asks each nearby column for its **perpendicular distance** to it, so
+ * a diagonal gets one clean edge course and a coherent carriageway between
+ * them. The lane lattice is the one this function always used
+ * ({@link carriagewaySpans}), so a straight road is unchanged block for block.
  */
 function surfaceRoute(
   region: Region,
@@ -1623,75 +1636,54 @@ function surfaceRoute(
   water: Uint8Array,
   bridged: Uint8Array,
 ): void {
-  const half = (width - 1) >> 1;
-  const offsets: number[] = [];
-  for (let o = -half; o <= width - 1 - half; o++) offsets.push(o);
+  const lanes = carriagewaySpans(width).lanes;
+  const spots = sweptColumns(region, path, lanes);
 
-  for (const [i, cell] of path.entries()) {
-    const heading = headingAt(path, i);
+  for (const spot of spots) {
+    const x = spot.x;
+    const z = spot.z;
+    const idx = spot.idx;
+    const i = Math.min(path.length - 1, Math.max(0, spot.index));
+    const cell = path[i] as { x: number; z: number; y: number };
     const isStep = i > 0 && cell.y !== (path[i - 1] as { y: number }).y;
-    const band: { x: number; z: number; outer: boolean }[] = [];
-    for (const offset of offsets) {
-      band.push({
-        x: cell.x + heading.pz * offset,
-        z: cell.z + heading.px * offset,
-        outer: offsets.length > 1 && Math.abs(offset) === Math.max(half, width - 1 - half),
-      });
-    }
-    // A diagonal step touches its two neighbours only at a corner, which the
-    // eye reads as a broken ribbon. Surfacing the pair of orthogonal cells the
-    // step passes between closes it without widening the lane anywhere else.
-    if (i > 0) {
-      const prev = path[i - 1] as { x: number; z: number };
-      if (prev.x !== cell.x && prev.z !== cell.z) {
-        band.push({ x: prev.x, z: cell.z, outer: false });
-        band.push({ x: cell.x, z: prev.z, outer: false });
-      }
-    }
-    for (const spot of band) {
-      const x = spot.x;
-      const z = spot.z;
-      if (!inside(region, x, z)) continue;
-      const idx = index(region, x, z);
-      // A bridge cell is *not* surfaced. The whole point of a deck is that the
-      // water underneath it is undisturbed — rewriting the column here would
-      // fill the channel with dirt path and, worse, would move `ground` and
-      // `fluidTop` under a river the fluid validator has already settled.
-      // It still counts as road, so the network stays connected and the
-      // canopy clip keeps the deck clear.
-      if (water[idx] === 1) {
-        road[idx] = 1;
-        roadY[idx] = cell.y;
-        bridged[idx] = 1;
-        if (occupancy !== undefined) claim(occupancy, idx);
-        continue;
-      }
-      // Never surface a foreign footprint, even in the shoulder.
-      if (blocked[idx] === 1) continue;
-      // The plaza surfaced itself; a lane crossing the green is *on* the green.
-      // It still counts as road for routing, occupancy and lantern spacing.
-      if (paved[idx] === 1) {
-        road[idx] = 1;
-        roadY[idx] = plan.ground[idx] as number;
-        if (occupancy !== undefined) claim(occupancy, idx);
-        continue;
-      }
-
-      const outer = spot.outer;
-      plan.ground[idx] = cell.y;
-      plan.fluidTop[idx] = cell.y;
-      plan.snow[idx] = 0;
-      plan.surface[idx] = isStep
-        ? states.step
-        : outer
-          ? states.shoulder(x, z)
-          : states.surface(x, z);
-      plan.subsurface[idx] = states.subsurface;
-      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+    // A bridge cell is *not* surfaced. The whole point of a deck is that the
+    // water underneath it is undisturbed — rewriting the column here would
+    // fill the channel with dirt path and, worse, would move `ground` and
+    // `fluidTop` under a river the fluid validator has already settled.
+    // It still counts as road, so the network stays connected and the
+    // canopy clip keeps the deck clear.
+    if (water[idx] === 1) {
       road[idx] = 1;
       roadY[idx] = cell.y;
+      bridged[idx] = 1;
       if (occupancy !== undefined) claim(occupancy, idx);
+      continue;
     }
+    // Never surface a foreign footprint, even in the shoulder.
+    if (blocked[idx] === 1) continue;
+    // The plaza surfaced itself; a lane crossing the green is *on* the green.
+    // It still counts as road for routing, occupancy and lantern spacing.
+    if (paved[idx] === 1) {
+      road[idx] = 1;
+      roadY[idx] = plan.ground[idx] as number;
+      if (occupancy !== undefined) claim(occupancy, idx);
+      continue;
+    }
+
+    const outer = spot.outer;
+    plan.ground[idx] = cell.y;
+    plan.fluidTop[idx] = cell.y;
+    plan.snow[idx] = 0;
+    plan.surface[idx] = isStep
+      ? states.step
+      : outer
+        ? states.shoulder(x, z)
+        : states.surface(x, z);
+    plan.subsurface[idx] = states.subsurface;
+    if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+    road[idx] = 1;
+    roadY[idx] = cell.y;
+    if (occupancy !== undefined) claim(occupancy, idx);
   }
 }
 

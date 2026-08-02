@@ -164,6 +164,30 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *       before has moved — only props that could not be placed at all.
  *   Compiled worlds from before this round reproduce block-for-block unless
  *   they contain a tunnel; their terrain shape is unchanged either way.
+ * - **SweptProfile engine, first client (2026-08-02)** — authorized reroll of
+ *   the *compiled world* only, and only of worlds that carry a road, a street
+ *   or an arterial. **Both hashes below are deliberately unchanged**: the
+ *   engine lives in `@terrainist/compiler`'s structure pass, which is
+ *   downstream of the heightfield and does not import this file's field
+ *   engine. What moved:
+ *     * road, street and arterial surfacing now resolves its cross-section
+ *       through `structures/sweep.ts`. Band membership is a **perpendicular
+ *       distance to the true centre line** — the polyline the raster is a
+ *       picture of, recovered by Douglas–Peucker — instead of a per-cell
+ *       offset along each rasterized step's own local heading.
+ *     * On an axis-aligned run the two constructions agree column for column
+ *       (the lane lattice is unchanged, `carriagewaySpans` is the old
+ *       `half = (w - 1) >> 1` rule), so a straight road does not move. On a
+ *       **diagonal** they do not, and that is the point: the old walk gave a
+ *       two-column dithered kerb and a ragged carriageway, and the engine
+ *       gives one continuous border course each side. Kai's screenshots of a
+ *       diagonal avenue are the acceptance criterion this reroll buys.
+ *     * The bespoke "surface the two orthogonal cells a diagonal step passes
+ *       between" patch is gone, because the perpendicular test covers those
+ *       columns by construction rather than by special case.
+ *   Compiled worlds from before this round reproduce block-for-block unless
+ *   they carry a road that is not axis-aligned; their terrain shape is
+ *   unchanged either way.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");
