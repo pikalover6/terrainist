@@ -29,6 +29,8 @@ export const PROFILE_BIOMES = [
   "minecraft:beach",
   "minecraft:snowy_beach",
   "minecraft:plains",
+  /** Not painted by {@link biomeForColumn}; the land-use clamp's snowy ground. */
+  "minecraft:snowy_plains",
   "minecraft:forest",
   "minecraft:taiga",
   "minecraft:windswept_hills",

@@ -18,6 +18,7 @@ export * from "./climate.js";
 export * from "./columns.js";
 export * from "./compile.js";
 export * from "./emit.js";
+export * from "./landuse.js";
 export * from "./palette.js";
 export * from "./validate.js";
 export * from "./vegetation.js";

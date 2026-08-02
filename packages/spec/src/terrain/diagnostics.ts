@@ -214,6 +214,26 @@ export const TERRAIN_DIAGNOSTICS = {
    * the coast.
    */
   PRECINCT_RESEATED: "LOAM-W409",
+
+  // --- the biome / snow land-use clamp (Phase 0 contract 4) ----------------
+  /**
+   * A settlement footprint's biome and snow cover were clamped to one coherent
+   * ground. Names the biome, the column count and the snow vote.
+   *
+   * `note`, not `warning`: nothing the author did is wrong and nothing in the
+   * document can change it. It fires on every settlement world, and the
+   * `LIFE_PASS_EMPTY` comment above records what happens when a code like that
+   * lands in the authoring loop's feedback set.
+   */
+  BIOME_CLAMPED: "LOAM-W470",
+  /** Snow removed from settlement ground the pre-settlement climate frosted. */
+  SNOW_SUPPRESSED: "LOAM-W471",
+  /**
+   * `intent.climate.biome` names a biome id the emitter's table does not
+   * carry. Author-actionable, so a real warning; the clamp falls back to its
+   * derived biome.
+   */
+  BIOME_INTENT_UNKNOWN: "LOAM-W472",
 } as const;
 
 /** Symbolic diagnostic name. */

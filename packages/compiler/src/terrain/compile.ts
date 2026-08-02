@@ -74,8 +74,14 @@ import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
 import type { Provenance } from "../provenance.js";
 
-import { biomeForColumn } from "./biomes.js";
+import { biomeForColumn, type ProfileBiome } from "./biomes.js";
 import { buildSettlementClearing } from "./clearing.js";
+import {
+  buildLandUseMask,
+  clampLandUse,
+  type LandUseClampResult,
+  type MaskRect,
+} from "./landuse.js";
 import {
   DECOR_APRON,
   clipTrees,
@@ -742,7 +748,15 @@ async function compileValidated(
 
   // --- pass 4b: biomes -----------------------------------------------------
   const t4 = now();
-  const biomeHistogram = paintBiomes(plan, classification, climate, scatter.coverage, stack);
+  // The land-use clamp's mask is a pure function of the *finished* placement,
+  // which is why it is built here rather than in the structures pass.
+  const landUseMask = landUseMaskOf(plan, structures, layoutOutcome?.placements ?? []);
+  const painted = paintBiomes(plan, classification, climate, scatter.coverage, stack, {
+    mask: landUseMask,
+    nodePath: rootPath,
+  });
+  const biomeHistogram = painted.histogram;
+  diagnostics.push(...painted.clamp.diagnostics);
   const biomesMs = now() - t4;
 
   // --- pass 7: validators --------------------------------------------------
@@ -897,19 +911,58 @@ function unwrittenEmit(
   };
 }
 
-/** Assign every column its biome id, and count the result. */
+/**
+ * The land-use mask for the biome clamp — every claimed footprint, unioned.
+ *
+ * Per the Phase 0 contract §4: district and city cells, precinct envelopes,
+ * building pads, and the road/arterial/street `claimed` masks. Per **ratified
+ * disposition 8**, camp *cores* would contribute here and farmland never does;
+ * neither has a generator in the profile yet, so `campCores` stays the
+ * documented seam it is in `landuse.ts` rather than a dead parameter here.
+ */
+function landUseMaskOf(
+  plan: ReturnType<typeof buildColumnPlan>,
+  structures: StructurePassResult | undefined,
+  placements: readonly Placement[],
+): Uint8Array {
+  const { region } = plan;
+  if (structures === undefined) {
+    return new Uint8Array(region.width * region.depth);
+  }
+  const cells: MaskRect[] = structures.districts.map((d) => d.bounds);
+  // Every placement the solver seated: precinct envelopes and building pads
+  // alike. This is the same footprint list the clearing pass calls "the
+  // settlement", which is exactly the coherence unit the clamp is about.
+  const pads: MaskRect[] = placements.map((p) => p.footprint);
+  const columns: Uint8Array[] = [];
+  if (structures.roads !== undefined) columns.push(structures.roads.roadColumns);
+  if (structures.streets !== undefined) columns.push(structures.streets.road);
+  if (structures.plaza !== undefined) columns.push(structures.plaza.paved);
+  return buildLandUseMask(region, { cells, pads, columns });
+}
+
+/**
+ * Assign every column its biome id, and count the result.
+ *
+ * Two steps, in precedence order (Phase 0 contract §4): the climate-derived
+ * rule paints every column, then the land-use clamp takes back the ground a
+ * settlement claims. The clamp also rewrites `plan.snow`, which is why this
+ * pass runs before emit and after the structures pass.
+ */
 function paintBiomes(
   plan: ReturnType<typeof buildColumnPlan>,
   classification: Classification,
   climate: ReturnType<typeof buildClimateFields>,
   coverage: Uint8Array,
   stack: ReturnType<typeof loadPrismarine>,
-): Record<string, number> {
+  landUse: { readonly mask: Uint8Array; readonly nodePath: string },
+): { histogram: Record<string, number>; clamp: LandUseClampResult } {
   const ids = new Map<string, number>();
   const histogram: Record<string, number> = {};
 
+  const base: ProfileBiome[] = new Array<ProfileBiome>(plan.ground.length);
   for (let idx = 0; idx < plan.ground.length; idx++) {
-    const name = biomeForColumn({
+    base[idx] = biomeForColumn({
       surfaceClass: classification.classes[idx] as number,
       groundY: plan.ground[idx] as number,
       relief: classification.relief[idx] as number,
@@ -918,6 +971,25 @@ function paintBiomes(
       lake: plan.lakeMask[idx] === 1,
       volcanicUpper: plan.volcanicUpper[idx] === 1,
     });
+  }
+
+  const clamp = clampLandUse({
+    width: plan.region.width,
+    depth: plan.region.depth,
+    x0: plan.region.x0,
+    z0: plan.region.z0,
+    mask: landUse.mask,
+    base,
+    snow: plan.snow,
+    surfaceClass: classification.classes,
+    temperature: climate.temperature,
+    forested: coverage,
+    nodePath: landUse.nodePath,
+  });
+  if (clamp.snow !== plan.snow) plan.snow.set(clamp.snow);
+
+  for (let idx = 0; idx < plan.ground.length; idx++) {
+    const name = clamp.biome[idx] as ProfileBiome;
     let id = ids.get(name);
     if (id === undefined) {
       const resolved = stack.biomeIdByName(name);
@@ -932,7 +1004,10 @@ function paintBiomes(
     histogram[name] = (histogram[name] ?? 0) + 1;
   }
 
-  return Object.fromEntries(Object.entries(histogram).sort(([a], [b]) => (a < b ? -1 : 1)));
+  return {
+    histogram: Object.fromEntries(Object.entries(histogram).sort(([a], [b]) => (a < b ? -1 : 1))),
+    clamp,
+  };
 }
 
 /**
