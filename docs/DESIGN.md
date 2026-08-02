@@ -820,16 +820,19 @@ makes the byte-identity claim structural rather than lucky.
 
 ---
 
-## Upgrade push — Phase 0 contracts (PROPOSED 2026-08-02, pending ratification with Kai)
+## Upgrade push — Phase 0 contracts (RATIFIED 2026-08-02, with Kai)
 
 Kai has ratified a large upgrade push. This section pins the four contracts the
 push builds on, before any of it is implemented, for the same reason `StreetGraph`
 and `CityPlan` were pinned: parallel tracks can code against a contract with a
 fixture, and a contract that is written down can be argued with.
 
-**Status of everything below: PROPOSED.** Nothing here is ratified, no code has
-been written against it, and the numbers (limits, budgets, thresholds) are
-starting points chosen with a reason attached, not measurements.
+**Status: RATIFIED with one major amendment** — contract 2 was drafted as two
+tiers with two artifact formats and came back as one, `AuthoredProgram`, for the
+reason recorded there. The draft's nine open questions are answered under
+*Dispositions* at the end. No code has been written against any of this yet, and
+the numbers (limits, budgets, thresholds) are starting points chosen with a
+reason attached, not measurements.
 
 ### 0. Where these live in Loam
 
@@ -839,15 +842,14 @@ inventing parallel concepts beside them is the failure mode.
 | Contract | Loam slot | New surface |
 |---|---|---|
 | SemanticIntent | L3 style (§2.4 era/mood/motifs, §2.5 biome themes) | one `intent` object, inheritable; the implemented profiles carry no L3 beyond `style.palettes` today |
-| BespokeAsset | `kind: "asset"` (§9), new `provider.name: "bespoke"` | the box/carve DSL as an artifact format; §9's lockfile, `role`, `fallback` and pipeline table apply unchanged |
-| AuthoredPlugin | L1 `authored` generator flavor (§7.6), `generator: "authored:<id>"` | a document-level `plugins` map, a narrowed context, an authoring-time validation loop |
+| AuthoredProgram (landmarks **and** plugins) | L1 `authored` generator flavor (§7.6), `generator: "authored:<id>"` | a document-level `programs` map, a minimal typed API, output-hash verification, an authoring-time validation loop |
 | SweptProfile | none — compiler-internal engine | one new node, `infra.wall@0`; everything else is a retrofit of existing passes |
 | Biome authorship | compiler invariant + `intent.climate` | no new node kinds |
 
-The strategic point of the bespoke tier: **both flavors are generated at
-AUTHORING time and frozen into the document.** The compile stays a pure function
-of spec + seed, the physics lint gates every block either of them writes, and a
-world that ships can be recompiled byte-identically with no model in the loop.
+The strategic point of the bespoke tier: **both invocation modes are generated
+at AUTHORING time and frozen into the document.** The compile stays a pure
+function of spec + seed, the physics lint gates every block a program writes, and
+a world that ships can be recompiled byte-identically with no model in the loop.
 
 ---
 
@@ -926,8 +928,8 @@ export interface CharacterIntent {
   readonly flora?: SelectionBias;
   /** §2.4 `motifs`: the closed enums the building grammar switches on. */
   readonly motifs?: Motifs;
-  /** What the authoring model is asked to write bespoke for this region (§3). */
-  readonly bespoke?: BespokeRequest;
+  /** Authored programs this region asks for — landmarks and plugins (§2). */
+  readonly programs?: ProgramRequest;
 }
 
 export interface SelectionBias {
@@ -1003,7 +1005,7 @@ feature that owns it.
 | `character.props` | prop family bias in the life and prop passes | `structures/life.ts`, `structures/props.ts` | reserved |
 | `character.flora` | species tables for scatter | `scatter.forest@0` | reserved (flora grammar, Phase 4) |
 | `character.motifs` | roof form, window rhythm, massing, footprint style | `building.grammar@0` | today |
-| `character.bespoke` | how many landmarks/plugins this region asks for | §3 | Phase 3 |
+| `character.programs` | how many authored programs this region asks for, and in which mode | contract 2 | Phase 3 |
 | `climate.biome` / `.snow` | biome + snow precedence | §4 | Phase 1 |
 | `climate.temperature` / `.humidity` | offsets into the climate field over the footprint | `terrain/climate.ts` | today |
 
@@ -1036,245 +1038,163 @@ node kind that carries none; `I482` intent below district depth; `W483`
 
 ---
 
-### 2. BespokeAsset + AuthoredPlugin — the pure-Luna bespoke tier
+### 2. AuthoredProgram — one contract for both bespoke tiers
 
-Two tiers, one authoring-time discipline:
+**Amended at ratification (Kai, 2026-08-02).** The draft split this in two: a
+box/carve DSL for one-off landmarks and a sandboxed generator for repeatable
+ones. Kai struck the DSL.
 
-- **BespokeAsset** — a *one-off* landmark. The model authors a structure
-  artifact in the compact box/carve DSL; the compiler expands and places it.
-  Proven in the shootout: 3/3 valid on attempt 1 at ~$0.03 each
-  (`tools/shootout/`, `out/e2e/comparison.md`).
-- **AuthoredPlugin** — a *repeatable* generator. The model writes a
-  deterministic procedural program (the UFO generator for an alien-invasion
-  world) which the compiler then invokes many times across the world.
+The evidence: **Luna performs measurably better unchained — writing its own
+generation code — than when guided through a curated tool vocabulary.** The run
+that settled it was "statue of an earth god": given a free hand in codex, Luna
+wrote a full generator script for it, down to its own NBT outputter (which our
+harness makes unnecessary — we already own `emitWorld`). A curated shape
+vocabulary is a leash on the single thing the model is best at, and every box in
+a box list is a shape the model was not allowed to compute.
 
-The dividing line is reuse, not size: if the world wants one of a thing, it is
-an asset; if it wants forty that differ, it is a plugin. Both are frozen into
-the `.loam.json` at authoring time.
+So: **one contract, two invocation modes.**
 
-#### 2a. BespokeAsset DSL v1 — frozen
+- **Landmark** — the program invoked **once**, against a fixed envelope.
+- **Plugin** — the same program invoked **N times**, with per-instance seeds.
 
-Verbatim from the shootout format (`tools/shootout/luna-structure.ts`), because
-the format that got 3/3 on the first attempt is the format the model has already
-demonstrated it can write. Types live in `packages/spec/src/bespoke/types.ts`;
-expansion in `packages/compiler/src/bespoke/expand.ts`.
+Nothing else differs. One pipeline, one sandbox, one artifact format, one gate,
+one repair loop. The two-tier language survives only as a description of how a
+node uses a program.
 
-```ts
-export interface BespokeBox {
-  readonly from: readonly [number, number, number];
-  readonly to: readonly [number, number, number];
-  /** A palette key, or the literal "air" to carve. */
-  readonly block: string;
-  readonly hollow?: boolean;
-}
-export interface BespokeAssetDoc {
-  readonly name: string;
-  /** key → "minecraft:<id>". Full cubes only in v1. */
-  readonly palette: Readonly<Record<string, string>>;
-  readonly boxes: readonly BespokeBox[];
-}
-```
+Both modes are the L1 **`authored` generator flavor** (§7.6):
+`generator: "authored:<id>"`. `kind: "asset"` reverts to meaning what §9 says it
+means — an AI-generated *mesh* — and gains nothing from this contract. That is a
+simplification the draft did not have: the bespoke tier now occupies exactly one
+slot in the language.
 
-Normative semantics — one statement, shared by the authoring prompt and the
-compiler, so the two cannot drift:
+Code lives in `packages/compiler/src/programs/` (sandbox, context, verify);
+types in `packages/spec/src/programs/types.ts`.
 
-1. Boxes are axis-aligned and **inclusive on both ends**; `from`/`to` are
-   unordered and normalized to min/max per axis.
-2. Boxes apply **in order**; a later box overwrites every voxel it covers.
-   Order is semantic and normalization must never reorder it.
-3. `block: "air"` carves. `air` may not be a palette key. Carving is how
-   windows, doorways, collapse gaps and eroded bites are made.
-4. `hollow: true` writes only the 1-thick shell of the box; the interior is left
-   untouched (not cleared).
-5. `y` is up; `y = 0` is the plane the asset is seated on; `y >= -4`.
-6. Palette values are plain `minecraft:<id>` **full cubes** — no stairs, slabs,
-   fences, or anything carrying a block state. Reason: the physics lint's
-   support chain and the emit path both stay trivial, and the shootout shows
-   silhouette is what carries a landmark. (See open question 2.)
-7. An artifact whose expansion has no solid voxel is invalid.
+#### The artifact is the program source
 
-Limits (v1), each with a reason rather than a round number:
-
-| Limit | Value | Why |
-|---|---|---|
-| footprint | ≤ 96 × 96 | a landmark should read from across a district; beyond this it is a precinct |
-| height | ≤ 96 | fits under the build limit from any seating the solver picks |
-| boxes | ≤ 1200 | the shootout's own budget is 150–500; 1200 leaves headroom without letting a model emit a voxel list |
-| palette keys | ≤ 16 | more is a model losing track, not a richer building |
-| expanded solid voxels | ≤ 250,000 | about one large building's worth of writes, so three landmarks cost less than the dev-world structure pass |
-
-**Artifact and content addressing.** The box list *is* the artifact; the
-expansion is never stored, because expansion is a pure function and a stored
-expansion is a second source of truth. Identity:
-
-```
-assetId = "b3:" + BLAKE3(canonicalJson(normalize(doc)))
-```
-
-`normalize` = per-axis min/max on every box, palette keys sorted, unused palette
-keys dropped, integers as integers, strings NFC, no whitespace, **box order
-preserved**. This is §9.8's discipline with a different input, and it reuses
-`assets.lock.json` with a new entry kind — a bespoke entry has no `meshSha256`
-and no provider call.
-
-**Where it lives.** A new optional top-level document map:
+Not a box list, not an expansion, not a schematic: **the source text is the
+canonical artifact**, and it is what the document carries.
 
 ```json
-"assets": { "b3:7f21…": { "name": "the_wreck", "palette": {…}, "boxes": [ … ] } }
-```
-
-Inline while the box JSON is ≤ 64 KiB (the normal case: the shootout's
-structures are 10–60 KB), else referenced by id from `assets/<id>.bespoke.json`
-beside the document. Both forms hash identically. A single-file world document
-is what the authoring pipeline emits and what a user recompiles; the file split
-exists for the rare monster.
-
-**How a node references it.**
-
-```json
-{ "id": "the_wreck", "kind": "asset",
-  "params": { "provider": { "name": "bespoke" }, "asset": "b3:7f21…",
-              "role": "solid", "front": "south",
-              "fallback": { "generator": "building.grammar@0",
-                            "params": { "floors": 2, "roof": "flat" } } },
-  "constraints": [ { "zone": "northeast" } ] }
-```
-
-- `provider.name: "bespoke"` is the only new field in §9. `role`, `fallback`,
-  `csg.precedence: 20`, and §9.10's pipeline table apply unchanged.
-- **v1 supports `role: "solid"` only.** `shell` and `carve` need the erode /
-  mask machinery that belongs with G6's mesh work; declaring either is `E322`.
-- A `fallback` is still warned-on when absent (`W302`) and is what stands in the
-  landmark's place if the artifact fails its gate at compile time.
-
-**Solver flow.**
-
-- The envelope is **derived, not authored**: `estimate()` returns the solid
-  extent of the normalized box list — a bounding box over box endpoints, no
-  expansion, genuinely cheap per §7.1. A declared envelope that disagrees loses,
-  and the override is reported (`W320`). The artifact is the truth; an envelope
-  authored before the artifact existed is a guess.
-- Placement is the ordinary layout solve — zone/at/within/distance, the usual
-  pad and apron. The asset's `y = 0` plane is seated on the placement's levelled
-  ground exactly as a building footprint is, so a landmark cannot float and
-  cannot bury itself.
-- **Ports: none in v1.** A bespoke asset publishes no ports and accepts no
-  `connected` / `along`; declaring one is `W321` (ignored). §9.6's cutting pass
-  is the mechanism and it belongs with the mesh work. Roads reach a landmark by
-  its apron, as a district landmark does today. *Reserved for v2:* ports
-  declared **inside** the DSL as a named face + rect, which is strictly easier
-  than ray-marching a mesh.
-
-**The lint gate** — identical rules at authoring time and compile time:
-
-1. Schema + limits above.
-2. **Connectivity.** The expanded solid must be one 6-connected component after
-   dropping components below 12 voxels (§9.9's `minIslandVolume`), else `E323`.
-   A floating chunk is precisely what the physics lint exists to catch, and at
-   authoring time it is nearly free to reject.
-3. **Physics lint.** The artifact is compiled into a scratch superflat world —
-   the shootout's `tools/shootout/assemble.ts` path, which already goes through
-   the real `emitWorld` — and walked by the existing physics rules. Any
-   error-severity finding fails.
-4. **Nonsense guard.** ≥ 500 solid voxels and ≥ 8 blocks tall (the shootout's
-   own DEGENERATE test).
-
-The two gates catch different things and both are needed: the authoring gate
-judges the artifact, the compile gate judges the **seating** — the same artifact
-that is clean on superflat can be half-buried on a slope or standing in water.
-A compile-time failure drops to the node's `fallback` with `W301` + `E324`. A
-broken landmark never ships.
-
-#### 2b. AuthoredPlugin — the sandboxed generator contract
-
-**Declaration.** A document-level map, so N nodes share one module, one hash and
-one compile:
-
-```json
-"plugins": {
-  "ufo_lander": {
-    "hash": "b3:1c4a…",
-    "stage": "structure",
-    "paramSchema": { "type": "object", "properties": { "radius": {"type":"integer"} } },
-    "source": { "inline": "export const stage = 'structure'; …" }
+"programs": {
+  "earth_god_statue": {
+    "mode": "landmark",
+    "envelope": [34, 52, 30],
+    "sourceHash": "b3:1c4a…",
+    "outputHash": "b3:9e07…",
+    "source": "export const envelope = [34, 52, 30]; export default function build(api) { … }"
   }
 }
 ```
 
-Nodes reference it exactly as §7.6 already says: `"generator":
-"authored:ufo_lander"`. Per-node `source` stays legal for hand-written
-generators; the map is canonical for model-authored ones because it is
-content-addressed and deduped. `hash` is `BLAKE3` of the normalized source; a
-mismatch is `E333` and refuses to run — that is what makes a shipped document a
-pure function again.
+| Field | Meaning |
+|---|---|
+| `mode` | `landmark` \| `plugin` \| `both` — how the document is allowed to invoke it |
+| `envelope` | node-local `[w, h, d]` the program declares it needs; the solver reserves this |
+| `source` | the program text; **≤ 64 KiB** |
+| `sourceHash` | `BLAKE3` of the normalized source — the compile refuses a mismatch (`E333`) |
+| `outputHash` | `BLAKE3` of the canonical op stream, recorded at authoring time (below) |
 
-**The API surface.** Deliberately narrower than §7.2's `GenContext`. Lives in
-`packages/compiler/src/plugins/context.ts`; the type the model is shown lives in
-the plugin author kit.
+Referenced as an ordinary generator node, so the layout solver, pads, aprons,
+constraints and the report all work on it unchanged:
 
-```ts
-export interface PluginModule<P> {
-  /** v1 allows these two stages only. */
-  readonly stage: "structure" | "decorate";
-  readonly paramSchema: JSONSchema;
-  /** Pure, params-only — cheaper than §7.1's and impossible to make impure. */
-  estimate(params: P): { size: [number, number, number] };
-  generate(ctx: PluginContext<P>): void;
-}
-
-export interface PluginContext<P> {
-  readonly params: P;
-  /** Node-local. Origin (0,0,0) is the min corner. World coords do not exist here. */
-  readonly envelope: { readonly size: readonly [number, number, number] };
-  /** Which of N this call is. The whole of "the same but different". */
-  readonly instance: { readonly index: number; readonly count: number };
-
-  readonly seed: Uint8Array;                 // per-instance, derived below
-  rng(stream: string): Rng;                  // §6.3 named streams
-  hash(stream: string, x: number, y: number, z: number): number;
-
-  readonly style: {
-    palette(symbol: string): PaletteHandle;  // "@wall", "@roof", … §2.2
-    readonly era: string;
-    readonly motifs: Readonly<Motifs>;
-    readonly tokens: Readonly<Record<string, string | number | boolean>>;
-  };
-  /** Node-local columns only; the plugin cannot ask about anywhere else. */
-  readonly terrain: {
-    heightAt(x: number, z: number): number;
-    slopeAt(x: number, z: number): number;
-    isWater(x: number, z: number): boolean;
-  };
-  /** The only way to write. Everything is clipped to the envelope. */
-  readonly out: {
-    set(x: number, y: number, z: number, block: string): void;
-    fill(from: V3, to: V3, block: string, opts?: { readonly hollow?: boolean }): void;
-    carve(from: V3, to: V3): void;
-  };
-
-  readonly math: DeterministicMath;          // §6.8 — the only transcendentals
-  readonly noise: NoiseFactory;              // pinned FastNoiseLite
-  log(msg: string): void;                    // diagnostics only, never affects output
-}
+```json
+{ "id": "the_earth_god", "kind": "generator", "generator": "authored:earth_god_statue",
+  "constraints": [ { "zone": "northeast" }, { "distance": { "to": "old_town", "max": 90 } } ] }
 ```
 
-- `block` is a palette symbol or a plain `minecraft:<id>` full cube — the same
-  restriction as the DSL, for the same reason.
-- Writes outside the envelope are **clipped and counted**; over 1% clipped is a
-  gate failure (`W331`), because a generator that spills is a generator whose
-  `estimate` is wrong.
-- No `child()`, no `resolvePort`, no `parentOccupancy`, no `ctx.field`. A plugin
-  is a leaf that fills a box. Each of those omissions is a scheduling contract,
-  and a plugin that can re-enter the solver is a plugin that can hang it.
-- Allowed util surface is exactly `ctx.*` plus the IEEE-exact primitives §6.8
-  rule 2 permits (`sqrt`, `abs`, `floor`, `ceil`, `round`, `trunc`, `min`,
-  `max`, `sign`). Everything else in §7.4's table is removed, not merely
-  discouraged.
+#### The API surface
 
-**Execution limits.**
+Minimal on purpose. **The API is the determinism boundary, not a creative
+vocabulary** — there is no shape library, no arch helper, no stair kit. If the
+program wants a dome it computes a dome; that is the whole point of the
+amendment.
+
+```ts
+/** Everything a program is handed. Nothing else is reachable. */
+export interface ProgramApi {
+  /** The only way to write. `block` is a full block string, states included:
+   *  "minecraft:stone_bricks", "minecraft:oak_stairs[facing=north,half=top]". */
+  set(x: number, y: number, z: number, block: string): void;
+  /** Node-local envelope bounds. Origin (0,0,0) is the min corner. */
+  readonly size: readonly [number, number, number];
+  /** Which of N this call is; `{index: 0, count: 1}` in landmark mode. */
+  readonly instance: { readonly index: number; readonly count: number };
+  /** Injected seeded PRNG. The only source of randomness that exists. */
+  random(): number;
+  /** Node-local terrain, for a program that wants to sit on real ground. */
+  heightAt(x: number, z: number): number;
+  /** Diagnostics only; never affects output. */
+  log(msg: string): void;
+}
+
+/** What the program hands back for the solver and the later passes. */
+export interface ProgramResult {
+  readonly name: string;
+  /** Node-local Y of the plane that meets the ground. Usually 0. */
+  readonly seatY: number;
+  /** Named points published into the node's anchor namespace (§5.5). */
+  readonly anchors?: Readonly<Record<string, readonly [number, number, number]>>;
+}
+
+/** The program: one pure function, plus a declared envelope. */
+export type AuthoredProgram = (api: ProgramApi) => ProgramResult;
+```
+
+Rules attached to that surface:
+
+1. **Standard JS math and arrays are allowed** — `Math.sin`, `Math.pow`,
+   `Array`, `Map`, typed arrays, the lot. This is a deliberate relaxation of
+   §6.5 rule 6 / §6.8, and it is safe *here* and nowhere else because
+   determinism is enforced by **hashing the output**, not by pinning the
+   primitives (below). Stdlib generators keep `ctx.math`; they have no hash to
+   check them against.
+2. **No IO, no clock, no ambient randomness, no dynamic code.** §7.4's table
+   applies unchanged for `fetch`/`fs`/`process`/`Date`/`performance`/
+   `Math.random`/`eval`/`Function`/`import()`. `api.random()` is the only
+   entropy, and it is seeded.
+3. **Full block strings, states included.** This resolves the draft's open
+   question 2 outright: the lint is the gate, not the format. An unknown id or
+   an invalid state is a gate failure (`E336`), not a silent placement.
+4. **Writes outside the envelope are clipped and counted;** over 1% clipped is a
+   gate failure (`W331`), because a program that spills is a program whose
+   declared envelope is wrong.
+5. `anchors` are published as §7.3 markers, so a road can be routed to a
+   landmark's `door` anchor without §9.6's mesh-cutting machinery ever existing.
+   Anchors are markers, not ports: they name a point, they promise no geometry.
+
+#### Determinism by verification
+
+The program runs on our machine, so the honest guarantee is not "the language is
+deterministic" but "the artifact is checked".
+
+1. **At authoring time** the program is executed **twice**, in separate module
+   realms, and the two op streams are byte-compared. A mismatch fails the gate
+   immediately — this catches iteration-order bugs at the only moment we can
+   attribute them.
+2. The canonical op stream's `BLAKE3` is recorded as `outputHash` beside the
+   source in the document. In plugin mode the hash covers a fixed verification
+   set — instance indices `0, 1, 7` at the document's `worldSeed`.
+3. **At compile time** the program is **re-executed** and the hash verified.
+   Code is the canonical artifact; a stored expansion is a **cache only**, keyed
+   by `outputHash`, and never a source of truth.
+4. A hash mismatch is `E334` and the node falls back — loud, never silent. The
+   residual risk this design accepts knowingly: a host whose `Math.sin` differs
+   in the last bit turns a world into a hard compile error rather than a subtly
+   different world. That is the right failure direction, and the cross-arch CI
+   job ratified post-G1 (Q9) is what would find it before a customer does.
+
+**Per-instance seeds** are unchanged from the draft:
+`instanceSeed = BLAKE3(worldSeed ‖ nodePath ‖ "program" ‖ instanceIndex)`, the
+same shape as §6.2. `api.random()` is seeded from it. Instances are ordered by
+placement order (solver order, then `nodePath` lexicographic) — never by
+completion order.
+
+#### Limits
 
 | Limit | Per instance | Per document |
 |---|---|---|
+| source size | — | 64 KiB per program |
 | fuel (instruction steps) | 20M | 200M |
 | block writes | 200,000 | 4,000,000 |
 | heap | 64 MiB | — |
@@ -1283,79 +1203,101 @@ export interface PluginContext<P> {
 Wall clock is deliberately absent: it is nondeterministic, and §7.4 already
 settles that fuel is the clock. An instance that trips a limit is dropped
 **whole** — never half-written — with `E332`. If more than a quarter of a
-plugin's instances trip, the plugin is dropped entirely and its nodes fall back;
-one bad instance is bad luck, a quarter of them is a bad plugin.
+program's instances trip, the program is dropped entirely and its nodes fall
+back: one bad instance is bad luck, a quarter of them is a bad program.
 
-**Determinism.** §6.5 and §7.4 apply verbatim: no `Date`, no `Math.random`, no
-IO, no `eval`/`Function`/dynamic import, no engine-variant math, module
-top-level frozen after load. Two additions specific to this tier:
+#### The gate
 
-- **Per-instance seed:** `instanceSeed = BLAKE3(worldSeed ‖ nodePath ‖ "plugin"
-  ‖ instanceIndex)`, the same shape as §6.2. Instances are ordered by placement
-  order (solver order, then `nodePath` lexicographic) — never by completion.
-- **The double-run assertion:** the compiler runs instance 0 twice per plugin
-  per compile and compares op streams. Cheap, and it catches the entire class of
-  "iterated a `Set`" bugs at the only moment we can attribute them.
+Identical rules at authoring time and compile time.
 
-**How N instances are invoked.** One node is one instance
-(`count: 1`). For many, a new stdlib generator:
+1. **Static** — the source parses, declares an envelope within limits, and
+   passes the sandbox lint (banned globals, no top-level mutable state).
+2. **Double run** — the byte-compare above.
+3. **Structural** — the written solid is one 6-connected component after
+   dropping components below 12 voxels (§9.9's `minIslandVolume`), else `E335`.
+   A floating chunk is exactly what the physics lint exists to catch, and at
+   authoring time it is nearly free to reject.
+4. **Physics lint** — the output is compiled into a scratch superflat world
+   through the shootout's `tools/shootout/assemble.ts` path, which already goes
+   through the real `emitWorld`, and walked by the existing physics rules. Any
+   error-severity finding fails.
+5. **Nonsense guard** — ≥ 500 solid voxels and ≥ 8 blocks tall (the shootout's
+   own DEGENERATE test).
+
+The two gates catch different things and both are needed: the authoring gate
+judges the **program**, the compile gate judges the **seating** — the same
+output that is clean on superflat can be half-buried on a slope or standing in
+water. A compile-time failure drops to the node's `fallback` with `E336`/`W337`.
+
+#### The authoring loop, and what happens when it fails
+
+1. The model writes the program.
+2. Static gate → double run → run on a synthetic flat sampler and a synthetic
+   sloped one, at instance indices `0, 1, 7`, under two world seeds.
+3. Emit to a scratch world; physics lint; structural and nonsense guards.
+4. **Diagnostics back to the model** — the same `Diagnostic` records the
+   compiler produces, plus the ASCII silhouette — as a repair turn. **Bounded at
+   3 rounds**, matching the shootout's ladder and `MAX_AUTHOR_ATTEMPTS`.
+5. Freeze: `sourceHash` and `outputHash` into the document. The compile is a
+   pure function again.
+
+This is **diagnostic-driven repair**, which §14.6 blesses and the standing
+decision permits; what is banned is autonomous *visual critique* iteration.
+Nothing in this loop looks at a render. Visual review stays Kai's, manually.
+
+**Failure semantics.** A program that cannot pass in 3 rounds is dropped **at
+authoring time** — it never enters the document. Nodes that referenced it are
+re-pointed at a fallback archetype or removed, and the run reports it. The
+invariant is one sentence: *the document that reaches the compiler contains only
+authored programs that have already been executed, hashed and linted clean.*
+
+#### Invoking N instances
+
+One node is one instance (`count: 1`) — that is landmark mode. For many:
 
 ```json
-{ "kind": "generator", "generator": "scatter.plugin@0",
-  "params": { "plugin": "ufo_lander", "count": 24, "area": { "zone": "north" },
-              "spacing": 40, "maxSlope": 18, "avoidTags": ["settlement"],
-              "params": { "radius": 9 } } }
+{ "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "ufo_lander", "count": 24, "area": { "zone": "north" },
+              "spacing": 40, "maxSlope": 18, "avoidTags": ["settlement"] } }
 ```
 
 It reuses the existing Poisson-disk scatter, eligibility rules and occupancy
-discipline, so a plugin never learns where it is — which is also how the
+discipline, so a program never learns where it is — which is how the
 no-absolute-coordinates law survives contact with model-written code. *Reserved
-for Phase 4:* a district `mix` may name `authored:<id>`, making a plugin part of
-the fabric rather than a scatter.
+for Phase 4:* a district `mix` may name `authored:<id>`, making a program part
+of the fabric rather than a scatter.
 
-**The authoring-time validation loop.** This is the part that makes the tier
-shippable.
+#### Budget scaling
 
-1. The model writes the module plus a sample `params`.
-2. **Static gate** — TypeScript type-check, then the sandbox lint (banned
-   globals, banned `Math.*`, no top-level mutable state).
-3. **Run on a test envelope** — the size `estimate()` asks for, against a
-   synthetic flat sampler and a synthetic sloped one, at instance indices
-   `0, 1, 7`, under two world seeds.
-4. **Emit and lint** — expand to blocks, write a scratch superflat world through
-   the shootout's `assemble.ts` path, run the physics rules and the double-run
-   determinism assertion.
-5. **Diagnostics back to the model** — the same `Diagnostic` records the
-   compiler produces, plus the ASCII silhouette, as a repair turn. **Bounded at
-   3 rounds**, matching the shootout's ladder and `MAX_AUTHOR_ATTEMPTS`.
-6. Freeze: source hash into the document, and the compile is a pure function
-   again.
-
-This is **diagnostic-driven repair**, which §14.6 already blesses and which the
-standing decision permits: what is banned is autonomous *visual critique*
-iteration. Visual review remains Kai's, manually, and nothing in this loop looks
-at a render.
-
-**Failure semantics.** A plugin that cannot pass in 3 rounds is dropped **at
-authoring time** — it never enters the document. Nodes that referenced it are
-re-pointed at a fallback archetype or removed, and the run reports it. Same for
-a bespoke asset that cannot pass its gate. The invariant is one sentence: *the
-document that reaches the compiler contains only bespoke content that has
-already been compiled and linted clean.*
-
-**Budget scaling.** With `A` = region area in blocks²:
+With `A` = region area in blocks²:
 
 ```
-maxLandmarks = clamp(round(3 × A / 512²), 3, 12)
-maxPlugins   = clamp(round(3 × A / 512²), 3,  6)
+maxLandmarkPrograms = clamp(round(3 × A / 512²), 3, 12)
+maxPluginPrograms   = clamp(round(3 × A / 512²), 3,  6)
 ```
 
-Plugins cap lower because a landmark costs the compile a fixed artifact while a
-plugin costs it every instance. Both are additionally bounded by a per-world
-authoring spend stop (`--bespoke-budget`, default $0.50) checked *before* each
-call, so a world degrades to stdlib rather than overrunning. At the shootout's
-~$0.03 per landmark this is not a tight bound today; it exists so that it is
-never discovered to be missing.
+Plugin programs cap lower because a landmark costs the compile one execution
+while a plugin costs it every instance. Both are additionally bounded by a
+per-world authoring spend stop (`--bespoke-budget`, default $0.50) checked
+*before* each call, so a world degrades to stdlib rather than overrunning. At
+the shootout's ~$0.03 per artifact this is not a tight bound today; it exists so
+it is never discovered to be missing.
+
+#### Historical note — the box DSL
+
+The compact box/carve JSON in `tools/shootout/luna-structure.ts` (ordered
+inclusive boxes, `"air"` to carve, `hollow` for a 1-thick shell, `y = 0` as the
+seating plane) is what proved the pipeline: 3/3 valid on attempt 1 at ~$0.03
+each, and the first evidence that a text model can author a structure worth
+walking to. It stays in the tools directory as the shootout's record, and its
+expansion semantics remain the reference for what "seat plane", "carve" and
+"hollow" mean. **It is not a shipping artifact format.** Nothing in the compiler
+should learn to read it.
+
+Diagnostics (proposed): `W330` declared envelope overridden, `W331` writes
+clipped beyond tolerance, `E332` budget exceeded, `E333` source hash mismatch,
+`E334` output hash mismatch, `E335` disconnected solid, `E336` gate failed,
+`W337` program dropped and fallback used.
 
 ---
 
@@ -1560,25 +1502,31 @@ biome id the emitter's table does not carry.
 
 ### Proposed spec amendments
 
-Not yet applied to `docs/LOAM-SPEC-v0.2.md`; listed here so ratification covers
-them explicitly. All are additive; no existing construct changes meaning.
+Not yet applied to `docs/LOAM-SPEC-v0.2.md`; listed here so the spec edit that
+follows ratification is mechanical. All are additive; no existing construct
+changes meaning.
 
-1. **§9.2** — `provider.name` gains `"bespoke"`, plus `params.asset` (an asset
-   id) and the `assets` document map. §9.8's lockfile gains a bespoke entry kind
-   with no `meshSha256`.
-2. **§7.6** — an `authored:` generator may be declared in a document-level
-   `plugins` map with a source hash; the plugin context is a documented
-   **subset** of §7.2's `GenContext` (§7.4's sandbox table applies unchanged).
-3. **§2** — a document and any composite/district/city node may carry `intent`;
+1. **§7.6** — an `authored:` generator may be declared in a document-level
+   `programs` map carrying `mode`, `envelope`, `source`, `sourceHash` and
+   `outputHash`. The program's API (`ProgramApi`) is a documented **narrowing**
+   of §7.2's `GenContext`, and §7.4's sandbox table applies unchanged except for
+   the math relaxation in item 2.
+2. **§6.5 / §6.8** — authored programs may use standard JS math. Determinism for
+   them is enforced by the authoring-time double run and the recorded
+   `outputHash`, verified at compile time, rather than by pinned primitives.
+   Stdlib generators are unchanged: they keep `ctx.math`, because they have no
+   hash to check them against.
+3. **§9** — **unchanged.** `kind: "asset"` keeps meaning "AI-generated mesh";
+   the draft's `provider.name: "bespoke"` is withdrawn along with the box DSL.
+4. **§2** — a document and any composite/district/city node may carry `intent`;
    §2.8's inheritance rules govern it verbatim.
-4. **§7.5** — two new stdlib entries: `scatter.plugin@0` (stage `structure` or
-   `decorate`, per the plugin) and `infra.wall@0` (stage `connective`).
-5. **§13.2** — the proposed code blocks: `W480`–`W483` intent, `W320`–`E324`
-   bespoke assets, `W331`–`E333` plugins, `W460`–`I463` sweeps, `W470`–`W472`
-   biome clamp.
-6. **Terrain profile** — `intent.climate` is the profile-legal spelling of
-   per-region climate/biome intent; the profile's `terrain.climate@0` params are
-   unchanged and remain the finer dial.
+5. **§7.5** — two new stdlib entries: `scatter.program@0` (stage `structure` or
+   `decorate`) and `infra.wall@0` (stage `connective`).
+6. **§13.2** — the proposed code blocks: `W480`–`W483` intent, `W330`–`W337`
+   authored programs, `W460`–`I463` sweeps, `W470`–`W472` biome clamp.
+7. **Terrain profile** — `intent.climate` is the profile-legal spelling of
+   per-region climate/biome intent; `terrain.climate@0`'s params are unchanged
+   and remain the finer dial.
 
 ---
 
@@ -1615,14 +1563,18 @@ luck** — distinct palettes, archetype mixes, props and flora — with the same
 prompt at the same seed producing the same two islands twice. Kai walks it.
 
 **Phase 3 — the bespoke core.**
-BespokeAsset DSL v1 + artifact + `asset` node flavor + the two lint gates;
-AuthoredPlugin sandbox + `scatter.plugin@0` + the bounded authoring validation
-loop + the budget rule.
-*Acceptance:* an alien-invasion prompt produces at least one working UFO plugin
-(many instances, deterministic, physics-clean) and at least one bespoke
-landmark; the world compiles with zero error diagnostics; and **recompiling the
-emitted `.loam.json` — plugins and assets frozen inside it — reproduces the
-world byte-identically with no model in the loop.**
+**One** program pipeline, not two: the sandbox and its `ProgramApi`, the
+`programs` document map, the double-run + `outputHash` verification, the two
+gates, `scatter.program@0`, the bounded authoring repair loop, and the budget
+rule. Landmark and plugin are invocation modes over that one pipeline, so
+"landmarks first, plugins later" is not a way to stage this work — the second
+mode is a `count` and a seed.
+*Acceptance:* an alien-invasion prompt produces at least one working UFO
+program invoked in plugin mode (many instances, deterministic, physics-clean)
+and at least one program invoked in landmark mode; the world compiles with zero
+error diagnostics; and **recompiling the emitted `.loam.json` — every program's
+source and `outputHash` frozen inside it — reproduces the world byte-identically
+with no model in the loop.**
 
 **Phase 4 — fabric breadth.**
 Urban forms as plugins, courtyard blocks, multi-level ground, the flora grammar,
@@ -1632,49 +1584,35 @@ rows; acceptance is defined per track when it starts, not now.
 
 ---
 
-### Open questions for Kai
+### Dispositions (Kai, 2026-08-02)
 
-Real uncertainty, not rhetorical.
+The draft's nine open questions, answered. Recorded with their answers rather
+than deleted, because the reasoning is the part that will be needed again.
 
-1. **Bespoke landmark interiors.** v1 is an exterior: full-cube shell, air
-   carves, no ports, no fit-out, no lighting. A player who walks through a
-   carved doorway finds an unlit empty cavity. Three options with real cost
-   differences: (a) ship v1 as monuments and keep them un-enterable, (b) let the
-   DSL declare an `interior` volume that the existing fit-out furnishes, (c)
-   push interiors to the plugin tier. I lean (a) for v1, (b) for v1.1.
-2. **Stateful blocks in the DSL.** v1 is full cubes only, per the shootout.
-   Stairs/slabs/logs-with-axis roughly double the shape vocabulary and would let
-   a bespoke roof read properly — at the cost of more physics-lint support-chain
-   cases and a higher model error rate. Add in v1.1, or hold to full cubes
-   indefinitely?
-3. **Where does intent come from?** Does the authoring model emit `intent`
-   itself as part of the document, or does a cheap classify-the-prompt pre-pass
-   produce it and hand it to the author inside the contract block? The second is
-   far more controllable and costs one extra call per world.
-4. **Flood: dressing or terrain?** I have pinned `event` as **dressing only** —
-   it never moves fluid or edits the field — because a flood that moves water is
-   a `terrain.edit@0` and fluid-lint problem, not a style one. If you want
-   actual water standing in the streets, that is a terrain-profile feature and
-   should be scoped separately.
-5. **Plugin trust boundary.** §7.4 states the threat model is bugs, not
-   adversaries, and pins `node:vm`. Once plugins are authored per-world by a
-   model on a *paying customer's* prompt, is `node:vm` still acceptable, or is
-   `isolated-vm`/a worker realm the entry price for Phase 3? This is a product
-   security decision, not a design one.
-6. **Budget shape.** I pinned counts scaling with region area (3 per 512²,
-   capped 12/6) plus a $0.50 per-world spend stop. Is a flat per-world dollar
-   budget the better primary dial, given it is what a customer eventually sees?
-7. **`infra.wall@0` authorship.** Does the author just declare a wall and let
-   the compiler derive its course from the settlement hull, or does the author
-   give a coarse `course` like a terrain verb? Deriving is less rope; an
-   authored course is what "a walled old town inside a bigger city" actually
-   needs.
-8. **Does the land-use clamp cover farmland and camps?** They are land use too,
-   and clamping them would fix "snow on half the wheat" — but their masks are
-   much larger and much softer than a settlement footprint, and a feather band
-   over a floodplain may read worse than the seam it replaces.
-9. **`character` intent vs. `style.biomeThemes`.** Two mechanisms for "this
-   region looks different". I have made intent the authoring surface and themes
-   the compiler's mechanism, but §2.5 makes `biomeThemes` authorable today.
-   Should it be demoted to compiler-internal, or kept as the power-user escape
-   hatch?
+1. **Bespoke landmark interiors.** Shells in v1; an `interior` volume the
+   existing fit-out furnishes in v2. **This does not block Phase 3** — an
+   un-enterable monument is a shippable monument.
+2. **Stateful blocks.** Resolved by the AuthoredProgram amendment: a program
+   writes **full block strings, states included**, and the physics lint is the
+   gate. The format restricts nothing; the lint restricts what ships.
+3. **Where intent comes from.** A **classify-the-prompt pre-pass** authors the
+   intent, and its output is **inspectable before the main authoring call**.
+   Costs one cheap call and buys a place to look when a world comes out wrong.
+4. **Flood.** Events stay **dressing only** — no fluid moved, no field edited.
+   Real standing floodwater is deferred to the terrain profile, where the
+   field and the fluid lint already live.
+5. **Plugin trust boundary.** `node:vm` plus fuel is fine **pre-launch**. Real
+   isolation (a worker or `isolated-vm`) is recorded as a **LAUNCH BLOCKER —
+   not a Phase 3 blocker**: it gates taking money from strangers, not building
+   the tier.
+6. **Budget shape.** Area-scaled counts are the **primary** dial; the per-world
+   spend stop is the **backstop**.
+7. **`infra.wall@0` authorship.** Compiler-derived hull course in v1; an
+   authored coarse course in v2, for the walled old town inside a bigger city.
+8. **What the land-use clamp covers.** Settlements **and camp cores**;
+   **not farmland**. A feather band over a floodplain reads worse than the seam
+   it would replace, and fields are ground that is *worked*, not ground that is
+   *built*.
+9. **`character` vs `biomeThemes`.** `character` intent is **canonical**;
+   `style.biomeThemes` stays as the power-user hatch. Revisit after Phase 2,
+   with a real two-region world to look at.
