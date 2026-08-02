@@ -120,7 +120,13 @@ This is the *development* workflow. The *production* worldgen pipeline
   walked in the client** — do not iterate on visuals without Kai. See the
   dated status blocks in `docs/DESIGN.md` for what each round added.
 - **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
-  indefinitely — production authoring is pure GLM 5.2 (cheapness is a core
-  goal); escalate only if GLM hits a hard capability wall. The
-  critique→repair pass stays MANUAL — Kai reviews; never build autonomous
-  repair iteration.
+  indefinitely — production authoring is cheap-model-first (cheapness is a
+  core goal); escalate only on a hard capability wall. The critique→repair
+  pass stays MANUAL — Kai reviews; never build autonomous repair iteration.
+- **Standing decisions (2026-08-02, Kai):** default authoring model is
+  **GPT 5.6 Luna at effort max** (`AUTHORING_MODEL_ID`; GLM 5.2 stays one
+  `--model` flag away — basis: 2026-08-01 3×3 comparison, equal reliability
+  at ~1/3 cost). **Demos are Luna e2e from a text prompt, never
+  hand-authored worlds** — every demo/acceptance world going forward is
+  generated via `terrainist generate`, so demos measure the real product
+  path (hand-authored docs remain fine as test fixtures and exhibits).
