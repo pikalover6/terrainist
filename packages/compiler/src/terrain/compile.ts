@@ -79,6 +79,7 @@ import { buildSettlementClearing } from "./clearing.js";
 import {
   buildLandUseMask,
   clampLandUse,
+  type ClimateIntent,
   type LandUseClampResult,
   type MaskRect,
 } from "./landuse.js";
@@ -102,6 +103,8 @@ import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js
 import { decorate, type DecorBlock } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
+import { ensureFanOutRows, fanOut, resolveIntents, type IntentResolution } from "../intent/index.js";
+import { TERRAIN_ROWS } from "./climate-intent.js";
 import {
   caveDiagnostics,
   tunnelDiagnostics,
@@ -397,9 +400,19 @@ async function compileValidated(
   const [width, depth] = doc.root.envelope.size ?? [512, 512];
   const region = centeredRegion(width, depth);
 
+  // --- pass 2: intent ------------------------------------------------------
+  // Resolved once, here, exactly where L3 styles are inherited; every consumer
+  // reads the resolved record and nobody re-reads the document. A document
+  // with no `intent` resolves to a record that declares nothing, and every
+  // fan-out row answers such a record with today's value — which is what makes
+  // this pass byte-identical until an author uses it.
+  ensureFanOutRows();
+  const intents = resolveIntents(doc);
+  diagnostics.push(...intents.diagnostics);
+
   // --- palette -------------------------------------------------------------
   const rootSeed = nodeSeed(worldSeed, rootPath, "");
-  const { palette, unknownBlocks } = resolvePalette(stack, doc.style, rootSeed);
+  const { palette, unknownBlocks } = resolvePalette(stack, styleWithIntent(doc.style, intents), rootSeed);
   for (const bad of unknownBlocks) {
     diagnostics.push(
       warning(
@@ -754,6 +767,15 @@ async function compileValidated(
   const painted = paintBiomes(plan, classification, climate, scatter.coverage, stack, {
     mask: landUseMask,
     nodePath: rootPath,
+    // Precedence rung 1 of the biome contract, arriving through the registry:
+    // `landuse.ts` declared this seam and left it undefined for Phase 2.
+    ...(() => {
+      const climateIntent = fanOut<ClimateIntent | undefined>(TERRAIN_ROWS.landUse, intents.root, {
+        nodePath: rootPath,
+        today: undefined,
+      });
+      return climateIntent === undefined ? {} : { intent: climateIntent };
+    })(),
   });
   const biomeHistogram = painted.histogram;
   diagnostics.push(...painted.clamp.diagnostics);
@@ -912,6 +934,28 @@ function unwrittenEmit(
 }
 
 /**
+ * The document's style with the world-scope character's palette overrides
+ * merged over it.
+ *
+ * `character.palettes` is a **merge over** `style.palettes` within the node's
+ * subtree; today the palette is resolved once for the whole region, so the row
+ * that reaches the compiler is the world-scope one. A subtree-local palette
+ * needs the palette resolver to become per-node, which is Phase 4's business —
+ * this is the honest half of the row, not a stand-in for it.
+ *
+ * With no intent declared it returns `style` **by reference**, so the palette
+ * resolver sees the identical object it saw before this function existed.
+ */
+function styleWithIntent(
+  style: TerrainDocument["style"],
+  intents: IntentResolution,
+): TerrainDocument["style"] {
+  const overrides = intents.root.intent.character?.palettes;
+  if (overrides === undefined || Object.keys(overrides).length === 0) return style;
+  return { ...style, palettes: { ...(style?.palettes ?? {}), ...overrides } };
+}
+
+/**
  * The land-use mask for the biome clamp — every claimed footprint, unioned.
  *
  * Per the Phase 0 contract §4: district and city cells, precinct envelopes,
@@ -955,7 +999,12 @@ function paintBiomes(
   climate: ReturnType<typeof buildClimateFields>,
   coverage: Uint8Array,
   stack: ReturnType<typeof loadPrismarine>,
-  landUse: { readonly mask: Uint8Array; readonly nodePath: string },
+  landUse: {
+    readonly mask: Uint8Array;
+    readonly nodePath: string;
+    /** Precedence rung 1 — `intent.climate`, resolved by the intent layer. */
+    readonly intent?: ClimateIntent;
+  },
 ): { histogram: Record<string, number>; clamp: LandUseClampResult } {
   const ids = new Map<string, number>();
   const histogram: Record<string, number> = {};
@@ -985,6 +1034,7 @@ function paintBiomes(
     temperature: climate.temperature,
     forested: coverage,
     nodePath: landUse.nodePath,
+    ...(landUse.intent === undefined ? {} : { intent: landUse.intent }),
   });
   if (clamp.snow !== plan.snow) plan.snow.set(clamp.snow);
 

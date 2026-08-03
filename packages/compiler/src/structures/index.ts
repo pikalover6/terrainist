@@ -46,6 +46,8 @@ import type {
 } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
+import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import { STRUCTURE_ROWS } from "./themes-intent.js";
 import { resolvePorts } from "../layout/ports.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
@@ -449,7 +451,18 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // order. Dealing centrally rather than per-building is what makes "no two
   // houses alike" a property of the village rather than a coincidence.
   const themeSeed: Seed256 = nodeSeed(input.worldSeed, rootPath, "");
-  const theme: MaterialTheme = pickTheme(themeSeed, themeOverride(input.doc));
+  // The theme the document already asked for, then the intent layer's chance
+  // to answer instead. `themes.materialTheme` is total: with no intent
+  // declared it hands back exactly what `themeOverride` said, which is what
+  // the byte-identity law requires.
+  ensureFanOutRows();
+  const intents = resolveIntents(input.doc);
+  const rootIntent = intentFor(intents, rootPath);
+  const themeId = fanOut<string | undefined>(STRUCTURE_ROWS.materialTheme, rootIntent, {
+    nodePath: rootPath,
+    today: themeOverride(input.doc),
+  });
+  const theme: MaterialTheme = pickTheme(themeSeed, themeId);
   const deal = assignMaterials(theme, jobs.length, themeSeed);
   // The whole palette rides along beside the triple, not instead of it. Only
   // the terrace reads it, and it reads it for a reason no other building has:
@@ -740,6 +753,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           nodePath: rootPath,
           cities: setPieceCities,
           existing: blocks,
+          // Where a player already walks. The hillside stair reads this and
+          // nothing else does: a flight has to *land* on the city at both
+          // ends or it is a folly on a slope. Roads, streets and arterials,
+          // the plaza's paving, and any building's own footprint all count.
+          connects: (x: number, z: number): boolean => {
+            const region = input.plan.region;
+            if (!inside(region, x, z)) return false;
+            const at = index(region, x, z);
+            if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
+            if (streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1) return true;
+            if (plaza !== undefined && plaza.paved[at] === 1) return true;
+            return buildings.built.some(
+              (b) =>
+                x >= b.footprint.x0 && x <= b.footprint.x1 && z >= b.footprint.z0 && z <= b.footprint.z1,
+            );
+          },
           ...(roads === undefined
             ? {}
             : {

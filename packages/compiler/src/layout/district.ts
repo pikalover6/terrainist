@@ -59,6 +59,7 @@ import {
   warning,
   isDistrictNode,
   type DistrictDensity,
+  type DistrictFabric,
   type DistrictNode,
   type DistrictParams,
   type HorizontalFace,
@@ -69,6 +70,8 @@ import {
   type Yaw,
 } from "@terrainist/spec";
 
+import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Rect } from "./frames.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import {
@@ -409,16 +412,30 @@ export function layDistrict(
   cell?: CellFabric,
 ): LaidDistrict | null {
   const p = cell === undefined ? node.params : { ...node.params, density: cell.density };
-  const density = p.density;
+  // The intent layer's three urban rows, each handed the value this pass was
+  // about to use. With no intent anywhere on this node's path every one of
+  // them returns that value unchanged — see `intent/fanout.ts`, law 2.
+  ensureFanOutRows();
+  const intent = intentFor(resolveIntents(input.doc), nodePath);
+  const density = fanOut<DistrictDensity>(LAYOUT_ROWS.density, intent, {
+    nodePath,
+    today: p.density,
+  });
   const bounds = placement.footprint;
   const seed = nodeSeed(input.worldSeed, nodePath, node.seedSalt ?? "");
-  const sidewalkWidth = SIDEWALK_BY_DENSITY[density] ?? 1;
+  const sidewalkWidth = fanOut<number>(LAYOUT_ROWS.streetWidth, intent, {
+    nodePath,
+    today: SIDEWALK_BY_DENSITY[density] ?? 1,
+  });
 
   const skeleton = buildStreetGraph({
     bounds,
-    fabric: p.fabric,
+    fabric: fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, { nodePath, today: p.fabric }),
     seed,
-    blockSize: cell?.blockSize ?? p.blockSize ?? (BLOCK_SIZE_BY_DENSITY[density] as number),
+    blockSize: fanOut<number>(LAYOUT_ROWS.blockSize, intent, {
+      nodePath,
+      today: cell?.blockSize ?? p.blockSize ?? (BLOCK_SIZE_BY_DENSITY[density] as number),
+    }),
     sidewalk: sidewalkWidth,
     ...(cell === undefined ? {} : { mask: cell.mask, orientation: cell.orientation }),
   });
