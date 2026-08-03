@@ -127,6 +127,51 @@ export {
 } from "./intent-prepass.js";
 export type { ClassifyIntentRequest, IntentClassification } from "./intent-prepass.js";
 
+export {
+  DEFAULT_BESPOKE_BUDGET_USD,
+  MAX_PROGRAM_ROUNDS,
+  MAX_PROGRAM_SOURCE_BYTES,
+  PROGRAM_AUTHOR_PROMPT,
+  PROGRAM_PROPOSAL_PROMPT,
+  applyBudget,
+  attachPrograms,
+  authorProgram,
+  authorPrograms,
+  collectProgramRequests,
+  extractProgramSource,
+  formatProgramRun,
+  hashSource,
+  lintSourceLocally,
+  normalizeRequests,
+  parseEnvelope,
+  programBudget,
+  programUserPrompt,
+  proposePrograms,
+  repairPrompt,
+  slugId,
+} from "./program-author.js";
+export type {
+  AuthorProgramOutcome,
+  AuthorProgramRequest,
+  AuthorProgramsRequest,
+  AuthorProgramsResult,
+  AuthoredProgramEntry,
+  ProgramBudget,
+  ProgramRequest,
+  ProgramRunRecord,
+  ProposalResult,
+  ProposeRequest,
+} from "./program-author.js";
+
+export { stubProgramGate } from "./program-gate.js";
+export type {
+  ProgramDocContext,
+  ProgramMode,
+  ProgramSubmission,
+  ProgramVerificationGate,
+  StubGateOptions,
+} from "./program-gate.js";
+
 export { extractJson, stripFences } from "./json.js";
 export type { JsonExtraction } from "./json.js";
 
