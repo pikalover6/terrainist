@@ -48,18 +48,16 @@ You never write a world. You only describe what kind of place the prompt asks fo
 Reply with a JSON object and nothing else. Every field is OPTIONAL, and omitting
 a field means "the prompt does not say" — which is NOT the same as zero.
 
-When the prompt names two or more places that should read differently, do NOT
-merge them: put shared facts at the top level and describe the per-place
-differences in "tokens" prose so the author can give each region its own
-character block.
-
 {
-  "era": string        // period word, resolved through an alias table to one
-                       // of: primitive, ancient, medieval, early_modern,
-                       // industrial, modern, far_future. Known aliases include
-                       // "victorian", "pirate", "fantasy", "steampunk",
-                       // "wild_west", "cyberpunk", "prehistoric". Prefer a
-                       // class name when no alias clearly fits.
+  "era": string        // ONE of these seven classes, or a listed alias for one:
+                       //   primitive   (prehistoric, stone_age, neolithic, tribal)
+                       //   ancient     (classical, roman, greek, egyptian, bronze_age)
+                       //   medieval    (feudal, viking, norse, fantasy, high_fantasy)
+                       //   renaissance (baroque, tudor, colonial, age_of_sail, pirate)
+                       //   industrial  (victorian, steam, steampunk, wild_west)
+                       //   modern      (contemporary, art_deco, brutalist, cyberpunk)
+                       //   far_future  (futuristic, space_age, scifi, alien)
+                       // Any other word is a warning and falls back to medieval.
   "wealth": 0..1       // 0 destitute, 0.5 ordinary, 1 rich
   "decline": 0..1      // 0 kept up, 1 abandoned. Orthogonal to wealth:
                        // a rich ruin exists.
@@ -84,13 +82,31 @@ character block.
   "tokens": { "<name>": string|number|boolean }   // anything else worth keeping
 }
 
+The three "prefer"/"forbid" lists are matched against real catalogs, and an
+entry that matches nothing is dropped with a warning. So:
+- archetypes are single-word building ids like "cottage", "manor", "tavern",
+  "church", "warehouse", "watchtower", "lighthouse", "windmill".
+- props are single-word object ids like "fountain", "gazebo", "cart",
+  "galleon", "standing_stones", "market_barrow", "well_head", "notice_board".
+- flora entries are tree shapes, and there are exactly four:
+  "spruce_tall", "spruce_squat", "oak_round", "birch_slim".
+Never write a phrase ("moored pirate ships", "pastel meadows"): a phrase
+grounds nowhere and is thrown away. If you cannot name an id, say it in
+"tokens" prose instead, where prose is what the field is for.
+
 Rules:
 - Only state what the prompt actually implies. Guessing every dial is worse
   than leaving one out.
 - If the prompt describes SEVERAL distinct places (two islands, a city and a
-  ruin), classify the WORLD as a whole here and put what makes each place
-  different into "tokens.regions" as a short sentence. The document author gets
-  this object and writes per-region character from it.
+  ruin), do NOT average them into one blob — an averaged intent is what makes
+  every region come out looking the same. Put ONLY what is genuinely shared at
+  the top level (usually little more than the climate), and describe each place
+  SEPARATELY in "tokens": one token per place, named for it, e.g.
+  "tokens": { "region_unicorn_isle": "pastoral, elegant, white quartz shrines,
+  wealth 0.8, decline 0", "region_pirate_cove": "ramshackle, weathered timber,
+  wealth 0.3, decline 0.7" }. Each token should name that place's own era,
+  wealth, decline, formality, material theme and preferred archetypes, because
+  the document author turns one token into one region's character block.
 - Reply with the JSON object alone. No prose, no markdown fence.`;
 
 /** What the pre-pass produced. */

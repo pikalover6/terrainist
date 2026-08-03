@@ -281,10 +281,94 @@ export const MODERN_CITY_THEME: MaterialTheme = Object.freeze({
   roofs: [QUARTZ_ROOF, CONCRETE_ROOF],
 });
 
+/* -------------------------------------------------------------------------- */
+/* the white-quartz palette                                                    */
+/* -------------------------------------------------------------------------- */
+
+const QUARTZ_WHITE: WoodSet = {
+  id: "quartz_white",
+  planks: "quartz_block",
+  log: "quartz_pillar",
+  stripped: "smooth_quartz",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  fence: "diorite_wall",
+  door: "birch_door",
+  trapdoor: "birch_trapdoor",
+};
+
+const QUARTZ_BRICK: WoodSet = {
+  id: "quartz_brick",
+  planks: "quartz_bricks",
+  log: "chiseled_quartz_block",
+  stripped: "quartz_block",
+  stairs: "smooth_quartz_stairs",
+  slab: "smooth_quartz_slab",
+  fence: "diorite_wall",
+  door: "birch_door",
+  trapdoor: "birch_trapdoor",
+};
+
+const CALCITE_SET: WoodSet = {
+  id: "calcite_pale",
+  planks: "calcite",
+  log: "quartz_pillar",
+  stripped: "smooth_quartz",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  fence: "diorite_wall",
+  door: "birch_door",
+  trapdoor: "birch_trapdoor",
+};
+
+const CALCITE_STONE: StoneSet = {
+  id: "calcite",
+  primary: "calcite",
+  accent: "quartz_block",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  wall: "diorite_wall",
+};
+
+const QUARTZ_STONE: StoneSet = {
+  id: "quartz_bricks",
+  primary: "quartz_bricks",
+  accent: "calcite",
+  stairs: "smooth_quartz_stairs",
+  slab: "smooth_quartz_slab",
+  wall: "diorite_wall",
+};
+
+const AMETHYST_ROOF: RoofSet = {
+  id: "amethyst",
+  stairs: "quartz_stairs",
+  slab: "quartz_slab",
+  solid: "amethyst_block",
+};
+
+/** The id a document (or an intent's `character.materialTheme`) names. */
+export const WHITE_QUARTZ_THEME_ID = "white_quartz";
+
+/**
+ * Quartz, calcite and a stroke of amethyst — the pale, elegant palette.
+ *
+ * Like {@link MODERN_CITY_THEME} this is deliberately **not** in
+ * {@link MATERIAL_THEMES}: adding a member to that pool rerolls every seeded
+ * theme draw ever taken and therefore every golden world. It is reachable by
+ * name only, which is exactly what an intent that says "white quartz" wants.
+ */
+export const WHITE_QUARTZ_THEME: MaterialTheme = Object.freeze({
+  id: WHITE_QUARTZ_THEME_ID,
+  woods: [QUARTZ_WHITE, QUARTZ_BRICK, CALCITE_SET],
+  stones: [CALCITE_STONE, QUARTZ_STONE],
+  roofs: [QUARTZ_ROOF, AMETHYST_ROOF],
+});
+
 /** Every theme that can be asked for **by name**, drawable or not. */
 export const ALL_MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
   ...MATERIAL_THEMES,
   MODERN_CITY_THEME,
+  WHITE_QUARTZ_THEME,
 ]);
 
 /** The theme a world is built in, drawn from the settlement's node seed. */

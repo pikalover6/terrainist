@@ -192,6 +192,15 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       lane: "minecraft:coarse_dirt",
     }),
     modern_city: MODERN_STREET_MATERIALS,
+    // Quartz and calcite: a pale, swept street to match the pale, swept
+    // buildings. Smooth stone is the back lane because gravel beside quartz
+    // reads as a building site.
+    white_quartz: Object.freeze({
+      carriageway: "minecraft:calcite",
+      worn: "minecraft:smooth_quartz",
+      marking: "minecraft:quartz_block",
+      lane: "minecraft:smooth_stone",
+    }),
   });
 
 /** The street materials for a theme id; the modern set when it is unknown. */

@@ -1,0 +1,293 @@
+/**
+ * Grounding the intent layer's free strings against the real registries.
+ *
+ * `SemanticIntent` is written by a language model, so its string-valued fields
+ * — `character.materialTheme`, and the `prefer` / `forbid` lists for
+ * archetypes, props and flora — arrive as *words*, not as ids. Three things can
+ * be true of such a word:
+ *
+ * 1. it **is** a registered id (`"cottage"`, `"fountain"`, `"oak_round"`);
+ * 2. it is a near miss a small alias table can carry (`"quartz"`,
+ *    `"white stone"` → the `white_quartz` theme);
+ * 3. it is prose (`"rainbow-hued crystal formations"`).
+ *
+ * Case 3 used to be silent — the compiler dropped it and the world came out
+ * generic, which is exactly the defect this module exists to end. Every
+ * ungrounded word now draws a warning naming the legal values (and, where the
+ * spelling is close, the nearest ones), so the authoring loop can see what it
+ * missed. Nothing here is ever fatal: an intent is a *wish*, and a wish the
+ * compiler cannot grant should cost a world a warning, not a compile.
+ *
+ * This file lives beside the structure passes, not inside `intent/`, for the
+ * same reason the fan-out rows do — fan-out law 1 says the intent package never
+ * imports a subsystem, and the registries are subsystems.
+ */
+
+import {
+  ALL_MATERIAL_THEMES,
+  PROP_NAMES,
+  STRUCTURE_CATALOG,
+  isPropName,
+  structureById,
+} from "@terrainist/stdlib";
+import { TREE_SHAPES, warning, type LoamDiagnostic } from "@terrainist/spec";
+
+import type { IntentResolution, ResolvedIntent } from "../intent/index.js";
+
+/* -------------------------------------------------------------------------- */
+/* material themes                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** Every material theme an author may name. */
+export function materialThemeIds(): readonly string[] {
+  return ALL_MATERIAL_THEMES.map((t) => t.id);
+}
+
+/**
+ * Words that mean a registered theme without spelling it.
+ *
+ * Deliberately small and hand-written. An alias is a claim that two words name
+ * the *same* palette, which is a design judgement — a fuzzy string distance
+ * would happily map "boreal" onto "brick" and call it a synonym.
+ */
+export const THEME_ALIASES: Readonly<Record<string, string>> = Object.freeze({
+  quartz: "white_quartz",
+  white: "white_quartz",
+  white_stone: "white_quartz",
+  whitestone: "white_quartz",
+  pale_stone: "white_quartz",
+  marble: "white_quartz",
+  calcite: "white_quartz",
+  crystal: "white_quartz",
+  ivory: "white_quartz",
+  concrete: "modern_city",
+  glass: "modern_city",
+  steel: "modern_city",
+  modern: "modern_city",
+  futuristic: "modern_city",
+  timber: "temperate_timber",
+  wood: "temperate_timber",
+  oak: "temperate_timber",
+  half_timbered: "temperate_timber",
+  cottage: "temperate_timber",
+  pine: "boreal_pine",
+  spruce: "boreal_pine",
+  boreal: "boreal_pine",
+  dark_wood: "boreal_pine",
+  weathered: "boreal_pine",
+  weathered_timber: "boreal_pine",
+  weathered_pirate: "boreal_pine",
+  driftwood: "boreal_pine",
+  tarred_wood: "boreal_pine",
+  birch: "birchwood_downs",
+  pale_timber: "birchwood_downs",
+  downs: "birchwood_downs",
+});
+
+/** Normalise a free word to the alias table's key shape. */
+function key(word: string): string {
+  return word
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+/** What {@link resolveMaterialTheme} decided, and why. */
+export interface ThemeResolution {
+  /** A registered theme id, or `undefined` when the word grounded nowhere. */
+  readonly id?: string;
+  /** True when the word was already an id (no aliasing needed). */
+  readonly exact: boolean;
+  readonly diagnostic?: LoamDiagnostic;
+}
+
+/**
+ * Ground `character.materialTheme` against the real registry.
+ *
+ * Exact match wins; then the alias table; otherwise a warning naming every
+ * legal value — never a silent fallback, and never a guess.
+ */
+export function resolveMaterialTheme(named: string, nodePath: string): ThemeResolution {
+  const ids = materialThemeIds();
+  if (ids.includes(named)) return { id: named, exact: true };
+  const k = key(named);
+  if (ids.includes(k)) return { id: k, exact: false };
+  const alias = THEME_ALIASES[k];
+  if (alias !== undefined) return { id: alias, exact: false };
+  return {
+    exact: false,
+    diagnostic: warning(
+      "INTENT_THEME_UNKNOWN",
+      nodePath,
+      `intent.character.materialTheme "${named}" is not a registered material theme; the settlement keeps its seeded draw`,
+      `use one of: ${ids.join(", ")} — or say it in words the alias table carries, e.g. "quartz", "timber", "birch", "concrete"`,
+    ),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* prefer / forbid lists                                                       */
+/* -------------------------------------------------------------------------- */
+
+/** Legal flora words: the tree shapes the vegetation pass implements. */
+export const FLORA_KINDS: readonly string[] = Object.freeze([...TREE_SHAPES]);
+
+/** Every archetype id the structure catalog implements. */
+export function archetypeIds(): readonly string[] {
+  return STRUCTURE_CATALOG.map((e) => e.id);
+}
+
+/** True for a word that names something the archetype catalog builds. */
+export function isArchetypeId(word: string): boolean {
+  return structureById(word) !== undefined || structureById(key(word)) !== undefined;
+}
+
+/** Grounded entries of a prefer/forbid list, plus the words that grounded nowhere. */
+export interface ListGrounding {
+  readonly known: readonly string[];
+  readonly unknown: readonly string[];
+}
+
+/** Split a prefer/forbid list into what the registry carries and what it does not. */
+export function groundList(
+  words: readonly string[] | undefined,
+  isKnown: (w: string) => boolean,
+): ListGrounding {
+  const known: string[] = [];
+  const unknown: string[] = [];
+  for (const word of words ?? []) {
+    if (isKnown(word)) known.push(word);
+    else if (isKnown(key(word))) known.push(key(word));
+    else unknown.push(word);
+  }
+  return { known, unknown };
+}
+
+/**
+ * Names in the vocabulary that share a word with the ungrounded entry.
+ *
+ * Token overlap, not edit distance: "moored pirate ships" should suggest the
+ * ships, and no character-level metric gets there.
+ */
+export function closeMatches(word: string, vocabulary: readonly string[], limit = 6): string[] {
+  const tokens = key(word).split("_").filter((t) => t.length > 2);
+  if (tokens.length === 0) return [];
+  const hits: string[] = [];
+  for (const candidate of vocabulary) {
+    if (tokens.some((t) => candidate.includes(t) || t.includes(candidate))) hits.push(candidate);
+    if (hits.length >= limit) break;
+  }
+  return hits;
+}
+
+function listWarning(
+  name: "INTENT_ARCHETYPE_UNKNOWN" | "INTENT_PROP_UNKNOWN" | "INTENT_FLORA_UNKNOWN",
+  nodePath: string,
+  field: string,
+  unknown: readonly string[],
+  vocabulary: readonly string[],
+  legalHint: string,
+): LoamDiagnostic {
+  const suggestions = unknown
+    .map((w) => {
+      const near = closeMatches(w, vocabulary);
+      return near.length === 0 ? undefined : `"${w}" → ${near.join(", ")}`;
+    })
+    .filter((s): s is string => s !== undefined);
+  return warning(
+    name,
+    nodePath,
+    `intent.character.${field} names ${unknown.length} value${unknown.length === 1 ? "" : "s"} no registry carries: ${unknown.map((w) => `"${w}"`).join(", ")} — ${unknown.length === 1 ? "it is" : "they are"} ignored`,
+    suggestions.length > 0
+      ? `did you mean: ${suggestions.join("; ")}`
+      : legalHint,
+  );
+}
+
+/**
+ * Check every scope's `character` vocabulary and report what grounded nowhere.
+ *
+ * **One aggregated warning per list per scope**, never one per word: a
+ * seven-word prose list is one authoring mistake, and seven diagnostics for it
+ * would drown the feedback set the authoring loop reads.
+ */
+export function checkIntentVocabulary(resolution: IntentResolution): readonly LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  // An intent inherits down the whole tree, so a list written once at the
+  // world scope is *resolved* at every node under it. Reporting each scope
+  // would turn one authoring mistake into thirty diagnostics, so a finding is
+  // reported at the shallowest path that carries it and nowhere else — the map
+  // is in insertion order, which is the root first and then depth-first.
+  const reported = new Set<string>();
+  for (const scope of resolution.byPath.values()) {
+    if (!scope.declared || scope.nodePath === "") continue;
+    for (const d of checkScopeVocabulary(scope)) {
+      const key = `${d.name}|${d.message}`;
+      if (reported.has(key)) continue;
+      reported.add(key);
+      out.push(d);
+    }
+  }
+  return out;
+}
+
+/** The vocabulary check for one resolved scope. Exported for the tests. */
+export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  const character = scope.intent.character;
+  if (character === undefined) return out;
+  const path = scope.nodePath;
+
+  if (character.materialTheme !== undefined) {
+    const resolved = resolveMaterialTheme(character.materialTheme, path);
+    if (resolved.diagnostic !== undefined) out.push(resolved.diagnostic);
+  }
+
+  const archetypes = [...(character.archetypes?.prefer ?? []), ...(character.archetypes?.forbid ?? [])];
+  const badArchetypes = groundList(archetypes, isArchetypeId).unknown;
+  if (badArchetypes.length > 0) {
+    out.push(
+      listWarning(
+        "INTENT_ARCHETYPE_UNKNOWN",
+        path,
+        "archetypes",
+        badArchetypes,
+        archetypeIds(),
+        `use catalog ids — e.g. ${archetypeIds().slice(0, 8).join(", ")} (see docs/kits/settlement-author.md §9d)`,
+      ),
+    );
+  }
+
+  const props = [...(character.props?.prefer ?? []), ...(character.props?.forbid ?? [])];
+  const badProps = groundList(props, isPropName).unknown;
+  if (badProps.length > 0) {
+    out.push(
+      listWarning(
+        "INTENT_PROP_UNKNOWN",
+        path,
+        "props",
+        badProps,
+        PROP_NAMES as readonly string[],
+        `use prop catalog ids — e.g. ${(PROP_NAMES as readonly string[]).slice(0, 8).join(", ")} (see docs/kits/settlement-author.md §9d)`,
+      ),
+    );
+  }
+
+  const flora = [...(character.flora?.prefer ?? []), ...(character.flora?.forbid ?? [])];
+  const badFlora = groundList(flora, (w) => FLORA_KINDS.includes(w)).unknown;
+  if (badFlora.length > 0) {
+    out.push(
+      listWarning(
+        "INTENT_FLORA_UNKNOWN",
+        path,
+        "flora",
+        badFlora,
+        FLORA_KINDS,
+        `flora words are tree shapes: ${FLORA_KINDS.join(", ")}`,
+      ),
+    );
+  }
+
+  return out;
+}

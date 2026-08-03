@@ -19,6 +19,7 @@
 
 import {
   DEFAULT_BASEMENT_DEPTH,
+  DEFAULT_ORNAMENT_DENSITY,
   archetypeOfTags,
   assignMaterials,
   materialKey,
@@ -48,6 +49,7 @@ import type {
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
 import { STRUCTURE_ROWS } from "./themes-intent.js";
+import { checkIntentVocabulary } from "./vocabulary.js";
 import { resolvePorts } from "../layout/ports.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
@@ -81,6 +83,7 @@ import {
 } from "./precincts.js";
 import {
   buildRoadNetwork,
+  STREET_WEAR_CHANCE,
   index,
   inside,
   surfaceStreetGraph,
@@ -112,6 +115,7 @@ export * from "./roads.js";
 export * from "./tunnels.js";
 export * from "./wall-course.js";
 export * from "./walls.js";
+export * from "./vocabulary.js";
 
 /** Everything {@link buildStructures} reads. */
 export interface StructurePassInput {
@@ -458,22 +462,72 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   ensureFanOutRows();
   const intents = resolveIntents(input.doc);
   const rootIntent = intentFor(intents, rootPath);
+  const declaredTheme = themeOverride(input.doc);
   const themeId = fanOut<string | undefined>(STRUCTURE_ROWS.materialTheme, rootIntent, {
     nodePath: rootPath,
-    today: themeOverride(input.doc),
+    today: declaredTheme,
   });
   const theme: MaterialTheme = pickTheme(themeSeed, themeId);
-  const deal = assignMaterials(theme, jobs.length, themeSeed);
+
+  // Every string the intent layer carries, checked against the real registries
+  // exactly once. An ungrounded word is a warning naming the legal values —
+  // never a silent drop, which is what made a "white_quartz" village come out
+  // looking like every other village.
+  diagnostics.push(...checkIntentVocabulary(intents));
+
+  // --- per-scope themes ----------------------------------------------------
+  // A district that named its own `character.materialTheme` is built in it.
+  // Jobs are grouped by the theme they resolved to, in document order, and each
+  // group is dealt from its own theme — so a world where every job resolves to
+  // the same theme (which is every world with no intent) takes exactly one
+  // deal of exactly the length it always took, and is byte-identical.
+  const jobThemes = jobs.map((job) => {
+    const scoped = intentFor(intents, job.nodePath);
+    const id = fanOut<string | undefined>(STRUCTURE_ROWS.materialTheme, scoped, {
+      nodePath: job.nodePath,
+      today: declaredTheme,
+    });
+    return id === themeId || id === undefined ? theme : pickTheme(themeSeed, id);
+  });
+  const groups = new Map<string, number[]>();
+  for (const [i, t] of jobThemes.entries()) {
+    const bucket = groups.get(t.id);
+    if (bucket === undefined) groups.set(t.id, [i]);
+    else bucket.push(i);
+  }
+  const deal: BuildingMaterials[] = new Array(jobs.length) as BuildingMaterials[];
+  for (const [themeKey, indices] of groups) {
+    const groupTheme = jobThemes[indices[0] as number] as MaterialTheme;
+    void themeKey;
+    const groupDeal = assignMaterials(groupTheme, indices.length, themeSeed);
+    for (const [k, jobIndex] of indices.entries()) {
+      deal[jobIndex] = groupDeal[k] as BuildingMaterials;
+    }
+  }
   // The whole palette rides along beside the triple, not instead of it. Only
   // the terrace reads it, and it reads it for a reason no other building has:
   // a terrace is several buildings, so one triple cannot clothe it — each bay
   // takes its own from the same theme, which is what makes a run read as a
   // street rather than as one long building painted one colour.
-  const themed = jobs.map((job, i) => ({
-    ...job,
-    materials: deal[i] as BuildingMaterials,
-    theme,
-  }));
+  const themed = jobs.map((job, i) => {
+    // `grammar.ornamentDensity`: how much shutter-and-window-box the facade
+    // carries. Absent intent hands the grammar its own constant back, so the
+    // param is only written when the row actually moved it.
+    const scoped = intentFor(intents, job.nodePath);
+    const ornament = fanOut<number>(STRUCTURE_ROWS.ornamentDensity, scoped, {
+      nodePath: job.nodePath,
+      today: DEFAULT_ORNAMENT_DENSITY,
+    });
+    return {
+      ...job,
+      params:
+        ornament === DEFAULT_ORNAMENT_DENSITY
+          ? job.params
+          : { ...job.params, ornamentDensity: ornament },
+      materials: deal[i] as BuildingMaterials,
+      theme: jobThemes[i] as MaterialTheme,
+    };
+  });
 
   const jobTags = new Map(jobs.map((job) => [job.nodePath, job.tags] as const));
 
@@ -551,6 +605,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       buildingPaths,
       theme: theme.id,
       seed: themeSeed,
+      // `roads.wearIntensity`: how patched the carriageway reads.
+      wearChance: fanOut<number>(STRUCTURE_ROWS.wearIntensity, rootIntent, {
+        nodePath: rootPath,
+        today: STREET_WEAR_CHANCE,
+      }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     blocks.push(...streets.blocks);
@@ -729,6 +788,16 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(roads === undefined ? {} : { roadColumns: roads.roadColumns }),
     ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
     doorstepColumns: doorsteps.touched,
+    // `decay.coverage` and `decay.vegetationReclaim`: how worn and how grown
+    // over the settlement's open ground is.
+    decayCoverage: fanOut<number>(STRUCTURE_ROWS.decayCoverage, rootIntent, {
+      nodePath: rootPath,
+      today: 0,
+    }),
+    vegetationReclaim: fanOut<number>(STRUCTURE_ROWS.vegetationReclaim, rootIntent, {
+      nodePath: rootPath,
+      today: 0,
+    }),
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
   blocks.push(...grounds.blocks);
@@ -830,6 +899,14 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     buildings: buildings.built.map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
     districts: streetMasks,
     existing: blocks,
+    // `props.family`: the prop the pavement furniture draw reaches for first.
+    ...((): { propFamily?: string } => {
+      const family = fanOut<string | undefined>(STRUCTURE_ROWS.propFamily, rootIntent, {
+        nodePath: rootPath,
+        today: undefined,
+      });
+      return family === undefined ? {} : { propFamily: family };
+    })(),
     ...(roads === undefined
       ? {}
       : {

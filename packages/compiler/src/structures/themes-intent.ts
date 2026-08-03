@@ -10,11 +10,12 @@
  * what "no opinion" means, and that is always `ctx.today`.
  */
 
-import { ALL_MATERIAL_THEMES } from "@terrainist/stdlib";
+import { isPropName } from "@terrainist/stdlib";
 import type { EraClass, RoofType } from "@terrainist/spec";
 
 import { registerFanOut, type FanOutContext } from "../intent/fanout.js";
 import type { ResolvedIntent } from "../intent/resolve.js";
+import { groundList, materialThemeIds, resolveMaterialTheme } from "./vocabulary.js";
 
 /** Row ids, so a caller never spells one as a bare string. */
 export const STRUCTURE_ROWS = {
@@ -56,15 +57,23 @@ const ROOF_BY_ERA: Readonly<Record<EraClass, RoofType>> = Object.freeze({
   far_future: "dome",
 });
 
-/** The prop/vehicle family an era furnishes its streets with. */
+/**
+ * The prop an era furnishes its streets with.
+ *
+ * **Every value is a real `PROP_NAMES` id.** It used to be a family *word*
+ * (`"handcart"`, `"truck"`, `"skimmer"`) — words no catalog carries, so the row
+ * answered with something the life pass could not build, which is a fan-out
+ * that reports success and changes nothing. An era whose ideal vehicle is not
+ * in the catalog takes the nearest thing that is.
+ */
 export const PROP_FAMILY_BY_ERA: Readonly<Record<EraClass, string>> = Object.freeze({
-  primitive: "handcart",
-  ancient: "handcart",
+  primitive: "cart",
+  ancient: "cart",
   medieval: "cart",
-  renaissance: "cart",
-  industrial: "wagon",
-  modern: "truck",
-  far_future: "skimmer",
+  renaissance: "stagecoach",
+  industrial: "covered_wagon",
+  modern: "bicycle_rack",
+  far_future: "floating_platform",
 });
 
 /** Register every structure-owned row. Idempotent; the seam calls it once. */
@@ -77,9 +86,16 @@ export function registerStructureFanOut(): void {
     drives: "which MaterialTheme a settlement is built in (stdlib/structures/themes.ts)",
     resolve(intent, ctx) {
       // `character.materialTheme` is an author naming a theme outright, so it
-      // outranks the era's preference and the seeded draw alike.
+      // outranks the era's preference and the seeded draw alike — but it is a
+      // free string from a language model, so it
+      // is *grounded* rather than trusted: exact id, then the alias table, then
+      // nothing (and `vocabulary.ts` has already drawn the warning that says
+      // so). An ungrounded word must never silently become a theme.
       const named = intent.intent.character?.materialTheme;
-      if (named !== undefined && isKnownTheme(named)) return named;
+      if (named !== undefined) {
+        const ground = resolveMaterialTheme(named, intent.nodePath);
+        if (ground.id !== undefined) return ground.id;
+      }
       if (!intent.eraDeclared) return ctx.today;
       // An explicit override already in the document (`style.palettes.theme`)
       // stays authoritative: it is the power-user hatch and intent is not a
@@ -111,7 +127,7 @@ export function registerStructureFanOut(): void {
     id: STRUCTURE_ROWS.ornamentDensity,
     reads: ["wealth", "character"],
     status: "today",
-    drives: "motifs.ornamentDensity → how much decoration a facade carries",
+    drives: "motifs.ornamentDensity → shutter and window-box density on a facade",
     resolve(intent, ctx) {
       const motif = intent.intent.character?.motifs?.ornamentDensity;
       if (motif !== undefined) return motif;
@@ -129,7 +145,7 @@ export function registerStructureFanOut(): void {
     id: STRUCTURE_ROWS.wearIntensity,
     reads: ["decline", "event"],
     status: "today",
-    drives: "road surface erosion / patch density (the road pass's wear mix)",
+    drives: "share of carriageway columns painted in the worn tone (roads.ts)",
     resolve(intent, ctx) {
       const decline = intent.intent.decline;
       if (decline === undefined) return ctx.today;
@@ -143,10 +159,14 @@ export function registerStructureFanOut(): void {
   /* --- era → prop and vehicle family ------------------------------------- */
   registerFanOut<string | undefined>({
     id: STRUCTURE_ROWS.propFamily,
-    reads: ["era"],
+    reads: ["era", "character"],
     status: "today",
-    drives: "which vehicle/prop family the life and prop passes draw from",
+    drives: "which prop the life pass's pavement furniture draw reaches for",
     resolve(intent, ctx) {
+      // An author naming props outranks the era, but only for names the
+      // catalog actually builds — `vocabulary.ts` warns about the rest.
+      const preferred = groundList(intent.intent.character?.props?.prefer, isPropName).known[0];
+      if (preferred !== undefined) return preferred;
       if (!intent.eraDeclared) return ctx.today;
       return PROP_FAMILY_BY_ERA[intent.eraClass];
     },
@@ -157,7 +177,7 @@ export function registerStructureFanOut(): void {
     id: STRUCTURE_ROWS.decayCoverage,
     reads: ["decline"],
     status: "today",
-    drives: "fraction of buildings re-clad as ruins (archetypes-relic.ts)",
+    drives: "how much of a settlement's open ground is worn through (grounds.ts)",
     resolve(intent, ctx) {
       const decline = intent.intent.decline;
       if (decline === undefined) return ctx.today;
@@ -172,7 +192,7 @@ export function registerStructureFanOut(): void {
     id: STRUCTURE_ROWS.vegetationReclaim,
     reads: ["decline"],
     status: "today",
-    drives: "moss, vines and volunteer saplings over claimed ground",
+    drives: "volunteer grass and flowers over claimed ground (grounds.ts gardens)",
     resolve(intent, ctx) {
       const decline = intent.intent.decline;
       if (decline === undefined) return ctx.today;
@@ -189,7 +209,6 @@ export function registerStructureFanOut(): void {
   reserved("event.fire", ["event"], "Phase 4", "charred substitution, roof gaps, standing chimneys, soot");
   reserved("event.siege", ["event"], "Phase 4", "wall breaches, rubble aprons, a camp outside the wall");
   reserved("event.boom", ["event"], "Phase 4", "scaffolds, new-material bias, density and storey lift");
-  reserved("character.props", ["character"], "Phase 4", "prop family bias in the life and prop passes");
   reserved("character.flora", ["character"], "Phase 4", "species tables for scatter.forest@0 (flora grammar)");
   reserved("character.programs", ["character"], "Phase 3", "how many authored programs a region asks for");
 }
@@ -211,7 +230,7 @@ function reserved(
 }
 
 function isKnownTheme(id: string): boolean {
-  return ALL_MATERIAL_THEMES.some((t) => t.id === id);
+  return materialThemeIds().includes(id);
 }
 
 function clamp01(value: number): number {

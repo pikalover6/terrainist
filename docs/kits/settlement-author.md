@@ -1963,8 +1963,39 @@ world hold two places that read differently**.
 | `materialTheme` | one of exactly these ids — `temperate_timber`, `boreal_pine`, `birchwood_downs`, `modern_city`, `white_quartz` — when the prompt names a material world. No other value exists; an unknown id is ignored with a warning |
 | `palettes` | palette symbol overrides, merged over `style.palettes` in this subtree |
 | `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }` |
-| `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` |
+| `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` — ids, never phrases; see the vocabulary below |
 | `motifs` | `{ "roofType": "gable"\|"hip"\|"flat"\|"dome"\|"shed"\|"mansard", "massing": "blocky"\|"stepped"\|"towered"\|"sprawling", "windowRhythm": "sparse"\|"regular"\|"dense"\|"banded", "ornamentDensity": 0..1 }` |
+
+### The three list vocabularies
+
+`archetypes`, `props` and `flora` are matched against the **real registries**.
+An entry that matches nothing is dropped, and the compile says so — one
+aggregated warning per list naming what it could not place (`LOAM-W483`,
+`LOAM-W485`, `LOAM-W486`). A phrase like `"moored pirate ships"` or
+`"pastel meadows"` grounds nowhere and changes nothing: put prose in `tokens`,
+and put ids in these lists.
+
+- **`archetypes`** — structure catalog ids, the same names `params.mix` takes:
+  `cottage`, `farmhouse`, `townhouse`, `terrace`, `manor_house`, `hall`, `inn`,
+  `tavern`, `chapel`, `church`, `warehouse`, `workshop`, `smithy`,
+  `watchtower`, `bastion`, `lighthouse`, `windmill`, `market_hall`, … Run
+  `terrainist catalog` for the full list.
+- **`props`** — prop catalog ids: `fountain`, `gazebo`, `cart`,
+  `covered_wagon`, `stagecoach`, `market_barrow`, `well_head`, `notice_board`,
+  `standing_stones`, `henge`, `monolith`, `cairn`, `bench`, `planter`,
+  `lamp_post`, `pier`, `rowboat`, `fishing_sloop`, `caravel`, `galleon`,
+  `junk`, `longship`, `bicycle_rack`, `floating_platform`, … Run
+  `terrainist catalog --category prop` for the full list. The first `prefer`
+  entry the catalog carries becomes the region's street-furniture headliner.
+- **`flora`** — tree shapes, and there are exactly four: `spruce_tall`,
+  `spruce_squat`, `oak_round`, `birch_slim`.
+
+`materialTheme` is grounded the same way, with a small alias table in front of
+it: `"quartz"`, `"marble"`, `"crystal"` reach `white_quartz`; `"timber"`,
+`"half-timbered"` reach `temperate_timber`; `"weathered"`, `"driftwood"`,
+`"pine"` reach `boreal_pine`; `"birch"` reaches `birchwood_downs`;
+`"concrete"`, `"glass"`, `"steel"` reach `modern_city`. Anything else is a
+`LOAM-W484` warning and the settlement keeps its seeded draw.
 
 ### Inheritance
 

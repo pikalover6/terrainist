@@ -65,6 +65,38 @@ describe("classifyPromptIntent", () => {
     expect(messages[0]?.content).not.toContain("loam");
   });
 
+  it("teaches the classifier the vocabulary it is allowed to use", () => {
+    // A model can only hit vocabulary it can see. Each of these was a real
+    // miss: an invented era word, an invented theme id, and prose in a
+    // prefer list that the compiler could only throw away.
+    for (const era of [
+      "primitive",
+      "ancient",
+      "medieval",
+      "renaissance",
+      "industrial",
+      "modern",
+      "far_future",
+    ]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(era);
+    }
+    for (const theme of [
+      "temperate_timber",
+      "boreal_pine",
+      "birchwood_downs",
+      "modern_city",
+      "white_quartz",
+    ]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(theme);
+    }
+    for (const shape of ["spruce_tall", "spruce_squat", "oak_round", "birch_slim"]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(shape);
+    }
+    // …and the two-places rule, which it broke by merging two islands into one
+    // averaged blob.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("do NOT average them");
+  });
+
   it("retries once with the diagnostics when the object is invalid", async () => {
     const { fetchImpl, bodies } = stubFetch([JSON.stringify({ wealth: 7 }), GOOD]);
     const result = await classifyPromptIntent({

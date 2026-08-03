@@ -283,6 +283,12 @@ export const TERRAIN_DIAGNOSTICS = {
   INTENT_TOO_DEEP: "LOAM-I482",
   /** `character.archetypes` names an archetype the catalog does not implement. */
   INTENT_ARCHETYPE_UNKNOWN: "LOAM-W483",
+  /** `character.materialTheme` names a theme the material registry does not carry. */
+  INTENT_THEME_UNKNOWN: "LOAM-W484",
+  /** `character.props` names a prop the prop catalog does not build. */
+  INTENT_PROP_UNKNOWN: "LOAM-W485",
+  /** `character.flora` names a species/kind the vegetation pass does not know. */
+  INTENT_FLORA_UNKNOWN: "LOAM-W486",
 } as const;
 
 /** Symbolic diagnostic name. */
