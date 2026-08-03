@@ -2068,6 +2068,99 @@ two `character` blocks is the correct answer — never one.**
 
 ---
 
+## 9e. `character.programs` — asking for a bespoke structure
+
+Everything above builds a world out of parts that already exist. Sometimes a
+prompt names a thing no archetype covers — a crashed saucer, a statue of an
+earth god, a fossilised leviathan half out of the sand, a snapped space
+elevator. For those you may **request a bespoke program**: a small generator,
+written from scratch for this world by a second model call, which computes the
+structure and hands back a shape the compiler places like any other node.
+
+### When to reach for one
+
+Ask for a program when **either** is true:
+
+- the prompt names a specific structure the archetype list does not have, and
+  the world would be missing its point without it; or
+- one custom element **repeats** across the world and should look different
+  every time (twelve crashed pods, thirty alien mushroom towers).
+
+Do **not** ask for one for anything the kit already builds — houses, towers,
+walls, bridges, roads, docks, trees, fountains, carts. A program costs a model
+call and a verification pass; a cottage costs neither. **Requesting nothing is
+a perfectly good answer** for a world whose prompt asks for nothing bespoke,
+and a padded list is worse than an empty one, because each extra request eats
+the world's budget before the ones that matter.
+
+### How to write the request
+
+Put the requests in `intent.character.programs`, at the scope the structures
+belong to — world root for something singular, a region for something that
+belongs to that region only.
+
+```json
+"intent": {
+  "character": {
+    "label": "invasion beachhead",
+    "programs": [
+      { "id": "mothership_wreck",
+        "mode": "landmark",
+        "brief": "The broken hull of a mothership half-buried nose-down in the dunes, hull plates peeled back, a lit interior seam visible through the tear.",
+        "envelope": [64, 48, 64] },
+      { "id": "drop_pod",
+        "mode": "plugin",
+        "brief": "A one-alien drop pod punched into the ground at an angle, hatch blown, scorched crater ring.",
+        "envelope": [9, 8, 9],
+        "count": 18 }
+    ]
+  }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id` | snake_case; becomes the `authored:<id>` generator name |
+| `mode` | `"landmark"` — built **once**, a singular monument; `"plugin"` — built **many** times with per-instance variation |
+| `brief` | one or two sentences: what it is, what it should read as, what matters about it. This is the only creative direction the program author gets besides the world's intent, so make it carry |
+| `envelope` | `[width, height, depth]` in blocks, node-local. A suggestion; the program may declare its own if the structure needs it |
+| `count` | plugin mode only: roughly how many instances the world wants |
+
+### Budgets
+
+Scaled by region area `A`:
+
+```
+landmark programs = clamp(round(3 × A / 512²), 3, 12)
+plugin programs   = clamp(round(3 × A / 512²), 3,  6)
+```
+
+So a standard 512×512 world gets **3 landmark and 3 plugin** programs at most.
+Plugins cap lower because a landmark is built once and a plugin is built for
+every instance. Requests over the budget are dropped in order, so **write the
+one that matters most first**.
+
+### What you get back, and what to do with it
+
+Each program is written, executed, hashed and linted **before** the world is
+compiled. A program that cannot pass its gate is dropped and the world compiles
+without it — so never make a world's legibility depend on a program existing.
+Place the ones you request as ordinary generator nodes:
+
+```json
+{ "id": "the_wreck", "kind": "generator", "generator": "authored:mothership_wreck",
+  "constraints": [ { "zone": "northeast" }, { "distance": { "to": "camp", "max": 90 } } ] }
+```
+
+Landmark programs publish **anchors** — named points such as `door`,
+`ramp_foot`, `pad` — into the node's anchor namespace. Anchors are markers a
+road can be routed to, exactly like any other marker: a landmark is reachable
+without you knowing a single coordinate of it. Name the ones that matter in the
+brief ("the ramp meets the ground on the north side") and the roads will find
+them.
+
+---
+
 ## 10. Constraints
 
 A constraint is one JSON object in a node's `constraints` array. The shorthand
