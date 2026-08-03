@@ -188,6 +188,28 @@ import { buildTerrainField, type TerrainFieldRequest } from "../src/index.js";
  *   Compiled worlds from before this round reproduce block-for-block unless
  *   they carry a road that is not axis-aligned; their terrain shape is
  *   unchanged either way.
+ * - **Bridge kit + path-stairs (2026-08-02)** — authorized reroll of the
+ *   *compiled world* only, and only of worlds that carry a crossing or a
+ *   public stair. **Both hashes below are deliberately unchanged**, for the
+ *   same reason: both clients live in the compiler's structure and set-piece
+ *   passes, downstream of the heightfield. What moved:
+ *     * the bridge kit (`structures/bridge.ts`) reads its deck, rail and pier
+ *       offsets out of one profile, so the deck builder and the C4 dressing
+ *       cannot disagree about where the parapet line is again. Piers now stand
+ *       on a **rhythm** along the span — phase-locked to the first wet column,
+ *       founded from the bed — rather than only at the two abutments, and the
+ *       parapet is carried a fixed approach run onto each bank instead of down
+ *       the whole road.
+ *     * bridge lamps are spaced along the **span**, not along the road that
+ *       reached it, so a crossing's lights are symmetric on it.
+ *     * a public stair's treads are a **mix**: a stair block on every one-block
+ *       riser facing the way you climb, a full block at a landing, a top slab
+ *       on the flat interior of a run. The `need[]` levels are untouched — they
+ *       come from the engine's `synthesizeTreads` — so every flight that was
+ *       climbable stays climbable, and `worstRise` is asserted ≤ 1 exhaustively
+ *       over every 8-column bank the recurrence accepts.
+ *   Compiled worlds from before this round reproduce block-for-block unless
+ *   they carry a bridge or a set-piece stair.
  */
 
 const hex = (b: Uint8Array): string => Buffer.from(b).toString("hex");

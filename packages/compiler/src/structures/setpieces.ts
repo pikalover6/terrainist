@@ -76,14 +76,35 @@ import {
   type LifeWorld,
   type PlaceRule,
 } from "./life.js";
+import { approachIndices } from "./bridge.js";
+// SEAM(sweep): the set-piece client's single import site — the bridge dressing
+// and the stair both read their geometry out of the profiles here rather than
+// restating it. When `structures/sweep.ts` lands, `dressBridge` and
+// `dressStair` become `sweep()` calls with `BRIDGE_PROFILE` / `STAIR_PROFILE`
+// and keep only their palette wiring. See `structures/profiles.ts`.
+import {
+  BRIDGE_PROFILE,
+  STAIR_PROFILE,
+  bridgeOffsets,
+  featureHits,
+  featureOf,
+  synthesizeTreadPlan,
+  type TreadShape,
+} from "./profiles.js";
 import { index, inside } from "./roads.js";
 
 /* -------------------------------------------------------------------------- */
 /* tuning                                                                      */
 /* -------------------------------------------------------------------------- */
 
-/** Cells between lamps on a bridge parapet. */
-export const BRIDGE_LAMP_PITCH = 11;
+/**
+ * Cells between lamps on a bridge parapet.
+ *
+ * Taken off {@link BRIDGE_PROFILE}'s `lamp` interval feature, not declared
+ * twice: the profile is the contract and this is the name the pass has always
+ * used for it.
+ */
+export const BRIDGE_LAMP_PITCH = featureOf(BRIDGE_PROFILE, "lamp").pitch;
 
 /** How far a bridge pylon rises above the deck. */
 export const BRIDGE_PYLON_HEIGHT = 5;
@@ -100,11 +121,12 @@ export const PROMENADE_BENCH_PITCH = 19;
 /** Columns out from the carriageway edge the promenade railing stands. */
 export const PROMENADE_RAIL_OFFSET = 2;
 
-/** Columns a hillside stair is wide, treads only. */
-export const STAIR_TREAD_WIDTH = 5;
+/** Columns a hillside stair is wide, treads only — {@link STAIR_PROFILE}'s tread band. */
+export const STAIR_TREAD_WIDTH =
+  STAIR_PROFILE.bands.find((b) => b.id === "tread")?.width ?? 5;
 
-/** Steps between lanterns on a hillside stair's balustrade. */
-export const STAIR_LAMP_PITCH = 4;
+/** Steps between lanterns on a hillside stair's balustrade — {@link STAIR_PROFILE}. */
+export const STAIR_LAMP_PITCH = featureOf(STAIR_PROFILE, "lamp").pitch;
 
 /**
  * Courses of masonry one column of a flight may be raised by.
@@ -402,12 +424,31 @@ function dressBridge(
   const path = piece.path;
   if (path === undefined || path.length === 0) return;
   // The deck is one column wider each side than the lane and its rail runs on
-  // that extra column: `buildBridgeDeck`'s `outer`, restated.
-  const rail = (((piece.width ?? 9) - 1) >> 1) + 1;
+  // that extra column. **Read, not restated**: `bridgeOffsets` is the one
+  // source of truth the deck builder uses too, which is what stops the two
+  // halves of the kit disagreeing about where the parapet line is — the defect
+  // this pass shipped with once already.
+  const { rail } = bridgeOffsets(piece.width ?? 9);
+  const lamp = featureOf(BRIDGE_PROFILE, "lamp");
   // A generous band around the waterline: one scan per column, and no
   // assumption at all about the height the deck was graded to.
   const hi = seaLevel + 32;
   const lo = seaLevel - 8;
+
+  // The span, as the deck builder sees it: a column is "over water" when its
+  // own centre is wet, not when the parapet column beside it happens to be.
+  const wet = path.map((cell) => fluid(cell.x, cell.z) !== null);
+  // Arc along the span, so lamps are phase-locked to the crossing and land
+  // symmetrically on it rather than being counted from the far end of the road.
+  const arcs: number[] = [];
+  let arc = 0;
+  for (const isWet of wet) {
+    arcs.push(isWet ? arc++ : -1);
+    if (!isWet) arc = 0;
+  }
+  // The bank columns the parapet is carried over. Beyond this run the road is a
+  // road, and a balustrade down the whole approach is a wall along a street.
+  const approach = new Set(approachIndices(wet));
 
   for (const [k, cell] of path.entries()) {
     const { dx, dz } = stepAt(path, k);
@@ -421,7 +462,8 @@ function dressBridge(
       if (wet !== null) {
         // Over the span the deck's own fence is already here, so the only
         // thing to add is light, and it rests on that fence.
-        if (k % BRIDGE_LAMP_PITCH !== 0) continue;
+        const along = arcs[k] as number;
+        if (along < 0 || !featureHits(lamp, along)) continue;
         planter.place(
           "bridgeLamp",
           [op(0, 0, 0, LAMP, { hanging: "false", waterlogged: "false" })],
@@ -453,6 +495,8 @@ function dressBridge(
         }
         continue;
       }
+      // Continuity onto the bank, for the approach run and no further.
+      if (!approach.has(k)) continue;
       planter.place(
         "bridgeBalustrade",
         [op(0, 0, 0, MASONRY_WALL)],
@@ -607,9 +651,28 @@ function dressStair(planter: Planter, world: LifeWorld, piece: SetPiece): void {
   if (seated === null) return;
   const { path, need } = seated;
 
+  // The tread law. `need[]` is the *mechanism* — it is what makes the flight
+  // climbable and nothing below moves it. What the law decides is only what the
+  // topmost course of each already-levelled column is made of: a stair where
+  // the column ahead is a block higher, a full block at a landing, a top slab
+  // on the flat interior of a run. That mix is what stops a public stair
+  // reading as the patch of bricks Kai photographed on the cliff.
+  const centreGround = path.map((cell) => world.standY(cell.x, cell.z) ?? 0);
+  // The levels are the engine's — `synthesizeTreads` owns the recurrence, and
+  // `seekFlight` above has already vetted the same run, so this agrees with
+  // `need[]` by construction and is only asked for the *shapes*.
+  const dressed = synthesizeTreadPlan(centreGround, {
+    maxFill: STAIR_MAX_FILL,
+    reach: 1,
+    maxGrade: 1,
+  });
+  const shapes: readonly TreadShape[] = dressed?.shapes ?? path.map(() => "landing" as TreadShape);
+
   for (const [k, cell] of path.entries()) {
     const { dx, dz } = stepAt(path, k);
     const level = need[k] as number;
+    const shape = shapes[k] as TreadShape;
+    const facing = facingOf(dx, dz);
     for (let a = -rail; a <= rail; a++) {
       const at = sideOf(cell, dx, dz, a);
       const base = world.standY(at.x, at.z);
@@ -618,9 +681,20 @@ function dressStair(planter: Planter, world: LifeWorld, piece: SetPiece): void {
       // filling *down* is not something an additive pass can do, and a bank
       // that pokes through the edge of a flight is a bank.
       const courses = level - base;
-      const ops: LifeOp[] = [];
-      for (let up = 0; up < courses; up++) ops.push(op(0, up, 0, MASONRY));
       const isRail = Math.abs(a) === rail;
+      const ops: LifeOp[] = [];
+      for (let up = 0; up < courses; up++) {
+        // The rail columns stay solid masonry: a balustrade footing is a plinth
+        // and a slab under a wall post is a hole in the parapet line.
+        const isTopCourse = up === courses - 1 && !isRail;
+        ops.push(
+          isTopCourse && shape === "stair"
+            ? stairOp(up, facing)
+            : isTopCourse && shape === "slab"
+              ? op(0, up, 0, MASONRY_SLAB, { type: "top", waterlogged: "false" })
+              : op(0, up, 0, MASONRY),
+        );
+      }
       if (courses > 0 && !planter.place(isRail ? "stairRailBase" : "stairTread", ops, at.x, base, at.z, PAVEMENT_RULE)) {
         continue;
       }
