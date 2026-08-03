@@ -18,6 +18,8 @@ import path from "node:path";
 
 import {
   authorLoamDoc,
+  classifyPromptIntent,
+  formatClassification,
   AuthoringFailedError,
   AUTHORING_MODEL_ID,
   AUTHORING_REASONING_EFFORT,
@@ -25,6 +27,7 @@ import {
   MAX_COMPILE_ROUNDS,
 } from "@terrainist/agents";
 import type { AuthoredDocument as LoamDocument, AuthorResult, KitName } from "@terrainist/agents";
+import { validateIntentValue, type SemanticIntent } from "@terrainist/spec";
 import { formatDiagnostic } from "@terrainist/compiler";
 import { resolveWorldSeed } from "@terrainist/stdlib";
 
@@ -44,6 +47,19 @@ export interface GenerateOptions {
   readonly kit: KitName;
   /** How many compile-feedback revision rounds the document gets. */
   readonly compileRounds: number;
+  /**
+   * Run the classify-the-prompt intent pre-pass. Default true; `--no-intent`
+   * turns it off, which is exactly how the product behaved before Phase 2.
+   */
+  readonly intentPrepass: boolean;
+  /**
+   * An intent supplied on the command line, replacing the pre-pass entirely.
+   *
+   * The inspectability half of ratified disposition 3: having looked at what
+   * the classifier said, a human can hand the run a corrected object instead of
+   * re-rolling the prompt.
+   */
+  readonly intent?: SemanticIntent;
 }
 
 /** The reasoning-effort levels OpenRouter's unified `reasoning` parameter accepts. */
@@ -67,6 +83,8 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
   let effort = AUTHORING_REASONING_EFFORT;
   let kit: KitName = DEFAULT_KIT;
   let compileRounds = MAX_COMPILE_ROUNDS;
+  let intentPrepass = true;
+  let intent: SemanticIntent | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -107,6 +125,23 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
         throw new Error("--compile-rounds must be an integer in 0..5");
       }
       compileRounds = value;
+    } else if (arg === "--no-intent") {
+      intentPrepass = false;
+    } else if (arg === "--intent") {
+      const raw = next();
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw) as unknown;
+      } catch (cause) {
+        throw new Error(`--intent must be a JSON object: ${(cause as Error).message}`);
+      }
+      const validation = validateIntentValue(parsed);
+      if (validation.intent === undefined) {
+        throw new Error(
+          `--intent is not a valid intent:\n${validation.diagnostics.map((d) => `  ${d.code} ${d.nodePath}: ${d.message}`).join("\n")}`,
+        );
+      }
+      intent = validation.intent;
     } else if (arg === "--keep-doc") {
       keepDoc = true;
     } else if (arg === "--no-zip") {
@@ -138,6 +173,8 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
     effort,
     kit,
     compileRounds,
+    intentPrepass,
+    ...(intent === undefined ? {} : { intent }),
   };
 }
 
@@ -198,6 +235,24 @@ export async function authorAndWriteDocument(
     ].join("\n"),
   );
 
+  // --- the intent pre-pass ------------------------------------------------
+  // One cheap call before the expensive one, and its output is printed: when a
+  // world comes out wrong, this line is the first place to look (ratified
+  // disposition 3). `--intent` replaces it; `--no-intent` skips it.
+  let intent: SemanticIntent | undefined = options.intent;
+  if (intent !== undefined) {
+    console.log(`intent     ${JSON.stringify(intent)}  (from --intent)\n`);
+  } else if (options.intentPrepass) {
+    const classified = await classifyPromptIntent({
+      prompt: options.prompt,
+      model: options.model,
+    });
+    console.log(`${formatClassification(classified)}\n`);
+    if (!classified.failed && Object.keys(classified.intent).length > 0) {
+      intent = classified.intent;
+    }
+  }
+
   let result: AuthorResult;
   try {
     result = await authorLoamDoc({
@@ -207,6 +262,7 @@ export async function authorAndWriteDocument(
       model: options.model,
       reasoningEffort: options.effort,
       kitName: options.kit,
+      ...(intent === undefined ? {} : { intent }),
     });
   } catch (err) {
     if (err instanceof AuthoringFailedError) {

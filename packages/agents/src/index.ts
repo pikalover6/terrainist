@@ -117,6 +117,16 @@ export type {
   TripoTextTaskRequest,
 } from "./tripo.js";
 
+export {
+  INTENT_CLASSIFIER_PROMPT,
+  MAX_INTENT_ATTEMPTS,
+  classifyPromptIntent,
+  formatClassification,
+  intentKitContext,
+  retryIntentPrompt,
+} from "./intent-prepass.js";
+export type { ClassifyIntentRequest, IntentClassification } from "./intent-prepass.js";
+
 export { extractJson, stripFences } from "./json.js";
 export type { JsonExtraction } from "./json.js";
 

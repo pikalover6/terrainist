@@ -109,6 +109,9 @@ describe("runGenerate — physics lint", () => {
       "--size", "128",
       "--seed", "7",
       "--out", outDir,
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
       "--keep-doc",
     ]);
@@ -155,6 +158,9 @@ describe("runGenerate — physics lint", () => {
       "--size", "128",
       "--seed", "7",
       "--out", outDir,
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
     ]);
     spy.mockRestore();

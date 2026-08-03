@@ -41,7 +41,8 @@ way; the structure nodes are simply absent.
 Hard rules, all enforced by the validator:
 
 - `"loam"` is exactly `"0.1"`; `"profile"` is exactly `"settlement"`.
-- Top level accepts only `loam`, `profile`, `meta`, `style`, `root`.
+- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`, `root`.
+  (`intent` is §9d — the dials that say what *kind* of place this is.)
 - `root.kind` is `"composite"`.
 - `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
   one** `terrain.climate@0`, any number of `scatter.forest@0` nodes, and —
@@ -1913,6 +1914,129 @@ the pier first.
 
 ---
 
+## 9d. `intent` — saying what kind of place this is
+
+Everything above says *what to build*. `intent` says **what kind of place it
+is**, once, and the compiler fans it out to the knobs that would otherwise have
+to be set by hand on every node: materials, roof forms, block size, street
+width, ornament, wear, ruin coverage, biome and snow.
+
+It is not a generator and it places nothing. **Every dial is optional, and
+leaving one out means "no opinion", which is never the same as `0`.** A
+document with no `intent` compiles exactly as it always did.
+
+`intent` is legal in exactly three places:
+
+- at the **top level** of the document, beside `style` — world scope;
+- on the **root composite**;
+- on a **`district`** or **`city`** node — region scope.
+
+Written on a building, a prop or a terrain generator it is ignored with a
+warning. Per-building overrides are what `params` are for.
+
+### The dials
+
+| key | value | what it drives |
+|---|---|---|
+| `era` | free word: `"medieval"`, `"victorian"`, `"far_future"`, `"pirate"`, `"prehistoric"`, … | material theme, roof form, prop and vehicle family, road materials |
+| `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
+| `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim. **Orthogonal to wealth: a rich ruin exists.** |
+| `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength |
+| `event` | `{ "kind": "flood"\|"fire"\|"siege"\|"boom", "severity": 0..1, "recency": 0..1 }` | dressing for a one-off event. `recency` 0 = happening now, 1 = a lifetime ago |
+| `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town" |
+| `character` | see below | everything that makes a *region* read as a different place |
+| `tokens` | flat bag of strings/numbers/booleans | anything else worth recording; nothing switches on it |
+
+`era` is an **open** vocabulary — use the word the prompt uses. It is dispatched
+internally to one of `primitive`, `ancient`, `medieval`, `renaissance`,
+`industrial`, `modern`, `far_future`; a word we do not recognise falls back to
+`medieval` with a warning and still reaches the rest of the pipeline.
+
+### `character` — how two regions differ
+
+This is the part that matters most, because it is the only way to make **one
+world hold two places that read differently**.
+
+| key | value |
+|---|---|
+| `label` | free text: `"pirate haven"`, `"unicorn glade"` |
+| `materialTheme` | a material theme id, when the prompt names a material world |
+| `palettes` | palette symbol overrides, merged over `style.palettes` in this subtree |
+| `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }` |
+| `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` |
+| `motifs` | `{ "roofType": "gable"\|"hip"\|"flat"\|"dome"\|"shed"\|"mansard", "massing": "blocky"\|"stepped"\|"towered"\|"sprawling", "windowRhythm": "sparse"\|"regular"\|"dense"\|"banded", "ornamentDensity": 0..1 }` |
+
+### Inheritance
+
+A district or city **inherits** the world's intent and overrides only what
+differs:
+
+- a scalar replaces (`wealth` at the district wins over `wealth` at the world);
+- an object merges key by key (a district may set `character.motifs` and keep
+  the world's `character.materialTheme`);
+- **an array replaces whole** — a district's `"prefer": ["chapel"]` does *not*
+  accumulate with the world's, which is what makes "no oak on this island"
+  expressible.
+
+### Two regions in one world
+
+When the prompt describes two places that should feel like enemies, write **two
+regions, each with its own `character`.** This is the whole point of the layer;
+a world where both islands drew the same theme from the same seed is the bug it
+exists to fix.
+
+```json
+{
+  "intent": { "era": "fantasy", "formality": 0.3 },
+  "children": [
+    {
+      "id": "unicorn_isle",
+      "kind": "district",
+      "envelope": { "shape": "region", "size": [120, 120] },
+      "constraints": [{ "zone": "northwest" }],
+      "params": { "fabric": "organic", "density": "low", "mix": ["cottage", "chapel"] },
+      "intent": {
+        "wealth": 0.8,
+        "decline": 0.0,
+        "climate": { "temperature": 0.2, "snow": "never" },
+        "character": {
+          "label": "magical unicorn island",
+          "palettes": { "ground.grass": "minecraft:moss_block" },
+          "archetypes": { "prefer": ["chapel", "cottage"], "forbid": ["warehouse"] },
+          "motifs": { "roofType": "dome", "ornamentDensity": 0.9 }
+        }
+      }
+    },
+    {
+      "id": "pirate_isle",
+      "kind": "district",
+      "envelope": { "shape": "region", "size": [120, 120] },
+      "constraints": [{ "zone": "southeast" }],
+      "params": { "fabric": "organic", "density": "medium", "mix": ["cottage", "warehouse"] },
+      "intent": {
+        "era": "pirate",
+        "wealth": 0.25,
+        "decline": 0.6,
+        "character": {
+          "label": "grumpy pirate island",
+          "palettes": { "ground.grass": "minecraft:coarse_dirt" },
+          "archetypes": { "prefer": ["warehouse", "cottage"], "forbid": ["chapel"] },
+          "motifs": { "roofType": "shed", "ornamentDensity": 0.1 }
+        }
+      }
+    }
+  ]
+}
+```
+
+Both islands inherit `era: "fantasy"` and `formality: 0.3` from the world; the
+pirates override `era`, both override `wealth`, `decline` and the whole
+`character` block, and the two quarters come out of the compiler with different
+materials, roofs, ornament, wear and ground. **If the prompt names two places,
+two `character` blocks is the correct answer — never one.**
+
+---
+
 ## 10. Constraints
 
 A constraint is one JSON object in a node's `constraints` array. The shorthand
@@ -2512,14 +2636,18 @@ The lessons that cost us the most iterations:
    village near either wants to be *beside* it, not on it: the solver refuses to
    build on water, so a plaza zoned onto a lake gets pushed around or dropped.
 8. **`spawn` on the plaza's zone.** It is the view the world should open on.
-9. **One register per settlement.** A keep, a pagoda and a skyscraper in the
+9. **Two places in one prompt means two `intent.character` blocks** (§9d).
+   Do not rely on the archetype names alone to make an enemy island read as an
+   enemy island — say so, per region, and the materials, roofs, ornament and
+   ground follow.
+10. **One register per settlement.** A keep, a pagoda and a skyscraper in the
    same village is three prompts, not one. Pick the archetype table the prompt
    is asking for and stay in it; the shared village theme does the rest.
-10. **The big archetypes want big flat ground.** A keep, a tall building, a
+11. **The big archetypes want big flat ground.** A keep, a tall building, a
     campsite or a galleon all need a level patch, and none of the props make
     one. A `plateau` edit under the whole built area — radius 90–110, height
     6–8, `"profile": "rounded"` — is what makes them land.
-11. **Props are cheap; use several small ones.** A bench, a planter, a
+12. **Props are cheap; use several small ones.** A bench, a planter, a
     clothesline and a signpost around the plaza read as habitation far better
     than one carousel does.
 

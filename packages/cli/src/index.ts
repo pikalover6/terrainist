@@ -99,6 +99,7 @@ const USAGE = `terrainist — text prompt to Minecraft world
 Usage:
   terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
                                  [--kit settlement|terrain] [--compile-rounds N]
+                                 [--no-intent] [--intent <json>]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
                                 [--channel <name>]
@@ -126,6 +127,9 @@ generate options:
                     each compile, author-actionable findings — an unclosed
                     basin rim, an unroutable road, a demoted or dropped
                     layout node — go back to the model for a revision.
+  --no-intent       Skip the classify-the-prompt intent pre-pass.
+  --intent <json>   Use this intent object instead of classifying the prompt.
+                    Validated before the run starts.
   --keep-doc        Keep the authored .loam.json after a successful compile.
   --model <id>      Override the pinned authoring model.
   --effort <level>  Reasoning effort: low, medium, high (default), xhigh, max.

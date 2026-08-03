@@ -26,6 +26,7 @@ import {
   validateSettlementDocument,
   validateTerrainDocument,
   type LoamDiagnostic,
+  type SemanticIntent,
   type SettlementDocument,
   type TerrainDocument,
 } from "@terrainist/spec";
@@ -38,6 +39,7 @@ import {
 } from "./config.js";
 import { loadOpenRouterKey } from "./env.js";
 import { extractJson } from "./json.js";
+import { intentKitContext } from "./intent-prepass.js";
 import { DEFAULT_KIT, loadAuthorKit, type KitName } from "./kit.js";
 import { chatComplete, sumUsage, type ChatMessage, type FetchLike, type Usage } from "./openrouter.js";
 
@@ -66,6 +68,14 @@ export interface AuthorRequest {
   readonly apiKey?: string;
   /** Injected for tests; defaults to the on-disk kit. */
   readonly kit?: string;
+  /**
+   * The classified intent from the pre-pass (ratified disposition 3).
+   *
+   * Handed to the conversation as kit context *and* pinned into the finished
+   * document, so what the classifier decided is inspectable in the artifact
+   * rather than only in a log line.
+   */
+  readonly intent?: SemanticIntent;
 }
 
 /** Request for {@link reviseLoamDoc}: another turn on an existing conversation. */
@@ -153,7 +163,13 @@ export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResul
 
   const messages: ChatMessage[] = [
     { role: "system", content: kit },
-    { role: "user", content: userPrompt(request.prompt, size, request.worldSeed, kitName) },
+    {
+      role: "user",
+      content: [
+        userPrompt(request.prompt, size, request.worldSeed, kitName),
+        ...(request.intent === undefined ? [] : ["", intentKitContext(request.intent)]),
+      ].join("\n"),
+    },
   ];
 
   return await runAuthorLoop({
@@ -162,6 +178,7 @@ export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResul
     kitName,
     size,
     worldSeed: request.worldSeed,
+    ...(request.intent === undefined ? {} : { intent: request.intent }),
     model: request.model ?? AUTHORING_MODEL_ID,
     reasoningEffort: request.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
     maxAttempts: Math.max(1, request.maxAttempts ?? MAX_AUTHOR_ATTEMPTS),
@@ -300,6 +317,8 @@ interface LoopOptions {
   readonly reasoningEffort: string;
   readonly maxAttempts: number;
   readonly fetchImpl?: FetchLike;
+  /** Pinned into the finished document if the model wrote none of its own. */
+  readonly intent?: SemanticIntent;
 }
 
 /** Completion → extract → validate → retry with diagnostics, until valid. */
@@ -346,7 +365,7 @@ async function runAuthorLoop(options: LoopOptions): Promise<AuthorResult> {
     });
 
     if (validation.document !== undefined) {
-      const pinned = pinCallerValues(validation.document, options.worldSeed, options.size);
+      const pinned = pinCallerValues(validation.document, options.worldSeed, options.size, options.intent);
       const recheck = validate(pinned);
       if (recheck.document === undefined) {
         /* c8 ignore next 4 — only reachable if pinning itself is buggy. */
@@ -448,12 +467,22 @@ function pinCallerValues(
   doc: AuthoredDocument,
   worldSeed: number | string,
   size: number,
+  intent?: SemanticIntent,
 ): unknown {
   const clone = JSON.parse(JSON.stringify(doc)) as {
     meta: { worldSeed: number | string };
+    intent?: SemanticIntent;
     root: { envelope: { size?: [number, number] } };
   };
   clone.meta.worldSeed = worldSeed;
   clone.root.envelope.size = [size, size];
+  // The classified intent is stored in the document — but only when the model
+  // wrote none of its own. A model that authored per-region character has
+  // understood the prompt better than the classifier did, and overwriting its
+  // world-scope intent would flatten exactly the distinction the pre-pass
+  // exists to produce.
+  if (intent !== undefined && clone.intent === undefined && Object.keys(intent).length > 0) {
+    clone.intent = intent;
+  }
   return clone;
 }

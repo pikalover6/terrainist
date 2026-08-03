@@ -68,3 +68,28 @@ describe("seedFromPrompt", () => {
     expect(seedFromPrompt("misty fjords")).toMatch(/^\d+$/);
   });
 });
+
+describe("--intent / --no-intent", () => {
+  it("runs the intent pre-pass by default", () => {
+    expect(parseGenerateArgs(["a village"]).intentPrepass).toBe(true);
+    expect(parseGenerateArgs(["a village"]).intent).toBeUndefined();
+  });
+
+  it("--no-intent turns the pre-pass off", () => {
+    expect(parseGenerateArgs(["a village", "--no-intent"]).intentPrepass).toBe(false);
+  });
+
+  it("--intent takes a validated JSON object", () => {
+    const options = parseGenerateArgs([
+      "a village",
+      "--intent",
+      '{"era":"medieval","wealth":0.2}',
+    ]);
+    expect(options.intent).toEqual({ era: "medieval", wealth: 0.2 });
+  });
+
+  it("rejects an --intent that is not JSON, and one that is not a valid intent", () => {
+    expect(() => parseGenerateArgs(["v", "--intent", "{oops"])).toThrow(/JSON object/);
+    expect(() => parseGenerateArgs(["v", "--intent", '{"wealth":9}'])).toThrow(/not a valid intent/);
+  });
+});

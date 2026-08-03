@@ -31,7 +31,14 @@ fractional placement and the compiler does the geometry.
 Hard rules, all enforced by the validator:
 
 - `"loam"` is exactly `"0.1"`; `"profile"` is exactly `"terrain"`.
-- Top level accepts only `loam`, `profile`, `meta`, `style`, `root`.
+- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`, `root`.
+- `intent` is optional and says what *kind* of place this is rather than what to
+  build: `era` (free word), `wealth`, `decline`, `formality` (each 0..1, and
+  omitting one means "no opinion", which is not the same as `0`), `climate`
+  (`{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1,
+  "snow": "auto"|"never"|"always" }`) and `character` (`label`, `palettes`,
+  `flora`). On a terrain document the climate dials are the ones that bite:
+  they outrank the terrain's own climate over the scope that declares them.
 - `root.kind` is `"composite"`; every child is `"kind": "generator"`.
 - `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
   one** `terrain.climate@0`, and any number of `scatter.forest@0` and

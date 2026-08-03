@@ -147,6 +147,9 @@ describe("runGenerate — settlement happy path", () => {
       "--size", "128",
       "--seed", "7",
       "--out", outDir,
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
       "--keep-doc",
     ]);
@@ -179,6 +182,9 @@ describe("runGenerate — settlement happy path", () => {
       "--seed", "7",
       "--out", outDir,
       "--kit", "terrain",
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
     ]);
 
@@ -197,6 +203,9 @@ describe("runGenerate — compile feedback", () => {
       "--size", "128",
       "--seed", "7",
       "--out", outDir,
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
       "--keep-doc",
     ]);
@@ -231,6 +240,9 @@ describe("runGenerate — compile feedback", () => {
       "--seed", "7",
       "--out", outDir,
       "--compile-rounds", "1",
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
     ]);
 
@@ -249,6 +261,9 @@ describe("runGenerate — compile feedback", () => {
       "--seed", "7",
       "--out", outDir,
       "--compile-rounds", "0",
+      // The intent pre-pass is a second model call; these tests count calls,
+      // so they opt out of it and `intent-prepass.test.ts` covers it instead.
+      "--no-intent",
       "--no-zip",
     ]);
 
