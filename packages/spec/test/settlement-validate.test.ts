@@ -579,3 +579,75 @@ describe("settlement profile — the `basement` param", () => {
     expect(names(withBasement({ depth: 4, height: 4 }))).toContain("UNKNOWN_KEY");
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* `infra.wall@0` — `params.walls`                                             */
+/* -------------------------------------------------------------------------- */
+
+/** A district that a `walls` patch can be hung on. */
+function walledDistrict(walls: unknown): Record<string, unknown> {
+  return {
+    id: "quarter",
+    kind: "district",
+    envelope: { shape: "region", size: [120, 120] },
+    params: {
+      fabric: "grid",
+      density: "medium",
+      mix: ["cottage", "shop_row"],
+      ...(walls === undefined ? {} : { walls }),
+    },
+  };
+}
+
+describe("settlement profile — walls", () => {
+  it("accepts the empty opt-in, which is the whole point of the surface", () => {
+    expect(codes(doc([walledDistrict({})]))).toEqual([]);
+  });
+
+  it("accepts every knob at once, and every style", () => {
+    for (const style of ["masonry", "palisade", "earthwork"]) {
+      expect(
+        codes(doc([walledDistrict({ style, margin: 12, towerPitch: 32, height: 8, gates: false })])),
+      ).toEqual([]);
+    }
+  });
+
+  it("takes the same param on a city", () => {
+    const city = {
+      id: "capital",
+      kind: "city",
+      envelope: { shape: "region", size: [240, 240] },
+      params: { size: "small", mix: ["cottage"], walls: { style: "masonry" } },
+    };
+    expect(codes(doc([city]))).toEqual([]);
+  });
+
+  it("rejects an unknown style, and names the three", () => {
+    const result = validateSettlementDocument(doc([walledDistrict({ style: "adamantium" })]));
+    expect(result.diagnostics.map((d) => d.name)).toEqual(["WALL_PARAM"]);
+    expect(result.diagnostics[0]?.code).toBe("LOAM-T219");
+    expect(result.diagnostics[0]?.fix).toContain("masonry");
+  });
+
+  it("rejects a wall that is not an object at all", () => {
+    expect(names(doc([walledDistrict(true)]))).toEqual(["WALL_PARAM"]);
+    expect(names(doc([walledDistrict("yes")]))).toEqual(["WALL_PARAM"]);
+  });
+
+  it("rejects an unknown key rather than silently ignoring it", () => {
+    expect(names(doc([walledDistrict({ moat: true })]))).toEqual(["UNKNOWN_KEY"]);
+  });
+
+  it("range-checks the margin, the pitch and the height", () => {
+    expect(names(doc([walledDistrict({ margin: 2 })]))).toEqual(["PARAM_OUT_OF_RANGE"]);
+    expect(names(doc([walledDistrict({ margin: 200 })]))).toEqual(["PARAM_OUT_OF_RANGE"]);
+    expect(names(doc([walledDistrict({ towerPitch: 4 })]))).toEqual(["PARAM_OUT_OF_RANGE"]);
+    expect(names(doc([walledDistrict({ height: 40 })]))).toEqual(["PARAM_OUT_OF_RANGE"]);
+    expect(names(doc([walledDistrict({ height: 6.5 })]))).toEqual(["PARAM_OUT_OF_RANGE"]);
+    expect(names(doc([walledDistrict({ gates: "no" })]))).toEqual(["BAD_TYPE"]);
+  });
+
+  it("leaves a district with no walls key completely alone", () => {
+    expect(codes(doc([walledDistrict(undefined)]))).toEqual([]);
+  });
+});

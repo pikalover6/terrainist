@@ -200,6 +200,71 @@ export const DISTRICT_DENSITIES = ["low", "medium", "high"] as const;
 /** A district density. */
 export type DistrictDensity = (typeof DISTRICT_DENSITIES)[number];
 
+/* -------------------------------------------------------------------------- */
+/* circumvallation (`infra.wall@0`)                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The wall styles `infra.wall@0` implements.
+ *
+ * Three, and each is a different *construction* rather than a different
+ * palette: a masonry curtain with a crenellated cap, a timber palisade with a
+ * hoarding, and an earthwork rampart with a revetted crest. A style that was
+ * only a material swap would be a `palettes` entry, not a style.
+ */
+export const WALL_STYLES = ["masonry", "palisade", "earthwork"] as const;
+
+/** A wall style. */
+export type WallStyle = (typeof WALL_STYLES)[number];
+
+/** Bounds on {@link WallOptions}, restated by the compiler's course pass. */
+export const WALL_MIN_MARGIN = 4;
+export const WALL_MAX_MARGIN = 64;
+export const WALL_MIN_TOWER_PITCH = 16;
+export const WALL_MAX_TOWER_PITCH = 128;
+export const WALL_MIN_HEIGHT = 4;
+export const WALL_MAX_HEIGHT = 14;
+
+/**
+ * `walls` — the settlement's circumvallation, opted into by a `district` or a
+ * `city`.
+ *
+ * Deliberately **not** a course. There is no key here that names a coordinate,
+ * a vertex or a length, for exactly the reason {@link CityParams} carries no
+ * list of quarters: a ring an author enumerates is the rectangle problem again
+ * with more typing, and it cannot follow ground it has never seen. The course
+ * is derived by the compiler from the settlement's own finished footprint —
+ * see `packages/compiler/src/structures/wall-course.ts` — and everything the
+ * author gets to say is *how thick, how tall, how often a tower, how far out*.
+ */
+export interface WallOptions {
+  /** Default `"masonry"`. */
+  readonly style?: WallStyle;
+  /**
+   * Columns the course stands **outward** of the built extent.
+   * {@link WALL_MIN_MARGIN}..{@link WALL_MAX_MARGIN}; default 10.
+   */
+  readonly margin?: number;
+  /**
+   * Columns of arc length between towers.
+   * {@link WALL_MIN_TOWER_PITCH}..{@link WALL_MAX_TOWER_PITCH}; default 40.
+   */
+  readonly towerPitch?: number;
+  /**
+   * Blocks from the ground to the wall-walk.
+   * {@link WALL_MIN_HEIGHT}..{@link WALL_MAX_HEIGHT}; default 6.
+   */
+  readonly height?: number;
+  /**
+   * Open a gate wherever a road crosses the course. Default `true`.
+   *
+   * `false` is a siege wall, not a city wall: the roads are cut. It exists
+   * because "the wall the river town abandoned" is a thing to author, and
+   * because a gate with nothing behind it is worse than no gate.
+   */
+  readonly gates?: boolean;
+}
+
 /** Params a `district` node carries. */
 export interface DistrictParams {
   readonly fabric: DistrictFabric;
@@ -210,6 +275,8 @@ export interface DistrictParams {
   readonly blockSize?: number;
   /** Leave one central block unbuilt as a square. */
   readonly plaza?: boolean;
+  /** Ring the finished quarter with a wall. See {@link WallOptions}. */
+  readonly walls?: WallOptions;
 }
 
 /**
@@ -314,6 +381,8 @@ export interface CityParams {
    * author should not have to ask. `false` suppresses the track outright.
    */
   readonly setPieces?: boolean | CitySetPieces;
+  /** Ring the finished city with a wall. See {@link WallOptions}. */
+  readonly walls?: WallOptions;
 }
 
 /** The five kinds of anchor a city seats. */

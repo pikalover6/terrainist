@@ -88,6 +88,15 @@ import {
 } from "./roads.js";
 import type { StreetscapeResult } from "./streetscape.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
+import {
+  WALL_DEFAULT_HEIGHT,
+  WALL_DEFAULT_MARGIN,
+  WALL_DEFAULT_TOWER_PITCH,
+  buildWalls,
+  extentOfRects,
+  type BuiltWall,
+  type WallJob,
+} from "./walls.js";
 
 export * from "./buildings.js";
 export * from "./doorsteps.js";
@@ -99,6 +108,8 @@ export * from "./setpieces.js";
 export * from "./props.js";
 export * from "./roads.js";
 export * from "./tunnels.js";
+export * from "./wall-course.js";
+export * from "./walls.js";
 
 /** Everything {@link buildStructures} reads. */
 export interface StructurePassInput {
@@ -254,6 +265,8 @@ export interface StructurePassResult {
   /** The fabric pass's per-district products, carried through for the report. */
   readonly districts: readonly DistrictProduct[];
   readonly tunnels: readonly BuiltTunnel[];
+  /** `infra.wall@0` — one per settlement node that opted in and got a course. */
+  readonly walls: readonly BuiltWall[];
   readonly props: readonly PlacedProp[];
   /** F2's ground treatment: what each lot got, and how much ground it took. */
   readonly grounds?: GroundPassResult;
@@ -742,6 +755,37 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks.push(...setPieces.blocks);
   }
 
+  // --- the wall (`infra.wall@0`) -------------------------------------------
+  // After the set pieces and before the life pass, and for both of the reasons
+  // the set pieces run where they do: a curtain wall stands on the *finished*
+  // ground, and C3 is contractually last with the emitted block list in hand.
+  // It also has to be after the roads and the streets, because a gate is not
+  // sited — it is *found*, where a carriageway already crosses the derived
+  // course, and until the surfacing has run there is no carriageway to find.
+  const wallJobs = wallJobsOf(input.doc, rootPath, buildings.built, (p) =>
+    placementByPath.get(p)?.footprint,
+  );
+  const wallPass =
+    wallJobs.length === 0
+      ? undefined
+      : buildWalls({
+          plan: input.plan,
+          stack: input.stack,
+          jobs: wallJobs,
+          existing: blocks,
+          onRoad: (x: number, z: number): boolean => {
+            const region = input.plan.region;
+            if (!inside(region, x, z)) return false;
+            const at = index(region, x, z);
+            if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
+            return streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1;
+          },
+        });
+  if (wallPass !== undefined) {
+    diagnostics.push(...wallPass.diagnostics);
+    blocks.push(...wallPass.blocks);
+  }
+
   // --- the life pass (C3) --------------------------------------------------
   // After *everything*, including the ground treatment, and that is the whole
   // contract: this stage adds eye-level incident into columns nobody else
@@ -774,6 +818,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks,
     buildings: buildings.built,
     tunnels: tunnelPass.tunnels,
+    walls: wallPass?.walls ?? [],
     props: props.placed,
     grounds,
     ...(precincts === undefined ? {} : { precincts }),
@@ -823,6 +868,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       piersBuilt: precincts?.stats.piers ?? 0,
       shipsMoored: precincts?.stats.ships ?? 0,
       ...(setPieces?.stats ?? {}),
+      ...(wallPass?.stats ?? {}),
       ...life.stats,
     },
   };
@@ -893,6 +939,66 @@ function ignoredPropConstraints(constraints: unknown): string[] {
     if (!out.includes(resolved.type)) out.push(resolved.type);
   }
   return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* `infra.wall@0` inputs                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Every settlement node that opted into a wall, with its extent resolved.
+ *
+ * The opt-in is `params.walls` on a `district` or a `city` — see
+ * `packages/spec/src/settlement/types.ts`'s `WallOptions` for why that is the
+ * whole authoring surface.
+ *
+ * The **extent** is the union of two things, and both halves are load-bearing:
+ *
+ * - the node's own placed footprint, which is the quarter's *ground* — its
+ *   street skeleton, its blocks, its lots, all of which are inside it. Without
+ *   this the hull is drawn round the buildings alone and the ring lands in the
+ *   middle of the quarter's own street grid, where every column is a
+ *   carriageway and the whole wall dissolves into one enormous gate;
+ * - every building the node owns, found by node-path prefix, so a landmark
+ *   that the solver pushed past the district's edge is still enclosed. The
+ *   path is the only thing that says which quarter a building belongs to: a
+ *   district's auto-infill has no line of JSON behind it at all.
+ */
+export function wallJobsOf(
+  doc: SettlementDocument,
+  rootPath: string,
+  built: readonly BuiltBuilding[],
+  rectOf: (nodePath: string) => { x0: number; z0: number; x1: number; z1: number } | undefined,
+): WallJob[] {
+  const jobs: WallJob[] = [];
+  for (const child of doc.root.children) {
+    if (child.kind !== "district" && child.kind !== "city") continue;
+    const params = (child.params ?? {}) as unknown as Record<string, unknown>;
+    const walls = params["walls"];
+    if (walls === undefined || walls === null || typeof walls !== "object") continue;
+    const w = walls as Record<string, unknown>;
+    const nodePath = `${rootPath}.${child.id}`;
+    const prefix = `${nodePath}.`;
+    const own = rectOf(nodePath);
+    const extent = extentOfRects([
+      ...(own === undefined ? [] : [own]),
+      ...built
+        .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
+        .map((b) => b.footprint),
+    ]);
+    if (extent.length === 0) continue;
+    jobs.push({
+      nodePath,
+      extent,
+      style: typeof w["style"] === "string" ? (w["style"] as string) : "masonry",
+      margin: typeof w["margin"] === "number" ? (w["margin"] as number) : WALL_DEFAULT_MARGIN,
+      towerPitch:
+        typeof w["towerPitch"] === "number" ? (w["towerPitch"] as number) : WALL_DEFAULT_TOWER_PITCH,
+      height: typeof w["height"] === "number" ? (w["height"] as number) : WALL_DEFAULT_HEIGHT,
+      gates: w["gates"] !== false,
+    });
+  }
+  return jobs;
 }
 
 /* -------------------------------------------------------------------------- */

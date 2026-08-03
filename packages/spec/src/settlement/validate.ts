@@ -63,6 +63,13 @@ import {
   SETTLEMENT_EXCLUDED_GENERATORS,
   STRUCTURE_GENERATORS,
   VISTA_ARTERIALS,
+  WALL_MAX_HEIGHT,
+  WALL_MAX_MARGIN,
+  WALL_MAX_TOWER_PITCH,
+  WALL_MIN_HEIGHT,
+  WALL_MIN_MARGIN,
+  WALL_MIN_TOWER_PITCH,
+  WALL_STYLES,
   isPrecinctGenerator,
   V02_FACES,
   V02_PORT_TYPES,
@@ -461,7 +468,14 @@ const DISTRICT_KEYS = [
 ] as const;
 
 /** Keys a district's `params` may carry. */
-const DISTRICT_PARAM_KEYS = ["fabric", "density", "mix", "blockSize", "plaza"] as const;
+const DISTRICT_PARAM_KEYS = [
+  "fabric",
+  "density",
+  "mix",
+  "blockSize",
+  "plaza",
+  "walls",
+] as const;
 
 /**
  * Block size a district may ask for, in blocks between street centre lines.
@@ -635,6 +649,7 @@ function validateDistrictParams(out: LoamDiagnostic[], at: string, params: Obj):
   });
 
   validateDistrictMix(out, at, params["mix"]);
+  validateWallsParam(out, at, params["walls"]);
 }
 
 /**
@@ -736,6 +751,7 @@ const CITY_PARAM_KEYS = [
   "ring",
   "blockSize",
   "setPieces",
+  "walls",
 ] as const;
 
 /**
@@ -924,6 +940,49 @@ function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): voi
   validateCityMix(out, at, "mix", params["mix"], true);
   validateCityCharacters(out, at, params["characters"]);
   validateSetPiecesParam(out, at, params["setPieces"]);
+  validateWallsParam(out, at, params["walls"]);
+}
+
+/**
+ * Validate `params.walls` (`infra.wall@0`).
+ *
+ * One spelling, and no `false`: a wall is opted *into*, so its absence is the
+ * off switch and a second way to spell "no" would be a second thing to get
+ * wrong. `{}` is the whole answer for "yes, the usual one", which is what an
+ * author reaches for most.
+ */
+function validateWallsParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  const path = `${at}.walls`;
+  if (!isObject(value)) {
+    out.push(
+      error(
+        "WALL_PARAM",
+        path,
+        `"walls" must be an object, got ${describe(value)}`,
+        `write "walls": {} for the usual curtain wall, or "walls": { "style": "masonry", "margin": 10, "towerPitch": 40, "height": 6 } — the styles are: ${WALL_STYLES.join(", ")}. Omit "walls" entirely for no wall`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, value, path, ["style", "margin", "towerPitch", "height", "gates"], "walls");
+  const style = value["style"];
+  if (style !== undefined && (typeof style !== "string" || !(WALL_STYLES as readonly string[]).includes(style))) {
+    out.push(
+      error(
+        "WALL_PARAM",
+        path,
+        `"style" must be one of ${WALL_STYLES.join(", ")}, got ${describe(style)}`,
+        'set "style": "masonry" — a stone curtain with a crenellated cap, which is the default',
+      ),
+    );
+  }
+  checkBooleans(out, path, value, ["gates"]);
+  checkNumbers(out, path, value, {
+    margin: { min: WALL_MIN_MARGIN, max: WALL_MAX_MARGIN, int: true },
+    towerPitch: { min: WALL_MIN_TOWER_PITCH, max: WALL_MAX_TOWER_PITCH, int: true },
+    height: { min: WALL_MIN_HEIGHT, max: WALL_MAX_HEIGHT, int: true },
+  });
 }
 
 /**

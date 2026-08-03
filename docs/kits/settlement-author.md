@@ -1466,6 +1466,7 @@ monastery on a hill.
 | `params.mix` | non-empty array of archetype names | **required**; what the auto-infill builds |
 | `params.blockSize` | 16..96 | optional hint: blocks between street centre lines. Omit and the density chooses |
 | `params.plaza` | bool | optional: keep the central block open as a square |
+| `params.walls` | object | optional: ring the finished quarter with a wall. See **Walls** below |
 | `constraints` | as any other node | say **where the district is**, not what is in it |
 | `children` | `building.grammar@0` nodes | the landmarks — everything else is infilled |
 
@@ -1571,6 +1572,7 @@ is mine".
 | `params.ring` | bool | optional; the default is "if the footprint is at least 260 on its short axis" |
 | `params.blockSize` | 16..96 | optional hint, scaled per character — 40 is the number the table is written against |
 | `params.setPieces` | bool, or `{ max, kinds }` | optional; the anchors (below). Omit for "seat what the ground offers", which is the intended default |
+| `params.walls` | object | optional: ring the finished city with a wall. See **Walls** below |
 | `constraints` | as any other node | say **where the city is**. It is allowed to straddle the waterline; nothing else but a harbour is |
 | `children` | `building.grammar@0` nodes | the landmarks, spread across the quarters that carry the skyline |
 
@@ -1614,6 +1616,60 @@ Rules worth knowing before you write one:
   arterials and the quarter streets are surfaced by the same road machinery, so
   a lane arriving from the next settlement joins the boulevard rather than
   running alongside it.
+
+#### `walls` — ringing a settlement (`infra.wall@0`)
+
+Write `"walls": {}` on a `district` or a `city` and the compiler puts a wall
+round it. That is the entire authoring surface, and the omission is the point:
+**you do not write the course.** The line is derived after everything is built,
+from the footprint the settlement actually took — a hull round the buildings,
+pushed out by the margin, with every segment on a multiple of 15° — and then
+swept over the real ground, so it steps down a hillside instead of hovering
+over it. There is no key that takes a coordinate, a vertex or a length, for the
+same reason a `city` has no key that names a quarter.
+
+```json
+{
+  "id": "old_town",
+  "kind": "district",
+  "envelope": { "shape": "region", "size": [120, 120] },
+  "params": {
+    "fabric": "organic",
+    "density": "medium",
+    "mix": ["cottage", "shop_row", "smithy"],
+    "walls": { "style": "masonry", "margin": 10, "towerPitch": 40, "height": 6 }
+  },
+  "constraints": [{ "zone": "center" }]
+}
+```
+
+| field | values | notes |
+|---|---|---|
+| `style` | `masonry`, `palisade`, `earthwork` | default `masonry`. Three constructions, not three palettes: a stone curtain, a timber palisade, a revetted rampart |
+| `margin` | 4..64 | default 10; columns the ring stands **outward** of the built ground. Raise it if the wall comes out mostly gaps |
+| `towerPitch` | 16..128 | default 40; columns of wall between towers. Towers also land on every corner of the course, always |
+| `height` | 4..14 | default 6; blocks from the ground to the wall-walk |
+| `gates` | bool | default `true`. `false` is a siege wall: the roads are cut |
+
+Rules worth knowing:
+
+- **Gates are found, not placed.** Wherever a lane or a boulevard already
+  crosses the derived course, the wall opens: the carriageway keeps its own
+  surface, the wall writes nothing in it, and a pair of towers flanks the
+  opening. So the way to get a gate somewhere is to **run a road there** —
+  anchor a `road.network@0` on the settlement's id from something outside it.
+  A walled settlement with no roads reaching it gets a wall with no gates,
+  which is exactly what it asked for.
+- **Put the wall on the thing that has fabric.** A `district` or a `city` has a
+  footprint made of buildings and streets; a loose scatter of
+  `building.grammar@0` nodes under the root does not, so `walls` lives on those
+  two node kinds only.
+- **Leave the ring room.** The course is refused whole (`LOAM-T220`, a note)
+  when the offset ring would fall outside the world region — so a district
+  pressed against the edge of a small world gets no wall. Give the root a
+  bigger envelope or move the district inward.
+- The wall-walk is **walkable end to end by construction**: the crest steps by
+  at most one block per column, so there is no riser you have to jump.
 
 #### Set pieces and vista axes
 

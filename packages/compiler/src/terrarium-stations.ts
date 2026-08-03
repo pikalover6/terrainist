@@ -69,7 +69,8 @@ export type MultiStationKind =
   | "road_context"
   | "waterfront"
   | "tunnel_junction"
-  | "hillside_lane";
+  | "hillside_lane"
+  | "walled_quarter";
 
 /** One multi-structure station, before it is compiled or placed. */
 export interface MultiStationSpec {
@@ -206,7 +207,15 @@ function conform(blend: number): Record<string, unknown> {
  * in order sees the machinery accumulate rather than arrive all at once.
  */
 export function multiStationSpecs(): readonly MultiStationSpec[] {
-  return [ROAD_CONTEXT, CONNECTED_PAIR, HILLSIDE_LANE, VILLAGE_SLICE, WATERFRONT, TUNNEL_JUNCTION];
+  return [
+    ROAD_CONTEXT,
+    CONNECTED_PAIR,
+    HILLSIDE_LANE,
+    VILLAGE_SLICE,
+    WATERFRONT,
+    TUNNEL_JUNCTION,
+    WALLED_QUARTER,
+  ];
 }
 
 /** One building, one lane, one doorstep — the smallest composition there is. */
@@ -451,6 +460,106 @@ const VILLAGE_SLICE: MultiStationSpec = {
           lanterns: true,
           lanternSpacing: 12,
         },
+      },
+    ],
+  ),
+};
+
+/**
+ * `infra.wall@0` — a quarter ringed by its own wall, with a lane through it.
+ *
+ * The station the wall pass is pointed at, and it asks the two questions the
+ * old `curtain_wall` prop could not be asked at all: does the ring *close*, and
+ * does the road get through it. The ground is deliberately not flat — a low
+ * rise inside the ring — because "follows the terrain" is the whole claim and a
+ * wall on a table proves nothing about it.
+ *
+ * The lane is anchored on the district and on a green **outside** the wall, so
+ * the road pass has to cross the derived course, which is what makes a gate
+ * exist. Nothing in this document mentions a gate, a tower or a coordinate.
+ */
+const WALLED_QUARTER: MultiStationSpec = {
+  id: "multi__walled_quarter",
+  kind: "walled_quarter",
+  title: "walled quarter",
+  question: "does the wall close, step with the ground, and let the lane through a gate?",
+  size: [120, 120],
+  document: miniDocument(
+    "terrarium_walled_quarter",
+    811007,
+    "a small walled quarter on a ridge, with a farm and a mill outside the wall and a lane running between them",
+    [120, 120],
+    0,
+    [
+      {
+        id: "ridge",
+        kind: "generator",
+        generator: "terrain.edit@0",
+        label: "The ridge the quarter sits across, so the wall has ground to step with",
+        params: {
+          verb: "ridge",
+          course: [
+            [0.05, 0.28],
+            [0.95, 0.34],
+          ],
+          width: 54,
+          height: 9,
+          meander: 0.3,
+        },
+      },
+    ],
+    [
+      {
+        id: "quarter",
+        kind: "district",
+        label: "The quarter the wall rings",
+        envelope: { shape: "region", size: [48, 48] },
+        params: {
+          fabric: "grid",
+          density: "medium",
+          mix: ["cottage", "shop_row", "smithy"],
+          blockSize: 20,
+          walls: { style: "masonry", margin: 6, towerPitch: 26, height: 6 },
+        },
+        // `cut_fill`, not `flatten`: a quarter that levelled its own ground
+        // would take the ridge out from under the wall, and the ridge is the
+        // whole reason this station is not a flat table like the others.
+        constraints: [
+          { zone: "center" },
+          { terrain_conform: "cut_fill", reference: "median", blend: 6 },
+        ],
+        tags: ["urban"],
+      },
+      // Two buildings **outside** the wall with one lane between them. This is
+      // how the gate gets made: a district is an obstacle to the road router
+      // and never a destination (see `RoadNetworkInput.anchorPaths`), so a lane
+      // aimed *at* the quarter does not exist — but a lane that has to get past
+      // it hugs its edge, crosses the derived course, and the wall opens where
+      // it does. Nothing here names a gate.
+      building(
+        "north_farm",
+        "The farm above the quarter",
+        [9, 9, 9],
+        { floors: 1, roof: "gable" },
+        [{ zone: "north" }, conform(3)],
+        door("south"),
+        ["house"],
+      ),
+      building(
+        "south_mill",
+        "The mill below it",
+        [9, 9, 9],
+        { floors: 1, roof: "gable" },
+        [{ zone: "south" }, conform(3)],
+        door("north"),
+        ["house"],
+      ),
+      {
+        id: "approach",
+        kind: "generator",
+        generator: "road.network@0",
+        label: "The lane the gates exist because of",
+        params: { anchors: ["north_farm", "south_mill"], pattern: "organic", width: 3 },
       },
     ],
   ),
