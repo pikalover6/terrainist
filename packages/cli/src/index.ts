@@ -43,7 +43,7 @@ import type { CompileResult, EmitSummary, TerrainCompileReport } from "@terraini
 import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@terrainist/render";
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
 
-import { AuthoringFailedError, reviseLoamDoc, sumUsage } from "@terrainist/agents";
+import { attachPrograms, AuthoringFailedError, reviseLoamDoc, sumUsage } from "@terrainist/agents";
 import type { Usage } from "@terrainist/agents";
 
 import {
@@ -100,6 +100,7 @@ Usage:
   terrainist generate "<prompt>" [--size 512] [--seed N] [--out <dir>]
                                  [--kit settlement|terrain] [--compile-rounds N]
                                  [--no-intent] [--intent <json>]
+                                 [--no-programs] [--bespoke-budget <usd>]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
                                 [--channel <name>]
@@ -128,6 +129,9 @@ generate options:
                     basin rim, an unroutable road, a demoted or dropped
                     layout node — go back to the model for a revision.
   --no-intent       Skip the classify-the-prompt intent pre-pass.
+  --no-programs     Skip bespoke program authoring.
+  --bespoke-budget <usd>
+                    Per-world spend stop for bespoke programs (default 0.50).
   --intent <json>   Use this intent object instead of classifying the prompt.
                     Validated before the run starts.
   --keep-doc        Keep the authored .loam.json after a successful compile.
@@ -701,12 +705,15 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
   if (authored === undefined) return 1;
 
   let session = authored.result;
+  // The document the compiler sees, which is the authored one plus any frozen
+  // bespoke programs. A revision round rewrites the tree; the programs stay.
+  let doc = authored.doc;
   let docPath = authored.docPath;
   let worldDir = authored.worldDir;
   const usages: Usage[] = [session.usage];
 
   for (let round = 0; ; round++) {
-    const result = await compileTerrain(session.doc, {
+    const result = await compileTerrain(doc, {
       outDir: worldDir,
       allowUnstable: options.allowUnstable,
     });
@@ -773,7 +780,7 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
       session = await reviseLoamDoc({
         messages: session.messages,
         feedback: feedback as string,
-        previous: JSON.stringify(session.doc),
+        previous: JSON.stringify(doc),
         worldSeed: options.seed,
         size: options.size,
         kitName: session.kitName,
@@ -791,8 +798,9 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
     }
     usages.push(session.usage);
     printReviseSummary(round + 1, session);
-    docPath = await writeDocument(path.resolve(options.outDir), session.doc);
-    worldDir = path.join(path.resolve(options.outDir), session.doc.meta.name);
+    doc = attachPrograms(session.doc, authored.programs);
+    docPath = await writeDocument(path.resolve(options.outDir), doc);
+    worldDir = path.join(path.resolve(options.outDir), doc.meta.name);
   }
 }
 
