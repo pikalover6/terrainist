@@ -24,6 +24,7 @@ import {
   type NumSpec,
   type Obj,
 } from "../checks.js";
+import { validateIntentPlacement } from "../intent/validate.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "../terrain/diagnostics.js";
 import { PROFILE_GENERATORS, ZONE_TOKENS, type ZoneToken } from "../terrain/types.js";
 import {
@@ -96,6 +97,10 @@ const STRUCTURE_KEYS = [
   "optional",
   "seedSalt",
   "tags",
+  // Legal only on a district/city; on a structure node the intent walker
+  // reports LOAM-W481 and ignores it, which is friendlier than a hard
+  // UNKNOWN_KEY error for a dial that simply has no effect there.
+  "intent",
 ] as const;
 
 /** Envelope size limits, so a footprint stays inside a plausible region. */
@@ -121,7 +126,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
     return { diagnostics: out };
   }
 
-  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "root"], "document");
+  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "root"], "document");
 
   if (input["loam"] !== "0.1") {
     out.push(
@@ -146,6 +151,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
 
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
+  validateIntentPlacement(out, input);
   validateRoot(out, input["root"]);
 
   if (hasErrors(out)) return { diagnostics: out };
@@ -173,7 +179,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
     return;
   }
 
-  unknownKeys(out, root, "root", ["id", "kind", "envelope", "children", "tags", "seedSalt", "constraints", "ports"], "root node");
+  unknownKeys(out, root, "root", ["id", "kind", "envelope", "children", "tags", "seedSalt", "constraints", "ports", "intent"], "root node");
 
   const id = typeof root["id"] === "string" ? root["id"] : "root";
   checkId(out, "", root["id"], "root");
@@ -415,7 +421,7 @@ function validatePlazaNode(
   node: Obj,
   connections: ConnectedRef[],
 ): void {
-  unknownKeys(out, node, path, ["id", "kind", "envelope", "params", "constraints", "ports", "optional", "seedSalt", "tags"], "plaza node");
+  unknownKeys(out, node, path, ["id", "kind", "envelope", "params", "constraints", "ports", "optional", "seedSalt", "tags", "intent"], "plaza node");
   checkBooleans(out, path, node, ["optional"]);
   checkTags(out, path, node["tags"]);
   checkSeedSalt(out, path, node["seedSalt"]);
@@ -465,6 +471,10 @@ const DISTRICT_KEYS = [
   "optional",
   "seedSalt",
   "tags",
+  // Legal only on a district/city; on a structure node the intent walker
+  // reports LOAM-W481 and ignores it, which is friendlier than a hard
+  // UNKNOWN_KEY error for a dial that simply has no effect there.
+  "intent",
 ] as const;
 
 /** Keys a district's `params` may carry. */
@@ -739,6 +749,10 @@ const CITY_KEYS = [
   "optional",
   "seedSalt",
   "tags",
+  // Legal only on a district/city; on a structure node the intent walker
+  // reports LOAM-W481 and ignores it, which is friendlier than a hard
+  // UNKNOWN_KEY error for a dial that simply has no effect there.
+  "intent",
 ] as const;
 
 /** Keys a city's `params` may carry. */

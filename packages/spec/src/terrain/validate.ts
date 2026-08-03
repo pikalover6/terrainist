@@ -23,6 +23,7 @@ import {
   type NumSpec,
   type Obj,
 } from "../checks.js";
+import { validateIntentPlacement } from "../intent/validate.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
   CAVE_STYLES,
@@ -168,7 +169,7 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
     return { diagnostics: out };
   }
 
-  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "root"], "document");
+  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "root"], "document");
 
   if (input["loam"] !== "0.1") {
     out.push(
@@ -193,6 +194,7 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
 
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
+  validateIntentPlacement(out, input);
   validateRoot(out, input["root"]);
 
   if (hasErrors(out)) return { diagnostics: out };
@@ -315,8 +317,20 @@ export function validateStyle(out: LoamDiagnostic[], style: unknown): void {
     out.push(error("BAD_TYPE", "style.palettes", `"style.palettes" must be an object, got ${describe(palettes)}`, 'map each symbol to a block name or a mix, e.g. { "ground.beach": "minecraft:sand" }'));
     return;
   }
+  validatePaletteMap(out, palettes, "style.palettes");
+}
+
+/**
+ * Validate a symbol → block-or-mix map.
+ *
+ * @internal Split out of {@link validateStyle} when `intent.character.palettes`
+ * arrived: a character's overrides are merged over `style.palettes` within its
+ * subtree, so they have to be exactly the same shape, checked by exactly the
+ * same code rather than by a second copy of it.
+ */
+export function validatePaletteMap(out: LoamDiagnostic[], palettes: Obj, at0: string): void {
   for (const [symbol, value] of Object.entries(palettes)) {
-    const at = `style.palettes.${symbol}`;
+    const at = `${at0}.${symbol}`;
     if (typeof value === "string") {
       if (value.trim() === "") {
         out.push(error("BAD_PALETTE", at, `palette symbol "${symbol}" maps to an empty block name`, 'use a namespaced block id such as "minecraft:gravel"'));
@@ -368,7 +382,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
     return;
   }
 
-  unknownKeys(out, root, "root", ["id", "kind", "envelope", "children", "tags", "seedSalt", "constraints", "ports"], "root node");
+  unknownKeys(out, root, "root", ["id", "kind", "envelope", "children", "tags", "seedSalt", "constraints", "ports", "intent"], "root node");
 
   const id = typeof root["id"] === "string" ? root["id"] : "root";
   checkId(out, "", root["id"], "root");
@@ -512,7 +526,7 @@ export function validateRootEnvelope(out: LoamDiagnostic[], path: string, envelo
 
 /** @internal */
 export function validateHeightfieldNode(out: LoamDiagnostic[], path: string, node: Obj): void {
-  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "children", "tags", "seedSalt", "constraints", "ports"], "terrain.heightfield@0 node");
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "children", "tags", "seedSalt", "constraints", "ports", "intent"], "terrain.heightfield@0 node");
   const params = requireParams(out, path, node, "terrain.heightfield@0");
   if (params) validateHeightfieldParams(out, path, params);
 
@@ -564,7 +578,7 @@ export function validateHeightfieldNode(out: LoamDiagnostic[], path: string, nod
 }
 
 function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void {
-  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "children", "tags", "seedSalt", "constraints", "ports"], "terrain.edit@0 node");
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "children", "tags", "seedSalt", "constraints", "ports", "intent"], "terrain.edit@0 node");
   if (node["kind"] !== "generator") {
     out.push(error("BAD_ENUM", path, `edit nodes must have "kind": "generator", got ${describe(node["kind"])}`, 'set "kind": "generator"'));
   }
@@ -647,7 +661,7 @@ function validateEditNode(out: LoamDiagnostic[], path: string, node: Obj): void 
 
 /** @internal */
 export function validateClimateNode(out: LoamDiagnostic[], path: string, node: Obj): void {
-  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "terrain.climate@0 node");
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports", "intent"], "terrain.climate@0 node");
   const params = node["params"];
   if (params === undefined) return;
   if (!isObject(params)) {
@@ -670,7 +684,7 @@ export function validateClimateNode(out: LoamDiagnostic[], path: string, node: O
  * reading the spec will reach for the missing half of it.
  */
 export function validateCaveNode(out: LoamDiagnostic[], path: string, node: Obj): void {
-  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "cave.carver@0 node");
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports", "intent"], "cave.carver@0 node");
   const params = node["params"];
   if (params === undefined) return;
   if (!isObject(params)) {
@@ -786,7 +800,7 @@ function checkIntPair(
 
 /** @internal */
 export function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): void {
-  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports"], "scatter.forest@0 node");
+  unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports", "intent"], "scatter.forest@0 node");
   const params = requireParams(out, path, node, "scatter.forest@0");
   if (!params) return;
   unknownKeys(out, params, `${path}.params`, ["species", "area", "density", "spacing", "clumping", "maxSlope", "elevation", "edgeFalloff", "avoidTags", "undergrowth", "snowLine"], "scatter.forest@0 params");

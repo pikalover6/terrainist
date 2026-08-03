@@ -258,6 +258,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * derived biome.
    */
   BIOME_INTENT_UNKNOWN: "LOAM-W472",
+
+  // --- SemanticIntent (Phase 0 contract 1) ---------------------------------
+  /** `intent.era` names a word the closed alias table does not carry. */
+  INTENT_ERA_UNKNOWN: "LOAM-W480",
+  /** `intent` on a node kind that carries none. Ignored, never fatal. */
+  INTENT_NOT_ALLOWED: "LOAM-W481",
+  /** `intent` declared below district depth, where the fan-out table thins. */
+  INTENT_TOO_DEEP: "LOAM-I482",
+  /** `character.archetypes` names an archetype the catalog does not implement. */
+  INTENT_ARCHETYPE_UNKNOWN: "LOAM-W483",
 } as const;
 
 /** Symbolic diagnostic name. */
