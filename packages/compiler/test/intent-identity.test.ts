@@ -61,7 +61,7 @@ function document(intent?: unknown): Record<string, unknown> {
           kind: "district",
           envelope: { shape: "region", size: [96, 96] },
           constraints: [{ zone: "center" }],
-          params: { fabric: "grid", density: "medium", mix: ["cottage", "workshop"] },
+          params: { fabric: "grid", density: "medium", mix: ["townhouse", "cottage"] },
         },
       ],
     },
