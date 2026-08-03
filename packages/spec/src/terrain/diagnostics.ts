@@ -195,6 +195,29 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   STAIR_UNCONNECTED: "LOAM-T221",
 
+  // --- Phase 0 contract 2: authored programs -------------------------------
+  // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
+  // quoted in the design doc and one printed by the compiler are the same
+  // string.
+  /** A node overrode the envelope the program declared for itself. */
+  PROGRAM_ENVELOPE_OVERRIDDEN: "LOAM-W330",
+  /** More than `clipTolerance` of an instance's writes fell outside the envelope. */
+  PROGRAM_WRITES_CLIPPED: "LOAM-W331",
+  /** An instance exhausted fuel, writes or heap. Dropped whole, never half-written. */
+  PROGRAM_BUDGET_EXCEEDED: "LOAM-E332",
+  /** `sourceHash` does not match the source carried beside it. */
+  PROGRAM_SOURCE_HASH_MISMATCH: "LOAM-E333",
+  /** Re-execution produced a different op stream from the recorded `outputHash`. */
+  PROGRAM_OUTPUT_HASH_MISMATCH: "LOAM-E334",
+  /** The written solid is not one 6-connected component. */
+  PROGRAM_DISCONNECTED: "LOAM-E335",
+  /** A gate step failed: static lint, block registry, physics, or the nonsense guard. */
+  PROGRAM_GATE_FAILED: "LOAM-E336",
+  /** The program was dropped and the node fell back. */
+  PROGRAM_DROPPED: "LOAM-W337",
+  /** The `programs` map or a reference into it is malformed. */
+  PROGRAM_SCHEMA: "LOAM-E338",
+
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
   ENVELOPE_SIZE_COERCED: "LOAM-W152",
