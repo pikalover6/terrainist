@@ -43,10 +43,42 @@ import {
   PROFILE_BIOMES,
   type ProfileBiome,
   TAIGA_TEMPERATURE,
+  isTintedLandBiome,
+  snowConsistentBiome,
 } from "./biomes.js";
 
 /** Columns of blend band outside the footprint, per the contract's default. */
 export const DEFAULT_FEATHER = 8;
+
+/** Narrowest and widest the size-scaled feather band may get. */
+export const MIN_FEATHER = 8;
+export const MAX_FEATHER = 24;
+
+/**
+ * Feather width for a footprint, scaled by its perimeter.
+ *
+ * A single hut and a whole city both used to get the same 8 columns, and eight
+ * columns is invisible next to a 400-column city edge — the seam Kai walked.
+ * `clamp(8, perimeter/64, 24)` keeps a hut's band tight while giving a city a
+ * band you have to walk to cross.
+ */
+export function featherForPerimeter(perimeter: number): number {
+  return Math.max(MIN_FEATHER, Math.min(MAX_FEATHER, Math.round(perimeter / 64)));
+}
+
+/**
+ * Columns of pre-clamp ambient sampled outside the footprint for the vote.
+ *
+ * Wider than the feather on purpose: the ring must read the terrain the
+ * settlement is *sitting in*, not the columns the feather is about to repaint.
+ */
+export const AMBIENT_RING = 12;
+
+/** Least ring columns that make an ambient vote worth trusting. */
+export const AMBIENT_RING_MIN_VOTES = 24;
+
+/** Share of the ring the winner needs; below this the ambient is "hopelessly mixed". */
+export const AMBIENT_RING_MAJORITY = 0.4;
 
 /**
  * How a settlement's snow cover is decided.
@@ -120,6 +152,18 @@ export interface LandUseClampResult {
   readonly snowAdded: number;
   /** The `auto` vote, for the report: snowy columns of land columns voted. */
   readonly vote: { readonly snowy: number; readonly total: number };
+  /**
+   * The ambient ring vote: the winning pre-clamp biome around the footprint,
+   * its share, and how many ring columns voted. `winner` is undefined when the
+   * ring was empty or too mixed and the clamp fell back to the derived biome.
+   */
+  readonly ambient: {
+    readonly winner?: ProfileBiome;
+    readonly share: number;
+    readonly total: number;
+  };
+  /** The feather width actually used — size-scaled unless the caller pinned it. */
+  readonly feather: number;
   readonly diagnostics: readonly LoamDiagnostic[];
 }
 
@@ -161,7 +205,6 @@ const PROFILE_BIOME_SET: ReadonlySet<string> = new Set<string>(PROFILE_BIOMES);
 export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
   const { width, depth, mask, base, snow, surfaceClass, temperature, forested } = input;
   const n = width * depth;
-  const feather = Math.max(0, input.feather ?? DEFAULT_FEATHER);
   const empty: LandUseClampResult = {
     biome: base,
     snow,
@@ -170,6 +213,8 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
     snowSuppressed: 0,
     snowAdded: 0,
     vote: { snowy: 0, total: 0 },
+    ambient: { share: 0, total: 0 },
+    feather: 0,
     diagnostics: [],
   };
 
@@ -219,11 +264,28 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
   const policy: "never" | "always" =
     requested === "auto" ? (snowy * 2 > voted ? "always" : "never") : requested;
 
-  // --- precedence rung 2: the settlement-derived biome ---------------------
-  const clampedBiome = intentBiome ?? derivedBiome(policy, beachish, forestish, voted, meanTemperature);
+  // --- the feather, scaled by how big the thing being blended is -----------
+  const feather =
+    input.feather !== undefined
+      ? Math.max(0, input.feather)
+      : featherForPerimeter(maskPerimeter(mask, width, depth));
 
-  // --- the mask's distance transform, out to the feather --------------------
-  const distance = chebyshevDistance(mask, width, depth, feather);
+  // --- the mask's distance transform, out past the feather to the ring -----
+  const distance = chebyshevDistance(mask, width, depth, Math.max(feather, AMBIENT_RING));
+
+  // --- precedence rung 2: the settlement-derived biome ---------------------
+  // The ambient majority first — a footprint should take the ground it sits
+  // in, so the only edge left is the one the feather dissolves. The dominant
+  // surface-class derivation is the fallback for a ring that says nothing.
+  const ambient = ambientVote(distance, base, surfaceClass, n);
+  const ambientBiome =
+    ambient.winner !== undefined && ambient.share >= AMBIENT_RING_MAJORITY
+      ? snowConsistentBiome(ambient.winner, policy)
+      : undefined;
+  const clampedBiome =
+    intentBiome ??
+    ambientBiome ??
+    derivedBiome(policy, beachish, forestish, voted, meanTemperature);
 
   const outBiome = base.slice();
   const outSnow = Uint8Array.from(snow);
@@ -236,15 +298,17 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
     for (let i = 0; i < width; i++) {
       const idx = j * width + i;
       const d = distance[idx] as number;
-      if (d < 0) continue;
+      if (d < 0 || d > feather) continue;
       // Land use owns the *ground* it claims: an ocean column inside a
       // harbour's envelope stays ocean, and stays wet.
       if (!isLand(surfaceClass[idx] as number)) continue;
       const inside = d === 0;
       if (!inside) {
         if (feather === 0) continue;
-        // Ordered dither: certain at the footprint edge, vanishing at the rim.
-        if (ditherAt(input.x0 + i, input.z0 + j) >= 1 - d / (feather + 1)) continue;
+        // Ordered dither, gradient-weighted: the paint probability falls with
+        // a smoothstep across the band, so the mix eases off both at the
+        // footprint edge and at the rim instead of ending on a visible step.
+        if (ditherAt(input.x0 + i, input.z0 + j) >= featherWeight(d, feather)) continue;
         featherColumns++;
       } else {
         footprintColumns++;
@@ -266,7 +330,13 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
     note(
       "BIOME_CLAMPED",
       input.nodePath,
-      `land use clamped ${footprintColumns} footprint column${footprintColumns === 1 ? "" : "s"} (plus ${featherColumns} feathered) to ${clampedBiome}; snow policy ${requested} resolved to "${policy}" on a ${snowy}/${voted} vote`,
+      `land use clamped ${footprintColumns} footprint column${footprintColumns === 1 ? "" : "s"} (plus ${featherColumns} feathered over ${feather} columns) to ${clampedBiome}, ${
+        intentBiome !== undefined
+          ? "named by climate intent"
+          : ambientBiome !== undefined
+            ? `from the ambient majority (${ambient.winner}, ${Math.round(ambient.share * 100)}% of ${ambient.total} ring columns)`
+            : `derived from the footprint's surface classes (the ${ambient.total}-column ambient ring was empty or too mixed)`
+      }; snow policy ${requested} resolved to "${policy}" on a ${snowy}/${voted} vote`,
       'no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground',
     ),
   );
@@ -291,8 +361,98 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
     snowSuppressed,
     snowAdded,
     vote: { snowy, total: voted },
+    ambient:
+      ambientBiome === undefined
+        ? { share: ambient.share, total: ambient.total }
+        : { winner: ambient.winner as ProfileBiome, share: ambient.share, total: ambient.total },
+    feather,
     diagnostics,
   };
+}
+
+/**
+ * The gradient weight of a feather column: the share of columns at that
+ * distance the clamp paints.
+ *
+ * `1` just outside the footprint, `0` at the rim, smoothstepped between — a
+ * linear ramp still ends on a step at the inner edge, where the mix goes from
+ * "all clamp" to "nearly all clamp" in one column.
+ */
+export function featherWeight(d: number, feather: number): number {
+  if (feather <= 0) return 0;
+  const t = Math.min(1, Math.max(0, (d - 0.5) / feather));
+  return 1 - t * t * (3 - 2 * t);
+}
+
+/**
+ * Columns on the mask's boundary — its perimeter, in columns.
+ *
+ * 4-connectivity: a mask column counts when any orthogonal neighbour is off the
+ * mask or off the region.
+ */
+export function maskPerimeter(mask: Uint8Array, width: number, depth: number): number {
+  let perimeter = 0;
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      const idx = j * width + i;
+      if (mask[idx] !== 1) continue;
+      if (
+        i === 0 ||
+        i === width - 1 ||
+        j === 0 ||
+        j === depth - 1 ||
+        mask[idx - 1] !== 1 ||
+        mask[idx + 1] !== 1 ||
+        mask[idx - width] !== 1 ||
+        mask[idx + width] !== 1
+      ) {
+        perimeter++;
+      }
+    }
+  }
+  return perimeter;
+}
+
+/**
+ * The ambient majority: a plurality vote over the pre-clamp biome of the land
+ * columns in a ring *around* the footprint.
+ *
+ * Voting outside rather than under the footprint is the whole point — under it
+ * the climate rule has already been distorted by the pad the structure pass
+ * levelled, while the ring still carries what the island actually is. Water,
+ * river and volcanic ash abstain: none of them carries a grass tint, so none of
+ * them can tell the clamp what colour the settlement's ground should be.
+ */
+function ambientVote(
+  distance: Int32Array,
+  base: readonly ProfileBiome[],
+  surfaceClass: ArrayLike<number>,
+  n: number,
+): { winner?: ProfileBiome; share: number; total: number } {
+  const tally = new Map<ProfileBiome, number>();
+  let total = 0;
+  for (let idx = 0; idx < n; idx++) {
+    const d = distance[idx] as number;
+    if (d <= 0 || d > AMBIENT_RING) continue;
+    if (!isLand(surfaceClass[idx] as number)) continue;
+    const b = base[idx] as ProfileBiome;
+    if (!isTintedLandBiome(b)) continue;
+    tally.set(b, (tally.get(b) ?? 0) + 1);
+    total++;
+  }
+  if (total < AMBIENT_RING_MIN_VOTES) return { share: 0, total };
+  // Deterministic tie-break: PROFILE_BIOMES order, which is fixed source order.
+  let winner: ProfileBiome | undefined;
+  let best = 0;
+  for (const candidate of PROFILE_BIOMES) {
+    const count = tally.get(candidate) ?? 0;
+    if (count > best) {
+      best = count;
+      winner = candidate;
+    }
+  }
+  if (winner === undefined) return { share: 0, total };
+  return { winner, share: best / total, total };
 }
 
 /**

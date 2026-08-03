@@ -28,11 +28,17 @@ import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compil
 import type { ProfileBiome } from "../src/terrain/biomes.js";
 import {
   DEFAULT_FEATHER,
+  MAX_FEATHER,
+  MIN_FEATHER,
   buildLandUseMask,
   chebyshevDistance,
   clampLandUse,
+  featherForPerimeter,
+  featherWeight,
+  maskPerimeter,
   type LandUseClampInput,
 } from "../src/terrain/landuse.js";
+import { snowConsistentBiome } from "../src/terrain/biomes.js";
 
 /* -------------------------------------------------------------------------- */
 /* Unit: the clamp                                                            */
@@ -189,6 +195,171 @@ describe("land-use clamp — the invariant", () => {
     });
   });
 
+  describe("the ambient majority", () => {
+    /** The same plateau, but with a uniform ambient the ring can read. */
+    function ambient(biome: ProfileBiome, over: Partial<LandUseClampInput> = {}) {
+      const input = scenario(over);
+      input.base.fill(biome);
+      return input;
+    }
+
+    it("takes the biome of the terrain around the footprint, not a default", () => {
+      const out = clampLandUse(ambient("minecraft:forest"));
+      expect(out.ambient.winner).toBe("minecraft:forest");
+      expect(out.ambient.share).toBe(1);
+      expect(out.clampedBiome).toBe("minecraft:forest");
+    });
+
+    it("votes over the ring, not under the footprint", () => {
+      // Under the footprint the terrain says taiga; around it, forest. The
+      // ring wins — that is the seam Kai walked.
+      const input = ambient("minecraft:forest");
+      for (let idx = 0; idx < W * D; idx++) {
+        if (input.mask[idx] === 1) input.base[idx] = "minecraft:taiga";
+      }
+      expect(clampLandUse(input).clampedBiome).toBe("minecraft:forest");
+    });
+
+    it("makes a snowy ambient agree with a snow policy of `never`", () => {
+      const out = clampLandUse(ambient("minecraft:snowy_slopes", { intent: { snow: "never" } }));
+      expect(out.ambient.winner).toBe("minecraft:snowy_slopes");
+      expect(out.clampedBiome).toBe("minecraft:windswept_hills");
+      expect(out.snowPolicy).toBe("never");
+    });
+
+    it("makes a temperate ambient agree with a snow policy of `always`", () => {
+      const out = clampLandUse(ambient("minecraft:plains", { intent: { snow: "always" } }));
+      expect(out.clampedBiome).toBe("minecraft:snowy_plains");
+    });
+
+    it("maps every sibling pair both ways, and leaves the tintless alone", () => {
+      expect(snowConsistentBiome("minecraft:beach", "always")).toBe("minecraft:snowy_beach");
+      expect(snowConsistentBiome("minecraft:snowy_beach", "never")).toBe("minecraft:beach");
+      expect(snowConsistentBiome("minecraft:forest", "always")).toBe("minecraft:taiga");
+      expect(snowConsistentBiome("minecraft:taiga", "never")).toBe("minecraft:forest");
+      expect(snowConsistentBiome("minecraft:stony_peaks", "always")).toBe("minecraft:stony_peaks");
+      expect(snowConsistentBiome("minecraft:stony_peaks", "never")).toBe("minecraft:stony_peaks");
+    });
+
+    it("water abstains: an island in the sea derives from its land, not the ocean", () => {
+      const input = ambient("minecraft:forest");
+      const sc = input.surfaceClass as Int32Array;
+      // Drown three of the four ring quadrants; the dry remainder still wins.
+      for (let j = 0; j < D; j++) {
+        for (let i = 0; i < W; i++) {
+          const idx = j * W + i;
+          if (input.mask[idx] === 1) continue;
+          if (i < 24) {
+            sc[idx] = SurfaceClass.UNDERWATER;
+            input.base[idx] = "minecraft:ocean";
+          }
+        }
+      }
+      const out = clampLandUse(input);
+      expect(out.clampedBiome).toBe("minecraft:forest");
+    });
+
+    it("falls back to the surface-class derivation when the ring is hopelessly mixed", () => {
+      const input = scenario();
+      // Five-way split around the footprint: nothing clears the majority bar.
+      const spread: ProfileBiome[] = [
+        "minecraft:forest",
+        "minecraft:taiga",
+        "minecraft:windswept_hills",
+        "minecraft:stony_peaks",
+        "minecraft:beach",
+      ];
+      for (let idx = 0; idx < W * D; idx++) {
+        if (input.mask[idx] !== 1) input.base[idx] = spread[idx % spread.length] as ProfileBiome;
+      }
+      const out = clampLandUse(input);
+      expect(out.ambient.winner).toBeUndefined();
+      expect(out.clampedBiome).toBe("minecraft:plains");
+      expect(out.diagnostics.find((d) => d.code === "LOAM-W470")?.message).toMatch(
+        /too mixed/,
+      );
+    });
+
+    it("falls back when the ring has too few columns to mean anything", () => {
+      // A footprint filling the whole region leaves no ring at all.
+      const mask = new Uint8Array(W * D).fill(1);
+      const out = clampLandUse(scenario({ mask }));
+      expect(out.ambient.total).toBe(0);
+      expect(out.ambient.winner).toBeUndefined();
+      expect(out.clampedBiome).toBe("minecraft:plains");
+    });
+
+    it("still lets explicit intent outrank the ambient", () => {
+      const out = clampLandUse(
+        ambient("minecraft:forest", { intent: { biome: "minecraft:stony_peaks" } }),
+      );
+      expect(out.ambient.winner).toBe("minecraft:forest");
+      expect(out.clampedBiome).toBe("minecraft:stony_peaks");
+    });
+  });
+
+  describe("the feather", () => {
+    it("scales with the footprint's perimeter, clamped to 8..24", () => {
+      expect(maskPerimeter(scenario().mask, W, D)).toBe(36);
+      expect(featherForPerimeter(36)).toBe(MIN_FEATHER);
+      expect(featherForPerimeter(36)).toBe(DEFAULT_FEATHER);
+      expect(featherForPerimeter(640)).toBe(10);
+      expect(featherForPerimeter(4000)).toBe(MAX_FEATHER);
+    });
+
+    it("gives a city a wider band than a hut", () => {
+      const hut = clampLandUse(scenario()).feather;
+      // A 160×144 district — the size the islands2 fixture actually claims.
+      const cw = 320;
+      const cityMask = new Uint8Array(cw * cw);
+      for (let j = 88; j < 232; j++) for (let i = 80; i < 240; i++) cityMask[j * cw + i] = 1;
+      const city = featherForPerimeter(maskPerimeter(cityMask, cw, cw));
+      expect(city).toBeGreaterThan(hut);
+    });
+
+    it("honours a caller-pinned width over the size-scaled one", () => {
+      expect(clampLandUse(scenario({ feather: 3 })).feather).toBe(3);
+    });
+
+    it("weights the band as a gradient: full at the edge, zero at the rim", () => {
+      const f = 12;
+      const weights = Array.from({ length: f }, (_, k) => featherWeight(k + 1, f));
+      expect(weights[0]).toBeGreaterThan(0.98);
+      expect(weights[f - 1]).toBeLessThan(0.02);
+      for (let k = 1; k < f; k++) {
+        expect(weights[k] as number).toBeLessThan(weights[k - 1] as number);
+      }
+    });
+
+    it("paints a monotonically thinning mix across the band", () => {
+      // A big footprint, so each distance band has enough columns to measure.
+      const mask = new Uint8Array(W * D);
+      for (let j = 6; j < 26; j++) for (let i = 6; i < 26; i++) mask[j * W + i] = 1;
+      const input = scenario({ mask, intent: { biome: "minecraft:taiga", snow: "never" } });
+      input.base.fill("minecraft:plains");
+      const out = clampLandUse(input);
+      const distance = chebyshevDistance(mask, W, D, out.feather);
+      const total = new Map<number, number>();
+      const painted = new Map<number, number>();
+      for (let idx = 0; idx < W * D; idx++) {
+        const d = distance[idx] as number;
+        if (d <= 0) continue;
+        total.set(d, (total.get(d) ?? 0) + 1);
+        if (out.biome[idx] === "minecraft:taiga") painted.set(d, (painted.get(d) ?? 0) + 1);
+      }
+      const fractions = [...total.keys()]
+        .sort((a, b) => a - b)
+        .map((d) => (painted.get(d) ?? 0) / (total.get(d) as number));
+      // Near the footprint most of the band is clamped; at the rim almost none.
+      expect(fractions[0] as number).toBeGreaterThan(0.8);
+      expect(fractions[fractions.length - 1] as number).toBeLessThan(0.3);
+      // And it steps down, never up, once past the first column.
+      for (let k = 2; k < fractions.length; k++) {
+        expect(fractions[k] as number).toBeLessThanOrEqual((fractions[k - 1] as number) + 1e-9);
+      }
+    });
+  });
+
   it("reports what it did", () => {
     const out = clampLandUse(scenario());
     const byCode = new Map(out.diagnostics.map((d) => [d.code, d] as const));
@@ -259,8 +430,13 @@ describe("frost_hollow — a city that straddles the snow line", () => {
     // One clamp, one policy: the message names a single resolved policy, and
     // an alpine mining town is still allowed to be snowy — coherence, not
     // "no snow".
-    expect(clamped[0]?.message).toMatch(/resolved to "(always|never)"/);
-    expect(report.stats.biomeHistogram["minecraft:snowy_plains"]).toBeGreaterThan(0);
+    expect(clamped[0]?.message).toMatch(/resolved to "always"/);
+    // Ambient-derived, not a default: the town takes the snowy ground the
+    // valley is already made of, so there is no tint step at its edge — and
+    // an alpine mining town is still allowed to be snowy.
+    expect(clamped[0]?.message).toMatch(/from the ambient majority \(minecraft:snowy_/);
+    expect(report.stats.biomeHistogram["minecraft:snowy_slopes"]).toBeGreaterThan(0);
+    expect(report.stats.biomeHistogram["minecraft:snowy_plains"]).toBeUndefined();
   });
 
   it("puts no biome seam through the middle of a building pad", async () => {

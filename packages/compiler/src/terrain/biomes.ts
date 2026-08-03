@@ -58,6 +58,59 @@ export const HIGH_ROCK_RELIEF = 0.6;
 /** Normalized relief above which soil land counts as "upland". */
 export const UPLAND_RELIEF = 0.45;
 
+/**
+ * Snowy / non-snowy sibling pairs, keyed snowy → temperate.
+ *
+ * The land-use clamp derives its biome from the **ambient majority** around a
+ * footprint, and then has to make that winner agree with the settlement's
+ * resolved snow policy: a snowy ambient under policy `never` would paint snow
+ * grass with no snow on it (and vice versa). Each pair is chosen so the two
+ * halves read as the same *place* in two climates — the grass tint moves, the
+ * terrain identity does not.
+ *
+ * `stony_peaks` is deliberately absent: bare rock carries no grass tint and is
+ * legible with or without snow, so it is its own sibling in both directions.
+ */
+const SNOWY_TO_TEMPERATE: ReadonlyMap<string, ProfileBiome> = new Map<string, ProfileBiome>([
+  ["minecraft:snowy_plains", "minecraft:plains"],
+  ["minecraft:snowy_beach", "minecraft:beach"],
+  ["minecraft:snowy_slopes", "minecraft:windswept_hills"],
+  ["minecraft:taiga", "minecraft:forest"],
+]);
+
+const TEMPERATE_TO_SNOWY: ReadonlyMap<string, ProfileBiome> = new Map<string, ProfileBiome>([
+  ["minecraft:plains", "minecraft:snowy_plains"],
+  ["minecraft:beach", "minecraft:snowy_beach"],
+  ["minecraft:windswept_hills", "minecraft:snowy_slopes"],
+  ["minecraft:forest", "minecraft:taiga"],
+]);
+
+/**
+ * Map a biome onto the sibling that agrees with a resolved snow policy.
+ *
+ * Identity when the biome is already consistent, or when it has no sibling
+ * (bare rock, water, volcanic ash — none of which take a grass tint).
+ */
+export function snowConsistentBiome(
+  biome: ProfileBiome,
+  policy: "never" | "always",
+): ProfileBiome {
+  if (policy === "always") return TEMPERATE_TO_SNOWY.get(biome) ?? biome;
+  return SNOWY_TO_TEMPERATE.get(biome) ?? biome;
+}
+
+/** True when the biome is dry ground whose grass tint the clamp may adopt. */
+export function isTintedLandBiome(biome: ProfileBiome): boolean {
+  return (
+    biome !== "minecraft:ocean" &&
+    biome !== "minecraft:deep_ocean" &&
+    biome !== "minecraft:cold_ocean" &&
+    biome !== "minecraft:deep_cold_ocean" &&
+    biome !== "minecraft:river" &&
+    biome !== "minecraft:basalt_deltas"
+  );
+}
+
 /** Everything the biome rule reads for one column. */
 export interface BiomeInput {
   /** Surface class from the stdlib classifier. */
