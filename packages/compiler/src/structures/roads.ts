@@ -34,6 +34,7 @@ import {
 } from "@terrainist/stdlib";
 import { warning, type LoamDiagnostic } from "@terrainist/spec";
 
+import { buildBridgeKit } from "./bridge.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
@@ -443,7 +444,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     }
 
     surfaceRoute(region, plan, blocked, road, roadY, surfaced, width, states, occupancy, paved, water, bridged);
-    buildBridgeDeck(region, plan, surfaced, width, states, blocks, water);
+    blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
 
     routes.push({
       from: anchor.nodePath,
@@ -624,7 +625,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       water,
       bridged,
     );
-    buildBridgeDeck(region, plan, surfaced, arterial.width, urban.avenue, blocks, water);
+    blocks.push(...buildBridgeKit(region, plan, surfaced, arterial.width, { deck: urban.avenue.deck, post: urban.avenue.post, pier: urban.avenue.pier }, water).blocks);
   }
   for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
 
@@ -1684,65 +1685,6 @@ function surfaceRoute(
     road[idx] = 1;
     roadY[idx] = cell.y;
     if (occupancy !== undefined) claim(occupancy, idx);
-  }
-}
-
-/**
- * Surface a route's water crossings as bridges.
- *
- * A bridge is three things, and it needs all three to read as one from the
- * ground: a **deck** one block wider on each side than the lane it carries
- * (top slabs at the graded profile height, so it is flush with both banks), a
- * **rail** of fence along those two extra columns, and a **pier** at each end
- * of the span dropping from the deck to the river bed.
- *
- * Nothing here touches the column plan. Every block is emitted as a structure
- * block over water the terrain pass already settled, so a bridge cannot
- * destabilize a fluid — the validator reads the plan, and the plan still says
- * "river". The piers do replace water blocks in their own columns, which is
- * both what a pier is and harmless: a full column of solid has no exposed
- * face for its neighbours to flow into.
- */
-function buildBridgeDeck(
-  region: Region,
-  plan: ColumnPlan,
-  path: readonly { x: number; z: number; y: number }[],
-  width: number,
-  states: RoadStates,
-  out: StructureBlock[],
-  water: Uint8Array,
-): void {
-  const half = (width - 1) >> 1;
-  const outer = half + 1;
-  const wetAt = (x: number, z: number): boolean =>
-    inside(region, x, z) && water[index(region, x, z)] === 1;
-
-  for (const [i, cell] of path.entries()) {
-    if (!wetAt(cell.x, cell.z)) continue;
-    const heading = headingAt(path, i);
-    // The ends of the span: the neighbours along the route that are dry.
-    const prev = path[i - 1];
-    const next = path[i + 1];
-    const isEnd =
-      prev === undefined ||
-      next === undefined ||
-      !wetAt(prev.x, prev.z) ||
-      !wetAt(next.x, next.z);
-
-    for (let o = -outer; o <= outer; o++) {
-      const x = cell.x + heading.pz * o;
-      const z = cell.z + heading.px * o;
-      if (!wetAt(x, z)) continue;
-      out.push({ x, y: cell.y, z, stateId: states.deck });
-      if (Math.abs(o) !== outer) continue;
-      // Rail, and at the ends of the span a pier under it down to the bed.
-      out.push({ x, y: cell.y + 1, z, stateId: states.post });
-      if (!isEnd) continue;
-      const bed = plan.ground[index(region, x, z)] as number;
-      for (let y = bed + 1; y < cell.y; y++) {
-        out.push({ x, y, z, stateId: states.pier });
-      }
-    }
   }
 }
 

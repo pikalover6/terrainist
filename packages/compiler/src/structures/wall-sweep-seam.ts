@@ -33,65 +33,22 @@
  */
 
 /* -------------------------------------------------------------------------- */
-/* pinned contract types — do not edit, mirror `docs/DESIGN.md` §3             */
+/* pinned contract types — single source of truth is `sweep.ts`                */
 /* -------------------------------------------------------------------------- */
 
-export type BandRole =
-  | "carriageway"
-  | "verge"
-  | "kerb"
-  | "walkway"
-  | "deck"
-  | "core"
-  | "parapet"
-  | "footing"
-  | "ditch";
-
-/** One band of the cross-section, measured outward from the centre line. */
-export interface ProfileBand {
-  readonly id: string;
-  readonly role: BandRole;
-  /** Columns per side; with `centred`, the full width straddling the line. */
-  readonly width: number;
-  readonly centred?: boolean;
-  /** Blocks relative to the swept datum. Negative cuts below it. */
-  readonly level?: number;
-  /** Palette symbol for the band's top course. */
-  readonly surface: string;
-  /** Fill between terrain and the band top. Defaults to `surface`. */
-  readonly fill?: string;
-  readonly cap?: BandCap;
-}
-
-export interface BandCap {
-  readonly height: number;
-  readonly block: string;
-  /** A fence/wall rail rather than a solid course. */
-  readonly rail?: boolean;
-}
-
-export interface IntervalFeature {
-  readonly id: string;
-  /** Columns of arc length between instances. */
-  readonly pitch: number;
-  readonly phase?: number;
-  readonly at?: "interval" | "bend" | "both";
-  /** Lateral offset from the centre line. */
-  readonly offset: number;
-  readonly generator?: string;
-}
-
-export interface SweptProfile {
-  readonly id: string;
-  /** Innermost first. Mirrored across the centre line unless `asymmetric`. */
-  readonly bands: readonly ProfileBand[];
-  readonly asymmetric?: boolean;
-  /** Blocks of datum change permitted per column before treads synthesize. */
-  readonly maxGrade: number;
-  readonly follow: "grade" | "level" | "step";
-  readonly features?: readonly IntervalFeature[];
-  readonly crossing: "bridge" | "causeway" | "ford" | "stop";
-}
+// The engine landed (structures/sweep.ts); its declarations ARE the pinned
+// contract, so this module re-exports them instead of restating them. The
+// ring-specific machinery below (closed-course datum, seam convergence,
+// windowed true-line normals) is the wall's own and is not in the engine yet;
+// unifying closed-ring sweeps into `sweep()` is a recorded follow-up.
+export type {
+  BandRole,
+  ProfileBand,
+  BandCap,
+  IntervalFeature,
+  SweptProfile,
+} from "./sweep.js";
+import type { SweptProfile, ProfileBand, BandCap, BandRole } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* the fixture's own vocabulary                                               */
