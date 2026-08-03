@@ -64,6 +64,7 @@ import type { Palette } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { index, inside } from "./roads.js";
+import { thickenCourse } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* the pinned StreetGraph contract (duplicated from docs/DESIGN.md)            */
@@ -382,6 +383,7 @@ export function dressStreets(
 
   const masks = buildStreetMasks(graph, region);
   paveSidewalks(graph, plan, masks, states);
+  thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
 
   // Blocked columns: a lamp or a piece of furniture may not share one, and
@@ -522,6 +524,53 @@ function paveSidewalks(
         }
       }
     }
+  }
+}
+
+/**
+ * Close the curb line where a diagonal street left it a sawtooth.
+ *
+ * {@link paveSidewalks} lays the curb one column wide, which is right on an
+ * axis-aligned street and impossible on a diagonal one: a one-column course
+ * along a 45° line touches its neighbours only at the corners, so what should
+ * be a coping line rasterizes as an in-out-in-out zigzag — the defect reported
+ * at the headline city's gorge lip. {@link thickenCourse} recruits one bridging
+ * column at each corner contact, always the one further from the carriageway,
+ * so the course thickens **into the sidewalk** and never eats a lane of road.
+ *
+ * Only columns this pass already paved as sidewalk are eligible, so the curb
+ * cannot spill onto a lot, into water, or across a junction.
+ */
+function thickenCurbs(plan: ColumnPlan, masks: StreetMasks, states: StreetStates): void {
+  const region = plan.region;
+  /** How many of the eight neighbours are carriageway — small means outward. */
+  const roadPressure = (x: number, z: number): number => {
+    let n = 0;
+    for (let dz = -1; dz <= 1; dz++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        if (masks.carriageway[index(region, x + dx, z + dz)] === 1) n++;
+      }
+    }
+    return n;
+  };
+
+  const added = thickenCourse(
+    region,
+    masks.curb,
+    (idx) =>
+      masks.sidewalk[idx] === 1 &&
+      masks.carriageway[idx] !== 1 &&
+      (masks.y[idx] as number) !== UNSET &&
+      plan.fluidKind[idx] === FluidKind.NONE &&
+      plan.surface[idx] === states.sidewalk,
+    (_idx, x, z) => -roadPressure(x, z),
+  );
+  if (added === 0) return;
+
+  for (let idx = 0; idx < masks.curb.length; idx++) {
+    if (masks.curb[idx] !== 1) continue;
+    if (plan.surface[idx] === states.sidewalk) plan.surface[idx] = states.curb;
   }
 }
 

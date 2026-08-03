@@ -439,6 +439,110 @@ export function sweptColumns(
   return out;
 }
 
+/* -------------------------------------------------------------------------- */
+/* geometry: continuity of a one-column course                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Make a one-column-wide course 4-connected, thickening **outward**.
+ *
+ * Rule 3 fixes *which* columns a band owns, but it cannot make a nominally
+ * one-column course continuous, because on a diagonal no one-column course
+ * can be. A band of unit perpendicular width along a 45° line spans about
+ * 1.41 columns of lattice, so the rounding keeps exactly one column per row —
+ * and a run of columns that touch only at their corners is a **sawtooth**: an
+ * in-out-in-out zigzag rather than a coping line. The gorge lip of the
+ * headline city's plaza is that zigzag, one block of stone edging per row,
+ * alternating.
+ *
+ * A coping line reads as a line because it is 4-connected. So wherever a
+ * course column has no orthogonal neighbour in the course but *does* have a
+ * diagonal one, one of the two columns that would bridge them is recruited —
+ * the one further from the line the course edges, so the course thickens into
+ * the ground behind it and never eats into the surface it borders. That is
+ * locally 2-wide exactly where the true line runs between columns and
+ * one-wide everywhere else, so **an axis-aligned course is untouched**.
+ *
+ * `course` is read and written in place. `eligible` decides what may be
+ * recruited (it must exclude everything on the inner side); when both bridging
+ * columns are eligible, `outward` breaks the tie — larger wins, and a tie in
+ * *that* falls back to region order, so the pass is independent of the order
+ * the course was drawn in. Recruits are committed after the scan, so no
+ * recruit can itself recruit and one call cannot cascade.
+ *
+ * Returns the number of columns added.
+ */
+export function thickenCourse(
+  region: Region,
+  course: Uint8Array,
+  eligible: (idx: number, x: number, z: number) => boolean,
+  outward: (idx: number, x: number, z: number) => number,
+): number {
+  const orthogonal = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ] as const;
+  const diagonal = [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ] as const;
+
+  const added: number[] = [];
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (course[idx] !== 1) continue;
+      const x = region.x0 + i;
+      const z = region.z0 + j;
+
+      let connected = false;
+      for (const [dx, dz] of orthogonal) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        if (course[index(region, x + dx, z + dz)] === 1) {
+          connected = true;
+          break;
+        }
+      }
+      if (connected) continue;
+
+      for (const [dx, dz] of diagonal) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        if (course[index(region, x + dx, z + dz)] !== 1) continue;
+        // The two columns that would bridge this corner contact.
+        let bestIdx = -1;
+        let bestOut = Number.NEGATIVE_INFINITY;
+        for (const [bx, bz] of [
+          [x + dx, z],
+          [x, z + dz],
+        ] as const) {
+          if (!inside(region, bx, bz)) continue;
+          const bidx = index(region, bx, bz);
+          if (course[bidx] === 1) continue;
+          if (!eligible(bidx, bx, bz)) continue;
+          const score = outward(bidx, bx, bz);
+          if (score > bestOut) {
+            bestOut = score;
+            bestIdx = bidx;
+          }
+        }
+        if (bestIdx >= 0) added.push(bestIdx);
+      }
+    }
+  }
+
+  let count = 0;
+  for (const idx of added) {
+    if (course[idx] === 1) continue;
+    course[idx] = 1;
+    count++;
+  }
+  return count;
+}
+
 /**
  * Assign a column's lane to a band of a {@link SweptProfile}.
  *

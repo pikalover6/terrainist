@@ -40,6 +40,7 @@ import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
+import { clusterCell, isSteepGround } from "../terrain/cluster.js";
 import { detailSeed, hash2 } from "../terrain/detail.js";
 import {
   STREET_CARRIAGEWAY_SYMBOL,
@@ -1639,8 +1640,12 @@ function surfaceRoute(
 ): void {
   const lanes = carriagewaySpans(width).lanes;
   const spots = sweptColumns(region, path, lanes);
+  // Which columns sit on a face, measured against the *natural* ground — the
+  // loop below flattens columns as it goes, so a test taken inside it would
+  // depend on how far along the sweep we were. See the note at the draw.
+  const steep = spots.map((spot) => isSteepGround(region, plan.ground, spot.x, spot.z));
 
-  for (const spot of spots) {
+  for (const [n, spot] of spots.entries()) {
     const x = spot.x;
     const z = spot.z;
     const idx = spot.idx;
@@ -1672,14 +1677,21 @@ function surfaceRoute(
     }
 
     const outer = spot.outer;
+    // The surface mix is sampled at the *cluster* cell wherever the ground the
+    // road is cut into is a face rather than a floor. A carriageway or shoulder
+    // mix drawn per column is fine underfoot on the flat and reads as static on
+    // a gorge apron, where every column is a visible vertical facet. Relief is
+    // read before this column is flattened, so the test sees the land, not the
+    // road. On gentle ground the draw is byte-for-byte what it always was.
+    const s = steep[n] === true ? clusterCell(x, z) : { x, z };
     plan.ground[idx] = cell.y;
     plan.fluidTop[idx] = cell.y;
     plan.snow[idx] = 0;
     plan.surface[idx] = isStep
       ? states.step
       : outer
-        ? states.shoulder(x, z)
-        : states.surface(x, z);
+        ? states.shoulder(s.x, s.z)
+        : states.surface(s.x, s.z);
     plan.subsurface[idx] = states.subsurface;
     if (plan.soil[idx] === 0) plan.soil[idx] = 1;
     road[idx] = 1;

@@ -35,6 +35,7 @@ import {
 } from "@terrainist/stdlib";
 
 import type { CavePlan } from "./caves.js";
+import { clusterCell, materialCell } from "./cluster.js";
 import { detailSeed, hash2, hash3i, hashInt } from "./detail.js";
 import type { Palette } from "./palette.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
@@ -307,12 +308,25 @@ function materialSeeds(seed: Seed256 | undefined): MaterialSeeds {
   };
 }
 
-/** Cliff faces: mostly the cliff symbol, with andesite and tuff intrusions. */
+/**
+ * Cliff faces: mostly the cliff symbol, with andesite and tuff intrusions.
+ *
+ * The *strata* come from a low-frequency field, so they are already connected
+ * patches. The **mix draw inside a symbol** is not: a document that declares
+ * `ground.cliff` as a mix would otherwise get an independent draw per column,
+ * and a face is seen edge-on, so that reads as static rather than as rock. The
+ * symbol is therefore sampled at the cluster lattice — a no-op for the single-
+ * block defaults, and connected patches for a mix. The field itself keeps the
+ * column's true coordinates: quantizing it would put a staircase outline round
+ * every stratum.
+ */
 function cliffState(palette: Palette, seeds: MaterialSeeds, x: number, z: number): number {
   const n = fbm2(seeds.rock, x, z, { octaves: 2, frequency: 0.012, lacunarity: 2, gain: 0.5 });
-  if (n > 0.3) return palette.stateAt("ground.andesite", x, z);
-  if (n < -0.34) return palette.stateAt("ground.tuff", x, z);
-  return palette.stateAt("ground.cliff", x, z);
+  // A cliff column is steep by construction, so no relief test is needed here.
+  const s = clusterCell(x, z);
+  if (n > 0.3) return palette.stateAt("ground.andesite", s.x, s.z);
+  if (n < -0.34) return palette.stateAt("ground.tuff", s.x, s.z);
+  return palette.stateAt("ground.cliff", s.x, s.z);
 }
 
 /** Ocean floor: gravel with drifting sand and clay patches. */
@@ -387,13 +401,18 @@ function applyScree(
 
       const x = region.x0 + i;
       const z = region.z0 + j;
-      const r = hash2(seeds.rock, x, z, 7);
+      // Scree sits by definition on a face, and a face is seen edge-on: an
+      // independent draw per column reads as static, not as rubble. Sample the
+      // same hash at the cluster lattice so the gravel, cobble and bare rock
+      // arrive in connected patches. Gentle scree keeps its per-column draw.
+      const s = materialCell(region, ground, x, z);
+      const r = hash2(seeds.rock, s.x, s.z, 7);
       surface[idx] =
         r < 0.45
-          ? palette.stateAt("ground.gravel", x, z)
+          ? palette.stateAt("ground.gravel", s.x, s.z)
           : r < 0.8
-            ? palette.stateAt("ground.cobblestone", x, z)
-            : palette.stateAt("ground.stone", x, z);
+            ? palette.stateAt("ground.cobblestone", s.x, s.z)
+            : palette.stateAt("ground.stone", s.x, s.z);
       soil[idx] = 0;
     }
   }
