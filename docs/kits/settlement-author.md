@@ -1938,7 +1938,7 @@ warning. Per-building overrides are what `params` are for.
 
 | key | value | what it drives |
 |---|---|---|
-| `era` | free word: `"medieval"`, `"victorian"`, `"far_future"`, `"pirate"`, `"prehistoric"`, … | material theme, roof form, prop and vehicle family, road materials |
+| `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `early_modern` / `industrial` / `modern` / `far_future`. Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
 | `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
 | `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim. **Orthogonal to wealth: a rich ruin exists.** |
 | `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength |
@@ -1960,7 +1960,7 @@ world hold two places that read differently**.
 | key | value |
 |---|---|
 | `label` | free text: `"pirate haven"`, `"unicorn glade"` |
-| `materialTheme` | a material theme id, when the prompt names a material world |
+| `materialTheme` | one of exactly these ids — `temperate_timber`, `boreal_pine`, `birchwood_downs`, `modern_city`, `white_quartz` — when the prompt names a material world. No other value exists; an unknown id is ignored with a warning |
 | `palettes` | palette symbol overrides, merged over `style.palettes` in this subtree |
 | `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }` |
 | `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` |

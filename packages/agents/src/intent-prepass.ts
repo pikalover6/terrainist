@@ -48,9 +48,18 @@ You never write a world. You only describe what kind of place the prompt asks fo
 Reply with a JSON object and nothing else. Every field is OPTIONAL, and omitting
 a field means "the prompt does not say" — which is NOT the same as zero.
 
+When the prompt names two or more places that should read differently, do NOT
+merge them: put shared facts at the top level and describe the per-place
+differences in "tokens" prose so the author can give each region its own
+character block.
+
 {
-  "era": string        // free word for the period: "medieval", "victorian",
-                       // "far_future", "pirate", "prehistoric", ...
+  "era": string        // period word, resolved through an alias table to one
+                       // of: primitive, ancient, medieval, early_modern,
+                       // industrial, modern, far_future. Known aliases include
+                       // "victorian", "pirate", "fantasy", "steampunk",
+                       // "wild_west", "cyberpunk", "prehistoric". Prefer a
+                       // class name when no alias clearly fits.
   "wealth": 0..1       // 0 destitute, 0.5 ordinary, 1 rich
   "decline": 0..1      // 0 kept up, 1 abandoned. Orthogonal to wealth:
                        // a rich ruin exists.
@@ -61,7 +70,9 @@ a field means "the prompt does not say" — which is NOT the same as zero.
                "humidity": -1..1, "snow": "auto"|"never"|"always" }
   "character": {
     "label": string,             // free text, e.g. "pirate haven"
-    "materialTheme": string,     // only if the prompt names a material world
+    "materialTheme": string,     // ONLY one of: temperate_timber, boreal_pine,
+                                 // birchwood_downs, modern_city, white_quartz.
+                                 // Omit rather than invent — no other id exists.
     "archetypes": { "prefer": [..], "forbid": [..] },
     "props":      { "prefer": [..], "forbid": [..] },
     "flora":      { "prefer": [..], "forbid": [..] },
