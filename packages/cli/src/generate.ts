@@ -17,8 +17,12 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import {
+  attachPrograms,
   authorLoamDoc,
+  authorPrograms,
   classifyPromptIntent,
+  formatProgramRun,
+  DEFAULT_BESPOKE_BUDGET_USD,
   formatClassification,
   AuthoringFailedError,
   AUTHORING_MODEL_ID,
@@ -26,7 +30,13 @@ import {
   DEFAULT_KIT,
   MAX_COMPILE_ROUNDS,
 } from "@terrainist/agents";
-import type { AuthoredDocument as LoamDocument, AuthorResult, KitName } from "@terrainist/agents";
+import type {
+  AuthoredDocument as LoamDocument,
+  AuthorResult,
+  AuthoredProgramEntry,
+  KitName,
+  ProgramVerificationGate,
+} from "@terrainist/agents";
 import { validateIntentValue, type SemanticIntent } from "@terrainist/spec";
 import { formatDiagnostic } from "@terrainist/compiler";
 import { resolveWorldSeed } from "@terrainist/stdlib";
@@ -60,6 +70,14 @@ export interface GenerateOptions {
    * re-rolling the prompt.
    */
   readonly intent?: SemanticIntent;
+  /**
+   * Author bespoke programs for this world. Default true; `--no-programs`
+   * turns the pass off, and a run without it is exactly the product as it
+   * behaved before Phase 3.
+   */
+  readonly programs: boolean;
+  /** Per-world bespoke authoring spend stop, in USD. */
+  readonly bespokeBudget: number;
 }
 
 /** The reasoning-effort levels OpenRouter's unified `reasoning` parameter accepts. */
@@ -85,6 +103,8 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
   let compileRounds = MAX_COMPILE_ROUNDS;
   let intentPrepass = true;
   let intent: SemanticIntent | undefined;
+  let programs = true;
+  let bespokeBudget = DEFAULT_BESPOKE_BUDGET_USD;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -142,6 +162,14 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
         );
       }
       intent = validation.intent;
+    } else if (arg === "--no-programs") {
+      programs = false;
+    } else if (arg === "--bespoke-budget") {
+      const value = Number(next());
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error("--bespoke-budget must be a non-negative number of dollars");
+      }
+      bespokeBudget = value;
     } else if (arg === "--keep-doc") {
       keepDoc = true;
     } else if (arg === "--no-zip") {
@@ -174,6 +202,8 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
     kit,
     compileRounds,
     intentPrepass,
+    programs,
+    bespokeBudget,
     ...(intent === undefined ? {} : { intent }),
   };
 }
@@ -208,6 +238,15 @@ export function printAuthorFailure(failure: AuthoringFailedError): void {
 /** What {@link authorAndWriteDocument} produced. */
 export interface AuthoredDocument {
   readonly result: AuthorResult;
+  /** The document as written to disk — programs attached, if any were. */
+  readonly doc: LoamDocument;
+  /**
+   * The frozen programs map, so a later revision round can re-attach it: a
+   * revision rewrites the document, and the programs it was authored beside
+   * are still valid — they were verified against the world seed and size, not
+   * against a particular node tree.
+   */
+  readonly programs: Readonly<Record<string, AuthoredProgramEntry>>;
   /** Where the document was written. */
   readonly docPath: string;
   /** Where its world folder should go. */
@@ -222,6 +261,7 @@ export interface AuthoredDocument {
  */
 export async function authorAndWriteDocument(
   options: GenerateOptions,
+  gate?: ProgramVerificationGate,
 ): Promise<AuthoredDocument | undefined> {
   console.log(
     [
@@ -274,11 +314,39 @@ export async function authorAndWriteDocument(
 
   printAuthorSummary(result);
 
+  // --- bespoke programs ---------------------------------------------------
+  // Authored AFTER the document, because what a world wants a program for is
+  // something the document has already said. Every program that passes the
+  // gate is frozen into the document — source, sourceHash, outputHash — so the
+  // compile downstream is a pure function again and needs no model.
+  let doc: LoamDocument = result.doc;
+  let programs: Readonly<Record<string, AuthoredProgramEntry>> = {};
+  if (options.programs) {
+    if (gate === undefined) {
+      console.log("programs   skipped (no verification gate available in this build)\n");
+    } else {
+      const authored = await authorPrograms({
+        prompt: options.prompt,
+        worldSeed: options.seed,
+        size: options.size,
+        gate,
+        doc: result.doc,
+        model: options.model,
+        reasoningEffort: options.effort,
+        budgetUsd: options.bespokeBudget,
+        ...(intent === undefined ? {} : { context: JSON.stringify(intent) }),
+      });
+      console.log(`${formatProgramRun(authored)}\n`);
+      programs = authored.programs;
+      doc = attachPrograms(doc, programs);
+    }
+  }
+
   const outDir = path.resolve(options.outDir);
-  const docPath = await writeDocument(outDir, result.doc);
+  const docPath = await writeDocument(outDir, doc);
   console.log(`  document   ${docPath}\n`);
 
-  return { result, docPath, worldDir: path.join(outDir, result.doc.meta.name) };
+  return { result, doc, programs, docPath, worldDir: path.join(outDir, doc.meta.name) };
 }
 
 /** Write an authored document next to its world folder; returns its path. */
