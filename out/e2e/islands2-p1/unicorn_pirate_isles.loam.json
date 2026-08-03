@@ -1,0 +1,1297 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "unicorn_pirate_isles",
+    "worldSeed": "11345845549159523007",
+    "prompt": "Two enemy islands across a strait: one a magical unicorn island — pastel meadows, flowering groves, rainbow-hued crystal formations, an elegant white shrine village; the other a grumpy pirate island — dark cliffs, a ramshackle pirate cove town with taverns and gallows humor, moored pirate ships, watchtowers and cannon batteries facing the unicorn island across the water",
+    "spawn": {
+      "zone": "west"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.peak": {
+        "mix": [
+          [
+            "minecraft:amethyst_block",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ],
+          [
+            "minecraft:purpur_block",
+            2
+          ],
+          [
+            "minecraft:red_concrete",
+            1
+          ],
+          [
+            "minecraft:orange_concrete",
+            1
+          ],
+          [
+            "minecraft:yellow_concrete",
+            1
+          ],
+          [
+            "minecraft:lime_concrete",
+            1
+          ],
+          [
+            "minecraft:cyan_concrete",
+            1
+          ],
+          [
+            "minecraft:blue_concrete",
+            1
+          ],
+          [
+            "minecraft:purple_concrete",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:deepslate",
+            4
+          ],
+          [
+            "minecraft:basalt",
+            3
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:sand",
+            3
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:light_gray_concrete_powder",
+            1
+          ]
+        ]
+      },
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:calcite",
+      "plaza.gravel": "minecraft:quartz_block",
+      "plaza.cobble": "minecraft:quartz_bricks",
+      "plaza.border": "minecraft:amethyst_block"
+    }
+  },
+  "intent": {
+    "era": "pirate",
+    "character": {
+      "label": "magical rival islands",
+      "archetypes": {
+        "prefer": [
+          "unicorns",
+          "pirates"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "elegant white shrine",
+          "taverns",
+          "gallows",
+          "moored pirate ships",
+          "watchtowers",
+          "cannon batteries",
+          "rainbow-hued crystal formations"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "pastel meadows",
+          "flowering groves"
+        ]
+      }
+    },
+    "tokens": {
+      "regions": "The unicorn island is pastoral, magical, and elegant with a white shrine village and rainbow-hued crystals; the pirate island is rugged and ramshackle, centered on a cove town with taverns, gallows, moored ships, and defenses aimed across the strait."
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the strait between the magical west isle and the grumbling east isle",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "two raised islands divided by a broad sea channel",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 62,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.52,
+          "ridged": false,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.58
+          },
+          "cliffThreshold": 42,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "unicorn_island",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rounded magical island west of the strait",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.25,
+                0.5
+              ],
+              "radius": 116,
+              "height": 32,
+              "profile": "rounded",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "pirate_island",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rugged pirate island east of the strait",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.75,
+                0.5
+              ],
+              "radius": 116,
+              "height": 35,
+              "profile": "sharp",
+              "irregularity": 0.25
+            }
+          },
+          {
+            "id": "unicorn_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle meadow shelf beneath the shrine village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.25,
+                0.5
+              ],
+              "radius": 110,
+              "height": 7,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "pirate_cove_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rough shelf above the pirate cove",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.75,
+                0.55
+              ],
+              "radius": 112,
+              "height": 6,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "pirate_cliff_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "dark cliffs and a high defensive spine on the pirate isle",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.8,
+                  0.22
+                ],
+                [
+                  0.9,
+                  0.38
+                ],
+                [
+                  0.91,
+                  0.62
+                ],
+                [
+                  0.8,
+                  0.78
+                ]
+              ],
+              "width": 38,
+              "height": 34,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "crystal_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northern rainbow crystal formation",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.17,
+                0.35
+              ],
+              "radius": 24,
+              "height": 22,
+              "profile": "sharp",
+              "irregularity": 0.3
+            }
+          },
+          {
+            "id": "crystal_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western rainbow crystal formation",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.32,
+                0.4
+              ],
+              "radius": 26,
+              "height": 24,
+              "profile": "sharp",
+              "irregularity": 0.28
+            }
+          },
+          {
+            "id": "crystal_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the southern rainbow crystal formation",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.28,
+                0.68
+              ],
+              "radius": 23,
+              "height": 21,
+              "profile": "sharp",
+              "irregularity": 0.3
+            }
+          },
+          {
+            "id": "strait",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the navigable strait separating the rival islands",
+            "params": {
+              "verb": "valley",
+              "course": [
+                "coast",
+                [
+                  0.5,
+                  0.5
+                ],
+                "coast"
+              ],
+              "width": 56,
+              "depth": 24,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "cove_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the pirate cove inlet opening into the strait",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.82,
+                  0.54
+                ],
+                [
+                  0.75,
+                  0.52
+                ],
+                "coast"
+              ],
+              "width": 30,
+              "depth": 20,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0017,
+          "latitudeGradient": -0.15,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "unicorn_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "flowering pastel groves across the unicorn meadows",
+        "params": {
+          "area": {
+            "at": [
+              0.25,
+              0.5
+            ],
+            "radius": 112
+          },
+          "density": 0.2,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            72
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.8,
+            "flowers": 0.55,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "pastel_birch",
+              "weight": 3,
+              "shape": "birch_slim",
+              "minHeight": 5,
+              "maxHeight": 12
+            },
+            {
+              "id": "flowering_oak",
+              "weight": 2,
+              "shape": "oak_round",
+              "minHeight": 4,
+              "maxHeight": 10
+            }
+          ]
+        }
+      },
+      {
+        "id": "pirate_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "wind-bent scrub and dark woodland on the pirate island",
+        "params": {
+          "area": {
+            "at": [
+              0.75,
+              0.5
+            ],
+            "radius": 105
+          },
+          "density": 0.055,
+          "spacing": 4,
+          "clumping": 0.7,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.15,
+            "flowers": 0.01,
+            "deadwood": 0.18
+          },
+          "species": [
+            {
+              "id": "pirate_spruce",
+              "weight": 3,
+              "shape": "spruce_tall",
+              "minHeight": 5,
+              "maxHeight": 14
+            },
+            {
+              "id": "wind_scrub",
+              "weight": 2,
+              "shape": "spruce_squat",
+              "minHeight": 3,
+              "maxHeight": 8
+            }
+          ]
+        }
+      },
+      {
+        "id": "world_wildflowers",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse natural cover beyond both island settlements",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.08,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "world_oak",
+              "weight": 2,
+              "shape": "oak_round",
+              "minHeight": 4,
+              "maxHeight": 10
+            },
+            {
+              "id": "world_birch",
+              "weight": 1,
+              "shape": "birch_slim",
+              "minHeight": 4,
+              "maxHeight": 11
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_village",
+        "kind": "district",
+        "label": "the elegant white shrine village in the flowering meadows",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            144,
+            144
+          ]
+        },
+        "params": {
+          "fabric": "organic",
+          "density": "low",
+          "mix": [
+            "cottage",
+            "church",
+            "courtyard_house"
+          ],
+          "blockSize": 30,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "at": [
+              0.25,
+              0.5
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "structure",
+          "island",
+          "unicorn",
+          "village"
+        ],
+        "intent": {
+          "era": "fantasy",
+          "wealth": 0.8,
+          "decline": 0,
+          "formality": 0.75,
+          "climate": {
+            "biome": "minecraft:flower_forest",
+            "temperature": 0.35,
+            "humidity": 0.65,
+            "snow": "never"
+          },
+          "character": {
+            "label": "magical unicorn island",
+            "materialTheme": "white_quartz",
+            "palettes": {
+              "ground.surface": {
+                "mix": [
+                  [
+                    "minecraft:grass_block",
+                    6
+                  ],
+                  [
+                    "minecraft:moss_block",
+                    2
+                  ],
+                  [
+                    "minecraft:pink_concrete_powder",
+                    1
+                  ],
+                  [
+                    "minecraft:light_blue_concrete_powder",
+                    1
+                  ]
+                ]
+              },
+              "ground.stone": "minecraft:calcite",
+              "ground.cliff": "minecraft:calcite",
+              "ground.beach": "minecraft:white_concrete_powder",
+              "plaza.path": "minecraft:quartz_block",
+              "plaza.gravel": "minecraft:calcite",
+              "plaza.cobble": "minecraft:quartz_bricks",
+              "plaza.border": "minecraft:amethyst_block",
+              "road.surface": "minecraft:quartz_block",
+              "road.shoulder": "minecraft:calcite"
+            },
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "church",
+                "cottage"
+              ],
+              "forbid": [
+                "bastion",
+                "watchtower",
+                "tavern",
+                "warehouse"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "fountain",
+                "gazebo",
+                "standing_stones"
+              ],
+              "forbid": [
+                "galleon",
+                "cannon_battery"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "pastel meadows",
+                "flowering groves"
+              ],
+              "forbid": [
+                "deadwood",
+                "withered scrub"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "massing": "sprawling",
+              "windowRhythm": "dense",
+              "ornamentDensity": 0.9
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "unicorn_shrine",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the elegant white crystal shrine at the village heart",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "hip",
+              "windowRhythm": "paired"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "crystal_shrine",
+              "landmark",
+              "public"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pirate_cove",
+        "kind": "district",
+        "label": "the ramshackle pirate cove town beneath the black cliffs",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            160,
+            144
+          ]
+        },
+        "params": {
+          "fabric": "organic",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "cottage",
+            "shop_row"
+          ],
+          "blockSize": 30,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "at": [
+              0.75,
+              0.53
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "structure",
+          "island",
+          "pirate",
+          "town"
+        ],
+        "intent": {
+          "era": "pirate",
+          "wealth": 0.28,
+          "decline": 0.68,
+          "formality": 0.18,
+          "climate": {
+            "biome": "minecraft:stony_shore",
+            "temperature": -0.1,
+            "humidity": 0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "grumpy pirate island",
+            "materialTheme": "weathered_pirate",
+            "palettes": {
+              "ground.surface": {
+                "mix": [
+                  [
+                    "minecraft:coarse_dirt",
+                    4
+                  ],
+                  [
+                    "minecraft:podzol",
+                    3
+                  ],
+                  [
+                    "minecraft:grass_block",
+                    1
+                  ]
+                ]
+              },
+              "ground.stone": "minecraft:deepslate",
+              "ground.cliff": {
+                "mix": [
+                  [
+                    "minecraft:deepslate",
+                    4
+                  ],
+                  [
+                    "minecraft:basalt",
+                    3
+                  ],
+                  [
+                    "minecraft:blackstone",
+                    2
+                  ]
+                ]
+              },
+              "ground.peak": {
+                "mix": [
+                  [
+                    "minecraft:deepslate",
+                    3
+                  ],
+                  [
+                    "minecraft:blackstone",
+                    2
+                  ],
+                  [
+                    "minecraft:basalt",
+                    2
+                  ]
+                ]
+              },
+              "ground.beach": {
+                "mix": [
+                  [
+                    "minecraft:gravel",
+                    3
+                  ],
+                  [
+                    "minecraft:gray_concrete_powder",
+                    1
+                  ],
+                  [
+                    "minecraft:black_concrete_powder",
+                    1
+                  ]
+                ]
+              },
+              "plaza.path": "minecraft:coarse_dirt",
+              "plaza.gravel": "minecraft:gravel",
+              "plaza.cobble": "minecraft:polished_blackstone_bricks",
+              "plaza.border": "minecraft:dark_oak_log",
+              "road.surface": "minecraft:coarse_dirt",
+              "road.shoulder": "minecraft:gravel"
+            },
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "watchtower",
+                "bastion",
+                "cottage"
+              ],
+              "forbid": [
+                "crystal_shrine",
+                "church",
+                "chalet"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "galleon",
+                "caravel",
+                "junk",
+                "notice_board",
+                "cairn"
+              ],
+              "forbid": [
+                "gazebo",
+                "fountain"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "wind-bent scrub",
+                "salt grass",
+                "dark cliffs"
+              ],
+              "forbid": [
+                "flowering groves"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "sprawling",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.12
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "cove_tavern",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the crooked tavern above the pirate quay",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "windowRhythm": "sparse",
+              "basement": {
+                "depth": 4,
+                "style": "wine_cellar"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "tavern",
+              "house",
+              "landmark"
+            ]
+          },
+          {
+            "id": "cove_storehouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the salt-stained storehouse at the cove",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                10,
+                11
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "warehouse",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gallows_humor",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gallows tower where the cove keeps its grim jokes",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "pirate_cove",
+            "min": 6,
+            "max": 70
+          },
+          {
+            "facing": "pirate_cove"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "gallows",
+          "landmark"
+        ]
+      },
+      {
+        "id": "watchtower_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the northern pirate watchtower aimed across the strait",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.84,
+              0.28
+            ]
+          },
+          {
+            "on": "@terrain:ridge",
+            "band": 48,
+            "partial": 0.5,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_village"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "defense"
+        ]
+      },
+      {
+        "id": "watchtower_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the southern pirate watchtower aimed at the unicorn isle",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.84,
+              0.72
+            ]
+          },
+          {
+            "on": "@terrain:ridge",
+            "band": 48,
+            "partial": 0.5,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_village"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6,
+            "maxSlope": 34,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "defense"
+        ]
+      },
+      {
+        "id": "cannon_battery_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the northern cannon battery facing the unicorn island",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.64,
+              0.4
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 40,
+            "partial": 0.5
+          },
+          {
+            "facing": "unicorn_village"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bastion",
+          "cannon_battery",
+          "defense"
+        ]
+      },
+      {
+        "id": "cannon_battery_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the southern cannon battery trained across the water",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.64,
+              0.6
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 40,
+            "partial": 0.5
+          },
+          {
+            "facing": "unicorn_village"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bastion",
+          "cannon_battery",
+          "defense"
+        ]
+      },
+      {
+        "id": "gallows_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the black-humor notice board by the gallows",
+        "params": {
+          "prop": "notice_board",
+          "zone": "east",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "pirate_pier_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the main pier reaching into the strait",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 20,
+          "width": 3
+        }
+      },
+      {
+        "id": "pirate_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the largest pirate ship moored in the cove",
+        "params": {
+          "prop": "galleon",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "pirate_pier_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the southern mooring pier",
+        "params": {
+          "prop": "pier",
+          "zone": "southeast",
+          "length": 16,
+          "width": 2
+        }
+      },
+      {
+        "id": "pirate_caravel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the swift caravel tied below the cliffs",
+        "params": {
+          "prop": "caravel",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "pirate_junk",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the weathered junk moored beside the pirate town",
+        "params": {
+          "prop": "junk",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "island_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "rough lanes serving both rival island settlements and their defenses",
+        "params": {
+          "anchors": [
+            "unicorn_village",
+            "pirate_cove",
+            "#tag:house",
+            "#tag:defense"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14,
+          "curvature": 0.45,
+          "maxGrade": 2,
+          "junctionStyle": "plaza"
+        }
+      }
+    ]
+  }
+}

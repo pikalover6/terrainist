@@ -1,0 +1,106 @@
+prompt     Two enemy islands across a strait: one a magical unicorn island — pastel meadows, flowering groves, rainbow-hued crystal formations, an elegant white shrine village; the other a grumpy pirate island — dark cliffs, a ramshackle pirate cove town with taverns and gallows humor, moored pirate ships, watchtowers and cannon batteries facing the unicorn island across the water
+seed       11345845549159523007
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"pirate","character":{"label":"magical rival islands","archetypes":{"prefer":["unicorns","pirates"]},"props":{"prefer":["elegant white shrine","taverns","gallows","moored pirate ships","watchtowers","cannon batteries","rainbow-hued crystal formations"]},"flora":{"prefer":["pastel meadows","flowering groves"]}},"tokens":{"regions":"The unicorn island is pastoral, magical, and elegant with a white shrine village and rainbow-hued crystals; the pirate island is rugged and ramshackle, centered on a cove town with taverns, gallows humor, moored ships, and defenses aimed across the strait."}}
+           1 attempt(s), 1079 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     51767 in + 51803 out = 103570  ($0.0317)
+  document   /home/user/terrainist/out/e2e/islands2-p1/unicorn_pirate_isles.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 9 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_village: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_village: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_cove: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E406 UNSATISFIABLE at world.pirate_cove: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.watchtower_north: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.watchtower_north: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.watchtower_south: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.watchtower_south: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost
+warning LOAM-E170 CANNOT_FIT at world.pirate_cove: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+Layout solver report:
+
+  world.unicorn_village: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+  world.pirate_cove: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+  world.watchtower_north: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.55)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.01)
+  world.watchtower_south: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 2.11)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 1 authored in 2 attempt(s)
+  tokens     123207 in + 18718 out = 141925  ($0.0141)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_village: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E406 UNSATISFIABLE at world.pirate_cove: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-E170 CANNOT_FIT at world.pirate_cove: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+Layout solver report:
+
+  world.unicorn_village: placed after unsatisfiable (97 candidates considered)
+  world.pirate_cove: placed after unsatisfiable (97 candidates considered)
+
+  revision 2 authored in 2 attempt(s)
+  tokens     122127 in + 14433 out = 136560  ($0.0115)
+
+compiled "unicorn_pirate_isles" — 1.21.11 (DataVersion 4671)
+  world      /home/user/terrainist/out/e2e/islands2-p1/unicorn_pirate_isles
+  seed       11345845549159523007
+  region     512x512 at (-256, -256)
+  heights    54.7..127.0  sea 63  snow line 125.7
+  land       44.4% of columns above sea level
+  biomes     ocean 55.6%, plains 30.1%, windswept_hills 9.1%, beach 2.2%, forest 1.5%, stony_peaks 1.5%
+  trees      100 (unicorn_groves=213, pirate_scrub=1, world_wildflowers=90)
+  chunks     1024
+  blocks     36184832 (6742 vegetation)
+  markers    94
+  spawn      [-171, 99, 0]
+  timings    validate 1ms  field 518ms  layout 682ms  climate 92ms  columns 173ms  caves 0ms  structures 1944ms  scatter 3935ms  biomes 108ms  validators 11ms  emit 3323ms  total 10861ms
+  zip        /home/user/terrainist/out/e2e/islands2-p1/unicorn_pirate_isles.zip
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.island_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_village: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+warning LOAM-E406 UNSATISFIABLE at world.pirate_cove: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+
+warning LOAM-E170 CANNOT_FIT at world.pirate_cove: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 45615 footprint columns (plus 8976 feathered) to minecraft:plains; snow policy auto resolved to "never" on a 0/45615 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 297101 in + 84954 out = 382055 tokens ($0.0572)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /home/user/terrainist/out/e2e/islands2-p1/unicorn_pirate_isles
