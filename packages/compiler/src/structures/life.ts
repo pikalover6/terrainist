@@ -413,6 +413,16 @@ export interface LifePassInput {
   readonly keepClear?: ReadonlySet<string>;
   /** Cap on objects planted, as a safety valve on a very large city. */
   readonly budget?: number;
+  /**
+   * A catalog prop the pavement furniture draw reaches for first — the
+   * `props.family` fan-out row's landing place.
+   *
+   * It takes {@link PROP_FAMILY_SHARE} of the draw and nothing else changes, so
+   * the street still carries the mixed clutter it always did; only its
+   * headline object is the one the era (or the author) asked for. Absent means
+   * "today", so a no-intent compile is byte-identical.
+   */
+  readonly propFamily?: string;
 }
 
 /** What {@link dressLife} produced. */
@@ -1581,6 +1591,13 @@ function dressStreetFrontage(
   }
 }
 
+/**
+ * Share of the pavement clutter draw the intent's prop family takes.
+ *
+ * Small on purpose: a street furnished entirely with carts is a cart depot.
+ */
+export const PROP_FAMILY_SHARE = 0.25;
+
 /** One piece of pavement clutter, chosen by frontage. */
 function plantGroundObject(
   frontage: Frontage,
@@ -1594,6 +1611,12 @@ function plantGroundObject(
   input: LifePassInput,
 ): boolean {
   const roll = hash2(seed, x, z, 20);
+  // The intent's prop family, first refusal on a quarter of the draw. The
+  // family is a real catalog id (the row grounds it), so a failure here is a
+  // fit failure, not a spelling one — and the frontage draw still follows.
+  if (input.propFamily !== undefined && roll < PROP_FAMILY_SHARE) {
+    if (placeCatalog(input.propFamily, input, planter, x, y, z)) return true;
+  }
   if (frontage === "shop") {
     if (roll < 0.3) return planter.place("crates", crateOps(hashInt(seed, x, z, 21, 1, 2)), x, y, z, PAVEMENT_RULE);
     if (roll < 0.5) return placeCatalog("sandwich_board", input, planter, x, y, z);

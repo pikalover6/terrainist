@@ -525,6 +525,14 @@ export interface StreetSurfaceInput {
   readonly theme?: string;
   /** Node seed the wear mix and the dash phase hang off. */
   readonly seed?: Seed256;
+  /**
+   * Share of carriageway columns painted in the worn tone, 0..1.
+   *
+   * The `roads.wearIntensity` fan-out row's landing place. Omitted means
+   * {@link STREET_WEAR_CHANCE} — the value the pass used before the intent
+   * layer existed, which is what makes a no-intent compile byte-identical.
+   */
+  readonly wearChance?: number;
 }
 
 /** What the street surfacing wrote. */
@@ -586,7 +594,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const bridged = new Uint8Array(cells);
   const paved = new Uint8Array(cells);
   const rural = resolveRoadStates(input.palette, input.stack);
-  const urban = resolveStreetStates(input.palette, input.stack, rural, input.theme, input.seed);
+  const urban = resolveStreetStates(
+    input.palette,
+    input.stack,
+    rural,
+    input.theme,
+    input.seed,
+    input.wearChance,
+  );
   const blocks: StructureBlock[] = [];
   /** Avenue centre lines, kept until every segment has been surfaced. */
   const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
@@ -1465,6 +1480,10 @@ function resolveRoadStates(palette: Palette, stack: PrismarineStack): RoadStates
  */
 export const STREET_WEAR_CHANCE = 0.12;
 
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
+}
+
 /** Hash salt for the wear draw — positional only, never a sequential RNG. */
 const STREET_WEAR_SALT = 0x5f;
 
@@ -1508,6 +1527,7 @@ function resolveStreetStates(
   rural: RoadStates,
   theme: string | undefined,
   seed: Seed256 | undefined,
+  wearChance: number | undefined,
 ): StreetStateSet {
   const materials = streetMaterials(theme);
   const named = (name: string, fallback: number): number =>
@@ -1529,8 +1549,9 @@ function resolveStreetStates(
   // column's own hash, so the same document and seed give the same patching
   // forever, whatever order the segments were walked in.
   const wearSeed = seed === undefined ? 0x5157_2ea1 : detailSeed(seed, "street.wear");
+  const wear = wearChance === undefined ? STREET_WEAR_CHANCE : clamp01(wearChance);
   const carriageway = (x: number, z: number): number =>
-    hash2(wearSeed, x, z, STREET_WEAR_SALT) < STREET_WEAR_CHANCE ? worn(x, z) : body(x, z);
+    hash2(wearSeed, x, z, STREET_WEAR_SALT) < wear ? worn(x, z) : body(x, z);
 
   const paved: RoadStates = { ...rural, surface: carriageway, shoulder: carriageway };
   return {

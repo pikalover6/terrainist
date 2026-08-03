@@ -135,6 +135,15 @@ export interface ProminenceInput {
    * {@link ARTERIAL_SHARE}.
    */
   readonly arterials?: readonly (readonly { readonly x: number; readonly z: number }[])[];
+  /**
+   * Multiplier on the storey ceiling every lot is measured against — the
+   * `layout.storeyMultiplier` fan-out row's landing place.
+   *
+   * A rich quarter builds taller on the same lots. It scales the *ceiling*,
+   * never the floor, so the density's minimum still holds and the archetype's
+   * own cap still wins. Absent (or 1) is exactly today's field.
+   */
+  readonly storeyMultiplier?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -308,7 +317,12 @@ export function buildProminenceField(input: ProminenceInput): ProminenceField {
     const character = ctx.character ?? input.character;
     const byCharacter =
       character === undefined ? hi : Math.max(lo, Math.round(hi * CHARACTER_CEILING[character]));
-    const cap = Math.min(byCharacter, archetypeCeiling(ctx.archetype));
+    // Intent's storey multiplier, applied to the ceiling only. Rounding a
+    // multiplier of exactly 1 is the identity, which is what the byte-identity
+    // law needs.
+    const multiplier = input.storeyMultiplier ?? 1;
+    const lifted = multiplier === 1 ? byCharacter : Math.max(lo, Math.round(byCharacter * multiplier));
+    const cap = Math.min(lifted, archetypeCeiling(ctx.archetype));
     if (cap <= lo) return Math.max(1, cap);
     const shaped = shapeProminence(at(x, z));
     return clamp(lo + Math.round(shaped * (cap - lo)), lo, cap);

@@ -73,7 +73,9 @@ describe("roofs, ornament, wear and decay", () => {
   });
 
   it("switches the prop family on the era", () => {
-    expect(fanOut(STRUCTURE_ROWS.propFamily, scope({ era: "far_future" }), { nodePath: "w", today: undefined })).toBe("skimmer");
+    // Every era's answer is a real catalog prop id, because a family word the
+    // life pass cannot build is a fan-out that changes nothing.
+    expect(fanOut(STRUCTURE_ROWS.propFamily, scope({ era: "far_future" }), { nodePath: "w", today: undefined })).toBe("floating_platform");
     expect(fanOut(STRUCTURE_ROWS.propFamily, NOTHING, { nodePath: "w", today: "cart" })).toBe("cart");
   });
 });

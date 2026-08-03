@@ -348,10 +348,26 @@ export interface BuildingParams {
    * regular, one — every bay takes `floors`.
    */
   readonly bays?: readonly TerraceBay[];
+  /**
+   * How much facade decoration the building carries, 0..1.
+   *
+   * The `grammar.ornamentDensity` fan-out row's landing place. It is the
+   * probability a window gets shutters; the window box takes a fixed share of
+   * what is left. Absent means {@link DEFAULT_ORNAMENT_DENSITY}, the value the
+   * grammar used before the intent layer existed — which is what makes a
+   * no-intent compile byte-identical.
+   */
+  readonly ornamentDensity?: number;
   /** True when the terrace's low-x / high-x end stands at an intersection. */
   readonly cornerStart?: boolean;
   readonly cornerEnd?: boolean;
 }
+
+/** Shutter probability per window when nothing says otherwise. */
+export const DEFAULT_ORNAMENT_DENSITY = 0.4;
+
+/** Window-box probability, as a share of the windows that got no shutters. */
+export const WINDOW_BOX_SHARE = 0.75;
 
 /** Lowest story height that still fits a two-block door plus a lintel. */
 export const MIN_STORY_HEIGHT = 3;
@@ -969,6 +985,12 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
           MAX_ROOF_LAYERS,
         );
   const windowShape = resolveWindowShape(params.windowShape ?? facade.windowShape, choice, storyHeight);
+  // Facade decoration. Absent is the grammar's own constant, so a building
+  // built with no intent is the building the grammar always built.
+  const ornament =
+    params.ornamentDensity === undefined
+      ? DEFAULT_ORNAMENT_DENSITY
+      : Math.min(1, Math.max(0, params.ornamentDensity));
 
   // The cellar is dug before the skirt is measured, because the two share the
   // same ground: a skirt sunk through a cellar would fill the room it stands in.
@@ -1233,7 +1255,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       // Shutters and a window box: the only facade details that live in the
       // apron, because a shutter that is flush with its wall is not a shutter.
       const [ox, oz] = cardinalStep(out);
-      if (positionFloat(choice, cell.x, y, cell.z) < 0.4) {
+      if (positionFloat(choice, cell.x, y, cell.z) < ornament) {
         for (const side of [-1, 1]) {
           const wx = cell.x + (alongZ ? 0 : side);
           const wz = cell.z + (alongZ ? side : 0);
@@ -1250,7 +1272,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
           });
           apronOps++;
         }
-      } else if (s === 0 && positionFloat(choice, cell.z, y, cell.x) < 0.3) {
+      } else if (s === 0 && positionFloat(choice, cell.z, y, cell.x) < ornament * WINDOW_BOX_SHARE) {
         // A flower box: a fence standing on the ground outside, a pot on top of
         // it, directly under the sill. Both blocks are supported by the block
         // below them, which is the whole point.

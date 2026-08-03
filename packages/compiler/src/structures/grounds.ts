@@ -176,6 +176,11 @@ export const GROUND_TREATMENTS: Readonly<Record<string, GroundTreatment>> = Obje
   "street-furniture": "none",
 });
 
+/** Clamp a dial into 0..1. */
+function clampUnit(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
+}
+
 /** The treatment for a building whose category the catalog does not name. */
 export const DEFAULT_TREATMENT: GroundTreatment = "garden";
 
@@ -210,6 +215,23 @@ export interface GroundPassInput {
   readonly doorstepColumns?: Uint8Array;
   /** Read for its `prop` / `building` / `road` / `plaza` tags; never written. */
   readonly occupancy?: OccupancyGrid;
+  /**
+   * How worn the settlement's open ground is, 0..1 — the `decay.coverage`
+   * fan-out row's landing place.
+   *
+   * It scales the worn-paint probabilities: a kept-up village keeps today's
+   * faint speckle, an abandoned one has paths worn right across its greens.
+   * Omitted means "today", so a no-intent compile is byte-identical.
+   */
+  readonly decayCoverage?: number;
+  /**
+   * How far volunteer growth has reclaimed the ground, 0..1 — the
+   * `decay.vegetationReclaim` row's landing place.
+   *
+   * It scales garden grass and flower density: nobody weeds an abandoned lot,
+   * so its garden grows *more*, not less. Omitted means "today".
+   */
+  readonly vegetationReclaim?: number;
 }
 
 /** One dressed lot, for the report and for tests. */
@@ -616,9 +638,14 @@ function dressGarden(
       // decides between a flower, a tuft and bare ground.
       if (!states.soft.has(plan.surface[idx] as number)) continue;
       const r = hash2(seed, x, z, 11);
-      if (r < GARDEN_FLOWER_DENSITY) {
+      // `vegetationReclaim` lifts both densities toward a fully-grown-over
+      // plot. 0 (or absent) is exactly today's garden.
+      const reclaim = input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim);
+      const flowerDensity = GARDEN_FLOWER_DENSITY + (1 - GARDEN_FLOWER_DENSITY) * reclaim * 0.5;
+      const grassDensity = GARDEN_GRASS_DENSITY + (1 - GARDEN_GRASS_DENSITY) * reclaim * 0.7;
+      if (r < flowerDensity) {
         blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 12, states.flowers) });
-      } else if (r < GARDEN_FLOWER_DENSITY + GARDEN_GRASS_DENSITY) {
+      } else if (r < flowerDensity + grassDensity) {
         blocks.push({ x, y: g + 1, z, stateId: states.grass });
       }
     }
@@ -741,7 +768,12 @@ function wearGround(
       // Linear falloff. Integer arithmetic only — no transcendentals anywhere
       // in this module, which §6.5 rule 6 requires and a test enforces.
       const t = (d - 1) / (WEAR_REACH - 1);
-      const chance = WEAR_NEAR + (WEAR_FAR - WEAR_NEAR) * t;
+      // `decayCoverage` is a *coverage*, not a multiplier: it lifts the whole
+      // falloff toward total wear, so 0 is today's speckle and 1 is bare
+      // ground everywhere the sweep reached.
+      const base = WEAR_NEAR + (WEAR_FAR - WEAR_NEAR) * t;
+      const lift = input.decayCoverage === undefined ? 0 : clampUnit(input.decayCoverage);
+      const chance = base + (1 - base) * lift;
       if (hash2(seed, x, z, 23) >= chance) continue;
       plan.surface[idx] = hash2(seed, x, z, 24) < 0.65 ? states.path : states.coarse;
       plan.snow[idx] = 0;

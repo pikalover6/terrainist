@@ -545,6 +545,12 @@ export function layDistrict(
   const prominence = buildProminenceField({
     bounds,
     seed,
+    // `layout.storeyMultiplier`: a wealthy quarter builds taller on the same
+    // lots. 1 is "today", so a district with no intent is unmoved.
+    storeyMultiplier: fanOut<number>(LAYOUT_ROWS.storeyMultiplier, intent, {
+      nodePath,
+      today: 1,
+    }),
     landmarks: built.map(
       (b): ProminenceLandmark => ({
         x: Math.floor((b.rect.x0 + b.rect.x1) / 2),
