@@ -96,23 +96,61 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
   }
   if (options.maxTokens !== undefined) body["max_tokens"] = options.maxTokens;
 
-  const response = await doFetch(CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${options.apiKey}`,
-      "Content-Type": "application/json",
-      ...ATTRIBUTION_HEADERS,
-    },
-    body: JSON.stringify(body),
-  });
+  // One retry on network-shaped failures only: a rejected fetch, a 5xx, or a
+  // truncated body (res.json() throwing "Unexpected end of JSON input" after a
+  // long request through a proxy). Anything the server *said* — a 4xx, or a
+  // well-formed body that fails narrowing — is not retried here: 4xx repeats
+  // identically, and content-level problems belong to the authoring loop's
+  // diagnostic retries, not this one.
+  const attempts = 2;
+  let lastFailure: Error | undefined;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    let response: Awaited<ReturnType<FetchLike>>;
+    try {
+      response = await doFetch(CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${options.apiKey}`,
+          "Content-Type": "application/json",
+          ...ATTRIBUTION_HEADERS,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (cause) {
+      lastFailure = new Error(`OpenRouter fetch failed: ${(cause as Error).message}`);
+      if (attempt < attempts) await sleepMs(2000);
+      continue;
+    }
 
-  if (!response.ok) {
-    const detail = await safeText(response);
-    throw new Error(`OpenRouter ${response.status} ${response.statusText}: ${detail}`);
+    if (!response.ok) {
+      const detail = await safeText(response);
+      const failure = new Error(`OpenRouter ${response.status} ${response.statusText}: ${detail}`);
+      if (response.status >= 500 && attempt < attempts) {
+        lastFailure = failure;
+        await sleepMs(2000);
+        continue;
+      }
+      throw failure;
+    }
+
+    let payload: unknown;
+    try {
+      payload = (await response.json()) as unknown;
+    } catch (cause) {
+      lastFailure = new Error(
+        `OpenRouter response body unreadable (truncated?): ${(cause as Error).message}`,
+      );
+      if (attempt < attempts) await sleepMs(2000);
+      continue;
+    }
+    return narrowCompletion(payload, model);
   }
+  throw lastFailure ?? new Error("OpenRouter request failed");
+}
 
-  const payload = (await response.json()) as unknown;
-  return narrowCompletion(payload, model);
+/** Injectable only via tests' fake timers; a plain delay between retries. */
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
