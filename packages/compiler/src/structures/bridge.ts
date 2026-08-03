@@ -54,6 +54,23 @@ import {
   featureOf,
 } from "./profiles.js";
 import { index, inside } from "./roads.js";
+import { sweptColumns } from "./sweep.js";
+
+/**
+ * The shortest wet run that gets a bridge, in columns of span.
+ *
+ * Below this a crossing is not a bridge — it is a **ford**, and the honest
+ * build is nothing at all. The defect this closes was a lane skirting a lake
+ * shore on a diagonal: the route dipped a toe in the water every few columns,
+ * and each of those one- and two-column "spans" got its own square of deck,
+ * two fence posts and a log pier. Two dozen of them read, correctly, as a
+ * collapsed pier — plank fragments at three heights, connected to nothing.
+ *
+ * A ford leaves the road's own columns as the terrain pass settled them, which
+ * across one or two columns of shallow water is a crossing a player walks
+ * through without noticing. A four-block plank island is not.
+ */
+export const BRIDGE_MIN_SPAN = 3;
 
 /** The region shape both helpers above take. Restated to avoid a type import cycle. */
 interface Region {
@@ -84,18 +101,6 @@ export interface BridgeFeature {
 export interface BridgeKitResult {
   readonly blocks: readonly StructureBlock[];
   readonly features: readonly BridgeFeature[];
-}
-
-/** Unit heading at path index `i`, and the perpendicular the band walks. */
-function headingAt(
-  path: readonly { x: number; z: number }[],
-  i: number,
-): { px: number; pz: number } {
-  const a = path[Math.max(0, i - 1)] as { x: number; z: number };
-  const b = path[Math.min(path.length - 1, i + 1)] as { x: number; z: number };
-  const dx = Math.sign(b.x - a.x);
-  const dz = Math.sign(b.z - a.z);
-  return dx === 0 && dz === 0 ? { px: 0, pz: 1 } : { px: dx, pz: -dz };
 }
 
 /**
@@ -132,6 +137,21 @@ export function pierArcs(length: number): number[] {
   return arcs;
 }
 
+/** The maximal runs of consecutive wet path indices, in path order. */
+export function wetRuns(wet: readonly boolean[]): { start: number; end: number }[] {
+  const runs: { start: number; end: number }[] = [];
+  let start = -1;
+  for (let i = 0; i <= wet.length; i++) {
+    if (wet[i] === true) {
+      if (start < 0) start = i;
+      continue;
+    }
+    if (start >= 0) runs.push({ start, end: i - 1 });
+    start = -1;
+  }
+  return runs;
+}
+
 /**
  * Build the deck, the rail, the piers and the approach landings of a crossing.
  *
@@ -141,6 +161,25 @@ export function pierArcs(length: number): number[] {
  * "river". The piers do replace water in their own columns, which is what a
  * pier is and is harmless: a full column of solid has no exposed face for its
  * neighbours to flow into.
+ *
+ * ## The span is the unit, not the column
+ *
+ * A route is not "a bridge": it is a road that happens to be wet in places, and
+ * a lane running along a lake shore is wet in *many* places, none of them a
+ * crossing. Two defects followed from building per wet column, and both are
+ * closed here by making a **wet run** the thing that is built or refused:
+ *
+ * 1. **Fragments.** Every isolated wet column got a deck square, two posts and
+ *    a pier. Runs shorter than {@link BRIDGE_MIN_SPAN} are now nothing at all
+ *    — a ford — and a run that cannot deck every one of its arcs is dropped
+ *    **whole**, which is the all-or-nothing law this pass had been exempt from.
+ * 2. **The diagonal dither.** The band used to be walked as `±o` along the
+ *    *rasterized* cell's local perpendicular, which on a 45° route puts
+ *    consecutive offsets √2 apart and leaves a checkerboard of deck and open
+ *    water — the same bug `blendShoulders` documents and solved by dilating.
+ *    The band is now {@link sweptColumns} over the span's own sub-path, which
+ *    tests perpendicular distance to the *true* line and so covers a diagonal
+ *    with one continuous surface.
  */
 export function buildBridgeKit(
   region: Region,
@@ -157,40 +196,64 @@ export function buildBridgeKit(
     inside(region, x, z) && water[index(region, x, z)] === 1;
 
   const wet = path.map((cell) => wetAt(cell.x, cell.z));
-  const arcs = spanArcs(wet);
-  // Run length per index, so `pierArcs`' "last column of the span" is knowable
-  // before the run has been walked.
-  const runEnd = new Int32Array(path.length);
-  for (let i = path.length - 1; i >= 0; i--) {
-    runEnd[i] = wet[i] === true ? ((runEnd[i + 1] ?? 0) as number) + 1 : 0;
+  for (const run of wetRuns(wet)) {
+    const span = buildSpan(region, plan, path.slice(run.start, run.end + 1), outer, states, wetAt);
+    if (span === null) continue;
+    blocks.push(...span.blocks);
+    features.push(...span.features);
   }
+  return { blocks, features };
+}
 
-  for (const [i, cell] of path.entries()) {
-    if (wet[i] !== true) continue;
-    const heading = headingAt(path, i);
-    const arc = arcs[i] as number;
-    const length = arc + (runEnd[i] as number);
-    const isPier = pierArcs(length).includes(arc);
+/**
+ * One crossing, built whole or refused whole.
+ *
+ * Returns `null` for a run too short to be a bridge and for a run whose band
+ * cannot cover every arc of its own span — a deck with a hole in it is the
+ * fragment defect wearing a longer name.
+ */
+function buildSpan(
+  region: Region,
+  plan: ColumnPlan,
+  span: readonly { x: number; z: number; y: number }[],
+  outer: number,
+  states: BridgeStates,
+  wetAt: (x: number, z: number) => boolean,
+): BridgeKitResult | null {
+  const length = span.length;
+  if (length < BRIDGE_MIN_SPAN) return null;
 
-    for (let o = -outer; o <= outer; o++) {
-      const x = cell.x + heading.pz * o;
-      const z = cell.z + heading.px * o;
-      if (!wetAt(x, z)) continue;
-      blocks.push({ x, y: cell.y, z, stateId: states.deck });
-      if (Math.abs(o) !== outer) continue;
-      blocks.push({ x, y: cell.y + 1, z, stateId: states.post });
-      if (!isPier) continue;
-      // Founded: grown from the bed of *this* column up to the deck. `ground`
-      // is the top occupied voxel, so the first pier block always has
-      // something under it and the last always meets the deck.
-      const bed = plan.ground[index(region, x, z)] as number;
-      for (let y = bed + 1; y < cell.y; y++) {
-        blocks.push({ x, y, z, stateId: states.pier });
-      }
-      features.push({ id: "pier", x, y: cell.y, z });
+  const piers = new Set(pierArcs(length));
+  const columns = sweptColumns(
+    region,
+    span.map((cell) => ({ x: cell.x, z: cell.z })),
+    { lo: -outer, hi: outer },
+  );
+  const blocks: StructureBlock[] = [];
+  const features: BridgeFeature[] = [];
+  const covered = new Set<number>();
+
+  for (const column of columns) {
+    if (!wetAt(column.x, column.z)) continue;
+    const arc = Math.min(length - 1, Math.max(0, column.index));
+    const deckY = (span[arc] as { y: number }).y;
+    covered.add(arc);
+    blocks.push({ x: column.x, y: deckY, z: column.z, stateId: states.deck });
+    if (Math.abs(column.lane) !== outer) continue;
+    blocks.push({ x: column.x, y: deckY + 1, z: column.z, stateId: states.post });
+    if (!piers.has(arc)) continue;
+    // Founded: grown from the bed of *this* column up to the deck. `ground`
+    // is the top occupied voxel, so the first pier block always has
+    // something under it and the last always meets the deck.
+    const bed = plan.ground[index(region, column.x, column.z)] as number;
+    for (let y = bed + 1; y < deckY; y++) {
+      blocks.push({ x: column.x, y, z: column.z, stateId: states.pier });
     }
+    features.push({ id: "pier", x: column.x, y: deckY, z: column.z });
   }
 
+  // All or nothing: every arc of the span carries deck, or there is no bridge.
+  if (covered.size < length) return null;
   return { blocks, features };
 }
 

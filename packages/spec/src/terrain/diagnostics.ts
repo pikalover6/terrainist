@@ -179,6 +179,21 @@ export const TERRAIN_DIAGNOSTICS = {
    * rather than anything the document can restate.
    */
   WALL_COURSE_EMPTY: "LOAM-T220",
+  /**
+   * C4 — a hillside stair was refused because it connected to nothing.
+   *
+   * Informational, for `LIFE_PASS_EMPTY`'s reason: it reports a fact about the
+   * finished ground and the street network, not anything the document said. A
+   * public stair is a *connection*, so the pass requires each end to reach a
+   * road, street, plaza cell or building pad; the sweep will happily relocate
+   * the strip to find one, and only when no candidate in the window connects
+   * at both ends does the piece decline whole. That refusal is the right
+   * outcome — masonry, balustrade and lanterns stranded mid-slope with no path
+   * at either end is a folly, and one Kai walked — but it is worth saying out
+   * loud, because "the plan asked for a stair and there is no stair" should
+   * never be silent.
+   */
+  STAIR_UNCONNECTED: "LOAM-T221",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */

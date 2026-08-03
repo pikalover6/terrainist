@@ -37,7 +37,7 @@ import {
 import { bandOfLane, totalHalfWidth } from "../src/structures/sweep.js";
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
-import { dressSetPieces } from "../src/structures/setpieces.js";
+import { STAIR_CONNECT, dressSetPieces, endsConnect } from "../src/structures/setpieces.js";
 import type { SetPiece } from "../src/layout/vistas.js";
 import { nodeSeed } from "@terrainist/stdlib";
 import type { ColumnPlan } from "../src/terrain/columns.js";
@@ -455,5 +455,163 @@ describe("the dressed public stair", () => {
       cities: [{ nodePath: "world.harbourtown", setPieces: [TERRACE_STAIR] }],
     });
     expect(JSON.stringify(again.blocks)).toBe(JSON.stringify(result.blocks));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 5. the two broken-structure defects Kai walked                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **Defect C** — the plank mess in the water at the quay.
+ *
+ * A lane skirting a lake shore on a diagonal dipped a toe in the water every
+ * few columns, and the kit built per *wet column*: each of those one- and
+ * two-column "spans" got a deck square, two fence posts and a log pier, and the
+ * band was walked along the rasterized cell's local perpendicular, which on a
+ * 45° route leaves a checkerboard. Thirty-eight blocks of oak at three heights
+ * in one inlet, connected to nothing — a collapsed pier.
+ *
+ * The span is now the unit: too short is a ford, and a span that cannot deck
+ * every arc of itself is refused whole.
+ */
+describe("the bridge kit's all-or-nothing span", () => {
+  it("fords a puddle rather than fragmenting over it", () => {
+    // One wet column, and two, on an otherwise dry lane: not a crossing.
+    for (const wetRun of [1, 2]) {
+      const water = new Uint8Array(REGION.width * REGION.depth);
+      const plan = channelPlan();
+      const path = Array.from({ length: 20 }, (_, k) => ({ x: -10 + k, z: 0, y: 65 }));
+      for (let k = 0; k < wetRun; k++) {
+        const cell = path[8 + k] as { x: number; z: number };
+        for (let o = -4; o <= 4; o++) {
+          water[(cell.z + o - REGION.z0) * REGION.width + (cell.x - REGION.x0)] = 1;
+        }
+      }
+      const { blocks } = buildBridgeKit(REGION, plan, path, 9, STATES, water);
+      expect(blocks, `a ${wetRun}-column span is a ford`).toEqual([]);
+    }
+  });
+
+  it("builds a real crossing whole, and covers every arc of it", () => {
+    const plan = channelPlan();
+    const { blocks } = buildBridgeKit(REGION, plan, CROSSING, 9, STATES, channelWater());
+    const decked = new Set(
+      blocks.filter((b) => b.stateId === STATES.deck).map((b) => `${b.x},${b.z}`),
+    );
+    // Every wet column of the crossing carries deck — no holes to fall through.
+    for (const cell of CROSSING) {
+      const wet = Math.abs(cell.x) <= 6;
+      if (wet) expect(decked.has(`${cell.x},${cell.z}`), `${cell.x},${cell.z}`).toBe(true);
+    }
+  });
+
+  it("decks a diagonal crossing without the checkerboard", () => {
+    // The defect made visible: a 45° route. The old band walked ±o along the
+    // cell's own perpendicular, so consecutive offsets were √2 apart and the
+    // deck came out dithered. Perpendicular distance to the true line does not.
+    const water = new Uint8Array(REGION.width * REGION.depth);
+    const plan = channelPlan();
+    for (let j = 0; j < REGION.depth; j++) {
+      for (let i = 0; i < REGION.width; i++) {
+        const x = REGION.x0 + i;
+        const z = REGION.z0 + j;
+        if (Math.abs(x + z) <= 8) water[j * REGION.width + i] = 1;
+      }
+    }
+    const path = Array.from({ length: 24 }, (_, k) => ({ x: -12 + k, z: 12 - k, y: 65 }));
+    const { blocks } = buildBridgeKit(REGION, plan, path, 9, STATES, water);
+    const deck = blocks.filter((b) => b.stateId === STATES.deck);
+    expect(deck.length).toBeGreaterThan(40);
+
+    // One connected surface: every deck column reaches every other through
+    // 8-connected steps. A dither fails this — it is two lattices.
+    const cells = new Set(deck.map((b) => `${b.x},${b.z}`));
+    const seen = new Set<string>();
+    const first = [...cells][0] as string;
+    const queue = [first];
+    seen.add(first);
+    while (queue.length > 0) {
+      const [x, z] = (queue.pop() as string).split(",").map(Number) as [number, number];
+      for (let dz = -1; dz <= 1; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const key = `${x + dx},${z + dz}`;
+          if (!cells.has(key) || seen.has(key)) continue;
+          seen.add(key);
+          queue.push(key);
+        }
+      }
+    }
+    expect(seen.size).toBe(cells.size);
+
+    // And no gaps *along* the walk: every deck column has an orthogonal
+    // neighbour, which is what a player needs to cross without jumping.
+    for (const key of cells) {
+      const [x, z] = key.split(",").map(Number) as [number, number];
+      const orthogonal =
+        cells.has(`${x + 1},${z}`) ||
+        cells.has(`${x - 1},${z}`) ||
+        cells.has(`${x},${z + 1}`) ||
+        cells.has(`${x},${z - 1}`);
+      expect(orthogonal, key).toBe(true);
+    }
+  });
+});
+
+/**
+ * **Defect D** — the stairs to nowhere.
+ *
+ * A masonry flight, lanterns and all, stranded mid-hillside: no path at the top
+ * and no destination at the bottom. `seekFlight` verified that the strip was
+ * climbable and never that it *went* anywhere.
+ */
+describe("a public stair connects at both ends or is not built", () => {
+  const stair = (connects?: (x: number, z: number) => boolean) =>
+    dressSetPieces({
+      plan: terracedBank(),
+      stack: STACK,
+      seed: nodeSeed(20260801n, "world", ""),
+      nodePath: "world",
+      cities: [{ nodePath: "world.harbourtown", setPieces: [TERRACE_STAIR] }],
+      ...(connects === undefined ? {} : { connects }),
+    });
+
+  it("refuses the whole flight, lamps included, when neither end reaches anything", () => {
+    const result = stair(() => false);
+    expect(result.blocks).toEqual([]);
+    expect(result.diagnostics.map((d) => d.name)).toContain("STAIR_UNCONNECTED");
+  });
+
+  it("refuses it when only one end reaches something", () => {
+    // The bottom of the flight is at x ≈ 0; give it a street there and nothing
+    // at the top. Half a connection is a folly with a landing.
+    const result = stair((x) => x <= 1);
+    expect(result.blocks).toEqual([]);
+  });
+
+  it("builds it, unchanged, when both ends reach the city", () => {
+    const wired = stair((x) => x <= 1 || x >= 13);
+    expect(wired.blocks.length).toBeGreaterThan(0);
+    expect(wired.diagnostics).toEqual([]);
+    // Identical to the flight the pass lays with no rule at all: the rule
+    // gates the piece, it does not reshape it.
+    expect(JSON.stringify(wired.blocks)).toBe(JSON.stringify(stair().blocks));
+  });
+
+  it("counts a column within the connect radius, and not one beyond it", () => {
+    const flight: { x: number; z: number }[] = [
+      { x: 0, z: 0 },
+      { x: 1, z: 0 },
+      { x: 2, z: 0 },
+    ];
+    expect(endsConnect(flight, (x, z) => x === -STAIR_CONNECT && z === 0)).toBe(false);
+    const both = (x: number, z: number): boolean =>
+      z === 0 && (x === -STAIR_CONNECT || x === 2 + STAIR_CONNECT);
+    expect(endsConnect(flight, both)).toBe(true);
+    const tooFar = (x: number, z: number): boolean =>
+      z === 0 && (x === -STAIR_CONNECT - 1 || x === 2 + STAIR_CONNECT + 1);
+    expect(endsConnect(flight, tooFar)).toBe(false);
+    // No predicate at all: nothing to fail to reach.
+    expect(endsConnect(flight)).toBe(true);
   });
 });

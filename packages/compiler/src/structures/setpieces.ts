@@ -147,6 +147,24 @@ export const STAIR_SEEK = 10;
 /** Total rise a flight must have on the *finished* ground to be worth laying. */
 export const STAIR_MIN_BUILT_RISE = 5;
 
+/**
+ * Chebyshev radius, in columns, within which each end of a flight must find
+ * something to connect to.
+ *
+ * A stair is a **connection**, and the sweep in {@link seekFlight} had until
+ * now verified only that it stood on climbable ground. Kai walked a masonry
+ * flight — treads, balustrade, lanterns and all — stranded mid-hillside with
+ * no path at the top and nothing at the bottom: geometrically a perfect stair,
+ * urbanistically a folly. Both ends are now required to reach a road, street,
+ * plaza or building pad, and because the sweep already tries every offset in a
+ * window, "prefer a strip that connects" and "refuse when none does" are the
+ * same one change.
+ *
+ * Three columns: far enough to bridge the sidewalk band and the shoulder a
+ * flight naturally stops short of, near enough that "connected" still means it.
+ */
+export const STAIR_CONNECT = 3;
+
 /** How tall the civic square's monument stands above its plinth. */
 export const MONUMENT_HEIGHT = 5;
 
@@ -211,6 +229,17 @@ export interface SetPiecePassInput {
   readonly avoid?: (x: number, z: number) => boolean;
   /** Extra columns to keep clear. Also an absolute veto. */
   readonly keepClear?: ReadonlySet<string>;
+  /**
+   * "Something a player can arrive from or leave for stands here" — a road,
+   * street or arterial column, a paved plaza cell, or a building pad.
+   *
+   * Read only by the hillside stair, and only to decide whether the flight it
+   * is about to lay actually *goes* anywhere. Omitted (no roads, no buildings,
+   * a unit test) the connectivity requirement is not enforced: there is
+   * nothing in such a world for a stair to fail to reach, and refusing every
+   * flight would be a worse answer than the one this rule exists to fix.
+   */
+  readonly connects?: (x: number, z: number) => boolean;
 }
 
 /** What the set-piece pass produced. */
@@ -256,6 +285,8 @@ export function dressSetPieces(input: SetPiecePassInput): SetPieceResult {
     return input.plan.fluidTop[idx] as number;
   };
 
+  const diagnostics: LoamDiagnostic[] = [];
+
   // Plan order throughout — the pieces arrive in the order `planVistas` rated
   // them, and the first one to claim a voxel keeps it.
   for (const piece of pieces) {
@@ -266,9 +297,20 @@ export function dressSetPieces(input: SetPiecePassInput): SetPieceResult {
       case "promenade":
         dressPromenade(planter, world, piece, seed);
         break;
-      case "stair":
-        dressStair(planter, world, piece);
+      case "stair": {
+        const refused = dressStair(planter, world, piece, input.connects);
+        if (refused !== null) {
+          diagnostics.push(
+            note(
+              "STAIR_UNCONNECTED",
+              input.nodePath,
+              `a hillside stair was refused whole: ${refused}`,
+              "nothing to change in the document — a flight that reaches no path at one end is a folly, and the pass declines it rather than stranding masonry on the slope",
+            ),
+          );
+        }
         break;
+      }
       case "square":
         dressSquare(planter, world, piece);
         break;
@@ -290,7 +332,6 @@ export function dressSetPieces(input: SetPiecePassInput): SetPieceResult {
   // placement the city pass seated — so a city whose anchors are all landmarks
   // writing nothing here is the expected outcome, and reporting it would be a
   // false alarm in every world that has one.
-  const diagnostics: LoamDiagnostic[] = [];
   const dressable = pieces.filter((p) => p.kind !== "landmark").length;
   if (dressable > 0 && planter.blocks.length === 0) {
     diagnostics.push(
@@ -641,14 +682,26 @@ function dressPromenade(
  * nothing here can float; the `standY(x, z) === y` anchor on each column's first
  * course is what makes that a fact rather than a hope.
  */
-function dressStair(planter: Planter, world: LifeWorld, piece: SetPiece): void {
+function dressStair(
+  planter: Planter,
+  world: LifeWorld,
+  piece: SetPiece,
+  connects?: (x: number, z: number) => boolean,
+): string | null {
   const proposal = piece.path;
-  if (proposal === undefined || proposal.length < 2) return;
+  if (proposal === undefined || proposal.length < 2) return null;
   const half = STAIR_TREAD_WIDTH >> 1;
   const rail = half + 1;
 
-  const seated = seekFlight(world, proposal);
-  if (seated === null) return;
+  const seated = seekFlight(world, proposal, connects);
+  if (seated === null) {
+    // Only worth reporting when there *was* a connectivity rule to fail. With
+    // no `connects` the null is the old "no climbable strip here" outcome, and
+    // that has never been a diagnostic.
+    return connects === undefined
+      ? null
+      : "no strip in the search window both climbs the bank and reaches a road, plaza or building pad at each end";
+  }
   const { path, need } = seated;
 
   // The tread law. `need[]` is the *mechanism* — it is what makes the flight
@@ -727,6 +780,7 @@ function dressStair(planter: Planter, world: LifeWorld, piece: SetPiece): void {
       );
     }
   }
+  return null;
 }
 
 /**
@@ -751,6 +805,7 @@ function dressStair(planter: Planter, world: LifeWorld, piece: SetPiece): void {
 function seekFlight(
   world: LifeWorld,
   proposal: readonly Point2[],
+  connects?: (x: number, z: number) => boolean,
 ): { readonly path: Point2[]; readonly need: number[] } | null {
   const length = proposal.length;
   const first = proposal[0] as Point2;
@@ -808,6 +863,12 @@ function seekFlight(
           if (courses > worst) worst = courses;
         }
         if (worst > STAIR_MAX_FILL) continue;
+        // Both ends, or neither: a flight is a connection, and one that lands
+        // on open hillside at either end is the folly this rule refuses. The
+        // sweep is doing the relocating for free — a strip one ring out that
+        // *does* reach the street wins over the plan's own, and only when no
+        // ring holds a connected strip does the piece decline whole.
+        if (!endsConnect(path, connects)) continue;
         if (best !== null && rise <= best.rise) continue;
         best = { path, need, rise };
       }
@@ -815,6 +876,37 @@ function seekFlight(
     if (best !== null) return { path: best.path, need: best.need };
   }
   return null;
+}
+
+/**
+ * Does a flight reach something at *both* ends?
+ *
+ * The test is a Chebyshev ball of {@link STAIR_CONNECT} columns around the
+ * first and last tread, and it deliberately does not care *what* it finds: a
+ * carriageway, a sidewalk, a plaza cell and a building pad are all places a
+ * player is already walking, and a stair that meets any of them is a stair
+ * that is used. Excluding the flight's own columns is unnecessary — the stair
+ * has not been written yet, and `connects` reports the city, not this pass.
+ *
+ * With no predicate the answer is yes: see {@link SetPiecePassInput.connects}.
+ */
+export function endsConnect(
+  path: readonly Point2[],
+  connects?: (x: number, z: number) => boolean,
+): boolean {
+  if (connects === undefined) return true;
+  const reaches = (cell: Point2): boolean => {
+    for (let dz = -STAIR_CONNECT; dz <= STAIR_CONNECT; dz++) {
+      for (let dx = -STAIR_CONNECT; dx <= STAIR_CONNECT; dx++) {
+        if (connects(cell.x + dx, cell.z + dz)) return true;
+      }
+    }
+    return false;
+  };
+  const first = path[0];
+  const last = path[path.length - 1];
+  if (first === undefined || last === undefined) return false;
+  return reaches(first) && reaches(last);
 }
 
 /* -------------------------------------------------------------------------- */
