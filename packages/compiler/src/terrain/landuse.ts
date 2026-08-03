@@ -47,23 +47,48 @@ import {
   snowConsistentBiome,
 } from "./biomes.js";
 
-/** Columns of blend band outside the footprint, per the contract's default. */
-export const DEFAULT_FEATHER = 8;
+/**
+ * The edge of a stored biome cell, in columns.
+ *
+ * **This number is why the feather had to be rebuilt.** Anvil stores biomes at
+ * 4×4×4 resolution, and `terrain/emit.ts#paintBiomes` writes one id per cell by
+ * sampling a single column of it (the one at `cell*4 + 1` on each axis). A
+ * per-*column* dither therefore never reaches the game: fifteen of every
+ * sixteen decisions are discarded at storage time, and the sixteenth is read at
+ * a fixed stride-4 phase of an 8×8 matrix, which collapses the ordered pattern
+ * to four thresholds. The band came out chunky and the transition read as a
+ * step. So the dither runs **per cell** now, and the band is measured in cells.
+ */
+export const BIOME_CELL = 4;
 
-/** Narrowest and widest the size-scaled feather band may get. */
-export const MIN_FEATHER = 8;
-export const MAX_FEATHER = 24;
+/** Columns of blend band outside the footprint, per the contract's default. */
+export const DEFAULT_FEATHER = 24;
+
+/** Narrowest and widest the size-scaled feather band may get, in **cells**. */
+export const MIN_FEATHER_CELLS = 6;
+export const MAX_FEATHER_CELLS = 10;
+
+/** The same bounds in columns — what {@link featherForPerimeter} returns. */
+export const MIN_FEATHER = MIN_FEATHER_CELLS * BIOME_CELL;
+export const MAX_FEATHER = MAX_FEATHER_CELLS * BIOME_CELL;
 
 /**
- * Feather width for a footprint, scaled by its perimeter.
+ * Feather width for a footprint, scaled by its perimeter — in columns, always
+ * a whole number of {@link BIOME_CELL} cells.
  *
- * A single hut and a whole city both used to get the same 8 columns, and eight
- * columns is invisible next to a 400-column city edge — the seam Kai walked.
- * `clamp(8, perimeter/64, 24)` keeps a hut's band tight while giving a city a
- * band you have to walk to cross.
+ * A band only reads as a gradient if it spans enough *stored cells* to carry
+ * distinguishable mix ratios: six cells is the floor at which the dither has
+ * room to thin out, and ten is as wide as a city edge needs. `clamp(6,
+ * perimeter/64, 10)` cells keeps a hut's band tight while giving a city a band
+ * you have to walk to cross. On top of this the client blends grass tint over a
+ * few blocks of its own, so the seam Kai walked is gone in both directions.
  */
 export function featherForPerimeter(perimeter: number): number {
-  return Math.max(MIN_FEATHER, Math.min(MAX_FEATHER, Math.round(perimeter / 64)));
+  const cells = Math.max(
+    MIN_FEATHER_CELLS,
+    Math.min(MAX_FEATHER_CELLS, Math.round(perimeter / 64)),
+  );
+  return cells * BIOME_CELL;
 }
 
 /**
@@ -182,10 +207,26 @@ const BAYER_8 = [
   7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21,
 ] as const;
 
-/** The dither threshold in `(0, 1)` for a world column. */
-function ditherAt(x: number, z: number): number {
-  const i = (((z % 8) + 8) % 8) * 8 + (((x % 8) + 8) % 8);
+/**
+ * The dither threshold in `(0, 1)` for a stored **biome cell**.
+ *
+ * Indexed by cell coordinates, not column coordinates: see {@link BIOME_CELL}.
+ * Still world-locked and seed-free — `cellX = floor(worldX / 4)` is an absolute
+ * quantity, so recompiling the same document paints the same cells.
+ */
+export function ditherAtCell(cellX: number, cellZ: number): number {
+  const i = (((cellZ % 8) + 8) % 8) * 8 + (((cellX % 8) + 8) % 8);
   return ((BAYER_8[i] as number) + 0.5) / 64;
+}
+
+/** Floor-divide a world coordinate to its stored biome cell. */
+function cellOf(v: number): number {
+  return Math.floor(v / BIOME_CELL);
+}
+
+/** Clamp `v` into `[lo, hi]`. */
+function clampTo(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
 }
 
 /** True when the column is dry ground the clamp may own. */
@@ -305,10 +346,19 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
       const inside = d === 0;
       if (!inside) {
         if (feather === 0) continue;
-        // Ordered dither, gradient-weighted: the paint probability falls with
-        // a smoothstep across the band, so the mix eases off both at the
-        // footprint edge and at the rim instead of ending on a visible step.
-        if (ditherAt(input.x0 + i, input.z0 + j) >= featherWeight(d, feather)) continue;
+        // Ordered dither at **stored-cell** granularity, gradient-weighted: one
+        // decision per 4×4 cell, taken from the cell's own dither threshold and
+        // the distance at the very column `paintBiomes` will sample. Every
+        // column of a cell therefore agrees with what the game will store, so
+        // the mix ratio survives emit and thins out smoothly across the band
+        // instead of collapsing into a chunky step.
+        const cellX = cellOf(input.x0 + i);
+        const cellZ = cellOf(input.z0 + j);
+        const sx = clampTo(cellX * BIOME_CELL + 1, input.x0, input.x0 + width - 1);
+        const sz = clampTo(cellZ * BIOME_CELL + 1, input.z0, input.z0 + depth - 1);
+        const dSample = distance[(sz - input.z0) * width + (sx - input.x0)] as number;
+        const dCell = dSample >= 0 ? dSample : d;
+        if (ditherAtCell(cellX, cellZ) >= featherWeight(dCell, feather)) continue;
         featherColumns++;
       } else {
         footprintColumns++;

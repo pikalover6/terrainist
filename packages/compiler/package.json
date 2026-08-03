@@ -25,6 +25,7 @@
     "prismarine-chunk": "^1.40.0",
     "prismarine-nbt": "^2.8.0",
     "prismarine-provider-anvil": "^2.13.0",
-    "vec3": "^0.2.0"
+    "vec3": "^0.2.0",
+    "@noble/hashes": "^2.2.0"
   }
 }

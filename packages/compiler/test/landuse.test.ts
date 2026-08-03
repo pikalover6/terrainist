@@ -27,6 +27,7 @@ import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 import type { ProfileBiome } from "../src/terrain/biomes.js";
 import {
+  BIOME_CELL,
   DEFAULT_FEATHER,
   MAX_FEATHER,
   MIN_FEATHER,
@@ -83,6 +84,41 @@ function scenario(over: Partial<LandUseClampInput> = {}): LandUseClampInput {
     nodePath: "world",
     ...over,
   };
+}
+
+/**
+ * A big square footprint on flat plains, wide enough that the whole size-scaled
+ * feather band fits inside the region with room to spare — the band is now up
+ * to {@link MAX_FEATHER} columns, which no longer fits the 32×32 miniature.
+ */
+function bigBand(): {
+  out: ReturnType<typeof clampLandUse>;
+  distance: Int32Array;
+  width: number;
+  depth: number;
+  n: number;
+} {
+  const width = 160;
+  const depth = 160;
+  const n = width * depth;
+  const mask = new Uint8Array(n);
+  for (let j = 60; j < 100; j++) for (let i = 60; i < 100; i++) mask[j * width + i] = 1;
+  const base: ProfileBiome[] = new Array<ProfileBiome>(n).fill("minecraft:plains");
+  const out = clampLandUse({
+    width,
+    depth,
+    x0: 0,
+    z0: 0,
+    mask,
+    base,
+    snow: new Uint8Array(n),
+    surfaceClass: new Int32Array(n).fill(SurfaceClass.SOIL),
+    temperature: new Float32Array(n).fill(0.35),
+    forested: new Uint8Array(n),
+    intent: { biome: "minecraft:taiga", snow: "never" },
+    nodePath: "world",
+  });
+  return { out, distance: chebyshevDistance(mask, width, depth, out.feather), width, depth, n };
 }
 
 /** Every column index the mask claims. */
@@ -299,12 +335,18 @@ describe("land-use clamp — the invariant", () => {
   });
 
   describe("the feather", () => {
-    it("scales with the footprint's perimeter, clamped to 8..24", () => {
+    it("scales with the footprint's perimeter, in whole 4-column biome cells", () => {
       expect(maskPerimeter(scenario().mask, W, D)).toBe(36);
       expect(featherForPerimeter(36)).toBe(MIN_FEATHER);
       expect(featherForPerimeter(36)).toBe(DEFAULT_FEATHER);
-      expect(featherForPerimeter(640)).toBe(10);
+      expect(featherForPerimeter(448)).toBe(7 * BIOME_CELL);
       expect(featherForPerimeter(4000)).toBe(MAX_FEATHER);
+      // Anvil stores biomes per 4×4 cell, so a band that is not a whole number
+      // of cells wide cannot mean what it says.
+      for (const p of [0, 36, 200, 448, 640, 4000]) {
+        expect(featherForPerimeter(p) % BIOME_CELL).toBe(0);
+      }
+      expect(MIN_FEATHER / BIOME_CELL).toBeGreaterThanOrEqual(6);
     });
 
     it("gives a city a wider band than a hut", () => {
@@ -331,32 +373,89 @@ describe("land-use clamp — the invariant", () => {
       }
     });
 
-    it("paints a monotonically thinning mix across the band", () => {
-      // A big footprint, so each distance band has enough columns to measure.
-      const mask = new Uint8Array(W * D);
-      for (let j = 6; j < 26; j++) for (let i = 6; i < 26; i++) mask[j * W + i] = 1;
-      const input = scenario({ mask, intent: { biome: "minecraft:taiga", snow: "never" } });
-      input.base.fill("minecraft:plains");
-      const out = clampLandUse(input);
-      const distance = chebyshevDistance(mask, W, D, out.feather);
+    it("paints a thinning mix across the band", () => {
+      const { out, distance, n, width } = bigBand();
       const total = new Map<number, number>();
       const painted = new Map<number, number>();
-      for (let idx = 0; idx < W * D; idx++) {
+      for (let idx = 0; idx < n; idx++) {
         const d = distance[idx] as number;
-        if (d <= 0) continue;
+        if (d <= 0 || d > out.feather) continue;
         total.set(d, (total.get(d) ?? 0) + 1);
         if (out.biome[idx] === "minecraft:taiga") painted.set(d, (painted.get(d) ?? 0) + 1);
       }
       const fractions = [...total.keys()]
         .sort((a, b) => a - b)
         .map((d) => (painted.get(d) ?? 0) / (total.get(d) as number));
+      expect(width).toBeGreaterThan(out.feather * 2);
       // Near the footprint most of the band is clamped; at the rim almost none.
       expect(fractions[0] as number).toBeGreaterThan(0.8);
-      expect(fractions[fractions.length - 1] as number).toBeLessThan(0.3);
-      // And it steps down, never up, once past the first column.
-      for (let k = 2; k < fractions.length; k++) {
-        expect(fractions[k] as number).toBeLessThanOrEqual((fractions[k - 1] as number) + 1e-9);
+      expect(fractions[fractions.length - 1] as number).toBeLessThan(0.2);
+      // It thins overall. Per *column* distance it is no longer required to be
+      // monotone step by step — the decision is taken per 4×4 cell now, so a
+      // single column ring straddles cells at two different cell distances.
+      const head = fractions.slice(0, 4).reduce((a, b) => a + b, 0) / 4;
+      const tail = fractions.slice(-4).reduce((a, b) => a + b, 0) / 4;
+      expect(head - tail).toBeGreaterThan(0.6);
+    });
+
+    /**
+     * The regression this file exists for after Kai's islands2 walk: the band
+     * has to still be a gradient **once Anvil has stored it**.
+     */
+    it("survives 4×4 storage decimation as a gradual step-down", () => {
+      const { out, distance, width, depth } = bigBand();
+      // Exactly what `terrain/emit.ts#paintBiomes` stores: one sample column
+      // per 4×4 cell, at `cell * 4 + 1` on each axis.
+      const rows: number[] = [];
+      for (let cellX = 0; cellX * BIOME_CELL + 1 < width; cellX++) {
+        let cells = 0;
+        let clamped = 0;
+        let near = Infinity;
+        for (let cellZ = 0; cellZ * BIOME_CELL + 1 < depth; cellZ++) {
+          const idx = (cellZ * BIOME_CELL + 1) * width + (cellX * BIOME_CELL + 1);
+          const d = distance[idx] as number;
+          if (d <= 0 || d > out.feather) continue;
+          near = Math.min(near, d);
+          cells++;
+          if (out.biome[idx] === "minecraft:taiga") clamped++;
+        }
+        if (cells >= 4) rows.push(clamped / cells);
       }
+      expect(rows.length).toBeGreaterThanOrEqual(6);
+      // Stored cells carry intermediate mixes — not just "all" and "none",
+      // which is what a per-column dither collapsed to.
+      const mid = rows.filter((f) => f > 0.15 && f < 0.85);
+      expect(mid.length).toBeGreaterThanOrEqual(3);
+      // And no cliff: no adjacent pair of cell rows jumps the whole way.
+      for (let k = 1; k < rows.length; k++) {
+        expect(Math.abs((rows[k] as number) - (rows[k - 1] as number))).toBeLessThan(0.7);
+      }
+    });
+
+    it("takes one decision per stored biome cell, not per column", () => {
+      const { out, distance, width, depth } = bigBand();
+      let checked = 0;
+      for (let cellZ = 0; (cellZ + 1) * BIOME_CELL <= depth; cellZ++) {
+        for (let cellX = 0; (cellX + 1) * BIOME_CELL <= width; cellX++) {
+          // Only cells wholly inside the band: a cell straddling the footprint
+          // edge legitimately mixes clamped footprint columns with band ones.
+          const idxs: number[] = [];
+          let ok = true;
+          for (let j = 0; j < BIOME_CELL; j++) {
+            for (let i = 0; i < BIOME_CELL; i++) {
+              const idx = (cellZ * BIOME_CELL + j) * width + (cellX * BIOME_CELL + i);
+              const d = distance[idx] as number;
+              if (d <= 0 || d > out.feather) ok = false;
+              idxs.push(idx);
+            }
+          }
+          if (!ok) continue;
+          checked++;
+          const first = out.biome[idxs[0] as number];
+          for (const idx of idxs) expect(out.biome[idx]).toBe(first);
+        }
+      }
+      expect(checked).toBeGreaterThan(20);
     });
   });
 
