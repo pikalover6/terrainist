@@ -711,7 +711,9 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
   let doc = authored.doc;
   let docPath = authored.docPath;
   let worldDir = authored.worldDir;
-  const usages: Usage[] = [session.usage];
+  // Authoring plus, when one happened, the program-wiring revision: after that
+  // revision `session.usage` is the revision's spend alone.
+  const usages: Usage[] = [...authored.usages];
 
   for (let round = 0; ; round++) {
     const result = await compileTerrain(doc, {

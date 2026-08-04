@@ -24,6 +24,7 @@ import {
   formatProgramRun,
   DEFAULT_BESPOKE_BUDGET_USD,
   formatClassification,
+  reviseForProgramWiring,
   AuthoringFailedError,
   AUTHORING_MODEL_ID,
   AUTHORING_REASONING_EFFORT,
@@ -36,6 +37,7 @@ import type {
   AuthoredProgramEntry,
   KitName,
   ProgramVerificationGate,
+  Usage,
 } from "@terrainist/agents";
 import { validateIntentValue, type SemanticIntent } from "@terrainist/spec";
 import { formatDiagnostic } from "@terrainist/compiler";
@@ -247,6 +249,13 @@ export interface AuthoredDocument {
    * against a particular node tree.
    */
   readonly programs: Readonly<Record<string, AuthoredProgramEntry>>;
+  /**
+   * Every model usage this phase spent, in order: the authoring run, and the
+   * program-wiring revision when one happened. The caller totals these rather
+   * than reading `result.usage`, which after a wiring revision is that
+   * revision's spend alone.
+   */
+  readonly usages: readonly Usage[];
   /** Where the document was written. */
   readonly docPath: string;
   /** Where its world folder should go. */
@@ -314,6 +323,8 @@ export async function authorAndWriteDocument(
 
   printAuthorSummary(result);
 
+  const usages: Usage[] = [result.usage];
+
   // --- bespoke programs ---------------------------------------------------
   // Authored AFTER the document, because what a world wants a program for is
   // something the document has already said. Every program that passes the
@@ -339,6 +350,40 @@ export async function authorAndWriteDocument(
       console.log(`${formatProgramRun(authored)}\n`);
       programs = authored.programs;
       doc = attachPrograms(doc, programs);
+
+      // --- and make sure the tree actually invokes them --------------------
+      // A program frozen into the map that no node names is a program that
+      // cost two model calls and places zero blocks. One focused revision
+      // closes it; a document that already wired everything spends nothing.
+      const wiring = await reviseForProgramWiring({
+        doc,
+        programs,
+        messages: result.messages,
+        worldSeed: options.seed,
+        size: options.size,
+        kitName: result.kitName,
+        model: options.model,
+        reasoningEffort: options.effort,
+      });
+      if (wiring.orphans.length > 0) {
+        console.log(
+          `wiring     ${wiring.orphans.length} program(s) authored but never invoked: ` +
+            `${wiring.orphans.map((o) => `${o.id} [${o.mode}]`).join(", ")}\n`,
+        );
+        usages.push(wiring.usage);
+        if (wiring.revised && wiring.result !== undefined) {
+          doc = wiring.doc as LoamDocument;
+          result = wiring.result;
+          const u = wiring.usage;
+          console.log(
+            `  wired in ${wiring.result.attempts} attempt(s); ${u.promptTokens} in + ` +
+              `${u.completionTokens} out = ${u.totalTokens} tokens` +
+              `${u.cost === undefined ? "" : `  ($${u.cost.toFixed(4)})`}\n`,
+          );
+        } else if (wiring.warning !== undefined) {
+          console.warn(`${wiring.warning}\n`);
+        }
+      }
     }
   }
 
@@ -346,7 +391,7 @@ export async function authorAndWriteDocument(
   const docPath = await writeDocument(outDir, doc);
   console.log(`  document   ${docPath}\n`);
 
-  return { result, doc, programs, docPath, worldDir: path.join(outDir, doc.meta.name) };
+  return { result, doc, programs, usages, docPath, worldDir: path.join(outDir, doc.meta.name) };
 }
 
 /** Write an authored document next to its world folder; returns its path. */
