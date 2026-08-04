@@ -107,20 +107,16 @@ This is the *development* workflow. The *production* worldgen pipeline
   auto-upgrades worlds on load. Revisit as libraries catch up.
 - Stack: TypeScript monorepo. Key deps: deepslate (rendering/NBT),
   PrismarineJS (world IO), minecraft-data.
-- Status (2026-07-29): G1–G3 complete and human-accepted through the GLM 5.2
-  e2e; G2.5 terrain-quality pass done. G4 (settlement profile, layout solver
-  v1, building grammar, roads), the pre-implementation program (rounds A–E:
-  caves + tunnels, `prop.place@0`, L/T `wing` footprints, seven new
-  archetypes, the dev-world exhibit grid) and the overnight program (W1
-  corridors + tier-2 constraints + tunnel junctions + the 440-entry structure
-  catalog + high-rise grammar + Terrarium v2; W2 structure blitz + vehicles +
-  themed underground; W3 widened settlement kit + two GLM demo worlds; then a
-  fix round closing the tunnel roof-margin escape, the `palettes.theme` false
-  warning, silently-ignored prop constraints and `PROP_MAX_RELIEF`) are all
-  CODE-COMPLETE PENDING JOINT IN-GAME TESTING WITH KAI. 1075 tests green;
-  every shipped world lints zero on every physics rule; but **nothing has been
-  walked in the client** — do not iterate on visuals without Kai. See the
-  dated status blocks in `docs/DESIGN.md` for what each round added.
+- Status (2026-08-04): the pipeline is end-to-end and walked. Terrain, the
+  arterial-first settlement fabric, 343/441 catalog archetypes, the
+  `SweptProfile` linework engine (roads, walls, bridges, path-stairs), the
+  semantic intent layer, the land-use biome clamp, and the **bespoke tier**
+  (model-written `authored:` programs, gated and frozen into the document,
+  invoked once or scattered) are all shipped. ~2,280 tests; every shipped
+  world lints zero on all 26 physics rules. `docs/DESIGN.md` is the current
+  state of the system — it carries no dated status blocks, by design; use git
+  history for what a given round added. **Visual iteration still needs Kai:
+  never tune looks without a walk.**
 - **Standing decisions (2026-07-29, Kai):** the Opus 5 planner is canned
   indefinitely — production authoring is cheap-model-first (cheapness is a
   core goal); escalate only on a hard capability wall. The critique→repair
