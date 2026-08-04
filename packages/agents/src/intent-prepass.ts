@@ -25,7 +25,22 @@
  * able to stop a world being made.
  */
 
-import { formatDiagnostic, validateIntentValue, type LoamDiagnostic, type SemanticIntent } from "@terrainist/spec";
+import {
+  ERA_ALIASES,
+  ERA_CLASSES,
+  EVENT_KINDS,
+  DEFAULT_ERA_CLASS,
+  formatDiagnostic,
+  MASSING_STYLES,
+  ROOF_TYPES,
+  SNOW_POLICIES,
+  TREE_SHAPES,
+  validateIntentValue,
+  WINDOW_RHYTHMS,
+  type EraClass,
+  type LoamDiagnostic,
+  type SemanticIntent,
+} from "@terrainist/spec";
 
 import { AUTHORING_MODEL_ID, AUTHORING_TEMPERATURE } from "./config.js";
 import { loadOpenRouterKey } from "./env.js";
@@ -42,6 +57,78 @@ export const MAX_INTENT_ATTEMPTS = 2;
  * anything about Loam, node kinds or generators, because a classifier that
  * knows about documents starts writing them.
  */
+/**
+ * The five material theme ids the structure grammar ships.
+ *
+ * Hand-listed because the theme table lives in `@terrainist/stdlib`, which the
+ * agents package deliberately does not depend on (agents talk to the *spec*,
+ * not to the block palettes). `packages/agents/test/intent-prepass.test.ts`
+ * pins the list so a drift shows up as a failing test rather than as a
+ * silently-dropped theme id.
+ */
+export const MATERIAL_THEME_IDS = [
+  "temperate_timber",
+  "boreal_pine",
+  "birchwood_downs",
+  "modern_city",
+  "white_quartz",
+] as const;
+
+/** Representative archetype ids, shown so the model writes ids, not phrases. */
+export const EXAMPLE_ARCHETYPE_IDS = [
+  "cottage",
+  "manor",
+  "tavern",
+  "church",
+  "warehouse",
+  "watchtower",
+  "lighthouse",
+  "windmill",
+] as const;
+
+/** Representative prop ids, shown for the same reason. */
+export const EXAMPLE_PROP_IDS = [
+  "fountain",
+  "gazebo",
+  "cart",
+  "galleon",
+  "standing_stones",
+  "market_barrow",
+  "well_head",
+  "notice_board",
+] as const;
+
+/** One `class: alias, alias, …` line per era class, built from `ERA_ALIASES`. */
+function eraVocabularyLines(): string {
+  const byClass = new Map<EraClass, string[]>(ERA_CLASSES.map((c) => [c, []]));
+  for (const [alias, cls] of Object.entries(ERA_ALIASES)) {
+    if (alias === cls) continue;
+    byClass.get(cls)?.push(alias);
+  }
+  const width = Math.max(...ERA_CLASSES.map((c) => c.length));
+  return ERA_CLASSES.map(
+    (cls) => `    ${cls.padEnd(width)}  <- ${(byClass.get(cls) ?? []).join(", ")}`,
+  ).join("\n");
+}
+
+const list = (xs: readonly string[]): string => xs.join(", ");
+
+/** The one worked example. Short on purpose: shape first, content second. */
+const WORKED_EXAMPLE = `EXAMPLE
+Prompt: "two islands in a warm sea — a white unicorn shrine isle and a
+ramshackle pirate cove"
+Good reply:
+{
+  "climate": { "temperature": 0.6, "humidity": 0.4, "snow": "never" },
+  "tokens": {
+    "region_unicorn_isle": "era renaissance, wealth 0.8, decline 0.05, formality 0.7; materialTheme white_quartz; prefer archetypes church, manor; airy shrine terraces, unicorns kept as sacred animals",
+    "region_pirate_cove": "era renaissance, wealth 0.3, decline 0.7, formality 0.15; materialTheme temperate_timber; prefer archetypes tavern, warehouse, lighthouse; props galleon, cart; moored ships, salvaged planking"
+  }
+}
+Note what it did NOT do: no single averaged "character" block for both isles,
+no "era": "pirate" (pirate is an alias — the class is renaissance), and no
+"unicorn island" in a prefer list (that is prose, so it lives in a token).`;
+
 export const INTENT_CLASSIFIER_PROMPT = `You classify a world-building prompt into a small JSON object of "intent" dials.
 You never write a world. You only describe what kind of place the prompt asks for.
 
@@ -49,65 +136,72 @@ Reply with a JSON object and nothing else. Every field is OPTIONAL, and omitting
 a field means "the prompt does not say" — which is NOT the same as zero.
 
 {
-  "era": string        // ONE of these seven classes, or a listed alias for one:
-                       //   primitive   (prehistoric, stone_age, neolithic, tribal)
-                       //   ancient     (classical, roman, greek, egyptian, bronze_age)
-                       //   medieval    (feudal, viking, norse, fantasy, high_fantasy)
-                       //   renaissance (baroque, tudor, colonial, age_of_sail, pirate)
-                       //   industrial  (victorian, steam, steampunk, wild_west)
-                       //   modern      (contemporary, art_deco, brutalist, cyberpunk)
-                       //   far_future  (futuristic, space_age, scifi, alien)
-                       // Any other word is a warning and falls back to medieval.
+  "era": string        // A CLASS or a listed ALIAS. Nothing else is legal.
   "wealth": 0..1       // 0 destitute, 0.5 ordinary, 1 rich
   "decline": 0..1      // 0 kept up, 1 abandoned. Orthogonal to wealth:
                        // a rich ruin exists.
   "formality": 0..1    // 0 organic vernacular lanes, 1 planned and monumental
-  "event": { "kind": "flood"|"fire"|"siege"|"boom",
+  "event": { "kind": one of [${list(EVENT_KINDS)}],
              "severity": 0..1, "recency": 0..1 }   // 0 recency = happening now
   "climate": { "biome": "minecraft:<id>", "temperature": -1..1,
-               "humidity": -1..1, "snow": "auto"|"never"|"always" }
+               "humidity": -1..1, "snow": one of [${list(SNOW_POLICIES)}] }
   "character": {
     "label": string,             // free text, e.g. "pirate haven"
-    "materialTheme": string,     // ONLY one of: temperate_timber, boreal_pine,
-                                 // birchwood_downs, modern_city, white_quartz.
-                                 // Omit rather than invent — no other id exists.
-    "archetypes": { "prefer": [..], "forbid": [..] },
-    "props":      { "prefer": [..], "forbid": [..] },
-    "flora":      { "prefer": [..], "forbid": [..] },
-    "motifs": { "roofType": "gable"|"hip"|"flat"|"dome"|"shed"|"mansard",
-                "massing": "blocky"|"stepped"|"towered"|"sprawling",
-                "windowRhythm": "sparse"|"regular"|"dense"|"banded",
+    "materialTheme": one of the five ids below,
+    "archetypes": { "prefer": [ids], "forbid": [ids] },
+    "props":      { "prefer": [ids], "forbid": [ids] },
+    "flora":      { "prefer": [tree shapes], "forbid": [tree shapes] },
+    "motifs": { "roofType": one of [${list(ROOF_TYPES)}],
+                "massing": one of [${list(MASSING_STYLES)}],
+                "windowRhythm": one of [${list(WINDOW_RHYTHMS)}],
                 "ornamentDensity": 0..1 }
   },
   "tokens": { "<name>": string|number|boolean }   // anything else worth keeping
 }
 
-The three "prefer"/"forbid" lists are matched against real catalogs, and an
-entry that matches nothing is dropped with a warning. So:
-- archetypes are single-word building ids like "cottage", "manor", "tavern",
-  "church", "warehouse", "watchtower", "lighthouse", "windmill".
-- props are single-word object ids like "fountain", "gazebo", "cart",
-  "galleon", "standing_stones", "market_barrow", "well_head", "notice_board".
-- flora entries are tree shapes, and there are exactly four:
-  "spruce_tall", "spruce_squat", "oak_round", "birch_slim".
-Never write a phrase ("moored pirate ships", "pastel meadows"): a phrase
-grounds nowhere and is thrown away. If you cannot name an id, say it in
-"tokens" prose instead, where prose is what the field is for.
+CLOSED VOCABULARIES — a value outside these is a warning, not a world.
 
-Rules:
-- Only state what the prompt actually implies. Guessing every dial is worse
-  than leaving one out.
-- If the prompt describes SEVERAL distinct places (two islands, a city and a
-  ruin), do NOT average them into one blob — an averaged intent is what makes
-  every region come out looking the same. Put ONLY what is genuinely shared at
-  the top level (usually little more than the climate), and describe each place
-  SEPARATELY in "tokens": one token per place, named for it, e.g.
-  "tokens": { "region_unicorn_isle": "pastoral, elegant, white quartz shrines,
-  wealth 0.8, decline 0", "region_pirate_cove": "ramshackle, weathered timber,
-  wealth 0.3, decline 0.7" }. Each token should name that place's own era,
-  wealth, decline, formality, material theme and preferred archetypes, because
-  the document author turns one token into one region's character block.
-- Reply with the JSON object alone. No prose, no markdown fence.`;
+era: exactly these ${ERA_CLASSES.length} classes; the words after "<-" are the ONLY other
+accepted spellings, and each resolves to the class on its line:
+${eraVocabularyLines()}
+  Write the class or one of its aliases verbatim. "pirate" is legal (it means
+  renaissance); "piratical", "swashbuckling" and "unicorn" are not. Any other
+  word is discarded and falls back to ${DEFAULT_ERA_CLASS}.
+
+materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exist:
+    ${list(MATERIAL_THEME_IDS)}
+
+flora: exactly these ${TREE_SHAPES.length} tree shapes:
+    ${list(TREE_SHAPES)}
+
+archetypes: single-word building ids, e.g. ${list(EXAMPLE_ARCHETYPE_IDS)}.
+props: single-word object ids, e.g. ${list(EXAMPLE_PROP_IDS)}.
+
+PROSE GOES IN "tokens", NEVER IN A PREFER LIST.
+prefer/forbid entries are matched against real catalogs; anything that is not
+an id is dropped with a warning. So "unicorn island", "pirate cove",
+"shrine village", "moored ships", "pastel meadows" are all WRONG in a prefer
+list. If you cannot name a legal id, write the idea as a sentence in "tokens" —
+prose is what that field is for, and it reaches the author intact.
+
+ONE PLACE PER TOKEN — DO NOT MERGE PLACES.
+If the prompt names SEVERAL distinct places (two islands, a city and a ruin),
+you must NOT write one "character" block covering both: an averaged intent is
+what makes every region come out looking the same. Instead, structurally:
+  1. Top level (era/wealth/decline/formality/character) carries ONLY what is
+     genuinely shared by every place — often just "climate". When the places
+     disagree on a dial, OMIT that dial at the top level.
+  2. Emit one entry in "tokens" per place, keyed "region_<place>", whose value
+     names that place's own era, wealth, decline, formality, materialTheme and
+     preferred archetypes/props. The document author turns one token into one
+     region's own character block, so a missing token is a missing region.
+
+Only state what the prompt actually implies. Guessing every dial is worse than
+leaving one out.
+
+${WORKED_EXAMPLE}
+
+Reply with the JSON object alone. No prose, no markdown fence.`;
 
 /** What the pre-pass produced. */
 export interface IntentClassification {

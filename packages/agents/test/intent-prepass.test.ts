@@ -14,7 +14,16 @@ import {
   classifyPromptIntent,
   intentKitContext,
   INTENT_CLASSIFIER_PROMPT,
+  MATERIAL_THEME_IDS,
 } from "../src/intent-prepass.js";
+import {
+  ERA_ALIASES,
+  ERA_CLASSES,
+  MASSING_STYLES,
+  ROOF_TYPES,
+  TREE_SHAPES,
+  WINDOW_RHYTHMS,
+} from "@terrainist/spec";
 import type { ChatMessage } from "../src/openrouter.js";
 
 /** A stub `fetch` that replies with `texts[i]` to the i-th call. */
@@ -67,34 +76,61 @@ describe("classifyPromptIntent", () => {
 
   it("teaches the classifier the vocabulary it is allowed to use", () => {
     // A model can only hit vocabulary it can see. Each of these was a real
-    // miss: an invented era word, an invented theme id, and prose in a
-    // prefer list that the compiler could only throw away.
-    for (const era of [
-      "primitive",
-      "ancient",
-      "medieval",
-      "renaissance",
-      "industrial",
-      "modern",
-      "far_future",
-    ]) {
+    // miss: an invented era word ("pirate" as an era CLASS), an invented
+    // theme id, and prose in a prefer list the compiler could only throw
+    // away. The lists come from the spec so the prompt cannot drift from it.
+    for (const era of ERA_CLASSES) {
       expect(INTENT_CLASSIFIER_PROMPT).toContain(era);
     }
-    for (const theme of [
+    // Every alias is spelled out too — the classifier must know that "pirate"
+    // is a legal spelling of renaissance rather than an era of its own.
+    for (const alias of Object.keys(ERA_ALIASES)) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(alias);
+    }
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("pirate");
+    for (const theme of MATERIAL_THEME_IDS) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(theme);
+    }
+    expect(MATERIAL_THEME_IDS).toEqual([
       "temperate_timber",
       "boreal_pine",
       "birchwood_downs",
       "modern_city",
       "white_quartz",
-    ]) {
-      expect(INTENT_CLASSIFIER_PROMPT).toContain(theme);
-    }
-    for (const shape of ["spruce_tall", "spruce_squat", "oak_round", "birch_slim"]) {
+    ]);
+    for (const shape of TREE_SHAPES) {
       expect(INTENT_CLASSIFIER_PROMPT).toContain(shape);
     }
-    // …and the two-places rule, which it broke by merging two islands into one
-    // averaged blob.
-    expect(INTENT_CLASSIFIER_PROMPT).toContain("do NOT average them");
+    for (const enumValue of [...ROOF_TYPES, ...MASSING_STYLES, ...WINDOW_RHYTHMS]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(enumValue);
+    }
+    // Prop and archetype ids, so a phrase never looks like the expected shape.
+    for (const id of ["cottage", "tavern", "lighthouse", "fountain", "galleon"]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(id);
+    }
+  });
+
+  it("states the prose-goes-in-tokens rule and the do-not-merge rule", () => {
+    // Prose in a prefer list grounds nowhere; the fix is a structural rule,
+    // not a hint.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('PROSE GOES IN "tokens", NEVER IN A PREFER LIST.');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"unicorn island"');
+
+    // Two distinct places must not collapse into one averaged character block.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("ONE PLACE PER TOKEN — DO NOT MERGE PLACES.");
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('one "character" block covering both');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"region_<place>"');
+  });
+
+  it("carries one worked example showing a two-place prompt", () => {
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("EXAMPLE");
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("Good reply:");
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("region_unicorn_isle");
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("region_pirate_cove");
+    // The example must be honest about the two observed failures.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('no "era": "pirate"');
+    // Exactly one worked example — this is a small-model prompt.
+    expect(INTENT_CLASSIFIER_PROMPT.match(/Good reply:/g)).toHaveLength(1);
   });
 
   it("retries once with the diagnostics when the object is invalid", async () => {
