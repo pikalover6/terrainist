@@ -51,4 +51,13 @@ describe("the settlement kit's program section", () => {
     expect(kit).toMatch(/Do \*\*not\*\* ask for one/);
     expect(kit).toContain("anchors");
   });
+
+  it("teaches plugin invocation and demands the invoking node in the same document", async () => {
+    const kit = await readFile(path.join(REPO_ROOT, "docs/kits/settlement-author.md"), "utf8");
+    expect(kit).toContain("scatter.program@0");
+    expect(kit).toContain('"program": "drop_pod"');
+    // The front door for the invocation gap: a request is a promise to invoke.
+    expect(kit).toMatch(/If you request a program, author the node that invokes it/);
+    expect(kit).toContain("prop.place@0` placeholder");
+  });
 });

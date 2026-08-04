@@ -2159,6 +2159,21 @@ without you knowing a single coordinate of it. Name the ones that matter in the
 brief ("the ramp meets the ground on the north side") and the roads will find
 them.
 
+A **plugin** program is invoked by a `scatter.program@0` node instead, whose
+`params.program` names the id; it takes the ordinary scatter placement fields:
+
+```json
+{ "id": "pod_field", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "drop_pod", "count": 18, "area": { "all": true },
+              "spacing": 24, "maxSlope": 20, "avoidTags": ["road", "building"] } }
+```
+
+**If you request a program, author the node that invokes it in the same
+document** — an `authored:<id>` node for a landmark, a `scatter.program@0` node
+for a plugin. A program nothing invokes places no blocks, and standing a
+`prop.place@0` placeholder in for it instead is the one mistake that makes a
+world silently lose the very thing the prompt was about.
+
 ---
 
 ## 10. Constraints
