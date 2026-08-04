@@ -415,10 +415,13 @@ export async function gatePhysics(
   const out: LoamDiagnostic[] = [];
   try {
     const raw = buildGateDocument(runs, envelope, `gate_${programId}`);
-    let doc;
     try {
-      doc = parseSpikeDocument(raw, `<gate:${programId}>`);
+      const doc = parseSpikeDocument(raw, `<gate:${programId}>`);
+      await emitWorld(doc, worldDir);
     } catch (err) {
+      // A malformed document *or* a block/state the emitter refuses: either
+      // way the failure belongs to the program, so it goes back to the author
+      // as a gate diagnostic rather than up the stack as a crash.
       return {
         step: "physics",
         ok: false,
@@ -432,7 +435,6 @@ export async function gatePhysics(
         ],
       };
     }
-    await emitWorld(doc, worldDir);
     const report = await lintWorldPhysics(worldDir, stack, {
       minY: GATE_GROUND_Y - 4,
       maxY: GATE_GROUND_Y + envelope[1] + 8,

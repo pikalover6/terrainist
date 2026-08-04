@@ -30,6 +30,7 @@ import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import type { StructureBlock } from "../structures/buildings.js";
 import type { ColumnPlan } from "../terrain/columns.js";
+import { parseBlockString } from "../emit/blockstring.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
 import { planProgramSites, type ProgramSite } from "./place.js";
@@ -308,20 +309,5 @@ export function resolveBlock(stack: PrismarineStack, block: string): number | un
   return stack.blockStateOf(parsed.name, parsed.props);
 }
 
-/** Split a full block string into its name and its property map. */
-export function parseBlockString(
-  block: string,
-): { readonly name: string; readonly props: Record<string, string> } | undefined {
-  const match = /^(?:minecraft:)?([a-z0-9_]+)(?:\[(.*)\])?$/.exec(block.trim());
-  if (match === null) return undefined;
-  const props: Record<string, string> = {};
-  const body = match[2];
-  if (body !== undefined && body.trim().length > 0) {
-    for (const pair of body.split(",")) {
-      const [key, value] = pair.split("=");
-      if (key === undefined || value === undefined) return undefined;
-      props[key.trim()] = value.trim();
-    }
-  }
-  return { name: match[1] as string, props };
-}
+export { parseBlockString };
+

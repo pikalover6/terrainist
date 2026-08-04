@@ -17,9 +17,10 @@
 
 import path from "node:path";
 
+import { parseBlockString } from "./blockstring.js";
 import type { SpikeDocument, SpikeFillOp } from "./document.js";
 import { DEFAULT_BIOME } from "./level-dat.js";
-import type { EmitBlock, EmitChunk } from "./prismarine.js";
+import type { EmitBlock, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { WORLD_HEIGHT, WORLD_MIN_Y, loadPrismarine } from "./prismarine.js";
 import { zeroRegionTimestamps } from "./timestamps.js";
 import { writeWorldFiles } from "./write.js";
@@ -67,7 +68,7 @@ export async function emitWorld(
   const version = options.minecraftVersion ?? EMIT_MINECRAFT_VERSION;
   const mc = loadPrismarine(version);
 
-  const palette = resolvePalette(doc, mc.blockByName.bind(mc));
+  const palette = resolvePalette(doc, mc);
   const biomeId = mc.biomeIdByName(DEFAULT_BIOME);
   if (biomeId === undefined) {
     throw new Error(`emit: unknown biome "${DEFAULT_BIOME}" in ${version}`);
@@ -141,19 +142,34 @@ interface MutableBounds {
   maxZ: number;
 }
 
-function resolvePalette(
-  doc: SpikeDocument,
-  blockByName: (name: string) => EmitBlock | undefined,
-): Map<string, EmitBlock> {
+function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, EmitBlock> {
   const resolved = new Map<string, EmitBlock>();
   for (const [symbol, blockId] of Object.entries(doc.palette)) {
-    const block = blockByName(blockId);
+    const block = resolveBlockString(mc, blockId);
     if (block === undefined) {
-      throw new Error(`emit: palette symbol "${symbol}" refers to unknown block "${blockId}"`);
+      throw new Error(
+        `emit: palette symbol "${symbol}" refers to unknown block or state "${blockId}"`,
+      );
     }
     resolved.set(symbol, block);
   }
   return resolved;
+}
+
+/**
+ * A palette entry may carry blockstate properties —
+ * `"minecraft:grass_block[snowy=false]"` — the syntax authored programs use;
+ * a bare name resolves to the block's default state.
+ */
+function resolveBlockString(mc: PrismarineStack, blockId: string): EmitBlock | undefined {
+  const parsed = parseBlockString(blockId);
+  if (parsed === undefined) return undefined;
+  const base = mc.blockByName(parsed.name);
+  if (base === undefined) return undefined;
+  if (Object.keys(parsed.props).length === 0) return base;
+  const stateId = mc.blockStateOf(parsed.name, parsed.props);
+  if (stateId === undefined) return undefined;
+  return { id: base.id, name: base.name, stateId };
 }
 
 function normalizeFill(op: SpikeFillOp, index: number): MutableBounds {
