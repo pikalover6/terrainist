@@ -44,6 +44,7 @@ import { DEFAULT_SCALE, renderTopDown, renderWorldViews, worldToGrid } from "@te
 import type { RenderView, WorldViewOptions } from "@terrainist/render";
 
 import { attachPrograms, AuthoringFailedError, reviseLoamDoc, sumUsage } from "@terrainist/agents";
+import { compilerProgramGate } from "./program-gate-live.js";
 import type { Usage } from "@terrainist/agents";
 
 import {
@@ -701,7 +702,7 @@ function printCompileReport(
 export async function runGenerate(args: readonly string[]): Promise<number> {
   const options = parseGenerateArgs(args);
 
-  const authored = await authorAndWriteDocument(options);
+  const authored = await authorAndWriteDocument(options, compilerProgramGate());
   if (authored === undefined) return 1;
 
   let session = authored.result;
