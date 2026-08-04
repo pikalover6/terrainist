@@ -18,6 +18,7 @@
 import path from "node:path";
 
 import { parseBlockString } from "./blockstring.js";
+import { applyConnectionStates, type ConnectionCandidate } from "./connections.js";
 import type { SpikeDocument, SpikeFillOp } from "./document.js";
 import { DEFAULT_BIOME } from "./level-dat.js";
 import type { EmitBlock, EmitChunk, PrismarineStack } from "./prismarine.js";
@@ -101,6 +102,14 @@ export async function emitWorld(
 
   /* c8 ignore next */
   if (bounds === undefined) throw new Error("emit: document produced no blocks");
+
+  // Connections last, over the finished world — the same pass, for the same
+  // reason, as the terrain emitter's. A fence stores its neighbours in its own
+  // block state and Minecraft never recomputes that on load, so it has to be
+  // right on disk. Without this the physics gate walked worlds the real
+  // emitter would never produce and reported `connection.stale` against
+  // programs whose fences were fine.
+  applyConnectionStates(chunks, parseCandidates(written), mc);
 
   // --- write -------------------------------------------------------------
   const writeResult = await writeWorldFiles({
@@ -202,6 +211,21 @@ function growBounds(current: MutableBounds | undefined, region: MutableBounds): 
     maxY: Math.max(current.maxY, region.maxY),
     maxZ: Math.max(current.maxZ, region.maxZ),
   };
+}
+
+/**
+ * The written-cell keys back as coordinates, lazily.
+ *
+ * Every cell the document wrote is a connection candidate. That is a superset
+ * of what has to be examined — most of them are stone — but the pass rejects a
+ * non-connective state on a cached id lookup, and a generator keeps the whole
+ * list from existing twice over for a large document.
+ */
+function* parseCandidates(written: ReadonlySet<string>): Generator<ConnectionCandidate> {
+  for (const key of written) {
+    const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+    yield { x, y, z };
+  }
 }
 
 function getOrCreateChunk(

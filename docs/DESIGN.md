@@ -387,8 +387,14 @@ registers its own fan-out rows.
   routinely demoted to soft by the solver; the demotions are reported, but the
   frequency suggests the constraint vocabulary or its cost model is too strict
   for small-town layouts.
-- The classifier pre-pass emits phrases where catalog ids belong (revision in
-  flight).
+- Programs are seated against a *median* ground plane. On a footprint spanning
+  genuinely broken ground that is the least-bad plane, not a correct one; a
+  large landmark on a slope still shows a step at one edge. The refusal
+  threshold (`PROGRAM_MAX_RELIEF`) is a sanity ceiling, not a fit criterion.
+- The physics gate now runs the emitter's connection pass, so it and the real
+  emit agree on fences. Other emit-time passes are still gate-invisible — if
+  one is added, the gate has to grow with it or it goes back to judging a world
+  production never writes.
 
 ## Keys and infrastructure
 

@@ -2152,6 +2152,19 @@ Place the ones you request as ordinary generator nodes:
   "constraints": [ { "zone": "northeast" }, { "distance": { "to": "camp", "max": 90 } } ] }
 ```
 
+A **plugin** program is invoked by a `scatter.program@0` node instead, whose
+`params.program` names the id; it takes the ordinary scatter placement fields:
+
+```json
+{ "id": "pod_field", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "drop_pod", "count": 18, "area": { "all": true },
+              "spacing": 24, "maxSlope": 20, "avoidTags": ["road", "building"] } }
+```
+
+The four subsections that follow are the knobs on those two nodes: how a lane
+reaches a landmark, whether you can go inside it, and how it meets the ground —
+by floating over it or by sitting in it.
+
 ### Routing a road to a landmark
 
 Landmark programs publish **anchors** — named points such as `door`,
@@ -2255,15 +2268,6 @@ crashed pods gets buried instead of parked: `"seat": "embed", "embedDepth": 4`.
 on".** A brief that says "resting on the moor" gets a saucer sitting on a lawn;
 what you meant is a hull half-buried in it, so write the brief that way *and*
 invoke the node with `"seat": "embed"`.
-
-A **plugin** program is invoked by a `scatter.program@0` node instead, whose
-`params.program` names the id; it takes the ordinary scatter placement fields:
-
-```json
-{ "id": "pod_field", "kind": "generator", "generator": "scatter.program@0",
-  "params": { "program": "drop_pod", "count": 18, "area": { "all": true },
-              "spacing": 24, "maxSlope": 20, "avoidTags": ["road", "building"] } }
-```
 
 **If you request a program, author the node that invokes it in the same
 document** — an `authored:<id>` node for a landmark, a `scatter.program@0` node

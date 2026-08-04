@@ -61,6 +61,40 @@ describe("emitWorld palette blockstates", () => {
   });
 });
 
+describe("the gate world is the world the emitter would write", () => {
+  it("recomputes fence connection states, so the gate reports no stale ones", async () => {
+    // The gate is only worth passing if it walks what production emits. The
+    // terrain emitter runs `applyConnectionStates`; the spike emitter did not,
+    // so a program that fenced anything failed the gate on `connection.stale`
+    // findings the real world would never have.
+    const run: ProgramRun = {
+      ok: true,
+      programId: "fenced",
+      index: 0,
+      ops: [],
+      voxels: new Map([
+        ["0,0,0", "minecraft:stone"],
+        ["1,0,0", "minecraft:stone"],
+        ["2,0,0", "minecraft:stone"],
+        ["0,1,0", "minecraft:oak_fence"],
+        ["1,1,0", "minecraft:oak_fence"],
+        ["2,1,0", "minecraft:oak_fence"],
+      ]),
+      opStream: "",
+      outputHash: "",
+      fuelUsed: 0,
+      writes: 6,
+      clipped: 0,
+      logs: [],
+      diagnostics: [],
+    };
+    const dir = await scratchDir("fence");
+    const step = await gatePhysics("fenced", [run], [4, 4, 4], { worldDir: dir });
+    expect(step.diagnostics.filter((d) => /connection\.stale/.test(d.message))).toEqual([]);
+    expect(step.ok).toBe(true);
+  }, 120_000);
+});
+
 describe("gatePhysics on emitter-refused blocks", () => {
   it("fails the gate with a diagnostic instead of throwing", async () => {
     const run: ProgramRun = {
