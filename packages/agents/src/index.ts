@@ -163,6 +163,20 @@ export type {
   ProposeRequest,
 } from "./program-author.js";
 
+export {
+  WIRING_MAX_ATTEMPTS,
+  collectProgramInvocations,
+  findOrphanPrograms,
+  programWiringFeedback,
+  reviseForProgramWiring,
+} from "./program-wiring.js";
+export type {
+  OrphanProgram,
+  ProgramInvocations,
+  ProgramWiringRequest,
+  ProgramWiringResult,
+} from "./program-wiring.js";
+
 export { stubProgramGate } from "./program-gate.js";
 export type {
   ProgramDocContext,
