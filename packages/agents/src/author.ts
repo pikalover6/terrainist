@@ -82,6 +82,12 @@ export interface AuthorRequest {
 export interface ReviseRequest {
   /** The conversation {@link authorLoamDoc} (or a previous revision) left behind. */
   readonly messages: readonly ChatMessage[];
+  /**
+   * A frozen `programs` map merged into the reply before validation. The
+   * model should never re-type 64 KiB of program source, so its reply may
+   * omit the map; `authored:` references still validate against the truth.
+   */
+  readonly programs?: Readonly<Record<string, unknown>>;
   /** The compile report, rendered for the model. Goes in verbatim. */
   readonly feedback: string;
   /** The document that produced that report, serialized. */
@@ -296,6 +302,7 @@ export async function reviseLoamDoc(request: ReviseRequest): Promise<AuthorResul
     messages,
     apiKey,
     kitName,
+    ...(request.programs === undefined ? {} : { programs: request.programs }),
     size: request.size,
     worldSeed: request.worldSeed,
     model: request.model ?? AUTHORING_MODEL_ID,
@@ -311,6 +318,8 @@ interface LoopOptions {
   readonly messages: ChatMessage[];
   readonly apiKey: string;
   readonly kitName: KitName;
+  /** See {@link ReviseRequest.programs}. */
+  readonly programs?: Readonly<Record<string, unknown>>;
   readonly size: number;
   readonly worldSeed: number | string;
   readonly model: string;
@@ -356,7 +365,22 @@ async function runAuthorLoop(options: LoopOptions): Promise<AuthorResult> {
       continue;
     }
 
-    const validation = validate(extracted.value);
+    // A wiring revision is validated against the real programs map even when
+    // the model's reply omits it: the caller owns the frozen source, and an
+    // authored: reference is only checkable with the map present.
+    const candidate =
+      options.programs !== undefined &&
+      typeof extracted.value === "object" &&
+      extracted.value !== null
+        ? {
+            ...(extracted.value as Record<string, unknown>),
+            programs: {
+              ...((extracted.value as Record<string, unknown>)["programs"] as object | undefined),
+              ...options.programs,
+            },
+          }
+        : extracted.value;
+    const validation = validate(candidate);
     history.push({
       index: attempt,
       diagnostics: validation.diagnostics,

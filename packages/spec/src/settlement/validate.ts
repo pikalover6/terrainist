@@ -25,7 +25,12 @@ import {
   type Obj,
 } from "../checks.js";
 import { validateIntentPlacement } from "../intent/validate.js";
-import { validateProgramMap } from "../programs/validate.js";
+import {
+  validateAuthoredReference,
+  validateProgramMap,
+  validateProgramScatterParams,
+} from "../programs/validate.js";
+import type { ProgramMap } from "../programs/types.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "../terrain/diagnostics.js";
 import { PROFILE_GENERATORS, ZONE_TOKENS, type ZoneToken } from "../terrain/types.js";
 import {
@@ -153,8 +158,9 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
   validateIntentPlacement(out, input);
-  out.push(...validateProgramMap(input["programs"]).diagnostics);
-  validateRoot(out, input["root"]);
+  const programMap = validateProgramMap(input["programs"]);
+  out.push(...programMap.diagnostics);
+  validateRoot(out, input["root"], programMap.programs);
 
   if (hasErrors(out)) return { diagnostics: out };
   return { diagnostics: out, document: input as unknown as SettlementDocument };
@@ -164,7 +170,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
 /* root                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function validateRoot(out: LoamDiagnostic[], root: unknown): void {
+function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap = {}): void {
   if (root === undefined) {
     out.push(
       error(
@@ -283,6 +289,25 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
     }
 
     const generator = raw["generator"];
+    // The bespoke tier: a landmark invokes its program by reference, a plugin
+    // scatters one. Both were authored against the same document, so the map
+    // is the source of truth for what may be named here.
+    if (typeof generator === "string" && generator.startsWith("authored:")) {
+      const record = validateAuthoredReference(out, generator, programs, childPath, {
+        envelopeDeclared: raw["envelope"] !== undefined,
+      });
+      if (record !== undefined) {
+        checkTags(out, childPath, raw["tags"]);
+        checkSeedSalt(out, childPath, raw["seedSalt"]);
+        validateConstraints(out, childPath, raw["constraints"], raw["id"], connections);
+        validatePorts(out, childPath, raw["ports"]);
+      }
+      continue;
+    }
+    if (generator === "scatter.program@0") {
+      validateProgramScatterParams(out, raw["params"], programs, childPath);
+      continue;
+    }
     if (typeof generator === "string" && (STRUCTURE_GENERATORS as readonly string[]).includes(generator)) {
       validateStructureNode(out, childPath, raw, connections);
       continue;

@@ -24,7 +24,12 @@ import {
   type Obj,
 } from "../checks.js";
 import { validateIntentPlacement } from "../intent/validate.js";
-import { validateProgramMap } from "../programs/validate.js";
+import {
+  validateAuthoredReference,
+  validateProgramMap,
+  validateProgramScatterParams,
+} from "../programs/validate.js";
+import type { ProgramMap } from "../programs/types.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
   CAVE_STYLES,
@@ -196,8 +201,9 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
   validateIntentPlacement(out, input);
-  out.push(...validateProgramMap(input["programs"]).diagnostics);
-  validateRoot(out, input["root"]);
+  const programMap = validateProgramMap(input["programs"]);
+  out.push(...programMap.diagnostics);
+  validateRoot(out, input["root"], programMap.programs);
 
   if (hasErrors(out)) return { diagnostics: out };
   return { diagnostics: out, document: input as unknown as TerrainDocument };
@@ -374,7 +380,7 @@ export function validatePaletteMap(out: LoamDiagnostic[], palettes: Obj, at0: st
 /* root + nodes                                                                */
 /* -------------------------------------------------------------------------- */
 
-function validateRoot(out: LoamDiagnostic[], root: unknown): void {
+function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap = {}): void {
   if (root === undefined) {
     out.push(error("MISSING_KEY", "", 'the document has no "root" node', 'add a "root" composite: { "id": "world", "kind": "composite", "envelope": { "shape": "region", "size": [512, 512] }, "children": [...] }'));
     return;
@@ -422,6 +428,19 @@ function validateRoot(out: LoamDiagnostic[], root: unknown): void {
     }
 
     const generator = raw["generator"];
+    // The bespoke tier is legal in the terrain profile too — a monument on
+    // pure terrain is the contract's own first example. Same dispatch as the
+    // settlement validator's.
+    if (typeof generator === "string" && generator.startsWith("authored:")) {
+      validateAuthoredReference(out, generator, programs, childPath, {
+        envelopeDeclared: raw["envelope"] !== undefined,
+      });
+      continue;
+    }
+    if (generator === "scatter.program@0") {
+      validateProgramScatterParams(out, raw["params"], programs, childPath);
+      continue;
+    }
     if (raw["kind"] !== "generator") {
       out.push(error("BAD_ENUM", childPath, `children of the root must have "kind": "generator", got ${describe(raw["kind"])}`, 'set "kind": "generator" — the terrain profile has no nested composites'));
     }

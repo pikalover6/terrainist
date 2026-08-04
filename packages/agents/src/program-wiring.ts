@@ -251,6 +251,7 @@ export async function reviseForProgramWiring(
   try {
     const result = await reviseLoamDoc({
       messages: request.messages,
+      programs: request.programs as Readonly<Record<string, unknown>>,
       feedback: programWiringFeedback(orphans),
       previous: JSON.stringify(request.doc),
       worldSeed: request.worldSeed,
@@ -262,10 +263,28 @@ export async function reviseForProgramWiring(
       ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
       ...(request.apiKey === undefined ? {} : { apiKey: request.apiKey }),
     });
+    const wired = attachProgramsTo(result.doc, request.programs);
+    // "Validated" is not "wired": a model can satisfy the validator by
+    // DELETING the invocations it was asked to add — the farmstead_siege run
+    // did exactly that while the profile still rejected authored ids. Success
+    // is measured by re-running the only check that matters.
+    const still = findOrphanPrograms(wired, request.programs);
+    if (still.length > 0) {
+      return {
+        doc: request.doc,
+        orphans,
+        revised: false,
+        usage: result.usage,
+        warning:
+          `warning: the wiring revision validated but still never invokes ` +
+          `${still.map((o) => `"${o.id}" [${o.mode}]`).join(", ")} — the revision was ` +
+          `discarded and the world ships without them.`,
+      };
+    }
     return {
       // The programs map is re-attached: the revision rewrote the tree, and a
       // rewritten tree does not carry a map the model was never shown.
-      doc: attachProgramsTo(result.doc, request.programs),
+      doc: wired,
       orphans,
       revised: true,
       result,

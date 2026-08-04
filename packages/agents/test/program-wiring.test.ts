@@ -25,7 +25,15 @@ import type { FetchLike } from "../src/openrouter.js";
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
 
 function entry(mode: AuthoredProgramEntry["mode"]): AuthoredProgramEntry {
-  return { mode, envelope: [16, 16, 16], sourceHash: "b3:00", source: "export const envelope = [16,16,16];" };
+  return {
+    mode,
+    envelope: [16, 16, 16],
+    sourceHash: "b3:0123456789abcdef",
+    outputHash: "b3:fedcba9876543210",
+    source:
+      "export const envelope = [16, 16, 16];\n" +
+      "export default function build(api) {\n  api.set(0, 0, 0, \"minecraft:stone\");\n  return { name: \"t\", seatY: 0 };\n}\n",
+  };
 }
 
 /** A minimal, valid terrain-profile document — what a revision must return. */
@@ -59,6 +67,30 @@ function validDoc(overrides: Record<string, unknown> = {}): Record<string, unkno
     ...overrides,
   };
 }
+
+/** A revision response that really does invoke the orphans it was asked to. */
+function wiredDoc(
+  overrides: Record<string, unknown> = {},
+  which: readonly ("mothership" | "ufo")[] = ["mothership", "ufo"],
+): Record<string, unknown> {
+  const doc = validDoc(overrides);
+  const root = doc["root"] as { children: unknown[] };
+  const add: unknown[] = [];
+  if (which.includes("mothership")) {
+    add.push({ id: "mothership", kind: "generator", generator: "authored:mothership" });
+  }
+  if (which.includes("ufo")) {
+    add.push({
+      id: "drone_fleet",
+      kind: "generator",
+      generator: "scatter.program@0",
+      params: { program: "ufo", count: 6, area: { zone: "north" }, spacing: 24 },
+    });
+  }
+  root.children = [...root.children, ...add];
+  return doc;
+}
+
 
 interface Recorded {
   readonly body: Record<string, unknown>;
@@ -243,7 +275,7 @@ describe("reviseForProgramWiring", () => {
 
   it("makes exactly one revision call for all orphans at once", async () => {
     const programs = { mothership: entry("landmark"), ufo: entry("plugin") };
-    const { fetchImpl, calls } = stubFetch([JSON.stringify(validDoc())]);
+    const { fetchImpl, calls } = stubFetch([JSON.stringify(wiredDoc())]);
     const wiring = await reviseForProgramWiring({
       ...REVISE_BASE,
       doc: validDoc({ programs }),
@@ -278,7 +310,7 @@ describe("reviseForProgramWiring", () => {
 
   it("reports the round's usage so the run's accounting stays whole", async () => {
     const programs = { mothership: entry("landmark") };
-    const { fetchImpl } = stubFetch([JSON.stringify(validDoc())]);
+    const { fetchImpl } = stubFetch([JSON.stringify(wiredDoc({}, ["mothership"]))]);
     const wiring = await reviseForProgramWiring({
       ...REVISE_BASE,
       doc: validDoc({ programs }),
@@ -292,7 +324,7 @@ describe("reviseForProgramWiring", () => {
 
   it("retries once with the validator's diagnostics", async () => {
     const programs = { mothership: entry("landmark") };
-    const { fetchImpl, calls } = stubFetch(["not a document at all", JSON.stringify(validDoc())]);
+    const { fetchImpl, calls } = stubFetch(["not a document at all", JSON.stringify(wiredDoc({}, ["mothership"]))]);
     const wiring = await reviseForProgramWiring({
       ...REVISE_BASE,
       doc: validDoc({ programs }),
