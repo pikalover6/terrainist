@@ -60,13 +60,13 @@ describe("chatComplete retry on empty content", () => {
     expect(calls).toHaveLength(2);
   });
 
-  it("gives up after the retry also returns empty content", async () => {
+  it("gives up once all three attempts return empty content", async () => {
     const { fetchImpl, calls } = stubFetch([{ body: EMPTY_BODY }]);
     const pending = chatComplete(callOptions(fetchImpl));
     pending.catch(() => {}); // assertion below re-awaits; avoid unhandled rejection
     await vi.runAllTimersAsync();
     await expect(pending).rejects.toThrow("no message content");
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
   });
 
   it("does not retry other narrowing failures", async () => {

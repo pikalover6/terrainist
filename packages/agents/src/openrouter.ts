@@ -96,7 +96,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
   }
   if (options.maxTokens !== undefined) body["max_tokens"] = options.maxTokens;
 
-  // One retry on network-shaped failures only: a rejected fetch, a 5xx, a
+  // Retries on network-shaped failures only: a rejected fetch, a 5xx, a
   // truncated body (res.json() throwing "Unexpected end of JSON input" after a
   // long request through a proxy), or a 200 whose message has no content at
   // all — an upstream-provider hiccup OpenRouter passes through as an empty
@@ -104,7 +104,13 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
   // fails narrowing for any other reason — is not retried here: 4xx repeats
   // identically, and content-level problems belong to the authoring loop's
   // diagnostic retries, not this one.
-  const attempts = 2;
+  //
+  // Three, not two: a max-effort program call runs for minutes and burns six
+  // figures of reasoning tokens, which is exactly the shape of request a
+  // provider drops, and two attempts was observed losing a landmark outright
+  // (2026-08-04). Backoff is linear in the attempt so a provider mid-wobble
+  // gets longer to settle than the first stumble allows.
+  const attempts = 3;
   let lastFailure: Error | undefined;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     let response: Awaited<ReturnType<FetchLike>>;
@@ -120,7 +126,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       });
     } catch (cause) {
       lastFailure = new Error(`OpenRouter fetch failed: ${(cause as Error).message}`);
-      if (attempt < attempts) await sleepMs(2000);
+      if (attempt < attempts) await sleepMs(2000 * attempt);
       continue;
     }
 
@@ -129,7 +135,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       const failure = new Error(`OpenRouter ${response.status} ${response.statusText}: ${detail}`);
       if (response.status >= 500 && attempt < attempts) {
         lastFailure = failure;
-        await sleepMs(2000);
+        await sleepMs(2000 * attempt);
         continue;
       }
       throw failure;
@@ -142,7 +148,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       lastFailure = new Error(
         `OpenRouter response body unreadable (truncated?): ${(cause as Error).message}`,
       );
-      if (attempt < attempts) await sleepMs(2000);
+      if (attempt < attempts) await sleepMs(2000 * attempt);
       continue;
     }
     try {
@@ -150,7 +156,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
     } catch (cause) {
       if (cause instanceof EmptyContentError && attempt < attempts) {
         lastFailure = cause;
-        await sleepMs(2000);
+        await sleepMs(2000 * attempt);
         continue;
       }
       throw cause;

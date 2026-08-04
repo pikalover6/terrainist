@@ -518,18 +518,42 @@ export async function authorPrograms(request: AuthorProgramsRequest): Promise<Au
       skipped.push({ id: item.id, reason: `bespoke spend stop reached ($${spent.toFixed(4)} of $${budgetUsd.toFixed(2)})` });
       continue;
     }
-    const outcome = await authorProgram({
-      request: item,
-      docContext,
-      gate: request.gate,
-      apiKey,
-      model,
-      reasoningEffort: effort,
-      maxRounds: Math.max(1, request.maxRounds ?? MAX_PROGRAM_ROUNDS),
-      ...(request.context === undefined ? {} : { context: request.context }),
-      ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
-      ...(request.systemPrompt === undefined ? {} : { systemPrompt: request.systemPrompt }),
-    });
+    // One program is never worth the world. A transport failure — a dropped
+    // socket, a provider returning 200 with no content — is exactly as fatal to
+    // *this* program as failing its gate, and exactly as survivable for
+    // everything else: the document is already authored and paid for, and a
+    // world minus one landmark still compiles. Anything that escapes this is a
+    // bug in the caller's budget arithmetic, not in the model's output.
+    let outcome: AuthorProgramOutcome;
+    try {
+      outcome = await authorProgram({
+        request: item,
+        docContext,
+        gate: request.gate,
+        apiKey,
+        model,
+        reasoningEffort: effort,
+        maxRounds: Math.max(1, request.maxRounds ?? MAX_PROGRAM_ROUNDS),
+        ...(request.context === undefined ? {} : { context: request.context }),
+        ...(request.fetchImpl === undefined ? {} : { fetchImpl: request.fetchImpl }),
+        ...(request.systemPrompt === undefined ? {} : { systemPrompt: request.systemPrompt }),
+      });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      skipped.push({ id: item.id, reason: `authoring failed: ${reason}` });
+      records.push({
+        id: item.id,
+        mode: item.mode,
+        attempts: 0,
+        // The tokens the failed call spent are unknowable — the response that
+        // would have reported them is the thing that did not arrive.
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        ok: false,
+        note: `authoring failed: ${reason}`,
+        diagnostics: [],
+      });
+      continue;
+    }
     usages.push(outcome.record.usage);
     records.push(outcome.record);
     if (outcome.entry !== undefined) programs[item.id] = outcome.entry;

@@ -366,6 +366,53 @@ describe("authorPrograms", () => {
     expect(result.skipped[0]?.reason).toContain("spend stop");
   });
 
+  it("drops the program, not the world, when its authoring call fails", async () => {
+    // Regression for the 2026-08-04 drowned-god run: the provider returned a
+    // 200 with no content while writing the second program and the whole
+    // generate died — after the document had been authored and paid for. One
+    // program failing is one landmark missing, not a world lost.
+    const doc = {
+      intent: {
+        character: {
+          programs: [
+            { id: "one", mode: "landmark", brief: "a" },
+            { id: "two", mode: "landmark", brief: "b" },
+          ],
+        },
+      },
+    };
+    let call = 0;
+    const fetchImpl = async (_input: string, _init?: RequestInit): Promise<Response> => {
+      call++;
+      // A 4xx is not retried, so the second program fails on its first call.
+      if (call > 1) return new Response("out of credits", { status: 402, statusText: "Payment Required" });
+      return new Response(
+        JSON.stringify({
+          model: "openai/gpt-5.6-luna",
+          choices: [{ message: { content: REPLY }, finish_reason: "stop" }],
+          usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.01 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const result = await authorPrograms({
+      prompt: "p",
+      worldSeed: "1",
+      size: 512,
+      gate: stubProgramGate({ rounds: [[]] }),
+      doc,
+      apiKey: "test",
+      fetchImpl,
+    });
+    expect(Object.keys(result.programs)).toEqual(["one"]);
+    expect(result.skipped[0]?.id).toBe("two");
+    expect(result.skipped[0]?.reason).toContain("authoring failed");
+    expect(result.skipped[0]?.reason).toContain("402");
+    // The failure is on the record too, so the run report shows what was lost.
+    expect(result.records.map((r) => r.ok)).toEqual([true, false]);
+  });
+
   it("asks the model what the world wants when nothing was requested", async () => {
     const proposal = JSON.stringify([
       { id: "ufo_lander", mode: "plugin", brief: "a saucer", envelope: [20, 10, 20], count: 24 },
