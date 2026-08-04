@@ -1,0 +1,1121 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "alien_farmtown",
+    "worldSeed": "13644100762785032457",
+    "prompt": "An alien invasion world: a peaceful farming town under attack — crashed and hovering UFOs scattered across the fields and hills, crop circles, a massive mothership landmark looming over the town, abduction beams, panicked barricades in the streets",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            5
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:dirt",
+      "ground.cliff": "minecraft:stone",
+      "ground.peak": "minecraft:deepslate",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cracked_stone_bricks",
+      "plaza.border": "minecraft:iron_block"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.48,
+    "decline": 0.18,
+    "formality": 0.3,
+    "event": {
+      "kind": "siege",
+      "severity": 0.9,
+      "recency": 0
+    },
+    "character": {
+      "label": "alien-invasion farming town",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "farmhouse",
+          "cottage",
+          "barn",
+          "store",
+          "smithy",
+          "tavern"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office"
+        ],
+        "weights": {
+          "farmhouse": 3,
+          "cottage": 4,
+          "barn": 2
+        }
+      },
+      "props": {
+        "prefer": [
+          "scarecrow",
+          "cart",
+          "covered_wagon",
+          "hitching_post"
+        ],
+        "forbid": [
+          "airliner",
+          "galleon"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "oak_round",
+          "birch_slim"
+        ],
+        "forbid": [
+          "spruce_tall"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.22
+      },
+      "programs": {
+        "landmarks": 1,
+        "briefs": [
+          "A massive hovering alien mothership looming over the farming town, with a broad dark hull, glowing underside and a colossal luminous abduction beam descending toward the town.",
+          "A family of alien saucers scattered across farm fields and hill slopes, with per-instance variation between intact hovering craft and crashed, tilted or half-buried wrecks. Hovering craft can cast vertical luminous abduction beams, while crashed sites leave impact scars and debris.",
+          "Grounded crop-circle sites pressed into working farmland: flattened crop rings, radial tracks, disturbed soil and an eerie central alien residue marker, with each instance using a different pattern.",
+          "An improvised panicked street barricade assembled from overturned farm carts, timber, hay bales, warning signs and rope, leaving a narrow passage for pedestrians and turning each site into a different desperate roadblock."
+        ]
+      }
+    },
+    "tokens": {
+      "alien_invasion_features": "crashed and hovering UFOs across fields and hills, crop circles, massive hovering mothership landmark, abduction beams, panicked street barricades"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "a peaceful farm town beneath an alien assault",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle agricultural country with a wooded northern rise",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.004,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shelf beneath the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.56
+              ],
+              "radius": 104,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "farm_fields",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the open farm fields south of town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.42,
+                0.72
+              ],
+              "radius": 128,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_hills",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wooded hills where saucers descend",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.16
+                ],
+                [
+                  0.4,
+                  0.1
+                ],
+                [
+                  0.72,
+                  0.15
+                ],
+                [
+                  0.9,
+                  0.22
+                ]
+              ],
+              "width": 80,
+              "height": 20,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.15,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "town_green",
+        "kind": "primitive",
+        "label": "the town green, now ringed by frightened residents",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "structure"
+        ]
+      },
+      {
+        "id": "farmhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the largest farmhouse at the edge of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              2,
+              10
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farmhouse",
+          "house",
+          "structure"
+        ]
+      },
+      {
+        "id": "cottage_green",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage pressed close to the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "structure"
+        ]
+      },
+      {
+        "id": "cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a small cottage along the western lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 52
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "structure"
+        ]
+      },
+      {
+        "id": "cottage_field",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the outlying cottage beside the fields",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 10,
+            "max": 58
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "structure"
+        ]
+      },
+      {
+        "id": "town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the town hall facing the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              2,
+              10
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "town_hall",
+          "structure"
+        ]
+      },
+      {
+        "id": "barn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the barn stranded beyond the town lanes",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 12,
+            "max": 90
+          },
+          {
+            "distance": "farmhouse",
+            "min": 8,
+            "max": 55
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barn",
+          "structure"
+        ]
+      },
+      {
+        "id": "granary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the grain store with its doors barred",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 12,
+            "max": 75
+          },
+          {
+            "distance": "barn",
+            "min": 6,
+            "max": 40
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store",
+          "structure"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smithy trying to keep the town supplied",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 50
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "smithy",
+          "structure"
+        ]
+      },
+      {
+        "id": "tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tavern where the townspeople shelter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house",
+          "structure"
+        ]
+      },
+      {
+        "id": "field_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a scarecrow abandoned in the fields",
+        "params": {
+          "prop": "scarecrow",
+          "zone": "south",
+          "jitter": 0.22,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "farm"
+        ]
+      },
+      {
+        "id": "farm_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a farm cart left beside a field lane",
+        "params": {
+          "prop": "cart",
+          "zone": "southeast",
+          "jitter": 0.18,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "farm"
+        ]
+      },
+      {
+        "id": "town_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the well head near the green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.12,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "public"
+        ]
+      },
+      {
+        "id": "hitching_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "hitching posts outside the tavern",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center",
+          "jitter": 0.2,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "public"
+        ]
+      },
+      {
+        "id": "panic_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "organic lanes from every home to the green",
+        "params": {
+          "anchors": [
+            "town_green",
+            "#tag:house",
+            "barn",
+            "granary",
+            "smithy",
+            "town_hall"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12,
+          "curvature": 0.7,
+          "maxGrade": 2,
+          "junctionStyle": "plaza"
+        }
+      },
+      {
+        "id": "mothership",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the massive hovering mothership looming beyond the town",
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "town_green",
+            "min": 55,
+            "max": 275
+          },
+          {
+            "clearance": 8
+          }
+        ],
+        "params": {
+          "prop": "airship",
+          "zone": "north",
+          "jitter": 0.08,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "landmark",
+          "mothership",
+          "alien"
+        ]
+      },
+      {
+        "id": "abduction_beam",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the alien abduction beam descending toward the town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            21,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "mothership",
+            "min": 1,
+            "max": 120
+          },
+          {
+            "distance": "town_green",
+            "min": 18,
+            "max": 110
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "beacon_spire",
+          "abduction_beam",
+          "alien",
+          "structure"
+        ]
+      },
+      {
+        "id": "field_ufo_sites",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "crashed and hovering UFOs scattered through the farm fields",
+        "seedSalt": "fields",
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "town_green",
+            "min": 28,
+            "max": 220
+          },
+          {
+            "clearance": 4
+          }
+        ],
+        "params": {
+          "prop": "airship",
+          "zone": "south",
+          "jitter": 0.25,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "alien",
+          "ufo",
+          "fields"
+        ]
+      },
+      {
+        "id": "hill_ufo_sites",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "hovering saucers and wrecks scattered across the northern hills",
+        "seedSalt": "hills",
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 72
+          },
+          {
+            "distance": "town_green",
+            "min": 60,
+            "max": 260
+          },
+          {
+            "clearance": 4
+          }
+        ],
+        "params": {
+          "prop": "airship",
+          "zone": "north",
+          "jitter": 0.22,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "alien",
+          "ufo",
+          "hills"
+        ]
+      },
+      {
+        "id": "crop_circles",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "alien crop circles pressed into the southern fields",
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "town_green",
+            "min": 24,
+            "max": 220
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 2
+          },
+          {
+            "clearance": 2
+          }
+        ],
+        "params": {
+          "prop": "henge",
+          "zone": "south",
+          "jitter": 0.2,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "crop_circle",
+          "field"
+        ]
+      },
+      {
+        "id": "street_barricades",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "panicked barricades blocking the town streets",
+        "constraints": [
+          {
+            "along": "panic_lanes",
+            "offset": [
+              0,
+              5
+            ],
+            "side": "any",
+            "faceRoad": true
+          },
+          {
+            "distance": "town_green",
+            "min": 4,
+            "max": 100
+          },
+          {
+            "clearance": 1
+          }
+        ],
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "center",
+          "jitter": 0.12,
+          "length": 16,
+          "yaw": 0,
+          "on": "ground"
+        },
+        "tags": [
+          "structure",
+          "barricade",
+          "road"
+        ]
+      },
+      {
+        "id": "hill_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "birch and oak woodland on the alien-haunted hills",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.2,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            5,
+            75
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.42,
+            "flowers": 0.05,
+            "deadwood": 0.07
+          },
+          "species": [
+            {
+              "id": "hill_oak",
+              "weight": 3,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 12
+            },
+            {
+              "id": "hill_birch",
+              "weight": 2,
+              "shape": "birch_slim",
+              "minHeight": 4,
+              "maxHeight": 11
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse tree cover beyond the farm plots",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.035,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            4,
+            85
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.32,
+            "flowers": 0.03,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 2,
+              "shape": "oak_round",
+              "minHeight": 4,
+              "maxHeight": 10
+            },
+            {
+              "id": "field_birch",
+              "weight": 1,
+              "shape": "birch_slim",
+              "minHeight": 4,
+              "maxHeight": 10
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "mothership": {
+      "mode": "landmark",
+      "envelope": [
+        90,
+        35,
+        90
+      ],
+      "sourceHash": "b3:8b64eb1cb36c16c682f7cb164e339d326375a91493210329b6aa54207f5b30f6",
+      "outputHash": "b3:4ddab56b19606ff1203d8e4da3d7c2fd0984a2fff181186e4b7ce20f8dce1bfe",
+      "source": "export const envelope = [90, 35, 90];\n\nexport default function build(api) {\n  const cx = 45;\n  const cz = 45;\n\n  const put = (x, y, z, block) => {\n    api.set(x, y, z, block);\n  };\n\n  const profile = [\n    [10, 10, 10],\n    [11, 22, 20],\n    [12, 30, 28],\n    [13, 35, 33],\n    [14, 39, 36],\n    [15, 41, 38],\n    [16, 42, 39],\n    [17, 42, 40],\n    [18, 41, 39],\n    [19, 40, 38],\n    [20, 38, 36],\n    [21, 35, 33],\n    [22, 32, 30],\n    [23, 29, 27],\n    [24, 26, 24],\n    [25, 22, 21],\n    [26, 18, 17],\n    [27, 14, 13],\n    [28, 10, 9],\n    [29, 7, 6],\n    [30, 4, 4]\n  ];\n\n  for (let pi = 0; pi < profile.length; pi++) {\n    const y = profile[pi][0];\n    const rx = profile[pi][1];\n    const rz = profile[pi][2];\n\n    for (let x = cx - rx; x <= cx + rx; x++) {\n      for (let z = cz - rz; z <= cz + rz; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const q = (dx * dx) / (rx * rx) + (dz * dz) / (rz * rz);\n\n        if (q <= 1) {\n          const pattern = (x * 17 + z * 31 + y * 13) % 47;\n          let block = \"minecraft:deepslate\";\n\n          if (pattern < 13) {\n            block = \"minecraft:polished_blackstone\";\n          } else if (pattern < 20) {\n            block = \"minecraft:obsidian\";\n          } else if (pattern < 27) {\n            block = \"minecraft:crying_obsidian\";\n          }\n\n          if (q > 0.84 && pattern % 7 === 0) {\n            block = \"minecraft:oxidized_copper\";\n          }\n\n          if (q > 0.94 && pattern % 11 === 0) {\n            block = \"minecraft:iron_block\";\n          }\n\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  for (let dx = -11; dx <= 11; dx++) {\n    for (let dz = -11; dz <= 11; dz++) {\n      const d2 = dx * dx + dz * dz;\n\n      if (d2 <= 121) {\n        let block = \"minecraft:polished_blackstone\";\n\n        if (d2 <= 4) {\n          block = \"minecraft:glowstone\";\n        } else if (d2 <= 16) {\n          block = \"minecraft:cyan_concrete\";\n        } else if (d2 <= 36) {\n          block = \"minecraft:purple_concrete\";\n        } else if (d2 % 7 === 0) {\n          block = \"minecraft:oxidized_copper\";\n        }\n\n        put(cx + dx, 0, cz + dz, block);\n      }\n    }\n  }\n\n  const beamRadii = [7, 6, 6, 5, 5, 4, 4, 4, 5, 6, 8];\n\n  for (let y = 0; y <= 10; y++) {\n    const r = beamRadii[y];\n\n    for (let dx = -r; dx <= r; dx++) {\n      for (let dz = -r; dz <= r; dz++) {\n        const d2 = dx * dx + dz * dz;\n\n        if (d2 <= r * r) {\n          let block;\n\n          if (d2 === 0) {\n            block = \"minecraft:glowstone\";\n          } else if (d2 >= (r - 1) * (r - 1)) {\n            block = \"minecraft:lime_concrete\";\n          } else if ((xOrZero(dx) + zOrZero(dz) + y) % 3 === 0) {\n            block = \"minecraft:cyan_concrete\";\n          } else {\n            block = \"minecraft:purple_concrete\";\n          }\n\n          put(cx + dx, y, cz + dz, block);\n        }\n      }\n    }\n  }\n\n  for (let i = 0; i < 16; i++) {\n    const angle = Math.PI * 2 * i / 16;\n    const ca = Math.cos(angle);\n    const sa = Math.sin(angle);\n\n    for (let step = 1; step <= 4; step++) {\n      const r = step * 2;\n\n      for (let w = -1; w <= 1; w++) {\n        const x = Math.round(cx + ca * r - sa * w);\n        const z = Math.round(cz + sa * r + ca * w);\n        const dx = x - cx;\n        const dz = z - cz;\n\n        if (dx * dx + dz * dz <= 100) {\n          let block = \"minecraft:obsidian\";\n\n          if (step <= 2 && (i + w) % 4 === 0) {\n            block = \"minecraft:glowstone\";\n          } else if (step === 3) {\n            block = \"minecraft:oxidized_copper\";\n          } else if (step === 4) {\n            block = \"minecraft:crying_obsidian\";\n          }\n\n          put(x, 10, z, block);\n        }\n      }\n    }\n  }\n\n  for (let i = 0; i < 12; i++) {\n    const angle = Math.PI * 2 * i / 12;\n    const ca = Math.cos(angle);\n    const sa = Math.sin(angle);\n\n    for (let y = 12; y <= 28; y++) {\n      const row = profile[y - 10];\n      const rx = row[1];\n      const rz = row[2];\n      const edge = 1 / Math.sqrt(\n        (ca * ca) / (rx * rx) +\n        (sa * sa) / (rz * rz)\n      );\n\n      for (let inset = 1; inset <= 3; inset++) {\n        const rr = edge - inset;\n\n        if (rr > 0) {\n          const x = Math.round(cx + ca * rr);\n          const z = Math.round(cz + sa * rr);\n          const dx = x - cx;\n          const dz = z - cz;\n          const q = (dx * dx) / (rx * rx) + (dz * dz) / (rz * rz);\n\n          if (q <= 1) {\n            let block;\n\n            if (inset === 1) {\n              block = i % 2 === 0\n                ? \"minecraft:oxidized_copper\"\n                : \"minecraft:crying_obsidian\";\n            } else if (inset === 2) {\n              block = \"minecraft:polished_blackstone\";\n            } else {\n              block = \"minecraft:obsidian\";\n            }\n\n            put(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  const dome = [\n    [29, 8],\n    [30, 7],\n    [31, 5],\n    [32, 4],\n    [33, 2],\n    [34, 1]\n  ];\n\n  for (let di = 0; di < dome.length; di++) {\n    const y = dome[di][0];\n    const r = dome[di][1];\n\n    for (let dx = -r; dx <= r; dx++) {\n      for (let dz = -r; dz <= r; dz++) {\n        const d2 = dx * dx + dz * dz;\n\n        if (d2 <= r * r) {\n          let block;\n\n          if (d2 === 0 && y >= 30) {\n            block = \"minecraft:glowstone\";\n          } else if (d2 === 0) {\n            block = \"minecraft:iron_block\";\n          } else if (d2 >= (r - 1) * (r - 1)) {\n            block = y % 2 === 0\n              ? \"minecraft:purple_concrete\"\n              : \"minecraft:cyan_concrete\";\n          } else if ((dx + dz + y) % 3 === 0) {\n            block = \"minecraft:amethyst_block\";\n          } else {\n            block = \"minecraft:crying_obsidian\";\n          }\n\n          put(cx + dx, y, cz + dz, block);\n        }\n      }\n    }\n  }\n\n  const podPositions = [\n    [cx + 18, cz],\n    [cx - 18, cz],\n    [cx, cz + 16],\n    [cx, cz - 16]\n  ];\n\n  for (let p = 0; p < podPositions.length; p++) {\n    const px = podPositions[p][0];\n    const pz = podPositions[p][1];\n\n    for (let level = 0; level < 4; level++) {\n      const y = 25 + level;\n      const r = level < 2 ? 2 : level === 2 ? 1 : 0;\n\n      for (let dx = -r; dx <= r; dx++) {\n        for (let dz = -r; dz <= r; dz++) {\n          const d2 = dx * dx + dz * dz;\n\n          if (d2 <= r * r) {\n            let block;\n\n            if (level === 3 && d2 === 0) {\n              block = \"minecraft:glowstone\";\n            } else if (d2 === 0) {\n              block = \"minecraft:iron_block\";\n            } else if (level < 2) {\n              block = \"minecraft:amethyst_block\";\n            } else {\n              block = \"minecraft:purple_concrete\";\n            }\n\n            put(px + dx, y, pz + dz, block);\n          }\n        }\n      }\n    }\n  }\n\n  const emitterPositions = [\n    [cx + 5, cz],\n    [cx - 5, cz],\n    [cx, cz + 5],\n    [cx, cz - 5]\n  ];\n\n  for (let p = 0; p < emitterPositions.length; p++) {\n    const px = emitterPositions[p][0];\n    const pz = emitterPositions[p][1];\n\n    for (let y = 8; y <= 10; y++) {\n      for (let dx = -1; dx <= 1; dx++) {\n        for (let dz = -1; dz <= 1; dz++) {\n          if (dx * dx + dz * dz <= 1) {\n            let block = \"minecraft:iron_block\";\n\n            if (dx === 0 && dz === 0 && y === 9) {\n              block = \"minecraft:glowstone\";\n            } else if ((dx + dz + y + p) % 2 === 0) {\n              block = \"minecraft:oxidized_copper\";\n            }\n\n            put(px + dx, y, pz + dz, block);\n          }\n        }\n      }\n    }\n  }\n\n  for (let x = cx - 3; x <= cx + 3; x++) {\n    const dx = x - cx;\n\n    for (let y = 16; y <= 21; y++) {\n      const row = profile[y - 10];\n      const span = Math.floor(\n        row[2] * Math.sqrt(1 - (dx * dx) / (row[1] * row[1]))\n      );\n      const z = cz - span - 1;\n      let block = \"minecraft:purple_concrete\";\n\n      if (Math.abs(dx) === 3 || y === 16 || y === 21) {\n        block = \"minecraft:iron_block\";\n      } else if (dx === 0 && y === 18) {\n        block = \"minecraft:glowstone\";\n      } else if ((x + y) % 3 === 0) {\n        block = \"minecraft:cyan_concrete\";\n      }\n\n      put(x, y, z, block);\n    }\n  }\n\n  return {\n    name: \"Mothership Command Vessel\",\n    seatY: 0,\n    anchors: {\n      door: [cx, 0, cz - 11],\n      beam: [cx, 5, cz],\n      hatch: [cx, 18, cz - 40],\n      core: [cx, 34, cz]\n    }\n  };\n}\n\nfunction xOrZero(value) {\n  return value;\n}\n\nfunction zOrZero(value) {\n  return value;\n}"
+    },
+    "ufo": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        10,
+        15
+      ],
+      "sourceHash": "b3:0318e397086db0f4895a0f9e6de60e812d1bd8efbba88b0c63db30b9f17e67ba",
+      "outputHash": "b3:fa3018b9683ac69378b7122adf635dae70358860776c09ca72e03585d69f7c6f",
+      "source": "export const envelope = [15, 10, 15];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const index = api.instance.index;\n  const count = api.instance.count;\n  const centerX = Math.floor(W / 2);\n  const centerZ = Math.floor(D / 2);\n\n  const randomValues = new Array(10);\n  for (let i = 0; i < randomValues.length; i++) {\n    randomValues[i] = api.random();\n  }\n\n  const kind = index % 4;\n  const hovering = kind === 0 || kind === 1;\n\n  const baseY = hovering\n    ? 1 + ((index + count + Math.floor(randomValues[0] * 6)) % 2)\n    : 0;\n\n  const phase = randomValues[1] * Math.PI * 2 + index * 0.37;\n  const rotation =\n    index * 0.29 +\n    (randomValues[2] - 0.5) * 0.55 +\n    kind * 0.08;\n\n  const impactAngle =\n    rotation +\n    (randomValues[3] - 0.5) * 0.8 +\n    (kind === 2 ? 0.35 : 0);\n\n  const bodyCos = Math.cos(rotation);\n  const bodySin = Math.sin(rotation);\n  const impactCos = Math.cos(impactAngle);\n  const impactSin = Math.sin(impactAngle);\n\n  const scaleX =\n    0.982 +\n    randomValues[4] * 0.045 +\n    ((index % 3) - 1) * 0.006;\n\n  const scaleZ =\n    0.982 +\n    randomValues[5] * 0.045 +\n    (((index + 1) % 3) - 1) * 0.006;\n\n  const damageStrength =\n    kind === 2\n      ? 0.82 + randomValues[6] * 0.16\n      : kind === 1\n        ? 0.42 + randomValues[6] * 0.36\n        : kind === 3\n          ? 0.12 + randomValues[6] * 0.16\n          : 0.06 + randomValues[6] * 0.08;\n\n  const profileX = [\n    5.15,\n    6.20,\n    6.65,\n    6.60,\n    6.05,\n    5.00,\n    3.65,\n    2.35\n  ];\n\n  const profileZ = [\n    4.60,\n    5.80,\n    6.40,\n    6.45,\n    5.90,\n    4.80,\n    3.50,\n    2.20\n  ];\n\n  const palettes = [\n    [\n      \"minecraft:deepslate_tiles\",\n      \"minecraft:polished_blackstone\",\n      \"minecraft:purple_concrete\",\n      \"minecraft:obsidian\"\n    ],\n    [\n      \"minecraft:oxidized_copper\",\n      \"minecraft:prismarine\",\n      \"minecraft:purpur_block\",\n      \"minecraft:amethyst_block\"\n    ],\n    [\n      \"minecraft:smooth_basalt\",\n      \"minecraft:iron_block\",\n      \"minecraft:cyan_concrete\",\n      \"minecraft:deepslate\"\n    ],\n    [\n      \"minecraft:blackstone\",\n      \"minecraft:crying_obsidian\",\n      \"minecraft:gray_concrete\",\n      \"minecraft:polished_blackstone\"\n    ]\n  ];\n\n  const palette =\n    palettes[\n      (index + count + Math.floor(randomValues[7] * palettes.length)) %\n        palettes.length\n    ];\n\n  const damageMaterials = [\n    \"minecraft:cracked_stone_bricks\",\n    \"minecraft:magma_block\",\n    \"minecraft:obsidian\",\n    \"minecraft:blackstone\"\n  ];\n\n  const rubbleMaterials = [\n    \"minecraft:stone\",\n    \"minecraft:deepslate\",\n    \"minecraft:iron_block\",\n    \"minecraft:magma_block\"\n  ];\n\n  const occupied = new Set();\n\n  function key(x, y, z) {\n    return x + \":\" + y + \":\" + z;\n  }\n\n  function put(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) {\n      return false;\n    }\n\n    const k = key(x, y, z);\n    if (occupied.has(k)) {\n      return false;\n    }\n\n    api.set(x, y, z, block);\n    occupied.add(k);\n    return true;\n  }\n\n  const neighborOffsets = [\n    [1, 0, 0],\n    [-1, 0, 0],\n    [0, 1, 0],\n    [0, -1, 0],\n    [0, 0, 1],\n    [0, 0, -1]\n  ];\n\n  function hasNeighbor(x, y, z) {\n    for (let i = 0; i < neighborOffsets.length; i++) {\n      const offset = neighborOffsets[i];\n      if (\n        occupied.has(\n          key(\n            x + offset[0],\n            y + offset[1],\n            z + offset[2]\n          )\n        )\n      ) {\n        return true;\n      }\n    }\n    return false;\n  }\n\n  function attach(px, py, pz, block) {\n    const ox = Math.round(px);\n    const oy = Math.round(py);\n    const oz = Math.round(pz);\n\n    for (let ring = 0; ring <= 3; ring++) {\n      for (let dy = -1; dy <= 1; dy++) {\n        for (let dx = -ring; dx <= ring; dx++) {\n          for (let dz = -ring; dz <= ring; dz++) {\n            if (Math.max(Math.abs(dx), Math.abs(dz)) !== ring) {\n              continue;\n            }\n\n            const x = ox + dx;\n            const y = oy + dy;\n            const z = oz + dz;\n\n            if (\n              x < 0 ||\n              x >= W ||\n              y < 0 ||\n              y >= H ||\n              z < 0 ||\n              z >= D\n            ) {\n              continue;\n            }\n\n            if (occupied.has(key(x, y, z))) {\n              continue;\n            }\n\n            if (hasNeighbor(x, y, z)) {\n              return put(x, y, z, block);\n            }\n          }\n        }\n      }\n    }\n\n    return false;\n  }\n\n  for (let layer = 0; layer < 8; layer++) {\n    const y = baseY + layer;\n\n    let factorX = 1;\n    let factorZ = 1;\n\n    if (kind === 1 && layer === 2) {\n      factorX = 1.04;\n      factorZ = 0.96;\n    } else if (kind === 2 && layer === 0) {\n      factorX = 0.95;\n      factorZ = 0.92;\n    } else if (kind === 3 && layer === 7) {\n      factorX = 0.88;\n      factorZ = 1.08;\n    }\n\n    const rx =\n      profileX[layer] *\n      scaleX *\n      factorX *\n      (1 + 0.014 * Math.sin(phase + layer * 1.31));\n\n    const rz =\n      profileZ[layer] *\n      scaleZ *\n      factorZ *\n      (1 + 0.014 * Math.cos(phase * 0.83 + layer * 1.17));\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - centerX;\n        const dz = z - centerZ;\n\n        const localX = dx * bodyCos + dz * bodySin;\n        const localZ = -dx * bodySin + dz * bodyCos;\n\n        const ellipse =\n          (localX * localX) / (rx * rx) +\n          (localZ * localZ) / (rz * rz);\n\n        if (ellipse > 1.000001) {\n          continue;\n        }\n\n        const along = dx * impactCos + dz * impactSin;\n        const across = -dx * impactSin + dz * impactCos;\n\n        const damageBand =\n          layer <= 4 &&\n          ellipse > 0.35 &&\n          along > -6.5 &&\n          along < 6.5 &&\n          Math.abs(across) <\n            0.95 + damageStrength * 1.15;\n\n        const damagePattern =\n          (x * 19 +\n            z * 23 +\n            layer * 7 +\n            index * 11 +\n            Math.floor(randomValues[8] * 13)) %\n          17;\n\n        const damageMark =\n          damageBand &&\n          damagePattern < 1 + Math.floor(damageStrength * 7);\n\n        const panel =\n          (x * 13 +\n            z * 17 +\n            layer * 11 +\n            index * 7 +\n            Math.floor(randomValues[9] * 17)) %\n          29;\n\n        let block =\n          palette[(panel + layer + index) % palette.length];\n\n        if (damageMark) {\n          block =\n            damageMaterials[\n              (x + z + layer + index) %\n                damageMaterials.length\n            ];\n        }\n\n        const undersideLight =\n          layer === 0 &&\n          ellipse < 0.90 &&\n          (x * 3 + z * 5 + layer + index) % 7 <\n            (kind === 2 ? 3 : 2);\n\n        if (undersideLight) {\n          block = \"minecraft:glowstone\";\n        }\n\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  if (hovering) {\n    for (let y = 0; y < baseY; y++) {\n      put(\n        centerX,\n        y,\n        centerZ,\n        y % 2 === 0\n          ? \"minecraft:glowstone\"\n          : \"minecraft:amethyst_block\"\n      );\n    }\n\n    const beamWide =\n      (index +\n        Math.floor(randomValues[6] * 9) +\n        count) %\n        3 !==\n      0;\n\n    if (beamWide) {\n      put(centerX - 1, 0, centerZ, \"minecraft:glowstone\");\n      put(centerX + 1, 0, centerZ, \"minecraft:glowstone\");\n      put(centerX, 0, centerZ - 1, \"minecraft:glowstone\");\n      put(centerX, 0, centerZ + 1, \"minecraft:glowstone\");\n\n      if (baseY > 1 && randomValues[7] > 0.38) {\n        const beamAccent =\n          index % 2 === 0\n            ? \"minecraft:cyan_concrete\"\n            : \"minecraft:purple_concrete\";\n\n        put(centerX - 1, 1, centerZ, beamAccent);\n        put(centerX + 1, 1, centerZ, beamAccent);\n        put(centerX, 1, centerZ - 1, beamAccent);\n        put(centerX, 1, centerZ + 1, beamAccent);\n      }\n    }\n  }\n\n  if (kind === 0) {\n    const podCount =\n      2 +\n      ((index + Math.floor(randomValues[7] * 3)) % 2);\n\n    for (let i = 0; i < podCount; i++) {\n      const angle =\n        rotation +\n        Math.PI * 2 * i / podCount +\n        (randomValues[2] - 0.5) * 0.12;\n\n      const radius = 6.70 + (i % 2) * 0.25;\n\n      attach(\n        centerX + Math.cos(angle) * radius,\n        baseY + 1,\n        centerZ + Math.sin(angle) * radius,\n        palette[(index + i + 1) % palette.length]\n      );\n    }\n  }\n\n  if (kind === 1) {\n    const plateCount =\n      3 +\n      ((index + Math.floor(randomValues[8] * 4)) % 3);\n\n    for (let i = 0; i < plateCount; i++) {\n      const angle =\n        impactAngle +\n        (i - plateCount * 0.5) * 0.23;\n\n      attach(\n        centerX + Math.cos(angle) * (6.15 + (i % 2) * 0.35),\n        baseY + (i % 3),\n        centerZ + Math.sin(angle) * (6.15 + (i % 2) * 0.35),\n        damageMaterials[\n          (i + index) % damageMaterials.length\n        ]\n      );\n    }\n  }\n\n  if (kind === 2) {\n    const rubbleCount =\n      4 +\n      (index % 3) +\n      Math.floor(randomValues[8] * 3);\n\n    for (let i = 0; i < rubbleCount; i++) {\n      const angle =\n        impactAngle +\n        (i - rubbleCount * 0.5) * 0.27;\n\n      const radius =\n        6.10 + (i % 3) * 0.45;\n\n      attach(\n        centerX + Math.cos(angle) * radius,\n        0,\n        centerZ + Math.sin(angle) * radius,\n        rubbleMaterials[\n          (i + index) % rubbleMaterials.length\n        ]\n      );\n    }\n\n    const smokeSide = index % 2 === 0 ? 1 : -1;\n\n    put(centerX, 8, centerZ, \"minecraft:gray_concrete\");\n    put(centerX, 9, centerZ, \"minecraft:black_concrete\");\n\n    if (randomValues[9] > 0.22) {\n      put(\n        centerX + smokeSide,\n        8,\n        centerZ,\n        \"minecraft:gray_concrete\"\n      );\n    }\n\n    if (randomValues[9] > 0.52) {\n      put(\n        centerX + smokeSide,\n        9,\n        centerZ,\n        \"minecraft:black_concrete\"\n      );\n    }\n\n    if (randomValues[9] > 0.78) {\n      put(\n        centerX - smokeSide,\n        8,\n        centerZ,\n        \"minecraft:black_concrete\"\n      );\n    }\n  }\n\n  if (kind === 3) {\n    const landingCount =\n      3 +\n      ((index + Math.floor(randomValues[8] * 2)) % 2);\n\n    for (let i = 0; i < landingCount; i++) {\n      const angle =\n        rotation +\n        Math.PI * 2 * i / landingCount +\n        (randomValues[3] - 0.5) * 0.12;\n\n      const radius = 6.05 + (i % 2) * 0.30;\n\n      attach(\n        centerX + Math.cos(angle) * radius,\n        0,\n        centerZ + Math.sin(angle) * radius,\n        i % 2 === 0\n          ? \"minecraft:iron_block\"\n          : \"minecraft:polished_blackstone\"\n      );\n\n      if (i === 0 || randomValues[9] > 0.62) {\n        attach(\n          centerX + Math.cos(angle) * (radius - 0.25),\n          1,\n          centerZ + Math.sin(angle) * (radius - 0.25),\n          \"minecraft:iron_block\"\n        );\n      }\n    }\n\n    put(\n      centerX,\n      8,\n      centerZ,\n      index % 2 === 0\n        ? \"minecraft:amethyst_block\"\n        : \"minecraft:glowstone\"\n    );\n\n    if ((index + Math.floor(randomValues[9] * 5)) % 2 === 0) {\n      put(centerX, 9, centerZ, \"minecraft:glowstone\");\n    }\n  }\n\n  function clamp(value, low, high) {\n    return Math.max(low, Math.min(high, value));\n  }\n\n  const frontAngle = rotation + Math.PI / 2;\n  const doorRadius = 6.35;\n\n  const doorX = clamp(\n    Math.round(centerX + Math.cos(frontAngle) * doorRadius),\n    0,\n    W - 1\n  );\n\n  const doorZ = clamp(\n    Math.round(centerZ + Math.sin(frontAngle) * doorRadius),\n    0,\n    D - 1\n  );\n\n  const labels = [\n    \"intact hovering alien saucer\",\n    \"damaged hovering alien saucer\",\n    \"crashed alien saucer\",\n    \"landed alien saucer\"\n  ];\n\n  return {\n    name: labels[kind],\n    seatY: 0,\n    anchors: {\n      door: [\n        doorX,\n        hovering ? baseY + 1 : 0,\n        doorZ\n      ],\n      beam: [centerX, 0, centerZ]\n    }\n  };\n}"
+    }
+  }
+}

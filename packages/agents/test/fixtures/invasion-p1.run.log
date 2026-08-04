@@ -1,0 +1,50 @@
+prompt     An alien invasion world: a peaceful farming town under attack — crashed and hovering UFOs scattered across the fields and hills, crop circles, a massive mothership landmark looming over the town, abduction beams, panicked barricades in the streets
+seed       13644100762785032457
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"far_future","event":{"kind":"siege","severity":0.9,"recency":0},"character":{"label":"alien-invasion farming town"},"tokens":{"alien_invasion_features":"crashed and hovering UFOs across fields and hills, crop circles, massive hovering mothership landmark, abduction beams, panicked street barricades"}}
+           1 attempt(s), 1374 tokens
+
+authored with openai/gpt-5.6-luna in 2 attempt(s)
+  attempt 1   6 problem(s): LOAM-T010 BAD_TYPE@intent.character.programs, LOAM-T200 STRUCTURE_GENERATOR_NOT_IN_PROFILE@world.mothership, LOAM-T200 STRUCTURE_GENERATOR_NOT_IN_PROFILE@world.field_ufo_sites, LOAM-T200 STRUCTURE_GENERATOR_NOT_IN_PROFILE@world.hill_ufo_sites, LOAM-T200 STRUCTURE_GENERATOR_NOT_IN_PROFILE@world.crop_circles, LOAM-T200 STRUCTURE_GENERATOR_NOT_IN_PROFILE@world.street_barricades
+  attempt 2   valid
+  tokens     119563 in + 67080 out = 186643  ($0.0491)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     mothership [landmark]  2 attempt(s), 74937 tokens  ($0.0397)
+  ok     ufo [plugin]  2 attempt(s), 107461 tokens  ($0.0586)
+  tokens     22968 in + 160304 out = 183272  ($0.0986)
+
+  document   /home/user/terrainist/out/e2e/invasion-p1/alien_farmtown.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The document failed to compile — 1 problem(s):
+
+error LOAM-T008 UNKNOWN_KEY at <document>: unknown key "programs" on document
+  fix: remove "programs"; document accepts only: loam, profile, meta, style, intent, root (plus "label" and "note", which are always allowed)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     64985 in + 6726 out = 71711  ($0.0060)
+
+
+compile feedback, round 2 of 2:
+
+The document failed to compile — 1 problem(s):
+
+error LOAM-T008 UNKNOWN_KEY at <document>: unknown key "programs" on document
+  fix: remove "programs"; document accepts only: loam, profile, meta, style, intent, root (plus "label" and "note", which are always allowed)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     64985 in + 11972 out = 76957  ($0.0092)
+
+terrainist: the authored document failed to compile — 1 problem(s)
+
+error LOAM-T008 UNKNOWN_KEY at <document>: unknown key "programs" on document
+  fix: remove "programs"; document accepts only: loam, profile, meta, style, intent, root (plus "label" and "note", which are always allowed)
+
+the document was kept at /home/user/terrainist/out/e2e/invasion-p1/alien_farmtown.loam.json
+  authoring  3 model run(s), 2 compile-feedback round(s), 249533 in + 85778 out = 335311 tokens ($0.0643)
