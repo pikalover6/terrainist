@@ -51,6 +51,7 @@ import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/i
 import { STRUCTURE_ROWS } from "./themes-intent.js";
 import { checkIntentVocabulary } from "./vocabulary.js";
 import { resolvePorts } from "../layout/ports.js";
+import { landmarkRoadAnchors } from "../programs/road-anchors.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
 import { dressStreets } from "./streetscape.js";
@@ -656,6 +657,28 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   if (roadNode !== undefined) {
     const nodePath = `${rootPath}.${roadNode.id}`;
     const seed: Seed256 = nodeSeed(input.worldSeed, nodePath, roadNode.seedSalt ?? "");
+    // A landmark program named in `params.anchors` is a destination too: its
+    // published `door` anchor becomes a synthetic approach port, so the router
+    // reaches it through the same machinery it reaches a house's door through.
+    // The author never writes a coordinate — that is the bespoke contract's
+    // promise, and this is where the road half of it is kept.
+    const landmarks = landmarkRoadAnchors({
+      doc: input.doc,
+      rootPath,
+      worldSeed: input.worldSeed,
+      plan: input.plan,
+      placements,
+      roadNodePath: nodePath,
+      selectors: anchorSelectorsOf(roadNode.params),
+    });
+    diagnostics.push(...landmarks.diagnostics);
+    // Destinations *and* obstacles: a lane that cut through the shrine to reach
+    // the next house would be a lane through the shrine.
+    const roadObstacles = new Set([
+      ...precinctAnchors(buildingPaths, precincts),
+      ...landmarks.paths,
+    ]);
+    const roadDestinations = new Set([...roadObstacles].filter((p) => !districtPaths.has(p)));
     roads = buildRoadNetwork({
       nodePath,
       params: roadParamsOf(roadNode.params),
@@ -667,18 +690,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       // The precinct approach ports are appended, not merged: the road pass
       // reads a placement's ports by node path, and a precinct has no shell for
       // the generic resolver to hang a stub on, so the kit states its own.
-      ports: precinctPorts.length === 0 ? input.ports : [...input.ports, ...precinctPorts],
-      buildingPaths: precinctAnchors(buildingPaths, precincts),
+      ports: [...input.ports, ...precinctPorts, ...landmarks.ports],
+      buildingPaths: roadObstacles,
       // A district's own buildings are obstacles, never destinations — they are
-      // already on a street; a precinct's landside anchor IS a destination.
-      // See `RoadNetworkInput.anchorPaths`.
-      ...(districtPaths.size === 0
-        ? {}
-        : {
-            anchorPaths: new Set(
-              [...precinctAnchors(buildingPaths, precincts)].filter((p) => !districtPaths.has(p)),
-            ),
-          }),
+      // already on a street; a precinct's landside anchor and a named landmark
+      // ARE destinations. See `RoadNetworkInput.anchorPaths`.
+      ...(districtPaths.size === 0 ? {} : { anchorPaths: roadDestinations }),
       ...(plazaPlacement === undefined ? {} : { plaza: plazaPlacement }),
       ...(plaza === undefined ? {} : { paved: plaza.paved, keepClear: plaza.keepClear }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
@@ -1310,6 +1327,21 @@ export function roadParamsOf(params: Readonly<Record<string, unknown>> | undefin
     ...(typeof p["lanterns"] === "boolean" ? { lanterns: p["lanterns"] } : {}),
     ...(spacing === undefined ? {} : { lanternSpacing: spacing }),
   };
+}
+
+/**
+ * The `anchors` selector list off a `road.network@0` node.
+ *
+ * Required by the validator, so an absent or malformed list here means the
+ * document never reached validation; an empty list is the honest answer and
+ * leaves the router on its default (every building is a destination).
+ */
+export function anchorSelectorsOf(
+  params: Readonly<Record<string, unknown>> | undefined,
+): readonly string[] {
+  const anchors = (params ?? {})["anchors"];
+  if (!Array.isArray(anchors)) return [];
+  return anchors.filter((a): a is string => typeof a === "string");
 }
 
 /**
