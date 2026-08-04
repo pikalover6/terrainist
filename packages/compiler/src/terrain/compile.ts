@@ -49,6 +49,9 @@ import {
   STRUCTURE_GENERATORS,
   authoredProgramId,
   hoverOf,
+  seatOfParams,
+  seatPolicyOf,
+  type SeatDecision,
   isAuthoredGenerator,
   validateSettlementDocument,
   validateTerrainDocument,
@@ -1449,16 +1452,22 @@ function programJobsFrom(
         });
         site = { footprint: hovered.footprint, baseY: hovered.baseY, hovering: true };
       } else if (solved !== undefined) {
-        // Settlement: the solver's site.
-        site = { footprint: solved.footprint, baseY: solved.foundationY };
+        // Settlement: the solver's site. Its `foundationY` is the ground plane;
+        // the pass derives node-local y = 0 from it, the run's `seatY` and the
+        // node's seat policy.
+        site = { footprint: solved.footprint, baseY: solved.foundationY, ...seatOn(node) };
       } else if (!ground.solved) {
         // Terrain: no solver, so the ground picks.
-        site = planLandmarkSite({
+        const found = planLandmarkSite({
           envelope: program.envelope,
           plan: ground.plan,
           seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
           taken: claimed,
         });
+        site =
+          found === undefined
+            ? undefined
+            : { footprint: found.footprint, baseY: found.baseY, ...seatOn(node) };
       }
       if (site === undefined) {
         diagnostics.push(
@@ -1499,10 +1508,24 @@ function programJobsFrom(
       );
       continue;
     }
-    jobs.push({ nodePath, programId: params.program, program, mode: "plugin", params, ...salt });
+    jobs.push({
+      nodePath,
+      programId: params.program,
+      program,
+      mode: "plugin",
+      params,
+      seat: seatOfParams(params),
+      ...salt,
+    });
   }
 
   return jobs;
+}
+
+/** The node's seat policy as a `ProgramPlacement` fragment. */
+function seatOn(node: unknown): { seat?: SeatDecision } {
+  const seat = seatPolicyOf(node);
+  return seat === undefined ? {} : { seat };
 }
 
 /** Claim every placed instance's footprint, so later passes route around it. */

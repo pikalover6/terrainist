@@ -21,8 +21,10 @@ import {
   PROGRAM_KEYS,
   PROGRAM_LIMITS,
   PROGRAM_MODES,
+  EMBED_DEPTH_RANGE,
   HOVER_RANGE,
   LANDMARK_PARAM_KEYS,
+  SEAT_POLICIES,
   PROGRAM_SCATTER_KEYS,
   allowsLandmark,
   allowsPlugin,
@@ -410,6 +412,8 @@ export function validateProgramScatterParams(
   num(out, params["maxRelief"], `${path}.maxRelief`, 0, 64, "blocks of relief across the footprint");
   checkElevation(out, params["elevation"], `${path}.elevation`);
   checkTags(out, params["avoidTags"], `${path}.avoidTags`);
+  // Nothing scattered hovers, so there is no `hover` to conflict with.
+  checkSeat(out, params, path, false);
 
   if (out.length !== before || (program === undefined && pendingMode === undefined)) return undefined;
   return params as unknown as ProgramScatterParams;
@@ -519,14 +523,81 @@ export function validateLandmarkParams(
   }
   unknownKeys(out, params, path, [...LANDMARK_PARAM_KEYS], "an authored: landmark node");
   const hover = params["hover"];
-  if (hover === undefined) return;
-  if (typeof hover !== "number" || !Number.isInteger(hover) || hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) {
+  if (hover !== undefined) {
+    if (typeof hover !== "number" || !Number.isInteger(hover) || hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) {
+      out.push(
+        error(
+          "PARAM_OUT_OF_RANGE",
+          `${path}.hover`,
+          `"hover" must be an integer ${HOVER_RANGE.min}..${HOVER_RANGE.max}, got ${describe(hover)}`,
+          `hover floats the landmark that many blocks above the highest ground under its footprint; below ${HOVER_RANGE.min} it reads as ground clutter, so seat it on the ground by dropping "hover" instead`,
+        ),
+      );
+    }
+  }
+  checkSeat(out, params, path, hover !== undefined);
+}
+
+/**
+ * `seat` / `embedDepth`, shared by a landmark node and `scatter.program@0`.
+ *
+ * `hovering` says the same params also carried a `hover`, which is the one
+ * combination that cannot mean anything: a thing cannot both float and meet
+ * the ground.
+ */
+function checkSeat(
+  out: LoamDiagnostic[],
+  params: Obj,
+  path: string,
+  hovering: boolean,
+): void {
+  const seat = params["seat"];
+  const depth = params["embedDepth"];
+  if (seat !== undefined) {
+    if (typeof seat !== "string" || !(SEAT_POLICIES as readonly string[]).includes(seat)) {
+      out.push(
+        error(
+          "BAD_ENUM",
+          `${path}.seat`,
+          `"seat" is ${describe(seat)}`,
+          `use one of: ${SEAT_POLICIES.join(", ")} — "pad" seats it on a levelled plane, "embed" sinks it into the ground, "drape" lets the program follow the terrain itself`,
+        ),
+      );
+    } else if (hovering) {
+      out.push(
+        error(
+          "PROGRAM_SCHEMA",
+          `${path}.seat`,
+          `this node asks for both "hover" and "seat": "${seat}" — a thing that floats does not meet the ground`,
+          'keep "hover" for something airborne, or drop it and keep "seat"',
+        ),
+      );
+    }
+  }
+  if (depth === undefined) return;
+  if (
+    typeof depth !== "number" ||
+    !Number.isInteger(depth) ||
+    depth < EMBED_DEPTH_RANGE.min ||
+    depth > EMBED_DEPTH_RANGE.max
+  ) {
     out.push(
       error(
         "PARAM_OUT_OF_RANGE",
-        `${path}.hover`,
-        `"hover" must be an integer ${HOVER_RANGE.min}..${HOVER_RANGE.max}, got ${describe(hover)}`,
-        `hover floats the landmark that many blocks above the highest ground under its footprint; below ${HOVER_RANGE.min} it reads as ground clutter, so seat it on the ground by dropping "hover" instead`,
+        `${path}.embedDepth`,
+        `"embedDepth" must be an integer ${EMBED_DEPTH_RANGE.min}..${EMBED_DEPTH_RANGE.max}, got ${describe(depth)}`,
+        `embedDepth is how many blocks below the ground plane the structure sinks; keep it inside ${EMBED_DEPTH_RANGE.min}..${EMBED_DEPTH_RANGE.max}`,
+      ),
+    );
+    return;
+  }
+  if (seat !== "embed") {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        `${path}.embedDepth`,
+        `"embedDepth" only means something with "seat": "embed", and this node's seat is ${describe(seat)}`,
+        'write "seat": "embed" beside it, or drop "embedDepth"',
       ),
     );
   }

@@ -22,8 +22,9 @@ import {
   type AuthoredProgramRecord,
   type LoamDiagnostic,
   type ProgramScatterParams,
+  type SeatDecision,
 } from "@terrainist/spec";
-import { error } from "@terrainist/spec";
+import { error, seatOfParams, warning } from "@terrainist/spec";
 import { nodeSeed, type Marker } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
@@ -32,8 +33,10 @@ import type { StructureBlock } from "../structures/buildings.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { parseBlockString } from "../emit/blockstring.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
+import { furnishRunInteriors } from "./interiors.js";
+import { levelPropPad } from "../structures/props.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
-import { planProgramSites, type ProgramSite } from "./place.js";
+import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.js";
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
 import { verifyOutputHash } from "./verify.js";
 
@@ -41,10 +44,15 @@ import { verifyOutputHash } from "./verify.js";
 export interface ProgramPlacement {
   /** World footprint, inclusive; matches the program's declared `[w, d]`. */
   readonly footprint: Rect;
-  /** World Y of the instance's node-local `y = 0`. */
+  /**
+   * The plane the instance seats on: node-local `y = 0` when it hovers, the
+   * ground plane when it does not (see {@link ProgramSite.baseY}).
+   */
   readonly baseY: number;
   /** True when the landmark floats: it claims no ground under it. */
   readonly hovering?: boolean;
+  /** How a non-hovering landmark meets the ground. Defaults to `"pad"`. */
+  readonly seat?: SeatDecision;
 }
 
 /** One authored-program node the compiler is asked to build. */
@@ -57,6 +65,8 @@ export interface ProgramJob {
   readonly placement?: ProgramPlacement;
   /** Plugin mode: the `scatter.program@0` params. */
   readonly params?: ProgramScatterParams;
+  /** Plugin mode: how each instance meets the ground. Defaults to `"pad"`. */
+  readonly seat?: SeatDecision;
   readonly seedSalt?: string;
 }
 
@@ -82,6 +92,7 @@ export interface PlacedProgram {
   readonly programId: string;
   readonly index: number;
   readonly footprint: Rect;
+  /** World Y of the instance's node-local `y = 0`, after seating. */
   readonly baseY: number;
   /** True when this instance floats — nothing may treat its footprint as taken. */
   readonly hovering?: boolean;
@@ -124,7 +135,19 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       }
     }
 
-    const sites = resolveSites(job, input, claimed);
+    const seat = seatOf(job);
+    const refusals: SiteRefusals = { cliff: 0 };
+    const sites = resolveSites(job, input, claimed, refusals);
+    if (refusals.cliff > 0) {
+      diagnostics.push(
+        warning(
+          "PROGRAM_DROPPED",
+          job.nodePath,
+          `${refusals.cliff} candidate site${refusals.cliff === 1 ? "" : "s"} for ${JSON.stringify(job.programId)} ${refusals.cliff === 1 ? "was" : "were"} refused: the ground under them falls away like a cliff, and no pad would seat a structure across that`,
+          "widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on",
+        ),
+      );
+    }
     if (sites.length === 0) {
       diagnostics.push(
         error(
@@ -137,18 +160,28 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       continue;
     }
 
+    // The pad goes down *before* the run, so `api.heightAt` shows the program
+    // the ground it will actually stand on rather than the ground that was
+    // there first. Fill-only, exactly as a prop's pad is: see `levelPropPad`.
+    if (seat?.policy === "pad") {
+      for (const site of sites) blocks.push(...levelPropPad(input.plan, site.footprint, site.baseY));
+    }
+
     const runs = executeSites(job, input, sites, diagnostics);
     fuelUsed += runs.fuelUsed;
     if (!runs.ok) continue;
 
     for (const [i, run] of runs.runs.entries()) {
       const site = sites[i] as ProgramSite;
-      const lowered = lowerRun(run, site, input.stack, job, diagnostics);
+      const baseY = seatedBaseY(site, run, seat);
+      const lowered = lowerRun(run, site, baseY, input.stack, job, diagnostics);
       if (lowered === undefined) continue;
       // A hovering landmark stands over the ground, not on it: the ground
       // beneath stays buildable, so its footprint is never claimed.
       if (job.placement?.hovering !== true) claimed.push(site.footprint);
       blocks.push(...lowered.blocks);
+      // v2: the shell is the program's, the fit-out inside it is the grammar's.
+      blocks.push(...furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
       markers.push(...lowered.markers);
       placed.push(lowered.placed);
     }
@@ -157,10 +190,50 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
   return { blocks, markers, placed, diagnostics, fuelUsed };
 }
 
+/**
+ * How this job meets the ground, or `undefined` when it does not: a hovering
+ * landmark has no seating decision to make, and `seatY` must never lower it
+ * into the terrain — `hover` means "node-local `y = 0` sits `hover` blocks
+ * above the highest ground", full stop, so its baseY is used exactly as
+ * `planHoverSite` computed it.
+ */
+function seatOf(job: ProgramJob): SeatDecision | undefined {
+  if (job.placement?.hovering === true) return undefined;
+  if (job.placement?.seat !== undefined) return job.placement.seat;
+  if (job.seat !== undefined) return job.seat;
+  return seatOfParams(job.params);
+}
+
+/**
+ * The world Y of the instance's node-local `y = 0`.
+ *
+ * The program declares `seatY`: the node-local plane that meets the ground. So
+ * the ground plane the site chose is where `seatY` has to land, and everything
+ * the program modelled *below* its seat — landing gear, a hull skirt, a buried
+ * belly — goes below the surface instead of hanging in the air over it.
+ *
+ * - hovering: no seating at all (see {@link seatOf}).
+ * - `"drape"`: neither pad nor re-seat; the program conformed itself through
+ *   `api.heightAt` and moving it would undo that.
+ * - `"embed"`: seated, then sunk `embedDepth` further. Nothing is cut; the
+ *   terrain simply stands over the buried part, which is what *crashed* means.
+ */
+function seatedBaseY(
+  site: ProgramSite,
+  run: ProgramRun,
+  seat: SeatDecision | undefined,
+): number {
+  if (seat === undefined || seat.policy === "drape") return site.baseY;
+  const seatY = run.result?.seatY ?? 0;
+  const sunk = seat.policy === "embed" ? seat.embedDepth : 0;
+  return site.baseY - seatY - sunk;
+}
+
 function resolveSites(
   job: ProgramJob,
   input: ProgramPassInput,
   claimed: readonly Rect[],
+  refusals: SiteRefusals,
 ): readonly ProgramSite[] {
   if (job.mode === "landmark") {
     if (job.placement === undefined) return [];
@@ -173,6 +246,7 @@ function resolveSites(
     plan: input.plan,
     seed: nodeSeed(input.worldSeed, job.nodePath, job.seedSalt ?? ""),
     taken: claimed,
+    refusals,
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
 }
@@ -242,6 +316,7 @@ interface LoweredRun {
 function lowerRun(
   run: ProgramRun,
   site: ProgramSite,
+  baseY: number,
   stack: PrismarineStack,
   job: ProgramJob,
   diagnostics: LoamDiagnostic[],
@@ -265,7 +340,7 @@ function lowerRun(
     }
     blocks.push({
       x: site.footprint.x0 + lx,
-      y: site.baseY + ly,
+      y: baseY + ly,
       z: site.footprint.z0 + lz,
       stateId,
     });
@@ -279,7 +354,7 @@ function lowerRun(
       id: `${job.nodePath}#${name}${job.mode === "plugin" ? `.${run.index}` : ""}`,
       name,
       x: site.footprint.x0 + ax,
-      y: site.baseY + ay,
+      y: baseY + ay,
       z: site.footprint.z0 + az,
     });
   }
@@ -292,7 +367,7 @@ function lowerRun(
       programId: job.programId,
       index: run.index,
       footprint: site.footprint,
-      baseY: site.baseY,
+      baseY,
       ...(job.placement?.hovering === true ? { hovering: true } : {}),
       blockCount: blocks.length,
       seatY: run.result?.seatY ?? 0,

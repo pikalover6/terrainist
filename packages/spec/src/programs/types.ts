@@ -120,6 +120,28 @@ export interface ProgramApi {
   log(msg: string): void;
 }
 
+/**
+ * A room the program hollowed and the compiler is asked to furnish.
+ *
+ * Node-local, inclusive at both corners, and `min.y` is the **lowest standable
+ * cell** — the floor plane the program laid is one below it. `kind` is a free
+ * word ("hall", "bridge", "quarters", "nave", "vault"): a hint the building
+ * grammar's fit-out reads, never a command it must obey.
+ */
+export interface InteriorVolume {
+  readonly min: readonly [number, number, number];
+  readonly max: readonly [number, number, number];
+  readonly kind?: string;
+}
+
+/** Bounds on a program's declared interiors. */
+export const INTERIOR_LIMITS = Object.freeze({
+  /** Volumes one instance may declare. A landmark is not a hotel. */
+  maxCount: 16,
+  /** Smallest edge, in blocks: below this there is no room to furnish. */
+  minEdge: 3,
+});
+
 /** What the program hands back for the solver and the later passes. */
 export interface ProgramResult {
   readonly name: string;
@@ -127,6 +149,13 @@ export interface ProgramResult {
   readonly seatY: number;
   /** Named points published into the node's anchor namespace (§5.5 / §7.3). */
   readonly anchors?: Readonly<Record<string, readonly [number, number, number]>>;
+  /**
+   * Rooms the program hollowed, for the compiler to furnish (Phase 0 contract
+   * 2, v2). The program builds the shell and the void; the fit-out puts the
+   * beds, tables, lights and shelves in — a program that furnishes itself is
+   * spending tokens on physics violations the grammar already knows to avoid.
+   */
+  readonly interiors?: readonly InteriorVolume[];
 }
 
 /** The program: one pure function, plus a declared envelope. */
@@ -146,6 +175,8 @@ export const PROGRAM_SCATTER_KEYS = [
   "maxRelief",
   "avoidTags",
   "elevation",
+  "seat",
+  "embedDepth",
 ] as const;
 
 /**
@@ -172,6 +203,10 @@ export interface ProgramScatterParams {
   readonly avoidTags?: readonly string[];
   /** `[yMin, yMax]` absolute ground band instances may sit in. */
   readonly elevation?: readonly [number, number];
+  /** How each instance meets the ground; see {@link SEAT_POLICIES}. */
+  readonly seat?: SeatPolicy;
+  /** `seat: "embed"` only — blocks the instance sinks below the ground plane. */
+  readonly embedDepth?: number;
 }
 
 /** Coarse area for a program scatter — the terrain profile's `ScatterArea`. */
@@ -211,7 +246,37 @@ export function allowsPlugin(mode: ProgramMode): boolean {
 /* -------------------------------------------------------------------------- */
 
 /** Keys an `authored:<id>` landmark node may carry in `params`. */
-export const LANDMARK_PARAM_KEYS = ["hover"] as const;
+export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth"] as const;
+
+/**
+ * How a ground-seated program meets the terrain.
+ *
+ * - `"pad"` (the default) — the compiler seats the program's own seat plane on
+ *   a robust ground plane under the footprint and raises the low columns to
+ *   meet it, fill-only. A building on a plinth.
+ * - `"embed"` — the same seating, then sunk `embedDepth` blocks further. No
+ *   terrain is cut: the ground simply stands over the buried part, which is
+ *   what a *crashed* thing wants rather than one resting on a lawn.
+ * - `"drape"` — no pad and no re-seat. The program conforms itself, column by
+ *   column, through `api.heightAt`.
+ */
+export const SEAT_POLICIES = ["pad", "embed", "drape"] as const;
+
+/** One of {@link SEAT_POLICIES}. */
+export type SeatPolicy = (typeof SEAT_POLICIES)[number];
+
+/** `params.embedDepth` bounds, inclusive. */
+export const EMBED_DEPTH_RANGE = Object.freeze({ min: 1, max: 32 });
+
+/** Blocks an `"embed"` seat sinks by when the node named no `embedDepth`. */
+export const DEFAULT_EMBED_DEPTH = 3;
+
+/** A resolved seating decision — what {@link seatPolicyOf} hands the compiler. */
+export interface SeatDecision {
+  readonly policy: SeatPolicy;
+  /** Meaningful for `"embed"` only; already defaulted. */
+  readonly embedDepth: number;
+}
 
 /** `params.hover` bounds, inclusive. Below the floor it reads as clutter. */
 export const HOVER_RANGE = Object.freeze({ min: 8, max: 256 });
@@ -232,4 +297,39 @@ export function hoverOf(node: unknown): number | undefined {
   if (typeof hover !== "number" || !Number.isInteger(hover)) return undefined;
   if (hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) return undefined;
   return hover;
+}
+
+/**
+ * How this node seats on the ground, or `undefined` when it does not seat at
+ * all because it hovers.
+ *
+ * The counterpart of {@link hoverOf}, and blessed the same way: compiler code
+ * never reads `params.seat` itself, so "how does this meet the ground" has one
+ * answer everywhere. `hover` and `seat` are mutually exclusive (the validator
+ * rejects both together), and hovering wins here so a document that slipped
+ * past validation still floats rather than being seated *and* floated.
+ * Anything the validator would have rejected reads as the `"pad"` default.
+ */
+export function seatPolicyOf(node: unknown): SeatDecision | undefined {
+  if (hoverOf(node) !== undefined) return undefined;
+  if (typeof node !== "object" || node === null) return { policy: "pad", embedDepth: DEFAULT_EMBED_DEPTH };
+  const params = (node as { params?: unknown }).params;
+  return seatOfParams(params);
+}
+
+/** {@link seatPolicyOf} for a params object — `scatter.program@0`'s spelling. */
+export function seatOfParams(params: unknown): SeatDecision {
+  const fallback: SeatDecision = { policy: "pad", embedDepth: DEFAULT_EMBED_DEPTH };
+  if (typeof params !== "object" || params === null) return fallback;
+  const seat = (params as { seat?: unknown }).seat;
+  if (typeof seat !== "string" || !(SEAT_POLICIES as readonly string[]).includes(seat)) return fallback;
+  const raw = (params as { embedDepth?: unknown }).embedDepth;
+  const depth =
+    typeof raw === "number" &&
+    Number.isInteger(raw) &&
+    raw >= EMBED_DEPTH_RANGE.min &&
+    raw <= EMBED_DEPTH_RANGE.max
+      ? raw
+      : DEFAULT_EMBED_DEPTH;
+  return { policy: seat as SeatPolicy, embedDepth: depth };
 }

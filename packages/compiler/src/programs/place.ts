@@ -3,8 +3,8 @@
  *
  * `scatter.program@0` reuses the scatter vocabulary the other scatter
  * generators already speak — a coarse `area`, a `spacing`, an eligibility band
- * — and the prop pass's own fitness helpers (`groundBase`, which refuses a
- * fluid column and a site rougher than the footprint tolerates). That reuse is
+ * — and its own fitness helper ({@link programGroundPlane}, which refuses a
+ * fluid column and a site rougher than a cliff's worth of relief). That reuse is
  * the point: **a program never learns where it is**, which is how the
  * no-absolute-coordinates law survives contact with model-written code.
  *
@@ -21,7 +21,72 @@ import { streamSeed } from "@terrainist/stdlib";
 import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import { groundBase } from "../structures/props.js";
+import { FluidKind } from "../terrain/columns.js";
+
+/**
+ * Roughness a program site tolerates before it is refused outright.
+ *
+ * A program is not a cart: it is a landmark-sized thing the compiler pads under
+ * (see the pass's `seat` handling), so ground that is merely *rough* must be
+ * padded rather than refused — refusing it is why a count-18 scatter used to
+ * place sixteen. What survives is a sanity ceiling, so nothing is ever seated
+ * across a cliff: past this, the pad would be a tower and the structure would
+ * read as a plinth with a hat.
+ */
+export const PROGRAM_MAX_RELIEF = 16;
+
+/** Counts refusals a caller wants to report rather than swallow. */
+export interface SiteRefusals {
+  /** Candidates a cliff refused — the ones worth a diagnostic. */
+  cliff: number;
+}
+
+/**
+ * The world Y of the plane a program's seat meets, or `undefined` when the
+ * ground will not do.
+ *
+ * The **median** column plus one, not the maximum: a single outlier boulder
+ * under a 30-block hull used to lift the whole structure a metre into the air,
+ * which is exactly the "just placed in" defect this replaces. The median is the
+ * plane most of the footprint already agrees with; the columns below it are
+ * raised to meet it by `levelPropPad`, and the few above it are simply
+ * occluded by their own terrain.
+ *
+ * Every column still has to be dry and inside the region. Relief is refused
+ * only past {@link PROGRAM_MAX_RELIEF}, and the refusal is counted into
+ * `refusals` so the caller can say so out loud.
+ */
+export function programGroundPlane(
+  plan: ColumnPlan,
+  rect: Rect,
+  refusals?: SiteRefusals,
+): number | undefined {
+  const { region } = plan;
+  const heights: number[] = [];
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return undefined;
+      const idx = j * region.width + i;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
+      const g = plan.ground[idx] as number;
+      heights.push(g);
+      if (g < lo) lo = g;
+      if (g > hi) hi = g;
+    }
+  }
+  /* c8 ignore next — a rect always has at least one column. */
+  if (heights.length === 0) return undefined;
+  if (hi - lo > PROGRAM_MAX_RELIEF) {
+    if (refusals !== undefined) refusals.cliff += 1;
+    return undefined;
+  }
+  heights.sort((a, b) => a - b);
+  return (heights[heights.length >> 1] as number) + 1;
+}
 
 /** One resolved instance site. */
 export interface ProgramSite {
@@ -29,7 +94,13 @@ export interface ProgramSite {
   readonly index: number;
   /** World footprint, inclusive, the size of the program's `[w, d]`. */
   readonly footprint: Rect;
-  /** World Y of the instance's node-local `y = 0`. */
+  /**
+   * World Y of the plane the instance seats on.
+   *
+   * For a hovering site this is the node-local `y = 0` outright; for a seated
+   * one it is the *ground* plane, and the pass derives the final `y = 0` from
+   * it and the run's `seatY`.
+   */
   readonly baseY: number;
 }
 
@@ -43,6 +114,8 @@ export interface ProgramPlacementInput {
   /** Footprints already claimed; an instance never lands on one. */
   readonly taken?: readonly Rect[];
   readonly occupancy?: OccupancyGrid;
+  /** Filled in with the candidates a cliff refused, for the caller to report. */
+  readonly refusals?: SiteRefusals;
 }
 
 /** Resolve up to `params.count` sites, in placement order. */
@@ -68,7 +141,7 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
       if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
       if (!areaAdmits(params.area, region, rect)) continue;
       if (input.occupancy !== undefined && occupied(input.occupancy, rect, params.avoidTags)) continue;
-      const baseY = groundBase(plan, rect);
+      const baseY = programGroundPlane(plan, rect, input.refusals);
       if (baseY === undefined) continue;
       if (!reliefOk(plan, rect, params, w, d)) continue;
       if (params.elevation !== undefined) {
@@ -89,6 +162,7 @@ export interface LandmarkPlacementInput {
   readonly plan: ColumnPlan;
   readonly seed: Seed256;
   readonly taken?: readonly Rect[];
+  readonly refusals?: SiteRefusals;
 }
 
 /**
@@ -113,7 +187,7 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   const centred: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
   const taken = input.taken ?? [];
   if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
-    const baseY = groundBase(plan, centred);
+    const baseY = programGroundPlane(plan, centred, input.refusals);
     if (baseY !== undefined) return { index: 0, footprint: centred, baseY };
   }
 
@@ -123,6 +197,7 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
     plan,
     seed: input.seed,
     taken,
+    ...(input.refusals === undefined ? {} : { refusals: input.refusals }),
   });
   return fallback;
 }
@@ -279,8 +354,8 @@ function occupied(grid: OccupancyGrid, rect: Rect, avoidTags: readonly string[] 
 
 /**
  * The site's roughness, against whichever of `maxRelief` / `maxSlope` the
- * author wrote. `groundBase` has already applied the prop pass's own default
- * tolerance; this is the author's tighter opinion on top of it.
+ * author wrote. `programGroundPlane` has already applied the sanity ceiling;
+ * this is the author's tighter opinion on top of it.
  */
 function reliefOk(
   plan: ColumnPlan,

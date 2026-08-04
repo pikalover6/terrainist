@@ -15,4 +15,6 @@ export * from "./run.js";
 export * from "./invoke.js";
 export * from "./place.js";
 export * from "./verify.js";
+export * from "./interiors.js";
 export * from "./pass.js";
+export * from "./road-anchors.js";

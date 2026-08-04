@@ -2152,12 +2152,56 @@ Place the ones you request as ordinary generator nodes:
   "constraints": [ { "zone": "northeast" }, { "distance": { "to": "camp", "max": 90 } } ] }
 ```
 
+### Routing a road to a landmark
+
 Landmark programs publish **anchors** — named points such as `door`,
-`ramp_foot`, `pad` — into the node's anchor namespace. Anchors are markers a
-road can be routed to, exactly like any other marker: a landmark is reachable
-without you knowing a single coordinate of it. Name the ones that matter in the
-brief ("the ramp meets the ground on the north side") and the roads will find
-them.
+`ramp_foot`, `pad` — into the node's anchor namespace, where they become
+markers named `"<node path>#<anchor>"` (`world.the_wreck#door`). A road can be
+routed to one, so a landmark is reachable without you knowing a single
+coordinate of it.
+
+**The syntax is the road node's own `anchors` list.** Name the landmark node
+there by id, exactly as you name a building:
+
+```json
+{ "children": [
+  { "id": "the_shrine", "kind": "generator", "generator": "authored:mountain_shrine",
+    "constraints": [ { "zone": "east" } ],
+    "tags": ["landmark"] },
+
+  { "id": "lanes", "kind": "generator", "generator": "road.network@0",
+    "params": { "anchors": ["town_hall", "#tag:house", "the_shrine"] } }
+] }
+```
+
+That is the whole change: `"the_shrine"` in the list turns the landmark into a
+destination, and the lane arrives at the **`door`-ish anchor the program
+published** — an anchor whose name reads as a way in (`door`, `entrance`,
+`gate`, `porch`, `steps`, `threshold`, …). A `#tag:` selector works too, so
+`"#tag:landmark"` reaches every landmark carrying that tag.
+
+Two things follow:
+
+- **Name the way in, in the brief.** "The stair meets the ground on the north
+  side, anchored as `door`" is what makes the lane arrive at the stair. A
+  program that publishes anchors but none that reads as a way in still gets its
+  lane — it lands on the footprint edge facing the town — plus a warning naming
+  the anchors it did publish, so the world is never left unreachable.
+- **A landmark you do not name is not a destination.** It is still built, its
+  markers are still published, and no lane goes to it. That is the right answer
+  for a monument on a ridge nobody walks to.
+
+### Interiors: a landmark you can go inside
+
+A landmark can be **enterable**, and if it should be, the brief has to say so —
+the program has to hollow the volume before there is anything to furnish. Ask
+for the space in the same physical language you'd use for a room: "a bridge deck
+you can stand on behind the forward glass", "a nave with a crypt below it", "a
+hangar bay wide enough to walk across". The program hollows what you asked for
+and hands the compiler the volumes; the compiler furnishes them with the same
+fit-out the ordinary buildings use, so the inside comes with lights, seating and
+storage without the brief listing a single prop. Say nothing about the inside
+and you get a solid monument, which is often the right answer for a statue.
 
 ### Hovering: airborne landmarks
 
@@ -2181,6 +2225,36 @@ nine-grid cell; with no `zone` it centres on the region).
 
 When the prompt wants something airborne, request a landmark and invoke it with
 `hover` — do **not** ask the program to bake an air gap into its own geometry.
+
+### Seating: how a grounded thing meets the ground
+
+Everything that does not hover meets the ground somehow, and `"params": {"seat":
+…}` says how. `seat` and `hover` are mutually exclusive — a thing either floats
+or it touches down.
+
+- `"seat": "pad"` — the default, and what you get by writing nothing. The
+  compiler seats the structure on a plane the footprint agrees with and raises
+  the low columns to meet it, fill-only, like a plinth under a building.
+- `"seat": "embed"` with `"embedDepth": <1..32>` — the same seating, then sunk
+  that many blocks into the ground. No terrain is cut: the land simply stands
+  over the buried part. This is what a **crashed** thing wants.
+- `"seat": "drape"` — no levelling and no re-seating; the program follows the
+  real terrain itself, column by column. Use it for something long and
+  conforming — a wall along a ridge, a pipeline, a fallen mast.
+
+```json
+{ "id": "crash_site", "kind": "generator", "generator": "authored:crashed_saucer",
+  "params": { "seat": "embed", "embedDepth": 5 },
+  "constraints": [ { "zone": "northeast" } ] }
+```
+
+A `scatter.program@0` node takes the same two keys, which is how a field of
+crashed pods gets buried instead of parked: `"seat": "embed", "embedDepth": 4`.
+
+**Something that crashed is requested as embedded, not described as "resting
+on".** A brief that says "resting on the moor" gets a saucer sitting on a lawn;
+what you meant is a hull half-buried in it, so write the brief that way *and*
+invoke the node with `"seat": "embed"`.
 
 A **plugin** program is invoked by a `scatter.program@0` node instead, whose
 `params.program` names the id; it takes the ordinary scatter placement fields:

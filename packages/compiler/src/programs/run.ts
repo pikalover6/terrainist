@@ -13,8 +13,10 @@
  */
 
 import {
+  INTERIOR_LIMITS,
   PROGRAM_LIMITS,
   type AuthoredProgramRecord,
+  type InteriorVolume,
   type ProgramApi,
   type ProgramResult,
   type LoamDiagnostic,
@@ -305,5 +307,81 @@ function readResult(value: unknown, w: number, h: number, d: number): ProgramRes
       anchors[key] = [ax, ay, az];
     }
   }
-  return anchors === undefined ? { name, seatY } : { name, seatY, anchors };
+  const interiors = readInteriors(obj["interiors"], w, h, d);
+  return {
+    name,
+    seatY,
+    ...(anchors === undefined ? {} : { anchors }),
+    ...(interiors === undefined ? {} : { interiors }),
+  };
+}
+
+/**
+ * Validate the rooms a program says it hollowed.
+ *
+ * Only the shape is checked here — integer boxes, inside the envelope, big
+ * enough to stand in, and not too many. Whether the program actually emptied
+ * them is the fit-out's problem: it furnishes the cells that are free and
+ * supported, so a lie about a solid volume costs furniture, not correctness.
+ */
+function readInteriors(
+  value: unknown,
+  w: number,
+  h: number,
+  d: number,
+): readonly InteriorVolume[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new TypeError("`interiors` must be an array of { min, max } volumes");
+  }
+  if (value.length > INTERIOR_LIMITS.maxCount) {
+    throw new TypeError(
+      `at most ${INTERIOR_LIMITS.maxCount} interiors may be declared; got ${value.length}`,
+    );
+  }
+  const out: InteriorVolume[] = [];
+  const bounds = [w, h, d];
+  for (const [i, raw] of (value as unknown[]).entries()) {
+    if (typeof raw !== "object" || raw === null) {
+      throw new TypeError(`interior ${i} is not { min, max }`);
+    }
+    const corners: [number, number, number][] = [];
+    for (const key of ["min", "max"] as const) {
+      const point = (raw as Record<string, unknown>)[key];
+      if (
+        !Array.isArray(point) ||
+        point.length !== 3 ||
+        point.some((v) => typeof v !== "number" || !Number.isInteger(v))
+      ) {
+        throw new TypeError(`interior ${i}: \`${key}\` must be whole [x, y, z]`);
+      }
+      corners.push(point as [number, number, number]);
+    }
+    const [min, max] = corners as [[number, number, number], [number, number, number]];
+    for (let axis = 0; axis < 3; axis++) {
+      const lo = min[axis] as number;
+      const hi = max[axis] as number;
+      if (lo < 0 || hi >= (bounds[axis] as number)) {
+        throw new TypeError(`interior ${i} lies outside the declared envelope`);
+      }
+      if (hi - lo + 1 < INTERIOR_LIMITS.minEdge) {
+        throw new TypeError(
+          `interior ${i} is thinner than ${INTERIOR_LIMITS.minEdge} blocks on one axis; there is nothing to furnish in it`,
+        );
+      }
+    }
+    // The floor plane the program laid sits one below `min.y`, so an interior
+    // seated at y = 0 has no floor under it at all.
+    if ((min[1] as number) < 1) {
+      throw new TypeError(
+        `interior ${i} starts at y = ${min[1]}; \`min.y\` is the lowest standable cell, so the floor beneath it must be inside the envelope`,
+      );
+    }
+    const kind = (raw as Record<string, unknown>)["kind"];
+    if (kind !== undefined && (typeof kind !== "string" || kind.length === 0)) {
+      throw new TypeError(`interior ${i}: \`kind\` must be a non-empty word`);
+    }
+    out.push(kind === undefined ? { min, max } : { min, max, kind });
+  }
+  return out;
 }

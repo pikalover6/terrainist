@@ -276,7 +276,24 @@ interface ProgramResult {
   readonly seatY: number;                 // node-local Y of the plane that meets
                                           // the ground; usually 0
   readonly anchors?: Record<string, [number, number, number]>;  // named points
+  readonly interiors?: {                  // rooms you left empty, for the compiler
+    min: [number, number, number];        // to furnish; node-local, inclusive
+    max: [number, number, number];        // min.y is the LOWEST STANDABLE cell —
+    kind?: string;                        // your floor is one block below it
+  }[];
 }
+
+INTERIORS — if a player can get inside what you built, say so.
+
+Leave the space empty yourself, then name it in \`interiors\` and stop there. The
+compiler furnishes every volume you declare with the same fit-out the ordinary
+buildings use: beds, tables, chests, seats turned the right way round, lights
+that hang off something and never at head height. Do NOT place furniture
+yourself — it costs you tokens and the fit-out already knows the physics rules
+your version would break. Each volume must be at least 3 x 3 x 3, must lie
+inside the envelope, and at most 16 of them. \`kind\` is one free word the
+fit-out reads as a hint — "hall", "bridge", "quarters", "nave", "vault".
+A solid landmark declares nothing, and is furnished not at all.
 
 THE SHAPE OF THE FILE — exactly this, no imports, no other exports:
 
@@ -302,20 +319,32 @@ RULES — each of these is checked by a gate before your program is accepted.
    0 <= z < size[2]. Writes outside are clipped and counted; more than 1%
    clipped fails the gate, because a program that spills has declared the wrong
    envelope. Declare the envelope you actually need.
-5. y = 0 IS THE SEAT PLANE — the course that meets the ground. Build upward from
-   it. Anything below y = 0 does not exist.
-6. FULL BLOCK STRINGS, states included. An unknown id or an invalid block state
+5. y = 0 IS THE SEAT PLANE by default — the course that meets the ground. Build
+   upward from it and return \`seatY: 0\`. If you model anything BELOW that
+   course — landing gear, a hull skirt, a belly that sinks in — put it at the
+   bottom of the envelope instead and return the HONEST \`seatY\`: the node-local
+   Y of the course that actually meets the ground. The compiler puts that plane
+   on the terrain, so a \`seatY\` of 0 on a structure with three blocks of gear
+   under it is a structure standing three blocks off the ground.
+6. FOLLOW THE GROUND YOU ARE GIVEN. \`api.heightAt(x, z)\` is the terrain height
+   under your footprint, node-local and measured from the seat plane: 0 where
+   the ground meets it, negative where the ground falls away, positive where it
+   rises. A thing that stands on the ground reads it at every column it touches
+   and follows it down — legs, skirt, plinth, foundation, whatever your thing
+   has. The compiler levels modestly under you and never cuts terrain; it does
+   not flatten a hillside for you.
+7. FULL BLOCK STRINGS, states included. An unknown id or an invalid block state
    is a gate failure, not a silent placement.
-7. FUEL-BOUNDED. 20 million instruction steps and 200,000 block writes per
+8. FUEL-BOUNDED. 20 million instruction steps and 200,000 block writes per
    instance. An instance that trips a limit is dropped whole. Prefer arithmetic
    over brute-force scans of the whole volume.
-8. ONE CONNECTED SOLID. After dropping stray components under 12 voxels, what
+9. ONE CONNECTED SOLID. After dropping stray components under 12 voxels, what
    you wrote must be a single 6-connected body, at least 8 blocks tall, at
    least 500 solid voxels. Floating chunks fail.
-9. IT MUST SURVIVE A PHYSICS LINT. Your output is emitted into a real world and
+10. IT MUST SURVIVE A PHYSICS LINT. Your output is emitted into a real world and
    walked: no floating gravity blocks, no unsupported stairs, no unreachable or
    sealed interiors, no obviously falling geometry.
-10. ANCHORS ARE NAMED POINTS the rest of the world can reach — a "door" anchor
+11. ANCHORS ARE NAMED POINTS the rest of the world can reach — a "door" anchor
     is where a road will be routed to. They name a point; they promise no
     geometry. Publish the ones that matter.
 
