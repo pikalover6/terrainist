@@ -30,6 +30,7 @@ import {
   validateProgramScatterParams,
 } from "../programs/validate.js";
 import type { ProgramMap } from "../programs/types.js";
+import { collectPendingPrograms, type PendingPrograms } from "../programs/requests.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
   CAVE_STYLES,
@@ -203,7 +204,7 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
   validateIntentPlacement(out, input);
   const programMap = validateProgramMap(input["programs"]);
   out.push(...programMap.diagnostics);
-  validateRoot(out, input["root"], programMap.programs);
+  validateRoot(out, input["root"], programMap.programs, collectPendingPrograms(input));
 
   if (hasErrors(out)) return { diagnostics: out };
   return { diagnostics: out, document: input as unknown as TerrainDocument };
@@ -380,7 +381,12 @@ export function validatePaletteMap(out: LoamDiagnostic[], palettes: Obj, at0: st
 /* root + nodes                                                                */
 /* -------------------------------------------------------------------------- */
 
-function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap = {}): void {
+function validateRoot(
+  out: LoamDiagnostic[],
+  root: unknown,
+  programs: ProgramMap = {},
+  pending: PendingPrograms = new Map(),
+): void {
   if (root === undefined) {
     out.push(error("MISSING_KEY", "", 'the document has no "root" node', 'add a "root" composite: { "id": "world", "kind": "composite", "envelope": { "shape": "region", "size": [512, 512] }, "children": [...] }'));
     return;
@@ -434,11 +440,12 @@ function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap
     if (typeof generator === "string" && generator.startsWith("authored:")) {
       validateAuthoredReference(out, generator, programs, childPath, {
         envelopeDeclared: raw["envelope"] !== undefined,
+        pending,
       });
       continue;
     }
     if (generator === "scatter.program@0") {
-      validateProgramScatterParams(out, raw["params"], programs, childPath);
+      validateProgramScatterParams(out, raw["params"], programs, childPath, pending);
       continue;
     }
     if (raw["kind"] !== "generator") {

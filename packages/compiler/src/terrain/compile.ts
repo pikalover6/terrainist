@@ -1412,8 +1412,23 @@ function programJobsFrom(
     if (isAuthoredGenerator(node.generator)) {
       const programId = authoredProgramId(node.generator);
       const program = programId === undefined ? undefined : map[programId];
-      /* c8 ignore next — the validator rejects a reference with no record. */
-      if (programId === undefined || program === undefined) continue;
+      /* c8 ignore next — the validator rejects a malformed reference. */
+      if (programId === undefined) continue;
+      if (program === undefined) {
+        // Legal now: a node may reference a program the document only
+        // *requested* (`intent.character.programs`). If the program-author
+        // phase never ran, or the program failed its gate and was dropped,
+        // the document arrives here without it.
+        diagnostics.push(
+          warning(
+            "PROGRAM_DROPPED",
+            nodePath,
+            `this node invokes program ${JSON.stringify(programId)}, which the document does not carry — it was requested but never authored`,
+            "run the program-authoring phase, add the program to the document's \"programs\" map, or drop the node; the world compiles without it",
+          ),
+        );
+        continue;
+      }
       const solved = placements.find((p) => p.nodePath === nodePath);
       // Settlement: the solver's site. Terrain: no solver, so the ground picks.
       const site =
@@ -1455,8 +1470,17 @@ function programJobsFrom(
     if (node.generator !== PROGRAM_SCATTER_GENERATOR) continue;
     const params = (node.params ?? {}) as unknown as ProgramScatterParams;
     const program = map[params.program];
-    /* c8 ignore next — likewise rejected by the validator. */
-    if (program === undefined) continue;
+    if (program === undefined) {
+      diagnostics.push(
+        warning(
+          "PROGRAM_DROPPED",
+          nodePath,
+          `this node scatters program ${JSON.stringify(params.program)}, which the document does not carry — it was requested but never authored`,
+          "run the program-authoring phase, add the program to the document's \"programs\" map, or drop the node; the world compiles without it",
+        ),
+      );
+      continue;
+    }
     jobs.push({ nodePath, programId: params.program, program, mode: "plugin", params, ...salt });
   }
 

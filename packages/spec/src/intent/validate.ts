@@ -407,17 +407,42 @@ function enumField(
   }
 }
 
+const PROGRAMS_SHAPE_HINT =
+  'use "programs": [{ "id": "earth_god_statue", "mode": "landmark", "brief": "a colossal statue of an earth god", "envelope": [24, 40, 24] }]';
+
+const PROGRAM_REQUEST_KEYS = ["id", "mode", "brief", "envelope", "count"] as const;
+const PROGRAM_REQUEST_MODES = ["landmark", "plugin", "both"] as const;
+
+/**
+ * `intent.character.programs` — bespoke-program **requests**.
+ *
+ * Two shapes are legal. The one the settlement kit (§9e) teaches, and the one
+ * the program-author phase actually reads, is an array of request objects; a
+ * single bare object is tolerated because the normaliser coerces it. The older
+ * `{ landmarks, plugins, briefs }` counts-and-briefs object still validates so
+ * that documents written against it keep working.
+ */
 function checkPrograms(out: LoamDiagnostic[], value: unknown, path: string): void {
   if (value === undefined) return;
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => checkProgramRequest(out, entry, `${path}[${index}]`));
+    return;
+  }
   if (!isObject(value)) {
     out.push(
       error(
         "BAD_TYPE",
         path,
-        `"programs" must be an object, got ${describe(value)}`,
-        'use "programs": { "landmarks": 1, "briefs": ["a statue of an earth god"] }',
+        `"programs" must be an array of program requests, got ${describe(value)}`,
+        PROGRAMS_SHAPE_HINT,
       ),
     );
+    return;
+  }
+  // A bare request object: `id`/`brief`/`mode`/`envelope`/`count` and none of
+  // the legacy keys. `normalizeRequests` wraps it in an array; mirror that.
+  if ("id" in value || "brief" in value || "mode" in value) {
+    checkProgramRequest(out, value, path);
     return;
   }
   unknownKeys(out, value, path, ["landmarks", "plugins", "briefs"], "intent.character.programs");
@@ -443,6 +468,97 @@ function checkPrograms(out: LoamDiagnostic[], value: unknown, path: string): voi
         `${path}.briefs`,
         `"briefs" must be an array of strings, got ${describe(briefs)}`,
         'write one sentence per program, e.g. ["a colossal statue of an earth god"]',
+      ),
+    );
+  }
+}
+
+/** One `{ id, mode, brief, envelope, count }` request. */
+function checkProgramRequest(out: LoamDiagnostic[], value: unknown, path: string): void {
+  if (!isObject(value)) {
+    out.push(
+      error(
+        "BAD_TYPE",
+        path,
+        `a program request must be an object, got ${describe(value)}`,
+        PROGRAMS_SHAPE_HINT,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, value, path, [...PROGRAM_REQUEST_KEYS], "a program request");
+
+  const id = value["id"];
+  if (typeof id !== "string" || id.trim() === "") {
+    out.push(
+      error(
+        "MISSING_KEY",
+        `${path}.id`,
+        `a program request needs an "id", got ${describe(id)}`,
+        'give it a short snake_case name — it becomes the "programs" key and the "authored:<id>" reference',
+      ),
+    );
+  } else if (!/[a-z0-9]/i.test(id)) {
+    out.push(
+      error(
+        "BAD_ID",
+        `${path}.id`,
+        `"id" ${JSON.stringify(id)} has no letters or digits to make a name out of`,
+        'use letters, digits and underscores, e.g. "earth_god_statue"',
+      ),
+    );
+  }
+
+  const brief = value["brief"];
+  if (typeof brief !== "string" || brief.trim() === "") {
+    out.push(
+      error(
+        "MISSING_KEY",
+        `${path}.brief`,
+        `a program request needs a "brief", got ${describe(brief)}`,
+        "write one sentence saying what it should be — that sentence is the whole prompt the program author gets",
+      ),
+    );
+  }
+
+  const mode = value["mode"];
+  if (mode !== undefined && (typeof mode !== "string" || !(PROGRAM_REQUEST_MODES as readonly string[]).includes(mode))) {
+    out.push(
+      error(
+        "BAD_ENUM",
+        `${path}.mode`,
+        `"mode" must be one of ${PROGRAM_REQUEST_MODES.join(", ")}, got ${describe(mode)}`,
+        'omit it for a one-off landmark, or use "plugin" for something scatter.program@0 places many of',
+      ),
+    );
+  }
+
+  const envelope = value["envelope"];
+  if (envelope !== undefined) {
+    const ok =
+      Array.isArray(envelope) &&
+      envelope.length === 3 &&
+      envelope.every((n) => typeof n === "number" && Number.isFinite(n) && n > 0);
+    if (!ok) {
+      out.push(
+        error(
+          "BAD_TYPE",
+          `${path}.envelope`,
+          `"envelope" must be [w, h, d] positive numbers, got ${describe(envelope)}`,
+          'write "envelope": [24, 40, 24] — a suggestion; the program may declare its own',
+        ),
+      );
+    }
+  }
+
+  const count = value["count"];
+  if (count !== undefined && (typeof count !== "number" || !Number.isInteger(count) || count < 1)) {
+    out.push(
+      error(
+        "PARAM_OUT_OF_RANGE",
+        `${path}.count`,
+        `"count" must be a positive integer, got ${describe(count)}`,
+        'give how many instances a "plugin" request wants, e.g. 12 — leave it off for a landmark',
       ),
     );
   }

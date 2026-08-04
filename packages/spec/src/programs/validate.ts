@@ -15,6 +15,7 @@ import { describe, isObject, unknownKeys, type Obj } from "../checks.js";
 import { error, hasErrors, warning, type LoamDiagnostic } from "../terrain/diagnostics.js";
 import { ID_PATTERN, ZONE_TOKENS } from "../terrain/types.js";
 import { lintProgramSource, sourceFindingsToDiagnostics } from "./lint.js";
+import type { PendingPrograms } from "./requests.js";
 import {
   PROGRAMS_KEY,
   PROGRAM_KEYS,
@@ -256,7 +257,7 @@ export function validateAuthoredReference(
   generator: unknown,
   programs: ProgramMap,
   nodePath: string,
-  options: { readonly envelopeDeclared?: boolean } = {},
+  options: { readonly envelopeDeclared?: boolean; readonly pending?: PendingPrograms } = {},
 ): AuthoredProgramRecord | undefined {
   const id = authoredProgramId(generator);
   if (id === undefined) {
@@ -272,12 +273,32 @@ export function validateAuthoredReference(
   }
   const program = programs[id];
   if (program === undefined) {
+    // The reference may still be legal: during initial authoring the document
+    // *requests* its bespoke programs in `intent.character.programs` and the
+    // map is attached by a later phase. A reference to a requested id is a
+    // promise, not a mistake — so it validates, with no record to return.
+    const pendingMode = options.pending?.get(id);
+    if (pendingMode !== undefined) {
+      if (!allowsLandmark(pendingMode)) {
+        out.push(
+          error(
+            "PROGRAM_SCHEMA",
+            nodePath,
+            `program ${JSON.stringify(id)} is requested with mode "${pendingMode}" and cannot be invoked as a landmark`,
+            'invoke it through scatter.program@0, or request it with "mode": "both"',
+          ),
+        );
+      }
+      // No PROGRAM_ENVELOPE_OVERRIDDEN here: until the program exists, the
+      // node's own envelope is the only size hint anything has.
+      return undefined;
+    }
     out.push(
       error(
         "PROGRAM_SCHEMA",
         nodePath,
-        `no program ${JSON.stringify(id)} in the document's "programs" map`,
-        `known programs: ${Object.keys(programs).join(", ") || "(none)"} — a reference is only ever to a program the document carries`,
+        `no program ${JSON.stringify(id)} in the document's "programs" map, and no request for it in "intent.character.programs"`,
+        `known programs: ${Object.keys(programs).join(", ") || "(none)"} — either name one the document carries, or request it in "intent.character.programs": [{ "id": ${JSON.stringify(id)}, "mode": "landmark", "brief": "…" }]`,
       ),
     );
     return undefined;
@@ -312,6 +333,7 @@ export function validateProgramScatterParams(
   params: unknown,
   programs: ProgramMap,
   nodePath: string,
+  pending?: PendingPrograms,
 ): ProgramScatterParams | undefined {
   const path = `${nodePath}.params`;
   if (!isObject(params)) {
@@ -330,13 +352,28 @@ export function validateProgramScatterParams(
   const before = out.length;
   const id = params["program"];
   let program: AuthoredProgramRecord | undefined;
-  if (typeof id !== "string" || programs[id] === undefined) {
+  // A requested-but-not-yet-authored id is legal here for the same reason it
+  // is legal on an `authored:` reference — see validateAuthoredReference.
+  let pendingMode: ProgramMode | undefined;
+  if (typeof id === "string" && programs[id] === undefined) pendingMode = pending?.get(id);
+  if (pendingMode !== undefined) {
+    if (!allowsPlugin(pendingMode)) {
+      out.push(
+        error(
+          "PROGRAM_SCHEMA",
+          `${path}.program`,
+          `program ${JSON.stringify(id)} is requested with mode "${pendingMode}" and cannot be scattered`,
+          'request it with "mode": "plugin" or "both", or invoke it once as a landmark node',
+        ),
+      );
+    }
+  } else if (typeof id !== "string" || programs[id] === undefined) {
     out.push(
       error(
         "PROGRAM_SCHEMA",
         `${path}.program`,
-        `scatter.program@0 names ${describe(id)}, which is not a key of "programs"`,
-        `known programs: ${Object.keys(programs).join(", ") || "(none)"}`,
+        `scatter.program@0 names ${describe(id)}, which is neither a key of "programs" nor a request in "intent.character.programs"`,
+        `known programs: ${Object.keys(programs).join(", ") || "(none)"} — or request it in "intent.character.programs": [{ "id": "…", "mode": "plugin", "brief": "…" }]`,
       ),
     );
   } else {
@@ -372,7 +409,7 @@ export function validateProgramScatterParams(
   checkElevation(out, params["elevation"], `${path}.elevation`);
   checkTags(out, params["avoidTags"], `${path}.avoidTags`);
 
-  if (out.length !== before || program === undefined) return undefined;
+  if (out.length !== before || (program === undefined && pendingMode === undefined)) return undefined;
   return params as unknown as ProgramScatterParams;
 }
 

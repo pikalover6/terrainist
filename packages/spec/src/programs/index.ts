@@ -9,4 +9,5 @@
 
 export * from "./types.js";
 export * from "./lint.js";
+export * from "./requests.js";
 export * from "./validate.js";

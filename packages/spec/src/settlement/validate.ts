@@ -31,6 +31,7 @@ import {
   validateProgramScatterParams,
 } from "../programs/validate.js";
 import type { ProgramMap } from "../programs/types.js";
+import { collectPendingPrograms, type PendingPrograms } from "../programs/requests.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "../terrain/diagnostics.js";
 import { PROFILE_GENERATORS, ZONE_TOKENS, type ZoneToken } from "../terrain/types.js";
 import {
@@ -160,7 +161,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
   validateIntentPlacement(out, input);
   const programMap = validateProgramMap(input["programs"]);
   out.push(...programMap.diagnostics);
-  validateRoot(out, input["root"], programMap.programs);
+  validateRoot(out, input["root"], programMap.programs, collectPendingPrograms(input));
 
   if (hasErrors(out)) return { diagnostics: out };
   return { diagnostics: out, document: input as unknown as SettlementDocument };
@@ -170,7 +171,12 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
 /* root                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap = {}): void {
+function validateRoot(
+  out: LoamDiagnostic[],
+  root: unknown,
+  programs: ProgramMap = {},
+  pending: PendingPrograms = new Map(),
+): void {
   if (root === undefined) {
     out.push(
       error(
@@ -293,10 +299,16 @@ function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap
     // scatters one. Both were authored against the same document, so the map
     // is the source of truth for what may be named here.
     if (typeof generator === "string" && generator.startsWith("authored:")) {
-      const record = validateAuthoredReference(out, generator, programs, childPath, {
+      // A pending (requested-but-not-yet-authored) reference returns no record
+      // and yet is legal, so "did this reference check out" is measured by
+      // diagnostics, not by the record — otherwise a faithful first-pass
+      // document would silently skip its constraint and port checks.
+      const beforeRef = out.length;
+      validateAuthoredReference(out, generator, programs, childPath, {
         envelopeDeclared: raw["envelope"] !== undefined,
+        pending,
       });
-      if (record !== undefined) {
+      if (out.length === beforeRef || !out.slice(beforeRef).some((d) => d.severity === "error")) {
         checkTags(out, childPath, raw["tags"]);
         checkSeedSalt(out, childPath, raw["seedSalt"]);
         validateConstraints(out, childPath, raw["constraints"], raw["id"], connections);
@@ -305,7 +317,7 @@ function validateRoot(out: LoamDiagnostic[], root: unknown, programs: ProgramMap
       continue;
     }
     if (generator === "scatter.program@0") {
-      validateProgramScatterParams(out, raw["params"], programs, childPath);
+      validateProgramScatterParams(out, raw["params"], programs, childPath, pending);
       continue;
     }
     if (typeof generator === "string" && (STRUCTURE_GENERATORS as readonly string[]).includes(generator)) {
