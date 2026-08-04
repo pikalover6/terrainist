@@ -2100,7 +2100,7 @@ belong to — world root for something singular, a region for something that
 belongs to that region only.
 
 ```json
-"intent": {
+{ "intent": {
   "character": {
     "label": "invasion beachhead",
     "programs": [
@@ -2115,7 +2115,7 @@ belongs to that region only.
         "count": 18 }
     ]
   }
-}
+} }
 ```
 
 | Field | Meaning |
