@@ -22,6 +22,7 @@ import type {
   TerrainStyle,
 } from "../terrain/types.js";
 import type { CanonicalConstraint } from "./constraints.js";
+import type { ProgramMap } from "../programs/types.js";
 
 /** Generators the settlement profile adds on top of the terrain set. */
 export const STRUCTURE_GENERATORS = [
@@ -152,6 +153,23 @@ interface StructureBase {
 export interface StructureNode extends StructureBase {
   readonly kind: "generator";
   readonly generator: StructureGenerator;
+  readonly params?: Readonly<Record<string, unknown>>;
+  readonly envelope?: BoxEnvelope;
+}
+
+/**
+ * A node that invokes an authored program (spec v0.2 §7.6).
+ *
+ * Two spellings, one type: `"generator": "authored:<id>"` invokes the program
+ * once against the envelope the program declares, and `"scatter.program@0"`
+ * scatters it. Deliberately outside {@link SettlementChildNode}: the validator
+ * checks both spellings against the document's `programs` map, and the passes
+ * that care reach for them by generator string.
+ */
+export interface ProgramNode extends StructureBase {
+  readonly kind: "generator";
+  /** `authored:<id>`, or `scatter.program@0`. */
+  readonly generator: string;
   readonly params?: Readonly<Record<string, unknown>>;
   readonly envelope?: BoxEnvelope;
 }
@@ -495,5 +513,7 @@ export interface SettlementDocument {
   readonly profile: "settlement";
   readonly meta: TerrainMeta;
   readonly style?: TerrainStyle;
+  /** The authored-program map (§7.6); the passes resolve every reference here. */
+  readonly programs?: ProgramMap;
   readonly root: SettlementRootNode;
 }

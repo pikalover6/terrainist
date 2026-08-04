@@ -6,6 +6,8 @@
  * known-good and the compiler never re-checks it.
  */
 
+import type { ProgramMap } from "../programs/types.js";
+
 /** Generators allowed by the terrain profile. */
 export const PROFILE_GENERATORS = [
   "terrain.heightfield@0",
@@ -335,5 +337,12 @@ export interface TerrainDocument {
   readonly profile: "terrain";
   readonly meta: TerrainMeta;
   readonly style?: TerrainStyle;
+  /**
+   * Authored programs (§7.6). The bespoke tier is legal in the terrain profile
+   * too — a monument on pure terrain is the contract's own first example — so
+   * the map, and the `authored:<id>` / `scatter.program@0` nodes that reference
+   * it, are validated and compiled here exactly as in the settlement profile.
+   */
+  readonly programs?: ProgramMap;
   readonly root: TerrainRootNode;
 }

@@ -8,15 +8,19 @@
 
 import { nodeSeed, type Seed256 } from "@terrainist/stdlib";
 import {
+  authoredProgramId,
   canonicalize,
+  isAuthoredGenerator,
   isPlaceableNode,
   note,
   resolveTypeKey,
+  type AuthoredProgramRecord,
   type CanonicalConstraint,
   type CityNode,
   type DistrictNode,
   type LoamDiagnostic,
   type PlazaNode,
+  type ProgramNode,
   type SettlementDocument,
   type StructureNode,
   type Yaw,
@@ -49,8 +53,24 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
   const diagnostics: LoamDiagnostic[] = [];
 
   for (const child of doc.root.children) {
-    if (!isPlaceableNode(child)) continue;
     const nodePath = `${rootPath}.${child.id}`;
+    // A landmark program is a placed node like any other — it just gets its box
+    // from the program's declared envelope instead of from the document, since
+    // §7.6 forbids the node from restating it.
+    if (child.kind === "generator" && isAuthoredGenerator((child as ProgramNode).generator)) {
+      const program = programOf(doc, (child as ProgramNode).generator);
+      if (program === undefined) continue;
+      nodes.push(
+        programInput(
+          child as ProgramNode,
+          program,
+          nodePath,
+          nodeSeed(worldSeed, nodePath, child.seedSalt ?? ""),
+        ),
+      );
+      continue;
+    }
+    if (!isPlaceableNode(child)) continue;
     const seed: Seed256 = nodeSeed(worldSeed, nodePath, child.seedSalt ?? "");
 
     if (child.kind === "primitive") {
@@ -104,6 +124,46 @@ function structureInput(node: StructureNode, nodePath: string, seed: Seed256): L
     flexible: envelope?.flexible === true,
     padding: envelope?.padding ?? 0,
     rotations: envelope?.rotations ?? ALL_YAWS,
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    seed,
+  };
+}
+
+/** The record an `authored:<id>` reference names, if the document has one. */
+export function programOf(
+  doc: SettlementDocument,
+  generator: string,
+): AuthoredProgramRecord | undefined {
+  const id = authoredProgramId(generator);
+  if (id === undefined) return undefined;
+  return doc.programs?.[id];
+}
+
+/**
+ * A landmark program, as the solver sees it: **the program's own box.**
+ *
+ * One rotation only. The pass lowers a run's node-local voxels straight into
+ * the world, so a yaw the solver chose would be a yaw nothing ever applied.
+ */
+function programInput(
+  node: ProgramNode,
+  program: AuthoredProgramRecord,
+  nodePath: string,
+  seed: Seed256,
+): LayoutNodeInput {
+  const [w, h, d] = program.envelope;
+  return {
+    id: node.id,
+    nodePath,
+    kind: "generator",
+    generator: node.generator,
+    size: [w, h, d],
+    flexible: false,
+    padding: 0,
+    rotations: [0],
     constraints: canonicalConstraints(node.constraints),
     ports: node.ports ?? {},
     optional: node.optional === true,

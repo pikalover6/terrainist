@@ -39,14 +39,29 @@ import {
   type EditNode,
   type ForestNode,
   type LoamDiagnostic,
+  type ProgramNode,
+  type ProgramScatterParams,
   type SettlementDocument,
   type TerrainDocument,
+  PROFILE_GENERATORS,
+  PROGRAM_SCATTER_GENERATOR,
+  PROP_GENERATOR,
+  STRUCTURE_GENERATORS,
+  authoredProgramId,
+  isAuthoredGenerator,
   validateSettlementDocument,
   validateTerrainDocument,
   note,
   warning,
   hasErrors,
 } from "@terrainist/spec";
+import {
+  buildPrograms,
+  planLandmarkSite,
+  type PlacedProgram,
+  type ProgramJob,
+  type ProgramPassResult,
+} from "../programs/index.js";
 
 import {
   TerrainProductIndex,
@@ -66,6 +81,7 @@ import {
   type OccupancyGrid,
   type PadEdit,
   type Placement,
+  type Rect,
   type ResolvedPort,
   type SolverReport,
 } from "../layout/index.js";
@@ -240,6 +256,8 @@ export interface CompileTimings {
   readonly caves: number;
   /** Structure pass; zero for terrain-profile documents. */
   readonly structures: number;
+  /** Authored-program pass; zero for a document with no `programs` map. */
+  readonly programs: number;
   readonly scatter: number;
   readonly biomes: number;
   readonly validators: number;
@@ -304,6 +322,18 @@ export interface CompileStats {
   readonly pondChains: Readonly<Record<string, number>>;
   /** What the structure pass built; absent for a terrain-profile compile. */
   readonly structures?: StructureStats;
+  /** What each authored-program node put in the world; absent when none did. */
+  readonly programs?: readonly ProgramNodeStats[];
+}
+
+/** One authored-program node's contribution to the world. */
+export interface ProgramNodeStats {
+  readonly nodePath: string;
+  readonly programId: string;
+  readonly mode: "landmark" | "plugin";
+  /** Instances that stand in the world — one for a landmark, N for a scatter. */
+  readonly instances: number;
+  readonly blockCount: number;
 }
 
 /** What the layout solver contributed, on a settlement-profile compile. */
@@ -409,6 +439,7 @@ async function compileValidated(
   ensureFanOutRows();
   const intents = resolveIntents(doc);
   diagnostics.push(...intents.diagnostics);
+  diagnostics.push(...generatorCoverageNotes(doc.root.children, rootPath));
 
   // --- palette -------------------------------------------------------------
   const rootSeed = nodeSeed(worldSeed, rootPath, "");
@@ -670,6 +701,41 @@ async function compileValidated(
   }
   const structuresMs = now() - tStruct;
 
+  // --- pass 5d: authored programs ------------------------------------------
+  // After the structures, for the same reason they run after the columns: a
+  // landmark sits on the site the solver reserved and a plugin scatter reads
+  // the occupancy every earlier pass has finished claiming. Its output is
+  // ordinary structure blocks from here on.
+  const tPrograms = now();
+  let programs: ProgramPassResult | undefined;
+  let programJobs: readonly ProgramJob[] = [];
+  {
+    // The bespoke tier is legal in both profiles. A settlement landmark takes
+    // the site the solver reserved; a terrain-profile one has no solver, so its
+    // site comes from the ground (see `planLandmarkSite`).
+    const jobs = programJobsFrom(doc, rootPath, layoutOutcome?.placements ?? [], diagnostics, {
+      plan,
+      worldSeed,
+      solved: isSettlement(doc),
+    });
+    programJobs = jobs;
+    if (jobs.length > 0) {
+      programs = buildPrograms({
+        jobs,
+        plan,
+        stack,
+        worldSeed,
+        ...(occupancy === undefined ? {} : { occupancy }),
+        reserved: (layoutOutcome?.placements ?? []).map((p) => p.footprint),
+      });
+      diagnostics.push(...programs.diagnostics);
+      // What a program stands on is claimed ground: the scatter that follows
+      // must not plant a tree through a saucer.
+      if (occupancy !== undefined) claimProgramFootprints(occupancy, programs.placed);
+    }
+  }
+  const programsMs = now() - tPrograms;
+
   // --- pass 5c: the settlement clearing and the vegetation clip ------------
   // Both are derived from what the structure pass actually built, and both are
   // consumed by the scatter that follows: the clearing decides where trees may
@@ -800,14 +866,23 @@ async function compileValidated(
 
   // --- pass 8: emit --------------------------------------------------------
   options.onColumnPlan?.(plan);
-  const markers = [...classification.markers, ...terrain.edits.markers, ...(plan.caves?.markers ?? [])];
+  const markers = [
+    ...classification.markers,
+    ...terrain.edits.markers,
+    ...(plan.caves?.markers ?? []),
+    ...(programs?.markers ?? []),
+  ];
+  const structureBlocks =
+    structures === undefined && programs === undefined
+      ? undefined
+      : [...(structures?.blocks ?? []), ...(programs?.blocks ?? [])];
   const spawnResult = resolveSpawn(doc, plan, markers, diagnostics, rootPath);
   const t6 = now();
   const emitInput = {
     plan,
     trees,
     decor: [...caveDecor.blocks, ...decoration.blocks, ...(transition?.blocks ?? [])],
-    ...(structures === undefined ? {} : { structures: structures.blocks }),
+    ...(structureBlocks === undefined ? {} : { structures: structureBlocks }),
     ...(clip === undefined ? {} : { clip }),
     stack,
     worldDir: options.outDir,
@@ -818,7 +893,7 @@ async function compileValidated(
     plan,
     trees,
     decor: emitInput.decor,
-    ...(structures === undefined ? {} : { structures: structures.blocks }),
+    ...(structureBlocks === undefined ? {} : { structures: structureBlocks }),
     ...(clip === undefined ? {} : { clip }),
     spawn: spawnResult,
     stack,
@@ -880,6 +955,7 @@ async function compileValidated(
         terrain.ponds.map((p) => [p.editId, p.ponds] as const).sort(([a], [b]) => (a < b ? -1 : 1)),
       ),
       ...(structures === undefined ? {} : { structures: structures.stats }),
+      ...(programs === undefined ? {} : { programs: programStatsOf(programJobs, programs.placed) }),
     },
     diagnostics,
     ...(layoutOutcome === undefined ? {} : { layout: layoutOutcome }),
@@ -891,6 +967,7 @@ async function compileValidated(
       columns: columnsMs,
       caves: cavesMs,
       structures: structuresMs,
+      programs: programsMs,
       scatter: scatterMs,
       biomes: biomesMs,
       validators: validatorsMs,
@@ -1301,6 +1378,162 @@ function transitionAvoid(
     }
     return false;
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* authored programs                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The authored-program nodes of a document, as pass jobs.
+ *
+ * Two spellings, one job list, in document order: `authored:<id>` is a landmark
+ * and takes the site the solver reserved for it; `scatter.program@0` is a
+ * plugin and hands its params to the placer. A node the validator accepted but
+ * that has nowhere to stand leaves a diagnostic behind rather than nothing.
+ */
+function programJobsFrom(
+  doc: SettlementDocument | TerrainDocument,
+  rootPath: string,
+  placements: readonly Placement[],
+  diagnostics: LoamDiagnostic[],
+  ground: { plan: ColumnPlan; worldSeed: bigint; solved: boolean },
+): readonly ProgramJob[] {
+  const map = doc.programs ?? {};
+  const jobs: ProgramJob[] = [];
+  const claimed: Rect[] = placements.map((p) => p.footprint);
+
+  for (const child of doc.root.children as readonly { kind: string }[]) {
+    if (child.kind !== "generator") continue;
+    const node = child as ProgramNode;
+    const nodePath = `${rootPath}.${node.id}`;
+    const salt = node.seedSalt === undefined ? {} : { seedSalt: node.seedSalt };
+
+    if (isAuthoredGenerator(node.generator)) {
+      const programId = authoredProgramId(node.generator);
+      const program = programId === undefined ? undefined : map[programId];
+      /* c8 ignore next — the validator rejects a reference with no record. */
+      if (programId === undefined || program === undefined) continue;
+      const solved = placements.find((p) => p.nodePath === nodePath);
+      // Settlement: the solver's site. Terrain: no solver, so the ground picks.
+      const site =
+        solved !== undefined
+          ? { footprint: solved.footprint, baseY: solved.foundationY }
+          : ground.solved
+            ? undefined
+            : planLandmarkSite({
+                envelope: program.envelope,
+                plan: ground.plan,
+                seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
+                taken: claimed,
+              });
+      if (site === undefined) {
+        diagnostics.push(
+          warning(
+            "PROGRAM_DROPPED",
+            nodePath,
+            ground.solved
+              ? `the layout solver reserved no site for landmark program ${JSON.stringify(programId)}, so it was not built`
+              : `no ground in the region would hold landmark program ${JSON.stringify(programId)}, so it was not built`,
+            "loosen the node's constraints, or shrink the program's declared envelope so a site can hold it",
+          ),
+        );
+        continue;
+      }
+      claimed.push(site.footprint);
+      jobs.push({
+        nodePath,
+        programId,
+        program,
+        mode: "landmark",
+        placement: site,
+        ...salt,
+      });
+      continue;
+    }
+
+    if (node.generator !== PROGRAM_SCATTER_GENERATOR) continue;
+    const params = (node.params ?? {}) as unknown as ProgramScatterParams;
+    const program = map[params.program];
+    /* c8 ignore next — likewise rejected by the validator. */
+    if (program === undefined) continue;
+    jobs.push({ nodePath, programId: params.program, program, mode: "plugin", params, ...salt });
+  }
+
+  return jobs;
+}
+
+/** Claim every placed instance's footprint, so later passes route around it. */
+function claimProgramFootprints(
+  occupancy: OccupancyGrid,
+  placed: readonly PlacedProgram[],
+): void {
+  const { region, mask } = occupancy;
+  for (const instance of placed) {
+    const { footprint } = instance;
+    for (let z = footprint.z0; z <= footprint.z1; z++) {
+      for (let x = footprint.x0; x <= footprint.x1; x++) {
+        const ix = x - region.x0;
+        const iz = z - region.z0;
+        if (ix < 0 || iz < 0 || ix >= region.width || iz >= region.depth) continue;
+        mask[iz * region.width + ix] = 1;
+      }
+    }
+  }
+}
+
+/** One report row per authored-program node, in job order. */
+function programStatsOf(
+  jobs: readonly ProgramJob[],
+  placed: readonly PlacedProgram[],
+): readonly ProgramNodeStats[] {
+  return jobs.map((job) => {
+    const mine = placed.filter((p) => p.nodePath === job.nodePath);
+    return {
+      nodePath: job.nodePath,
+      programId: job.programId,
+      mode: job.mode,
+      instances: mine.length,
+      blockCount: mine.reduce((sum, p) => sum + p.blockCount, 0),
+    };
+  });
+}
+
+/**
+ * `LOAM-T208` for every generator node no pass in this pipeline handles.
+ *
+ * The validator's generator whitelist and this list are maintained apart, and a
+ * document that satisfies the first while falling through the second used to
+ * compile to a world silently missing whatever the node asked for. That class
+ * of defect is what this sweep exists to make loud.
+ */
+export function generatorCoverageNotes(
+  children: readonly { readonly kind: string; readonly id: string; readonly generator?: string }[],
+  rootPath: string,
+): readonly LoamDiagnostic[] {
+  const handled = new Set<string>([
+    ...PROFILE_GENERATORS,
+    ...STRUCTURE_GENERATORS,
+    PROP_GENERATOR,
+    PROGRAM_SCATTER_GENERATOR,
+  ]);
+  const out: LoamDiagnostic[] = [];
+  for (const child of children) {
+    if (child.kind !== "generator") continue;
+    const generator = child.generator;
+    if (typeof generator === "string" && (handled.has(generator) || isAuthoredGenerator(generator))) {
+      continue;
+    }
+    out.push(
+      note(
+        "GENERATOR_NOT_IMPLEMENTED",
+        `${rootPath}.${child.id}`,
+        `no compiler pass handles generator ${JSON.stringify(String(generator))}, so this node contributed nothing to the world`,
+        "use a generator this compiler implements, or drop the node — a generator with no pass is silent, not harmless",
+      ),
+    );
+  }
+  return out;
 }
 
 /** Monotonic-ish millisecond clock for pass timings. */

@@ -674,6 +674,12 @@ function printCompileReport(
     `  spawn      [${emit.spawn.join(", ")}]`,
     `  timings    ${Object.entries(timings).map(([k, v]) => `${k} ${v.toFixed(0)}ms`).join("  ")}`,
   ];
+  if (stats.programs !== undefined && stats.programs.length > 0) {
+    const built = stats.programs
+      .map((p) => `${p.nodePath}=${p.programId}×${p.instances} (${p.blockCount} blocks)`)
+      .join(", ");
+    lines.push(`  programs   ${built}`);
+  }
   if (report.provenance !== undefined) {
     const p = report.provenance;
     const marks = [p.isBaseline ? "baseline" : p.branch, ...(p.dirty ? ["dirty"] : [])];

@@ -82,6 +82,51 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   return sites;
 }
 
+/** Everything {@link planLandmarkSite} reads. */
+export interface LandmarkPlacementInput {
+  /** The program's declared `[w, h, d]`. */
+  readonly envelope: readonly [number, number, number];
+  readonly plan: ColumnPlan;
+  readonly seed: Seed256;
+  readonly taken?: readonly Rect[];
+}
+
+/**
+ * The single site of an `authored:<id>` node **without a layout solver.**
+ *
+ * The terrain profile has no solver and no occupancy, so a landmark's site is
+ * decided by the ground alone: the region's centre first — the one placement an
+ * author can predict from the document — and, if the centre column will not
+ * hold the footprint (fluid, or too rough), the ordinary scatter walk over the
+ * whole region, which is the same deterministic row-major lattice a plugin
+ * node uses. Returns `undefined` when nothing in the region fits, which the
+ * caller reports as `PROGRAM_DROPPED` rather than silence.
+ */
+export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | undefined {
+  const { plan } = input;
+  const [w, , d] = input.envelope;
+  const region = plan.region;
+  const whole = areaRect(region, undefined);
+
+  const cx = region.x0 + Math.floor((region.width - w) / 2);
+  const cz = region.z0 + Math.floor((region.depth - d) / 2);
+  const centred: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
+  const taken = input.taken ?? [];
+  if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
+    const baseY = groundBase(plan, centred);
+    if (baseY !== undefined) return { index: 0, footprint: centred, baseY };
+  }
+
+  const [fallback] = planProgramSites({
+    params: { program: "", count: 1 } as unknown as ProgramScatterParams,
+    envelope: input.envelope,
+    plan,
+    seed: input.seed,
+    taken,
+  });
+  return fallback;
+}
+
 /** The nine-grid cell (or circle bound, or whole region) an `area` names. */
 export function areaRect(region: Region, area: ProgramScatterParams["area"]): Rect {
   const whole: Rect = {
