@@ -59,6 +59,11 @@ scaffolding, well-specified coding tasks, and mechanical changes. Design/spec-he
 work goes to a single **Opus 5 HIGH** subagent, which writes docs only and
 never touches code that parallel work has in flight.
 
+**The cap is a TOTAL across the whole tree, not a per-level fan-out** (Kai,
+2026-08-04). An implementer subagent must not spawn subagents of its own —
+say so in every brief — and the orchestrator counts any nested agent against
+the same budget. Three concurrent means three agents running, full stop.
+
 ### How to spawn subagents at a chosen model + reasoning effort
 
 The repo commits a generic 15-type agent matrix in `.claude/agents/`:
