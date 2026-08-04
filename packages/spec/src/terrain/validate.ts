@@ -24,6 +24,7 @@ import {
   type Obj,
 } from "../checks.js";
 import { validateIntentPlacement } from "../intent/validate.js";
+import { validateProgramMap } from "../programs/validate.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "./diagnostics.js";
 import {
   CAVE_STYLES,
@@ -169,7 +170,7 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
     return { diagnostics: out };
   }
 
-  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "root"], "document");
+  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "programs", "root"], "document");
 
   if (input["loam"] !== "0.1") {
     out.push(
@@ -195,6 +196,7 @@ export function validateTerrainDocument(input: unknown): TerrainValidation {
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
   validateIntentPlacement(out, input);
+  out.push(...validateProgramMap(input["programs"]).diagnostics);
   validateRoot(out, input["root"]);
 
   if (hasErrors(out)) return { diagnostics: out };

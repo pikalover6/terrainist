@@ -25,6 +25,7 @@ import {
   type Obj,
 } from "../checks.js";
 import { validateIntentPlacement } from "../intent/validate.js";
+import { validateProgramMap } from "../programs/validate.js";
 import { type LoamDiagnostic, error, hasErrors, warning } from "../terrain/diagnostics.js";
 import { PROFILE_GENERATORS, ZONE_TOKENS, type ZoneToken } from "../terrain/types.js";
 import {
@@ -126,7 +127,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
     return { diagnostics: out };
   }
 
-  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "root"], "document");
+  unknownKeys(out, input, "", ["loam", "profile", "meta", "style", "intent", "programs", "root"], "document");
 
   if (input["loam"] !== "0.1") {
     out.push(
@@ -152,6 +153,7 @@ export function validateSettlementDocument(input: unknown): SettlementValidation
   validateMeta(out, input["meta"]);
   validateStyle(out, input["style"]);
   validateIntentPlacement(out, input);
+  out.push(...validateProgramMap(input["programs"]).diagnostics);
   validateRoot(out, input["root"]);
 
   if (hasErrors(out)) return { diagnostics: out };
