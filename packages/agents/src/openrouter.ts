@@ -96,10 +96,12 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
   }
   if (options.maxTokens !== undefined) body["max_tokens"] = options.maxTokens;
 
-  // One retry on network-shaped failures only: a rejected fetch, a 5xx, or a
+  // One retry on network-shaped failures only: a rejected fetch, a 5xx, a
   // truncated body (res.json() throwing "Unexpected end of JSON input" after a
-  // long request through a proxy). Anything the server *said* — a 4xx, or a
-  // well-formed body that fails narrowing — is not retried here: 4xx repeats
+  // long request through a proxy), or a 200 whose message has no content at
+  // all — an upstream-provider hiccup OpenRouter passes through as an empty
+  // choice. Anything the server *said* — a 4xx, or a well-formed body that
+  // fails narrowing for any other reason — is not retried here: 4xx repeats
   // identically, and content-level problems belong to the authoring loop's
   // diagnostic retries, not this one.
   const attempts = 2;
@@ -143,10 +145,22 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       if (attempt < attempts) await sleepMs(2000);
       continue;
     }
-    return narrowCompletion(payload, model);
+    try {
+      return narrowCompletion(payload, model);
+    } catch (cause) {
+      if (cause instanceof EmptyContentError && attempt < attempts) {
+        lastFailure = cause;
+        await sleepMs(2000);
+        continue;
+      }
+      throw cause;
+    }
   }
   throw lastFailure ?? new Error("OpenRouter request failed");
 }
+
+/** A 200 whose first choice carried no text — retryable provider hiccup. */
+class EmptyContentError extends Error {}
 
 /** Injectable only via tests' fake timers; a plain delay between retries. */
 function sleepMs(ms: number): Promise<void> {
@@ -236,7 +250,7 @@ function narrowCompletion(payload: unknown, requestedModel: string): CompletionR
   const choice = p.choices?.[0];
   const content = choice?.message?.content;
   if (typeof content !== "string") {
-    throw new Error("OpenRouter response had no message content");
+    throw new EmptyContentError("OpenRouter response had no message content");
   }
 
   const usage: Usage = {
