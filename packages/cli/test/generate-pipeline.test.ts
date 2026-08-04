@@ -165,6 +165,12 @@ describe("runGenerate — settlement happy path", () => {
       profile: string;
     };
     expect(doc.profile).toBe("settlement");
+    // The compile report is persisted beside the document for post-mortems.
+    const report = JSON.parse(
+      await readFile(path.join(outDir, "stub_hamlet.report.json"), "utf8"),
+    ) as { name: string; timings: Record<string, number> };
+    expect(report.name).toBe("stub_hamlet");
+    expect(report.timings).toBeDefined();
     await expect(
       readFile(path.join(outDir, "stub_hamlet", "level.dat")),
     ).resolves.toBeDefined();

@@ -62,6 +62,7 @@ import {
 import {
   authorAndWriteDocument,
   discardDocument,
+  persistGenerateArtifacts,
   parseGenerateArgs,
   printAuthorFailure,
   printReviseSummary,
@@ -653,6 +654,7 @@ function printCompileReport(
   report: TerrainCompileReport,
   zipPath: string | undefined,
   reportPath: string | undefined,
+  docPath?: string,
 ): void {
   const { stats, timings, emit } = report;
   const biomes = Object.entries(stats.biomeHistogram)
@@ -686,6 +688,7 @@ function printCompileReport(
     lines.push(`  built from ${p.commit.slice(0, 12)} (${marks.join(", ")})`);
   }
   if (zipPath !== undefined) lines.push(`  zip        ${zipPath}`);
+  if (docPath !== undefined) lines.push(`  doc        ${path.resolve(docPath)}`);
   if (reportPath !== undefined) lines.push(`  report     ${path.resolve(reportPath)}`);
   console.log(lines.join("\n"));
   for (const d of report.diagnostics) console.warn(`\n${formatDiagnostic(d)}`);
@@ -752,7 +755,13 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
     if (result.ok && feedback === undefined) {
       const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
       await discardDocument(docPath, options.keepDoc);
-      printCompileReport(result.report, zipPath, undefined);
+      const artifacts = await persistGenerateArtifacts(
+        options.outDir,
+        result.report.name,
+        doc,
+        result.report,
+      );
+      printCompileReport(result.report, zipPath, artifacts.reportPath, artifacts.docPath);
       printRunUsage(usages, round);
       console.log(`\nnext: terrainist install ${result.report.emit.worldDir}`);
       return 0;
@@ -764,7 +773,13 @@ export async function runGenerate(args: readonly string[]): Promise<number> {
       // keeping. The findings are printed with the report, as always.
       const zipPath = options.zip ? await zipWorld(result.report.emit.worldDir) : undefined;
       await discardDocument(docPath, options.keepDoc);
-      printCompileReport(result.report, zipPath, undefined);
+      const artifacts = await persistGenerateArtifacts(
+        options.outDir,
+        result.report.name,
+        doc,
+        result.report,
+      );
+      printCompileReport(result.report, zipPath, artifacts.reportPath, artifacts.docPath);
       printRunUsage(usages, round);
       console.log(
         `\nnote: ${options.compileRounds} compile-feedback round(s) used; the findings above remain`,
@@ -1067,7 +1082,7 @@ if (entry !== undefined && import.meta.url === pathToFileURL(entry).href) {
 export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed, stampLevelDat } from "./install.js";
 export { BASELINE_TAG, gitProvenance } from "./provenance.js";
 export type { InstallOptions, InstallResult } from "./install.js";
-export { parseGenerateArgs, seedFromPrompt } from "./generate.js";
+export { parseGenerateArgs, seedFromPrompt, persistGenerateArtifacts } from "./generate.js";
 export {
   buildSession,
   chatPayload,

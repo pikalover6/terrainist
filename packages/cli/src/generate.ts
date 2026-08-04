@@ -402,6 +402,54 @@ export async function writeDocument(outDir: string, doc: LoamDocument): Promise<
   return docPath;
 }
 
+/** Where {@link persistGenerateArtifacts} put the run's debugging artifacts. */
+export interface GenerateArtifactPaths {
+  /** The final authored document, programs map included. */
+  readonly docPath: string;
+  /** The compile report the summary was printed from. */
+  readonly reportPath: string;
+}
+
+/**
+ * Write the two files a post-mortem needs next to the world folder: the
+ * document that produced this world, and the compile report for it.
+ *
+ * Both are pretty-printed with a two-space indent and a trailing newline, the
+ * same shape `terrainist compile --report` writes, so the files interchange.
+ * Nothing here reads the clock; identical inputs give byte-identical output.
+ */
+export async function persistGenerateArtifacts(
+  outDir: string,
+  name: string,
+  doc: unknown,
+  report: unknown,
+): Promise<GenerateArtifactPaths> {
+  const dir = path.resolve(outDir);
+  await mkdir(dir, { recursive: true });
+  const docPath = path.join(dir, `${name}.loam.json`);
+  const reportPath = path.join(dir, `${name}.report.json`);
+  await writeFile(docPath, `${stringifyArtifact(doc)}\n`);
+  await writeFile(reportPath, `${stringifyArtifact(report)}\n`);
+  return { docPath, reportPath };
+}
+
+/**
+ * JSON for an artifact, with the two values `JSON.stringify` refuses or
+ * mangles handled deliberately rather than by throwing mid-write: bigints
+ * become decimal strings, non-finite numbers become their names.
+ */
+function stringifyArtifact(value: unknown): string {
+  return JSON.stringify(
+    value,
+    (_key, v: unknown) => {
+      if (typeof v === "bigint") return v.toString();
+      if (typeof v === "number" && !Number.isFinite(v)) return String(v);
+      return v;
+    },
+    2,
+  );
+}
+
 /** Print what one compile-feedback round asked for and what it cost. */
 export function printReviseSummary(round: number, result: AuthorResult): void {
   const { usage } = result;
