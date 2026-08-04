@@ -21,6 +21,8 @@ import {
   PROGRAM_KEYS,
   PROGRAM_LIMITS,
   PROGRAM_MODES,
+  HOVER_RANGE,
+  LANDMARK_PARAM_KEYS,
   PROGRAM_SCATTER_KEYS,
   allowsLandmark,
   allowsPlugin,
@@ -483,6 +485,48 @@ function num(
         path,
         `expected ${min}..${max}, got ${describe(value)}`,
         `${meaning}; keep it inside ${min}..${max}`,
+      ),
+    );
+  }
+}
+
+/**
+ * Validate the `params` of an `authored:<id>` landmark node.
+ *
+ * A landmark node takes no generator params in general — its geometry is the
+ * program's business — so the one key here is placement: `hover`, the number
+ * of blocks between the highest ground under the footprint and the program's
+ * node-local `y = 0`. Anything below {@link HOVER_RANGE}`.min` would read as
+ * ground clutter rather than as an airborne thing, so it is rejected outright.
+ */
+export function validateLandmarkParams(
+  out: LoamDiagnostic[],
+  params: unknown,
+  nodePath: string,
+): void {
+  if (params === undefined) return;
+  const path = `${nodePath}.params`;
+  if (!isObject(params)) {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        path,
+        `an authored: landmark node's params must be an object, got ${describe(params)}`,
+        'write "params": { "hover": 48 }, or drop "params" entirely',
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, params, path, [...LANDMARK_PARAM_KEYS], "an authored: landmark node");
+  const hover = params["hover"];
+  if (hover === undefined) return;
+  if (typeof hover !== "number" || !Number.isInteger(hover) || hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) {
+    out.push(
+      error(
+        "PARAM_OUT_OF_RANGE",
+        `${path}.hover`,
+        `"hover" must be an integer ${HOVER_RANGE.min}..${HOVER_RANGE.max}, got ${describe(hover)}`,
+        `hover floats the landmark that many blocks above the highest ground under its footprint; below ${HOVER_RANGE.min} it reads as ground clutter, so seat it on the ground by dropping "hover" instead`,
       ),
     );
   }

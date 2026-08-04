@@ -27,6 +27,7 @@ import {
 import { validateIntentPlacement } from "../intent/validate.js";
 import {
   validateAuthoredReference,
+  validateLandmarkParams,
   validateProgramMap,
   validateProgramScatterParams,
 } from "../programs/validate.js";
@@ -313,6 +314,7 @@ function validateRoot(
         checkSeedSalt(out, childPath, raw["seedSalt"]);
         validateConstraints(out, childPath, raw["constraints"], raw["id"], connections);
         validatePorts(out, childPath, raw["ports"]);
+        validateLandmarkParams(out, raw["params"], childPath);
       }
       continue;
     }

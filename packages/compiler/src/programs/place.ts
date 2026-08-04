@@ -127,6 +127,64 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   return fallback;
 }
 
+/** Everything {@link planHoverSite} reads. */
+export interface HoverPlacementInput {
+  /** The program's declared `[w, h, d]`. */
+  readonly envelope: readonly [number, number, number];
+  readonly plan: ColumnPlan;
+  /** Blocks between the highest ground under the footprint and node-local y=0. */
+  readonly hover: number;
+  /** The `zone` constraint's zone, if the node wrote one. */
+  readonly zone?: string;
+}
+
+/**
+ * The site of a **hovering** `authored:<id>` node.
+ *
+ * Nothing about the ground can refuse it: it floats. So there is no fitness
+ * test, no occupancy test and no relief test here — only a footprint centred
+ * in the named zone (or in the region, when the node named none), clamped to
+ * stay inside the region, and a base Y that clears the *highest* column under
+ * that footprint by `hover`. Constraints other than `zone` are ignored for a
+ * hovering node in v1: `adjacent_to`, `distance` and friends are all statements
+ * about competing for ground, which this node does not do.
+ */
+export function planHoverSite(input: HoverPlacementInput): ProgramSite {
+  const { plan, hover } = input;
+  const [w, , d] = input.envelope;
+  const region = plan.region;
+  const whole = areaRect(region, undefined);
+  const area = areaRect(region, input.zone === undefined ? undefined : { zone: input.zone });
+
+  const cx = area.x0 + Math.floor((area.x1 - area.x0 + 1 - w) / 2);
+  const cz = area.z0 + Math.floor((area.z1 - area.z0 + 1 - d) / 2);
+  const x0 = clamp(cx, whole.x0, Math.max(whole.x0, whole.x1 - w + 1));
+  const z0 = clamp(cz, whole.z0, Math.max(whole.z0, whole.z1 - d + 1));
+  const footprint: Rect = {
+    x0,
+    z0,
+    x1: Math.min(whole.x1, x0 + w - 1),
+    z1: Math.min(whole.z1, z0 + d - 1),
+  };
+
+  let top = -Infinity;
+  for (let z = footprint.z0; z <= footprint.z1; z++) {
+    for (let x = footprint.x0; x <= footprint.x1; x++) {
+      const idx = (z - region.z0) * region.width + (x - region.x0);
+      const g = plan.ground[idx];
+      if (g !== undefined && g > top) top = g;
+    }
+  }
+  /* c8 ignore next — an empty footprint cannot reach here; the region has area. */
+  if (!Number.isFinite(top)) top = 0;
+
+  return { index: 0, footprint, baseY: top + hover };
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
 /** The nine-grid cell (or circle bound, or whole region) an `area` names. */
 export function areaRect(region: Region, area: ProgramScatterParams["area"]): Rect {
   const whole: Rect = {

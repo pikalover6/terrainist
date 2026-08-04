@@ -2159,6 +2159,29 @@ without you knowing a single coordinate of it. Name the ones that matter in the
 brief ("the ramp meets the ground on the north side") and the roads will find
 them.
 
+### Hovering: airborne landmarks
+
+A landmark node may carry `"params": {"hover": <blocks>}`, which floats the
+whole structure that many blocks above the **highest** ground column under its
+footprint instead of seating it on the ground:
+
+```json
+{ "id": "the_mothership", "kind": "generator", "generator": "authored:mothership",
+  "params": { "hover": 48 },
+  "constraints": [ { "zone": "center" } ] }
+```
+
+A hovering landmark takes no part in the layout solve, so the ground beneath it
+stays fully buildable — the town keeps its houses and roads and the ship looms
+over them. Use it for anything airborne: motherships, sky islands, floating
+fortresses. `hover` is an integer 8–256; pick one that clears the tallest thing
+below, so **12 or more** above a low village and considerably more over towers.
+Only the node's `zone` constraint is honoured (it centres the footprint in that
+nine-grid cell; with no `zone` it centres on the region).
+
+When the prompt wants something airborne, request a landmark and invoke it with
+`hover` — do **not** ask the program to bake an air gap into its own geometry.
+
 A **plugin** program is invoked by a `scatter.program@0` node instead, whose
 `params.program` names the id; it takes the ordinary scatter placement fields:
 

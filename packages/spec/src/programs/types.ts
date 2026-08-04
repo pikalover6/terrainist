@@ -205,3 +205,31 @@ export function allowsLandmark(mode: ProgramMode): boolean {
 export function allowsPlugin(mode: ProgramMode): boolean {
   return mode === "plugin" || mode === "both";
 }
+
+/* -------------------------------------------------------------------------- */
+/* landmark invocation params                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Keys an `authored:<id>` landmark node may carry in `params`. */
+export const LANDMARK_PARAM_KEYS = ["hover"] as const;
+
+/** `params.hover` bounds, inclusive. Below the floor it reads as clutter. */
+export const HOVER_RANGE = Object.freeze({ min: 8, max: 256 });
+
+/**
+ * The hover height a landmark node asks for, or `undefined`.
+ *
+ * The one blessed reader: compiler code never pokes at `params.hover` itself,
+ * so "is this node airborne" has exactly one answer everywhere. Anything the
+ * validator would have rejected (non-integer, out of range) reads as
+ * `undefined` here rather than as a nonsense altitude.
+ */
+export function hoverOf(node: unknown): number | undefined {
+  if (typeof node !== "object" || node === null) return undefined;
+  const params = (node as { params?: unknown }).params;
+  if (typeof params !== "object" || params === null) return undefined;
+  const hover = (params as { hover?: unknown }).hover;
+  if (typeof hover !== "number" || !Number.isInteger(hover)) return undefined;
+  if (hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) return undefined;
+  return hover;
+}

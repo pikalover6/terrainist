@@ -43,6 +43,8 @@ export interface ProgramPlacement {
   readonly footprint: Rect;
   /** World Y of the instance's node-local `y = 0`. */
   readonly baseY: number;
+  /** True when the landmark floats: it claims no ground under it. */
+  readonly hovering?: boolean;
 }
 
 /** One authored-program node the compiler is asked to build. */
@@ -81,6 +83,8 @@ export interface PlacedProgram {
   readonly index: number;
   readonly footprint: Rect;
   readonly baseY: number;
+  /** True when this instance floats — nothing may treat its footprint as taken. */
+  readonly hovering?: boolean;
   readonly blockCount: number;
   readonly seatY: number;
   readonly name: string;
@@ -141,7 +145,9 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       const site = sites[i] as ProgramSite;
       const lowered = lowerRun(run, site, input.stack, job, diagnostics);
       if (lowered === undefined) continue;
-      claimed.push(site.footprint);
+      // A hovering landmark stands over the ground, not on it: the ground
+      // beneath stays buildable, so its footprint is never claimed.
+      if (job.placement?.hovering !== true) claimed.push(site.footprint);
       blocks.push(...lowered.blocks);
       markers.push(...lowered.markers);
       placed.push(lowered.placed);
@@ -287,6 +293,7 @@ function lowerRun(
       index: run.index,
       footprint: site.footprint,
       baseY: site.baseY,
+      ...(job.placement?.hovering === true ? { hovering: true } : {}),
       blockCount: blocks.length,
       seatY: run.result?.seatY ?? 0,
       name: run.result?.name ?? job.programId,

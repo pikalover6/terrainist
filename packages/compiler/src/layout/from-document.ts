@@ -10,6 +10,7 @@ import { nodeSeed, type Seed256 } from "@terrainist/stdlib";
 import {
   authoredProgramId,
   canonicalize,
+  hoverOf,
   isAuthoredGenerator,
   isPlaceableNode,
   note,
@@ -58,6 +59,9 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
     // from the program's declared envelope instead of from the document, since
     // §7.6 forbids the node from restating it.
     if (child.kind === "generator" && isAuthoredGenerator((child as ProgramNode).generator)) {
+      // A hovering landmark does not compete for ground: it floats above
+      // whatever the solver puts down, so it never enters the node list.
+      if (hoverOf(child) !== undefined) continue;
       const program = programOf(doc, (child as ProgramNode).generator);
       if (program === undefined) continue;
       nodes.push(

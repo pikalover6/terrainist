@@ -26,6 +26,7 @@ import {
 import { validateIntentPlacement } from "../intent/validate.js";
 import {
   validateAuthoredReference,
+  validateLandmarkParams,
   validateProgramMap,
   validateProgramScatterParams,
 } from "../programs/validate.js";
@@ -442,6 +443,7 @@ function validateRoot(
         envelopeDeclared: raw["envelope"] !== undefined,
         pending,
       });
+      validateLandmarkParams(out, raw["params"], childPath);
       continue;
     }
     if (generator === "scatter.program@0") {

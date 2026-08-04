@@ -48,6 +48,7 @@ import {
   PROP_GENERATOR,
   STRUCTURE_GENERATORS,
   authoredProgramId,
+  hoverOf,
   isAuthoredGenerator,
   validateSettlementDocument,
   validateTerrainDocument,
@@ -58,8 +59,10 @@ import {
 import {
   buildPrograms,
   planLandmarkSite,
+  planHoverSite,
   type PlacedProgram,
   type ProgramJob,
+  type ProgramPlacement,
   type ProgramPassResult,
 } from "../programs/index.js";
 
@@ -69,6 +72,7 @@ import {
   corridorMask,
   corridorsFromCourses,
   deriveTerrainProducts,
+  canonicalConstraints,
   layoutNodesFrom,
   registerRoadCorridors,
   solveCities,
@@ -1429,19 +1433,33 @@ function programJobsFrom(
         );
         continue;
       }
+      // Hovering wins over every other placement route: the node never
+      // entered the solver, and the ground has no say over something that
+      // floats. Only a `zone` constraint is honoured (see `planHoverSite`).
+      const hover = hoverOf(node);
       const solved = placements.find((p) => p.nodePath === nodePath);
-      // Settlement: the solver's site. Terrain: no solver, so the ground picks.
-      const site =
-        solved !== undefined
-          ? { footprint: solved.footprint, baseY: solved.foundationY }
-          : ground.solved
-            ? undefined
-            : planLandmarkSite({
-                envelope: program.envelope,
-                plan: ground.plan,
-                seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
-                taken: claimed,
-              });
+      let site: ProgramPlacement | undefined;
+      if (hover !== undefined) {
+        const zone = zoneOf(node);
+        const hovered = planHoverSite({
+          envelope: program.envelope,
+          plan: ground.plan,
+          hover,
+          ...(zone === undefined ? {} : { zone }),
+        });
+        site = { footprint: hovered.footprint, baseY: hovered.baseY, hovering: true };
+      } else if (solved !== undefined) {
+        // Settlement: the solver's site.
+        site = { footprint: solved.footprint, baseY: solved.foundationY };
+      } else if (!ground.solved) {
+        // Terrain: no solver, so the ground picks.
+        site = planLandmarkSite({
+          envelope: program.envelope,
+          plan: ground.plan,
+          seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
+          taken: claimed,
+        });
+      }
       if (site === undefined) {
         diagnostics.push(
           warning(
@@ -1455,7 +1473,7 @@ function programJobsFrom(
         );
         continue;
       }
-      claimed.push(site.footprint);
+      if (site.hovering !== true) claimed.push(site.footprint);
       jobs.push({
         nodePath,
         programId,
@@ -1494,6 +1512,8 @@ function claimProgramFootprints(
 ): void {
   const { region, mask } = occupancy;
   for (const instance of placed) {
+    // A hovering landmark leaves the ground under it free for roads and props.
+    if (instance.hovering === true) continue;
     const { footprint } = instance;
     for (let z = footprint.z0; z <= footprint.z1; z++) {
       for (let x = footprint.x0; x <= footprint.x1; x++) {
@@ -1566,3 +1586,11 @@ function now(): number {
 }
 
 export type { TreePlacement };
+
+/** The zone a node's `zone` constraint names, if it wrote one. */
+function zoneOf(node: ProgramNode): string | undefined {
+  for (const raw of canonicalConstraints(node.constraints)) {
+    if (raw.type === "zone" && typeof raw["zone"] === "string") return raw["zone"];
+  }
+  return undefined;
+}
