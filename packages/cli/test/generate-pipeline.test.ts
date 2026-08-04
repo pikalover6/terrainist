@@ -150,6 +150,7 @@ describe("runGenerate — settlement happy path", () => {
       // The intent pre-pass is a second model call; these tests count calls,
       // so they opt out of it and `intent-prepass.test.ts` covers it instead.
       "--no-intent",
+      "--no-programs",
       "--no-zip",
       "--keep-doc",
     ]);
@@ -185,6 +186,7 @@ describe("runGenerate — settlement happy path", () => {
       // The intent pre-pass is a second model call; these tests count calls,
       // so they opt out of it and `intent-prepass.test.ts` covers it instead.
       "--no-intent",
+      "--no-programs",
       "--no-zip",
     ]);
 
@@ -206,6 +208,7 @@ describe("runGenerate — compile feedback", () => {
       // The intent pre-pass is a second model call; these tests count calls,
       // so they opt out of it and `intent-prepass.test.ts` covers it instead.
       "--no-intent",
+      "--no-programs",
       "--no-zip",
       "--keep-doc",
     ]);
@@ -243,6 +246,7 @@ describe("runGenerate — compile feedback", () => {
       // The intent pre-pass is a second model call; these tests count calls,
       // so they opt out of it and `intent-prepass.test.ts` covers it instead.
       "--no-intent",
+      "--no-programs",
       "--no-zip",
     ]);
 
@@ -264,6 +268,7 @@ describe("runGenerate — compile feedback", () => {
       // The intent pre-pass is a second model call; these tests count calls,
       // so they opt out of it and `intent-prepass.test.ts` covers it instead.
       "--no-intent",
+      "--no-programs",
       "--no-zip",
     ]);
 
