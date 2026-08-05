@@ -42,6 +42,7 @@ import {
   AUTHORING_MODEL_ID,
   AUTHORING_REASONING_EFFORT,
   AUTHORING_TEMPERATURE,
+  PROGRAM_AUTHOR_MAX_TOKENS,
 } from "./config.js";
 import { loadOpenRouterKey } from "./env.js";
 import { extractJson } from "./json.js";
@@ -612,6 +613,10 @@ export async function authorProgram(options: AuthorProgramRequest): Promise<Auth
       messages,
       temperature: AUTHORING_TEMPERATURE,
       reasoningEffort: options.reasoningEffort ?? AUTHORING_REASONING_EFFORT,
+      // Explicit, and far above the provider default: writing a landmark is the
+      // longest-thinking call we make, and the default allowance is small
+      // enough that the reasoning alone can consume it. See the constant.
+      maxTokens: PROGRAM_AUTHOR_MAX_TOKENS,
       ...(options.fetchImpl === undefined ? {} : { fetchImpl: options.fetchImpl }),
     });
     usages.push(completion.usage);

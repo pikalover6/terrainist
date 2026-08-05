@@ -69,6 +69,32 @@ describe("chatComplete retry on empty content", () => {
     expect(calls).toHaveLength(3);
   });
 
+  it("names the output limit when reasoning consumed the whole budget", async () => {
+    // 2026-08-04: Luna at max effort spent all 65,536 output tokens thinking
+    // and wrote nothing. That arrives in the same shape as a provider hiccup,
+    // and reporting it as "no message content" sent the investigation at the
+    // network for a day. `finish_reason` is the only thing that tells them
+    // apart, so the message has to carry what actually happened.
+    const truncated = {
+      choices: [{ message: { content: null }, finish_reason: "length" }],
+      usage: {
+        prompt_tokens: 6000,
+        completion_tokens: 65536,
+        total_tokens: 71536,
+        completion_tokens_details: { reasoning_tokens: 65536 },
+      },
+      model: "test/model",
+    };
+    const { fetchImpl, calls } = stubFetch([{ body: truncated }]);
+    const pending = chatComplete(callOptions(fetchImpl));
+    pending.catch(() => {});
+    await vi.runAllTimersAsync();
+    await expect(pending).rejects.toThrow(/output limit/);
+    await expect(pending).rejects.toThrow(/65536 of its output tokens went to reasoning/);
+    // Still retried — how long a model thinks varies, so the same call can land.
+    expect(calls).toHaveLength(3);
+  });
+
   it("does not retry other narrowing failures", async () => {
     const { fetchImpl, calls } = stubFetch([{ body: { error: { message: "boom" } } }]);
     await expect(chatComplete(callOptions(fetchImpl))).rejects.toThrow("OpenRouter error: boom");

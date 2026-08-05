@@ -154,7 +154,10 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
     try {
       return narrowCompletion(payload, model);
     } catch (cause) {
-      if (cause instanceof EmptyContentError && attempt < attempts) {
+      if (
+        (cause instanceof EmptyContentError || cause instanceof OutputBudgetError) &&
+        attempt < attempts
+      ) {
         lastFailure = cause;
         await sleepMs(2000 * attempt);
         continue;
@@ -167,6 +170,15 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
 
 /** A 200 whose first choice carried no text — retryable provider hiccup. */
 class EmptyContentError extends Error {}
+
+/**
+ * The model hit the output ceiling before writing anything.
+ *
+ * Retried like a hiccup — how long a max-effort model thinks varies run to run,
+ * so the same call can succeed — but never by asking it to think less: the
+ * remedy is a bigger budget, and callers that need one set `maxTokens`.
+ */
+export class OutputBudgetError extends Error {}
 
 /** Injectable only via tests' fake timers; a plain delay between retries. */
 function sleepMs(ms: number): Promise<void> {
@@ -244,6 +256,7 @@ function narrowCompletion(payload: unknown, requestedModel: string): CompletionR
       completion_tokens?: unknown;
       total_tokens?: unknown;
       cost?: unknown;
+      completion_tokens_details?: { reasoning_tokens?: unknown };
     };
     model?: unknown;
     error?: { message?: unknown };
@@ -256,6 +269,19 @@ function narrowCompletion(payload: unknown, requestedModel: string): CompletionR
   const choice = p.choices?.[0];
   const content = choice?.message?.content;
   if (typeof content !== "string") {
+    // Two very different failures arrive in the same shape, and calling both
+    // "no message content" cost a day: a provider hiccup (retry it), and a
+    // model that spent its whole output budget on reasoning and had nothing
+    // left to say (retrying an identical call mostly repeats it). Only
+    // `finish_reason` tells them apart, so it goes in the message.
+    if (choice?.finish_reason === "length") {
+      const reasoning = num(p.usage?.completion_tokens_details?.reasoning_tokens);
+      throw new OutputBudgetError(
+        `OpenRouter stopped on the output limit before the model wrote any content` +
+          `${reasoning > 0 ? ` — ${reasoning} of its output tokens went to reasoning` : ""}. ` +
+          `Raise max_tokens for this call.`,
+      );
+    }
     throw new EmptyContentError("OpenRouter response had no message content");
   }
 

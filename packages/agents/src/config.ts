@@ -48,6 +48,17 @@ export const AUTHORING_TEMPERATURE = 0;
 /** Reasoning effort passed to OpenRouter's unified `reasoning` parameter. */
 export const AUTHORING_REASONING_EFFORT = "max";
 
+/**
+ * Output budget for a bespoke-program call, reasoning included.
+ *
+ * Measured 2026-08-04: at max effort a hard landmark brief regularly burns the
+ * provider's default 65,536-token output allowance entirely on reasoning and
+ * returns `finish_reason: "length"` with no content at all — two of three test
+ * worlds died that way. The budget is the fix; thinking less is not, because
+ * the thinking is the part of the job that makes the program good.
+ */
+export const PROGRAM_AUTHOR_MAX_TOKENS = 120_000;
+
 /** How many authoring attempts (initial + diagnostic retries) before giving up. */
 export const MAX_AUTHOR_ATTEMPTS = 3;
 
