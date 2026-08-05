@@ -54,6 +54,8 @@ export interface InteriorFurnishInput {
   readonly worldSeed: bigint;
   readonly nodePath: string;
   readonly seedSalt?: string;
+  /** The world's resolved material theme id; see {@link interiorVoxels}. */
+  readonly themeId?: string;
 }
 
 /**
@@ -96,6 +98,16 @@ export function interiorVoxels(input: {
   readonly worldSeed: bigint;
   readonly nodePath: string;
   readonly seedSalt?: string;
+  /**
+   * The world's resolved material theme id.
+   *
+   * Absent, `pickTheme` deals from the seed alone — a different theme per
+   * instance, agreeing with neither the houses outside nor the next landmark
+   * over. Every other caller in the compiler passes the resolved id, and this
+   * one omitting it was a live defect: a `white_quartz` monastery furnished
+   * its shrine in whatever the seed happened to land on.
+   */
+  readonly themeId?: string;
 }): Map<string, string> {
   const out = new Map<string, string>();
   const volumes = input.run.result?.interiors;
@@ -106,7 +118,7 @@ export function interiorVoxels(input: {
     `${input.seedSalt ?? ""}#interiors:${input.run.index}`,
   );
   for (const [i, volume] of volumes.entries()) {
-    for (const [key, block] of furnishOne(input.run, volume, i, streamSeed(base, `interior:${i}`))) {
+    for (const [key, block] of furnishOne(input.run, volume, i, streamSeed(base, `interior:${i}`), input.themeId)) {
       out.set(key, block);
     }
   }
@@ -118,6 +130,7 @@ function furnishOne(
   volume: InteriorVolume,
   index: number,
   seed: Uint8Array,
+  themeId: string | undefined,
 ): ReadonlyMap<string, string> {
   const [x0, minY, z0] = volume.min;
   const [x1, maxY, z1] = volume.max;
@@ -165,7 +178,7 @@ function furnishOne(
     written.set(`${x},${floorY + y},${z}`, blockString(block, props));
   };
 
-  const materials = assignMaterials(pickTheme(seed), 1, seed)[0];
+  const materials = assignMaterials(pickTheme(seed, themeId), 1, seed)[0];
   if (materials === undefined) return EMPTY;
 
   furnish({

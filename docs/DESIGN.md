@@ -381,6 +381,20 @@ registers its own fan-out rows.
 
 ## Open defects
 
+**The failure mode worth watching for.** Three of the defects fixed on
+2026-08-04 had the same shape, and none of ~2,300 tests could see any of them:
+the model wrote a reasonable thing, the compiler quietly did something else,
+and the diagnostic blamed the document. `road.network@0` required
+`params.anchors` and ignored it. `hover` on a scatter node was rejected as an
+unknown key, so the correction dropped the request and shipped a node named
+`hovering_saucers` sitting on the dirt. A landmark meant to stand in water was
+pushed onto dry land and told, via `UNSATISFIABLE`, to loosen constraints that
+were already soft — when nothing it could write would have worked.
+
+These only surface by generating a world from a prompt and asking whether the
+prompt's central image is *in* it. Look for valid requests the system silently
+declines, not for crashes.
+
 - District placement scoring appears to prefer flat ground over an explicit
   `zone` constraint (seen while building the wall exhibit; not chased).
 - Hard `adjacent_to` / `terrain_conform` constraints on ordinary cottages are

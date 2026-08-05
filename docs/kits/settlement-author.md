@@ -280,7 +280,7 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 | param | default | notes |
 |---|---|---|
 | `species` | **required** | non-empty array. Each entry: `id` (loam id), `shape` (required), optional `weight`, `minHeight`/`maxHeight` (2..64, int). |
-| `area` | `{"all": true}` | `{"zone": "<token>"}`, `{"at": [fx,fz], "radius": <blocks>}`, or `{"all": true}`. |
+| `area` | `{"all": true}` | `{"zone": "<token>"}`, `{"at": [fx,fz], "radius": <0.01–1>}`, or `{"all": true}`. **`radius` here is a fraction of the region radius, not blocks** — `0.25` is a quarter of the way out from the centre. (A terrain verb's `radius` *is* in blocks; same word, two units, and this is the one that bites.) |
 | `density` | 0.15 | 0..1, trees per eligible column. 0.15–0.3 = closed-canopy forest, 0.02–0.05 = wilderness fill. |
 | `undergrowth` | `{grass: 0.35, flowers: 0.05, deadwood: 0.02}` | per-column probabilities, each 0..1: grass/ferns, flower patches, dead bushes and fallen logs. Raise `grass`/`flowers` for a lush floor, `deadwood` for an old or blighted wood. |
 | `spacing` | 3 | 1..64, minimum blocks between trunks. |

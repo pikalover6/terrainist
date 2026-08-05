@@ -735,6 +735,9 @@ async function compileValidated(
         worldSeed,
         ...(occupancy === undefined ? {} : { occupancy }),
         reserved: (layoutOutcome?.placements ?? []).map((p) => p.footprint),
+        // The theme the village resolved to, for furnishing a landmark's
+        // interiors. A shrine's inside has to agree with the houses outside it.
+        ...(structures === undefined ? {} : { themeId: structures.stats.theme }),
       });
       diagnostics.push(...programs.diagnostics);
       // What a program stands on is claimed ground: the scatter that follows

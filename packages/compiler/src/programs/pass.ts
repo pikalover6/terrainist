@@ -80,6 +80,14 @@ export interface ProgramPassInput {
   /** Footprints already claimed by earlier passes. */
   readonly reserved?: readonly Rect[];
   /**
+   * The world's resolved material theme id, for furnishing declared interiors.
+   *
+   * Absent, the fit-out picks a theme from its own seed — which is a different
+   * theme per instance and agrees with nothing else in the world. Every other
+   * caller of `pickTheme` passes the resolved id; this one has to as well.
+   */
+  readonly themeId?: string;
+  /**
    * Skip the `E334` re-execution. Only for a caller that has already verified
    * this document in this process — never for a compile from a file.
    */
@@ -159,6 +167,22 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       );
       continue;
     }
+    // Asking for eighteen and getting one is not a placement detail, it is the
+    // world missing most of what the prompt asked for. The invasion world
+    // shipped one crop circle where the document said eight and nothing said
+    // so — the count is a request, and a request the compiler cannot meet has
+    // to be reported rather than quietly rounded down.
+    const wanted = job.params?.count;
+    if (wanted !== undefined && sites.length < wanted) {
+      diagnostics.push(
+        warning(
+          "PROGRAM_DROPPED",
+          job.nodePath,
+          `${JSON.stringify(job.programId)} asked for ${wanted} instance${wanted === 1 ? "" : "s"} and only ${sites.length} site${sites.length === 1 ? "" : "s"} would take one`,
+          `the area cannot hold that many at this spacing: widen "area", lower "spacing" below ${Math.max(1, (job.params?.spacing ?? 1) - 1)}, relax "maxSlope"/"avoidTags", or ask for fewer`,
+        ),
+      );
+    }
 
     // The pad goes down *before* the run, so `api.heightAt` shows the program
     // the ground it will actually stand on rather than the ground that was
@@ -181,7 +205,7 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       if (!isHovering(job)) claimed.push(site.footprint);
       blocks.push(...lowered.blocks);
       // v2: the shell is the program's, the fit-out inside it is the grammar's.
-      blocks.push(...furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
+      blocks.push(...furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
       markers.push(...lowered.markers);
       placed.push(lowered.placed);
     }

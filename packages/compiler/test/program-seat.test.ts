@@ -277,3 +277,41 @@ describe("an embedded landmark through the compile pipeline", () => {
     }
   }, 300_000);
 });
+
+describe("a scatter that cannot fit what it asked for", () => {
+  it("says so instead of quietly placing fewer", () => {
+    // The invasion world shipped one crop circle where its document said
+    // eight, with no diagnostic. A count is a request; one the compiler cannot
+    // meet is reported, not rounded down in silence.
+    const stack = loadPrismarine("1.21.11");
+    const plan = devColumnPlan(centeredRegion(128, 128), stack);
+    const source = readFileSync(path.join(here, "fixtures", "programs", "pylon.js"), "utf8");
+    const base = {
+      mode: "plugin" as const,
+      envelope: [8, 10, 8] as const,
+      source,
+      sourceHash: sourceHashOf(source),
+      outputHash: "b3:0000000000000000",
+    };
+    const program = { ...base, outputHash: gateDoubleRun("pylon", base as never, 0n).outputHash };
+    const result = buildPrograms({
+      jobs: [
+        {
+          nodePath: "world.pylons",
+          programId: "pylon",
+          program: program as never,
+          mode: "plugin" as const,
+          // Far more than a 128-block region holds at this spacing.
+          params: { program: "pylon", count: 400, area: { all: true }, spacing: 40 } as never,
+        },
+      ],
+      plan,
+      stack,
+      worldSeed: 0n,
+    });
+    const short = result.diagnostics.filter((d) => /asked for 400 instances/.test(d.message));
+    expect(short).toHaveLength(1);
+    expect(short[0]?.severity).toBe("warning");
+    expect(short[0]?.message).toMatch(/only \d+ sites? would take one/);
+  });
+});

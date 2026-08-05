@@ -156,6 +156,35 @@ describe("a program that declares its interiors", () => {
     expect(embed.blocks).toEqual(drape.blocks.map((b) => ({ ...b, y: b.y - 3 })));
   });
 
+  it("furnishes in the world's theme, not one dealt from its own seed", () => {
+    // Every other `pickTheme` caller in the compiler passes the resolved theme
+    // id. This one omitting it meant a `white_quartz` monastery furnished its
+    // shrine in whatever the seed landed on — and two landmarks in one world
+    // disagreeing with each other.
+    //
+    // A `chapel` on purpose: the hall's own `quarters` fit-out lays only beds,
+    // a chest and a barrel, none of which are cut from the theme's materials,
+    // so it could not tell a threaded theme from an ignored one.
+    const chapel = record(source.replace('kind: "quarters"', 'kind: "chapel"'));
+    const run = runProgramInstance({
+      programId: "moot_hall",
+      program: chapel,
+      nodePath: "world.hall",
+      worldSeed: 0n,
+      index: 0,
+      count: 1,
+    });
+    const quartz = interiorVoxels({ run, worldSeed: 0n, nodePath: "world.hall", themeId: "white_quartz" });
+    const timber = interiorVoxels({ run, worldSeed: 0n, nodePath: "world.hall", themeId: "temperate_timber" });
+    expect(quartz.size).toBeGreaterThan(0);
+    expect([...quartz.values()]).not.toEqual([...timber.values()]);
+    expect([...quartz.values()].some((b) => b.includes("quartz"))).toBe(true);
+    // And it is still a pure function of (seed, theme).
+    expect([...interiorVoxels({ run, worldSeed: 0n, nodePath: "world.hall", themeId: "white_quartz" })]).toEqual([
+      ...quartz,
+    ]);
+  });
+
   it("walks the physics rules over the furnished landmark", async () => {
     const run = runProgramInstance({
       programId: "moot_hall",

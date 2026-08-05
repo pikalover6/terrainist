@@ -449,7 +449,17 @@ function checkArea(out: LoamDiagnostic[], value: unknown, path: string): void {
       error("COARSE_COORD_RANGE", path, `"at" is ${describe(at)}`, 'use fractional region coordinates, e.g. "at": [0.3, 0.7]'),
     );
   }
-  num(out, value["radius"], `${path}.radius`, 0.01, 1, "fraction of the region radius the instances spread over");
+  // Named for the trap it is: a terrain verb's `radius` is in blocks, and a
+  // model that has just written one reaches for the same units here. Three of
+  // four live runs on 2026-08-04 lost a revision round to exactly this.
+  num(
+    out,
+    value["radius"],
+    `${path}.radius`,
+    0.01,
+    1,
+    'a FRACTION of the region radius, not blocks — write 0.25 for a quarter of the way out from "at"',
+  );
 }
 
 function checkElevation(out: LoamDiagnostic[], value: unknown, path: string): void {
