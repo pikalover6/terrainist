@@ -39,6 +39,19 @@ export interface LayoutNodeInput {
    */
   readonly amphibious?: boolean;
   /**
+   * How this node's ground is prepared — `"pad"` (the default and today's
+   * behaviour) or `"stepped"`.
+   *
+   * `"stepped"` says *the node levels its own ground, in pieces*, so the solver
+   * lays no pad under it: `padFor` returns `null`, exactly as it already does
+   * for a city and for an amphibious node. Set by `from-document.ts` when a
+   * district's resolved urban form reads contours — a `terraced` quarter handed
+   * a billiard table by the compiler itself has nothing left to terrace. Its
+   * benches are the levelling, and they reach the field through the same
+   * `fabricPads` list a city cell's mask runs already use.
+   */
+  readonly groundPolicy?: "pad" | "stepped";
+  /**
    * …and it is *scored against* a candidate with no water in it. Separate from
    * {@link LayoutNodeInput.amphibious} because an inland city is allowed to
    * touch the water and must not be dragged towards it.

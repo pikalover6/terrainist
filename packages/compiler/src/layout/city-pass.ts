@@ -32,6 +32,7 @@ import {
 
 import {
   CELL_MIN_BUILDING,
+  arterialAt,
   buildCityPlan,
   type CityPlan,
   type CityPlanStats,
@@ -45,6 +46,8 @@ import {
   type DistrictProduct,
 } from "./district.js";
 import type { Rect } from "./frames.js";
+import type { FormFocus } from "./forms/index.js";
+import { erode, largestRect, maskRuns, withoutReserved } from "./masks.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import { MIN_DISTRICT_SPAN, SIDEWALK_BY_DENSITY } from "./streets.js";
 import type { LayoutNodeInput, PadEdit, Placement, ResolvedPort } from "./types.js";
@@ -440,6 +443,16 @@ function layCity(
       foundationY,
       minBuilding: CELL_MIN_BUILDING,
       landmarkBase: nodePath,
+      // What this cell's plan may be about (§2.1). The city pass knows things a
+      // district never can: which squares the armature seated beside it, which
+      // landmarks were dealt to it, and where its outline meets an arterial. A
+      // form with no use for them ignores them and says so in its record.
+      //
+      // No `corridor`: an arterial *borders* a cell, it does not cross one —
+      // the cells are the faces the armature leaves behind — so a cell's
+      // through-route is its `orientation`, and the corridor field is for a
+      // `road.network@0` reservation crossing an authored district.
+      focus: cellFocus(cell, setPieces, byCell.get(index) ?? [], plan),
     });
     diagnostics.push(...cellDiagnostics.filter((d) => d.name !== "DISTRICT_TOO_SMALL"));
     if (laid === null) {
@@ -758,6 +771,66 @@ function article(word: string): string {
   return "aeiou".includes(word[0] ?? "") ? "an" : "a";
 }
 
+/**
+ * What one cell's plan may organise itself around, in a fixed order.
+ *
+ * Squares first (a set piece seated against this cell is the strongest claim to
+ * being the centre of the place), then the landmarks the plan dealt to it, then
+ * the one point where its outline meets a boulevard. Every entry is a *world*
+ * column, and every consumer projects it into the mask itself — the domain, the
+ * cell's bounds and the plan's region are three different coordinate spaces and
+ * this function is careful to answer in only one of them.
+ */
+function cellFocus(
+  cell: DistrictCell,
+  pieces: readonly SetPiece[],
+  landmarks: readonly StructureNode[],
+  plan: CityPlan,
+): FormFocus[] {
+  const b = cell.bounds;
+  const stride = b.x1 - b.x0 + 1;
+  const inCell = (x: number, z: number): boolean =>
+    x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1 && cell.mask[(z - b.z0) * stride + (x - b.x0)] === 1;
+  const out: FormFocus[] = [];
+
+  for (const piece of pieces) {
+    if (piece.kind !== "square") continue;
+    const x = Math.floor((piece.site.x0 + piece.site.x1) / 2);
+    const z = Math.floor((piece.site.z0 + piece.site.z1) / 2);
+    if (inCell(x, z)) out.push({ kind: "plaza", at: { x, z }, weight: 0.9 });
+  }
+  for (const landmark of landmarks) {
+    out.push({
+      kind: "landmark",
+      id: landmark.id,
+      // A landmark has no site yet — the fabric is what gives it one — so its
+      // focus is the cell's own centre, which is what "put the plan around this
+      // building" means before the building has been placed.
+      at: { x: Math.floor((b.x0 + b.x1) / 2), z: Math.floor((b.z0 + b.z1) / 2) },
+      weight: 0.5,
+    });
+  }
+  // The gate: the first column of the outline, row-major, with a boulevard on
+  // the other side of it. Row-major and first-wins so it cannot depend on
+  // iteration order anywhere.
+  for (let z = b.z0; z <= b.z1 && out.every((f) => f.kind !== "gate"); z++) {
+    for (let x = b.x0; x <= b.x1; x++) {
+      if (!inCell(x, z)) continue;
+      if (
+        !arterialAt(plan, x + 1, z) &&
+        !arterialAt(plan, x - 1, z) &&
+        !arterialAt(plan, x, z + 1) &&
+        !arterialAt(plan, x, z - 1)
+      ) {
+        continue;
+      }
+      out.push({ kind: "gate", at: { x, z }, weight: 0.6 });
+      break;
+    }
+  }
+  return out;
+}
+
 /** A rect grown by `margin` columns on every side. */
 function grow(rect: Rect, margin: number): Rect {
   return {
@@ -766,29 +839,6 @@ function grow(rect: Rect, margin: number): Rect {
     x1: rect.x1 + margin,
     z1: rect.z1 + margin,
   };
-}
-
-/**
- * A lot mask with the set pieces punched out of it.
- *
- * The only moment in the whole pipeline at which a district can be told "not
- * here". After this the cell subdivides, and the subdivision has no vocabulary
- * for ground that is spoken for — which is exactly why the reservation has to
- * be a hole in the mask rather than a veto somewhere downstream.
- */
-function withoutReserved(mask: Uint8Array, bounds: Rect, reserved: readonly Rect[]): Uint8Array {
-  if (reserved.length === 0) return mask;
-  const stride = bounds.x1 - bounds.x0 + 1;
-  for (const rect of reserved) {
-    const x0 = Math.max(bounds.x0, rect.x0);
-    const x1 = Math.min(bounds.x1, rect.x1);
-    const z0 = Math.max(bounds.z0, rect.z0);
-    const z1 = Math.min(bounds.z1, rect.z1);
-    for (let z = z0; z <= z1; z++) {
-      for (let x = x0; x <= x1; x++) mask[(z - bounds.z0) * stride + (x - bounds.x0)] = 0;
-    }
-  }
-  return mask;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -835,77 +885,8 @@ function hasFabric(cell: DistrictCell): boolean {
 }
 
 /* -------------------------------------------------------------------------- */
-/* precinct seating                                                            */
-/* -------------------------------------------------------------------------- */
-
-/**
- * The largest axis-aligned rectangle entirely inside a cell's mask.
- *
- * The standard maximal-rectangle-under-a-histogram sweep, O(area), with ties
- * broken by the earlier row and the earlier column so it is stable.
- */
-function largestRect(b: Rect, mask: Uint8Array): Rect | null {
-  const width = b.x1 - b.x0 + 1;
-  const depth = b.z1 - b.z0 + 1;
-  const heights = new Int32Array(width);
-  let best: Rect | null = null;
-  let bestArea = 0;
-
-  for (let j = 0; j < depth; j++) {
-    for (let i = 0; i < width; i++) {
-      heights[i] = mask[j * width + i] === 1 ? (heights[i] as number) + 1 : 0;
-    }
-    const stack: number[] = [];
-    for (let i = 0; i <= width; i++) {
-      const h = i === width ? 0 : (heights[i] as number);
-      while (stack.length > 0 && (heights[stack[stack.length - 1] as number] as number) >= h) {
-        const top = stack.pop() as number;
-        const height = heights[top] as number;
-        const left = stack.length === 0 ? 0 : (stack[stack.length - 1] as number) + 1;
-        const area = height * (i - left);
-        if (height > 0 && area > bestArea) {
-          bestArea = area;
-          best = {
-            x0: b.x0 + left,
-            z0: b.z0 + j - height + 1,
-            x1: b.x0 + i - 1,
-            z1: b.z0 + j,
-          };
-        }
-      }
-      stack.push(i);
-    }
-  }
-  return best;
-}
-
-/* -------------------------------------------------------------------------- */
 /* masks                                                                       */
 /* -------------------------------------------------------------------------- */
-
-/**
- * A cell's mask as maximal horizontal runs — one flat rectangle per run.
- *
- * The only way to level an arbitrary polygon with an API that takes rectangles.
- * Every run is one row tall and carries no apron, so adjacent runs cannot blend
- * against each other and the union is exactly the mask at exactly one height.
- */
-function maskRuns(b: Rect, mask: Uint8Array): Rect[] {
-  const stride = b.x1 - b.x0 + 1;
-  const out: Rect[] = [];
-  for (let z = b.z0; z <= b.z1; z++) {
-    let start = -1;
-    for (let x = b.x0; x <= b.x1 + 1; x++) {
-      const inside = x <= b.x1 && mask[(z - b.z0) * stride + (x - b.x0)] === 1;
-      if (inside && start < 0) start = x;
-      if (!inside && start >= 0) {
-        out.push({ x0: start, z0: z, x1: x - 1, z1: z });
-        start = -1;
-      }
-    }
-  }
-  return out;
-}
 
 /**
  * The median ground height over a cell's *mask*, not its bounding box.
@@ -931,39 +912,4 @@ function maskMedian(field: { region: { x0: number; z0: number; width: number; de
   if (heights.length === 0) return 0;
   heights.sort((a, b2) => a - b2);
   return Math.round(heights[heights.length >> 1] as number);
-}
-
-/**
- * Pull a mask back by `rings` columns.
- *
- * The cell's outline is the arterial's kerb. Streets are clipped to the outline
- * so they reach it; lots are held inside this erosion so a facade always has a
- * verge between it and eleven columns of tarmac.
- */
-export function erode(mask: Uint8Array, width: number, depth: number, rings: number): Uint8Array {
-  if (rings <= 0) return Uint8Array.from(mask);
-  let current = Uint8Array.from(mask);
-  for (let ring = 0; ring < rings; ring++) {
-    const next = new Uint8Array(current.length);
-    for (let j = 0; j < depth; j++) {
-      for (let i = 0; i < width; i++) {
-        const k = j * width + i;
-        if (current[k] !== 1) continue;
-        let keep = true;
-        for (let dj = -1; dj <= 1 && keep; dj++) {
-          for (let di = -1; di <= 1; di++) {
-            const ii = i + di;
-            const jj = j + dj;
-            if (ii < 0 || jj < 0 || ii >= width || jj >= depth || current[jj * width + ii] !== 1) {
-              keep = false;
-              break;
-            }
-          }
-        }
-        if (keep) next[k] = 1;
-      }
-    }
-    current = next;
-  }
-  return current;
 }

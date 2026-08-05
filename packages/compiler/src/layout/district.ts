@@ -72,7 +72,17 @@ import {
 
 import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
-import type { Rect } from "./frames.js";
+import type { Point2, Rect } from "./frames.js";
+import {
+  drawFabric,
+  installUrbanForms,
+  urbanForm,
+  type FormBench,
+  type FormChannel,
+  type FormFocus,
+  type FormRecord,
+  type GroundSample,
+} from "./forms/index.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import {
   buildProminenceField,
@@ -82,7 +92,6 @@ import {
 import {
   BLOCK_SIZE_BY_DENSITY,
   SIDEWALK_BY_DENSITY,
-  buildStreetGraph,
   carriagewayCells,
   type StreetGraph,
 } from "./streets.js";
@@ -244,6 +253,18 @@ export interface DistrictProduct {
   readonly bounds: Rect;
   /** The pinned F4 / road-pass contract. */
   readonly streets: StreetGraph;
+  /**
+   * Which urban form drew this quarter, and whether it is the one that was
+   * asked for.
+   *
+   * This is how a fallback reaches the **final** compile report rather than only
+   * a compile-feedback round: `form.id !== form.requested` with
+   * `form.fellBackBecause` set is the whole story, per quarter, in the artifact
+   * that ships beside the world.
+   */
+  readonly form: FormRecord;
+  /** Dug water this quarter declared, for the canal pass. Usually absent. */
+  readonly channels?: readonly FormChannel[];
   /** 1 for a carriageway column, row-major over {@link DistrictProduct.bounds}. */
   readonly carriageway: Uint8Array;
   /** 1 for a sidewalk column, row-major over {@link DistrictProduct.bounds}. */
@@ -391,6 +412,16 @@ export interface CellFabric {
    * cell they landed in is what actually placed them.
    */
   readonly landmarkBase?: string;
+  /**
+   * Points this cell's plan may organise itself around, in a fixed order.
+   *
+   * The city pass knows things a district never can: which corner of the cell
+   * meets an arterial, which set piece was seated beside it, where the water is.
+   * A form that has no use for them ignores them and says so in its record.
+   */
+  readonly focus?: readonly FormFocus[];
+  /** A route corridor crossing the cell, clipped to it. Read by `linear`. */
+  readonly corridor?: readonly Point2[];
 }
 
 /** One district's fabric. */
@@ -401,6 +432,43 @@ export interface LaidDistrict {
   readonly padEdits: readonly PadEdit[];
   readonly params: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
   readonly product: DistrictProduct;
+}
+
+/**
+ * The urban form a district will be drawn with — **resolved twice, on purpose.**
+ *
+ * Once here, from `from-document.ts`, *before* the solve, because a contour-led
+ * form has to stop the solver levelling the ground it was going to read
+ * (`LayoutNodeInput.groundPolicy` → `padFor`); and once inside {@link layDistrict},
+ * to actually draw. Two resolutions of one value is exactly the shape of defect
+ * `DESIGN.md` warns about, so this is the *only* function that answers the
+ * question: both call sites hand it the same node, the same `nodePath` and the
+ * same document, so they cannot disagree.
+ */
+export function resolveDistrictFabric(
+  doc: SettlementDocument,
+  node: DistrictNode,
+  nodePath: string,
+): DistrictFabric {
+  ensureFanOutRows();
+  const intent = intentFor(resolveIntents(doc), nodePath);
+  return fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, { nodePath, today: node.params.fabric });
+}
+
+/**
+ * Whether a district levels its own ground, one bench at a time.
+ *
+ * True exactly when the resolved form declares `requires.unlevelled` — the form
+ * registry is the one place that knows, so nothing here enumerates form ids.
+ */
+export function districtGroundPolicy(
+  doc: SettlementDocument,
+  node: DistrictNode,
+  nodePath: string,
+): "pad" | "stepped" {
+  installUrbanForms();
+  const form = urbanForm(resolveDistrictFabric(doc, node, nodePath));
+  return form?.requires.unlevelled === true ? "stepped" : "pad";
 }
 
 export function layDistrict(
@@ -428,22 +496,40 @@ export function layDistrict(
     today: SIDEWALK_BY_DENSITY[density] ?? 1,
   });
 
-  const skeleton = buildStreetGraph({
+  // The urban form registry (Phase 4.1). `drawFabric` is the only entry point:
+  // it looks the form up, checks what the form needs against what this quarter
+  // is, and draws either the requested form or its announced fallback — and
+  // says which, in a diagnostic *and* in the `FormRecord` the report carries.
+  installUrbanForms();
+  const requested = fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, {
+    nodePath,
+    // Resolved a second time here; `resolveDistrictFabric` is the shared answer
+    // and this call is deliberately identical to it. See that function.
+    today: p.fabric,
+  });
+  const drawn = drawFabric({
     bounds,
-    fabric: fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, { nodePath, today: p.fabric }),
+    fabric: requested,
+    nodePath,
     seed,
     blockSize: fanOut<number>(LAYOUT_ROWS.blockSize, intent, {
       nodePath,
       today: cell?.blockSize ?? p.blockSize ?? (BLOCK_SIZE_BY_DENSITY[density] as number),
     }),
     sidewalk: sidewalkWidth,
+    density,
+    ground: sampleGround(input, bounds, node, cell !== undefined),
+    focus: cell?.focus ?? [],
+    ...(cell?.corridor === undefined ? {} : { corridor: cell.corridor }),
     ...(cell === undefined ? {} : { mask: cell.mask, orientation: cell.orientation }),
   });
-  if (!skeleton.ok) {
-    diagnostics.push(error("DISTRICT_TOO_SMALL", nodePath, skeleton.reason, skeleton.fix));
+  if (!drawn.ok) {
+    diagnostics.push(error("DISTRICT_TOO_SMALL", nodePath, drawn.refusal.reason, drawn.refusal.fix));
     return null;
   }
-  const graph = skeleton.graph;
+  diagnostics.push(...drawn.outcome.diagnostics);
+  const plan = drawn.outcome.plan;
+  const graph = plan.graph;
 
   // --- the void ------------------------------------------------------------
   const grid = new Grid(bounds);
@@ -462,6 +548,23 @@ export function layDistrict(
   // edge without the subdivision knowing anything about city plans.
   if (cell !== undefined) {
     for (let k = 0; k < grid.cells; k++) if (cell.lotMask[k] !== 1) blocked[k] = 1;
+  }
+  // The form's own lot mask, ANDed with the caller's. Absent means "anywhere the
+  // streets left free", which is what every form but `linear` says — so this is
+  // a no-op for a document that names no new form.
+  if (plan.lotMask !== undefined) {
+    for (let k = 0; k < grid.cells; k++) if (plan.lotMask[k] !== 1) blocked[k] = 1;
+  }
+  // A reservation is a hole in the mask rather than a veto downstream, for the
+  // reason `withoutReserved` states: after this the quarter subdivides, and the
+  // subdivision has no vocabulary for ground that is spoken for.
+  for (const reservation of plan.reservations ?? []) {
+    for (let z = Math.max(bounds.z0, reservation.rect.z0); z <= Math.min(bounds.z1, reservation.rect.z1); z++) {
+      for (let x = Math.max(bounds.x0, reservation.rect.x0); x <= Math.min(bounds.x1, reservation.rect.x1); x++) {
+        const k = grid.index(x, z);
+        if (k >= 0) blocked[k] = 1;
+      }
+    }
   }
   const blocks = blocksOf(grid, blocked);
 
@@ -618,11 +721,27 @@ export function layDistrict(
   const padEdits: PadEdit[] = [];
   const params = new Map<string, Readonly<Record<string, unknown>>>();
 
+  // The form's benches, if it cut any. Each becomes one flat pad per run — the
+  // only way to level a curved platform with an API that takes rectangles — and
+  // every building whose lot falls on a bench is founded at that bench's level,
+  // so no building is ever seated across a step. A form that cuts none (every
+  // form but `terraced`) leaves both of these empty and nothing below changes.
+  const benchLevel = benchLevels(grid, plan.benches ?? []);
+  for (const bench of plan.benches ?? []) {
+    for (const run of bench.runs) {
+      padEdits.push({ nodePath, footprint: run, targetY: bench.level, apron: 0 });
+    }
+  }
+
   for (const item of built) {
     const yaw = yawFacing(frontFace(item.ports, item.frontPort), item.face);
     const [rw, rh, rd] = rotatedSize(item.size, yaw);
     const rect = seat(item.rect, item.face, rw, rd);
-    const foundationY = cell?.foundationY ?? medianGround(input.field, rect);
+    const bench = benchLevel === null ? undefined : benchLevel[grid.index(rect.x0, rect.z0)];
+    const foundationY =
+      bench !== undefined && bench !== NO_BENCH
+        ? bench
+        : cell?.foundationY ?? medianGround(input.field, rect);
     const made: Placement = {
       nodePath: item.nodePath,
       id: item.id,
@@ -675,6 +794,10 @@ export function layDistrict(
       nodePath,
       bounds,
       streets: graph,
+      form: plan.record,
+      ...(plan.channels === undefined || plan.channels.length === 0
+        ? {}
+        : { channels: plan.channels }),
       carriageway,
       sidewalk,
       stats: {
@@ -1666,6 +1789,129 @@ export function seat(lot: Rect, face: HorizontalFace, w: number, d: number): Rec
     default:
       return { x0: lot.x1 - w + 1, z0: cz, x1: lot.x1, z1: cz + d - 1 };
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* the ground, as a form reads it                                              */
+/* -------------------------------------------------------------------------- */
+
+/** `terrain_conform` modes that level the ground under a footprint. */
+const LEVELLING_MODES: ReadonlySet<string> = new Set(["flatten", "cut_fill", "terrace"]);
+
+/** Whether the solver's pad has already flattened this district's ground. */
+function conformLevels(node: DistrictNode): boolean {
+  let mode = "cut_fill";
+  for (const c of node.constraints ?? []) {
+    const raw = c as unknown as Record<string, unknown>;
+    if (raw["type"] !== "terrain_conform" && !("terrain_conform" in raw)) continue;
+    const named = raw["mode"] ?? raw["terrain_conform"];
+    if (typeof named === "string") mode = named;
+  }
+  return LEVELLING_MODES.has(mode);
+}
+
+/**
+ * The ground under a domain, as a {@link GroundSample}.
+ *
+ * Built **once** by the caller and handed to the form, which is the whole point
+ * of the accessor: the field's region, the plan's region and the district's
+ * bounds are three different coordinate domains, `city.ts` carries a comment
+ * about how expensive that confusion is, and one object built here removes the
+ * index bug from six form modules. Outside the domain every accessor clamps to
+ * the edge, so a form that reads one column past its own boundary gets a
+ * plausible answer rather than a zero.
+ */
+export function sampleGround(
+  input: DistrictPassInput,
+  bounds: Rect,
+  node: DistrictNode,
+  cell: boolean,
+): GroundSample {
+  const region = input.field.region;
+  const at = (x: number, z: number): number => {
+    const i = Math.min(region.width - 1, Math.max(0, x - region.x0));
+    const j = Math.min(region.depth - 1, Math.max(0, z - region.z0));
+    return input.field.values[j * region.width + i] as number;
+  };
+  const clampX = (x: number): number => Math.min(bounds.x1, Math.max(bounds.x0, x));
+  const clampZ = (z: number): number => Math.min(bounds.z1, Math.max(bounds.z0, z));
+  const height = (x: number, z: number): number => Math.round(at(clampX(x), clampZ(z)));
+  const wet = (x: number, z: number): boolean => {
+    if (input.water === undefined) return false;
+    const i = Math.min(region.width - 1, Math.max(0, clampX(x) - region.x0));
+    const j = Math.min(region.depth - 1, Math.max(0, clampZ(z) - region.z0));
+    return input.water[j * region.width + i] === 1;
+  };
+
+  let lo = Number.POSITIVE_INFINITY;
+  let hi = Number.NEGATIVE_INFINITY;
+  let waterReach = Number.POSITIVE_INFINITY;
+  const cx = (bounds.x0 + bounds.x1) / 2;
+  const cz = (bounds.z0 + bounds.z1) / 2;
+  const half = Math.max((bounds.x1 - bounds.x0) / 2, (bounds.z1 - bounds.z0) / 2);
+  // One sweep of a generous box around the domain: the height range inside it,
+  // and the Chebyshev distance from the domain's edge out to the nearest water.
+  const margin = 24;
+  for (let z = bounds.z0 - margin; z <= bounds.z1 + margin; z++) {
+    for (let x = bounds.x0 - margin; x <= bounds.x1 + margin; x++) {
+      const inside = x >= bounds.x0 && x <= bounds.x1 && z >= bounds.z0 && z <= bounds.z1;
+      if (inside) {
+        const h = Math.round(at(x, z));
+        if (h < lo) lo = h;
+        if (h > hi) hi = h;
+      }
+      if (!wet(x, z)) continue;
+      const d = Math.max(0, Math.round(Math.max(Math.abs(x - cx), Math.abs(z - cz)) - half));
+      if (d < waterReach) waterReach = d;
+    }
+  }
+  const relief = lo === Number.POSITIVE_INFINITY ? 0 : hi - lo;
+
+  return {
+    height,
+    water: wet,
+    slope: (x, z) =>
+      Math.max(
+        Math.abs(height(x + 1, z) - height(x, z)),
+        Math.abs(height(x - 1, z) - height(x, z)),
+        Math.abs(height(x, z + 1) - height(x, z)),
+        Math.abs(height(x, z - 1) - height(x, z)),
+      ),
+    relief,
+    // A *cell* of a city plan is drawn before its own pads reach the field (a
+    // city gets no city-wide pad at all), so its ground is the real ground. An
+    // authored district's has already been levelled by the solver, unless its
+    // `terrain_conform` says otherwise or its form asked for `groundPolicy:
+    // "stepped"` — which is exactly what that plumbing exists to arrange.
+    levelled: !cell && conformLevels(node) && relief <= 1,
+    waterReach,
+    ...(input.seaLevel === undefined ? {} : { seaLevel: input.seaLevel }),
+  };
+}
+
+/** No bench covers this column. */
+const NO_BENCH = Number.NEGATIVE_INFINITY;
+
+/**
+ * A per-column bench level over the domain, or `null` when no bench was cut.
+ *
+ * `null` rather than an all-`NO_BENCH` array so the ordinary path — every form
+ * but `terraced` — allocates nothing and branches once.
+ */
+function benchLevels(grid: Grid, benches: readonly FormBench[]): Float64Array | null {
+  if (benches.length === 0) return null;
+  const out = new Float64Array(grid.cells).fill(NO_BENCH);
+  for (const bench of benches) {
+    for (const run of bench.runs) {
+      for (let z = run.z0; z <= run.z1; z++) {
+        for (let x = run.x0; x <= run.x1; x++) {
+          const k = grid.index(x, z);
+          if (k >= 0) out[k] = bench.level;
+        }
+      }
+    }
+  }
+  return out;
 }
 
 /** Median ground height under a rectangle of the composed field. */

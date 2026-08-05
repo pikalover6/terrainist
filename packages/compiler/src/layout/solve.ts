@@ -831,6 +831,12 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // it would fill the bay with dirt and stand the colossus on a lawn, which is
   // exactly the defect wading exists to fix.
   if (node.amphibious === true) return null;
+  // …and the fourth: a node that levels its own ground in pieces. A `terraced`
+  // quarter's benches *are* its levelling, and a pad laid before the fabric pass
+  // ran would erase the contours the form was going to follow — the form would
+  // then measure a flat quarter and refuse itself. See `LayoutNodeInput.groundPolicy`
+  // and `districtInput` in `from-document.ts`, which is where the policy is set.
+  if (node.groundPolicy === "stepped") return null;
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {

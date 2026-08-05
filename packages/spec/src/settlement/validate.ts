@@ -524,6 +524,7 @@ const DISTRICT_PARAM_KEYS = [
   "density",
   "mix",
   "blockSize",
+  "focus",
   "plaza",
   "walls",
 ] as const;
@@ -600,7 +601,7 @@ function validateDistrictNode(
       ),
     );
   } else {
-    validateDistrictParams(out, `${path}.params`, params);
+    validateDistrictParams(out, `${path}.params`, params, districtChildIds(node["children"]));
   }
 
   // --- landmark children ---------------------------------------------------
@@ -665,8 +666,14 @@ function validateDistrictNode(
 }
 
 /** Validate a district's `params` object. */
-function validateDistrictParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+function validateDistrictParams(
+  out: LoamDiagnostic[],
+  at: string,
+  params: Obj,
+  childIds: readonly string[] = [],
+): void {
   unknownKeys(out, params, at, DISTRICT_PARAM_KEYS, "district params");
+  validateDistrictFocus(out, at, params["focus"], childIds);
 
   for (const [key, allowed, example] of [
     ["fabric", DISTRICT_FABRICS, "grid"],
@@ -805,6 +812,7 @@ const CITY_PARAM_KEYS = [
   "diagonals",
   "ring",
   "blockSize",
+  "forms",
   "setPieces",
   "walls",
 ] as const;
@@ -961,6 +969,85 @@ function validateCityNode(
   validatePorts(out, path, node["ports"]);
 }
 
+/** The ids of a district's landmark children, for `params.focus` to name. */
+function districtChildIds(children: unknown): readonly string[] {
+  if (!Array.isArray(children)) return [];
+  const out: string[] = [];
+  for (const raw of children) {
+    if (isObject(raw) && typeof raw["id"] === "string") out.push(raw["id"]);
+  }
+  return out;
+}
+
+/**
+ * Validate `params.focus` — what the plan is about.
+ *
+ * `"plaza"`, or the id of one of this district's own children. An id naming
+ * nothing is an error rather than a degrade, for the `mix` reason: the
+ * alternative is invisible in the finished world, because the quarter still
+ * gets a hub — just not around the thing the author meant.
+ */
+function validateDistrictFocus(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  childIds: readonly string[],
+): void {
+  if (value === undefined) return;
+  const legal = ["plaza", ...childIds];
+  if (typeof value !== "string" || !legal.includes(value)) {
+    out.push(
+      error(
+        "DISTRICT_PARAM",
+        at,
+        `"focus" must be "plaza" or the id of one of this district's children, got ${describe(value)}`,
+        childIds.length === 0
+          ? 'write "focus": "plaza" — or add the building you meant to this district\'s "children" first'
+          : `write "focus": "plaza", or one of: ${childIds.join(", ")}`,
+      ),
+    );
+  }
+}
+
+/**
+ * Validate `params.forms` — the per-character urban form table.
+ *
+ * Exactly parallel to `params.characters`: an unknown character key or an
+ * unknown form id is a `CITY_PARAM` error naming the legal values, because a
+ * quarter silently drawn as the compiler's default is not something an author
+ * can see in the finished world.
+ */
+function validateCityForms(out: LoamDiagnostic[], at: string, forms: unknown): void {
+  if (forms === undefined) return;
+  const path = `${at}.forms`;
+  if (!isObject(forms)) {
+    out.push(
+      error(
+        "CITY_PARAM",
+        at,
+        `"forms" must be an object keyed by district character, got ${describe(forms)}`,
+        `write "forms": { "lanes": "grown" } — the keys are: ${DISTRICT_CHARACTERS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, forms, path, DISTRICT_CHARACTERS, "city forms");
+  for (const key of DISTRICT_CHARACTERS) {
+    const value = forms[key];
+    if (value === undefined) continue;
+    if (typeof value !== "string" || !(DISTRICT_FABRICS as readonly string[]).includes(value)) {
+      out.push(
+        error(
+          "CITY_PARAM",
+          path,
+          `"${key}" must be one of ${DISTRICT_FABRICS.join(", ")}, got ${describe(value)}`,
+          `write "forms": { "${key}": "grid" }`,
+        ),
+      );
+    }
+  }
+}
+
 /** Validate a city's `params` object. */
 function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): void {
   unknownKeys(out, params, at, CITY_PARAM_KEYS, "city params");
@@ -994,6 +1081,7 @@ function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): voi
 
   validateCityMix(out, at, "mix", params["mix"], true);
   validateCityCharacters(out, at, params["characters"]);
+  validateCityForms(out, at, params["forms"]);
   validateSetPiecesParam(out, at, params["setPieces"]);
   validateWallsParam(out, at, params["walls"]);
 }

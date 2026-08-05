@@ -194,6 +194,22 @@ export const TERRAIN_DIAGNOSTICS = {
    * never be silent.
    */
   STAIR_UNCONNECTED: "LOAM-T221",
+  /**
+   * Phase 4.1 urban forms — the requested form could not be drawn on this
+   * quarter, so its **announced fallback** was drawn instead.
+   *
+   * A warning rather than an error, deliberately: a terrain mismatch is
+   * something an author may not have been able to predict, and losing a whole
+   * quarter over one costs more than the form did. The message names the
+   * measurement that failed and the thing in the document to change, and the
+   * fallback is recorded on the district in the compile report — so a fallback
+   * is legible in the finished artifact, not only in a feedback round.
+   *
+   * Also carries a form's own notes about the ground it was given (a canal
+   * quarter that is a closed pound; a flight of steps that could not be made
+   * climbable).
+   */
+  DISTRICT_FORM: "LOAM-T222",
 
   // --- Phase 0 contract 2: authored programs -------------------------------
   // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
@@ -312,6 +328,8 @@ export const TERRAIN_DIAGNOSTICS = {
   INTENT_PROP_UNKNOWN: "LOAM-W485",
   /** `character.flora` names a species/kind the vegetation pass does not know. */
   INTENT_FLORA_UNKNOWN: "LOAM-W486",
+  /** `character.urbanForm` names a form outside the district-fabric vocabulary. */
+  INTENT_FORM_UNKNOWN: "LOAM-W487",
 } as const;
 
 /** Symbolic diagnostic name. */

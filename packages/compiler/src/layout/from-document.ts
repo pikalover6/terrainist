@@ -28,6 +28,7 @@ import {
   type Yaw,
 } from "@terrainist/spec";
 
+import { districtGroundPolicy } from "./district.js";
 import type { LayoutNodeInput } from "./types.js";
 
 /** Footprint a `building.grammar@0` node gets when it declares no envelope. */
@@ -84,7 +85,7 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
     }
 
     if (child.kind === "district") {
-      nodes.push(districtInput(child, nodePath, seed));
+      nodes.push(districtInput(child, nodePath, seed, doc));
       continue;
     }
 
@@ -217,9 +218,21 @@ function plazaInput(node: PlazaNode, nodePath: string, seed: Seed256): LayoutNod
  * streets would only have to be un-rotated again) and a height of 1, because
  * the pad it emits is what the fabric pass then builds on.
  */
-function districtInput(node: DistrictNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+function districtInput(
+  node: DistrictNode,
+  nodePath: string,
+  seed: Seed256,
+  doc: SettlementDocument,
+): LayoutNodeInput {
   const [w, d] = node.envelope.size ?? [128, 128];
+  // The one thing the solver has to know about the quarter's *interior*: a
+  // contour-led urban form levels its own ground one bench at a time, so the
+  // solver must not lay a pad that erases the contours first. The form is
+  // resolved here and again in `layDistrict`; `districtGroundPolicy` is the
+  // single shared answer, so the two cannot disagree.
+  const policy = districtGroundPolicy(doc, node, nodePath);
   return {
+    ...(policy === "pad" ? {} : { groundPolicy: policy }),
     id: node.id,
     nodePath,
     kind: "district",

@@ -337,7 +337,9 @@ skeleton), not for buildings.
 registers its own fan-out rows.
 - **Urban forms as plugins** — radial, canal, terraced, linear, grown. The
   direct answer to "every settlement is the same settlement", and the largest
-  single variety win available.
+  single variety win available. Specified in `docs/URBAN-FORMS-v0.md`: a
+  registry of named street-skeleton generators behind one contract, with blocks,
+  lots and frontage seating shared and unchanged below it.
 - **Courtyard blocks and multi-level ground** — old-quarter and hill-town
   texture; the two fabric rigidities most worth relaxing.
 - **Flora grammar** — canopy giants, ancients, fungal, fantasy strata; the

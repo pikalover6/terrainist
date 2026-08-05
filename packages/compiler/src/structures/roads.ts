@@ -649,6 +649,25 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     for (const segment of graph.segments) {
       const path = segment.path.filter((c) => inside(region, c.x, c.z));
       if (path.length === 0) continue;
+      // The urban-form seam (`docs/URBAN-FORMS-v0.md` §4.1). A segment's *role*
+      // says what is inside its width, and it is the only thing dispatched on
+      // here: a channel is a street whose carriageway is water, and a flight of
+      // steps is a street the tread law lays instead of the grader. Both new
+      // branches are deliberate no-ops until their packages land, in the same
+      // spirit `dressStreets` was a no-op until F4 filled it in — so a document
+      // that names no new form walks exactly the code it walks today.
+      const role = segment.role ?? "carriageway";
+      if (role === "channel") {
+        // WP-B (`structures/canals.ts`): dig the channel, write the water into
+        // the column plan *before* this pass runs, and deck every crossing.
+        continue;
+      }
+      if (role === "steps") {
+        // WP-C (`structures/street-stairs.ts`): `synthesizeTreadPlan` over the
+        // raw ground of this path, dressed with `STAIR_PROFILE`, with the
+        // whole-run refusal that keeps an unclimbable flight from being built.
+        continue;
+      }
       const profile = gradeProfile(
         path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
         plan.seaLevel,

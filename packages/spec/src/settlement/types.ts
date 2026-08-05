@@ -206,10 +206,31 @@ export interface PlazaNode extends StructureBase {
 /* districts (fabric v2, F1)                                                   */
 /* -------------------------------------------------------------------------- */
 
-/** How a district's street skeleton is drawn. */
-export const DISTRICT_FABRICS = ["grid", "organic"] as const;
+/**
+ * How a district's street skeleton is drawn — the **urban form** vocabulary.
+ *
+ * Seven ids, one idea each about how a settlement is organised, and the wire
+ * key stays `params.fabric`: renaming it to `params.form` would have cost every
+ * committed document, every kit example and every golden and bought a better
+ * noun (`docs/URBAN-FORMS-v0.md` §6.1). The prose calls the concept an urban
+ * form; the key stays where the model already knows to look.
+ *
+ * `grid` and `organic` are frozen — `organic` is a grid that has been let go of,
+ * it is what four city characters map to and what half the goldens are built on,
+ * and `grown` is the real unplanned town. Every id here is checked against the
+ * compiler's form registry by a test, in both directions.
+ */
+export const DISTRICT_FABRICS = [
+  "grid",
+  "organic",
+  "grown",
+  "radial",
+  "canal",
+  "terraced",
+  "linear",
+] as const;
 
-/** A street-skeleton fabric. */
+/** A street-skeleton fabric — an urban form id. */
 export type DistrictFabric = (typeof DISTRICT_FABRICS)[number];
 
 /** How much of a district's lot supply is actually built on. */
@@ -291,6 +312,15 @@ export interface DistrictParams {
   readonly mix: readonly string[];
   /** Preferred block size between street centre lines, in blocks. A hint. */
   readonly blockSize?: number;
+  /**
+   * What the plan is *about*: `"plaza"`, or the id of one of this district's
+   * own `children`.
+   *
+   * Read by the `radial` form, which puts it in the hub and runs everything
+   * else at it. Written on a quarter whose form does not read it, it is a note
+   * saying which form does — never a silent no-op.
+   */
+  readonly focus?: string;
   /** Leave one central block unbuilt as a square. */
   readonly plaza?: boolean;
   /** Ring the finished quarter with a wall. See {@link WallOptions}. */
@@ -378,6 +408,14 @@ export interface CityParams {
    * from {@link CityParams.mix}.
    */
   readonly characters?: Readonly<Partial<Record<DistrictCharacterName, readonly string[]>>>;
+  /**
+   * Per-character urban form, exactly parallel to {@link CityParams.characters}.
+   *
+   * A character the author does not name keeps the compiler's own table, which
+   * is frozen at `grid`/`organic` — so a city with no `forms` key is exactly the
+   * city it was before the form registry existed (§5.5, §10.6).
+   */
+  readonly forms?: Readonly<Partial<Record<DistrictCharacterName, DistrictFabric>>>;
   /**
    * Draw a shoreline drive. Omitted means "if the footprint has a coast" —
    * `false` suppresses the drive even on the water, `true` asks for one and
