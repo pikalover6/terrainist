@@ -825,6 +825,12 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // stair district was going to climb. Its buildings still level their own
   // footprints and its arterials still grade themselves; the *land* survives.
   if (node.kind === "city") return null;
+  // …and every other amphibious node, for the third time and the same reason:
+  // a `seat: "wade"` landmark stands *in* the water, and a pad under it would
+  // level the sea bed up to the median of a footprint that is half sea — i.e.
+  // it would fill the bay with dirt and stand the colossus on a lawn, which is
+  // exactly the defect wading exists to fix.
+  if (node.amphibious === true) return null;
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {

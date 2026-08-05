@@ -1464,6 +1464,9 @@ function programJobsFrom(
           plan: ground.plan,
           seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
           taken: claimed,
+          // No solver here, so the seat policy is the only thing that can tell
+          // the ground search that water is the point rather than a refusal.
+          wades: seatPolicyOf(node)?.policy === "wade",
         });
         site =
           found === undefined

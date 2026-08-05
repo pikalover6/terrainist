@@ -230,6 +230,10 @@ function isHovering(job: ProgramJob): boolean {
  *   `api.heightAt` and moving it would undo that.
  * - `"embed"`: seated, then sunk `embedDepth` further. Nothing is cut; the
  *   terrain simply stands over the buried part, which is what *crashed* means.
+ * - `"wade"`: seated exactly as `"pad"` is — but on the seabed, and with no pad
+ *   under it (see `buildPrograms`, which lays a pad for `"pad"` alone). How much
+ *   of the thing ends up under water is decided by its own height against the
+ *   sea, which is what makes *half-submerged* a fact rather than a description.
  */
 function seatedBaseY(
   site: ProgramSite,

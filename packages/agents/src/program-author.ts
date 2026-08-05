@@ -326,7 +326,11 @@ RULES — each of these is checked by a gate before your program is accepted.
    bottom of the envelope instead and return the HONEST \`seatY\`: the node-local
    Y of the course that actually meets the ground. The compiler puts that plane
    on the terrain, so a \`seatY\` of 0 on a structure with three blocks of gear
-   under it is a structure standing three blocks off the ground.
+   under it is a structure standing three blocks off the ground. For a thing
+   that stands in water, the ground is the SEABED and \`seatY\` means the same
+   as ever: build the whole thing, from its footing upward, and let the
+   waterline fall where it falls — never model an air gap or a waterline
+   yourself.
 6. FOLLOW THE GROUND YOU ARE GIVEN. \`api.heightAt(x, z)\` is the terrain height
    under your footprint, node-local and measured from the seat plane: 0 where
    the ground meets it, negative where the ground falls away, positive where it

@@ -2284,6 +2284,10 @@ or it touches down.
 - `"seat": "drape"` — no levelling and no re-seating; the program follows the
   real terrain itself, column by column. Use it for something long and
   conforming — a wall along a ridge, a pipeline, a fallen mast.
+- `"seat": "wade"` — the thing stands **in the water**. Its seat plane goes on
+  the seabed and no pad is laid, so the waterline cuts it wherever its own
+  height puts it. Everything else refuses to be placed below sea level at all;
+  this is the only way to ask for something that is not.
 
 ```json
 { "id": "crash_site", "kind": "generator", "generator": "authored:crashed_saucer",
@@ -2293,6 +2297,34 @@ or it touches down.
 
 A `scatter.program@0` node takes the same two keys, which is how a field of
 crashed pods gets buried instead of parked: `"seat": "embed", "embedDepth": 4`.
+`"seat": "wade"` scatters the same way — a bay of half-sunk wrecks.
+
+**Something standing in the sea is requested with `wade`, not described as
+"half-submerged" and hoped for.** Nothing a program writes and nothing a brief
+says can put a structure below the waterline: every other node is held a block
+clear of the sea, so a colossus the prompt wanted lying in the shallows comes
+out standing on dry grass above the beach, and the compiler reports an
+`UNSATISFIABLE` you cannot act on. `wade` is what lifts that.
+
+```json
+{ "id": "drowned_god", "kind": "generator", "generator": "authored:drowned_god_shrine",
+  "params": { "seat": "wade" },
+  "constraints": [ { "on": "@terrain:coastline", "band": 32 } ] }
+```
+
+The program that goes with it builds the whole figure — plinth, torso,
+shoulders, the outstretched hand — from its footing upward and returns an
+honest `seatY`. It does not model a waterline: which courses end up drowned is
+decided by the seabed it lands on and by how tall the figure is, so a shallower
+bay shows more of it. That is the point of `wade` — half-submerged is a
+consequence of the geometry, not a thing anyone drew.
+
+`wade` is a preference for water, not a demand for it. The solver is pulled
+toward the shallows but will still place the node on dry ground rather than
+drop it, so a document that asks for a wading landmark on a coast the terrain
+never grew gets a beached one instead of nothing. `embedDepth` means nothing
+here — it belongs to `embed` — and `wade` and `hover` cannot be written
+together, the same as every other seat.
 
 **Something that crashed is requested as embedded, not described as "resting
 on".** A brief that says "resting on the moor" gets a saucer sitting on a lawn;

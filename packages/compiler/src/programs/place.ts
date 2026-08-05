@@ -15,7 +15,7 @@
  */
 
 import type { ProgramScatterParams } from "@terrainist/spec";
-import { hoverOfParams } from "@terrainist/spec";
+import { hoverOfParams, seatOfParams } from "@terrainist/spec";
 import { positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
 import { streamSeed } from "@terrainist/stdlib";
 
@@ -56,11 +56,19 @@ export interface SiteRefusals {
  * Every column still has to be dry and inside the region. Relief is refused
  * only past {@link PROGRAM_MAX_RELIEF}, and the refusal is counted into
  * `refusals` so the caller can say so out loud.
+ *
+ * `allowFluid` is `seat: "wade"` and nothing else: a wading instance stands on
+ * the seabed on purpose, so a fluid column is the site it wanted rather than a
+ * reason to refuse it. `plan.ground` is already the solid ground under the
+ * water, so the plane this returns needs no adjustment — the waterline simply
+ * cuts whatever is built on it. The cliff ceiling still applies: a seabed that
+ * falls away like a cliff is no better a footing than a dry one.
  */
 export function programGroundPlane(
   plan: ColumnPlan,
   rect: Rect,
   refusals?: SiteRefusals,
+  allowFluid = false,
 ): number | undefined {
   const { region } = plan;
   const heights: number[] = [];
@@ -72,7 +80,7 @@ export function programGroundPlane(
       const j = z - region.z0;
       if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return undefined;
       const idx = j * region.width + i;
-      if (plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
+      if (!allowFluid && plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
       const g = plan.ground[idx] as number;
       heights.push(g);
       if (g < lo) lo = g;
@@ -160,6 +168,9 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   // dirt. What survives is the region, the author's `area` and `avoidTags`,
   // and `spacing` against its own siblings, so two saucers never share a sky.
   const hover = hoverOfParams(params);
+  // A wading scatter — a bay full of half-sunk wrecks — is the one kind whose
+  // sites are *supposed* to have water in them.
+  const wades = hover === undefined && seatOfParams(params).policy === "wade";
 
   const claimed: Rect[] = hover === undefined ? [...(input.taken ?? [])] : [];
   const sites: ProgramSite[] = [];
@@ -190,7 +201,7 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
         if (top === undefined) continue;
         baseY = top + hover;
       } else {
-        baseY = programGroundPlane(plan, rect, input.refusals);
+        baseY = programGroundPlane(plan, rect, input.refusals, wades);
         if (baseY === undefined) continue;
         if (!reliefOk(plan, rect, params, w, d)) continue;
       }
@@ -213,6 +224,8 @@ export interface LandmarkPlacementInput {
   readonly seed: Seed256;
   readonly taken?: readonly Rect[];
   readonly refusals?: SiteRefusals;
+  /** `seat: "wade"`: the site may (and wants to) contain water. */
+  readonly wades?: boolean;
 }
 
 /**
@@ -237,12 +250,16 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   const centred: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
   const taken = input.taken ?? [];
   if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
-    const baseY = programGroundPlane(plan, centred, input.refusals);
+    const baseY = programGroundPlane(plan, centred, input.refusals, input.wades === true);
     if (baseY !== undefined) return { index: 0, footprint: centred, baseY };
   }
 
   const [fallback] = planProgramSites({
-    params: { program: "", count: 1 } as unknown as ProgramScatterParams,
+    params: {
+      program: "",
+      count: 1,
+      ...(input.wades === true ? { seat: "wade" } : {}),
+    } as unknown as ProgramScatterParams,
     envelope: input.envelope,
     plan,
     seed: input.seed,

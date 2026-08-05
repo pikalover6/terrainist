@@ -265,8 +265,16 @@ export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth"] as const;
  *   what a *crashed* thing wants rather than one resting on a lawn.
  * - `"drape"` — no pad and no re-seat. The program conforms itself, column by
  *   column, through `api.heightAt`.
+ * - `"wade"` — this thing stands *in the water*. The seat plane goes on the
+ *   seabed, the solid ground under the fluid, and no pad is laid: filling a
+ *   bay with dirt to make a plinth is the one thing a wading landmark must
+ *   never do. Nothing about the geometry is faked — the waterline simply cuts
+ *   the structure wherever its own height puts it, which is what makes
+ *   "half-submerged" fall out rather than be described. It also lifts the
+ *   solver's freeboard veto, so a candidate footprint may reach below sea
+ *   level at all.
  */
-export const SEAT_POLICIES = ["pad", "embed", "drape"] as const;
+export const SEAT_POLICIES = ["pad", "embed", "drape", "wade"] as const;
 
 /** One of {@link SEAT_POLICIES}. */
 export type SeatPolicy = (typeof SEAT_POLICIES)[number];

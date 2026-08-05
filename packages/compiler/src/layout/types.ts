@@ -33,8 +33,9 @@ export interface LayoutNodeInput {
   /** `building.grammar@0` / `road.network@0`; absent for the plaza. */
   readonly generator?: string;
   /**
-   * The node may straddle the waterline: the freeboard veto is lifted and the
-   * amphibious hazard mask is used. A harbour and a city, and nothing else.
+   * The node may straddle the waterline: the freeboard veto is lifted, the
+   * amphibious hazard mask is used, and no pad is laid under it. A harbour, a
+   * city, and a `seat: "wade"` landmark program — nothing else.
    */
   readonly amphibious?: boolean;
   /**

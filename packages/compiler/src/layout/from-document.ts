@@ -15,6 +15,7 @@ import {
   isPlaceableNode,
   note,
   resolveTypeKey,
+  seatPolicyOf,
   type AuthoredProgramRecord,
   type CanonicalConstraint,
   type CityNode,
@@ -151,6 +152,15 @@ export function programOf(
  *
  * One rotation only. The pass lowers a run's node-local voxels straight into
  * the world, so a yaw the solver chose would be a yaw nothing ever applied.
+ *
+ * `seat: "wade"` is the one param that reaches the solver at all, and it has
+ * to: the freeboard veto — no footprint may reach below sea level — is a rule
+ * about buildings, and a colossus meant to lie in the shallows is refused by
+ * it everywhere, which is an `UNSATISFIABLE` warning no author can act on.
+ * Wading also *wants* water (a cost, not a veto): a thing that stands in the
+ * sea should be pulled toward the shallows, but a document that asks for one
+ * on a lake the terrain never grew should still place it on dry land rather
+ * than be dropped.
  */
 function programInput(
   node: ProgramNode,
@@ -159,7 +169,9 @@ function programInput(
   seed: Seed256,
 ): LayoutNodeInput {
   const [w, h, d] = program.envelope;
+  const wades = seatPolicyOf(node)?.policy === "wade";
   return {
+    ...(wades ? { amphibious: true, wantsWater: true } : {}),
     id: node.id,
     nodePath,
     kind: "generator",
