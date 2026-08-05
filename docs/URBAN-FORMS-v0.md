@@ -994,6 +994,67 @@ with WP-0's merge, not with A/B/C.
    > still gets a quarter with houses on it. That refusal is not a substitute
    > for choosing the height properly; it is the guard that stops the wrong
    > height from shipping an empty quarter in silence.
+
+   > **Resolved 2026-08-05 — and half of the measurement above was a lie.**
+   >
+   > **First, the lie.** The "widest bench comes out 0 columns" a generated hill
+   > town refused itself with was not a measurement of the ground at all.
+   > `maskRuns` used `start = -1` as its "no run is open" sentinel while `start`
+   > held a **world X**, so over any quarter west of the origin the closing test
+   > `start >= 0` never fired and the function returned an empty list. `terraced`
+   > skips a bench whose runs are empty *before* it measures its width, so every
+   > bench was skipped and the widest came out 0; `derivePlatforms` pushed
+   > fifteen blocks' worth of pieces into `maskRuns` and kept none, which is the
+   > `DISTRICT_GROUND` "one platform" note on 45 blocks of relief in the same
+   > world. One sentinel, two diagnostics, both blaming the terrain. Every
+   > fixture in the repo sat at `x0 = 0`. The lesson is older than this phase and
+   > worth restating: **a sentinel that shares a value with legal data is a bug
+   > with a delay on it**, and a fixture whose bounds are always at the origin
+   > cannot see one. `terraced-bench-height.test.ts` asserts translation
+   > invariance now.
+   >
+   > **Second, the derivation.** `benchHeight` is no longer fixed. The deciding
+   > variable is the gradient — bench width is `benchHeight / gradient` — so a
+   > relief-derived height is derived from the wrong number and `clamp(round(
+   > relief / 6), 3, 6)` is formally withdrawn. But the gradient of real ground
+   > is not one number either: a quarter with a flat shoulder and a steep face
+   > has no single slope, and every scalar summary of it is a guess at which part
+   > of the quarter the answer should serve. So `benchHeightFor` measures the
+   > gradient's **consequence** instead, which is exact and cheap:
+   >
+   > > Take the smallest height in `[BENCH_HEIGHT, BENCH_HEIGHT_MAX]` whose
+   > > widest bench clears `MIN_BENCH_WIDTH` and whose field still holds two
+   > > benches. If none does, return the tallest and refuse with that
+   > > measurement — which is now honestly "even the tallest bench this ground
+   > > allows is too narrow" rather than "4 was too narrow".
+   >
+   > Smallest-first is load-bearing: one storey per bench stays the answer
+   > wherever it is possible, so a gentle terraced quarter is byte-identical to
+   > the one drawn before the height became a range, and a hill pays the taller
+   > party-wall step only when the alternative is no quarter at all. Cost is at
+   > most three integer cuts of one blurred field.
+   >
+   > **`BENCH_HEIGHT_MAX = RETAIN_MAX`, and that is not a taste.** A bench
+   > boundary is a seam of exactly `benchHeight` blocks, and
+   > `treatmentForDrop` builds a retaining wall up to `RETAIN_MAX` and *nothing
+   > at all* above it. A hill town on 8-block benches would therefore have no
+   > retaining walls in it — the one thing the prompt for a hill town always
+   > names. The ceiling on bench height is the tallest drop the seam machinery
+   > still builds a face for, the two numbers agree by construction, and a test
+   > asserts they cannot drift apart.
+   >
+   > **What this did not fix.** The measured hill town needed no taller bench
+   > once `maskRuns` worked: it draws 12 benches at 4 blocks, 1010 seams and 124
+   > retaining walls. And a `terraced` bench wide enough for a street and its
+   > lots is still not wide enough for a **courtyard** — the monastery prompt
+   > draws none, and forcing the floor of the range to 6 moves its refusal from
+   > "too thin for two opposite rows of lots" (12 of 19 blocks) to "core
+   > narrower than 9 columns" (4 of 7) without ever reaching one. A cloister on a
+   > slope wants a bench sized from `2 · LOT_DEPTH + MIN_COURT_SIDE`, which is
+   > roughly double `MIN_BENCH_WIDTH` and past `RETAIN_MAX` at any real gradient.
+   > That is a separate decision — probably a courtyard-aware bench *width*
+   > target that widens by dropping benches rather than by raising them — and it
+   > is deliberately not taken here.
 4. **The canal datum near real water.** `surfaceY = seaLevel` when the quarter is
    within 24 columns of open water is a guess at what reads as "open to the
    sea". Whether the channel should actually be *cut through* to the water — a

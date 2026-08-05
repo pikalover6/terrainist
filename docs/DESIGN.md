@@ -401,6 +401,28 @@ These only surface by generating a world from a prompt and asking whether the
 prompt's central image is *in* it. Look for valid requests the system silently
 declines, not for crashes.
 
+- **A retaining balustrade is left two courses proud, and it is the same hazard
+  the surfacer's own correction names.** Measured on the hill-town and
+  monastery worlds (2026-08-05): one `unsupported.chain` each — a
+  `stone_brick_wall` with air beneath it and the platform surface two courses
+  down. `sweep` writes the rail at `top + 1` from the upper platform's datum
+  and `retaining.ts` emits the coping at `plan.ground[k]`, but a later ground
+  pass pulls that seam column down a course and the emitted coping does not
+  survive it. Setting `RETAIN_RAIL` out of range takes both worlds to 26/26
+  zero, which pins the provenance exactly. Two fixes inside `retaining.ts` —
+  dropping unsupported blocks, and emitting a plinth — were tried and are both
+  no-ops, because the coping *is* emitted at the right Y and is then
+  overwritten. The cure belongs in whichever pass re-levels a claimed seam
+  column, which is the invariant `COURTYARDS-AND-LEVELS-v0.md` §3.4 already
+  states: *no later pass may re-level a column the surfacer owns.*
+- **A district may be seated flush against the region boundary, and is then
+  sliced by it.** Seen on a generated old-quarter world (2026-08-05): the
+  region is `x0 −256, width 512`, so its east edge is `x1 = 255`, and the
+  solver placed the quarter at `x0 96 … x1 255`. Blocks, lots and buildings
+  are cut mid-structure by the edge of the world, which reads to a player as a
+  broken town rather than an edge. The solver has no boundary margin for a
+  fabric-bearing node; a district wants at least a block of clearance, and
+  arguably a whole `blockSize`.
 - **Street surfacing has no column ownership, and on stepped ground it shows.**
   `surfaceStreetGraph` dresses each segment in turn, so where two segments
   share a column — a stair landing on a contour street, any junction on a

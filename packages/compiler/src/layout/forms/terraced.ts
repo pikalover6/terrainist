@@ -37,6 +37,7 @@
  */
 
 import type { Point2, Rect } from "../frames.js";
+import { RETAIN_MAX } from "../levels.js";
 import { largestRect, maskRuns } from "../masks.js";
 import type { StreetSegment } from "../streets.js";
 
@@ -54,15 +55,30 @@ import {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Blocks of rise per bench — one storey, fixed at 4 in v0.
+ * Blocks of rise per bench on ground gentle enough not to need more — one
+ * storey, and the floor of the range {@link benchHeightFor} chooses from.
  *
  * One storey is the number that makes a terrace's party wall step by a whole
- * floor. A relief-derived height (`clamp(round(relief / 6), 3, 6)`) is probably
- * better on very shallow and very steep ground alike, and is deliberately not
- * implemented here: it is `docs/URBAN-FORMS-v0.md` §10.3, and it wants a walk to
- * judge rather than a guess to ship.
+ * floor, so it stays the answer wherever it is *possible*: a quarter whose
+ * benches are already wide enough at 4 gets 4, and every terraced world drawn
+ * before this became a range is byte-identical.
  */
 export const BENCH_HEIGHT = 4;
+
+/**
+ * Tallest bench, and the number `RETAIN_MAX` fixes rather than a taste.
+ *
+ * A bench boundary is a seam of exactly `benchHeight` blocks, and
+ * `treatmentForDrop` builds a retaining wall up to `RETAIN_MAX` and *nothing at
+ * all* above it — past that the two platforms are graded into each other as a
+ * `bank`. A hill town whose benches were 8 blocks apart would therefore have no
+ * retaining walls in it, which is the one thing the prompt for a hill town
+ * always names. So the ceiling on bench height is not a separate judgement: it
+ * is the tallest drop the seam machinery will still build a wall for. The two
+ * numbers agree by construction, and `terraced-bench-height.test.ts` asserts
+ * they cannot drift apart.
+ */
+export const BENCH_HEIGHT_MAX = RETAIN_MAX;
 
 /** Half-width of the box blur applied to the height field, in columns. */
 const SMOOTH_RADIUS = 2;
@@ -129,7 +145,16 @@ function draw(ctx: FormContext): FormResult {
     p.x >= bounds.x0 && p.x <= bounds.x1 && p.z >= bounds.z0 && p.z <= bounds.z1 && masked(at(p.x, p.z));
 
   // --- the smoothed field and the bench field ------------------------------
-  const { smooth, base, bench, present } = benchFieldOf(ctx);
+  // Cut at the floor of the range first: `benchHeightFor` needs the blur and
+  // the datum, and nothing else, and this is the only place the field is built.
+  const first = benchFieldOf(ctx);
+  // §10.3, filled: how tall a bench has to be *here*. On ground gentle enough
+  // for one storey this is `BENCH_HEIGHT` and `first` is already the answer, so
+  // the common path cuts the field once and every gentle terraced quarter is
+  // byte-identical to the one drawn before the height became a range.
+  const benchHeight = first.base === Number.POSITIVE_INFINITY ? BENCH_HEIGHT : benchHeightFor(ctx, first);
+  const { smooth, base, bench, present } =
+    benchHeight === first.height ? first : benchFieldOf(ctx, benchHeight);
   if (base === Number.POSITIVE_INFINITY) {
     return {
       ok: false,
@@ -142,7 +167,7 @@ function draw(ctx: FormContext): FormResult {
   if (present.size < 2) {
     return {
       ok: false,
-      reason: `after the contour blur the ground under this quarter holds one bench of ${BENCH_HEIGHT} blocks, which is a grid with extra words`,
+      reason: `after the contour blur the ground under this quarter holds one bench of ${benchHeight} blocks, which is a grid with extra words`,
       fix: 'move the quarter onto a slope with a "zone" or "at" constraint, drop "terrain_conform" (a terraced quarter levels itself, one bench at a time), or write "fabric": "grown" for an unplanned quarter on level ground',
       fallback: "grown",
     };
@@ -273,7 +298,7 @@ function draw(ctx: FormContext): FormResult {
     if (box !== null) {
       widestBench = Math.max(widestBench, Math.min(box.x1 - box.x0 + 1, box.z1 - box.z0 + 1));
     }
-    benches.push({ runs, level: base + index * BENCH_HEIGHT + BENCH_HEIGHT - 1 });
+    benches.push({ runs, level: base + index * benchHeight + benchHeight - 1 });
   }
 
   // A bench is only a bench if something can stand on it. Its width is
@@ -287,7 +312,7 @@ function draw(ctx: FormContext): FormResult {
   if (widestBench < MIN_BENCH_WIDTH) {
     return {
       ok: false,
-      reason: `this ground is too steep to terrace at ${BENCH_HEIGHT} blocks a bench: the widest bench comes out ${widestBench} columns, and a contour street with lots along it needs ${MIN_BENCH_WIDTH}`,
+      reason: `this ground is too steep to terrace at ${benchHeight} blocks a bench, the tallest bench a retaining wall is built for: the widest bench comes out ${widestBench} columns, and a contour street with lots along it needs ${MIN_BENCH_WIDTH}`,
       fix: 'move the quarter onto a gentler slope with a "zone" or "at" constraint, give it a smaller footprint so it sits across fewer contours, or write "fabric": "grown" for an unplanned quarter that climbs the hill without terracing it',
       fallback: "grown",
     };
@@ -299,7 +324,7 @@ function draw(ctx: FormContext): FormResult {
       graph: { segments, intersections: intersectionsOf(segments), sidewalk: ctx.sidewalk },
       benches,
       record: drewAsAsked("terraced", {
-        adapted: [`benches ${benches.length} of ${BENCH_HEIGHT} blocks`, ...adapted],
+        adapted: [`benches ${benches.length} of ${benchHeight} blocks`, ...adapted],
         // The contours decide which way a street runs; an author's angle cannot.
         ignored: ["orientation (contour-led)"],
       }),
@@ -321,6 +346,8 @@ export interface BenchField {
   readonly bench: Int32Array;
   /** Every bench index that has at least one column. */
   readonly present: ReadonlySet<number>;
+  /** Blocks of rise this field was cut at — {@link benchHeightFor}'s answer. */
+  readonly height: number;
 }
 
 /**
@@ -329,8 +356,11 @@ export interface BenchField {
  * Exported because it is the one thing a test can assert the invariant against
  * — no lot spans two bench levels, every adjacent bench pair is joined by a
  * stair — without re-deriving the blur and getting a different answer.
+ *
+ * `height` defaults to {@link BENCH_HEIGHT} so a caller that does not care about
+ * the derivation gets the field the form has always cut.
  */
-export function benchFieldOf(ctx: FormContext): BenchField {
+export function benchFieldOf(ctx: FormContext, height: number = BENCH_HEIGHT): BenchField {
   const { bounds } = ctx;
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
@@ -350,18 +380,100 @@ export function benchFieldOf(ctx: FormContext): BenchField {
     const h = Math.round(smooth[k] as number);
     if (h < base) base = h;
   }
+  return { smooth, base, ...cut(smooth, cells, base, height, masked), height };
+}
 
+/** The bench index per column at one height, over an already-blurred field. */
+function cut(
+  smooth: Float64Array,
+  cells: number,
+  base: number,
+  height: number,
+  masked: (k: number) => boolean,
+): { readonly bench: Int32Array; readonly present: ReadonlySet<number> } {
   const bench = new Int32Array(cells).fill(-1);
   const present = new Set<number>();
   if (base !== Number.POSITIVE_INFINITY) {
     for (let k = 0; k < cells; k++) {
       if (!masked(k)) continue;
-      const b = Math.floor((Math.round(smooth[k] as number) - base) / BENCH_HEIGHT);
+      const b = Math.floor((Math.round(smooth[k] as number) - base) / height);
       bench[k] = b;
       present.add(b);
     }
   }
-  return { smooth, base, bench, present };
+  return { bench, present };
+}
+
+/**
+ * How tall a bench has to be here, and the whole of §10.3's answer.
+ *
+ * **The deciding variable is the gradient, not the relief.** A bench is the
+ * horizontal offcut of a riser, so its width is `benchHeight / gradient`: sixty
+ * columns on a 1-in-15 slope and twelve on a 1-in-3 one, at the *same* height,
+ * and two quarters with identical relief spread over 400 and over 100 columns
+ * behave nothing alike. That is why `clamp(round(relief / 6), 3, 6)` — the
+ * derivation §10.3 deferred — is derived from the wrong number and is not what
+ * this does.
+ *
+ * It is also why this measures rather than models. The gradient of real ground
+ * is not one number: a quarter with a flat shoulder and a steep face has no
+ * single slope, and every scalar summary of it (mean, median, percentile of the
+ * adjacent differences) is a guess at which part of the quarter the answer
+ * should serve. The quantity that actually decides whether the form can be
+ * drawn is **the width of the widest bench**, which is the gradient's
+ * consequence and is cheap to compute exactly: cut the field at a candidate
+ * height and measure. So:
+ *
+ * > Take the **smallest** height in `[BENCH_HEIGHT, BENCH_HEIGHT_MAX]` whose
+ * > widest bench can carry a contour street and the lots along it, and whose
+ * > field still holds two benches. If none can, return the tallest — the caller
+ * > refuses with that measurement, which is now honestly "even the tallest
+ * > bench this ground allows is too narrow" rather than "4 was too narrow".
+ *
+ * Smallest-first is what keeps one storey per bench the answer wherever it is
+ * possible, so a gentle terraced quarter is byte-identical to the one this
+ * compiler drew before the height became a range, and a hill only pays the
+ * taller party-wall step when the alternative is no quarter at all.
+ *
+ * Deterministic: three integer cuts of one blurred field and a
+ * maximal-rectangle sweep over each, no RNG and no clock.
+ */
+export function benchHeightFor(ctx: FormContext, field: BenchField): number {
+  const { bounds } = ctx;
+  const width = bounds.x1 - bounds.x0 + 1;
+  const cells = width * (bounds.z1 - bounds.z0 + 1);
+  const masked = (k: number): boolean => ctx.mask === undefined || ctx.mask[k] === 1;
+  for (let height = BENCH_HEIGHT; height <= BENCH_HEIGHT_MAX; height++) {
+    const { bench, present } = cut(field.smooth, cells, field.base, height, masked);
+    // One bench is a grid with extra words, and a taller cut can only make it
+    // worse, so this is a floor on the candidate rather than a reason to climb.
+    if (present.size < 2) return height;
+    if (widestBenchOf(bounds, cells, bench, present) >= MIN_BENCH_WIDTH) return height;
+  }
+  return BENCH_HEIGHT_MAX;
+}
+
+/**
+ * The narrow dimension of the largest rectangle inside any one bench.
+ *
+ * The same measurement the refusal quotes, so the number that chose the height
+ * and the number in the diagnostic are the same number by construction.
+ */
+function widestBenchOf(
+  bounds: Rect,
+  cells: number,
+  bench: Int32Array,
+  present: ReadonlySet<number>,
+): number {
+  let widest = 0;
+  for (const index of [...present].sort((a, b) => a - b)) {
+    const platform = new Uint8Array(cells);
+    for (let k = 0; k < cells; k++) if (bench[k] === index) platform[k] = 1;
+    const box = largestRect(bounds, platform);
+    if (box === null) continue;
+    widest = Math.max(widest, Math.min(box.x1 - box.x0 + 1, box.z1 - box.z0 + 1));
+  }
+  return widest;
 }
 
 /**

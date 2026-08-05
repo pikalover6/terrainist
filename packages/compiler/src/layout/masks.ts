@@ -83,18 +83,35 @@ export function withoutReserved(mask: Uint8Array, bounds: Rect, reserved: readon
  * Every run is one row tall and carries no apron, so adjacent runs cannot blend
  * against each other and the union is exactly the mask at exactly one height.
  * `FormBench.runs` is the same shape for the same reason.
+ *
+ * **`open` is a flag, not a sentinel value of `start`.** `start` holds a *world*
+ * X, which is negative over any quarter west of the origin, so the older
+ * `start = -1` / `start >= 0` idiom read "a run is open" as "the run began at a
+ * non-negative X" and closed nothing at all west of x = 0. Measured 2026-08-05:
+ * a hill town whose district spanned x ∈ [−160, −1] got **zero** runs out of
+ * every bench and every derived platform, which surfaced two doors away as
+ * "this ground is too steep to terrace" (`terraced` skips a bench with no runs
+ * before it can measure its width, so the widest bench came out 0 columns) and
+ * as "stepped ground came out as one platform" (`derivePlatforms` pushed
+ * fifteen blocks' worth of pieces and kept none). Any sentinel that shares a
+ * value with legal data is this bug waiting to happen; the flag cannot be
+ * confused with a coordinate.
  */
 export function maskRuns(b: Rect, mask: Uint8Array): Rect[] {
   const stride = b.x1 - b.x0 + 1;
   const out: Rect[] = [];
   for (let z = b.z0; z <= b.z1; z++) {
-    let start = -1;
+    let start = 0;
+    let open = false;
     for (let x = b.x0; x <= b.x1 + 1; x++) {
       const inside = x <= b.x1 && mask[(z - b.z0) * stride + (x - b.x0)] === 1;
-      if (inside && start < 0) start = x;
-      if (!inside && start >= 0) {
+      if (inside && !open) {
+        start = x;
+        open = true;
+      }
+      if (!inside && open) {
         out.push({ x0: start, z0: z, x1: x - 1, z1: z });
-        start = -1;
+        open = false;
       }
     }
   }
