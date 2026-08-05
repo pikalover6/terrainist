@@ -24,7 +24,7 @@ import {
   type ProgramScatterParams,
   type SeatDecision,
 } from "@terrainist/spec";
-import { error, seatOfParams, warning } from "@terrainist/spec";
+import { error, hoverOfParams, seatOfParams, warning } from "@terrainist/spec";
 import { nodeSeed, type Marker } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
@@ -176,9 +176,9 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       const baseY = seatedBaseY(site, run, seat);
       const lowered = lowerRun(run, site, baseY, input.stack, job, diagnostics);
       if (lowered === undefined) continue;
-      // A hovering landmark stands over the ground, not on it: the ground
+      // A hovering instance stands over the ground, not on it: the ground
       // beneath stays buildable, so its footprint is never claimed.
-      if (job.placement?.hovering !== true) claimed.push(site.footprint);
+      if (!isHovering(job)) claimed.push(site.footprint);
       blocks.push(...lowered.blocks);
       // v2: the shell is the program's, the fit-out inside it is the grammar's.
       blocks.push(...furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
@@ -198,10 +198,23 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
  * `planHoverSite` computed it.
  */
 function seatOf(job: ProgramJob): SeatDecision | undefined {
-  if (job.placement?.hovering === true) return undefined;
+  if (isHovering(job)) return undefined;
   if (job.placement?.seat !== undefined) return job.placement.seat;
   if (job.seat !== undefined) return job.seat;
   return seatOfParams(job.params);
+}
+
+/**
+ * True when this job's instances float.
+ *
+ * One answer for both modes: a landmark carries the decision on its solved
+ * placement, a `scatter.program@0` carries it in its params, and everything
+ * downstream — the pad, the seating, the claim, the `PlacedProgram` flag —
+ * asks this rather than re-deriving it.
+ */
+function isHovering(job: ProgramJob): boolean {
+  if (job.placement?.hovering === true) return true;
+  return job.mode === "plugin" && hoverOfParams(job.params) !== undefined;
 }
 
 /**
@@ -368,7 +381,7 @@ function lowerRun(
       index: run.index,
       footprint: site.footprint,
       baseY,
-      ...(job.placement?.hovering === true ? { hovering: true } : {}),
+      ...(isHovering(job) ? { hovering: true } : {}),
       blockCount: blocks.length,
       seatY: run.result?.seatY ?? 0,
       name: run.result?.name ?? job.programId,

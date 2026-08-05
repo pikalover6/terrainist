@@ -412,8 +412,10 @@ export function validateProgramScatterParams(
   num(out, params["maxRelief"], `${path}.maxRelief`, 0, 64, "blocks of relief across the footprint");
   checkElevation(out, params["elevation"], `${path}.elevation`);
   checkTags(out, params["avoidTags"], `${path}.avoidTags`);
-  // Nothing scattered hovers, so there is no `hover` to conflict with.
-  checkSeat(out, params, path, false);
+  // A scatter hovers the same way a landmark does — every instance floats over
+  // its own footprint — so the same two checks, and the same exclusion.
+  const hovering = checkHover(out, params, path, "instance");
+  checkSeat(out, params, path, hovering);
 
   if (out.length !== before || (program === undefined && pendingMode === undefined)) return undefined;
   return params as unknown as ProgramScatterParams;
@@ -522,20 +524,38 @@ export function validateLandmarkParams(
     return;
   }
   unknownKeys(out, params, path, [...LANDMARK_PARAM_KEYS], "an authored: landmark node");
+  const hovering = checkHover(out, params, path, "landmark");
+  checkSeat(out, params, path, hovering);
+}
+
+/**
+ * `hover`, shared by a landmark node and `scatter.program@0`.
+ *
+ * `subject` is what floats — one `"landmark"`, or each scattered `"instance"`
+ * — so the fix text names the thing the author wrote. Returns true when the
+ * params carry a `hover` at all, malformed or not: a document that asked to
+ * float and also asked to seat is wrong either way, and saying so once beats
+ * saying nothing because the altitude was also out of range.
+ */
+function checkHover(
+  out: LoamDiagnostic[],
+  params: Obj,
+  path: string,
+  subject: "landmark" | "instance",
+): boolean {
   const hover = params["hover"];
-  if (hover !== undefined) {
-    if (typeof hover !== "number" || !Number.isInteger(hover) || hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) {
-      out.push(
-        error(
-          "PARAM_OUT_OF_RANGE",
-          `${path}.hover`,
-          `"hover" must be an integer ${HOVER_RANGE.min}..${HOVER_RANGE.max}, got ${describe(hover)}`,
-          `hover floats the landmark that many blocks above the highest ground under its footprint; below ${HOVER_RANGE.min} it reads as ground clutter, so seat it on the ground by dropping "hover" instead`,
-        ),
-      );
-    }
+  if (hover === undefined) return false;
+  if (typeof hover !== "number" || !Number.isInteger(hover) || hover < HOVER_RANGE.min || hover > HOVER_RANGE.max) {
+    out.push(
+      error(
+        "PARAM_OUT_OF_RANGE",
+        `${path}.hover`,
+        `"hover" must be an integer ${HOVER_RANGE.min}..${HOVER_RANGE.max}, got ${describe(hover)}`,
+        `hover floats the ${subject} that many blocks above the highest ground under its footprint; below ${HOVER_RANGE.min} it reads as ground clutter, so seat it on the ground by dropping "hover" instead`,
+      ),
+    );
   }
-  checkSeat(out, params, path, hover !== undefined);
+  return true;
 }
 
 /**

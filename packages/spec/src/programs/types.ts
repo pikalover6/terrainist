@@ -175,6 +175,7 @@ export const PROGRAM_SCATTER_KEYS = [
   "maxRelief",
   "avoidTags",
   "elevation",
+  "hover",
   "seat",
   "embedDepth",
 ] as const;
@@ -203,6 +204,11 @@ export interface ProgramScatterParams {
   readonly avoidTags?: readonly string[];
   /** `[yMin, yMax]` absolute ground band instances may sit in. */
   readonly elevation?: readonly [number, number];
+  /**
+   * Blocks every instance floats above the highest ground under its own
+   * footprint. Mutually exclusive with {@link ProgramScatterParams.seat}.
+   */
+  readonly hover?: number;
   /** How each instance meets the ground; see {@link SEAT_POLICIES}. */
   readonly seat?: SeatPolicy;
   /** `seat: "embed"` only — blocks the instance sinks below the ground plane. */
@@ -282,16 +288,24 @@ export interface SeatDecision {
 export const HOVER_RANGE = Object.freeze({ min: 8, max: 256 });
 
 /**
- * The hover height a landmark node asks for, or `undefined`.
+ * The hover height a node asks for, or `undefined`.
  *
  * The one blessed reader: compiler code never pokes at `params.hover` itself,
  * so "is this node airborne" has exactly one answer everywhere. Anything the
  * validator would have rejected (non-integer, out of range) reads as
  * `undefined` here rather than as a nonsense altitude.
+ *
+ * Both invocation modes spell it the same way. On an `authored:<id>` landmark
+ * it floats the one instance; on `scatter.program@0` it floats *every*
+ * instance, each above its own footprint.
  */
 export function hoverOf(node: unknown): number | undefined {
   if (typeof node !== "object" || node === null) return undefined;
-  const params = (node as { params?: unknown }).params;
+  return hoverOfParams((node as { params?: unknown }).params);
+}
+
+/** {@link hoverOf} for a params object — `scatter.program@0`'s spelling. */
+export function hoverOfParams(params: unknown): number | undefined {
   if (typeof params !== "object" || params === null) return undefined;
   const hover = (params as { hover?: unknown }).hover;
   if (typeof hover !== "number" || !Number.isInteger(hover)) return undefined;

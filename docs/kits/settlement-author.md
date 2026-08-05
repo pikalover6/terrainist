@@ -2216,7 +2216,7 @@ fit-out the ordinary buildings use, so the inside comes with lights, seating and
 storage without the brief listing a single prop. Say nothing about the inside
 and you get a solid monument, which is often the right answer for a statue.
 
-### Hovering: airborne landmarks
+### Hovering: airborne things
 
 A landmark node may carry `"params": {"hover": <blocks>}`, which floats the
 whole structure that many blocks above the **highest** ground column under its
@@ -2236,8 +2236,38 @@ below, so **12 or more** above a low village and considerably more over towers.
 Only the node's `zone` constraint is honoured (it centres the footprint in that
 nine-grid cell; with no `zone` it centres on the region).
 
-When the prompt wants something airborne, request a landmark and invoke it with
-`hover` — do **not** ask the program to bake an air gap into its own geometry.
+A `scatter.program@0` node takes `hover` too, and it means the same thing per
+instance: every scattered instance floats that many blocks above the highest
+ground column under **its own** footprint, so a field of them follows the
+hills rather than sitting on one flat sheet.
+
+```json
+{ "id": "hovering_saucers", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "saucer", "count": 14, "area": { "all": true },
+              "spacing": 60, "hover": 40 } }
+```
+
+A hovering scatter is how you get **many** airborne things; an `authored:` node
+with `hover` is how you get **one big one**. A prompt about a fleet over the
+fields wants the scatter; a prompt about the mothership wants the landmark.
+
+Nothing that hovers claims the ground under it in either mode — no pad is laid,
+no footprint is reserved, and roads, fields and houses carry on beneath. That
+also means a hovering scatter places instances where a grounded one would
+refuse them: water and cliff-grade slopes do not matter forty blocks up. It
+still has to be inside the region and inside the `area` you named, and
+`spacing` still keeps two instances from sharing a patch of sky.
+
+**`avoidTags` still means what it says when something hovers.** Ground being
+spoken for is no obstacle to a thing that is not standing on it, so a hovering
+scatter will happily fly over houses and roads — but if you write
+`"avoidTags": ["road"]`, it avoids them, because that is an instruction rather
+than a fact about the ground. So: to hang saucers over the rooftops, write no
+`avoidTags` at all; to keep them out over open country, name what to stay away
+from.
+
+When the prompt wants something airborne, invoke it with `hover` — do **not**
+ask the program to bake an air gap into its own geometry.
 
 ### Seating: how a grounded thing meets the ground
 

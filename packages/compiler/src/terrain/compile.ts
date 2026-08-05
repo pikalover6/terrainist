@@ -49,6 +49,7 @@ import {
   STRUCTURE_GENERATORS,
   authoredProgramId,
   hoverOf,
+  hoverOfParams,
   seatOfParams,
   seatPolicyOf,
   type SeatDecision,
@@ -1514,7 +1515,9 @@ function programJobsFrom(
       program,
       mode: "plugin",
       params,
-      seat: seatOfParams(params),
+      // A hovering scatter has no seating decision to make — the pass reads
+      // the same `hover` out of the params and skips the pad entirely.
+      ...(hoverOfParams(params) === undefined ? { seat: seatOfParams(params) } : {}),
       ...salt,
     });
   }

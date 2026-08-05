@@ -15,6 +15,7 @@
  */
 
 import type { ProgramScatterParams } from "@terrainist/spec";
+import { hoverOfParams } from "@terrainist/spec";
 import { positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
 import { streamSeed } from "@terrainist/stdlib";
 
@@ -88,6 +89,32 @@ export function programGroundPlane(
   return (heights[heights.length >> 1] as number) + 1;
 }
 
+/**
+ * The highest ground column under `rect`, or `undefined` when the rect leaves
+ * the region.
+ *
+ * What a hovering site stands on instead of {@link programGroundPlane}: the
+ * *maximum*, not the median, because hover is clearance — every column under
+ * the footprint has to be below the hull, including the boulder. Fluid and
+ * relief are not consulted at all: they are statements about seating, and this
+ * site never seats.
+ */
+export function topGroundUnder(plan: ColumnPlan, rect: Rect): number | undefined {
+  const { region } = plan;
+  let top = -Infinity;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return undefined;
+      const g = plan.ground[j * region.width + i] as number;
+      if (g > top) top = g;
+    }
+  }
+  /* c8 ignore next — a rect always has at least one column. */
+  return Number.isFinite(top) ? top : undefined;
+}
+
 /** One resolved instance site. */
 export interface ProgramSite {
   /** Instance index — the position in this list, and the seed's `index`. */
@@ -128,8 +155,13 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   const step = Math.max(w, d) + spacing;
   const stream = streamSeed(input.seed, "scatter");
   const jitter = Math.max(0, Math.floor(spacing / 2));
+  // A hovering scatter floats every instance, so the ground's *fitness* has no
+  // say — no fluid test, no relief test — and it competes with nobody for the
+  // dirt. What survives is the region, the author's `area` and `avoidTags`,
+  // and `spacing` against its own siblings, so two saucers never share a sky.
+  const hover = hoverOfParams(params);
 
-  const claimed: Rect[] = [...(input.taken ?? [])];
+  const claimed: Rect[] = hover === undefined ? [...(input.taken ?? [])] : [];
   const sites: ProgramSite[] = [];
 
   for (let cz = area.z0; cz + d - 1 <= area.z1 && sites.length < params.count; cz += step) {
@@ -140,10 +172,28 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
       if (!insideRect(rect, area)) continue;
       if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
       if (!areaAdmits(params.area, region, rect)) continue;
-      if (input.occupancy !== undefined && occupied(input.occupancy, rect, params.avoidTags)) continue;
-      const baseY = programGroundPlane(plan, rect, input.refusals);
-      if (baseY === undefined) continue;
-      if (!reliefOk(plan, rect, params, w, d)) continue;
+      // `avoidTags` is honoured whether or not the instance floats: fluid and
+      // relief are statements about ground a thing stands on and a hovering
+      // instance is exempt from those, but `avoidTags` is a statement the
+      // *author* made, and a param the compiler accepts and quietly ignores is
+      // a document that lies. What a hovering instance does skip is the plain
+      // occupancy mask — see `occupied`.
+      if (
+        input.occupancy !== undefined &&
+        occupied(input.occupancy, rect, params.avoidTags, hover !== undefined)
+      ) {
+        continue;
+      }
+      let baseY: number | undefined;
+      if (hover !== undefined) {
+        const top = topGroundUnder(plan, rect);
+        if (top === undefined) continue;
+        baseY = top + hover;
+      } else {
+        baseY = programGroundPlane(plan, rect, input.refusals);
+        if (baseY === undefined) continue;
+        if (!reliefOk(plan, rect, params, w, d)) continue;
+      }
       if (params.elevation !== undefined) {
         const [lo, hi] = params.elevation;
         if (baseY < lo || baseY > hi) continue;
@@ -333,9 +383,23 @@ function overlaps(a: Rect, b: Rect, margin: number): boolean {
   );
 }
 
-function occupied(grid: OccupancyGrid, rect: Rect, avoidTags: readonly string[] | undefined): boolean {
+/**
+ * Is this rect blocked?
+ *
+ * `tagsOnly` splits the two things this grid knows. `grid.mask` is "the ground
+ * here is spoken for", which a hovering instance is exempt from — it is forty
+ * blocks up and wants to loom over exactly the rooftops that mask covers. The
+ * per-tag masks are the author's own `avoidTags`, which mean what they say
+ * whatever the altitude.
+ */
+function occupied(
+  grid: OccupancyGrid,
+  rect: Rect,
+  avoidTags: readonly string[] | undefined,
+  tagsOnly = false,
+): boolean {
   const { region } = grid;
-  const masks: Uint8Array[] = [grid.mask];
+  const masks: Uint8Array[] = tagsOnly ? [] : [grid.mask];
   for (const tag of avoidTags ?? []) {
     const mask = grid.byTag.get(tag);
     if (mask !== undefined) masks.push(mask);
