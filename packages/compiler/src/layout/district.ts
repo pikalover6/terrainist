@@ -60,6 +60,7 @@ import {
   isDistrictNode,
   type DistrictDensity,
   type DistrictFabric,
+  type DistrictGroundPolicy,
   type DistrictNode,
   type DistrictParams,
   type HorizontalFace,
@@ -71,13 +72,13 @@ import {
 } from "@terrainist/spec";
 
 import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import { NO_PLATFORM, groundLevelsOf, levelSeams } from "./levels.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
 import {
   drawFabric,
   installUrbanForms,
   urbanForm,
-  type FormBench,
   type FormChannel,
   type FormFocus,
   type FormRecord,
@@ -456,20 +457,49 @@ export function resolveDistrictFabric(
 }
 
 /**
- * Whether a district levels its own ground, one bench at a time.
+ * How a district prepares its ground — **resolved twice, for the same reason
+ * {@link resolveDistrictFabric} is**, and by the same single function.
  *
- * True exactly when the resolved form declares `requires.unlevelled` — the form
- * registry is the one place that knows, so nothing here enumerates form ids.
+ * Once from `from-document.ts` before the solve, because a node that levels its
+ * own ground must stop the solver laying a pad under it (`padFor`); and once
+ * inside {@link layDistrict}, to found buildings on the platforms and treat the
+ * seams between them. Both call sites hand this the same document, node and
+ * `nodePath`, so they cannot disagree — and `sampleGround` now asks *this*
+ * rather than re-deriving an answer of its own (§9.9).
+ *
+ * Precedence, and it is the standing one: an explicit `params.ground` outranks
+ * `intent.character.ground`, which outranks what the form implies. The form's
+ * implication is `"benched"` exactly when the resolved form declares
+ * `requires.unlevelled` — the form registry is the one place that knows, so
+ * nothing here enumerates form ids — and `"pad"` otherwise.
+ *
+ * `"benched"` is what this function returned as `"stepped"` before Phase 4.2.
+ * The rename is what keeps `terraced` byte-identical: `padFor` returns null for
+ * both, and the *new* `"stepped"` — derived platforms, retaining walls, derived
+ * stairs — is a thing a document asks for by name
+ * (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2).
  */
 export function districtGroundPolicy(
   doc: SettlementDocument,
   node: DistrictNode,
   nodePath: string,
-): "pad" | "stepped" {
+): DistrictGroundPolicy {
   installUrbanForms();
   const form = urbanForm(resolveDistrictFabric(doc, node, nodePath));
-  return form?.requires.unlevelled === true ? "stepped" : "pad";
+  const implied: DistrictGroundPolicy = form?.requires.unlevelled === true ? "benched" : "pad";
+  const named = node.params.ground;
+  if (named !== undefined) return named;
+  ensureFanOutRows();
+  const intent = intentFor(resolveIntents(doc), nodePath);
+  // The row id is spelled out rather than imported from `LAYOUT_ROWS` because
+  // WP-D owns that file and registers the row there; `fanOut` returns `today`
+  // for a row nobody has written yet, which is exactly the behaviour this
+  // package wants and fan-out law 2 requires.
+  return fanOut<DistrictGroundPolicy>(GROUND_POLICY_ROW, intent, { nodePath, today: implied });
 }
+
+/** `layout.groundPolicy` — registered by WP-D in `layout/streets-intent.ts`. */
+const GROUND_POLICY_ROW = "layout.groundPolicy";
 
 export function layDistrict(
   node: DistrictNode,
@@ -501,6 +531,11 @@ export function layDistrict(
   // is, and draws either the requested form or its announced fallback — and
   // says which, in a diagnostic *and* in the `FormRecord` the report carries.
   installUrbanForms();
+  // How this quarter's ground is prepared, from the one function that answers
+  // that question. It is resolved *here* rather than re-derived from the form,
+  // the relief or a constraint, because two answers to one question is the
+  // defect class `DESIGN.md` names — `sampleGround` below is the case in point.
+  const groundPolicy = districtGroundPolicy(input.doc, node, nodePath);
   const requested = fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, {
     nodePath,
     // Resolved a second time here; `resolveDistrictFabric` is the shared answer
@@ -518,7 +553,7 @@ export function layDistrict(
     }),
     sidewalk: sidewalkWidth,
     density,
-    ground: sampleGround(input, bounds, node, cell !== undefined),
+    ground: sampleGround(input, bounds, node, cell !== undefined, groundPolicy),
     focus: cell?.focus ?? [],
     ...(cell?.corridor === undefined ? {} : { corridor: cell.corridor }),
     ...(cell === undefined ? {} : { mask: cell.mask, orientation: cell.orientation }),
@@ -564,6 +599,49 @@ export function layDistrict(
         const k = grid.index(x, z);
         if (k >= 0) blocked[k] = 1;
       }
+    }
+  }
+
+  // --- the ground, as a set of level platforms ------------------------------
+  // `docs/COURTYARDS-AND-LEVELS-v0.md` §3. The form's benches *are* the
+  // platforms; every form but `terraced` declares none and `groundLevelsOf`
+  // returns `null`, so the ordinary path allocates nothing and branches once —
+  // the shape `benchLevels` already had, and why this is byte-identical.
+  //
+  // WP-B slot: when the policy is `"stepped"` and the form declared no benches,
+  // `layout/platforms.ts` derives them from the blocks' own medians and hands
+  // them here. Until it lands the policy has nothing extra to offer, so a
+  // `"stepped"` quarter behaves exactly as a `"benched"` one.
+  const levels = groundLevelsOf(bounds, plan.benches ?? []);
+  // Seam *treatment* is gated on `"stepped"`, which is the new and therefore
+  // opt-in policy (§3.2, §6.2). A `"benched"` quarter — every `terraced` quarter
+  // written before this phase — has platforms and gets its `foundationY` from
+  // them, exactly as it always did, but nothing here treats the faces between
+  // them: the `blocked` mask below and the pad apron further down both stay
+  // today's, so the quarter is byte-identical. It is gated rather than proved a
+  // no-op because `terraced`'s bench field partitions the *whole* quarter,
+  // streets included, so its platforms are genuinely 4-adjacent and every one
+  // of its bench boundaries is a seam.
+  const seams = levels === null || groundPolicy !== "stepped" ? [] : levelSeams(levels);
+
+  // **The platform boundary goes into `blocked` before `blocksOf` runs** —
+  // §3.3 step 4, and the single placement the rest of the phase rests on. It is
+  // one loop here and it is what makes the rest fall out rather than be built:
+  // a split block becomes *two* blocks that subdivide independently, so no lot
+  // spans two platforms and no terrace run does (`terraceRuns` groups by
+  // `block:face`); two neighbours at `LOT_SIDE_GAP.high === 0` are never a
+  // storey apart, because the seam column is between them; a courtyard block is
+  // therefore never split-level; and the blocked columns are exactly where a
+  // retaining wall will stand. Do not reinvent any of that elsewhere.
+  //
+  // `seams` is empty unless the policy is `"stepped"`, so this is a no-op for
+  // every quarter that did not opt in — which is the second half of the
+  // byte-identity argument (the first is that `levelY[at()]` equals
+  // `benchLevels`' answer, column for column).
+  for (const seam of seams) {
+    for (const point of seam.cells) {
+      const k = grid.index(point.x, point.z);
+      if (k >= 0) blocked[k] = 1;
     }
   }
   const blocks = blocksOf(grid, blocked);
@@ -726,21 +804,50 @@ export function layDistrict(
   // every building whose lot falls on a bench is founded at that bench's level,
   // so no building is ever seated across a step. A form that cuts none (every
   // form but `terraced`) leaves both of these empty and nothing below changes.
-  const benchLevel = benchLevels(grid, plan.benches ?? []);
   for (const bench of plan.benches ?? []) {
     for (const run of bench.runs) {
       padEdits.push({ nodePath, footprint: run, targetY: bench.level, apron: 0 });
     }
   }
 
+  // Columns a seam runs through. A building whose lot touches one gets
+  // `apron: 0` below: `applyLevelPad` blends an apron with a smoothstep lerp,
+  // which on a platform edge smears two columns of the seam into a ramp and
+  // undoes the wall that is supposed to stand there (§3.6, §9.2). Empty for
+  // every quarter that declared no platforms, so the ordinary path is a `Set`
+  // of size zero and one `has` per building.
+  const seamColumns = new Set<number>();
+  for (const seam of seams) {
+    for (const point of seam.cells) {
+      const k = grid.index(point.x, point.z);
+      if (k >= 0) seamColumns.add(k);
+    }
+  }
+  const touchesSeam = (rect: Rect): boolean => {
+    if (seamColumns.size === 0) return false;
+    for (let z = rect.z0; z <= rect.z1; z++) {
+      for (let x = rect.x0; x <= rect.x1; x++) {
+        const k = grid.index(x, z);
+        if (k >= 0 && seamColumns.has(k)) return true;
+      }
+    }
+    return false;
+  };
+
   for (const item of built) {
     const yaw = yawFacing(frontFace(item.ports, item.frontPort), item.face);
     const [rw, rh, rd] = rotatedSize(item.size, yaw);
     const rect = seat(item.rect, item.face, rw, rd);
-    const bench = benchLevel === null ? undefined : benchLevel[grid.index(rect.x0, rect.z0)];
+    // One expression, three fallbacks, and the last two are exactly today's
+    // (§3.6). `foundationY` is *the level of the platform this lot sits on* —
+    // which for a `terraced` quarter is the number `benchLevels` returned,
+    // column for column, because `groundLevelsOf` fills from the same
+    // `FormBench.runs` in the same order. The bench branch is subsumed, not
+    // duplicated.
+    const platform = levels === null ? NO_PLATFORM : levels.at(rect.x0, rect.z0);
     const foundationY =
-      bench !== undefined && bench !== NO_BENCH
-        ? bench
+      levels !== null && platform !== NO_PLATFORM
+        ? (levels.levelY[platform] as number)
         : cell?.foundationY ?? medianGround(input.field, rect);
     const made: Placement = {
       nodePath: item.nodePath,
@@ -772,8 +879,15 @@ export function layDistrict(
     placements.push(made);
     ports.push(...resolvePorts(made, item.size, item.ports));
     // A pad on already-levelled ground is a no-op; it is emitted anyway so a
-    // district whose apron did not quite reach still meets its own ground.
-    padEdits.push({ nodePath: item.nodePath, footprint: rect, targetY: foundationY, apron: 2 });
+    // district whose apron did not quite reach still meets its own ground. The
+    // apron is dropped to 0 on a lot that touches a platform seam — see
+    // `touchesSeam`.
+    padEdits.push({
+      nodePath: item.nodePath,
+      footprint: rect,
+      targetY: foundationY,
+      apron: touchesSeam(rect) ? 0 : 2,
+    });
     params.set(item.nodePath, item.params);
   }
 
@@ -1826,6 +1940,7 @@ export function sampleGround(
   bounds: Rect,
   node: DistrictNode,
   cell: boolean,
+  groundPolicy: DistrictGroundPolicy,
 ): GroundSample {
   const region = input.field.region;
   const at = (x: number, z: number): number => {
@@ -1880,38 +1995,20 @@ export function sampleGround(
     relief,
     // A *cell* of a city plan is drawn before its own pads reach the field (a
     // city gets no city-wide pad at all), so its ground is the real ground. An
-    // authored district's has already been levelled by the solver, unless its
-    // `terrain_conform` says otherwise or its form asked for `groundPolicy:
-    // "stepped"` — which is exactly what that plumbing exists to arrange.
-    levelled: !cell && conformLevels(node) && relief <= 1,
+    // authored district's has already been levelled by the solver — unless its
+    // `terrain_conform` says otherwise, or its ground policy told `padFor` to
+    // lay no pad at all.
+    //
+    // That last clause **reads the resolved policy** rather than re-deriving it
+    // from `relief <= 1` (§9.9). The old test got the right answer by accident,
+    // because real slope has relief above 1 — but it was a second answer to a
+    // question `districtGroundPolicy` already answers, and a `"stepped"` quarter
+    // that happened to be flat would have been told its ground was levelled when
+    // no pad had been laid under it. One question, one answer.
+    levelled: !cell && groundPolicy === "pad" && conformLevels(node),
     waterReach,
     ...(input.seaLevel === undefined ? {} : { seaLevel: input.seaLevel }),
   };
-}
-
-/** No bench covers this column. */
-const NO_BENCH = Number.NEGATIVE_INFINITY;
-
-/**
- * A per-column bench level over the domain, or `null` when no bench was cut.
- *
- * `null` rather than an all-`NO_BENCH` array so the ordinary path — every form
- * but `terraced` — allocates nothing and branches once.
- */
-function benchLevels(grid: Grid, benches: readonly FormBench[]): Float64Array | null {
-  if (benches.length === 0) return null;
-  const out = new Float64Array(grid.cells).fill(NO_BENCH);
-  for (const bench of benches) {
-    for (const run of bench.runs) {
-      for (let z = run.z0; z <= run.z1; z++) {
-        for (let x = run.x0; x <= run.x1; x++) {
-          const k = grid.index(x, z);
-          if (k >= 0) out[k] = bench.level;
-        }
-      }
-    }
-  }
-  return out;
 }
 
 /** Median ground height under a rectangle of the composed field. */

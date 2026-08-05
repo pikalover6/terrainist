@@ -52,8 +52,22 @@ import {
 } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { surfaceStreetStairs } from "./street-stairs.js";
-import { carriagewaySpans, sweptColumns } from "./sweep.js";
+import {
+  claimColumns,
+  compareStreetRank,
+  pinLevel,
+  type StreetOwnerKind,
+  type StreetRank,
+} from "./street-owner.js";
+import {
+  dressStreetStairs,
+  streetStairGeometry,
+  streetStairLevels,
+  streetStairRail,
+  type StreetStairGeometry,
+  type StreetStairLevels,
+} from "./street-stairs.js";
+import { carriagewaySpans, sweptColumns, type SweptColumn } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* tuning                                                                      */
@@ -459,7 +473,21 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // --- shoulders, after every route is graded -----------------------------
   // A verge blended against a lane that a later route then re-cuts is a verge
   // blended to the wrong height, so this waits for every route.
-  blendShoulders(region, plan, road, roadY, blocked, paved);
+  //
+  // And it waits for every *other* pass's road too. The street surfacer runs
+  // before this one and tags every column it laid on the occupancy grid, and
+  // those columns are not in this pass's own `road` mask — so without this the
+  // village blend was free to drop a column a district street had already
+  // surfaced, which is the same "moves the height, never the surface block"
+  // defect §2.4 fixes inside the surfacer: a street left standing proud of its
+  // own kerb, and anything the surfacer stood on that column (a stair
+  // balustrade, a lamp) left hanging over the drop.
+  const foreign = occupancy?.byTag.get("road");
+  const keepOut = foreign === undefined ? blocked : new Uint8Array(blocked);
+  if (foreign !== undefined) {
+    for (let k = 0; k < cells; k++) if (foreign[k] === 1) keepOut[k] = 1;
+  }
+  blendShoulders(region, plan, road, roadY, keepOut, paved);
 
   // --- lanterns, dead last -------------------------------------------------
   // A post planted while routes were still being laid could have a later route
@@ -576,6 +604,33 @@ export interface StreetSurfaceResult {
  * levelled its ground before this pass ran, so the profile is flat and the
  * shoulder blend has nothing to do. It is run anyway, because a district on the
  * edge of its own apron is exactly where "nearly" stops being true.
+ *
+ * **The pass runs in four phases — claim, level, dress, furnish — each completing
+ * over every segment of every graph before the next begins**
+ * (`docs/COURTYARDS-AND-LEVELS-v0.md` §2). It used to be one loop that graded a
+ * segment against `plan.ground` as it stood and wrote `plan.ground` back, which
+ * made both the read and the write depend on document order: on stepped ground
+ * that is pavement at two levels in one junction, blocks left proud of their
+ * neighbours, and a stair flight whose landings move after it has been laid.
+ *
+ * 1. **Claim.** `plan.ground` is snapshotted into a frozen `natural` array, and
+ *    every segment's swept columns are computed in {@link compareStreetRank}
+ *    order, each taking the columns nobody wider, nobody with a stronger role and
+ *    nobody with a lower id has taken. The column lists are kept, so the dress
+ *    phase recomputes nothing.
+ * 2. **Level.** Each segment's elevation profile is graded from `natural` —
+ *    never from the mutating plan — with the columns it does *not* own pinned
+ *    exactly to the level their owner chose ({@link pinLevel}).
+ * 3. **Dress.** One walk in the original traversal order. The owner writes the
+ *    geometry — ground, fluid top, snow, subsurface, soil, road tag and level —
+ *    once, at the owner's level. **Painting keeps the old last-write-wins
+ *    order**: every segment that claimed a column may still write
+ *    `plan.surface`. Ownership decides geometry and deliberately not material,
+ *    which is what makes a flat world provably unmoved: on levelled ground every
+ *    owner's level and every non-owner's are the same number.
+ * 4. **Furnish.** Only then: the centre lines, the stair balustrades and their
+ *    lamps — anything that *stands on* a column rather than being one — and last
+ *    of all the shoulder blend.
  */
 export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResult {
   const { plan, occupancy } = input;
@@ -609,24 +664,261 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   /** Avenue centre lines, kept until every segment has been surfaced. */
   const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
 
-  // Arterials first: a city street *meets* a boulevard rather than the other
-  // way round, and the wider carriageway should be the one that survives where
-  // the two bands overlap.
-  const arterialMask = new Uint8Array(cells);
+  /* --- the segments, in traversal order ---------------------------------- */
+
+  /** One thing to surface: an arterial, a street, or a flight of steps. */
+  interface StreetJob {
+    readonly rank: StreetRank;
+    /** Position in the document-order walk — the painting order, unchanged. */
+    readonly order: number;
+    readonly role: "carriageway" | "steps";
+    readonly width: number;
+    readonly path: readonly { readonly x: number; readonly z: number }[];
+    readonly states: RoadStates;
+    /** Lift the profile clear of water it spans, and build the bridge kit. */
+    readonly decks: boolean;
+    /** Avenues collect a dashed centre line, against their own graph. */
+    readonly graph?: StreetGraph;
+    readonly marked: boolean;
+    /** Set by the claim phase. */
+    spots?: readonly SweptColumn[];
+    geometry?: StreetStairGeometry;
+    /** Set by the level phase. */
+    profile?: readonly number[];
+    stairs?: StreetStairLevels;
+  }
+
+  const jobs: StreetJob[] = [];
   for (const arterial of input.arterials ?? []) {
     const path = arterial.path.filter((c) => inside(region, c.x, c.z));
     if (path.length === 0) continue;
-    const profile = gradeProfile(
-      path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
-      plan.seaLevel,
-      ROAD_FILL_BAND,
-      // A deck has to clear the water it spans; a dry cell keeps the plain floor.
-      path.map((c) => {
-        const k = index(region, c.x, c.z);
-        return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
-      }),
+    jobs.push({
+      // An arterial is the widest thing in the pass and outranks every street
+      // by width alone; the kind rank is only ever consulted on a tie.
+      rank: { id: `arterial:${arterial.id}`, width: arterial.width, role: "carriageway", kind: "arterial" },
+      order: jobs.length,
+      role: "carriageway",
+      width: arterial.width,
+      path,
+      // A boulevard is wider than any avenue, so it takes the widest urban
+      // surface the theme defines rather than the rural one this pass was
+      // written against before street classes existed.
+      states: urban.avenue,
+      decks: true,
+      marked: false,
+    });
+  }
+  for (const graph of input.graphs) {
+    // Does this quarter carry water? Two things hang off the answer, and both
+    // are gated on it so that a document naming no `canal` quarter grades and
+    // surfaces exactly the columns it grades and surfaces today: a street that
+    // crosses a channel needs its deck lifted clear of the water (the per-cell
+    // floor the arterial loop has always passed and this one never did), and it
+    // needs the bridge kit — otherwise a district street over a canal is a
+    // graded deck with no rails and no piers, which is a hole in the street with
+    // a name.
+    const hasChannel = graph.segments.some((s) => s.role === "channel");
+    for (const segment of graph.segments) {
+      const path = segment.path.filter((c) => inside(region, c.x, c.z));
+      if (path.length === 0) continue;
+      // The urban-form seam (`docs/URBAN-FORMS-v0.md` §4.1). A segment's *role*
+      // says what is inside its width: a channel is a street whose carriageway
+      // is water, and a flight of steps is a street the tread law lays instead
+      // of the grader.
+      const role = segment.role ?? "carriageway";
+      if (role === "channel") {
+        // The water is already there: `digCanals` (`structures/canals.ts`) ran
+        // between the column plan and this pass, so every channel column is
+        // already priced as bridgeable by `buildBridgeableMask` and every cross
+        // street that meets one is decked *above* it rather than paving it. A
+        // channel therefore surfaces nothing and claims nothing — its columns
+        // are held by the fluid mask, which is a stronger claim than ownership
+        // and one no carriageway has ever been able to overwrite.
+        continue;
+      }
+      jobs.push({
+        rank: { id: `segment:${segment.id}`, width: segment.width, role, kind: segment.kind },
+        order: jobs.length,
+        role: role === "steps" ? "steps" : "carriageway",
+        width: segment.width,
+        path,
+        states: urban[segment.kind],
+        decks: hasChannel,
+        graph,
+        marked: segment.kind === "avenue",
+      });
+    }
+  }
+
+  /* --- phase 1: claim ----------------------------------------------------- */
+
+  // The frozen ground. Every level below is measured against this and never
+  // against `plan.ground`, which the dress phase is about to start moving.
+  const natural = Int32Array.from(plan.ground);
+  const naturalAt = (x: number, z: number): number => natural[index(region, x, z)] as number;
+  const owner = new Int32Array(cells).fill(-1);
+  /** The level each owned column was given — what a pin reads. */
+  const columnY = new Int32Array(cells);
+  /** 1 where the *owner's* profile steps, which is what chooses `states.step`. */
+  const stepFlag = new Uint8Array(cells);
+
+  const ranked = jobs.map((_, i) => i);
+  ranked.sort((a, b) => compareStreetRank((jobs[a] as StreetJob).rank, (jobs[b] as StreetJob).rank));
+
+  for (const j of ranked) {
+    const job = jobs[j] as StreetJob;
+    if (job.role === "steps") {
+      const geometry = streetStairGeometry({
+        region,
+        plan,
+        blocked,
+        paved,
+        water,
+        path: job.path,
+        width: job.width,
+      });
+      job.geometry = geometry;
+      if (geometry.refusedBecause !== undefined) continue;
+      // Whole-run refusal is settled *here*, against the snapshot and before a
+      // single column is taken. A flight refused after claiming would leave its
+      // columns owned by nobody — grass down the middle of a street that would
+      // otherwise have dressed them — so the flight either can be built on the
+      // natural ground or it never enters the ownership map at all.
+      const trial = streetStairLevels(geometry, naturalAt);
+      if (trial.refusedBecause !== undefined) {
+        job.geometry = { ...geometry, refusedBecause: trial.refusedBecause };
+        continue;
+      }
+      job.stairs = trial;
+      claimColumns(
+        owner,
+        geometry.columns.map((c) => c.idx),
+        j,
+      );
+      continue;
+    }
+    const spots = sweptColumns(region, job.path, carriagewaySpans(job.width).lanes);
+    job.spots = spots;
+    // A foreign footprint is never surfaced by anybody, so it is never owned:
+    // claiming it would only stop the column being painted by a segment that is
+    // allowed to paint it. **Water is the exception**, and it has to be: a wet
+    // column is `blocked` too, and a street still carries a *deck* over it — the
+    // one thing a bridge column gets is a road tag and a level, and both are the
+    // owner's to write.
+    claimColumns(
+      owner,
+      spots.filter((s) => blocked[s.idx] !== 1 || water[s.idx] === 1).map((s) => s.idx),
+      j,
     );
-    const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+  }
+
+  /* --- phase 2: level ----------------------------------------------------- */
+
+  for (const j of ranked) {
+    const job = jobs[j] as StreetJob;
+    if (job.role === "steps") {
+      const geometry = job.geometry;
+      const trial = job.stairs;
+      if (geometry === undefined || trial === undefined || geometry.refusedBecause !== undefined) {
+        continue;
+      }
+      // The landing at each end: when the column belongs to the street the
+      // flight meets, the flight lands on *that* level. A `steps` segment ranks
+      // below any street of its width precisely so this is the direction the
+      // constraint runs in — a flight arrives at a street; a street does not
+      // arrive at a flight.
+      const pinOf = (i: number): number | undefined => {
+        const cell = geometry.centre[i];
+        if (cell === undefined) return undefined;
+        const k = index(region, cell.x, cell.z);
+        return owner[k] === j || owner[k] === -1 ? undefined : (columnY[k] as number);
+      };
+      const first = pinOf(0);
+      const last = pinOf(geometry.centre.length - 1);
+      const pinned =
+        first === undefined && last === undefined
+          ? trial
+          : streetStairLevels(geometry, naturalAt, {
+              ...(first === undefined ? {} : { first }),
+              ...(last === undefined ? {} : { last }),
+            });
+      // A flight the pins refuse keeps the levels the snapshot allowed. It has
+      // already claimed its columns, and dropping them here would leave a hole
+      // in the fabric that nothing else is going to fill.
+      const levels = pinned.refusedBecause === undefined ? pinned : trial;
+      job.stairs = levels;
+      for (const column of geometry.columns) {
+        if (owner[column.idx] !== j) continue;
+        columnY[column.idx] = (levels.levels[column.k] as number) - 1;
+      }
+      continue;
+    }
+
+    const path = job.path;
+    const ground: number[] = [];
+    const band: number[] = [];
+    const deckFloor: number[] = [];
+    for (const c of path) {
+      const k = index(region, c.x, c.z);
+      ground.push(natural[k] as number);
+      band.push(paved[k] === 1 ? 0 : ROAD_FILL_BAND);
+      // A deck has to clear the water it spans, so a bridge cell's floor is the
+      // fluid surface plus one rather than the water table. Without it the grade
+      // would follow the channel's *bed* — a ramp down into the canal and out
+      // the other side — because `plan.ground` under water is the bed.
+      deckFloor.push(
+        job.decks && water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0,
+      );
+    }
+    for (const [i, c] of path.entries()) {
+      const k = index(region, c.x, c.z);
+      if (owner[k] === j || owner[k] === -1) continue;
+      pinLevel(ground, band, deckFloor, i, columnY[k] as number);
+    }
+    const profile = gradeProfile(ground, plan.seaLevel, band, deckFloor);
+    job.profile = profile;
+    for (const spot of job.spots ?? []) {
+      if (owner[spot.idx] !== j) continue;
+      const i = Math.min(path.length - 1, Math.max(0, spot.index));
+      // A plaza surfaced itself and keeps its own level; the lane is *on* the
+      // green, which is what the dress phase writes there too.
+      columnY[spot.idx] =
+        paved[spot.idx] === 1 ? (natural[spot.idx] as number) : (profile[i] as number);
+      stepFlag[spot.idx] = i > 0 && profile[i] !== profile[i - 1] ? 1 : 0;
+    }
+  }
+
+  /* --- phase 3: dress ----------------------------------------------------- */
+
+  for (const job of jobs) {
+    if (job.role === "steps") {
+      const geometry = job.geometry;
+      const levels = job.stairs;
+      if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
+        // A flight that cannot be made climbable is not built, and the bench
+        // that lost its only stair is found by the physics lint's
+        // `traversal.unreachable` rather than shipped as a jump.
+        continue;
+      }
+      const flight = dressStreetStairs(geometry, levels, {
+        region,
+        plan,
+        road,
+        roadY,
+        states: { step: job.states.step, subsurface: job.states.subsurface },
+        stack: input.stack,
+        owner,
+        job: job.order,
+        ...(occupancy === undefined ? {} : { occupancy }),
+      });
+      blocks.push(...flight.blocks);
+      continue;
+    }
+
+    const profile = job.profile;
+    const spots = job.spots;
+    if (profile === undefined || spots === undefined) continue;
+    const surfaced = job.path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
     surfaceRoute(
       region,
       plan,
@@ -634,131 +926,67 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       road,
       roadY,
       surfaced,
-      arterial.width,
-      // A boulevard is wider than any avenue, so it takes the widest urban
-      // surface the theme defines rather than the rural one this loop was
-      // written against before street classes existed.
-      urban.avenue,
+      job.width,
+      job.states,
       occupancy,
       paved,
       water,
       bridged,
+      { owner, job: job.order, step: stepFlag, natural, spots },
     );
-    blocks.push(...buildBridgeKit(region, plan, surfaced, arterial.width, { deck: urban.avenue.deck, post: urban.avenue.post, pier: urban.avenue.pier }, water).blocks);
-  }
-  for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
-
-  for (const graph of input.graphs) {
-    // Does this quarter carry water? Two things hang off the answer, and both
-    // are gated on it so that a document naming no `canal` quarter grades and
-    // surfaces exactly the columns it grades and surfaces today (§5): a street
-    // that crosses a channel needs its deck lifted clear of the water (the
-    // per-cell floor the arterial loop has always passed and this one never
-    // did), and it needs the bridge kit — otherwise a district street over a
-    // canal is a graded deck with no rails and no piers, which is a hole in the
-    // street with a name.
-    const hasChannel = graph.segments.some((s) => s.role === "channel");
-    for (const segment of graph.segments) {
-      const path = segment.path.filter((c) => inside(region, c.x, c.z));
-      if (path.length === 0) continue;
-      // The urban-form seam (`docs/URBAN-FORMS-v0.md` §4.1). A segment's *role*
-      // says what is inside its width, and it is the only thing dispatched on
-      // here: a channel is a street whose carriageway is water, and a flight of
-      // steps is a street the tread law lays instead of the grader. Both new
-      // branches are deliberate no-ops until their packages land, in the same
-      // spirit `dressStreets` was a no-op until F4 filled it in — so a document
-      // that names no new form walks exactly the code it walks today.
-      const role = segment.role ?? "carriageway";
-      if (role === "channel") {
-        // The water is already there: `digCanals` (`structures/canals.ts`) ran
-        // between the column plan and this pass, which is the ordering §4.3
-        // pins — `buildBridgeableMask` above read `plan.fluidKind`, so every
-        // channel column is already priced as bridgeable and every cross street
-        // that meets one is decked below. There is nothing to surface: a
-        // carriageway laid over a channel would be the canal filled in with
-        // tarmac.
-        continue;
-      }
-      if (role === "steps") {
-        // `synthesizeTreadPlan` over the raw ground of this path, dressed with
-        // `STAIR_PROFILE` — including the whole-run refusal, which is why the
-        // result is checked rather than assumed: a flight that cannot be made
-        // climbable is not built, and the bench that lost its only stair is
-        // found by the physics lint's `traversal.unreachable` rather than
-        // shipped as a jump.
-        const flight = surfaceStreetStairs({
+    if (job.decks) {
+      // The same call the arterial loop makes, so a canal bridge gets the same
+      // deck, the same rail, the same pier rhythm and the same approaches a
+      // river crossing gets. `buildBridgeKit` finds its own wet runs and refuses
+      // any run too short to be a bridge, so a street that never meets the water
+      // contributes nothing.
+      blocks.push(
+        ...buildBridgeKit(
           region,
           plan,
-          blocked,
-          road,
-          roadY,
-          paved,
+          surfaced,
+          job.width,
+          { deck: job.states.deck, post: job.states.post, pier: job.states.pier },
           water,
-          path,
-          width: segment.width,
-          states: { step: urban[segment.kind].step, subsurface: urban[segment.kind].subsurface },
-          stack: input.stack,
-          ...(occupancy === undefined ? {} : { occupancy }),
-        });
-        blocks.push(...flight.blocks);
-        continue;
-      }
-      const profile = gradeProfile(
-        path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
-        plan.seaLevel,
-        ROAD_FILL_BAND,
-        // A deck has to clear the water it spans. Without this the grade would
-        // follow the channel's *bed* — a ramp down into the canal and out the
-        // other side — because `plan.ground` under water is the bed.
-        hasChannel
-          ? path.map((c) => {
-              const k = index(region, c.x, c.z);
-              return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
-            })
-          : 0,
+        ).blocks,
       );
-      const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
-      surfaceRoute(
-        region,
-        plan,
-        blocked,
-        road,
-        roadY,
-        surfaced,
-        segment.width,
-        urban[segment.kind],
-        occupancy,
-        paved,
-        water,
-        bridged,
-      );
-      if (hasChannel) {
-        // The same call the arterial loop makes, so a canal bridge gets the
-        // same deck, the same rail, the same pier rhythm and the same
-        // approaches a river crossing gets. `buildBridgeKit` finds its own wet
-        // runs and refuses any run too short to be a bridge, so a street that
-        // never meets the water contributes nothing.
-        const states = urban[segment.kind];
-        blocks.push(
-          ...buildBridgeKit(
-            region,
-            plan,
-            surfaced,
-            segment.width,
-            { deck: states.deck, post: states.post, pier: states.pier },
-            water,
-          ).blocks,
-        );
-      }
-      if (segment.kind === "avenue") {
-        avenues.push({ cells: markableCells(surfaced, graph, segment.width) });
-      }
+    }
+    if (job.marked && job.graph !== undefined) {
+      avenues.push({ cells: markableCells(surfaced, job.graph, job.width) });
     }
   }
 
-  // After every segment: a street laid later crosses an earlier one, and a
-  // dash painted before that crossing would simply be overwritten.
+  const arterialMask = new Uint8Array(cells);
+  for (const job of jobs) {
+    if (job.rank.kind !== "arterial") continue;
+    for (const spot of job.spots ?? []) if (road[spot.idx] === 1) arterialMask[spot.idx] = 1;
+  }
+
+  /* --- phase 4: furnish --------------------------------------------------- */
+
+  // After every segment: a street laid later crosses an earlier one, and a dash
+  // painted before that crossing would simply be overwritten.
   paintCentreLines(region, plan, road, paved, water, urban, avenues);
+
+  // The balustrade, at last. It stands *above* a column rather than being one,
+  // which is why it could not be built until `plan.ground` was final — see the
+  // note at the head of `street-stairs.ts`.
+  for (const job of jobs) {
+    if (job.role !== "steps") continue;
+    const geometry = job.geometry;
+    const levels = job.stairs;
+    if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
+      continue;
+    }
+    blocks.push(
+      ...streetStairRail(geometry, levels, {
+        region,
+        plan,
+        stack: input.stack,
+        lantern: job.states.lantern,
+      }),
+    );
+  }
 
   blendShoulders(region, plan, road, roadY, blocked, paved);
 
@@ -1725,6 +1953,15 @@ function paintCentreLines(
  * a diagonal gets one clean edge course and a coherent carriageway between
  * them. The lane lattice is the one this function always used
  * ({@link carriagewaySpans}), so a straight road is unchanged block for block.
+ *
+ * **`ownership`, when present, splits geometry from material.** Without it —
+ * which is every call the village road pass makes — this writes everything it
+ * sweeps, exactly as it always has. With it (the street surfacer's dress phase)
+ * only the columns this segment *owns* have their level, fluid top, snow,
+ * subsurface, soil and road tag written; every swept column is still painted, in
+ * the same last-write-wins traversal order. See
+ * `docs/COURTYARDS-AND-LEVELS-v0.md` §2.3 for why that split is what makes a
+ * flat world provably unmoved.
  */
 function surfaceRoute(
   region: Region,
@@ -1739,13 +1976,24 @@ function surfaceRoute(
   paved: Uint8Array,
   water: Uint8Array,
   bridged: Uint8Array,
+  ownership?: {
+    readonly owner: Int32Array;
+    readonly job: number;
+    /** 1 where the owning segment's profile steps — a step is geometry. */
+    readonly step: Uint8Array;
+    /** The frozen ground the relief test is taken against. */
+    readonly natural: Int32Array;
+    /** The claim phase's cached sweep — never recomputed. */
+    readonly spots: readonly SweptColumn[];
+  },
 ): void {
   const lanes = carriagewaySpans(width).lanes;
-  const spots = sweptColumns(region, path, lanes);
+  const spots = ownership?.spots ?? sweptColumns(region, path, lanes);
   // Which columns sit on a face, measured against the *natural* ground — the
   // loop below flattens columns as it goes, so a test taken inside it would
   // depend on how far along the sweep we were. See the note at the draw.
-  const steep = spots.map((spot) => isSteepGround(region, plan.ground, spot.x, spot.z));
+  const relief = ownership?.natural ?? plan.ground;
+  const steep = spots.map((spot) => isSteepGround(region, relief, spot.x, spot.z));
 
   for (const [n, spot] of spots.entries()) {
     const x = spot.x;
@@ -1753,7 +2001,13 @@ function surfaceRoute(
     const idx = spot.idx;
     const i = Math.min(path.length - 1, Math.max(0, spot.index));
     const cell = path[i] as { x: number; z: number; y: number };
-    const isStep = i > 0 && cell.y !== (path[i - 1] as { y: number }).y;
+    // Whether this segment may move the ground here. Painting is not gated on
+    // it: ownership decides geometry and deliberately not material.
+    const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
+    const isStep =
+      ownership === undefined
+        ? i > 0 && cell.y !== (path[i - 1] as { y: number }).y
+        : ownership.step[idx] === 1;
     // A bridge cell is *not* surfaced. The whole point of a deck is that the
     // water underneath it is undisturbed — rewriting the column here would
     // fill the channel with dirt path and, worse, would move `ground` and
@@ -1761,6 +2015,7 @@ function surfaceRoute(
     // It still counts as road, so the network stays connected and the
     // canopy clip keeps the deck clear.
     if (water[idx] === 1) {
+      if (!owned) continue;
       road[idx] = 1;
       roadY[idx] = cell.y;
       bridged[idx] = 1;
@@ -1772,6 +2027,7 @@ function surfaceRoute(
     // The plaza surfaced itself; a lane crossing the green is *on* the green.
     // It still counts as road for routing, occupancy and lantern spacing.
     if (paved[idx] === 1) {
+      if (!owned) continue;
       road[idx] = 1;
       roadY[idx] = plan.ground[idx] as number;
       if (occupancy !== undefined) claim(occupancy, idx);
@@ -1786,19 +2042,21 @@ function surfaceRoute(
     // read before this column is flattened, so the test sees the land, not the
     // road. On gentle ground the draw is byte-for-byte what it always was.
     const s = steep[n] === true ? clusterCell(x, z) : { x, z };
-    plan.ground[idx] = cell.y;
-    plan.fluidTop[idx] = cell.y;
-    plan.snow[idx] = 0;
+    if (owned) {
+      plan.ground[idx] = cell.y;
+      plan.fluidTop[idx] = cell.y;
+      plan.snow[idx] = 0;
+      plan.subsurface[idx] = states.subsurface;
+      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+      road[idx] = 1;
+      roadY[idx] = cell.y;
+      if (occupancy !== undefined) claim(occupancy, idx);
+    }
     plan.surface[idx] = isStep
       ? states.step
       : outer
         ? states.shoulder(s.x, s.z)
         : states.surface(s.x, s.z);
-    plan.subsurface[idx] = states.subsurface;
-    if (plan.soil[idx] === 0) plan.soil[idx] = 1;
-    road[idx] = 1;
-    roadY[idx] = cell.y;
-    if (occupancy !== undefined) claim(occupancy, idx);
   }
 }
 
@@ -1822,6 +2080,20 @@ function surfaceRoute(
  * invariant: lowering a dry column beside a river opens a face the river would
  * flow into on the first tick, and a bridge that drains its own channel is a
  * worse defect than the embankment this fixes.
+ *
+ * **Nearest, not first** (`docs/COURTYARDS-AND-LEVELS-v0.md` §2.4). The dilation
+ * is a proper multi-source BFS: a column takes its level from the road it is
+ * *nearest* to, and a tie between two roads at different levels resolves to the
+ * **lower** one. The old form marked a column claimed the instant any frontier
+ * cell reached it, so a column between an upper street and a lower one took
+ * whichever the row-major scan happened to touch first — and since the blend
+ * moves only the *height* and never the surface block, taking the upper level is
+ * literally a grass column standing at pavement height in the middle of a
+ * street. A verge should meet the lower street and let the upper one retain.
+ *
+ * `seam`, when given, is never written: a column where the ground changes level
+ * by more than the ring allowance is not a bank to be smoothed, it is a face, and
+ * §3.4 owns what stands on it.
  */
 function blendShoulders(
   region: Region,
@@ -1830,6 +2102,7 @@ function blendShoulders(
   roadY: Int32Array,
   blocked: Uint8Array,
   paved: Uint8Array,
+  seam?: Uint8Array,
 ): void {
   const n = region.width * region.depth;
   // Ring dilation of the finished road mask, not perpendicular offsets from a
@@ -1851,6 +2124,9 @@ function blendShoulders(
 
   for (let ring = 1; ring <= ROAD_SHOULDER_REACH; ring++) {
     const next = new Uint8Array(n);
+    // The whole ring is collected before anything is marked claimed, so every
+    // road at this distance gets a vote and the lowest of them wins. Marking
+    // inside the scan is what made the answer depend on row-major order.
     for (let j = 0; j < region.depth; j++) {
       for (let i = 0; i < region.width; i++) {
         const idx = j * region.width + i;
@@ -1863,13 +2139,17 @@ function blendShoulders(
             if (ii < 0 || jj < 0 || ii >= region.width || jj >= region.depth) continue;
             const k = jj * region.width + ii;
             if (claimed[k] === 1) continue;
-            claimed[k] = 1;
+            if (next[k] === 1) {
+              if (y < (height[k] as number)) height[k] = y;
+              continue;
+            }
             next[k] = 1;
             height[k] = y;
           }
         }
       }
     }
+    for (let k = 0; k < n; k++) if (next[k] === 1) claimed[k] = 1;
 
     const allowed = ring;
     for (let j = 0; j < region.depth; j++) {
@@ -1877,6 +2157,9 @@ function blendShoulders(
         const idx = j * region.width + i;
         if (next[idx] !== 1) continue;
         if (blocked[idx] === 1 || paved[idx] === 1) continue;
+        // A seam is a face, not a bank: smoothing it would undo the wall that
+        // holds the platform above it.
+        if (seam !== undefined && seam[idx] === 1) continue;
         if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
         const x = region.x0 + i;
         const z = region.z0 + j;

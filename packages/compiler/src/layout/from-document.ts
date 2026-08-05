@@ -230,6 +230,13 @@ function districtInput(
   // solver must not lay a pad that erases the contours first. The form is
   // resolved here and again in `layDistrict`; `districtGroundPolicy` is the
   // single shared answer, so the two cannot disagree.
+  //
+  // Since Phase 4.2 the answer is three-valued and is not only the form's: an
+  // explicit `params.ground` outranks `intent.character.ground`, which outranks
+  // the form's implication. `"benched"` and `"stepped"` both mean "the node
+  // levels its own ground", so `padFor` returns null for both and only the
+  // *treatment* of the seams between the levels is gated on `"stepped"`.
+  // `sampleGround` reads this same answer rather than re-deriving one.
   const policy = districtGroundPolicy(doc, node, nodePath);
   return {
     ...(policy === "pad" ? {} : { groundPolicy: policy }),

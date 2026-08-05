@@ -16,7 +16,7 @@
  */
 
 import { describe, isObject, unknownKeys, type Obj } from "../checks.js";
-import { DISTRICT_FABRICS } from "../settlement/types.js";
+import { DISTRICT_FABRICS, DISTRICT_GROUND_POLICIES } from "../settlement/types.js";
 import { error, hasErrors, note, warning, type LoamDiagnostic } from "../terrain/diagnostics.js";
 import { validatePaletteMap } from "../terrain/validate.js";
 import {
@@ -278,7 +278,22 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
   // the live form registry: an id outside the vocabulary is `LOAM-W487`, a
   // warning naming the legal values, exactly as every other intent vocabulary
   // is handled. An error here would let a classifier typo cost the whole intent.
-  for (const key of ["label", "materialTheme", "urbanForm"] as const) {
+  // `courtyards` is a share, so 0..1, and — like every other intent vocabulary
+  // — an out-of-range value is *grounded* in the compiler as `LOAM-W488`, a
+  // warning naming the range. Only the type is an error here.
+  const courtyards = value["courtyards"];
+  if (courtyards !== undefined && (typeof courtyards !== "number" || !Number.isFinite(courtyards))) {
+    out.push(
+      error(
+        "BAD_TYPE",
+        `${path}.courtyards`,
+        `"courtyards" must be a number in 0..1, got ${describe(courtyards)}`,
+        'write "courtyards": 0.7 — the share of eligible blocks that close around a courtyard',
+      ),
+    );
+  }
+
+  for (const key of ["label", "materialTheme", "urbanForm", "ground"] as const) {
     const v = value[key];
     if (v !== undefined && (typeof v !== "string" || v.trim() === "")) {
       out.push(
@@ -290,7 +305,9 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
             ? 'write what the place is, e.g. "pirate haven" — free text, it reaches prompts and never a switch'
             : key === "urbanForm"
               ? `name an urban form: ${DISTRICT_FABRICS.join(", ")}`
-              : 'name a stdlib material theme id, e.g. "stone_slate"',
+              : key === "ground"
+                ? `name a ground policy: ${DISTRICT_GROUND_POLICIES.join(", ")}`
+                : 'name a stdlib material theme id, e.g. "stone_slate"',
         ),
       );
     }

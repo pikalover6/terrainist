@@ -621,25 +621,74 @@ export interface TreadRun {
  * **Slabs and stairs are decoration on top of that level, never the
  * mechanism.** Raising every column by the same half block leaves every riser
  * exactly as tall as it was and makes a two-block riser worse, not better.
+ *
+ * **Endpoint pins** (`pinFirst`, `pinLast`, in the same stand-level units as the
+ * result) are what makes a flight *land* on the street it joins rather than on
+ * whatever the raw ground under its last column happens to be
+ * (`docs/COURTYARDS-AND-LEVELS-v0.md` §2.3). A street stair shares its top and
+ * bottom columns with the contour streets either end, and those columns have an
+ * owner; the pin is that owner's level. A pinned run is refused whole exactly as
+ * an unpinned one is — and now the refusal is honest, because the endpoints it is
+ * measured against are the ones that will actually be built. Passing neither pin
+ * is bit-for-bit the old function.
  */
 export function synthesizeTreads(
   ground: readonly number[],
-  options: { readonly maxFill?: number; readonly reach?: number; readonly maxGrade?: number } = {},
+  options: {
+    readonly maxFill?: number;
+    readonly reach?: number;
+    readonly maxGrade?: number;
+    /** Stand level column 0 must land on, when its landing has an owner. */
+    readonly pinFirst?: number;
+    /** Stand level column `n − 1` must land on, when its landing has an owner. */
+    readonly pinLast?: number;
+  } = {},
 ): TreadRun {
   const n = ground.length;
   if (n === 0) return { levels: [], risers: [] };
   const maxFill = options.maxFill ?? 8;
   const reach = options.reach ?? 1;
   const maxGrade = options.maxGrade ?? 1;
+  const pinFirst = options.pinFirst;
+  const pinLast = options.pinLast;
+
+  // A pin below the column's own ground is a landing the flight would have to
+  // cut into rock it does not own; refuse rather than build half of it.
+  if (pinFirst !== undefined && pinFirst < (ground[0] as number) + 1) {
+    return { levels: null, refusal: "unclimbable", risers: [] };
+  }
+  if (pinLast !== undefined && pinLast < (ground[n - 1] as number) + 1) {
+    return { levels: null, refusal: "unclimbable", risers: [] };
+  }
 
   const need = new Array<number>(n);
-  need[n - 1] = (ground[n - 1] as number) + 1;
+  need[n - 1] = pinLast ?? (ground[n - 1] as number) + 1;
   for (let k = n - 2; k >= 0; k--) {
     need[k] = Math.max((ground[k] as number) + 1, (need[k + 1] as number) - maxGrade);
   }
 
-  // The bottom step has to be reachable from the ground it starts on.
-  if ((need[0] as number) - ((ground[0] as number) + 1) > reach) {
+  // The far pin is an equality, so a run the backward pass had to lift above it
+  // cannot be built between these two landings.
+  if (pinFirst !== undefined) {
+    if (pinFirst < (need[0] as number)) {
+      return { levels: null, refusal: "unclimbable", risers: [] };
+    }
+    // Lifting the bottom landing to its owner's level pulls the columns after it
+    // up by at most `maxGrade` each — the same 1-Lipschitz law, forwards.
+    need[0] = pinFirst;
+    for (let k = 1; k < n; k++) {
+      need[k] = Math.max(need[k] as number, (need[k - 1] as number) - maxGrade);
+    }
+    if (pinLast !== undefined && (need[n - 1] as number) !== pinLast) {
+      return { levels: null, refusal: "unclimbable", risers: [] };
+    }
+  }
+
+  // The bottom step has to be reachable from the ground it starts on — or, when
+  // the bottom landing has an owner, from that owner's level, which is the
+  // measurement that is actually true once everything is built.
+  const base = pinFirst ?? (ground[0] as number) + 1;
+  if ((need[0] as number) - base > reach) {
     return { levels: null, refusal: "unclimbable", risers: [] };
   }
   for (let k = 0; k < n; k++) {

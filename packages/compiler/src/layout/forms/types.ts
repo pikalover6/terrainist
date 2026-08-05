@@ -112,6 +112,12 @@ export interface FormReservation {
 
 /** A level platform the caller turns into `PadEdit`s. */
 export interface FormBench {
+  /**
+   * A name for the report, e.g. `"contour.3"`. Optional and read by nothing
+   * else: a bench's *identity* is its index in the form's list, which is what
+   * `layout/levels.ts` turns into a platform index.
+   */
+  readonly id?: string;
   /** Maximal horizontal runs of the bench, one row tall — see `maskRuns`. */
   readonly runs: readonly Rect[];
   /** The level every column of the bench is cut or filled to. */

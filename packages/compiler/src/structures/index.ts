@@ -591,6 +591,31 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // arriving from the next district should *join* the street grid, and the
   // router discounts existing road cells — which is exactly how a lane finds a
   // street rather than running alongside it.
+  // --- the retaining walls (Phase 4.2, WP-B) -------------------------------
+  // SLOT, deliberately empty until `structures/retaining.ts` lands. The
+  // ordering is load-bearing and is stated here once, beside the canal comment
+  // that states the other half (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.4, §9.8):
+  // the retaining pass runs **after the buildings and before the canals and the
+  // street surfacing**. After the buildings, because a seam a building already
+  // stands on is `treatment: "built"` — its own foundation skirt is the wall
+  // and nothing else may be built there. Before the surfacing, because the
+  // surfacer must see the finished ground and a wall must not be cut into by a
+  // street drawn before it existed; a seam column a street already claims is
+  // skipped, since the street is the connection, not a wall across it.
+  //
+  // The balustrade on top of a wall is *not* emitted here: it stands on a
+  // column rather than being one, so it belongs to the surfacer's furnish
+  // phase (§2.3), which is the whole reason WP-A comes first.
+
+  // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
+  // SLOT, deliberately empty until `structures/courtyards.ts` lands. It runs
+  // after `buildBuildings` and before the streetscape, because the passage arch
+  // springs from the flanking bays' walls and is only built when a readback of
+  // the emitted block list finds both of them solid at the arch height — a
+  // floating arch is never built (§4.4). The interior treatments claim their
+  // columns in the occupancy grid, so no scatter, ground treatment or prop
+  // lands in a courtyard the pass has furnished.
+
   // --- the canals ----------------------------------------------------------
   // After the column plan, before the streets are surfaced, and that ordering
   // is the whole risk-management story of the `canal` form

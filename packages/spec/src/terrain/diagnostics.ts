@@ -210,6 +210,25 @@ export const TERRAIN_DIAGNOSTICS = {
    * climbable).
    */
   DISTRICT_FORM: "LOAM-T222",
+  /**
+   * Phase 4.2 — `params.ground: "stepped"` was asked for and the quarter came
+   * out as **one platform**, so there is nothing to retain and no step to cut.
+   *
+   * A note, not a failure: the quarter still compiles, as `"pad"`. It names the
+   * relief measured and the storey it needed, because "the document asked for a
+   * hill town and got a flat one" is exactly the class of request this repo has
+   * accepted and quietly not met before.
+   */
+  DISTRICT_GROUND: "LOAM-T223",
+  /**
+   * Phase 4.2 — `params.courtyards > 0` and **not one block closed**.
+   *
+   * Names the measurement that failed and how many blocks failed on it, plus
+   * the thing in the document to change: a bigger `blockSize`, or `density:
+   * "high"` so the perimeter builds a continuous street wall. Same reason as
+   * `DISTRICT_GROUND`: never silent, never fatal.
+   */
+  COURTYARD_NONE: "LOAM-T224",
 
   // --- Phase 0 contract 2: authored programs -------------------------------
   // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
@@ -282,6 +301,24 @@ export const TERRAIN_DIAGNOSTICS = {
    * the coast.
    */
   PRECINCT_RESEATED: "LOAM-W409",
+  /**
+   * Phase 4.2 — a level platform no street network could reach gave its level
+   * back, and its columns took the level of the neighbouring platform they
+   * touch most (ties to the lower).
+   *
+   * The honest degradation behind "a platform you cannot reach is not a
+   * platform": the quarter ships with fewer levels rather than with an
+   * unreachable one, and the note names the platform and the measurement.
+   */
+  LEVEL_DISSOLVED: "LOAM-W410",
+  /**
+   * Phase 4.2 — a seam was too tall for a retaining wall (`drop` past
+   * `RETAIN_MAX`), so the two platforms were graded into each other as a bank.
+   *
+   * Names the drop. There is no unbuilt cliff either way; this says which of
+   * the two answers the ground got.
+   */
+  RETAINING_REFUSED: "LOAM-W411",
 
   // --- the SweptProfile engine (Phase 0 contract 3) ------------------------
   /** A swept run was refused whole: unclimbable, or past the fill cap. */
@@ -330,6 +367,12 @@ export const TERRAIN_DIAGNOSTICS = {
   INTENT_FLORA_UNKNOWN: "LOAM-W486",
   /** `character.urbanForm` names a form outside the district-fabric vocabulary. */
   INTENT_FORM_UNKNOWN: "LOAM-W487",
+  /**
+   * `character.ground` names a policy outside the ground vocabulary, or
+   * `character.courtyards` is outside 0..1. Ignored, and each quarter keeps the
+   * ground it would have had.
+   */
+  INTENT_GROUND_UNKNOWN: "LOAM-W488",
 } as const;
 
 /** Symbolic diagnostic name. */

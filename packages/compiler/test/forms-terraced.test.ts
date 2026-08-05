@@ -456,9 +456,14 @@ function layTerraced(): DistrictPassResult {
 }
 
 describe("the ground policy", () => {
-  it("asks the registry, and the registry says stepped", () => {
+  // Phase 4.2 renamed this value: what `terraced` declares is now spelled
+  // `"benched"` — the form cuts its own platforms and `padFor` lays no pad —
+  // and `"stepped"` means that *plus* seam treatment, which a document has to
+  // ask for by name. The rename is what keeps a `terraced` quarter
+  // byte-identical (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2, §6.2).
+  it("asks the registry, and the registry says benched", () => {
     const doc = documentOf("terraced");
-    expect(districtGroundPolicy(doc, districtOf(doc), "world.hill_town")).toBe("stepped");
+    expect(districtGroundPolicy(doc, districtOf(doc), "world.hill_town")).toBe("benched");
     const flat = documentOf("grid");
     expect(districtGroundPolicy(flat, districtOf(flat), "world.hill_town")).toBe("pad");
   });
@@ -468,7 +473,7 @@ describe("the ground policy", () => {
       id: "hill_town",
       nodePath: "world.hill_town",
       kind: "district",
-      groundPolicy: "stepped",
+      groundPolicy: "benched",
       size: [200, 1, 180],
       flexible: false,
       padding: 0,
@@ -519,7 +524,7 @@ describe("the ground policy", () => {
           fabric,
         );
         expect(districtGroundPolicy(doc, child as DistrictNode, nodePath), `${file} ${nodePath}`).toBe(
-          urbanForm(fabric)?.requires.unlevelled === true ? "stepped" : "pad",
+          urbanForm(fabric)?.requires.unlevelled === true ? "benched" : "pad",
         );
       }
     }

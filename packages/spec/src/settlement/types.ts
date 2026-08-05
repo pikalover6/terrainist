@@ -239,6 +239,32 @@ export const DISTRICT_DENSITIES = ["low", "medium", "high"] as const;
 /** A district density. */
 export type DistrictDensity = (typeof DISTRICT_DENSITIES)[number];
 
+/**
+ * How a quarter's ground is prepared (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2).
+ *
+ * - `"pad"` — one plane for the whole quarter. The solver levels it. Today's
+ *   default for every form but `terraced`, and unchanged.
+ * - `"benched"` — the form cuts its own level platforms, the fabric pass founds
+ *   buildings on them, and the solver lays no pad. This is what `terraced` has
+ *   always done; it is declared by the form, so an author rarely writes it.
+ * - `"stepped"` — `"benched"`, *plus* derived platforms where the form declares
+ *   none, plus seam treatment: retaining walls between the levels, derived
+ *   stairs, and the rule that a platform you cannot reach is not a platform.
+ *   This is the key an author writes for a hill town.
+ *
+ * Omitted means "what the form implies", which is `"pad"` everywhere but
+ * `terraced`. Nothing here names a height, a wall or a step count: an author
+ * says *how the ground behaves*, never where a wall goes.
+ */
+export const DISTRICT_GROUND_POLICIES = ["pad", "benched", "stepped"] as const;
+
+/** A ground policy. */
+export type DistrictGroundPolicy = (typeof DISTRICT_GROUND_POLICIES)[number];
+
+/** Bounds on `params.courtyards` — a share of the *eligible* blocks. */
+export const COURTYARD_SHARE_MIN = 0;
+export const COURTYARD_SHARE_MAX = 1;
+
 /* -------------------------------------------------------------------------- */
 /* circumvallation (`infra.wall@0`)                                            */
 /* -------------------------------------------------------------------------- */
@@ -323,6 +349,27 @@ export interface DistrictParams {
   readonly focus?: string;
   /** Leave one central block unbuilt as a square. */
   readonly plaza?: boolean;
+  /**
+   * The share of *eligible* blocks that close around a courtyard, 0..1.
+   *
+   * A courtyard block is an introverted block: the buildings enclose a shared
+   * interior — a well, a tree, a cloister walk — reached through an arched
+   * passage cut under a building, and the street wall is unbroken. Eligibility
+   * is measured (`docs/COURTYARDS-AND-LEVELS-v0.md` §4.2), so this is a share
+   * of the blocks that *can*, not of all of them; a quarter where none can
+   * reports `COURTYARD_NONE` rather than silently building nothing.
+   *
+   * Default 0, which is what makes every document written before Phase 4.2
+   * byte-identical. Courtyards are **not** a form: `grid`, `grown`, `radial`
+   * and `terraced` can all have them.
+   */
+  readonly courtyards?: number;
+  /**
+   * How this quarter's ground is prepared. See {@link DistrictGroundPolicy}.
+   *
+   * Omitted means "what the resolved urban form implies".
+   */
+  readonly ground?: DistrictGroundPolicy;
   /** Ring the finished quarter with a wall. See {@link WallOptions}. */
   readonly walls?: WallOptions;
 }
@@ -428,6 +475,14 @@ export interface CityParams {
   readonly ring?: boolean;
   /** Preferred block size between street centre lines. A hint; cells drift. */
   readonly blockSize?: number;
+  /**
+   * {@link DistrictParams.courtyards}, applied to every cell that gets a
+   * fabric. A cell is a compiler-chosen quarter with no `params` of its own,
+   * so this is the only way to ask a whole city for courtyards.
+   */
+  readonly courtyards?: number;
+  /** {@link DistrictParams.ground}, applied to every cell that gets a fabric. */
+  readonly ground?: DistrictGroundPolicy;
   /**
    * The set pieces (C4): the handful of anchors placed for their *relationship*
    * to the plan rather than sprinkled through it.

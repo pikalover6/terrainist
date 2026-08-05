@@ -836,7 +836,12 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // ran would erase the contours the form was going to follow — the form would
   // then measure a flat quarter and refuse itself. See `LayoutNodeInput.groundPolicy`
   // and `districtInput` in `from-document.ts`, which is where the policy is set.
-  if (node.groundPolicy === "stepped") return null;
+  //
+  // Both non-`"pad"` policies are that node: `"benched"` is what this test
+  // spelled `"stepped"` before Phase 4.2 (the form cuts its own platforms), and
+  // `"stepped"` is `"benched"` plus derived platforms and seam treatment. In
+  // both the quarter's own levelling is the levelling, so there is no pad.
+  if (node.groundPolicy === "benched" || node.groundPolicy === "stepped") return null;
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {

@@ -24,7 +24,7 @@
  * (`LOAM-W481`, ignored).
  */
 
-import type { DistrictFabric } from "../settlement/types.js";
+import type { DistrictFabric, DistrictGroundPolicy } from "../settlement/types.js";
 import type { PaletteValue } from "../terrain/types.js";
 
 /**
@@ -246,6 +246,29 @@ export interface CharacterIntent {
    * value is `LOAM-W487`, a warning naming the legal ids, never a silent drop.
    */
   readonly urbanForm?: DistrictFabric;
+  /**
+   * The share of eligible blocks that close around a courtyard, 0..1
+   * (`docs/COURTYARDS-AND-LEVELS-v0.md` §5.2).
+   *
+   * The key the classifier writes when the prompt says "old quarter", "medina"
+   * or "narrow lanes and hidden yards". Outranked by an explicit
+   * `params.courtyards`; out of range is `LOAM-W488`, a warning naming the
+   * range, never a silent clamp.
+   *
+   * `era` deliberately does not set this: a mapping from era to courtyards is a
+   * guess the compiler would make on every intent-carrying document, and it
+   * belongs in the classifier pre-pass where a human can read the answer.
+   */
+  readonly courtyards?: number;
+  /**
+   * How every quarter in scope prepares its ground
+   * (`DistrictGroundPolicy`).
+   *
+   * The key the classifier writes for "hill town", "cliffside", "streets on
+   * different levels". Outranked by an explicit `params.ground`; an unknown
+   * value is `LOAM-W488`.
+   */
+  readonly ground?: DistrictGroundPolicy;
 }
 
 /** The author-facing dials. Every field is optional; absent means no opinion. */
@@ -288,6 +311,8 @@ export const CHARACTER_KEYS = [
   "motifs",
   "programs",
   "urbanForm",
+  "courtyards",
+  "ground",
 ] as const;
 
 /** The key an intent object hangs off a node under. */

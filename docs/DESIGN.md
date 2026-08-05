@@ -341,7 +341,11 @@ registers its own fan-out rows.
   registry of named street-skeleton generators behind one contract, with blocks,
   lots and frontage seating shared and unchanged below it.
 - **Courtyard blocks and multi-level ground** — old-quarter and hill-town
-  texture; the two fabric rigidities most worth relaxing.
+  texture; the two fabric rigidities most worth relaxing. Specified in
+  `docs/COURTYARDS-AND-LEVELS-v0.md`: one representation for a quarter's ground
+  (level platforms and the seams between them), a block whose perimeter closes
+  around a reached interior, and the column-ownership rule the street surfacer
+  needs before either can be built.
 - **Flora grammar** — canopy giants, ancients, fungal, fantasy strata; the
   biggest visible gap outside settlements.
 - **Infrastructure family** — aqueduct, canal, rail, mine headworks, on the
@@ -397,6 +401,21 @@ These only surface by generating a world from a prompt and asking whether the
 prompt's central image is *in* it. Look for valid requests the system silently
 declines, not for crashes.
 
+- **Street surfacing has no column ownership, and on stepped ground it shows.**
+  `surfaceStreetGraph` dresses each segment in turn, so where two segments
+  share a column — a stair landing on a contour street, any junction on a
+  slope — whichever is reached last wins, over ground the other has already
+  cut or filled. Walked on a terraced quarter (2026-08-04) it reads as
+  pavement at conflicting levels, blocks left proud of their neighbours, and
+  grass punching up through a street. It is also why `terraced` cannot build
+  the `STAIR_PROFILE` balustrade: a rail placed on a tread is left floating
+  when another segment later lowers the column under it. The fix is a
+  surfacing order with a declared owner per column, or a dressing pass that
+  runs after every segment is laid — a change to the surfacer's shape, not to
+  any one caller. Specified in `docs/COURTYARDS-AND-LEVELS-v0.md` §2: claim →
+  level → dress → furnish, with a total rank order over segments, profiles
+  graded against a frozen snapshot with junctions pinned, and everything that
+  stands above a column emitted only after every column is written.
 - District placement scoring appears to prefer flat ground over an explicit
   `zone` constraint (seen while building the wall exhibit; not chased).
 - Hard `adjacent_to` / `terrain_conform` constraints on ordinary cottages are

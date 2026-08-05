@@ -10,7 +10,13 @@
 
 import type { LoamDiagnostic } from "@terrainist/spec";
 import type { Classification, HeightField, Region, Seed256 } from "@terrainist/stdlib";
-import type { CanonicalConstraint, HorizontalFace, PortDeclaration, Yaw } from "@terrainist/spec";
+import type {
+  CanonicalConstraint,
+  DistrictGroundPolicy,
+  HorizontalFace,
+  PortDeclaration,
+  Yaw,
+} from "@terrainist/spec";
 
 import type { RouteCorridor } from "./corridors.js";
 import type { Rect } from "./frames.js";
@@ -40,17 +46,27 @@ export interface LayoutNodeInput {
   readonly amphibious?: boolean;
   /**
    * How this node's ground is prepared — `"pad"` (the default and today's
-   * behaviour) or `"stepped"`.
+   * behaviour), `"benched"`, or `"stepped"`
+   * (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2).
    *
-   * `"stepped"` says *the node levels its own ground, in pieces*, so the solver
+   * `"benched"` says *the node levels its own ground, in pieces*, so the solver
    * lays no pad under it: `padFor` returns `null`, exactly as it already does
    * for a city and for an amphibious node. Set by `from-document.ts` when a
    * district's resolved urban form reads contours — a `terraced` quarter handed
    * a billiard table by the compiler itself has nothing left to terrace. Its
    * benches are the levelling, and they reach the field through the same
    * `fabricPads` list a city cell's mask runs already use.
+   *
+   * **`"benched"` is what this key spelled `"stepped"` before Phase 4.2**, and
+   * the rename is precisely what keeps `terraced` byte-identical: the form
+   * still declares the old meaning under the new name, and the *new* meaning of
+   * `"stepped"` — derived platforms where the form declares none, plus seam
+   * treatment: retaining walls, derived stairs, the reachability rule — is a
+   * thing a document has to ask for by name.
+   *
+   * `padFor` returns `null` for both.
    */
-  readonly groundPolicy?: "pad" | "stepped";
+  readonly groundPolicy?: DistrictGroundPolicy;
   /**
    * …and it is *scored against* a candidate with no water in it. Separate from
    * {@link LayoutNodeInput.amphibious} because an inland city is allowed to

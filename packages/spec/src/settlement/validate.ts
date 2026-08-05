@@ -62,8 +62,11 @@ import {
   CITY_MAX_DIAGONALS,
   CITY_SIZES,
   DISTRICT_CHARACTERS,
+  COURTYARD_SHARE_MAX,
+  COURTYARD_SHARE_MIN,
   DISTRICT_DENSITIES,
   DISTRICT_FABRICS,
+  DISTRICT_GROUND_POLICIES,
   HORIZONTAL_FACES,
   PORT_TYPES,
   SET_PIECE_KINDS,
@@ -526,6 +529,8 @@ const DISTRICT_PARAM_KEYS = [
   "blockSize",
   "focus",
   "plaza",
+  "courtyards",
+  "ground",
   "walls",
 ] as const;
 
@@ -705,9 +710,68 @@ function validateDistrictParams(
   checkNumbers(out, at, params, {
     blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
   });
+  validateCourtyardShare(out, at, params["courtyards"]);
+  validateGroundPolicy(out, at, params["ground"]);
 
   validateDistrictMix(out, at, params["mix"]);
   validateWallsParam(out, at, params["walls"]);
+}
+
+/**
+ * Validate `params.courtyards` — the share of *eligible* blocks that close.
+ *
+ * A share, so 0..1, and out of range is an error naming the range rather than a
+ * clamp: "0.7" and "70" are the same intention and only one of them is what the
+ * author meant, so guessing costs a quarter.
+ */
+function validateCourtyardShare(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  code: "DISTRICT_PARAM" | "CITY_PARAM" = "DISTRICT_PARAM",
+): void {
+  if (value === undefined) return;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    out.push(
+      error(
+        code,
+        at,
+        `"courtyards" must be a number in ${COURTYARD_SHARE_MIN}..${COURTYARD_SHARE_MAX}, got ${describe(value)}`,
+        'write "courtyards": 0.7 — the share of the blocks that *can* hold a courtyard which actually close',
+      ),
+    );
+    return;
+  }
+  if (value < COURTYARD_SHARE_MIN || value > COURTYARD_SHARE_MAX) {
+    out.push(
+      error(
+        code,
+        at,
+        `"courtyards" = ${value} is outside ${COURTYARD_SHARE_MIN}..${COURTYARD_SHARE_MAX}`,
+        `write a share, not a percentage — ${COURTYARD_SHARE_MAX} closes every eligible block, 0 closes none`,
+      ),
+    );
+  }
+}
+
+/** Validate `params.ground` / `city.params.ground`. */
+function validateGroundPolicy(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  code: "DISTRICT_PARAM" | "CITY_PARAM" = "DISTRICT_PARAM",
+): void {
+  if (value === undefined) return;
+  if (typeof value !== "string" || !(DISTRICT_GROUND_POLICIES as readonly string[]).includes(value)) {
+    out.push(
+      error(
+        code,
+        at,
+        `"ground" must be one of ${DISTRICT_GROUND_POLICIES.join(", ")}, got ${describe(value)}`,
+        'write "ground": "stepped" for a quarter on a hill — levels with retaining walls and steps between them; omit it for one plane',
+      ),
+    );
+  }
 }
 
 /**
@@ -813,6 +877,8 @@ const CITY_PARAM_KEYS = [
   "ring",
   "blockSize",
   "forms",
+  "courtyards",
+  "ground",
   "setPieces",
   "walls",
 ] as const;
@@ -1079,6 +1145,8 @@ function validateCityParams(out: LoamDiagnostic[], at: string, params: Obj): voi
     blockSize: { min: DISTRICT_MIN_BLOCK, max: DISTRICT_MAX_BLOCK, int: true },
   });
 
+  validateCourtyardShare(out, at, params["courtyards"], "CITY_PARAM");
+  validateGroundPolicy(out, at, params["ground"], "CITY_PARAM");
   validateCityMix(out, at, "mix", params["mix"], true);
   validateCityCharacters(out, at, params["characters"]);
   validateCityForms(out, at, params["forms"]);
