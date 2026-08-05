@@ -120,19 +120,34 @@ function drawRadial(ctx: FormContext): FormResult {
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
   const span = Math.min(width, depth);
-  const pitch = Math.max(MIN_BLOCK_SPACING, ctx.blockSize);
+  const adapted: string[] = [];
 
-  if (span < 6 * pitch) {
+  // The ring pitch is fitted to the quarter, not taken from `blockSize`.
+  //
+  // A radial plan is a *proportion* — a round-point, then rings out to the
+  // edge — and the thing that has to fit is six of them across the short axis.
+  // Taking the pitch from `ctx.blockSize` instead asks the quarter to be six
+  // times a number chosen by density, which the arterial-first city never
+  // satisfies: measured on a baroque-capital world, every one of eight cells
+  // was 75–231 columns against a demand of 258–420, so `radial` announced a
+  // fallback eight times out of eight and never drew. A form whose refusal is
+  // certain is not a form. Below `blockSize` the rings simply come closer
+  // together, which is what a small round-point quarter looks like anyway.
+  const pitch = Math.max(MIN_BLOCK_SPACING, Math.min(ctx.blockSize, Math.floor(span / 6)));
+
+  if (span < 6 * MIN_BLOCK_SPACING) {
     return {
       ok: false,
-      reason: `a round-point plus two ring streets needs ${6 * pitch} blocks on the short axis at blockSize ${pitch}, and this quarter is ${width} × ${depth}`,
-      fix: `grow "envelope.size" to at least [${6 * pitch}, ${6 * pitch}], or lower "params.blockSize" so the hub and its rings fit`,
+      reason: `a round-point plus two ring streets needs ${6 * MIN_BLOCK_SPACING} blocks on the short axis even at the tightest ring pitch, and this quarter is ${width} × ${depth}`,
+      fix: `grow "envelope.size" to at least [${6 * MIN_BLOCK_SPACING}, ${6 * MIN_BLOCK_SPACING}] — below that there is no room for a round-point and two rings, whatever the block size`,
       fallback: "grown",
     };
   }
+  if (pitch < ctx.blockSize) {
+    adapted.push(`ring pitch ${ctx.blockSize} → ${pitch} (fitted to a ${width} × ${depth} quarter)`);
+  }
 
   const inside = insideOf(ctx);
-  const adapted: string[] = [];
   const ignored: string[] = [];
 
   const seat = chooseFocus(ctx, inside, ignored);

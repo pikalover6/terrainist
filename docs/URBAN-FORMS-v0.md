@@ -428,16 +428,30 @@ with no change to blocks, lots or seating.
 4. Cross streets that cross a channel keep `role: "carriageway"` and are marked
    for a deck: the crossing cells are found with the existing `findCrossings`
    and handed to the bridge kit at surfacing time (§4).
-5. **The datum.** One water surface for the whole quarter:
-   `surfaceY = foundationY − 1` normally, and `seaLevel` when the domain's
-   `waterReach` is under 24 columns and `|foundationY − seaLevel| ≤ 2` — so a
-   quarter beside the sea shares the sea's level and reads as open to it.
-   Channel floor is `surfaceY − depth`, `depth = 2`.
+5. **The datum.** One water surface for the whole quarter, and it is measured
+   **on the ground the promoted runs actually cross**, not at the quarter's
+   midpoint: `quayY` is the *lowest* column any run passes and
+   `surfaceY = quayY − 1`. That is what makes a canal a canal on real ground —
+   every column of every run is *cut down* to reach the water, so no stretch of
+   it is ever a trough built up above the land it crosses. (A datum taken at the
+   centre leaked wherever the ground fell away from the middle of the quarter,
+   which on a generated world is everywhere.) Beside real water — `waterReach`
+   under 24 columns and `|quayY − seaLevel| ≤ 2` — the quarter shares the sea's
+   level instead and reads as open to it. Channel floor is `surfaceY − depth`,
+   `depth = 2`.
+
+   **One pound, one level.** A canal holds one surface for its whole length, so
+   the fall the runs cross is measured with the datum and capped at
+   `CANAL_MAX_FALL = 6`. Past that the quarter is refused with the fall named,
+   and the announced `grid` fallback is drawn: a real canal answers a longer fall
+   with a staircase of locks, one pound per reach, and this form builds no locks.
+   Refusing is the honest half of that — the alternative is an aqueduct at one
+   end and a trench at the other.
 6. Emit one `FormChannel` per promoted segment.
 
 **Parameters.** `blockSize` (canal pitch), `density` (`canalEvery`),
 `sidewalk` (quay width). **Terrain.** `waterReach`, `seaLevel`, `height` — read
-only to choose the datum, above.
+only to choose the datum and to measure the fall, above.
 
 **When the terrain will not support it — a canal quarter with no water.** It
 still gets canals. A canal is *dug*, and a quarter with no open water within
@@ -626,6 +640,18 @@ exist before a bridge can be priced over it. The pass writes
 `plan.fluidKind = WATER` and `plan.fluidTop = surfaceY` over the channel band and
 cuts the shell beneath, which is the mirror image of what `precinct.harbour@0`
 already does when it dredges (it writes `FluidKind.NONE`).
+
+**The containment is structural, not incidental.** A swept profile draws a
+*cross-section*: it covers the two flanks of a run and says nothing about the
+columns off its two **ends**, and it is drawn against the datum rather than
+against the column plan the terrain edits, pads and dredging actually left. So
+after the sweep the pass **closes itself**: every 4-neighbour of a channel column
+that does not already stand at or above the water line becomes coping, levelled
+one proud. That is `checkFluidStability`'s own predicate restated as a
+construction, so the pass cannot leak through geometry it forgot to sweep — an
+end cap, a bend the thickening missed, a stub the trim left. A neighbour that
+already holds the line is left alone, which is what keeps a canal dug beside open
+water open to it: the sea's own columns hold it and are never paved over.
 
 Crossings use the existing bridge kit: `buildBridgeKit(region, plan, surfaced,
 width, states, water)`, exactly the call the arterial loop makes today, so a
@@ -975,6 +1001,20 @@ with WP-0's merge, not with A/B/C.
    deliberately out of v0: it makes the canal a hydrological feature rather than
    a dug pond, and that belongs with the infrastructure family (aqueduct, canal,
    rail) already contracted to land on the sweep engine.
+
+   > **Measured during implementation (2026-08-04).** The first *generated*
+   > canal city failed `LOAM-T110` on forty blocks of water — the two ends of
+   > every run, pouring out onto ground four blocks below the datum. Two things
+   > were wrong and both are now fixed above: the datum was taken at the
+   > quarter's midpoint rather than on the ground the runs cross (§3.5 step 5),
+   > and the swept cross-section never capped the ends of a run (§4.3). The
+   > second fix is the one that matters, because it makes containment a
+   > construction rather than a property the geometry happened to have: the
+   > water is contained because every column it touches was made to hold it. A
+   > `follow: "level"` profile over unlevelled ground is the general shape of
+   > this defect, and any future member of the infrastructure family that
+   > carries a fluid — the aqueduct, above all — inherits both the bug and the
+   > cure.
 5. **Whether `radial` should reserve the hub as a disc rather than a rect.** A
    rect wastes the corners and the ground pass dresses them; a disc reservation
    would need `FormReservation` to carry a mask. Cheap to add later; not worth

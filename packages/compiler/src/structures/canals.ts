@@ -201,6 +201,51 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
     },
   );
 
+  // --- the closure: every column the water touches holds it -----------------
+  //
+  // The swept profile draws a *cross-section*, so it covers the two flanks of a
+  // run and nothing else: the columns off the **ends** of a run are whatever the
+  // terrain left there. On flat ground that is the datum and the canal happens
+  // to hold; on real ground it is the hillside the quarter sits on, and the
+  // canal pours out of both ends — which is exactly the LOAM-T110 a canal
+  // quarter shipped before this pass closed itself.
+  //
+  // So the containment is made structural rather than incidental: **every**
+  // 4-neighbour of a channel column that does not already hold the water line
+  // becomes coping. That is `checkFluidStability`'s own predicate, restated as a
+  // construction, so the pass cannot leak by geometry it forgot to sweep — an
+  // end cap, a bend the thickening missed, a trimmed stub. A neighbour that
+  // already stands at or above the water surface is left entirely alone, which
+  // is what keeps a canal dug beside open water open to it: the sea's own
+  // columns hold the line and are never paved over.
+  const walls: number[] = [];
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (channelMask[idx] !== 1) continue;
+      const surface = surfaceOf[idx] as number;
+      const x = region.x0 + i;
+      const z = region.z0 + j;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const n = index(region, x + dx, z + dz);
+        if (channelMask[n] === 1) continue;
+        // Already a bank: it is levelled to its own quay, which is one proud of
+        // its own canal. Two canals at different data meeting at one column is
+        // the `max` below, not a special case.
+        if (coping[n] === 1 || quay[n] === 1) {
+          if ((quayOf[n] as number) < surface + 1) quayOf[n] = surface + 1;
+          continue;
+        }
+        const standing = Math.max(plan.ground[n] as number, plan.fluidTop[n] as number);
+        if (standing >= surface) continue;
+        walls.push(n);
+        if ((quayOf[n] as number) < surface + 1) quayOf[n] = surface + 1;
+      }
+    }
+  }
+  for (const n of walls) coping[n] = 1;
+
   // The note, measured *before* the water is written: "open water" means water
   // the compiler already had, not the canal we are about to dig.
   for (const district of wanted) {

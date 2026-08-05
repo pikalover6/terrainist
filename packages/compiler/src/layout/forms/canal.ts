@@ -53,6 +53,21 @@ export const CANAL_SEA_REACH = 24;
 /** The most the quay may sit above a shared sea datum before it stops sharing. */
 export const CANAL_SEA_TOLERANCE = 2;
 
+/**
+ * The most the ground may fall along a run and still be one pound of water.
+ *
+ * A canal has **one** water surface for its whole length (`CANAL_PROFILE`'s
+ * `follow: "level"`), so the ground it crosses has to be flat enough to hold
+ * that one level. A real canal answers a longer fall with a staircase of locks,
+ * one pound per reach; this form builds no locks, so past this much fall it
+ * refuses the quarter and says which measurement failed rather than digging a
+ * channel whose far end is a masonry aqueduct standing in a field.
+ *
+ * Six is a cutting deep enough to read as a canal in a town and shallow enough
+ * that the quay still meets the ground behind it.
+ */
+export const CANAL_MAX_FALL = 6;
+
 /** How many block sizes the short axis needs: channel, two quays, a street each side. */
 export const CANAL_SPAN_BLOCKS = 3;
 
@@ -114,7 +129,11 @@ function drawCanal(ctx: FormContext): FormResult {
   const promoted: string[] = [];
   const dropped: string[] = [];
   const out: StreetSegment[] = [];
-  const datum = canalDatum(ctx);
+  // Two sweeps, because the datum is a fact about the runs and the runs are not
+  // known until the promotion has happened: the first decides *which* lines
+  // carry water and how far each is trimmed, the second cuts them all to the one
+  // level the first sweep's ground says they can share.
+  const runs: StreetSegment[] = [];
 
   for (const segment of segments) {
     const line = lineOf(segment.id);
@@ -142,9 +161,28 @@ function drawCanal(ctx: FormContext): FormResult {
       out.push(segment);
       continue;
     }
-    out.push({ ...segment, role: "channel", path });
+    const run: StreetSegment = { ...segment, role: "channel", path };
+    out.push(run);
+    runs.push(run);
     promoted.push(segment.id);
-    channels.push({ segment: segment.id, surfaceY: datum.surfaceY, depth: CANAL_CHANNEL_DEPTH });
+  }
+
+  const datum = canalDatum(ctx, runs);
+  // The refusal, and it is a refusal rather than a warning because the thing
+  // that would be drawn is not a worse canal, it is not a canal: one level over
+  // ground that falls this far is a channel standing proud of the land at one
+  // end or a slot cut through the town at the other.
+  if (datum.fall > CANAL_MAX_FALL) {
+    return {
+      ok: false,
+      reason: `the ground under this quarter's canal lines falls ${datum.fall} blocks (from y ${datum.high} to y ${datum.low}) and a canal holds one water level for its whole length, so at ${CANAL_MAX_FALL} blocks of fall it stops being a canal and starts being an aqueduct at one end and a trench at the other`,
+      fix: `move the quarter onto flatter ground with an "at" or "zone" constraint, or flatten it first with a "terrain.edit" node whose "verb" is "plateau" over the quarter, or lower "params.blockSize" so the lines are shorter and each crosses less fall`,
+      fallback: "grid",
+    };
+  }
+
+  for (const run of runs) {
+    channels.push({ segment: run.id, surfaceY: datum.surfaceY, depth: CANAL_CHANNEL_DEPTH });
   }
 
   if (channels.length === 0) {
@@ -158,7 +196,7 @@ function drawCanal(ctx: FormContext): FormResult {
 
   const adapted = [
     `${promoted.length} of ${indices.size} lines on the quarter's ${width >= depth ? "x" : "z"} axis promoted to channels (every ${every}${ordinal(every)})`,
-    `water datum ${datum.surfaceY}${datum.shared ? " (shared with the sea)" : " (the quarter's own level)"}`,
+    `water datum ${datum.surfaceY}${datum.shared ? " (shared with the sea)" : " (one below the lowest ground the runs cross)"}, quay ${datum.low}, ${datum.fall} block(s) of fall cut through`,
   ];
   if (dropped.length > 0) {
     adapted.push(`${dropped.length} line(s) left as streets: too short to trim into a channel`);
@@ -190,31 +228,63 @@ export interface CanalDatum {
   readonly surfaceY: number;
   /** True when the quarter shares the sea's level rather than its own. */
   readonly shared: boolean;
+  /** Lowest ground the runs cross — the quay level, and the datum's parent. */
+  readonly low: number;
+  /** Highest ground the runs cross. */
+  readonly high: number;
+  /** `high − low`: the fall one pound of water is being asked to span. */
+  readonly fall: number;
 }
 
 /**
  * One water surface for the whole quarter.
  *
- * `quayY − 1` normally — the water is one below the ground the doors stand on,
- * which is what makes the bank exactly one course proud. Beside real water
- * (`waterReach` under {@link CANAL_SEA_REACH}, and the quarter within
- * {@link CANAL_SEA_TOLERANCE} of the sea) the quarter shares the sea's level
- * instead, so it reads as open to it. The `min` is not decoration: a quay is
- * *never* allowed to sit at or below its own canal.
+ * The quay level is the **lowest ground the promoted runs actually cross**, not
+ * the height at the quarter's midpoint. That one change is what makes a canal
+ * hold on real ground: the water goes one below the lowest column of the run,
+ * so every column the channel passes is *cut down* to reach it and no stretch
+ * of it is ever a trough built up above the land — which is precisely how a
+ * level datum taken at the centre used to spring a leak wherever the ground
+ * fell away from the middle of the quarter. `high`/`fall` are reported with it
+ * so the caller can refuse a fall no single pound can span
+ * ({@link CANAL_MAX_FALL}).
+ *
+ * Beside real water (`waterReach` under {@link CANAL_SEA_REACH}, and the quay
+ * within {@link CANAL_SEA_TOLERANCE} of the sea) the quarter shares the sea's
+ * level instead, so it reads as open to it. The `min` is not decoration: a quay
+ * is *never* allowed to sit at or below its own canal.
+ *
+ * With no runs to measure — the skeleton callers, and every test that asks what
+ * level a quarter would cut to — the quarter's midpoint is the answer, which is
+ * the reading this function has always given.
  */
-export function canalDatum(ctx: FormContext): CanalDatum {
+export function canalDatum(ctx: FormContext, runs: readonly StreetSegment[] = []): CanalDatum {
   const cx = Math.floor((ctx.bounds.x0 + ctx.bounds.x1) / 2);
   const cz = Math.floor((ctx.bounds.z0 + ctx.bounds.z1) / 2);
-  const quayY = ctx.ground.height(cx, cz);
+  let low = Number.POSITIVE_INFINITY;
+  let high = Number.NEGATIVE_INFINITY;
+  for (const run of runs) {
+    for (const cell of run.path) {
+      const h = ctx.ground.height(cell.x, cell.z);
+      if (h < low) low = h;
+      if (h > high) high = h;
+    }
+  }
+  if (!Number.isFinite(low)) {
+    low = ctx.ground.height(cx, cz);
+    high = low;
+  }
+  const quayY = low;
   const sea = ctx.ground.seaLevel;
+  const fall = high - low;
   if (
     sea !== undefined &&
     ctx.ground.waterReach < CANAL_SEA_REACH &&
     Math.abs(quayY - sea) <= CANAL_SEA_TOLERANCE
   ) {
-    return { surfaceY: Math.min(sea, quayY - 1), shared: true };
+    return { surfaceY: Math.min(sea, quayY - 1), shared: true, low, high, fall };
   }
-  return { surfaceY: quayY - 1, shared: false };
+  return { surfaceY: quayY - 1, shared: false, low, high, fall };
 }
 
 /** The axis family and line index of an axial segment id (`ns3`, `ew2_1`). */

@@ -21,7 +21,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { nodeSeed } from "@terrainist/stdlib";
 
-import { CANAL_EVERY, CANAL_FORM, canalDatum } from "../src/layout/forms/canal.js";
+import { CANAL_EVERY, CANAL_FORM, CANAL_MAX_FALL, canalDatum } from "../src/layout/forms/canal.js";
 import { flatGround, type FormContext, type GroundSample } from "../src/layout/forms/types.js";
 import { drawFabric } from "../src/layout/forms/registry.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
@@ -30,6 +30,7 @@ import { digCanals } from "../src/structures/canals.js";
 import { CANAL_DEPTH } from "../src/structures/profiles.js";
 import { surfaceStreetGraph } from "../src/structures/roads.js";
 import { FluidKind } from "../src/terrain/columns.js";
+import { checkFluidStability } from "../src/terrain/validate.js";
 import { resolvePalette } from "../src/terrain/palette.js";
 import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
@@ -180,17 +181,17 @@ describe("the canal form", () => {
 
   it("cuts to the quarter's own level, and to the sea when the sea is near", () => {
     const pound = canalDatum(context({ ground: groundAt(80) }));
-    expect(pound).toEqual({ surfaceY: 79, shared: false });
+    expect(pound).toMatchObject({ surfaceY: 79, shared: false, low: 80, fall: 0 });
 
     const shore = canalDatum(
       context({ ground: groundAt(64, { seaLevel: 63, waterReach: 6 }) }),
     );
-    expect(shore).toEqual({ surfaceY: 63, shared: true });
+    expect(shore).toMatchObject({ surfaceY: 63, shared: true });
 
     // Far from the water the sea level is not the quarter's business, however
     // close the two numbers happen to be.
     const inland = canalDatum(context({ ground: groundAt(64, { seaLevel: 63, waterReach: 90 }) }));
-    expect(inland).toEqual({ surfaceY: 63, shared: false });
+    expect(inland).toMatchObject({ surfaceY: 63, shared: false });
 
     // A quay is never at or below its own canal, whatever the sea says.
     const low = canalDatum(context({ ground: groundAt(62, { seaLevel: 63, waterReach: 4 }) }));
@@ -360,6 +361,64 @@ describe("the canal pass", () => {
     expect(railed.size).toBeGreaterThan(0);
   });
 
+  /**
+   * Dig one quarter's canals into a plan whose ground is `planY`, with the
+   * heightfield the form reads reporting `formY`.
+   *
+   * The two are separate on purpose. `planY` is what the *column plan* says the
+   * ground is by the time the canal pass runs — after the terrain edits, the
+   * pads, the terracing and the dredging — and `formY` is what the heightfield
+   * the form measured its datum against said two passes earlier. On a real
+   * document they differ, and every leak this pass has ever sprung lived in the
+   * gap between them.
+   */
+  const digOver = (formY: number, planY: number) => {
+    const region = { x0: BOUNDS.x0, z0: BOUNDS.z0, width: 220, depth: 180 };
+    const plan = devColumnPlan(region, stack);
+    for (let k = 0; k < plan.ground.length; k++) {
+      plan.ground[k] = planY;
+      plan.fluidTop[k] = planY;
+      plan.fluidKind[k] = FluidKind.NONE;
+    }
+    const palette = resolvePalette(stack, undefined, nodeSeed(7n, "world")).palette;
+    const drawn = CANAL_FORM.draw(context({ ground: groundAt(formY) }));
+    if (!drawn.ok) throw new Error("the canal form refused a 220 × 180 quarter");
+    const result = digCanals({
+      districts: [
+        {
+          nodePath: "world.old_quarter",
+          bounds: BOUNDS,
+          streets: drawn.plan.graph,
+          ...(drawn.plan.channels === undefined ? {} : { channels: drawn.plan.channels }),
+        },
+      ],
+      plan,
+      palette,
+      stack,
+    });
+    return { plan, result };
+  };
+
+  it("caps the ends of every run when the plan sits below the datum", () => {
+    // The regression. A swept profile draws a *cross-section*: it covers the two
+    // flanks of a run and says nothing about the columns off its two **ends**.
+    // While the ground happened to be exactly the datum those end columns held
+    // the water by luck; four blocks lower — which is what the terrain under a
+    // real quarter does — every run poured out of both ends, and that is the
+    // forty-block LOAM-T110 a generated canal city failed on.
+    const { plan, result } = digOver(76, 72);
+    expect(result.water).toBeGreaterThan(500);
+    expect(checkFluidStability(plan).unstable).toBe(0);
+  });
+
+  it("holds its water when the plan stands above the datum too", () => {
+    // The mirror case, for the same reason: a canal cut into a shelf that is
+    // higher than the heightfield said must not leave a bank *below* its water.
+    const { plan, result } = digOver(76, 80);
+    expect(result.water).toBeGreaterThan(500);
+    expect(checkFluidStability(plan).unstable).toBe(0);
+  });
+
   it("touches nothing when no quarter declared a channel", () => {
     const region = { x0: 0, z0: 0, width: 64, depth: 64 };
     const plan = devColumnPlan(region, stack);
@@ -465,6 +524,110 @@ describe("a compiled canal world", () => {
   });
 
   it("settles every block of its water", () => {
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) return;
+    expect(compiled.report.stats.unstableFluidBlocks).toBe(0);
+  });
+
+  it("finds nothing wrong, under every physics rule", () => {
+    const summary = report.findings
+      .slice(0, 12)
+      .map((f) => `${f.rule} @ ${f.x},${f.y},${f.z} ${f.block}: ${f.detail}`)
+      .join("\n");
+    expect(summary).toBe("");
+    for (const rule of PHYSICS_RULES) expect(report.counts[rule], rule).toBe(0);
+  });
+});
+
+/**
+ * The same quarter on ground nobody flattened — the acceptance case for the
+ * leak.
+ *
+ * {@link CANAL_DOC} carries a `terrain_conform: "flatten"` constraint, so its
+ * quarter is levelled before the canal pass ever sees it and one water datum
+ * fits it exactly. That is the easy half of the world and it is the half that
+ * shipped green while a generated canal city failed LOAM-T110 on forty blocks
+ * of water pouring out of the ends of its runs. This document drops the flatten
+ * and puts a hill through the middle of the quarter, so the ground under the
+ * runs genuinely falls away, and asserts the whole claim end to end: the canals
+ * are still dug, none of their water moves, and the emitted world reads back
+ * clean under all twenty-six physics rules.
+ */
+const SLOPED_CANAL_DOC = (() => {
+  const doc = structuredClone(CANAL_DOC) as unknown as {
+    meta: { name: string };
+    root: {
+      children: {
+        id: string;
+        children?: unknown[];
+        constraints?: unknown[];
+        params?: Record<string, unknown>;
+      }[];
+    };
+  };
+  doc.meta.name = "canal_slope";
+  const terrain = doc.root.children.find((c) => c.id === "terrain");
+  if (terrain === undefined) throw new Error("the fixture lost its terrain node");
+  terrain.children = [
+    {
+      id: "quarter_shelf",
+      kind: "generator",
+      generator: "terrain.edit@0",
+      label: "the shelf the canal quarter half stands on",
+      params: { verb: "plateau", at: [0.5, 0.3], radius: 130, height: 8, profile: "rounded" },
+    },
+  ];
+  const quarter = doc.root.children.find((c) => c.id === "old_quarter");
+  if (quarter === undefined) throw new Error("the fixture lost its quarter");
+  // `drape` is the solver's "leave the ground alone": the default `cut_fill`
+  // would level the quarter under the quarter and there would be nothing to
+  // fall away. This is the one constraint that makes the document a test.
+  quarter.constraints = [{ zone: "center" }, { terrain_conform: "drape" }];
+  return doc as unknown as typeof CANAL_DOC;
+})();
+
+describe("a canal quarter on ground that falls away", () => {
+  const scratch: string[] = [];
+  let stack: PrismarineStack;
+  let dir: string;
+  let report: PhysicsReport;
+  let compiled: Awaited<ReturnType<typeof compileTerrain>>;
+
+  beforeAll(async () => {
+    stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const root = await mkdtemp(path.join(tmpdir(), "terrainist-canal-slope-"));
+    scratch.push(root);
+    dir = path.join(root, "canal_slope");
+    compiled = await compileTerrain(structuredClone(SLOPED_CANAL_DOC), { outDir: dir });
+    if (!compiled.ok) {
+      throw new Error(`sloped canal compile failed: ${compiled.diagnostics.map((d) => `${d.code} ${d.message}`).join("; ")}`);
+    }
+    const structures = (compiled.report as unknown as {
+      layout?: { structures?: { buildings?: unknown[]; roads?: { routes?: unknown[] }; props?: unknown[] } };
+    }).layout?.structures;
+    report = await lintWorldPhysics(dir, stack, {
+      buildings: (structures?.buildings ?? []) as never,
+      roads: (structures?.roads?.routes ?? []) as never,
+      props: (structures?.props ?? []) as never,
+    });
+  }, 600_000);
+
+  afterAll(async () => {
+    for (const root of scratch) await rm(root, { recursive: true, force: true });
+  });
+
+  it("still digs canals rather than quietly drawing a grid", () => {
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) return;
+    const districts = (compiled.report as unknown as {
+      layout?: { districts?: readonly { form: { id: string }; channels?: readonly unknown[] }[] };
+    }).layout?.districts;
+    const quarter = districts?.[0];
+    expect(quarter?.form.id).toBe("canal");
+    expect((quarter?.channels ?? []).length).toBeGreaterThan(0);
+  });
+
+  it("settles every block of its water on unlevelled ground", () => {
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) return;
     expect(compiled.report.stats.unstableFluidBlocks).toBe(0);

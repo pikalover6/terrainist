@@ -253,8 +253,13 @@ describe("grown — refusal and fallback", () => {
   it("is what a radial quarter too small for its rings degrades to", () => {
     // Before `grown` landed the announced fallback had no module and the
     // quarter was refused outright. This is the assertion that it no longer is.
+    //
+    // 90 × 90, not 150 × 150: `radial` fits its ring pitch to the quarter
+    // rather than taking it from `blockSize`, so a 150-column quarter draws
+    // rings 25 apart instead of refusing. Only a quarter too small for six of
+    // the *tightest* rings falls back now.
     const drawn = drawFabric({
-      ...context({ bounds: { x0: 0, z0: 0, x1: 149, z1: 149 }, blockSize: 34 }),
+      ...context({ bounds: { x0: 0, z0: 0, x1: 89, z1: 89 }, blockSize: 34 }),
       fabric: "radial",
       nodePath: "world.small_ring",
     });

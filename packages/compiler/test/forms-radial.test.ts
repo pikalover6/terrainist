@@ -325,13 +325,31 @@ describe("radial, the plan it claims to draw", () => {
 
 describe("radial, when the domain cannot hold a round-point", () => {
   it("refuses with the measurement and the fix, and announces `grown`", () => {
-    const result = RADIAL_FORM.draw(context({ bounds: { x0: 0, z0: 0, x1: 159, z1: 149 } }));
+    // Only a quarter too small for six of the *tightest* rings is refused.
+    const result = RADIAL_FORM.draw(context({ bounds: { x0: 0, z0: 0, x1: 89, z1: 79 } }));
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toMatch(/204 blocks on the short axis/);
-    expect(result.reason).toMatch(/160 × 150/);
-    expect(result.fix).toMatch(/blockSize/);
+    expect(result.reason).toMatch(/96 blocks on the short axis/);
+    expect(result.reason).toMatch(/90 × 80/);
+    expect(result.fix).toMatch(/whatever the block size/);
     expect(result.fallback).toBe("grown");
+  });
+
+  it("fits its ring pitch to a quarter the size a city actually produces", () => {
+    // The regression this guards: the pitch used to come from `ctx.blockSize`,
+    // so the quarter had to be six times a number chosen by density. Measured
+    // on a baroque-capital world, all eight city cells were 75–231 columns
+    // against a demand of 258–420 — `radial` announced a fallback eight times
+    // out of eight and never drew once. A form whose refusal is certain is not
+    // a form.
+    for (const [x1, z1] of [[159, 149], [230, 109], [119, 99]] as const) {
+      const result = RADIAL_FORM.draw(context({ bounds: { x0: 0, z0: 0, x1, z1 } }));
+      expect(result.ok, `${x1 + 1} × ${z1 + 1}`).toBe(true);
+      if (!result.ok) continue;
+      expect(result.plan.record.id).toBe("radial");
+      // The fitting is an adaptation, and an adaptation is always declared.
+      expect(result.plan.record.adapted.some((a) => /ring pitch .*fitted to/.test(a))).toBe(true);
+    }
   });
 
   it("still seats a plan with no focus at all — the fallback is announced, not silent", () => {
