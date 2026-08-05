@@ -225,6 +225,71 @@ export function canalProfile(width: number, quay: number): SweptProfile {
 }
 
 /* -------------------------------------------------------------------------- */
+/* the retaining wall                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A retaining wall, as one cross-section
+ * (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.4).
+ *
+ * The **fifth client of `SweptProfile`**, and it is nearly free because of how
+ * the engine writes: `sweep()` sets `plan.ground` for every column of every
+ * band and the column plan materialises a column downward from there. So
+ * holding the lowest row of the upper platform at the upper platform's level,
+ * with stone under it, *is* the wall — solid masonry presenting a face to the
+ * low side — for the same reason `precinct.harbour@0`'s quay works. There is no
+ * new geometry here and there must not be.
+ *
+ * | band | lane | what |
+ * |---|---|---|
+ * | `face` | 0 | the lowest row of the upper platform: the wall's visible face |
+ * | `verge` | +1 | one column back into the platform the wall holds |
+ *
+ * `asymmetric` because a wall has a high side and a low side; the two are not
+ * mirror images and pretending they are would build a second wall inside the
+ * platform. `follow: "step"` rather than `"level"` because one seam component
+ * can run between two different platform pairs along its length.
+ *
+ * The balustrade is not in the profile: it is a `cap` applied by
+ * {@link retainingProfile} only when the drop is worth a rail, so a two-block
+ * wall is a wall and a five-block wall is a wall you cannot walk off.
+ */
+export const RETAINING_PROFILE: SweptProfile = {
+  id: "retaining.masonry",
+  asymmetric: true,
+  bands: [
+    { id: "face", role: "core", width: 1, level: 0, surface: "street.curb", fill: "ground.stone" },
+    { id: "verge", role: "walkway", width: 1, level: 0, surface: "street.sidewalk" },
+  ],
+  maxGrade: 1,
+  follow: "step",
+  features: [{ id: "weep", pitch: 9, at: "interval", offset: 0 }],
+  crossing: "stop",
+};
+
+/**
+ * {@link RETAINING_PROFILE} with the balustrade a drop of `drop` deserves.
+ *
+ * `RETAIN_RAIL` (3) is where a drop starts being worth a rail — unmeasured, and
+ * §10.2 says so. Below it the profile is returned unchanged, which is the same
+ * object, so a wall that gets no rail allocates nothing.
+ */
+export function retainingProfile(
+  drop: number,
+  rail: number,
+  block: string,
+  base: SweptProfile = RETAINING_PROFILE,
+): SweptProfile {
+  if (drop < rail) return base;
+  return {
+    ...base,
+    bands: base.bands.map((band) =>
+      band.id === "face" ? { ...band, cap: { height: 1, block, rail: true } } : band,
+    ),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /* shared profile geometry                                                    */
 /* -------------------------------------------------------------------------- */
 

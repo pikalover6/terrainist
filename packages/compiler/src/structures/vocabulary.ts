@@ -30,7 +30,14 @@ import {
   isPropName,
   structureById,
 } from "@terrainist/stdlib";
-import { TREE_SHAPES, warning, type LoamDiagnostic } from "@terrainist/spec";
+import {
+  COURTYARD_SHARE_MAX,
+  COURTYARD_SHARE_MIN,
+  DISTRICT_GROUND_POLICIES,
+  TREE_SHAPES,
+  warning,
+  type LoamDiagnostic,
+} from "@terrainist/spec";
 
 import type { IntentResolution, ResolvedIntent } from "../intent/index.js";
 import { installUrbanForms, urbanForms } from "../layout/forms/index.js";
@@ -287,6 +294,43 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
         path,
         `intent.character.urbanForm names "${character.urbanForm}", which is not an urban form — it is ignored, and each quarter keeps the form it would have had`,
         `write one of: ${urbanFormIds().join(", ")}`,
+      ),
+    );
+  }
+
+  // The ground policy is a closed vocabulary in the spec, so it is grounded
+  // against `DISTRICT_GROUND_POLICIES` itself rather than against a registry —
+  // there is no module list to disagree with. Unknown is a warning naming the
+  // legal values; the quarter keeps the ground it would have had.
+  if (
+    character.ground !== undefined &&
+    !(DISTRICT_GROUND_POLICIES as readonly string[]).includes(character.ground)
+  ) {
+    out.push(
+      warning(
+        "INTENT_GROUND_UNKNOWN",
+        path,
+        `intent.character.ground names "${character.ground}", which is not a ground policy — it is ignored, and each quarter keeps the ground it would have had`,
+        `write one of: ${DISTRICT_GROUND_POLICIES.join(", ")}`,
+      ),
+    );
+  }
+
+  // A share is a number, so "ungrounded" means "outside the range". It is
+  // warned and *not* clamped: clamping honours half a request the author can
+  // then not see was refused, which is the silent-decline defect this module
+  // exists to end.
+  const share = character.courtyards;
+  if (
+    share !== undefined &&
+    (!Number.isFinite(share) || share < COURTYARD_SHARE_MIN || share > COURTYARD_SHARE_MAX)
+  ) {
+    out.push(
+      warning(
+        "INTENT_GROUND_UNKNOWN",
+        path,
+        `intent.character.courtyards is ${share}, which is outside ${COURTYARD_SHARE_MIN}..${COURTYARD_SHARE_MAX} — it is ignored, and each quarter keeps the courtyard share it would have had`,
+        `write a share between ${COURTYARD_SHARE_MIN} and ${COURTYARD_SHARE_MAX}, e.g. 0.7 — the fraction of the blocks that *can* close that actually do`,
       ),
     );
   }

@@ -26,7 +26,10 @@
  */
 
 import {
+  COURTYARD_SHARE_MAX,
+  COURTYARD_SHARE_MIN,
   DISTRICT_FABRICS,
+  DISTRICT_GROUND_POLICIES,
   ERA_ALIASES,
   ERA_CLASSES,
   EVENT_KINDS,
@@ -139,6 +142,44 @@ const URBAN_FORM_LINES = DISTRICT_FABRICS.map(
   (id) => `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id]}`,
 ).join("\n");
 
+/**
+ * What a prompt has to say for each ground policy, one line per id.
+ *
+ * Keyed off `DISTRICT_GROUND_POLICIES` for the same reason
+ * {@link URBAN_FORM_HINTS} is keyed off `DISTRICT_FABRICS`: a policy added to
+ * the vocabulary without a line here is a missing key at **build time**, not a
+ * value the classifier can never choose. A kit doc and a validator drifting
+ * apart cost a revision round on most worlds until that was caught.
+ */
+const GROUND_POLICY_HINTS: Readonly<Record<(typeof DISTRICT_GROUND_POLICIES)[number], string>> = {
+  pad: 'the ordinary answer — one flat platform per quarter. Omit "ground" rather than writing this',
+  benched:
+    "the quarter cuts its own terraces and nothing is built between them. Written by a form, not usually by you",
+  stepped:
+    'hill town, cliffside, "streets on different levels", "steps between the levels", "terraces held up by stone walls"',
+};
+
+/** The ground hint table as prompt lines, in vocabulary order. */
+const GROUND_POLICY_LINES = DISTRICT_GROUND_POLICIES.map(
+  (id) =>
+    `    ${id.padEnd(Math.max(...DISTRICT_GROUND_POLICIES.map((g) => g.length)))}  <- ${GROUND_POLICY_HINTS[id]}`,
+).join("\n");
+
+/**
+ * What a prompt has to say for a courtyard share.
+ *
+ * Not a closed vocabulary — it is a number — so this is one paragraph rather
+ * than a table, and the number it names is the one
+ * `docs/COURTYARDS-AND-LEVELS-v0.md` §5.2 names.
+ */
+const COURTYARD_HINT = `courtyards: a number in ${COURTYARD_SHARE_MIN}..${COURTYARD_SHARE_MAX}. The share of the blocks that CAN close
+around a shared interior which actually do. A courtyard block is introverted:
+an unbroken street wall, an arched passage cut under a building, and a real
+place inside — a well, a tree, a cloister walk. Write ~0.7 when the prompt says
+old quarter, medina, casbah, kasbah, cloister, "buildings around a courtyard",
+"narrow lanes and hidden yards". Omit it otherwise; omitted means none, and a
+village of detached houses in gardens should have none.`;
+
 /** The one worked example. Short on purpose: shape first, content second. */
 const WORKED_EXAMPLE = `EXAMPLE
 Prompt: "two islands in a warm sea — a white unicorn shrine isle and a
@@ -181,7 +222,9 @@ a field means "the prompt does not say" — which is NOT the same as zero.
                 "massing": one of [${list(MASSING_STYLES)}],
                 "windowRhythm": one of [${list(WINDOW_RHYTHMS)}],
                 "ornamentDensity": 0..1 },
-    "urbanForm": one of [${list(DISTRICT_FABRICS)}]   // the shape of the streets
+    "urbanForm": one of [${list(DISTRICT_FABRICS)}],   // the shape of the streets
+    "courtyards": ${COURTYARD_SHARE_MIN}..${COURTYARD_SHARE_MAX},   // how many blocks close around a shared interior
+    "ground": one of [${list(DISTRICT_GROUND_POLICIES)}]   // how the ground under a quarter is prepared
   },
   "tokens": { "<name>": string|number|boolean }   // anything else worth keeping
 }
@@ -220,6 +263,22 @@ ${URBAN_FORM_LINES}
     much the same thing but flatter; prefer "grown".
   - "grid" is worth writing explicitly for a planned or colonial town, because
     it says the plan was deliberate rather than a default.
+
+ground: exactly these ${DISTRICT_GROUND_POLICIES.length} ids. It is ORTHOGONAL to urbanForm — any form can
+have any ground — so write it when the prompt says something about levels, not
+because you already wrote "terraced".
+
+${GROUND_POLICY_LINES}
+
+  "stepped" is what builds retaining walls, steps between the levels and
+  terrace gardens above the walls. On genuinely flat ground the quarter comes
+  out as one platform and says so; it is never a failed world.
+
+${COURTYARD_HINT}
+
+  Courtyards are NOT a form. "old hill town" is BOTH "courtyards": 0.7 AND
+  "ground": "stepped" (and probably "urbanForm": "grown") — never a choice
+  between the two halves of the phrase.
 
 PROSE GOES IN "tokens", NEVER IN A PREFER LIST.
 prefer/forbid entries are matched against real catalogs; anything that is not

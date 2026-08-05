@@ -456,14 +456,24 @@ function layTerraced(): DistrictPassResult {
 }
 
 describe("the ground policy", () => {
-  // Phase 4.2 renamed this value: what `terraced` declares is now spelled
+  // Phase 4.2 renamed this value: what `terraced` *declares* is spelled
   // `"benched"` — the form cuts its own platforms and `padFor` lays no pad —
-  // and `"stepped"` means that *plus* seam treatment, which a document has to
-  // ask for by name. The rename is what keeps a `terraced` quarter
-  // byte-identical (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2, §6.2).
-  it("asks the registry, and the registry says benched", () => {
+  // and `"stepped"` is that plus seam treatment.
+  //
+  // **WP-D then overruled the default** (Kai, 2026-08-05; the design's §10 open
+  // question 4). `terraced` resolves to `"stepped"`, because a hill town's
+  // blocks *are* split-level and a hill town whose benches are separated by
+  // raw dirt banks is the thing this phase exists to end. The `"benched"`
+  // behaviour is one `params.ground` away and is asserted below.
+  it("asks the registry, and the registry steps a hill town", () => {
     const doc = documentOf("terraced");
-    expect(districtGroundPolicy(doc, districtOf(doc), "world.hill_town")).toBe("benched");
+    expect(districtGroundPolicy(doc, districtOf(doc), "world.hill_town")).toBe("stepped");
+    // An author who wants the pre-4.2 quarter says so by name, and the row is
+    // never consulted.
+    const benched = documentOf("terraced");
+    const node = districtOf(benched);
+    (node.params as Record<string, unknown>)["ground"] = "benched";
+    expect(districtGroundPolicy(benched, node, "world.hill_town")).toBe("benched");
     const flat = documentOf("grid");
     expect(districtGroundPolicy(flat, districtOf(flat), "world.hill_town")).toBe("pad");
   });

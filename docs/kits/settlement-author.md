@@ -1467,6 +1467,8 @@ monastery on a hill.
 | `params.mix` | non-empty array of archetype names | **required**; what the auto-infill builds |
 | `params.blockSize` | 16..96 | optional hint: blocks between street centre lines. Omit and the density chooses |
 | `params.plaza` | bool | optional: keep the central block open as a square |
+| `params.courtyards` | 0..1 | optional, default 0: the share of the blocks that *can* close around a shared interior which actually do. See **Courtyard blocks** below |
+| `params.ground` | `pad`, `benched`, `stepped` | optional: how the ground under the quarter is prepared. See **Multi-level ground** below |
 | `params.walls` | object | optional: ring the finished quarter with a wall. See **Walls** below |
 | `constraints` | as any other node | say **where the district is**, not what is in it |
 | `children` | `building.grammar@0` nodes | the landmarks — everything else is infilled |
@@ -1548,6 +1550,139 @@ Rules worth knowing before you write one:
   two crossing streets and a block between them. Anything under ~100 on a side
   is one or two blocks, which reads as a courtyard rather than a quarter — below
   that scale, write the buildings out and let the solver place them.
+
+### Courtyard blocks — `params.courtyards`
+
+Every block this compiler has ever drawn is **extroverted**: buildings face out
+onto the street and the space they enclose is leftover. That is one of the two
+ways towns are made, and it is the modern one. The other is the old quarter: the
+buildings **enclose** a shared interior, you reach it through an arched passage
+cut under a building, and there is something real inside — a well, a tree, a
+cloister walk, washing lines. From the street you see an unbroken wall.
+
+`params.courtyards` is a number from 0 to 1: **the share of the blocks that
+*can* close which actually do.** It is not a count and not a position — the same
+rule as everywhere else in this kit, you say how many, never where.
+
+```json
+{
+  "id": "old_quarter",
+  "kind": "district",
+  "envelope": { "shape": "region", "size": [220, 200] },
+  "params": {
+    "fabric": "grown",
+    "density": "high",
+    "mix": ["townhouse", "shop_row", "workshop"],
+    "courtyards": 0.7
+  },
+  "constraints": [{ "zone": "north" }]
+}
+```
+
+**When a prompt calls for one.** Old quarter, medina, casbah, kasbah, souk,
+cloister, monastery quarter, "buildings around a courtyard", "narrow lanes and
+hidden yards", "you would never know it was there from the street". Also the
+Continental city block and the Roman insula. Write `0.6`–`0.8` for a quarter
+that reads as an old town throughout, `0.2`–`0.3` for a few of them among
+ordinary blocks.
+
+**Courtyards are not a form.** They are orthogonal to `params.fabric`: `grid`,
+`grown`, `radial` and `terraced` can all have them. A prompt that says "old hill
+town" gets `"fabric": "grown"`, `"courtyards": 0.7` **and**
+`"ground": "stepped"` — never a choice between the halves of the phrase.
+
+**What you actually get.** Inside a closed block: the perimeter builds out to a
+continuous street wall with party walls and no gaps, one (or on a long block,
+two) three-column arched passages through it, and a paved interior whose
+treatment is chosen from what the block is mostly made of — a well, a canopy
+tree and a bench, a cloister colonnade, a working yard, or a garden. Every
+inward-facing door is flush with the courtyard floor.
+
+**What happens when a block will not hold one.** A block is only eligible if it
+is thick enough for buildings on opposite sides *and* leaves a core at least 9
+columns across, and if the block is close enough to a rectangle that its
+perimeter can actually close (a wedge-shaped block cannot). An ineligible block
+is simply built the ordinary way — but if **no** block in the quarter is
+eligible, that is a request the compiler accepted and did not meet, so it says
+so: one `COURTYARD_NONE` (`LOAM-T224`) naming the measurement that failed, how
+many blocks failed on it, and what to change (usually a bigger `blockSize`, or
+`density: "high"` so the perimeter builds a continuous wall). The world still
+compiles. It is never a silent plain block.
+
+The passage is the other announced fallback. It is only roofed if there is
+actually a wall on both sides to spring the arch from; if a flanking building
+refused, the passage stays an **open gap**, which still works as the way in. A
+floating arch is never built.
+
+**Where courtyards do not belong.** At `density: "low"` no block closes at all,
+by design: a village is detached houses in gardens, and the gardens *are* the
+interior. A courtyard block is also not `params.plaza` — a plaza reserves a
+whole block and builds nothing on it; a courtyard block is fully built with a
+hole in the middle. Both can exist in one quarter.
+
+### Multi-level ground — `params.ground`
+
+A quarter normally sits on **one plane**. On a slope that is visibly wrong: the
+block is levelled to one number, the streets around it grade to something else,
+and the difference comes out as a bank of raw dirt at the block edge and a
+shopfront two blocks above its own kerb. A real hill town is not one plane and
+not a smooth ramp — it is a set of level terraces with **retaining walls**
+between them and steps up from one to the next.
+
+| value | what it means | when to write it |
+|---|---|---|
+| `pad` | one flat platform for the whole quarter | the default for every form but `terraced`. Omit the key rather than writing this |
+| `benched` | the form cuts its own terraces and buildings are founded on them; nothing is built between the levels | rarely written by hand — it is what a contour-led form implies |
+| `stepped` | `benched`, plus the compiler derives its own platforms where the form declares none, plus the seams between them are **built**: retaining walls, coping, a balustrade on a tall one, and steps between levels that would otherwise be unreachable | hill town, cliffside, "streets on different levels", "steps between the levels", "terraces held up by stone walls" |
+
+```json
+{
+  "id": "upper_town",
+  "kind": "district",
+  "envelope": { "shape": "region", "size": [200, 180] },
+  "params": {
+    "fabric": "terraced",
+    "density": "medium",
+    "mix": ["townhouse", "shop_row", "chapel"],
+    "ground": "stepped"
+  },
+  "constraints": [{ "zone": "north" }]
+}
+```
+
+**`terraced` is `stepped` by default.** You do not need to write the key for a
+hill town: a `terraced` quarter that says nothing about its ground gets
+`stepped`, because a hill town's blocks *are* split-level and the form exists to
+say so. Write `"ground": "benched"` explicitly if you want the old behaviour —
+level benches with unbuilt banks between them.
+
+**It works on any form.** `stepped` on a `grid` or `grown` quarter derives a
+platform per block from the block's own median height, quantised to a whole
+storey, so neighbouring blocks differ by whole floors and a cornice line steps
+cleanly. A block whose own relief is more than a storey is split into two
+platforms — a split-level block — and no lot ever spans a seam.
+
+**The habit to drop.** The standing advice to give a district
+`terrain_conform: "flatten"` is exactly wrong here, as it is for `terraced`: a
+stepped quarter levels its own ground, terrace by terrace, and a quarter the
+solver already flattened has no relief left to step. Put it on a real slope and
+leave the ground alone.
+
+**What happens when the terrain will not support it.** `stepped` on flat ground
+has nothing to step: the quarter comes out as a single platform and compiles
+exactly as `pad` would — announced, with one `DISTRICT_GROUND` (`LOAM-T223`)
+naming the relief it measured and the storey height it needed. That is a note,
+not a failure. Likewise a seam too tall to be a wall (more than 6 blocks) is not
+built as a wall at all: the two levels are graded into each other as a bank, and
+one `RETAINING_REFUSED` (`LOAM-W411`) names the drop. And a platform nothing can
+walk to is dissolved back into its neighbour — one `LEVEL_DISSOLVED`
+(`LOAM-W410`) — because a level you cannot reach is not a level. The quarter
+ships with fewer levels rather than with an unreachable one.
+
+**Levels and courtyards compose.** A quarter that is both `stepped` and full of
+courtyards gives you a *series* of courtyards, one per level, each with its own
+flat floor and its own passage, with retaining walls between them. No courtyard
+block is ever split-level. That is a hill town.
 
 ### `city` — a whole city, planned from its arterials down
 
@@ -2009,6 +2144,8 @@ world hold two places that read differently**.
 | `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` — ids, never phrases; see the vocabulary below |
 | `motifs` | `{ "roofType": "gable"\|"hip"\|"flat"\|"dome"\|"shed"\|"mansard", "massing": "blocky"\|"stepped"\|"towered"\|"sprawling", "windowRhythm": "sparse"\|"regular"\|"dense"\|"banded", "ornamentDensity": 0..1 }` |
 | `urbanForm` | one of `grid`, `organic`, `grown`, `radial`, `canal`, `terraced`, `linear` — the urban form every quarter in this scope is drawn with. This is how a *city* gets anything but its default quarters: a city's cells are chosen by the compiler, and without this key they are the same grid-and-lanes table every city has always had. An id outside the seven is a warning (`LOAM-W487`) naming the legal values, and every quarter keeps the form it would have had |
+| `courtyards` | 0..1 — the courtyard share for every quarter in this scope, exactly as `params.courtyards`. Outranked by an explicit `params.courtyards`. Out of range is a warning (`LOAM-W488`) naming the range, and it is **not** clamped: the quarter keeps the share it would have had |
+| `ground` | one of `pad`, `benched`, `stepped` — the ground policy for every quarter in this scope, exactly as `params.ground`. Outranked by an explicit `params.ground`. An unknown value is `LOAM-W488` naming the legal values |
 
 ### The three list vocabularies
 

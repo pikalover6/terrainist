@@ -564,6 +564,17 @@ export interface StreetSurfaceInput {
    * layer existed, which is what makes a no-intent compile byte-identical.
    */
   readonly wearChance?: number;
+  /**
+   * 1 on every column a retaining wall holds, row-major over the plan's region
+   * (`docs/COURTYARDS-AND-LEVELS-v0.md` §2.4).
+   *
+   * Handed to {@link blendShoulders}, which never writes a column marked in it:
+   * a column where the ground changes level by more than the ring allowance is
+   * not a bank to be smoothed, it is a **face**, and §3.4 owns what stands on
+   * it. Omitted by every caller that built no wall, which is every document
+   * written before Phase 4.2, so the pass is unmoved by its presence.
+   */
+  readonly seam?: Uint8Array;
 }
 
 /** What the street surfacing wrote. */
@@ -988,7 +999,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     );
   }
 
-  blendShoulders(region, plan, road, roadY, blocked, paved);
+  blendShoulders(region, plan, road, roadY, blocked, paved, input.seam);
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;

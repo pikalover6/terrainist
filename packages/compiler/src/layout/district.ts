@@ -56,6 +56,7 @@ import {
 } from "@terrainist/stdlib";
 import {
   error,
+  note,
   warning,
   isDistrictNode,
   type DistrictDensity,
@@ -72,7 +73,25 @@ import {
 } from "@terrainist/spec";
 
 import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
-import { NO_PLATFORM, groundLevelsOf, levelSeams } from "./levels.js";
+import {
+  COURTYARD_FILL,
+  MIN_COURT_SIDE,
+  isCourtyardPlan,
+  planCourtyard,
+  splitIndexNearest,
+  type CourtyardBlock,
+  type CourtyardPassage,
+  type CourtyardPlan,
+  type CourtyardReject,
+} from "./courtyards.js";
+import {
+  NO_PLATFORM,
+  groundLevelsOf,
+  levelSeams,
+  type GroundLevels,
+  type LevelSeam,
+} from "./levels.js";
+import { derivePlatforms } from "./platforms.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
 import {
@@ -148,6 +167,16 @@ export const INFILL_FLOORS: Readonly<Record<DistrictDensity, readonly [number, n
 
 /** Blocks per storey, matching the profile's default. */
 export const FLOOR_HEIGHT = 4;
+
+/**
+ * Columns of blend around a building's pad.
+ *
+ * Two, unchanged: `applyLevelPad` ramps the ground to the pad's level with a
+ * smoothstep across it, so a district whose own apron did not quite reach still
+ * meets its own ground. It is named here because the platform-seam guard has to
+ * ask about exactly this reach — see `touchesSeam`.
+ */
+export const BUILDING_APRON = 2;
 
 /** Smallest footprint axis this pass will hand the grammar. */
 export const MIN_INFILL_SIDE = 7;
@@ -245,6 +274,14 @@ export interface DistrictStats {
   readonly plazaLots: number;
   readonly carriagewayColumns: number;
   readonly sidewalkColumns: number;
+  /** Blocks that closed around a courtyard. Absent when none did. */
+  readonly courtyards?: number;
+  /**
+   * Why the others did not, by §4.2's criteria — the measurement behind
+   * `COURTYARD_NONE`, and the number to look at before touching
+   * {@link COURTYARD_FILL}. Absent when nobody asked for a courtyard.
+   */
+  readonly courtyardRejects?: Readonly<Partial<Record<CourtyardReject, number>>>;
 }
 
 /** One district's fabric, as the compile report carries it. */
@@ -270,6 +307,31 @@ export interface DistrictProduct {
   readonly carriageway: Uint8Array;
   /** 1 for a sidewalk column, row-major over {@link DistrictProduct.bounds}. */
   readonly sidewalk: Uint8Array;
+  /**
+   * The blocks that closed around a courtyard, and the passages through them
+   * (`docs/COURTYARDS-AND-LEVELS-v0.md` §4). Absent — not empty — for every
+   * quarter that did not ask, which is every document written before Phase 4.2.
+   *
+   * The street graph deliberately knows nothing about a passage: it is drawn by
+   * the form before blocks exist, and threading a three-column stub back into
+   * it would perturb the form contract for no gain. The physics lint's walking
+   * agent walks the *world*, so it finds the passage if the passage is
+   * walkable, which is the only property that matters.
+   */
+  readonly courtyards?: readonly CourtyardBlock[];
+  /**
+   * This quarter's ground as a set of level platforms, when it has more than
+   * one (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.1).
+   *
+   * Absent for every quarter whose ground policy is not `"stepped"`, and for a
+   * `"stepped"` quarter that came out as one plane. Carried on the product
+   * because the retaining pass runs on the *column plan*, two stages later, and
+   * re-deriving the platforms there would be the same construction with a
+   * second chance to differ.
+   */
+  readonly levels?: GroundLevels;
+  /** The seams between those platforms, in a fixed order. Absent with `levels`. */
+  readonly seams?: readonly LevelSeam[];
   readonly stats: DistrictStats;
 }
 
@@ -501,6 +563,83 @@ export function districtGroundPolicy(
 /** `layout.groundPolicy` — registered by WP-D in `layout/streets-intent.ts`. */
 const GROUND_POLICY_ROW = "layout.groundPolicy";
 
+/**
+ * `layout.courtyardShare` — registered by WP-D in `layout/streets-intent.ts`.
+ *
+ * Spelled out rather than imported for the same reason `GROUND_POLICY_ROW` is:
+ * WP-D owns that file, and `fanOut` returns `today` for a row nobody has
+ * written yet, which is exactly what fan-out law 2 requires.
+ */
+const COURTYARD_SHARE_ROW = "layout.courtyardShare";
+
+/**
+ * The archetype most of a block's ranges were built as, or `undefined`.
+ *
+ * A terrace carries its bays' archetypes rather than one of its own, so both
+ * are counted; ties break on the lexicographically smaller name, which is what
+ * makes the choice a pure function of what was built.
+ */
+function dominantArchetype(built: readonly BuiltLot[], rect: Rect): string | undefined {
+  const counts = new Map<string, number>();
+  const bump = (name: unknown, by: number): void => {
+    if (typeof name !== "string" || name === "" || name === "terrace") return;
+    counts.set(name, (counts.get(name) ?? 0) + by);
+  };
+  for (const item of built) {
+    const r = item.rect;
+    if (r.x1 < rect.x0 || r.x0 > rect.x1 || r.z1 < rect.z0 || r.z0 > rect.z1) continue;
+    bump(item.params["archetype"], 1);
+    const bays = item.params["bays"];
+    if (Array.isArray(bays)) {
+      for (const bay of bays) bump((bay as { archetype?: unknown }).archetype, 1);
+    }
+  }
+  let best: string | undefined;
+  let bestCount = 0;
+  for (const [name, count] of [...counts].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
+    if (count > bestCount) {
+      bestCount = count;
+      best = name;
+    }
+  }
+  return best;
+}
+
+/** The `COURTYARD_NONE` diagnostic, naming the measurement that refused. */
+function courtyardNone(
+  nodePath: string,
+  blocks: number,
+  rejects: ReadonlyMap<CourtyardReject, number>,
+  density: DistrictDensity,
+): LoamDiagnostic {
+  const order: readonly CourtyardReject[] = ["core", "fill", "perimeter", "density", "draw"];
+  let worst: CourtyardReject = "draw";
+  let count = 0;
+  for (const reason of order) {
+    const n = rejects.get(reason) ?? 0;
+    if (n > count) {
+      worst = reason;
+      count = n;
+    }
+  }
+  const measured: Readonly<Record<CourtyardReject, string>> = {
+    share: "the share is zero",
+    density: `"density": "${density}" never closes a block — a village is detached houses in gardens`,
+    perimeter: `are too thin for two opposite rows of lots`,
+    core: `have a core narrower than ${MIN_COURT_SIDE} columns`,
+    fill: `are too ragged: their largest inscribed rectangle is under ${COURTYARD_FILL} of the block, so the perimeter would close around a hole`,
+    draw: "the positional draw came in over the share on every eligible block",
+  };
+  return warning(
+    "COURTYARD_NONE",
+    nodePath,
+    `no block in "${nodePath}" can hold a courtyard: ${count} of ${blocks} ${measured[worst]}`,
+    density === "low"
+      ? `raise "density" to "medium" or "high" — a courtyard block needs a continuous street wall around it`
+      : `raise "params.blockSize" so a block is at least ${2 * LOT_DEPTH[density] + MIN_COURT_SIDE} columns across, or raise "density" to "high" so the perimeter builds a continuous street wall`,
+  );
+}
+
 export function layDistrict(
   node: DistrictNode,
   nodePath: string,
@@ -608,11 +747,34 @@ export function layDistrict(
   // returns `null`, so the ordinary path allocates nothing and branches once —
   // the shape `benchLevels` already had, and why this is byte-identical.
   //
-  // WP-B slot: when the policy is `"stepped"` and the form declared no benches,
-  // `layout/platforms.ts` derives them from the blocks' own medians and hands
-  // them here. Until it lands the policy has nothing extra to offer, so a
-  // `"stepped"` quarter behaves exactly as a `"benched"` one.
-  const levels = groundLevelsOf(bounds, plan.benches ?? []);
+  // WP-B, filled: when the policy is `"stepped"` and the form declared no
+  // benches, `layout/platforms.ts` derives them from the blocks' own medians
+  // (§3.3) and they arrive here as ordinary `FormBench`es. A derived platform
+  // and a declared one are the same thing to everything downstream, which is
+  // why `groundLevelsOf` needs no second entry point and `foundationY` no
+  // second branch. `derivePlatforms` returns an empty list when the ground is
+  // flat enough that every block quantises to one storey — one platform is no
+  // platform — so a `"stepped"` quarter on the level is exactly a `"pad"` one.
+  const declared = plan.benches ?? [];
+  const derived =
+    groundPolicy === "stepped" && declared.length === 0
+      ? derivePlatforms({ bounds, blocked, field: input.field })
+      : [];
+  const levels = groundLevelsOf(bounds, declared.length > 0 ? declared : derived);
+  // Never accepted and quietly not met (§5.3): a document that asked for
+  // stepped ground and got one plane is told so, in the terms it asked in, and
+  // the quarter still compiles — as the `"pad"` it turned out to be.
+  if (groundPolicy === "stepped" && declared.length === 0 && derived.length === 0) {
+    const relief = reliefOf(input.field, bounds);
+    diagnostics.push(
+      note(
+        "DISTRICT_GROUND",
+        nodePath,
+        `"${nodePath}" asked for stepped ground and came out as one platform: the ground under it holds ${relief} block(s) of relief, and a step needs ${FLOOR_HEIGHT}`,
+        `Move the quarter onto steeper ground, enlarge "envelope.size" so it spans more of the slope, or drop "params.ground" and let it be the flat quarter it is.`,
+      ),
+    );
+  }
   // Seam *treatment* is gated on `"stepped"`, which is the new and therefore
   // opt-in policy (§3.2, §6.2). A `"benched"` quarter — every `terraced` quarter
   // written before this phase — has platforms and gets its `foundationY` from
@@ -672,12 +834,37 @@ export function layDistrict(
   const blockSites: BlockSite[] = [];
   let dropped = 0;
   let plazaLots = 0;
+  // --- courtyard blocks (Phase 4.2, §4) ------------------------------------
+  // The share of *eligible* blocks that close around a courtyard. Default 0,
+  // which is what makes the whole feature byte-identical for a document that
+  // names neither the param nor the intent key: `planCourtyard` returns a
+  // refusal before it measures anything, so `subdivide` walks the code it
+  // walked before this phase.
+  const courtyardShare = fanOut<number>(COURTYARD_SHARE_ROW, intent, {
+    nodePath,
+    today: p.courtyards ?? 0,
+  });
+  const courtyardStream = streamSeed(seed, "courtyard");
+  const courtyardPlans = new Map<number, CourtyardPlan>();
+  const courtyardRejects = new Map<CourtyardReject, number>();
+  const courtyardPassages: CourtyardPassage[] = [];
+  const preferAt = new Map<string, number>();
   for (const [i, block] of blocks.entries()) {
-    const cut = subdivide(block, i, density, grid, blocked, owner, sidewalkWidth);
+    const cut = subdivide(block, i, density, grid, blocked, owner, sidewalkWidth, {
+      share: courtyardShare,
+      stream: courtyardStream,
+    });
     dropped += cut.dropped;
+    if (cut.rejected !== null) {
+      courtyardRejects.set(cut.rejected, (courtyardRejects.get(cut.rejected) ?? 0) + 1);
+    }
     if (i === plazaBlock) {
       plazaLots += cut.lots.length;
       continue;
+    }
+    if (cut.courtyard !== null) {
+      courtyardPlans.set(i, cut.courtyard);
+      for (const [face, at] of cut.courtyard.preferAt) preferAt.set(`${i}:${face}`, at);
     }
     lots.push(...cut.lots);
     if (cut.front !== null && cut.lots.length > 0) blockSites.push(cut.front);
@@ -754,7 +941,16 @@ export function layDistrict(
   // the cathedral wanted. Before the infill, because every lot a terrace claims
   // is a lot the per-lot path must not also build on — and a terrace is the
   // *default* for a dense face, not a special case of it.
-  const terraces = terraceRuns(lots, claimed, p, nodePath, input.worldSeed, seed);
+  const terraces = terraceRuns(
+    lots,
+    claimed,
+    p,
+    nodePath,
+    input.worldSeed,
+    seed,
+    preferAt,
+    courtyardPassages,
+  );
   let terraceBays = 0;
   let terraceLots = 0;
   for (const terrace of terraces) {
@@ -769,7 +965,11 @@ export function layDistrict(
     if (claimed.has(lot.id)) continue;
     // The coverage draw comes first and is *not* a drop: a lot the density left
     // open is open ground, which is a decision, not a failure to build.
-    if (positionFloat(infillStream, lot.rect.x0, 0, lot.rect.z0) >= (LOT_COVERAGE[p.density] as number)) {
+    // …unless the lot is in a courtyard perimeter, where coverage is 1 (§4.3).
+    if (
+      !lot.courtyard &&
+      positionFloat(infillStream, lot.rect.x0, 0, lot.rect.z0) >= (LOT_COVERAGE[p.density] as number)
+    ) {
       continue;
     }
     const filled = infillLot(lot, p, infillStream, prominence, cell?.minBuilding ?? MIN_INFILL_SIDE);
@@ -792,6 +992,29 @@ export function layDistrict(
     });
   }
 
+  // --- the courtyard records ------------------------------------------------
+  // What the structure pass needs and nothing more: the core to furnish, the
+  // gaps to roof, and the dominant archetype the treatment is chosen from
+  // (§4.5). Built here, after the ranges exist, because the archetype is a
+  // property of what was actually built rather than of what the mix listed.
+  const courtyardBlocks: CourtyardBlock[] = [];
+  for (const [i, plan] of [...courtyardPlans].sort((a, b) => a[0] - b[0])) {
+    const rect = (blocks[i] as Block).rect;
+    const archetype = dominantArchetype(built, rect);
+    courtyardBlocks.push({
+      block: i,
+      rect,
+      core: plan.core,
+      passages: courtyardPassages.filter((pg) => pg.block === i),
+      ...(archetype === undefined ? {} : { archetype }),
+    });
+  }
+  // Never accepted and quietly not met (§5.3): the author asked for courtyards
+  // and got none, so say which measurement refused and what to change.
+  if (courtyardShare > 0 && courtyardBlocks.length === 0 && blocks.length > 0) {
+    diagnostics.push(courtyardNone(nodePath, blocks.length, courtyardRejects, density));
+  }
+
   // --- turn every claimed lot into a placement ------------------------------
   const nodes: LayoutNodeInput[] = [];
   const placements: Placement[] = [];
@@ -809,6 +1032,20 @@ export function layDistrict(
       padEdits.push({ nodePath, footprint: run, targetY: bench.level, apron: 0 });
     }
   }
+  // The **derived** platforms of a `"stepped"` quarter (§3.3). Levelled from
+  // `levels.runs` rather than from the bench list, because those runs are
+  // re-derived from the *resolved* field: a pad list built from the
+  // declarations would level an overlapped column twice, at two heights, in
+  // list order. `apron: 0` for the reason the bench pads have it — an apron is
+  // a smoothstep ramp, and a ramp across a platform edge is the wall not being
+  // there. Empty unless this quarter derived platforms, so nothing that did not
+  // opt in gains a pad.
+  if (derived.length > 0 && levels !== null) {
+    for (const [platform, runs] of levels.runs.entries()) {
+      const targetY = levels.levelY[platform] as number;
+      for (const run of runs) padEdits.push({ nodePath, footprint: run, targetY, apron: 0 });
+    }
+  }
 
   // Columns a seam runs through. A building whose lot touches one gets
   // `apron: 0` below: `applyLevelPad` blends an apron with a smoothstep lerp,
@@ -823,10 +1060,15 @@ export function layDistrict(
       if (k >= 0) seamColumns.add(k);
     }
   }
+  // The rect **plus its apron**, not the rect. A seam column is in `blocked`
+  // (§3.3 step 4), so no lot contains one and no building rect can — testing
+  // the rect alone made this guard true nowhere the platforms were derived,
+  // which is exactly the half of §9.2 that matters: the apron is what reaches
+  // the seam, so the apron is what has to be asked about.
   const touchesSeam = (rect: Rect): boolean => {
     if (seamColumns.size === 0) return false;
-    for (let z = rect.z0; z <= rect.z1; z++) {
-      for (let x = rect.x0; x <= rect.x1; x++) {
+    for (let z = rect.z0 - BUILDING_APRON; z <= rect.z1 + BUILDING_APRON; z++) {
+      for (let x = rect.x0 - BUILDING_APRON; x <= rect.x1 + BUILDING_APRON; x++) {
         const k = grid.index(x, z);
         if (k >= 0 && seamColumns.has(k)) return true;
       }
@@ -886,7 +1128,7 @@ export function layDistrict(
       nodePath: item.nodePath,
       footprint: rect,
       targetY: foundationY,
-      apron: touchesSeam(rect) ? 0 : 2,
+      apron: touchesSeam(rect) ? 0 : BUILDING_APRON,
     });
     params.set(item.nodePath, item.params);
   }
@@ -914,6 +1156,13 @@ export function layDistrict(
         : { channels: plan.channels }),
       carriageway,
       sidewalk,
+      ...(courtyardBlocks.length === 0 ? {} : { courtyards: courtyardBlocks }),
+      // The platforms and their seams, for the retaining pass — the one
+      // consumer that runs on the column plan rather than on the layout, and so
+      // the one that cannot re-derive them. Both are omitted unless this
+      // quarter is `"stepped"` and actually stepped, so the product a quarter
+      // written before this phase carries is the object it carried before.
+      ...(levels === null || groundPolicy !== "stepped" ? {} : { levels, seams }),
       stats: {
         blocks: blocks.length,
         lots: lots.length,
@@ -927,6 +1176,10 @@ export function layDistrict(
         plazaLots,
         carriagewayColumns,
         sidewalkColumns,
+        ...(courtyardBlocks.length === 0 ? {} : { courtyards: courtyardBlocks.length }),
+        ...(courtyardShare <= 0
+          ? {}
+          : { courtyardRejects: Object.fromEntries([...courtyardRejects].sort()) }),
       },
     },
   };
@@ -1110,12 +1363,29 @@ interface Lot {
   readonly rect: Rect;
   /** The direction from the lot towards its street — where its door points. */
   readonly face: HorizontalFace;
+  /**
+   * Which side of the block the lot's strip was cut from.
+   *
+   * Equal to {@link Lot.face} for every lot the ordinary subdivision cuts, and
+   * *opposite* to it on a courtyard block's streetless face, where the range
+   * turns its door into the court (§4.3). Runs are grouped by `side`, never by
+   * `face`, so a north strip facing south and a south strip facing south stay
+   * two strips rather than collapsing into one.
+   */
+  readonly side: HorizontalFace;
   /** The segment id it fronts; `""` when it fronts the district boundary. */
   readonly street: string;
   readonly block: number;
   /** Frontage index within the strip, for run detection. */
   readonly order: number;
   readonly corner: boolean;
+  /**
+   * True on a lot in a courtyard block's perimeter. Its coverage draws — the
+   * terrace one and the per-lot one — are forced to 1: an unbuilt lot in a
+   * courtyard perimeter is a hole in the wall, and the whole point of the form
+   * is that the wall is unbroken (§4.3).
+   */
+  readonly courtyard: boolean;
 }
 
 /** The four sides of a block, in the fixed order the subdivision walks them. */
@@ -1145,6 +1415,10 @@ interface Subdivision {
   readonly dropped: number;
   /** The block's own frontage, for a landmark that wants the whole block. */
   readonly front: BlockSite | null;
+  /** The courtyard this block closes around, when it was selected (§4.2). */
+  readonly courtyard: CourtyardPlan | null;
+  /** Why it was not selected. `null` when it was. */
+  readonly rejected: CourtyardReject | null;
 }
 
 /** A whole block, offered to a landmark no run of lots can hold. */
@@ -1182,6 +1456,7 @@ function subdivide(
   blockedMask: Uint8Array,
   owner: (string | undefined)[],
   sidewalkWidth: number,
+  courtyards: { readonly share: number; readonly stream: Seed256 },
 ): Subdivision {
   const frontage = LOT_FRONTAGE[density];
   const { rect } = block;
@@ -1202,7 +1477,9 @@ function subdivide(
     const street = streetBehind(rect, side, grid, owner, sidewalkWidth);
     if (street !== undefined) fronts.set(side, street);
   }
-  if (fronts.size === 0) return { lots: [], dropped: 0, front: null };
+  if (fronts.size === 0) {
+    return { lots: [], dropped: 0, front: null, courtyard: null, rejected: "perimeter" };
+  }
   const primary = bestSide(fronts);
   const front: BlockSite = {
     block: index,
@@ -1210,6 +1487,25 @@ function subdivide(
     face: primary,
     street: fronts.get(primary) as string,
   };
+
+  // Does this block close around a courtyard? §4.2, and every criterion is a
+  // number this function already computed. A share of 0 — the default — short
+  // circuits inside `planCourtyard`, so a document that names no new key walks
+  // exactly the code it walked before this phase.
+  const decision = planCourtyard({
+    rect,
+    columns: block.columns,
+    density,
+    share: courtyards.share,
+    depth,
+    perimeter,
+    fronts: new Set(fronts.keys()),
+    primary,
+    maxFrontage: TERRACE_MAX_FRONTAGE[density],
+    stream: courtyards.stream,
+  });
+  const plan = isCourtyardPlan(decision) ? decision : null;
+  const rejected = plan === null ? (decision as { rejected: CourtyardReject }).rejected : null;
 
   const lots: Lot[] = [];
   let dropped = 0;
@@ -1219,6 +1515,7 @@ function subdivide(
     street: string,
     cornerFirst: boolean,
     cornerLast: boolean,
+    face: HorizontalFace = side,
   ): void => {
     const along = side === "north" || side === "south";
     const length = along ? strip.x1 - strip.x0 + 1 : strip.z1 - strip.z0 + 1;
@@ -1243,11 +1540,13 @@ function subdivide(
       lots.push({
         id: `b${index}${side[0]}${k}`,
         rect: lot,
-        face: side,
+        face,
+        side,
         street,
         block: index,
         order: k,
         corner: (k === 0 && cornerFirst) || (k === count - 1 && cornerLast),
+        courtyard: plan !== null,
       });
     }
   };
@@ -1256,7 +1555,40 @@ function subdivide(
     // Too shallow for two rows: one row of lots spanning the whole block,
     // facing whichever side has a street, in the fixed side order.
     emit(rect, primary, front.street, true, true);
-    return { lots, dropped, front };
+    return { lots, dropped, front, courtyard: null, rejected };
+  }
+
+  if (plan !== null) {
+    // A courtyard block cuts **all four** strips, including the sides with no
+    // street behind them (§4.3). The rule that a lot may not front the district
+    // boundary is kept rather than broken: the streetless range's door does not
+    // go on the outside, it goes on the courtyard, so its `face` is the inward
+    // direction and `yawFacing` turns it into the court. What is left outside
+    // is a blank wall on the district edge, which is what a medina looks like
+    // from outside.
+    const inward: Readonly<Record<HorizontalFace, HorizontalFace>> = {
+      north: "south",
+      south: "north",
+      west: "east",
+      east: "west",
+    };
+    const innerZ0c = rect.z0 + depth;
+    const innerZ1c = rect.z1 - depth;
+    for (const side of SIDES) {
+      const street = fronts.get(side);
+      const face = street === undefined ? (inward[side] as HorizontalFace) : side;
+      const strip: Rect =
+        side === "north"
+          ? { ...rect, z1: rect.z0 + depth - 1 }
+          : side === "south"
+            ? { ...rect, z0: rect.z1 - depth + 1 }
+            : side === "west"
+              ? { x0: rect.x0, z0: innerZ0c, x1: rect.x0 + depth - 1, z1: innerZ1c }
+              : { x0: rect.x1 - depth + 1, z0: innerZ0c, x1: rect.x1, z1: innerZ1c };
+      const ends = side === "north" || side === "south";
+      emit(strip, side, street ?? front.street, ends, ends, face);
+    }
+    return { lots, dropped, front, courtyard: plan, rejected: null };
   }
 
   const north = fronts.get("north");
@@ -1283,7 +1615,7 @@ function subdivide(
     }
   }
 
-  return { lots, dropped, front };
+  return { lots, dropped, front, courtyard: null, rejected };
 }
 
 /** The frontage side to use when a block only gets one: fixed side order. */
@@ -1577,6 +1909,15 @@ function terraceRuns(
   nodePath: string,
   worldSeed: bigint,
   districtSeed: Seed256,
+  /**
+   * Where a courtyard block wants its perimeter cut, keyed `block:side`
+   * (§4.4). The gap the cut opens *is* the passage, so this is the difference
+   * between a passage the block asked for and one it got by accident from a
+   * frontage cap.
+   */
+  preferAt: ReadonlyMap<string, number>,
+  /** Filled with the passages actually cut. */
+  passages: CourtyardPassage[],
 ): Terrace[] {
   const density = params.density;
   const maxFrontage = TERRACE_MAX_FRONTAGE[density];
@@ -1589,7 +1930,12 @@ function terraceRuns(
   const faces = new Map<string, Lot[]>();
   for (const lot of lots) {
     if (claimed.has(lot.id)) continue;
-    const key = `${lot.block}:${lot.face}`;
+    // Keyed on the *side* the strip was cut from, not on the face its doors
+    // point at: on a courtyard block a streetless north range faces south, and
+    // grouping by face would merge it with the south range into one run whose
+    // `order` indices collide. For every lot the ordinary subdivision cuts the
+    // two are the same value, so this is byte-identical there.
+    const key = `${lot.block}:${lot.side}`;
     const group = faces.get(key);
     if (group === undefined) faces.set(key, [lot]);
     else group.push(lot);
@@ -1616,30 +1962,72 @@ function terraceRuns(
 
   /** Cut one run into terraces short enough to read as a street. */
   function cutRun(run: readonly Lot[]): Terrace[] {
-    const along = (run[0] as Lot).face === "north" || (run[0] as Lot).face === "south";
+    const first = run[0] as Lot;
+    const along = first.side === "north" || first.side === "south";
     const width = (lot: Lot): number =>
       along ? lot.rect.x1 - lot.rect.x0 + 1 : lot.rect.z1 - lot.rect.z0 + 1;
 
-    const chunks: Lot[][] = [];
-    let chunk: Lot[] = [];
-    let span = 0;
-    for (const lot of run) {
-      const w = width(lot);
-      if (chunk.length > 0 && span + w > maxFrontage) {
-        chunks.push(chunk);
-        chunk = [];
-        span = 0;
+    /** Chunk one contiguous part by the frontage cap, the way this always has. */
+    const byFrontage = (part: readonly Lot[]): Lot[][] => {
+      const out: Lot[][] = [];
+      let chunk: Lot[] = [];
+      let span = 0;
+      for (const lot of part) {
+        const w = width(lot);
+        if (chunk.length > 0 && span + w > maxFrontage) {
+          out.push(chunk);
+          chunk = [];
+          span = 0;
+        }
+        chunk.push(lot);
+        span += w;
       }
-      chunk.push(lot);
-      span += w;
-    }
-    if (chunk.length > 0) chunks.push(chunk);
+      if (chunk.length > 0) out.push(chunk);
+      return out;
+    };
+
+    // A courtyard block asks for a cut *here* — at the lot boundary nearest the
+    // middle of its primary face — rather than taking whatever the frontage cap
+    // gives (§4.4). Everything else about the cut is unchanged, including the
+    // three columns the second run gives up, which is the gap.
+    const prefer = preferAt.get(`${first.block}:${first.side}`);
+    const starts = run.map((lot) => (along ? lot.rect.x0 : lot.rect.z0));
+    const at =
+      prefer === undefined ? null : splitIndexNearest(starts, prefer, TERRACE_MIN_LOTS);
+
+    const chunks: Lot[][] =
+      at === null
+        ? byFrontage(run)
+        : [...byFrontage(run.slice(0, at)), ...byFrontage(run.slice(at))];
+    // Which chunk starts the asked-for passage: the first of the second part.
+    const asked = at === null ? -1 : byFrontage(run.slice(0, at)).length;
 
     const made: Terrace[] = [];
+    let before: Terrace | null = null;
     for (const [i, part] of chunks.entries()) {
-      if (part.length < TERRACE_MIN_LOTS) continue;
-      const terrace = makeTerrace(part, along, i > 0);
-      if (terrace === null) continue;
+      const terrace =
+        part.length < TERRACE_MIN_LOTS ? null : makeTerrace(part, along, i > 0);
+      if (terrace === null) {
+        before = null;
+        continue;
+      }
+      // The passage is only recorded when there is a building on *both* sides
+      // of it: a gap with nothing flanking it is not a pend, it is a missing
+      // building, and the structure pass would have nothing for an arch to
+      // spring from. The readback in `structures/courtyards.ts` is the second
+      // half of that check and the one that catches a terrace that refused
+      // downstream.
+      if (i === asked && before !== null) {
+        const whole = unionRect(part.map((l) => l.rect));
+        passages.push({
+          block: first.block,
+          face: first.side,
+          rect: along
+            ? { ...whole, x1: whole.x0 + TERRACE_PASSAGE - 1 }
+            : { ...whole, z1: whole.z0 + TERRACE_PASSAGE - 1 },
+        });
+      }
+      before = terrace;
       made.push(terrace);
     }
     return made;
@@ -1668,7 +2056,12 @@ function terraceRuns(
     const id = `terrace_${rect.x0}_${rect.z0}`;
     const path = `${nodePath}.${id}`;
     const seed = nodeSeed(worldSeed, path, "");
-    if (coverage < 1 && positionFloat(stream, rect.x0, 2, rect.z0) >= coverage) return null;
+    // Coverage goes to 1 on a courtyard block: an unbuilt range is a hole in a
+    // wall that is supposed to be unbroken (§4.3).
+    const closes = chunk[0]?.courtyard === true;
+    if (!closes && coverage < 1 && positionFloat(stream, rect.x0, 2, rect.z0) >= coverage) {
+      return null;
+    }
 
     // Phase one: where the party walls fall. Seeded from this terrace's own
     // node seed, which is a hash of its own min corner — so the frontage is cut
@@ -2012,6 +2405,31 @@ export function sampleGround(
 }
 
 /** Median ground height under a rectangle of the composed field. */
+/**
+ * The relief of the natural ground under a rectangle, in blocks.
+ *
+ * Read by one caller: the `DISTRICT_GROUND` note, which has to say *what was
+ * measured* rather than "the ground was flat" — a document that asked for a
+ * hill town and got a flat one is exactly the class of request this repo has
+ * accepted and quietly not met before.
+ */
+function reliefOf(field: HeightField, rect: Rect): number {
+  const region = field.region;
+  let lo = Number.POSITIVE_INFINITY;
+  let hi = Number.NEGATIVE_INFINITY;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      const h = Math.round(field.values[j * region.width + i] as number);
+      if (h < lo) lo = h;
+      if (h > hi) hi = h;
+    }
+  }
+  return hi < lo ? 0 : hi - lo;
+}
+
 export function medianGround(field: HeightField, rect: Rect): number {
   const region = field.region;
   const heights: number[] = [];

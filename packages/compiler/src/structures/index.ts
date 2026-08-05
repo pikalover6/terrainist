@@ -70,6 +70,8 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { digCanals, type CanalPassResult } from "./canals.js";
+import { buildRetainingWalls } from "./retaining.js";
+import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
@@ -107,6 +109,8 @@ import {
 
 export * from "./buildings.js";
 export * from "./canals.js";
+export * from "./retaining.js";
+export * from "./courtyards.js";
 export * from "./doorsteps.js";
 export * from "./life.js";
 export * from "./grounds.js";
@@ -279,6 +283,11 @@ export interface StructurePassResult {
   readonly props: readonly PlacedProp[];
   /** F2's ground treatment: what each lot got, and how much ground it took. */
   readonly grounds?: GroundPassResult;
+  /**
+   * The courtyards this world furnished, and the passages it roofed. Absent
+   * when no quarter closed a block (`docs/COURTYARDS-AND-LEVELS-v0.md` §4).
+   */
+  readonly courtyards?: CourtyardPassResult;
   readonly precincts?: PrecinctPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
@@ -592,7 +601,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // router discounts existing road cells — which is exactly how a lane finds a
   // street rather than running alongside it.
   // --- the retaining walls (Phase 4.2, WP-B) -------------------------------
-  // SLOT, deliberately empty until `structures/retaining.ts` lands. The
+  // SLOT, filled by `structures/retaining.ts`. The
   // ordering is load-bearing and is stated here once, beside the canal comment
   // that states the other half (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.4, §9.8):
   // the retaining pass runs **after the buildings and before the canals and the
@@ -603,18 +612,44 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // street drawn before it existed; a seam column a street already claims is
   // skipped, since the street is the connection, not a wall across it.
   //
-  // The balustrade on top of a wall is *not* emitted here: it stands on a
-  // column rather than being one, so it belongs to the surfacer's furnish
-  // phase (§2.3), which is the whole reason WP-A comes first.
+  // The balustrade on top of a wall is emitted with the wall, as a cap on the
+  // `face` band, and it clears the furnish bar a different way from the stair
+  // rail's: the wall's columns are kept clear of the street network, its coping
+  // is emitted as a structure block as well as a plan column, and its seam mask
+  // goes to the surfacer so `blendShoulders` never smooths a face. "The furnish
+  // phase runs after every ground write" is false — WP-A measured it — so
+  // nothing here relies on it (§3.4's correction).
+  const retaining = buildRetainingWalls({
+    districts,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+    footprints: buildings.built.map((b) => b.footprint),
+  });
+  diagnostics.push(...retaining.diagnostics);
+  blocks.push(...retaining.blocks);
 
   // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
-  // SLOT, deliberately empty until `structures/courtyards.ts` lands. It runs
-  // after `buildBuildings` and before the streetscape, because the passage arch
-  // springs from the flanking bays' walls and is only built when a readback of
-  // the emitted block list finds both of them solid at the arch height — a
-  // floating arch is never built (§4.4). The interior treatments claim their
-  // columns in the occupancy grid, so no scatter, ground treatment or prop
-  // lands in a courtyard the pass has furnished.
+  // SLOT, filled. It runs after `buildBuildings` and before the streetscape,
+  // because the passage arch springs from the flanking bays' walls and is only
+  // built when a readback of the emitted block list finds both of them solid at
+  // the arch height — a floating arch is never built (§4.4). The interior
+  // treatments claim their columns in the occupancy grid, so no scatter, ground
+  // treatment or prop lands in a courtyard the pass has furnished.
+  //
+  // `furnishCourtyards` returns untouched when no quarter closed a block, which
+  // is every document written before this phase.
+  const courtyardPass = furnishCourtyards({
+    districts,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+    emitted: blocks,
+    seed: seed32(streamSeed(themeSeed, "courtyard")),
+    ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+  });
+  diagnostics.push(...courtyardPass.diagnostics);
+  blocks.push(...courtyardPass.blocks);
 
   // --- the canals ----------------------------------------------------------
   // After the column plan, before the streets are surfaced, and that ordering
@@ -657,6 +692,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         nodePath: rootPath,
         today: STREET_WEAR_CHANCE,
       }),
+      // §2.4: a column a retaining wall holds is a *face*, not a bank, and
+      // `blendShoulders` would smooth it into a ramp. Omitted entirely when no
+      // quarter built one, so the surfacer's behaviour is untouched for every
+      // document written before this phase.
+      ...(retaining.wallColumns === 0 ? {} : { seam: retaining.seam }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     blocks.push(...streets.blocks);
@@ -990,6 +1030,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     walls: wallPass?.walls ?? [],
     props: props.placed,
     grounds,
+    ...(courtyardPass.courtyards.length === 0 ? {} : { courtyards: courtyardPass }),
     ...(precincts === undefined ? {} : { precincts }),
     districts,
     ...(plaza === undefined ? {} : { plaza }),
