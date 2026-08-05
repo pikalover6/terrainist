@@ -52,6 +52,7 @@ import {
 } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
+import { surfaceStreetStairs } from "./street-stairs.js";
 import { carriagewaySpans, sweptColumns } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
@@ -501,9 +502,11 @@ export interface StreetSurfaceInput {
    * An arterial is a street that happens to be eleven columns wide: it wants
    * the same grade, the same materials and the same shoulder blend a street
    * gets, and forking a third surfacing path would be the third place a change
-   * of road palette has to be made. The one thing it gets that a street does
-   * not is a **bridge deck** — a district's grid never crosses water, and a
-   * city's drive is expected to.
+   * of road palette has to be made. It was for a long time the only thing that
+   * got a **bridge deck**, on the grounds that a district's grid never crosses
+   * water and a city's drive is expected to. The `canal` form ended that: a
+   * quarter that carries a channel decks its own crossings, on exactly the same
+   * kit, and the segment loop below says so.
    */
   readonly arterials?: readonly {
     readonly id: string;
@@ -646,6 +649,15 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   for (let k = 0; k < cells; k++) if (road[k] === 1) arterialMask[k] = 1;
 
   for (const graph of input.graphs) {
+    // Does this quarter carry water? Two things hang off the answer, and both
+    // are gated on it so that a document naming no `canal` quarter grades and
+    // surfaces exactly the columns it grades and surfaces today (§5): a street
+    // that crosses a channel needs its deck lifted clear of the water (the
+    // per-cell floor the arterial loop has always passed and this one never
+    // did), and it needs the bridge kit — otherwise a district street over a
+    // canal is a graded deck with no rails and no piers, which is a hole in the
+    // street with a name.
+    const hasChannel = graph.segments.some((s) => s.role === "channel");
     for (const segment of graph.segments) {
       const path = segment.path.filter((c) => inside(region, c.x, c.z));
       if (path.length === 0) continue;
@@ -658,20 +670,52 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // that names no new form walks exactly the code it walks today.
       const role = segment.role ?? "carriageway";
       if (role === "channel") {
-        // WP-B (`structures/canals.ts`): dig the channel, write the water into
-        // the column plan *before* this pass runs, and deck every crossing.
+        // The water is already there: `digCanals` (`structures/canals.ts`) ran
+        // between the column plan and this pass, which is the ordering §4.3
+        // pins — `buildBridgeableMask` above read `plan.fluidKind`, so every
+        // channel column is already priced as bridgeable and every cross street
+        // that meets one is decked below. There is nothing to surface: a
+        // carriageway laid over a channel would be the canal filled in with
+        // tarmac.
         continue;
       }
       if (role === "steps") {
-        // WP-C (`structures/street-stairs.ts`): `synthesizeTreadPlan` over the
-        // raw ground of this path, dressed with `STAIR_PROFILE`, with the
-        // whole-run refusal that keeps an unclimbable flight from being built.
+        // `synthesizeTreadPlan` over the raw ground of this path, dressed with
+        // `STAIR_PROFILE` — including the whole-run refusal, which is why the
+        // result is checked rather than assumed: a flight that cannot be made
+        // climbable is not built, and the bench that lost its only stair is
+        // found by the physics lint's `traversal.unreachable` rather than
+        // shipped as a jump.
+        const flight = surfaceStreetStairs({
+          region,
+          plan,
+          blocked,
+          road,
+          roadY,
+          paved,
+          water,
+          path,
+          width: segment.width,
+          states: { step: urban[segment.kind].step, subsurface: urban[segment.kind].subsurface },
+          stack: input.stack,
+          ...(occupancy === undefined ? {} : { occupancy }),
+        });
+        blocks.push(...flight.blocks);
         continue;
       }
       const profile = gradeProfile(
         path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
         plan.seaLevel,
         ROAD_FILL_BAND,
+        // A deck has to clear the water it spans. Without this the grade would
+        // follow the channel's *bed* — a ramp down into the canal and out the
+        // other side — because `plan.ground` under water is the bed.
+        hasChannel
+          ? path.map((c) => {
+              const k = index(region, c.x, c.z);
+              return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
+            })
+          : 0,
       );
       const surfaced = path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
       surfaceRoute(
@@ -688,6 +732,24 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         water,
         bridged,
       );
+      if (hasChannel) {
+        // The same call the arterial loop makes, so a canal bridge gets the
+        // same deck, the same rail, the same pier rhythm and the same
+        // approaches a river crossing gets. `buildBridgeKit` finds its own wet
+        // runs and refuses any run too short to be a bridge, so a street that
+        // never meets the water contributes nothing.
+        const states = urban[segment.kind];
+        blocks.push(
+          ...buildBridgeKit(
+            region,
+            plan,
+            surfaced,
+            segment.width,
+            { deck: states.deck, post: states.post, pier: states.pier },
+            water,
+          ).blocks,
+        );
+      }
       if (segment.kind === "avenue") {
         avenues.push({ cells: markableCells(surfaced, graph, segment.width) });
       }

@@ -149,6 +149,82 @@ export const STAIR_PROFILE: SweptProfile = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* the canal                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns of water under the surface of a dug channel.
+ *
+ * Two. Deep enough that the channel reads as water rather than as a puddle in a
+ * gutter, shallow enough that a player who steps off the quay climbs back out
+ * of it — and shallow enough that the cut does not reach the soil band's
+ * bottom, which is what keeps the shell stone rather than a hole into a cave.
+ */
+export const CANAL_DEPTH = 2;
+
+/**
+ * A canal, as one cross-section (`docs/URBAN-FORMS-v0.md` §4.3).
+ *
+ * The whole idea of the `canal` form in one object: **a canal is a street whose
+ * carriageway is water.** The bands are the street's bands with the middle one
+ * cut below the datum and filled with water, so the quay is the sidewalk, the
+ * doors front it through the ordinary frontage machinery, and nothing
+ * downstream of the skeleton needed to learn a new word.
+ *
+ * | band | role | width | what |
+ * |---|---|---|---|
+ * | `channel` | `core` | `width − 2` | water to `surfaceY`, shell below |
+ * | `coping` | `kerb` | 1 each side | one course proud of the water |
+ * | `quay` | `walkway` | `sidewalk` | the frontage the doors face |
+ *
+ * The widths here are the representative ones (a five-column street with a
+ * two-column verge); {@link canalProfile} resolves them against the segment
+ * that was promoted, exactly as {@link bridgeProfile} resolves the deck against
+ * the road that reached the bank.
+ *
+ * `level: -1` on the core is the one number that matters: the water's surface
+ * is one below the quay, so a bank column is *exactly* one proud of the water.
+ * That is what `road.proud` measures and what makes the fluid stable — every
+ * 4-neighbour of a channel column has a solid top at or above the water line,
+ * so nothing has an exposed horizontal face to flow out of.
+ */
+export const CANAL_PROFILE: SweptProfile = {
+  id: "canal.masonry",
+  bands: [
+    { id: "channel", role: "core", width: 3, centred: true, level: -1, surface: "ground.stone" },
+    { id: "coping", role: "kerb", width: 1, surface: "street.curb" },
+    { id: "quay", role: "walkway", width: 2, surface: "street.sidewalk" },
+  ],
+  maxGrade: 0,
+  // A canal has one water surface for its whole length; it does not follow the
+  // ground and it does not step. The datum is the quarter's, decided once.
+  follow: "level",
+  crossing: "bridge",
+};
+
+/**
+ * {@link CANAL_PROFILE} resolved against the promoted segment and its verge.
+ *
+ * `width` is the street width the channel inherited — the promotion keeps the
+ * segment's path *and* its width, which is what makes an avenue-class canal
+ * wider than a street-class one without anybody choosing a number. `quay` is
+ * the district's sidewalk band.
+ */
+export function canalProfile(width: number, quay: number): SweptProfile {
+  const channel = Math.max(1, width - 2);
+  return {
+    ...CANAL_PROFILE,
+    bands: CANAL_PROFILE.bands.map((band) =>
+      band.role === "core"
+        ? { ...band, width: channel }
+        : band.role === "walkway"
+          ? { ...band, width: Math.max(1, quay) }
+          : band,
+    ),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /* shared profile geometry                                                    */
 /* -------------------------------------------------------------------------- */
 

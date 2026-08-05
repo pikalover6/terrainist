@@ -26,6 +26,7 @@
  */
 
 import {
+  DISTRICT_FABRICS,
   ERA_ALIASES,
   ERA_CLASSES,
   EVENT_KINDS,
@@ -113,6 +114,31 @@ function eraVocabularyLines(): string {
 
 const list = (xs: readonly string[]): string => xs.join(", ");
 
+/**
+ * What a prompt has to say for each urban form, one line per id.
+ *
+ * Keyed off `DISTRICT_FABRICS` rather than hand-listed, so a form added to the
+ * vocabulary without a line here is a missing key at build time rather than a
+ * form the classifier can never choose. This is §6.3's table: **`era` on its own
+ * deliberately does not pick a form** — a mapping from era to form would move
+ * every intent-carrying world that already has an `era`, so the guess lives here
+ * in the pre-pass, where a human can read the answer before the expensive call.
+ */
+const URBAN_FORM_HINTS: Readonly<Record<(typeof DISTRICT_FABRICS)[number], string>> = {
+  canal: 'canal town, Venice, Amsterdam, "streets of water", a quarter built on a lagoon',
+  terraced: 'hill town, cliffside, Cinque Terre, "a town on a mountainside", stepped streets',
+  radial: 'ring town, baroque capital, star fort, "everything faces the palace or the cathedral"',
+  linear: 'ribbon village, roadside village, valley village, "strung along the road"',
+  grown: 'medieval, an old quarter, "grew over centuries", "no two streets parallel", winding lanes',
+  grid: "planned, colonial, gridiron, a modern downtown, a company town",
+  organic: "(legacy — write grown instead)",
+};
+
+/** The hint table as prompt lines, in vocabulary order. */
+const URBAN_FORM_LINES = DISTRICT_FABRICS.map(
+  (id) => `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id]}`,
+).join("\n");
+
 /** The one worked example. Short on purpose: shape first, content second. */
 const WORKED_EXAMPLE = `EXAMPLE
 Prompt: "two islands in a warm sea — a white unicorn shrine isle and a
@@ -154,7 +180,8 @@ a field means "the prompt does not say" — which is NOT the same as zero.
     "motifs": { "roofType": one of [${list(ROOF_TYPES)}],
                 "massing": one of [${list(MASSING_STYLES)}],
                 "windowRhythm": one of [${list(WINDOW_RHYTHMS)}],
-                "ornamentDensity": 0..1 }
+                "ornamentDensity": 0..1 },
+    "urbanForm": one of [${list(DISTRICT_FABRICS)}]   // the shape of the streets
   },
   "tokens": { "<name>": string|number|boolean }   // anything else worth keeping
 }
@@ -176,6 +203,23 @@ flora: exactly these ${TREE_SHAPES.length} tree shapes:
 
 archetypes: single-word building ids, e.g. ${list(EXAMPLE_ARCHETYPE_IDS)}.
 props: single-word object ids, e.g. ${list(EXAMPLE_PROP_IDS)}.
+
+urbanForm: exactly these ${DISTRICT_FABRICS.length} ids. This is the single field that decides whether
+two towns look like different places, so read the prompt for it deliberately —
+but write it ONLY when the prompt actually says something about the shape of the
+place. An omitted urbanForm means every quarter keeps the form it would have
+had, which is always safe; a guessed one restyles the whole settlement.
+
+${URBAN_FORM_LINES}
+
+  Notes on three of them:
+  - "terraced" needs a genuinely steep site. Write it for a town that is ON a
+    mountainside or a cliff, not for one that merely has hills nearby — on
+    gentle ground it falls back and warns.
+  - "grown" is the medieval default. "organic" is a legacy value that means
+    much the same thing but flatter; prefer "grown".
+  - "grid" is worth writing explicitly for a planned or colonial town, because
+    it says the plan was deliberate rather than a default.
 
 PROSE GOES IN "tokens", NEVER IN A PREFER LIST.
 prefer/forbid entries are matched against real catalogs; anything that is not

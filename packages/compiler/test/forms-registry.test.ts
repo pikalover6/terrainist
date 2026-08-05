@@ -48,9 +48,15 @@ const context = (): FormContext => ({
 });
 
 describe("the urban form registry", () => {
-  it("answers with the two forms this package ships", () => {
+  it("answers with every form the vocabulary carries", () => {
     installUrbanForms();
-    expect(urbanForms().map((f) => f.id)).toEqual(["grid", "organic"]);
+    // The registry and the authoring vocabulary must agree in *both*
+    // directions. An id in `DISTRICT_FABRICS` with no module is a document the
+    // validator accepts and the compiler cannot draw; a module whose id is not
+    // in the vocabulary is a form no author can ask for. This assertion was
+    // one-directional only while the vocabulary was widened ahead of the
+    // registry, between the contract landing and the forms filling it in.
+    expect(urbanForms().map((f) => f.id).sort()).toEqual([...DISTRICT_FABRICS].sort());
   });
 
   it("registers only ids the authoring vocabulary carries", () => {
@@ -166,22 +172,17 @@ describe("the announced fallback", () => {
     expect(drawn.ok).toBe(false);
   });
 
-  it("draws a grid, once and loudly, for a vocabulary id no form is built for yet", () => {
-    installUrbanForms();
-    expect(urbanForm("canal")).toBeUndefined();
-    const drawn = drawFabric({ ...context(), fabric: "canal", nodePath: "world.old_quarter" });
-    expect(drawn.ok).toBe(true);
-    if (!drawn.ok) return;
-    expect(drawn.outcome.diagnostics).toHaveLength(1);
-    expect(drawn.outcome.diagnostics[0]?.name).toBe("DISTRICT_FORM");
-    expect(drawn.outcome.plan.record.id).toBe("grid");
-    expect(drawn.outcome.plan.record.requested).toBe("canal");
-  });
+  // The "a vocabulary id with no module draws a grid and warns" case was a
+  // deliberately temporary branch: the vocabulary was widened to all seven ids
+  // by the contract package, before the modules that fill them existed, so a
+  // legal document had to stay compilable in between. Every id now has a
+  // module — asserted above, in both directions — so the branch is unreachable
+  // and the test that pinned it would only pin dead code.
 
   it("throws on an id the vocabulary does not carry — that is a compiler bug", () => {
     installUrbanForms();
     expect(() =>
       drawFabric({ ...context(), fabric: "canaal" as never, nodePath: "world.q" }),
-    ).toThrow(/validator/);
+    ).toThrow(/compiler bug/);
   });
 });

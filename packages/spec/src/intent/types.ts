@@ -24,6 +24,7 @@
  * (`LOAM-W481`, ignored).
  */
 
+import type { DistrictFabric } from "../settlement/types.js";
 import type { PaletteValue } from "../terrain/types.js";
 
 /**
@@ -234,6 +235,17 @@ export interface CharacterIntent {
   readonly flora?: SelectionBias;
   readonly motifs?: Motifs;
   readonly programs?: ProgramRequest;
+  /**
+   * The urban form every quarter in scope is drawn with
+   * (`docs/URBAN-FORMS-v0.md` §6.1).
+   *
+   * One of `DISTRICT_FABRICS`. This is the key the classifier writes when the
+   * prompt says "canal town" or "hill town", and it is the only route by which
+   * a *compiler-chosen* quarter — a city cell — gets anything but the frozen
+   * `CELL_FABRIC` table. Outranked by an explicit `params.fabric`; an unknown
+   * value is `LOAM-W487`, a warning naming the legal ids, never a silent drop.
+   */
+  readonly urbanForm?: DistrictFabric;
 }
 
 /** The author-facing dials. Every field is optional; absent means no opinion. */
@@ -275,6 +287,7 @@ export const CHARACTER_KEYS = [
   "flora",
   "motifs",
   "programs",
+  "urbanForm",
 ] as const;
 
 /** The key an intent object hangs off a node under. */

@@ -1462,7 +1462,7 @@ monastery on a hill.
 | field | values | notes |
 |---|---|---|
 | `envelope` | `{"shape": "region", "size": [x, z]}` | **required**; 38 × 38 is the hard floor, 140+ before a grid reads as one |
-| `params.fabric` | `grid`, `organic` | **required**; `grid` is a planned town, `organic` the same grid let go of |
+| `params.fabric` | `grid`, `organic`, `grown`, `radial`, `canal`, `terraced`, `linear` | **required**; the **urban form** — see the table below |
 | `params.density` | `low`, `medium`, `high` | **required**; drives lot size, coverage and storeys together |
 | `params.mix` | non-empty array of archetype names | **required**; what the auto-infill builds |
 | `params.blockSize` | 16..96 | optional hint: blocks between street centre lines. Omit and the density chooses |
@@ -1470,6 +1470,48 @@ monastery on a hill.
 | `params.walls` | object | optional: ring the finished quarter with a wall. See **Walls** below |
 | `constraints` | as any other node | say **where the district is**, not what is in it |
 | `children` | `building.grammar@0` nodes | the landmarks — everything else is infilled |
+
+### The urban forms
+
+`params.fabric` picks the **urban form**: the generator that draws the street
+skeleton. Everything downstream of the skeleton — blocks, lots, which building
+fronts which street, where a door goes — is shared, so a form changes what a
+quarter *is*, not just how it is decorated. There are seven, and a prompt almost
+always implies one:
+
+| form | what it is | when a prompt calls for it | what it needs |
+|---|---|---|---|
+| `grid` | a surveyed plan: two perpendicular sets of straight streets, an avenue every third line | planned, colonial, gridiron, a modern downtown, anything an authority laid out on paper | 38 blocks on the short axis |
+| `organic` | the same grid, let go of: twice the jitter and a slow wander per street | nothing, really — it is the legacy value, kept because half the shipped worlds are built on it. For an unplanned town write `grown` | 38 blocks |
+| `grown` | no plan at all: the quarter split by one street at a time, so the streets meet in **T-junctions**, the blocks come out every size, and no line of sight runs more than a couple of blocks. A market where the first two streets crossed | medieval, an old quarter, "grew over centuries", "no two streets parallel" | 38 blocks. Reads no terrain |
+| `radial` | everything faces one place: a round-point, concentric ring streets, radial avenues that double in as they go out | a ring town, a baroque capital, a star fort, "everything faces the palace" | `6 × blockSize` on the short axis — a big quarter |
+| `canal` | the primary circulation is **water**: every second or third street is a channel with quays, and the cross streets bridge it | a canal town, Venice, Amsterdam, "streets of water" | `3 × blockSize`. Water nearby is optional — a landlocked quarter gets a closed pound and a note saying so |
+| `terraced` | the hill decides: streets run **along** the contours and are level, the cross-connections are stairs, and every building on a bench shares one floor level | a hill town, cliffside, Cinque Terre, "a town on a mountainside" | real relief — at least 8 blocks of it — and ground the compiler has **not** levelled |
+| `linear` | one street, and the town is what fronts it: an avenue the length of the quarter, dead-end ribs off it, and open ground beyond the lots that becomes fields | a ribbon village, a roadside village, a valley village, "strung along the road" | `3 × blockSize` along its long axis |
+
+Two things follow from the table and are worth stating plainly.
+
+**A form you write is a form you get, or an announced fallback — never a silent
+grid.** If the quarter is too small for the rings, or the ground under a
+`terraced` quarter is flat, the compiler emits one `DISTRICT_FORM` warning
+(`LOAM-T222`) naming the measurement that failed and what to change, draws the
+form's declared fallback instead, and records both in the compile report as
+`requested` vs `id`. The fallback chain is `radial → grown`, `terraced → grown`,
+`canal → grid`, `linear → grid`, `grown → organic`; `grid` has none, and a
+quarter too small for a grid is the same `DISTRICT_TOO_SMALL` error it always
+was. A fallback never happens twice: if the fallback also cannot be drawn, the
+quarter is refused rather than guessed at again.
+
+**`terraced` wants unlevelled ground, which means dropping a habit.** Every
+other form is happier on a pad, so the standing advice below — give a district
+`terrain_conform: "flatten"` — is exactly wrong for this one: a terraced quarter
+levels itself, one bench at a time, and a quarter the solver already flattened
+has no contours left to follow. Put it on a real slope with a `zone` or `at`
+constraint and leave the ground alone.
+
+**There are no per-form numeric knobs.** Ring pitch, spoke count, canal pitch,
+bench height, rib depth and market size all come out of `blockSize`, `density`
+and the ground. You say how thick, how tall, how often — never where.
 
 **What `density` actually does**, so you pick the right one:
 
@@ -1568,6 +1610,7 @@ is mine".
 | `params.size` | `small`, `medium`, `large` | **required**; how much armature gets drawn, and how many industrial quarters |
 | `params.mix` | non-empty array of archetype names | **required**; what a quarter builds from unless `characters` names it |
 | `params.characters` | object keyed by character | optional per-quarter mixes; keys are the eight characters below. An unknown key is an error (`LOAM-T213`) |
+| `params.forms` | object keyed by character, values from the seven urban forms | optional per-quarter **urban form** — exactly parallel to `characters`, and the only per-character way to say "the lanes quarter is a canal quarter". Without it a city's quarters are the frozen default table (`core`/`grid`/`rowhouse`/`industrial`/`civic` grid, `lanes`/`waterfront` organic). An unknown character key or form id is an error (`LOAM-T213`) |
 | `params.coastal` | bool | optional; omit for "coastal if the ground is". `true` on dry ground gets a note, not a failure |
 | `params.diagonals` | 0..2 | optional; the default is 1, or 2 for a `large` city |
 | `params.ring` | bool | optional; the default is "if the footprint is at least 260 on its short axis" |
@@ -1941,7 +1984,7 @@ warning. Per-building overrides are what `params` are for.
 | `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `early_modern` / `industrial` / `modern` / `far_future`. Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
 | `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
 | `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim. **Orthogonal to wealth: a rich ruin exists.** |
-| `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength |
+| `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength. Outranked by `character.urbanForm` |
 | `event` | `{ "kind": "flood"\|"fire"\|"siege"\|"boom", "severity": 0..1, "recency": 0..1 }` | dressing for a one-off event. `recency` 0 = happening now, 1 = a lifetime ago |
 | `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town" |
 | `character` | see below | everything that makes a *region* read as a different place |
@@ -1965,6 +2008,7 @@ world hold two places that read differently**.
 | `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }` |
 | `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` — ids, never phrases; see the vocabulary below |
 | `motifs` | `{ "roofType": "gable"\|"hip"\|"flat"\|"dome"\|"shed"\|"mansard", "massing": "blocky"\|"stepped"\|"towered"\|"sprawling", "windowRhythm": "sparse"\|"regular"\|"dense"\|"banded", "ornamentDensity": 0..1 }` |
+| `urbanForm` | one of `grid`, `organic`, `grown`, `radial`, `canal`, `terraced`, `linear` — the urban form every quarter in this scope is drawn with. This is how a *city* gets anything but its default quarters: a city's cells are chosen by the compiler, and without this key they are the same grid-and-lanes table every city has always had. An id outside the seven is a warning (`LOAM-W487`) naming the legal values, and every quarter keeps the form it would have had |
 
 ### The three list vocabularies
 

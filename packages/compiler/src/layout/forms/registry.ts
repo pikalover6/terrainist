@@ -11,10 +11,15 @@
  * adding a module and one line here; it is never editing a switch.
  */
 
-import { DISTRICT_FABRICS, warning, type LoamDiagnostic, type DistrictFabric } from "@terrainist/spec";
+import { warning, type LoamDiagnostic, type DistrictFabric } from "@terrainist/spec";
 
+import { CANAL_FORM } from "./canal.js";
 import { GRID_FORM } from "./grid.js";
+import { GROWN_FORM } from "./grown.js";
+import { LINEAR_FORM } from "./linear.js";
 import { ORGANIC_FORM } from "./organic.js";
+import { RADIAL_FORM } from "./radial.js";
+import { TERRACED_FORM } from "./terraced.js";
 import type { FormContext, FormPlan, UrbanForm } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
@@ -46,8 +51,13 @@ export function urbanForms(): readonly UrbanForm[] {
  */
 export function installUrbanForms(): void {
   if (installed) return;
+  registerForm(CANAL_FORM);
   registerForm(GRID_FORM);
+  registerForm(GROWN_FORM);
+  registerForm(LINEAR_FORM);
   registerForm(ORGANIC_FORM);
+  registerForm(RADIAL_FORM);
+  registerForm(TERRACED_FORM);
   installed = true;
 }
 
@@ -106,12 +116,10 @@ export type FabricResult =
  *   sentence about `blockSize` and `envelope.size` since fabric v2), and the
  *   caller's `DISTRICT_TOO_SMALL` is the diagnostic the author already gets. A
  *   second warning on top of it would be new output for an unchanged document.
- * - **A legal-but-unregistered id falls back rather than throwing.** The
- *   vocabulary is widened to seven ids by this package and the other six forms
- *   land after it; until they do, a document naming one gets the announced
- *   fallback and a warning that says so, which is the same contract a
- *   requirement miss gets. An id that is not in the vocabulary at all is a
- *   compiler bug — the validator has already refused it — and throws.
+ * - **An id with no registered form throws.** Every id in `DISTRICT_FABRICS`
+ *   has a module and a test asserts both directions of that, so a missing form
+ *   is a compiler bug rather than an authoring error; the validator has already
+ *   refused anything outside the vocabulary.
  */
 export function drawFabric(request: FabricRequest): FabricResult {
   installUrbanForms();
@@ -135,28 +143,13 @@ function attemptForm(
 ): FormPlan | FabricRefusal {
   const form = urbanForm(id);
   if (form === undefined) {
-    if (!DISTRICT_FABRICS.includes(id)) {
-      throw new Error(
-        `no urban form is registered for "${id}" — the validator should have refused this id before the fabric pass ran`,
-      );
-    }
-    // Widened vocabulary, form not landed in this compiler yet. Announce it and
-    // draw the floor of the vocabulary.
-    if (mayFallBack && id !== "grid") {
-      diagnostics.push(
-        warning(
-          "DISTRICT_FORM",
-          request.nodePath,
-          `the "${id}" urban form is named in the vocabulary but is not built into this compiler yet, so this quarter is drawn as a grid`,
-          `write "fabric": "grid" (or "organic") to say so explicitly, or use a compiler that ships the "${id}" form`,
-        ),
-      );
-      return withFallbackRecord(attemptForm(request, "grid", diagnostics, false), id, "the form is not built into this compiler");
-    }
-    return {
-      reason: `no urban form is registered for "${id}"`,
-      fix: 'write "fabric": "grid" on this district',
-    };
+    // Every id in the vocabulary now has a module, and a test asserts both
+    // directions of that (`forms-vocabulary.test.ts`). So an id with no form is
+    // a compiler bug either way: the validator has already refused anything
+    // outside `DISTRICT_FABRICS`, and anything inside it is registered.
+    throw new Error(
+      `no urban form is registered for "${id}" — every id in DISTRICT_FABRICS has a module, so this is a compiler bug, not an authoring error`,
+    );
   }
 
   const miss = unmetRequirement(form, request);

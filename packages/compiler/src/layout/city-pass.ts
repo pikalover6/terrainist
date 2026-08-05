@@ -38,6 +38,8 @@ import {
   type CityPlanStats,
   type DistrictCell,
 } from "./city.js";
+import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import { CITY_ROWS, type CellFormTable } from "./city-intent.js";
 import {
   layDistrict,
   medianGround,
@@ -363,6 +365,7 @@ function layCity(
   }
 
   // --- every cell that is not a park and not a precinct gets a fabric ------
+  const cellForms = cellFormTable(node, nodePath, input);
   let open = 0;
   for (const [index, cell] of plan.cells.entries()) {
     if (!hasFabric(cell)) {
@@ -378,7 +381,7 @@ function layCity(
       kind: "district",
       envelope: { shape: "region", size: [width, depth] },
       params: {
-        fabric: CELL_FABRIC[cell.character],
+        fabric: cellForms[cell.character],
         density: cell.density,
         mix: mixFor(node, cell.character),
         blockSize: cell.blockSize,
@@ -857,6 +860,31 @@ const CELL_FABRIC: Readonly<Record<DistrictCell["character"], "grid" | "organic"
   park: "organic",
   waterfront: "organic",
 });
+
+/**
+ * The urban form each character's cells are drawn with, for one city.
+ *
+ * The one function that chooses a cell's form, and the precedence is §6.2's:
+ * `city.params.forms[character]` beats `intent.character.urbanForm`, which beats
+ * {@link CELL_FABRIC} — today's frozen table, which is what the row returns when
+ * no intent names a form. So a city with neither key is byte-identical, and
+ * every golden built on one stays valid.
+ *
+ * `park` is never re-mapped: a park cell gets no fabric at all.
+ */
+function cellFormTable(node: CityNode, nodePath: string, input: DistrictPassInput): CellFormTable {
+  ensureFanOutRows();
+  const intent = intentFor(resolveIntents(input.doc), nodePath);
+  const fanned = fanOut<CellFormTable>(CITY_ROWS.cellForms, intent, { nodePath, today: CELL_FABRIC });
+  const authored = node.params.forms;
+  if (authored === undefined) return fanned;
+  const out: Record<string, string> = { ...fanned };
+  for (const [character, form] of Object.entries(authored)) {
+    if (character === "park" || form === undefined) continue;
+    out[character] = form;
+  }
+  return out as CellFormTable;
+}
 
 /** Which cells a landmark is offered first: the ones that carry the skyline. */
 const LANDMARK_RANK: Readonly<Record<DistrictCell["character"], number>> = Object.freeze({

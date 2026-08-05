@@ -549,10 +549,18 @@ edge to edge by construction.
    pitch, each running `ribDepth = 2 · LOT_DEPTH[density] + sidewalk + 4`
    columns either side and stopping — a dead end, which is what a rib is.
    At `high` density the rib ends are joined by a back lane.
-3. **The lot mask.** 1 within `ribDepth` of the spine or of a rib; 0 elsewhere.
+3. **The lot mask.** 1 within `ribDepth` of the spine, and within
+   `LOT_DEPTH[density] + sidewalk + 2` of a rib or a back lane; 0 elsewhere.
    Without it the subdivision would find one enormous block of leftover ground
    and lot its perimeter, which would produce a hollow ring of houses facing
    nothing — the failure mode this form exists to avoid.
+
+   > **Amended during implementation (2026-08-04).** This step first read "1
+   > within `ribDepth` of the spine *or of a rib*", which is a band two ribs
+   > wide, because a rib is itself `ribDepth` long. Measured on a 300 × 120
+   > quarter it left 353 open columns out of 36 000 — no fields at all, i.e.
+   > exactly the failure the mask exists to prevent, arrived at from the other
+   > direction. The rib radius is the shallower one above.
 4. Everything outside the lot mask is open ground and reaches the ground
    treatment and scatter passes untouched: fields, orchards and paddocks
    beside a village, which is exactly right.
@@ -947,6 +955,19 @@ with WP-0's merge, not with A/B/C.
    gives very wide benches and a steep one gives very narrow ones. A relief-
    derived bench height (`clamp(round(relief / 6), 3, 6)`) is probably better
    and is not specified here because it wants a walk to judge.
+
+   > **Measured during implementation (2026-08-04).** Bench *width* is
+   > `benchHeight / gradient`, and on a 1-in-3 hill that is twelve columns —
+   > narrower than a contour street and its two verges. A 200 × 180 terraced
+   > quarter on that gradient laid its streets and produced **zero buildings**.
+   > Two consequences. First, the deciding variable is the **gradient**, not
+   > the relief, so `clamp(round(relief / 6), 3, 6)` would not have helped much
+   > — a relief-derived height is the wrong derivation. Second, the form now
+   > *refuses* ground it cannot bench, naming the width it measured and the
+   > width it needed, and the announced fallback draws `grown` so the hill
+   > still gets a quarter with houses on it. That refusal is not a substitute
+   > for choosing the height properly; it is the guard that stops the wrong
+   > height from shipping an empty quarter in silence.
 4. **The canal datum near real water.** `surfaceY = seaLevel` when the quarter is
    within 24 columns of open water is a guess at what reads as "open to the
    sea". Whether the channel should actually be *cut through* to the water — a

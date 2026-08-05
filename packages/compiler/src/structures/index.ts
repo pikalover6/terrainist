@@ -69,6 +69,7 @@ import {
   type BuiltBuilding,
   type StructureBlock,
 } from "./buildings.js";
+import { digCanals, type CanalPassResult } from "./canals.js";
 import { buildDoorsteps } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
@@ -105,6 +106,7 @@ import {
 } from "./walls.js";
 
 export * from "./buildings.js";
+export * from "./canals.js";
 export * from "./doorsteps.js";
 export * from "./life.js";
 export * from "./grounds.js";
@@ -589,6 +591,25 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // arriving from the next district should *join* the street grid, and the
   // router discounts existing road cells — which is exactly how a lane finds a
   // street rather than running alongside it.
+  // --- the canals ----------------------------------------------------------
+  // After the column plan, before the streets are surfaced, and that ordering
+  // is the whole risk-management story of the `canal` form
+  // (`docs/URBAN-FORMS-v0.md` §4.3 and §9): `surfaceStreetGraph`'s
+  // `buildBridgeableMask` reads `plan.fluidKind`, so the water has to exist
+  // before a bridge over it can be priced — and once it does exist, every
+  // water-aware pass after this point (biomes, the land-use clamp, the scatter
+  // clip, the life pass, the props' shore probes, three physics rules) sees the
+  // one answer instead of a second mask. `digCanals` returns untouched when no
+  // quarter declared a channel, which is every document written before this
+  // phase.
+  const canals: CanalPassResult = digCanals({
+    districts,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+  });
+  diagnostics.push(...canals.diagnostics);
+
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
   let streetFurniture = 0;

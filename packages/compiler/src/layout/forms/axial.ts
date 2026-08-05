@@ -590,3 +590,87 @@ export function intersectionsOf(segments: readonly StreetSegment[]): StreetInter
   out.sort((p, q) => (p.z !== q.z ? p.z - q.z : p.x - q.x));
   return out;
 }
+
+/* -------------------------------------------------------------------------- */
+/* connectivity                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Euclidean distance between two columns. `sqrt` is IEEE-exact; `hypot` is not. */
+export function distance(a: Point2, b: Point2): number {
+  const dx = a.x - b.x;
+  const dz = a.z - b.z;
+  return Math.sqrt(dx * dx + dz * dz);
+}
+
+/**
+ * The segments a road can reach from a seed column, in draw order.
+ *
+ * A clip can strand a run — the far end of a ring that the cell's polygon cut
+ * into two arcs, a spoke that only exists outside the last ring it touched, a
+ * lane of a grown town on the wrong side of the cut — and a stranded run is
+ * carriageway no lane reaches, buildings fronting nothing, and a
+ * `traversal.unreachable` finding in the physics lint. Two segments are joined
+ * when they share a centre-line cell, which is exactly what a crossing is; the
+ * component containing the seed (or the largest, if none does) is kept.
+ *
+ * Written by `radial`, shared by `linear` and `grown`, and it lives here beside
+ * `runsOf` because "the cell stops" and "the plan is one piece" are the same
+ * question asked twice.
+ */
+export function connectedSegments(segments: readonly StreetSegment[], seed: Point2): StreetSegment[] {
+  if (segments.length === 0) return [];
+  const parent = segments.map((_, i) => i);
+  const find = (i: number): number => {
+    let root = i;
+    while ((parent[root] as number) !== root) root = parent[root] as number;
+    let walk = i;
+    while ((parent[walk] as number) !== walk) {
+      const next = parent[walk] as number;
+      parent[walk] = root;
+      walk = next;
+    }
+    return root;
+  };
+  const union = (i: number, j: number): void => {
+    const a = find(i);
+    const b = find(j);
+    if (a !== b) parent[Math.max(a, b)] = Math.min(a, b);
+  };
+
+  const owner = new Map<string, number>();
+  for (const [i, segment] of segments.entries()) {
+    for (const cell of segment.path) {
+      const key = `${cell.x},${cell.z}`;
+      const first = owner.get(key);
+      if (first === undefined) owner.set(key, i);
+      else union(first, i);
+    }
+  }
+
+  // The component nearest the seed wins; failing that, the biggest one. Both
+  // tie-break on the lowest segment index, which is draw order.
+  const size = new Map<number, number>();
+  for (const [i] of segments.entries()) size.set(find(i), (size.get(find(i)) ?? 0) + 1);
+  let chosen = -1;
+  let bestReach = Number.POSITIVE_INFINITY;
+  for (const [i, segment] of segments.entries()) {
+    const root = find(i);
+    for (const cell of segment.path) {
+      const reach = distance(cell, seed);
+      if (reach < bestReach) {
+        bestReach = reach;
+        chosen = root;
+      }
+    }
+  }
+  if (chosen < 0) {
+    let biggest = 0;
+    for (const [root, count] of size) {
+      if (count > biggest) {
+        biggest = count;
+        chosen = root;
+      }
+    }
+  }
+  return segments.filter((_, i) => find(i) === chosen);
+}

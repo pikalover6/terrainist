@@ -16,6 +16,7 @@
  */
 
 import { describe, isObject, unknownKeys, type Obj } from "../checks.js";
+import { DISTRICT_FABRICS } from "../settlement/types.js";
 import { error, hasErrors, note, warning, type LoamDiagnostic } from "../terrain/diagnostics.js";
 import { validatePaletteMap } from "../terrain/validate.js";
 import {
@@ -273,7 +274,11 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
   }
   unknownKeys(out, value, path, [...CHARACTER_KEYS], "intent.character");
 
-  for (const key of ["label", "materialTheme"] as const) {
+  // `urbanForm` is type-checked here and *grounded* in the compiler, against
+  // the live form registry: an id outside the vocabulary is `LOAM-W487`, a
+  // warning naming the legal values, exactly as every other intent vocabulary
+  // is handled. An error here would let a classifier typo cost the whole intent.
+  for (const key of ["label", "materialTheme", "urbanForm"] as const) {
     const v = value[key];
     if (v !== undefined && (typeof v !== "string" || v.trim() === "")) {
       out.push(
@@ -283,7 +288,9 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
           `"${key}" must be a non-empty string, got ${describe(v)}`,
           key === "label"
             ? 'write what the place is, e.g. "pirate haven" — free text, it reaches prompts and never a switch'
-            : 'name a stdlib material theme id, e.g. "stone_slate"',
+            : key === "urbanForm"
+              ? `name an urban form: ${DISTRICT_FABRICS.join(", ")}`
+              : 'name a stdlib material theme id, e.g. "stone_slate"',
         ),
       );
     }

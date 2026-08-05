@@ -33,6 +33,7 @@ import {
 import { TREE_SHAPES, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { IntentResolution, ResolvedIntent } from "../intent/index.js";
+import { installUrbanForms, urbanForms } from "../layout/forms/index.js";
 
 /* -------------------------------------------------------------------------- */
 /* material themes                                                             */
@@ -274,6 +275,22 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
     );
   }
 
+  // The urban form is grounded against the **live registry**, not against a
+  // list: a form the vocabulary names but no module draws would be a word the
+  // author could write and nothing could honour, and the registry is the only
+  // thing that knows. Unknown is a warning naming the legal ids, never a silent
+  // drop — an ungrounded form is invisible in the finished world otherwise.
+  if (character.urbanForm !== undefined && !isUrbanFormId(character.urbanForm)) {
+    out.push(
+      warning(
+        "INTENT_FORM_UNKNOWN",
+        path,
+        `intent.character.urbanForm names "${character.urbanForm}", which is not an urban form — it is ignored, and each quarter keeps the form it would have had`,
+        `write one of: ${urbanFormIds().join(", ")}`,
+      ),
+    );
+  }
+
   const flora = [...(character.flora?.prefer ?? []), ...(character.flora?.forbid ?? [])];
   const badFlora = groundList(flora, (w) => FLORA_KINDS.includes(w)).unknown;
   if (badFlora.length > 0) {
@@ -290,4 +307,19 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
   }
 
   return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* urban forms                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/** Every registered urban form id, sorted — the legal values, from the registry. */
+export function urbanFormIds(): readonly string[] {
+  installUrbanForms();
+  return urbanForms().map((f) => f.id);
+}
+
+/** True when the word is an id the form registry can actually draw. */
+export function isUrbanFormId(word: string): boolean {
+  return urbanFormIds().includes(word);
 }

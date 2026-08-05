@@ -6,9 +6,10 @@
  * other row file — owned here, registered through the seam, and total.
  */
 
-import type { DistrictDensity, DistrictFabric } from "@terrainist/spec";
+import { DISTRICT_FABRICS, type DistrictDensity, type DistrictFabric } from "@terrainist/spec";
 
 import { registerFanOut } from "../intent/fanout.js";
+import { registerCityFanOut } from "./city-intent.js";
 
 /** Row ids owned by the layout passes. */
 export const LAYOUT_ROWS = {
@@ -21,6 +22,13 @@ export const LAYOUT_ROWS = {
 
 /** Register every layout-owned row. */
 export function registerLayoutFanOut(): void {
+  // The city pass owns `layout.cellForms` and defines it beside itself, in the
+  // same spirit fan-out law 1 states: the row lives with the subsystem it
+  // drives. It is pulled in here rather than through `intent/seam.ts` because
+  // the seam's job is one entry point per *package*, and this is the layout
+  // package's.
+  registerCityFanOut();
+
   /* --- wealth → block size ------------------------------------------------ */
   registerFanOut<number>({
     id: LAYOUT_ROWS.blockSize,
@@ -72,10 +80,18 @@ export function registerLayoutFanOut(): void {
   /* --- formality → fabric ------------------------------------------------- */
   registerFanOut<DistrictFabric>({
     id: LAYOUT_ROWS.fabric,
-    reads: ["formality"],
+    reads: ["formality", "character"],
     status: "today",
-    drives: "district street skeleton: grid vs organic",
+    drives: "district urban form: the street-skeleton generator (layout/forms/)",
     resolve(intent, ctx) {
+      // `character.urbanForm` first, and it is the *only* branch that can name
+      // one of the five forms this phase added. A document written before the
+      // urban-form registry existed cannot carry the key, so the widened row is
+      // byte-identical on every such document — which is what makes the identity
+      // test total rather than merely a spot check.
+      const named = intent.intent.character?.urbanForm;
+      if (named !== undefined && DISTRICT_FABRICS.includes(named)) return named;
+
       const formality = intent.intent.formality;
       if (formality === undefined) return ctx.today;
       // Only the ends of the dial speak. The middle is "no strong opinion",
