@@ -361,13 +361,34 @@ Step 4 is what makes the rest of the design fall out rather than be built:
 
 ### 3.4 Seams: kerbs, retaining walls, banks
 
-`levelSeams` groups the seam columns into 4-connected components and gives each
-a treatment by its drop:
+`levelSeams` groups the seam columns into 8-connected components and gives each
+a treatment by its drop **and its run length**:
+
+> **Corrected after the walk (2026-08-05).** This section first said
+> *4-connected*, and that one word was the scree. A seam **column** is found
+> 4-connected — a lower column sharing an edge with a higher platform — and that
+> is the definition of a face and does not change. But the *run* those columns
+> form is a contour, and a contour on a lattice is a staircase: along a 45°
+> boundary consecutive lower-side columns are diagonal neighbours and never edge
+> neighbours. Grouping the run 4-connected therefore cut every diagonal seam
+> into one- and two-column crumbs and the pass grew a stub of wall at each.
+> Measured on `stepped_hilltown`: **1010 seams over 2495 columns, 714 of them
+> one or two columns long, 124 walls actually built.** Regrouping the identical
+> 2495 columns 8-connected gives **37** seams, 25 of them 25 columns or longer,
+> and **26 walls over 365 columns**. The wall builder never cared —
+> `thickenCourse` makes a diagonal course 4-connected before it is swept,
+> precisely so that a diagonal run is one wall.
+>
+> A length gate rides along: a `retaining` seam shorter than `MIN_RETAIN_RUN`
+> (6, which is `RETAIN_MAX` — a wall shorter than the tallest wall we build is
+> shorter than it is tall) is graded as a `bank` instead. On the hill town that
+> moved two of the 37. It is the guard, not the fix.
 
 | drop | treatment | what is built |
 |---|---|---|
 | 1 | `kerb` | one course of the street's kerb material on the lower column. Not a wall. |
-| 2 … `RETAIN_MAX` (6) | `retaining` | a masonry wall standing on the lower side, coped, with a balustrade above `RETAIN_RAIL` (3). |
+| 2 … `RETAIN_MAX` (6), run ≥ `MIN_RETAIN_RUN` (6) | `retaining` | a masonry wall standing on the lower side, coped, with a balustrade above `RETAIN_RAIL` (3). |
+| 2 … `RETAIN_MAX`, run < `MIN_RETAIN_RUN` | `bank` | a wall shorter than it is tall is a stub. Graded, as below. |
 | > `RETAIN_MAX` | `bank` | nothing is built; the two platforms are graded into each other over `drop` columns and the record says so. |
 | any | `built` | a building already stands on the seam; its own foundation skirt is the wall. Nothing is built. |
 

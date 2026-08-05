@@ -111,6 +111,21 @@ life pass at eye level, vistas and set pieces closing axes on landmarks.
 `precinct.airport@0` and `precinct.harbour@0` lay out whole compounds; the
 harbour seeks a real coastline when its envelope holds none.
 
+**Where a levelled quarter meets ground nobody cut.** A placed node with a
+`cut_fill` `terrain_conform` is levelled to one plane by `padFor` and eased back
+into the terrain across an apron. That apron used to be `terrain_conform.blend`
+— 4 columns — whether the pad was sitting one block proud of the ground or
+twelve, and twelve blocks over four columns is a 3:1 cut face. Walked, it read
+as a flat plane cobbled into the landscape. `LevelPad.adaptiveApron` makes the
+falloff a function of the step it is absorbing, measured **per column**: two
+columns of run per block of difference, floored at `blend` and capped at 24. A
+one-block step therefore keeps exactly today's apron and does not move; a
+twelve-block step gets a 1-in-2 ramp; and because the reach follows the terrain
+around the perimeter, the outer edge of the apron is a wandering contour rather
+than a rectangle. Set on the solver's node-scale pads only — a building's
+two-column apron is a doorstep detail, and stretching it on a slope would have
+one house re-level its neighbour's street.
+
 **Structures.** `building.grammar@0` with **343 of 441** catalog entries
 implemented, wings (L/T plans), upper-floor fit-out, themed underground (crypt,
 catacombs, vault, wine cellar, mineshaft), vehicles with a rotated-op path,
@@ -402,8 +417,18 @@ prompt's central image is *in* it. Look for valid requests the system silently
 declines, not for crashes.
 
 - **A retaining balustrade is left two courses proud, and it is the same hazard
-  the surfacer's own correction names.** Measured on the hill-town and
-  monastery worlds (2026-08-05): one `unsupported.chain` each — a
+  the surfacer's own correction names.** ~~Measured on the hill-town and
+  monastery worlds (2026-08-05): one `unsupported.chain` each~~ — **not
+  reproducible since the seam-run fix (2026-08-05).** Both worlds now lint
+  26/26 zero. The finding was on a *stub* wall: 92% of the seams the pass was
+  handed were five columns or shorter, because `levelSeams` grouped its columns
+  4-connected and a diagonal contour is not 4-connected. Grouping them
+  8-connected takes the hill town from 1010 seams to 37 and the balustrade
+  hazard with it — a rail that runs the length of a real terrace stands on its
+  own wall, where a two-column stub's rail was hanging off the end of one. The
+  underlying invariant below is still the right one and is still unproven, so
+  the entry stays until something else tests it. Original text:
+  a
   `stone_brick_wall` with air beneath it and the platform surface two courses
   down. `sweep` writes the rail at `top + 1` from the upper platform's datum
   and `retaining.ts` emits the coping at `plan.ground[k]`, but a later ground

@@ -2260,7 +2260,53 @@ export interface LevelPad {
   readonly apron: number;
   /** 0..1 blend between the original field and the levelled target. Default 1. */
   readonly strength?: number;
+  /**
+   * Let the apron grow with the height difference it is absorbing.
+   *
+   * A fixed apron is a fixed apron whether the pad is sitting one block proud
+   * of the ground or twelve. On a hillside quarter the twelve-block case is
+   * what a player actually sees: a perfectly flat plane meeting untouched
+   * terrain over four columns is a 3:1 cut face, and it reads as a plateau
+   * cobbled into the landscape rather than as ground. Kai walked exactly that
+   * and called it "100% flat planes cobbled in with normal terrain".
+   *
+   * With this set, {@link applyLevelPad} widens the falloff **per column** to
+   * {@link APRON_RUN_PER_BLOCK} columns for every block of difference between
+   * that column's own height and `targetY`, floored at `apron` and capped at
+   * {@link APRON_MAX}. Three things fall out of that and all three are wanted:
+   *
+   * - a one-block step keeps today's apron exactly, so nothing that was already
+   *   sitting on level ground moves a block;
+   * - a twelve-block step gets a twenty-four-column ramp, which is a 1:2 slope
+   *   — a hillside, not a cut;
+   * - the reach varies with the terrain around the perimeter, so the outer edge
+   *   of the apron is a wandering contour rather than a straight line. The
+   *   plateau's boundary stops being a rectangle without anyone drawing one.
+   *
+   * Off by default, and set only on the solver's node-scale pads: a building's
+   * two-column apron is a doorstep detail, and stretching it to twelve columns
+   * on a slope would have one house re-level its neighbour's street.
+   */
+  readonly adaptiveApron?: boolean;
 }
+
+/**
+ * Columns of apron per block of height an adaptive pad absorbs.
+ *
+ * Two, so the outer face of a deep pad is a 1:2 slope. One is a 45° bank and
+ * still reads as cut; three overruns the neighbouring quarter on a 512 region.
+ */
+export const APRON_RUN_PER_BLOCK = 2;
+
+/**
+ * Longest adaptive apron, in columns.
+ *
+ * Twenty-four is twelve blocks of absorbed difference at
+ * {@link APRON_RUN_PER_BLOCK}, and twelve blocks is three storeys — past it the
+ * quarter is not sitting on a slope, it is sitting on a cliff, and the answer
+ * there is a smaller quarter or a `terraced` one, not a longer ramp.
+ */
+export const APRON_MAX = 24;
 
 /**
  * Level the field under a structure footprint, with a smooth apron.
@@ -2277,11 +2323,16 @@ export function applyLevelPad(field: HeightField, pad: LevelPad): void {
   const strength = clamp01(pad.strength ?? 1);
   if (strength === 0) return;
   const apron = Math.max(0, Math.floor(pad.apron));
+  // The adaptive apron reaches as far as the tallest step it could be asked to
+  // absorb, so the scan window is the cap; the per-column test below is what
+  // actually decides, and on level ground it decides `apron` everywhere.
+  const adaptive = pad.adaptiveApron === true && apron > 0;
+  const scan = adaptive ? Math.max(apron, APRON_MAX) : apron;
 
-  const i0 = clamp(pad.x0 - apron - region.x0, 0, region.width - 1) | 0;
-  const i1 = clamp(pad.x1 + apron - region.x0, 0, region.width - 1) | 0;
-  const j0 = clamp(pad.z0 - apron - region.z0, 0, region.depth - 1) | 0;
-  const j1 = clamp(pad.z1 + apron - region.z0, 0, region.depth - 1) | 0;
+  const i0 = clamp(pad.x0 - scan - region.x0, 0, region.width - 1) | 0;
+  const i1 = clamp(pad.x1 + scan - region.x0, 0, region.width - 1) | 0;
+  const j0 = clamp(pad.z0 - scan - region.z0, 0, region.depth - 1) | 0;
+  const j1 = clamp(pad.z1 + scan - region.z0, 0, region.depth - 1) | 0;
 
   for (let j = j0; j <= j1; j++) {
     const z = region.z0 + j;
@@ -2290,11 +2341,17 @@ export function applyLevelPad(field: HeightField, pad: LevelPad): void {
       const x = region.x0 + i;
       const dx = x < pad.x0 ? pad.x0 - x : x > pad.x1 ? x - pad.x1 : 0;
       const d = dx === 0 && dz === 0 ? 0 : sqrt(dx * dx + dz * dz);
-      if (apron > 0 && d > apron) continue;
-      const f = d === 0 ? 1 : apron === 0 ? 0 : smoothstep01(clamp01((apron - d) / apron));
-      if (f <= 0) continue;
+      if (scan > 0 && d > scan) continue;
       const idx = j * region.width + i;
       const h = field.values[idx] as number;
+      // How far this column's own falloff runs. Integer, so it is a pure
+      // function of the field and not of the order the pads were composed in.
+      const reach = adaptive
+        ? Math.min(APRON_MAX, Math.max(apron, Math.round(Math.abs(h - pad.targetY) * APRON_RUN_PER_BLOCK)))
+        : apron;
+      if (reach > 0 && d > reach) continue;
+      const f = d === 0 ? 1 : reach === 0 ? 0 : smoothstep01(clamp01((reach - d) / reach));
+      if (f <= 0) continue;
       field.values[idx] = lerp(h, pad.targetY, f * strength);
     }
   }

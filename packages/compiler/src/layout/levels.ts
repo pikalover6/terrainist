@@ -53,7 +53,7 @@ export type SeamTreatment = "kerb" | "retaining" | "bank" | "built";
 export interface LevelSeam {
   readonly above: number; // platform index
   readonly below: number;
-  /** The columns of `below` that touch `above`, 4-connected, in a fixed order. */
+  /** The columns of `below` that touch `above`, 8-connected, in a fixed order. */
   readonly cells: readonly Point2[];
   readonly drop: number; // levelY[above] − levelY[below]
   readonly treatment: SeamTreatment;
@@ -70,6 +70,51 @@ export const RETAIN_MAX = 6;
 
 /** Drop at which a retaining wall gets a balustrade (§3.4). Unmeasured — §10.2. */
 export const RETAIN_RAIL = 3;
+
+/**
+ * Shortest seam run that is walled rather than graded, in columns.
+ *
+ * **Measured, 2026-08-05.** The `stepped_hilltown` quarter (160×160, 12
+ * platforms at 67…111) reported 1010 seams, 714 of them one or two columns
+ * long. A two-column wall is not a wall; a thousand of them scattered over a
+ * hillside is scree. Most of that was {@link SEAM_NEIGHBOURS}' fault and is
+ * fixed there — regrouping the same 2495 seam columns 8-connected gives 37
+ * components, 25 of them 25 columns or longer. This constant is the guard on
+ * what is left: of those 37, two are shorter than six columns.
+ *
+ * Six because it is {@link RETAIN_MAX}: a wall shorter than the tallest wall we
+ * build is shorter than it is tall, and a masonry face taller than it is long
+ * is a buttress nobody asked for. Below it the seam is graded into a bank,
+ * which `structures/retaining.ts` already knows how to do.
+ */
+export const MIN_RETAIN_RUN = 6;
+
+/**
+ * Adjacency for grouping seam columns into one face — **8-connected**, and this
+ * is the fix for the scree.
+ *
+ * A seam *column* is found 4-connected (a column of the lower platform sharing
+ * an edge with a higher one), and that is the definition of a face and does not
+ * change. But the run those columns form is a **contour**, and a contour on a
+ * lattice is a staircase: along a 45° boundary consecutive lower-side columns
+ * are diagonal neighbours, never edge neighbours. Grouping them 4-connected
+ * therefore cuts every diagonal seam into one- and two-column crumbs — which is
+ * exactly the measured 714 — and the pass then builds a stub of wall at each.
+ * The wall itself never cared: `thickenCourse` makes a diagonal course
+ * 4-connected before it is swept, precisely so a diagonal run is one wall.
+ *
+ * So the grouping is 8-connected and the crumbs become terraces.
+ */
+const SEAM_NEIGHBOURS = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+] as const;
 
 /**
  * The platform field a list of benches describes, or `null` when there is none.
@@ -147,7 +192,7 @@ interface SeamCell {
 }
 
 /**
- * Every place two platforms touch, grouped into 4-connected components.
+ * Every place two platforms touch, grouped into 8-connected components.
  *
  * A seam's `cells` are columns of the **lower** platform — the side a retaining
  * wall stands on — and a component never mixes platform pairs, so `drop` is one
@@ -207,9 +252,10 @@ export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
   }
   if (cells.size === 0) return [];
 
-  // Pass 2: 4-connected components within each pair, so one seam is one run of
-  // wall. `member` is rebuilt per pair rather than shared, which keeps the
-  // grouping independent of the order the pairs were discovered in.
+  // Pass 2: 8-connected components within each pair, so one seam is one run of
+  // wall — see SEAM_NEIGHBOURS for why the diagonal is not optional. `member`
+  // is rebuilt per pair rather than shared, which keeps the grouping
+  // independent of the order the pairs were discovered in.
   const out: LevelSeam[] = [];
   const keys = [...cells.keys()].sort((a, b) => a - b);
   for (const key of keys) {
@@ -230,12 +276,7 @@ export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
         component.push(k);
         const i = k % width;
         const j = (k - i) / width;
-        for (const [di, dj] of [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ] as const) {
+        for (const [di, dj] of SEAM_NEIGHBOURS) {
           const ii = i + di;
           const jj = j + dj;
           if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
@@ -254,7 +295,7 @@ export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
           z: bounds.z0 + Math.floor(k / width),
         })),
         drop,
-        treatment: treatmentForDrop(drop),
+        treatment: treatmentForSeam(drop, component.length),
       });
     }
   }
@@ -276,4 +317,20 @@ export function treatmentForDrop(drop: number): SeamTreatment {
   if (drop <= 1) return "kerb";
   if (drop <= RETAIN_MAX) return "retaining";
   return "bank";
+}
+
+/**
+ * §3.4's table with the run length in it: drop **and** length → treatment.
+ *
+ * The drop decides what the face *is*; the length decides whether it is worth
+ * building. A retaining wall shorter than {@link MIN_RETAIN_RUN} is graded into
+ * a bank instead — the same treatment a drop past {@link RETAIN_MAX} gets, and
+ * for the same reason: what would be built there would not read as built. A
+ * kerb keeps its length-independent answer, because a kerb is one course of
+ * material on the ground and two columns of it is a doorstep, not scree.
+ */
+export function treatmentForSeam(drop: number, run: number): SeamTreatment {
+  const byDrop = treatmentForDrop(drop);
+  if (byDrop === "retaining" && run < MIN_RETAIN_RUN) return "bank";
+  return byDrop;
 }

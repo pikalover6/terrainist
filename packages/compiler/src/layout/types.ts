@@ -221,6 +221,15 @@ export interface PadEdit {
   readonly targetY: number;
   /** Falloff width outside the footprint, in blocks. */
   readonly apron: number;
+  /**
+   * Let the apron grow with the step it absorbs — `LevelPad.adaptiveApron`.
+   *
+   * Set by `padFor` on a node-scale pad and by nothing else. The fabric pass's
+   * bench and lot pads keep the fixed apron they were given, because there the
+   * apron is a detail between two things that are already at the right level;
+   * this is for the one edge where a levelled quarter meets ground nobody cut.
+   */
+  readonly adaptiveApron?: boolean;
 }
 
 /**

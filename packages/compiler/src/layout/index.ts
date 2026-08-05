@@ -56,6 +56,7 @@ export function applyPadEdits(field: HeightField, edits: readonly PadEdit[]): vo
       z1: edit.footprint.z1,
       targetY: edit.targetY,
       apron: edit.apron,
+      ...(edit.adaptiveApron === true ? { adaptiveApron: true } : {}),
     });
   }
 }

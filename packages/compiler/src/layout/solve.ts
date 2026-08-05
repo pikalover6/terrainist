@@ -853,7 +853,19 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // `flatten` rather than stepping, and `drape`/`stilts`/`float`/`bury` make no
   // field edit at all.
   if (!LEVELLING_MODES.has(mode)) return null;
-  return { nodePath: placement.nodePath, footprint: placement.footprint, targetY: placement.foundationY, apron: blend };
+  // `adaptiveApron` — the fix for "100% flat planes cobbled in with normal
+  // terrain". `blend` is 4 by default and 4 whether the pad is sitting one
+  // block proud of the ground or twelve; the flag lets `applyLevelPad` stretch
+  // it per column to two columns per block of difference, so a quarter on a
+  // hillside walks out to its own ground instead of ending at a cut face. On
+  // level ground the reach is `blend` in every column and nothing moves.
+  return {
+    nodePath: placement.nodePath,
+    footprint: placement.footprint,
+    targetY: placement.foundationY,
+    apron: blend,
+    adaptiveApron: true,
+  };
 }
 
 /** Build the occupancy grid the scatter pass reads. */

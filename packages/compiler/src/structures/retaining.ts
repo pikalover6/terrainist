@@ -53,7 +53,8 @@ import type { Rect } from "../layout/frames.js";
 import {
   NO_PLATFORM,
   RETAIN_RAIL,
-  treatmentForDrop,
+  MIN_RETAIN_RUN,
+  treatmentForSeam,
   type GroundLevels,
   type LevelSeam,
 } from "../layout/levels.js";
@@ -280,11 +281,14 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       if (record.treatment === "bank") {
         banks++;
         gradeBank(region, plan, levels, record, floorY, street, occupied);
+        const short = record.cells.length < MIN_RETAIN_RUN;
         diagnostics.push(
           warning(
             "RETAINING_REFUSED",
             district.nodePath,
-            `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
+            short
+              ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over only ${record.cells.length} column(s), shorter than the ${MIN_RETAIN_RUN} columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank`
+              : `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
             "Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.",
           ),
         );
@@ -439,6 +443,18 @@ const NEIGHBOURS = [
   [0, -1],
 ] as const;
 
+/** `layout/levels.ts`'s SEAM_NEIGHBOURS, for grouping a skirt into one face. */
+const SEAM_NEIGHBOURS = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+] as const;
+
 /**
  * The seams a platform makes with the ground that is **not** a platform.
  *
@@ -513,7 +529,10 @@ function skirtSeams(
         const k = queue[head] as number;
         const x = region.x0 + (k % region.width);
         const z = region.z0 + Math.floor(k / region.width);
-        for (const [dx, dz] of NEIGHBOURS) {
+        // 8-connected, for `layout/levels.ts`'s SEAM_NEIGHBOURS reason: a
+        // skirt is a contour too, and a contour on a lattice is a staircase
+        // whose consecutive columns are diagonal neighbours.
+        for (const [dx, dz] of SEAM_NEIGHBOURS) {
           if (!inside(region, x + dx, z + dz)) continue;
           const n = index(region, x + dx, z + dz);
           if (!member.has(n) || seen.has(n)) continue;
@@ -538,7 +557,7 @@ function skirtSeams(
             z: region.z0 + Math.floor(k / region.width),
           })),
           drop,
-          treatment: treatmentForDrop(drop),
+          treatment: treatmentForSeam(drop, queue.length),
         },
         floorY,
       });
