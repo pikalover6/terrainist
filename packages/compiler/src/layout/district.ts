@@ -1380,12 +1380,21 @@ function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
   const seen = new Uint8Array(grid.cells);
   const out: Block[] = [];
   const stack: number[] = [];
+  // Membership of the component currently being flooded. `largestFreeRect`
+  // reads it as its own `blocked`, so the inscribed rectangle is a rectangle of
+  // *this* block rather than one of unblocked ground — see below.
+  const member = new Uint8Array(grid.cells);
+  const flooded: number[] = [];
 
   for (let start = 0; start < grid.cells; start++) {
     if (blocked[start] === 1 || seen[start] === 1) continue;
     seen[start] = 1;
     stack.length = 0;
     stack.push(start);
+    for (const k of flooded) member[k] = 0;
+    flooded.length = 0;
+    member[start] = 1;
+    flooded.push(start);
     let x0 = grid.x(start);
     let x1 = x0;
     let z0 = grid.z(start);
@@ -1405,10 +1414,12 @@ function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
         const n = grid.index(x + dx, z + dz);
         if (n < 0 || seen[n] === 1 || blocked[n] === 1) continue;
         seen[n] = 1;
+        member[n] = 1;
+        flooded.push(n);
         stack.push(n);
       }
     }
-    const rect = largestFreeRect(grid, blocked, { x0, z0, x1, z1 });
+    const rect = largestFreeRect(grid, member, { x0, z0, x1, z1 });
     if (rect === null) continue;
     out.push({ rect, columns });
   }
@@ -1416,7 +1427,24 @@ function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
 }
 
 /**
- * The largest free axis-aligned rectangle inside a block's bounding box.
+ * The largest axis-aligned rectangle of **this block** inside its bounding box.
+ *
+ * `member` is the flood-fill membership of the one component being measured,
+ * not the district's `blocked` mask, and that distinction is the whole of a
+ * measured defect. A block's bounding box is not the block: on a `grown`
+ * fabric the streets curve, so one component's bounding box straddles the lane
+ * beside it and contains columns of the *next* block. Those columns are
+ * unblocked, so a histogram sweep over `blocked` will happily return a
+ * rectangle that lies partly in a neighbour — two components then subdivide
+ * the same ground, and at `high` density, where every lot builds, the two
+ * terraces are emitted through each other. Measured on `old_quarter`
+ * (`grown` × `high` × `stepped`): one such pair, whose interpenetration cost
+ * 46 `interior.blocked_column`, 142 `traversal.unreachable` and the one
+ * `traversal.no_start` in the world. Confining the sweep to the component
+ * makes the overlap unrepresentable.
+ *
+ * On a `grid` fabric a component fills its own bounding box, so `member` and
+ * "not `blocked`" agree column for column and the result is unchanged.
  *
  * A grid block *is* its bounding box, and this returns exactly that. An organic
  * block is not — its streets curve, so the bounding box clips a sidewalk at
@@ -1429,7 +1457,7 @@ function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
  * The standard maximal-rectangle-under-a-histogram sweep — O(area), with every
  * tie broken by the earlier row and the earlier column, so it is stable.
  */
-function largestFreeRect(grid: Grid, blocked: Uint8Array, bounds: Rect): Rect | null {
+function largestFreeRect(grid: Grid, member: Uint8Array, bounds: Rect): Rect | null {
   const width = bounds.x1 - bounds.x0 + 1;
   const heights = new Int32Array(width);
   let best: Rect | null = null;
@@ -1438,7 +1466,7 @@ function largestFreeRect(grid: Grid, blocked: Uint8Array, bounds: Rect): Rect | 
   for (let z = bounds.z0; z <= bounds.z1; z++) {
     for (let i = 0; i < width; i++) {
       const k = grid.index(bounds.x0 + i, z);
-      heights[i] = k < 0 || blocked[k] === 1 ? 0 : (heights[i] as number) + 1;
+      heights[i] = k < 0 || member[k] !== 1 ? 0 : (heights[i] as number) + 1;
     }
     const stack: number[] = [];
     for (let i = 0; i <= width; i++) {
