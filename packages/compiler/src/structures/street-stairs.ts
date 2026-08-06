@@ -345,11 +345,14 @@ export interface StreetStairDressResult {
 /**
  * Write one flight into the column plan.
  *
- * Only what the flight *owns* moves: the tread band's ground, fluid top, snow,
- * surface, subsurface and soil, plus its road tag and level. A column some other
- * segment owns is left at that segment's level, which is what the pins in
- * {@link streetStairLevels} were measured against, so the flight lands on the
- * street rather than beside it.
+ * Only what the flight *owns* is dressed: the tread band's surface, subsurface
+ * and soil, plus its road tag and level. A column some other segment owns is left
+ * to that segment, which is what the pins in {@link streetStairLevels} were
+ * measured against, so the flight lands on the street rather than beside it.
+ *
+ * The **ground** is no longer written here (`docs/GROUND-CONTRACT-v0.md` §3.7b,
+ * §9): a flight declares as a `street.network` profile alongside the streets it
+ * meets, and the driver has already committed its levels by the time this runs.
  */
 export function dressStreetStairs(
   geometry: StreetStairGeometry,
@@ -366,9 +369,10 @@ export function dressStreetStairs(
     const top = level - 1;
     const k2 = column.idx;
 
-    plan.ground[k2] = top;
-    plan.fluidTop[k2] = top;
-    plan.snow[k2] = 0;
+    // `ground`, `fluidTop` and `snow` are the driver's: a flight is folded into
+    // `street.network` (`docs/GROUND-CONTRACT-v0.md` §3.7b) and its levels were
+    // committed with the rest of the subsystem before this loop ran. What is left
+    // here is the tread mix and the masks.
     plan.surface[k2] = input.states.step;
     plan.subsurface[k2] = input.states.subsurface;
     if (plan.soil[k2] === 0) plan.soil[k2] = 1;

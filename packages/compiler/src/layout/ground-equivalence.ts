@@ -64,25 +64,16 @@ export interface GroundEquivalenceOutcome {
   readonly resolved: ResolvedGround;
   /** The mutating pipeline's answer, after the structure pass. */
   readonly written: GroundSnapshot;
-  /** What each self-inverting pass wrote, per column. See {@link SelfWrites}. */
-  readonly selfWrites: readonly SelfWrites[];
-}
-
-/**
- * A pass that under the contract wins its own columns **at a different level**
- * than it wrote — §8.5's I6, the one row whose winner and loser are one class.
- *
- * The declaration set alone cannot attribute such a divergence: the declarer
- * declares the contract level and nothing declares the written one, so §8.3's
- * "the claim whose level equals `plan.ground[k]`" finds either nothing or, worse,
- * an unrelated claim that happens to sit at the old number. This carries the
- * pass's own record of what it wrote, so a self-inversion is attributed on
- * per-column evidence rather than by elimination.
- */
-export interface SelfWrites {
-  readonly sourceClass: GroundSourceClass;
-  /** Column → the level the pass actually wrote there. */
-  readonly wrote: ReadonlyMap<number, number>;
+  /**
+   * `GroundDriver.finish()` — the last answer of the accumulating prefix (§9a.5).
+   *
+   * Compared against {@link GroundEquivalenceOutcome.resolved}, which the shim
+   * computes for itself over the same intent set. The two must be equal element
+   * for element: that is the proof that the incremental prefix-resolve is not a
+   * second resolver, and it is the assertion that catches a driver which mutated
+   * an intent, dropped one, or exhausted a generator (§9a.1, rule 4).
+   */
+  readonly driver: ResolvedGround;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -149,6 +140,14 @@ export const TOLERATED_INVERSIONS: readonly ToleratedInversion[] = Object.freeze
     losers: Object.freeze(["verge"] as const),
   },
   {
+    // WP-3 converted `paveSidewalks`, so the band's level now comes from the
+    // flanking carriageway's `ArcLevels` and the pass writes what it declares:
+    // there is no self-inversion left to attribute, and the row's count is zero
+    // on every world. It stays in the table because the table **is** §8.5 and a
+    // row removed to make a world pass is the failure mode §8.5's closing line
+    // exists to prevent — and because a divergence of this shape reappearing is
+    // a finding, not a tolerance. The `selfWrites` evidence it used to be
+    // matched on is gone with it (§9a.5, last paragraph).
     id: "I6",
     what: "the sidewalk stops re-levelling from plan.ground",
     winners: Object.freeze(["street.sidewalk"] as const),
@@ -215,6 +214,13 @@ export interface GroundEquivalenceReport {
   /** Worst |resolved − written| over I6's self-divergences. Caps at 7. */
   readonly maxSidewalkDelta: number;
   /**
+   * Columns where `driver.finish()` and the shim's own one-shot resolve differ
+   * (§9a.5). **Zero is contract, on every world and at every work package**: the
+   * driver calls `resolveGround` on the whole accumulated array every time and
+   * never patches incrementally, so its last answer *is* the one-shot resolve.
+   */
+  readonly driverMismatches: number;
+  /**
    * Every failed assertion, one readable line each, in column order and capped
    * per category so a broken world produces a report rather than a core dump.
    * **The test asserts this is empty**; the function returns rather than throws
@@ -265,7 +271,7 @@ const NEAREST_CLAIM_RADIUS = 96;
 export function assertGroundEquivalence(
   outcome: GroundEquivalenceOutcome,
 ): GroundEquivalenceReport {
-  const { baseline, intents, resolved, written, selfWrites } = outcome;
+  const { baseline, intents, resolved, written, driver } = outcome;
   const region = baseline.region;
   const n = baseline.ground.length;
 
@@ -288,32 +294,27 @@ export function assertGroundEquivalence(
     else if (seen === MAX_MESSAGES + 1) failures.push(`…and more ${category}`);
   };
 
-  /** Is this row §8.5's one self-row — winner and loser the same class? */
-  const isSelfRow = (r: ToleratedInversion): boolean =>
-    r.winners.length === 1 && r.losers.length === 1 && r.winners[0] === r.losers[0];
-
   /**
    * The §8.5 row that explains one divergence, or `undefined`.
    *
-   * Two shapes, and the difference is §8.5's own: an ordinary row is a pair of
-   * *classes*, matched against the claim that asked for the level the pipeline
-   * wrote; the self-row is matched against the winning pass's own record of what
-   * it wrote there, because on a self-inversion no claim carries that level.
+   * A row is a pair of *classes*, matched against the claim that asked for the
+   * level the pipeline wrote. §8.5's one self-row (I6) used to be matched instead
+   * against the winning pass's own record of what it wrote, because on a
+   * self-inversion no claim carries that level; WP-3 converted the sidewalk, so
+   * the pass writes what it declares and there is no such column left. A
+   * divergence of that shape now falls through to `unattributable`, which is the
+   * right answer: the evidence for tolerating it is gone with the defect.
    */
   const attribute = (
-    k: number,
     winnerClass: GroundSourceClass,
-    writtenY: number,
     losers: readonly GroundSourceClass[] | undefined,
   ): ToleratedInversion | undefined =>
-    TOLERATED_INVERSIONS.find((r) => {
-      if (!r.winners.includes(winnerClass)) return false;
-      if (isSelfRow(r)) {
-        const own = selfWrites.find((s) => s.sourceClass === winnerClass);
-        return own !== undefined && own.wrote.get(k) === writtenY;
-      }
-      return losers !== undefined && losers.some((c) => r.losers.includes(c));
-    });
+    TOLERATED_INVERSIONS.find(
+      (r) =>
+        r.winners.includes(winnerClass) &&
+        losers !== undefined &&
+        losers.some((c) => r.losers.includes(c)),
+    );
 
   /** Bank one attributed divergence, and hold it to the row's delta cap. */
   const credit = (row: ToleratedInversion, k: number, delta: number): void => {
@@ -339,6 +340,7 @@ export function assertGroundEquivalence(
   let divergences = 0;
   let unattributable = 0;
   let maxSidewalkDelta = 0;
+  let driverMismatches = 0;
   const byInversion: Record<InversionId, number> = {
     I1: 0,
     I2: 0,
@@ -395,21 +397,11 @@ export function assertGroundEquivalence(
       const declared = [...levels][0] as number;
       const sameGround = (resolved.ground[k] as number) === (written.ground[k] as number);
       if (sameGround && fluidAgrees(resolved, written, k)) continue;
-      // A self-inversion with no second claimant lands here rather than in
-      // CONFLICT (see `cleanDivergences`). Only the ground can be inverted: a
-      // fluid the two answers genuinely disagree about is a mismatch, always —
-      // §8.5 has no row for one.
-      const owner = minimal.get(k) as { intent: number; y: number };
-      const winner = intents[owner.intent] as GroundIntent;
-      const row = fluidAgrees(resolved, written, k)
-        ? attribute(k, winner.sourceClass, written.ground[k] as number, undefined)
-        : undefined;
-      if (row !== undefined) {
-        divergences += 1;
-        cleanDivergences += 1;
-        credit(row, k, Math.abs((resolved.ground[k] as number) - (written.ground[k] as number)));
-        continue;
-      }
+      // An I6 column with a single claimant used to land here rather than in
+      // CONFLICT and was credited to the self-row (`cleanDivergences`). WP-3
+      // converted the sidewalk, so the pass writes what it declares and there is
+      // nothing left of that shape; `cleanDivergences` stays at zero and a CLEAN
+      // column the two answers disagree about is a declarer bug, always.
       cleanMismatches += 1;
       fail(
         "clean mismatches",
@@ -448,7 +440,7 @@ export function assertGroundEquivalence(
 
     divergences += 1;
     const losers = classesByColumnLevel.get(k)?.get(written.ground[k] as number);
-    const row = attribute(k, winner.sourceClass, written.ground[k] as number, losers);
+    const row = attribute(winner.sourceClass, losers);
     if (row === undefined) {
       unattributable += 1;
       fail(
@@ -463,6 +455,29 @@ export function assertGroundEquivalence(
       continue;
     }
     credit(row, k, Math.abs((resolved.ground[k] as number) - (written.ground[k] as number)));
+  }
+
+  // §9a.5's new assertion: `driver.finish()` **is** the one-shot resolve. The
+  // shim computed `resolved` itself, over `driver.intents`; if the accumulating
+  // prefix were a second resolver — an intent mutated, one dropped, a generator
+  // exhausted after the first of a dozen resolves — this is where it shows.
+  for (let k = 0; k < n; k++) {
+    if (
+      (driver.ground[k] as number) === (resolved.ground[k] as number) &&
+      (driver.fluidTop[k] as number) === (resolved.fluidTop[k] as number) &&
+      (driver.fluidKind[k] as number) === (resolved.fluidKind[k] as number)
+    ) {
+      continue;
+    }
+    driverMismatches += 1;
+    fail(
+      "driver mismatches",
+      `driver mismatch at ${at(k)}: the accumulating prefix finished at ` +
+        `(${driver.ground[k]}, fluid ${driver.fluidTop[k]}/${driver.fluidKind[k]}) and the ` +
+        `one-shot resolve over the same intents says ` +
+        `(${resolved.ground[k]}, fluid ${resolved.fluidTop[k]}/${resolved.fluidKind[k]}) — ` +
+        "the driver is not a second resolver, and §9a.1 rule 4 is the usual cause",
+    );
   }
 
   for (const row of TOLERATED_INVERSIONS) {
@@ -490,6 +505,7 @@ export function assertGroundEquivalence(
     byInversion,
     unattributable,
     maxSidewalkDelta,
+    driverMismatches,
     failures,
   };
 }

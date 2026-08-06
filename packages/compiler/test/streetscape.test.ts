@@ -233,21 +233,47 @@ describe("sidewalk bands", () => {
     );
     const { masks } = dress(graph, plan);
 
+    // The ridge runs the whole depth of the region, so an `x = -12` column is in
+    // the **avenue's** band everywhere and in a **crossing street's** band at
+    // `z = z0 ± 3`. Those two are different questions and the rule answers them
+    // differently, correctly: the avenue's carriageway is off the ridge and two
+    // blocks below, so its band is cut to meet it and takes no kerb; a crossing
+    // street's carriageway *is* on the ridge at that x, so its band is already
+    // flush and does take one.
+    //
+    // **Updated at WP-3** (`docs/GROUND-CONTRACT-v0.md` §9). This test used to
+    // assert no kerb on any `x = -12` column, and it held for the wrong reason:
+    // `natural` was read from `plan.ground` at the moment of writing, so by the
+    // time a street segment reached a column the avenue had already paved, the
+    // "natural" ground it compared against was the avenue's *written* level, not
+    // the land. The declare/commit split removes that read-after-write inside the
+    // pass — `natural` is now the view at the pass's own position, which is what
+    // the variable has always claimed to be — and the six columns whose own
+    // street is flush with the ridge get the kerb the rule says they should.
+    const streetSidewalkZ = new Set([-27, -21, -3, 3, 21, 27]);
     let level = 0;
     let stepped = 0;
+    let flush = 0;
     for (let j = 0; j < REGION.depth; j++) {
       for (let i = 0; i < REGION.width; i++) {
         const idx = j * REGION.width + i;
         if (masks.sidewalk[idx] !== 1) continue;
         const x = REGION.x0 + i;
-        if (x === -12 && masks.sidewalk[idx] === 1) {
-          expect(masks.curb[idx]).toBe(0);
-          stepped++;
+        const z = REGION.z0 + j;
+        if (x === -12) {
+          if (streetSidewalkZ.has(z)) {
+            expect(masks.curb[idx], `flush kerb at ${x},${z}`).toBe(1);
+            flush++;
+          } else {
+            expect(masks.curb[idx], `cut band at ${x},${z}`).toBe(0);
+            stepped++;
+          }
         }
         if (masks.curb[idx] === 1) level++;
       }
     }
     expect(stepped).toBeGreaterThan(10);
+    expect(flush).toBe(streetSidewalkZ.size);
     expect(level).toBeGreaterThan(100);
 
     // And on wholly flat ground the inner column of the band *is* the kerb.

@@ -36,16 +36,11 @@ import {
 import { groundLevelsOf, levelSeams } from "../src/layout/levels.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
-import {
-  declareAll,
-  declareRetaining,
-  declareSidewalks,
-  declareStreets,
-  levelClaimsByColumn,
-} from "../src/structures/ground-declare.js";
+import { declareRetaining, levelClaimsByColumn } from "../src/structures/ground-declare.js";
+import { driverForPlan, type GroundDriver } from "../src/layout/ground-driver.js";
+import { dressStreets, type SegmentArc, type StreetscapeResult } from "../src/structures/streetscape.js";
 import { surfaceStreetGraph, type StreetSurfaceResult } from "../src/structures/roads.js";
 import { buildRetainingWalls, type RetainingPassResult } from "../src/structures/retaining.js";
-import { dressStreets, type StreetscapeResult } from "../src/structures/streetscape.js";
 import { sweep } from "../src/structures/sweep.js";
 import { RETAINING_PROFILE } from "../src/structures/profiles.js";
 import { FluidKind, type ColumnPlan } from "../src/terrain/columns.js";
@@ -166,7 +161,9 @@ interface Run {
   readonly retaining: RetainingPassResult;
   readonly streets: StreetSurfaceResult;
   readonly dressed: StreetscapeResult;
-  readonly intents: GroundIntent[];
+  /** The one accumulator, as `buildStructures` threads one (§9a.1, rule 1). */
+  readonly driver: GroundDriver;
+  readonly intents: readonly GroundIntent[];
 }
 
 function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): Run {
@@ -190,8 +187,15 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
     palette,
     stack,
   });
+  // WP-3: the street family declares for itself, so the fixture threads a driver
+  // exactly as `buildStructures` does — the surfacer and the dressing commit into
+  // it, and the still-unconverted retaining pass records into it at its own
+  // pipeline position, which is before them.
+  const driver = driverForPlan(plan);
+  driver.record(declareRetaining(retaining));
   const streets = surfaceStreetGraph({
     graphs: [graph],
+    ground: driver,
     plan,
     palette,
     stack,
@@ -201,8 +205,15 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
     theme: "medieval_village",
     ...(retaining.wallColumns === 0 ? {} : { seam: retaining.seam }),
   });
+  const segmentArcs = new Map<string, SegmentArc>();
+  for (const segment of streets.declaration.segments) {
+    if (segment.frame === undefined || segment.levels === undefined) continue;
+    segmentArcs.set(segment.source, { frame: segment.frame, levels: segment.levels });
+  }
   const dressed = dressStreets(graph, {
     plan,
+    ground: driver,
+    levels: segmentArcs,
     stack,
     seed: nodeSeed(11n, "world.quarter"),
     furniture: "village",
@@ -210,19 +221,23 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
     nodePath: "world.quarter",
     surfaced: streets.road,
   });
-  const intents = declareAll({
-    plan,
-    retaining,
-    streets,
-    streetscape: [{ nodePath: "world.quarter", result: dressed }],
-  });
-  return { plan, graph, retaining, streets, dressed, intents };
+  return { plan, graph, retaining, streets, dressed, driver, intents: driver.intents };
 }
 
 const classesOf = (intents: readonly GroundIntent[]): Set<string> =>
   new Set(intents.map((i) => i.sourceClass));
 
 const columnCount = (intent: GroundIntent): number => [...intent.columns].length;
+
+/** Every `street.sidewalk` claim the dressing committed, column -> level. */
+function sidewalkClaims(run: Run): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const intent of run.intents) {
+    if (intent.sourceClass !== "street.sidewalk") continue;
+    for (const claim of intent.columns) out.set(claim.idx, claim.y);
+  }
+  return out;
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -241,7 +256,7 @@ describe("the shadow declarers, on a stepped quarter", () => {
   it("the fixture actually stepped: a wall was built and streets were surfaced", () => {
     expect(run.retaining.wallColumns).toBeGreaterThan(0);
     expect(run.streets.surfacedColumns).toBeGreaterThan(0);
-    expect(run.dressed.declaration.length).toBeGreaterThan(0);
+    expect(sidewalkClaims(run).size).toBeGreaterThan(0);
   });
 
   it("every class that should appear does — streets, retaining, sidewalk, verge", () => {
@@ -283,7 +298,7 @@ describe("the shadow declarers, on a stepped quarter", () => {
   });
 
   it("street intents carry distinct subRanks, consistent with compareStreetRank", () => {
-    const streetIntents = declareStreets(run.streets).filter(
+    const streetIntents = run.intents.filter(
       (i) => i.sourceClass === "street.network" && i.kind === "profile",
     );
     expect(streetIntents.length).toBeGreaterThan(1);
@@ -328,43 +343,43 @@ describe("the shadow declarers, on a stepped quarter", () => {
     expect(GROUND_TIERS["verge"]).toBe("D");
   });
 
-  it("I6 is visible: the sidewalk declares the arc-station level it was denied", () => {
-    const declared = declareSidewalks("world.quarter", run.dressed, run.streets);
-    const claim = new Map<number, number>();
-    for (const intent of declared) for (const c of intent.columns) claim.set(c.idx, c.y);
-    let differed = 0;
-    let worst = 0;
-    for (const column of run.dressed.declaration) {
-      const y = claim.get(column.idx);
-      expect(y, `sidewalk column ${column.idx} undeclared`).toBeDefined();
-      if (y === column.wrote) continue;
-      differed++;
-      worst = Math.max(worst, Math.abs((y as number) - column.wrote));
-    }
-    // On this fixture the surfacer and the centre-cell read may or may not
-    // disagree; what must hold is that the declaration is the *arc* answer, so
-    // where they differ the difference is a real step and never silent.
-    expect(differed).toBeGreaterThanOrEqual(0);
-    if (differed > 0) expect(worst).toBeGreaterThan(0);
-
-    // The substantive half of I6: the sidewalk's level and the carriageway's
-    // come from one number by construction. Every declared band column whose
-    // flanking centre cell the surfacer owns is declared at *that* column's
-    // level — no second read of `plan.ground`, and so no seven-block step
-    // across a street's own width.
+  it("I6 has landed: the sidewalk's level IS the carriageway's, by construction", () => {
+    // WP-2 could only *declare* the arc-station level beside a pass that wrote
+    // the centre cell's, and this test measured the gap between the two. WP-3
+    // converted the pass, so there is no gap to measure: what is asserted is the
+    // substantive half of I6 directly on the plan.
+    const claims = sidewalkClaims(run);
+    expect(claims.size).toBeGreaterThan(50);
     const carriageway = new Map<number, number>();
     for (const segment of run.streets.declaration.segments) {
       for (const column of segment.columns) carriageway.set(column.idx, column.y);
     }
+    // No seven-block step across a street's own width: a band column stands
+    // within one block of the carriageway it touches. Under WP-2's centre-cell
+    // read this was violated by up to seven on the hill town, which is the
+    // measured size of the defect I6 fixes.
     let checked = 0;
-    for (const column of run.dressed.declaration) {
-      const centre = (column.cz - REGION.z0) * SIZE + (column.cx - REGION.x0);
-      const owned = carriageway.get(centre);
-      if (owned === undefined) continue;
-      expect(claim.get(column.idx), `sidewalk ${column.idx} off its carriageway`).toBe(owned);
+    let worst = 0;
+    for (const [idx, y] of claims) {
+      const flank: number[] = [];
+      for (const n of [idx - 1, idx + 1, idx - SIZE, idx + SIZE]) {
+        const c = carriageway.get(n);
+        if (c !== undefined) flank.push(c);
+      }
+      if (flank.length === 0) continue;
+      worst = Math.max(worst, ...flank.map((c) => Math.abs(c - y)));
       checked++;
     }
     expect(checked).toBeGreaterThan(50);
+    expect(worst).toBeLessThanOrEqual(1);
+
+    // And the plan carries the resolver's answer on every column the sidewalk
+    // won — the driver's write-through, seen from the outside (§9a.1 rule 2).
+    const resolved = run.driver.finish();
+    for (const idx of claims.keys()) {
+      if (resolved.owner[idx] === -1) continue;
+      expect(run.plan.ground[idx], `plan at ${idx}`).toBe(resolved.ground[idx]);
+    }
   });
 });
 

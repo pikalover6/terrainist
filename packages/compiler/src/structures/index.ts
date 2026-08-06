@@ -54,7 +54,17 @@ import { resolvePorts } from "../layout/ports.js";
 import { landmarkRoadAnchors } from "../programs/road-anchors.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
-import { dressStreets } from "./streetscape.js";
+import { dressStreets, type SegmentArc } from "./streetscape.js";
+import type { GroundDriver } from "../layout/ground-driver.js";
+import {
+  declareCanals,
+  declareCourtyards,
+  declareDoorsteps,
+  declarePlaza,
+  declarePrecincts,
+  declareProps,
+  declareRetaining,
+} from "./ground-declare.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -140,6 +150,20 @@ export interface StructurePassInput {
   readonly ports: readonly ResolvedPort[];
   /** Mutated by the road pass. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * **The one accumulator for the whole compile.** Every pass contributes at its
+   * own pipeline position, converted or not (§9a.1, rule 1): a converted pass
+   * calls `commit` instead of writing, and an unconverted one writes exactly as
+   * it always has with its shadow declarer called immediately afterwards, into
+   * `record`. That is why there is no `declareAll` any more — §3's inventory is
+   * the list of call sites below.
+   *
+   * Required: `terrain/compile.ts` builds it beside the baseline snapshot, and
+   * the baseline is no longer optional on the settlement path.
+   */
+  readonly ground: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /** Mutated by both passes, and read by the scatter that follows. */
@@ -295,41 +319,8 @@ export interface StructurePassResult {
    */
   readonly courtyards?: CourtyardPassResult;
   readonly precincts?: PrecinctPassResult;
-  /**
-   * The pass results the ground contract's shadow declarers read
-   * (`docs/GROUND-CONTRACT-v0.md` §8.1, item 2).
-   *
-   * Five of the eleven declaring passes had no reason to leave this function
-   * before WP-2 — their products are blocks and masks the emitter never sees
-   * separately — so they are gathered here rather than promoted to five more
-   * top-level fields nothing but the shim reads. **References to results that
-   * already exist**: no work is done to build this, so it costs a production
-   * compile nothing and cannot move a block.
-   */
-  readonly groundDeclarers: GroundDeclarers;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
-}
-
-/** The §3 pass results `structures/ground-declare.ts` recomputes intents from. */
-export interface GroundDeclarers {
-  readonly retaining: RetainingPassResult;
-  readonly canals: CanalPassResult;
-  /** One per district dressed, with the node path its sidewalks belong to. */
-  readonly streetscape: readonly {
-    readonly nodePath: string;
-    readonly result: StreetscapeResult;
-  }[];
-  readonly props: PropPassResult;
-  readonly doorsteps: DoorstepResult;
-  /**
-   * The plaza's node path, which `StructurePassResult.plaza` does not carry and
-   * `declarePlaza` needs: a plaza is one placed node, and its claims are named
-   * after it rather than after the settlement.
-   */
-  readonly plazaNodePath?: string;
-  /** The path canal claims are named under — one pass, so one source prefix. */
-  readonly canalNodePath: string;
 }
 
 /** Build every placed structure, then connect them. */
@@ -412,6 +403,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
+  // §9a.1 rule 1: an unconverted pass's shadow declaration, at its own position.
+  input.ground.record(declarePrecincts(precincts));
 
   /**
    * The placements every pass after this one reads.
@@ -656,6 +649,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
     diagnostics.push(...plaza.diagnostics);
     blocks.push(...plaza.blocks);
+    input.ground.record(declarePlaza(plazaNode.nodePath, plaza));
   }
 
   // --- district streets ----------------------------------------------------
@@ -693,6 +687,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   diagnostics.push(...retaining.diagnostics);
   blocks.push(...retaining.blocks);
+  input.ground.record(declareRetaining(retaining));
 
   // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
   // SLOT, filled. It runs after `buildBuildings` and before the streetscape,
@@ -715,6 +710,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   diagnostics.push(...courtyardPass.diagnostics);
   blocks.push(...courtyardPass.blocks);
+  input.ground.record(declareCourtyards(courtyardPass));
 
   // --- the canals ----------------------------------------------------------
   // After the column plan, before the streets are surfaced, and that ordering
@@ -734,17 +730,19 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     stack: input.stack,
   });
   diagnostics.push(...canals.diagnostics);
+  // One source prefix per pass: the canal pass claims every channel column of
+  // every quarter before writing one, so the arbitration between two canals a
+  // block apart has already happened (§3.5b).
+  input.ground.record(declareCanals(rootPath, canals));
 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
-  // Kept for the ground contract's sidewalk declarer (§3.8b), which needs each
-  // dressing beside the node path its claims are named under.
-  const dressings: { nodePath: string; result: StreetscapeResult }[] = [];
   let streetFurniture = 0;
   const arterials = cities.flatMap((c) => c.plan.arterials);
   if (districts.length > 0 || arterials.length > 0) {
     streets = surfaceStreetGraph({
       graphs: districts.map((d) => d.streets),
+      ground: input.ground,
       ...(arterials.length === 0
         ? {}
         : { arterials: arterials.map((a) => ({ id: a.id, width: a.width, path: a.path })) }),
@@ -768,6 +766,15 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     blocks.push(...streets.blocks);
+    // §3.8b: one entry per surfaced segment, keyed by the surfacer's own source
+    // id, so the sidewalk band takes its level from the very `ArcLevels` the
+    // carriageway was graded to. A segment with no frame (a flight of steps, a
+    // refused run) is simply absent, and the band falls back to the centre cell.
+    const segmentArcs = new Map<string, SegmentArc>();
+    for (const segment of streets.declaration.segments) {
+      if (segment.frame === undefined || segment.levels === undefined) continue;
+      segmentArcs.set(segment.source, { frame: segment.frame, levels: segment.levels });
+    }
     // The F4 seam, filled: curbs, sidewalk paving, lamps, crossings and the
     // district's furniture. The kit is read off the contract itself — a
     // two-column sidewalk is the downtown band, one column is a village lane.
@@ -779,6 +786,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     for (const district of districts) {
       const dressed: StreetscapeResult = dressStreets(district.streets, {
         plan: input.plan,
+        ground: input.ground,
+        // §3.8b / inversion I6: the sidewalk's level is the flanking
+        // carriageway's **arc-station** level, so the surfacer hands over the
+        // frames and levels it graded rather than the pass reading `plan.ground`
+        // at a centre cell a cross-section away.
+        levels: segmentArcs,
         stack: input.stack,
         seed: nodeSeed(input.worldSeed, district.nodePath, ""),
         furniture: district.streets.sidewalk >= 2 ? "downtown" : "village",
@@ -800,7 +813,6 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       blocks.push(...dressed.blocks);
       streetFurniture += dressed.props.length;
       diagnostics.push(...dressed.diagnostics);
-      dressings.push({ nodePath: district.nodePath, result: dressed });
       // Kept for C3: the life pass needs the walk lane it must not touch and
       // the carriageway it parks against, and re-deriving either from the
       // graph would be the same rasterization with a second chance to differ.
@@ -847,6 +859,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     const roadDestinations = new Set([...roadObstacles].filter((p) => !districtPaths.has(p)));
     roads = buildRoadNetwork({
       nodePath,
+      ground: input.ground,
       params: roadParamsOf(roadNode.params),
       seed,
       plan: input.plan,
@@ -940,6 +953,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         });
   diagnostics.push(...props.diagnostics);
   blocks.push(...props.blocks);
+  input.ground.record(declareProps(props));
   // The grammar's fluid claim, re-derived from what it actually emitted. It is
   // reported here as well as by the readback lint because a leak is cheapest
   // to attribute at the pass that caused it.
@@ -962,6 +976,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     stack: input.stack,
   });
   blocks.push(...doorsteps.blocks);
+  input.ground.record(declareDoorsteps(doorsteps));
 
   // --- ground treatment (F2) -----------------------------------------------
   // Dead last, and that is the whole design: every other pass has by now
@@ -1121,15 +1136,6 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     ...(streets === undefined ? {} : { streets }),
-    groundDeclarers: {
-      retaining,
-      canals,
-      streetscape: dressings,
-      props,
-      doorsteps,
-      ...(plazaNode === undefined ? {} : { plazaNodePath: plazaNode.nodePath }),
-      canalNodePath: rootPath,
-    },
     diagnostics,
     stats: {
       theme: theme.id,

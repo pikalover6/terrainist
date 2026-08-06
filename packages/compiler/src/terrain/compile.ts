@@ -96,7 +96,8 @@ import {
 import type { GroundBaseline } from "../layout/ground-contract.js";
 import { resolveGround } from "../layout/ground-resolver.js";
 import type { GroundEquivalenceOutcome } from "../layout/ground-equivalence.js";
-import { declareAll, sidewalkWrites } from "../structures/ground-declare.js";
+import { declarePadEdits } from "../structures/ground-declare.js";
+import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
@@ -238,16 +239,15 @@ export interface CompileTerrainOptions {
    * Run the ground contract's equivalence shim beside the mutating pipeline
    * (`docs/GROUND-CONTRACT-v0.md` §8.1).
    *
-   * **Default off, and off is free**: with this unset the compiler allocates no
-   * baseline, builds no declaration set and never calls the resolver, so a
-   * production emit is byte-identical to one from before the shim existed. With
-   * it on, the ground is snapshotted as materialised, snapshotted again after the
-   * structure pass, and both are handed back on
-   * {@link CompileTerrainResult.groundEquivalence} beside the declaration set and
-   * `resolveGround`'s answer, for `assertGroundEquivalence` to compare.
-   *
-   * Three region-sized arrays twice over: it belongs in the test harness, which
-   * is where it is measured, and not in the CLI.
+   * **The baseline is no longer what this gates** (§9a.1, last paragraph). From
+   * the first conversion the baseline snapshot is unconditional on the settlement
+   * path, because it is the resolver's first argument and the driver is
+   * production code. What this still gates is the *shim*: the second snapshot
+   * taken after the structure pass, the shim's own one-shot `resolveGround`, and
+   * `driver.finish()` — which nothing in production consumes yet, since §7's
+   * report section has no wiring. With it on, all of that is handed back on
+   * {@link CompileTerrainResult.groundEquivalence} for `assertGroundEquivalence`
+   * to compare.
    */
   readonly groundEquivalence?: boolean;
 }
@@ -686,18 +686,24 @@ async function compileValidated(
   const columnsMs = now() - t2;
 
   // The ground contract's baseline (§8.1, step 1) — the three frozen arrays as
-  // materialised, before the first structure pass touches one. Off by default,
-  // and off costs three array copies that never happen.
-  const groundBaseline: GroundBaseline | undefined =
-    options.groundEquivalence === true
-      ? {
-          region: plan.region,
-          ground: Int32Array.from(plan.ground),
-          fluidTop: Int32Array.from(plan.fluidTop),
-          fluidKind: Uint8Array.from(plan.fluidKind),
-          seaLevel: plan.seaLevel,
-        }
-      : undefined;
+  // materialised, before the first structure pass touches one. **Unconditional on
+  // the settlement path** from WP-3 (§9a.1): it is the resolver's first argument,
+  // and the driver that resolves against it is production code, not a shim. A
+  // terrain-profile compile has no structure passes and builds none.
+  const groundBaseline: GroundBaseline | undefined = isSettlement(doc)
+    ? {
+        region: plan.region,
+        ground: Int32Array.from(plan.ground),
+        fluidTop: Int32Array.from(plan.fluidTop),
+        fluidKind: Uint8Array.from(plan.fluidKind),
+        seaLevel: plan.seaLevel,
+      }
+    : undefined;
+  // The one thing that writes a level during the mixture (§9a.1). Every pass
+  // contributes at its own pipeline position: a converted pass commits, an
+  // unconverted one writes and its shadow declarer records immediately after.
+  const groundDriver: GroundDriver | undefined =
+    groundBaseline === undefined ? undefined : createGroundDriver(groundBaseline, plan);
 
   // --- pass 5a: caves ------------------------------------------------------
   // Subtractive, and deliberately downstream of everything that decides what
@@ -731,10 +737,20 @@ async function compileValidated(
   let structures: StructurePassResult | undefined;
   // Nothing placed means nothing to build *and* nothing to connect, and the
   // report must stay identical to a terrain-profile compile's in that case.
-  if (isSettlement(doc) && layoutOutcome !== undefined && layoutOutcome.placements.length > 0) {
+  if (
+    isSettlement(doc) &&
+    groundDriver !== undefined &&
+    layoutOutcome !== undefined &&
+    layoutOutcome.placements.length > 0
+  ) {
+    // §9a.1 rule 1's one exception of timing: `declarePadEdits` records *before*
+    // the first structure pass, because its "pass" is the layout solver and the
+    // field already carries its answer (§3.12).
+    groundDriver.record(declarePadEdits(plan, layoutOutcome.padEdits));
     structures = buildStructures({
       doc,
       worldSeed,
+      ground: groundDriver,
       nodes: layoutNodes,
       placements: layoutOutcome.placements,
       ports: layoutOutcome.ports,
@@ -766,50 +782,27 @@ async function compileValidated(
   // a plan the programs had already written would attribute their writes to a
   // declarer that never claimed them.
   const groundEquivalence: GroundEquivalenceOutcome | undefined =
-    groundBaseline === undefined
+    groundDriver === undefined || groundBaseline === undefined || options.groundEquivalence !== true
       ? undefined
-      : (() => {
-          const declarers = structures?.groundDeclarers;
-          const intents = declareAll({
-            plan,
-            ...(structures?.precincts === undefined ? {} : { precincts: structures.precincts }),
-            ...(structures?.plaza === undefined || declarers?.plazaNodePath === undefined
-              ? {}
-              : { plaza: { nodePath: declarers.plazaNodePath, result: structures.plaza } }),
-            ...(declarers === undefined
-              ? {}
-              : {
-                  retaining: declarers.retaining,
-                  canals: { nodePath: declarers.canalNodePath, result: declarers.canals },
-                  streetscape: declarers.streetscape,
-                  props: declarers.props,
-                  doorsteps: declarers.doorsteps,
-                }),
-            ...(structures?.courtyards === undefined ? {} : { courtyards: structures.courtyards }),
-            ...(structures?.streets === undefined ? {} : { streets: structures.streets }),
-            ...(structures?.roads === undefined ? {} : { roads: structures.roads }),
-            ...(layoutOutcome === undefined ? {} : { padEdits: layoutOutcome.padEdits }),
-          });
-          return {
-            baseline: groundBaseline,
-            intents,
-            resolved: resolveGround(groundBaseline, intents),
-            // A copy, not the live plan: the passes after this one go on writing
-            // it, and comparing against a moving array would credit their writes
-            // to the eleven.
-            written: {
-              ground: Int32Array.from(plan.ground),
-              fluidTop: Int32Array.from(plan.fluidTop),
-              fluidKind: Uint8Array.from(plan.fluidKind),
-            },
-            // §8.5's I6: the sidewalk wins its own band at the arc level and
-            // wrote the centre cell's, so only the pass's own record can tell a
-            // self-inversion from an unattributed move.
-            selfWrites: [
-              { sourceClass: "street.sidewalk", wrote: sidewalkWrites(declarers?.streetscape) },
-            ],
-          };
-        })();
+      : {
+          baseline: groundBaseline,
+          // §9a.5: the shim is fed `driver.intents` rather than `declareAll(…)`'s
+          // result — the same set, arrived at from one place instead of two.
+          intents: groundDriver.intents,
+          resolved: resolveGround(groundBaseline, groundDriver.intents),
+          // …and computed **by the shim itself**, not read off the driver, so
+          // that comparing it against `finish()` proves the accumulating prefix
+          // is not a second resolver.
+          driver: groundDriver.finish(),
+          // A copy, not the live plan: the passes after this one go on writing
+          // it, and comparing against a moving array would credit their writes
+          // to the eleven.
+          written: {
+            ground: Int32Array.from(plan.ground),
+            fluidTop: Int32Array.from(plan.fluidTop),
+            fluidKind: Uint8Array.from(plan.fluidKind),
+          },
+        };
 
   // --- pass 5d: authored programs ------------------------------------------
   // After the structures, for the same reason they run after the columns: a

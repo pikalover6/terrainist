@@ -339,6 +339,66 @@ export interface ResolvedGround {
 }
 
 /* -------------------------------------------------------------------------- */
+/* 9a.4 the one legal read                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An `Int32Array` a holder may read and may not write.
+ *
+ * §10 lists "`ColumnPlan.ground`, `.fluidTop` and `.fluidKind` become read-only
+ * past the resolver … writing is a **type error**" as WP-6 work. §9a.4 pulls the
+ * *alias* forward to the first conversion, and only the alias: the plan's arrays
+ * are still `Int32Array` and still mutable, but a converted pass reaches them
+ * through {@link GroundView} and therefore cannot write through its own read.
+ *
+ * Declared structurally rather than as `Omit<Int32Array, …>`, because `Omit`
+ * keeps the numeric index signature's mutability and would let `view.ground[k] =
+ * 0` through — which is the one thing this type exists to stop. A real
+ * `Int32Array` is assignable to it; the reverse is not.
+ */
+export interface ReadonlyInt32Array extends Iterable<number> {
+  readonly length: number;
+  readonly [index: number]: number;
+}
+
+/** {@link ReadonlyInt32Array}, for the `Uint8Array`-shaped arrays. */
+export interface ReadonlyUint8Array extends Iterable<number> {
+  readonly length: number;
+  readonly [index: number]: number;
+}
+
+/**
+ * The one legal read (§1.4), as it stands at a pass's own pipeline position
+ * (§9a.4).
+ *
+ * > **During the mixture, `resolvedSoFar` is `driver.view()`: the plan's three
+ * > arrays at the pass's own pipeline position, handed out `readonly`.**
+ *
+ * Not a separate array, and deliberately not the baseline. Every column is one
+ * of exactly two kinds and both are the best answer available here: a column
+ * some committed intent won holds **the resolver's answer over the prefix**, and
+ * every other column holds what the unconverted passes wrote — which is
+ * precisely what the pass reads today. Reading `baseline` instead would be
+ * strictly worse: a tier-B pass would lose the precinct grading a tier-A pass
+ * performed by hand, which it can see today.
+ *
+ * Two knowing approximations ride along, both bounded and both named in §9a.4: a
+ * higher tier that declares *later* in the pipeline is missing from the view
+ * (`digCanals` is tier A and runs after the tier-B walls), and the view is not
+ * tier-filtered. Both are today's behaviour exactly, and §13.7's typed
+ * `declare(tier, above)` is what closes the second — at WP-6, where `view(tier)`
+ * can mask every column whose owner is not in a strictly higher tier back to the
+ * baseline.
+ */
+export interface GroundView {
+  readonly region: Region;
+  readonly ground: ReadonlyInt32Array;
+  readonly fluidTop: ReadonlyInt32Array;
+  readonly fluidKind: ReadonlyUint8Array;
+  readonly seaLevel: number;
+}
+
+/* -------------------------------------------------------------------------- */
 /* 7. the report section                                                       */
 /* -------------------------------------------------------------------------- */
 

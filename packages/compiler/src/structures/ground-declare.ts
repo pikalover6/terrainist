@@ -1,14 +1,27 @@
 /**
  * **The shadow declarers** — `docs/GROUND-CONTRACT-v0.md` §8.1, item 2.
  *
- * WP-2 converts **no** caller. Every one of the eleven passes still writes
- * `plan.ground` exactly as it always has; this module recomputes, from what
- * those passes now hand back, the `GroundIntent`s each of them *would* declare
- * after conversion (§3, subsection by subsection). The equivalence shim then
- * resolves that declaration set beside the mutating pipeline and asserts the two
- * agree where §8.3 says they must — which is the safety net for the whole
- * rewrite, and is worth nothing if the declarations are invented rather than
- * derived.
+ * An **unconverted** pass still writes `plan.ground` exactly as it always has;
+ * this module recomputes, from what those passes hand back, the `GroundIntent`s
+ * each of them *would* declare after conversion (§3, subsection by subsection).
+ * `buildStructures` hands the result to `GroundDriver.record` immediately after
+ * the pass runs, at the pass's own pipeline position (§9a.1, rule 1), so the
+ * accumulating prefix carries every claim in the world whether or not its author
+ * has been converted yet. The equivalence shim then resolves that set beside the
+ * mutating pipeline and asserts the two agree where §8.3 says they must — the
+ * safety net for the whole rewrite, worth nothing if the declarations are
+ * invented rather than derived.
+ *
+ * **Each shadow declarer dies at its own pass's conversion, not at WP-6**
+ * (§9a.7). WP-3 converted the street family, so `declareStreets`,
+ * `declareSidewalks`, `declareRoads` and `sidewalkWrites` are gone: the passes
+ * declare for themselves now, from their own code paths, and the intents they
+ * hand to `commit` are the same ones this module used to recompute. What is left
+ * here is the eight passes WP-4 and WP-5 have yet to convert, plus
+ * `declarePadEdits`, whose "pass" is the layout solver and which therefore
+ * records before the first structure pass. `declareAll` is gone with them: there
+ * is one accumulator, in one order, and §3's inventory is a list of call sites
+ * rather than a list of arguments.
  *
  * Two rules govern everything below.
  *
@@ -20,13 +33,8 @@
  * and why production behaviour is bit-for-bit unchanged.
  *
  * **Declare the contract level, not the mutated result.** For most passes those
- * are the same number. For three they are not, and the difference is the point:
+ * are the same number. For two they are not, and the difference is the point:
  *
- * - the **sidewalk** (§3.8b) declares the flanking carriageway's *arc-station*
- *   level, not the `plan.ground` of the centre cell it levels to today. That is
- *   inversion I6 — measured at up to seven blocks of step across one street's
- *   own width — and it has to be visible in the declaration set or the shim
- *   cannot see it at all;
  * - the **doorstep** (§3.11b) declares only the `dropped` outcome's cut columns;
  *   the `stepped` outcome is block placement above a ground it does not move;
  * - the **prop pad** (§3.10b) declares only the columns its own fill-never-cut
@@ -48,16 +56,13 @@ import type { PadEdit } from "../layout/types.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { index, inside } from "./roads.js";
-import type { RoadNetworkResult, StreetSurfaceResult } from "./roads.js";
 import type { PrecinctPassResult } from "./precincts.js";
 import type { PlazaResult } from "./plaza.js";
 import type { RetainingPassResult } from "./retaining.js";
 import type { CourtyardPassResult } from "./courtyards.js";
 import type { CanalPassResult } from "./canals.js";
-import type { StreetscapeResult } from "./streetscape.js";
 import type { PropPassResult } from "./props.js";
 import type { DoorstepResult } from "./doorsteps.js";
-import { projectToLine } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* §3.1 precincts                                                              */
@@ -298,230 +303,6 @@ export function declareCanals(
 }
 
 /* -------------------------------------------------------------------------- */
-/* §3.6 + §3.7 streets and street stairs                                       */
-/* -------------------------------------------------------------------------- */
-
-/**
- * §3.6b and §3.7b — the street family declares as **one subsystem**, because its
- * internal arbitration (rank, ownership, endpoint pins) is already correct and
- * is not the resolver's business.
- *
- * Per surfaced segment: a `profile` at class `street.network`, `subRank` = its
- * position in the `compareStreetRank` sort, `transition: "none"` (a
- * carriageway's own cross-section takes no kerb), over the columns it *owns* at
- * the surfacer's own levels. A flight of steps is the same intent with the
- * subRank that puts it below any street of its width — a flight arrives at a
- * street; a street does not arrive at a flight.
- *
- * Plus, exactly as §3.6b lists them: `preserve` over any run carrying a
- * balustrade or a bridge rail, and `clearance` + `preserve` over the bridged
- * water columns at the fluid surface — the deck is *meant* to stand over its
- * channel, and the column beneath it must not move. And `blendShoulders`
- * declares separately, as `verge`: the pass still computes the BFS; the resolver
- * only arbitrates.
- */
-export function declareStreets(result: StreetSurfaceResult | undefined): GroundIntent[] {
-  if (result === undefined) return [];
-  const out: GroundIntent[] = [];
-  for (const segment of result.declaration.segments) {
-    if (segment.columns.length > 0) {
-      out.push({
-        source: segment.source,
-        sourceClass: "street.network",
-        kind: "profile",
-        columns: segment.columns,
-        transition: "none",
-        subRank: segment.subRank,
-      });
-    }
-    if (segment.preserve && segment.columns.length > 0) {
-      out.push({
-        source: segment.source,
-        sourceClass: "street.network",
-        kind: "preserve",
-        columns: segment.columns,
-        transition: "none",
-        subRank: segment.subRank,
-      });
-    }
-    if (segment.bridged.length > 0) {
-      out.push(
-        {
-          source: `${segment.source}#deck`,
-          sourceClass: "street.network",
-          kind: "clearance",
-          columns: segment.bridged,
-          transition: "none",
-          subRank: segment.subRank,
-        },
-        {
-          source: `${segment.source}#deck`,
-          sourceClass: "street.network",
-          kind: "preserve",
-          columns: segment.bridged,
-          transition: "none",
-          subRank: segment.subRank,
-        },
-      );
-    }
-  }
-  if (result.declaration.shoulders.length > 0) {
-    out.push({
-      source: "street#shoulders",
-      sourceClass: "verge",
-      kind: "profile",
-      columns: result.declaration.shoulders,
-      transition: "ramp",
-    });
-  }
-  return out;
-}
-
-/* -------------------------------------------------------------------------- */
-/* §3.8 streetscape                                                            */
-/* -------------------------------------------------------------------------- */
-
-/**
- * §3.8b — the sidewalk band as a `street.sidewalk` profile, **at the flanking
- * carriageway's arc-station level**.
- *
- * This is inversion I6 and it is a bug fix, not a policy choice. Today
- * `paveSidewalks` reads the current `plan.ground` of the centre column —
- * whatever the last writer left — and levels the whole band to it. Here the
- * level comes from the same `ArcLevels` the carriageway's did, so the sidewalk's
- * level and the carriageway's are one number by construction. A column whose
- * flanking segment the surfacer never levelled (a graph dressed on its own, a
- * segment refused) falls back to what the pass wrote: there is no arc frame to
- * ask, and inventing one would be a second answer.
- *
- * `transition: "step"` — the kerb is the transition, and the resolver generates
- * it. `thickenCurbs` declares nothing: it is a *material* course over columns
- * this pass already paved.
- */
-export function declareSidewalks(
-  nodePath: string,
-  dressed: StreetscapeResult | undefined,
-  streets: StreetSurfaceResult | undefined,
-): GroundIntent[] {
-  if (dressed === undefined || dressed.declaration.length === 0) return [];
-  const bySegment = new Map(
-    (streets?.declaration.segments ?? []).map((s) => [s.id, s] as const),
-  );
-  const columns: GroundClaim[] = [];
-  for (const column of dressed.declaration) {
-    const segment = bySegment.get(`segment:${column.segment}`);
-    const frame = segment?.frame;
-    const levels = segment?.levels;
-    if (frame === undefined || levels === undefined) {
-      columns.push({ idx: column.idx, y: column.wrote });
-      continue;
-    }
-    const arc = projectToLine({ x: column.cx, z: column.cz }, frame.line, frame.arcs).arc;
-    columns.push({ idx: column.idx, y: levels.at(arc) });
-  }
-  return [
-    {
-      source: `${nodePath}#sidewalk`,
-      sourceClass: "street.sidewalk",
-      kind: "profile",
-      columns,
-      transition: "step",
-    },
-  ];
-}
-
-/**
- * What `paveSidewalks` **wrote**, per column — the other half of inversion I6.
- *
- * {@link declareSidewalks} declares the arc-station level, which is the whole
- * point of I6 and is deliberately *not* the number the pass put in the plan. So
- * on an I6 column no claim in the set carries the written level, and §8.3's
- * "the claim whose level equals `plan.ground[k]`" finds nothing to attribute the
- * divergence to. §8.5's I6 row names `street.sidewalk` as its own loser for
- * exactly this reason — "the level changed, not the winner" — and this map is
- * the evidence that makes that row checkable per column instead of assumed.
- *
- * Later districts overwrite earlier ones, as the pipeline's write order does.
- */
-export function sidewalkWrites(
-  streetscape: readonly { readonly result: StreetscapeResult }[] | undefined,
-): Map<number, number> {
-  const out = new Map<number, number>();
-  for (const dressed of streetscape ?? []) {
-    for (const column of dressed.result.declaration) out.set(column.idx, column.wrote);
-  }
-  return out;
-}
-
-/* -------------------------------------------------------------------------- */
-/* §3.9 roads                                                                  */
-/* -------------------------------------------------------------------------- */
-
-/**
- * §3.9b — one `road.network` profile per route over its swept columns at the
- * graded profile, `transition: "none"`; its shoulders declare `verge` exactly as
- * §3.6b's do.
- *
- * `road.network` sits below `street.network`, which is inversion I2: the router
- * already discounts existing road cells so a lane *joins* the grid rather than
- * running alongside it, and the levels should join too. The bridged columns get
- * the same `clearance` + `preserve` a street's deck does, for the same reason.
- */
-export function declareRoads(result: RoadNetworkResult | undefined): GroundIntent[] {
-  if (result === undefined) return [];
-  const out: GroundIntent[] = [];
-  for (const [i, route] of result.declaration.routes.entries()) {
-    // Routing order, later-wins — `road.network`'s answer to `street.network`'s
-    // `subRank`. `surfaceRoute` has no "already surfaced" guard, so where two
-    // lanes share a column the pipeline's level is the **last** route's, and
-    // without this the winner would be whichever route's source string sorted
-    // first. Measured on `hillside-village`: 5 columns, up to 4 blocks, decided
-    // by alphabetical accident. Negative because lower wins (§4.1).
-    const subRank = -i;
-    if (route.columns.length > 0) {
-      out.push({
-        source: route.source,
-        sourceClass: "road.network",
-        kind: "profile",
-        columns: route.columns,
-        transition: "none",
-        subRank,
-      });
-    }
-    if (route.bridged.length > 0) {
-      out.push(
-        {
-          source: `${route.source}#deck`,
-          sourceClass: "road.network",
-          kind: "clearance",
-          columns: route.bridged,
-          transition: "none",
-          subRank,
-        },
-        {
-          source: `${route.source}#deck`,
-          sourceClass: "road.network",
-          kind: "preserve",
-          columns: route.bridged,
-          transition: "none",
-          subRank,
-        },
-      );
-    }
-  }
-  if (result.declaration.shoulders.length > 0) {
-    out.push({
-      source: "road#shoulders",
-      sourceClass: "verge",
-      kind: "profile",
-      columns: result.declaration.shoulders,
-      transition: "ramp",
-    });
-  }
-  return out;
-}
-
-/* -------------------------------------------------------------------------- */
 /* §3.10 props, §3.11 doorsteps                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -612,61 +393,6 @@ export function declarePadEdits(
       subRank: -i,
     });
   }
-  return out;
-}
-
-/* -------------------------------------------------------------------------- */
-/* the whole declaration set                                                   */
-/* -------------------------------------------------------------------------- */
-
-/** Everything {@link declareAll} needs; every field optional, as every pass is. */
-export interface GroundDeclarationInput {
-  readonly plan: ColumnPlan;
-  readonly precincts?: PrecinctPassResult;
-  readonly plaza?: { readonly nodePath: string; readonly result: PlazaResult };
-  readonly retaining?: RetainingPassResult;
-  readonly courtyards?: CourtyardPassResult;
-  readonly canals?: { readonly nodePath: string; readonly result: CanalPassResult };
-  readonly streets?: StreetSurfaceResult;
-  /** One per district dressed, each with the node path its sidewalks belong to. */
-  readonly streetscape?: readonly {
-    readonly nodePath: string;
-    readonly result: StreetscapeResult;
-  }[];
-  readonly roads?: RoadNetworkResult;
-  readonly props?: PropPassResult;
-  readonly doorsteps?: DoorstepResult;
-  readonly padEdits?: readonly PadEdit[];
-}
-
-/**
- * The whole declaration set, in pipeline order — what the shim resolves.
- *
- * Pipeline order is not precedence order and does not need to be: the resolver's
- * answer is a pure function of the set (§4.1's comparator is total on distinct
- * intents, because `source` is unique within a class), so this order is for the
- * *reader* — it is §3's inventory, in §3's sequence, so a missing pass is missing
- * from a list somebody can check against the doc.
- */
-export function declareAll(input: GroundDeclarationInput): GroundIntent[] {
-  const out: GroundIntent[] = [];
-  out.push(...declarePrecincts(input.precincts));
-  if (input.plaza !== undefined) {
-    out.push(...declarePlaza(input.plaza.nodePath, input.plaza.result));
-  }
-  out.push(...declareRetaining(input.retaining));
-  out.push(...declareCourtyards(input.courtyards));
-  if (input.canals !== undefined) {
-    out.push(...declareCanals(input.canals.nodePath, input.canals.result));
-  }
-  out.push(...declareStreets(input.streets));
-  for (const dressed of input.streetscape ?? []) {
-    out.push(...declareSidewalks(dressed.nodePath, dressed.result, input.streets));
-  }
-  out.push(...declareRoads(input.roads));
-  out.push(...declareProps(input.props));
-  out.push(...declareDoorsteps(input.doorsteps));
-  if (input.padEdits !== undefined) out.push(...declarePadEdits(input.plan, input.padEdits));
   return out;
 }
 

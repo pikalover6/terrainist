@@ -39,7 +39,13 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type {
+  GroundClaim,
+  GroundIntent,
+  GroundView,
+  ReadonlyInt32Array,
+} from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { clusterCell, isSteepGround } from "../terrain/cluster.js";
 import { detailSeed, hash2 } from "../terrain/detail.js";
@@ -240,8 +246,16 @@ export interface RoadNetworkInput {
   readonly nodePath: string;
   readonly params: RoadParams;
   readonly seed: Seed256;
-  /** Mutated in place: ground, surface, subsurface and snow along each route. */
+  /** Mutated in place: surface, subsurface and soil along each route. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * See {@link StreetSurfaceInput.ground}: every level goes through `commit`, and
+   * the only callers that omit it are the unit tests that route a network on a
+   * bare plan.
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /** Every placed node — buildings supply anchors, the plaza supplies the hub. */
@@ -392,6 +406,8 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const { plan, occupancy } = input;
   const { region } = plan;
   const cells = region.width * region.depth;
+  const driver = input.ground ?? driverForPlan(plan);
+  const view = driver.view();
 
   const width = clampInt(Math.round(input.params.width ?? 3), ROAD_MIN_WIDTH, ROAD_MAX_WIDTH);
   const spacing = Math.max(4, Math.round(input.params.lanternSpacing ?? ROAD_LANTERN_SPACING));
@@ -499,14 +515,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     const levels = arcLevels(
       frame,
       gradeProfile(
-        frame.stations.map((p) => plan.ground[at(p)] as number),
+        // §9 step 9: the level-deciding read is the view — the plan at this
+        // route's own position, which already carries the routes committed
+        // before it.
+        frame.stations.map((p) => view.ground[at(p)] as number),
         plan.seaLevel,
         frame.stations.map((p) => (paved[at(p)] === 1 ? 0 : ROAD_FILL_BAND)),
         // A deck has to clear the water it spans, so a bridge cell's floor is
         // the fluid surface plus one rather than the water table.
         frame.stations.map((p) => {
           const k = at(p);
-          return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
+          return water[k] === 1 ? Math.max(plan.seaLevel, view.fluidTop[k] as number) + 1 : 0;
         }),
       ),
     );
@@ -515,14 +534,25 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       surfaced.push({ x: cell.x, z: cell.z, y: levels.at(frame.pathArc[i] as number) });
     }
 
-    const declaredLevel: GroundClaim[] = [];
-    const declaredBridged: GroundClaim[] = [];
-    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged, undefined, { level: declaredLevel, bridged: declaredBridged });
-    declaredRoutes.push({
-      source: `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`,
-      columns: declaredLevel,
-      bridged: declaredBridged,
-    });
+    // §3.9b — one `road.network` profile per route over its swept columns at the
+    // graded profile, `transition: "none"`; the bridged columns get the same
+    // `clearance` + `preserve` a street's deck does. Committed **before** the
+    // route is dressed and before the next route is routed, because the next
+    // route's A* and its grade both read the ground this one settled.
+    //
+    // Routing order, later-wins: `surfaceRoute` has no "already surfaced" guard,
+    // so where two lanes share a column the pipeline's level is the last route's.
+    // Negative because lower wins (§4.1); without it the winner would be whichever
+    // route's source string sorted first — measured on `hillside-village` at 5
+    // columns, up to 4 blocks, decided by alphabetical accident.
+    const source = `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`;
+    const subRank = -declaredRoutes.length;
+    const claimed = declareRoute(view, blocked, spots, levels, paved, water);
+    // Before the commit: the relief test sees the land this lane is cut into.
+    const steep = reliefOf(region, view.ground, spots);
+    driver.commit(routeIntents(source, subRank, claimed));
+    declaredRoutes.push({ source, columns: claimed.level, bridged: claimed.bridged });
+    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged, steep);
     blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
 
     routes.push({
@@ -550,8 +580,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   if (foreign !== undefined) {
     for (let k = 0; k < cells; k++) if (foreign[k] === 1) keepOut[k] = 1;
   }
-  const declaredShoulders: GroundClaim[] = [];
-  blendShoulders(region, plan, road, roadY, keepOut, paved, undefined, declaredShoulders);
+  const declaredShoulders = blendShoulders(
+    region,
+    plan,
+    view,
+    driver,
+    "road#shoulders",
+    road,
+    roadY,
+    keepOut,
+    paved,
+  );
 
   // --- lanterns, dead last -------------------------------------------------
   // A post planted while routes were still being laid could have a later route
@@ -590,6 +629,54 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   };
 }
 
+/**
+ * §3.9b's intents for one route.
+ *
+ * `road.network` sits **below** `street.network`, which is inversion I2: the
+ * router already discounts existing road cells so a lane *joins* the grid rather
+ * than running alongside it, and the levels should join too. Today the road pass
+ * runs after the district streets and overwrites the shared columns; under rank
+ * it does not.
+ */
+function routeIntents(
+  source: string,
+  subRank: number,
+  claimed: { readonly level: readonly GroundClaim[]; readonly bridged: readonly GroundClaim[] },
+): GroundIntent[] {
+  const out: GroundIntent[] = [];
+  if (claimed.level.length > 0) {
+    out.push({
+      source,
+      sourceClass: "road.network",
+      kind: "profile",
+      columns: claimed.level,
+      transition: "none",
+      subRank,
+    });
+  }
+  if (claimed.bridged.length > 0) {
+    out.push(
+      {
+        source: `${source}#deck`,
+        sourceClass: "road.network",
+        kind: "clearance",
+        columns: claimed.bridged,
+        transition: "none",
+        subRank,
+      },
+      {
+        source: `${source}#deck`,
+        sourceClass: "road.network",
+        kind: "preserve",
+        columns: claimed.bridged,
+        transition: "none",
+        subRank,
+      },
+    );
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 /* district streets (fabric v2, F1)                                            */
 /* -------------------------------------------------------------------------- */
@@ -615,8 +702,18 @@ export interface StreetSurfaceInput {
     readonly width: number;
     readonly path: readonly { readonly x: number; readonly z: number }[];
   }[];
-  /** Mutated in place, exactly as the road pass mutates it. */
+  /** Mutated in place, exactly as the road pass mutates it — materials only. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * Every level this pass decides goes through `commit`; nothing here writes
+   * `plan.ground` any more. Omitted only by callers that are not the pipeline —
+   * the unit tests that surface a graph on a bare plan — which then get a driver
+   * of their own over the plan as it stands (`driverForPlan`). `buildStructures`
+   * always supplies the one driver the whole compile accumulates into.
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /** Footprints no street may cut into — every building, district or not. */
@@ -764,6 +861,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const { plan, occupancy } = input;
   const { region } = plan;
   const cells = region.width * region.depth;
+  const driver = input.ground ?? driverForPlan(plan);
+  const view = driver.view();
 
   const water = buildBridgeableMask(plan);
   const blocked = new Uint8Array(cells);
@@ -885,8 +984,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   /* --- phase 1: claim ----------------------------------------------------- */
 
   // The frozen ground. Every level below is measured against this and never
-  // against `plan.ground`, which the dress phase is about to start moving.
-  const natural = Int32Array.from(plan.ground);
+  // against the live view, which the commit is about to start moving. §9 step 9:
+  // the read is `driver.view()` — the plan at this pass's own pipeline position,
+  // which holds the resolver's answer wherever a converted pass has won and the
+  // unconverted passes' writes everywhere else. (§10 retires this snapshot at
+  // WP-6: the baseline *is* the snapshot, and there is only one.)
+  const natural = Int32Array.from(view.ground);
   const naturalAt = (x: number, z: number): number => natural[index(region, x, z)] as number;
   const owner = new Int32Array(cells).fill(-1);
   /** The level each owned column was given — what a pin reads. */
@@ -1023,7 +1126,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // would follow the channel's *bed* — a ramp down into the canal and out
       // the other side — because `plan.ground` under water is the bed.
       deckFloor.push(
-        job.decks && water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0,
+        job.decks && water[k] === 1 ? Math.max(plan.seaLevel, view.fluidTop[k] as number) + 1 : 0,
       );
     }
     for (const [i, c] of path.entries()) {
@@ -1045,6 +1148,63 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       stepFlag[spot.idx] = levels.steps(spot.arc) ? 1 : 0;
     }
   }
+
+  /* --- phase 2b: declare, and commit the whole subsystem ------------------- */
+  // §3.6b: the street family declares as **one subsystem**, because its internal
+  // arbitration — rank, ownership, endpoint pins — is already correct and is not
+  // the resolver's business. So every segment's claim is computed here, after the
+  // level phase has settled all of them against `natural`, and the whole set goes
+  // to the driver in one commit. Only then does anything paint.
+
+  for (const job of jobs) {
+    if (job.role === "steps") {
+      const geometry = job.geometry;
+      const levels = job.stairs;
+      if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
+        continue;
+      }
+      // §3.7b: a flight is a `street.network` profile whose `subRank` puts it
+      // below any street of its width — a flight arrives at a street; a street
+      // does not arrive at a flight — plus `preserve` over the whole tread band,
+      // which is the balustrade problem stated as a claim.
+      declaredSegments.push({
+        source: `street:${job.rank.id}`,
+        subRank: subRankOf.get(job.order) ?? job.order,
+        role: "steps",
+        id: job.rank.id,
+        columns: geometry.columns
+          .filter((c) => owner[c.idx] === job.order)
+          .map((c) => ({ idx: c.idx, y: columnY[c.idx] as number })),
+        bridged: [],
+        preserve: true,
+      });
+      continue;
+    }
+    const levels = job.levels;
+    const spots = job.spots;
+    if (levels === undefined || spots === undefined) continue;
+    const claimed = declareRoute(view, blocked, spots, levels, paved, water, {
+      owner,
+      job: job.order,
+    });
+    declaredSegments.push({
+      source: `street:${job.rank.id}`,
+      subRank: subRankOf.get(job.order) ?? job.order,
+      role: "carriageway",
+      id: job.rank.id,
+      columns: claimed.level,
+      bridged: claimed.bridged,
+      // A run that decks water carries a rail; §3.6b preserves those columns.
+      preserve: claimed.bridged.length > 0,
+      frame: levels.frame,
+      levels,
+    });
+  }
+
+  // Declared in rank order, which is the order the resolver reads them in and the
+  // order the report prints them in.
+  declaredSegments.sort((a, b) => a.subRank - b.subRank);
+  driver.commit(streetIntents(declaredSegments));
 
   /* --- phase 3: dress ----------------------------------------------------- */
 
@@ -1071,20 +1231,6 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         ...(occupancy === undefined ? {} : { occupancy }),
       });
       blocks.push(...flight.blocks);
-      // §3.7b: a flight is a `street.network` profile whose `subRank` puts it
-      // below any street of its width, plus `preserve` over the whole tread
-      // band — the balustrade problem, stated as a claim.
-      declaredSegments.push({
-        source: `street:${job.rank.id}`,
-        subRank: subRankOf.get(job.order) ?? job.order,
-        role: "steps",
-        id: job.rank.id,
-        columns: geometry.columns
-          .filter((c) => owner[c.idx] === job.order)
-          .map((c) => ({ idx: c.idx, y: columnY[c.idx] as number })),
-        bridged: [],
-        preserve: true,
-      });
       continue;
     }
 
@@ -1099,8 +1245,6 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       z: cell.z,
       y: levels.at(levels.frame.pathArc[i] as number),
     }));
-    const declaredLevel: GroundClaim[] = [];
-    const declaredBridged: GroundClaim[] = [];
     surfaceRoute(
       region,
       plan,
@@ -1114,21 +1258,11 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       paved,
       water,
       bridged,
-      { owner, job: job.order, step: stepFlag, natural },
-      { level: declaredLevel, bridged: declaredBridged },
+      // The surfacer's relief is measured against the pass-entry snapshot, which
+      // no commit moves, so its timing was never in question.
+      reliefOf(region, natural, spots),
+      { owner, job: job.order, step: stepFlag },
     );
-    declaredSegments.push({
-      source: `street:${job.rank.id}`,
-      subRank: subRankOf.get(job.order) ?? job.order,
-      role: "carriageway",
-      id: job.rank.id,
-      columns: declaredLevel,
-      bridged: declaredBridged,
-      // A run that decks water carries a rail; §3.6b preserves those columns.
-      preserve: declaredBridged.length > 0,
-      frame: levels.frame,
-      levels,
-    });
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
       // deck, the same rail, the same pier rhythm and the same approaches a
@@ -1184,8 +1318,18 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     );
   }
 
-  const declaredShoulders: GroundClaim[] = [];
-  blendShoulders(region, plan, road, roadY, blocked, paved, input.seam, declaredShoulders);
+  const declaredShoulders = blendShoulders(
+    region,
+    plan,
+    view,
+    driver,
+    "street#shoulders",
+    road,
+    roadY,
+    blocked,
+    paved,
+    input.seam,
+  );
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;
@@ -1201,13 +1345,67 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     road,
     bridgeColumns,
     arterialColumns,
-    declaration: {
-      // Declared in rank order, which is the order the resolver reads them in
-      // and the order the report prints them in.
-      segments: [...declaredSegments].sort((a, b) => a.subRank - b.subRank),
-      shoulders: declaredShoulders,
-    },
+    declaration: { segments: declaredSegments, shoulders: declaredShoulders },
   };
+}
+
+/**
+ * §3.6b and §3.7b's intents, from the segments the pass has just declared.
+ *
+ * One `profile` per surfaced segment at class `street.network`, `subRank` = its
+ * position in the `compareStreetRank` sort — so the proven order
+ * `(−width, roleRank, kindRank, id)` is preserved exactly and is not re-litigated
+ * by the contract — and `transition: "none"`, because a carriageway's own
+ * cross-section takes no kerb. Plus `preserve` over any run something *stands*
+ * on (a stair balustrade, a bridge rail), and `clearance` + `preserve` over the
+ * bridged water columns at the fluid surface: the deck is meant to stand over its
+ * channel, and the column beneath it must not move.
+ */
+function streetIntents(segments: readonly StreetSegmentDeclaration[]): GroundIntent[] {
+  const out: GroundIntent[] = [];
+  for (const segment of segments) {
+    if (segment.columns.length > 0) {
+      out.push({
+        source: segment.source,
+        sourceClass: "street.network",
+        kind: "profile",
+        columns: segment.columns,
+        transition: "none",
+        subRank: segment.subRank,
+      });
+    }
+    if (segment.preserve && segment.columns.length > 0) {
+      out.push({
+        source: segment.source,
+        sourceClass: "street.network",
+        kind: "preserve",
+        columns: segment.columns,
+        transition: "none",
+        subRank: segment.subRank,
+      });
+    }
+    if (segment.bridged.length > 0) {
+      out.push(
+        {
+          source: `${segment.source}#deck`,
+          sourceClass: "street.network",
+          kind: "clearance",
+          columns: segment.bridged,
+          transition: "none",
+          subRank: segment.subRank,
+        },
+        {
+          source: `${segment.source}#deck`,
+          sourceClass: "street.network",
+          kind: "preserve",
+          columns: segment.bridged,
+          transition: "none",
+          subRank: segment.subRank,
+        },
+      );
+    }
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2182,6 +2380,15 @@ function paintCentreLines(
  * the same last-write-wins traversal order. See
  * `docs/COURTYARDS-AND-LEVELS-v0.md` §2.3 for why that split is what makes a
  * flat world provably unmoved.
+ *
+ * **What it no longer does is move the ground** (`docs/GROUND-CONTRACT-v0.md`
+ * §9, WP-3). {@link declareRoute} computes this run's `GroundClaim`s from exactly
+ * the filters below, the caller commits them through the driver, and the driver
+ * writes `ground`, `fluidTop` and `snow`. What is left here is §9 step 2's
+ * "second loop": the surface mix, the subsurface, the soil, the road tag, the
+ * level mask and the occupancy claim — and it runs over the columns this segment
+ * **claimed**, never the ones it won, because ownership decides geometry and
+ * deliberately not material.
  */
 function surfaceRoute(
   region: Region,
@@ -2196,28 +2403,24 @@ function surfaceRoute(
   paved: Uint8Array,
   water: Uint8Array,
   bridged: Uint8Array,
+  /**
+   * Per swept column: does it sit on a face rather than a floor?
+   *
+   * **Computed by the caller, before this run's levels reach the plan**, and that
+   * timing is the whole of it: the relief test has to see the land, not the road.
+   * It used to be taken here from `plan.ground` on the way in, which was the same
+   * instant because this function did the writing; now the driver writes first
+   * (§9, step 2), so a test taken here would read the road it is asking about.
+   * See {@link reliefOf}.
+   */
+  steep: readonly boolean[],
   ownership?: {
     readonly owner: Int32Array;
     readonly job: number;
     /** 1 where the owning segment's profile steps — a step is geometry. */
     readonly step: Uint8Array;
-    /** The frozen ground the relief test is taken against. */
-    readonly natural: Int32Array;
   },
-  /**
-   * Optional sink for the ground contract's claim (§3.6b, §3.9b): every column
-   * this call levels, at the level it levels it to, plus the bridged columns it
-   * deliberately leaves alone. Write-only, filled beside the writes themselves,
-   * and never read — so a surfacing with a sink is byte-for-byte one without.
-   */
-  declare?: { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] },
 ): void {
-  // Which columns sit on a face, measured against the *natural* ground — the
-  // loop below flattens columns as it goes, so a test taken inside it would
-  // depend on how far along the sweep we were. See the note at the draw.
-  const relief = ownership?.natural ?? plan.ground;
-  const steep = spots.map((spot) => isSteepGround(region, relief, spot.x, spot.z));
-
   for (const [n, spot] of spots.entries()) {
     const x = spot.x;
     const z = spot.z;
@@ -2236,9 +2439,6 @@ function surfaceRoute(
     // canopy clip keeps the deck clear.
     if (water[idx] === 1) {
       if (!owned) continue;
-      // §3.6b: the deck stands over its channel, so the *water* column is what
-      // is declared — `clearance` at the fluid surface plus `preserve`.
-      declare?.bridged.push({ idx, y: plan.fluidTop[idx] as number });
       road[idx] = 1;
       roadY[idx] = y;
       bridged[idx] = 1;
@@ -2266,10 +2466,8 @@ function surfaceRoute(
     // road. On gentle ground the draw is byte-for-byte what it always was.
     const s = steep[n] === true ? clusterCell(x, z) : { x, z };
     if (owned) {
-      declare?.level.push({ idx, y });
-      plan.ground[idx] = y;
-      plan.fluidTop[idx] = y;
-      plan.snow[idx] = 0;
+      // `ground`, `fluidTop` and `snow` are the driver's, from this run's
+      // committed claim (§9a.1 rule 2). What is left is material.
       plan.subsurface[idx] = states.subsurface;
       if (plan.soil[idx] === 0) plan.soil[idx] = 1;
       road[idx] = 1;
@@ -2282,6 +2480,70 @@ function surfaceRoute(
         ? states.shoulder(s.x, s.z)
         : states.surface(s.x, s.z);
   }
+}
+
+/**
+ * Which of a run's swept columns sit on a **face** rather than a floor.
+ *
+ * The surface mix is sampled at the *cluster* cell wherever the ground the road
+ * is cut into is a face: a mix drawn per column is fine underfoot on the flat and
+ * reads as static on a gorge apron, where every column is a visible vertical
+ * facet. The read has to be taken **before** the run's own levels reach the
+ * ground, or the test sees the road instead of the land — which is why this is a
+ * function the caller invokes at a chosen moment rather than a line inside
+ * {@link surfaceRoute}. The street surfacer passes its frozen pass-entry
+ * snapshot; the road pass passes the view, immediately before its commit.
+ */
+function reliefOf(
+  region: Region,
+  // Read-only by intent — a converted pass may not write through its own read
+  // (§9a.4) — and widened for `isSteepGround`, which predates the alias and takes
+  // the array itself. The one place the two meet, and it reads.
+  ground: ReadonlyInt32Array,
+  spots: readonly SweptColumn[],
+): boolean[] {
+  const field = ground as Int32Array;
+  return spots.map((spot) => isSteepGround(region, field, spot.x, spot.z));
+}
+
+/**
+ * What one surfaced run claims (`docs/GROUND-CONTRACT-v0.md` §3.6b, §3.9b).
+ *
+ * The declaration half of {@link surfaceRoute}, and deliberately the *same*
+ * filters read in the *same* order: a wet column the run owns is a deck, so the
+ * water beneath it is declared rather than levelled (`clearance` at the fluid
+ * surface, plus `preserve` — the deck is meant to stand over its channel and the
+ * column beneath it must not move); a foreign footprint is never surfaced by
+ * anybody; a plaza surfaced itself and keeps its own level; and a column some
+ * other segment owns is that segment's to level, not this one's.
+ *
+ * Pure: it reads the view and writes only its return value, so a pass may
+ * declare, commit, and only then dress.
+ */
+function declareRoute(
+  view: GroundView,
+  blocked: Uint8Array,
+  spots: readonly SweptColumn[],
+  levels: ArcLevels,
+  paved: Uint8Array,
+  water: Uint8Array,
+  ownership?: { readonly owner: Int32Array; readonly job: number },
+): { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] } {
+  const level: GroundClaim[] = [];
+  const bridged: GroundClaim[] = [];
+  for (const spot of spots) {
+    const idx = spot.idx;
+    const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
+    if (water[idx] === 1) {
+      if (owned) bridged.push({ idx, y: view.fluidTop[idx] as number });
+      continue;
+    }
+    if (blocked[idx] === 1) continue;
+    if (paved[idx] === 1) continue;
+    if (!owned) continue;
+    level.push({ idx, y: levels.at(spot.arc) });
+  }
+  return { level, bridged };
 }
 
 /**
@@ -2318,21 +2580,34 @@ function surfaceRoute(
  * `seam`, when given, is never written: a column where the ground changes level
  * by more than the ring allowance is not a bank to be smoothed, it is a face, and
  * §3.4 owns what stands on it.
+ *
+ * **Converted at WP-3** (`docs/GROUND-CONTRACT-v0.md` §3.6b's last bullet, §9).
+ * The pass still computes the BFS — the resolver only arbitrates (§13.9) — but
+ * the ring targets are now a `verge` profile, committed through the driver.
+ * `verge` is rank 140, the last built rank there is, so a bank can only move
+ * ground nothing else claimed: that is inversion I5, and it replaces the
+ * hand-written guard list (claimed / wet / near-wet / on the `seam` mask) with
+ * one rank. The guards below stay for this round, because deleting a defence the
+ * rank makes redundant is §10's work and not a conversion's.
+ *
+ * The rings are collected before anything is committed, which is sound because a
+ * column belongs to exactly one ring: ring `k + 1` reads `plan.ground` on columns
+ * ring `k` never wrote, so the answer is the same one the interleaved form gave.
  */
 function blendShoulders(
   region: Region,
   plan: ColumnPlan,
+  view: GroundView,
+  driver: GroundDriver,
+  /** `<pass>#shoulders` — the `verge` claim's source, unique and stable (§9 step 3). */
+  source: string,
   road: Uint8Array,
   roadY: Int32Array,
   blocked: Uint8Array,
   paved: Uint8Array,
   seam?: Uint8Array,
-  /**
-   * Optional sink for §3.6b's last bullet: the ring targets this blend computes,
-   * declared as a `verge` profile. Write-only and never read.
-   */
-  declare?: GroundClaim[],
-): void {
+): readonly GroundClaim[] {
+  const declared: GroundClaim[] = [];
   const n = region.width * region.depth;
   // Ring dilation of the finished road mask, not perpendicular offsets from a
   // centre line. The offset form was the obvious one and it is wrong on a
@@ -2397,17 +2672,28 @@ function blendShoulders(
         if (nearFluid(region, plan, x, z)) continue;
 
         const y = height[idx] as number;
-        const g = plan.ground[idx] as number;
+        const g = view.ground[idx] as number;
         const target = g > y + allowed ? y + allowed : g < y - allowed ? y - allowed : g;
         if (target === g) continue;
-        declare?.push({ idx, y: target });
-        plan.ground[idx] = target;
-        plan.fluidTop[idx] = target;
-        if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+        declared.push({ idx, y: target });
       }
     }
     frontier = next;
   }
+
+  if (declared.length > 0) {
+    driver.commit([
+      { source, sourceClass: "verge", kind: "profile", columns: declared, transition: "ramp" },
+    ]);
+    // §9 step 2's second loop, over the columns the blend **claimed**: a verge
+    // moves only the height, never the surface block, so a lane through grass
+    // keeps grass right up to its shoulder — and the soil depth follows the cut
+    // whether or not the rank let the bank have the column.
+    for (const claim of declared) {
+      if (plan.soil[claim.idx] === 0) plan.soil[claim.idx] = 1;
+    }
+  }
+  return declared;
 }
 
 /** True when `(x, z)` or any of its four neighbours holds a fluid. */

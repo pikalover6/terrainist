@@ -92,6 +92,31 @@ interface WorldCase {
 const PAD_APRON_MISMATCHES = { "c1-harbourtown": 55 } as const;
 
 /**
+ * **WP-3's finding, recorded at the golden it moved.**
+ *
+ * §9a.5 says a divergence count that *grows* is never a golden update: it is a
+ * finding with exactly two legitimate causes, and the cause has to be written
+ * down before the number is changed. This is cause 1 — "the declaration set
+ * moved" — and the declarer it moved for is not the one §9a.3 predicts.
+ *
+ * §9a.3 names `prop.pad` as "the one declarer whose *column* set is a function of
+ * the ground it is declared against", because `levelPropPad` selects with
+ * `if (g >= want) continue`. **`doorstep.landing` is a second.**
+ * `buildDoorsteps` cuts a landing only where the ground stands *above* the
+ * threshold line, so converting the sidewalk — which is what I6 does, on 9,921
+ * columns of `c1-harbourtown` and 4,169 of `showcase-bayline` — changes which
+ * doors get a `dropped` outcome at all. Measured: `doorstepsDropped` 0 → 12 on
+ * `c1-harbourtown` and 7 → 3 on `showcase-bayline`, and every one of the new
+ * landings that lands on a street column is an I3 divergence, attributable and
+ * counted. I3 therefore grows at WP-3 and goes to **zero at WP-4**, where §9a.3's
+ * table already puts it — the same shape §9a.3 predicts for I4 shrinking at WP-3
+ * and reaching zero at WP-5, in the other direction.
+ *
+ * The doc gets amended; the golden is not bent to hide it.
+ */
+const DOORSTEP_RESELECTION = { "c1-harbourtown": 12, "showcase-bayline": 6 } as const;
+
+/**
  * §8.4's flat controls. `showcase-*`, `demo-*` and `c1-harbourtown`: the worlds
  * §12's byte-identity argument is about.
  *
@@ -105,9 +130,13 @@ const PAD_APRON_MISMATCHES = { "c1-harbourtown": 55 } as const;
 const CONTROLS: readonly WorldCase[] = [
   {
     name: "c1-harbourtown",
-    // I6 alone: the sidewalk re-levelling from `plan.ground` is what a city's
-    // whole street fabric does, so it is where the fix shows up at scale.
-    inversions: { ...NONE, I6: 9921 },
+    // WP-3 converted the street family. **I6: 9,921 → 0** — the largest single
+    // movement in the rewrite, and the whole of it: the sidewalk's level now
+    // comes from the flanking carriageway's `ArcLevels` rather than from a second
+    // read of `plan.ground`, so the pass writes what it declares and there is
+    // nothing left to diverge. **I3: 0 → 12** — see `DOORSTEP_RESELECTION`; it
+    // goes to zero at WP-4.
+    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"] },
     cleanMismatches: PAD_APRON_MISMATCHES["c1-harbourtown"],
   },
   { name: "showcase-ironvale", inversions: { ...NONE, I4: 41 } },
@@ -132,17 +161,26 @@ const HILLS: readonly WorldCase[] = [
     // quarter on a slope, and the world with the richest inversion mix in the
     // repo — the only committed example that exercises I1, I2 and I3 at once.
     name: "showcase-bayline",
-    inversions: { ...NONE, I1: 3, I2: 2, I3: 3, I6: 4169 },
+    // WP-3, and the world where three of the four land at once (§9a.3's table):
+    // **I1: 3 → 0** — the street/sidewalk/verge side of "a face beats a street"
+    // is the *loser's* conversion, and the loser is WP-3's; the wall is still
+    // written by hand and still wins. **I2: 2 → 0** — a street beats a road, both
+    // of them inside WP-3's own family. **I6: 4,169 → 0**. **I3: 3 → 6** — see
+    // `DOORSTEP_RESELECTION`. §9a.3 splits I1 between WP-3 and WP-4 ("except any
+    // column whose last writer is `gradeBank`"); measured, `showcase-bayline`'s
+    // share is entirely WP-3's — there is no `gradeBank` remainder here.
+    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["showcase-bayline"] },
   },
   {
     name: "levels_scarp",
     doc: steppedWorld,
-    // The stepped quarter, and the two inversions a step produces: 52 sidewalk
-    // columns whose level now comes from the arc frame rather than from whatever
-    // the last writer left (I6), and one doorstep landing cut into a column a
-    // street owns, which under §4.4 gets a flush threshold instead of a trench
-    // (I3). Both are what §4.4 says a stepped world should show.
-    inversions: { ...NONE, I3: 1, I6: 52 },
+    // **I6: 52 → 0** at WP-3. The one doorstep landing cut into a column a
+    // street owns stays, unmoved: I3 is WP-4's. That this count did *not* grow
+    // where the two city worlds' did is what makes `DOORSTEP_RESELECTION` a
+    // reselection — a door here and a door there whose approach the sidewalk's
+    // new level pushed across the threshold line — rather than a systematic
+    // shift the conversion introduced.
+    inversions: { ...NONE, I3: 1 },
   },
 ];
 
@@ -250,6 +288,25 @@ describe("the ground contract's equivalence shim", () => {
 
     it("I6's step never exceeds the seven blocks it was measured at", () => {
       expect(reportFor(name).maxSidewalkDelta).toBeLessThanOrEqual(7);
+    });
+
+    it("the driver's answer is the one-shot resolve", () => {
+      // §9a.5's new assertion, and §9a.1 rule 3's proof: `resolveGround` is
+      // called on the whole accumulated array every time and never patched, so
+      // the last intermediate answer *is* the final one. Zero here is what
+      // catches an intent the driver mutated, dropped, or — rule 4, the most
+      // likely way to get this wrong — whose `columns` were a generator, which is
+      // exhausted after the first of a dozen resolves.
+      expect(failuresOf(name, "driver mismatch").join("\n")).toBe("");
+      expect(reportFor(name).driverMismatches).toBe(0);
+    });
+
+    it("no CLEAN column diverges — the sidewalk's self-inversion is gone", () => {
+      // §9a.5: `cleanDivergences` was I6's single-claimant columns, credited to
+      // the self-row and held to seven blocks. WP-3 converted the sidewalk, so
+      // the pass writes what it declares; the count is zero and the `selfWrites`
+      // machinery went with it.
+      expect(reportFor(name).cleanDivergences).toBe(0);
     });
 
     it("the partition covers the region exactly once", () => {

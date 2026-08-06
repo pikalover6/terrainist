@@ -62,9 +62,21 @@ import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { detailSeed, hash2, hashInt } from "../terrain/detail.js";
 import type { Palette } from "../terrain/palette.js";
 
+import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
+
 import type { StructureBlock } from "./buildings.js";
 import { index, inside } from "./roads.js";
-import { thickenCourse } from "./sweep.js";
+import { projectToLine, thickenCourse, type ArcFrame, type ArcLevels } from "./sweep.js";
+
+/**
+ * One surfaced segment's arc frame and levels — what a sidewalk takes its own
+ * level from. See {@link StreetscapeContext.levels}.
+ */
+export interface SegmentArc {
+  readonly frame: ArcFrame;
+  readonly levels: ArcLevels;
+}
 
 /* -------------------------------------------------------------------------- */
 /* the pinned StreetGraph contract (duplicated from docs/DESIGN.md)            */
@@ -238,8 +250,33 @@ export type FurnitureKit = "downtown" | "village" | "none";
 
 /** Everything {@link dressStreets} reads. */
 export interface StreetscapeContext {
-  /** The column plan; sidewalks and crossings mutate it in place. */
+  /** The column plan; sidewalks and crossings mutate its *materials* in place. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * The sidewalk band is a `street.sidewalk` profile now, committed through this
+   * rather than written. Omitted only by callers that are not the pipeline — the
+   * unit tests that dress a graph on a bare plan — which get a driver of their
+   * own over the plan as it stands.
+   */
+  readonly ground?: GroundDriver;
+  /**
+   * The flanking carriageway's arc frame and levels, per surfaced segment id
+   * (`street:<id>`) — **inversion I6** (§3.8b, §4.4).
+   *
+   * `paveSidewalks` used to read the current `plan.ground` of the centre column,
+   * whatever the last writer left, and level the whole band to it: measured at up
+   * to **seven blocks** of step across one street's own width, and one of the six
+   * walked defects. With this, the sidewalk's level and the carriageway's come
+   * from one number by construction — the same {@link ArcLevels} the surfacer
+   * graded, sampled at the band column's own arc station.
+   *
+   * A segment the surfacer never levelled (a graph dressed on its own, a segment
+   * refused) has no entry, and the band falls back to the centre cell's ground:
+   * there is no arc frame to ask, and inventing one would be a second answer.
+   */
+  readonly levels?: ReadonlyMap<string, SegmentArc>;
   /** Block-name → state-id resolution for prop ops. */
   readonly stack: PrismarineStack;
   /** The district node's seed; every hash stream derives from it. */
@@ -327,30 +364,6 @@ export interface StreetscapeResult {
   /** Columns repainted as crossing stripes. */
   readonly crossingColumns: number;
   readonly diagnostics: readonly LoamDiagnostic[];
-  /**
-   * Every sidewalk column this pass paved, with the segment it flanks and the
-   * **centre cell** it flanks it at (`docs/GROUND-CONTRACT-v0.md` §3.8b).
-   *
-   * A **return value only**, read by WP-2's shadow declarers
-   * (`structures/ground-declare.ts`). What is *not* here is the level: the level
-   * this pass writes is `plan.ground` of that centre cell — whatever the last
-   * writer left — and §3.8b declares the flanking carriageway's **arc-station**
-   * level instead. That difference is inversion I6, and keeping the raw
-   * geometry here rather than the number written is what makes it visible.
-   */
-  readonly declaration: readonly SidewalkColumn[];
-}
-
-/** One paved sidewalk column, and the carriageway cross-section it belongs to. */
-export interface SidewalkColumn {
-  readonly idx: number;
-  /** The flanked segment's id — `street:<id>` is the surfacer's source. */
-  readonly segment: string;
-  /** The carriageway centre cell of the cross-section this column sits in. */
-  readonly cx: number;
-  readonly cz: number;
-  /** What the pass actually wrote, kept so a test can measure I6 in blocks. */
-  readonly wrote: number;
 }
 
 const UNSET = -2147483648;
@@ -490,9 +503,9 @@ export function dressStreets(
   const blocks: StructureBlock[] = [];
   const props: StreetscapeProp[] = [];
 
+  const driver = ctx.ground ?? driverForPlan(plan);
   const masks = buildStreetMasks(graph, region, ctx.surfaced);
-  const declaration: SidewalkColumn[] = [];
-  paveSidewalks(graph, plan, masks, states, declaration);
+  paveSidewalks(graph, ctx, driver, driver.view(), masks, states, ctx.nodePath ?? "");
   thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
 
@@ -516,7 +529,7 @@ export function dressStreets(
     props.push(...scatterFurniture(ctx, masks, kit, blocks, taken));
   }
 
-  return { blocks, props, masks, crossingColumns, diagnostics, declaration };
+  return { blocks, props, masks, crossingColumns, diagnostics };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -585,42 +598,80 @@ export function buildStreetMasks(
 /* -------------------------------------------------------------------------- */
 
 /**
- * Pave the sidewalk bands into the column plan.
+ * Pave the sidewalk bands: declare the band, commit it, then dress it.
  *
- * A sidewalk column takes the Y of the carriageway cell it flanks, so the band
- * is flush with the road it belongs to rather than following the field beside
- * it. Two columns are never touched:
+ * A sidewalk column takes the Y of the carriageway it flanks, so the band is
+ * flush with the road it belongs to rather than following the field beside it.
+ * **Where that Y comes from is inversion I6** (§3.8b, §4.4): from the flanking
+ * segment's {@link ArcLevels} at the band column's own arc station, which is the
+ * number the surfacer graded the carriageway to — not from a second read of
+ * `plan.ground` at a centre cell one or two cross-sections away. It is strictly a
+ * bug fix; it is an "inversion" only in that it changes worlds, and it changes
+ * them in the direction every walk asked for.
+ *
+ * Two columns are never claimed:
  *
  * - anything wet, or anything **next to** something wet — the fluid invariant
  *   `roads.ts` states at `blendShoulders`: moving a dry column beside a river
  *   opens a face the river flows into on the first tick;
  * - anything the carriageway already owns.
  *
- * The curb is written here too, because "level" is only decidable while the
- * natural ground is still in hand: a column is curbed when its ground was
- * already within {@link CURB_LEVEL_TOLERANCE} of the road.
+ * `street.sidewalk` is rank 90, below `street.network`: a sidewalk is
+ * definitionally the carriageway's level and can never outrank the thing it
+ * copies. `transition: "step"` — the kerb *is* the transition, and the resolver
+ * derives it.
+ *
+ * The curb decision stays here and stays what it was: a column is curbed when its
+ * own ground was already within {@link CURB_LEVEL_TOLERANCE} of the road. §10
+ * replaces that test with "is there a `step` transition here" from the resolver's
+ * list, and §9a.7 is explicit that consuming `resolved.transitions` is WP-6 work
+ * in every case — a transition derived against a partial owner field is not the
+ * transition the full set produces.
  */
 function paveSidewalks(
   graph: StreetGraph,
-  plan: ColumnPlan,
+  ctx: StreetscapeContext,
+  driver: GroundDriver,
+  view: GroundView,
   masks: StreetMasks,
   states: StreetStates,
-  /**
-   * Optional sink for §3.8b: the band columns this call paved, each with the
-   * segment and the centre cell it took its level from. Write-only, never read,
-   * and carrying no level of its own — see {@link StreetscapeResult.declaration}.
-   */
-  declare?: SidewalkColumn[],
+  nodePath: string,
 ): void {
+  const plan = ctx.plan;
   const region = plan.region;
   const half = (w: number): number => (w - 1) >> 1;
 
+  /** One claimed band column, kept for the dress loop that follows the commit. */
+  interface Band {
+    readonly idx: number;
+    /** The level the **last** segment to reach this column asked for. */
+    y: number;
+    /**
+     * Did *any* flanking segment see this as its own flush inner column?
+     *
+     * An OR, and the last-write-wins `surface` below is not — which looks like an
+     * inconsistency and is the rule the pass has always kept. A column can be one
+     * street's kerb line and another's outer band; the kerb *course* is a
+     * continuous line and loses its meaning if a crossing street erases a stretch
+     * of it, so the mask ORs. `thickenCourse` then closes the course, and its
+     * repaint is what makes the surface agree.
+     */
+    curbAny: boolean;
+    /** The last segment's answer, which is what paints the column. */
+    curbLast: boolean;
+  }
+  // Keyed by column, last claim winning, because two segments' bands overlap at
+  // a junction and the pass's own traversal is last-write-wins. One intent per
+  // district, so a column named twice would be `LOAM-E494` rather than a choice.
+  const band = new Map<number, Band>();
+
   for (const segment of graph.segments) {
+    const arc = ctx.levels?.get(`street:segment:${segment.id}`);
     const inner = half(segment.width) + 1;
     const outer = inner + graph.sidewalk - 1;
     for (const step of walkStreet(segment.path)) {
       const centre = inside(region, step.x, step.z)
-        ? (plan.ground[index(region, step.x, step.z)] as number)
+        ? (view.ground[index(region, step.x, step.z)] as number)
         : undefined;
       if (centre === undefined) continue;
       for (const side of [1, -1]) {
@@ -633,21 +684,49 @@ function paveSidewalks(
           if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
           if (touchesFluid(plan, c.x, c.z)) continue;
 
-          const natural = plan.ground[idx] as number;
-          const level = Math.abs(natural - centre) <= CURB_LEVEL_TOLERANCE;
-          plan.ground[idx] = centre;
-          plan.fluidTop[idx] = centre;
-          plan.snow[idx] = 0;
-          plan.surface[idx] =
-            k === inner && level ? states.curb : states.sidewalk;
-          plan.subsurface[idx] = states.subsurface;
-          if ((plan.soil[idx] as number) === 0) plan.soil[idx] = 1;
-          declare?.push({ idx, segment: segment.id, cx: step.x, cz: step.z, wrote: centre });
-          masks.y[idx] = centre;
-          if (k === inner && level) masks.curb[idx] = 1;
+          const y =
+            arc === undefined
+              ? centre
+              : arc.levels.at(projectToLine({ x: c.x, z: c.z }, arc.frame.line, arc.frame.arcs).arc);
+          const natural = view.ground[idx] as number;
+          const curb = k === inner && Math.abs(natural - centre) <= CURB_LEVEL_TOLERANCE;
+          const prior = band.get(idx);
+          if (prior === undefined) {
+            band.set(idx, { idx, y, curbAny: curb, curbLast: curb });
+          } else {
+            prior.y = y;
+            prior.curbAny = prior.curbAny || curb;
+            prior.curbLast = curb;
+          }
         }
       }
     }
+  }
+  if (band.size === 0) return;
+
+  const columns: GroundClaim[] = [];
+  for (const c of band.values()) columns.push({ idx: c.idx, y: c.y });
+  driver.commit([
+    {
+      source: `${nodePath}#sidewalk`,
+      sourceClass: "street.sidewalk",
+      kind: "profile",
+      columns,
+      transition: "step",
+    },
+  ]);
+
+  // §9 step 2's second loop, over the columns the pass **claimed** rather than
+  // the ones it won: ownership decides geometry and deliberately not material.
+  // `masks.y` is the one exception and has to be — it is where a lamp stands, so
+  // it reads the view (§9 step 9), which is the winner's level on a contested
+  // column and the sidewalk's own everywhere else.
+  for (const c of band.values()) {
+    plan.surface[c.idx] = c.curbLast ? states.curb : states.sidewalk;
+    plan.subsurface[c.idx] = states.subsurface;
+    if ((plan.soil[c.idx] as number) === 0) plan.soil[c.idx] = 1;
+    masks.y[c.idx] = view.ground[c.idx] as number;
+    if (c.curbAny) masks.curb[c.idx] = 1;
   }
 }
 
