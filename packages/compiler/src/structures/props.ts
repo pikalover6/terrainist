@@ -55,6 +55,7 @@ import { error, warning, type LoamDiagnostic } from "@terrainist/spec";
 import { isZoneToken } from "../layout/frames.js";
 import { jitteredZonePoint, type Frame, type Point2, type Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 
@@ -158,6 +159,22 @@ export interface PropPassResult {
   readonly blocks: readonly StructureBlock[];
   readonly placed: readonly PlacedProp[];
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.10b): one entry per prop that needed a pad,
+   * naming **only the columns its own filter selected** — the fill-never-cut
+   * `if (g >= want) continue` — at their targets.
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`).
+   */
+  readonly padDeclarations: readonly PropPadDeclaration[];
+}
+
+/** One prop's pad, as §3.10b declares it. */
+export interface PropPadDeclaration {
+  readonly source: string;
+  readonly columns: readonly GroundClaim[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -176,6 +193,7 @@ export function buildProps(input: PropPassInput): PropPassResult {
   const blocks: StructureBlock[] = [];
   const placed: PlacedProp[] = [];
   const diagnostics: LoamDiagnostic[] = [];
+  const padDeclarations: PropPadDeclaration[] = [];
   const missing = new Set<string>();
   const taken: Rect[] = [...(input.reserved ?? [])];
 
@@ -220,7 +238,11 @@ export function buildProps(input: PropPassInput): PropPassResult {
     // downstream. Water and shore props never get one — their base is a water
     // surface, which is level by definition.
     if (propFootprint(job.prop, job.params).base === "ground") {
-      blocks.push(...levelPropPad(plan, site.footprint, site.baseY));
+      // The sink is §3.10b's declaration and nothing else: `levelPropPad` fills
+      // it beside the writes it already makes, and reads it never.
+      const pad: GroundClaim[] = [];
+      blocks.push(...levelPropPad(plan, site.footprint, site.baseY, pad));
+      if (pad.length > 0) padDeclarations.push({ source: `${job.nodePath}#pad`, columns: pad });
     }
 
     const generated = generateProp({
@@ -280,7 +302,7 @@ export function buildProps(input: PropPassInput): PropPassResult {
     );
   }
 
-  return { blocks, placed, diagnostics };
+  return { blocks, placed, diagnostics, padDeclarations };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -505,6 +527,13 @@ export function levelPropPad(
   plan: ColumnPlan,
   rect: Rect,
   baseY: number,
+  /**
+   * Optional sink for §3.10b's `prop.pad` claim: every column this call fills,
+   * at the level it fills it to. Write-only, appended to in the same statement
+   * group as the writes themselves, and never read — so the pad laid with a sink
+   * is byte-for-byte the pad laid without one.
+   */
+  declare?: GroundClaim[],
 ): StructureBlock[] {
   const out: StructureBlock[] = [];
   const top = baseY - 1;
@@ -542,6 +571,7 @@ export function levelPropPad(
       for (let y = g + 1; y <= want; y++) {
         out.push({ x, y, z, stateId: y === want ? cap : fill });
       }
+      declare?.push({ idx, y: want });
       plan.ground[idx] = want;
       plan.surface[idx] = cap;
       plan.fluidTop[idx] = want;

@@ -39,6 +39,7 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { clusterCell, isSteepGround } from "../terrain/cluster.js";
 import { detailSeed, hash2 } from "../terrain/detail.js";
@@ -326,6 +327,27 @@ export interface RoadNetworkResult {
   readonly diagnostics: readonly LoamDiagnostic[];
   /** Anchors that could not be reached. */
   readonly unrouted: readonly string[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.9b), recorded as it surfaces.
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`).
+   */
+  readonly declaration: RoadDeclaration;
+}
+
+/** The raw material of §3.9b's intents. */
+export interface RoadDeclaration {
+  /** One `road.network` profile per route, over the columns it levelled. */
+  readonly routes: readonly {
+    readonly source: string;
+    readonly columns: readonly GroundClaim[];
+    /** Water columns a deck spans: `clearance` at the fluid surface, plus `preserve`. */
+    readonly bridged: readonly GroundClaim[];
+  }[];
+  /** `blendShoulders`' ring targets, declared `verge` exactly as §3.6b's are. */
+  readonly shoulders: readonly GroundClaim[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -385,6 +407,8 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const diagnostics: LoamDiagnostic[] = [];
   const routes: RoadRoute[] = [];
   const unrouted: string[] = [];
+  /** §3.9b, recorded as the routes are surfaced. Never read here. */
+  const declaredRoutes: RoadDeclaration["routes"][number][] = [];
   const blocks: StructureBlock[] = [];
 
   // --- anchors, in document order ------------------------------------------
@@ -401,7 +425,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // --- the hub -------------------------------------------------------------
   const hub = pickHub(input, anchors, region, blocked);
   if (hub === null || anchors.length === 0) {
-    return { blocks, routes, surfacedColumns: 0, bridgeColumns: 0, roadColumns: road, width, diagnostics, unrouted };
+    return {
+      blocks,
+      routes,
+      surfacedColumns: 0,
+      bridgeColumns: 0,
+      roadColumns: road,
+      width,
+      diagnostics,
+      unrouted,
+      declaration: { routes: [], shoulders: [] },
+    };
   }
   road[index(region, hub.x, hub.z)] = 1;
 
@@ -481,7 +515,14 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       surfaced.push({ x: cell.x, z: cell.z, y: levels.at(frame.pathArc[i] as number) });
     }
 
-    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged);
+    const declaredLevel: GroundClaim[] = [];
+    const declaredBridged: GroundClaim[] = [];
+    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged, undefined, { level: declaredLevel, bridged: declaredBridged });
+    declaredRoutes.push({
+      source: `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`,
+      columns: declaredLevel,
+      bridged: declaredBridged,
+    });
     blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
 
     routes.push({
@@ -509,7 +550,8 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   if (foreign !== undefined) {
     for (let k = 0; k < cells; k++) if (foreign[k] === 1) keepOut[k] = 1;
   }
-  blendShoulders(region, plan, road, roadY, keepOut, paved);
+  const declaredShoulders: GroundClaim[] = [];
+  blendShoulders(region, plan, road, roadY, keepOut, paved, undefined, declaredShoulders);
 
   // --- lanterns, dead last -------------------------------------------------
   // A post planted while routes were still being laid could have a later route
@@ -535,7 +577,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     if (bridged[k] === 1) bridgeColumns++;
   }
 
-  return { blocks, routes, surfacedColumns, bridgeColumns, roadColumns: road, width, diagnostics, unrouted };
+  return {
+    blocks,
+    routes,
+    surfacedColumns,
+    bridgeColumns,
+    roadColumns: road,
+    width,
+    diagnostics,
+    unrouted,
+    declaration: { routes: declaredRoutes, shoulders: declaredShoulders },
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -609,6 +661,49 @@ export interface StreetSurfaceResult {
   readonly bridgeColumns: number;
   /** Arterial carriageway columns, of the total. */
   readonly arterialColumns: number;
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.6b, and §3.7b's flights folded into it),
+   * recorded as it runs.
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`) — and by the sidewalk declarer, which is
+   * why {@link StreetSegmentDeclaration.frame} and `levels` are handed out: a
+   * sidewalk's level is the flanking carriageway's **arc-station** level, not
+   * the `plan.ground` of a centre cell, and that difference is inversion I6.
+   */
+  readonly declaration: StreetDeclaration;
+}
+
+/** The raw material of §3.6–§3.8's intents. */
+export interface StreetDeclaration {
+  /** One entry per surfaced segment, in `compareStreetRank` order. */
+  readonly segments: readonly StreetSegmentDeclaration[];
+  /** `blendShoulders`' ring targets — a `verge` profile (§3.6b, last bullet). */
+  readonly shoulders: readonly GroundClaim[];
+}
+
+/** One surfaced segment, as §3.6b declares it. */
+export interface StreetSegmentDeclaration {
+  /** `street:<rank id>` — unique within the class, as §4.1 requires. */
+  readonly source: string;
+  /** Position in the `compareStreetRank` sort. The class's `subRank`. */
+  readonly subRank: number;
+  readonly role: "carriageway" | "steps";
+  /** The segment's own id, so a sidewalk can find the carriageway it flanks. */
+  readonly id: string;
+  /** Owned columns at the surfacer's own levels. */
+  readonly columns: readonly GroundClaim[];
+  /** Water columns under a deck: `clearance` at the fluid surface, plus `preserve`. */
+  readonly bridged: readonly GroundClaim[];
+  /**
+   * True when something *stands* on this run — a stair balustrade or a bridge
+   * rail — which is what §3.6b/§3.7b declare `preserve` over.
+   */
+  readonly preserve: boolean;
+  /** The run's arc frame and levels, for the sidewalk's declarer. Steps carry none. */
+  readonly frame?: ArcFrame;
+  readonly levels?: ArcLevels;
 }
 
 /**
@@ -694,6 +789,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     input.wearChance,
   );
   const blocks: StructureBlock[] = [];
+  /** §3.6b, recorded as the pass runs. Never read here. */
+  const declaredSegments: StreetSegmentDeclaration[] = [];
   /** Avenue centre lines, kept until every segment has been surfaced. */
   const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
 
@@ -799,6 +896,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
 
   const ranked = jobs.map((_, i) => i);
   ranked.sort((a, b) => compareStreetRank((jobs[a] as StreetJob).rank, (jobs[b] as StreetJob).rank));
+  /**
+   * §3.6b's `subRank`: a job's position in the `compareStreetRank` sort, which
+   * is the proven order `(−width, roleRank, kindRank, id)` and is not
+   * re-litigated by the contract. Built here so the declaration and the
+   * ownership map come from one sort.
+   */
+  const subRankOf = new Map<number, number>();
+  for (const [position, j] of ranked.entries()) subRankOf.set(j, position);
 
   for (const j of ranked) {
     const job = jobs[j] as StreetJob;
@@ -966,6 +1071,20 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         ...(occupancy === undefined ? {} : { occupancy }),
       });
       blocks.push(...flight.blocks);
+      // §3.7b: a flight is a `street.network` profile whose `subRank` puts it
+      // below any street of its width, plus `preserve` over the whole tread
+      // band — the balustrade problem, stated as a claim.
+      declaredSegments.push({
+        source: `street:${job.rank.id}`,
+        subRank: subRankOf.get(job.order) ?? job.order,
+        role: "steps",
+        id: job.rank.id,
+        columns: geometry.columns
+          .filter((c) => owner[c.idx] === job.order)
+          .map((c) => ({ idx: c.idx, y: columnY[c.idx] as number })),
+        bridged: [],
+        preserve: true,
+      });
       continue;
     }
 
@@ -980,6 +1099,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       z: cell.z,
       y: levels.at(levels.frame.pathArc[i] as number),
     }));
+    const declaredLevel: GroundClaim[] = [];
+    const declaredBridged: GroundClaim[] = [];
     surfaceRoute(
       region,
       plan,
@@ -994,7 +1115,20 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       water,
       bridged,
       { owner, job: job.order, step: stepFlag, natural },
+      { level: declaredLevel, bridged: declaredBridged },
     );
+    declaredSegments.push({
+      source: `street:${job.rank.id}`,
+      subRank: subRankOf.get(job.order) ?? job.order,
+      role: "carriageway",
+      id: job.rank.id,
+      columns: declaredLevel,
+      bridged: declaredBridged,
+      // A run that decks water carries a rail; §3.6b preserves those columns.
+      preserve: declaredBridged.length > 0,
+      frame: levels.frame,
+      levels,
+    });
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
       // deck, the same rail, the same pier rhythm and the same approaches a
@@ -1050,7 +1184,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     );
   }
 
-  blendShoulders(region, plan, road, roadY, blocked, paved, input.seam);
+  const declaredShoulders: GroundClaim[] = [];
+  blendShoulders(region, plan, road, roadY, blocked, paved, input.seam, declaredShoulders);
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;
@@ -1060,7 +1195,19 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     if (bridged[k] === 1) bridgeColumns++;
     if (arterialMask[k] === 1) arterialColumns++;
   }
-  return { blocks, surfacedColumns, road, bridgeColumns, arterialColumns };
+  return {
+    blocks,
+    surfacedColumns,
+    road,
+    bridgeColumns,
+    arterialColumns,
+    declaration: {
+      // Declared in rank order, which is the order the resolver reads them in
+      // and the order the report prints them in.
+      segments: [...declaredSegments].sort((a, b) => a.subRank - b.subRank),
+      shoulders: declaredShoulders,
+    },
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2057,6 +2204,13 @@ function surfaceRoute(
     /** The frozen ground the relief test is taken against. */
     readonly natural: Int32Array;
   },
+  /**
+   * Optional sink for the ground contract's claim (§3.6b, §3.9b): every column
+   * this call levels, at the level it levels it to, plus the bridged columns it
+   * deliberately leaves alone. Write-only, filled beside the writes themselves,
+   * and never read — so a surfacing with a sink is byte-for-byte one without.
+   */
+  declare?: { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] },
 ): void {
   // Which columns sit on a face, measured against the *natural* ground — the
   // loop below flattens columns as it goes, so a test taken inside it would
@@ -2082,6 +2236,9 @@ function surfaceRoute(
     // canopy clip keeps the deck clear.
     if (water[idx] === 1) {
       if (!owned) continue;
+      // §3.6b: the deck stands over its channel, so the *water* column is what
+      // is declared — `clearance` at the fluid surface plus `preserve`.
+      declare?.bridged.push({ idx, y: plan.fluidTop[idx] as number });
       road[idx] = 1;
       roadY[idx] = y;
       bridged[idx] = 1;
@@ -2109,6 +2266,7 @@ function surfaceRoute(
     // road. On gentle ground the draw is byte-for-byte what it always was.
     const s = steep[n] === true ? clusterCell(x, z) : { x, z };
     if (owned) {
+      declare?.level.push({ idx, y });
       plan.ground[idx] = y;
       plan.fluidTop[idx] = y;
       plan.snow[idx] = 0;
@@ -2169,6 +2327,11 @@ function blendShoulders(
   blocked: Uint8Array,
   paved: Uint8Array,
   seam?: Uint8Array,
+  /**
+   * Optional sink for §3.6b's last bullet: the ring targets this blend computes,
+   * declared as a `verge` profile. Write-only and never read.
+   */
+  declare?: GroundClaim[],
 ): void {
   const n = region.width * region.depth;
   // Ring dilation of the finished road mask, not perpendicular offsets from a
@@ -2237,6 +2400,7 @@ function blendShoulders(
         const g = plan.ground[idx] as number;
         const target = g > y + allowed ? y + allowed : g < y - allowed ? y - allowed : g;
         if (target === g) continue;
+        declare?.push({ idx, y: target });
         plan.ground[idx] = target;
         plan.fluidTop[idx] = target;
         if (plan.soil[idx] === 0) plan.soil[idx] = 1;

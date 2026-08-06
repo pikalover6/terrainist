@@ -51,6 +51,7 @@ import type { Rect } from "../layout/frames.js";
 import { PASSAGE_HEAD, type CourtyardBlock, type CourtyardPassage } from "../layout/courtyards.js";
 import type { DistrictProduct } from "../layout/district.js";
 import type { OccupancyGrid } from "../layout/types.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { hash2, hashInt } from "../terrain/detail.js";
 import type { Palette } from "../terrain/palette.js";
@@ -105,6 +106,32 @@ export interface CourtyardPassResult {
   readonly blocks: readonly StructureBlock[];
   readonly courtyards: readonly FurnishedCourtyard[];
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.4b).
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`). A passage is declared whether or not it
+   * was roofed: that is the point of §3.4b — `roofPassage`'s "not one plane"
+   * refusal is silent today, and declaring turns it into either a level pend or
+   * a named conflict.
+   */
+  readonly declaration: CourtyardDeclaration;
+}
+
+/** The raw material of §3.4b's intents. */
+export interface CourtyardDeclaration {
+  /** One entry per passage: the pend rect at its own median level. */
+  readonly passages: readonly {
+    readonly nodePath: string;
+    readonly columns: readonly GroundClaim[];
+  }[];
+  /** One entry per well dug — `plaza.well`, exactly as `plaza.ts` declares it. */
+  readonly wells: readonly {
+    readonly nodePath: string;
+    readonly centre: GroundClaim;
+    readonly perimeter: readonly GroundClaim[];
+  }[];
 }
 
 /** The block states this pass writes. */
@@ -191,8 +218,13 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
   const courtyards: FurnishedCourtyard[] = [];
   const diagnostics: LoamDiagnostic[] = [];
 
+  const declaredPassages: CourtyardDeclaration["passages"][number][] = [];
+  const declaredWells: CourtyardDeclaration["wells"][number][] = [];
+
   const closed = input.districts.filter((d) => (d.courtyards?.length ?? 0) > 0);
-  if (closed.length === 0) return { blocks, courtyards, diagnostics };
+  if (closed.length === 0) {
+    return { blocks, courtyards, diagnostics, declaration: { passages: [], wells: [] } };
+  }
 
   const states = resolveStates(input.palette, input.stack);
   const { region } = input.plan;
@@ -233,9 +265,11 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
       const treatment = treatmentFor(court, input.seed);
       const paved = paveCore(input, states, court.core, idx, inside);
       switch (treatment) {
-        case "well":
-          buildWell(input, states, court.core, blocks, idx, inside);
+        case "well": {
+          const dug = buildWell(input, states, court.core, blocks, idx, inside);
+          if (dug !== undefined) declaredWells.push({ nodePath: district.nodePath, ...dug });
           break;
+        }
         case "tree":
           plantTree(input, states, court.core, blocks, idx, inside);
           break;
@@ -251,7 +285,16 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
       }
 
       let roofed = 0;
-      for (const passage of court.passages) {
+      for (const [i, passage] of court.passages.entries()) {
+        // §3.4b, read before the pend is paved (paving writes no level, so the
+        // two are the same number; reading first says which one is meant).
+        const columns = passageClaims(input.plan, passage.rect, idx, inside);
+        if (columns.length > 0) {
+          declaredPassages.push({
+            nodePath: `${district.nodePath}#courtyard@${court.core.x0},${court.core.z0}/pend@${i}`,
+            columns,
+          });
+        }
         pavePassage(input, states, passage.rect, idx, inside);
         if (roofPassage(input, states, passage, readback, blocks, idx, inside)) roofed++;
       }
@@ -268,7 +311,45 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
     }
   }
 
-  return { blocks, courtyards, diagnostics };
+  return {
+    blocks,
+    courtyards,
+    diagnostics,
+    declaration: { passages: declaredPassages, wells: declaredWells },
+  };
+}
+
+/**
+ * §3.4b's `courtyard.floor` claim for one pend: the whole rect, at the pend's
+ * **median** level.
+ *
+ * Median rather than min or max because a pend is a *floor* and the median is
+ * the level that moves the fewest columns to make it one — and because
+ * `roofPassage`'s test is "one plane or nothing", so a claim that names one
+ * plane is exactly the request the refusal is refusing today. Pure reads: this
+ * moves nothing, which is what keeps WP-2 a shadow.
+ */
+function passageClaims(
+  plan: ColumnPlan,
+  rect: Rect,
+  idx: (x: number, z: number) => number,
+  inside: (x: number, z: number) => boolean,
+): GroundClaim[] {
+  const cells: number[] = [];
+  const levels: number[] = [];
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      if (!inside(x, z)) continue;
+      const k = idx(x, z);
+      if (plan.fluidKind[k] !== FluidKind.NONE) continue;
+      cells.push(k);
+      levels.push(plan.ground[k] as number);
+    }
+  }
+  if (cells.length === 0) return [];
+  const sorted = [...levels].sort((a, b) => a - b);
+  const median = sorted[(sorted.length - 1) >> 1] as number;
+  return cells.map((k) => ({ idx: k, y: median }));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -580,9 +661,9 @@ function buildWell(
   blocks: StructureBlock[],
   idx: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
-): void {
+): { readonly centre: GroundClaim; readonly perimeter: readonly GroundClaim[] } | undefined {
   const centre = levelCentre(input, core, idx, inside);
-  if (centre === null) return;
+  if (centre === null) return undefined;
   const { plan } = input;
   const { cx, cz, y } = centre;
 
@@ -593,12 +674,15 @@ function buildWell(
   plan.fluidTop[middle] = y;
   plan.snow[middle] = 0;
 
+  /** §3.2b's `preserve`, verbatim: the eight columns the proof stands on. */
+  const perimeter: GroundClaim[] = [];
   for (let z = cz - 1; z <= cz + 1; z++) {
     for (let x = cx - 1; x <= cx + 1; x++) {
       if (x === cx && z === cz) continue;
       const corner = x !== cx && z !== cz;
       blocks.push({ x, y: y + 1, z, stateId: corner ? states.wallState : states.wall });
       plan.surface[idx(x, z)] = states.kerb;
+      perimeter.push({ idx: idx(x, z), y });
     }
   }
   for (const [dx, dz] of [
@@ -609,6 +693,11 @@ function buildWell(
     blocks.push({ x: cx + dx, y: y + 3, z: cz + dz, stateId: states.post });
     blocks.push({ x: cx + dx, y: y + 4, z: cz + dz, stateId: states.lantern });
   }
+
+  return {
+    centre: { idx: middle, y: y - 1, fluid: { kind: FluidKind.WATER, top: y } },
+    perimeter,
+  };
 }
 
 /** One canopy tree, a ring of packed earth, and a bench facing it. */

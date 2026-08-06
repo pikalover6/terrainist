@@ -54,6 +54,7 @@ import type { FormChannel } from "../layout/forms/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 
 import { CANAL_DEPTH, canalProfile } from "./profiles.js";
 import { index, inside } from "./roads.js";
@@ -93,6 +94,25 @@ export interface CanalPassResult {
   /** 1 on every column this pass turned to water, row-major over the region. */
   readonly channelMask: Uint8Array;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.5b), recorded as it writes.
+   *
+   * A **return value only** — WP-2's shadow declarers turn it into
+   * `GroundIntent`s (`structures/ground-declare.ts`) and nothing here reads it,
+   * so the pass's behaviour is unmoved. It is recorded rather than recomputed
+   * because the levels are only in hand while the pass is running: by the time
+   * a declarer could look, five later passes have written the same columns.
+   */
+  readonly declaration: CanalDeclaration;
+}
+
+/** The raw material of §3.5b's two intents, in region-major column order. */
+export interface CanalDeclaration {
+  /** Channel columns at the bed, each carrying its water surface. */
+  readonly channel: readonly GroundClaim[];
+  /** Coping ∪ quay columns at the quay level. */
+  readonly banks: readonly GroundClaim[];
 }
 
 /** The block states the pass writes. */
@@ -134,7 +154,13 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
   // The ordinary path: no quarter asked for water, nothing is touched, and the
   // column plan is byte-for-byte the one every existing document compiles to.
   if (wanted.length === 0) {
-    return { water: 0, banks: 0, channelMask, diagnostics: [] };
+    return {
+      water: 0,
+      banks: 0,
+      channelMask,
+      diagnostics: [],
+      declaration: { channel: [], banks: [] },
+    };
   }
 
   const states = resolveStates(input.palette, input.stack);
@@ -262,10 +288,14 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
 
   let water = 0;
   let banks = 0;
+  // §3.5b, recorded as the pass writes. Never read here.
+  const declaredChannel: GroundClaim[] = [];
+  const declaredBanks: GroundClaim[] = [];
   for (let k = 0; k < cells; k++) {
     if (channelMask[k] === 1) {
       const surface = surfaceOf[k] as number;
       const floor = floorOf[k] as number;
+      declaredChannel.push({ idx: k, y: floor, fluid: { kind: FluidKind.WATER, top: surface } });
       plan.ground[k] = floor;
       plan.fluidTop[k] = surface;
       plan.fluidKind[k] = FluidKind.WATER;
@@ -285,6 +315,10 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
     }
     if (coping[k] !== 1 && quay[k] !== 1) continue;
     const level = quayOf[k] as number;
+    // Declared whether or not the bank is already there: an agreeing claim is
+    // not a conflict (§5.3), and the "already at the quay" skip below is a
+    // material decision, not a level one.
+    declaredBanks.push({ idx: k, y: level });
     // A bank already at the quay is left entirely alone: its surface is the
     // district's, and repainting every quay column would overwrite the sidewalk
     // the streetscape is about to lay.
@@ -304,7 +338,13 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
     banks++;
   }
 
-  return { water, banks, channelMask, diagnostics };
+  return {
+    water,
+    banks,
+    channelMask,
+    diagnostics,
+    declaration: { channel: declaredChannel, banks: declaredBanks },
+  };
 }
 
 /** Is there water the compiler already had within reach of this quarter? */

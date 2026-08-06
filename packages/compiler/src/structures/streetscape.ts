@@ -327,6 +327,30 @@ export interface StreetscapeResult {
   /** Columns repainted as crossing stripes. */
   readonly crossingColumns: number;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * Every sidewalk column this pass paved, with the segment it flanks and the
+   * **centre cell** it flanks it at (`docs/GROUND-CONTRACT-v0.md` §3.8b).
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`). What is *not* here is the level: the level
+   * this pass writes is `plan.ground` of that centre cell — whatever the last
+   * writer left — and §3.8b declares the flanking carriageway's **arc-station**
+   * level instead. That difference is inversion I6, and keeping the raw
+   * geometry here rather than the number written is what makes it visible.
+   */
+  readonly declaration: readonly SidewalkColumn[];
+}
+
+/** One paved sidewalk column, and the carriageway cross-section it belongs to. */
+export interface SidewalkColumn {
+  readonly idx: number;
+  /** The flanked segment's id — `street:<id>` is the surfacer's source. */
+  readonly segment: string;
+  /** The carriageway centre cell of the cross-section this column sits in. */
+  readonly cx: number;
+  readonly cz: number;
+  /** What the pass actually wrote, kept so a test can measure I6 in blocks. */
+  readonly wrote: number;
 }
 
 const UNSET = -2147483648;
@@ -467,7 +491,8 @@ export function dressStreets(
   const props: StreetscapeProp[] = [];
 
   const masks = buildStreetMasks(graph, region, ctx.surfaced);
-  paveSidewalks(graph, plan, masks, states);
+  const declaration: SidewalkColumn[] = [];
+  paveSidewalks(graph, plan, masks, states, declaration);
   thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
 
@@ -491,7 +516,7 @@ export function dressStreets(
     props.push(...scatterFurniture(ctx, masks, kit, blocks, taken));
   }
 
-  return { blocks, props, masks, crossingColumns, diagnostics };
+  return { blocks, props, masks, crossingColumns, diagnostics, declaration };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -580,6 +605,12 @@ function paveSidewalks(
   plan: ColumnPlan,
   masks: StreetMasks,
   states: StreetStates,
+  /**
+   * Optional sink for §3.8b: the band columns this call paved, each with the
+   * segment and the centre cell it took its level from. Write-only, never read,
+   * and carrying no level of its own — see {@link StreetscapeResult.declaration}.
+   */
+  declare?: SidewalkColumn[],
 ): void {
   const region = plan.region;
   const half = (w: number): number => (w - 1) >> 1;
@@ -611,6 +642,7 @@ function paveSidewalks(
             k === inner && level ? states.curb : states.sidewalk;
           plan.subsurface[idx] = states.subsurface;
           if ((plan.soil[idx] as number) === 0) plan.soil[idx] = 1;
+          declare?.push({ idx, segment: segment.id, cx: step.x, cz: step.z, wrote: centre });
           masks.y[idx] = centre;
           if (k === inner && level) masks.curb[idx] = 1;
         }

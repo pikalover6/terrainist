@@ -57,6 +57,7 @@ import { TERRAIN_DIAGNOSTICS, note, warning, type LoamDiagnostic } from "@terrai
 import type { Region } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import {
   NO_PLATFORM,
   RETAIN_RAIL,
@@ -207,6 +208,34 @@ export interface RetainingPassResult {
   /** Columns of graded bank finished as earth rather than as bare substrate. */
   readonly banked: number;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.3b), recorded as it builds.
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`). Three things are in it and two are not:
+   * the wall runs (`face` + `preserve`, at the coping's own walking level), and
+   * `gradeBank`'s ring targets (`verge`). `kerbSeam` and `faceCuts` declare
+   * **nothing** — they are materials, and the contract does not protect
+   * materials.
+   */
+  readonly declaration: RetainingDeclaration;
+}
+
+/** The raw material of §3.3b's intents. */
+export interface RetainingDeclaration {
+  /** One entry per swept chain of one seam: the thickened, chained course. */
+  readonly walls: readonly {
+    readonly source: string;
+    /** `retaining.seam` for a declared seam, `retaining.skirt` for a measured one. */
+    readonly measured: boolean;
+    readonly columns: readonly GroundClaim[];
+  }[];
+  /** One entry per bank: `gradeBank`'s ring targets, as a `verge` profile. */
+  readonly banks: readonly {
+    readonly source: string;
+    readonly columns: readonly GroundClaim[];
+  }[];
 }
 
 /** Why a seam column classified `retaining` ended up with no wall. */
@@ -323,6 +352,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let built = 0;
   let revetted = 0;
   let banked = 0;
+  const declaredWalls: RetainingDeclaration["walls"][number][] = [];
+  const declaredBanks: RetainingDeclaration["banks"][number][] = [];
   const unfaced: Record<UnfacedReason, number> = {
     building: 0,
     street: 0,
@@ -348,6 +379,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       banked,
       unfaced,
       diagnostics,
+      declaration: { walls: [], banks: [] },
     };
   }
   const states = resolveStates(palette, stack);
@@ -388,9 +420,14 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       }
     }
 
-    const jobs: { readonly seam: LevelSeam; readonly floorY: number }[] = [];
+    const jobs: {
+      readonly seam: LevelSeam;
+      readonly floorY: number;
+      /** A skirt is *measured* from the finished ground; a seam is declared. */
+      readonly measured: boolean;
+    }[] = [];
     for (const record of district.seams ?? []) {
-      jobs.push({ seam: record, floorY: levels.levelY[record.below] as number });
+      jobs.push({ seam: record, floorY: levels.levelY[record.below] as number, measured: false });
     }
     // **The skirt of a platform** — the other half of §3.4, and the half a
     // platform-to-platform seam cannot express. A block's platform is bounded
@@ -402,16 +439,33 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // is a storey down, and you see the wall that makes it so" (§4.6) — so it
     // is derived here, from the platform field and the finished ground, rather
     // than left as a bank of raw dirt.
-    jobs.push(...skirtSeams(region, plan, levels));
+    jobs.push(...skirtSeams(region, plan, levels).map((j) => ({ ...j, measured: true })));
 
-    for (const { seam: record, floorY } of jobs) {
+    for (const [jobIndex, { seam: record, floorY, measured }] of jobs.entries()) {
       if (record.treatment === "kerb") {
         kerbs += kerbSeam(region, plan, record, states, street, occupied) > 0 ? 1 : 0;
         continue;
       }
       if (record.treatment === "bank") {
         banks++;
-        banked += gradeBank(region, plan, levels, record, floorY, street, occupied, states);
+        const ringTargets: GroundClaim[] = [];
+        banked += gradeBank(
+          region,
+          plan,
+          levels,
+          record,
+          floorY,
+          street,
+          occupied,
+          states,
+          ringTargets,
+        );
+        if (ringTargets.length > 0) {
+          declaredBanks.push({
+            source: `${district.nodePath}#bank@${jobIndex}`,
+            columns: ringTargets,
+          });
+        }
         const short = record.cells.length < MIN_RETAIN_RUN;
         unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
         diagnostics.push(
@@ -542,7 +596,9 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       }
 
       let anySwept = false;
+      let chainIndex = -1;
       for (const chain of chainsOf(region, columns)) {
+        chainIndex++;
         const path = orient(region, chain, levels, record.above, street, occupied);
         const result = sweep({
           profile: retainingProfile(record.drop, RETAIN_RAIL, states.rail, states.profile),
@@ -565,9 +621,21 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           if (d.code === TERRAIN_DIAGNOSTICS.SWEEP_COLUMNS_SKIPPED) continue;
           diagnostics.push(d);
         }
+        // §3.3b, recorded here: the coping's own walking level, on the course
+        // the sweep actually claimed, before `deepen` (soil) or the coping block
+        // (material) touch anything. Read-only with respect to the plan.
+        const wallColumnsDeclared: GroundClaim[] = [];
         for (let k = 0; k < cells; k++) {
           if (result.claimed[k] !== 1) continue;
           seam[k] = 1;
+          wallColumnsDeclared.push({ idx: k, y: plan.ground[k] as number });
+        }
+        if (wallColumnsDeclared.length > 0) {
+          declaredWalls.push({
+            source: `${district.nodePath}#retaining@${jobIndex}/${chainIndex}`,
+            measured,
+            columns: wallColumnsDeclared,
+          });
         }
         // **The wall is as deep as it is tall.** `sweep()` writes one course of
         // the `fill` band and leaves `soil` alone, so a six-block wall used to
@@ -642,6 +710,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     banked,
     unfaced,
     diagnostics,
+    declaration: { walls: declaredWalls, banks: declaredBanks },
   };
 }
 
@@ -1099,6 +1168,11 @@ function gradeBank(
   street: Uint8Array,
   occupied: Uint8Array,
   states: RetainingStates,
+  /**
+   * Optional sink for §3.3b's `verge` claim: every ring column this call
+   * raised, at the target it raised it to. Write-only and never read.
+   */
+  declare?: GroundClaim[],
 ): number {
   const cells = region.width * region.depth;
   const top = levels.levelY[record.above] as number;
@@ -1123,6 +1197,7 @@ function gradeBank(
       if (street[k] !== 1 && occupied[k] !== 1 && plan.fluidKind[k] === FluidKind.NONE) {
         const g = plan.ground[k] as number;
         if (target > g) {
+          declare?.push({ idx: k, y: target });
           plan.ground[k] = target;
           plan.fluidTop[k] = target;
           // Earth, and enough of it to cover what the ramp just raised: the

@@ -59,6 +59,7 @@ import type { Rect } from "../layout/frames.js";
 import { resolvePorts } from "../layout/ports.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 
 import type { StructureBlock } from "./buildings.js";
 
@@ -227,6 +228,22 @@ export interface PrecinctPassResult {
   readonly relocations: ReadonlyMap<string, Placement>;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: PrecinctStats;
+  /**
+   * One entry per precinct that was built: the columns it graded and the level
+   * it graded each to — §3.1b's `precinct.ground` platform, per kit.
+   *
+   * A **return value only**, consumed by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`). Nothing in the pipeline reads it, and on a
+   * healthy compile the solver's pad has already done the levelling, so these
+   * are the columns the loop wrote surfaces on and moved no height at all.
+   */
+  readonly declarations: readonly PrecinctDeclaration[];
+}
+
+/** One precinct's ground works, as §3.1b declares them. */
+export interface PrecinctDeclaration {
+  readonly nodePath: string;
+  readonly columns: readonly GroundClaim[];
 }
 
 /** Everything {@link buildPrecincts} reads. */
@@ -453,6 +470,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
   const ports: ResolvedPort[] = [];
   const anchorPaths: string[] = [];
   const relocations = new Map<string, Placement>();
+  const declarations: PrecinctDeclaration[] = [];
   const diagnostics: LoamDiagnostic[] = [];
   const states = resolveStates(input.stack);
   let airports = 0;
@@ -478,6 +496,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     ports.push(...out.ports);
     anchorPaths.push(job.nodePath);
     if (out.relocation !== undefined) relocations.set(job.nodePath, out.relocation);
+    if (out.claims.length > 0) declarations.push({ nodePath: job.nodePath, columns: out.claims });
     if (job.generator === "precinct.airport@0") airports++;
     else harbours++;
     stands += out.counts.stands;
@@ -497,6 +516,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     anchorPaths,
     relocations,
     diagnostics,
+    declarations,
     stats: { airports, harbours, stands, aircraft, hangars, piers, ships, cranes, surfacedColumns },
   };
 }
@@ -511,6 +531,12 @@ interface OneResult {
   readonly diagnostics: LoamDiagnostic[];
   /** Set when the kit seated itself away from the solver's footprint. */
   readonly relocation?: Placement;
+  /**
+   * The columns this kit brought to its own plane, and the level each was
+   * brought to — §3.1b's `precinct.ground` platform, recorded as it is written.
+   * A return value only; nothing in this pass reads it.
+   */
+  readonly claims: GroundClaim[];
   readonly counts: {
     stands: number;
     aircraft: number;
@@ -530,6 +556,7 @@ function empty(diagnostics: LoamDiagnostic[]): OneResult {
     props: [],
     ports: [],
     diagnostics,
+    claims: [],
     counts: { stands: 0, aircraft: 0, hangars: 0, piers: 0, ships: 0, cranes: 0, surfaced: 0 },
   };
 }
@@ -665,6 +692,8 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
   // compile this loop writes surfaces and changes no heights at all; it is here
   // because a stand grid on rolling ground is not a stand grid.
   let surfaced = 0;
+  /** §3.1b, recorded as the ground works are written. See {@link OneResult.claims}. */
+  const claims: GroundClaim[] = [];
   for (let v = 0; v < cross; v++) {
     for (let u = 0; u < long; u++) {
       const c = at(f, u, v);
@@ -677,9 +706,11 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
         // than as a grey rectangle.
         const centre = v === taxiV0 + (b.taxiway >> 1);
         surfaceColumn(plan, idx, groundY, centre && u % 5 < 3 ? states.marking : states.taxiway, states);
+        claims.push({ idx, y: groundY });
         surfaced++;
       } else if (onApron) {
         surfaceColumn(plan, idx, groundY, states.apron, states);
+        claims.push({ idx, y: groundY });
         surfaced++;
       } else if (plan.fluidKind[idx] === FluidKind.NONE) {
         // Grass, but level: the runway strip and the forecourt are graded
@@ -687,6 +718,7 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
         plan.ground[idx] = groundY;
         plan.fluidTop[idx] = groundY;
         plan.snow[idx] = 0;
+        claims.push({ idx, y: groundY });
       }
     }
   }
@@ -845,6 +877,7 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     props,
     ports: [port, ...resolvePorts(job.placement, job.placement.size, job.ports)],
     diagnostics: [],
+    claims,
     counts: {
       stands: standCount,
       aircraft: parked,
@@ -918,6 +951,8 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
   // emitter lays them as terrain and the fluid validator sees a wall rather
   // than a wall-shaped hole in a sea.
   let surfaced = 0;
+  /** §3.1b, recorded as the ground works are written. See {@link OneResult.claims}. */
+  const claims: GroundClaim[] = [];
   for (let u = 0; u < f.uLen; u++) {
     const s = shore[u] as number;
     if (s < 0) continue;
@@ -928,6 +963,7 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
       const idx = indexOf(plan, c.x, c.z);
       if (idx === undefined) continue;
       surfaceColumn(plan, idx, quayTop, back === 0 ? states.quayEdge : states.quay, states);
+      claims.push({ idx, y: quayTop });
       surfaced++;
     }
   }
@@ -1041,6 +1077,7 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     ports: [port, ...resolvePorts(seated, seated.size, job.ports)],
     diagnostics: relocation === undefined ? [] : [relocatedHarbourNote(job, placed, rect, read)],
     ...(relocation === undefined ? {} : { relocation }),
+    claims,
     counts: {
       stands: 0,
       aircraft: 0,

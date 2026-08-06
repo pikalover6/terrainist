@@ -882,7 +882,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   }
   const props =
     propJobs.length === 0
-      ? { blocks: [] as StructureBlock[], placed: [] as PlacedProp[], diagnostics: [] as LoamDiagnostic[] }
+      ? {
+          blocks: [] as StructureBlock[],
+          placed: [] as PlacedProp[],
+          diagnostics: [] as LoamDiagnostic[],
+          padDeclarations: [],
+        }
       : buildProps({
           jobs: propJobs,
           plan: input.plan,

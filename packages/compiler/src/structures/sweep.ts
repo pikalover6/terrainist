@@ -33,6 +33,12 @@ import { note, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { OccupancyGrid } from "../layout/types.js";
+import type {
+  GroundClaim,
+  GroundIntent,
+  GroundSourceClass,
+  GroundTransitionKind,
+} from "../layout/ground-contract.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
@@ -114,6 +120,28 @@ export interface SweepInput {
   readonly avoid?: OccupancyGrid;
   /** Node path the diagnostics hang off. */
   readonly nodePath?: string;
+  /**
+   * **Declaration mode** (`docs/GROUND-CONTRACT-v0.md` §3.13).
+   *
+   * Present means: compute exactly what this sweep would build, write **nothing**
+   * to the plan (and nothing to `avoid`), and hand the run back as a
+   * {@link SweepResult.intent}. Absent means the mutating path, byte for byte as
+   * it has always been — every write below is inside `if (declareOnly ===
+   * undefined)`, so there is no path the flag's absence can change.
+   *
+   * The class is *supplied by the caller* rather than chosen here, because the
+   * engine is an engine: a retaining wall swept by it declares `retaining.seam`,
+   * a street `street.network`, an authored profile `sweep.run`. One optional
+   * field rather than a `declareOnly: boolean` plus a second class field, so the
+   * two can never disagree — presence of the class *is* the mode.
+   */
+  readonly declareOnly?: {
+    readonly sourceClass: GroundSourceClass;
+    /** Defaults to `nodePath ?? profile.id`. */
+    readonly source?: string;
+    /** Defaults to `"ramp"`; a wall course wants `"wall"`. */
+    readonly transition?: GroundTransitionKind;
+  };
 }
 
 export interface SweepFeaturePlacement {
@@ -133,6 +161,13 @@ export interface SweepResult {
   readonly datum: Int32Array;
   readonly features: readonly SweepFeaturePlacement[];
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * Set only under {@link SweepInput.declareOnly}: the intent this run would
+   * have written. `columns` names every column the sweep would have *levelled*
+   * — not the spanned ones, which it deliberately leaves alone (§2.4's bridged
+   * column) and which appear in {@link claimed} without a level.
+   */
+  readonly intent?: GroundIntent;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1025,6 +1060,19 @@ const SWEEP_MAX_FILL = 12;
  */
 export function sweep(input: SweepInput): SweepResult {
   const { profile, plan, palette, stack } = input;
+  const declareOnly = input.declareOnly;
+  /** Declaration mode's answer, built beside the writes it replaces. */
+  const declared: GroundClaim[] = [];
+  const asIntent = (): GroundIntent | undefined =>
+    declareOnly === undefined
+      ? undefined
+      : {
+          source: declareOnly.source ?? input.nodePath ?? profile.id,
+          sourceClass: declareOnly.sourceClass,
+          kind: "profile",
+          columns: declared,
+          transition: declareOnly.transition ?? "ramp",
+        };
   const region = plan.region;
   const nodePath = input.nodePath ?? profile.id;
   const cells = region.width * region.depth;
@@ -1035,7 +1083,14 @@ export function sweep(input: SweepInput): SweepResult {
 
   const path = input.path.filter((c) => inside(region, c.x, c.z));
   if (path.length === 0) {
-    return { blocks, claimed, datum: new Int32Array(0), features, diagnostics };
+    return {
+      blocks,
+      claimed,
+      datum: new Int32Array(0),
+      features,
+      diagnostics,
+      ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+    };
   }
 
   const line = simplifyPath(path);
@@ -1079,7 +1134,14 @@ export function sweep(input: SweepInput): SweepResult {
           "Route the run across gentler ground, or raise the profile's maxGrade.",
         ),
       );
-      return { blocks, claimed, datum: Int32Array.from(level), features, diagnostics };
+      return {
+        blocks,
+        claimed,
+        datum: Int32Array.from(level),
+        features,
+        diagnostics,
+        ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+      };
     }
     for (const [i, v] of treads.levels.entries()) level[i] = v;
   }
@@ -1138,6 +1200,12 @@ export function sweep(input: SweepInput): SweepResult {
       continue;
     }
     const top = (level[i] as number) + (band.level ?? 0);
+    if (declareOnly !== undefined) {
+      // Declaration mode: the level, and not one byte of plan, mask or block.
+      declared.push({ idx: col.idx, y: top });
+      claimed[col.idx] = 1;
+      continue;
+    }
     plan.ground[col.idx] = top;
     plan.fluidTop[col.idx] = top;
     plan.snow[col.idx] = 0;
@@ -1185,5 +1253,12 @@ export function sweep(input: SweepInput): SweepResult {
     );
   }
 
-  return { blocks, claimed, datum: Int32Array.from(level), features, diagnostics };
+  return {
+    blocks,
+    claimed,
+    datum: Int32Array.from(level),
+    features,
+    diagnostics,
+    ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+  };
 }

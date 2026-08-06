@@ -40,6 +40,7 @@ import { warning, type LoamDiagnostic } from "@terrainist/spec";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid, Placement } from "../layout/types.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { hash2, hashInt } from "../terrain/detail.js";
 import type { Palette } from "../terrain/palette.js";
@@ -82,6 +83,28 @@ export interface PlazaResult {
   /** True when the well was built; false when the plaza was too small or wet. */
   readonly well: boolean;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.2b), recorded as it runs.
+   *
+   * A **return value only**: WP-2's shadow declarers
+   * (`structures/ground-declare.ts`) turn it into `GroundIntent`s and nothing
+   * here reads it. The plaza's *level* is the solver's pad and this pass never
+   * writes it, so the level has to be sampled while the pad's answer is still
+   * the answer — after the streets have run it is no longer legible.
+   */
+  readonly declaration: PlazaDeclaration;
+}
+
+/** The raw material of §3.2b's two intents. */
+export interface PlazaDeclaration {
+  /** The paved rect at the pad's level — `plaza.ground`. */
+  readonly paved: readonly GroundClaim[];
+  /** The dug centre column and the eight it stands on — `plaza.well`. */
+  readonly well?: {
+    readonly centre: GroundClaim;
+    readonly perimeter: readonly GroundClaim[];
+  };
 }
 
 /** The block states the plaza pass writes. */
@@ -149,7 +172,16 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
         `grow the plaza's "envelope.size" to at least [${MIN_PLAZA_SIZE}, ${MIN_PLAZA_SIZE}], or drop the node if the village wants no green`,
       ),
     );
-    return { blocks, paved, keepClear, pavedColumns: 0, benches: 0, well: false, diagnostics };
+    return {
+      blocks,
+      paved,
+      keepClear,
+      pavedColumns: 0,
+      benches: 0,
+      well: false,
+      diagnostics,
+      declaration: { paved: [] },
+    };
   }
 
   const states = resolveStates(input.palette, input.stack);
@@ -163,6 +195,8 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
 
   // --- 1 + 2: the border ring and the paved field --------------------------
   let pavedCount = 0;
+  /** §3.2b's `plaza.ground` claim, sampled at the pad's own level. */
+  const declaredPaved: GroundClaim[] = [];
   for (let z = rect.z0; z <= rect.z1; z++) {
     for (let x = rect.x0; x <= rect.x1; x++) {
       if (!inside(x, z)) continue;
@@ -174,6 +208,7 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
       plan.snow[idx] = 0;
       if (plan.soil[idx] === 0) plan.soil[idx] = 1;
       pavedCount++;
+      declaredPaved.push({ idx, y: plan.ground[idx] as number });
       paved[idx] = 1;
       if (input.occupancy !== undefined) claim(input.occupancy, idx);
     }
@@ -182,7 +217,8 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
   // --- 3a: the well --------------------------------------------------------
   const cx = Math.floor((rect.x0 + rect.x1) / 2);
   const cz = Math.floor((rect.z0 + rect.z1) / 2);
-  const well = buildWell(input, states, cx, cz, blocks, index, inside);
+  const wellClaim = buildWell(input, states, cx, cz, blocks, index, inside);
+  const well = wellClaim !== undefined;
   if (well) {
     for (let z = cz - WELL_RADIUS; z <= cz + WELL_RADIUS; z++) {
       for (let x = cx - WELL_RADIUS; x <= cx + WELL_RADIUS; x++) {
@@ -194,7 +230,19 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
   // --- 3b: the benches -----------------------------------------------------
   const benches = placeBenches(input, states, rect, blocks, index, inside);
 
-  return { blocks, paved, keepClear, pavedColumns: pavedCount, benches, well, diagnostics };
+  return {
+    blocks,
+    paved,
+    keepClear,
+    pavedColumns: pavedCount,
+    benches,
+    well,
+    diagnostics,
+    declaration: {
+      paved: declaredPaved,
+      ...(wellClaim === undefined ? {} : { well: wellClaim }),
+    },
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -224,8 +272,11 @@ function fieldState(states: PlazaStates, seed: number, x: number, z: number): nu
  * The centrepiece well: a cobblestone-wall ring on stone-brick corners around
  * one block of enclosed water, with fence-and-lantern posts on two corners.
  *
- * Returns false when the ground under the well is not the flat, dry platform the
- * construction assumes — better no well than a well hanging off a slope.
+ * Returns `undefined` when the ground under the well is not the flat, dry
+ * platform the construction assumes — better no well than a well hanging off a
+ * slope. Otherwise it returns §3.2b's `plaza.well` claim: the dug centre and the
+ * eight perimeter columns whose standing still *is* the stability proof. The
+ * return value is the only thing that changed; every write below is untouched.
  */
 function buildWell(
   input: PlazaInput,
@@ -235,7 +286,7 @@ function buildWell(
   blocks: StructureBlock[],
   index: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
-): boolean {
+): PlazaDeclaration["well"] {
   const { plan } = input;
   const r = WELL_RADIUS;
 
@@ -244,15 +295,15 @@ function buildWell(
   let level: number | null = null;
   for (let z = cz - r; z <= cz + r; z++) {
     for (let x = cx - r; x <= cx + r; x++) {
-      if (!inside(x, z)) return false;
+      if (!inside(x, z)) return undefined;
       const idx = index(x, z);
-      if (plan.fluidKind[idx] !== FluidKind.NONE) return false;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
       const y = plan.ground[idx] as number;
       if (level === null) level = y;
-      else if (y !== level) return false;
+      else if (y !== level) return undefined;
     }
   }
-  if (level === null) return false;
+  if (level === null) return undefined;
   const groundY = level;
 
   const centre = index(cx, cz);
@@ -267,6 +318,8 @@ function buildWell(
 
   // The ring, one block above the plaza surface: stone brick on the corners,
   // cobblestone wall along the sides.
+  /** §3.2b's `preserve`: the eight columns the stability proof stands on. */
+  const perimeter: GroundClaim[] = [];
   for (let z = cz - r; z <= cz + r; z++) {
     for (let x = cx - r; x <= cx + r; x++) {
       if (x === cx && z === cz) continue;
@@ -274,6 +327,7 @@ function buildWell(
       blocks.push({ x, y: groundY + 1, z, stateId: corner ? states.border : states.wall });
       // The rim itself is stone brick underfoot, not paving.
       plan.surface[index(x, z)] = states.border;
+      perimeter.push({ idx: index(x, z), y: groundY });
     }
   }
 
@@ -288,7 +342,10 @@ function buildWell(
     blocks.push({ x: cx + dx, y: groundY + 4, z: cz + dz, stateId: states.lantern });
   }
 
-  return true;
+  return {
+    centre: { idx: centre, y: groundY - 1, fluid: { kind: FluidKind.WATER, top: groundY } },
+    perimeter,
+  };
 }
 
 /**

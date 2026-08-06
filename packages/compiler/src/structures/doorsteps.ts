@@ -28,6 +28,7 @@
 
 import type { ResolvedPort } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
+import type { GroundClaim } from "../layout/ground-contract.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -63,6 +64,23 @@ export interface DoorstepResult {
    * may repaint.
    */
   readonly touched: Uint8Array;
+  /**
+   * What this pass would declare under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.11b): one entry per door whose approach was
+   * **cut**, naming only the `dropped` columns and their targets.
+   *
+   * A **return value only**, read by WP-2's shadow declarers
+   * (`structures/ground-declare.ts`). The `stepped` outcome contributes nothing:
+   * it is block placement above a ground it does not move.
+   */
+  readonly declarations: readonly DoorstepDeclaration[];
+}
+
+/** One door's landing, as §3.11b declares it. */
+export interface DoorstepDeclaration {
+  /** `<nodePath>#doorstep@<port ref>` — unique per claim, as §4.1 requires. */
+  readonly source: string;
+  readonly columns: readonly GroundClaim[];
 }
 
 /** The four cardinals, as `(dx, dz)` and the block-state name of each. */
@@ -82,6 +100,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   let dropped = 0;
   let flush = 0;
   const touched = new Uint8Array(region.width * region.depth);
+  const declarations: DoorstepDeclaration[] = [];
 
   const stepState = palette.has("road.step")
     ? palette.state("road.step")
@@ -120,6 +139,8 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     const floorY = built.floorY;
     let outcome: "flush" | "stepped" | "dropped" = "flush";
     let y = floorY;
+    /** §3.11b: the cut columns of this door, and nothing else. */
+    const cuts: GroundClaim[] = [];
 
     for (let k = 1; k <= DOORSTEP_REACH; k++) {
       const x = px + dx * k;
@@ -138,6 +159,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
         if (outcome === "stepped" || g === y) break;
         const target = floorY + (k - 1);
         if (g <= target) break;
+        cuts.push({ idx, y: target });
         plan.ground[idx] = target;
         plan.fluidTop[idx] = target;
         plan.surface[idx] = stepState;
@@ -164,7 +186,8 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     if (outcome === "stepped") stepped++;
     else if (outcome === "dropped") dropped++;
     else flush++;
+    if (cuts.length > 0) declarations.push({ source: `${port.nodePath}#doorstep@${port.ref}`, columns: cuts });
   }
 
-  return { blocks, stepped, dropped, flush, touched };
+  return { blocks, stepped, dropped, flush, touched, declarations };
 }
