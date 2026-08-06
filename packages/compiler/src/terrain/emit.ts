@@ -134,11 +134,25 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   // Connections last, over the finished world. Fences, panes, walls and bars
   // store their neighbours in their own block state and Minecraft never
   // recomputes that on load, so it has to be right on disk — and it can only
-  // be computed once every block exists. Terrain columns hold no connective
-  // block, so the decoration and structure lists are the whole candidate set.
+  // be computed once every block exists.
+  //
+  // The surface layer is a candidate too, and the comment that used to stand
+  // here said otherwise: "terrain columns hold no connective block". That is
+  // true of terrain the heightfield wrote and false of terrain a *ground
+  // treatment* wrote. A palette is free to point a paving symbol at a wall —
+  // `plaza.border` → `minecraft:stone_brick_wall` is a reasonable thing for an
+  // author to write, and `grounds.ts` duly lays it into `plan.surface`. Fed
+  // only the non-terrain writes, this pass never saw those columns, and they
+  // kept the default "connected to nothing" state: 604 `connection.stale`
+  // findings on one generated world, every one of them a wall laid as ground.
+  //
+  // A connection is a property of a neighbourhood, not of which pass wrote the
+  // block, so the whole surface layer goes in. `applyConnectionStates` rejects
+  // a non-connective state on a cached id lookup, so the added cost is one map
+  // probe per column.
   const connections = applyConnectionStates(
     chunks,
-    [...(input.decor ?? []), ...(input.structures ?? [])],
+    [...(input.decor ?? []), ...(input.structures ?? []), ...surfaceCandidates(plan)],
     stack,
   );
 
@@ -432,4 +446,21 @@ function bucketTrees(
 
 function clampTo(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
+}
+
+/**
+ * Every surface column, as a connection candidate.
+ *
+ * Lazily, because the list is region-sized and is consumed once. The y is the
+ * surface course itself — `plan.ground[idx]` is the top solid block, which is
+ * exactly where a ground treatment laid its paving.
+ */
+function* surfaceCandidates(plan: ColumnPlan): Generator<{ x: number; y: number; z: number }> {
+  const { region } = plan;
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      yield { x: region.x0 + i, y: plan.ground[idx] as number, z: region.z0 + j };
+    }
+  }
 }
