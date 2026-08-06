@@ -525,6 +525,14 @@ and `ArcLevels`, so the sidewalk's level and the carriageway's come from one
 number by construction. That is inversion I6 (§4.4) and it is a bug fix, not a
 policy choice.
 
+**One claim per column, keeping the last** (WP-3, measured): two segments'
+bands overlap at every junction, and a declarer that pushes one claim per
+(segment, column) pair makes the resolver's duplicate rule keep the *first*
+while the pass's own traversal writes the *last* — WP-2's shadow declarer did
+exactly that, silently drawing `GROUND_INVARIANT` errors nobody read. The
+pass declares the level its own traversal means: one claim per column, last
+writer within the pass.
+
 **(c) Material, stays behind.** Sidewalk / curb / crossing `surface`,
 `subsurface`, `soil`, the lamps and the furniture, `thickenCurbs`' bridging
 columns (a *material* course; it recruits only columns this pass already paved).
@@ -1297,7 +1305,13 @@ re-derive anything in §4 or §5.
    changes the painting on every contested column (§9a.6, step 4). If the two
    loops cannot be separated because the material depends on the level, the
    material loop reads `driver.view()` — there is no `resolved.ground` to read
-   until WP-6 — and the dependency is gone.
+   until WP-6 — and the dependency is gone. **A third category exists** (WP-3,
+   measured): material that depends on the level *before* the pass moved it.
+   `surfaceRoute`'s relief test read `plan.ground` at the instant of its own
+   write, which was sound only because the function did the writing; once the
+   driver commits first, that read sees the road it is asking about. Such a
+   read must be lifted to the caller and sampled at the moment the old code
+   read it (`reliefOf`), not pointed at the view.
 3. **Name the source.** `source` is the node path where there is one, and
    `<nodePath>#<part>` where one pass makes several distinct claims (a segment's
    carriageway and its verge are two sources, §4.5). Sources must be unique and
@@ -1539,6 +1553,23 @@ continue`, so converting a street changes which columns a pad claims. §3.10b
 predicts the direction ("against a resolved ground a pad simply has fewer columns
 to fill"), so I4's golden should shrink at WP-3 as well as reaching zero at WP-5.
 A golden that *grows* there is a finding.
+
+**WP-3 measured both predictions, and amended this subsection:**
+
+- **I4 did not shrink at WP-3** — correctly: neither `showcase-ironvale` nor
+  `demo-deltaport` has any street-family movement, so no ground under a pad
+  changed and the filter selects the same columns. A prediction that did not
+  fire, not a failure.
+- **`doorstep.landing` is a *second* ground-dependent declarer**, which this
+  subsection had not named: `buildDoorsteps` cuts a landing only where the
+  ground stands above the threshold line, so I6's move reselects which doors
+  get a `dropped` outcome. I3 therefore **grows** at WP-3 (`c1-harbourtown`
+  0 → 12, `showcase-bayline` 3 → 6 — `DOORSTEP_RESELECTION` in the test) and
+  goes to zero at WP-4, where the table already puts it. This is the one
+  legitimate exception to "goldens may only shrink", and it is bounded: every
+  reselected landing is an attributable I3 divergence or the test fails.
+- I1's `gradeBank` share had no WP-4 remainder on `showcase-bayline` — all
+  three columns went at WP-3.
 
 ### 9a.4 What a converted pass reads
 
