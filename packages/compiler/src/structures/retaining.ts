@@ -188,13 +188,20 @@ export interface RetainingPassResult {
    */
   readonly unfaced: Readonly<Record<UnfacedReason, number>>;
   /**
-   * Columns of cut face finished in masonry without a wall standing on them.
+   * Columns of **cut-face course** — the contour a cut leaves that no wall
+   * stands on, finished in masonry and coped along its top edge.
    *
    * The answer to the second half of the walk: *"retaining walls do not
    * properly seal the cliffside; raw dirt faces jut out underneath stone slabs
    * in arbitrary patches."* They did, and they were not the wall's fault — a
    * platform edge nobody could wall was left showing the soil band the terrain
    * pass gave it, four blocks of dirt under a stone kerb.
+   *
+   * Counted per column of the finished course, which is more than the columns
+   * that answer the drop test on their own: {@link faceCuts} bridges the
+   * one-column gaps in the contour and thickens it across the diagonal, because
+   * a contour on a lattice is a staircase and a staircase of single blocks is
+   * the artifact rather than the fix.
    */
   readonly revetted: number;
   /** Columns of graded bank finished as earth rather than as bare substrate. */
@@ -603,7 +610,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // of the cut is made of, and it runs over the whole quarter rather than
     // over the seams, because "no wall here" has eight named reasons and a cut
     // face has one appearance whichever of them applied.
-    revetted += faceCuts(region, plan, levels, states, seam);
+    revetted += faceCuts(region, plan, levels, states, seam, street, occupied);
   }
 
   const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
@@ -671,17 +678,57 @@ function deepen(plan: ColumnPlan, k: number, depth: number): void {
  * build a wall — left exactly that.
  *
  * So the finish is not a wall and does not pretend to be one: it is a statement
- * about what the cut is **made of**. Every column of a platform that stands two
- * or more blocks above an 8-neighbour has its soil band replaced by the theme's
- * revetment and deepened to the height of the drop. Nothing is emitted, no
- * level moves, nothing can float, and a column a wall already claimed keeps the
- * wall's own material — it is only deepened.
+ * about what the cut is **made of**. Nothing is emitted, no level moves, nothing
+ * can float, and a column a wall already claimed keeps the wall's own material —
+ * it is only deepened. The pass swaps materials and does nothing else, and that
+ * property is what makes it safe to run over a whole quarter.
  *
- * Two or more, because one block of step is a kerb: it is a course you walk up,
- * the street pass already copes it, and facing it would be building a wall you
- * trip over. The same number `skirtSeams` uses, for the same reason.
+ * ## A cut face is a course, not a per-column property
  *
- * @returns columns faced.
+ * > *Walked 2026-08-06: "raw dirt faces jut out underneath stone slabs in
+ * > arbitrary patches", still, after the finish existed.*
+ *
+ * The first version of this asked one question of one column — *is your
+ * 8-neighbour drop ≥ 2?* — and painted whichever columns said yes. On a diagonal
+ * contour the set of columns that say yes is **itself a lattice staircase**, so
+ * from the low side the revetment showed as isolated single blocks; wherever the
+ * drop dipped to 1 the masonry was interrupted by a column of grass; and with no
+ * coping every stone patch was capped by the lawn on top. It read as a broken
+ * wall.
+ *
+ * This is the **third** appearance of one lesson — *a contour on a lattice is a
+ * staircase* — after the 1,010 phantom seam runs (grouped 4-connected, fixed by
+ * grouping 8-connected) and the chessboard paving of diagonal streets. The fix
+ * is the one that worked both previous times: build the face as a **course along
+ * the contour** and finish it as one.
+ *
+ * 1. **Members** are what the old test found: on a platform, dry, 8-neighbour
+ *    drop ≥ 2. Two or more, because one block of step is a kerb — a course you
+ *    walk up, which the street pass already copes and which a facing would turn
+ *    into a wall you trip over. The same number `skirtSeams` uses.
+ * 2. Members are **grouped 8-connected**, exactly as `skirtSeams` groups its
+ *    own and for exactly the same reason.
+ * 3. **Drop-1 gaps are bridged.** A dry platform column whose own drop is 1
+ *    joins the course when it is 8-adjacent to *two or more* members of one
+ *    component — the stone–gap–stone signature of a contour dipping to a single
+ *    block. A longer run of drop-1 columns touches at most one member at each
+ *    end and stays out: there the face legitimately fades to a kerb, which is
+ *    the street's course, not this one's. Recruits are decided in one region-order
+ *    scan and committed after it, so a recruit can never recruit its own
+ *    neighbour and the result does not depend on scan direction.
+ * 4. **`thickenCourse` closes the diagonal**, because a unit-width band along a
+ *    45° line spans ≈1.41 lattice columns and only a 4-connected course reads as
+ *    masonry. It thickens with the *higher* ground preferred, which is **into
+ *    the platform behind the edge** — never out onto the low side, where a
+ *    painted column would be a patch of stone lying in the grass below the cut.
+ * 5. Every course column gets the theme's revetment, a soil band as deep as its
+ *    own drop, and — the new part — a **coping** on its surface, so the top edge
+ *    of the face reads as something somebody built rather than as grass that
+ *    happens to stop. The coping is withheld from a street column (the surfacer
+ *    owns it), a footprint column (the building owns it) and a wall column (the
+ *    wall pass emits its own coping there, as a structure block too).
+ *
+ * @returns columns of course — members, gap recruits and thicken recruits alike.
  */
 function faceCuts(
   region: Region,
@@ -689,33 +736,130 @@ function faceCuts(
   levels: GroundLevels,
   states: RetainingStates,
   seam: Uint8Array,
+  street: Uint8Array,
+  occupied: Uint8Array,
 ): number {
   const bounds = levels.bounds;
-  let faced = 0;
+  const cells = region.width * region.depth;
+
+  /** The tallest face a column presents to any 8-neighbour; -1 if ineligible. */
+  const drops = new Int32Array(cells).fill(-1);
+  const dropOf = (k: number): number => {
+    const known = drops[k] as number;
+    if (known >= 0) return known;
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    const top = plan.ground[k] as number;
+    let drop = 0;
+    for (const [dx, dz] of SEAM_NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      const n = index(region, x + dx, z + dz);
+      const fall = top - (plan.ground[n] as number);
+      if (fall > drop) drop = fall;
+    }
+    drops[k] = drop;
+    return drop;
+  };
+  /** On a platform of this quarter and not under water. */
+  const facing = (x: number, z: number, k: number): boolean =>
+    levels.at(x, z) !== NO_PLATFORM && plan.fluidKind[k] === FluidKind.NONE;
+
+  // --- members ------------------------------------------------------------
+  const course = new Uint8Array(cells);
+  const members: number[] = [];
   for (let z = bounds.z0; z <= bounds.z1; z++) {
     for (let x = bounds.x0; x <= bounds.x1; x++) {
       if (!inside(region, x, z)) continue;
-      if (levels.at(x, z) === NO_PLATFORM) continue;
       const k = index(region, x, z);
-      if (plan.fluidKind[k] !== FluidKind.NONE) continue;
-      const top = plan.ground[k] as number;
-      // The tallest face this column presents to any neighbour, 8-connected:
-      // a corner column shows its diagonal, and a diagonal face left raw is the
-      // "arbitrary patch" the walk described.
-      let drop = 0;
+      if (!facing(x, z, k)) continue;
+      // A corner column shows its diagonal, and a diagonal face left raw is the
+      // "arbitrary patch" the walk described — so the drop is 8-connected.
+      if (dropOf(k) < 2) continue;
+      course[k] = 1;
+      members.push(k);
+    }
+  }
+  if (members.length === 0) return 0;
+
+  // --- components, 8-connected --------------------------------------------
+  const component = new Int32Array(cells).fill(-1);
+  let nextComponent = 0;
+  for (const start of members) {
+    if ((component[start] as number) >= 0) continue;
+    const id = nextComponent++;
+    component[start] = id;
+    const queue = [start];
+    for (let head = 0; head < queue.length; head++) {
+      const k = queue[head] as number;
+      const x = region.x0 + (k % region.width);
+      const z = region.z0 + Math.floor(k / region.width);
       for (const [dx, dz] of SEAM_NEIGHBOURS) {
         if (!inside(region, x + dx, z + dz)) continue;
         const n = index(region, x + dx, z + dz);
-        const fall = top - (plan.ground[n] as number);
-        if (fall > drop) drop = fall;
+        if (course[n] !== 1 || (component[n] as number) >= 0) continue;
+        component[n] = id;
+        queue.push(n);
       }
-      if (drop < 2) continue;
-      // A column a wall stands on already has the wall's material; all it wants
-      // is the depth, so the wall does not sit on a dirt plinth of its own.
-      if (seam[k] !== 1) plan.subsurface[k] = states.revetment;
-      deepen(plan, k, drop);
-      faced++;
     }
+  }
+
+  // --- the drop-1 gaps ----------------------------------------------------
+  // Decided in one scan and committed after it: a recruit that could recruit
+  // its neighbour would walk the course along the whole kerb line.
+  const recruits: number[] = [];
+  for (let z = bounds.z0; z <= bounds.z1; z++) {
+    for (let x = bounds.x0; x <= bounds.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      const k = index(region, x, z);
+      if (course[k] === 1) continue;
+      if (!facing(x, z, k)) continue;
+      if (dropOf(k) !== 1) continue;
+      const touching = new Map<number, number>();
+      for (const [dx, dz] of SEAM_NEIGHBOURS) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const n = index(region, x + dx, z + dz);
+        if (course[n] !== 1) continue;
+        const id = component[n] as number;
+        touching.set(id, (touching.get(id) ?? 0) + 1);
+      }
+      for (const count of touching.values()) {
+        if (count >= 2) {
+          recruits.push(k);
+          break;
+        }
+      }
+    }
+  }
+  for (const k of recruits) course[k] = 1;
+
+  // --- the diagonal -------------------------------------------------------
+  // Preferring the *higher* ground is what points the thickening inward: the
+  // column behind the edge stands level with the face's top, the column in
+  // front of it is the ground below, and a stone patch lying in the grass down
+  // there is the artifact rather than the fix. Drop cannot make this call —
+  // it measures only downward falls, so the column at the foot of the cut
+  // scores the same 0 as a flat column behind the edge and region order would
+  // decide the side.
+  thickenCourse(
+    region,
+    course,
+    (idx, x, z) =>
+      facing(x, z, idx) && occupied[idx] !== 1 && street[idx] !== 1,
+    (idx) => plan.ground[idx] as number,
+  );
+
+  // --- the materials ------------------------------------------------------
+  let faced = 0;
+  for (let k = 0; k < cells; k++) {
+    if (course[k] !== 1) continue;
+    // A column a wall stands on already has the wall's material; all it wants
+    // is the depth, so the wall does not sit on a dirt plinth of its own.
+    if (seam[k] !== 1) {
+      plan.subsurface[k] = states.revetment;
+      if (street[k] !== 1 && occupied[k] !== 1) plan.surface[k] = states.coping;
+    }
+    deepen(plan, k, dropOf(k));
+    faced++;
   }
   return faced;
 }
