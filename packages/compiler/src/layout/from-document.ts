@@ -28,7 +28,7 @@ import {
   type Yaw,
 } from "@terrainist/spec";
 
-import { districtGroundPolicy } from "./district.js";
+import { districtGroundElectable, districtGroundPolicy } from "./district.js";
 import type { LayoutNodeInput } from "./types.js";
 
 /** Footprint a `building.grammar@0` node gets when it declares no envelope. */
@@ -237,9 +237,17 @@ function districtInput(
   // levels its own ground", so `padFor` returns null for both and only the
   // *treatment* of the seams between the levels is gated on `"stepped"`.
   // `sampleGround` reads this same answer rather than re-deriving one.
+  //
+  // The relief election is deliberately *not* made here, and cannot be: a
+  // district has no footprint until the solver gives it one, so there is no
+  // ground to measure. What is decided here is the half that only the document
+  // knows — whether this `"pad"` was asked for or merely defaulted — and
+  // `padFor` decides the other half against the footprint it just chose. See
+  // `districtGroundElectable`.
   const policy = districtGroundPolicy(doc, node, nodePath);
   return {
     ...(policy === "pad" ? {} : { groundPolicy: policy }),
+    ...(districtGroundElectable(doc, node, nodePath) ? { groundElectable: true } : {}),
     id: node.id,
     nodePath,
     kind: "district",

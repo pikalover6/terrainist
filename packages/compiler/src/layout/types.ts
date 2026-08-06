@@ -68,6 +68,22 @@ export interface LayoutNodeInput {
    */
   readonly groundPolicy?: DistrictGroundPolicy;
   /**
+   * This district's `"pad"` is a **default**, not a request, so the ground it
+   * is placed on may still elect to step.
+   *
+   * A quarter that named no ground gets the ground its *site* has: above
+   * `STEP_RELIEF` blocks of relief it derives platforms and steps down the
+   * slope in storeys instead of being levelled to one plane. The relief cannot
+   * be measured before the solve — there is no footprint yet — so the document
+   * half of the question is answered in `from-document.ts` and carried here,
+   * and `padFor` measures the footprint it has just chosen.
+   *
+   * Set by `from-document.ts` and read by `padFor` and by nothing else. Absent
+   * whenever anything *asked* for a ground policy, because an answered question
+   * is not re-opened by the terrain.
+   */
+  readonly groundElectable?: boolean;
+  /**
    * …and it is *scored against* a candidate with no water in it. Separate from
    * {@link LayoutNodeInput.amphibious} because an inland city is allowed to
    * touch the water and must not be dragged towards it.

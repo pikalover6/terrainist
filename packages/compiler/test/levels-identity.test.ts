@@ -225,9 +225,20 @@ describe("a dial that is turned reaches the world", () => {
   // exposed by compiling. A row registered under a misspelt id, or a `params`
   // key nothing reads, is a passing unit test and an unchanged world — so the
   // assertion is simply that the world *is not the same one*.
-  it("gives params.ground: stepped a different world from the default pad", async () => {
+  // The baseline is an **explicit** `ground: "pad"`, not the default.
+  //
+  // It used to be the default, and that stopped being the same thing when the
+  // relief election landed: this fixture's quarter stands on 13 blocks of
+  // relief, which is over `STEP_RELIEF`, so a document that names no ground now
+  // *elects* stepped ground rather than being levelled to one plane. Asserting
+  // against the default would then be asserting `stepped !== stepped`, which is
+  // a false failure — and, read the other way, the fact that it failed the
+  // moment the election landed is the cheapest possible proof that the election
+  // reaches a compiled world. `params.ground: "pad"` is the pre-election answer
+  // and is what the contrast is actually about.
+  it("gives params.ground: stepped a different world from a pad", async () => {
     installFanOutRows();
-    const pad = await compileOnce(world({}));
+    const pad = await compileOnce(world({ ground: "pad" }));
     const stepped = await compileOnce(world({ ground: "stepped" }));
     expect(stepped).not.toBe(pad);
   }, 300_000);
@@ -238,8 +249,23 @@ describe("a dial that is turned reaches the world", () => {
     const viaIntent = await compileOnce(world({}, { character: { ground: "stepped" } }));
     // Not asserted equal — an intent carries other rows with it — only that the
     // intent route moved the world off the pad answer at all.
-    const pad = await compileOnce(world({}));
+    const pad = await compileOnce(world({ ground: "pad" }));
     expect(viaIntent).not.toBe(pad);
     expect(viaParams).not.toBe(pad);
+  }, 300_000);
+
+  // The election itself, at compile scale rather than at unit scale
+  // (`ground-election.test.ts` owns the unit statement). This fixture's ground
+  // is the reason the two assertions above had to change, so it is worth saying
+  // out loud what it now compiles to.
+  it("elects stepped ground for a quarter that named none, on real relief", async () => {
+    installFanOutRows();
+    const elected = await compileOnce(world({}));
+    const asked = await compileOnce(world({ ground: "stepped" }));
+    const levelled = await compileOnce(world({ ground: "pad" }));
+    // Byte-identical to the same quarter asking for it by name: the election
+    // chooses a policy, it does not open a second code path.
+    expect(elected).toBe(asked);
+    expect(elected).not.toBe(levelled);
   }, 300_000);
 });

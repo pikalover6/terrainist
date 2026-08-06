@@ -67,7 +67,16 @@ import {
   type StreetStairGeometry,
   type StreetStairLevels,
 } from "./street-stairs.js";
-import { carriagewaySpans, sweptColumns, type SweptColumn } from "./sweep.js";
+import {
+  arcFrame,
+  arcLevels,
+  carriagewaySpans,
+  simplifyPath,
+  sweptColumns,
+  type ArcFrame,
+  type ArcLevels,
+  type SweptColumn,
+} from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
 /* tuning                                                                      */
@@ -443,23 +452,36 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     // straight through it and undo the perpendicular arrival.
     const path = joinStub(stub, smoothed);
 
-    const profile = gradeProfile(
-      path.map((c) => plan.ground[index(region, c.x, c.z)] as number),
-      plan.seaLevel,
-      path.map((c) => (paved[index(region, c.x, c.z)] === 1 ? 0 : ROAD_FILL_BAND)),
-      // A deck has to clear the water it spans, so a bridge cell's floor is
-      // the fluid surface plus one rather than the water table.
-      path.map((c) => {
-        const k = index(region, c.x, c.z);
-        return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
-      }),
+    // Graded on the arc frame, for the reason {@link ArcFrame} gives: a lane's
+    // height is a function of how far along the lane you are, and the raster is
+    // only a drawing of that. A lane routed 8-connected is less distorted than a
+    // 4-connected street — a diagonal step is one cell and √2 of arc — but the
+    // grade cap still has to mean one block of rise per block of ground, and a
+    // cross-section still has to be level across the lane's width.
+    const frame = arcFrame(path);
+    const spots = sweptColumns(region, path, carriagewaySpans(width).lanes, { line: frame.line });
+    const at = (p: { x: number; z: number }): number =>
+      index(region, clampX(region, p.x), clampZ(region, p.z));
+    const levels = arcLevels(
+      frame,
+      gradeProfile(
+        frame.stations.map((p) => plan.ground[at(p)] as number),
+        plan.seaLevel,
+        frame.stations.map((p) => (paved[at(p)] === 1 ? 0 : ROAD_FILL_BAND)),
+        // A deck has to clear the water it spans, so a bridge cell's floor is
+        // the fluid surface plus one rather than the water table.
+        frame.stations.map((p) => {
+          const k = at(p);
+          return water[k] === 1 ? Math.max(plan.seaLevel, plan.fluidTop[k] as number) + 1 : 0;
+        }),
+      ),
     );
     const surfaced: { x: number; z: number; y: number }[] = [];
     for (const [i, cell] of path.entries()) {
-      surfaced.push({ x: cell.x, z: cell.z, y: profile[i] as number });
+      surfaced.push({ x: cell.x, z: cell.z, y: levels.at(frame.pathArc[i] as number) });
     }
 
-    surfaceRoute(region, plan, blocked, road, roadY, surfaced, width, states, occupancy, paved, water, bridged);
+    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged);
     blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
 
     routes.push({
@@ -693,9 +715,11 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     readonly marked: boolean;
     /** Set by the claim phase. */
     spots?: readonly SweptColumn[];
+    /** The run's arc frame — where its height lives. Set by the claim phase. */
+    frame?: ArcFrame;
     geometry?: StreetStairGeometry;
-    /** Set by the level phase. */
-    profile?: readonly number[];
+    /** Set by the level phase: one level per station of {@link frame}. */
+    levels?: ArcLevels;
     stairs?: StreetStairLevels;
   }
 
@@ -808,8 +832,13 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       );
       continue;
     }
-    const spots = sweptColumns(region, job.path, carriagewaySpans(job.width).lanes);
+    // One simplified line, shared by the sweep and the frame: the arcs they
+    // speak in must be the same coordinate or the level a column reads is not
+    // the level its cross-section was graded to.
+    const line = simplifyPath(job.path);
+    const spots = sweptColumns(region, job.path, carriagewaySpans(job.width).lanes, { line });
     job.spots = spots;
+    job.frame = arcFrame(job.path, line);
     // A foreign footprint is never surfaced by anybody, so it is never owned:
     // claiming it would only stop the column being painted by a segment that is
     // allowed to paint it. **Water is the exception**, and it has to be: a wet
@@ -866,11 +895,22 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     }
 
     const path = job.path;
+    const frame = job.frame as ArcFrame;
+    // **The profile is graded over the arc frame's stations, not over the raster
+    // cells.** Two things follow, and both are the defect this replaces. The
+    // grade cap becomes one block of rise per block of *ground travelled* rather
+    // than per raster cell — on a diagonal those differ by √2, which is why a
+    // diagonal street used to climb half again as fast as its own grade cap
+    // claimed. And the ground it is graded from is sampled *along the true
+    // line*, which does not zigzag: the 4-connected raster of a diagonal
+    // oscillates across the contour every step, `gradeProfile` is a lower
+    // envelope of unit cones and preserves a ±1 oscillation exactly, and the
+    // result was a washboard written into the street. See {@link ArcFrame}.
     const ground: number[] = [];
     const band: number[] = [];
     const deckFloor: number[] = [];
-    for (const c of path) {
-      const k = index(region, c.x, c.z);
+    for (const p of frame.stations) {
+      const k = index(region, clampX(region, p.x), clampZ(region, p.z));
       ground.push(natural[k] as number);
       band.push(paved[k] === 1 ? 0 : ROAD_FILL_BAND);
       // A deck has to clear the water it spans, so a bridge cell's floor is the
@@ -884,18 +924,20 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     for (const [i, c] of path.entries()) {
       const k = index(region, c.x, c.z);
       if (owner[k] === j || owner[k] === -1) continue;
-      pinLevel(ground, band, deckFloor, i, columnY[k] as number);
+      // A junction is a *place*, not a path cell: the pin lands on the station
+      // whose cross-section covers the shared column, so the whole width of this
+      // street arrives at the owner's level rather than one lane of it.
+      pinLevel(ground, band, deckFloor, frame.station(frame.pathArc[i] as number), columnY[k] as number);
     }
-    const profile = gradeProfile(ground, plan.seaLevel, band, deckFloor);
-    job.profile = profile;
+    const levels = arcLevels(frame, gradeProfile(ground, plan.seaLevel, band, deckFloor));
+    job.levels = levels;
     for (const spot of job.spots ?? []) {
       if (owner[spot.idx] !== j) continue;
-      const i = Math.min(path.length - 1, Math.max(0, spot.index));
       // A plaza surfaced itself and keeps its own level; the lane is *on* the
       // green, which is what the dress phase writes there too.
       columnY[spot.idx] =
-        paved[spot.idx] === 1 ? (natural[spot.idx] as number) : (profile[i] as number);
-      stepFlag[spot.idx] = i > 0 && profile[i] !== profile[i - 1] ? 1 : 0;
+        paved[spot.idx] === 1 ? (natural[spot.idx] as number) : levels.at(spot.arc);
+      stepFlag[spot.idx] = levels.steps(spot.arc) ? 1 : 0;
     }
   }
 
@@ -926,24 +968,31 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       continue;
     }
 
-    const profile = job.profile;
+    const levels = job.levels;
     const spots = job.spots;
-    if (profile === undefined || spots === undefined) continue;
-    const surfaced = job.path.map((cell, i) => ({ x: cell.x, z: cell.z, y: profile[i] as number }));
+    if (levels === undefined || spots === undefined) continue;
+    // The path-indexed form, for everything that still walks the raster: the
+    // bridge kit's spans and the avenue's dash phase. Each cell takes the level
+    // of the cross-section it sits in, so the two views never disagree.
+    const surfaced = job.path.map((cell, i) => ({
+      x: cell.x,
+      z: cell.z,
+      y: levels.at(levels.frame.pathArc[i] as number),
+    }));
     surfaceRoute(
       region,
       plan,
       blocked,
       road,
       roadY,
-      surfaced,
-      job.width,
+      spots,
+      levels,
       job.states,
       occupancy,
       paved,
       water,
       bridged,
-      { owner, job: job.order, step: stepFlag, natural, spots },
+      { owner, job: job.order, step: stepFlag, natural },
     );
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
@@ -1965,6 +2014,17 @@ function paintCentreLines(
  * them. The lane lattice is the one this function always used
  * ({@link carriagewaySpans}), so a straight road is unchanged block for block.
  *
+ * **And the level comes from the arc frame, not from the raster either.** A
+ * column's height used to be read at `path[spot.index].y` — the height of
+ * whichever *rasterized cell* the column projected nearest to. On a diagonal run
+ * the raster carries √2 cross-sections per block of street, so one block of
+ * carriageway was written at two heights, and those two cross-sections interleave
+ * on the lattice: every column's four neighbours belong to the other one. That is
+ * the chessboard of full blocks and half slabs the hill-town walk reported, and
+ * it is not noise. {@link ArcLevels} gives one level per block of arc length, so
+ * a cross-section is level across its width and a grade change is one clean step
+ * across the whole carriageway. See {@link ArcFrame}.
+ *
  * **`ownership`, when present, splits geometry from material.** Without it —
  * which is every call the village road pass makes — this writes everything it
  * sweeps, exactly as it always has. With it (the street surfacer's dress phase)
@@ -1980,8 +2040,8 @@ function surfaceRoute(
   blocked: Uint8Array,
   road: Uint8Array,
   roadY: Int32Array,
-  path: readonly { x: number; z: number; y: number }[],
-  width: number,
+  spots: readonly SweptColumn[],
+  levels: ArcLevels,
   states: RoadStates,
   occupancy: OccupancyGrid | undefined,
   paved: Uint8Array,
@@ -1994,12 +2054,8 @@ function surfaceRoute(
     readonly step: Uint8Array;
     /** The frozen ground the relief test is taken against. */
     readonly natural: Int32Array;
-    /** The claim phase's cached sweep — never recomputed. */
-    readonly spots: readonly SweptColumn[];
   },
 ): void {
-  const lanes = carriagewaySpans(width).lanes;
-  const spots = ownership?.spots ?? sweptColumns(region, path, lanes);
   // Which columns sit on a face, measured against the *natural* ground — the
   // loop below flattens columns as it goes, so a test taken inside it would
   // depend on how far along the sweep we were. See the note at the draw.
@@ -2010,15 +2066,12 @@ function surfaceRoute(
     const x = spot.x;
     const z = spot.z;
     const idx = spot.idx;
-    const i = Math.min(path.length - 1, Math.max(0, spot.index));
-    const cell = path[i] as { x: number; z: number; y: number };
+    // The level of this column's **cross-section**, keyed on arc length.
+    const y = levels.at(spot.arc);
     // Whether this segment may move the ground here. Painting is not gated on
     // it: ownership decides geometry and deliberately not material.
     const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
-    const isStep =
-      ownership === undefined
-        ? i > 0 && cell.y !== (path[i - 1] as { y: number }).y
-        : ownership.step[idx] === 1;
+    const isStep = ownership === undefined ? levels.steps(spot.arc) : ownership.step[idx] === 1;
     // A bridge cell is *not* surfaced. The whole point of a deck is that the
     // water underneath it is undisturbed — rewriting the column here would
     // fill the channel with dirt path and, worse, would move `ground` and
@@ -2028,7 +2081,7 @@ function surfaceRoute(
     if (water[idx] === 1) {
       if (!owned) continue;
       road[idx] = 1;
-      roadY[idx] = cell.y;
+      roadY[idx] = y;
       bridged[idx] = 1;
       if (occupancy !== undefined) claim(occupancy, idx);
       continue;
@@ -2054,13 +2107,13 @@ function surfaceRoute(
     // road. On gentle ground the draw is byte-for-byte what it always was.
     const s = steep[n] === true ? clusterCell(x, z) : { x, z };
     if (owned) {
-      plan.ground[idx] = cell.y;
-      plan.fluidTop[idx] = cell.y;
+      plan.ground[idx] = y;
+      plan.fluidTop[idx] = y;
       plan.snow[idx] = 0;
       plan.subsurface[idx] = states.subsurface;
       if (plan.soil[idx] === 0) plan.soil[idx] = 1;
       road[idx] = 1;
-      roadY[idx] = cell.y;
+      roadY[idx] = y;
       if (occupancy !== undefined) claim(occupancy, idx);
     }
     plan.surface[idx] = isStep
@@ -2316,6 +2369,23 @@ function unroutable(nodePath: string, from: string, to: string, why: string): Lo
 /** Row-major column index. Callers must have checked {@link inside}. */
 export function index(region: Region, x: number, z: number): number {
   return (z - region.z0) * region.width + (x - region.x0);
+}
+
+/**
+ * Clamp a column into the region.
+ *
+ * A station of the arc frame is the true centre line rounded to the lattice, and
+ * near the region's edge that rounding can land one column outside it. Reading
+ * the nearest in-region column is at most one block from the point asked for; the
+ * alternative is a hole in the elevation profile at the world's edge.
+ */
+export function clampX(region: Region, x: number): number {
+  return x < region.x0 ? region.x0 : x > region.x0 + region.width - 1 ? region.x0 + region.width - 1 : x;
+}
+
+/** Clamp a column into the region. See {@link clampX}. */
+export function clampZ(region: Region, z: number): number {
+  return z < region.z0 ? region.z0 : z > region.z0 + region.depth - 1 ? region.z0 + region.depth - 1 : z;
 }
 
 /** True when `(x, z)` is a column of the region. */

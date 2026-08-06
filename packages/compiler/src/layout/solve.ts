@@ -22,6 +22,7 @@
 import {
   Rng,
   streamSeed,
+  type HeightField,
   type Region,
 } from "@terrainist/stdlib";
 import {
@@ -58,6 +59,7 @@ import {
   type Candidate,
   type EvalContext,
 } from "./cost.js";
+import { STEP_RELIEF, reliefOf } from "./district.js";
 import { footprintStats, terrainCost, terrainFeasible, type FootprintStats } from "./fitness.js";
 import { resolvePorts, rotatedSize } from "./ports.js";
 import {
@@ -262,7 +264,7 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
     if (placement === undefined) continue;
     placements.push(placement);
     ports.push(...resolvePorts(placement, node.size, node.ports));
-    const pad = padFor(node, placement);
+    const pad = padFor(node, placement, request.field);
     if (pad !== null) padEdits.push(pad);
   }
 
@@ -813,7 +815,11 @@ export function referenceY(node: LayoutNodeInput, stats: FootprintStats): number
 const LEVELLING_MODES = new Set(["flatten", "cut_fill", "terrace"]);
 
 /** The pad edit for one placement, or `null` when the node does not touch the ground. */
-export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | null {
+export function padFor(
+  node: LayoutNodeInput,
+  placement: Placement,
+  field?: HeightField,
+): PadEdit | null {
   // A harbour is the one placed node whose footprint is *meant* to be half
   // water. Levelling it to one plane would raise the sea bed to the median
   // ground of the box and there would be no harbour left to build, so the quay
@@ -842,6 +848,26 @@ export function padFor(node: LayoutNodeInput, placement: Placement): PadEdit | n
   // `"stepped"` is `"benched"` plus derived platforms and seam treatment. In
   // both the quarter's own levelling is the levelling, so there is no pad.
   if (node.groundPolicy === "benched" || node.groundPolicy === "stepped") return null;
+  // …and the fifth, which is the same node arrived at from the other side: a
+  // quarter whose `"pad"` was a *default* rather than a request, standing on
+  // real relief. It elects `"stepped"` (`STEP_RELIEF`, `layout/district.ts`),
+  // so there is no pad here either — and this is the only place the election
+  // can be made, because it is the first moment a footprint exists.
+  //
+  // The fabric pass re-makes the same election from the same field at the same
+  // footprint, and the two cannot disagree in either direction: elect
+  // `"stepped"` and no pad is laid, so the pass measures the same natural
+  // relief; elect `"pad"` and the pad below flattens the footprint, so the pass
+  // measures a relief of 0. The field is the shared state that keeps them
+  // honest, which is the same trick `districtGroundPolicy` already plays with
+  // the document.
+  if (
+    node.groundElectable === true &&
+    field !== undefined &&
+    reliefOf(field, placement.footprint) >= STEP_RELIEF
+  ) {
+    return null;
+  }
   let mode = "cut_fill";
   let blend = DEFAULT_BLEND;
   for (const c of node.constraints) {

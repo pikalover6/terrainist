@@ -205,6 +205,31 @@ export interface StreetscapeContext {
    * trapdoor. A prop whose ops touch any avoided column is skipped whole.
    */
   readonly avoid?: (x: number, z: number) => boolean;
+  /**
+   * 1 on every column the **street surfacer** laid — its carriageways, its
+   * bridge decks and its flights of steps, row-major over the plan's region.
+   *
+   * This pass and the surfacer both have to answer "where is the street", and
+   * until this input existed they answered it with two different constructions.
+   * The surfacer asks each nearby column for its perpendicular distance to the
+   * **true centre line** ({@link sweptColumns}); {@link buildStreetMasks} walks
+   * the *raster* and offsets each cell along a heading forced onto an axis. On an
+   * axis-aligned street those agree exactly. On a diagonal they do not: the outer
+   * lanes of a diagonal carriageway fall outside every axis-aligned bar the
+   * raster walk draws, so this pass classified road as **sidewalk** and
+   * {@link paveSidewalks} re-levelled it — to the ground under a centre cell one
+   * or two cross-sections away. Measured on the hill town that turned a street
+   * the surfacer had written level into one with up to seven blocks of step
+   * across its own width.
+   *
+   * The invariant, stated once: **no later pass re-levels a column the surfacer
+   * owns.** A column in this mask is carriageway, whatever the raster walk
+   * thinks, and this pass may paint a crossing on it and nothing else.
+   *
+   * Omitted by callers with no surfacer result — every test that dresses a graph
+   * on its own — and the pass then behaves exactly as it did before.
+   */
+  readonly surfaced?: Uint8Array;
 }
 
 /** One prop this pass planted, in world columns. */
@@ -381,7 +406,7 @@ export function dressStreets(
   const blocks: StructureBlock[] = [];
   const props: StreetscapeProp[] = [];
 
-  const masks = buildStreetMasks(graph, region);
+  const masks = buildStreetMasks(graph, region, ctx.surfaced);
   paveSidewalks(graph, plan, masks, states);
   thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
@@ -423,6 +448,7 @@ export function dressStreets(
 export function buildStreetMasks(
   graph: StreetGraph,
   region: Region,
+  surfaced?: Uint8Array,
 ): StreetMasks {
   const n = region.width * region.depth;
   const carriageway = new Uint8Array(n);
@@ -430,6 +456,12 @@ export function buildStreetMasks(
   const walkLane = new Uint8Array(n);
   const curb = new Uint8Array(n);
   const y = new Int32Array(n).fill(UNSET);
+
+  // The surfacer's own answer, first and unconditionally: a column it laid *is*
+  // carriageway. See {@link StreetscapeContext.surfaced}.
+  if (surfaced !== undefined) {
+    for (let k = 0; k < n; k++) if (surfaced[k] === 1) carriageway[k] = 1;
+  }
 
   for (const segment of graph.segments) {
     for (const step of walkStreet(segment.path)) {

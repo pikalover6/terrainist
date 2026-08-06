@@ -28,7 +28,7 @@ import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { gradeProfile, index, inside } from "./roads.js";
+import { clampX, clampZ, gradeProfile, index, inside } from "./roads.js";
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */
@@ -116,7 +116,11 @@ export interface SweepResult {
   readonly blocks: readonly StructureBlock[];
   /** 1 on every column the sweep claimed, row-major over the plan's region. */
   readonly claimed: Uint8Array;
-  /** The datum actually built to, per path index. */
+  /**
+   * The datum actually built to, **per station of the arc frame** — one entry
+   * per block of arc length along the true centre line, not per raster cell.
+   * See {@link ArcFrame}. For an axis-aligned run the two indexings coincide.
+   */
   readonly datum: Int32Array;
   readonly features: readonly SweepFeaturePlacement[];
   readonly diagnostics: readonly LoamDiagnostic[];
@@ -307,6 +311,148 @@ export function arcLengths(line: readonly LineVertex[]): number[] {
     out.push((out[s] as number) + Math.hypot(b.x - a.x, b.z - a.z));
   }
   return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* geometry: the arc frame — where height lives                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A swept run's **stations**: the centre line resampled at one-block intervals
+ * of arc length, plus the arc coordinate of every rasterized path cell.
+ *
+ * This is the answer to the question rule 3 left open. `sweptColumns` already
+ * decides *which* columns a run owns from the true line; nothing decided **how
+ * high** they sit from the true line, and the datum was indexed by rasterized
+ * path cell instead. On an axis-aligned run those are the same thing. On a
+ * diagonal they are emphatically not: a 4-connected raster of a 45° line spends
+ * √2 cells per block of real distance, so
+ *
+ * - a datum that changes by at most one block *per raster cell* changes by up to
+ *   1.41 blocks per block of ground — the grade cap silently stops meaning what
+ *   it says; and
+ * - one block of street therefore carries **two** raster cross-sections at two
+ *   different heights, and those two cross-sections interleave on the lattice.
+ *   Every column's four neighbours are on the other one. That is the chessboard
+ *   of full blocks and slabs a walk of the hill town found on every diagonal
+ *   street, and it is not noise: it is a perfectly regular consequence of
+ *   measuring height in raster cells.
+ *
+ * There is a second, quieter half. `plan.ground` read at the raster cells is a
+ * *zigzag* sample of the terrain, and a zigzag across a contour oscillates by
+ * the cross-slope every step. `gradeProfile` is a lower envelope of unit cones,
+ * which preserves a ±1 oscillation exactly. Stations sample along the **true
+ * line**, which does not zigzag, so the oscillation never enters the profile.
+ *
+ * The rule this type exists to state:
+ *
+ * > **A road's cross-section is level. Its height is a function of arc length
+ * > along its centre line, never of which raster cell a column is nearest.**
+ *
+ * Iso-height bands are then perpendicular to the centre line by construction, a
+ * grade change is one clean step across the full carriageway, and the 1-Lipschitz
+ * law is 1 block of rise per block of ground travelled — for a diagonal exactly
+ * as for a straight.
+ *
+ * **An axis-aligned run is unmoved, exactly.** Its simplified line is two
+ * vertices, its total arc is `path.length − 1`, so there are as many stations as
+ * path cells, station `k` *is* `path[k]`, and `pathArc[i] === i`. Every array
+ * this frame produces is the array the old code produced, element for element.
+ */
+export interface ArcFrame {
+  readonly line: readonly LineVertex[];
+  /** Cumulative arc length at each vertex of {@link line}. */
+  readonly arcs: readonly number[];
+  /** Arc length of the whole run. */
+  readonly total: number;
+  /** Station spacing, one block or as near to it as the run divides evenly. */
+  readonly spacing: number;
+  /** World column of each station; `stations[k]` sits at arc `k · spacing`. */
+  readonly stations: readonly Vec2[];
+  /** Arc length of each rasterized path cell, in path order. */
+  readonly pathArc: readonly number[];
+  /** The station an arc length belongs to, clamped into range. */
+  station(arc: number): number;
+}
+
+/**
+ * Build the {@link ArcFrame} of a path.
+ *
+ * `line` may be supplied when the caller has already simplified the path — the
+ * frame and {@link sweptColumns} must be built against the *same* line, or the
+ * arcs they speak in are not the same coordinate.
+ */
+export function arcFrame(
+  path: readonly Vec2[],
+  line: readonly LineVertex[] = simplifyPath(path),
+): ArcFrame {
+  const arcs = arcLengths(line);
+  const total = (arcs[arcs.length - 1] ?? 0) as number;
+  const pathArc = path.map((c) => projectToLine(c, line, arcs).arc);
+
+  // **A station is one block of ground, or one step of the path, whichever is
+  // longer**, and that sentence is the whole of the grade law.
+  //
+  // One block of ground is the obvious half: a run that climbs a block per block
+  // is a 45° ramp and nothing should be steeper. One *step of the path* is the
+  // half that is easy to miss and that a hillside village found the hard way. A
+  // route is walked cell by cell, and a player crossing a lane's diagonal step
+  // covers √2 blocks of ground in one move — so a datum that changes by a block
+  // per block of arc may change by two across that one move, which is a wall.
+  // Taking the longer of the two makes "one block per station" mean one block
+  // per block of ground *and* one block per step taken, at once.
+  //
+  // The epsilons are float dust, not slack: `pathArc` is a dot product, so a
+  // straight run's consecutive arcs come out `1 ± 4e-15`, and without the guard
+  // an axis-aligned run's spacing lands a hair above one block and its last
+  // station is quietly dropped. That is the identity guarantee, lost to rounding.
+  let stride = 1;
+  for (let i = 1; i < pathArc.length; i++) {
+    const d = Math.abs((pathArc[i] as number) - (pathArc[i - 1] as number));
+    if (d > stride + 1e-9) stride = d;
+  }
+  // The spacing is the stride itself, not the run divided into equal parts. An
+  // even division would have to round the number of parts, and a spacing of
+  // 0.98 or 1.03 blocks *drifts*: after twenty stations the grid has slipped
+  // half a block against the ground it measures, and a step lands in the middle
+  // of a block of street instead of at its edge. Stations at exact multiples of
+  // the stride do not drift, and the last stretch shorter than one stride simply
+  // belongs to the last station — which is what a run ending mid-block is.
+  const spacing = stride;
+  const count = Math.max(1, Math.floor(total / spacing + 1e-9) + 1);
+  const stations: Vec2[] = [];
+  for (let k = 0; k < count; k++) stations.push(pointAtArc(line, k * spacing, 0));
+  const station = (arc: number): number => {
+    const k = Math.round(arc / spacing);
+    return k < 0 ? 0 : k > count - 1 ? count - 1 : k;
+  };
+  return { line, arcs, total, spacing, stations, pathArc, station };
+}
+
+/** A run's height as a function of arc length: one level per station. */
+export interface ArcLevels {
+  readonly frame: ArcFrame;
+  /** Level per station, in station order. */
+  readonly y: readonly number[];
+  /** The level at an arc length along the line. */
+  at(arc: number): number;
+  /** True when the station at `arc` stands above or below the one before it. */
+  steps(arc: number): boolean;
+}
+
+/** Bind a station-indexed profile to the frame it was graded over. */
+export function arcLevels(frame: ArcFrame, y: readonly number[]): ArcLevels {
+  const last = Math.max(0, y.length - 1);
+  const at = (arc: number): number => y[Math.min(last, frame.station(arc))] as number;
+  return {
+    frame,
+    y,
+    at,
+    steps: (arc: number): boolean => {
+      const k = Math.min(last, frame.station(arc));
+      return k > 0 && y[k] !== y[k - 1];
+    },
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -857,7 +1003,13 @@ export function sweep(input: SweepInput): SweepResult {
   }
 
   const line = simplifyPath(path);
-  const ground = path.map((c) => plan.ground[index(region, c.x, c.z)] as number);
+  // The datum lives on the **arc frame**, not on the raster: one level per block
+  // of real distance along the true line, sampled off the true line. See
+  // {@link ArcFrame} for why a raster-indexed datum chessboards a diagonal run.
+  const frame = arcFrame(path, line);
+  const ground = frame.stations.map(
+    (p) => plan.ground[index(region, clampX(region, p.x), clampZ(region, p.z))] as number,
+  );
   const level = sweepDatum(ground, profile.follow, Math.max(1, profile.maxGrade), plan.seaLevel);
 
   // Where the datum climbs faster than a player can walk, treads take over the
@@ -885,8 +1037,10 @@ export function sweep(input: SweepInput): SweepResult {
     for (const [i, v] of treads.levels.entries()) level[i] = v;
   }
 
+  // Crossings are found on the raster (the fluid mask is a per-column fact) and
+  // then *stated* on the frame, because that is where the datum lives.
   const crossings = findCrossings(region, plan, path);
-  const spanned = new Uint8Array(path.length);
+  const spanned = new Uint8Array(level.length);
   for (const run of crossings) {
     if (profile.crossing === "stop") {
       diagnostics.push(
@@ -899,13 +1053,14 @@ export function sweep(input: SweepInput): SweepResult {
       );
     }
     for (let i = run.from; i <= run.to; i++) {
+      const s = frame.station(frame.pathArc[i] as number);
       // A bridge deck leaves the water it spans undisturbed; a causeway fills;
       // a ford drops the datum to the waterline and paves.
-      if (profile.crossing === "bridge") spanned[i] = 1;
-      else if (profile.crossing === "stop") spanned[i] = 2;
+      if (profile.crossing === "bridge") spanned[s] = 1;
+      else if (profile.crossing === "stop") spanned[s] = 2;
       else if (profile.crossing === "ford") {
         const k = index(region, (path[i] as Vec2).x, (path[i] as Vec2).z);
-        level[i] = Math.max(plan.seaLevel, plan.fluidTop[k] as number);
+        level[s] = Math.max(plan.seaLevel, plan.fluidTop[k] as number);
       }
     }
   }
@@ -921,7 +1076,9 @@ export function sweep(input: SweepInput): SweepResult {
   let skipped = 0;
   for (const col of columns) {
     const band = profile.bands[bandOfLane(profile, col.lane)] as ProfileBand;
-    const i = Math.min(path.length - 1, Math.max(0, col.index));
+    // **Arc, not raster index.** Every column of one cross-section shares an arc,
+    // so every column of one cross-section is built to one datum.
+    const i = frame.station(col.arc);
     if (spanned[i] === 2) continue;
     if (spanned[i] === 1) {
       // On a bridged column the plan is untouched: rewriting it would fill the

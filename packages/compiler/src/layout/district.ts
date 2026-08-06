@@ -72,7 +72,13 @@ import {
   type Yaw,
 } from "@terrainist/spec";
 
-import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import {
+  ensureFanOutRows,
+  fanOut,
+  intentFor,
+  resolveIntents,
+  type ResolvedIntent,
+} from "../intent/index.js";
 import {
   COURTYARD_FILL,
   MIN_COURT_SIDE,
@@ -545,6 +551,7 @@ export function districtGroundPolicy(
   doc: SettlementDocument,
   node: DistrictNode,
   nodePath: string,
+  site?: GroundSite,
 ): DistrictGroundPolicy {
   installUrbanForms();
   const form = urbanForm(resolveDistrictFabric(doc, node, nodePath));
@@ -557,7 +564,101 @@ export function districtGroundPolicy(
   // WP-D owns that file and registers the row there; `fanOut` returns `today`
   // for a row nobody has written yet, which is exactly the behaviour this
   // package wants and fan-out law 2 requires.
-  return fanOut<DistrictGroundPolicy>(GROUND_POLICY_ROW, intent, { nodePath, today: implied });
+  const resolved = fanOut<DistrictGroundPolicy>(GROUND_POLICY_ROW, intent, {
+    nodePath,
+    today: implied,
+  });
+  // **The relief election.** It sits *below* `params.ground` and below
+  // `intent.character.ground` — both return above — and it refines the *form's
+  // implication*, which is the only thing left. That placement is the whole
+  // argument: a document that named a ground gets it however steep the hill,
+  // and a document that named none gets the ground its site actually has
+  // rather than the ground the form guessed at from nothing.
+  //
+  // It can only ever turn `"pad"` into `"stepped"`. `"benched"` is a form that
+  // already cuts its own platforms and `"stepped"` is already the answer, so
+  // there is nothing to double-apply and nothing to fight: `terraced` resolves
+  // `"stepped"` a line above and never reaches here.
+  if (resolved !== "pad" || site === undefined) return resolved;
+  if (namedIntentGround(intent) !== undefined) return resolved;
+  return reliefOf(site.field, site.footprint) >= STEP_RELIEF ? "stepped" : "pad";
+}
+
+/**
+ * The ground a district was actually placed on — what the relief election reads.
+ *
+ * Handed in by the two call sites that know the footprint: `padFor`, which is
+ * where the solver decides whether to lay a pad, and {@link layDistrict}, which
+ * is where the platforms are derived. Both read the *same* field object at the
+ * same footprint and therefore cannot disagree — which is the whole point, and
+ * it is self-correcting either way round: elect `"stepped"` and no pad is laid,
+ * so the fabric pass measures the same natural relief and elects `"stepped"`
+ * again; elect `"pad"` and the pad is laid, so the fabric pass measures a
+ * flattened footprint, whose relief is 0, and elects `"pad"` again.
+ */
+export interface GroundSite {
+  readonly field: HeightField;
+  /** The placed footprint, in world columns. */
+  readonly footprint: Rect;
+}
+
+/**
+ * Relief, in blocks, at which a quarter that named no ground steps instead of
+ * being levelled.
+ *
+ * **Measured, not chosen.** The number has to clear three bars at once:
+ *
+ * - it must be above the relief of every quarter that reads as flat, or a world
+ *   that did not ask to move moves and the byte-identity law is broken;
+ * - it must be high enough that `derivePlatforms` actually finds two distinct
+ *   storeys, because a quarter that elects `"stepped"` and comes out as one
+ *   platform gets no pad *and* no platforms — the one genuinely bad outcome
+ *   available here. A block median quantises to `FLOOR_HEIGHT` (4), so two
+ *   distinct storeys need the block medians to straddle a multiple of 4;
+ *   `2 · FLOOR_HEIGHT` is the smallest relief for which that is reliable
+ *   rather than a coin toss on where the medians happen to land;
+ * - it must be low enough that ordinary rolling ground is caught, because a
+ *   threshold nothing reaches is the defect being fixed with extra steps.
+ *
+ * Measured over every committed example (`tools/…` is not needed; the numbers
+ * are in the report on this change): quarters that read as flat sit at 0–5
+ * blocks of relief and quarters that read as "a flat plane cobbled into
+ * terrain" sit at 12 and above, with nothing in between. Ten — `2 ·
+ * FLOOR_HEIGHT + 2` — is inside that gap and clears all three bars.
+ */
+export const STEP_RELIEF = 10;
+
+/** `intent.character.ground`, when it names a policy this compiler knows. */
+function namedIntentGround(intent: ResolvedIntent): string | undefined {
+  const named: unknown = intent.intent.character?.ground;
+  return typeof named === "string" && GROUND_POLICIES.has(named) ? named : undefined;
+}
+
+const GROUND_POLICIES: ReadonlySet<string> = new Set(["pad", "benched", "stepped"]);
+
+/**
+ * Whether this quarter's `"pad"` is a *default* rather than a request.
+ *
+ * The solver has to answer the same question {@link districtGroundPolicy} does
+ * — a quarter that will step must not be padded first — but it asks it from
+ * `padFor`, which sees a `LayoutNodeInput` and not a document. So the document
+ * side is answered once, here, before the solve, and travels on the node as
+ * {@link LayoutNodeInput.groundElectable}; `padFor` then does the one thing
+ * only it can, which is measure the relief of the footprint it just chose.
+ *
+ * False the moment anything *asked* for a ground — `params.ground`,
+ * `intent.character.ground`, or a form that cuts its own benches — because an
+ * answered question is not re-opened by the terrain.
+ */
+export function districtGroundElectable(
+  doc: SettlementDocument,
+  node: DistrictNode,
+  nodePath: string,
+): boolean {
+  if (node.params.ground !== undefined) return false;
+  if (districtGroundPolicy(doc, node, nodePath) !== "pad") return false;
+  ensureFanOutRows();
+  return namedIntentGround(intentFor(resolveIntents(doc), nodePath)) === undefined;
 }
 
 /** `layout.groundPolicy` — registered by WP-D in `layout/streets-intent.ts`. */
@@ -674,7 +775,19 @@ export function layDistrict(
   // that question. It is resolved *here* rather than re-derived from the form,
   // the relief or a constraint, because two answers to one question is the
   // defect class `DESIGN.md` names — `sampleGround` below is the case in point.
-  const groundPolicy = districtGroundPolicy(input.doc, node, nodePath);
+  //
+  // The `site` argument is what lets a quarter that named no ground *elect*
+  // stepped ground from the relief it was actually placed on (`STEP_RELIEF`).
+  // A city cell is deliberately not offered one: a cell already gets no pad —
+  // `padFor` returns null for the whole city — so its ground is already
+  // natural, and electing platforms inside one is a second, larger change than
+  // the one this is.
+  const groundPolicy = districtGroundPolicy(
+    input.doc,
+    node,
+    nodePath,
+    cell === undefined ? { field: input.field, footprint: bounds } : undefined,
+  );
   const requested = fanOut<DistrictFabric>(LAYOUT_ROWS.fabric, intent, {
     nodePath,
     // Resolved a second time here; `resolveDistrictFabric` is the shared answer
@@ -2406,14 +2519,17 @@ export function sampleGround(
 
 /** Median ground height under a rectangle of the composed field. */
 /**
- * The relief of the natural ground under a rectangle, in blocks.
+ * The relief of the ground under a rectangle, in blocks.
  *
- * Read by one caller: the `DISTRICT_GROUND` note, which has to say *what was
- * measured* rather than "the ground was flat" — a document that asked for a
- * hill town and got a flat one is exactly the class of request this repo has
- * accepted and quietly not met before.
+ * Two callers, and they are the same measurement: the `DISTRICT_GROUND` note,
+ * which has to say *what was measured* rather than "the ground was flat"; and
+ * the relief election (`STEP_RELIEF`), from both {@link districtGroundPolicy}
+ * and `padFor`. Max minus min over the rect, rounded per column — the crudest
+ * statistic that answers "is this one plane or a hillside", and deliberately
+ * not a gradient: a quarter is levelled or stepped as a whole, so the question
+ * is about the whole.
  */
-function reliefOf(field: HeightField, rect: Rect): number {
+export function reliefOf(field: HeightField, rect: Rect): number {
   const region = field.region;
   let lo = Number.POSITIVE_INFINITY;
   let hi = Number.NEGATIVE_INFINITY;

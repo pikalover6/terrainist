@@ -717,6 +717,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         palette: input.palette,
         nodePath: district.nodePath,
         avoid: (x, z) => builtColumns.has(`${x},${z}`),
+        // The surfacer's own answer to "where is the street". Without it this
+        // pass re-derives the carriageway from the raster and gets a *different*
+        // set on any diagonal street — and then re-levels the columns it wrongly
+        // called sidewalk, undoing the levels the surfacer just committed to.
+        // See `StreetscapeContext.surfaced`.
+        surfaced: streets.road,
       });
       blocks.push(...dressed.blocks);
       streetFurniture += dressed.props.length;
