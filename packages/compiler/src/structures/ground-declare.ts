@@ -105,16 +105,26 @@ export function declarePlaza(
 ): GroundIntent[] {
   if (result === undefined) return [];
   const out: GroundIntent[] = [];
-  if (result.declaration.paved.length > 0) {
+  const well = result.declaration.well;
+  // The paving runs before the well is dug, so `declaration.paved` holds the
+  // centre column too — and `plaza.ground` (30) outranks `plaza.well` (40), so
+  // declared as it stands the paving wins the well and fills it in. Measured on
+  // `showcase-ironvale` and `demo-deltaport`: one column each, dry stone at the
+  // plaza's level where the pass left a block of water. The pass does not own
+  // that column when it is finished, so it does not declare it.
+  const paved =
+    well === undefined
+      ? result.declaration.paved
+      : result.declaration.paved.filter((c) => c.idx !== well.centre.idx);
+  if (paved.length > 0) {
     out.push({
       source: nodePath,
       sourceClass: "plaza.ground",
       kind: "platform",
-      columns: result.declaration.paved,
+      columns: paved,
       transition: "ramp",
     });
   }
-  const well = result.declaration.well;
   if (well !== undefined) {
     out.push(
       {
@@ -420,6 +430,29 @@ export function declareSidewalks(
   ];
 }
 
+/**
+ * What `paveSidewalks` **wrote**, per column — the other half of inversion I6.
+ *
+ * {@link declareSidewalks} declares the arc-station level, which is the whole
+ * point of I6 and is deliberately *not* the number the pass put in the plan. So
+ * on an I6 column no claim in the set carries the written level, and §8.3's
+ * "the claim whose level equals `plan.ground[k]`" finds nothing to attribute the
+ * divergence to. §8.5's I6 row names `street.sidewalk` as its own loser for
+ * exactly this reason — "the level changed, not the winner" — and this map is
+ * the evidence that makes that row checkable per column instead of assumed.
+ *
+ * Later districts overwrite earlier ones, as the pipeline's write order does.
+ */
+export function sidewalkWrites(
+  streetscape: readonly { readonly result: StreetscapeResult }[] | undefined,
+): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const dressed of streetscape ?? []) {
+    for (const column of dressed.result.declaration) out.set(column.idx, column.wrote);
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 /* §3.9 roads                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -437,7 +470,14 @@ export function declareSidewalks(
 export function declareRoads(result: RoadNetworkResult | undefined): GroundIntent[] {
   if (result === undefined) return [];
   const out: GroundIntent[] = [];
-  for (const route of result.declaration.routes) {
+  for (const [i, route] of result.declaration.routes.entries()) {
+    // Routing order, later-wins — `road.network`'s answer to `street.network`'s
+    // `subRank`. `surfaceRoute` has no "already surfaced" guard, so where two
+    // lanes share a column the pipeline's level is the **last** route's, and
+    // without this the winner would be whichever route's source string sorted
+    // first. Measured on `hillside-village`: 5 columns, up to 4 blocks, decided
+    // by alphabetical accident. Negative because lower wins (§4.1).
+    const subRank = -i;
     if (route.columns.length > 0) {
       out.push({
         source: route.source,
@@ -445,6 +485,7 @@ export function declareRoads(result: RoadNetworkResult | undefined): GroundInten
         kind: "profile",
         columns: route.columns,
         transition: "none",
+        subRank,
       });
     }
     if (route.bridged.length > 0) {
@@ -455,6 +496,7 @@ export function declareRoads(result: RoadNetworkResult | undefined): GroundInten
           kind: "clearance",
           columns: route.bridged,
           transition: "none",
+          subRank,
         },
         {
           source: `${route.source}#deck`,
@@ -462,6 +504,7 @@ export function declareRoads(result: RoadNetworkResult | undefined): GroundInten
           kind: "preserve",
           columns: route.bridged,
           transition: "none",
+          subRank,
         },
       );
     }
@@ -559,6 +602,14 @@ export function declarePadEdits(
       kind: "platform",
       columns,
       transition: "ramp",
+      // Application order, later-wins, exactly as `applyPadEdits` composes them:
+      // inside a footprint `applyLevelPad` writes `targetY` outright, so where
+      // two footprints overlap the field carries the **last** pad's level. Left
+      // to the class's default the two would be ordered by `source` string, and
+      // on `c1-harbourtown` 162 columns would then be decided by whether a node
+      // path happens to sort before another — right by luck, and the same luck
+      // could as easily run the other way. Negative because lower wins (§4.1).
+      subRank: -i,
     });
   }
   return out;

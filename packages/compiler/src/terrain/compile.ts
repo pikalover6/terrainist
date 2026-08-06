@@ -93,6 +93,10 @@ import {
   type ResolvedPort,
   type SolverReport,
 } from "../layout/index.js";
+import type { GroundBaseline } from "../layout/ground-contract.js";
+import { resolveGround } from "../layout/ground-resolver.js";
+import type { GroundEquivalenceOutcome } from "../layout/ground-equivalence.js";
+import { declareAll, sidewalkWrites } from "../structures/ground-declare.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
@@ -230,6 +234,22 @@ export interface CompileTerrainOptions {
    * any machine. Only the report (a sidecar) carries it.
    */
   readonly provenance?: Provenance;
+  /**
+   * Run the ground contract's equivalence shim beside the mutating pipeline
+   * (`docs/GROUND-CONTRACT-v0.md` §8.1).
+   *
+   * **Default off, and off is free**: with this unset the compiler allocates no
+   * baseline, builds no declaration set and never calls the resolver, so a
+   * production emit is byte-identical to one from before the shim existed. With
+   * it on, the ground is snapshotted as materialised, snapshotted again after the
+   * structure pass, and both are handed back on
+   * {@link CompileTerrainResult.groundEquivalence} beside the declaration set and
+   * `resolveGround`'s answer, for `assertGroundEquivalence` to compare.
+   *
+   * Three region-sized arrays twice over: it belongs in the test harness, which
+   * is where it is measured, and not in the CLI.
+   */
+  readonly groundEquivalence?: boolean;
 }
 
 /**
@@ -392,7 +412,19 @@ export interface TerrainCompileReport {
 
 /** Result of a compile attempt: a report, or the diagnostics that stopped it. */
 export type CompileTerrainResult =
-  | { readonly ok: true; readonly report: TerrainCompileReport }
+  | {
+      readonly ok: true;
+      readonly report: TerrainCompileReport;
+      /**
+       * The equivalence shim's material, present only when
+       * {@link CompileTerrainOptions.groundEquivalence} asked for it.
+       *
+       * On the *result* rather than in the report, deliberately: the report is
+       * JSON the CLI writes to a file, and six region-sized typed arrays have no
+       * business on disk. Nothing serialises this.
+       */
+      readonly groundEquivalence?: GroundEquivalenceOutcome;
+    }
   | { readonly ok: false; readonly diagnostics: readonly LoamDiagnostic[] };
 
 /**
@@ -653,6 +685,20 @@ async function compileValidated(
   });
   const columnsMs = now() - t2;
 
+  // The ground contract's baseline (§8.1, step 1) — the three frozen arrays as
+  // materialised, before the first structure pass touches one. Off by default,
+  // and off costs three array copies that never happen.
+  const groundBaseline: GroundBaseline | undefined =
+    options.groundEquivalence === true
+      ? {
+          region: plan.region,
+          ground: Int32Array.from(plan.ground),
+          fluidTop: Int32Array.from(plan.fluidTop),
+          fluidKind: Uint8Array.from(plan.fluidKind),
+          seaLevel: plan.seaLevel,
+        }
+      : undefined;
+
   // --- pass 5a: caves ------------------------------------------------------
   // Subtractive, and deliberately downstream of everything that decides what
   // the world looks like from above: the field, the classification, the biomes
@@ -708,6 +754,62 @@ async function compileValidated(
     layoutOutcome = { ...layoutOutcome, structures };
   }
   const structuresMs = now() - tStruct;
+
+  // --- pass 5b′: the ground contract's equivalence shim ---------------------
+  // §8.1, steps 2–3. Read-only: the shadow declarers recompute what each of the
+  // eleven passes *would* have declared, from what those passes handed back, and
+  // the resolver answers the same question the write-order pile just answered.
+  // Nothing here writes a plan, and it is skipped entirely unless asked for.
+  //
+  // Here, and not later: the eleven are the contract's inventory, and the
+  // authored-program pass that follows is outside it (§3.12). Comparing against
+  // a plan the programs had already written would attribute their writes to a
+  // declarer that never claimed them.
+  const groundEquivalence: GroundEquivalenceOutcome | undefined =
+    groundBaseline === undefined
+      ? undefined
+      : (() => {
+          const declarers = structures?.groundDeclarers;
+          const intents = declareAll({
+            plan,
+            ...(structures?.precincts === undefined ? {} : { precincts: structures.precincts }),
+            ...(structures?.plaza === undefined || declarers?.plazaNodePath === undefined
+              ? {}
+              : { plaza: { nodePath: declarers.plazaNodePath, result: structures.plaza } }),
+            ...(declarers === undefined
+              ? {}
+              : {
+                  retaining: declarers.retaining,
+                  canals: { nodePath: declarers.canalNodePath, result: declarers.canals },
+                  streetscape: declarers.streetscape,
+                  props: declarers.props,
+                  doorsteps: declarers.doorsteps,
+                }),
+            ...(structures?.courtyards === undefined ? {} : { courtyards: structures.courtyards }),
+            ...(structures?.streets === undefined ? {} : { streets: structures.streets }),
+            ...(structures?.roads === undefined ? {} : { roads: structures.roads }),
+            ...(layoutOutcome === undefined ? {} : { padEdits: layoutOutcome.padEdits }),
+          });
+          return {
+            baseline: groundBaseline,
+            intents,
+            resolved: resolveGround(groundBaseline, intents),
+            // A copy, not the live plan: the passes after this one go on writing
+            // it, and comparing against a moving array would credit their writes
+            // to the eleven.
+            written: {
+              ground: Int32Array.from(plan.ground),
+              fluidTop: Int32Array.from(plan.fluidTop),
+              fluidKind: Uint8Array.from(plan.fluidKind),
+            },
+            // §8.5's I6: the sidewalk wins its own band at the arc level and
+            // wrote the centre cell's, so only the pass's own record can tell a
+            // self-inversion from an unattributed move.
+            selfWrites: [
+              { sourceClass: "street.sidewalk", wrote: sidewalkWrites(declarers?.streetscape) },
+            ],
+          };
+        })();
 
   // --- pass 5d: authored programs ------------------------------------------
   // After the structures, for the same reason they run after the columns: a
@@ -987,7 +1089,11 @@ async function compileValidated(
     },
     emit,
   };
-  return { ok: true, report };
+  return {
+    ok: true,
+    report,
+    ...(groundEquivalence === undefined ? {} : { groundEquivalence }),
+  };
 }
 
 /* -------------------------------------------------------------------------- */

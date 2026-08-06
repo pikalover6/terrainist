@@ -70,14 +70,20 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { digCanals, type CanalPassResult } from "./canals.js";
-import { buildRetainingWalls } from "./retaining.js";
+import { buildRetainingWalls, type RetainingPassResult } from "./retaining.js";
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
-import { buildDoorsteps } from "./doorsteps.js";
+import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
-import { buildProps, checkPropFluidSafety, type PlacedProp, type PropJob } from "./props.js";
+import {
+  buildProps,
+  checkPropFluidSafety,
+  type PlacedProp,
+  type PropJob,
+  type PropPassResult,
+} from "./props.js";
 
 import {
   buildPrecincts,
@@ -289,8 +295,41 @@ export interface StructurePassResult {
    */
   readonly courtyards?: CourtyardPassResult;
   readonly precincts?: PrecinctPassResult;
+  /**
+   * The pass results the ground contract's shadow declarers read
+   * (`docs/GROUND-CONTRACT-v0.md` §8.1, item 2).
+   *
+   * Five of the eleven declaring passes had no reason to leave this function
+   * before WP-2 — their products are blocks and masks the emitter never sees
+   * separately — so they are gathered here rather than promoted to five more
+   * top-level fields nothing but the shim reads. **References to results that
+   * already exist**: no work is done to build this, so it costs a production
+   * compile nothing and cannot move a block.
+   */
+  readonly groundDeclarers: GroundDeclarers;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
+}
+
+/** The §3 pass results `structures/ground-declare.ts` recomputes intents from. */
+export interface GroundDeclarers {
+  readonly retaining: RetainingPassResult;
+  readonly canals: CanalPassResult;
+  /** One per district dressed, with the node path its sidewalks belong to. */
+  readonly streetscape: readonly {
+    readonly nodePath: string;
+    readonly result: StreetscapeResult;
+  }[];
+  readonly props: PropPassResult;
+  readonly doorsteps: DoorstepResult;
+  /**
+   * The plaza's node path, which `StructurePassResult.plaza` does not carry and
+   * `declarePlaza` needs: a plaza is one placed node, and its claims are named
+   * after it rather than after the settlement.
+   */
+  readonly plazaNodePath?: string;
+  /** The path canal claims are named under — one pass, so one source prefix. */
+  readonly canalNodePath: string;
 }
 
 /** Build every placed structure, then connect them. */
@@ -698,6 +737,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
+  // Kept for the ground contract's sidewalk declarer (§3.8b), which needs each
+  // dressing beside the node path its claims are named under.
+  const dressings: { nodePath: string; result: StreetscapeResult }[] = [];
   let streetFurniture = 0;
   const arterials = cities.flatMap((c) => c.plan.arterials);
   if (districts.length > 0 || arterials.length > 0) {
@@ -758,6 +800,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       blocks.push(...dressed.blocks);
       streetFurniture += dressed.props.length;
       diagnostics.push(...dressed.diagnostics);
+      dressings.push({ nodePath: district.nodePath, result: dressed });
       // Kept for C3: the life pass needs the walk lane it must not touch and
       // the carriageway it parks against, and re-deriving either from the
       // graph would be the same rasterization with a second chance to differ.
@@ -880,7 +923,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
     });
   }
-  const props =
+  const props: PropPassResult =
     propJobs.length === 0
       ? {
           blocks: [] as StructureBlock[],
@@ -1078,6 +1121,15 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
     ...(streets === undefined ? {} : { streets }),
+    groundDeclarers: {
+      retaining,
+      canals,
+      streetscape: dressings,
+      props,
+      doorsteps,
+      ...(plazaNode === undefined ? {} : { plazaNodePath: plazaNode.nodePath }),
+      canalNodePath: rootPath,
+    },
     diagnostics,
     stats: {
       theme: theme.id,
