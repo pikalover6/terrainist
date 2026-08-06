@@ -960,6 +960,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         roadY,
         states: { step: job.states.step, subsurface: job.states.subsurface },
         stack: input.stack,
+        palette: input.palette,
         owner,
         job: job.order,
         ...(occupancy === undefined ? {} : { occupancy }),
@@ -1043,6 +1044,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         region,
         plan,
         stack: input.stack,
+        palette: input.palette,
         lantern: job.states.lantern,
       }),
     );

@@ -400,6 +400,59 @@ describe("frontage classification and runs", () => {
 /* the empty case                                                              */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* back courts belong to a building                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The service-clutter half of the hill town's prop spam.
+ *
+ * `openPatches` flood-fills every unclaimed column inside a district, which on
+ * a grid is the inside of a block and on a terraced quarter is also the strip
+ * between two benches and the shelf above a retaining wall. Dressing all of
+ * them made clutter a function of leftover ground: half the hill town's 124
+ * crates and pallets stood in courts no house could see.
+ */
+describe("open ground with nobody on it", () => {
+  /** A walled-off court south of the town: no street touches it. */
+  const COURT = { x0: -20, z0: 30, x1: 20, z1: 44 };
+
+  /**
+   * The fixture city plus that court as a district of its own, optionally with
+   * a shed standing in it.
+   */
+  const withCourt = (shed: boolean): ReturnType<typeof dressLife> => {
+    const c = city();
+    const extra = shed ? terrace("shed", "warehouse", -4, 1, 6, 26, 4, 1) : [];
+    return dressLife({
+      plan: c.plan,
+      stack,
+      seed: SEED,
+      nodePath: "world",
+      buildings: [...c.buildings, ...extra],
+      districts: [
+        ...c.districts,
+        { nodePath: "world.court", bounds: COURT, graph: c.districts[0]!.graph, masks: c.districts[0]!.masks },
+      ],
+      existing: c.existing,
+    });
+  };
+
+  const inCourt = (r: ReturnType<typeof dressLife>): number =>
+    r.blocks.filter((b) => b.x >= COURT.x0 && b.x <= COURT.x1 && b.z >= COURT.z0 && b.z <= COURT.z1)
+      .length;
+
+  it("plants no service clutter in a court no building stands near", () => {
+    // Before the `BACK_COURT_REACH` rule this empty field was a back court like
+    // any other and got its heap of crates.
+    expect(inCourt(withCourt(false))).toBe(0);
+  });
+
+  it("still dresses a court a building actually stands behind", () => {
+    expect(inCourt(withCourt(true))).toBeGreaterThan(0);
+  });
+});
+
 describe("degenerate inputs", () => {
   it("does nothing, quietly, with no buildings", () => {
     const result = dressLife({ plan: flatPlan(), stack, seed: SEED, buildings: [] });

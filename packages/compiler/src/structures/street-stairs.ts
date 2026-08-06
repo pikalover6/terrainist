@@ -46,6 +46,7 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Point2 } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
+import type { Palette } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { STAIR_PROFILE, featureOf, treadPlan, type TreadShape } from "./profiles.js";
@@ -65,6 +66,25 @@ import { synthesizeTreads } from "./sweep.js";
 export const STREET_STAIR_MAX_FILL = 8;
 
 /**
+ * The block name behind a **ground role**, for a dressing that needs properties.
+ *
+ * The palette stores state ids and a stair has to be laid facing the way you
+ * are walking, so the role is resolved to its *name* and the property set is
+ * applied to that. A palette without the role — every unit test that dresses a
+ * flight by hand — falls back to the name the pass used before the roles
+ * existed, so nothing built off this module can come out as air.
+ */
+function roleBlock(
+  palette: Palette | undefined,
+  role: string,
+  fallback: string,
+  stack: PrismarineStack,
+): string {
+  if (palette === undefined || !palette.has(role)) return fallback;
+  return stack.blockNameByStateId(palette.state(role)) ?? fallback;
+}
+
+/**
  * Columns of tread, from {@link STAIR_PROFILE}.
  *
  * Read lazily rather than at module scope: `roads.ts` imports this module and
@@ -79,6 +99,23 @@ function treadWidth(): number {
 function lampPitch(): number {
   return featureOf(STAIR_PROFILE, "lamp").pitch;
 }
+
+/**
+ * Steps between balustrade lanterns, at least.
+ *
+ * The profile's own `lamp` pitch is four, which is the rhythm of the *masonry*
+ * — where the parapet thickens into a post — and reading it as the rhythm of
+ * the *lighting* is what produced the hill town's glitter: a lantern every four
+ * steps, on both balustrades, of every flight. A terraced quarter is nothing
+ * but flights, and it is stacked, so a player standing on one bench sees six
+ * terraces' worth of them at once: 314 lanterns on fifteen houses' worth of
+ * town, against 55 street lamps.
+ *
+ * Twelve steps is a lantern you walk *to*, which is what a stair lantern is
+ * for. The head and the foot of every flight are lit regardless
+ * ({@link streetStairRail}), so a short flight is still a lit flight.
+ */
+export const STREET_STAIR_LAMP_PITCH = 12;
 
 /* -------------------------------------------------------------------------- */
 /* phase 1 — geometry                                                          */
@@ -277,6 +314,16 @@ export interface StreetStairDressInput {
   /** Masonry states, from the street state set. */
   readonly states: { readonly step: number; readonly subsurface: number };
   readonly stack: PrismarineStack;
+  /**
+   * The palette, for the ground roles the nosing and the balustrade take.
+   *
+   * A flight is the most visible piece of built ground in a hill town and every
+   * one of them used to be dressed in `stone_brick_stairs` and
+   * `stone_brick_slab` by name, whatever the settlement was made of. Optional
+   * because a caller with no palette — the unit tests that dress a flight on a
+   * bare plan — must still get the blocks it always got.
+   */
+  readonly palette?: Palette;
   readonly occupancy?: OccupancyGrid;
   /**
    * `owner[idx] === job` for every column this flight is allowed to *level*.
@@ -343,14 +390,20 @@ export function dressStreetStairs(
     const step = stepAt(geometry.centre, column.k);
     const dressing =
       shape === "stair"
-        ? input.stack.blockStateOf("stone_brick_stairs", {
-            facing: facingOf(step.dx, step.dz),
-            half: "bottom",
-            shape: "straight",
-            waterlogged: "false",
-          })
+        ? input.stack.blockStateOf(
+            roleBlock(input.palette, "ground.stairs", "stone_brick_stairs", input.stack),
+            {
+              facing: facingOf(step.dx, step.dz),
+              half: "bottom",
+              shape: "straight",
+              waterlogged: "false",
+            },
+          )
         : shape === "slab"
-          ? input.stack.blockStateOf("stone_brick_slab", { type: "top", waterlogged: "false" })
+          ? input.stack.blockStateOf(
+              roleBlock(input.palette, "ground.slab", "stone_brick_slab", input.stack),
+              { type: "top", waterlogged: "false" },
+            )
           : undefined;
     if (dressing !== undefined) blocks.push({ x: column.x, y: top, z: column.z, stateId: dressing });
   }
@@ -384,13 +437,46 @@ export function streetStairRail(
     readonly plan: ColumnPlan;
     readonly stack: PrismarineStack;
     readonly lantern: number;
+    /** For the `balustrade` and `coping` ground roles; see {@link roleBlock}. */
+    readonly palette?: Palette;
   },
 ): StructureBlock[] {
   const out: StructureBlock[] = [];
-  const wall = input.stack.blockByName("stone_brick_wall")?.stateId;
-  const plinth = input.stack.blockByName("stone_bricks")?.stateId;
+  const role = (name: string, fallback: string): number | undefined =>
+    input.palette !== undefined && input.palette.has(name)
+      ? input.palette.state(name)
+      : input.stack.blockByName(fallback)?.stateId;
+  // The theme's balustrade over the theme's coping — the same pair a retaining
+  // wall is capped with, because a flight beside a wall and the wall itself are
+  // the same piece of built ground and used to be the same two grey blocks by
+  // accident rather than by agreement.
+  const wall = role("ground.balustrade", "stone_brick_wall");
+  const plinth = role("ground.coping", "stone_bricks");
   if (wall === undefined || plinth === undefined || levels.levels.length === 0) return out;
+  // The post rhythm is the profile's; the *lantern* rhythm is not. See
+  // {@link STREET_STAIR_LAMP_PITCH}.
   const pitch = Math.max(1, lampPitch());
+  const lampPitchSteps = Math.max(pitch, STREET_STAIR_LAMP_PITCH);
+
+  // One balustrade carries the lighting, not both: two lit rails four columns
+  // apart read as a runway. Which one is a pure function of where the flight
+  // starts, so neighbouring flights alternate and the quarter does not end up
+  // lit down one edge.
+  const head = geometry.centre[0] as Point2 | undefined;
+  const litSide = head === undefined || (((head.x + head.z) & 1) === 0) ? 1 : -1;
+
+  // The ends of the flight, so the head and the foot are lit however short it
+  // is: a lantern at the top of a stair is the one that tells you the stair is
+  // there. Taken over parapet columns on the lit side only, so the two ends are
+  // real balustrade columns and not a step the rail never reached.
+  let firstK = Infinity;
+  let lastK = -Infinity;
+  for (const column of geometry.columns) {
+    if (column.role !== "parapet") continue;
+    if (Math.sign(column.a) !== litSide) continue;
+    if (column.k < firstK) firstK = column.k;
+    if (column.k > lastK) lastK = column.k;
+  }
 
   for (const column of geometry.columns) {
     if (column.role !== "parapet") continue;
@@ -416,7 +502,9 @@ export function streetStairRail(
     // floating balustrade v0 refused to build.
     out.push({ x: column.x, y: top, z: column.z, stateId: plinth });
     out.push({ x: column.x, y: top + 1, z: column.z, stateId: wall });
-    if (column.k % pitch !== 0) continue;
+    if (Math.sign(column.a) !== litSide) continue;
+    const end = column.k === firstK || column.k === lastK;
+    if (!end && column.k % lampPitchSteps !== 0) continue;
     out.push({ x: column.x, y: top + 2, z: column.z, stateId: wall });
     out.push({ x: column.x, y: top + 3, z: column.z, stateId: input.lantern });
   }

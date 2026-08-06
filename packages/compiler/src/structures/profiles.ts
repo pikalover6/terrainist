@@ -129,17 +129,27 @@ export function bridgeBandAt(width: number, offset: number) {
 /* the stair                                                                  */
 /* -------------------------------------------------------------------------- */
 
-/** A public flight: tread band, balustrade caps, lamp interval feature. */
+/**
+ * A public flight: tread band, balustrade caps, lamp interval feature.
+ *
+ * The band materials are the **ground roles** `road.step` and
+ * `ground.balustrade` (`terrain/palette.ts`), not block names. A flight is
+ * paved, and a settlement paves in one material; writing `stone_bricks` here
+ * was one of the six places that made a hill town read as one carved monolith.
+ * Both symbols are always defined — `road.step` by the terrain profile's own
+ * default table and `ground.balustrade` by `defineGroundRoles` — so the engine
+ * never sees an unresolvable symbol, which resolves to air.
+ */
 export const STAIR_PROFILE: SweptProfile = {
   id: "stair.masonry",
   bands: [
-    { id: "tread", role: "walkway", width: 5, centred: true, surface: "stone_bricks" },
+    { id: "tread", role: "walkway", width: 5, centred: true, surface: "road.step" },
     {
       id: "balustrade",
       role: "parapet",
       width: 1,
-      surface: "stone_bricks",
-      cap: { height: 1, block: "stone_brick_wall", rail: true },
+      surface: "road.step",
+      cap: { height: 1, block: "ground.balustrade", rail: true },
     },
   ],
   maxGrade: 1,
@@ -240,10 +250,19 @@ export function canalProfile(width: number, quay: number): SweptProfile {
  * low side — for the same reason `precinct.harbour@0`'s quay works. There is no
  * new geometry here and there must not be.
  *
- * | band | lane | what |
- * |---|---|---|
- * | `face` | 0 | the lowest row of the upper platform: the wall's visible face |
- * | `verge` | +1 | one column back into the platform the wall holds |
+ * | band | lane | what | material role |
+ * |---|---|---|---|
+ * | `face` | 0 | the lowest row of the upper platform: the wall's visible face | `coping` over `revetment` |
+ * | `verge` | +1 | one column back into the platform the wall holds | `pavement` |
+ *
+ * The three roles are the whole of why a wall now reads as a wall. They used to
+ * be `street.curb`, `ground.stone` and `street.sidewalk`: the first two of those
+ * are the *street's* kerb and the *world's* bedrock, so a retaining wall came
+ * out as a stone-brick line over the same plain stone the hill itself is made
+ * of — which is precisely "a WorldEdit cut into the terrain" rather than
+ * masonry somebody built. `ground.revetment` is the theme's earth-holding
+ * masonry, `ground.coping` its dressed cap, `street.sidewalk` the walk behind
+ * it; all three are defined by `defineGroundRoles` from the settlement's theme.
  *
  * `asymmetric` because a wall has a high side and a low side; the two are not
  * mirror images and pretending they are would build a second wall inside the
@@ -258,7 +277,14 @@ export const RETAINING_PROFILE: SweptProfile = {
   id: "retaining.masonry",
   asymmetric: true,
   bands: [
-    { id: "face", role: "core", width: 1, level: 0, surface: "street.curb", fill: "ground.stone" },
+    {
+      id: "face",
+      role: "core",
+      width: 1,
+      level: 0,
+      surface: "ground.coping",
+      fill: "ground.revetment",
+    },
     { id: "verge", role: "walkway", width: 1, level: 0, surface: "street.sidewalk" },
   ],
   maxGrade: 1,

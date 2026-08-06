@@ -23,7 +23,7 @@ import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { nodeSeed } from "@terrainist/stdlib";
+import { MATERIAL_THEMES, nodeSeed, type MaterialTheme } from "@terrainist/stdlib";
 
 import { PHYSICS_RULES, lintWorldPhysics, type PhysicsReport } from "../src/emit/physics.js";
 import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js";
@@ -42,7 +42,7 @@ import type { FormBench } from "../src/layout/forms/types.js";
 import { RETAINING_PROFILE, retainingProfile } from "../src/structures/profiles.js";
 import { buildRetainingWalls } from "../src/structures/retaining.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
-import { resolvePalette } from "../src/terrain/palette.js";
+import { defineGroundRoles, resolvePalette } from "../src/terrain/palette.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 
 /* -------------------------------------------------------------------------- */
@@ -524,6 +524,154 @@ describe("buildRetainingWalls", () => {
     });
     expect(result.kerbs).toBe(0);
     for (let k = 0; k < before.length; k++) expect(plan.surface[k]).toBe(before[k]);
+  });
+
+  /* ------------------------------------------------------------------------ */
+  /* the finish: what a cut face is made of when no wall stands on it          */
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * The second half of the walk, and the half no mechanism answered.
+   *
+   * > *"Retaining walls do not properly seal the cliffside. Raw dirt faces jut
+   * > out underneath stone slabs in arbitrary patches. It looks like a
+   * > WorldEdit cut/paste error where the generator sliced into the terrain
+   * > without auto-completing the stone retaining facade."*
+   *
+   * It was not a paste error. A platform is levelled by a pad edit, which moves
+   * `plan.ground` and leaves the column's *materials* alone — grass over dirt.
+   * From above that is a lawn; from the low side of a four-block cut it is four
+   * blocks of dirt. Every seam the pass declined to wall left exactly that, and
+   * on the walked hill town that was 451 columns for four different good
+   * reasons. "No wall" is a decision about masonry; it was never a decision to
+   * show the player the soil band.
+   */
+  const themed = (s: PrismarineStack) => {
+    const palette = resolvePalette(s, undefined, nodeSeed(7n, "world")).palette;
+    defineGroundRoles(palette, s, MATERIAL_THEMES[1] as MaterialTheme);
+    return palette;
+  };
+
+  it("faces a cut nobody could wall, rather than leaving the soil band showing", () => {
+    const top = 64 + 4;
+    const quarter = district(top);
+    // Every column of the quarter is carriageway, so the walk back into the
+    // upper platform is street for its whole length and not one wall is built:
+    // the `street` reason, which was 217 of the hill town's 451 columns.
+    const carriageway = new Uint8Array(48 * 48).fill(1);
+    const plan = steppedPlan(stack, top);
+    const palette = themed(stack);
+    const dirt = plan.subsurface[24] as number;
+    const result = buildRetainingWalls({
+      districts: [{ ...quarter, carriageway }],
+      plan,
+      palette,
+      stack,
+    });
+    expect(result.walls).toBe(0);
+    expect(result.unfaced.street).toBeGreaterThan(0);
+    // …and the face is finished anyway.
+    expect(result.revetted).toBeGreaterThan(0);
+    const revetment = palette.state("ground.revetment");
+    expect(revetment).not.toBe(dirt);
+    for (let z = 0; z < 48; z++) {
+      const k = z * 48 + 24;
+      expect(plan.subsurface[k], `column 24,${z}`).toBe(revetment);
+      // As deep as the cut is tall: a one-course facing over three of dirt is
+      // the same defect with a lid on it.
+      expect(plan.soil[k] as number, `column 24,${z}`).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it("leaves a one-block step alone — that is a kerb, not a cliff", () => {
+    const plan = steppedPlan(stack, 65);
+    const before = Int32Array.from(plan.subsurface);
+    const result = buildRetainingWalls({
+      districts: [district(65)],
+      plan,
+      palette: themed(stack),
+      stack,
+    });
+    expect(result.revetted).toBe(0);
+    for (let k = 0; k < before.length; k++) expect(plan.subsurface[k]).toBe(before[k]);
+  });
+
+  it("gives a wall a body as deep as it is tall", () => {
+    // `sweep()` writes one course of the `fill` band and leaves `soil` alone,
+    // so a six-block wall used to be one course of masonry over five of
+    // whatever the hill is made of — and the old fill symbol was literally
+    // `ground.stone`, the hill itself. That is the "carved out of one
+    // monolith" reading in a single line.
+    const top = 64 + 5;
+    const plan = steppedPlan(stack, top);
+    const palette = themed(stack);
+    const result = buildRetainingWalls({
+      districts: [district(top)],
+      plan,
+      palette,
+      stack,
+    });
+    expect(result.wallColumns).toBeGreaterThan(0);
+    const revetment = palette.state("ground.revetment");
+    let faces = 0;
+    for (let k = 0; k < result.seam.length; k++) {
+      if (result.seam[k] !== 1) continue;
+      if (plan.subsurface[k] !== revetment) continue;
+      faces++;
+      expect(plan.soil[k] as number, `column ${k}`).toBeGreaterThanOrEqual(5);
+    }
+    expect(faces).toBeGreaterThan(0);
+  });
+
+  it("finishes a graded bank as earth, not as whatever the cut exposed", () => {
+    const top = 64 + RETAIN_MAX + 4;
+    const plan = steppedPlan(stack, top);
+    const palette = themed(stack);
+    const before = Int32Array.from(plan.ground);
+    const result = buildRetainingWalls({
+      districts: [district(top)],
+      plan,
+      palette,
+      stack,
+    });
+    expect(result.banks).toBeGreaterThan(0);
+    expect(result.banked).toBeGreaterThan(0);
+    const bank = palette.state("ground.bank");
+    let raised = 0;
+    for (let k = 0; k < before.length; k++) {
+      if ((plan.ground[k] as number) <= (before[k] as number)) continue;
+      raised++;
+      // A ramp made of masonry reads as a broken wall; a ramp made of earth
+      // reads as a slope, which is the whole claim a bank makes.
+      expect(plan.subsurface[k], `column ${k}`).toBe(bank);
+    }
+    expect(raised).toBe(result.banked);
+  });
+
+  it("draws the wall in the settlement's own masonry, not in one grey", () => {
+    const top = 64 + 4;
+    const first = MATERIAL_THEMES[0] as MaterialTheme;
+    const second = MATERIAL_THEMES[1] as MaterialTheme;
+    const of = (theme: MaterialTheme) => {
+      const palette = resolvePalette(stack, undefined, nodeSeed(7n, "world")).palette;
+      defineGroundRoles(palette, stack, theme);
+      const plan = steppedPlan(stack, top);
+      const result = buildRetainingWalls({
+        districts: [district(top)],
+        plan,
+        palette,
+        stack,
+      });
+      const coping = new Set(result.blocks.filter((b) => b.y === top).map((b) => b.stateId));
+      return { coping, fill: plan.subsurface[24 + 24 * 48] as number };
+    };
+    const a = of(first);
+    const b = of(second);
+    expect(a.coping.size).toBe(1);
+    expect(b.coping.size).toBe(1);
+    // Two settlements built on the same hill out of two different rocks.
+    expect([...b.coping][0]).not.toBe([...a.coping][0]);
+    expect(b.fill).not.toBe(a.fill);
   });
 
   it("writes the same wall twice", () => {

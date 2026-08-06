@@ -180,8 +180,25 @@ export interface RetainingPassResult {
    * A column dropped for a reason nobody counted is a column nobody can find,
    * and 85% of this quarter's seam length was exactly that. The keys are the
    * whole of the accounting: `faced + Σ unfaced === ` the classifier's total.
+   *
+   * **This is no longer the same thing as "left as raw dirt".** Every reason
+   * here is a legitimate reason not to build a *wall*; none of them is a reason
+   * to leave the ground the cut exposed. {@link revetted} is what happens
+   * instead — see {@link faceCuts}.
    */
   readonly unfaced: Readonly<Record<UnfacedReason, number>>;
+  /**
+   * Columns of cut face finished in masonry without a wall standing on them.
+   *
+   * The answer to the second half of the walk: *"retaining walls do not
+   * properly seal the cliffside; raw dirt faces jut out underneath stone slabs
+   * in arbitrary patches."* They did, and they were not the wall's fault — a
+   * platform edge nobody could wall was left showing the soil band the terrain
+   * pass gave it, four blocks of dirt under a stone kerb.
+   */
+  readonly revetted: number;
+  /** Columns of graded bank finished as earth rather than as bare substrate. */
+  readonly banked: number;
   readonly diagnostics: readonly LoamDiagnostic[];
 }
 
@@ -213,6 +230,10 @@ interface RetainingStates {
   readonly weep: number;
   /** Palette symbol for the balustrade — resolved inside `sweep`. */
   readonly rail: string;
+  /** The masonry a wall's body and an unwalled cut's face are made of. */
+  readonly revetment: number;
+  /** Earth a graded bank is finished with. */
+  readonly bank: number;
   /**
    * The profile's own band symbols, already fallen back to real block names.
    *
@@ -223,39 +244,54 @@ interface RetainingStates {
    * with air, and the lint found it as four unsupported fence posts on the
    * platform behind. So the fallback happens here, where a fallback can be
    * written down, rather than inside the engine.
+   *
    */
   readonly profile: SweptProfile;
 }
 
+/**
+ * The ground roles this pass writes, as palette symbols.
+ *
+ * Every one is defined by `defineGroundRoles` before the first pass runs, and
+ * every one carries the block name the pass used *before* the roles existed as
+ * its fallback — so a caller that built a palette by hand (every unit test that
+ * sweeps a wall on a bare plan) still gets masonry rather than air.
+ */
+const ROLE_FALLBACKS: Readonly<Record<string, string>> = Object.freeze({
+  "ground.coping": "minecraft:stone_bricks",
+  "ground.revetment": "minecraft:stone",
+  "ground.plinth": "minecraft:stone_bricks",
+  "ground.balustrade": "minecraft:stone_brick_wall",
+  "ground.weep": "minecraft:mossy_stone_bricks",
+  "ground.bank": "minecraft:coarse_dirt",
+  "ground.scree": "minecraft:gravel",
+  "street.sidewalk": "minecraft:smooth_stone",
+});
+
 function resolveStates(palette: Palette, stack: PrismarineStack): RetainingStates {
   const fallback = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
-  const at = (symbol: string, name: string): number =>
-    palette.has(symbol) ? palette.state(symbol) : fallback(name);
-  const symbol = (name: string, fall: string): string => (palette.has(name) ? name : fall);
-  const faces: Readonly<Record<string, readonly [string, string]>> = {
-    "street.curb": ["street.curb", "minecraft:stone_bricks"],
-    "ground.stone": ["ground.stone", "minecraft:stone"],
-    "street.sidewalk": ["street.sidewalk", "minecraft:smooth_stone"],
-  };
-  const resolve = (s: string): string => {
-    const row = faces[s];
-    return row === undefined ? s : symbol(row[0], row[1]);
-  };
+  /** A role's palette symbol when it has one, else a block name that exists. */
+  const symbol = (role: string): string =>
+    palette.has(role) ? role : (ROLE_FALLBACKS[role] ?? role);
+  const state = (role: string): number =>
+    palette.has(role) ? palette.state(role) : fallback(ROLE_FALLBACKS[role] ?? role);
   const profile: SweptProfile = {
     ...RETAINING_PROFILE,
     bands: RETAINING_PROFILE.bands.map((band) => ({
       ...band,
-      surface: resolve(band.surface),
-      ...(band.fill === undefined ? {} : { fill: resolve(band.fill) }),
+      surface: symbol(band.surface),
+      ...(band.fill === undefined ? {} : { fill: symbol(band.fill) }),
     })),
   };
   return {
     profile,
-    coping: at("street.curb", "minecraft:stone_bricks"),
+    coping: state("ground.coping"),
+    revetment: state("ground.revetment"),
+    bank: state("ground.bank"),
     // What makes a retaining wall read as *old* rather than as a slab, and it
     // is one block every nine columns.
-    weep: fallback("minecraft:mossy_stone_bricks"),
-    rail: "stone_brick_wall",
+    weep: state("ground.weep"),
+    rail: symbol("ground.balustrade"),
   };
 }
 
@@ -278,6 +314,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let kerbs = 0;
   let banks = 0;
   let built = 0;
+  let revetted = 0;
+  let banked = 0;
   const unfaced: Record<UnfacedReason, number> = {
     building: 0,
     street: 0,
@@ -291,7 +329,19 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
 
   const relevant = input.districts.filter((d) => d.levels !== undefined);
   if (relevant.length === 0) {
-    return { blocks, seam, walls, wallColumns, kerbs, banks, built, unfaced, diagnostics };
+    return {
+      blocks,
+      seam,
+      walls,
+      wallColumns,
+      kerbs,
+      banks,
+      built,
+      revetted,
+      banked,
+      unfaced,
+      diagnostics,
+    };
   }
   const states = resolveStates(palette, stack);
 
@@ -354,7 +404,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       }
       if (record.treatment === "bank") {
         banks++;
-        gradeBank(region, plan, levels, record, floorY, street, occupied);
+        banked += gradeBank(region, plan, levels, record, floorY, street, occupied, states);
         const short = record.cells.length < MIN_RETAIN_RUN;
         unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
         diagnostics.push(
@@ -512,6 +562,18 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           if (result.claimed[k] !== 1) continue;
           seam[k] = 1;
         }
+        // **The wall is as deep as it is tall.** `sweep()` writes one course of
+        // the `fill` band and leaves `soil` alone, so a six-block wall used to
+        // be one course of masonry over five of whatever the hill is made of —
+        // `minecraft:stone`, because the old fill symbol was literally
+        // `ground.stone`. That is the "carved out of one monolith" reading in a
+        // single line. Deepening the soil band to the drop is what turns it
+        // into a wall somebody built.
+        for (const cell of path) {
+          const k = index(region, cell.x, cell.z);
+          if (result.claimed[k] !== 1) continue;
+          deepen(plan, k, record.drop);
+        }
         // The coping, as a structure block as well as a plan column: a rail may
         // never be left standing over ground a later pass dropped.
         for (const cell of path) {
@@ -535,9 +597,17 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       }
       if (anySwept) walls++;
     }
+
+    // --- the finish ---------------------------------------------------------
+    // Everything above decides where a *wall* goes. This decides what the rest
+    // of the cut is made of, and it runs over the whole quarter rather than
+    // over the seams, because "no wall here" has eight named reasons and a cut
+    // face has one appearance whichever of them applied.
+    revetted += faceCuts(region, plan, levels, states, seam);
   }
 
-  if (walls + kerbs + banks + built > 0) {
+  const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
+  if (walls + kerbs + banks + built + revetted > 0) {
     const breakdown = UNFACED_REASONS.filter((r) => unfaced[r] > 0)
       .map((r) => `${unfaced[r]} ${r}`)
       .join(", ");
@@ -546,13 +616,108 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         "SWEEP_FEATURES_PLACED",
         relevant[0]?.nodePath ?? "world",
         `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on` +
-          (breakdown === "" ? "" : `; seam columns left unfaced: ${breakdown}`),
+          (breakdown === "" ? "" : `; ${unfacedTotal} seam column(s) got no wall (${breakdown})`) +
+          `; every cut face finished: ${revetted} revetted, ${banked} graded as bank`,
         "No action needed.",
       ),
     );
   }
 
-  return { blocks, seam, walls, wallColumns, kerbs, banks, built, unfaced, diagnostics };
+  return {
+    blocks,
+    seam,
+    walls,
+    wallColumns,
+    kerbs,
+    banks,
+    built,
+    revetted,
+    banked,
+    unfaced,
+    diagnostics,
+  };
+}
+
+/**
+ * Deepen a column's soil band so its **face** is made of what its top is.
+ *
+ * `sweep()` writes `plan.subsurface` and sets `plan.soil` to 1 if it was 0 —
+ * one course. That is right for a road, whose face nobody sees, and wrong for
+ * anything standing on a slope: the second course down is the terrain's own
+ * soil or stone, so a wall reads as a lid on the hill rather than as masonry.
+ * The band is never *shortened*, because a column that already had deeper soil
+ * had it for a reason.
+ */
+function deepen(plan: ColumnPlan, k: number, depth: number): void {
+  const want = depth < 1 ? 1 : depth > 255 ? 255 : depth;
+  if ((plan.soil[k] as number) < want) plan.soil[k] = want;
+}
+
+/**
+ * Finish every cut face in a quarter that no wall stands on.
+ *
+ * > **The second half of the walk, and the one nobody had a mechanism for.**
+ * > *"Retaining walls do not properly seal the cliffside. Raw dirt faces jut
+ * > out underneath stone slabs in arbitrary patches. It looks like a WorldEdit
+ * > cut/paste error where the generator sliced into the terrain without
+ * > auto-completing the stone retaining facade."*
+ *
+ * It was not a paste error and the walls were not at fault. A platform is
+ * levelled by a pad edit, which moves `plan.ground` and leaves the column's
+ * *materials* alone — surface, then `soil` courses of `subsurface`, which for
+ * ordinary ground is grass over dirt. Seen from above that is a lawn; seen from
+ * the low side of a four-block cut it is four blocks of dirt. Every seam the
+ * pass declined to wall — and each of the eight reasons is a good reason not to
+ * build a wall — left exactly that.
+ *
+ * So the finish is not a wall and does not pretend to be one: it is a statement
+ * about what the cut is **made of**. Every column of a platform that stands two
+ * or more blocks above an 8-neighbour has its soil band replaced by the theme's
+ * revetment and deepened to the height of the drop. Nothing is emitted, no
+ * level moves, nothing can float, and a column a wall already claimed keeps the
+ * wall's own material — it is only deepened.
+ *
+ * Two or more, because one block of step is a kerb: it is a course you walk up,
+ * the street pass already copes it, and facing it would be building a wall you
+ * trip over. The same number `skirtSeams` uses, for the same reason.
+ *
+ * @returns columns faced.
+ */
+function faceCuts(
+  region: Region,
+  plan: ColumnPlan,
+  levels: GroundLevels,
+  states: RetainingStates,
+  seam: Uint8Array,
+): number {
+  const bounds = levels.bounds;
+  let faced = 0;
+  for (let z = bounds.z0; z <= bounds.z1; z++) {
+    for (let x = bounds.x0; x <= bounds.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      if (levels.at(x, z) === NO_PLATFORM) continue;
+      const k = index(region, x, z);
+      if (plan.fluidKind[k] !== FluidKind.NONE) continue;
+      const top = plan.ground[k] as number;
+      // The tallest face this column presents to any neighbour, 8-connected:
+      // a corner column shows its diagonal, and a diagonal face left raw is the
+      // "arbitrary patch" the walk described.
+      let drop = 0;
+      for (const [dx, dz] of SEAM_NEIGHBOURS) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const n = index(region, x + dx, z + dz);
+        const fall = top - (plan.ground[n] as number);
+        if (fall > drop) drop = fall;
+      }
+      if (drop < 2) continue;
+      // A column a wall stands on already has the wall's material; all it wants
+      // is the depth, so the wall does not sit on a dirt plinth of its own.
+      if (seam[k] !== 1) plan.subsurface[k] = states.revetment;
+      deepen(plan, k, drop);
+      faced++;
+    }
+  }
+  return faced;
 }
 
 /**
@@ -770,6 +935,16 @@ function kerbSeam(
  * Nothing is *built* — that is the point of the refusal — but nothing is left
  * as a cliff either. The ramp only ever raises the low side toward the face,
  * one block per column, and it never touches a street, a footprint or water.
+ *
+ * A raised column is also **finished**: its soil band becomes the theme's bank
+ * earth. Without that the ramp is made of whatever the terrain pass put under
+ * the old surface — on a cut platform that is frequently plain stone — and a
+ * graded bank of masonry reads as a broken wall rather than as a slope. The
+ * *surface* is deliberately untouched: it is the grass, podzol or path the
+ * terrain and climate already agreed on, and it is what makes the bank read as
+ * ground rather than as a build.
+ *
+ * @returns columns raised.
  */
 function gradeBank(
   region: Region,
@@ -779,7 +954,8 @@ function gradeBank(
   floorY: number,
   street: Uint8Array,
   occupied: Uint8Array,
-): void {
+  states: RetainingStates,
+): number {
   const cells = region.width * region.depth;
   const top = levels.levelY[record.above] as number;
   const floor = floorY;
@@ -792,6 +968,7 @@ function gradeBank(
     seen[k] = 1;
     frontier.push(k);
   }
+  let raised = 0;
   for (let ring = 0; ring < record.drop && frontier.length > 0; ring++) {
     const target = top - ring - 1;
     if (target <= floor) break;
@@ -804,7 +981,12 @@ function gradeBank(
         if (target > g) {
           plan.ground[k] = target;
           plan.fluidTop[k] = target;
-          if (plan.soil[k] === 0) plan.soil[k] = 1;
+          // Earth, and enough of it to cover what the ramp just raised: the
+          // face of a bank is the bank, and it is not masonry.
+          plan.subsurface[k] = states.bank;
+          const fill = target - g;
+          plan.soil[k] = Math.min(255, Math.max(plan.soil[k] as number, fill + 1));
+          raised++;
         }
       }
       for (const [dx, dz] of NEIGHBOURS) {
@@ -819,6 +1001,7 @@ function gradeBank(
     }
     frontier = next;
   }
+  return raised;
 }
 
 /**

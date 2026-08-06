@@ -93,6 +93,59 @@ export type { StreetGraph, StreetIntersection, StreetSegment };
 export const LAMP_SPACING = 14;
 
 /**
+ * Shortest run of street that carries a lamp of its own, in columns.
+ *
+ * A lamp used to be planted at index `LAMP_SPACING / 2` of *every* segment,
+ * however short — so the rhythm restarted at every junction and a quarter made
+ * of stubs got one lamp per stub regardless of how little street that was. On a
+ * grid, where a segment is a whole block long, nobody could tell; on a terraced
+ * quarter, where half the segments are a 10-column contour link or an alley
+ * between two flights, it multiplied: fourteen of the hill town's
+ * thirty-six segments were shorter than two lamp spacings and each one still
+ * got a post.
+ *
+ * A stub shorter than this is lit by the street it joins. The rule is therefore
+ * a *world distance* rule and not a per-segment one, which is the whole point:
+ * chopping one street into five does not give it five times the lighting.
+ */
+export const LAMP_MIN_RUN = 24;
+
+/**
+ * Columns of street per building at which lamp spacing starts to stretch.
+ *
+ * Lighting scales with how many people live on a street, not with how much
+ * pavement the fabric happened to spend. A grid quarter spends roughly 60–70
+ * columns of street on each building, and at or under this figure the rhythm is
+ * exactly {@link LAMP_SPACING} — every quarter dense enough to be a street is
+ * lit precisely as it was. Above it the spacing stretches in proportion, so a
+ * terraced quarter that spends 110 columns of contour street and stair alley on
+ * each of its fifteen houses is lit like fifteen houses rather than like a
+ * kilometre of pavement.
+ */
+export const LAMP_STREET_PER_BUILDING = 80;
+
+/** Most the lamp rhythm may stretch on a pavement-heavy quarter. */
+export const LAMP_MAX_STRETCH = 2.5;
+
+/**
+ * Lamp spacing for a district, given its street length and how many buildings
+ * stand on it.
+ *
+ * Clamped at 1 from below by construction: nothing here can make a quarter
+ * brighter than {@link LAMP_SPACING}, so a district that was never
+ * pavement-heavy is byte-identical to what it was before this rule existed.
+ */
+export function lampSpacing(streetCells: number, buildings: number | undefined): number {
+  if (buildings === undefined || buildings <= 0) return LAMP_SPACING;
+  const perBuilding = streetCells / buildings;
+  const stretch = Math.min(
+    LAMP_MAX_STRETCH,
+    Math.max(1, perBuilding / LAMP_STREET_PER_BUILDING),
+  );
+  return Math.max(LAMP_SPACING, Math.round(LAMP_SPACING * stretch));
+}
+
+/**
  * Least sidewalk width that can carry a lamp post.
  *
  * A lamp stands on the *outer* sidewalk column so the walk lane (the inner
@@ -197,6 +250,13 @@ export interface StreetscapeContext {
   readonly palette?: Palette;
   /** Node path for diagnostics. */
   readonly nodePath?: string;
+  /**
+   * Buildings standing in this district — what there is to light.
+   *
+   * Omitted by callers that dress a graph on its own, and the pass then lights
+   * the street at the flat {@link LAMP_SPACING} rhythm it always did.
+   */
+  readonly buildings?: number;
   /**
    * Columns already carrying someone else's blocks — building aprons above
    * all. A shop's porch lamp lands one cell outside its footprint, which on a
@@ -823,11 +883,20 @@ export function plantLamps(
   const [sizeX, , sizeZ] = foot.size;
   const half = (w: number): number => (w - 1) >> 1;
 
-  for (const segment of graph.segments) {
-    const cells = walkStreet(segment.path);
+  // Two rules, both of them about world distance rather than about segments.
+  // The spacing is set once for the whole district from its street length and
+  // its building count, and a run too short to hold a rhythm carries no lamp at
+  // all — it is lit by the street it joins.
+  const walked = graph.segments.map((s) => walkStreet(s.path));
+  const streetCells = walked.reduce((n, cells) => n + cells.length, 0);
+  const spacing = lampSpacing(streetCells, ctx.buildings);
+
+  for (const [s, segment] of graph.segments.entries()) {
+    const cells = walked[s] as Step[];
+    if (cells.length < LAMP_MIN_RUN) continue;
     const outer = half(segment.width) + graph.sidewalk;
     let lamp = 0;
-    for (let i = LAMP_SPACING >> 1; i < cells.length; i += LAMP_SPACING) {
+    for (let i = spacing >> 1; i < cells.length; i += spacing) {
       const step = cells[i] as Step;
       const side = lamp % 2 === 0 ? 1 : -1;
       lamp++;

@@ -254,10 +254,24 @@ export interface GroundPassResult {
   readonly wornColumns: number;
 }
 
-/** The block states the ground pass writes, resolved once. */
+/**
+ * The block states the ground pass writes, resolved once.
+ *
+ * The three `pave*` states are the **ground roles** of `terrain/palette.ts`,
+ * not the plaza's symbols they used to be. A forecourt is the piece of built
+ * ground a player reads as belonging to the building it rings, so it is laid in
+ * the theme's `plinth` — the building's own base course — broken up with the
+ * pavement and the coping the rest of the quarter is paved and capped with.
+ * Before this it was `plaza.border` (`stone_bricks`) and `plaza.cobble`
+ * (`cobblestone`) whatever theme the settlement was drawn in, which is one of
+ * the six places the "everything is the same grey" defect lived.
+ */
 interface GroundStates {
+  /** The masonry against the wall: the theme's `plinth`. */
   readonly paveA: number;
+  /** The outer breaking-up course: the theme's `kerb`. */
   readonly paveB: number;
+  /** The second tone in the body of an apron: the theme's `pavement`. */
   readonly paveC: number;
   readonly gravel: number;
   readonly coarse: number;
@@ -299,13 +313,18 @@ function resolveStates(palette: Palette, stack: PrismarineStack): GroundStates {
     if (palette.has(s)) soft.add(palette.state(s));
   }
   return {
-    paveA: symbol("plaza.border", "minecraft:stone_bricks"),
-    paveB: symbol("plaza.cobble", "minecraft:cobblestone"),
-    paveC: named("minecraft:smooth_stone"),
+    // The ground roles first, with the pre-role symbol as the fallback, so a
+    // caller that never ran `defineGroundRoles` — every unit test that dresses
+    // a lot on a bare palette — lays exactly what it always laid.
+    paveA: symbol("ground.plinth", "minecraft:stone_bricks"),
+    paveB: symbol("street.curb", "minecraft:cobblestone"),
+    paveC: symbol("street.sidewalk", "minecraft:smooth_stone"),
+    // A working yard is earth and grit and was never part of the grey: it keeps
+    // the terrain profile's own symbols, which a document can already override.
     gravel: symbol("ground.gravel", "minecraft:gravel"),
     coarse: symbol("ground.coarse_dirt", "minecraft:coarse_dirt"),
     path: symbol("road.surface", "minecraft:dirt_path"),
-    smooth: named("minecraft:smooth_stone"),
+    smooth: symbol("street.sidewalk", "minecraft:smooth_stone"),
     fence: symbol("road.post", "minecraft:oak_fence"),
     gate: { north: gate("north"), south: gate("south"), east: gate("east"), west: gate("west") },
     grass: symbol("foliage.short_grass", "minecraft:short_grass"),
@@ -551,8 +570,9 @@ function ringState(
     return states.path;
   }
   if (treatment === "sacred") return states.smooth;
-  // An apron: masonry against the wall, breaking up into cobble and gravel at
-  // its outer edge so it meets the lane rather than stopping at a drawn line.
+  // An apron: the building's own base course against the wall, breaking up into
+  // the quarter's kerb and grit at its outer edge so it meets the lane rather
+  // than stopping at a drawn line.
   if (d < radius) {
     return r < 0.7 ? states.paveA : states.paveC;
   }

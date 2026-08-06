@@ -58,7 +58,7 @@ import { dressStreets } from "./streetscape.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import { PALETTE_THEME_KEY, type Palette } from "../terrain/palette.js";
+import { PALETTE_THEME_KEY, defineGroundRoles, type Palette } from "../terrain/palette.js";
 
 import {
   buildBuildings,
@@ -481,6 +481,32 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   const theme: MaterialTheme = pickTheme(themeSeed, themeId);
 
+  // --- the built ground's material roles ------------------------------------
+  // The theme is drawn; the palette can now answer for the ground a settlement
+  // *builds* rather than the ground it stands on. This is one call and it is
+  // where the "everything is the same grey" defect is actually fixed: the
+  // streetscape's pavement and kerb, the canal's coping and quay, the
+  // courtyard's edge, the retaining wall's face and the stair's tread all ask
+  // the palette for a symbol that used to have no value and fell back to one
+  // hard-coded block each. `Palette.derive` refuses to move anything the
+  // document itself wrote, so `style.palettes` is still the last word.
+  //
+  // It runs here, before the first pass reads a symbol, because a role that
+  // arrived halfway through would make two columns of one wall different
+  // colours. Per-scope themes deliberately do **not** re-derive: the built
+  // ground between two quarters is one continuous thing, and a kerb that
+  // changed colour at a district boundary would read as a seam, not a place.
+  for (const bad of defineGroundRoles(input.palette, input.stack, theme)) {
+    diagnostics.push(
+      warning(
+        "BAD_PALETTE",
+        rootPath,
+        `the "${theme.id}" material theme gives ground role "${bad.symbol}" the block "${bad.block}", which does not exist in this Minecraft version`,
+        "this is a compiler bug rather than a document problem — the role keeps its previous value meanwhile",
+      ),
+    );
+  }
+
   // Every string the intent layer carries, checked against the real registries
   // exactly once. An ungrounded word is a warning naming the legal values —
   // never a silent drop, which is what made a "white_quartz" village come out
@@ -716,6 +742,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         furniture: district.streets.sidewalk >= 2 ? "downtown" : "village",
         palette: input.palette,
         nodePath: district.nodePath,
+        // What there is to light. Street lighting scales with the buildings on
+        // a quarter, not with the pavement the fabric spent on it — see
+        // `LAMP_STREET_PER_BUILDING`.
+        buildings: [...districtPaths].filter((p) => p.startsWith(`${district.nodePath}.`))
+          .length,
         avoid: (x, z) => builtColumns.has(`${x},${z}`),
         // The surfacer's own answer to "where is the street". Without it this
         // pass re-derives the carriageway from the raster and gets a *different*

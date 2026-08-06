@@ -2062,7 +2062,25 @@ interface OpenPatch {
   readonly bounds: Rect;
   /** True when the patch touches a sidewalk — a square, not a back court. */
   readonly public: boolean;
+  /**
+   * Distinct buildings standing within {@link BACK_COURT_REACH} of the patch.
+   *
+   * A back court belongs to the building behind it: the crates are *its* crates.
+   * Zero means the flood fill found leftover ground with nobody on it — a strip
+   * between two terrace benches, a shelf above a retaining wall — and a heap of
+   * pallets there is clutter with no author.
+   */
+  readonly buildings: number;
 }
+
+/**
+ * How far a building may stand from a back court and still own it, in columns.
+ *
+ * Not one: a building's apron, porch step and doorstep are `taken` before this
+ * pass runs, so a court that abuts a house is separated from its footprint by
+ * two or three claimed columns. Three reaches across that and no further.
+ */
+export const BACK_COURT_REACH = 3;
 
 /**
  * Find the open ground: everything inside a district that nobody claimed.
@@ -2085,7 +2103,27 @@ function openPatches(
   const out: OpenPatch[] = [];
   const region = input.plan.region;
   const building = new Set<string>();
-  for (const b of input.buildings) for (const c of b.cells) building.add(c);
+  /** Which building owns a column — how a court finds out whose it is. */
+  const owner = new Map<string, number>();
+  for (const [i, b] of input.buildings.entries()) {
+    for (const c of b.cells) {
+      building.add(c);
+      owner.set(c, i);
+    }
+  }
+  /** Distinct buildings within {@link BACK_COURT_REACH} of a patch's columns. */
+  const buildingsNear = (columns: readonly { x: number; z: number }[]): number => {
+    const near = new Set<number>();
+    for (const c of columns) {
+      for (let dz = -BACK_COURT_REACH; dz <= BACK_COURT_REACH; dz++) {
+        for (let dx = -BACK_COURT_REACH; dx <= BACK_COURT_REACH; dx++) {
+          const b = owner.get(key2(c.x + dx, c.z + dz));
+          if (b !== undefined) near.add(b);
+        }
+      }
+    }
+    return near.size;
+  };
 
   for (const district of input.districts ?? []) {
     const { x0, z0, x1, z1 } = district.bounds;
@@ -2141,6 +2179,7 @@ function openPatches(
           columns,
           bounds: { x0: bx0, z0: bz0, x1: bx1, z1: bz1 },
           public: touchesStreet && columns.length >= PLAZA_MIN_AREA,
+          buildings: buildingsNear(columns),
         });
       }
     }
@@ -2172,6 +2211,14 @@ function dressOpenGround(
   if (!patch.public) {
     // A back court: a heap of service clutter near one corner, nothing else.
     if (patch.columns.length > COURT_MAX_AREA) return;
+    // …and a back court with nobody behind it is not a back court. The flood
+    // fill finds every unclaimed column in a district, which on a grid is the
+    // inside of a block and on a terraced quarter is also the strip between two
+    // benches and the shelf above a retaining wall. Dressing those scaled the
+    // service clutter with the *ground the fabric left over* rather than with
+    // the buildings that would generate it: half the hill town's 124 crates and
+    // pallets stood in courts no house could see. See {@link BACK_COURT_REACH}.
+    if (patch.buildings === 0) return;
     const anchor = patch.columns[hashInt(seed, b.x0, b.z0, 2, 0, patch.columns.length - 1)] as {
       x: number;
       z: number;

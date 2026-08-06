@@ -436,7 +436,7 @@ export const RETAINING_PROFILE: SweptProfile = {
   id: "retaining.masonry",
   asymmetric: true,
   bands: [
-    { id: "face",  role: "core",    width: 1, level: 0, surface: "street.curb",     fill: "ground.stone" },
+    { id: "face",  role: "core",    width: 1, level: 0, surface: "ground.coping",  fill: "ground.revetment" },
     { id: "verge", role: "walkway", width: 1, level: 0, surface: "street.sidewalk" },
   ],
   maxGrade: 1,
@@ -482,6 +482,62 @@ before the street surfacing**, for the same reason `digCanals` does: the surface
 must see the finished ground, and the wall must not be cut into by a street that
 was drawn before it existed. A seam column that a street already claims is
 skipped — the street is the connection, not a wall across it.
+
+> **Corrected after the second walk (2026-08-06), twice over.**
+>
+> **The materials were a lie.** The band symbols above were `street.curb` and
+> `ground.stone`, and neither is a material a mason would use: the first is the
+> *street's* edge course, the second is the block the hill itself is made of.
+> Worse, `street.curb` and `street.sidewalk` were never members of
+> `DEFAULT_PALETTE` at all, so six modules asked for them, got nothing, and
+> each fell back to its own hard-coded `stone_bricks` or `smooth_stone` in
+> every theme ever compiled. A vision model shown the hill town cold ranked the
+> result first of four defects: *"the eye perceives the entire generation as
+> one contiguous, carved stone monolith rather than individual buildings on a
+> hill."* The fix is `terrain/palette.ts`'s **ground roles** — pavement, kerb,
+> tread, revetment, coping, plinth, weep, balustrade, nosing, half course, bank
+> and scree, twelve jobs each theme fills in for itself, written onto the
+> palette by `defineGroundRoles` the moment the settlement's theme is drawn and
+> before any pass reads a symbol. `style.palettes` still wins over all of them.
+> The snippet above is the corrected one.
+>
+> **And a wall was one course thick.** `sweep()` writes `plan.subsurface` and
+> raises `plan.soil` to 1 only if it was 0, so a six-block wall was one course
+> of masonry over five courses of hillside. The pass now deepens the soil band
+> of every face column to the drop, which is the difference between masonry and
+> a lid.
+
+#### The finish — what a cut face is made of when there is no wall
+
+Every one of the eight reasons the pass declines to build a wall is a good
+reason not to build a *wall*. None of them is a reason to show the player the
+soil band. On the walked hill town 451 seam columns got no wall — 217 because a
+street owned the face for the whole setback, 184 because the upper bench was
+narrower than the road on it, 38 too short to be a wall, 12 under a building —
+and every one of them stood as two to six blocks of raw dirt, which is the
+walk's second finding: *"raw dirt faces jut out underneath stone slabs in
+arbitrary patches; it looks like a WorldEdit cut/paste error where the
+generator sliced into the terrain without auto-completing the stone retaining
+facade."*
+
+A platform is levelled by a pad edit, which moves `plan.ground` and leaves the
+column's *materials* alone. From above that is a lawn; from the low side of a
+cut it is the soil band, end on. So the finish is not a wall and does not
+pretend to be one — it is a statement about what the cut is **made of**:
+
+> **`faceCuts` runs once per quarter after every seam is decided.** Every column
+> of a platform that stands two or more blocks above an 8-neighbour has its soil
+> band replaced by the theme's `revetment` and deepened to the height of the
+> drop. Nothing is emitted, no level moves, nothing can float, and a column a
+> wall already claimed keeps the wall's own material and is only deepened.
+
+Two or more, because one block of step is a kerb — the street pass already copes
+it and facing it would be building a wall you trip over. `gradeBank` finishes
+its own ramp the same way and in the other material: a raised column's soil band
+becomes the theme's `bank` earth, and its *surface* is deliberately untouched,
+because the grass on top is what makes a bank read as ground rather than as a
+build. The report line carries both numbers, so "no wall" and "unfinished" can
+never be confused again.
 
 ### 3.5 Steps, and what stops this becoming a staircase of pads
 

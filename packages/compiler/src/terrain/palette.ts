@@ -10,7 +10,9 @@
 import {
   positionWeighted,
   streamSeed,
+  type MaterialTheme,
   type Seed256,
+  type StoneSet,
 } from "@terrainist/stdlib";
 import type { PaletteValue, TerrainStyle } from "@terrainist/spec";
 
@@ -209,6 +211,300 @@ export function streetMaterials(themeId: string | undefined): StreetMaterials {
   return STREET_MATERIALS_BY_THEME[themeId] ?? MODERN_STREET_MATERIALS;
 }
 
+/* -------------------------------------------------------------------------- */
+/* the built ground's material roles                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What the ground a settlement *built* is made of, by **role**.
+ *
+ * The defect this answers, in the words of a vision model shown a hill town
+ * cold: *"pathways, retaining walls, platform bases and building tops are
+ * constructed from the exact same grey stone brick palette; the eye perceives
+ * the entire generation as one contiguous, carved stone monolith rather than
+ * individual buildings on a hill."* It was right, and the cause was one line
+ * repeated in six modules: `street.sidewalk` and `street.curb` are **not**
+ * members of {@link DEFAULT_PALETTE}, so every consumer fell through to its own
+ * hard-coded default — `smooth_stone` and `stone_bricks` — whatever theme the
+ * settlement was built in. The retaining wall, the kerb, the stair tread, the
+ * canal coping, the courtyard edge and the forecourt all landed on the same two
+ * blocks, and `road.step` was a third that never moved either.
+ *
+ * A role is not a block. It is a *job in the built ground*, and the whole point
+ * is that three jobs a player can tell apart get three materials:
+ *
+ * - **paving** — {@link pavement}, {@link kerb}, {@link tread}: what you walk
+ *   on beside a carriageway and up a flight. Dressed, flat, and never the
+ *   carriageway's own material, because a kerb that matches the road is not a
+ *   kerb.
+ * - **revetment** — {@link revetment}, {@link coping}, {@link rail},
+ *   {@link stairs}, {@link slab}, {@link weep}: masonry that *holds earth*.
+ *   Rougher and heavier than the paving, capped by a dressed course, weeping
+ *   through an aged one.
+ * - **the building's base** — {@link plinth}: the course a building stands on
+ *   where its lot meets open ground, and the face of a platform whose top *is*
+ *   a building's ground. It belongs to the building, not to the infrastructure.
+ * - **earth** — {@link bank}, {@link scree}: what a cut face nobody walled is
+ *   finished with. Not a block a mason laid; a slope somebody graded.
+ *
+ * Every entry is a full block except {@link rail} (a `_wall`), {@link stairs}
+ * (a `_stairs`) and {@link slab} (a `_slab`); a test asserts that the nine
+ * full-block roles resolve to nine *different* blocks for every shipped theme,
+ * which is the property the defect violated and the only one worth pinning —
+ * *which* block reads best is a walk's decision, not a test's.
+ */
+export interface GroundMaterials {
+  /** The walking band beside a carriageway. */
+  readonly pavement: string;
+  /** The edge course between carriageway and pavement. */
+  readonly kerb: string;
+  /** What a flight of steps is paved with. */
+  readonly tread: string;
+  /** The face of masonry that holds earth. */
+  readonly revetment: string;
+  /** The dressed course capping that masonry. */
+  readonly coping: string;
+  /** A building's base course, and the face of a platform a building sits on. */
+  readonly plinth: string;
+  /** The aged, damp course a revetment weeps through. */
+  readonly weep: string;
+  /** The balustrade above a drop — a `_wall` block. */
+  readonly rail: string;
+  /** A tread's nosing — a `_stairs` block. */
+  readonly stairs: string;
+  /** A half course — a `_slab` block. */
+  readonly slab: string;
+  /** Earth a graded cut face is finished with. */
+  readonly bank: string;
+  /** The loose toe of that bank. */
+  readonly scree: string;
+}
+
+/** The palette symbol each {@link GroundMaterials} role lands on. */
+export const GROUND_ROLE_SYMBOLS: Readonly<Record<keyof GroundMaterials, string>> = Object.freeze({
+  // Two symbols that already existed and never had a value: the whole defect.
+  pavement: "street.sidewalk",
+  kerb: "street.curb",
+  // One that had a value and never varied.
+  tread: "road.step",
+  revetment: "ground.revetment",
+  coping: "ground.coping",
+  plinth: "ground.plinth",
+  weep: "ground.weep",
+  rail: "ground.balustrade",
+  stairs: "ground.stairs",
+  slab: "ground.slab",
+  bank: "ground.bank",
+  scree: "ground.scree",
+});
+
+/** The full-block roles — the ones a theme must keep distinct from each other. */
+export const GROUND_SOLID_ROLES: readonly (keyof GroundMaterials)[] = Object.freeze([
+  "pavement",
+  "kerb",
+  "tread",
+  "revetment",
+  "coping",
+  "plinth",
+  "weep",
+  "bank",
+  "scree",
+]);
+
+/**
+ * Concrete, dressed stone and a mossy course — the modern default.
+ *
+ * The set every unknown theme derives *against*: {@link deriveGroundMaterials}
+ * fills a role from the theme's own sets and falls back here when the theme
+ * cannot supply a block that role does not already share with another.
+ */
+export const MODERN_GROUND_MATERIALS: GroundMaterials = Object.freeze({
+  pavement: "minecraft:smooth_stone",
+  kerb: "minecraft:polished_andesite",
+  tread: "minecraft:smooth_quartz",
+  revetment: "minecraft:stone_bricks",
+  coping: "minecraft:polished_diorite",
+  plinth: "minecraft:quartz_block",
+  weep: "minecraft:mossy_stone_bricks",
+  rail: "minecraft:stone_brick_wall",
+  stairs: "minecraft:stone_brick_stairs",
+  slab: "minecraft:stone_brick_slab",
+  bank: "minecraft:coarse_dirt",
+  scree: "minecraft:gravel",
+});
+
+/**
+ * Ground materials per material theme id.
+ *
+ * The same shape {@link STREET_MATERIALS_BY_THEME} has, for the same reason and
+ * with the same discipline: each theme fills in the *same twelve jobs*, so a
+ * kerb is a kerb and a revetment is a revetment whatever palette the settlement
+ * is drawn in, and a reader can check a theme by reading down one column. Every
+ * block here is checked against the pinned 1.21.11 block table by a test.
+ *
+ * Three rules govern the choices, and they are the only ones a test can hold:
+ * the nine solid roles of a theme are nine different blocks; none of
+ * {@link GroundMaterials.pavement}, `kerb` or `tread` is that theme's
+ * carriageway — a pavement the colour of the road is the defect restated; and
+ * `rail`, `stairs` and `slab` are cut from the **revetment's own family**,
+ * because a balustrade is the top of the wall it stands on and a nosing is the
+ * step cut into it.
+ */
+export const GROUND_MATERIALS_BY_THEME: Readonly<Record<string, GroundMaterials>> = Object.freeze({
+  // Cobbled market town: dressed flags on the pavement, rubble in the walls,
+  // a warm brick plinth under the timber so the base reads as the building's.
+  temperate_timber: Object.freeze({
+    pavement: "minecraft:smooth_stone",
+    kerb: "minecraft:andesite",
+    tread: "minecraft:stone_bricks",
+    revetment: "minecraft:mossy_cobblestone",
+    coping: "minecraft:polished_andesite",
+    plinth: "minecraft:bricks",
+    weep: "minecraft:mossy_stone_bricks",
+    rail: "minecraft:mossy_cobblestone_wall",
+    stairs: "minecraft:mossy_cobblestone_stairs",
+    slab: "minecraft:mossy_cobblestone_slab",
+    bank: "minecraft:coarse_dirt",
+    scree: "minecraft:gravel",
+  }),
+  // Northern pine: the road is deepslate, so the pavement is pale andesite
+  // against it and the walls are the older cobble the town was built from.
+  boreal_pine: Object.freeze({
+    pavement: "minecraft:andesite",
+    kerb: "minecraft:polished_deepslate",
+    tread: "minecraft:polished_andesite",
+    revetment: "minecraft:cobblestone",
+    coping: "minecraft:stone_bricks",
+    plinth: "minecraft:deepslate_tiles",
+    weep: "minecraft:mossy_cobblestone",
+    rail: "minecraft:cobblestone_wall",
+    stairs: "minecraft:cobblestone_stairs",
+    slab: "minecraft:cobblestone_slab",
+    bank: "minecraft:podzol",
+    scree: "minecraft:gravel",
+  }),
+  // Chalk downs: pale, dry and dressed; the revetment is the one damp thing on
+  // the hill, which is what a cutting looks like in chalk country.
+  birchwood_downs: Object.freeze({
+    pavement: "minecraft:polished_diorite",
+    kerb: "minecraft:stone_bricks",
+    tread: "minecraft:polished_andesite",
+    revetment: "minecraft:mossy_cobblestone",
+    coping: "minecraft:chiseled_stone_bricks",
+    plinth: "minecraft:bricks",
+    weep: "minecraft:mossy_stone_bricks",
+    rail: "minecraft:mossy_cobblestone_wall",
+    stairs: "minecraft:mossy_cobblestone_stairs",
+    slab: "minecraft:mossy_cobblestone_slab",
+    bank: "minecraft:coarse_dirt",
+    scree: "minecraft:gravel",
+  }),
+  modern_city: MODERN_GROUND_MATERIALS,
+  // Quartz and calcite. The revetment is diorite — pale, rough and *not*
+  // quartz, so a wall holding a hillside reads as engineering rather than as
+  // more monastery; the weep is moss, which is the only thing on the hill that
+  // is neither white nor cut.
+  white_quartz: Object.freeze({
+    pavement: "minecraft:polished_diorite",
+    kerb: "minecraft:quartz_bricks",
+    tread: "minecraft:smooth_quartz",
+    revetment: "minecraft:diorite",
+    coping: "minecraft:chiseled_quartz_block",
+    plinth: "minecraft:quartz_pillar",
+    weep: "minecraft:moss_block",
+    rail: "minecraft:diorite_wall",
+    stairs: "minecraft:diorite_stairs",
+    slab: "minecraft:diorite_slab",
+    bank: "minecraft:coarse_dirt",
+    scree: "minecraft:gravel",
+  }),
+});
+
+/**
+ * Ground materials for a theme the table does not name, derived from its sets.
+ *
+ * The table above is hand-held for the five shipped themes because a walk is
+ * what decides whether a pavement reads; a theme nobody has walked still has to
+ * come out legible rather than grey, and it can, because a `MaterialTheme`
+ * already carries its own masonry families. Three of them are picked out by
+ * position and each one takes a named member:
+ *
+ * - `stones[0]` is what the settlement **builds** with — the revetment and
+ *   everything cut from it (rail, stairs, slab);
+ * - `stones[n − 1]` is what it **paves** with;
+ * - `stones[1 % n]` is what it **underpins** with — the plinth.
+ *
+ * Where two roles land on the same block — which they do, because a theme's
+ * `accent` is routinely its neighbour's `primary` — the later role walks a
+ * shared pool (every stone member, then every wood's stripped face, then every
+ * roof's solid) and finally {@link MODERN_GROUND_MATERIALS}. Greedy, ordered
+ * and total: the result is a pure function of the theme and no two solid roles
+ * can collide.
+ */
+export function deriveGroundMaterials(theme: MaterialTheme): GroundMaterials {
+  const stones = theme.stones;
+  const n = stones.length;
+  /* c8 ignore next — a themeless theme is not constructible through the spec. */
+  if (n === 0) return MODERN_GROUND_MATERIALS;
+  const masonry = stones[0] as StoneSet;
+  const paving = stones[n - 1] as StoneSet;
+  const underpin = stones[1 % n] as StoneSet;
+
+  // The shared pool, in the order a role falls back through it: the theme's own
+  // masonry first, then its joinery faces, then its roofs, and finally the
+  // modern set — which is what makes the greedy pass *total*. A theme whose two
+  // stone sets name each other's blocks (which is how the shipped ones are
+  // written) supplies as few as three distinct solids on its own, and nine
+  // roles have to come out of it.
+  const pool: string[] = [];
+  for (const s of stones) pool.push(s.primary, s.accent);
+  for (const w of theme.woods) pool.push(w.stripped, w.log);
+  for (const r of theme.roofs) pool.push(r.solid);
+  pool.push(...GROUND_SOLID_ROLES.map((role) => MODERN_GROUND_MATERIALS[role]));
+
+  const used = new Set<string>();
+  const take = (...wanted: readonly string[]): string => {
+    for (const candidate of [...wanted, ...pool]) {
+      if (used.has(candidate)) continue;
+      used.add(candidate);
+      return candidate;
+    }
+    /* c8 ignore next 2 — the modern tail is longer than the roles it backs. */
+    return wanted[0] as string;
+  };
+
+  // Order matters: the roles that most want a *specific* member go first.
+  const revetment = take(masonry.primary);
+  const coping = take(masonry.accent);
+  const pavement = take(paving.primary);
+  const kerb = take(paving.accent);
+  const plinth = take(underpin.primary);
+  const tread = take(paving.accent, masonry.accent);
+  const weep = take(underpin.accent);
+  const bank = take(MODERN_GROUND_MATERIALS.bank);
+  const scree = take(MODERN_GROUND_MATERIALS.scree);
+  return {
+    pavement,
+    kerb,
+    tread,
+    revetment,
+    coping,
+    plinth,
+    weep,
+    bank,
+    scree,
+    rail: masonry.wall,
+    stairs: masonry.stairs,
+    slab: masonry.slab,
+  };
+}
+
+/** The ground materials for a material theme: the table, else the derivation. */
+export function groundMaterials(theme: MaterialTheme | undefined): GroundMaterials {
+  if (theme === undefined) return MODERN_GROUND_MATERIALS;
+  return GROUND_MATERIALS_BY_THEME[theme.id] ?? deriveGroundMaterials(theme);
+}
+
 /** A palette symbol resolved down to block state ids. */
 export type ResolvedSymbol =
   | { readonly kind: "single"; readonly stateId: number }
@@ -218,15 +514,51 @@ export type ResolvedSymbol =
 export class Palette {
   private readonly symbols: Map<string, ResolvedSymbol>;
   private readonly stream: Seed256;
+  /**
+   * Symbols the **document** wrote, as opposed to the profile's own defaults.
+   *
+   * The distinction exists for exactly one caller — {@link defineGroundRoles},
+   * which hands the palette a theme's answer for a role. A role symbol the
+   * profile left blank (`street.curb`) it may fill; a role symbol the profile
+   * gave a fixed default (`road.step`) it may *replace*, because that default
+   * is the grey this phase is removing; a symbol the author wrote in
+   * `style.palettes` it may never touch, which is what keeps
+   * `style.palettes` the last word it has always been.
+   */
+  private readonly authored: ReadonlySet<string>;
 
-  constructor(symbols: Map<string, ResolvedSymbol>, stream: Seed256) {
+  constructor(
+    symbols: Map<string, ResolvedSymbol>,
+    stream: Seed256,
+    authored: ReadonlySet<string> = new Set<string>(),
+  ) {
     this.symbols = symbols;
     this.stream = stream;
+    this.authored = authored;
   }
 
   /** True when the symbol is defined. */
   has(symbol: string): boolean {
     return this.symbols.has(symbol);
+  }
+
+  /** True when the *document* named this symbol, rather than the profile. */
+  isAuthored(symbol: string): boolean {
+    return this.authored.has(symbol);
+  }
+
+  /**
+   * Give `symbol` a derived value, unless the document already named it.
+   *
+   * Returns whether the value landed. Deliberately the only mutator on this
+   * class, and deliberately called once per compile, before any pass reads a
+   * symbol: a derived default that arrived halfway through would make two
+   * columns of one wall different colours.
+   */
+  derive(symbol: string, stateId: number): boolean {
+    if (this.authored.has(symbol)) return false;
+    this.symbols.set(symbol, { kind: "single", stateId });
+    return true;
   }
 
   /** The resolved entry, or throw — unknown symbols are a compiler bug. */
@@ -303,6 +635,9 @@ export function resolvePalette(
   const merged: Record<string, PaletteValue> = { ...DEFAULT_PALETTE, ...(style?.palettes ?? {}) };
   const symbols = new Map<string, ResolvedSymbol>();
   const unknownBlocks: { symbol: string; block: string }[] = [];
+  // What the *document* said, kept apart from what the profile defaults said,
+  // so a theme-derived role can replace a profile default and never an author.
+  const authored = new Set<string>(Object.keys(style?.palettes ?? {}));
 
   for (const symbol of Object.keys(merged).sort()) {
     if (NON_SYMBOL_PALETTE_KEYS.has(symbol)) continue;
@@ -336,5 +671,46 @@ export function resolvePalette(
     );
   }
 
-  return { palette: new Palette(symbols, streamSeed(nodeSeedValue, "palette")), unknownBlocks };
+  return {
+    palette: new Palette(symbols, streamSeed(nodeSeedValue, "palette"), authored),
+    unknownBlocks,
+  };
+}
+
+/**
+ * Write a theme's {@link GroundMaterials} onto a palette as its role symbols.
+ *
+ * **Where the fix actually lands.** Six modules ask the palette for
+ * `street.sidewalk` or `street.curb` and fall back to a hard-coded grey when it
+ * has no answer — the streetscape's pavement and kerb, the canal's coping and
+ * quay, the courtyard's edge, the retaining wall's face, the swept profiles and
+ * the forecourt. Giving the palette an answer fixes all six at once, in one
+ * place, without any of them learning what a theme is; and because
+ * {@link Palette.derive} refuses to move a symbol the document wrote,
+ * `style.palettes` still overrides every one of them.
+ *
+ * Called once per compile, immediately after the settlement's theme is drawn
+ * and before any pass reads a symbol.
+ *
+ * @returns the roles whose block the pinned block table did not recognize —
+ *   empty for every shipped theme, and a test keeps it that way.
+ */
+export function defineGroundRoles(
+  palette: Palette,
+  stack: PrismarineStack,
+  theme: MaterialTheme | undefined,
+): readonly { readonly symbol: string; readonly block: string }[] {
+  const materials = groundMaterials(theme);
+  const unknown: { symbol: string; block: string }[] = [];
+  for (const role of Object.keys(GROUND_ROLE_SYMBOLS).sort() as (keyof GroundMaterials)[]) {
+    const symbol = GROUND_ROLE_SYMBOLS[role];
+    const name = materials[role];
+    const block = stack.blockByName(name);
+    if (block === undefined) {
+      unknown.push({ symbol, block: name });
+      continue;
+    }
+    palette.derive(symbol, block.stateId);
+  }
+  return unknown;
 }

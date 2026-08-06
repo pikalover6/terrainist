@@ -23,6 +23,8 @@ import {
   CROSSING_SETBACK,
   FURNITURE_MIN_GAP,
   LAMP_SPACING,
+  LAMP_STREET_PER_BUILDING,
+  lampSpacing,
   carriagewayOffsets,
   dressStreets,
   perp,
@@ -334,6 +336,70 @@ describe("lamp posts", () => {
       expect(masks.y[idx]).toBe(GROUND);
       expect(b.y).toBeGreaterThan(GROUND);
     }
+  });
+
+  /**
+   * The lantern-spam regression, in the two shapes the hill town produced it.
+   *
+   * Both are the same defect stated twice: lighting used to be a function of
+   * pavement rather than of what stands on it. A quarter chopped into stubs got
+   * one lamp per stub, and a quarter that spent 110 columns of street on each
+   * house got the rhythm of one that spent 65.
+   */
+  describe("scales with what there is to light, not with pavement", () => {
+    /** One street chopped into `n` equal segments, end to end. */
+    const chopped = (n: number): StreetGraph => {
+      const span = 80;
+      const step = span / n;
+      return {
+        sidewalk: 2,
+        segments: Array.from({ length: n }, (_, i) => ({
+          id: `stub-${i}`,
+          kind: "street" as const,
+          width: 5,
+          path: [
+            { x: -40 + Math.round(i * step), z: 0 },
+            { x: -40 + Math.round((i + 1) * step), z: 0 },
+          ],
+        })),
+        intersections: [],
+      };
+    };
+
+    it("does not multiply lamps when one street is chopped into stubs", () => {
+      const whole = dress(chopped(1), flatPlan(), "none").props.filter(
+        (p) => p.prop === "lamp_post",
+      ).length;
+      const stubs = dress(chopped(8), flatPlan(), "none").props.filter(
+        (p) => p.prop === "lamp_post",
+      ).length;
+      // Eight 10-column stubs are eight junctions' worth of the same street.
+      // Before the `LAMP_MIN_RUN` gate each one carried its own post.
+      expect(whole).toBeGreaterThan(0);
+      expect(stubs).toBeLessThanOrEqual(whole);
+    });
+
+    it("stretches the rhythm on a quarter with more pavement than buildings", () => {
+      const graph = fixtureGraph();
+      const cells = graph.segments.reduce((n, s) => n + walkStreet(s.path).length, 0);
+      const dense = Math.max(1, Math.round(cells / LAMP_STREET_PER_BUILDING));
+      const lamps = (buildings?: number): number =>
+        dressStreets(graph, {
+          plan: flatPlan(),
+          stack,
+          seed: SEED,
+          furniture: "none",
+          ...(buildings === undefined ? {} : { buildings }),
+        }).props.filter((p) => p.prop === "lamp_post").length;
+
+      // A quarter at or above the reference density is lit exactly as it was:
+      // the flat-world byte-identity law depends on this clamp.
+      expect(lampSpacing(cells, dense)).toBe(LAMP_SPACING);
+      expect(lamps(dense)).toBe(lamps(undefined));
+      // A quarter with a quarter of the buildings and the same pavement is not.
+      expect(lampSpacing(cells, Math.max(1, dense >> 2))).toBeGreaterThan(LAMP_SPACING);
+      expect(lamps(Math.max(1, dense >> 2))).toBeLessThan(lamps(dense));
+    });
   });
 
   it("skips lighting a one-column sidewalk, and says why", () => {
