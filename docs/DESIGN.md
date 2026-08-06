@@ -397,6 +397,12 @@ skeleton), not for buildings.
 > Ratified by Kai 2026-08-06 after walking three hill towns. This section is
 > self-contained: it is the whole brief, and it assumes no memory of the
 > conversation that produced it.
+>
+> **Normative spec: `docs/GROUND-CONTRACT-v0.md`** — this brief made precise
+> enough to implement (the full pass inventory, `INTENT_RANK` with its seven
+> named inversions, the resolver pseudocode, the WP-2 equivalence-shim design,
+> and the per-WP conversion recipe). Implement from that document; this section
+> stays the ratified summary.
 
 ### Why: eleven passes fight over one array
 
