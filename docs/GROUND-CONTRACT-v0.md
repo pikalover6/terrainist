@@ -1287,11 +1287,17 @@ re-derive anything in §4 or §5.
    `plan.fluidTop` / `plan.fluidKind` writes in the same statement group.
    (`grep -n "plan.ground\[" <file>` is exactly how §3's inventory was built.)
 2. **Split the loop.** The loop that computes a level and writes it becomes a
-   loop that computes a level and `yield`s a `GroundClaim`. Everything else in
-   the loop body — `surface`, `subsurface`, `soil`, block pushes, mask writes —
-   stays where it is and moves to a **second** loop that runs in the build phase.
-   If the two loops cannot be separated because the material depends on the
-   level, the material loop reads `resolved.ground` and the dependency is gone.
+   loop that computes a level and `yield`s a `GroundClaim`. The intents go to
+   `driver.commit` (§9a.1), which is what puts the levels in the plan until WP-6
+   moves the build phase behind the freeze. Everything else in the loop body —
+   `surface`, `subsurface`, `soil`, block pushes, mask writes — stays where it is
+   and moves to a **second** loop that runs after the commit. That second loop
+   keeps the pass's **claimed** columns, not the ones it won: ownership decides
+   geometry and deliberately not material, and narrowing it to the won columns
+   changes the painting on every contested column (§9a.6, step 4). If the two
+   loops cannot be separated because the material depends on the level, the
+   material loop reads `driver.view()` — there is no `resolved.ground` to read
+   until WP-6 — and the dependency is gone.
 3. **Name the source.** `source` is the node path where there is one, and
    `<nodePath>#<part>` where one pass makes several distinct claims (a segment's
    carriageway and its verge are two sources, §4.5). Sources must be unique and
@@ -1313,21 +1319,455 @@ re-derive anything in §4 or §5.
    writers, and only those: the `avoid`/`seam`/`street`-dilation family. Keep
    every mask that expresses a genuine exclusion (a footprint the pass must not
    enter, water it must not cross).
-9. **Move the tier-dependent reads.** A pass in tier C or D that read
-   `plan.ground` to decide a level now reads `resolvedSoFar.ground` (§1.4). A
-   pass in tier A or B that did so now reads `baseline.ground`. Anything reading
-   `plan.ground` to decide where to *put a block* becomes a build-phase read of
-   the frozen array and does not change.
-10. **Delete the snow clears.** Group M's `moved`-mask rule replaces them
-    (§1.3).
+9. **Move the tier-dependent reads.** Every read of `plan.ground` that decides a
+   level becomes `driver.view()` (§9a.4), whatever the pass's tier. `baseline` is
+   the right answer only at WP-6, when every higher tier has declared before the
+   read; during the mixture the view is the plan at this pipeline position, which
+   holds the resolver's answer where a converted pass won and the unconverted
+   passes' writes everywhere else — and reading `baseline` instead would throw
+   away work the pass can see today. Anything reading `plan.ground` to decide
+   where to *put a block* also becomes a `driver.view()` read, and does not change
+   value.
+10. **Delete the snow clears** — the pass's `plan.snow[idx] = 0` lines go, and
+    `commit` clears snow on the columns the commit won, which is bit-for-bit the
+    same set (§9a.6). Group M's `moved`-mask rule of §1.3 is a *superset* of that
+    and is WP-6's: adopting it in a conversion leaves snow on new pavement on any
+    flat snowy world.
 11. **Run the equivalence test** with the pass converted and the others still
-    shadow-declared. The shim is designed to work with any mixture: a converted
-    pass declares for real, an unconverted one declares through its shadow, and
-    the assertions are identical either way. That is what makes WP-3, WP-4 and
-    WP-5 genuinely parallel.
-12. **Regenerate nothing.** Flat controls must still shasum-match. If they do
-    not, the conversion changed a level on flat ground, which is a bug in the
-    conversion and not a licence to regenerate a golden.
+    shadow-declared. The shim works with any mixture: a converted pass commits, an
+    unconverted one records through its shadow declarer at the same pipeline
+    position, and the assertions are identical either way. That is what makes
+    WP-3, WP-4 and WP-5 genuinely parallel. §9a.5 says which assertions may never
+    move (`gaps`, `precedenceMismatches`, `fluidMismatches`, `unattributable`, I7,
+    I6's 7-block cap), which divergence rows go to zero at this work package
+    (§9a.3's table), and the rule for the goldens: **they may only shrink**, and a
+    count that grows is a finding with one of two named causes, never a golden
+    update and never a new row in §8.5.
+12. **Regenerate nothing.** Every world whose committed golden is all zero must
+    still shasum-match — today `hillside-village` and `hilltop-crypt-hamlet`. A
+    world with a non-zero golden moves by exactly that golden and by nothing
+    else; §9a.6 corrects §12's control list, which named three worlds that WP-2c
+    measured as movers. A world that moves where its golden says it should not
+    has had a level changed on ground the contract calls uncontested, which is a
+    bug in the conversion and not a licence to regenerate a golden.
+
+---
+
+## 9a. The mixture period — how a converted pass's levels reach the plan
+
+§9 step 2 says a converted pass "computes a level and yields a `GroundClaim`",
+and that its material loop "reads `resolved.ground`". Between WP-2 and WP-6
+there is no `resolved.ground` to read. The declaration set is not complete until
+the last pass has run, so a single end-of-pipeline `resolveGround` cannot be what
+puts a converted pass's level in the plan — and the plan is where an unconverted
+downstream pass will look for it, at its own pipeline position, because that is
+the only place it has ever looked. Eleven passes converted in three parallel work
+packages means that for most of the rewrite roughly half the pipeline declares
+and half still writes, and **the half that still writes must not be able to tell
+the difference**.
+
+This section decides the write mechanism for that period. Everything else in it
+follows from that one decision. Nothing here changes a world on its own: it is
+the mechanism WP-3, WP-4 and WP-5 each use, and the first of the three to land
+builds it.
+
+### 9a.1 The mechanism — one driver, an accumulating prefix, a write-through
+
+**`layout/ground-driver.ts`, `GroundDriver`.** Created in `terrain/compile.ts`
+immediately after `buildColumnPlan`, beside the baseline snapshot §8.1 already
+takes, and threaded into `buildStructures` as `StructureInput.ground`. It exists
+only on the settlement path; a terrain-profile compile builds none.
+
+```ts
+/** The one thing that writes a level during the mixture (§9a). */
+export interface GroundDriver {
+  /** The materialised ground the whole resolve is against. Never changes. */
+  readonly baseline: GroundBaseline;
+  /** Every intent contributed so far, in pipeline order. */
+  readonly intents: readonly GroundIntent[];
+
+  /** An unconverted pass's shadow declaration. Accumulates; writes nothing. */
+  record(intents: readonly GroundIntent[]): void;
+  /** A converted pass's claims. Accumulates, resolves, and writes them through. */
+  commit(intents: readonly GroundIntent[]): void;
+  /** The one legal read (§1.4), as it stands at this pipeline position. */
+  view(): GroundView;
+  /** After the last pass: the final `ResolvedGround`, its report, its diagnostics. */
+  finish(): ResolvedGround;
+}
+```
+
+Four rules, all normative.
+
+**1. Every pass contributes at its own pipeline position, converted or not.** A
+converted pass calls `commit` instead of writing. An unconverted pass writes
+exactly as it always has, and its shadow declarer (§8.1, item 2) is called
+immediately afterwards — the declarers derive from the pass's *return values*, so
+they can run there — and hands the result to `record`. `declareAll` and the
+`groundDeclarers` bundle are therefore deleted at the first conversion: there is
+one accumulator, in one order, and §3's inventory is a list of call sites rather
+than a list of arguments. `declarePadEdits` records before the first structure
+pass, since the field already carries its answer.
+
+**2. `commit` writes the resolver's answer over the columns of its own
+intents, and nothing else.**
+
+```
+commit(intents):
+  append intents to the driver's array, materialising each `columns` (rule 4)
+  r := resolveGround(baseline, driver.intents)        # the whole prefix, re-resolved
+  touched := union of c.idx over every intent in *this commit*, every kind,
+             ascending
+  for k in touched:
+      if r.owner[k] === -1: continue                  # nobody won it; not ours
+      plan.ground[k]    := r.ground[k]
+      plan.fluidTop[k]  := r.fluidTop[k]
+      plan.fluidKind[k] := r.fluidKind[k]
+      if r.owner[k] indexes one of *this commit's* intents:
+          plan.snow[k] := 0                           # §9a.6, the snow rule
+```
+
+Three details in that loop are load-bearing and each is a defect if dropped.
+*`owner[k] === -1` is skipped* because a column named only by a `clearance` has
+no winner, and writing the resolver's answer there — the baseline — would erase
+an unconverted pass's work. *`touched` includes `clearance` and `preserve`
+columns* because a clearance recorded after a level claim was already written
+must still clamp it, and the commit that declares the clearance is the only one
+that will revisit the column. *Only this commit's columns are written*: a commit
+never rewrites a column claimed solely by an earlier commit, which is what keeps
+a conversion's blast radius equal to the pass's own footprint (§9a.3).
+
+**3. The prefix is the answer.** `resolveGround` is called on the whole
+accumulated array every time, never incrementally patched, so every intermediate
+answer is literally `resolveGround` over a prefix of the final set and the last
+one is `resolveGround` over the final set — the same call, the same arguments and
+the same result the shim computes. The driver is not a second resolver and §11
+asserts it (§9a.5). Re-resolving is lazy: at most one call per `commit`, and one
+per `view()` that follows a `record`. Twelve resolves on a city region is twelve
+walks of a few million cells, which is the cost of the mixture and is deleted
+with it.
+
+**4. An intent handed to the driver must be re-iterable.** §5.7.3 lets a declarer
+generate `columns` lazily because the resolver consumes them exactly once; the
+driver calls the resolver a dozen times over the same array, so a generator is
+exhausted after the first. `record` and `commit` therefore **materialise each
+intent's `columns` into a frozen array on receipt**. This is the single most
+likely way to get the driver subtly wrong: a lazily-declared intent silently
+contributes nothing from the second resolve on, which reads as "my pass's claims
+stopped winning halfway down the pipeline".
+
+**Diagnostics and the report come from `finish()` only.** An intermediate resolve
+sees a prefix, so it fires `GROUND_CLAIM_REFUSED` for claims a later-recorded
+higher rank has not taken yet and misses `LOAM-E494`s that only the full set
+exhibits (a `preserve` whose own claim loses to something recorded after it).
+Intermediate diagnostics and reports are **discarded**; `finish()` is what §6 and
+§7 are fed from.
+
+**The baseline stops being optional.** `groundBaseline` is gated behind
+`CompileInput.groundEquivalence` today (§8.1, item 1). From the first conversion
+it is unconditional on the settlement path — three region-sized copies — because
+it is the resolver's first argument and the driver is production code. The
+*shim* stays gated.
+
+### 9a.2 Why the driver, and not the two cheaper shapes
+
+**Rejected: converted passes write their declared levels directly, with no
+arbitration until WP-6.** It is the smallest change and it lands I6 (which is a
+change of *where the level comes from*, not of who wins) at WP-3 correctly. It
+lands nothing else. I2 — a street beating a road, both of them inside WP-3's own
+family — would still be decided by write order, so the work package whose whole
+purpose is "convert the surfacer from *owning* its columns to *declaring* them"
+would ship without the ownership changing hands. Every cross-pass inversion would
+then arrive at once, at WP-6, which is exactly the leap §8 exists to prevent:
+seven behaviour changes in one commit, walked once, with no way to attribute what
+a hill town now looks like to any one of them. The equivalence shim would still
+*measure* the leap; it would not make it walkable.
+
+**Rejected: a resolve per work-package family.** Each WP's passes resolve among
+themselves at the end of the family and write that answer. I2 and I6 land at
+WP-3, which is better — but I1 and I3, whose two sides sit in different families,
+still wait for WP-6, and the mechanism invents a scope ("the family") the
+contract does not have and the tiers contradict. Worse, three family resolves
+writing at three pipeline positions against three different starting states is
+the write-order pile again with three participants instead of eleven, and none of
+it survives WP-6.
+
+**Chosen: the driver.** It is the only shape in which an inversion becomes real
+exactly when the pass that currently decides the column is converted, so each
+work package moves the worlds its own passes are responsible for and can be
+walked on its own; it needs no change to `resolveGround`, which stays the landed,
+tested pure function and is merely called more often; its intermediate answers
+are not an approximation of the contract but the contract applied to a prefix;
+its last answer *is* the final resolve; and WP-6 deletes only its write-through,
+because the accumulate-and-resolve half is the per-tier machinery §1.4 and §13.7
+ask for and would have to be built anyway.
+
+### 9a.3 When each inversion becomes real
+
+The rule, and it is worth stating before the table because the table is only its
+consequence:
+
+> **A column stops diverging at the work package that converts the pass which
+> writes it last in pipeline order.**
+
+The winner's own conversion is not required. Because every pass records at its
+own position, the winning claim is already in the driver's prefix by the time the
+last writer commits — and it always is, since a claimant that ran *after* the
+last writer would be the last writer. So the loser's conversion is what lands the
+inversion, and the winner may still be writing by hand.
+
+| id | winner (pass, WP) | loser — the last writer (pass, WP) | real at | what the goldens do |
+| --- | --- | --- | --- | --- |
+| I1 | `retaining.seam` / `.skirt` (`retaining`, WP-4) | `street.network` (`roads`), `street.sidewalk` (`streetscape`), `verge` (`blendShoulders`) — all WP-3; `verge` from `gradeBank` — WP-4 | **WP-3**, except any column whose last writer is `gradeBank`, which goes at WP-4 | `showcase-bayline` I1: 3 → 0. The split between the two shares is measured at the conversion, not predicted here. |
+| I2 | `street.network` (`roads`, WP-3) | `road.network` (`roads`, WP-3) | **WP-3** | `showcase-bayline` I2: 2 → 0. |
+| I3 | `street.network`, `street.sidewalk` (WP-3) | `doorstep.landing` (`doorsteps`, WP-4) | **WP-4** | `showcase-bayline` I3: 3 → 0; `levels_scarp` I3: 1 → 0. |
+| I4 | any of tiers A–C | `prop.pad` (`props`, WP-5) | **WP-5** | `showcase-ironvale` I4: 41 → 0; `demo-deltaport` I4: 20 → 0. |
+| I5 | any of tiers A–C | `verge` (`blendShoulders`, WP-3; `gradeBank`, WP-4) | **WP-3** and **WP-4** respectively | zero on every world today; it must stay zero, and a non-zero count appearing at a conversion is a finding, not a golden. |
+| I6 | `street.sidewalk` (self) | `street.sidewalk` (`streetscape`, WP-3) | **WP-3** | `c1-harbourtown` 9,921 → 0; `showcase-bayline` 4,169 → 0; `levels_scarp` 52 → 0. The largest single movement in the rewrite. |
+| I7 | `plaza.ground` (`plaza`, WP-4) | `street.network`, `road.network` (WP-3) | **WP-3** | zero, and zero at every WP. A non-zero count is a failure, per §8.5. |
+
+Two consequences worth reading off the table. **WP-3 is where the worlds move**:
+it takes I1's street share, I2, I5's shoulder share and all of I6, which is every
+divergence measured on `c1-harbourtown` and all but three columns of
+`showcase-bayline`'s. **WP-4 and WP-5 are small**: one doorstep column on
+`levels_scarp`, three on `bayline`, and sixty-one prop-pad columns across two
+controls. Plan the walk accordingly — WP-3's is the one that needs Kai.
+
+`prop.pad` is the one declarer whose *column set* is a function of the ground it
+is declared against: `levelPropPad` selects columns with `if (g >= want)
+continue`, so converting a street changes which columns a pad claims. §3.10b
+predicts the direction ("against a resolved ground a pad simply has fewer columns
+to fill"), so I4's golden should shrink at WP-3 as well as reaching zero at WP-5.
+A golden that *grows* there is a finding.
+
+### 9a.4 What a converted pass reads
+
+> **During the mixture, `resolvedSoFar` is `driver.view()`: the plan's three
+> arrays at the pass's own pipeline position, handed out `readonly`.**
+
+Not a separate array, and not `baseline`. The view is sound in the only sense
+that matters, which is that it is composed of exactly two kinds of column and
+both are the best available answer:
+
+- a column some committed intent won holds **the resolver's answer over the
+  prefix** — the driver has just written it there;
+- every other column holds **what the unconverted passes wrote**, which is
+  precisely what the pass reads today. Reading `baseline` instead would be
+  strictly worse: a tier-B pass reading the baseline would lose the precinct
+  grading a tier-A pass performed by hand, which it can see today.
+
+So §9 step 9's "a pass in tier A or B reads `baseline.ground`" is a WP-6
+statement, not a mixture one; during the mixture every pass reads the view, and
+the view converges on the frozen ground one conversion at a time.
+
+`GroundView` carries `ground`, `fluidTop`, `fluidKind`, `seaLevel` and `region`,
+with the arrays typed by the `ReadonlyInt32Array`-shaped alias §10 specifies for
+WP-6 — declared in `ground-contract.ts` at the first conversion rather than at the
+last, so that a converted pass cannot write through its own read even while the
+plan is still mutable.
+
+**Two knowing approximations, both bounded, both named.**
+
+1. **A higher tier that declares later in the pipeline is missing from the
+   view.** `digCanals` is tier A and runs after `buildRetainingWalls` (tier B);
+   `furnishCourtyards` (rank 50) runs after the walls (60/70). A converted
+   retaining pass therefore computes its levels without seeing the channel. This
+   is *today's behaviour exactly* — the ordering is the pipeline's, not the
+   contract's — so the conversion ships no regression, and the arbitration is
+   still right: the canal records at its own position and, when converted, its
+   commit rewrites the shared columns at rank 0. What can differ is the *derived*
+   level of a neighbouring column the canal never claims. Bounded to that, and
+   the fix is a pipeline reorder into tier order, which is not in WP-1–6.
+2. **The view is not tier-filtered.** §1.4 forbids a pass reading its own tier;
+   the mixture's view contains whatever ran earlier, including same-tier
+   claimants (`pavePlaza`'s well is tier B and runs before the tier-B walls).
+   Again this is today's behaviour, and §13.7's typed `declare(tier, above)` is
+   what closes it — at WP-6, where the driver already holds the owning intent per
+   column and can mask the view back to the baseline wherever the owner's tier is
+   not strictly higher.
+
+One case that looks like a tier violation and is not: **the sidewalk taking the
+carriageway's level.** Both are tier C. The sidewalk does not read the resolved
+carriageway; it reads the `ArcFrame`/`ArcLevels` the surfacer hands it (§3.8b),
+which is intra-subsystem data — the street family declares as *one* subsystem
+(§3.6b) and its internal arbitration is not the resolver's business.
+
+### 9a.5 How the shim's assertions tighten
+
+The shim keeps its shape. Two wiring changes and one new assertion:
+
+- `assertGroundEquivalence` is fed `driver.intents` instead of `declareAll(…)`'s
+  result, which after the first conversion is the same set arrived at from one
+  place instead of two;
+- `written` is still a copy of the plan taken at pass 5b′, and still compared
+  against `resolveGround(baseline, driver.intents)` computed **by the shim
+  itself**, not read off the driver;
+- **new:** `driver.finish().ground` must equal that resolve element for element,
+  and likewise `fluidTop` and `fluidKind`. This is what proves the incremental
+  prefix-resolve equals the one-shot resolve, and it is the assertion that
+  catches a driver which mutated an intent, dropped one, or exhausted a
+  generator (§9a.1, rule 4).
+
+**What may never move, at any conversion.** These are contract, not goldens:
+
+| assertion | value | why it cannot move |
+| --- | --- | --- |
+| `gaps` | 0 | a converted pass declares everything it writes by construction; a gap appearing at a conversion means the pass writes a column outside its own intents. |
+| `precedenceMismatches` | 0 | it asserts the resolver against §4, and the resolver did not change. |
+| `fluidMismatches` | 0 | §8.5 has no row that inverts a fluid, and §1.3's joint freeze is what makes that safe to say. |
+| `unattributable` | 0 | see below. |
+| `byInversion.I7` | 0 | §8.5. |
+| `maxSidewalkDelta` | ≤ 7 | §8.5, the measured size of the defect I6 fixes. |
+| "the resolver moves nothing nobody claimed" | 0 failures | unchanged; the driver writes a strict subset of what the resolver owns. |
+
+**CLEAN stays exact.** On a CLEAN column exactly one level is declared, so the
+resolver writes that level (or a clearance clamp), and a converted pass's commit
+writes the same number the unconverted pass wrote. `cleanMismatches` therefore
+stays at its golden through every conversion. The one moving part is
+`cleanDivergences` — the I6 columns with a single claimant, which §8.5's second
+WP-2c amendment put in CLEAN rather than CONFLICT — and those go to zero with the
+rest of I6 at WP-3.
+
+**Divergence goldens may only shrink.** Per conversion, the rows named in §9a.3's
+table go to zero and every other row keeps its number. A count that grows, or a
+row that becomes non-zero having been zero, is **not** a golden update: it is a
+finding, and it has exactly two legitimate causes, both of which must be written
+down at the constant before the number is changed —
+
+1. **the declaration set moved.** A converted pass computes its claims against
+   `driver.view()`, and an earlier conversion changed the view on the diverging
+   columns, so the pass now claims a different set or different levels. `prop.pad`
+   is the declarer this is expected of (§9a.3); anywhere else, check that the
+   conversion promoted the shadow declarer rather than re-deriving it.
+2. **a claim recorded after the last writer's commit.** The prefix the commit
+   resolved was missing a claim the final set has — in practice a `clearance`
+   declared downstream. It presents as an *unattributable* divergence, because
+   the written level is a clamp no claim asked for. Find it by diffing the
+   commit's prefix against `driver.intents`; **do not add a row to §8.5.** The
+   tolerated table is §4.4's list and nothing else, and a row added to make a
+   world pass is the failure mode §8.5's closing line exists to prevent.
+
+**`PAD_APRON_MISMATCHES` is untouched by every conversion, and that is
+provable.** The 55 columns are claimed by `pad.record` alone; no pass commits
+them, because the pads are a field edit and there is no post-materialisation pass
+to convert (§3.12). A commit only writes its own columns, so nothing rewrites
+them, and `cleanMismatches` stays at exactly 55 on `c1-harbourtown` and 61 on
+`showcase-deltamere` through WP-3, WP-4 and WP-5. They become a *world* change at
+the moment the driver's write stops being per-commit and becomes the whole
+ground — which is WP-6's first change and nothing earlier. That is the sharpened
+form of §13.3's "this question must be settled before WP-6 freezes the ground":
+it must be settled before WP-6's **first** change, not merely inside WP-6. The
+golden may shrink if a declarer fix lands; it may not grow.
+
+`sidewalkWrites` and the `selfWrites` machinery (§8.5's WP-2c amendment) stay
+until `streetscape` converts and are deleted with I6's golden, since a
+self-inversion that no longer diverges has nothing to attribute.
+
+### 9a.6 Byte-identity through the mixture
+
+§12's argument extends to the driver in five steps, and each is checkable
+without running the test:
+
+1. **The driver writes only columns some committed intent claims** (§9a.1, rule
+   2). Every other column of the plan is untouched by the mechanism, so an
+   unconverted pass's work is bit-for-bit preserved.
+2. **On a flat world every claim on a shared column proposes the same level**
+   (§12.3) — every pass's level derives from one plane. So for *any* subset of
+   the declaration set, `resolveGround` returns that one level on every claimed
+   column: §5.3's agreement rule makes the answer independent of which claims are
+   present, not merely of their order.
+3. **Therefore every driver write is value-identical to what was already there.**
+   The prefix property of §9a.1 rule 3 is what makes this hold at *every* commit
+   and not only at the last one, which is what makes the mixture safe rather than
+   only its endpoint.
+4. **Materials keep their passes, their column sets and their order.** A
+   converted pass's material loop runs over the columns the pass *claimed*, not
+   the columns it *won* — "ownership decides geometry and deliberately not
+   material" (§3.6a), and Group M's last-write-wins order is what §12.4 depends
+   on. A conversion that narrows the material loop to the won columns changes the
+   painting on any world with a contested column and is a bug in the conversion.
+5. **The snow clear is a driver write, not a `moved`-mask rule.** See below.
+
+**The snow rule, corrected for the mixture.** §1.3 replaces the eleven
+`plan.snow[idx] = 0` lines with "a column whose resolved level differs from its
+materialised level carries no snow". That rule is *not* equivalent to the eleven
+lines: those clear snow on every column the pass writes, whether or not the level
+moved, and on a flat snowy world no level moves at all — so adopting the
+`moved`-mask rule during a conversion leaves a snow layer on top of freshly laid
+pavement and breaks §12 on exactly the worlds §12 is about. What the driver does
+instead is bit-for-bit the eleven lines: **`commit` clears `plan.snow[k]` on
+every column the commit *won*.** A claimed column the commit lost still ends
+snowless, because its winner clears it — by hand if that pass is unconverted, by
+its own commit if it is not — and either way the value is 0 and the order does
+not matter. §1.3's superset (clearing snow where a *different* claimant moved the
+column) is a real behaviour change on any world with snow, it is WP-6's, and it
+needs its own measurement.
+
+**The control set §12 names is wrong, and the goldens say so.** §12 asserts that
+`examples/showcase-*`, `demo-*` and `c1-harbourtown` shasum-match through every
+work package. WP-2c measured otherwise: `c1-harbourtown` diverges on 9,921
+columns (I6), `showcase-ironvale` on 41 and `demo-deltaport` on 20 (I4). Those
+worlds *will* move, at WP-3 and WP-5 respectively, by exactly the counts in
+§9a.3's table. Byte-identity is a **per-column** guarantee — a column with no
+conflicting claim and no self-inversion does not move — and only a world with an
+all-zero golden inherits it world-wide. Today that is `hillside-village` and
+`hilltop-crypt-hamlet`: the two hill towns, and not one of the three worlds §12
+calls a flat control. **The shasum control set for WP-3–5 is every world whose
+committed golden is all zero**, and §8.4's flat-control list is a list of worlds
+whose movement must equal their golden, which is the assertion the equivalence
+test already makes. A shasum diff on a world with a non-zero golden is read
+against §9a.3's table, never waved through.
+
+### 9a.7 What WP-6 deletes, and what it flips
+
+§10's list stands in full. The driver adds to it and refines two of its entries.
+
+**Deleted at WP-6:**
+
+- **`commit`'s write-through** — the loop of §9a.1 rule 2, and with it the snow
+  clear. Nothing writes `plan.ground` any more, so nothing needs to.
+- **`record`** — every pass commits; there is no unconverted half to shadow.
+- **`ground-declare.ts` and the shim**, as §10 already says — refined: each
+  shadow declarer dies at *its own* pass's conversion, not at WP-6. The module,
+  `levelClaimsByColumn`, `sidewalkWrites`, `ground-equivalence.ts` and
+  `test/ground-equivalence.test.ts` are what remain to delete at WP-6, and they
+  go together.
+
+**Flipped at WP-6:**
+
+- **The plan's three arrays become the resolver's.** `finish()` returns the frozen
+  `ResolvedGround`; `ColumnPlan.ground`, `.fluidTop` and `.fluidKind` become
+  readonly aliases of its arrays. §10's "writing is a type error" is then true by
+  construction rather than by a static scan — the scan stays as the guard against
+  a module that keeps its own `Int32Array`.
+- **`view()` becomes tier-typed.** `view(tier)` masks every column whose owning
+  intent is not in a strictly higher tier back to the baseline, which is §13.7's
+  `declare(tier, above: ResolvedGround)` and closes §9a.4's second approximation.
+- **The build phases move behind the freeze.** §9 step 2's "second loop that runs
+  in the build phase" becomes literally true: declaration completes for every
+  pass, `finish()` freezes, and the material loops, block emission and furnishing
+  run against the frozen ground. This is the change §3.7's balustrade and §3.3's
+  coping-as-a-structure-block workarounds were waiting for.
+- **The transitions get consumers.** Until WP-6 `resolved.transitions` is
+  computed and **not consumed**: a transition derived against a partial owner
+  field is not the transition the full set produces — an unconverted neighbour
+  reads as `owner = -1`, the baseline, whose request §5.6 reads as `"ramp"`. So
+  §5.6's "consumers read this list" — `buildRetainingWalls` building the `wall`
+  transitions instead of deriving seams, the streetscape's curb reading the
+  `step` ones, `CURB_LEVEL_TOLERANCE`'s deletion — is WP-6 work in every case,
+  even where the pass converts at WP-3 or WP-4.
+
+**Not flipped at WP-6:** the per-commit resolve does *not* collapse to a single
+call. Collapsing it to one resolve per tier (§1.4's four) requires the pipeline
+to run in tier order, and it does not — `digCanals` (tier A) runs after
+`buildRetainingWalls` (tier B), `furnishCourtyards` (rank 50) after the walls
+(60/70). WP-6 keeps the accumulating prefix and the typed tier mask; the reorder
+is a later round's, and it buys clarity rather than correctness, because the
+final resolve is over the whole set either way.
+
+**One precondition.** §13.3 must be answered before the write-through becomes the
+whole ground, because that is the change that makes `PAD_APRON_MISMATCHES` real
+(§9a.5). It is the first item of WP-6, not a task inside it.
 
 ---
 
@@ -1432,6 +1872,11 @@ Expanding the brief's four bullets into names and assertions. New files:
   the per-inversion counts asserted against a committed golden.
 - `I7 produces no divergence` — expected count exactly zero.
 - `I6's delta never exceeds 7 blocks` — the measured size of the defect it fixes.
+- `the driver's answer is the one-shot resolve` (from the first conversion,
+  §9a.5) — `driver.finish()`'s three arrays equal
+  `resolveGround(baseline, driver.intents)`'s element for element. The proof that
+  the accumulating prefix is not a second resolver, and the assertion that
+  catches an intent whose `columns` were a generator.
 
 **Generated worlds — what unit tests cannot see.** Per the brief and per Phase
 4.1's and 4.2's record (three defects then six, all through green unit tests),
@@ -1469,6 +1914,13 @@ acceptance:
 
 **The guarantee: a flat world must not move, through every work package.**
 
+> **Amended by §9a.6.** The guarantee is per *column*, and only a world with an
+> all-zero golden inherits it world-wide. WP-2c measured `c1-harbourtown`,
+> `showcase-ironvale` and `demo-deltaport` — three of the worlds this section
+> calls flat controls — as movers; they move by exactly their goldens, at the
+> work packages §9a.3's table names. The shasum control set is every world whose
+> golden is all zero, which today is the two hill towns.
+
 The argument, checkable independently of the test:
 
 1. **WP-1 adds types only.** No call site changes; every existing test passes
@@ -1485,7 +1937,10 @@ The argument, checkable independently of the test:
    held.
 4. **Materials keep their passes and their order** (§1.3, Group M), so the
    emitted block stream is unchanged even where the geometry is recomputed.
-5. **WP-6 deletes; it does not decide.** Every deletion in §10 is a defence that
+5. **The driver writes only claimed columns, and only values point 3 makes
+   identical** (§9a.6). That is what carries the argument across the mixture
+   period rather than only across its endpoints.
+6. **WP-6 deletes; it does not decide.** Every deletion in §10 is a defence that
    is provably redundant once rank decides, and each is removed with the
    equivalence test still green.
 
