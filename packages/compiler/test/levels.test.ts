@@ -448,20 +448,82 @@ describe("buildRetainingWalls", () => {
     expect(raised).toBeGreaterThan(0);
   });
 
-  it("skips a seam column a street already claims", () => {
+  it("skips a seam a street *crosses*, and only for as long as it is street", () => {
     const top = 64 + 4;
     const quarter = district(top);
+    // A flight climbing *through* the seam: a band perpendicular to it, so the
+    // walk back into the platform is street all the way and finds no ground.
+    // There the street is the connection between the levels and a wall across
+    // it would be a wall across a road.
     const carriageway = new Uint8Array(48 * 48);
-    for (let z = 0; z < 48; z++) for (let x = 22; x <= 26; x++) carriageway[z * 48 + x] = 1;
+    for (let z = 20; z <= 26; z++) for (let x = 20; x < 48; x++) carriageway[z * 48 + x] = 1;
     const result = buildRetainingWalls({
       districts: [{ ...quarter, carriageway }],
       plan: steppedPlan(stack, top),
       palette: paletteOf(stack),
       stack,
     });
-    // The street *is* the connection between the levels; a wall across it would
-    // be a wall across a road.
-    expect(result.wallColumns).toBe(0);
+    // The crossing stays open — no coping over the carriageway — and the rest
+    // of the seam is still walled.
+    for (const block of result.blocks) {
+      expect(carriageway[block.z * 48 + block.x], `${block.x},${block.z}`).not.toBe(1);
+    }
+    expect(result.wallColumns).toBeGreaterThan(30);
+    expect(result.unfaced.street).toBeGreaterThan(0);
+  });
+
+  /**
+   * **The 85%.** A contour street runs *along* the seam, which is what a
+   * `terraced` quarter looks like everywhere — its bench field partitions the
+   * whole quarter, streets included. The face, the lowest row of the upper
+   * platform, is therefore carriageway for its whole length, and the pass used
+   * to skip it whole: measured on `stepped_hilltown`, 2,489 seam columns
+   * classified `retaining` and 365 walled. What was left standing beside the
+   * road was the raw dirt face the walk reported.
+   *
+   * A street *along* a seam is not the connection between its levels — it is
+   * the thing the wall holds the ground above. So the wall steps back to the
+   * first free column of the platform and is faced end to end.
+   */
+  it("faces a seam a street runs along, end to end, behind the pavement", () => {
+    const top = 64 + 4;
+    const quarter = district(top);
+    const carriageway = new Uint8Array(48 * 48);
+    for (let z = 0; z < 48; z++) for (let x = 24; x <= 29; x++) carriageway[z * 48 + x] = 1;
+    const result = buildRetainingWalls({
+      districts: [{ ...quarter, carriageway }],
+      plan: steppedPlan(stack, top),
+      palette: paletteOf(stack),
+      stack,
+    });
+    // End to end: the seam is 48 columns long and every one of them is faced.
+    const seam = quarter.seams.reduce((n, s) => n + s.cells.length, 0);
+    expect(seam).toBe(48);
+    expect(result.wallColumns).toBeGreaterThanOrEqual(48);
+    // Behind the pavement, never on it, and never over the platform below.
+    for (const block of result.blocks) {
+      expect(carriageway[block.z * 48 + block.x], `${block.x},${block.z}`).not.toBe(1);
+      expect(block.x).toBeGreaterThan(29);
+    }
+    // And nothing is left unexplained.
+    expect(result.unfaced.street).toBe(0);
+  });
+
+  it("never lays a kerb course inside a building", () => {
+    // `kerbSeam` took the street mask and not the footprint mask, unlike
+    // `gradeBank` and the wall path: a drop-1 seam running under a terrace
+    // would have written a course of kerb across its ground floor.
+    const plan = steppedPlan(stack, 65);
+    const before = Int32Array.from(plan.surface);
+    const result = buildRetainingWalls({
+      districts: [district(65)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      footprints: [{ x0: 0, z0: 0, x1: 23, z1: 47 }],
+    });
+    expect(result.kerbs).toBe(0);
+    for (let k = 0; k < before.length; k++) expect(plan.surface[k]).toBe(before[k]);
   });
 
   it("writes the same wall twice", () => {

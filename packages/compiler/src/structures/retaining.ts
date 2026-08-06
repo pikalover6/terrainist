@@ -11,9 +11,13 @@
  * `treatment: "built"` — the building's own foundation skirt is the wall and
  * nothing else may be built there. Before the surfacing, because the surfacer
  * must see the finished ground and a wall must not be cut into by a street
- * drawn before it existed; a seam column a street already claims is skipped
- * whole, since there the street *is* the connection and a wall across it would
- * be a wall across a road.
+ * drawn before it existed.
+ *
+ * A street on the seam is *not* one answer. A street that **crosses** a seam is
+ * the connection between its two levels and a wall across it would be a wall
+ * across a road, so the crossing stays open. A street that **runs along** one is
+ * the thing the wall holds the ground above, and skipping it was the measured
+ * 85%: see {@link RETAIN_FACE_SETBACK}.
  *
  * ## The wall is a sweep
  *
@@ -35,9 +39,12 @@
  * re-levels a column the surfacer owns"**, and this pass clears it three ways
  * rather than assuming phase order does:
  *
- * - the wall stands on the platform's own outermost column, which is inside the
- *   block and so outside the sidewalk band the streetscape re-levels, and any
- *   column a street actually claims is dropped before anything is swept;
+ * - the wall stands on the platform's own outermost *free* column — outside the
+ *   carriageway and outside the sidewalk band the streetscape re-levels, which
+ *   is measured rather than assumed: letting a wall stand on a sidewalk column
+ *   built 1,520 columns on the hill town and 183 unsupported balustrade posts
+ *   with them, because `paveSidewalks` pulled the ground back out from under
+ *   the coping. The sidewalk mask is a hard stop for that reason and no other;
  * - {@link RetainingPassResult.seam} is handed to `surfaceStreetGraph`, which
  *   passes it to `blendShoulders` — a seam is a face, not a bank, and smoothing
  *   it would undo the wall (§2.4);
@@ -78,6 +85,33 @@ import { sweep, sweptColumns, thickenCourse, type Vec2 } from "./sweep.js";
  * connection between the two levels, not a wall across it.
  */
 export const RETAIN_STREET_CLEARANCE = 0;
+
+/**
+ * How far back into the upper platform a wall may step to get off the street.
+ *
+ * **Measured, 2026-08-05, and this is the 85%.** On `stepped_hilltown` the
+ * classifier called 2,489 seam columns `retaining` and the pass built 365. The
+ * sink was one line: the face — the lowest row of the *upper* platform — is
+ * carriageway for **2,274 of 2,713** columns, because `terraced`'s bench field
+ * partitions the whole quarter, streets included, so a contour street runs
+ * straight down the bench boundary. The face was skipped whole, and what was
+ * left standing beside the street was the raw 2-to-4-block dirt face the walk
+ * reported.
+ *
+ * "A column a street claims is skipped" is right for a street that **crosses**
+ * a seam — there the street is the connection and a wall across it is a wall
+ * across a road — and wrong for a street that **runs along** one, where the
+ * uphill side of the carriageway is exactly where a hill town puts masonry.
+ * The two are told apart by stepping: the walk-back runs perpendicular to the
+ * seam, so a street along the seam is left after a few columns and the wall
+ * lands at the back of the pavement, while a stair climbing *through* the seam
+ * is street for the whole walk and the seam stays open there. No new
+ * classification, no new mask — just how far you are allowed to walk.
+ *
+ * Twelve columns: wider than any carriageway plus its sidewalk dilation in the
+ * catalog, narrow enough that a wall never detaches from the face it holds.
+ */
+export const RETAIN_FACE_SETBACK = 12;
 
 /**
  * Share of a seam's face that has to be built over before the *seam* is built
@@ -140,8 +174,38 @@ export interface RetainingPassResult {
   readonly banks: number;
   /** Seams a building already stood on. */
   readonly built: number;
+  /**
+   * Every seam column classified `retaining` that got no wall, by reason.
+   *
+   * A column dropped for a reason nobody counted is a column nobody can find,
+   * and 85% of this quarter's seam length was exactly that. The keys are the
+   * whole of the accounting: `faced + Σ unfaced === ` the classifier's total.
+   */
+  readonly unfaced: Readonly<Record<UnfacedReason, number>>;
   readonly diagnostics: readonly LoamDiagnostic[];
 }
+
+/** Why a seam column classified `retaining` ended up with no wall. */
+export type UnfacedReason =
+  | "building" // a building stands on the face; its own skirt is the wall
+  | "street" // the street owns the face for {@link RETAIN_FACE_SETBACK} columns — it crosses
+  | "water" // the face is in a channel
+  | "shortRun" // the seam is shorter than `MIN_RETAIN_RUN`, graded as a bank
+  | "tallDrop" // the seam drops past `RETAIN_MAX`, graded as a bank
+  | "builtSeam" // most of the seam's face is under one building
+  | "offPlatform" // the upper bench is narrower than the road that runs on it
+  | "noFace"; // the seam's upper platform presents no column at all
+
+const UNFACED_REASONS: readonly UnfacedReason[] = [
+  "building",
+  "street",
+  "water",
+  "shortRun",
+  "tallDrop",
+  "builtSeam",
+  "offPlatform",
+  "noFace",
+];
 
 /** The block states the pass writes. */
 interface RetainingStates {
@@ -214,10 +278,20 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let kerbs = 0;
   let banks = 0;
   let built = 0;
+  const unfaced: Record<UnfacedReason, number> = {
+    building: 0,
+    street: 0,
+    water: 0,
+    shortRun: 0,
+    tallDrop: 0,
+    builtSeam: 0,
+    offPlatform: 0,
+    noFace: 0,
+  };
 
   const relevant = input.districts.filter((d) => d.levels !== undefined);
   if (relevant.length === 0) {
-    return { blocks, seam, walls, wallColumns, kerbs, banks, built, diagnostics };
+    return { blocks, seam, walls, wallColumns, kerbs, banks, built, unfaced, diagnostics };
   }
   const states = resolveStates(palette, stack);
 
@@ -275,13 +349,14 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
 
     for (const { seam: record, floorY } of jobs) {
       if (record.treatment === "kerb") {
-        kerbs += kerbSeam(region, plan, record, states, street) > 0 ? 1 : 0;
+        kerbs += kerbSeam(region, plan, record, states, street, occupied) > 0 ? 1 : 0;
         continue;
       }
       if (record.treatment === "bank") {
         banks++;
         gradeBank(region, plan, levels, record, floorY, street, occupied);
         const short = record.cells.length < MIN_RETAIN_RUN;
+        unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
         diagnostics.push(
           warning(
             "RETAINING_REFUSED",
@@ -300,8 +375,19 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // cells are the low side, and a wall standing on them would eat the
       // platform below instead of holding the one above.
       const face: number[] = [];
+      const chosen = new Uint8Array(cells);
       const inFace = new Uint8Array(cells);
       let blockedByBuilding = 0;
+      const reasons: Record<UnfacedReason, number> = {
+        building: 0,
+        street: 0,
+        water: 0,
+        shortRun: 0,
+        tallDrop: 0,
+        builtSeam: 0,
+        offPlatform: 0,
+        noFace: 0,
+      };
       for (const point of record.cells) {
         for (const [dx, dz] of NEIGHBOURS) {
           const x = point.x + dx;
@@ -311,21 +397,52 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           const k = index(region, x, z);
           if (inFace[k] === 1) continue;
           inFace[k] = 1;
-          if (occupied[k] === 1) {
-            blockedByBuilding++;
+          // Walk back into the platform until the ground is the platform's own
+          // rather than the street's: one column for a free face; a handful for
+          // a street running *along* the seam, which puts the wall at the back
+          // of the pavement; nothing within the setback for a street *crossing*
+          // it, which is a seam that stays open because there the street is the
+          // connection, not a thing to wall off.
+          const found = walkBack(
+            region,
+            x,
+            z,
+            dx,
+            dz,
+            levels,
+            record.above,
+            street,
+            occupied,
+            plan,
+          );
+          const landed = found.column;
+          const why = found.why;
+          if (landed < 0) {
+            if (why === "building") blockedByBuilding++;
+            reasons[why]++;
             continue;
           }
-          if (street[k] === 1) continue;
-          if (plan.fluidKind[k] !== FluidKind.NONE) continue;
-          face.push(k);
+          if (chosen[landed] === 1) continue;
+          chosen[landed] = 1;
+          face.push(landed);
         }
       }
       let total = 0;
       for (let k = 0; k < cells; k++) total += inFace[k] === 1 ? 1 : 0;
-      if (total === 0) continue;
+      if (total === 0) {
+        unfaced.noFace += record.cells.length;
+        continue;
+      }
       if (blockedByBuilding >= total * RETAIN_BUILT_SHARE) {
         built++;
+        unfaced.builtSeam += record.cells.length;
         continue;
+      }
+      // The report is in *seam* columns and `reasons` counts *upper-platform*
+      // ones, so each reason is scaled by the seam's own length over its face's.
+      for (const reason of UNFACED_REASONS) {
+        const n = reasons[reason];
+        if (n > 0) unfaced[reason] += Math.round((n * record.cells.length) / total);
       }
       if (face.length === 0) continue;
 
@@ -333,15 +450,16 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // into the low side, never into the platform the wall holds.
       const course = new Uint8Array(cells);
       for (const k of face) course[k] = 1;
+      // A one-column course on a diagonal is a sawtooth. The course may now sit
+      // a few columns inside the platform (the setback above), so "thicken
+      // outward, never into the platform" is no longer the test that keeps a
+      // wall off ground it does not own — free ground is, and free ground is
+      // exactly what the setback walk already looked for.
       thickenCourse(
         region,
         course,
         (idx) =>
-          occupied[idx] !== 1 &&
-          street[idx] !== 1 &&
-          plan.fluidKind[idx] === FluidKind.NONE &&
-          levels.at(region.x0 + (idx % region.width), region.z0 + Math.floor(idx / region.width)) !==
-            record.above,
+          occupied[idx] !== 1 && street[idx] !== 1 && plan.fluidKind[idx] === FluidKind.NONE,
         (idx) => cells - idx,
       );
       const columns: number[] = [];
@@ -368,7 +486,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
 
       let anySwept = false;
       for (const chain of chainsOf(region, columns)) {
-        const path = orient(region, chain, levels, record.above);
+        const path = orient(region, chain, levels, record.above, street, occupied);
         const result = sweep({
           profile: retainingProfile(record.drop, RETAIN_RAIL, states.rail, states.profile),
           path,
@@ -420,17 +538,65 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   }
 
   if (walls + kerbs + banks + built > 0) {
+    const breakdown = UNFACED_REASONS.filter((r) => unfaced[r] > 0)
+      .map((r) => `${unfaced[r]} ${r}`)
+      .join(", ");
     diagnostics.push(
       note(
         "SWEEP_FEATURES_PLACED",
         relevant[0]?.nodePath ?? "world",
-        `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on`,
+        `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on` +
+          (breakdown === "" ? "" : `; seam columns left unfaced: ${breakdown}`),
         "No action needed.",
       ),
     );
   }
 
-  return { blocks, seam, walls, wallColumns, kerbs, banks, built, diagnostics };
+  return { blocks, seam, walls, wallColumns, kerbs, banks, built, unfaced, diagnostics };
+}
+
+/**
+ * The nearest column of the upper platform a wall may actually stand on.
+ *
+ * A straight walk **perpendicular to the seam**, away from it, bounded by
+ * {@link RETAIN_FACE_SETBACK}. Straight, and never around: that is the whole of
+ * how a street running *along* a seam is told from one *crossing* it. Along,
+ * the walk leaves the carriageway after a few columns and the wall lands at the
+ * back of the pavement; across, the walk is street for its whole length and
+ * comes back empty, so the crossing stays open — there the street is the
+ * connection between the two levels, not a thing to wall off. A search free to
+ * detour would find its way round a flight and wall the landing.
+ *
+ * A building and water are **stops**, not obstacles to walk past: what is
+ * behind a building is the building's ground and its own foundation skirt is
+ * the wall (§3.4).
+ */
+function walkBack(
+  region: Region,
+  x0: number,
+  z0: number,
+  dx: number,
+  dz: number,
+  levels: GroundLevels,
+  above: number,
+  street: Uint8Array,
+  occupied: Uint8Array,
+  plan: ColumnPlan,
+): { readonly column: number; readonly why: UnfacedReason } {
+  for (let step = 0; step < RETAIN_FACE_SETBACK; step++) {
+    const x = x0 + dx * step;
+    const z = z0 + dz * step;
+    if (!inside(region, x, z)) break;
+    // Out of platform before out of street: the upper bench is narrower than
+    // the road that runs on it, and there is no ground of its own to stand on.
+    if (levels.at(x, z) !== above) return { column: -1, why: "offPlatform" };
+    const k = index(region, x, z);
+    if (occupied[k] === 1) return { column: -1, why: "building" };
+    if (plan.fluidKind[k] !== FluidKind.NONE) return { column: -1, why: "water" };
+    if (street[k] === 1) continue;
+    return { column: k, why: "street" };
+  }
+  return { column: -1, why: "street" };
 }
 
 /** Text for the refusal, kept out of the template so the number has one home. */
@@ -579,12 +745,17 @@ function kerbSeam(
   record: LevelSeam,
   states: RetainingStates,
   street: Uint8Array,
+  occupied: Uint8Array,
 ): number {
   let laid = 0;
   for (const point of record.cells) {
     if (!inside(region, point.x, point.z)) continue;
     const k = index(region, point.x, point.z);
     if (street[k] === 1) continue;
+    // The footprint mask, which `gradeBank` and the wall path both honour and
+    // this one did not: a drop-1 seam running under a building would have laid
+    // a course of kerb inside its ground floor.
+    if (occupied[k] === 1) continue;
     if (plan.fluidKind[k] !== FluidKind.NONE) continue;
     plan.surface[k] = states.coping;
     laid++;
@@ -735,6 +906,8 @@ function orient(
   chain: readonly Vec2[],
   levels: GroundLevels,
   above: number,
+  street: Uint8Array,
+  occupied: Uint8Array,
 ): Vec2[] {
   const path = [...chain];
   if (path.length < 2) return path;
@@ -742,8 +915,12 @@ function orient(
   let off = 0;
   for (const column of sweptColumns(region, path, { lo: 0, hi: 1 })) {
     if (column.lane !== 1) continue;
-    const platform = levels.at(column.x, column.z);
-    if (platform === above) onPlatform++;
+    const k = index(region, column.x, column.z);
+    // Free ground of the platform the wall holds, not merely the platform: with
+    // the setback both lanes can be on it, and the verge belongs on the side
+    // that is walkable rather than on the side the carriageway owns.
+    const free = street[k] !== 1 && occupied[k] !== 1;
+    if (levels.at(column.x, column.z) === above && free) onPlatform++;
     else off++;
   }
   return off > onPlatform ? [...path].reverse() : path;
