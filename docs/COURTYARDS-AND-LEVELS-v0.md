@@ -82,6 +82,37 @@ column standing at pavement level in the middle of a street. It is the "grass
 punching up through a street" in the walk, and it is a separate bug from (a) and
 (b).
 
+> **A fourth defect, found after the walk (2026-08-05).** (a), (b) and (c) are
+> all about *order*, and all three were fixed — and the walk still reported
+> streets rendered as a **chessboard**: alternating full blocks and half slabs
+> on a regular lattice, across a whole street's width, on sloping ground. That
+> one is not about order at all. `profile` was one entry per *rasterized path
+> cell* and each swept column read the entry of the cell it projected nearest
+> to, so on a 4-connected diagonal — √2 cells per block of ground — one block of
+> street carried two cross-sections at two heights, and consecutive raster
+> cross-sections interleave on the lattice: every column's four neighbours are
+> on the other one. The grade cap silently meant 1.41 blocks of rise per block of
+> ground for the same reason, and the raster's zigzag across the contours put a
+> ±1 washboard into the sampled ground that `gradeProfile` — a lower envelope of
+> unit cones — preserves exactly.
+>
+> The fix is in the sweep engine, not in the surfacer, because all five clients
+> share the defect: `ArcFrame` (`structures/sweep.ts`) puts the datum on
+> **stations** along the true line, spaced one block of ground or one step of the
+> path, whichever is longer, and every column reads the station its own arc falls
+> in. Measured on `stepped_hilltown`, cross-sections of a street that the
+> surfacer owns and writes unevenly: **993 of 2614 before, 1 of 2614 after.**
+>
+> **And a fifth, in the same measurement.** After the surfacer, the *streetscape*
+> pushed that 993 back up: `buildStreetMasks` re-derives the carriageway by
+> walking the raster with a heading forced onto an axis, which on a diagonal
+> misses the outer lanes the sweep owns, so `paveSidewalks` re-levelled road it
+> had mistaken for sidewalk — by up to seven blocks. §3.4's correction already
+> states the invariant this needs ("no later pass re-levels a column the surfacer
+> owns"); it is now enforced by handing `dressStreets` the surfacer's own road
+> mask instead of letting it guess. After both fixes the final ground of every
+> column the surfacer owns is, to the block, the level the surfacer chose.
+
 And (b) is why `terraced` cannot build its `STAIR_PROFILE` balustrade.
 `structures/street-stairs.ts` says so in its own doc comment: a wall placed on a
 tread can be left standing over a column another segment later lowers, so the

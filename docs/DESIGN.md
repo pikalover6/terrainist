@@ -265,7 +265,9 @@ footing, ditch) swept along a polyline over real terrain, with `follow` modes
 (`grade` / `level` / `step`), interval features by arc length, and crossing
 behaviour (bridge / causeway / ford / stop).
 
-Two rules carry most of the visual weight:
+Three rules carry most of the visual weight, and all three say the same thing
+in different registers: **the raster is a drawing of the line; every question
+worth asking is asked of the line.**
 
 - **The tread law.** `need[k] = max(g[k] + 1, need[k+1] − 1)` taken backwards
   decides where steps go; slabs and stairs are decoration over that, never the
@@ -275,6 +277,29 @@ Two rules carry most of the visual weight:
   lattice columns), so `thickenCourse` recruits one bridging column where the
   course only connects diagonally — which is what turns a sawtooth kerb into a
   coping line.
+- **Height is a function of arc length along the true line** — the `ArcFrame`.
+  The datum lives on *stations*, sampled along the line and spaced **one block
+  of ground, or one step of the path, whichever is longer**. Both halves are
+  load-bearing. Indexing the datum by rasterized cell instead (which is what the
+  engine did until the arc frame landed) means a 4-connected diagonal carries √2
+  cross-sections per block of street, at two different heights, on cross-sections
+  that *interleave* on the lattice — every column's four neighbours on the other
+  one. That is a chessboard of full blocks and half slabs across the width of
+  every diagonal street, and it is what three rounds of surfacer fixes kept
+  failing to remove. Sampling the ground off the raster is the quieter half: a
+  4-connected diagonal zigzags across the contours, so the sampled ground
+  oscillates by the cross-slope every step, and `gradeProfile` (a lower envelope
+  of unit cones) preserves a ±1 oscillation exactly. The "one step of the path"
+  clause is what keeps the grade cap walkable: a route's diagonal step covers √2
+  blocks in one move, so its stations are √2 apart or that move is a wall.
+  An axis-aligned run's stations *are* its path cells, so the frame is the old
+  per-cell one element for element and a levelled district does not move.
+
+And one rule that is not about geometry at all: **no later pass re-levels a
+column the surfacer owns.** The streetscape is handed the surfacer's own road
+mask rather than re-deriving the carriageway from the raster; the two
+constructions disagree on any diagonal, and the disagreement was the dressing
+pass re-levelling road it had mistaken for sidewalk.
 
 Clients: road surfacing, `infra.wall@0`, the bridge kit (deck, rail, pier
 rhythm, approaches), path-stairs. The infrastructure family (aqueduct, canal,

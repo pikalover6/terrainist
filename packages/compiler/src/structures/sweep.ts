@@ -15,6 +15,15 @@
  * Rasterization decides only which columns are *visited*; the profile decides
  * what each one is, and it decides it from real geometry.
  *
+ * Rule 3 settled *which* column is the kerb and left *how high it stands*
+ * answered the old way — one datum entry per rasterized cell, read by whichever
+ * cell a column projected nearest to. That is the same mistake one level down,
+ * and it produced the same picture: a chessboard, this time of full blocks and
+ * half slabs across the width of every diagonal street. {@link ArcFrame} is the
+ * other half of rule 3. **Height is a function of arc length along the true
+ * line**, so a cross-section is level by construction and a grade change is one
+ * clean step across the whole width.
+ *
  * See `docs/DESIGN.md` → "Upgrade push — Phase 0 contracts" → "3. SweptProfile"
  * for the pinned contract this file implements.
  */
@@ -28,7 +37,7 @@ import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { clampX, clampZ, gradeProfile, index, inside } from "./roads.js";
+import { gradeProfile, index, inside } from "./roads.js";
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */
@@ -427,6 +436,33 @@ export function arcFrame(
     return k < 0 ? 0 : k > count - 1 ? count - 1 : k;
   };
   return { line, arcs, total, spacing, stations, pathArc, station };
+}
+
+/**
+ * The rasterized path cell nearest each station, one per station.
+ *
+ * The bridge between the two indexings, for a caller whose *columns* are the
+ * thing it chose and whose line is only their summary. Ties go to the earlier
+ * cell, so the answer is a pure function of the path.
+ */
+export function stationAnchors(frame: ArcFrame, cells: number): number[] {
+  const out = new Array<number>(frame.stations.length).fill(0);
+  const best = new Array<number>(frame.stations.length).fill(Number.POSITIVE_INFINITY);
+  for (let i = 0; i < cells; i++) {
+    const arc = frame.pathArc[i] as number;
+    const s = frame.station(arc);
+    const d = Math.abs(arc - s * frame.spacing);
+    if (d < (best[s] as number)) {
+      best[s] = d;
+      out[s] = i;
+    }
+  }
+  // A station no path cell landed nearest to inherits the previous station's
+  // anchor rather than cell 0, so a gap never drags the datum back to the start.
+  for (let s = 1; s < out.length; s++) {
+    if (best[s] === Number.POSITIVE_INFINITY) out[s] = out[s - 1] as number;
+  }
+  return out;
 }
 
 /** A run's height as a function of arc length: one level per station. */
@@ -1004,11 +1040,22 @@ export function sweep(input: SweepInput): SweepResult {
 
   const line = simplifyPath(path);
   // The datum lives on the **arc frame**, not on the raster: one level per block
-  // of real distance along the true line, sampled off the true line. See
-  // {@link ArcFrame} for why a raster-indexed datum chessboards a diagonal run.
+  // of real distance along the true line rather than one per rasterized cell.
+  // See {@link ArcFrame} for why a raster-indexed datum chessboards a diagonal
+  // run — and note that the fix that matters is the *readback* below, `col.arc`
+  // rather than `col.index`, which is what makes a cross-section level.
+  //
+  // The ground is still read at the path's own columns, one per station, and
+  // that is deliberate rather than lazy. A road's centre line is an abstraction
+  // the raster draws, so a road samples the line. A wall's course is not: the
+  // caller chose those columns, and `structures/retaining.ts` chooses them *as*
+  // the lowest row of the platform it holds up, so that the datum it reads is
+  // the upper level. Sampling half a block off that row samples the wrong
+  // platform and the wall falls over. The path is the contract here.
   const frame = arcFrame(path, line);
-  const ground = frame.stations.map(
-    (p) => plan.ground[index(region, clampX(region, p.x), clampZ(region, p.z))] as number,
+  const anchor = stationAnchors(frame, path.length);
+  const ground = anchor.map(
+    (i) => plan.ground[index(region, (path[i] as Vec2).x, (path[i] as Vec2).z)] as number,
   );
   const level = sweepDatum(ground, profile.follow, Math.max(1, profile.maxGrade), plan.seaLevel);
 
