@@ -658,29 +658,51 @@ describe("a terraced quarter, compiled", () => {
 /** A 1-in-3 hill: the gradient at which a 4-block bench stops being ground. */
 const cliffAt = (x: number, z: number): number => 70 + Math.round((x + z) / 3);
 
+/** A 1-in-1 scarp: no bench height in range makes a terrace you can stand on. */
+const scarpAt = (x: number, z: number): number => 70 + x + z;
+
+function groundOf(at: (x: number, z: number) => number): GroundSample {
+  return {
+    height: at,
+    water: () => false,
+    slope: (x, z) => Math.abs(at(x + 1, z) - at(x, z)),
+    relief: at(BOUNDS.x1, BOUNDS.z1) - at(BOUNDS.x0, BOUNDS.z0),
+    levelled: false,
+    waterReach: Number.POSITIVE_INFINITY,
+  };
+}
+
 describe("ground too steep to terrace", () => {
-  it("refuses, naming the bench width, instead of drawing an empty quarter", () => {
-    // Measured during implementation: a 200 × 180 quarter on this gradient laid
-    // its contour streets and produced *zero buildings*, because a bench is
-    // `BENCH_HEIGHT / gradient` columns wide and twelve columns is narrower
-    // than a street and its verges. Returning that in silence is the defect
-    // this repo keeps paying for — a request accepted and quietly not met.
-    const steep: GroundSample = {
-      height: cliffAt,
-      water: () => false,
-      slope: (x, z) => Math.abs(cliffAt(x + 1, z) - cliffAt(x, z)),
-      relief: cliffAt(BOUNDS.x1, BOUNDS.z1) - cliffAt(BOUNDS.x0, BOUNDS.z0),
-      levelled: false,
-      waterReach: Number.POSITIVE_INFINITY,
-    };
-    const result = TERRACED_FORM.draw(context({ ground: steep }));
+  it("draws a 1-in-3 hill, which the stride made buildable", () => {
+    // This gradient used to be the refusal case: a bench is `benchHeight /
+    // gradient` columns wide, twelve columns is narrower than a street and its
+    // two verges, and the quarter came out as all pavement and no houses. It is
+    // buildable now because the *street* is no longer on every bench boundary —
+    // `contourStrideFor` puts one every `S`th and the terraces between them
+    // carry houses instead of carriageway — so refusing it would be refusing a
+    // hill town the compiler can now build.
+    const result = TERRACED_FORM.draw(context({ ground: groundOf(cliffAt) }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // …and it is buildable *because* of the stride, which the record says.
+    expect(result.plan.record.adapted.join(" ")).toMatch(/contour streets on every \d+\w+ bench boundary/);
+    // The retained boundaries are in the lot mask, which is what keeps no lot
+    // spanning two bench levels now that no street does.
+    expect(result.plan.lotMask).toBeDefined();
+  });
+
+  it("refuses a scarp no bench height in range can terrace, naming the width", () => {
+    // The refusal did not go away, it moved to where it is honest: ground on
+    // which even a six-block bench — the tallest a retaining wall is built for
+    // — is narrower than one row of houses. Returning that in silence is the
+    // defect this repo keeps paying for: a request accepted and quietly not met.
+    const result = TERRACED_FORM.draw(context({ ground: groundOf(scarpAt) }));
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toMatch(/too steep to terrace/);
-    expect(result.reason).toMatch(/widest bench comes out \d+ columns/);
+    expect(result.reason).toMatch(/too steep to terrace|one bench of/);
     // The announced fallback is what keeps a quarter on the hill at all.
     expect(result.fallback).toBe("grown");
-    expect(result.fix).toMatch(/gentler slope|grown/);
+    expect(result.fix).toMatch(/gentler slope|grown|level ground/);
   });
 
   it("still draws the hillside a town can actually stand on", () => {

@@ -919,7 +919,9 @@ export function layDistrict(
       if (k >= 0) blocked[k] = 1;
     }
   }
-  const blocks = blocksOf(grid, blocked);
+  // A form that cut its own benches hands the subdivision curved bands; see
+  // `rectsOf`. Everything else keeps one rectangle per block, unchanged.
+  const blocks = blocksOf(grid, blocked, declared.length > 0);
 
   // --- the reserved square -------------------------------------------------
   // `plaza: true` keeps one block open. The block nearest the district's centre
@@ -963,10 +965,17 @@ export function layDistrict(
   const courtyardPassages: CourtyardPassage[] = [];
   const preferAt = new Map<string, number>();
   for (const [i, block] of blocks.entries()) {
-    const cut = subdivide(block, i, density, grid, blocked, owner, sidewalkWidth, {
-      share: courtyardShare,
-      stream: courtyardStream,
-    });
+    const cut = subdivide(
+      block,
+      i,
+      density,
+      grid,
+      blocked,
+      owner,
+      sidewalkWidth,
+      { share: courtyardShare, stream: courtyardStream },
+      declared.length > 0,
+    );
     dropped += cut.dropped;
     if (cut.rejected !== null) {
       courtyardRejects.set(cut.rejected, (courtyardRejects.get(cut.rejected) ?? 0) + 1);
@@ -1303,7 +1312,7 @@ export function layDistrict(
 /* -------------------------------------------------------------------------- */
 
 /** Row-major addressing over a district footprint. */
-class Grid {
+export class Grid {
   readonly x0: number;
   readonly z0: number;
   readonly width: number;
@@ -1376,7 +1385,7 @@ interface Block {
 }
 
 /** Connected components of the unclaimed ground, in row-major discovery order. */
-function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
+function blocksOf(grid: Grid, blocked: Uint8Array, split: boolean): Block[] {
   const seen = new Uint8Array(grid.cells);
   const out: Block[] = [];
   const stack: number[] = [];
@@ -1419,9 +1428,87 @@ function blocksOf(grid: Grid, blocked: Uint8Array): Block[] {
         stack.push(n);
       }
     }
-    const rect = largestFreeRect(grid, member, { x0, z0, x1, z1 });
-    if (rect === null) continue;
-    out.push({ rect, columns });
+    // One rectangle per block, unless the form cut its own benches — see
+    // `rectsOf`, which is where the whole of that "unless" is argued.
+    if (!split) {
+      const rect = largestFreeRect(grid, member, { x0, z0, x1, z1 });
+      if (rect === null) continue;
+      out.push({ rect, columns });
+      continue;
+    }
+    for (const rect of rectsOf(grid, member, { x0, z0, x1, z1 })) {
+      out.push({ rect, columns: (rect.x1 - rect.x0 + 1) * (rect.z1 - rect.z0 + 1) });
+    }
+  }
+  return out;
+}
+
+/**
+ * Most rectangles a curved block is cut into. `subdivide` is cheap and
+ * `largestFreeRect` is O(area), so this is a guard against a pathological
+ * component rather than a shape decision.
+ */
+const MAX_BLOCK_RECTS = 8;
+
+/**
+ * A curved block as **several** inscribed rectangles rather than one.
+ *
+ * `largestFreeRect` deliberately hands `subdivide` the largest rectangle that
+ * lies entirely inside one block, and for a grid block that *is* the block. For
+ * a **terrace** it is nowhere near: a bench is a band that follows a contour
+ * round a hill, and the largest rectangle inside a curved band is a chord of it.
+ * Measured on `stepped_hilltown` once the contour streets were thinned: 59
+ * blocks holding 13 868 columns whose inscribed rectangles came to 6 232 — 45 %
+ * — and since every lot is cut from a rectangle, 55 % of the town's ground could
+ * not hold a house whatever else was fixed. It is the largest single loss in the
+ * quarter and it is invisible in every statistic the report carries.
+ *
+ * So: take the largest rectangle, take it *out*, and take the largest rectangle
+ * of what is left, until what is left cannot hold a building. Each rectangle
+ * becomes its own `Block` and subdivides independently against its own frontage
+ * probe, exactly as two blocks either side of a street already do. They are
+ * disjoint by construction, so the interpenetration failure `largestFreeRect`
+ * documents — two components lotting the same ground — stays unrepresentable.
+ *
+ * **Only for a form that cut its own benches**, which today is `terraced` and
+ * nothing else. Not because it would be wrong elsewhere but because it would
+ * move every organic and grown world in the repository, and a quarter that did
+ * not ask to move should not move. The gate is `plan.benches`, the same flag
+ * everything else about a benched quarter hangs off.
+ *
+ * Deterministic: `largestFreeRect` breaks every tie on the earlier row and the
+ * earlier column, so the sequence of rectangles is a function of the block.
+ *
+ * Exported for the same reason `benchFieldOf` is: the property that matters —
+ * disjoint rectangles covering most of a curved band — is invisible in every
+ * statistic downstream, and a test that re-derived the band by hand would be
+ * testing its own arithmetic.
+ */
+export function rectsOf(grid: Grid, member: Uint8Array, bounds: Rect): Rect[] {
+  const out: Rect[] = [];
+  const left = Uint8Array.from(member);
+  for (let n = 0; n < MAX_BLOCK_RECTS; n++) {
+    const rect = largestFreeRect(grid, left, bounds);
+    if (rect === null) break;
+    const w = rect.x1 - rect.x0 + 1;
+    const d = rect.z1 - rect.z0 + 1;
+    // A rectangle no building fits in is not a block; stop rather than shave.
+    if (Math.min(w, d) < MIN_INFILL_SIDE) break;
+    out.push(rect);
+    for (let z = rect.z0; z <= rect.z1; z++) {
+      for (let x = rect.x0; x <= rect.x1; x++) {
+        const k = grid.index(x, z);
+        if (k >= 0) left[k] = 0;
+      }
+    }
+  }
+  // A block too small or too thin for even one whole-building rectangle still
+  // gets today's answer: the largest rectangle in it, whatever its size. It is
+  // where the infill slivers come from and dropping it here would be a second,
+  // unrelated change.
+  if (out.length === 0) {
+    const rect = largestFreeRect(grid, member, bounds);
+    if (rect !== null) out.push(rect);
   }
   return out;
 }
@@ -1598,6 +1685,7 @@ function subdivide(
   owner: (string | undefined)[],
   sidewalkWidth: number,
   courtyards: { readonly share: number; readonly stream: Seed256 },
+  benched: boolean,
 ): Subdivision {
   const frontage = LOT_FRONTAGE[density];
   const { rect } = block;
@@ -1621,7 +1709,7 @@ function subdivide(
   if (fronts.size === 0) {
     return { lots: [], dropped: 0, front: null, courtyard: null, rejected: "perimeter" };
   }
-  const primary = bestSide(fronts);
+  const primary = bestSide(fronts, benched ? { width, span } : undefined);
   const front: BlockSite = {
     block: index,
     rect,
@@ -1759,8 +1847,38 @@ function subdivide(
   return { lots, dropped, front, courtyard: null, rejected };
 }
 
-/** The frontage side to use when a block only gets one: fixed side order. */
-function bestSide(fronts: ReadonlyMap<HorizontalFace, string>): HorizontalFace {
+/**
+ * The frontage side to use when a block only gets one.
+ *
+ * Fixed side order, which is arbitrary and is the point: for a block with two
+ * fronts the choice has to be *a* rule, and an arbitrary one leaves every
+ * quarter drawn before it exactly where it was.
+ *
+ * **Unless the block is a terrace.** A bench block is a long thin band with a
+ * stair-alley across each *end*, so the fixed order hands it a nine-column face
+ * on the short side and `subdivide`'s single-row branch cuts one lot the length
+ * of the terrace — one building forty blocks long where a row of houses belongs.
+ * Given the block's dimensions this takes the **longest** face instead, ties on
+ * the fixed order, and the row runs along the terrace as it should. Passed in
+ * only for a form that cut its own benches, so no other quarter moves.
+ */
+export function bestSide(
+  fronts: ReadonlyMap<HorizontalFace, string>,
+  size?: { readonly width: number; readonly span: number },
+): HorizontalFace {
+  if (size !== undefined) {
+    let best: HorizontalFace | undefined;
+    let bestLength = 0;
+    for (const side of SIDES) {
+      if (!fronts.has(side)) continue;
+      const length = side === "north" || side === "south" ? size.width : size.span;
+      if (length > bestLength) {
+        bestLength = length;
+        best = side;
+      }
+    }
+    if (best !== undefined) return best;
+  }
   for (const side of SIDES) {
     if (fronts.has(side)) return side;
   }
