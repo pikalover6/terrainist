@@ -1224,6 +1224,15 @@ The byte-identity technique stays what worked repeatedly this week: a git
 worktree at `HEAD`, compile both, diff per-file shasums of the whole world
 directory. The flat controls must produce identical shasums through every WP.
 
+WP-2c corrected this section's world list against measurement:
+`c1-harbourtown` is a *city*, not flat — 11,209 conflicted columns — so its
+assertion is "conflicts under 5% of the region and every one attributable",
+not "CONFLICT is empty"; `showcase-bayline` is a hill world despite the prefix
+and is the only committed example exercising I1, I2 and I3 at once; and a unit
+test cannot call `terrainist generate`, so the generated stepped quarter is
+substituted by `levels.test.ts`'s `steppedWorld()` fixture (copied, not
+imported, so a change there cannot silently move the golden).
+
 ### 8.5 The tolerated divergences
 
 `TOLERATED_INVERSIONS` is a table, not a predicate, and it is exactly §4.4:
@@ -1245,6 +1254,23 @@ The test therefore compares `resolved.ground[k]` against the declared level and
 records the delta, capping it at the measured defect's size — **7 blocks** — with
 a failure past it, so "the sidewalk moved" cannot quietly become "the sidewalk
 moved a lot".
+
+Two things WP-2c measured that this section did not anticipate, both now
+normative:
+
+- **A self-inversion cannot be attributed by "the claim whose level equals
+  `plan.ground[k]`"** — for I6 nothing declares the written level, so that rule
+  either finds nothing or fingers an unrelated claim sitting at the old number
+  (9,447 misattributions on `c1-harbourtown`). The pass's own per-column record
+  of what it wrote (`SidewalkColumn.wrote`, carried as
+  `GroundEquivalenceOutcome.selfWrites`) is the evidence the self-row matches
+  against.
+- **An I6 column with a single claimant partitions CLEAN**, not CONFLICT, so the
+  self-row applies there too — counted separately (`cleanDivergences`), credited
+  to I6, still capped at 7 blocks, never waved through. Relatedly, `fluidTop`
+  follows `ground` on a dry column, so the comparison is `fluidAgrees`: kinds
+  match; a wet surface matches outright; a dry one equals its own side's ground
+  — otherwise every moved dry column reports twice.
 
 I7's expected count is zero, and a non-zero count fails rather than being
 tolerated. A tolerated divergence with an expected count is how the table stops
@@ -1505,6 +1531,17 @@ move it in WP-1–6. Log it as WP-7: `applyLevelPad` declares the platform and t
 resolver chooses the transition, which would make the apron the third client of
 `treatmentForSeam` and close the defect properly. It is a bigger change than it
 looks, because the field is what `padFor`'s ground-policy election reads.
+
+**WP-2c measured the cost of leaving this open, and it is no longer free.**
+`declarePadEdits` declares a footprint at `targetY`; on `c1-harbourtown` **55**
+footprint columns (61 on `showcase-deltamere`) are reached only by a *later*
+pad's apron and disagree with that declaration. They have exactly one claim, so
+they partition CLEAN — and at WP-6, when the resolver's answer becomes the
+ground, it would raise up to 3 blocks under a floor plane the fabric had graded
+away. Held as an asserted golden of exactly 55 (`PAD_APRON_MISMATCHES` in
+`test/ground-equivalence.test.ts`) so it cannot grow silently; both candidate
+declarer fixes decide this question by implementation, so neither was taken.
+**This question must be settled before WP-6 freezes the ground.**
 
 **13.4 The contract does not protect materials — is that enough?**
 `faceCuts`' coping is a `surface` write and can still be overwritten by a later
