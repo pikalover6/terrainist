@@ -5,7 +5,8 @@
 > archived; git history is the archive. `rough-vision.txt` at the repo root is
 > the original vision, kept as a historical artifact and superseded by this file.
 >
-> Last full revision: **2026-08-04**.
+> Last full revision: **2026-08-06**. The next contracted change is *The
+> ground contract — declare → resolve → build*, below; start there.
 
 ## Product
 
@@ -110,6 +111,32 @@ shared party walls and a common cornice, a prominence field for the skyline, a
 life pass at eye level, vistas and set pieces closing axes on landmarks.
 `precinct.airport@0` and `precinct.harbour@0` lay out whole compounds; the
 harbour seeks a real coastline when its envelope holds none.
+
+**Urban forms (Phase 4.1, shipped).** Seven street skeletons behind a plugin
+registry — `grid`, `organic`, `grown`, `radial`, `canal`, `terraced`, `linear` —
+with blocks, lots and frontage seating shared and unchanged below them. The
+classifier chooses a form from ordinary prompt language, which is what delivers
+the variety: `era` maps to no form at all, because an era→form table would move
+every world that already carries one. `docs/URBAN-FORMS-v0.md` is the contract.
+
+**Courtyards and multi-level ground (Phase 4.2, shipped).** A quarter's ground is
+a set of level platforms and derived seams; a district on more than
+`STEP_RELIEF = 10` blocks of relief elects `stepped` ground and steps down the
+slope in storeys rather than being levelled to one plane. Seams become retaining
+walls (the fifth client of the sweep engine), banks, or kerbs by drop and run.
+A block may close its perimeter around a courtyard reached through a pend. A
+`terraced` quarter puts a street on every `S`th bench boundary where
+`S = ceil(blockSize / mean bench width)`, because the "a bench boundary is
+always a street" invariant became redundant the moment seam columns went into
+`blocked`. `docs/COURTYARDS-AND-LEVELS-v0.md` is the contract.
+
+**Ground roles.** Twelve *jobs* in a built ground — pavement, kerb, tread,
+revetment, coping, plinth, weep, balustrade, stairs, slab, bank, scree — filled
+per theme by `defineGroundRoles`, so a road, a wall that holds earth and a
+building's forecourt are different materials. The tests assert the roles resolve
+to *different* blocks in every shipped theme and never to the theme's
+carriageway; they deliberately do not assert which block, because that is Kai's
+call after a walk and each is one line in `GROUND_MATERIALS_BY_THEME`.
 
 **Where a levelled quarter meets ground nobody cut.** A placed node with a
 `cut_fill` `terrain_conform` is levelled to one plane by `padFor` and eased back
@@ -364,7 +391,181 @@ geometry reads as designed — so meshes earn their place for **sculptural
 one-offs a grammar cannot express** (a statue, a figurehead, a beached whale
 skeleton), not for buildings.
 
+## The ground contract — declare → resolve → build
+
+> **Contracted next, and the largest single change in the codebase's history.**
+> Ratified by Kai 2026-08-06 after walking three hill towns. This section is
+> self-contained: it is the whole brief, and it assumes no memory of the
+> conversation that produced it.
+
+### Why: eleven passes fight over one array
+
+The terrain half of the pipeline is sound and is *not* what changes:
+
+1. **The field.** `terrain.heightfield@0` and the model's verbs (ridge, valley,
+   river, plateau …) compose into one `HeightField` — a height per column,
+   evaluated once, kernels blended with falloff in a fixed order.
+2. **Pads join the field.** When the solver places a node, `padFor`
+   (`layout/solve.ts`) emits a `PadEdit` and `applyLevelPad` composes it **into
+   the master field** before anything is materialised. "Flatten this quarter" is
+   a terrain edit, not a later cut.
+3. **The column plan.** The field is materialised into `ColumnPlan`: `ground[]`,
+   `surface[]`, `subsurface[]`, `fluidKind[]`, one mutable array per property.
+
+Then it falls apart. **Eleven passes write `plan.ground` after materialisation**
+— `roads`, `precincts`, `canals`, `sweep`, `streetscape`, `street-stairs`,
+`retaining`, `props`, `plaza`, `doorsteps`, `courtyards` — each reading whatever
+the previous ones left, each cutting and filling in place, with no arbitration
+beyond array-write order.
+
+Every ground defect chased between 2026-08-04 and 2026-08-06 is a collision in
+that pile, and they are one defect wearing six faces:
+
+- `paveSidewalks` re-levelled ground `surfaceStreetGraph` had just graded — up
+  to **7 blocks** of step across a street's own width;
+- a retaining wall's coping was overwritten by a later pass, leaving its
+  balustrade two courses proud (the `unsupported.chain` that survived four
+  rounds of fixes);
+- `kerbSeam` wrote a kerb course inside a building's ground floor;
+- a building's `apron: 2` ramped away the seam a retaining wall stood on;
+- a retaining wall was skipped wherever a street claimed the face — 84% of the
+  faces in a hill town, because on a terraced quarter the street *runs along*
+  the seam;
+- the street surfacer had no column ownership at all, which is why the stair
+  balustrade could not be built for two phases.
+
+Column ownership (`docs/COURTYARDS-AND-LEVELS-v0.md` §2) fixed **one** of the
+eleven and took street cross-section unevenness from 38% to 0.08%. The proposal
+is to stop doing that for one subsystem and do it for all of them.
+
+### The rule
+
+> **Nothing may modify the ground after the ground is decided.**
+
+Stages 1–3 above are already "generate the terrain, then build on it". The
+missing piece is that stage 4 is allowed to keep editing the terrain. Three
+phases replace it.
+
+**1. Declare.** Every subsystem emits what it *needs* from the ground, as data,
+mutating nothing:
+
+```ts
+/** A claim on the ground, from one subsystem, before anything is decided. */
+export interface GroundIntent {
+  /** Who is asking — a node path or a pass id. Appears in diagnostics. */
+  readonly source: string;
+  /** What kind of claim; drives precedence. See `INTENT_RANK`. */
+  readonly kind:
+    | "platform"      // this footprint is level at `y`
+    | "profile"       // these columns follow this polyline's levels
+    | "face"          // this column presents a cut face of `drop`
+    | "clearance"     // nothing may stand above `y` here
+    | "preserve";     // this column is finished; later passes may not move it
+  readonly columns: Iterable<GroundClaim>;   // { idx, y } — lazy, region-sized lists are normal
+  /** Absorbed how, when a neighbour disagrees: a ramp, a step, a wall. */
+  readonly transition: "ramp" | "step" | "wall" | "none";
+}
+```
+
+Every pass already computes this; it just applies it immediately instead of
+returning it. That is what makes the conversion mostly mechanical.
+
+**2. Resolve.** One pass reconciles every declaration into a final ground:
+
+- **Precedence is explicit and total**, in the shape the street rank order
+  already proved (`(−width, roleRank, kindRank, id)` — a total order, never
+  traversal order). Ties break on a stable key so the result is a pure function
+  of the declaration set.
+- **Conflicts that cannot be reconciled are diagnostics**, naming both claimants
+  and the measurement. Today they are resolved silently by write order, which is
+  why the six defects above were invisible until someone walked a world.
+- **Transitions are generated, not left to chance.** Where two platforms meet,
+  the resolver decides ramp-or-step-or-wall *once*, from the drop and the run,
+  and every consumer reads that decision instead of re-deriving it.
+
+**3. Build.** Everything places blocks against a **frozen** ground. The array is
+handed out `readonly`; writing to it is a type error rather than a convention.
+
+### Work packages
+
+Six, in dependency order. WP-1 and WP-2 land alone; WP-3–5 are parallel.
+
+- **WP-1 — the contract.** `GroundIntent`, `GroundClaim`, `INTENT_RANK`, the
+  resolver's signature, and the frozen-plan type. No behaviour changes; every
+  existing test passes unmodified.
+- **WP-2 — the resolver.** Precedence, transition selection, conflict
+  diagnostics, and a report section listing every claim and how it was
+  satisfied. Still no caller converted: the resolver runs, its output is
+  compared against the mutating pipeline's, and a test asserts they agree.
+  **That equivalence test is the safety net for the whole rewrite.**
+- **WP-3 — the street family** (`roads`, `sweep`, `streetscape`,
+  `street-stairs`). Column ownership already has the right shape; this converts
+  it from "the surfacer owns its columns" to "the surfacer declares and the
+  resolver owns".
+- **WP-4 — the ground family** (`retaining`, `grounds`, `plaza`, `doorsteps`,
+  `courtyards`).
+- **WP-5 — the rest** (`props`, `canals`, `precincts`).
+- **WP-6 — freeze.** `ColumnPlan.ground` becomes `readonly` past the resolver;
+  delete the equivalence shim; a test asserts no module outside the resolver
+  writes it.
+
+### Byte-identity strategy
+
+A flat world must not move. The technique that worked repeatedly this week: a
+git worktree at `HEAD`, compile both, diff per-file shasums of the whole world
+directory. `examples/showcase-*`, `demo-*` and `c1-harbourtown` are the flat
+controls; `hillside-village` and any `terraced` quarter are expected to move and
+must be justified move by move.
+
+### Test surface
+
+- The **WP-2 equivalence test** above, which is what makes this safe to do at
+  all.
+- A **generated-world** check per package, not only unit tests. Phase 4.1 shipped
+  three defects that passed every unit test; Phase 4.2 shipped six. The bar is a
+  compiled world read back off disk and linted on all 26 rules.
+- **Cross-section flatness** for streets (already exists,
+  `test/road-cross-section.test.ts`) — the resolver must not regress it.
+- A **conflict test**: two subsystems declaring incompatible levels on one
+  column produce a diagnostic naming both, rather than a silent winner.
+
+### Risks
+
+- **The resolver becomes a god object.** Mitigation: it decides *levels and
+  transitions only*. Materials, blocks and props stay with their passes — the
+  same split that made column ownership provable ("ownership decides geometry;
+  painting keeps its own order").
+- **Precedence is a design problem, not a coding one.** Getting it wrong moves
+  every world. WP-2's equivalence test is what turns that from a leap into a
+  measurement.
+- **Scope creep into the fabric layer.** The resolver does not decide *where*
+  things go, only what the ground under them does.
+
+### The wall artifact, and the lattice lesson
+
+`faceCuts` (`structures/retaining.ts`) marks any column whose 8-neighbour drop is
+≥2 and swaps its **subsurface** to the theme's revetment. Along a diagonal
+contour the set of such columns is itself a lattice staircase, so the revetment
+shows as a **sawtooth of single blocks**, with gaps wherever the drop happens to
+be 1, and no coping. Walked 2026-08-06; it reads as a broken wall.
+
+This is the **third** appearance of one lesson: *a contour on a lattice is a
+staircase.* It produced 1,010 phantom retaining walls (seam runs grouped
+4-connected, fixed by grouping 8-connected), the chessboard street paving (a
+4-connected raster of a diagonal carries √2 cross-sections per block, fixed by
+levelling on arc-length stations), and now this.
+
+The fix is the one that worked both previous times: treat a cut face as a
+**swept course along the contour** rather than a per-column property, so
+`thickenCourse` can make it 4-connected, and give it a coping so the top edge is
+deliberate. Contained, roughly half a day, and worth doing **before** the ground
+contract — it is what Kai is looking at, and it is independent of the rewrite.
+
 ## Roadmap
+
+**Immediate, in order.**
+1. The **wall artifact** above — swept course + coping.
+2. The **ground contract**, WP-1 → WP-6.
 
 **Bespoke tier — remaining.**
 - Terrain seating (`seatY`, pad/embed/drape), landmark interiors, anchors→roads
@@ -441,30 +642,59 @@ These only surface by generating a world from a prompt and asking whether the
 prompt's central image is *in* it. Look for valid requests the system silently
 declines, not for crashes.
 
-- **A retaining balustrade is left two courses proud, and it is the same hazard
-  the surfacer's own correction names.** ~~Measured on the hill-town and
-  monastery worlds (2026-08-05): one `unsupported.chain` each~~ — **not
-  reproducible since the seam-run fix (2026-08-05).** Both worlds now lint
-  26/26 zero. The finding was on a *stub* wall: 92% of the seams the pass was
-  handed were five columns or shorter, because `levelSeams` grouped its columns
-  4-connected and a diagonal contour is not 4-connected. Grouping them
-  8-connected takes the hill town from 1010 seams to 37 and the balustrade
-  hazard with it — a rail that runs the length of a real terrace stands on its
-  own wall, where a two-column stub's rail was hanging off the end of one. The
-  underlying invariant below is still the right one and is still unproven, so
-  the entry stays until something else tests it. Original text:
-  a
-  `stone_brick_wall` with air beneath it and the platform surface two courses
-  down. `sweep` writes the rail at `top + 1` from the upper platform's datum
-  and `retaining.ts` emits the coping at `plan.ground[k]`, but a later ground
-  pass pulls that seam column down a course and the emitted coping does not
-  survive it. Setting `RETAIN_RAIL` out of range takes both worlds to 26/26
-  zero, which pins the provenance exactly. Two fixes inside `retaining.ts` —
-  dropping unsupported blocks, and emitting a plinth — were tried and are both
-  no-ops, because the coping *is* emitted at the right Y and is then
-  overwritten. The cure belongs in whichever pass re-levels a claimed seam
-  column, which is the invariant `COURTYARDS-AND-LEVELS-v0.md` §3.4 already
-  states: *no later pass may re-level a column the surfacer owns.*
+**A second failure mode, learned 2026-08-05/06 and worth as much.** *Machinery
+that exists and never runs.* `road.network@0` required `params.anchors` and no
+code read it. `INTENT_GROUND_UNKNOWN` was assigned a diagnostic code that
+nothing raised. `touchesSeam` guarded against an apron reaching a seam with a
+condition that was true nowhere. `street.sidewalk` and `street.curb` were read
+by six modules and were never members of `DEFAULT_PALETTE`, so every theme in
+every world fell through to the same two hard-coded greys. Each reads, in
+review, as coverage that is not there. Grep for a symbol's *definition* as well
+as its uses.
+
+**And a third, about tests.** A test can pin a defect in place. "Skips a seam
+column a street already claims" was written with the street running *along* the
+seam and asserted **zero** retaining walls — it passed for weeks and it was
+asserting the bug. Tests written from the implementation rather than from the
+intent do this, and only a walked world catches them.
+
+**On the physics lint's limits.** It proves a world is *well-formed*, not that
+it is any good. 1,010 stub retaining walls, 314 stair lanterns and a quarter
+that is 80% pavement are all perfectly legal, and all three shipped green.
+Kai's walks are the only instrument that sees them, which is why *Critique →
+repair* is locked to manual.
+
+- **A cut face is revetted per column, so on a diagonal it reads as a sawtooth.**
+  `faceCuts` swaps the subsurface of any column whose 8-neighbour drop is ≥2;
+  along a contour that set is a lattice staircase, so the revetment shows as
+  single blocks with gaps and no coping. Walked 2026-08-06. See *The ground
+  contract* → *The wall artifact* for the fix and for why this is the third
+  instance of one lesson.
+- **`largestFreeRect` discards roughly 45% of block ground, and it is the hard
+  ceiling on how many buildings a quarter can hold.** `blocksOf` reduces every
+  block to inscribed axis-aligned rectangles, and lots are cut from rectangles,
+  so a ragged contour band or a wedge loses most of its area. Measured on the
+  hill town: 66 blocks holding 13,868 columns yield 7,573 columns of rectangle.
+  It has now surfaced three times under three names — `radial`'s wedges losing
+  area (4.1), the `COURTYARD_FILL` eligibility guard (4.2), and the hill town's
+  building count (4.2). **The fix is a polygon lot cutter**, which moves every
+  form and is a phase of its own.
+- **A terraced quarter generates 11 "public squares".** Found while fixing prop
+  density (2026-08-06) and deliberately not fixed there: gating plaza props
+  would have moved a flat control world. The defect is that the fabric layer
+  calls too much leftover ground a square, not that the life pass decorates
+  them.
+- **`setpieces.ts` hard-codes a `stone_bricks` masonry family** for hillside
+  set-piece stair and bridge dressing, so it ignores the ground roles landed
+  2026-08-06.
+- **Junctions between streets at different levels** are ~8% of cross-sections on
+  a hill town, with a 2–7 block tail. The ownership pin binds centre-line
+  *cells*; the contract says *columns*. Pinning every shared swept column is the
+  next step and was left alone because it can over-constrain a street running
+  parallel to a wider one.
+- **City walls (`sweepCourse`) and the sidewalk band's own paving still use the
+  pre-arc raster-perpendicular model.** If dither appears *beside* a diagonal
+  street rather than on it, it lives there.
 - **A district may be seated flush against the region boundary, and is then
   sliced by it.** Seen on a generated old-quarter world (2026-08-05): the
   region is `x0 −256, width 512`, so its east edge is `x1 = 255`, and the
