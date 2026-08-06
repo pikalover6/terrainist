@@ -373,6 +373,44 @@ export const TERRAIN_DIAGNOSTICS = {
    * ground it would have had.
    */
   INTENT_GROUND_UNKNOWN: "LOAM-W488",
+
+  // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
+  // `resolveGround` reconciles every subsystem's claim on a column's level.
+  // Precedence resolving a disagreement is normal and silent; these are the
+  // cases worth a word. None belongs in `FEEDBACK_CODES` (§13.6): a claim table
+  // is not author-actionable.
+  /**
+   * A level claim lost a column another source declared `preserve`. Deliberately
+   * narrow — a lane losing a junction column to a boulevard happens thousands of
+   * times per world; a doorstep cutting into a column a retaining wall's
+   * balustrade stands on is news, and today it is invisible until somebody walks
+   * the world.
+   */
+  GROUND_CONFLICT: "LOAM-W490",
+  /**
+   * A claim lost columns to higher ranks, **aggregated per claim, never per
+   * column** — a hill town would otherwise produce thousands, and a note that
+   * fires on every world is a report nobody reads.
+   */
+  GROUND_CLAIM_ADJUSTED: "LOAM-I491",
+  /** A claim kept fewer columns than its `minColumns`. The resolver never acts on it. */
+  GROUND_CLAIM_REFUSED: "LOAM-W492",
+  /**
+   * A winning level exceeded a `clearance` ceiling and was clamped to it.
+   * Clamping rather than refusing is deliberate: a clamped column is walkable
+   * and reported; a refused one is a hole.
+   */
+  GROUND_CLEARANCE_VIOLATED: "LOAM-W493",
+  /**
+   * A ground-contract invariant: a level outside the world range, a `fluidTop`
+   * below its ground, a duplicate column within one intent, a `preserve` on an
+   * unowned column, a precedence tie. **A compiler bug**, in the class of
+   * `CAVE_FLUID_BREACH`: no legal document can produce it, and the caller aborts
+   * loudly rather than feeding it back to an author.
+   */
+  GROUND_INVARIANT: "LOAM-E494",
+  /** Once per compile, summarising the transitions built and the requests overridden. */
+  GROUND_TRANSITION: "LOAM-I495",
 } as const;
 
 /** Symbolic diagnostic name. */
