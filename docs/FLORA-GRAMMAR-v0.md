@@ -176,12 +176,16 @@ Grammar-level tests run every program across its parameter-envelope **corners**
    game's*), so leaves survive without `persistent` hacks. See **§9.1**: the
    emitter does not write the state that makes this true today, and fixing it
    moves worlds. **One frozen exception, measured by WP-A:** the shipped
-   mega-spruce whorl reaches taxicab 6–7, leaving exactly 32 canopy blocks per
+   mega-spruce whorl reaches taxicab 6–7, leaving up to 32 canopy blocks per
    mega tree unreachable; the reach law outranks law 2, so the exception is
    pinned as an enumerated list with an exact count (a regression in either
-   direction fails). Its resolution — narrowing the whorl — moves every boreal
-   world and rides with the `LEAF_STATE_POLICY` flip (§9.1), one measured
-   commit.
+   direction fails). *Population correction (2026-08-07, measured at the
+   flip): "32 per tree" is the envelope-corner number — on misty-fjords only
+   17 of 118 mega spruces strand any canopy (3×32 + 14×16 = 320 blocks,
+   236 surviving last-writer-wins), all mega, none anything else.* The flip
+   itself landed 2026-08-07 (`LEAF_STATE_POLICY = "computed"`, Kai's go
+   after observing live decay); the whorl keeps its geometry and its
+   stranded blocks ride as counted `persistent` exceptions.
 3. **Branches are connected**: every `branch` block is 6-adjacent to another
    `branch`/`log`. No floating limbs. The construction that guarantees it is
    always the same — **a branch walk steps one lattice axis per block, never
