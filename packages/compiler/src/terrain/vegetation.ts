@@ -34,6 +34,14 @@ import {
 import type { ForestParams, ForestSpecies, ScatterArea, TreeShape } from "@terrainist/spec";
 import { ZONE_TOKENS } from "@terrainist/spec";
 
+import {
+  LEGACY_FLORA_SPECIES,
+  SHAPE_PROGRAMS,
+  type FloraBlock,
+  type FloraSpeciesDef,
+  type FloraVariation,
+  type ShapeProgramId,
+} from "./flora/index.js";
 import type { ColumnPlan } from "./columns.js";
 import { FluidKind } from "./columns.js";
 import type { Palette } from "./palette.js";
@@ -90,12 +98,13 @@ export interface TreePlacement {
   readonly leafState: number;
 }
 
-/** How the geometry of one tree differs from its template's baseline. */
-export interface TreeVariation {
-  readonly height: number;
-  readonly radiusDelta: number;
-  readonly mega: boolean;
-}
+/**
+ * How the geometry of one tree differs from its template's baseline.
+ *
+ * An alias of the grammar's {@link FloraVariation} (§3): same three fields, plus
+ * the optional `lean`/`age` the WP-B programs read and the legacy two ignore.
+ */
+export type TreeVariation = FloraVariation;
 
 /** Share of `spruce_tall` trees that come up as 2×2-trunk giants. */
 export const MEGA_SPRUCE_SHARE = 0.03;
@@ -531,14 +540,14 @@ export function areaContains(
 /* Templates                                                                   */
 /* -------------------------------------------------------------------------- */
 
-/** One block of a generated tree, relative to the trunk base. */
-export interface TreeBlock {
-  readonly dx: number;
-  readonly dy: number;
-  readonly dz: number;
-  /** `"log"` or `"leaves"`; the emitter maps it to the placement's states. */
-  readonly part: "log" | "leaves";
-}
+/**
+ * One block of a generated tree, relative to the trunk base.
+ *
+ * Now an alias of the grammar's {@link FloraBlock}: the legacy programs emit
+ * only `log` and `leaves`, and the emitter's two-part mapping still covers
+ * them exactly.
+ */
+export type TreeBlock = FloraBlock;
 
 /** A tree shape: trunk length range, default palette symbols, and geometry. */
 export interface TreeTemplate {
@@ -557,76 +566,23 @@ export function plainVariation(height: number): TreeVariation {
   return { height, radiusDelta: 0, mega: false };
 }
 
-function conifer(spread: number): (v: TreeVariation) => TreeBlock[] {
-  return ({ height, radiusDelta, mega }) => {
-    const out: TreeBlock[] = [];
-    const trunk: readonly (readonly [number, number])[] = mega
-      ? [
-          [0, 0],
-          [1, 0],
-          [0, 1],
-          [1, 1],
-        ]
-      : [[0, 0]];
-    for (let dy = 0; dy < height; dy++) {
-      for (const [tx, tz] of trunk) out.push({ dx: tx, dy, dz: tz, part: "log" });
-    }
-    const cap = Math.max(1, spread + radiusDelta + (mega ? 2 : 0));
-    // Whorled conifer canopy: radius grows downward from the tip, dipping every
-    // third layer so the silhouette reads as a spruce rather than a cone.
-    const start = Math.max(1, Math.floor(height * 0.35));
-    for (let dy = start; dy <= height; dy++) {
-      const fromTop = height - dy;
-      let r = Math.min(cap, Math.floor(fromTop / 2));
-      if (fromTop % 3 === 2 && r > 0) r -= 1;
-      if (r === 0) {
-        if (dy >= height) out.push({ dx: 0, dy, dz: 0, part: "leaves" });
-        continue;
-      }
-      for (let dz = -r; dz <= r + (mega ? 1 : 0); dz++) {
-        for (let dx = -r; dx <= r + (mega ? 1 : 0); dx++) {
-          if (isTrunk(trunk, dx, dz) && dy < height) continue;
-          const qx = mega ? Math.min(Math.abs(dx), Math.abs(dx - 1)) : Math.abs(dx);
-          const qz = mega ? Math.min(Math.abs(dz), Math.abs(dz - 1)) : Math.abs(dz);
-          if (qx * qx + qz * qz > r * r + r) continue;
-          out.push({ dx, dy, dz, part: "leaves" });
-        }
-      }
-    }
-    // Cap every trunk column, not just the first. A mega spruce has four, and
-    // capping only `(0, 0)` left three bare logs poking out of the crown — the
-    // "trunk tips above the canopy" the render review caught, 262 of them in
-    // one 320² world. The rule the tree templates must satisfy is simply that
-    // no log is the topmost block of its column.
-    for (const [tx, tz] of trunk) out.push({ dx: tx, dy: height, dz: tz, part: "leaves" });
-    return out;
-  };
-}
-
-function isTrunk(trunk: readonly (readonly [number, number])[], dx: number, dz: number): boolean {
-  for (const [tx, tz] of trunk) if (tx === dx && tz === dz) return true;
-  return false;
-}
-
-function blob(radius: number, squash: number): (v: TreeVariation) => TreeBlock[] {
-  return ({ height, radiusDelta }) => {
-    const out: TreeBlock[] = [];
-    for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
-    const r = Math.max(1, radius + radiusDelta);
-    const cy = height - 1;
-    const ry = Math.max(1, Math.round(r * squash));
-    for (let dy = cy - ry; dy <= cy + ry; dy++) {
-      for (let dz = -r; dz <= r; dz++) {
-        for (let dx = -r; dx <= r; dx++) {
-          if (dx === 0 && dz === 0 && dy < height) continue;
-          const vy = (dy - cy) / ry;
-          if ((dx * dx + dz * dz) / (r * r) + vy * vy > 1.15) continue;
-          out.push({ dx, dy, dz, part: "leaves" });
-        }
-      }
-    }
-    return out;
-  };
+/**
+ * The legacy geometry, now expressed through the flora grammar.
+ *
+ * `SHAPE_PROGRAMS.conifer` and `SHAPE_PROGRAMS.blob` are transcriptions of the
+ * closures that used to live here, and `flora-identity.test.ts` holds them to
+ * **list-identity** with those closures — the same array, element for element,
+ * duplicates and order included, because `clipTrees` divides by
+ * `blocks.length`. Neither program draws from its RNG, so passing a thrower is
+ * both safe and a live assertion of that.
+ */
+function legacyBlocks(speciesId: keyof typeof LEGACY_FLORA_SPECIES) {
+  const def = LEGACY_FLORA_SPECIES[speciesId] as FloraSpeciesDef;
+  const program = SHAPE_PROGRAMS[def.program as ShapeProgramId];
+  return (v: TreeVariation): TreeBlock[] =>
+    program.blocks(v, def, () => {
+      throw new Error(`flora: ${def.program} must not draw from the RNG`);
+    }) as TreeBlock[];
 }
 
 /** The four tree shapes the terrain profile implements. */
@@ -637,7 +593,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
     canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta + (v.mega ? 2 : 0)),
-    blocks: conifer(2),
+    blocks: legacyBlocks("spruce_tall"),
   },
   spruce_squat: {
     minHeight: 5,
@@ -645,7 +601,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
     canopyRadius: (v) => Math.max(1, 3 + v.radiusDelta),
-    blocks: conifer(3),
+    blocks: legacyBlocks("spruce_squat"),
   },
   oak_round: {
     minHeight: 5,
@@ -653,7 +609,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     trunkSymbol: "wood.oak_log",
     leafSymbol: "wood.oak_leaves",
     canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
-    blocks: blob(2, 1),
+    blocks: legacyBlocks("oak_round"),
   },
   birch_slim: {
     minHeight: 6,
@@ -661,6 +617,41 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     trunkSymbol: "wood.birch_log",
     leafSymbol: "wood.birch_leaves",
     canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
-    blocks: blob(2, 0.75),
+    blocks: legacyBlocks("birch_slim"),
   },
 });
+
+/* -------------------------------------------------------------------------- */
+/* Re-exports                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The grammar, re-exported so `vegetation.ts` stays the one import site every
+ * existing consumer already uses (§3: "`vegetation.ts` keeps scatter and
+ * eligibility and re-exports, so no existing importer changes").
+ */
+export {
+  LEGACY_FLORA_SPECIES,
+  LEAF_STATE_POLICY,
+  MAX_LEAF_DISTANCE,
+  SHAPE_PROGRAMS,
+  emitFloraBlocks,
+  leafDistances,
+  knob,
+  CANOPY_PARTS,
+  WOOD_PARTS,
+} from "./flora/index.js";
+export type {
+  EmittedFloraBlock,
+  FloraBlock,
+  FloraEmission,
+  FloraPart,
+  FloraProgram,
+  FloraSpeciesDef,
+  FloraStateCodec,
+  FloraStates,
+  FloraVariation,
+  FloraVec2,
+  LeafStatePolicy,
+  ShapeProgramId,
+} from "./flora/index.js";

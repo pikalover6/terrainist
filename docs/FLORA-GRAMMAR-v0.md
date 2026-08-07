@@ -141,7 +141,7 @@ leafState`. The parts model needs five more, and all of them obey one rule:
 | `stem` | species `stemSymbol` | the six mushroom booleans: a face is `true` iff no `stem`/`cap` block of the same plant sits against it |
 | `cap` | species `capSymbol` | same six-boolean rule |
 | `hanging` | species `hangingSymbol` | the attachment property naming the face toward the block above — `up=true` for both `vine` and `glow_lichen`. A `hanging` block with no block of the same plant directly above it is **dropped**, not emitted unsupported |
-| `deco` | species `decoSymbol` | if the block declares `facing`, it faces the one 6-neighbour that is a `log`/`branch`/`stem` of the same plant; if there is none, the block is dropped |
+| `deco` | species `decoSymbol` | if the block declares `facing`, it faces **away from** the one 6-neighbour that is a `log`/`branch`/`stem` of the same plant — the amethyst convention: `facing` is the growth direction and the support sits on the opposite face (*corrected 2026-08-07; this row originally said "toward", which renders the cluster detached*); if there is no such neighbour, the block is dropped |
 
 The mushroom-face rule is what makes a giant mushroom read as a mushroom rather
 than as a red cube pile: vanilla's outer cap blocks show cap texture on their
@@ -166,9 +166,19 @@ Grammar-level tests run every program across its parameter-envelope **corners**
    promoted from a per-template fix to a law. **Read `log` as the whole
    wood family — `log`, `branch` and `stem`** — because a bare mushroom stem
    poking through its own cap is the same defect wearing a different block.
-2. **Every canopy block is within taxicab 5 of a `log`/`branch`/`stem`**, so
-   leaves survive without `persistent` hacks. See **§9.1**: the emitter does not
-   write the state that makes this true today, and fixing it moves worlds.
+2. **Every canopy block is within leaf-BFS distance 6 of a
+   `log`/`branch`/`stem`** — BFS through the plant's own canopy blocks, which
+   is the metric vanilla's `distance` actually uses (*ratified 2026-08-07; the
+   skeleton said "taxicab 5", a stricter and different metric than the
+   game's*), so leaves survive without `persistent` hacks. See **§9.1**: the
+   emitter does not write the state that makes this true today, and fixing it
+   moves worlds. **One frozen exception, measured by WP-A:** the shipped
+   mega-spruce whorl reaches taxicab 6–7, leaving exactly 32 canopy blocks per
+   mega tree unreachable; the reach law outranks law 2, so the exception is
+   pinned as an enumerated list with an exact count (a regression in either
+   direction fails). Its resolution — narrowing the whorl — moves every boreal
+   world and rides with the `LEAF_STATE_POLICY` flip (§9.1), one measured
+   commit.
 3. **Branches are connected**: every `branch` block is 6-adjacent to another
    `branch`/`log`. No floating limbs. The construction that guarantees it is
    always the same — **a branch walk steps one lattice axis per block, never
@@ -1166,7 +1176,12 @@ fantasy, and nothing else in the document has to change.
   world.**
 - **WP-B — naturalistic species + strata.** `giant`, `ancient`, `broadleaf`,
   `columnar`, `umbrella`, `weeping`; the species catalog for the four climates;
-  strata composition in `scatterForests`. Gate: a generated
+  strata composition in `scatterForests`. WP-A hand-offs (2026-08-07): wire
+  `emitFloraBlocks` into `terrain/emit.ts` — it is implemented and tested but
+  deliberately **not wired**, a no-op under `legacy` for `log`/`leaves`, so do
+  not assume it live — and reconcile the `TREE_TEMPLATES.canopyRadius`
+  literals with the programs' own derivations, behaviour-preserving for the
+  legacy four. Gate: a generated
   temperate-old-growth fixture, linted on all 26 rules; silhouette review
   render for Kai's walk.
 - **WP-C — fungal + fantasy.** `fungal` program, fantasy species, glow/crystal
