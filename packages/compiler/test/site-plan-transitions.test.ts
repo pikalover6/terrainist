@@ -279,12 +279,20 @@ const STEEP_EDGES = {
    */
   fillColumns: 537, // 273 → 537 (405 bank, 132 retaining)
   cutColumns: 415, // 269 → 415 (377 retaining, 38 rock)
-  benchedBanks: 10, // 1 → 10
+  // 10 → 11 (2026-08-07, the composite gate). The extra bank is the 90-column
+  // skirt that reported `drop: 6` — a face rule 9 sanctions — while thirteen of
+  // its columns stood over ground seven blocks down, six of them contiguous.
+  // `structures/retaining.ts`' `facesOf` measures the face rather than the
+  // summary and the seam is benched like any other face past `RETAIN_MAX`.
+  benchedBanks: 11, // 1 → 10 → 11
   plannedColumns: 952,
   /** Unmoved: the seven-block terrace face WP-3 was given, still 183 columns. */
   tallDropSeamColumns: 183,
-  /** New row: 13 refusals in all, of which 7 are benched rather than stubs. */
-  benchedFaceRefusals: 7,
+  /**
+   * 13 refusals in all, of which **8** are benched rather than stubs — 7 → 8
+   * with the composite gate, which is `benchedBanks`' own +1 and the same seam.
+   */
+  benchedFaceRefusals: 8,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
@@ -370,6 +378,37 @@ describe("the steep fixture's transitions, compiled", () => {
       `${Math.ceil(7 / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between`,
     );
     expect(seven).toContain(`over ${benchedRun(7)} column(s) of run`);
+  });
+
+  it("measures the finished face, not the seam's summary of it (the composite)", () => {
+    // **The defect this closes.** Every rule in §5.2 reads one `drop` per seam,
+    // and a skirt's is the component's *median* — deliberately, so one column of
+    // gully cannot bank a hundred-column terrace. What nothing measured was the
+    // other tail: on this fixture a 90-column skirt reported `drop: 6`, which
+    // rule 9 sanctions, while thirteen of its columns stood over ground seven
+    // blocks down and six of those were contiguous. What got built there was a
+    // seven-block sheer face no rule had ever looked at.
+    const composite = sweep.filter((m) => m.includes("the face it would have presented"));
+    expect(composite.length).toBe(1);
+    expect(composite[0]).toContain("benched bank");
+    // …and it is benched for the face, not for the summary: a seven-block fall
+    // answered with six blocks' worth of benches leaves the last block as a step
+    // no bench reaches, which is the sheer face one block shorter.
+    expect(composite[0]).toContain(`${Math.ceil(7 / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s)`);
+  });
+
+  it("reports its built faces by finished drop, and none of them past RETAIN_MAX", () => {
+    // `docs/GROUND-CONTRACT-v0.md` §13.8's measurement, carried on every world
+    // this compiler builds. The bar it asserts is the one the composite gate
+    // exists to hold: a built face past the ceiling is not a wall, it is a bank.
+    const line = sweep.find((m) => m.includes("built faces by finished drop"));
+    expect(line, "the §13.8 line is missing from the report").toBeDefined();
+    const drops = [...(line as string).matchAll(/\d+ at (\d+)/g)].map((m) => Number(m[1]));
+    expect(drops.length).toBeGreaterThan(0);
+    for (const drop of drops) {
+      expect(drop).toBeGreaterThan(0);
+      expect(drop).toBeLessThanOrEqual(RETAIN_MAX);
+    }
   });
 
   it("reports zero offPlatform, and would have raised it as an error (§5.5)", () => {

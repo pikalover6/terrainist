@@ -292,15 +292,25 @@ const STEEP_DRESSING: DressingGoldens = {
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
-  // 5 → **7** faces, 53 → **73** columns, worst drop 8 → **9**. The one group
-  // that got worse this wave and the one to argue about: with the causeways
-  // refused (b90f87a) the retaining pass has more open edge to hold, and six of
-  // the seven runs are `retaining` past `RETAIN_MAX` — the wall's foot standing
-  // on another drop. MUST GO DOWN; the hillside fixture went to nought, so the
-  // mechanism is not the obstacle here, the steep fixture's fills are.
-  sheerFaces: 7,
-  sheerColumns: 73,
-  sheerWorstDrop: 9,
+  // 7 → **2** faces, 73 → **24** columns, worst drop 9 → **6** — the composite
+  // gate (`structures/retaining.ts`, 2026-08-07). Six of the seven runs were a
+  // *composite*: a face that stacked past `RETAIN_MAX` while every seam obeyed
+  // its own limit. Five of them were one 90-column skirt reporting `drop: 6` —
+  // the component's **median** — with thirteen columns standing over ground
+  // seven blocks down; `facesOf` measures the face the wall would present
+  // rather than the summary, and the seam is benched. The other two were walls
+  // whose *foot* a later pass dug out — a prop pad four blocks into the
+  // hillside, a road shoulder blended down by one — and the wall now declares
+  // the ground at its foot so nothing lower-ranked can take it.
+  //
+  // The two that remain are **both** `clause 9`: single-seam walls at exactly
+  // `RETAIN_MAX`, sanctioned on purpose, which is the half of this that is
+  // Kai's aesthetic call after a walk and not a compiler's. The compile report
+  // now carries "built faces by finished drop" so that call has numbers behind
+  // it. They still MUST GO DOWN, but only by a decision, not by a fix.
+  sheerFaces: 2,
+  sheerColumns: 24,
+  sheerWorstDrop: 6,
 };
 
 const scratch: string[] = [];

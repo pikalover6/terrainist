@@ -72,6 +72,7 @@ import {
   benchedRun,
   treatmentForEdge,
   treatmentForSeam,
+  type EdgeChoice,
   type EdgeContext,
   type EdgeUse,
   type GroundLevels,
@@ -267,6 +268,26 @@ export interface RetainingPassResult {
    * columns of soil between, rather than as one 1:1 slope of earth.
    */
   readonly benchedBanks: number;
+  /**
+   * …and how many of those were benched because the **composite** ran past
+   * {@link RETAIN_MAX} where the seam's own drop did not (see `facesOf`).
+   *
+   * Kept apart from {@link benchedBanks} because the two answer different
+   * questions: that one counts faces the planner drew too tall, this one counts
+   * faces nothing measured until they were about to be built.
+   */
+  readonly compositeBanks: number;
+  /**
+   * The **face profile** of every wall this pass built, as a histogram of
+   * finished drop indexed `0…RETAIN_MAX`, index 0 unused.
+   *
+   * `docs/GROUND-CONTRACT-v0.md` §13.8's measurement. One entry per column of
+   * the seam a wall was built along — the low side, which is where a face
+   * shows — bucketed by `facesOf`'s answer for that column. Every bucket past
+   * {@link RETAIN_MAX} is empty by construction: a face that would land there
+   * is a benched bank, which is the whole of the composite conversion.
+   */
+  readonly facesByDrop: readonly number[];
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
    * What this pass declared under the ground contract
@@ -425,6 +446,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let built = 0;
   let banked = 0;
   let benchedBanks = 0;
+  let compositeBanks = 0;
+  const facesByDrop = new Array<number>(RETAIN_MAX + 1).fill(0);
   const treated: Record<SeamTreatment, number> = {
     kerb: 0,
     retaining: 0,
@@ -467,6 +490,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       treated,
       treatedCut,
       benchedBanks,
+      compositeBanks,
+      facesByDrop,
       unfaced,
       diagnostics,
       declaration: { walls: [], banks: [] },
@@ -532,12 +557,34 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       const context = planned
         ? edgeContextOf(region, plan, levels, record, street, occupied, budget)
         : null;
-      const answer = context === null ? record.treatment : treatmentForEdge(context);
+      const wanted = context === null ? record.treatment : treatmentForEdge(context);
+      // **The composite, measured before it is built** — see {@link facesOf}.
+      // Every rule above reads the seam's one `drop`, and on a skirt that number
+      // is the component's median: the columns below it get the same wall, at
+      // the same level, standing on a deeper floor. So the face is measured
+      // column by column and asked the question rule 5 asks — is this taller
+      // than any wall we build — of the finished face rather than of the
+      // summary. `composite` is the answer's evidence and it is reported.
+      //
+      // It is asked of a wall only. A bank, a kerb, a building's own back and
+      // the hill's own rock all answer a tall face honestly already; it is
+      // masonry that must not exceed the one ceiling masonry has.
+      const faces = wanted === "retaining" ? facesOf(region, plan, levels, record) : [];
+      const composite = wanted === "retaining" ? overCeilingRun(region, record, faces) : 0;
+      const overCeiling = composite >= MIN_RETAIN_RUN;
+      const answer: EdgeChoice = overCeiling ? "replan" : wanted;
       const treatment: SeamTreatment = answer === "replan" ? "bank" : answer;
       // A face past the tallest wall we build is banked in **benches** rather
       // than ramped 1:1 — §5.2 rule 5's honest downstream answer, and the reason
-      // the walked town had sheer platform-to-platform dropoffs mid-town.
-      const bench = context !== null && record.drop > RETAIN_MAX;
+      // the walked town had sheer platform-to-platform dropoffs mid-town. A
+      // composite past the ceiling is the same face by a different arithmetic
+      // and gets the same answer.
+      const bench = (context !== null && record.drop > RETAIN_MAX) || overCeiling;
+      // The drop the benches have to get down, which for a composite is **not**
+      // `record.drop`: benching a seven-block face in six blocks' worth of
+      // benches leaves the last block as a step the bench never reaches.
+      const benchDrop = overCeiling ? Math.max(record.drop, ...faces) : record.drop;
+      if (overCeiling) compositeBanks++;
       if (context !== null) treated[treatment] += record.cells.length;
       if (treatment === "kerb") {
         kerbs += kerbSeam(region, plan, record, states, street, occupied) > 0 ? 1 : 0;
@@ -571,6 +618,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           states,
           ringTargets,
           bench,
+          benchDrop,
         );
         if (ringTargets.length > 0) {
           declaredBanks.push({
@@ -590,7 +638,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
             short
               ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over only ${record.cells.length} column(s), shorter than the ${MIN_RETAIN_RUN} columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank`
               : bench
-                ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so it was cut back as a benched bank — ${Math.ceil(record.drop / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between, over ${benchedRun(record.drop)} column(s) of run`
+                ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s)` +
+                  (overCeiling
+                    ? ` — a drop a wall is built for, but the face it would have presented falls up to ${benchDrop} block(s) over a run of ${composite} column(s), which is`
+                    : `,`) +
+                  ` past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so it was cut back as a benched bank — ${Math.ceil(benchDrop / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between, over ${benchedRun(benchDrop)} column(s) of run`
                 : `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
             "Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.",
           ),
@@ -780,6 +832,60 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         if (wallColumnsDeclared.length > 0) {
           declaredWalls.push({ source, measured, columns: wallColumnsDeclared });
         }
+        // **The foot, declared** — the other half of the composite, and the half
+        // no measurement taken in this pass can see.
+        //
+        // The face this pass builds is `top − foot`, and it chose to build it
+        // because both halves of that subtraction were what they were when it
+        // ran. `top` is then held by the wall's own `preserve`; the **foot was
+        // held by nothing**, and four passes downstream move ground. Measured on
+        // the steep fixture (2026-08-07): a prop levelled its pad four blocks
+        // into the hillside directly under a five-block wall and left a
+        // nine-block sheer face, and the road's shoulder blend took another one
+        // down by a block. Neither pass did anything wrong by its own lights —
+        // nobody had said the ground there was spoken for.
+        //
+        // So it is said, at the level the wall was built for and never at a new
+        // one: the claim proposes the ground that is already there, so on its
+        // own it moves nothing and cannot move anything (§5.3 — a claim that
+        // agrees with the ground is satisfied in silence). What it does is give
+        // the `preserve` beside it something to guard, because §5.2 lets a
+        // source preserve only columns its own level claim won. Rank does the
+        // rest: `retaining.seam`/`retaining.skirt` are tier B, and every pass
+        // that cut a foot here — street, road, sweep, doorstep, prop, verge — is
+        // tier C or D.
+        const foot: GroundClaim[] = [];
+        const footSeen = new Uint8Array(cells);
+        for (let k = 0; k < cells; k++) {
+          if (result.claimed[k] !== 1) continue;
+          const x = region.x0 + (k % region.width);
+          const z = region.z0 + Math.floor(k / region.width);
+          for (const [dx, dz] of NEIGHBOURS) {
+            if (!inside(region, x + dx, z + dz)) continue;
+            const n = index(region, x + dx, z + dz);
+            if (footSeen[n] === 1 || result.claimed[n] === 1) continue;
+            // Only the low side: the platform the wall holds is the wall's own
+            // ground and is already declared, and a column no lower than the
+            // course is not a foot.
+            if (levels.at(x + dx, z + dz) === record.above) continue;
+            // Water is nobody's floor, and a building's ground is the
+            // building's — §3.4's own rule, and the two classes that outrank
+            // this one anyway, so claiming them would be claiming a column the
+            // resolver would hand straight back.
+            if (plan.fluidKind[n] !== FluidKind.NONE) continue;
+            if (occupied[n] === 1) continue;
+            if ((plan.ground[n] as number) >= (plan.ground[k] as number)) continue;
+            footSeen[n] = 1;
+            foot.push({ idx: n, y: plan.ground[n] as number });
+          }
+        }
+        if (foot.length > 0) {
+          const footSource = `${source}/foot`;
+          driver.commit([
+            { source: footSource, sourceClass, kind: "profile", columns: foot, transition: "none" },
+            { source: footSource, sourceClass, kind: "preserve", columns: foot, transition: "none" },
+          ]);
+        }
         // **The wall is as deep as it is tall.** `sweep()` writes one course of
         // the `fill` band and leaves `soil` alone, so a six-block wall used to
         // be one course of masonry over five of whatever the hill is made of —
@@ -830,7 +936,21 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           blocks.push({ x: feature.at.x, y, z: feature.at.z, stateId: states.weep });
         }
       }
-      if (anySwept) walls++;
+      if (anySwept) {
+        walls++;
+        // **The distribution §13.8 asked for, and the number the walk needs.**
+        // A single-seam wall at drop 5 or 6 with no bench is sanctioned by rule
+        // 9 on purpose, and whether it should get a mid-bench is an aesthetic
+        // call nobody can make from a compiler. What a compiler *can* do is say
+        // how many there are: every column of face this pass actually built,
+        // bucketed by the finished drop it presents. Clamped into 1…RETAIN_MAX
+        // because the composite conversion above is what guarantees the bucket
+        // exists — a column past the ceiling is a bank now, not a wall.
+        for (const face of faces) {
+          const bucket = face < 1 ? 1 : face > RETAIN_MAX ? RETAIN_MAX : face;
+          facesByDrop[bucket] = (facesByDrop[bucket] as number) + 1;
+        }
+      }
     }
 
     // --- the finish ---------------------------------------------------------
@@ -897,7 +1017,33 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         `transitions by context (§5): ${fill.total + cut.total} planned edge column(s) — ` +
           `fill ${fill.total} (${fill.breakdown === "" ? "none" : fill.breakdown}), ` +
           `cut ${cut.total} (${cut.breakdown === "" ? "none" : cut.breakdown})` +
-          (benchedBanks === 0 ? "" : `; ${benchedBanks} bank(s) benched rather than ramped`),
+          (benchedBanks === 0 ? "" : `; ${benchedBanks} bank(s) benched rather than ramped`) +
+          (compositeBanks === 0
+            ? ""
+            : `, ${compositeBanks} of them because the face they would have presented ran past ${RETAIN_MAX_TEXT} where the seam's own drop did not`),
+        "No action needed.",
+      ),
+    );
+  }
+
+  // **Built faces by finished drop** — `docs/GROUND-CONTRACT-v0.md` §13.8's
+  // measurement, taken on the world rather than argued from the constants.
+  // Every column of masonry face this pass built, bucketed by how far it
+  // actually falls, so the question the composite conversion deliberately does
+  // *not* answer — should a sanctioned five- or six-block wall get a mid-bench —
+  // is a decision somebody can make from numbers after a walk.
+  const facedColumns = facesByDrop.reduce((sum, n) => sum + n, 0);
+  if (facedColumns > 0) {
+    diagnostics.push(
+      note(
+        "SWEEP_FEATURES_PLACED",
+        relevant[0]?.nodePath ?? "world",
+        `built faces by finished drop (§13.8): ${facedColumns} face column(s) along the seams a wall was built on — ` +
+          facesByDrop
+            .map((n, drop) => [n, drop] as const)
+            .filter(([n, drop]) => drop > 0 && n > 0)
+            .map(([n, drop]) => `${n} at ${drop}`)
+            .join(", "),
         "No action needed.",
       ),
     );
@@ -916,6 +1062,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     treated,
     treatedCut,
     benchedBanks,
+    compositeBanks,
+    facesByDrop,
     unfaced,
     diagnostics,
     declaration: { walls: declaredWalls, banks: declaredBanks },
@@ -1852,6 +2000,97 @@ function skirtSeams(
 }
 
 /**
+ * The face a wall on this seam would actually present, column by column.
+ *
+ * > **The composite, and the hole `RETAIN_MAX` was falling through.**
+ *
+ * Every seam in this pass carries one `drop`, and every rule that has an
+ * opinion about how tall a face may be reads that one number: rule 5 sends a
+ * drop past {@link RETAIN_MAX} to a benched bank, rule 9 sanctions a wall at or
+ * under it. But `drop` is a *summary*. A platform-to-platform seam's is exact,
+ * because both sides are level by construction; a **skirt**'s is the component's
+ * **median** ground, chosen deliberately — "a wall is built for the face it
+ * presents, and one column of gully at the end of a run is not that face"
+ * ({@link skirtSeams}) — and a median says nothing about the columns below it.
+ *
+ * Measured on the steep fixture (2026-08-07): one skirt of 90 columns reported
+ * `drop: 6`, was sanctioned by rule 9, and thirteen of its columns stood over
+ * ground seven blocks down. Six of those thirteen were contiguous. What got
+ * built there was a seven-block sheer face that no rule in §5.2 ever looked at,
+ * because every rule looked at the 6.
+ *
+ * So this measures the face the wall would present **per column** — the level it
+ * is built to, less the ground its foot lands on — and {@link overCeilingRun}
+ * asks the only question that matters about the profile: is there a stretch of
+ * it past the ceiling long enough to read as a wall.
+ */
+function facesOf(
+  region: Region,
+  plan: ColumnPlan,
+  levels: GroundLevels,
+  record: LevelSeam,
+): number[] {
+  const top = levels.levelY[record.above] as number;
+  return record.cells.map((p) => top - (plan.ground[index(region, p.x, p.z)] as number));
+}
+
+/**
+ * The longest 8-connected run of face past {@link RETAIN_MAX}, in columns.
+ *
+ * **Why a run and not a maximum, and why this run and not another number.** A
+ * single column of gully under a hundred-column terrace is the thing
+ * `skirtSeams`' median exists to ignore, and taking the profile's maximum would
+ * bank a whole face because of it — the fixture where that matters is
+ * `site-plan-hillside`, whose one long skirt has four such columns out of 191.
+ * A *run* asks the question the walk asks: not "is any column too tall" but "is
+ * there a piece of wall here that is too tall".
+ *
+ * Eight-connected for {@link SEAM_NEIGHBOURS}' reason, which is now on its
+ * fourth appearance in this compiler: a contour on a lattice is a staircase, and
+ * a run of it counted 4-connected is crumbs.
+ *
+ * The bar is {@link MIN_RETAIN_RUN}, and it is the same argument that constant
+ * already makes read backwards. A stretch of face shorter than the tallest wall
+ * we build is not a wall — that is why a short seam is graded rather than
+ * walled — so a stretch of *over-ceiling* face shorter than that is not a
+ * too-tall wall either. At or past it, it is.
+ */
+function overCeilingRun(
+  region: Region,
+  record: LevelSeam,
+  faces: readonly number[],
+): number {
+  const over = new Set<number>();
+  for (const [i, face] of faces.entries()) {
+    if (face <= RETAIN_MAX) continue;
+    const point = record.cells[i] as { x: number; z: number };
+    over.add(index(region, point.x, point.z));
+  }
+  if (over.size === 0) return 0;
+  const seen = new Set<number>();
+  let longest = 0;
+  for (const start of [...over].sort((a, b) => a - b)) {
+    if (seen.has(start)) continue;
+    seen.add(start);
+    const queue = [start];
+    for (let head = 0; head < queue.length; head++) {
+      const k = queue[head] as number;
+      const x = region.x0 + (k % region.width);
+      const z = region.z0 + Math.floor(k / region.width);
+      for (const [dx, dz] of SEAM_NEIGHBOURS) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const n = index(region, x + dx, z + dz);
+        if (!over.has(n) || seen.has(n)) continue;
+        seen.add(n);
+        queue.push(n);
+      }
+    }
+    if (queue.length > longest) longest = queue.length;
+  }
+  return longest;
+}
+
+/**
  * A drop of one block is a kerb, not a wall.
  *
  * One course of the street's kerb material on the lower column, and the level
@@ -1933,6 +2172,16 @@ function gradeBank(
    * False for every quarter no planner drew, so nothing else moves.
    */
   benched = false,
+  /**
+   * The fall the benches have to get down, when it is not `record.drop`.
+   *
+   * A **composite** face — a seam whose own drop is a summary and whose deepest
+   * columns stand lower than it (see {@link facesOf}) — is benched for the face
+   * it actually presents, not for the summary: `benchedRun(6)` over a
+   * seven-block fall leaves the last block as a step no bench reaches, which is
+   * the sheer face this conversion exists to remove, one block shorter.
+   */
+  drop = record.drop,
 ): number {
   const view = driver.view();
   const cells = region.width * region.depth;
@@ -1950,7 +2199,7 @@ function gradeBank(
   let raised = 0;
   /** The ring targets, with the ground each was measured against (§9 step 2). */
   const rings: { readonly idx: number; readonly target: number; readonly g: number }[] = [];
-  const steps = benched ? benchedRun(record.drop) : record.drop;
+  const steps = benched ? benchedRun(drop) : drop;
   for (let ring = 0; ring < steps && frontier.length > 0; ring++) {
     // One block per column, or one bench of `BENCH_FACE` blocks every
     // `BENCH_TREAD` columns. The benched profile is clamped one block above the

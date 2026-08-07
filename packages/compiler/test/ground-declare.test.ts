@@ -272,7 +272,19 @@ describe("the shadow declarers, on a stepped quarter", () => {
       (i) => i.kind === "preserve" && i.sourceClass.startsWith("retaining."),
     );
     expect(faces.length).toBeGreaterThan(0);
-    expect(preserves.length).toBe(faces.length);
+    const guarded = new Set(preserves.map((i) => i.source));
+    for (const face of faces) expect(guarded.has(face.source)).toBe(true);
+    // **The second pair, added 2026-08-07 with the composite gate.** A wall now
+    // also declares the ground at its *foot* — `<source>/foot`, a `profile` at
+    // the level that ground already has, plus the `preserve` §5.2 requires
+    // beside it — so no later pass can cut the floor out from under a face that
+    // was measured against it. Same shape, same invariant: every preserve this
+    // class declares stands beside a level claim from the same source.
+    const feet = run.intents.filter(
+      (i) => i.kind === "profile" && i.sourceClass.startsWith("retaining."),
+    );
+    for (const foot of feet) expect(foot.source.endsWith("/foot")).toBe(true);
+    expect(preserves.length).toBe(faces.length + feet.length);
   });
 
   it("every intent is non-empty and every declared column is in region", () => {

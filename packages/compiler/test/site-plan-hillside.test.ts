@@ -868,7 +868,14 @@ const STEEP = {
   infill: 2,
   terraceBays: 11,
   // 85 → 129: three walls on a longer town rather than one on a short one.
-  wallColumns: 129,
+  // 129 → **48** (2026-08-07, the composite gate). The 81 columns that went are
+  // the 90-column skirt that reported `drop: 6` and would have presented seven
+  // blocks of face over six contiguous columns; `structures/retaining.ts`'
+  // `facesOf` measures the face the wall would actually present rather than the
+  // seam's median, and this one is benched like any other face past
+  // `RETAIN_MAX`. It owned five of the seven sheer runs `walkability.test.ts`
+  // measured on this fixture.
+  wallColumns: 48,
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,

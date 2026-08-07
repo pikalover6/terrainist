@@ -2163,6 +2163,48 @@ re-measure on a generated hill town before WP-4 lands, and pin the measurement i
 `levels.ts` beside the constants — the way `MIN_RETAIN_RUN`'s own 2026-08-05
 measurement is pinned.
 
+**Measured 2026-08-07, on both hill-town fixtures, and no constant was changed.**
+The distributions below come from `structures/retaining.ts` as it stands after
+the composite gate landed; the compile report now carries the first of them on
+every world it builds (`built faces by finished drop (§13.8)`), so this is a
+sample of a standing measurement rather than a one-off.
+
+*`site-plan-hillside`.* Seven seams reach the pass: run lengths 1, 1, 1, 3, 5, 6
+and 191 columns, at drops 2, 2, 2, 2, 2, 5 and 7. Six are answered as banks and
+one is a building's own back. **No wall is built at all** — zero wall columns,
+zero rail columns, and therefore no face histogram. Five of the seven runs (71%)
+are shorter than `MIN_RETAIN_RUN`.
+
+*`site-plan-hillside-steep`.* Twenty-one seams: run lengths 1, 1, 2, 2, 5, 5, 5,
+5, 5, 7, 10, 13, 13, 14, 14, 15, 19, 27, 90, 101, 183, at drops 4 (×1), 5 (×2),
+6 (×8), 7 (×2) and 9 (×8). Nine of the twenty-one (43%) are shorter than
+`MIN_RETAIN_RUN`. Three are answered `retaining`, twelve as banks, six as a
+building's own back; of the three walls one is converted by the composite gate,
+leaving **two walls over seven chains and 48 wall columns**. Their face profile,
+column by column along the seam: **4 at drop 2, 4 at 3, 8 at 4, 9 at 5, 17 at
+6** — 42 face columns, nothing above `RETAIN_MAX`, and 40% of them sitting
+exactly on it.
+
+*What the three numbers look like against that.* **`RETAIN_MAX = 6` is doing
+work and stays**: the ceiling is the mode of the built distribution, which is
+what a ceiling that binds looks like, and the sheer-face audit finds no built
+face past it once the composite is measured. **`MIN_RETAIN_RUN = 6` stays** and
+has earned a second duty: it is now also the bar the composite gate uses — a
+stretch of *over-ceiling* face shorter than the shortest wall we build is not a
+too-tall wall — so the same argument decides both directions of the same
+question. **`RETAIN_RAIL = 3` is still unmeasured, and the reason is not the
+number.** All seven built chains drop 5 or 6 blocks, well past it, and **not one
+carries a balustrade**: the gate that fires is `RAIL_ACCESS_RANGE` — a parapet
+is built only where somebody can walk up to the wall — so on these two fixtures
+the drop threshold is never reached. Measuring it needs a fixture whose streets
+run along a wall top, not another hill.
+
+*The one thing the measurement does not settle*, and it is deliberately left
+open: seventeen of the forty-two face columns finish at exactly `RETAIN_MAX`
+with no bench, sanctioned by §5.2 rule 9. Whether a six-block wall should carry
+a mid-bench is an aesthetic call that needs a walk, and it is Kai's. The report
+line exists so that call has numbers under it.
+
 **13.9 Does the resolver own the shoulder BFS?**
 `blendShoulders`' multi-source dilation ("nearest, not first"; ties to the lower
 road) is a genuine algorithm, and it is tempting to move it into the resolver
