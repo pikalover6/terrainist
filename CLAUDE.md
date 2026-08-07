@@ -51,18 +51,21 @@ Kai's MacBook (Kai-approved, informed decision). Everything lives in
 **Standing workflow (Kai, 2026-07-29; concurrency raised 2026-07-31):** a
 **Fable 5 session at high effort is the orchestrator** — it plans,
 delegates, integrates, and verifies; it does not grind through bulk
-implementation itself. It runs **up to 3 concurrent Opus 5 LOW implementer
-subagents by default** (raised to 6 on 2026-07-31, dialed back to 3 by Kai
-2026-08-02; Kai will explicitly grant a higher cap for specific waves in
-real time — never assume one) for
-scaffolding, well-specified coding tasks, and mechanical changes. Design/spec-heavy
-work goes to a single **Opus 5 HIGH** subagent, which writes docs only and
-never touches code that parallel work has in flight.
+implementation itself. It runs **up to 4 concurrent subagents by default,
+of which at most 2 may be medium reasoning and at most 1 high reasoning at
+any given time** (history: 3→6 on 2026-07-31, back to 3 on 2026-08-02,
+raised to 4-with-sub-caps by Kai 2026-08-07; Kai will explicitly grant a
+higher cap for specific waves in real time — never assume one). Default
+implementer is still `opus-5-low` for scaffolding, well-specified coding
+tasks, and mechanical changes; the medium slots are for work needing real
+diagnosis or judgment. Design/spec-heavy work goes to a single **Opus 5
+HIGH** subagent, which writes docs only and never touches code that
+parallel work has in flight.
 
 **The cap is a TOTAL across the whole tree, not a per-level fan-out** (Kai,
 2026-08-04). An implementer subagent must not spawn subagents of its own —
 say so in every brief — and the orchestrator counts any nested agent against
-the same budget. Three concurrent means three agents running, full stop.
+the same budget. Four concurrent means four agents running, full stop.
 
 ### How to spawn subagents at a chosen model + reasoning effort
 
@@ -72,7 +75,8 @@ Dispatch with the Agent tool by setting `subagent_type` to the type name —
 e.g. `subagent_type: "opus-5-low"` — and the child runs as that model at
 that effort. This works on **stock** Claude Code (including Claude Code
 Cloud); no patched binary is required. So the standing workflow is:
-implementation → `opus-5-low` (≤3 concurrent); design → `opus-5-high`.
+implementation → `opus-5-low`, diagnosis → `opus-5-medium`, design →
+`opus-5-high`, within the 4-total / ≤2-medium / ≤1-high cap.
 
 Facts behind this (measured live on the wire + token counts, 2026-07-29;
 probe + full tables in `tools/cc-effort-probe/`):
