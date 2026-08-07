@@ -142,24 +142,26 @@ const HILLSIDE: Goldens = {
   // ten components, nine orphan columns, 0.2% of the paving.
   components: 10,
   orphans: 9,
-  // 0.844 → **0.998**. The headline of the wave: a traveller who walks in on
-  // the external road now reaches all but nine columns of the town. MUST GO UP,
-  // towards 1; there is very little left to take.
-  entranceReachable: 3963,
-  entranceReachableShare: 0.998,
+  // 3963 → 3971, share → 1.000. **The walker walks on grass (e668053)**: the
+  // entrance flood now crosses every standable column rather than declared
+  // paving alone, so all that is left out is the entrance's own column. The
+  // pinned share is the instrument's ceiling now; the number to watch for
+  // regressions on this fixture is `orphans` above.
+  entranceReachable: 3971,
+  entranceReachableShare: 1.0,
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 3,
-  // 0.188 → 0.175, and 0.075 → 0.048 (eb93a54, junction steps 4b18ef5). The
-  // solo control fell by a third again; junctions remain the lever.
-  junctionDensity: 0.175,
+  // 0.188 → 0.175 (eb93a54, 4b18ef5), → 0.176 with Option A's tip flights
+  // (baeed2a) adding courses at street tips. The solo control held at 0.048;
+  // junctions remain the lever. MUST GO DOWN.
+  junctionDensity: 0.176,
   soloDensity: 0.048,
-  // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
-  // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
-  // a *new* row in the wrong direction and it is recorded as such rather than
-  // absorbed: the causeway landing removed the connector network that happened
-  // to serve that face's foot. MUST GO DOWN, back to 0.
-  faceRuns: 4,
-  unservedFaces: 1,
+  // 4 → 1 runs, and the unearned face at (5, 44) is **served again**: Option A
+  // (baeed2a) walks a street tip down onto its own flight, which is exactly the
+  // connector the causeway landing had removed from that face's foot. Back to
+  // 0 unserved, where it MUST stay.
+  faceRuns: 1,
+  unservedFaces: 0,
 };
 
 const STEEP: Goldens = {
@@ -176,17 +178,22 @@ const STEEP: Goldens = {
   // DOWN, and on this fixture the entrance share below says why it matters.
   components: 12,
   orphans: 649,
-  // 0.142 → 0.150. Barely moved, and that is the finding: on the steep fixture
-  // the external road still does not reach the town. The hillside fixture's
-  // 0.998 shows the machinery works; whatever blocks it here is the next lever.
-  entranceReachable: 633,
-  entranceReachableShare: 0.15,
+  // 633 → 4215, share 0.15 → 1.000. **The walker walks on grass (e668053).**
+  // Kai reaches 100% of this town on foot and the audit said 15%: the graph
+  // only ever held declared paving, so two flights separated by four columns of
+  // grass terrace read as islands. The town was never disconnected — the
+  // instrument was. With the ground graph the share is at its ceiling; the
+  // fragmentation this fixture still carries lives in `components`/`orphans`
+  // above, which stay network-scoped by design and MUST come down.
+  entranceReachable: 4215,
+  entranceReachableShare: 1.0,
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
   deadEnds: 10,
-  // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5).
-  junctionDensity: 0.124,
-  soloDensity: 0.043,
+  // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5); → 0.126/0.044 with
+  // Option A's tip flights (baeed2a). MUST GO DOWN.
+  junctionDensity: 0.126,
+  soloDensity: 0.044,
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
   faceRuns: 4,
@@ -233,11 +240,12 @@ interface DressingGoldens {
 }
 
 const HILLSIDE_DRESSING: DressingGoldens = {
-  // 1059 → 319 and 191 → 41: the denominators. The flight-floor fix (eb93a54)
-  // lays a flight *in* the ground, so most of what used to be a half-height
-  // tread over its own masonry is now full ground.
-  halfTreads: 319,
-  openSided: 41,
+  // 1059 → 319 and 191 → 41: the denominators; → 312/36 as Option A (baeed2a)
+  // recuts the tip flights. The flight-floor fix (eb93a54) lays a flight *in*
+  // the ground, so most of what used to be a half-height tread over its own
+  // masonry is now full ground.
+  halfTreads: 312,
+  openSided: 36,
   // **1 → 0.** The floating slab over exposed dirt is gone from this fixture,
   // and not by deleting the tread mix — `openSided` fell with it because the
   // flights sit lower, not because the slabs went away.
@@ -251,15 +259,15 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   streetLamps: 32,
   sunkenLamps: 0,
   deeplySunkenLamps: 0,
-  // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
-  // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
-  // denominator and is pinned so that a fix which merely stops cutting reads as
-  // what it is.
-  cutoffColumns: 14,
+  // 21 → 14 raw cuts (→ 12 with Option A re-landing two of them), and
+  // **21 → 0 undressed**: the junction-step wave (4b18ef5) dresses every one.
+  // `cutoffColumns` is the denominator and is pinned so that a fix which
+  // merely stops cutting reads as what it is.
+  cutoffColumns: 12,
   undressedCutoffs: 0,
-  // Unmoved: 32 columns of both-sides plinth, longest run two. Still the
+  // 32 → 30 columns of both-sides plinth, longest run two. Still the
   // external road's own kerb, still no run of plinth road on this fixture.
-  plinthColumns: 32,
+  plinthColumns: 30,
   plinthLongestRun: 2,
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
@@ -272,22 +280,24 @@ const HILLSIDE_DRESSING: DressingGoldens = {
 };
 
 const STEEP_DRESSING: DressingGoldens = {
-  // Same two levers, same direction: 1571 → 594, 551 → 178.
-  halfTreads: 594,
-  openSided: 178,
+  // Same two levers, same direction: 1571 → 594, 551 → 178; → 548/133 as
+  // Option A (baeed2a) recuts the tip flights.
+  halfTreads: 548,
+  openSided: 133,
   // 2 → 0 and 2 → 0 (eb93a54).
   openOverSoil: 0,
   floatingDressing: 0,
   streetLamps: 17,
   sunkenLamps: 0,
   deeplySunkenLamps: 0,
-  // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5).
-  cutoffColumns: 13,
+  // 11 → 13 cuts (→ 16 as Option A's tip flights cut their own slots),
+  // **11 → 0 undressed** (4b18ef5): every cut stays dressed.
+  cutoffColumns: 16,
   undressedCutoffs: 0,
-  // 3 → 5 columns, longest run 1 → 2. Up, and small; a kerb detail, well under
+  // 5 → 3 columns, longest run 2 → 1. A kerb detail, well under
   // `PLINTH_MIN_RUN`. Pinned so it cannot creep.
-  plinthColumns: 5,
-  plinthLongestRun: 2,
+  plinthColumns: 3,
+  plinthLongestRun: 1,
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
   stepPlinthColumns: 0,
