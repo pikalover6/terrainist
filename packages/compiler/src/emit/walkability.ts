@@ -51,6 +51,8 @@
  * **defect goldens**: they record how bad it is, and they must go DOWN.
  */
 
+import type { DressingProbe, DressingReport } from "./dressing.js";
+import { auditDressing } from "./dressing.js";
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { listChunks } from "./prismarine.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -227,8 +229,24 @@ export interface WalkabilityReport {
   readonly orphansByEmitter: Readonly<Record<string, number>>;
   /** The column a traveller arrives on, or `null` when no road reached the town. */
   readonly entrance: { readonly x: number; readonly y: number; readonly z: number } | null;
-  /** True when that column is in the main component — "you can walk into town". */
-  readonly entranceConnected: boolean;
+  /**
+   * Columns a traveller can reach **on foot from the entrance**, under the same
+   * reciprocal-move rule as the rest of this module.
+   *
+   * This replaced `entranceConnected`, which was a boolean saying whether the
+   * entrance happened to fall in the *largest* component. That was a tiebreak
+   * wearing a metric's clothes: it read `true` on the hillside fixture and
+   * `false` on the steep one, it flipped when two components swapped places
+   * without a single block moving, and it said nothing at all about how much of
+   * the town a traveller who walks in can actually get to. A share says the
+   * thing the walk asks.
+   */
+  readonly entranceReachable: number;
+  /**
+   * `entranceReachable / columns` — the headline. One is the target: every
+   * paved column reachable from the road that arrives.
+   */
+  readonly entranceReachableShare: number;
   /** Laid columns with no standable cell, by emitter. */
   readonly buriedByEmitter: Readonly<Record<string, number>>;
   readonly deadEnds: readonly DeadEnd[];
@@ -263,6 +281,12 @@ export interface WalkabilityReport {
   readonly unservedFaces: number;
   /** Drop → count, over every mid-town face. */
   readonly faceHistogram: Readonly<Record<string, number>>;
+  /**
+   * The four things a walk sees that a pedestrian graph cannot — floating
+   * dressing, intersection cutoffs, plinth roads and sheer built faces. See
+   * `emit/dressing.ts`.
+   */
+  readonly dressing: DressingReport;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -462,6 +486,14 @@ export async function auditWalkability(
   };
   const standable = (x: number, y: number, z: number): boolean =>
     supportAt(x, y - 1, z) && passableAt(x, y, z) && passableAt(x, y + 1, z);
+  /** Empty, in the literal sense the dressing audit needs: no state at all. */
+  const airAt = (x: number, y: number, z: number): boolean => stateAt(x, y, z) === 0;
+  const propsAt = (
+    x: number,
+    y: number,
+    z: number,
+  ): { name: string; props: Readonly<Record<string, string>> } | undefined =>
+    stack.blockStateProps(stateAt(x, y, z));
 
   /**
    * A half-block rise onto `(x, y, z)` entered from direction `(dx, dz)`.
@@ -643,8 +675,11 @@ export async function auditWalkability(
    * useless one for this world: the entrance turned out to sit in a two-column
    * stub, so every number came out as 99.96% orphaned and told a reader nothing
    * about where the town breaks. Largest-is-main plus an explicit
-   * `entranceConnected` flag says both things — how fragmented the network is,
-   * *and* whether a traveller can walk in — without either hiding the other.
+   * {@link WalkabilityReport.entranceReachableShare} says both things — how
+   * fragmented the network is, *and* how much of it a traveller who walks in can
+   * get to — without either hiding the other. The share is what replaced the
+   * boolean that used to sit here: "is the entrance in the biggest piece" is a
+   * tiebreak between components, not a statement about the walk.
    */
   const entrance = externalEntrance(context, feet);
   const ordered = [...buckets.values()].sort((a, b) => b.length - a.length);
@@ -995,6 +1030,34 @@ export async function auditWalkability(
     return null;
   }
 
+  /* --- 5: how much of the town a traveller who walks in can reach ---------- */
+
+  // The reciprocal graph is undirected, so "reachable from the entrance" *is*
+  // the entrance's own component — no second traversal, and no chance of the two
+  // answers drifting apart.
+  const entranceIndex = entrance === null ? undefined : indexOf.get(entrance);
+  const entranceReachable =
+    entranceIndex === undefined ? 0 : (buckets.get(find(entranceIndex))?.length ?? 0);
+
+  /* --- 6: the four things the graph cannot see ---------------------------- */
+
+  const probe: DressingProbe = {
+    nameAt,
+    propsAt,
+    airAt,
+    supportAt,
+    standable,
+    groundStanding,
+    feet,
+    laidBy,
+    roleAt,
+    blocks: context.blocks ?? [],
+    ...(context.town === undefined ? {} : { town: context.town }),
+    minY,
+    maxY,
+  };
+  const dressing = auditDressing(probe);
+
   const histogram = new Map<string, number>();
   for (const face of faceColumns) {
     const bucket = `drop${face.drop}`;
@@ -1009,7 +1072,8 @@ export async function auditWalkability(
     orphanColumns,
     orphansByEmitter: sortedCounts(orphanCounts),
     entrance: entrance === null ? null : entranceAt(entrance, feet),
-    entranceConnected: entrance !== null && mainSet.has(entrance),
+    entranceReachable,
+    entranceReachableShare: keys.length === 0 ? 0 : round3(entranceReachable / keys.length),
     deadEnds,
     junctions: junctions.slice(0, worst),
     junctionCount: junctions.length,
@@ -1026,6 +1090,7 @@ export async function auditWalkability(
         ([a], [b]) => Number(a.slice(4)) - Number(b.slice(4)),
       ),
     ),
+    dressing,
   };
 }
 

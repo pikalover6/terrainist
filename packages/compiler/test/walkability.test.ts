@@ -56,6 +56,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { compileTerrain } from "../src/terrain/compile.js";
 import {
+  FURNITURE_REACH,
+  PLATFORM_BAND,
+  PLINTH_MIN_RUN,
+  SHEER_DROP,
+  SHEER_RUN,
+} from "../src/emit/dressing.js";
+import {
   EARN_RATIO,
   LEVEL_SLACK,
   MIN_DANGLE,
@@ -75,8 +82,9 @@ interface Goldens {
   readonly components: number;
   /** Columns outside the largest piece. */
   readonly orphans: number;
-  /** Can a traveller walk in from the external road? */
-  readonly entranceConnected: boolean;
+  /** Columns a traveller who walks in can reach, and their share of the whole. */
+  readonly entranceReachable: number;
+  readonly entranceReachableShare: number;
   /** Flights and streets whose far end joins nothing. */
   readonly deadEnds: number;
   /** Courses per walkable column, aggregated over junctions… */
@@ -125,12 +133,13 @@ const HILLSIDE: Goldens = {
   // 3262 → 797, from 68.8% of the paving outside the main piece to 15.6% of a
   // larger network. The same fix, read as area rather than as count.
   orphans: 797,
-  // Held at true, and it is worth saying how narrowly: measured against the
-  // balustrade fix alone this went false, not because a route was lost but
-  // because "main" is the *largest* component and a different piece overtook the
-  // entrance's. With the tread-law fix the entrance's own piece is the largest
-  // again. The steep fixture is still false, for its own reason — see `STEEP`.
-  entranceConnected: true,
+  // **This replaced `entranceConnected`, which read `true` here.** The boolean
+  // asked whether the entrance fell in the *largest* component, which it did —
+  // and 797 columns of the town, 15.6% of the paving, are not reachable from the
+  // road a traveller arrives on. A boolean cannot say that and a share can. MUST
+  // GO UP, towards 1.
+  entranceReachable: 4323,
+  entranceReachableShare: 0.844,
   // 6 → 5. **The one row that did not move the way the audit predicted**, and
   // the reason is worth recording rather than burying. The audit's diagnosis was
   // that the hillside form throws connectors downhill from its *lowest* street
@@ -166,9 +175,12 @@ const STEEP: Goldens = {
   // 53 → 9.
   components: 9,
   orphans: 941,
-  // **Still false**, and unchanged in cause: this fixture's external road never
-  // reaches the town at all. Nothing in this round touched the road router.
-  entranceConnected: false,
+  // The boolean read `false` here and this reads 0.142: the external road never
+  // reaches the town, and the piece it *does* touch holds a seventh of the
+  // paving. The steep fixture is expected to read badly; what it must not do is
+  // read badly and silently.
+  entranceReachable: 633,
+  entranceReachableShare: 0.142,
   // Unmoved, and the same story as `HILLSIDE.deadEnds` — four of these seven are
   // the lowest street's causeways (`dn0_160` dangles 435 columns).
   deadEnds: 7,
@@ -179,6 +191,107 @@ const STEEP: Goldens = {
   // 26 → 3, and 16 → 0.
   faceRuns: 3,
   unservedFaces: 0,
+};
+
+/**
+ * The **dressing** goldens — `emit/dressing.ts`, the four defect classes Kai
+ * walked on 2026-08-07 that the pedestrian graph above is blind to.
+ *
+ * Same discipline, same direction: every number is a measurement of what is
+ * wrong today and **must go DOWN**. Two of the four came out very much smaller
+ * than the walk suggested and that is a finding, not a failure of the
+ * instrument — see the comments on each row, which say what the number *is* as
+ * well as what it reads. Each is a single named constant so a fix wave can
+ * re-pin it in one line.
+ */
+interface DressingGoldens {
+  /** Walkable top-half treads on the ground plane — the population. */
+  readonly halfTreads: number;
+  /** …with the underside open sideways at all. */
+  readonly openSided: number;
+  /** …with **soil** at the bottom of the opening: Kai's floating slab. */
+  readonly openOverSoil: number;
+  /** …with two cells or more of air under the tread. */
+  readonly floatingDressing: number;
+  /** Lamps with paving within two columns, and those standing below it. */
+  readonly streetLamps: number;
+  readonly sunkenLamps: number;
+  readonly deeplySunkenLamps: number;
+  /** Paved columns two or more blocks under the paving beside them. */
+  readonly cutoffColumns: number;
+  readonly undressedCutoffs: number;
+  /** Carriageway proud of open ground on both sides, and the longest such run. */
+  readonly plinthColumns: number;
+  readonly plinthLongestRun: number;
+  /** The same over flights. */
+  readonly stepPlinthColumns: number;
+  readonly stepPlinthLongestRun: number;
+  /** Built faces five blocks or taller over three columns or longer. */
+  readonly sheerFaces: number;
+  readonly sheerColumns: number;
+  readonly sheerWorstDrop: number;
+}
+
+const HILLSIDE_DRESSING: DressingGoldens = {
+  halfTreads: 1059,
+  // 191 of 1059 treads show their underside to the column beside them, and 188
+  // of those 191 show it over the flight's *own* masonry one block down — which
+  // is what a half-block step looks like and is not the defect.
+  openSided: 191,
+  // **One.** The "floating slab over exposed dirt" is one column on this
+  // fixture, at (101, 110, 69). MUST GO DOWN, to nought — but the number to read
+  // beside it is `openSided`: if a fix moves this to nought by removing the top
+  // slab from the tread mix it will take 191 with it, and that is a different
+  // change with different consequences.
+  openOverSoil: 1,
+  floatingDressing: 3,
+  // 47 lamps stand within two columns of paving; 13 of them stand *below* it and
+  // three of those by two blocks. All three are `streetscape`'s lamp posts, and
+  // every one of the thirteen has `viaCarriageway: false` — the paving above
+  // them is a flight or a doorstep, never the carriageway they light.
+  streetLamps: 47,
+  sunkenLamps: 13,
+  deeplySunkenLamps: 3,
+  // 21 paved columns sit two blocks under a paved neighbour, and **all 21 carry
+  // no stair or slab**: a raw cut nobody dressed. This is the "rectangular notch
+  // bitten out of the street end" as a number.
+  cutoffColumns: 21,
+  undressedCutoffs: 21,
+  // 32 columns of both-sides plinth in 23 runs, the longest of which is **two
+  // columns**. There is no run of plinth road on this fixture; the ones that
+  // exist are the external road's own kerb.
+  plinthColumns: 32,
+  plinthLongestRun: 2,
+  stepPlinthColumns: 0,
+  stepPlinthLongestRun: 0,
+  // Seven runs of built face at five blocks or more, 84 columns of them, the
+  // worst eight blocks tall. Every attributed one is `retaining`.
+  sheerFaces: 7,
+  sheerColumns: 84,
+  sheerWorstDrop: 8,
+};
+
+const STEEP_DRESSING: DressingGoldens = {
+  halfTreads: 1571,
+  openSided: 551,
+  openOverSoil: 2,
+  floatingDressing: 2,
+  streetLamps: 23,
+  sunkenLamps: 7,
+  deeplySunkenLamps: 1,
+  cutoffColumns: 11,
+  undressedCutoffs: 11,
+  plinthColumns: 3,
+  plinthLongestRun: 1,
+  // The only plinth with any length on either fixture is on the *flights*, and
+  // it is four columns at a stair head — which is the half of Kai's observation
+  // ("mostly at the tops of stairs") the instrument confirms, at a size the walk
+  // over-reported.
+  stepPlinthColumns: 8,
+  stepPlinthLongestRun: 4,
+  sheerFaces: 5,
+  sheerColumns: 53,
+  sheerWorstDrop: 8,
 };
 
 const scratch: string[] = [];
@@ -223,13 +336,26 @@ describe("the walkability audit", () => {
     expect(MIN_DANGLE).toBe(3);
     // A tread, a course of dressing over it, a landing cut under it.
     expect(LEVEL_SLACK).toBe(3);
+    // A lamp stands on the outer sidewalk column, so its own carriageway is two
+    // columns away; anything further is a different street, and measuring
+    // against it turns a hill into a defect.
+    expect(FURNITURE_REACH).toBe(2);
+    // Carriageway, kerb, footway and a column of slack for a building's apron.
+    expect(PLATFORM_BAND).toBe(5);
+    // Six columns of both-sides plinth is a run you see; two is a kerb.
+    expect(PLINTH_MIN_RUN).toBe(6);
+    // Below `RETAIN_MAX` on purpose: the tallest wall the compiler will build is
+    // already taller than Kai wants to walk past, so a detector pinned at the
+    // sanctioned ceiling would read zero and prove nothing.
+    expect(SHEER_DROP).toBeLessThan(6);
+    expect(SHEER_RUN).toBe(3);
   });
 
   /* --- the goldens -------------------------------------------------------- */
 
-  for (const [name, golden, get] of [
-    ["site-plan-hillside", HILLSIDE, (): WalkabilityReport => hillside],
-    ["site-plan-hillside-steep", STEEP, (): WalkabilityReport => steep],
+  for (const [name, golden, dressed, get] of [
+    ["site-plan-hillside", HILLSIDE, HILLSIDE_DRESSING, (): WalkabilityReport => hillside],
+    ["site-plan-hillside-steep", STEEP, STEEP_DRESSING, (): WalkabilityReport => steep],
   ] as const) {
     describe(name, () => {
       it("measures the paved network at the size it was measured at", () => {
@@ -248,9 +374,10 @@ describe("the walkability audit", () => {
         expect(get().orphanColumns).toBe(golden.orphans);
       });
 
-      it("DEFECT GOLDEN — whether a traveller can walk into town", () => {
-        // MUST GO UP, to true on both fixtures.
-        expect(get().entranceConnected).toBe(golden.entranceConnected);
+      it("DEFECT GOLDEN — how much of the town a traveller who walks in reaches", () => {
+        // MUST GO UP, towards 1 on both fixtures.
+        expect(get().entranceReachable).toBe(golden.entranceReachable);
+        expect(get().entranceReachableShare).toBeCloseTo(golden.entranceReachableShare, 3);
       });
 
       it("DEFECT GOLDEN — flights and streets whose far end joins nothing", () => {
@@ -271,6 +398,63 @@ describe("the walkability audit", () => {
         // A six-block face with a twelve-column stair passes this test.
         expect(get().faceRuns).toBe(golden.faceRuns);
         expect(get().unservedFaces).toBe(golden.unservedFaces);
+      });
+
+      /* --- the dressing audit ------------------------------------------- */
+
+      it("DEFECT GOLDEN 1 — dressing cantilevered over open ground", () => {
+        // `openOverSoil` MUST GO DOWN, to 0. `halfTreads` and `openSided` are
+        // the denominators and are pinned so that a fix which lowers the defect
+        // by deleting the tread mix is visible as such rather than as a win.
+        expect(get().dressing.halfTreads).toBe(dressed.halfTreads);
+        expect(get().dressing.openSided).toBe(dressed.openSided);
+        expect(get().dressing.openOverSoil).toBe(dressed.openOverSoil);
+        expect(get().dressing.floatingDressing).toBe(dressed.floatingDressing);
+      });
+
+      it("DEFECT GOLDEN 2 — sunken furniture and undressed cuts", () => {
+        // `sunkenLamps` and `undressedCutoffs` MUST GO DOWN, to 0.
+        // `streetLamps` is the denominator: a fix that stops planting lamps
+        // would take the defect with it and must not read as a success.
+        expect(get().dressing.streetLamps).toBe(dressed.streetLamps);
+        expect(get().dressing.sunkenLamps).toBe(dressed.sunkenLamps);
+        expect(get().dressing.deeplySunkenLamps).toBe(dressed.deeplySunkenLamps);
+        expect(get().dressing.cutoffColumns).toBe(dressed.cutoffColumns);
+        expect(get().dressing.undressedCutoffs).toBe(dressed.undressedCutoffs);
+      });
+
+      it("DEFECT GOLDEN 3 — road standing proud of the ground on both sides", () => {
+        // MUST GO DOWN. Both fixtures read close to nought today, which is the
+        // finding: the plinth Kai walked is not a carriageway phenomenon on
+        // these two documents. The rows are pinned anyway, because a fix aimed
+        // at the *other* three defects is exactly the kind of change that would
+        // create this one.
+        expect(get().dressing.plinthColumns).toBe(dressed.plinthColumns);
+        expect(get().dressing.plinthLongestRun).toBe(dressed.plinthLongestRun);
+        expect(get().dressing.stepPlinthColumns).toBe(dressed.stepPlinthColumns);
+        expect(get().dressing.stepPlinthLongestRun).toBe(dressed.stepPlinthLongestRun);
+      });
+
+      it("DEFECT GOLDEN 4 — sheer built faces with no bench", () => {
+        // MUST GO DOWN, to 0 — and by benching or shortening the face, not by
+        // hiding it: `sheerColumns` is pinned beside the run count so that
+        // splitting one long face into three short ones cannot read as progress.
+        expect(get().dressing.sheerFaces).toBe(dressed.sheerFaces);
+        expect(get().dressing.sheerColumns).toBe(dressed.sheerColumns);
+        expect(get().dressing.sheerWorstDrop).toBe(dressed.sheerWorstDrop);
+      });
+
+      it("names the pass that built every sheer face it lists", () => {
+        // The finding has to be actionable: a face with no owner is a complaint.
+        // Every attributed run on both fixtures is `retaining`'s, which is the
+        // diagnosis — this is `treatmentForEdge` rule 9 doing what it is written
+        // to do, plus faces that *stack* past `RETAIN_MAX` because the wall's own
+        // foot sits on another drop.
+        for (const face of get().dressing.worstSheer) {
+          const owners = Object.keys(face.byEmitter);
+          if (owners.length === 0) continue;
+          expect(owners[0]).toBe("retaining");
+        }
       });
     });
   }
