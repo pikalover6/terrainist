@@ -80,8 +80,18 @@ export interface FloraEmission {
  */
 export type LeafStatePolicy = "legacy" | "computed";
 
-/** The active policy. Byte-identity with pre-grammar worlds depends on it. */
-export const LEAF_STATE_POLICY: LeafStatePolicy = "legacy";
+/**
+ * The active policy.
+ *
+ * **Flipped to `"computed"` 2026-08-07 on Kai's go** — he saw live leaf decay
+ * on the old-growth walk, which was the confirmation §9.1 was waiting for.
+ * Every emitted leaf now carries a BFS `distance` with `persistent = false`;
+ * canopy the search cannot reach within 6 is written `persistent = true` and
+ * counted (law 2's frozen mega-spruce whorl exception, §3.3). The world diff
+ * was measured first: on every fixture the move is a `*_leaves` state change
+ * only — same block, different `distance`/`persistent`.
+ */
+export const LEAF_STATE_POLICY: LeafStatePolicy = "computed";
 
 /** The maximum `distance` a non-persistent leaf may carry in vanilla. */
 export const MAX_LEAF_DISTANCE = 6;
