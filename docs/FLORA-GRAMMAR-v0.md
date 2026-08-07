@@ -166,6 +166,9 @@ Grammar-level tests run every program across its parameter-envelope **corners**
    promoted from a per-template fix to a law. **Read `log` as the whole
    wood family — `log`, `branch` and `stem`** — because a bare mushroom stem
    poking through its own cap is the same defect wearing a different block.
+   *Amended 2026-08-07 — see §9.4: suspended as a universal law. Accidental
+   masts are prevented at the source (`capWood` on live constructions,
+   asserted per program); deliberate standing dead wood is legal.*
 2. **Every canopy block is within leaf-BFS distance 6 of a
    `log`/`branch`/`stem`** — BFS through the plant's own canopy blocks, which
    is the metric vanilla's `distance` actually uses (*ratified 2026-08-07; the
@@ -1436,15 +1439,17 @@ this is terrain-side only, and a tree inside the settlement footprint is
 excluded unconditionally by `forestEligibility`. Revisit with the agricultural
 layer, which will want hedgerows and orchards inside claimed ground anyway.
 
-### 9.4 Law 1 forbids a dead standing snag
+### 9.4 Law 1 forbids a dead standing snag — RESOLVED
 
-Raised by §3.8. Law 1 was written against bare mega-spruce masts — an accident.
-A deliberate dead snag is the same geometry on purpose, and it is good scenery
-in an arid or blighted wood. Options: leave law 1 absolute (v0's choice: the
-one-live-limb ancient, `age ≤ 0.85`); or add a per-species `snag: true` opt-out
-that the law's test reads, so the exemption is enumerable and visible in a diff
-rather than a hole in the invariant. Kai's call; the second is cheap and the
-first is safe.
+**Kai, 2026-08-07 (by popup): law 1 is suspended as a universal law.** The
+target property was never "no topmost log" — it was "no *accidental* bare
+mast", and that is enforced at the source: live constructions cap their wood
+columns (`capWood`, §3.13.4), and the grammar tests assert it per program for
+live output. Deliberately dead standing wood (a snag, a fully dead ancient)
+is **legal geometry** — maximum flexibility. Fallback, pre-authorized: if
+suspension causes trouble (lint noise, accidental masts creeping back), switch
+to an enumerable per-species `snag: true` opt-out without asking again.
+Implementation queued with the next flora wave (with §9.6's).
 
 ### 9.5 Should the connectivity corollary be law 6? — RESOLVED
 
@@ -1462,11 +1467,11 @@ authoring pattern the compiler silently declines, on a key the kit teaches a
 model to write.
 
 The flora grammar is its natural owner (a per-species elevation ceiling is the
-same idea as `elevation`, applied per species rather than per node). Three ways
-out, for Kai: implement it as documented (per-species, which means moving the key
-onto the species entry and leaving the node-level one as a default), implement it
-node-wide as an upper `elevation` bound, or delete it from the validator and the
-kit. Doing nothing is the only bad answer.
+same idea as `elevation`, applied per species rather than per node).
+**RESOLVED — Kai, 2026-08-07 (by popup): implement as documented,
+per-species** — the key moves onto the species entry and the node-level value
+stays as the default. Implementation queued with the next flora wave (with
+§9.4's).
 
 ### 9.7 Snow on canopy tops
 

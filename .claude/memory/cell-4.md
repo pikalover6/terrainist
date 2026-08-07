@@ -53,8 +53,15 @@ last hillside unservedFace verge fix (low); the transcript→HTML log
 renderer `tools/session-log/` (low). **Then:** DESIGN.md ledger refresh,
 regenerate + install three walk worlds (both hill towns + old-growth).
 
+**Settled by popup (2026-08-07):** snowLine → per-species as documented;
+flora law 1 → SUSPENDED (accidental masts prevented at source via capWood;
+deliberate snags legal; pre-authorized fallback to `snag: true` opt-out on
+trouble). Both queued for the next flora wave. Kai also designed the
+**funnel memory** (this file system + rendered log, protocol in CLAUDE.md)
+and invited liberal AskUserQuestion popups.
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
-walk); snowLine fate; junction pass on flat towns (after harbourtown walk);
-mega-whorl narrowing (rides with leaf flip); snag opt-out; snow on tall
-crowns; understory density (§9.9); dwellings-vs-nature gate; hillside
-cutover (WP-5) after the iterated walk.
+walk); junction pass on flat towns (after harbourtown walk); mega-whorl
+narrowing (rides with leaf flip); snow on tall crowns; understory density
+(§9.9); dwellings-vs-nature gate; hillside cutover (WP-5) after the
+iterated walk.
