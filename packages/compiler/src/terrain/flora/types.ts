@@ -52,6 +52,16 @@ export interface FloraBlock {
   readonly part: FloraPart;
   /** For `"branch"`: the log axis the emitter maps to an oriented log state. */
   readonly axis?: "x" | "y" | "z";
+  /**
+   * For `"branch"`: a **dead** limb, which takes the species' `deadSymbol`
+   * (a stripped log) instead of its trunk symbol.
+   *
+   * The flag is needed because `part` alone cannot carry the distinction: an
+   * `ancient` grows live and dead limbs on the same tree, and §3.2's rule is
+   * that the palette symbol decides the block. A live branch takes the trunk
+   * state; a dead one takes {@link FloraStates.branch}.
+   */
+  readonly dead?: boolean;
 }
 
 /**
@@ -64,6 +74,14 @@ export interface FloraSpeciesDef {
   readonly id: string;
   readonly program: string;
   readonly height: readonly [number, number];
+  /** Which layer of a composed forest this species is (§5). */
+  readonly stratum?: "emergent" | "canopy" | "understory";
+  /** Climate affinity for the default composition tables (§5.2). */
+  readonly climates?: readonly string[];
+  /** §2: never reachable from a climate default, only by being named. */
+  readonly fantasy?: boolean;
+  /** `age` envelope for the `ancient` program, drawn per tree. */
+  readonly age?: readonly [number, number];
   readonly trunkSymbol: string;
   readonly leafSymbol: string;
   /** Program knobs — only the ones the program reads; see §3's tables. */

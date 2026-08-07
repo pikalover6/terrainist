@@ -17,11 +17,13 @@
  */
 
 import {
+  Rng,
   SurfaceClass,
   clamp01,
   columnFloat,
   fbm2,
   gradientNoise2,
+  positionDigest,
   positionFloat,
   positionInt,
   positionWeighted,
@@ -31,15 +33,28 @@ import {
   type Region,
   type Seed256,
 } from "@terrainist/stdlib";
-import type { ForestParams, ForestSpecies, ScatterArea, TreeShape } from "@terrainist/spec";
+import type {
+  ClimateTheme,
+  FloraSpeciesId,
+  ForestParams,
+  ForestSpecies,
+  ScatterArea,
+  StrataParams,
+  StratumSpec,
+  TreeShape,
+} from "@terrainist/spec";
 import { ZONE_TOKENS } from "@terrainist/spec";
 
 import {
   LEGACY_FLORA_SPECIES,
   SHAPE_PROGRAMS,
+  CLIMATE_STRATA,
+  speciesFor,
   type FloraBlock,
   type FloraSpeciesDef,
+  type FloraStates,
   type FloraVariation,
+  type FloraVec2,
   type ShapeProgramId,
 } from "./flora/index.js";
 import type { ColumnPlan } from "./columns.js";
@@ -83,7 +98,7 @@ const ZONE_FRACTIONS: Readonly<Record<string, readonly [number, number]>> = Obje
 export interface TreePlacement {
   readonly nodeId: string;
   readonly speciesId: string;
-  readonly shape: TreeShape;
+  readonly shape: FloraSpeciesId;
   /** World coordinates of the trunk base (the first log, one above the ground). */
   readonly x: number;
   readonly z: number;
@@ -96,6 +111,31 @@ export interface TreePlacement {
   readonly mega: boolean;
   readonly trunkState: number;
   readonly leafState: number;
+  /**
+   * Which layer of the composition planted this tree (§5). Absent means the
+   * node had no `strata`, which is every document that validates today.
+   */
+  readonly stratum?: "emergent" | "canopy" | "understory";
+  /**
+   * The seed of this plant's program RNG (§3.1), position-keyed on the trunk
+   * column so the geometry is a pure function of where the tree stands — never
+   * of the order the region was traversed.
+   *
+   * Carried on the placement rather than recomputed by each consumer because
+   * `clipTrees`, the shade map and the emitter must all see the *same* tree.
+   */
+  readonly programSeed?: Seed256;
+  /** Trunk drift direction per 4 blocks of rise (`ancient`). */
+  readonly lean?: FloraVec2;
+  /** `0..1`, drawn from the species' `age` envelope (`ancient`). */
+  readonly age?: number;
+  /** Extra part states, resolved from the palette at scatter time (§3.2). */
+  readonly rootState?: number;
+  readonly deadState?: number;
+  readonly hangingState?: number;
+  readonly decoState?: number;
+  readonly stemState?: number;
+  readonly capState?: number;
 }
 
 /**
@@ -116,6 +156,8 @@ export interface ScatteredNode {
   readonly params: ReturnType<typeof resolveForestParams>;
   /** Where this node considers the ground plantable. */
   readonly mask: Uint8Array;
+  /** The node's resolved composition, absent when it declared no `strata`. */
+  readonly strata?: ResolvedStrata;
 }
 
 /** The outcome of the scatter pass. */
@@ -127,6 +169,13 @@ export interface ScatterResult {
   readonly perNode: Readonly<Record<string, number>>;
   /** Per-node eligibility and resolved params, for the undergrowth pass. */
   readonly nodes: readonly ScatteredNode[];
+  /**
+   * What each composed node's strata did (§5.3).
+   *
+   * A budget the node could not spend is exactly the kind of silent decline
+   * DESIGN.md's first failure mode is about, so it is printed.
+   */
+  readonly strata: readonly StrataReport[];
 }
 
 /**
@@ -244,6 +293,7 @@ export function scatterForests(
   palette: Palette,
   structures?: StructureOccupancy,
   clearing?: Float32Array,
+  climate?: ClimateSample,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -253,6 +303,7 @@ export function scatterForests(
   const trees: TreePlacement[] = [];
   const perNode: Record<string, number> = {};
   const scattered: ScatteredNode[] = [];
+  const strataReports: StrataReport[] = [];
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
@@ -271,12 +322,61 @@ export function scatterForests(
       if (mask[k] === 1 && (clearing === undefined || (clearing[k] as number) > 0)) coverage[k] = 1;
     }
     const before = trees.length;
-    scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing);
+    const strata = resolveStrata(node.params.strata);
+    // Strata run in a fixed order — emergent, canopy, understory — on three
+    // named streams. Order matters only through the shared occupancy mask,
+    // which is already order-dependent (row-major) today; naming the order in
+    // one place is what keeps it deterministic.
+    if (strata === undefined) {
+      scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing, false);
+    } else {
+      const theme = nodeClimateTheme(mask, climate);
+      const emergentLive = stratumLive(strata.emergent);
+      const emergentSpecies = emergentLive
+        ? stratumSpecies(strata.emergent, theme, "emergent", CLIMATE_STRATA)
+        : [];
+      const emergent = emergentLive
+        ? scatterEmergent(node, params, strata.emergent, emergentSpecies, plan, mask, occupancy, palette, trees, clearing)
+        : { budget: 0, placed: 0, refused: 0 };
+      // §5.5: with a live emergent stratum the mega-spruce draw is suppressed —
+      // the budget has taken over the "rare and landmark-like" job, and a wood
+      // with both would be the opposite of rare.
+      const resolvedCanopy: ResolvedStrata =
+        strata.canopy === "default"
+          ? { ...strata, canopy: { species: stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA) } }
+          : strata;
+      scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing, emergentLive, resolvedCanopy);
+      let understory = 0;
+      if (stratumLive(strata.understory)) {
+        const shade = canopyCover(plan, trees.slice(before));
+        understory = scatterUnderstory(
+          node,
+          params,
+          strata.understory,
+          stratumSpecies(strata.understory, theme, "understory", CLIMATE_STRATA),
+          plan,
+          mask,
+          occupancy,
+          shade,
+          palette,
+          trees,
+          clearing,
+        );
+      }
+      strataReports.push({
+        node: node.id,
+        theme,
+        budget: emergent.budget,
+        placed: emergent.placed,
+        refused: emergent.refused,
+        understory,
+      });
+    }
     perNode[node.id] = trees.length - before;
-    scattered.push({ id: node.id, seed: node.seed, params, mask });
+    scattered.push({ id: node.id, seed: node.seed, params, mask, ...(strata === undefined ? {} : { strata }) });
   }
 
-  return { trees, coverage, perNode, nodes: scattered };
+  return { trees, coverage, perNode, nodes: scattered, strata: strataReports };
 }
 
 function scatterOne(
@@ -288,13 +388,25 @@ function scatterOne(
   palette: Palette,
   out: TreePlacement[],
   clearing: Float32Array | undefined,
+  suppressMega: boolean,
+  strata?: ResolvedStrata,
 ): void {
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
+  const programStream = streamSeed(node.seed, "flora.program");
   const clumpSeed = seed32(streamSeed(node.seed, "scatter.clump"));
   const areaWobbleSeed = seed32(streamSeed(node.seed, "scatter.area-edge"));
   const spacing = Math.max(1, Math.floor(params.spacing));
-  const species = node.params.species;
+  // The canopy layer defaults to `params.species`, unchanged — which is what
+  // makes the whole feature additive: `strata` adds the layer above it and the
+  // layer below it.
+  const canopy = strata?.canopy ?? "authored";
+  const species =
+    canopy === "authored"
+      ? node.params.species
+      : typeof canopy === "string"
+        ? node.params.species
+        : canopy.species;
   const weights = species.map((s) => s.weight ?? 1);
   // `density` is trees per eligible column, so one cell wants
   // `density · spacing²` of them. Below one that is a probability; at or above
@@ -340,21 +452,26 @@ function scatterOne(
 
         const pick = positionWeighted(scatter, x, 4, z, weights);
         const chosen = species[pick] as ForestSpecies;
-        const template = TREE_TEMPLATES[chosen.shape];
-        const minH = chosen.minHeight ?? template.minHeight;
-        const maxH = chosen.maxHeight ?? template.maxHeight;
+        const def = speciesFor(chosen.shape);
+        const minH = chosen.minHeight ?? def.height[0];
+        const maxH = chosen.maxHeight ?? def.height[1];
         // Per-tree variety, all position-keyed: height inside the species range, a
         // canopy a block wider or narrower, and the occasional giant.
         const height = positionInt(scatter, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
         const radiusDelta = positionInt(scatter, x, 6, z, -1, 1);
+        // §5.5: `MEGA_SPRUCE_SHARE` is data now. Same draw, same salt, same
+        // constant, same trees — and suppressed outright when an emergent
+        // stratum has taken over the landmark job.
         const mega =
-          chosen.shape === "spruce_tall" && positionFloat(scatter, x, 7, z) < MEGA_SPRUCE_SHARE;
+          !suppressMega &&
+          def.megaShare !== undefined &&
+          positionFloat(scatter, x, 7, z) < def.megaShare;
 
         // Only the trunk is exclusive; a mega spruce occupies 2×2, so it claims
         // one more block of clearance.
         if (!claimTrunk(region, occupancy, x, z, spacing + (mega ? 1 : 0), mega)) continue;
 
-        out.push({
+        const base: TreePlacement = {
           nodeId: node.id,
           speciesId: chosen.id,
           shape: chosen.shape,
@@ -364,13 +481,484 @@ function scatterOne(
           height: mega ? height + 4 : height,
           radiusDelta,
           mega,
-          trunkState: palette.state(chosen.trunkPalette ?? template.trunkSymbol),
-          leafState: palette.state(chosen.leafPalette ?? template.leafSymbol),
-        });
+          trunkState: palette.state(chosen.trunkPalette ?? def.trunkSymbol),
+          leafState: palette.state(chosen.leafPalette ?? def.leafSymbol),
+        };
+        out.push(
+          strata === undefined
+            ? base
+            : makePlacement({
+                node,
+                entry: chosen,
+                def,
+                stream: scatter,
+                programStream,
+                x,
+                z,
+                baseY: base.baseY,
+                height: base.height,
+                radiusDelta,
+                mega,
+                stratum: "canopy",
+                palette,
+              }),
+        );
       }
     }
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Strata composition (FLORA-GRAMMAR-v0 §5)                                    */
+/* -------------------------------------------------------------------------- */
+
+/** One emergent per this many blocks square of eligible ground. */
+export const EMERGENT_AREA = 128;
+/** Upper bound on a single node's emergent budget, however large the node. */
+export const EMERGENT_MAX = 12;
+/** Minimum trunk-to-trunk distance between two emergents. */
+export const EMERGENT_EXCLUSION = 48;
+/** Understory density as a share of the node's own `density`. */
+export const UNDERSTORY_SHARE = 0.45;
+/** How much broken light raises an understory tree's acceptance. */
+export const UNDERSTORY_SHADE_GAIN = 0.8;
+/**
+ * The highest block a plant may reach (§9.2).
+ *
+ * `bucketTrees` silently drops anything above y = 319, which would take a
+ * giant's crown off and leave law 1 violated after the fact, by the emitter,
+ * invisibly. Four blocks of margin below the build limit is the clamp's target.
+ */
+export const FLORA_CEILING = 319 - 4;
+
+/** A forest node's composition, every default filled in. */
+export interface ResolvedStrata {
+  readonly emergent?: StratumSpec;
+  readonly understory?: StratumSpec;
+  readonly canopy: "authored" | "default" | { readonly species: readonly ForestSpecies[] };
+  readonly floor: "default" | "fungal" | "glow";
+}
+
+/**
+ * Resolve `params.strata`.
+ *
+ * `strata: true` is the one-word form and means
+ * `{ emergent: "default", understory: "default" }` — the form the kit teaches
+ * first. Absent, this returns `undefined` and the node scatters exactly as it
+ * does today, which is §2's reach law at the scatter level.
+ */
+export function resolveStrata(strata: true | StrataParams | undefined): ResolvedStrata | undefined {
+  if (strata === undefined) return undefined;
+  const s: StrataParams = strata === true ? { emergent: "default", understory: "default" } : strata;
+  return {
+    ...(s.emergent === undefined ? {} : { emergent: s.emergent }),
+    ...(s.understory === undefined ? {} : { understory: s.understory }),
+    canopy: s.canopy ?? "authored",
+    floor: s.floor ?? "default",
+  };
+}
+
+/** Whether a stratum is switched on at all. */
+function stratumLive(spec: StratumSpec | undefined): boolean {
+  return spec !== undefined && spec !== "none";
+}
+
+/** A stratum's numeric knob, or `undefined` when it was not written. */
+function stratumNumber(spec: StratumSpec | undefined, key: "budget" | "exclusion" | "density"): number | undefined {
+  if (spec === undefined || typeof spec === "string") return undefined;
+  const value = spec[key];
+  return typeof value === "number" ? value : undefined;
+}
+
+/**
+ * The climate theme nearest a `(temperature, humidity)` pair.
+ *
+ * The same nearest-centre rule the land-use biome clamp uses; ties break on
+ * `CLIMATE_THEMES` declaration order.
+ */
+export function climateThemeAt(
+  temperature: number,
+  humidity: number,
+  centers: Readonly<Record<string, readonly [number, number]>>,
+  themes: readonly string[],
+): string {
+  let best = themes[0] as string;
+  let bestD = Number.POSITIVE_INFINITY;
+  for (const theme of themes) {
+    const c = centers[theme] as readonly [number, number];
+    const d = (temperature - c[0]) ** 2 + (humidity - c[1]) ** 2;
+    if (d < bestD) {
+      bestD = d;
+      best = theme;
+    }
+  }
+  return best;
+}
+
+/** The per-column climate fields the strata pass reads (§5.2). */
+export interface ClimateSample {
+  readonly temperature: Float32Array;
+  readonly humidity: Float32Array;
+  readonly centers: Readonly<Record<string, readonly [number, number]>>;
+  readonly themes: readonly string[];
+}
+
+/**
+ * One theme per node, by ambient majority over its eligibility mask.
+ *
+ * Not per column, on purpose: a patch is a *place*, and a wood whose species
+ * mix changes column by column across a climate gradient reads as noise.
+ */
+export function nodeClimateTheme(mask: Uint8Array, climate: ClimateSample | undefined): string {
+  if (climate === undefined) return "temperate";
+  const counts = new Map<string, number>();
+  for (let k = 0; k < mask.length; k++) {
+    if (mask[k] !== 1) continue;
+    const theme = climateThemeAt(
+      climate.temperature[k] as number,
+      climate.humidity[k] as number,
+      climate.centers,
+      climate.themes,
+    );
+    counts.set(theme, (counts.get(theme) ?? 0) + 1);
+  }
+  let best = "temperate";
+  let bestN = -1;
+  // Ties break on declaration order, which is why this walks the theme list
+  // rather than the map's insertion order.
+  for (const theme of climate.themes) {
+    const n = counts.get(theme) ?? 0;
+    if (n > bestN) {
+      bestN = n;
+      best = theme;
+    }
+  }
+  return bestN <= 0 ? "temperate" : best;
+}
+
+/** What one node's composition did, for the report (§5.3). */
+export interface StrataReport {
+  readonly node: string;
+  readonly theme: string;
+  readonly budget: number;
+  readonly placed: number;
+  /** Candidates the §9.2 build-limit clamp refused outright. */
+  readonly refused: number;
+  readonly understory: number;
+}
+
+/** The species list a stratum draws from. */
+function stratumSpecies(
+  spec: StratumSpec | undefined,
+  theme: string,
+  stratum: "emergent" | "canopy" | "understory",
+  table: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>,
+): readonly ForestSpecies[] {
+  if (spec !== undefined && typeof spec !== "string" && spec.species !== undefined) {
+    return spec.species;
+  }
+  const row = table[theme]?.[stratum] ?? [];
+  return row.map((id) => ({ id, shape: id as FloraSpeciesId }));
+}
+
+/**
+ * Fill in one placement's variation, program seed and part states.
+ *
+ * Every draw here is position-keyed on the trunk column (§3.1), so two trees at
+ * the same column agree however the region was traversed — and so introducing a
+ * draw for a new species cannot shift a draw an old one makes.
+ */
+function makePlacement(args: {
+  node: ForestNodeInput;
+  entry: ForestSpecies;
+  def: FloraSpeciesDef;
+  stream: Seed256;
+  programStream: Seed256;
+  x: number;
+  z: number;
+  baseY: number;
+  height: number;
+  radiusDelta: number;
+  mega: boolean;
+  stratum: "emergent" | "canopy" | "understory";
+  palette: Palette;
+}): TreePlacement {
+  const { entry, def, stream, programStream, x, z, palette } = args;
+  const optional = (symbol: string | undefined): { state: number } | undefined =>
+    symbol === undefined ? undefined : { state: palette.state(symbol) };
+  const root = optional(def.rootSymbol);
+  const dead = optional(def.deadSymbol);
+  const hanging = optional(def.hangingSymbol);
+  const deco = optional(def.decoSymbol);
+  const stem = optional(def.stemSymbol);
+  const cap = optional(def.capSymbol);
+  const age =
+    def.age === undefined
+      ? undefined
+      : def.age[0] + positionFloat(stream, x, 8, z) * (def.age[1] - def.age[0]);
+  const theta = 2 * Math.PI * positionFloat(stream, x, 9, z);
+  return {
+    nodeId: args.node.id,
+    speciesId: entry.id,
+    shape: entry.shape,
+    x,
+    z,
+    baseY: args.baseY,
+    height: args.height,
+    radiusDelta: args.radiusDelta,
+    mega: args.mega,
+    stratum: args.stratum,
+    programSeed: positionDigest(programStream, x, 0, z),
+    trunkState: palette.state(entry.trunkPalette ?? def.trunkSymbol),
+    leafState: palette.state(entry.leafPalette ?? def.leafSymbol),
+    ...(def.program === "ancient" ? { lean: { x: Math.cos(theta), z: Math.sin(theta) } } : {}),
+    ...(age === undefined ? {} : { age }),
+    ...(root === undefined ? {} : { rootState: root.state }),
+    ...(dead === undefined ? {} : { deadState: dead.state }),
+    ...(hanging === undefined ? {} : { hangingState: hanging.state }),
+    ...(deco === undefined ? {} : { decoState: deco.state }),
+    ...(stem === undefined ? {} : { stemState: stem.state }),
+    ...(cap === undefined ? {} : { capState: cap.state }),
+  };
+}
+
+/**
+ * The emergent stratum: rare, landmark-like, placed **first**.
+ *
+ * The budget is area-scaled and the exclusion radius is large, so emergents
+ * anchor the skyline the way the prominence field anchors a town's. A candidate
+ * that fails either occupancy mask is skipped, not retried elsewhere: the
+ * budget is an upper bound, and a patch too small or too broken to hold it
+ * reports `placed < budget` rather than forcing trees into bad ground.
+ *
+ * Candidates are ranked by a position-keyed score rather than accepted in
+ * row-major order. §5.3's literal reading (first-fit over the jittered grid)
+ * spends the whole budget in the region's first two rows of cells — one
+ * emergent per 128² is a *density*, not a preference for the north-west corner
+ * — and a score-ranked greedy pass is equally deterministic and equally
+ * traversal-independent.
+ */
+function scatterEmergent(
+  node: ForestNodeInput,
+  params: ReturnType<typeof resolveForestParams>,
+  spec: StratumSpec | undefined,
+  species: readonly ForestSpecies[],
+  plan: ColumnPlan,
+  mask: Uint8Array,
+  occupancy: Uint8Array,
+  palette: Palette,
+  out: TreePlacement[],
+  clearing: Float32Array | undefined,
+): { budget: number; placed: number; refused: number } {
+  const { region, ground } = plan;
+  let area = 0;
+  for (let k = 0; k < mask.length; k++) if (mask[k] === 1) area += 1;
+  const budget =
+    stratumNumber(spec, "budget") ??
+    Math.max(0, Math.min(EMERGENT_MAX, Math.round(area / (EMERGENT_AREA * EMERGENT_AREA))));
+  const exclusion = Math.max(1, Math.round(stratumNumber(spec, "exclusion") ?? EMERGENT_EXCLUSION));
+  if (budget <= 0 || species.length === 0) return { budget, placed: 0, refused: 0 };
+
+  const stream = streamSeed(node.seed, "scatter.emergent");
+  const programStream = streamSeed(node.seed, "flora.program");
+  const weights = species.map((s) => s.weight ?? 1);
+  const spacing = Math.max(1, Math.floor(params.spacing));
+  const cellsX = Math.ceil(region.width / exclusion);
+  const cellsZ = Math.ceil(region.depth / exclusion);
+
+  const candidates: { x: number; z: number; idx: number; score: number }[] = [];
+  for (let cz = 0; cz < cellsZ; cz++) {
+    for (let cx = 0; cx < cellsX; cx++) {
+      const jx = positionFloat(stream, cx, 1, cz);
+      const jz = positionFloat(stream, cx, 2, cz);
+      const x = region.x0 + Math.min(region.width - 1, Math.floor(cx * exclusion + jx * exclusion));
+      const z = region.z0 + Math.min(region.depth - 1, Math.floor(cz * exclusion + jz * exclusion));
+      const idx = (z - region.z0) * region.width + (x - region.x0);
+      if (mask[idx] !== 1) continue;
+      if (clearing !== undefined && (clearing[idx] as number) <= 0) continue;
+      candidates.push({ x, z, idx, score: positionFloat(stream, cx, 3, cz) });
+    }
+  }
+  candidates.sort((a, b) => a.score - b.score || a.z - b.z || a.x - b.x);
+
+  // A private mask, so emergents keep their distance from each other without
+  // reserving that much ground against the canopy.
+  const emergentOccupancy = new Uint8Array(region.width * region.depth);
+  let placed = 0;
+  let refused = 0;
+  for (const c of candidates) {
+    if (placed >= budget) break;
+    if (emergentOccupancy[c.idx] === 1) continue;
+    const entry = species[positionWeighted(stream, c.x, 4, c.z, weights)] as ForestSpecies;
+    const def = speciesFor(entry.shape);
+    const program = SHAPE_PROGRAMS[def.program as ShapeProgramId];
+    const minH = entry.minHeight ?? def.height[0];
+    const maxH = entry.maxHeight ?? def.height[1];
+    const lo = Math.min(minH, maxH);
+    const hi = Math.max(minH, maxH);
+    let height = positionInt(stream, c.x, 5, c.z, lo, hi);
+    const radiusDelta = positionInt(stream, c.x, 6, c.z, -1, 1);
+    const baseY = (ground[c.idx] as number) + 1;
+    // §9.2, ratified: clamp the height so the crown fits under the ceiling, and
+    // refuse the tree outright if the clamp falls below the species minimum —
+    // reported, never silently stunted.
+    const headroom = knobCrownHeadroom(def);
+    const allowed = FLORA_CEILING - baseY - headroom;
+    if (allowed < lo) {
+      refused += 1;
+      continue;
+    }
+    if (height > allowed) height = allowed;
+    const span = program.id === "giant" ? Math.max(1, giantTrunkSpan(def, height)) : 1;
+    if (!claimTrunk(region, occupancy, c.x, c.z, spacing + span - 1, span > 1)) continue;
+    paint(region, emergentOccupancy, c.x, c.z, exclusion);
+    out.push(
+      makePlacement({
+        node,
+        entry,
+        def,
+        stream,
+        programStream,
+        x: c.x,
+        z: c.z,
+        baseY,
+        height,
+        radiusDelta,
+        mega: false,
+        stratum: "emergent",
+        palette,
+      }),
+    );
+    placed += 1;
+  }
+  return { budget, placed, refused };
+}
+
+/** How far above `height` a species' crown reaches, in blocks. */
+function knobCrownHeadroom(def: FloraSpeciesDef): number {
+  // `giant` runs its leader two blocks past the trunk and then caps it with a
+  // crown mass; every other program tops out within its own mass radius.
+  const crown = typeof def.knobs?.["crown"] === "number" ? (def.knobs["crown"] as number) : 4;
+  const mass = typeof def.knobs?.["mass"] === "number" ? (def.knobs["mass"] as number) : 3;
+  return def.program === "giant" ? 2 + Math.round((crown + 1) * 0.6) + 1 : Math.round(mass + 2);
+}
+
+/** A giant's trunk span for a given height (§3.7). */
+function giantTrunkSpan(def: FloraSpeciesDef, height: number): number {
+  const base = typeof def.knobs?.["trunkSpan"] === "number" ? (def.knobs["trunkSpan"] as number) : 2;
+  return height >= 24 ? Math.max(base, 3) : base;
+}
+
+/** Paint a disc of radius `r` into a mask. */
+function paint(region: Region, mask: Uint8Array, x: number, z: number, r: number): void {
+  const i = x - region.x0;
+  const j = z - region.z0;
+  const ri = Math.ceil(r);
+  for (let dj = -ri; dj <= ri; dj++) {
+    const jj = j + dj;
+    if (jj < 0 || jj >= region.depth) continue;
+    for (let di = -ri; di <= ri; di++) {
+      const ii = i + di;
+      if (ii < 0 || ii >= region.width) continue;
+      if (di * di + dj * dj > r * r) continue;
+      mask[jj * region.width + ii] = 1;
+    }
+  }
+}
+
+/**
+ * The understory: small trees and shrubs, in canopy gaps and *under* the
+ * canopy of giants.
+ *
+ * Occupancy is checked against the trunk, never the canopy — that has been true
+ * since the "dotted speckle" fix — so an understory tree under a giant's crown
+ * is legal by construction. Rather than merely permitting it, this pass
+ * **prefers** it: acceptance scales with the shade overhead, which puts the
+ * shrubs where the light is broken and the ground looks bare from a standing
+ * eye, and leaves the open glades open.
+ */
+function scatterUnderstory(
+  node: ForestNodeInput,
+  params: ReturnType<typeof resolveForestParams>,
+  spec: StratumSpec | undefined,
+  species: readonly ForestSpecies[],
+  plan: ColumnPlan,
+  mask: Uint8Array,
+  occupancy: Uint8Array,
+  shade: Uint8Array,
+  palette: Palette,
+  out: TreePlacement[],
+  clearing: Float32Array | undefined,
+): number {
+  const { region, ground } = plan;
+  const density = stratumNumber(spec, "density") ?? UNDERSTORY_SHARE * params.density;
+  if (density <= 0 || species.length === 0) return 0;
+  const stream = streamSeed(node.seed, "scatter.understory");
+  const programStream = streamSeed(node.seed, "flora.program");
+  const clumpSeed = seed32(streamSeed(node.seed, "scatter.clump"));
+  const areaWobbleSeed = seed32(streamSeed(node.seed, "scatter.area-edge"));
+  const weights = species.map((s) => s.weight ?? 1);
+  const spacing = Math.max(1, Math.floor(params.spacing));
+  const cellsX = Math.ceil(region.width / spacing);
+  const cellsZ = Math.ceil(region.depth / spacing);
+  const wanted = density * spacing * spacing;
+  let placed = 0;
+
+  for (let cz = 0; cz < cellsZ; cz++) {
+    for (let cx = 0; cx < cellsX; cx++) {
+      const jx = positionFloat(stream, cx, 1, cz);
+      const jz = positionFloat(stream, cx, 2, cz);
+      const x = region.x0 + Math.min(region.width - 1, Math.floor(cx * spacing + jx * spacing));
+      const z = region.z0 + Math.min(region.depth - 1, Math.floor(cz * spacing + jz * spacing));
+      const idx = (z - region.z0) * region.width + (x - region.x0);
+      if (mask[idx] !== 1) continue;
+
+      let p = clamp01(wanted);
+      if (params.clumping > 0) {
+        const n = fbm2(clumpSeed, x, z, { octaves: 2, frequency: 0.02, lacunarity: 2, gain: 0.5 });
+        p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
+      }
+      p *= edgeTaper(region, x, z, params.edgeFalloff);
+      p *= areaTaper(region, params.area, x, z, params.edgeFalloff, areaWobbleSeed);
+      if (clearing !== undefined) {
+        const f = clearing[idx] as number;
+        if (f <= 0) continue;
+        p *= f;
+      }
+      p *= 1 + UNDERSTORY_SHADE_GAIN * Math.min(1, (shade[idx] as number) / 2);
+      if (columnFloat(stream, x, z, 3) >= p) continue;
+
+      const entry = species[positionWeighted(stream, x, 4, z, weights)] as ForestSpecies;
+      const def = speciesFor(entry.shape);
+      const minH = entry.minHeight ?? def.height[0];
+      const maxH = entry.maxHeight ?? def.height[1];
+      const height = positionInt(stream, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
+      const radiusDelta = positionInt(stream, x, 6, z, -1, 1);
+      if (!claimTrunk(region, occupancy, x, z, spacing, false)) continue;
+      out.push(
+        makePlacement({
+          node,
+          entry,
+          def,
+          stream,
+          programStream,
+          x,
+          z,
+          baseY: (ground[idx] as number) + 1,
+          height,
+          radiusDelta,
+          mega: false,
+          stratum: "understory",
+          palette,
+        }),
+      );
+      placed += 1;
+    }
+  }
+  return placed;
+}
+
+/* -------------------------------------------------------------------------- */
 
 /**
  * Density taper within `falloff` blocks of the *node's own area* boundary.
@@ -561,6 +1149,89 @@ export interface TreeTemplate {
   blocks(v: TreeVariation): TreeBlock[];
 }
 
+/* -------------------------------------------------------------------------- */
+/* One placement's geometry                                                    */
+/* -------------------------------------------------------------------------- */
+
+/** The variation record a placement carries into its shape program. */
+export function treeVariation(tree: TreePlacement): FloraVariation {
+  return {
+    height: tree.height,
+    radiusDelta: tree.radiusDelta,
+    mega: tree.mega,
+    ...(tree.lean === undefined ? {} : { lean: tree.lean }),
+    ...(tree.age === undefined ? {} : { age: tree.age }),
+  };
+}
+
+/**
+ * One placement's blocks.
+ *
+ * The RNG is rebuilt from the placement's own `programSeed` on every call, so
+ * `clipTrees`, the shade map and the emitter all see the identical plant — and
+ * a placement with no seed (every document that declares no `strata`) reaches
+ * only the two legacy programs, which never draw.
+ */
+export function treeBlocks(tree: TreePlacement): FloraBlock[] {
+  const def = speciesFor(tree.shape);
+  const program = SHAPE_PROGRAMS[def.program as ShapeProgramId];
+  const rng =
+    tree.programSeed === undefined
+      ? (): number => {
+          throw new Error(`flora: ${def.program} drew from the RNG with no program seed`);
+        }
+      : (() => {
+          const r = new Rng(tree.programSeed);
+          return (): number => r.float();
+        })();
+  return program.blocks(treeVariation(tree), def, rng);
+}
+
+/** One placement's horizontal reach. */
+export function treeCanopyRadius(tree: TreePlacement): number {
+  const def = speciesFor(tree.shape);
+  return SHAPE_PROGRAMS[def.program as ShapeProgramId].canopyRadius(treeVariation(tree), def);
+}
+
+/**
+ * Canopy columns overhead, per column — the shade map.
+ *
+ * Hoisted here from `decorate.ts` so the undergrowth pass and the understory
+ * stratum share one answer (§5.4) rather than two that can drift apart.
+ */
+export function canopyCover(plan: ColumnPlan, trees: readonly TreePlacement[]): Uint8Array {
+  const { region } = plan;
+  const cover = new Uint8Array(region.width * region.depth);
+  for (const tree of trees) {
+    const r = treeCanopyRadius(tree);
+    for (let dz = -r; dz <= r; dz++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dz * dz > r * r) continue;
+        const i = tree.x + dx - region.x0;
+        const j = tree.z + dz - region.z0;
+        if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+        const idx = j * region.width + i;
+        if ((cover[idx] as number) < 255) cover[idx] = (cover[idx] as number) + 1;
+      }
+    }
+  }
+  return cover;
+}
+
+/** The part states one placement resolved, as the emitter's mapping wants them. */
+export function treeStates(tree: TreePlacement): FloraStates {
+  return {
+    log: tree.trunkState,
+    leaves: tree.leafState,
+    ...(tree.deadState === undefined ? {} : { branch: tree.deadState }),
+    ...(tree.rootState === undefined ? {} : { root: tree.rootState }),
+    ...(tree.stemState === undefined ? {} : { stem: tree.stemState }),
+    ...(tree.capState === undefined ? {} : { cap: tree.capState }),
+    ...(tree.hangingState === undefined ? {} : { hanging: tree.hangingState }),
+    ...(tree.decoState === undefined ? {} : { deco: tree.decoState }),
+  };
+}
+
 /** The baseline variation: no jitter, no giant. */
 export function plainVariation(height: number): TreeVariation {
   return { height, radiusDelta: 0, mega: false };
@@ -585,6 +1256,21 @@ function legacyBlocks(speciesId: keyof typeof LEGACY_FLORA_SPECIES) {
     }) as TreeBlock[];
 }
 
+/**
+ * The canopy radius of a legacy shape, derived from its program rather than
+ * repeated as a literal.
+ *
+ * The four literals this replaces were `max(1, spread + rd + (mega ? 2 : 0))`
+ * and `max(1, radius + rd)` written out by hand — exactly what
+ * `conifer.canopyRadius` and `blob.canopyRadius` compute from the same knobs,
+ * so the reconciliation is behaviour-preserving by construction.
+ */
+function legacyRadius(speciesId: keyof typeof LEGACY_FLORA_SPECIES) {
+  const def = LEGACY_FLORA_SPECIES[speciesId] as FloraSpeciesDef;
+  const program = SHAPE_PROGRAMS[def.program as ShapeProgramId];
+  return (v: TreeVariation): number => program.canopyRadius(v, def);
+}
+
 /** The four tree shapes the terrain profile implements. */
 export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.freeze({
   spruce_tall: {
@@ -592,7 +1278,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 13,
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
-    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta + (v.mega ? 2 : 0)),
+    canopyRadius: legacyRadius("spruce_tall"),
     blocks: legacyBlocks("spruce_tall"),
   },
   spruce_squat: {
@@ -600,7 +1286,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 7,
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
-    canopyRadius: (v) => Math.max(1, 3 + v.radiusDelta),
+    canopyRadius: legacyRadius("spruce_squat"),
     blocks: legacyBlocks("spruce_squat"),
   },
   oak_round: {
@@ -608,7 +1294,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 7,
     trunkSymbol: "wood.oak_log",
     leafSymbol: "wood.oak_leaves",
-    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
+    canopyRadius: legacyRadius("oak_round"),
     blocks: legacyBlocks("oak_round"),
   },
   birch_slim: {
@@ -616,7 +1302,7 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
     maxHeight: 9,
     trunkSymbol: "wood.birch_log",
     leafSymbol: "wood.birch_leaves",
-    canopyRadius: (v) => Math.max(1, 2 + v.radiusDelta),
+    canopyRadius: legacyRadius("birch_slim"),
     blocks: legacyBlocks("birch_slim"),
   },
 });
@@ -631,6 +1317,11 @@ export const TREE_TEMPLATES: Readonly<Record<TreeShape, TreeTemplate>> = Object.
  * eligibility and re-exports, so no existing importer changes").
  */
 export {
+  CLIMATE_STRATA,
+  FLORA_SPECIES,
+  NATURALISTIC_FLORA_SPECIES,
+  NATURALISTIC_PROGRAMS,
+  speciesFor,
   LEGACY_FLORA_SPECIES,
   LEAF_STATE_POLICY,
   MAX_LEAF_DISTANCE,

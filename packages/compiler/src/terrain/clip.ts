@@ -29,7 +29,7 @@ import type { Region } from "@terrainist/stdlib";
 
 import type { BuiltBuilding } from "../structures/buildings.js";
 
-import { TREE_TEMPLATES, type TreePlacement } from "./vegetation.js";
+import { treeBlocks, treeCanopyRadius, type TreePlacement } from "./vegetation.js";
 
 /** Share of a tree's voxels that may be clipped before it is dropped entirely. */
 export const MAX_CLIP_FRACTION = 0.4;
@@ -263,8 +263,7 @@ export function clipTrees(
   let clippedBlocks = 0;
 
   for (const tree of trees) {
-    const variation = { height: tree.height, radiusDelta: tree.radiusDelta, mega: tree.mega };
-    const radius = TREE_TEMPLATES[tree.shape].canopyRadius(variation) + (tree.mega ? 2 : 0);
+    const radius = treeCanopyRadius(tree) + (tree.mega ? 2 : 0);
     // Cheap rejection: a tree whose whole horizontal reach misses every claimed
     // column cannot be clipped, and that is nearly all of them.
     if (!nearStructure(clip, tree.x, tree.z, radius + 1)) {
@@ -272,7 +271,7 @@ export function clipTrees(
       continue;
     }
 
-    const blocks = TREE_TEMPLATES[tree.shape].blocks(variation);
+    const blocks = treeBlocks(tree);
     let hit = 0;
     let leaves = 0;
     let leavesHit = 0;

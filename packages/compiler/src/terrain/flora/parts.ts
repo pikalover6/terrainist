@@ -173,7 +173,8 @@ function baseStateFor(part: FloraPart, states: FloraStates): number | undefined 
     case "log":
       return states.log;
     case "branch":
-      return states.branch ?? states.log;
+      // Live limbs are trunk wood; only a *dead* limb takes the stripped log.
+      return states.log;
     case "root":
       return states.root ?? states.log;
     case "leaves":
@@ -218,7 +219,9 @@ export function emitFloraBlocks(
     let stateId = base;
     switch (b.part) {
       case "branch":
-        stateId = withProps(codec, base, { axis: b.axis ?? "y" });
+        stateId = withProps(codec, b.dead === true ? (states.branch ?? base) : base, {
+          axis: b.axis ?? "y",
+        });
         break;
       case "root":
         stateId = withProps(codec, base, { axis: "y" });

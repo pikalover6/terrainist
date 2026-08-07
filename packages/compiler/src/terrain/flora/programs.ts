@@ -14,6 +14,7 @@
  * counting proxy.
  */
 
+import { NATURALISTIC_PROGRAMS } from "./naturalistic.js";
 import { knob, type FloraBlock, type FloraProgram, type FloraSpeciesDef, type FloraVariation } from "./types.js";
 
 function isTrunk(trunk: readonly (readonly [number, number])[], dx: number, dz: number): boolean {
@@ -115,6 +116,7 @@ export const blob: FloraProgram = {
 export const SHAPE_PROGRAMS = Object.freeze({
   conifer,
   blob,
+  ...NATURALISTIC_PROGRAMS,
 } satisfies Readonly<Record<string, FloraProgram>>);
 
 /** A program name the registry knows. */

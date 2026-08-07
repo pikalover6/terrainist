@@ -43,14 +43,14 @@ import {
   FALLOFF_PROFILES,
   FLOODED_MODES,
   ID_PATTERN,
+  FLORA_SPECIES_IDS,
   PROFILE_GENERATORS,
-  TREE_SHAPES,
   ZONE_TOKENS,
   type CaveStyle,
   type ClimateTheme,
   type EditVerbName,
+  type FloraSpeciesId,
   type TerrainDocument,
-  type TreeShape,
 } from "./types.js";
 
 /** Result of validating a candidate terrain document. */
@@ -828,12 +828,114 @@ function checkIntPair(
   }
 }
 
+/**
+ * One species entry, wherever it appears.
+ *
+ * `params.species` and every stratum's `species` go through this one function:
+ * same keys, same `checkId`, same height-range checks, same `BAD_ENUM` listing
+ * the legal shapes. A model that learns the species entry once knows it
+ * everywhere (FLORA-GRAMMAR-v0 §5.1).
+ */
+function checkSpeciesEntry(out: LoamDiagnostic[], at: string, entry: unknown): void {
+  if (!isObject(entry)) {
+    out.push(error("BAD_TYPE", at, `each species must be an object, got ${describe(entry)}`, 'write { "id": "spruce", "weight": 1, "shape": "spruce_tall" }'));
+    return;
+  }
+  unknownKeys(out, entry, at, ["id", "weight", "shape", "minHeight", "maxHeight", "trunkPalette", "leafPalette"], "species entry");
+  checkId(out, at, entry["id"], "species id");
+  const shape = entry["shape"];
+  if (typeof shape !== "string" || !(FLORA_SPECIES_IDS as readonly string[]).includes(shape as FloraSpeciesId)) {
+    out.push(error("BAD_ENUM", at, `"shape" must be a tree shape this profile implements, got ${describe(shape)}`, `set "shape" to one of: ${FLORA_SPECIES_IDS.join(", ")}`));
+  }
+  checkNumbers(out, at, entry, { weight: { min: 0 }, minHeight: { min: 2, max: 64, int: true }, maxHeight: { min: 2, max: 64, int: true } });
+  const lo = entry["minHeight"];
+  const hi = entry["maxHeight"];
+  if (typeof lo === "number" && typeof hi === "number" && lo > hi) {
+    out.push(error("PARAM_OUT_OF_RANGE", at, `"minHeight" (${lo}) is greater than "maxHeight" (${hi})`, "swap them, or widen the range so minHeight ≤ maxHeight"));
+  }
+}
+
+/** Legal string forms of `strata.emergent` / `strata.understory`. */
+const STRATUM_KEYWORDS = ["default", "none"] as const;
+/** Legal string forms of `strata.canopy`. */
+const CANOPY_KEYWORDS = ["authored", "default"] as const;
+/** Legal values of `strata.floor`. */
+const FLOOR_KEYWORDS = ["default", "fungal", "glow"] as const;
+
+/** Range checks for a stratum object's numeric knobs (§5.1: reported, never clamped). */
+const STRATUM_NUMS = Object.freeze({
+  budget: { min: 0, max: 24, int: true },
+  exclusion: { min: 8, max: 128 },
+  density: { min: 0, max: 1 },
+});
+
+function checkStratumSpec(
+  out: LoamDiagnostic[],
+  at: string,
+  value: unknown,
+  keywords: readonly string[],
+  objectKeys: readonly string[],
+): void {
+  if (typeof value === "string") {
+    if (!keywords.includes(value)) {
+      out.push(error("BAD_ENUM", at, `"${at.split(".").pop() as string}" must be one of ${keywords.join(", ")} or an object, got ${describe(value)}`, `set it to one of: ${keywords.join(", ")}`));
+    }
+    return;
+  }
+  if (!isObject(value)) {
+    out.push(error("BAD_TYPE", at, `a stratum must be a keyword or an object, got ${describe(value)}`, `write "default", "none", or { "species": [...] }`));
+    return;
+  }
+  unknownKeys(out, value, at, objectKeys, "stratum");
+  const species = value["species"];
+  if (species !== undefined) {
+    if (!Array.isArray(species)) {
+      out.push(error("BAD_TYPE", at, `"species" must be an array, got ${describe(species)}`, 'write "species": [{ "id": "great_beech", "shape": "beech_giant" }]'));
+    } else if (species.length === 0) {
+      out.push(error("MISSING_KEY", at, `"species" is an empty array, so this stratum names nothing`, 'set this stratum to "none" if the layer is meant to be off, or list at least one species'));
+    } else {
+      for (const [i, entry] of species.entries()) checkSpeciesEntry(out, `${at}.species[${i}]`, entry);
+    }
+  }
+  const nums: Record<string, { min: number; max: number; int?: boolean }> = {};
+  for (const k of objectKeys) {
+    const spec = (STRATUM_NUMS as Record<string, { min: number; max: number; int?: boolean }>)[k];
+    if (spec !== undefined) nums[k] = spec;
+  }
+  checkNumbers(out, at, value, nums);
+}
+
+/** `params.strata` — the vertical composition (FLORA-GRAMMAR-v0 §5.1). */
+function checkStrata(out: LoamDiagnostic[], path: string, strata: unknown): void {
+  if (strata === undefined) return;
+  const at = `${path}.params.strata`;
+  if (strata === true) return;
+  if (!isObject(strata)) {
+    out.push(error("BAD_TYPE", at, `"strata" must be true or an object, got ${describe(strata)}`, 'write "strata": true, or an object with "emergent"/"canopy"/"understory"/"floor"'));
+    return;
+  }
+  unknownKeys(out, strata, at, ["emergent", "canopy", "understory", "floor"], "strata");
+  if (strata["emergent"] !== undefined) {
+    checkStratumSpec(out, `${at}.emergent`, strata["emergent"], STRATUM_KEYWORDS, ["species", "budget", "exclusion"]);
+  }
+  if (strata["understory"] !== undefined) {
+    checkStratumSpec(out, `${at}.understory`, strata["understory"], STRATUM_KEYWORDS, ["species", "density"]);
+  }
+  if (strata["canopy"] !== undefined) {
+    checkStratumSpec(out, `${at}.canopy`, strata["canopy"], CANOPY_KEYWORDS, ["species"]);
+  }
+  const floor = strata["floor"];
+  if (floor !== undefined && (typeof floor !== "string" || !(FLOOR_KEYWORDS as readonly string[]).includes(floor))) {
+    out.push(error("BAD_ENUM", `${at}.floor`, `"floor" must be one of ${FLOOR_KEYWORDS.join(", ")}, got ${describe(floor)}`, `set it to one of: ${FLOOR_KEYWORDS.join(", ")}`));
+  }
+}
+
 /** @internal */
 export function validateForestNode(out: LoamDiagnostic[], path: string, node: Obj): void {
   unknownKeys(out, node, path, ["id", "kind", "generator", "envelope", "params", "tags", "seedSalt", "constraints", "ports", "intent"], "scatter.forest@0 node");
   const params = requireParams(out, path, node, "scatter.forest@0");
   if (!params) return;
-  unknownKeys(out, params, `${path}.params`, ["species", "area", "density", "spacing", "clumping", "maxSlope", "elevation", "edgeFalloff", "avoidTags", "undergrowth", "snowLine"], "scatter.forest@0 params");
+  unknownKeys(out, params, `${path}.params`, ["species", "area", "density", "spacing", "clumping", "maxSlope", "elevation", "edgeFalloff", "avoidTags", "undergrowth", "snowLine", "strata"], "scatter.forest@0 params");
   checkNumbers(out, `${path}.params`, params, FOREST_NUMS);
 
   const species = params["species"];
@@ -848,25 +950,11 @@ export function validateForestNode(out: LoamDiagnostic[], path: string, node: Ob
     );
   } else {
     for (const [i, entry] of species.entries()) {
-      const at = `${path}.params.species[${i}]`;
-      if (!isObject(entry)) {
-        out.push(error("BAD_TYPE", at, `each species must be an object, got ${describe(entry)}`, 'write { "id": "spruce", "weight": 1, "shape": "spruce_tall" }'));
-        continue;
-      }
-      unknownKeys(out, entry, at, ["id", "weight", "shape", "minHeight", "maxHeight", "trunkPalette", "leafPalette"], "species entry");
-      checkId(out, at, entry["id"], "species id");
-      const shape = entry["shape"];
-      if (typeof shape !== "string" || !(TREE_SHAPES as readonly string[]).includes(shape as TreeShape)) {
-        out.push(error("BAD_ENUM", at, `"shape" must be a tree shape this profile implements, got ${describe(shape)}`, `set "shape" to one of: ${TREE_SHAPES.join(", ")}`));
-      }
-      checkNumbers(out, at, entry, { weight: { min: 0 }, minHeight: { min: 2, max: 64, int: true }, maxHeight: { min: 2, max: 64, int: true } });
-      const lo = entry["minHeight"];
-      const hi = entry["maxHeight"];
-      if (typeof lo === "number" && typeof hi === "number" && lo > hi) {
-        out.push(error("PARAM_OUT_OF_RANGE", at, `"minHeight" (${lo}) is greater than "maxHeight" (${hi})`, "swap them, or widen the range so minHeight ≤ maxHeight"));
-      }
+      checkSpeciesEntry(out, `${path}.params.species[${i}]`, entry);
     }
   }
+
+  checkStrata(out, path, params["strata"]);
 
   const elevation = params["elevation"];
   if (elevation !== undefined) {

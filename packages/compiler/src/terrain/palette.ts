@@ -83,6 +83,20 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "wood.oak_leaves": "minecraft:oak_leaves",
   "wood.birch_log": "minecraft:birch_log",
   "wood.birch_leaves": "minecraft:birch_leaves",
+  // --- the flora grammar's naturalistic catalog (FLORA-GRAMMAR-v0 §4.2) ----
+  "wood.dark_oak_log": "minecraft:dark_oak_log",
+  "wood.dark_oak_leaves": "minecraft:dark_oak_leaves",
+  "wood.jungle_log": "minecraft:jungle_log",
+  "wood.jungle_leaves": "minecraft:jungle_leaves",
+  "wood.acacia_log": "minecraft:acacia_log",
+  "wood.acacia_leaves": "minecraft:acacia_leaves",
+  "wood.cherry_log": "minecraft:cherry_log",
+  "wood.cherry_leaves": "minecraft:cherry_leaves",
+  "wood.azalea_leaves": "minecraft:azalea_leaves",
+  "wood.stripped_oak_log": "minecraft:stripped_oak_log",
+  "wood.stripped_spruce_log": "minecraft:stripped_spruce_log",
+  "foliage.vine": "minecraft:vine",
+  "fungal.brown_cap": "minecraft:brown_mushroom_block",
   // --- roads (G4b) ---------------------------------------------------------
   "road.surface": "minecraft:dirt_path",
   "road.shoulder": {

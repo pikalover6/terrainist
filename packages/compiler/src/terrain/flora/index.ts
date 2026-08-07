@@ -9,3 +9,5 @@
 export * from "./types.js";
 export * from "./programs.js";
 export * from "./parts.js";
+export * from "./naturalistic.js";
+export * from "./species.js";

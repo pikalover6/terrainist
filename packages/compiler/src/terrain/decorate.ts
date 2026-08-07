@@ -32,7 +32,7 @@ import { FluidKind, type ColumnPlan } from "./columns.js";
 import { detailSeed, hash2, hashInt, hashPick } from "./detail.js";
 import type { Palette } from "./palette.js";
 import type { ScatteredNode, TreePlacement } from "./vegetation.js";
-import { TREE_TEMPLATES } from "./vegetation.js";
+import { canopyCover } from "./vegetation.js";
 
 /** One decoration block, in absolute world coordinates. */
 export interface DecorBlock {
@@ -351,29 +351,13 @@ function decorateForest(
   }
 }
 
-/** Canopy columns overhead, per column — the shade map. */
-export function canopyCover(plan: ColumnPlan, trees: readonly TreePlacement[]): Uint8Array {
-  const { region } = plan;
-  const cover = new Uint8Array(region.width * region.depth);
-  for (const tree of trees) {
-    const r = TREE_TEMPLATES[tree.shape].canopyRadius({
-      height: tree.height,
-      radiusDelta: tree.radiusDelta,
-      mega: tree.mega,
-    });
-    for (let dz = -r; dz <= r; dz++) {
-      for (let dx = -r; dx <= r; dx++) {
-        if (dx * dx + dz * dz > r * r) continue;
-        const i = tree.x + dx - region.x0;
-        const j = tree.z + dz - region.z0;
-        if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
-        const idx = j * region.width + i;
-        if ((cover[idx] as number) < 255) cover[idx] = (cover[idx] as number) + 1;
-      }
-    }
-  }
-  return cover;
-}
+/**
+ * Canopy columns overhead, per column — the shade map.
+ *
+ * Re-exported from `vegetation.ts`, which owns it now: the understory stratum
+ * (§5.4) and the undergrowth pass must read one answer, not two.
+ */
+export { canopyCover };
 
 /** 1 on every column a trunk stands in. */
 function trunkMask(plan: ColumnPlan, trees: readonly TreePlacement[]): Uint8Array {

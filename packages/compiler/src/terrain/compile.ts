@@ -43,6 +43,7 @@ import {
   type ProgramScatterParams,
   type SettlementDocument,
   type TerrainDocument,
+  CLIMATE_THEMES,
   PROFILE_GENERATORS,
   PROGRAM_SCATTER_GENERATOR,
   PROP_GENERATOR,
@@ -126,7 +127,7 @@ import {
   structureBoxes,
   type StructureClip,
 } from "./clip.js";
-import { buildClimateFields, resolveClimateParams } from "./climate.js";
+import { THEME_CENTERS, buildClimateFields, resolveClimateParams } from "./climate.js";
 import {
   buildCavePlan,
   checkCaveIntegrity,
@@ -147,7 +148,7 @@ import {
   checkFluidStability,
   validatorDiagnostics,
 } from "./validate.js";
-import { scatterForests, type ForestNodeInput, type TreePlacement } from "./vegetation.js";
+import { scatterForests, type ForestNodeInput, type StrataReport, type TreePlacement } from "./vegetation.js";
 import {
   buildStructures,
   buildTransitionBand,
@@ -333,6 +334,8 @@ export interface CompileStats {
   readonly landFraction: number;
   readonly treeCount: number;
   readonly treesPerNode: Readonly<Record<string, number>>;
+  /** Per-node strata composition, present only for nodes that declared any. */
+  readonly strata?: readonly StrataReport[];
   readonly unstableFluidBlocks: number;
   readonly floatingTrees: number;
   /** Column counts per painted biome, sorted by biome name. */
@@ -912,6 +915,14 @@ async function compileValidated(
     palette,
     occupancy,
     clearing?.density,
+    // §5.2: the strata tables are per climate theme, and a forest node does not
+    // carry one — it is resolved by ambient majority over the node's own mask.
+    {
+      temperature: climate.temperature,
+      humidity: climate.humidity,
+      centers: THEME_CENTERS,
+      themes: CLIMATE_THEMES,
+    },
   );
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
@@ -1075,6 +1086,7 @@ async function compileValidated(
       landFraction: plan.ground.length === 0 ? 0 : land / plan.ground.length,
       treeCount: trees.length,
       treesPerNode: scatter.perNode,
+      ...(scatter.strata.length === 0 ? {} : { strata: scatter.strata }),
       unstableFluidBlocks: fluids.unstable,
       floatingTrees: floating.length,
       biomeHistogram,

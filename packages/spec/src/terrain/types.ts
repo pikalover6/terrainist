@@ -69,6 +69,40 @@ export const TREE_SHAPES = ["spruce_tall", "spruce_squat", "oak_round", "birch_s
 /** A tree shape name. */
 export type TreeShape = (typeof TREE_SHAPES)[number];
 
+/**
+ * The flora grammar's species vocabulary (FLORA-GRAMMAR-v0 §4.1).
+ *
+ * A superset of {@link TREE_SHAPES}: the four legacy names keep their meaning
+ * and their geometry, and the naturalistic catalog is added beside them.
+ * Widening an accepted enum is additive — no document that validates today
+ * stops validating.
+ */
+export const FLORA_SPECIES_IDS = [
+  ...TREE_SHAPES,
+  "spruce_ancient",
+  "larch_columnar",
+  "juniper_scrub",
+  "beech_giant",
+  "oak_spreading",
+  "willow_weeping",
+  "hazel_shrub",
+  "cherry_blossom",
+  "acacia_umbrella",
+  "desert_ironwood",
+  "kapok_emergent",
+  "jungle_broadleaf",
+  "tree_fern",
+] as const;
+
+/** A flora species id — what a `species` entry's `shape` names. */
+export type FloraSpeciesId = (typeof FLORA_SPECIES_IDS)[number];
+
+/** The strata a species may occupy (FLORA-GRAMMAR-v0 §5). */
+export const FLORA_STRATA = ["emergent", "canopy", "understory"] as const;
+
+/** One stratum name. */
+export type FloraStratum = (typeof FLORA_STRATA)[number];
+
 /** Climate themes the profile understands. */
 export const CLIMATE_THEMES = ["boreal", "temperate", "arid", "tropical"] as const;
 
@@ -201,7 +235,7 @@ export interface ClimateParams {
 export interface ForestSpecies {
   readonly id: string;
   readonly weight?: number;
-  readonly shape: TreeShape;
+  readonly shape: FloraSpeciesId;
   readonly minHeight?: number;
   readonly maxHeight?: number;
   readonly trunkPalette?: string;
@@ -227,6 +261,34 @@ export type ScatterArea =
   | { readonly at: FractionalPoint; readonly radius: number }
   | { readonly all: true };
 
+/**
+ * One stratum of a forest node's composition (FLORA-GRAMMAR-v0 §5.1).
+ *
+ * `"default"` takes the climate table's row for this stratum; `"none"` switches
+ * the layer off; an object refines it.
+ */
+export type StratumSpec =
+  | "default"
+  | "none"
+  | {
+      readonly species?: readonly ForestSpecies[];
+      /** Emergent only; default is §5.3's area formula. */
+      readonly budget?: number;
+      /** Emergent only; minimum trunk-to-trunk distance, default 48. */
+      readonly exclusion?: number;
+      /** Understory only; default `0.45 × params.density`. */
+      readonly density?: number;
+    };
+
+/** Vertical composition of a forest node (FLORA-GRAMMAR-v0 §5.1). */
+export interface StrataParams {
+  readonly emergent?: StratumSpec;
+  /** `"authored"` (the default) means `params.species`, unchanged. */
+  readonly canopy?: "authored" | "default" | { readonly species: readonly ForestSpecies[] };
+  readonly understory?: StratumSpec;
+  readonly floor?: "default" | "fungal" | "glow";
+}
+
 /** Params of `scatter.forest@0` in this profile. */
 export interface ForestParams {
   readonly species: readonly ForestSpecies[];
@@ -240,6 +302,12 @@ export interface ForestParams {
   readonly avoidTags?: readonly string[];
   readonly undergrowth?: UndergrowthParams;
   readonly snowLine?: number;
+  /**
+   * Vertical composition. `true` is the one-word form —
+   * `{ emergent: "default", understory: "default" }`. Absent, the node
+   * scatters exactly as it does today (the reach law, §2).
+   */
+  readonly strata?: true | StrataParams;
 }
 
 /** A `scatter.forest@0` node. */

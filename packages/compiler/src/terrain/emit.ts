@@ -26,7 +26,7 @@ import {
 } from "./columns.js";
 import type { StructureClip } from "./clip.js";
 import type { DecorBlock } from "./decorate.js";
-import { TREE_TEMPLATES, type TreePlacement } from "./vegetation.js";
+import { emitFloraBlocks, treeBlocks, treeStates, type FloraStateCodec, type TreePlacement } from "./vegetation.js";
 
 /** Vertical resolution of the biome array: one value per 4×4×4 cell. */
 const BIOME_CELL = 4;
@@ -93,7 +93,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   const { plan, stack } = input;
   const { region } = plan;
 
-  const treesByChunk = bucketTrees(input.trees, input.clip);
+  const treesByChunk = bucketTrees(input.trees, stack, input.clip);
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
   const blockEntityByChunk = bucketBlockEntities(input.blockEntities ?? []);
@@ -412,16 +412,18 @@ function bucketDecor(decor: readonly DecorBlock[]): Map<string, PlacedBlock[]> {
  */
 function bucketTrees(
   trees: readonly TreePlacement[],
+  codec: FloraStateCodec,
   clip?: StructureClip,
 ): Map<string, PlacedBlock[]> {
   const out = new Map<string, PlacedBlock[]>();
   for (const tree of trees) {
-    const template = TREE_TEMPLATES[tree.shape];
-    for (const block of template.blocks({
-      height: tree.height,
-      radiusDelta: tree.radiusDelta,
-      mega: tree.mega,
-    })) {
+    // The parts → blockstate mapping (§3.2). Under `LEAF_STATE_POLICY =
+    // "legacy"` and for a plant that emits only `log` and `leaves` — which is
+    // every tree of every document that declares no `strata` — this is
+    // byte-identical to the one-line mapping it replaces, and the byte-identity
+    // gate on the six control worlds is the proof.
+    const emission = emitFloraBlocks(treeBlocks(tree), treeStates(tree), codec);
+    for (const block of emission.blocks) {
       const x = tree.x + block.dx;
       const y = tree.baseY + block.dy;
       const z = tree.z + block.dz;
@@ -433,12 +435,7 @@ function bucketTrees(
         bucket = [];
         out.set(key, bucket);
       }
-      bucket.push({
-        x,
-        y,
-        z,
-        stateId: block.part === "log" ? tree.trunkState : tree.leafState,
-      });
+      bucket.push({ x, y, z, stateId: block.stateId });
     }
   }
   return out;
