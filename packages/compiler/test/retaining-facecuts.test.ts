@@ -29,7 +29,7 @@ import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js"
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { groundLevelsOf } from "../src/layout/levels.js";
 import type { FormBench } from "../src/layout/forms/types.js";
-import { buildRetainingWalls } from "../src/structures/retaining.js";
+import { buildRetainingWalls, finishCutFaces } from "../src/structures/retaining.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
 import { defineGroundRoles, resolvePalette } from "../src/terrain/palette.js";
 
@@ -124,8 +124,15 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       palette,
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [district()],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
     expect(result.walls).toBe(0);
-    expect(result.revetted).toBeGreaterThan(0);
+    expect(finish.revetted).toBeGreaterThan(0);
     const coped = facedOf(plan, palette.state("ground.stone"));
     expect(coped.size).toBeGreaterThan(10);
     // One 4-connected piece: flood the set orthogonally from its first column
@@ -166,6 +173,13 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       palette,
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [district()],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
     expect(result.walls).toBe(0);
     // **Intent changed, ratified by Kai 2026-08-07 after the fortress-maze
     // walk**: an unwalled cut is the hill's own rock, not the theme's masonry,
@@ -190,7 +204,14 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       palette,
       stack,
     });
-    expect(result.revetted).toBe(0);
+    const finish = finishCutFaces({
+      districts: [district()],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
+    expect(finish.revetted).toBe(0);
     for (let k = 0; k < SIZE * SIZE; k++) {
       expect(plan.surface[k], `column ${k}`).toBe(before.surface[k]);
       expect(plan.subsurface[k], `column ${k}`).toBe(before.sub[k]);
@@ -214,8 +235,15 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       palette,
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [district(carriageway)],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
     expect(result.walls).toBe(0);
-    expect(result.revetted).toBeGreaterThan(0);
+    expect(finish.revetted).toBeGreaterThan(0);
     for (let k = 0; k < SIZE * SIZE; k++) {
       expect(plan.surface[k], `column ${k}`).toBe(surfaceBefore[k]);
     }
@@ -265,6 +293,31 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       palette,
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [
+        {
+          nodePath: "world.quarter",
+          bounds: BOUNDS,
+          carriageway: new Uint8Array(SIZE * SIZE),
+          sidewalk: new Uint8Array(SIZE * SIZE),
+          levels,
+          // The seam as `levelSeams` would derive it: the low side of the step.
+          seams: [
+            {
+              above: 1,
+              below: 0,
+              cells: Array.from({ length: SIZE }, (_, z) => ({ x: 15, z })),
+              drop: 4,
+              treatment: "retaining" as const,
+            },
+          ],
+        },
+      ],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
     expect(result.wallColumns).toBeGreaterThan(0);
     const coping = palette.state("ground.coping");
     const sidewalk = palette.state("street.sidewalk");
@@ -286,5 +339,49 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       expect(plan.soil[k] as number, `column ${k}`).toBeGreaterThanOrEqual(4);
     }
     expect(verges).toBeGreaterThan(0);
+  });
+
+  it("finishes a face cut *after* the walls were built — the reason it is a late pass", () => {
+    // The hillside walk's dirt band, reproduced: `buildRetainingWalls` runs
+    // before the streets are surfaced, the roads are cut and the doorsteps are
+    // stepped, and every one of those passes drops fresh ground. A face that
+    // did not exist when the finish ran is a face the finish never saw, and an
+    // unfinished face is the terrain's soil band — dirt.
+    const plan = planOf(stack, () => 70);
+    const palette = themed();
+    const dirt = plan.subsurface[at(8, 8)] as number;
+    const rock = palette.state("ground.stone");
+    expect(rock).not.toBe(dirt);
+
+    // Flat ground: nothing to wall and nothing to face.
+    const walls = buildRetainingWalls({
+      districts: [district()],
+      plan,
+      palette,
+      stack,
+    });
+    expect(walls.wallColumns).toBe(0);
+
+    // …and now a later pass cuts a landing, exactly as `dressStreetStairs`
+    // drops each tread to `level - 1` and `buildDoorsteps` cuts a threshold.
+    for (let z = 4; z < SIZE - 4; z++) {
+      for (let x = 4; x <= 10; x++) plan.ground[at(x, z)] = 66;
+    }
+
+    const finish = finishCutFaces({
+      districts: [district()],
+      plan,
+      palette,
+      stack,
+      seam: walls.seam,
+    });
+    expect(finish.revetted).toBeGreaterThan(0);
+    // The face the cut left — the column beside the landing — is rock to its
+    // full depth rather than the dirt it was a moment ago.
+    for (let z = 6; z < SIZE - 6; z++) {
+      const k = at(11, z);
+      expect(plan.subsurface[k], `column 11,${z}`).toBe(rock);
+      expect(plan.soil[k] as number, `column 11,${z}`).toBeGreaterThanOrEqual(4);
+    }
   });
 });

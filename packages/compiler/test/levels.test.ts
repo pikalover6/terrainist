@@ -40,7 +40,7 @@ import { MIN_PLATFORM_COLUMNS, derivePlatforms } from "../src/layout/platforms.j
 import { FLOOR_HEIGHT } from "../src/layout/district.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import { RETAINING_PROFILE } from "../src/structures/profiles.js";
-import { MIN_RAIL_RUN, buildRetainingWalls } from "../src/structures/retaining.js";
+import { MIN_RAIL_RUN, buildRetainingWalls, finishCutFaces } from "../src/structures/retaining.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
 import { defineGroundRoles, resolvePalette } from "../src/terrain/palette.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
@@ -329,6 +329,20 @@ describe("buildRetainingWalls", () => {
       palette: paletteOf(stack),
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [
+        {
+          nodePath: "world.quarter",
+          bounds: { x0: 0, z0: 0, x1: 47, z1: 47 },
+          carriageway: new Uint8Array(48 * 48),
+          sidewalk: new Uint8Array(48 * 48),
+        },
+      ],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
+    });
     expect(result.blocks).toEqual([]);
     expect(result.walls).toBe(0);
     expect(result.seam.some((v) => v === 1)).toBe(false);
@@ -342,6 +356,13 @@ describe("buildRetainingWalls", () => {
       plan,
       palette: paletteOf(stack),
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
     });
     expect(result.walls).toBeGreaterThan(0);
     expect(result.wallColumns).toBeGreaterThan(0);
@@ -372,6 +393,13 @@ describe("buildRetainingWalls", () => {
       plan,
       palette: paletteOf(stack),
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
     });
     expect(result.wallColumns).toBeGreaterThan(0);
     for (let k = 0; k < result.seam.length; k++) {
@@ -450,6 +478,13 @@ describe("buildRetainingWalls", () => {
       palette: paletteOf(stack),
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [district(65)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
+    });
     expect(result.kerbs).toBeGreaterThan(0);
     expect(result.walls).toBe(0);
     expect(result.blocks).toEqual([]);
@@ -467,6 +502,16 @@ describe("buildRetainingWalls", () => {
       // skirt is the wall, and a second wall in front of it is a second wall.
       footprints: [{ x0: 24, z0: 0, x1: 26, z1: 47 }],
     });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      // A terrace standing the whole length of the face: its own foundation
+      // skirt is the wall, and a second wall in front of it is a second wall.
+      footprints: [{ x0: 24, z0: 0, x1: 26, z1: 47 }],
+      seam: result.seam,
+    });
     expect(result.built).toBeGreaterThan(0);
     expect(result.walls).toBe(0);
   });
@@ -480,6 +525,13 @@ describe("buildRetainingWalls", () => {
       plan,
       palette: paletteOf(stack),
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
     });
     expect(result.banks).toBeGreaterThan(0);
     expect(result.diagnostics.some((d) => d.name === "RETAINING_REFUSED")).toBe(true);
@@ -506,6 +558,13 @@ describe("buildRetainingWalls", () => {
       plan: steppedPlan(stack, top),
       palette: paletteOf(stack),
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [{ ...quarter, carriageway }],
+      plan: steppedPlan(stack, top),
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
     });
     // The crossing stays open — no coping over the carriageway — and the rest
     // of the seam is still walled.
@@ -540,6 +599,13 @@ describe("buildRetainingWalls", () => {
       palette: paletteOf(stack),
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [{ ...quarter, carriageway }],
+      plan: steppedPlan(stack, top),
+      palette: paletteOf(stack),
+      stack,
+      seam: result.seam,
+    });
     // End to end: the seam is 48 columns long and every one of them is faced.
     const seam = quarter.seams.reduce((n, s) => n + s.cells.length, 0);
     expect(seam).toBe(48);
@@ -565,6 +631,14 @@ describe("buildRetainingWalls", () => {
       palette: paletteOf(stack),
       stack,
       footprints: [{ x0: 0, z0: 0, x1: 23, z1: 47 }],
+    });
+    const finish = finishCutFaces({
+      districts: [district(65)],
+      plan,
+      palette: paletteOf(stack),
+      stack,
+      footprints: [{ x0: 0, z0: 0, x1: 23, z1: 47 }],
+      seam: result.seam,
     });
     expect(result.kerbs).toBe(0);
     for (let k = 0; k < before.length; k++) expect(plan.surface[k]).toBe(before[k]);
@@ -612,10 +686,17 @@ describe("buildRetainingWalls", () => {
       palette,
       stack,
     });
+    const finish = finishCutFaces({
+      districts: [{ ...quarter, carriageway }],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
+    });
     expect(result.walls).toBe(0);
     expect(result.unfaced.street).toBeGreaterThan(0);
     // …and the face is finished anyway.
-    expect(result.revetted).toBeGreaterThan(0);
+    expect(finish.revetted).toBeGreaterThan(0);
     // **Intent changed 2026-08-07, ratified by Kai after the fortress-maze
     // walk**: the face of a cut nobody walled is the hill's own rock, not the
     // theme's revetment. Armouring every unwalled cut in masonry is what made
@@ -642,7 +723,14 @@ describe("buildRetainingWalls", () => {
       palette: themed(stack),
       stack,
     });
-    expect(result.revetted).toBe(0);
+    const finish = finishCutFaces({
+      districts: [district(65)],
+      plan,
+      palette: themed(stack),
+      stack,
+      seam: result.seam,
+    });
+    expect(finish.revetted).toBe(0);
     for (let k = 0; k < before.length; k++) expect(plan.subsurface[k]).toBe(before[k]);
   });
 
@@ -660,6 +748,13 @@ describe("buildRetainingWalls", () => {
       plan,
       palette,
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
     });
     expect(result.wallColumns).toBeGreaterThan(0);
     const revetment = palette.state("ground.revetment");
@@ -683,6 +778,13 @@ describe("buildRetainingWalls", () => {
       plan,
       palette,
       stack,
+    });
+    const finish = finishCutFaces({
+      districts: [district(top)],
+      plan,
+      palette,
+      stack,
+      seam: result.seam,
     });
     expect(result.banks).toBeGreaterThan(0);
     expect(result.banked).toBeGreaterThan(0);
@@ -711,6 +813,13 @@ describe("buildRetainingWalls", () => {
         plan,
         palette,
         stack,
+      });
+      const finish = finishCutFaces({
+        districts: [district(top)],
+        plan,
+        palette,
+        stack,
+        seam: result.seam,
       });
       const coping = new Set(result.blocks.filter((b) => b.y === top).map((b) => b.stateId));
       return { coping, fill: plan.subsurface[24 + 24 * 48] as number };

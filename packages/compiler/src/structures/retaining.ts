@@ -210,34 +210,10 @@ export interface RetainingPassResult {
    *
    * **This is no longer the same thing as "left as raw dirt".** Every reason
    * here is a legitimate reason not to build a *wall*; none of them is a reason
-   * to leave the ground the cut exposed. {@link revetted} is what happens
-   * instead — see {@link faceCuts}.
+   * to leave the ground the cut exposed. {@link finishCutFaces} is what happens
+   * instead, at the end of the structure pass.
    */
   readonly unfaced: Readonly<Record<UnfacedReason, number>>;
-  /**
-   * Columns of **cut-face course** — the contour a cut leaves that no wall
-   * stands on, faced in the hill's own rock.
-   *
-   * The name is historical: until 2026-08-07 the course was dressed in the
-   * theme's `ground.revetment` and coped along its top edge, which armoured
-   * every unwalled cut in masonry and made the hillside read as a quarry. It is
-   * kept because the field is part of this pass's result contract; what it
-   * counts is unchanged — the columns of finished cut face. See
-   * {@link faceCuts}.
-   *
-   * The answer to the second half of the walk: *"retaining walls do not
-   * properly seal the cliffside; raw dirt faces jut out underneath stone slabs
-   * in arbitrary patches."* They did, and they were not the wall's fault — a
-   * platform edge nobody could wall was left showing the soil band the terrain
-   * pass gave it, four blocks of dirt under a stone kerb.
-   *
-   * Counted per column of the finished course, which is more than the columns
-   * that answer the drop test on their own: {@link faceCuts} bridges the
-   * one-column gaps in the contour and thickens it across the diagonal, because
-   * a contour on a lattice is a staircase and a staircase of single blocks is
-   * the artifact rather than the fix.
-   */
-  readonly revetted: number;
   /** Columns of graded bank finished as earth rather than as bare substrate. */
   readonly banked: number;
   readonly diagnostics: readonly LoamDiagnostic[];
@@ -396,7 +372,6 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let kerbs = 0;
   let banks = 0;
   let built = 0;
-  let revetted = 0;
   let banked = 0;
   const declaredWalls: RetainingDeclaration["walls"][number][] = [];
   const declaredBanks: RetainingDeclaration["banks"][number][] = [];
@@ -422,7 +397,6 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       kerbs,
       banks,
       built,
-      revetted,
       banked,
       unfaced,
       diagnostics,
@@ -434,38 +408,15 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   // Everything already standing. A seam most of whose face is under a building
   // is that building's foundation skirt, and a wall in front of it is a wall in
   // front of a wall.
-  const occupied = new Uint8Array(cells);
-  for (const rect of input.footprints ?? []) {
-    for (let z = rect.z0; z <= rect.z1; z++) {
-      for (let x = rect.x0; x <= rect.x1; x++) {
-        if (inside(region, x, z)) occupied[index(region, x, z)] = 1;
-      }
-    }
-  }
+  const occupied = occupancyOf(region, input.footprints);
 
   for (const district of relevant) {
     const levels = district.levels as GroundLevels;
-    const bounds = district.bounds;
-    const width = bounds.x1 - bounds.x0 + 1;
-    const depth = bounds.z1 - bounds.z0 + 1;
 
     // The street network of this quarter, dilated by the clearance. A wall the
     // streetscape would re-level is not a wall, it is 75 floating blocks — the
     // measurement WP-A made and the reason this ring exists.
-    const street = new Uint8Array(cells);
-    for (let j = 0; j < depth; j++) {
-      for (let i = 0; i < width; i++) {
-        const k = j * width + i;
-        if (district.carriageway[k] !== 1 && district.sidewalk[k] !== 1) continue;
-        for (let dj = -RETAIN_STREET_CLEARANCE; dj <= RETAIN_STREET_CLEARANCE; dj++) {
-          for (let di = -RETAIN_STREET_CLEARANCE; di <= RETAIN_STREET_CLEARANCE; di++) {
-            const x = bounds.x0 + i + di;
-            const z = bounds.z0 + j + dj;
-            if (inside(region, x, z)) street[index(region, x, z)] = 1;
-          }
-        }
-      }
-    }
+    const street = streetMaskOf(region, district);
 
     const jobs: {
       readonly seam: LevelSeam;
@@ -761,24 +712,15 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     }
 
     // --- the finish ---------------------------------------------------------
-    // Everything above decides where a *wall* goes. This decides what the rest
-    // of the cut is made of, and it runs over the whole quarter rather than
-    // over the seams, because "no wall here" has eight named reasons and a cut
-    // face has one appearance whichever of them applied.
-    revetted += faceCuts(
-      region,
-      plan,
-      levels,
-      states,
-      seam,
-      street,
-      occupied,
-      district.naturalCuts === true,
-    );
+    // Moved out. Everything above decides where a *wall* goes; deciding what
+    // the rest of the cut is made of is {@link finishCutFaces}, and it runs at
+    // the end of the structure pass rather than here, because the ground this
+    // one sees is not the ground the emitter lays — see that function's own
+    // doc comment for the measurement.
   }
 
   const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
-  if (walls + kerbs + banks + built + revetted > 0) {
+  if (walls + kerbs + banks + built > 0) {
     const breakdown = UNFACED_REASONS.filter((r) => unfaced[r] > 0)
       .map((r) => `${unfaced[r]} ${r}`)
       .join(", ");
@@ -788,7 +730,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         relevant[0]?.nodePath ?? "world",
         `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s) (${railColumns} parapeted), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on` +
           (breakdown === "" ? "" : `; ${unfacedTotal} seam column(s) got no wall (${breakdown})`) +
-          `; every cut face finished: ${revetted} faced in rock, ${banked} graded as bank`,
+          `; ${banked} column(s) graded as bank`,
         "No action needed.",
       ),
     );
@@ -803,12 +745,156 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     kerbs,
     banks,
     built,
-    revetted,
     banked,
     unfaced,
     diagnostics,
     declaration: { walls: declaredWalls, banks: declaredBanks },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the cut-face finish, as its own late pass                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Everything already standing, as a column mask. */
+function occupancyOf(region: Region, footprints: readonly Rect[] | undefined): Uint8Array {
+  const occupied = new Uint8Array(region.width * region.depth);
+  for (const rect of footprints ?? []) {
+    for (let z = rect.z0; z <= rect.z1; z++) {
+      for (let x = rect.x0; x <= rect.x1; x++) {
+        if (inside(region, x, z)) occupied[index(region, x, z)] = 1;
+      }
+    }
+  }
+  return occupied;
+}
+
+/** A quarter's carriageway and sidewalk, dilated by {@link RETAIN_STREET_CLEARANCE}. */
+function streetMaskOf(region: Region, district: RetainingDistrict): Uint8Array {
+  const bounds = district.bounds;
+  const width = bounds.x1 - bounds.x0 + 1;
+  const depth = bounds.z1 - bounds.z0 + 1;
+  const street = new Uint8Array(region.width * region.depth);
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      const k = j * width + i;
+      if (district.carriageway[k] !== 1 && district.sidewalk[k] !== 1) continue;
+      for (let dj = -RETAIN_STREET_CLEARANCE; dj <= RETAIN_STREET_CLEARANCE; dj++) {
+        for (let di = -RETAIN_STREET_CLEARANCE; di <= RETAIN_STREET_CLEARANCE; di++) {
+          const x = bounds.x0 + i + di;
+          const z = bounds.z0 + j + dj;
+          if (inside(region, x, z)) street[index(region, x, z)] = 1;
+        }
+      }
+    }
+  }
+  return street;
+}
+
+/** Everything {@link finishCutFaces} reads. */
+export interface CutFaceFinishInput {
+  readonly districts: readonly RetainingDistrict[];
+  /** Mutated — **materials only**: `subsurface` and `soil`, never a level. */
+  readonly plan: ColumnPlan;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /** Footprints of everything built, so the finish never thickens under a house. */
+  readonly footprints?: readonly Rect[];
+  /**
+   * {@link RetainingPassResult.seam} — the columns a wall's masonry stands on.
+   *
+   * Protected: a column a wall holds already has the wall's material and wants
+   * only the depth, so the finish deepens it and leaves its subsurface alone.
+   * Omitted (all zeroes) by callers with no wall pass in front of them.
+   */
+  readonly seam?: Uint8Array;
+}
+
+/** What the finish did. */
+export interface CutFaceFinishResult {
+  /**
+   * Columns of **cut-face course** — the contour a cut leaves that no wall
+   * stands on, faced in the hill's own rock.
+   *
+   * The answer to the second half of the retaining-wall walk: *"raw dirt faces
+   * jut out underneath stone slabs in arbitrary patches."* A platform edge
+   * nobody could wall was left showing the soil band the terrain pass gave it.
+   *
+   * Counted per column of the finished course, which is more than the columns
+   * that answer the drop test on their own: {@link faceCuts} bridges the
+   * one-column gaps in the contour and thickens it across the diagonal, because
+   * a contour on a lattice is a staircase and a staircase of single blocks is
+   * the artifact rather than the fix.
+   */
+  readonly revetted: number;
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/**
+ * Finish every cut face in the town — **the last pass that touches the ground.**
+ *
+ * ## Why it is not part of `buildRetainingWalls`
+ *
+ * It used to be, and that was the bug behind the hillside walk's second
+ * photograph: a street ending at a sheer drop, with a band of raw dirt showing
+ * mid-face under the coping. `buildRetainingWalls` runs early — before the
+ * canals, before the street surfacing, before the roads, the props and the
+ * doorsteps — because a *wall* must exist before a street is graded over the
+ * seam it holds. But four later passes still **cut fresh ground**:
+ * `dressStreetStairs` drops each tread to `level − 1`, `buildDoorsteps` cuts a
+ * landing outside every threshold, the road pass cuts its lanes and blends
+ * their shoulders, and `buildProps` levels a plinth. Every one of those makes
+ * an exposed face the finish never saw, and an unfinished face shows the soil
+ * band — dirt.
+ *
+ * So the finish runs here instead, after the last pass that writes a level.
+ *
+ * ## Why moving it is safe under the ground contract
+ *
+ * This pass writes **materials only** — `plan.subsurface` and `plan.soil` — and
+ * never a level or a surface. The ground contract protects *levels*, and its
+ * ordering rules are about who commits which level when; materials are plain
+ * last-write-wins over the column plan, so a materials-only pass may sit
+ * anywhere in the order its inputs allow. Its inputs are the finished ground,
+ * which is exactly what it now gets. `faceCuts` declares nothing to the driver,
+ * before the move and after it.
+ */
+export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
+  const { plan, palette, stack } = input;
+  const region = plan.region;
+  const relevant = input.districts.filter((d) => d.levels !== undefined);
+  if (relevant.length === 0) return { revetted: 0, diagnostics: [] };
+
+  const states = resolveStates(palette, stack);
+  const occupied = occupancyOf(region, input.footprints);
+  const seam = input.seam ?? new Uint8Array(region.width * region.depth);
+
+  let revetted = 0;
+  for (const district of relevant) {
+    revetted += faceCuts(
+      region,
+      plan,
+      district.levels as GroundLevels,
+      states,
+      seam,
+      streetMaskOf(region, district),
+      occupied,
+      district.naturalCuts === true,
+    );
+  }
+
+  const diagnostics: LoamDiagnostic[] =
+    revetted === 0
+      ? []
+      : [
+          note(
+            "SWEEP_FEATURES_PLACED",
+            relevant[0]?.nodePath ?? "world",
+            `every cut face finished: ${revetted} column(s) faced in the hill's own rock`,
+            "No action needed.",
+          ),
+        ];
+  return { revetted, diagnostics };
 }
 
 /* -------------------------------------------------------------------------- */

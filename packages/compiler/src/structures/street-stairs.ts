@@ -95,6 +95,27 @@ function treadWidth(): number {
   return STAIR_PROFILE.bands.find((b) => b.id === "tread")?.width ?? 5;
 }
 
+/**
+ * The longest hole in a flight's balustrade that is bridged rather than left.
+ *
+ * Four, the same number `retaining.ts`'s `RAIL_GAP_BRIDGE` uses on a retaining
+ * wall's parapet, and deliberately the same: the two rails are the same object
+ * to a player walking past them, and a hole in either is the same artifact.
+ * Duplicated rather than imported because `retaining.ts` reaches this module
+ * through `roads.ts` and a back-import would close the cycle.
+ */
+export const STREET_STAIR_RAIL_GAP_BRIDGE = 4;
+
+/**
+ * The shortest run of balustrade worth building — `retaining.ts`'s
+ * `MIN_RAIL_RUN`, for the same reason.
+ *
+ * One or two wall blocks on their own do not render as a low course; they
+ * render as full-height posts, which is the "rubble on the landing" the
+ * hillside walk photographed.
+ */
+export const STREET_STAIR_MIN_RAIL_RUN = 3;
+
 /** Steps between lanterns on the balustrade — {@link STAIR_PROFILE}'s `lamp`. */
 function lampPitch(): number {
   return featureOf(STAIR_PROFILE, "lamp").pitch;
@@ -432,6 +453,29 @@ export function dressStreetStairs(
  * A lamp is the same two courses the hillside set-piece stair uses: the wall
  * post, a second wall block, and a lantern on top, every `lamp` steps of the
  * profile's own pitch.
+ *
+ * ## The rail is a *course*, not a per-column decision
+ *
+ * `top === level − 1` — "the flight actually rises beside this column" — is the
+ * right test for whether a rail belongs here, and applying it column by column
+ * was the wrong way to use it: 234 of 1,316 parapet columns on the hillside
+ * prototype failed it, scattered, and each failure punched a hole in a course
+ * that a player reads as one object. What shipped was cobblestone wall blocks
+ * standing apart on the landings — the "rubble beside the lantern" the walk
+ * photographed. A wall block on its own does not render as a low course; it
+ * renders as a full-height post.
+ *
+ * So the eligibility is worked out first, per side, and then twice smoothed
+ * with the same two rules `railRun` uses on a retaining wall's parapet — the
+ * two passes are deliberately the same numbers, because the artifact is the
+ * same artifact:
+ *
+ * 1. **Gaps of at most {@link STREET_STAIR_RAIL_GAP_BRIDGE} are bridged**, at the bridged
+ *    column's *own* ground, so the rail steps across a short landing instead of
+ *    stopping at it. Never at the ends: a rail is carried across a hole, not
+ *    extended past where the flight stops.
+ * 2. **Runs shorter than {@link STREET_STAIR_MIN_RAIL_RUN} are dropped.** Two posts left
+ *    over at the head of a flight are the artifact, not a shortened rail.
  */
 export function streetStairRail(
   geometry: StreetStairGeometry,
@@ -469,31 +513,80 @@ export function streetStairRail(
   const head = geometry.centre[0] as Point2 | undefined;
   const litSide = head === undefined || (((head.x + head.z) & 1) === 0) ? 1 : -1;
 
-  // The ends of the flight, so the head and the foot are lit however short it
+  // --- the course, one side at a time -------------------------------------
+  // Each side of the flight is its own run of columns in `k` order, so gaps and
+  // stubs are decided along the rail rather than across the flight.
+  const sides = new Map<number, StreetStairColumn[]>();
+  for (const column of geometry.columns) {
+    if (column.role !== "parapet") continue;
+    const side = Math.sign(column.a);
+    const run = sides.get(side);
+    if (run === undefined) sides.set(side, [column]);
+    else run.push(column);
+  }
+
+  /** Every parapet column that will carry a rail, in `k` order per side. */
+  const railed: StreetStairColumn[] = [];
+  for (const side of [...sides.keys()].sort((a, b) => a - b)) {
+    const run = (sides.get(side) as StreetStairColumn[])
+      .slice()
+      .sort((a, b) => a.k - b.k);
+    const n = run.length;
+    // Dry ground, and the flight rising beside it — the two tests that used to
+    // be applied one column at a time.
+    const rises = new Uint8Array(n);
+    for (const [i, column] of run.entries()) {
+      if (input.plan.fluidKind[column.idx] !== FluidKind.NONE) continue;
+      const top = input.plan.ground[column.idx] as number;
+      const level = levels.levels[column.k] as number;
+      if (top === level - 1) rises[i] = 1;
+    }
+    // Wet is wet: a bridged column still has to be dry ground to stand on.
+    const dry = new Uint8Array(n);
+    for (const [i, column] of run.entries()) {
+      if (input.plan.fluidKind[column.idx] === FluidKind.NONE) dry[i] = 1;
+    }
+    const carried = Uint8Array.from(rises);
+    // 1 — bridge the short gaps, from the array as it stands so the result does
+    // not depend on scan direction. Interior gaps only.
+    for (let i = 0; i < n; i++) {
+      if (rises[i] === 1) continue;
+      let end = i;
+      while (end < n && rises[end] !== 1) end++;
+      if (i > 0 && end < n && end - i <= STREET_STAIR_RAIL_GAP_BRIDGE) {
+        for (let j = i; j < end; j++) if (dry[j] === 1) carried[j] = 1;
+      }
+      i = end;
+    }
+    // 2 — drop the stubs.
+    const runs = Uint8Array.from(carried);
+    for (let i = 0; i < n; i++) {
+      if (runs[i] !== 1) continue;
+      let end = i;
+      while (end < n && runs[end] === 1) end++;
+      if (end - i < STREET_STAIR_MIN_RAIL_RUN) for (let j = i; j < end; j++) carried[j] = 0;
+      i = end;
+    }
+    for (const [i, column] of run.entries()) if (carried[i] === 1) railed.push(column);
+  }
+
+  // The ends of the *course*, so the head and the foot are lit however short it
   // is: a lantern at the top of a stair is the one that tells you the stair is
-  // there. Taken over parapet columns on the lit side only, so the two ends are
+  // there. Taken over railed columns on the lit side only, so the two ends are
   // real balustrade columns and not a step the rail never reached.
   let firstK = Infinity;
   let lastK = -Infinity;
-  for (const column of geometry.columns) {
-    if (column.role !== "parapet") continue;
+  for (const column of railed) {
     if (Math.sign(column.a) !== litSide) continue;
     if (column.k < firstK) firstK = column.k;
     if (column.k > lastK) lastK = column.k;
   }
 
-  for (const column of geometry.columns) {
-    if (column.role !== "parapet") continue;
-    const k2 = column.idx;
-    if (input.plan.fluidKind[k2] !== FluidKind.NONE) continue;
+  for (const column of railed) {
     // The ground as it finally stands, not the level the flight asked for: on a
     // shared landing that is the owning street's level, and a rail that ignored
     // it would be the floating balustrade v0 refused to build.
-    const top = input.plan.ground[k2] as number;
-    // A rail is only a rail where the flight actually rises beside it. On a
-    // landing the parapet would be a knee-high wall across a junction.
-    const level = levels.levels[column.k] as number;
-    if (top !== level - 1) continue;
+    const top = input.plan.ground[column.idx] as number;
     // The plinth the wall stands on, emitted rather than assumed. At this point
     // it is the block the flight already levelled the column to, so on the
     // ordinary path it rewrites stone with the same stone. It earns its place on

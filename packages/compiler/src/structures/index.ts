@@ -71,7 +71,11 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { digCanals, type CanalPassResult } from "./canals.js";
-import { buildRetainingWalls, type RetainingPassResult } from "./retaining.js";
+import {
+  buildRetainingWalls,
+  finishCutFaces,
+  type RetainingPassResult,
+} from "./retaining.js";
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
@@ -970,6 +974,32 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     stack: input.stack,
   });
   blocks.push(...doorsteps.blocks);
+
+  // --- the cut-face finish -------------------------------------------------
+  // The other half of the retaining pass, and it runs *here* rather than up
+  // there with the walls. Walked (the hillside prototype, 2026-08-06): a street
+  // ending at a sheer drop showed a band of raw dirt mid-face, under the
+  // coping. The walls were built before the streets were surfaced — they have
+  // to be — but `dressStreetStairs` drops every tread to `level − 1`, the road
+  // pass cuts its lanes, the props level their plinths and `buildDoorsteps`
+  // cuts a landing at every threshold, and each of those exposes a face the
+  // finish never saw. An unseen face is the terrain's soil band, which is dirt.
+  //
+  // Materials only — `subsurface` and `soil`, never a level and never a
+  // surface — so under the ground contract this is free to sit anywhere its
+  // inputs allow (materials are last-write-wins; the contract protects levels).
+  // Its input is the finished ground, which is only finished here.
+  const cutFaces = finishCutFaces({
+    districts,
+    plan: input.plan,
+    palette: input.palette,
+    stack: input.stack,
+    footprints: buildings.built.map((b) => b.footprint),
+    // The wall masonry stays the wall's: a seam column is deepened, not
+    // repainted in rock.
+    seam: retaining.seam,
+  });
+  diagnostics.push(...cutFaces.diagnostics);
 
   // --- ground treatment (F2) -----------------------------------------------
   // Dead last, and that is the whole design: every other pass has by now
