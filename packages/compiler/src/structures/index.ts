@@ -289,10 +289,41 @@ export interface StructureStats {
   readonly [lifeStat: string]: number | string | boolean;
 }
 
+/**
+ * Which pass pushed a run of {@link StructurePassResult.blocks} — the audit's
+ * attribution seam.
+ *
+ * A `StructureBlock` is four numbers and deliberately stays four numbers: it is
+ * written tens of thousands of times per world and a provenance string on each
+ * one would cost more than the whole rest of the pass. But *some* instrument has
+ * to be able to answer "which pass put this cobblestone wall here", because the
+ * defects that survive every other check are the ones that only exist where two
+ * passes meet — a junction is a maze because four emitters each laid something
+ * defensible there, and no pass sees the fifth thing they add up to.
+ *
+ * The block list is built by concatenation, in pass order, and nothing ever
+ * removes from it. So a half-open index range per push is a complete, exact and
+ * free record of who laid what. It is a *return value only*: nothing downstream
+ * reads it, so the emitted world is byte-identical with or without it.
+ */
+export interface BlockSpan {
+  /** The pass, as `walkability.ts` and the report name it. */
+  readonly emitter: string;
+  /** First index into `blocks`, inclusive. */
+  readonly from: number;
+  /** One past the last, exclusive. */
+  readonly to: number;
+}
+
+/** Elements copied per `push` when a pass's blocks are appended. See `lay`. */
+const LAY_CHUNK = 8192;
+
 /** What the structure pass produced. */
 export interface StructurePassResult {
   /** Blocks to stamp after the terrain columns are written. */
   readonly blocks: readonly StructureBlock[];
+  /** Who pushed each run of {@link StructurePassResult.blocks}. See {@link BlockSpan}. */
+  readonly blockSpans: readonly BlockSpan[];
   readonly buildings: readonly BuiltBuilding[];
   readonly plaza?: PlazaResult;
   readonly roads?: RoadNetworkResult;
@@ -311,6 +342,12 @@ export interface StructurePassResult {
   readonly props: readonly PlacedProp[];
   /** F2's ground treatment: what each lot got, and how much ground it took. */
   readonly grounds?: GroundPassResult;
+  /**
+   * Every door's landing — carried out so the walkability audit can put a
+   * doorstep in the pedestrian graph. A house whose step is not on the network
+   * is a house you cannot walk out of, and nothing else here would notice.
+   */
+  readonly doorsteps: DoorstepResult;
   /**
    * The courtyards this world furnished, and the passages it roofed. Absent
    * when no quarter closed a block (`docs/COURTYARDS-AND-LEVELS-v0.md` §4).
@@ -600,7 +637,28 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
 
   const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
-  const blocks: StructureBlock[] = [...(precincts?.blocks ?? []), ...buildings.blocks];
+  const blocks: StructureBlock[] = [];
+  /** See {@link BlockSpan}. A return value only; nothing downstream reads it. */
+  const blockSpans: BlockSpan[] = [];
+  /**
+   * Append a pass's blocks and record the range they landed in.
+   *
+   * Copied in chunks rather than spread: `push(...list)` puts every element on
+   * the argument stack, and a harbour town's building pass hands over enough
+   * blocks to overflow it. (Measured — `c1-harbourtown`.) The old
+   * `[...a, ...b]` array literal this replaced had no such limit, so the
+   * failure only appeared once the concatenation became a call.
+   */
+  const lay = (emitter: string, list: readonly StructureBlock[]): void => {
+    if (list.length === 0) return;
+    const from = blocks.length;
+    for (let i = 0; i < list.length; i += LAY_CHUNK) {
+      blocks.push(...list.slice(i, i + LAY_CHUNK));
+    }
+    blockSpans.push({ emitter, from, to: blocks.length });
+  };
+  lay("precincts", precincts?.blocks ?? []);
+  lay("buildings", buildings.blocks);
   if (input.occupancy !== undefined) {
     for (const built of buildings.built) claimFootprint(input.occupancy, built);
   }
@@ -624,7 +682,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
   diagnostics.push(...tunnelPass.diagnostics);
-  blocks.push(...tunnelPass.blocks);
+  lay("tunnels", tunnelPass.blocks);
   if (tunnelPass.tunnels.length > 0) attachTunnelSpans(input.plan, tunnelPass);
 
   // --- the plaza -----------------------------------------------------------
@@ -646,7 +704,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
     diagnostics.push(...plaza.diagnostics);
-    blocks.push(...plaza.blocks);
+    lay("plaza", plaza.blocks);
   }
 
   // --- district streets ----------------------------------------------------
@@ -684,7 +742,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     footprints: buildings.built.map((b) => b.footprint),
   });
   diagnostics.push(...retaining.diagnostics);
-  blocks.push(...retaining.blocks);
+  lay("retaining", retaining.blocks);
 
   // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
   // SLOT, filled. It runs after `buildBuildings` and before the streetscape,
@@ -707,7 +765,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
   diagnostics.push(...courtyardPass.diagnostics);
-  blocks.push(...courtyardPass.blocks);
+  lay("courtyards", courtyardPass.blocks);
 
   // --- the canals ----------------------------------------------------------
   // After the column plan, before the streets are surfaced, and that ordering
@@ -760,7 +818,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       ...(retaining.wallColumns === 0 ? {} : { seam: retaining.seam }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     });
-    blocks.push(...streets.blocks);
+    lay("streets", streets.blocks);
     // §3.8b: one entry per surfaced segment, keyed by the surfacer's own source
     // id, so the sidewalk band takes its level from the very `ArcLevels` the
     // carriageway was graded to. A segment with no frame (a flight of steps, a
@@ -805,7 +863,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         // See `StreetscapeContext.surfaced`.
         surfaced: streets.road,
       });
-      blocks.push(...dressed.blocks);
+      lay(`streetscape:${district.nodePath}`, dressed.blocks);
       streetFurniture += dressed.props.length;
       diagnostics.push(...dressed.diagnostics);
       // Kept for C3: the life pass needs the walk lane it must not touch and
@@ -876,7 +934,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       ...(input.roadCorridor === undefined ? {} : { corridor: input.roadCorridor }),
     });
     diagnostics.push(...roads.diagnostics);
-    blocks.push(...roads.blocks);
+    lay("roads", roads.blocks);
   }
 
   // --- props ---------------------------------------------------------------
@@ -948,7 +1006,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   diagnostics.push(...props.diagnostics);
-  blocks.push(...props.blocks);
+  lay("props", props.blocks);
   // §9a.1 rule 1: converted at WP-5 — `levelPropPad` commits its own `prop.pad`
   // claims as it lays each plinth, so there is nothing to record here.
   // The grammar's fluid claim, re-derived from what it actually emitted. It is
@@ -963,7 +1021,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // The apron, a second time: the roads have cut and the shoulders have
   // blended, so the ground a porch lamp stands in is only now the ground the
   // emitter will lay. Adds nothing on a world with no roads.
-  blocks.push(...underpinAprons(buildings.built, input.plan));
+  lay("aprons", underpinAprons(buildings.built, input.plan));
 
   const doorsteps = buildDoorsteps({
     buildings: buildings.built,
@@ -973,7 +1031,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     palette: input.palette,
     stack: input.stack,
   });
-  blocks.push(...doorsteps.blocks);
+  lay("doorsteps", doorsteps.blocks);
 
   // --- the cut-face finish -------------------------------------------------
   // The other half of the retaining pass, and it runs *here* rather than up
@@ -1026,7 +1084,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     }),
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
-  blocks.push(...grounds.blocks);
+  lay("grounds", grounds.blocks);
 
   // --- the set pieces (C4) -------------------------------------------------
   // After the ground treatment and before the life pass, and both halves are
@@ -1076,7 +1134,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         });
   if (setPieces !== undefined) {
     diagnostics.push(...setPieces.diagnostics);
-    blocks.push(...setPieces.blocks);
+    lay("setpieces", setPieces.blocks);
   }
 
   // --- the wall (`infra.wall@0`) -------------------------------------------
@@ -1107,7 +1165,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         });
   if (wallPass !== undefined) {
     diagnostics.push(...wallPass.diagnostics);
-    blocks.push(...wallPass.blocks);
+    lay("walls", wallPass.blocks);
   }
 
   // --- the life pass (C3) --------------------------------------------------
@@ -1151,10 +1209,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         }),
   });
   diagnostics.push(...life.diagnostics);
-  blocks.push(...life.blocks);
+  lay("life", life.blocks);
 
   return {
     blocks,
+    blockSpans,
+    doorsteps,
     buildings: buildings.built,
     tunnels: tunnelPass.tunnels,
     walls: wallPass?.walls ?? [],

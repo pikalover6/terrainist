@@ -101,6 +101,12 @@ import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.j
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
+import {
+  auditWalkability,
+  walkabilityContextOf,
+  type WalkabilityReport,
+  type WalkabilityTuning,
+} from "../emit/walkability.js";
 import type { Provenance } from "../provenance.js";
 
 import { biomeForColumn, type ProfileBiome } from "./biomes.js";
@@ -250,6 +256,16 @@ export interface CompileTerrainOptions {
    * to compare.
    */
   readonly groundEquivalence?: boolean;
+  /**
+   * Run the walkability audit over the emitted world (`emit/walkability.ts`).
+   *
+   * Opt-in for the same reason the equivalence shim is: it reads every region
+   * file back and floods a graph over every paved column, which is seconds a
+   * production compile should not spend. It is what the tests and a diagnosis
+   * session point at a fixture. Ignored under `skipEmit` — there is no world to
+   * read.
+   */
+  readonly walkability?: boolean | WalkabilityTuning;
 }
 
 /**
@@ -424,6 +440,12 @@ export type CompileTerrainResult =
        * business on disk. Nothing serialises this.
        */
       readonly groundEquivalence?: GroundEquivalenceOutcome;
+      /**
+       * What the walkability audit found, present only when
+       * {@link CompileTerrainOptions.walkability} asked for it. On the result
+       * rather than in the report, for the same reason as the shim above.
+       */
+      readonly walkability?: WalkabilityReport;
     }
   | { readonly ok: false; readonly diagnostics: readonly LoamDiagnostic[] };
 
@@ -1009,6 +1031,25 @@ async function compileValidated(
     options.skipEmit === true ? unwrittenEmit(stack, spawnResult) : await emitTerrain(emitInput);
   const emitMs = now() - t6;
 
+  // --- the walkability audit (opt-in) --------------------------------------
+  // After the emit and never before it: this reads the world on disk, because
+  // the whole point is to measure what the passes added up to rather than what
+  // any one of them declared.
+  const walkability =
+    options.walkability === undefined ||
+    options.walkability === false ||
+    options.skipEmit === true ||
+    structures === undefined
+      ? undefined
+      : await auditWalkability(options.outDir, stack, {
+          ...walkabilityContextOf(plan, structures, {
+            ...(structures.districts[0] === undefined
+              ? {}
+              : { town: structures.districts[0].bounds }),
+          }),
+          ...(options.walkability === true ? {} : options.walkability),
+        });
+
   let land = 0;
   let volcanicColumns = 0;
   let lavaFlowColumns = 0;
@@ -1087,6 +1128,7 @@ async function compileValidated(
     ok: true,
     report,
     ...(groundEquivalence === undefined ? {} : { groundEquivalence }),
+    ...(walkability === undefined ? {} : { walkability }),
   };
 }
 
