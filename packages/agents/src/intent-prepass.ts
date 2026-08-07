@@ -238,6 +238,22 @@ ${eraVocabularyLines()}
   renaissance); "piratical", "swashbuckling" and "unicorn" are not. Any other
   word is discarded and falls back to ${DEFAULT_ERA_CLASS}.
 
+  ALWAYS WRITE "era" WHEN THE PROMPT IMPLIES A PERIOD AT ALL. It is the one
+  dial that should almost never be omitted. Omitting it is NOT neutral: the
+  street furniture pass then keeps its full modern kit, so a mountain village
+  with no "era" comes out with air-conditioning units on its walls, fire
+  hydrants and phone boxes along its kerbs, wheeled dumpsters in its back
+  courts and cars parked on its lanes. A period is implied far more often than
+  it is stated:
+    - mountain village, hillside town, old hill town, fishing village, farming
+      hamlet, a town with a chapel or a castle  -> medieval
+    - colonial, age of sail, pirate, baroque                 -> renaissance
+    - victorian, steampunk, mill town, wild west             -> industrial
+    - downtown, suburb, contemporary, cyberpunk              -> modern / far_future
+    - roman, greek, classical -> ancient;  tribal, prehistoric -> primitive
+  Leave "era" out ONLY when the prompt fixes no period AND a present-day street
+  full of cars and hydrants would look right.
+
 materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exist:
     ${list(MATERIAL_THEME_IDS)}
 

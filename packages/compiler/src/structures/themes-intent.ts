@@ -24,6 +24,7 @@ export const STRUCTURE_ROWS = {
   ornamentDensity: "grammar.ornamentDensity",
   wearIntensity: "roads.wearIntensity",
   propFamily: "props.family",
+  modernFittings: "life.modernFittings",
   decayCoverage: "decay.coverage",
   vegetationReclaim: "decay.vegetationReclaim",
 } as const;
@@ -75,6 +76,18 @@ export const PROP_FAMILY_BY_ERA: Readonly<Record<EraClass, string>> = Object.fre
   modern: "bicycle_rack",
   far_future: "floating_platform",
 });
+
+/**
+ * Era classes whose streets may carry the *modern* fittings.
+ *
+ * An air-conditioning condenser, a fire hydrant, a phone box, a wheeled
+ * dumpster, a newspaper box, a parked car and a bus shelter all say "twentieth
+ * century" louder than any material does, and a boreal mountain village with
+ * seventeen AC units reads as a film set. `industrial` is deliberately *out*:
+ * the gaslit-terrace read is the one that era buys, and it is spoiled by a
+ * satellite dish.
+ */
+const MODERN_FITTING_ERAS: ReadonlySet<EraClass> = new Set<EraClass>(["modern", "far_future"]);
 
 /** Register every structure-owned row. Idempotent; the seam calls it once. */
 export function registerStructureFanOut(): void {
@@ -169,6 +182,21 @@ export function registerStructureFanOut(): void {
       if (preferred !== undefined) return preferred;
       if (!intent.eraDeclared) return ctx.today;
       return PROP_FAMILY_BY_ERA[intent.eraClass];
+    },
+  });
+
+  /* --- era → may the life pass plant modern fittings? --------------------- */
+  registerFanOut<boolean>({
+    id: STRUCTURE_ROWS.modernFittings,
+    reads: ["era"],
+    status: "today",
+    drives: "whether life.ts plants AC units, hydrants, phone boxes, dumpsters, cars",
+    resolve(intent, ctx) {
+      // Law 2, and it bites hardest here: a document with no `era` gets today's
+      // behaviour, which is "modern fittings allowed". The gate only closes when
+      // an era is actually declared and resolves to a pre-modern class.
+      if (!intent.eraDeclared) return ctx.today;
+      return MODERN_FITTING_ERAS.has(intent.eraClass);
     },
   });
 

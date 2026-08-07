@@ -504,3 +504,66 @@ describe("degenerate inputs", () => {
     }
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* the era gate                                                                */
+/* -------------------------------------------------------------------------- */
+
+describe("modern fittings are era-gated", () => {
+  /** The kinds that date a street to the twentieth century. */
+  const MODERN = [
+    "acUnit",
+    "satelliteDish",
+    "hydrant",
+    "phone_box",
+    "newspaperBox",
+    "dumpster",
+    "mailbox",
+    "bicycle_rack",
+    "bus_shelter",
+    "parkedCar",
+  ] as const;
+
+  const dress = (modernFittings?: boolean): ReturnType<typeof dressLife> => {
+    const c = city();
+    return dressLife({
+      plan: c.plan,
+      stack,
+      seed: SEED,
+      nodePath: "world",
+      buildings: c.buildings,
+      districts: c.districts,
+      existing: c.existing,
+      ...(modernFittings === undefined ? {} : { modernFittings }),
+    });
+  };
+
+  const modernCount = (r: ReturnType<typeof dressLife>): number =>
+    MODERN.reduce((n, k) => n + ((r.stats[k] as number | undefined) ?? 0), 0);
+
+  it("an absent gate is today's behaviour, byte for byte", () => {
+    // The intent layer's law: a document with no `era` compiles identically.
+    // `true` is the value the fan-out row hands back as `today`, so the two
+    // must agree block for block, not merely in count.
+    const absent = dress(undefined);
+    const on = dress(true);
+    expect(on.blocks).toEqual(absent.blocks);
+    expect(on.stats).toEqual(absent.stats);
+    expect(modernCount(absent)).toBeGreaterThan(0);
+  });
+
+  it("a pre-modern era plants none of them", () => {
+    const off = dress(false);
+    for (const kind of MODERN) expect(off.stats[kind] ?? 0).toBe(0);
+  });
+
+  it("still dresses the street: the gate substitutes, it does not empty", () => {
+    const off = dress(false);
+    const on = dress(true);
+    // A pre-modern street loses the parking lane and the wall plant outright,
+    // so it is lighter — but it is still a dressed street, not a bare one.
+    expect(off.stats["lifeTotal"] as number).toBeGreaterThan(
+      (on.stats["lifeTotal"] as number) * 0.5,
+    );
+  });
+});

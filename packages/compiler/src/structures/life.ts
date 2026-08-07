@@ -423,6 +423,22 @@ export interface LifePassInput {
    * "today", so a no-intent compile is byte-identical.
    */
   readonly propFamily?: string;
+  /**
+   * May the pass plant the **modern** fittings?
+   *
+   * The `life.modernFittings` fan-out row's landing place. The modern set is
+   * the one that dates a street on sight: air-conditioning condensers and
+   * satellite dishes on a flank wall, fire hydrants, phone boxes, newspaper
+   * boxes, mailboxes, wheeled dumpsters, bicycle racks, bus shelters and parked
+   * cars. Everything else — crates, pallets, log piles, barrows, benches,
+   * planters, notice boards, flagpoles, bollards, litter bins, drinking
+   * fountains — is era-neutral and always placed.
+   *
+   * **Absent means `true`**, which is exactly today's behaviour, so a document
+   * with no `era` compiles byte-identically. The gate closes only when the
+   * intent layer resolved a pre-modern era.
+   */
+  readonly modernFittings?: boolean;
 }
 
 /** What {@link dressLife} produced. */
@@ -1598,6 +1614,15 @@ function dressStreetFrontage(
  */
 export const PROP_FAMILY_SHARE = 0.25;
 
+/**
+ * May this compile plant the modern fittings?
+ *
+ * One reader for the whole pass, and it is `!== false` rather than `=== true`
+ * on purpose: absent is today's behaviour (see
+ * {@link LifePassInput.modernFittings}).
+ */
+const modernOk = (input: LifePassInput): boolean => input.modernFittings !== false;
+
 /** One piece of pavement clutter, chosen by frontage. */
 function plantGroundObject(
   frontage: Frontage,
@@ -1611,6 +1636,10 @@ function plantGroundObject(
   input: LifePassInput,
 ): boolean {
   const roll = hash2(seed, x, z, 20);
+  // The era gate. The roll is drawn first and unchanged either way, so a
+  // pre-modern street is today's street with the dated objects swapped for the
+  // era-neutral neighbour in the same band — not a differently seeded street.
+  const modern = modernOk(input);
   // The intent's prop family, first refusal on a quarter of the draw. The
   // family is a real catalog id (the row grounds it), so a failure here is a
   // fit failure, not a spelling one — and the frontage draw still follows.
@@ -1623,12 +1652,16 @@ function plantGroundObject(
     if (roll < 0.62) return placeCatalog("market_barrow", input, planter, x, y, z);
     if (roll < 0.74) return placeCatalog("planter", input, planter, x, y, z);
     if (roll < 0.86) return placeCatalog("litter_bin", input, planter, x, y, z);
-    return placeCatalog("bicycle_rack", input, planter, x, y, z);
+    return modern
+      ? placeCatalog("bicycle_rack", input, planter, x, y, z)
+      : planter.place("crates", crateOps(1), x, y, z, PAVEMENT_RULE);
   }
   if (frontage === "industrial") {
     if (roll < 0.4) return planter.place("crates", crateOps(2), x, y, z, PAVEMENT_RULE);
     if (roll < 0.7) return planter.place("pallet", palletOps(wood), x, y, z, PAVEMENT_RULE);
-    return planter.place("dumpster", dumpsterOps(d), x, y, z, PAVEMENT_RULE);
+    return modern
+      ? planter.place("dumpster", dumpsterOps(d), x, y, z, PAVEMENT_RULE)
+      : placeCatalog("log_pile", input, planter, x, y, z);
   }
   if (frontage === "civic") {
     if (roll < 0.4) return placeCatalog("planter", input, planter, x, y, z);
@@ -1638,7 +1671,11 @@ function plantGroundObject(
   // Residential, office and plain frontage: quiet, useful things only.
   if (roll < 0.35) return placeCatalog("planter", input, planter, x, y, z);
   if (roll < 0.6) return placeCatalog("litter_bin", input, planter, x, y, z);
-  if (roll < 0.8) return placeCatalog("bicycle_rack", input, planter, x, y, z);
+  if (roll < 0.8) {
+    return modern
+      ? placeCatalog("bicycle_rack", input, planter, x, y, z)
+      : placeCatalog("bench", input, planter, x, y, z);
+  }
   return planter.place("windowBoxPot", [op(0, 0, 0, "flower_pot")], x, y, z, PAVEMENT_RULE);
 }
 
@@ -1777,7 +1814,12 @@ function dressFacade(
 
     // Plant: condensers low, dishes high, and neither on a street elevation of
     // a civic building, which is the one place they would look wrong.
-    for (let i = 0; i < n; i++) {
+    //
+    // Nor anywhere at all before the twentieth century — a condenser rattling on
+    // a mountain chapel's flank is the loudest anachronism the pass can make, so
+    // the era gate skips the draw outright rather than substituting: there is no
+    // pre-modern object that belongs bolted to a wall at first-floor height.
+    for (let i = 0; modernOk(input) && i < n; i++) {
       const w = run.wall[i] as { x: number; z: number };
       const ox = w.x + d.dx;
       const oz = w.z + d.dz;
@@ -1915,8 +1957,12 @@ function dressBack(
     if (y === undefined || world.wet(x, z)) continue;
     if (planter.crowded(x, z, 2)) continue;
     const roll = hash2(seed, x + k, z, 11);
-    if (roll < 0.3) planter.place("dumpster", dumpsterOps(d), x, y, z, PAVEMENT_RULE);
-    else if (roll < 0.6) planter.place("crates", crateOps(hashInt(seed, x, z, 12, 1, 2)), x, y, z, PAVEMENT_RULE);
+    // A wheeled dumpster is a modern object; a pre-modern back court gets more
+    // of what is already heaped there.
+    if (roll < 0.3) {
+      if (modernOk(input)) planter.place("dumpster", dumpsterOps(d), x, y, z, PAVEMENT_RULE);
+      else placeCatalog("log_pile", input, planter, x, y, z);
+    } else if (roll < 0.6) planter.place("crates", crateOps(hashInt(seed, x, z, 12, 1, 2)), x, y, z, PAVEMENT_RULE);
     else if (roll < 0.8) planter.place("pallet", palletOps(wood), x, y, z, PAVEMENT_RULE);
     else placeCatalog("log_pile", input, planter, x, y, z);
   }
@@ -1950,7 +1996,9 @@ function dressKerbside(
     const arterial = segment.width >= ARTERIAL_MIN_WIDTH;
 
     // --- parked cars -------------------------------------------------------
-    if (segment.width >= PARKING_MIN_WIDTH) {
+    // Gated on the era for the obvious reason. Nothing is substituted: a cart at
+    // the kerb is a job for the prop family, not for the parking-lane geometry.
+    if (modernOk(input) && segment.width >= PARKING_MIN_WIDTH) {
       for (let base = 4; base + CAR_LENGTH < cells.length - 4; base += PARKING_PERIOD) {
         const anchor = cells[base] as { x: number; z: number };
         if (hash2(seed, anchor.x, anchor.z, 1) >= 0.65) continue;
@@ -1981,7 +2029,8 @@ function dressKerbside(
     }
 
     // --- bus stops, on arterials only --------------------------------------
-    if (arterial) {
+    // A bus shelter without buses is a folly; the era gate takes it.
+    if (arterial && modernOk(input)) {
       for (const frac of [0.3, 0.7]) {
         const i = Math.floor(cells.length * frac);
         const step = cells[i];
@@ -2015,19 +2064,30 @@ function dressKerbside(
           : side === 1
             ? DIRS[1] as Dir
             : DIRS[3] as Dir;
-      if (roll < 0.3) planter.place("hydrant", hydrantOps(), at.x, y, at.z, PAVEMENT_RULE);
-      else if (roll < 0.5) {
-        planter.place(
-          "newspaperBox",
-          newsBoxOps(hashPick(seed, at.x, at.z, 9, SIGN_COLOURS), facing),
-          at.x,
-          y,
-          at.z,
-          PAVEMENT_RULE,
-        );
-      } else if (roll < 0.7) placeCatalog("mailbox", input, planter, at.x, y, at.z);
-      else if (roll < 0.85) placeCatalog("bollard_row", input, planter, at.x, y, at.z);
-      else placeCatalog("phone_box", input, planter, at.x, y, at.z);
+      // Three of these five fittings are twentieth-century objects — a hydrant,
+      // a newspaper box and a phone box — and a mailbox as styled here is a
+      // fourth. Pre-modern, the same bands fall to the era-neutral kerb objects
+      // rather than being dropped, so the fitting *rhythm* along the kerb is the
+      // one thing the era does not change.
+      const modern = modernOk(input);
+      if (roll < 0.3) {
+        if (modern) planter.place("hydrant", hydrantOps(), at.x, y, at.z, PAVEMENT_RULE);
+        else placeCatalog("drinking_fountain", input, planter, at.x, y, at.z);
+      } else if (roll < 0.5) {
+        if (modern) {
+          planter.place(
+            "newspaperBox",
+            newsBoxOps(hashPick(seed, at.x, at.z, 9, SIGN_COLOURS), facing),
+            at.x,
+            y,
+            at.z,
+            PAVEMENT_RULE,
+          );
+        } else placeCatalog("notice_board", input, planter, at.x, y, at.z);
+      } else if (roll < 0.7) {
+        placeCatalog(modern ? "mailbox" : "planter", input, planter, at.x, y, at.z);
+      } else if (roll < 0.85) placeCatalog("bollard_row", input, planter, at.x, y, at.z);
+      else placeCatalog(modern ? "phone_box" : "bench", input, planter, at.x, y, at.z);
     }
 
     // --- gutter drains ------------------------------------------------------

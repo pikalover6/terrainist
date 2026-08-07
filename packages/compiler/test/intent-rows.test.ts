@@ -78,6 +78,22 @@ describe("roofs, ornament, wear and decay", () => {
     expect(fanOut(STRUCTURE_ROWS.propFamily, scope({ era: "far_future" }), { nodePath: "w", today: undefined })).toBe("floating_platform");
     expect(fanOut(STRUCTURE_ROWS.propFamily, NOTHING, { nodePath: "w", today: "cart" })).toBe("cart");
   });
+
+  it("gates the modern street fittings on the era, and defaults to today", () => {
+    const gate = (intent: unknown, today: boolean): boolean =>
+      fanOut<boolean>(STRUCTURE_ROWS.modernFittings, scope(intent), { nodePath: "w", today });
+    // Declared and modern: allowed. Declared and pre-modern: shut.
+    expect(gate({ era: "modern" }, true)).toBe(true);
+    expect(gate({ era: "cyberpunk" }, true)).toBe(true);
+    expect(gate({ era: "medieval" }, true)).toBe(false);
+    expect(gate({ era: "victorian" }, true)).toBe(false);
+    // Not declared: today, whatever today is. This is the identity law — a
+    // document with no `era` must not lose a single AC unit.
+    expect(fanOut<boolean>(STRUCTURE_ROWS.modernFittings, NOTHING, { nodePath: "w", today: true })).toBe(true);
+    expect(fanOut<boolean>(STRUCTURE_ROWS.modernFittings, NOTHING, { nodePath: "w", today: false })).toBe(false);
+    // An unknown word falls back to the default class, which is pre-modern.
+    expect(gate({ era: "swashbuckling" }, true)).toBe(false);
+  });
 });
 
 describe("the urban rows", () => {

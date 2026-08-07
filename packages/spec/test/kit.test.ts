@@ -68,9 +68,8 @@ function extractJsonBlocks(
 }
 
 const terrainBlocks = extractJsonBlocks(await readFile(path.join(DOCS, "terrain-author.md"), "utf8"));
-const settlementBlocks = extractJsonBlocks(
-  await readFile(path.join(DOCS, "settlement-author.md"), "utf8"),
-);
+const settlementSource = await readFile(path.join(DOCS, "settlement-author.md"), "utf8");
+const settlementBlocks = extractJsonBlocks(settlementSource);
 
 /** The complete documents among `blocks` — a skeleton or a fragment is neither. */
 function completeDocuments(
@@ -142,6 +141,21 @@ describe("settlement-author kit", () => {
       return children.some((c) => c.generator === "building.grammar@0");
     });
     expect(withStructures.length).toBeGreaterThan(0);
+  });
+
+  it("tells the author to write `era` when the prompt implies a period", () => {
+    // The hill town walked 2026-08-06 came out with seventeen AC units and
+    // thirteen phone boxes because its intent carried a `character` and no
+    // `era` — and an absent `era` means "modern fittings allowed", which is the
+    // only default the identity law permits. So the fix has to live in the
+    // guidance: the kit must say that omitting `era` is a choice with a look.
+    const era = settlementSource.slice(settlementSource.indexOf("`era` is an **open** vocabulary"));
+    expect(era).toContain("mountain village");
+    expect(era).toMatch(/hydrant|air-conditioning/);
+    // And it must name a class for the period words a prompt actually uses.
+    for (const cls of ["medieval", "renaissance", "industrial", "modern"]) {
+      expect(era, cls).toContain(`"era": "${cls}"`);
+    }
   });
 
   it("teaches the settlement profile, not the terrain one", () => {

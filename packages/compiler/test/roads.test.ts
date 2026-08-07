@@ -26,6 +26,7 @@ import {
   routeTo,
   smoothRoute,
   surfaceStreetGraph,
+  presentsExposedFace,
   MARKING_DASH,
   MARKING_PERIOD,
   ROAD_FILL_BAND,
@@ -773,6 +774,91 @@ describe("rotation agrees across packages", () => {
           }
         }
       }
+    }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the exposed-face substrate guard                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A street along the lip of a cut may not repaint the face below it.
+ *
+ * `ColumnPlan` carries one `subsurface` per column, so before the guard the
+ * road's dirt substrate overwrote the revetment an earlier pass had finished
+ * the exposed face with — and because the road runs later, it won. The tell in
+ * a walked world is courses of raw dirt mid-face in the masonry.
+ */
+describe("a road's substrate leaves an exposed face alone", () => {
+  const nameOf = (stateId: number): string => stack.blockNameByStateId(stateId) ?? "";
+
+  /** A terrace: high ground north of `z = 0`, a 20-block drop south of it. */
+  const terraced = (): ColumnPlan => plan(region(), (_x, z) => (z <= 0 ? 90 : 70));
+
+  it("reports a face only where the drop is real", () => {
+    const p = terraced();
+    // The lip: its southern neighbours are six blocks down.
+    expect(presentsExposedFace(p, p.region, 0, 0)).toBe(true);
+    // Flat ground on either side of the step is not a face.
+    expect(presentsExposedFace(p, p.region, 0, -8)).toBe(false);
+    expect(presentsExposedFace(p, p.region, 0, 8)).toBe(false);
+    // The foot of the step looks *up*, not down: not a face of its own.
+    expect(presentsExposedFace(p, p.region, 0, 1)).toBe(false);
+  });
+
+  it("keeps the face's material and still paves the top", () => {
+    const p = terraced();
+    const revetment = stack.blockByName("stone_bricks")?.stateId ?? 1;
+    // Finish the whole terrace as an earlier pass would have.
+    p.subsurface.fill(revetment);
+    p.soil.fill(4);
+
+    const street: { x: number; z: number }[] = [];
+    for (let x = -24; x <= 24; x++) street.push({ x, z: 0 });
+    // A terrace of buildings on the low ground. Without it the lane's own
+    // shoulder blend ramps the step away one course per column and there is no
+    // face left to protect — which is the honest shape of the fix: the guard
+    // fires exactly where something else already owns the drop.
+    const below = building("world.below", -24, 1, 48, 10, 70).placement;
+    const result = surfaceStreetGraph({
+      graphs: [
+        {
+          segments: [{ id: "contour", kind: "lane", width: 3, path: street }],
+          intersections: [],
+          sidewalk: 2,
+        },
+      ],
+      plan: p,
+      palette: emptyPalette,
+      stack,
+      placements: [below],
+      buildingPaths: new Set<string>(["world.below"]),
+      seed: nodeSeed(11n, "world.contour"),
+      theme: "temperate_timber",
+    });
+
+    let faces = 0;
+    let paved = 0;
+    for (let x = -20; x <= 20; x++) {
+      const k = index(p.region, x, 0);
+      if (result.road[k] !== 1) continue;
+      paved++;
+      if (!presentsExposedFace(p, p.region, x, 0)) continue;
+      faces++;
+      // The face keeps its masonry…
+      expect(nameOf(p.subsurface[k] as number), `column ${x},0`).toBe("stone_bricks");
+      // …and the depth an earlier `deepen` gave it is never shortened.
+      expect(p.soil[k] as number, `column ${x},0`).toBeGreaterThanOrEqual(4);
+    }
+    expect(faces).toBeGreaterThan(0);
+    expect(paved).toBe(faces);
+    // Materials only: the carriageway is still surfaced over every guarded lip
+    // column. The guard withholds the substrate, never the paving.
+    for (let x = -20; x <= 20; x++) {
+      const k = index(p.region, x, 0);
+      if (result.road[k] !== 1) continue;
+      expect(p.surface[k] as number, `column ${x},0`).not.toBe(0);
     }
   });
 });

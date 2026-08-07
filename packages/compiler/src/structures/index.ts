@@ -1103,6 +1103,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       });
       return family === undefined ? {} : { propFamily: family };
     })(),
+    // `life.modernFittings`: may the street carry AC units, hydrants, phone
+    // boxes, dumpsters and parked cars? True is today's behaviour, so a
+    // document with no `era` compiles byte-identically.
+    modernFittings: fanOut<boolean>(STRUCTURE_ROWS.modernFittings, rootIntent, {
+      nodePath: rootPath,
+      today: true,
+    }),
     ...(roads === undefined
       ? {}
       : {

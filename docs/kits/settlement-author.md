@@ -2130,6 +2130,28 @@ internally to one of `primitive`, `ancient`, `medieval`, `renaissance`,
 `industrial`, `modern`, `far_future`; a word we do not recognise falls back to
 `medieval` with a warning and still reaches the rest of the pipeline.
 
+**Write `era` whenever the prompt implies a period at all — it is the one dial
+you should almost never leave out.** Omitting it does not mean "generic": it
+means the street furniture pass keeps its full modern kit, so a village with no
+`era` gets air-conditioning condensers on its flank walls, fire hydrants, phone
+boxes, wheeled dumpsters, bus shelters and parked cars at the kerb. That is
+correct for a contemporary town and ruinous for anything else. A period is
+implied far more often than it is stated:
+
+- "medieval", "viking", "feudal", "castle town" → `"era": "medieval"`
+- "mountain village", "hillside town with a chapel", "old hill town",
+  "farming hamlet", "fishing village" → `"era": "medieval"` (the pre-industrial
+  default: no prompt of this shape wants a hydrant)
+- "colonial", "pirate", "baroque", "age of sail" → `"era": "renaissance"`
+- "victorian", "steampunk", "mill town", "wild west" → `"era": "industrial"`
+- "city", "downtown", "suburb", "modern", "cyberpunk" → `"era": "modern"` (or
+  `far_future`), which is the only family that *wants* the modern fittings
+- "ancient", "roman", "greek" → `"era": "ancient"`; "prehistoric", "tribal" →
+  `"era": "primitive"`
+
+Only leave `era` out when the prompt genuinely fixes no period *and* a
+contemporary street would be right.
+
 ### `character` — how two regions differ
 
 This is the part that matters most, because it is the only way to make **one

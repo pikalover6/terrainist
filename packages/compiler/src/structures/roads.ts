@@ -2468,8 +2468,17 @@ function surfaceRoute(
     if (owned) {
       // `ground`, `fluidTop` and `snow` are the driver's, from this run's
       // committed claim (§9a.1 rule 2). What is left is material.
-      plan.subsurface[idx] = states.subsurface;
-      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+      //
+      // …except on a column that presents a tall exposed face. A street along
+      // the lip of a cut would otherwise repaint the substrate an earlier pass
+      // finished as revetment, and the face below the carriageway shows courses
+      // of raw dirt (see {@link presentsExposedFace}). The surface block below
+      // still paves the top; only the face's material is left alone. `soil` is
+      // raised and never shortened, so an earlier `deepen` keeps its depth.
+      if (!presentsExposedFace(plan, region, x, z)) {
+        plan.subsurface[idx] = states.subsurface;
+        if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+      }
       road[idx] = 1;
       roadY[idx] = y;
       if (occupancy !== undefined) claim(occupancy, idx);
@@ -2841,6 +2850,42 @@ export function clampZ(region: Region, z: number): number {
 }
 
 /** True when `(x, z)` is a column of the region. */
+/**
+ * Least drop to an 8-neighbour that makes this column's side a *face* a viewer
+ * reads as masonry rather than as a slope.
+ */
+export const EXPOSED_FACE_DROP = 2;
+
+/**
+ * True when the column presents a tall exposed vertical face.
+ *
+ * **The defect this exists for:** `ColumnPlan` carries exactly one `subsurface`
+ * state per column, so a street running along the top of a cut writes its dirt
+ * substrate into the same column whose exposed side an earlier pass finished as
+ * revetment — and because the road runs later, it wins. The result is courses of
+ * raw dirt under a contour street's edge, mid-face in the masonry, which is what
+ * makes a hill town read as a quarry.
+ *
+ * The guard is materials-only: the carriageway's *surface* block still paves the
+ * top of the column, and levels are untouched — the ground contract's driver and
+ * resolver never see this.
+ */
+export function presentsExposedFace(plan: ColumnPlan, region: Region, x: number, z: number): boolean {
+  if (!inside(region, x, z)) return false;
+  const here = plan.ground[index(region, x, z)] as number;
+  for (let dz = -1; dz <= 1; dz++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dz === 0) continue;
+      const nx = x + dx;
+      const nz = z + dz;
+      if (!inside(region, nx, nz)) continue;
+      const there = plan.ground[index(region, nx, nz)] as number;
+      if (here - there >= EXPOSED_FACE_DROP) return true;
+    }
+  }
+  return false;
+}
+
 export function inside(region: Region, x: number, z: number): boolean {
   return (
     x >= region.x0 && x < region.x0 + region.width && z >= region.z0 && z < region.z0 + region.depth

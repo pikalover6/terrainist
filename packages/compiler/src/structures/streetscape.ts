@@ -66,7 +66,7 @@ import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { index, inside } from "./roads.js";
+import { index, inside, presentsExposedFace } from "./roads.js";
 import { projectToLine, thickenCourse, type ArcFrame, type ArcLevels } from "./sweep.js";
 
 /**
@@ -723,8 +723,17 @@ function paveSidewalks(
   // column and the sidewalk's own everywhere else.
   for (const c of band.values()) {
     plan.surface[c.idx] = c.curbLast ? states.curb : states.sidewalk;
-    plan.subsurface[c.idx] = states.subsurface;
-    if ((plan.soil[c.idx] as number) === 0) plan.soil[c.idx] = 1;
+    // Same guard as the carriageway's (see `presentsExposedFace`): the sidewalk
+    // band along the lip of a cut must not repaint the substrate of a column
+    // whose exposed side was finished as revetment, or the face below the kerb
+    // shows courses of raw dirt. The paving still goes down; `soil` is raised
+    // and never shortened, so an earlier `deepen` keeps its depth.
+    const cx = region.x0 + (c.idx % region.width);
+    const cz = region.z0 + Math.floor(c.idx / region.width);
+    if (!presentsExposedFace(plan, region, cx, cz)) {
+      plan.subsurface[c.idx] = states.subsurface;
+      if ((plan.soil[c.idx] as number) === 0) plan.soil[c.idx] = 1;
+    }
     masks.y[c.idx] = view.ground[c.idx] as number;
     if (c.curbAny) masks.curb[c.idx] = 1;
   }
