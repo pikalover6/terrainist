@@ -877,12 +877,26 @@ repair* is locked to manual.
   clause-9 walls stay — "what matters is that the village is walkable and
   stairs are non-mangled; tall walls by themselves aren't bad." The
   faces-by-drop report stays as monitoring.
-- **Flights crossing natural ground went near-invisible (walked
-  2026-08-07, steep).** Where a connector flight crosses open terraced
-  hillside, only sporadic wood slabs emit — the interior sits flush and
-  surfaces as grass. Regression from `eb93a54`'s `floorAtGrade` (the
-  in-town flights it fixed still read correctly). Queued for the next
-  medium slot; street-stairs/sweep territory.
+- ~~Flights crossing natural ground went near-invisible~~ — **fixed
+  2026-08-07, and the hypothesis was wrong twice**: the paving was all
+  there (`stepColumnsOnSoil: 0` — readback-proven), the flights lacked
+  *relief*: `treadPlan` only dressed a stair when the column AHEAD rose,
+  every flight descends, so the fixture had one stair block town-wide, and
+  `floorAtGrade` removed the proud course that used to make the flush
+  strip read on same-stone hillside. Kai chose "stairs + landings" by
+  popup; the relief mode ships a fourth tread shape (`"fall"` — the same
+  stair facing backward up the rise), landings dressed. Steep 7 → 133
+  stair blocks. `stepTreadsWithRelief` is the standing counter.
+- **Every flight's pinned re-solve is silently refused — a unit
+  mismatch (found 2026-08-07, not yet fixed).** `streetStairLevels` hands
+  `synthesizeTreads` stand-unit ground (`+1`) where the guard expects
+  solid-top y, so a street exactly at grade fails `pinFirst ≥ g0 + 1` by
+  one, every flight (8 of 8 across both fixtures) falls back to unpinned
+  trial levels, and its head rides one block proud of the street it
+  should meet — which is precisely what the terminus-landing and
+  junction-step passes absorb downstream. Fixing the units moves every
+  flight's endpoint levels: its own careful change, next in the
+  street-family queue.
 - **`entranceReachableShare` contradicts a human walk** — Kai genuinely
   reaches 100% of the steep town on intended paths; the audit reads 0.150.
   Hypothesis under test: the movement graph admits network columns only,
