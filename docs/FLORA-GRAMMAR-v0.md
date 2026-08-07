@@ -572,6 +572,46 @@ floating strand.
 | `curtainShare` | 0.6 | 0–1 |
 | `curtain` | `[2, 5]` | 1–7 |
 
+### 3.13 WP-B amendments (measured, 2026-08-07)
+
+Seven corrections the six-law matrix and the block census forced on
+§3.6–§3.12; where these disagree with the original prose, **the shipped code
+is normative** and the prose above is read as amended:
+
+1. **`umbrella`**: a bare plate of radius ≥ 4 breaks law 2 — the plate cell
+   `(3,4)` is leaf-BFS 8 from wood. Plates of radius ≥ 4 carry four cardinal
+   `branch` spokes one block beneath the plate.
+2. **`giant`**: the leader runs two blocks past the trunk top so the crown's
+   centre *is* wood; as originally drawn the centre floated 2 off wood
+   (BFS 9 at crown radius 5).
+3. **`canopyRadius` under-reported** in §3.6/§3.7/§3.8: the formulas omitted
+   the RNG limb extension (+0..2), the trunk-span offset and the lean.
+   Bounds widened — the declared reach is what `clipTrees` and the shade map
+   rely on, so an under-report is a correctness bug, not cosmetics.
+4. **Law 1 "by construction" was false twice**, measured: a rising limb
+   leaves blocks proud of its tip mass, and `ancient`'s gnarl can wander the
+   trunk back out of a column it visited lower. A shared `capWood` pass —
+   the mega-spruce fix generalised — caps every wood column; the
+   per-program "trivially satisfied" claims are struck.
+5. **Dead limbs**: one symbol per part could not express live vs dead
+   without restriping every live branch. `FloraBlock.dead?: boolean`
+   (additive to WP-A) selects `branch ?? log`; only deliberately dead limbs
+   take the stripped symbol.
+6. **Root flares grow from accepted columns only**: the independent
+   per-column 0.75 draw could accept a depth-2 column whose depth-1 support
+   was rejected — an isolated root, a law-6 finding.
+7. **§5.3's row-major first-fit is replaced**: it spent the whole emergent
+   budget in the region's first rows of cells. Candidates are ranked by a
+   position-keyed score and accepted greedily — equally deterministic and
+   traversal-independent.
+
+WP-C notes: §3.11/§3.12's `disc`/`curtain` pseudocode left `part`/anchor
+detail unspecified (resolved locally in `weeping`; `fungal` must specify it),
+and the two fungal-naturalistic mushrooms ship with WP-C's `fungal` program,
+not WP-B. New open question §9.9: understory starvation under the shared
+trunk lattice (§7.1's fixture yields 28 shrubs across a 170-radius wood —
+own lattice, smaller spacing, or acceptable? Kai/tuning).
+
 ## 4. Species registry
 
 A **species** = shape program + parameter envelope + palette symbols + stratum
@@ -612,7 +652,7 @@ and are converted to `speciesFor(id)` in WP-B.
 
 ### 4.1 The v0 catalog
 
-Twenty-one entries: four existing, fifteen naturalistic, two fungal-naturalistic
+Twenty-one entries: four existing, thirteen naturalistic, two fungal-naturalistic
 and two fantasy. The bar every one clears — **distinguishable in silhouette at
 60 blocks** — is met by *outline*, not by colour, because colour is what a
 render loses first: cone, ellipsoid, lumpy-branched, column, plate, dome,
@@ -1446,3 +1486,13 @@ documents are geometrically identical. Note `nodeSeed` already derives from
 `hash(worldSeed, nodePath)`, so the coincidence requires the same world seed
 *and* node path — cosmetically nil. **Ratified 2026-08-07: the deviation
 stands; the skeleton's index keying was a mistake.**
+
+### 9.9 Understory starvation under the shared trunk lattice
+
+Found by WP-B (2026-08-07): §5.4's shared-claim rule is implemented as
+written, and in §7.1's fixture a saturating canopy (`density 0.22`,
+`spacing 3`) claims nearly every trunk slot, so `density: 0.09` yields **28
+understory shrubs across a 170-radius wood**. Whether the understory should
+draw from its own lattice, use a smaller spacing class, or stay this sparse
+is a tuning call for Kai's silhouette walk — the old-growth fixture at
+`agent-wpb/fixture/oldgrowth_vale` is the exhibit.

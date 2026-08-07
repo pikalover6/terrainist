@@ -132,6 +132,23 @@ export const STREET_STAIR_MIN_RAIL_RUN = 3;
  */
 export const STREET_STAIR_RAIL_DROP = 2;
 
+/**
+ * Columns at each unpinned end of a flight that come back down to grade.
+ *
+ * The dressing audit's stair-head plinth (2026-08-07): a flight rides one
+ * course of masonry above the hill by law, and where its head finishes on open
+ * ground rather than on a street, that course is four or five columns of tread
+ * standing one block proud of the field on both sides — measured at
+ * (145, 104, 133) and (53, 108, 130) on the steep fixture.
+ *
+ * Three columns is the shortest window that reads as an ease rather than as a
+ * step: the head column lands flush, and the two behind it carry the single
+ * riser back up onto the flight's own course. It never shortens a run and never
+ * makes a riser taller, which is the ratified principle — a drop is earned with
+ * run, so the cure for a step is always more run and never a bigger step.
+ */
+export const STREET_STAIR_HEAD_EASE = 3;
+
 /** Steps between lanterns on the balustrade — {@link STAIR_PROFILE}'s `lamp`. */
 function lampPitch(): number {
   return featureOf(STAIR_PROFILE, "lamp").pitch;
@@ -369,6 +386,7 @@ export function streetStairLevels(
     maxFill: STREET_STAIR_MAX_FILL,
     reach: 1,
     maxGrade: 1,
+    floorAtGrade: true,
     ...(pins.first === undefined ? {} : { pinFirst: pins.first + 1 }),
     ...(pins.last === undefined ? {} : { pinLast: pins.last + 1 }),
   });
@@ -379,7 +397,20 @@ export function streetStairLevels(
       refusedBecause: `no flight of ${geometry.centre.length} columns climbs this bank within ${STREET_STAIR_MAX_FILL} courses of masonry`,
     };
   }
-  return { levels: run.levels, shapes: treadPlan(run.levels, centreGround) };
+  // The tread mix is read against the course the flight *would* have ridden.
+  // `floorAtGrade` lays the flight into the top course of the hill rather than
+  // on top of it, and `treadPlan` reads `level − ground` as "how much masonry is
+  // under me" — so at grade every flat column comes out a `landing`, and a
+  // flight loses two thirds of its half-treads to a change that is about where
+  // the flight sits, not about what it is dressed with. Shifting the datum by
+  // the course that was removed keeps the mix bit-for-bit what it was.
+  return {
+    levels: run.levels,
+    shapes: treadPlan(
+      run.levels,
+      centreGround.map((g) => g - 1),
+    ),
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -476,8 +507,25 @@ export function dressStreetStairs(
     // flat interior of a run, and a plain full block at a landing.
     const shape = levels.shapes[column.k] as TreadShape;
     const step = stepAt(geometry.centre, column.k);
+    // **The band end closes with a full block** (the dressing audit's
+    // `openOverSoil`, 2026-08-07). A `type: top` slab fills only the upper half
+    // of its cell, so where the flight's band *stops* — a verge column the
+    // geometry dropped for a building or a paved plaza, or simply the last
+    // column of the run — the empty lower half opens sideways over whatever the
+    // ground beside it does. Two blocks or more of that and the tread reads as
+    // cantilevered over bare earth, which is exactly what Kai photographed at
+    // (101, 110, 69).
+    //
+    // The cure is the cheapest one that is also level-neutral: a full block
+    // stands a player at the same `top + 1` a top slab does, so closing the end
+    // costs the half-step detail at that one column and moves no level, no
+    // claim and no mask. It is deliberately *not* applied to a one-block
+    // opening, which is the ordinary step down onto the flight's own next tread
+    // and is what a stair is supposed to look like.
     const dressing =
-      shape === "stair"
+      shape === "slab" && opensDeeply(input, column, top)
+        ? undefined
+        : shape === "stair"
         ? input.stack.blockStateOf(
             roleBlock(input.palette, "ground.stairs", "stone_brick_stairs", input.stack),
             {
@@ -498,6 +546,48 @@ export function dressStreetStairs(
 
   return { blocks, columns };
 }
+
+/**
+ * True when a tread column's own cell would show its underside over a drop of
+ * two blocks or more.
+ *
+ * Read off `plan.ground`, which the ground contract has already committed for
+ * the whole `street.network` subsystem by the time the dress phase runs
+ * (§3.7b), so the answer does not depend on which segment was dressed first —
+ * the masks do, which is exactly why they are not consulted here.
+ *
+ * `top` is the flight's own topmost solid block at this column; a neighbour
+ * whose ground stands at `top − 1` is the next tread down and is not a defect.
+ */
+function opensDeeply(
+  input: StreetStairDressInput,
+  column: StreetStairColumn,
+  top: number,
+): boolean {
+  const { region, plan } = input;
+  for (const [dx, dz] of NEIGHBOUR4) {
+    const nx = column.x + dx;
+    const nz = column.z + dz;
+    if (
+      nx < region.x0 ||
+      nz < region.z0 ||
+      nx >= region.x0 + region.width ||
+      nz >= region.z0 + region.depth
+    ) {
+      return true;
+    }
+    const nidx = (nz - region.z0) * region.width + (nx - region.x0);
+    if ((plan.ground[nidx] as number) <= top - 2) return true;
+  }
+  return false;
+}
+
+const NEIGHBOUR4 = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
 
 /* -------------------------------------------------------------------------- */
 /* phase 4 — the balustrade                                                    */

@@ -937,6 +937,29 @@ export function synthesizeTreads(
     readonly pinFirst?: number;
     /** Stand level column `n − 1` must land on, when its landing has an owner. */
     readonly pinLast?: number;
+    /**
+     * Columns at each **unpinned** end that may come back down to grade.
+     *
+     * `need[k] ≥ ground[k] + 1` is a course of masonry laid on the surface of
+     * the hill, and at the *head* of a flight — where the run ends on open
+     * ground rather than on a street that owns the landing — that course is the
+     * whole defect the dressing audit calls a stair-head plinth: four or five
+     * columns of tread standing exactly one block proud of the field on both
+     * sides, with nothing easing the last course back to the ground it
+     * finishes on.
+     *
+     * Inside this window the floor drops by one, to `ground[k]`, so the tread
+     * is laid *into* the top course of soil and the head meets open ground
+     * within Δ1. Nothing here raises a level and nothing here lengthens a
+     * riser: the ease is propagated inward through the same 1-Lipschitz `min`
+     * the fall pass uses, so a drop is still earned with run — the run simply
+     * ends flush.
+     *
+     * Zero (the default) is bit-for-bit the function without it, which is why
+     * every other caller — the set-piece stairs above all — is untouched.
+     */
+    readonly easeEnds?: number;
+    readonly floorAtGrade?: boolean;
   } = {},
 ): TreadRun {
   const n = ground.length;
@@ -956,10 +979,13 @@ export function synthesizeTreads(
     return { levels: null, refusal: "unclimbable", risers: [] };
   }
 
+  const grade = options.floorAtGrade === true;
+  const base = (k: number): number =>
+    (ground[k] as number) + (grade && k !== 0 && k !== n - 1 ? 0 : 1);
   const need = new Array<number>(n);
   need[n - 1] = pinLast ?? (ground[n - 1] as number) + 1;
   for (let k = n - 2; k >= 0; k--) {
-    need[k] = Math.max((ground[k] as number) + 1, (need[k + 1] as number) - maxGrade);
+    need[k] = Math.max(base(k), (need[k + 1] as number) - maxGrade);
   }
 
   // The far pin is an equality, so a run the backward pass had to lift above it
@@ -994,7 +1020,7 @@ export function synthesizeTreads(
   const floor = (k: number): number => {
     if (k === 0) return pinFirst ?? (ground[0] as number) + 1;
     if (k === n - 1) return pinLast ?? (ground[n - 1] as number) + 1;
-    return (ground[k] as number) + 1 - MAX_TREAD_CUT;
+    return base(k) - MAX_TREAD_CUT;
   };
   for (let k = n - 2; k >= 0; k--) {
     need[k] = Math.max(Math.min(need[k] as number, (need[k + 1] as number) + maxGrade), floor(k));
@@ -1011,8 +1037,8 @@ export function synthesizeTreads(
   // The bottom step has to be reachable from the ground it starts on — or, when
   // the bottom landing has an owner, from that owner's level, which is the
   // measurement that is actually true once everything is built.
-  const base = pinFirst ?? (ground[0] as number) + 1;
-  if ((need[0] as number) - base > reach) {
+  const bottom = pinFirst ?? (ground[0] as number) + 1;
+  if ((need[0] as number) - bottom > reach) {
     return { levels: null, refusal: "unclimbable", risers: [] };
   }
   for (let k = 0; k < n; k++) {
