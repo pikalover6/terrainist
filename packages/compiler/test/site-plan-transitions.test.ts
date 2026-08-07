@@ -270,11 +270,21 @@ describe("the constants cannot drift apart", () => {
  * refusal.
  */
 const STEEP_EDGES = {
-  /** Golden, measured 2026-08-07 on `examples/site-plan-hillside-steep.loam.json`. */
-  fillColumns: 273,
-  cutColumns: 269,
-  benchedBanks: 1,
+  /**
+   * Goldens, re-measured 2026-08-07 (evening) after the causeway landing
+   * (`b90f87a`) and the flight-floor fix (`eb93a54`). The planner now declares
+   * **952** edge columns where it declared 542: refusing the lowest street's
+   * causeways hands the seams they were covering back to §5, so there is much
+   * more edge to treat and it is treated.
+   */
+  fillColumns: 537, // 273 → 537 (405 bank, 132 retaining)
+  cutColumns: 415, // 269 → 415 (377 retaining, 38 rock)
+  benchedBanks: 10, // 1 → 10
+  plannedColumns: 952,
+  /** Unmoved: the seven-block terrace face WP-3 was given, still 183 columns. */
   tallDropSeamColumns: 183,
+  /** New row: 13 refusals in all, of which 7 are benched rather than stubs. */
+  benchedFaceRefusals: 7,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
@@ -330,7 +340,7 @@ describe("the steep fixture's transitions, compiled", () => {
     expect(total).toBe(STEEP_EDGES.cutColumns);
   });
 
-  it("treats the 183 tallDrop columns instead of counting them as unwalled", () => {
+  it("treats every tall seam column instead of counting them as unwalled", () => {
     const multi = sweep.find((m) => m.includes("multi-level ground")) ?? "";
     expect(multi).not.toContain("tallDrop");
     expect(multi).not.toContain("shortRun");
@@ -338,15 +348,28 @@ describe("the steep fixture's transitions, compiled", () => {
     expect(transitions).toContain(`fill ${STEEP_EDGES.fillColumns}`);
     expect(transitions).toContain(`cut ${STEEP_EDGES.cutColumns}`);
     expect(transitions).toContain(`${STEEP_EDGES.benchedBanks} bank(s) benched`);
+    expect(transitions).toContain(`${STEEP_EDGES.plannedColumns} planned edge column(s)`);
   });
 
   it("answers the seven-block face as several short faces with soil between", () => {
-    const refused = sweep.find((m) => m.includes("RETAINING_REFUSED")) ?? "";
-    expect(refused).toContain(`over ${STEEP_EDGES.tallDropSeamColumns} column(s)`);
-    expect(refused).toContain(
+    // **Re-pinned 2026-08-07 (evening), and the re-pin is a lesson.** The
+    // original body did `sweep.find(m => m.includes("RETAINING_REFUSED"))` and
+    // asserted against the one message that existed. After the causeway landing
+    // (`b90f87a`) there are **13** refusals on this fixture — six under
+    // `MIN_RETAIN_RUN` (a stub, graded into a bank) and seven past `RETAIN_MAX`
+    // (benched) — and `find` returned an arbitrary one. The seven-block face is
+    // still there, still 183 columns; the test simply stopped looking at it.
+    // It now selects by the property it is about.
+    const benched = sweep.filter((m) => m.includes("benched bank"));
+    expect(benched.length).toBe(STEEP_EDGES.benchedFaceRefusals);
+    const seven = benched.find((m) =>
+      m.includes(`over ${STEEP_EDGES.tallDropSeamColumns} column(s)`),
+    );
+    expect(seven, "the seven-block face is no longer reported").toBeDefined();
+    expect(seven).toContain(
       `${Math.ceil(7 / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between`,
     );
-    expect(refused).toContain(`over ${benchedRun(7)} column(s) of run`);
+    expect(seven).toContain(`over ${benchedRun(7)} column(s) of run`);
   });
 
   it("reports zero offPlatform, and would have raised it as an error (§5.5)", () => {

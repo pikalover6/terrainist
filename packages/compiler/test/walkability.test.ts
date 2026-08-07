@@ -41,6 +41,16 @@
  * below carry the new numbers and each says what moved it. The two rows still
  * waiting for their lever are the pieces — sixteen is not one — and the faces.
  *
+ * **Re-taken again after the 2026-08-07 evening wave**, and every row below
+ * names which of its three commits moved it: the **causeway landing**
+ * (`b90f87a` — the lowest street stops throwing connectors into open field),
+ * the **flight-floor fix** (`eb93a54` — a flight lies *in* the ground, and band
+ * ends close over voids), and **junction steps** (`4b18ef5`). The headline is
+ * the entrance share on `site-plan-hillside`: **0.844 → 0.998**. The rows that
+ * went the wrong way — the steep fixture's components, dead ends and sheer
+ * faces, and one unserved face on the hillside — are the causeway landing's
+ * price, and each says so where it stands.
+ *
  * The last one is the row to read most carefully, because the rule behind it is
  * Kai's and it is not "faces are too tall". A six-block terrace is what a hill
  * town is. A connection between two levels has to **earn its drop with run**,
@@ -114,82 +124,72 @@ interface Goldens {
  * module.
  */
 const HILLSIDE: Goldens = {
-  // 4740 → 5120. Up, and up is right here: this counts declared columns a player
-  // can *stand* on, and the balustrade fix hands back two columns beside every
-  // flight's centre line. It is not simply `buried` moving across — the spine's
-  // stair-alleys are gone and the flights' own footprints moved — so the
-  // before-and-after totals do not have to agree, and do not.
-  columns: 5120,
-  // 1054 → 120. Nine tenths of the old number was the flights standing on
-  // themselves; what is left is the same rails where the drop beside them is
-  // real, plus the plaza and the terrace lanes.
-  buried: 120,
-  // 54 → 15. **The tread-law fix is what moved this.** Measured on its own
-  // against a worktree at 84129d5 it is 54 → 39: every connector used to be
-  // severed mid-run by its own five-block riser where it crossed a terrace cut,
-  // so each flight was two components with a cliff between them. A flight that
-  // starts down before the edge is one flight.
-  components: 15,
-  // 3262 → 797, from 68.8% of the paving outside the main piece to 15.6% of a
-  // larger network. The same fix, read as area rather than as count.
-  orphans: 797,
-  // **This replaced `entranceConnected`, which read `true` here.** The boolean
-  // asked whether the entrance fell in the *largest* component, which it did —
-  // and 797 columns of the town, 15.6% of the paving, are not reachable from the
-  // road a traveller arrives on. A boolean cannot say that and a share can. MUST
-  // GO UP, towards 1.
-  entranceReachable: 4323,
-  entranceReachableShare: 0.844,
-  // 6 → 5. **The one row that did not move the way the audit predicted**, and
-  // the reason is worth recording rather than burying. The audit's diagnosis was
-  // that the hillside form throws connectors downhill from its *lowest* street
-  // into open field; that much is exactly right, and `dn0_128` still dangles 495
-  // declared columns from (59, 71). Refusing those connectors was implemented
-  // and measured — it takes this fixture to 10 components and **9** orphan
-  // columns — and then reverted, because on `site-plan-hillside-steep` the
-  // retaining pass promotes the seam those causeways happen to be covering into
-  // §5.5's `offPlatform` error and the world stops compiling. The causeway is
-  // load-bearing on that fixture in a way nobody designed and the fix belongs
-  // with whoever owns §5.5's planning arm.
-  deadEnds: 5,
-  // 0.456 → 0.188. The junction maze of screenshot 20, halved and halved again.
-  junctionDensity: 0.188,
-  // 0.299 → 0.075 — and this fell *further* than the junction number, which is
-  // the point. The solo control was high because a flight's own cross-section
-  // was a maze on its own; that is the half of the diagnosis the balustrade fix
-  // answers.
-  soloDensity: 0.075,
-  // 30 → 4, and 26 → **0**. This is the row the whole round was for. Not one
-  // mid-town face run is left whose drop no route earns, and *not* because the
-  // faces got shorter: the histogram is now `drop2` only, which is what a hill
-  // town looks like when every terrace is entered by a stair that starts back
-  // from its own edge instead of a five-block step off it.
+  // 5120 → 3972. Down, and down is not a loss here: the causeway landing
+  // (b90f87a) stopped the lowest street throwing 495 declared columns of
+  // connector into open field, and the flight-floor fix (eb93a54) closed band
+  // ends over voids rather than paving them. Fewer columns, almost all of them
+  // reachable — see `entranceReachableShare`.
+  columns: 3972,
+  // 120 → 19. **The flight-floor fix (eb93a54)** — a flight lies in the ground
+  // rather than on it, so the rail no longer stands on its own carriageway
+  // anywhere. What is left is nine columns on the spine, the plaza's six, and
+  // four on the terrace lanes.
+  buried: 19,
+  // 15 → 10, and 797 → **9**. **The causeway landing (b90f87a).** This is the
+  // lever the old comment on `deadEnds` said had been implemented, measured and
+  // reverted because it broke the steep fixture's §5.5 planning; it landed for
+  // real this wave, and it reads exactly what that measurement predicted:
+  // ten components, nine orphan columns, 0.2% of the paving.
+  components: 10,
+  orphans: 9,
+  // 0.844 → **0.998**. The headline of the wave: a traveller who walks in on
+  // the external road now reaches all but nine columns of the town. MUST GO UP,
+  // towards 1; there is very little left to take.
+  entranceReachable: 3963,
+  entranceReachableShare: 0.998,
+  // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
+  deadEnds: 3,
+  // 0.188 → 0.175, and 0.075 → 0.048 (eb93a54, junction steps 4b18ef5). The
+  // solo control fell by a third again; junctions remain the lever.
+  junctionDensity: 0.175,
+  soloDensity: 0.048,
+  // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
+  // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
+  // a *new* row in the wrong direction and it is recorded as such rather than
+  // absorbed: the causeway landing removed the connector network that happened
+  // to serve that face's foot. MUST GO DOWN, back to 0.
   faceRuns: 4,
-  unservedFaces: 0,
+  unservedFaces: 1,
 };
 
 const STEEP: Goldens = {
-  // Same three changes, same day, same direction.
-  columns: 4453,
-  buried: 211,
-  // 53 → 9.
-  components: 9,
-  orphans: 941,
-  // The boolean read `false` here and this reads 0.142: the external road never
-  // reaches the town, and the piece it *does* touch holds a seventh of the
-  // paving. The steep fixture is expected to read badly; what it must not do is
-  // read badly and silently.
+  // 4453 → 4216 (b90f87a, eb93a54), 211 → 110 — the same two levers, and the
+  // same direction, at two thirds the effect: this fixture's flights are longer
+  // so more of the buried count was rail on carriageway.
+  columns: 4216,
+  buried: 110,
+  // 9 → **12** and 941 → 649. The count went UP and the area went down, and
+  // both are the causeway landing (b90f87a): refusing the lowest street's
+  // connectors splits off three small pieces that the causeways used to bridge,
+  // while removing 292 columns of paving that led nowhere. This is a decision,
+  // not a regression — but the component count is a row that MUST come back
+  // DOWN, and on this fixture the entrance share below says why it matters.
+  components: 12,
+  orphans: 649,
+  // 0.142 → 0.150. Barely moved, and that is the finding: on the steep fixture
+  // the external road still does not reach the town. The hillside fixture's
+  // 0.998 shows the machinery works; whatever blocks it here is the next lever.
   entranceReachable: 633,
-  entranceReachableShare: 0.142,
-  // Unmoved, and the same story as `HILLSIDE.deadEnds` — four of these seven are
-  // the lowest street's causeways (`dn0_160` dangles 435 columns).
-  deadEnds: 7,
-  junctionDensity: 0.142,
-  // 0.47 → 0.082. This fixture is where the balustrade dominated the *control*,
-  // because its flights are so long that most of their length is solo.
-  soloDensity: 0.082,
-  // 26 → 3, and 16 → 0.
-  faceRuns: 3,
+  entranceReachableShare: 0.15,
+  // 7 → **10**, up, and the same trade as `components`: the refused causeways
+  // leave the streets they used to terminate hanging. MUST GO DOWN.
+  deadEnds: 10,
+  // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5).
+  junctionDensity: 0.124,
+  soloDensity: 0.043,
+  // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
+  // removal exposed; every one of the four is earned.
+  faceRuns: 4,
   unservedFaces: 0,
 };
 
@@ -233,65 +233,74 @@ interface DressingGoldens {
 }
 
 const HILLSIDE_DRESSING: DressingGoldens = {
-  halfTreads: 1059,
-  // 191 of 1059 treads show their underside to the column beside them, and 188
-  // of those 191 show it over the flight's *own* masonry one block down — which
-  // is what a half-block step looks like and is not the defect.
-  openSided: 191,
-  // **One.** The "floating slab over exposed dirt" is one column on this
-  // fixture, at (101, 110, 69). MUST GO DOWN, to nought — but the number to read
-  // beside it is `openSided`: if a fix moves this to nought by removing the top
-  // slab from the tread mix it will take 191 with it, and that is a different
-  // change with different consequences.
-  openOverSoil: 1,
-  floatingDressing: 3,
-  // 47 lamps stand within two columns of paving; 13 of them stand *below* it and
-  // three of those by two blocks. All three are `streetscape`'s lamp posts, and
-  // every one of the thirteen has `viaCarriageway: false` — the paving above
-  // them is a flight or a doorstep, never the carriageway they light.
-  streetLamps: 47,
-  sunkenLamps: 13,
-  deeplySunkenLamps: 3,
-  // 21 paved columns sit two blocks under a paved neighbour, and **all 21 carry
-  // no stair or slab**: a raw cut nobody dressed. This is the "rectangular notch
-  // bitten out of the street end" as a number.
-  cutoffColumns: 21,
-  undressedCutoffs: 21,
-  // 32 columns of both-sides plinth in 23 runs, the longest of which is **two
-  // columns**. There is no run of plinth road on this fixture; the ones that
-  // exist are the external road's own kerb.
+  // 1059 → 319 and 191 → 41: the denominators. The flight-floor fix (eb93a54)
+  // lays a flight *in* the ground, so most of what used to be a half-height
+  // tread over its own masonry is now full ground.
+  halfTreads: 319,
+  openSided: 41,
+  // **1 → 0.** The floating slab over exposed dirt is gone from this fixture,
+  // and not by deleting the tread mix — `openSided` fell with it because the
+  // flights sit lower, not because the slabs went away.
+  openOverSoil: 0,
+  // 3 → 0 (eb93a54).
+  floatingDressing: 0,
+  // 47 → 32 lamps stand within reach of paving, and **13 → 0** of them stand
+  // below it; the deep three are gone too. The denominator fell because the
+  // refused causeways took their lit stubs with them (b90f87a); the defect fell
+  // to nought because the flights no longer sit a course above their own kerb.
+  streetLamps: 32,
+  sunkenLamps: 0,
+  deeplySunkenLamps: 0,
+  // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
+  // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
+  // denominator and is pinned so that a fix which merely stops cutting reads as
+  // what it is.
+  cutoffColumns: 14,
+  undressedCutoffs: 0,
+  // Unmoved: 32 columns of both-sides plinth, longest run two. Still the
+  // external road's own kerb, still no run of plinth road on this fixture.
   plinthColumns: 32,
   plinthLongestRun: 2,
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
-  // Seven runs of built face at five blocks or more, 84 columns of them, the
-  // worst eight blocks tall. Every attributed one is `retaining`.
-  sheerFaces: 7,
-  sheerColumns: 84,
-  sheerWorstDrop: 8,
+  // 7 → **0**, 84 → 0. No built face on this fixture is five blocks or taller
+  // over three columns any more (eb93a54's band-end closure plus the causeway
+  // landing, which removed the fills those walls were retaining).
+  sheerFaces: 0,
+  sheerColumns: 0,
+  sheerWorstDrop: 0,
 };
 
 const STEEP_DRESSING: DressingGoldens = {
-  halfTreads: 1571,
-  openSided: 551,
-  openOverSoil: 2,
-  floatingDressing: 2,
-  streetLamps: 23,
-  sunkenLamps: 7,
-  deeplySunkenLamps: 1,
-  cutoffColumns: 11,
-  undressedCutoffs: 11,
-  plinthColumns: 3,
-  plinthLongestRun: 1,
-  // The only plinth with any length on either fixture is on the *flights*, and
-  // it is four columns at a stair head — which is the half of Kai's observation
-  // ("mostly at the tops of stairs") the instrument confirms, at a size the walk
-  // over-reported.
-  stepPlinthColumns: 8,
-  stepPlinthLongestRun: 4,
-  sheerFaces: 5,
-  sheerColumns: 53,
-  sheerWorstDrop: 8,
+  // Same two levers, same direction: 1571 → 594, 551 → 178.
+  halfTreads: 594,
+  openSided: 178,
+  // 2 → 0 and 2 → 0 (eb93a54).
+  openOverSoil: 0,
+  floatingDressing: 0,
+  streetLamps: 17,
+  sunkenLamps: 0,
+  deeplySunkenLamps: 0,
+  // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5).
+  cutoffColumns: 13,
+  undressedCutoffs: 0,
+  // 3 → 5 columns, longest run 1 → 2. Up, and small; a kerb detail, well under
+  // `PLINTH_MIN_RUN`. Pinned so it cannot creep.
+  plinthColumns: 5,
+  plinthLongestRun: 2,
+  // 8 → **0**, and with it the four-column stair-head plinth that was the only
+  // plinth with any length on either fixture. The flight-floor fix (eb93a54).
+  stepPlinthColumns: 0,
+  stepPlinthLongestRun: 0,
+  // 5 → **7** faces, 53 → **73** columns, worst drop 8 → **9**. The one group
+  // that got worse this wave and the one to argue about: with the causeways
+  // refused (b90f87a) the retaining pass has more open edge to hold, and six of
+  // the seven runs are `retaining` past `RETAIN_MAX` — the wall's foot standing
+  // on another drop. MUST GO DOWN; the hillside fixture went to nought, so the
+  // mechanism is not the obstacle here, the steep fixture's fills are.
+  sheerFaces: 7,
+  sheerColumns: 73,
+  sheerWorstDrop: 9,
 };
 
 const scratch: string[] = [];
@@ -496,19 +505,22 @@ describe("the walkability audit", () => {
     }
   });
 
-  it("names the balustrade as the thing standing on the flights", () => {
-    // Still the biggest share of what is left, and still the same owner — but of
-    // 120 columns rather than 1054. A `steps` segment no longer loses its width
-    // to its own rail; where a rail survives, it is because there is a drop
-    // beside it, and it stands on the verge the flight levelled for it.
+  it("names what is left standing on the flights, now that it is nearly nothing", () => {
+    // This assertion used to say "the balustrade owns nine tenths of `buried`",
+    // at 1054 columns and then at 120. **The flight-floor fix (eb93a54) took the
+    // denominator to 19**, and at 19 columns an ownership share is noise: eleven
+    // are on `street:segment:*` (the spine's nine, `dn1_64`'s two), six are the
+    // plaza's and two the terrace lanes'. It reads 0.579.
     //
-    // The bar is 0.85 rather than 0.9 because the denominator is now small: at
-    // 120 columns a dozen either way is ten points of share, so a tighter bar
-    // would be measuring noise rather than ownership. It reads 0.892.
+    // So the test is re-pinned as what it can still honestly assert: the flights
+    // are no longer the dominant owner, and the absolute count on them is small.
+    // Both bounds MUST hold as `buried` falls further. If a change puts the
+    // flights back above 0.85 of a *large* `buried`, the count bound catches it.
     const bySteps = Object.entries(hillside.buriedByEmitter).filter(([e]) =>
       /segment:(dn|sp)/.test(e),
     );
     const onSteps = bySteps.reduce((sum, [, n]) => sum + n, 0);
-    expect(onSteps / hillside.buried).toBeGreaterThan(0.85);
+    expect(onSteps).toBeLessThanOrEqual(11);
+    expect(hillside.buried).toBeLessThanOrEqual(19);
   });
 });
