@@ -366,3 +366,177 @@ describe("the pass as a function", () => {
     expect(MAX_JUNCTION_LIFT).toBe(3);
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* the doorstep defect Kai walked on 2026-08-07                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The **standing surface** of a column: the plan's ground, plus the contiguous
+ * stack of blocks laid on top of it.
+ *
+ * A doorstep does not move `plan.ground` — it *stacks masonry on it* — so this
+ * is the only height at which a question about what a walker meets can be
+ * asked, and it is the height the pass itself reconciles.
+ */
+function standingAt(
+  p: ColumnPlan,
+  blocks: readonly StructureBlock[],
+  x: number,
+  z: number,
+): number {
+  let y = p.ground[at(p.region, x, z)] as number;
+  for (;;) {
+    if (!blocks.some((b) => b.x === x && b.z === z && b.y === y + 1)) return y;
+    y++;
+  }
+}
+
+/**
+ * **The detector, as a property of the finished world.**
+ *
+ * Every stair this pass lays has to be one of two honest things — a step you
+ * climb, or a nosing against a face — and both mean the same thing about the
+ * block: *the column its full-height half stands against is higher than it is*.
+ * A stair whose facing points at a column level with it or below it is turned
+ * across everything it touches, which is what Kai walked: a two-stair stack
+ * beside a doorstep threshold, both treads facing sideways into a column at
+ * their own level, reading as a second staircase the road built next to the
+ * door's own.
+ *
+ * Asserted on every fixture in this file rather than only the doorstep one,
+ * because the rule is not about doorsteps — it is about what a stair is.
+ */
+function expectEveryStairServesItsFacing(
+  p: ColumnPlan,
+  result: { readonly blocks: readonly StructureBlock[]; readonly backless: number },
+  laid: readonly StructureBlock[] = [],
+): void {
+  const ways = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] } as const;
+  for (const block of result.blocks) {
+    const facing = stack.blockStateProps(block.stateId)?.props["facing"] as keyof typeof ways;
+    const [dx, dz] = ways[facing];
+    const height = standingAt(p, laid, block.x + dx, block.z + dz);
+    expect(height, `stair at ${block.x},${block.y},${block.z} faces ${facing}`).toBeGreaterThan(
+      block.y,
+    );
+  }
+  expect(result.backless).toBe(0);
+}
+
+/**
+ * The site, reduced to the geometry that produced it: a **flat** lane running
+ * past a cottage, with the cottage's own doorstep flight stacked on two of the
+ * lane's columns.
+ *
+ * On `site-plan-hillside` this is `(-80, -216)`: ground 176 for every column in
+ * sight, a door at 179 whose flight lays a stair at 178 on an underpin at 177,
+ * and a second stair at 177 one column out. `occupiedAbove` promotes those two
+ * columns to the top of their masonry, so the lane beside them reads as two
+ * blocks below "paving" — and the pass used to climb it, putting a hump in dead
+ * flat pavement and dressing it facing the stoop. **Nothing here is a hill.**
+ */
+function stoop() {
+  const r = region();
+  // The cottage's own ground stands two above the lane at `z <= 9`, which is
+  // what stops `wouldBeCauseway` from refusing the lift on its own: the pass
+  // has to be *told* not to climb a stoop, not saved by an accident.
+  const p = plan(r, (_x, z) => (z <= 9 ? 178 : 176));
+  const andesite = stack.blockByName("polished_andesite")?.stateId ?? 1;
+  const tread =
+    stack.blockStateOf("stone_brick_stairs", {
+      facing: "north",
+      half: "bottom",
+      shape: "straight",
+      waterlogged: "false",
+    }) ?? 1;
+  // The doorstep flight: an underpin and a tread on the column at the door,
+  // one tread on the column beyond it. Exactly what `doorsteps.ts` builds.
+  const laid: StructureBlock[] = [
+    { x: 12, y: 177, z: 10, stateId: andesite },
+    { x: 12, y: 178, z: 10, stateId: tread },
+    { x: 12, y: 177, z: 11, stateId: tread },
+  ];
+  const paved = [
+    { kind: "street" as const, columns: rect(r, 4, 10, 20, 14) },
+    { kind: "doorstep" as const, columns: [at(r, 12, 10), at(r, 12, 11)] },
+  ];
+  return { r, p, paved, laid };
+}
+
+describe("a lane running past a doorstep", () => {
+  it("never climbs a stoop: the cheek of a step is not a cut to be earned", () => {
+    const { p, paved, laid } = stoop();
+    const before = Int32Array.from(p.ground);
+    const result = run(p, paved, laid);
+
+    // **The detector.** Before the 2026-08-07 fix this read 4 on this fixture,
+    // 3 on `site-plan-hillside` and 2 on `site-plan-hillside-steep`: lane
+    // columns raised with nothing but a doorstep at or above the level they
+    // reached. A door is served *along* its own flight, whose foot is at lane
+    // level a column further out; a walker never enters across the side of a
+    // step, so the climb bought nothing but a hump.
+    expect(result.stoopLifts).toBe(0);
+    expect(result.lifted).toBe(0);
+    // Dead flat, and it stays dead flat.
+    expect([...p.ground]).toEqual([...before]);
+  });
+
+  it("…but still dresses the cheek, so the cut is never left raw", () => {
+    const { p, paved, laid } = stoop();
+    const result = run(p, paved, laid);
+    // The audit counts an undressed cut whatever caused it, so refusing the
+    // lift must not become refusing the tread: this trades a staircase for a
+    // kerb, not for a bare riser.
+    expect(result.nosed).toBeGreaterThan(0);
+    expect(result.unresolved).toBe(0);
+  });
+
+  it("faces every tread it lays along the connection that tread serves", () => {
+    const { p, paved, laid } = stoop();
+    const result = run(p, paved, laid);
+    expectEveryStairServesItsFacing(p, result, laid);
+    // The two columns beside the flight are the ones Kai walked, and they come
+    // out as the two things a junction stair is allowed to be. Beside the
+    // flight's *lower* tread the rise is one block — a real way onto the
+    // doorstep from the side — so that stair is **a step**; beside the *upper*
+    // tread the rise is two and unclimbable, so that one is **a kerb**. Both
+    // face east, which is the direction of the thing they serve; before the fix
+    // both faced east too, and neither served anything, because one of them had
+    // been raised a block first so that its facing pointed at a column level
+    // with it.
+    for (const [z, rise] of [
+      [11, 1],
+      [10, 2],
+    ] as const) {
+      const block = result.blocks.find((b) => b.x === 11 && b.z === z);
+      expect(stack.blockStateProps(block?.stateId ?? 0)?.props["facing"]).toBe("east");
+      expect(standingAt(p, laid, 12, z) - (block?.y ?? 0)).toBe(rise);
+    }
+  });
+
+  it("holds the same rule on the seams, which are not doorsteps at all", () => {
+    // The control: the property is about what a stair *is*, so a seam between
+    // two ordinary streets has to satisfy it too, and a fix that bought the
+    // doorstep case by weakening the seam case would show up here.
+    const r = region();
+    const p = plan(r, (_x, z) => (z <= 9 ? 80 : 77));
+    const result = run(p, [
+      { kind: "street", columns: rect(r, 4, 4, 20, 9) },
+      { kind: "street", columns: rect(r, 4, 10, 20, 24) },
+    ]);
+    expect(result.stoopLifts).toBe(0);
+    // **The residue, pinned rather than hidden.** Two of the thirty-four treads
+    // here are `backless`, and both are the same thing: the column at each end
+    // of the staircase, where the run has turned the corner and the only
+    // neighbour above it is *diagonal*. A stair has four facings and no
+    // diagonal one, so there is no direction in which that block can stand
+    // against something higher; it reads as a bevel in the pavement rather than
+    // as a stair beside a stair, and it is the lattice-corner artifact
+    // `docs/DESIGN.md` names, not the defect Kai walked. **It MUST GO DOWN**,
+    // and it will not go down by turning the block — it needs the corner
+    // treated as a corner.
+    expect(result.backless).toBe(2);
+    expect(result.blocks).toHaveLength(34);
+  });
+});

@@ -75,6 +75,38 @@
  * deserves. The residue is counted and returned
  * ({@link JunctionStepResult.unresolved}) rather than hidden.
  *
+ * ## What is not a cut: a stoop's cheek (walked 2026-08-07)
+ *
+ * `occupiedAbove` promotes a column to the top of the masonry standing on it,
+ * because a doorstep does not move `plan.ground` — it *stacks stairs on it* —
+ * and a pass that compared plan levels would see two columns level where a
+ * walker meets a two-block riser. That is right, and it has one wrong
+ * consequence: the lane beside a doorstep flight reads as two blocks below
+ * "paving", so the pass climbed it.
+ *
+ * On `site-plan-hillside` at `(−80, −216)` the ground is 176 for every column
+ * in sight — **nothing there is a hill**. A cottage door at 179 puts a tread at
+ * 178 and another at 177 one column out; the lane column beside the *lower*
+ * tread was raised to 177 and dressed facing east, and the one beside the
+ * *upper* tread was nosed at 176 facing east, and the pair read as a two-step
+ * staircase built sideways next to the door's own. Kai walked it as "two
+ * unnecessary sideways stairs", and it is the same mechanism that produced
+ * every one of the thirty-two lifts on the flat `showcase-bayline`.
+ *
+ * The cheek of a step is architecture, not a hole. A door is served **along**
+ * its flight, whose foot is at lane level a column further out; nobody enters a
+ * house across the side of its stoop. So the lift's trigger reads the paving
+ * *without* the doorsteps ({@link highestNeighbour}'s `skip`), and the cut is
+ * settled with a nosing where it stands. It costs four cutoff rows on
+ * `site-plan-hillside` and three on the steep fixture — counted, dressed, and
+ * `undressedCutoffs` still nought — and it buys back dead-flat pavement.
+ *
+ * Two detectors keep it: {@link JunctionStepResult.stoopLifts}, columns raised
+ * with nothing but a doorstep at or above the level they reached, and
+ * {@link JunctionStepResult.backless}, treads turned across everything they
+ * touch. Both are read off the finished grid rather than off the rule that
+ * produced it, so neither is a restatement of the fix. See {@link stepFacing}.
+ *
  * ## Why it mutates the plan rather than emitting over it
  *
  * A lift is a change of *ground*, not a decoration: the heightmap, the biome
@@ -238,6 +270,19 @@ export interface JunctionStepResult {
    * bar.
    */
   readonly unresolved: number;
+  /**
+   * Dressed steps turned across everything they touch — full-height half
+   * against a column at their own level or below. See {@link stepFacing}; this
+   * is the 2026-08-07 walk defect as a number, and **zero is the bar**.
+   */
+  readonly backless: number;
+  /**
+   * Columns raised whose only paving at or above the level they reached is a
+   * **doorstep**. See {@link onlyStoopAbove} — this is the defect Kai walked on
+   * 2026-08-07 stated as a measurement of the finished grid, and **zero is the
+   * bar**.
+   */
+  readonly stoopLifts: number;
   /** How much was lifted, by lift: `"1"`, `"2"`, `"3"`. */
   readonly liftHistogram: Readonly<Record<string, number>>;
   /** The worst cuts the pass touched, deepest first. */
@@ -339,7 +384,22 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
         const idx = z * region.width + x;
         if (movable[idx] !== 1) continue;
         if ((lift[idx] as number) >= MAX_JUNCTION_LIFT) continue;
-        if (highestNeighbour(region, paved, top, x, z).y - (top[idx] as number) < JUNCTION_CUT) {
+        // **A stoop's cheek is not a cut, and climbing it earns nothing.**
+        // The trigger reads the paving *without* the doorsteps, which is the
+        // 2026-08-07 walk defect stated as one condition. A doorstep is a
+        // flight of its own: `occupiedAbove` promotes its columns to the top of
+        // the masonry it stacked, so the lane beside a two-stair stoop reads as
+        // two blocks below "paving" — but that paving is the **side** of a
+        // step, and nobody enters a door across it. The door is served along
+        // the flight, whose own foot is at lane level one column on. Lifting
+        // towards it put a one-block hump in dead-flat pavement and dressed it
+        // facing the stoop, and Kai walked the pair as "two unnecessary
+        // sideways stairs". The cut is still *dressed* below — the audit counts
+        // it and it is real masonry to nose — it is simply not climbed.
+        if (
+          highestNeighbour(region, paved, top, x, z, threshold).y - (top[idx] as number) <
+          JUNCTION_CUT
+        ) {
           continue;
         }
         // **A step is only earned if the ground behind it can follow.** Raising
@@ -378,6 +438,8 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
   let lifted = 0;
   let nosed = 0;
   let unresolved = 0;
+  let backless = 0;
+  let stoopLifts = 0;
   const histogram = new Map<string, number>();
   /** The lift, as claims, grouped by the class that wins each column. */
   const claims = new Map<GroundSourceClass, GroundClaim[]>();
@@ -409,6 +471,15 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
         const bucket = claims.get(cls);
         if (bucket === undefined) claims.set(cls, [{ idx, y: after }]);
         else bucket.push({ idx, y: after });
+        // **The 2026-08-07 defect, measured off the finished grid.** Read as a
+        // property of the output rather than as a flag the skip above sets, so
+        // it is a detector and not a restatement of the fix: a column that
+        // climbed, and whose only paving at or above the level it climbed to is
+        // a doorstep. Nothing it now stands beside is anything a walker was
+        // trying to reach — the door is served along its own flight, whose foot
+        // is at lane level a column on — so the lift bought a hump in the
+        // pavement and a stair turned across the way in. Zero is the bar.
+        if (onlyStoopAbove(region, paved, threshold, top, x, z, after)) stoopLifts++;
       }
 
       // A column whose top course already carries a dressing block — a flight's
@@ -419,17 +490,22 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
       // flight's mix the same way and for the same reason: a dressing block on
       // top of the surface is a block standing on the pavement, which is a
       // different defect in the same audit.
-      const state = alreadyDressed
+      const dressing = alreadyDressed
         ? undefined
-        : stack.blockStateOf(stairName, {
-            facing: facingOf(highest.dx, highest.dz),
-            half: "bottom",
-            shape: "straight",
-            waterlogged: "false",
-          });
+        : stepFacing(region, top, x, z, after, highest);
+      const state =
+        dressing === undefined
+          ? undefined
+          : stack.blockStateOf(stairName, {
+              facing: dressing.facing,
+              half: "bottom",
+              shape: "straight",
+              waterlogged: "false",
+            });
       if (state !== undefined) {
         blocks.push({ x: region.x0 + x, y: after, z: region.z0 + z, stateId: state });
         if (rise === 0) nosed++;
+        if (dressing?.kind === "backless") backless++;
       }
       if (residual >= JUNCTION_CUT) {
         if (state === undefined && !alreadyDressed) unresolved++;
@@ -466,6 +542,8 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
     lifted,
     nosed,
     unresolved,
+    backless,
+    stoopLifts,
     liftHistogram: Object.fromEntries([...histogram].sort(([a], [b]) => (a < b ? -1 : 1))),
     worst: steps.slice(0, WORST_STEPS),
   };
@@ -537,6 +615,7 @@ function highestNeighbour(
   top: Int32Array,
   x: number,
   z: number,
+  skip?: Uint8Array,
 ): { readonly y: number; readonly dx: number; readonly dz: number } {
   let best = Number.NEGATIVE_INFINITY;
   let bestCardinal = Number.NEGATIVE_INFINITY;
@@ -550,6 +629,9 @@ function highestNeighbour(
     if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
     const nidx = nz * region.width + nx;
     if (paved[nidx] !== 1) continue;
+    // `skip` names a *kind* of paving this question does not count — the
+    // doorsteps, when the question is "is there a climb here to earn".
+    if (skip !== undefined && skip[nidx] === 1) continue;
     const y = top[nidx] as number;
     if (y > best) {
       best = y;
@@ -664,6 +746,41 @@ function roleBlockName(
 }
 
 /**
+ * True when the only paving at or above a lifted column's finished level is a
+ * **doorstep** — the shape of the 2026-08-07 walk defect.
+ *
+ * Eight-connected, to match the neighbourhood the cut itself is measured in.
+ * The test is deliberately "at or above" rather than "two or more above": a
+ * lift that has already closed the gap to one still has to have been *for*
+ * something, and if the only thing it now stands level with is a stoop, it was
+ * not. A column that climbed towards a street, a flight, a plaza or a bank has
+ * that neighbour above it at the end and is not counted, which is why this can
+ * be read off the finished grid instead of trusting the rule that produced it.
+ */
+function onlyStoopAbove(
+  region: Region,
+  paved: Uint8Array,
+  threshold: Uint8Array,
+  top: Int32Array,
+  x: number,
+  z: number,
+  after: number,
+): boolean {
+  let stoop = false;
+  for (const [dx, dz] of NEIGHBOURS8) {
+    const nx = x + dx;
+    const nz = z + dz;
+    if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
+    const nidx = nz * region.width + nx;
+    if (paved[nidx] !== 1) continue;
+    if ((top[nidx] as number) < after) continue;
+    if (threshold[nidx] !== 1) return false;
+    stoop = true;
+  }
+  return stoop;
+}
+
+/**
  * The cardinal name of a step, for a stair's `facing`.
  *
  * The same convention `street-stairs.ts` uses: **facing points uphill**, so the
@@ -674,4 +791,68 @@ function facingOf(dx: number, dz: number): string {
   if (dx > 0) return "east";
   if (dx < 0) return "west";
   return dz > 0 ? "south" : "north";
+}
+
+/**
+ * Which way a dressed step faces, and what that facing is *for*.
+ *
+ * There are exactly two honest things a stair at a junction can be, and the
+ * facing has to name one of them:
+ *
+ * - **a step you climb** — a cardinal neighbour exactly one block above, which
+ *   the stair's half-height half hands you up onto. `"step"`.
+ * - **a nosing on a kerb** — a cardinal neighbour two or more above, a face the
+ *   column cannot climb; the stair's full-height half stands against it and
+ *   the edge reads as deliberate masonry rather than a sawn-off block. `"kerb"`.
+ *
+ * What it must never be is a stair **turned across everything it touches**:
+ * full-height half against a column at its own level or below, half-height half
+ * against nothing. Kai walked exactly that on 2026-08-07 — a lifted lane column
+ * beside a doorstep, facing east into a column level with it, reading as a
+ * second staircase built sideways next to the door's own. That outcome is
+ * `"backless"`, it is counted ({@link JunctionStepResult.backless}), and zero is
+ * the bar.
+ *
+ * The `"backless"` case is still *dressed*: the audit counts an undressed cut
+ * whatever the reason, so refusing to lay the tread would trade a bad stair for
+ * a bare riser. It falls back to the old rule — the axis of the diagonal that
+ * cut it — and is reported instead of hidden.
+ */
+function stepFacing(
+  region: Region,
+  top: Int32Array,
+  x: number,
+  z: number,
+  after: number,
+  highest: { readonly dx: number; readonly dz: number },
+): { readonly facing: string; readonly kind: "step" | "kerb" | "backless" } {
+  let step: readonly [number, number] | undefined;
+  let kerb: readonly [number, number] | undefined;
+  let kerbY = Number.NEGATIVE_INFINITY;
+  for (const [dx, dz] of NEIGHBOURS4) {
+    const nx = x + dx;
+    const nz = z + dz;
+    if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
+    const nidx = nz * region.width + nx;
+    // **Every** neighbour, paved or not. What a stair's raised half stands
+    // against is a question about the ground, and an unclaimed bank a block up
+    // is as real a thing to step onto — and two blocks up as real a thing to
+    // nose against — as a street is. Reading only the paving is what left a
+    // third of these stairs turned at a bank they were built beside.
+    const dy = (top[nidx] as number) - after;
+    // Deterministic without a tie-break rule: `NEIGHBOURS4` is a fixed order and
+    // the first neighbour at exactly one above wins. Every such neighbour is
+    // the same connection from the stair's point of view.
+    if (dy === 1) {
+      step ??= [dx, dz] as const;
+      continue;
+    }
+    if (dy >= JUNCTION_CUT && (top[nidx] as number) > kerbY) {
+      kerbY = top[nidx] as number;
+      kerb = [dx, dz] as const;
+    }
+  }
+  if (step !== undefined) return { facing: facingOf(step[0], step[1]), kind: "step" };
+  if (kerb !== undefined) return { facing: facingOf(kerb[0], kerb[1]), kind: "kerb" };
+  return { facing: facingOf(highest.dx, highest.dz), kind: "backless" };
 }
