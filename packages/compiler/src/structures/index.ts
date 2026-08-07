@@ -106,7 +106,7 @@ import {
   type RoadParams,
   type StreetSurfaceResult,
 } from "./roads.js";
-import type { StreetscapeResult } from "./streetscape.js";
+import type { FurnitureKit, StreetscapeResult } from "./streetscape.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
 import {
   WALL_DEFAULT_HEIGHT,
@@ -847,7 +847,14 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         levels: segmentArcs,
         stack: input.stack,
         seed: nodeSeed(input.worldSeed, district.nodePath, ""),
-        furniture: district.streets.sidewalk >= 2 ? "downtown" : "village",
+        // `streetscape.kerbsideKit`: the band width proposes, the era disposes.
+        // Today's kit is the pure width rule, so a document with no `era`
+        // compiles byte-identically; a declared pre-modern era swaps the
+        // downtown kit (bicycle racks, bollard rows) for the rustic one.
+        furniture: fanOut<string>(STRUCTURE_ROWS.kerbsideKit, intentFor(intents, district.nodePath), {
+          nodePath: district.nodePath,
+          today: district.streets.sidewalk >= 2 ? "downtown" : "village",
+        }) as FurnitureKit,
         palette: input.palette,
         nodePath: district.nodePath,
         // What there is to light. Street lighting scales with the buildings on

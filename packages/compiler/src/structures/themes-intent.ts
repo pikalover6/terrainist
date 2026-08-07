@@ -25,6 +25,7 @@ export const STRUCTURE_ROWS = {
   wearIntensity: "roads.wearIntensity",
   propFamily: "props.family",
   modernFittings: "life.modernFittings",
+  kerbsideKit: "streetscape.kerbsideKit",
   decayCoverage: "decay.coverage",
   vegetationReclaim: "decay.vegetationReclaim",
 } as const;
@@ -88,6 +89,23 @@ export const PROP_FAMILY_BY_ERA: Readonly<Record<EraClass, string>> = Object.fre
  * satellite dish.
  */
 const MODERN_FITTING_ERAS: ReadonlySet<EraClass> = new Set<EraClass>(["modern", "far_future"]);
+
+/**
+ * Era classes whose sidewalks may be dressed from the **downtown** kerbside kit.
+ *
+ * The kit is selected today by band width alone (`streets.sidewalk >= 2`), and
+ * band width is a *fabric* fact: a dense hill village laid out at high coverage
+ * gets a two-column walk and, with it, bicycle racks and bollard rows. Those two
+ * props are the kit's whole difference from the village kit, and both say
+ * "twentieth-century street" as loudly as a fire hydrant does — so the gate is
+ * the same closed set as {@link MODERN_FITTING_ERAS}, for the same reason. Any
+ * other declared era keeps the width (that is layout's business) and takes the
+ * rustic substitution: the village kit's bench, planter and litter bin.
+ */
+const DOWNTOWN_KERBSIDE_ERAS: ReadonlySet<EraClass> = new Set<EraClass>([
+  "modern",
+  "far_future",
+]);
 
 /** Register every structure-owned row. Idempotent; the seam calls it once. */
 export function registerStructureFanOut(): void {
@@ -197,6 +215,23 @@ export function registerStructureFanOut(): void {
       // an era is actually declared and resolves to a pre-modern class.
       if (!intent.eraDeclared) return ctx.today;
       return MODERN_FITTING_ERAS.has(intent.eraClass);
+    },
+  });
+
+  /* --- era → which kerbside furniture kit dresses a sidewalk -------------- */
+  registerFanOut<string>({
+    id: STRUCTURE_ROWS.kerbsideKit,
+    reads: ["era"],
+    status: "today",
+    drives: "which furniture kit streetscape.ts scatters along a district's sidewalks",
+    resolve(intent, ctx) {
+      // Law 2: no `era`, today's kit — which is the pure band-width rule, so a
+      // document without intent compiles byte-identically. The gate only ever
+      // *downgrades*: it never promotes a village lane to the downtown kit,
+      // because the band is too narrow to hold it whichever era asked.
+      if (!intent.eraDeclared) return ctx.today;
+      if (ctx.today !== "downtown") return ctx.today;
+      return DOWNTOWN_KERBSIDE_ERAS.has(intent.eraClass) ? "downtown" : "village";
     },
   });
 

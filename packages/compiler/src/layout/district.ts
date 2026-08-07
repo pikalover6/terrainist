@@ -1473,7 +1473,16 @@ export const MAX_REPLAN_ROUNDS = MAX_PRINCIPAL_STREETS - MIN_PRINCIPAL_STREETS +
 export const COMPOSITION_GATES = Object.freeze({
   /** §6.1: uncut, unpaved ground inside the quarter. Most of a hillside is hillside. */
   naturalFraction: 0.4,
-  /** §6.1, §8.3 check 6: carriageway plus sidewalk. */
+  /**
+   * §6.1, §8.3 check 6: carriageway plus sidewalk, **net of the carriage
+   * spine** (§3.6a; amendment 2026-08-07).
+   *
+   * The bar is unchanged at 0.25. What changed is what it measures: the spine's
+   * columns are infrastructure the town needs — its length is
+   * `SPINE_GRADE_RUN × drop`, a number the ladder cannot move, because dropping
+   * a contour street does not shorten the road up the hill — so counting them
+   * as street sprawl charged the ladder for a road it could not shorten.
+   */
   streetFraction: 0.25,
 });
 
@@ -1507,13 +1516,12 @@ export interface Composition {
    * Columns of {@link Composition.streetColumns} the carriage spine accounts for
    * (`docs/SITE-PLAN-v0.md` §3.6a).
    *
-   * **Reported, never gated, and the reason it exists is the open question that
-   * section ends on.** The spine is counted in `streetFraction` with no
-   * exemption, and its length is `SPINE_GRADE_RUN × drop` — a number the ladder
-   * cannot move, because dropping a contour street does not shorten the road up
-   * the hill. Whether the gate should therefore be raised by one spine's worth
-   * or measured net of it is a spec decision, and a decision nobody can take on
-   * a number nobody can see.
+   * **Subtracted from {@link Composition.streetFraction}, which is why it
+   * exists.** The open question that section ended on — raise the gate by one
+   * spine's worth, or measure net of it — was settled net of it (Kai,
+   * 2026-08-07), the bar staying 0.25. So `streetColumns` is every paved column
+   * and `streetFraction` is `(streetColumns - spineColumns) / quarterColumns`:
+   * the two are deliberately *not* a ratio of each other.
    */
   readonly spineColumns: number;
   readonly spineFraction: number;
@@ -1564,7 +1572,9 @@ export function compositionOf(plan: FormPlan, bounds: Rect, sidewalkWidth: numbe
     naturalColumns: natural,
     platformColumns: platform,
     naturalFraction: natural / n,
-    streetFraction: street / n,
+    // Net of the spine: see COMPOSITION_GATES.streetFraction. `Math.max` is
+    // belt and braces — every spine column is a paved column by construction.
+    streetFraction: Math.max(0, street - spine) / n,
     platformFraction: platform / n,
     spineColumns: spine,
     spineFraction: spine / n,
@@ -1652,7 +1662,7 @@ export function planQuarter(request: FabricRequest, sidewalkWidth: number): Plan
   }
   if (c.streetFraction > COMPOSITION_GATES.streetFraction) {
     missed.push(
-      `${(c.streetFraction * 100).toFixed(1)}% of it is road where the plan asks for at most ${COMPOSITION_GATES.streetFraction * 100}%`,
+      `${(c.streetFraction * 100).toFixed(1)}% of it is road other than the carriage spine, where the plan asks for at most ${COMPOSITION_GATES.streetFraction * 100}%`,
     );
   }
   return {

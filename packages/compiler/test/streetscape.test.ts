@@ -12,7 +12,15 @@
 
 import { describe, expect, it } from "vitest";
 
-import { nodeSeed, type Region } from "@terrainist/stdlib";
+import {
+  generateProp,
+  nodeSeed,
+  rotateOps,
+  streamSeed,
+  type LocalVoxelOp,
+  type PropName,
+  type Region,
+} from "@terrainist/stdlib";
 
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
@@ -528,6 +536,38 @@ describe("district furniture", () => {
     const downtown = dress(fixtureGraph(), flatPlan(), "downtown").props.length;
     const village = dress(fixtureGraph(), flatPlan(), "village").props.length;
     expect(downtown).toBeGreaterThan(village);
+  });
+
+  it("places every prop whole, or not at all", () => {
+    // The defect this pins: a prop used to be *clipped* to the band, which is
+    // harmless for a bench (a shorter bench) and leaves a bollard row or a
+    // bicycle rack as loose wall blocks standing in the street, because their
+    // standing columns are disjoint. So no placed prop may be missing a column.
+    const { props, masks } = dress(fixtureGraph(), flatPlan(), "downtown");
+    const furniture = props.filter((p) => p.prop !== "lamp_post");
+    expect(furniture.length).toBeGreaterThan(0);
+    for (const p of furniture) {
+      const generated = generateProp({
+        prop: p.prop,
+        seed: streamSeed(SEED, `streetscape.${p.prop}.${p.x}.${p.z}`),
+        params: {},
+      });
+      const [sizeX, , sizeZ] = generated.meta.size;
+      const ops = rotateOps(generated.ops, p.yaw, sizeX, sizeZ) as readonly LocalVoxelOp[];
+      // Every op of the whole prop landed: same count, and every one of them on
+      // a paved, walk-lane-free column at the prop's own base height.
+      expect(p.blockCount).toBe(ops.length);
+      for (const op of ops) {
+        const idx = at(p.x + op.x, p.z + op.z);
+        expect(masks.sidewalk[idx]).toBe(1);
+        expect(masks.walkLane[idx]).toBe(0);
+        expect(masks.y[idx]).toBe(p.baseY);
+      }
+    }
+    // And the disjoint props are actually exercised by this fixture, or the
+    // assertion above is guarding a case that never occurs.
+    const disjoint: readonly PropName[] = ["bollard_row", "bicycle_rack"] as PropName[];
+    expect(furniture.some((p) => disjoint.includes(p.prop))).toBe(true);
   });
 
   it("never clumps: every object keeps the minimum gap", () => {

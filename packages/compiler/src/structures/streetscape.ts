@@ -893,15 +893,14 @@ function tooClose(
 }
 
 /**
- * Emit one prop's ops at a sidewalk column, clipped to the sidewalk.
+ * Emit one prop's ops at a sidewalk column — **whole, or not at all**.
  *
- * Clipping is what keeps the two hard rules true at once: **no op ever lands
- * on a carriageway cell**, and **nothing floats** — every surviving op sits
- * over a column this pass paved to a known, flat Y. A prop whose declared box
- * overhangs the band simply loses the overhanging columns; what remains is
- * still the thing (a bench with its end cropped is a shorter bench), and the
- * alternative — refusing to place near a narrow band — empties exactly the
- * sidewalks that most need dressing.
+ * Two hard rules hold either way: **no op ever lands on a carriageway cell**,
+ * and **nothing floats** — every op sits over a column this pass paved to a
+ * known, flat Y. What changed (2026-08-07) is what happens when a declared box
+ * overhangs the band: it used to lose the overhanging columns, which is fine
+ * for a solid footprint and wrong for a disjoint one, and left bollard rows and
+ * bicycle racks as loose wall blocks. Now the prop is refused instead.
  *
  * Returns `undefined` when the anchor column itself is unusable, so the caller
  * can simply skip.
@@ -944,25 +943,40 @@ function emitProp(
     }
   }
 
-  let count = 0;
+  // Whole or not at all. Clipping *columns* was the old rule, and it is only
+  // defensible for a prop whose footprint is solid: a bench with its end cropped
+  // is a shorter bench. It is indefensible for a prop whose standing columns are
+  // **disjoint** — a bollard row or a bicycle rack is a rhythm of separate posts
+  // over a shared pad, so dropping the columns that overhang the band leaves
+  // stray wall blocks standing in the street with nothing between them. Since no
+  // caller can tell the two shapes apart from the outside, the rule is the same
+  // for every prop: gather the ops first, and if a single one of them cannot
+  // land, place none of it. What this costs is dressing on the narrowest bands;
+  // what it buys is that everything placed is a whole object.
+  const landed: StructureBlock[] = [];
   for (const op of ops as readonly LocalVoxelOp[]) {
     // The prop's own paved pad is dropped: the sidewalk *is* the pad, and
     // laying a second course on top of it would raise the object one block
     // and leave a lip beside the walk lane. `baseY` is therefore the sidewalk
-    // surface itself, and local `y = 1` stands directly on it.
+    // surface itself, and local `y = 1` stands directly on it. A dropped pad op
+    // is not a *missing* column, so it never fails the whole-prop test.
     if (!keepLocalFloor && op.y === 0) continue;
     const x = originX + op.x;
     const z = originZ + op.z;
-    if (!inside(region, x, z)) continue;
+    if (!inside(region, x, z)) return undefined;
     const idx = index(region, x, z);
-    if (masks.sidewalk[idx] !== 1) continue;
-    if (masks.walkLane[idx] === 1) continue;
-    if ((masks.y[idx] as number) !== baseY) continue;
+    if (masks.sidewalk[idx] !== 1) return undefined;
+    if (masks.walkLane[idx] === 1) return undefined;
+    if ((masks.y[idx] as number) !== baseY) return undefined;
     const stateId = resolveOpState(ctx.stack, op);
+    // An unresolvable block state is a catalog fault, not a site fault: it would
+    // hole the prop wherever it stood, so refusing the site would refuse every
+    // site. Skip the op, exactly as before.
     if (stateId === undefined) continue;
-    out.push({ x, y: baseY + op.y, z, stateId });
-    count++;
+    landed.push({ x, y: baseY + op.y, z, stateId });
   }
+  const count = landed.length;
+  for (const block of landed) out.push(block);
   if (count === 0) return undefined;
   return { prop, x: originX, z: originZ, baseY, yaw, blockCount: count };
 }

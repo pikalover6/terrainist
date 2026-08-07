@@ -94,6 +94,24 @@ describe("roofs, ornament, wear and decay", () => {
     // An unknown word falls back to the default class, which is pre-modern.
     expect(gate({ era: "swashbuckling" }, true)).toBe(false);
   });
+
+  it("gates the downtown kerbside kit on the era, and defaults to today", () => {
+    const kit = (intent: unknown, today: string): string =>
+      fanOut<string>(STRUCTURE_ROWS.kerbsideKit, scope(intent), { nodePath: "w", today });
+    // Declared and modern: the wide band keeps its downtown kit.
+    expect(kit({ era: "modern" }, "downtown")).toBe("downtown");
+    expect(kit({ era: "cyberpunk" }, "downtown")).toBe("downtown");
+    // Declared and pre-modern: the rustic substitution, however wide the band.
+    expect(kit({ era: "medieval" }, "downtown")).toBe("village");
+    expect(kit({ era: "victorian" }, "downtown")).toBe("village");
+    expect(kit({ era: "swashbuckling" }, "downtown")).toBe("village");
+    // The gate only ever downgrades: a village lane is never promoted.
+    expect(kit({ era: "modern" }, "village")).toBe("village");
+    expect(kit({ era: "medieval" }, "none")).toBe("none");
+    // Not declared: today, whatever today is — the identity law.
+    expect(fanOut<string>(STRUCTURE_ROWS.kerbsideKit, NOTHING, { nodePath: "w", today: "downtown" })).toBe("downtown");
+    expect(fanOut<string>(STRUCTURE_ROWS.kerbsideKit, NOTHING, { nodePath: "w", today: "village" })).toBe("village");
+  });
 });
 
 describe("the urban rows", () => {

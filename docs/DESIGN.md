@@ -640,14 +640,14 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 3. **Uphill masonry (SITE-PLAN §5.2 rule 9)** — every cut edge along a street
    currently gets rock where a real town would put masonry; needs a sweep face
    whose upper side is natural ground. Reported in every compile.
-4. **Cropped street furniture** — the disjoint-prop fix (bollard rows place
-   whole or not at all) is designed and tested but moves flat worlds
-   everywhere; awaiting Kai's explicit go.
-5. **The downtown furniture kit** reaches hill villages via `sidewalk >= 2`
-   alone — gate the kerbside kit on era/character like the modern fittings.
-6. **Gate decisions for Kai**: the street-fraction bar vs the spine
-   (0.2745 measured vs 0.25; raise to ~0.28 or gate on street − spine), and
-   the dwellings-vs-nature tradeoff (`COMPOSITION_GATES` is the knob).
+4. ~~**Cropped street furniture**~~ — **fixed 2026-08-07** on Kai's go: a
+   sidewalk prop is placed whole or not at all (`structures/streetscape.ts`).
+5. ~~**The downtown furniture kit** reaches hill villages~~ — **fixed
+   2026-08-07**: `streetscape.kerbsideKit` gates the downtown kit on the era,
+   exactly as `life.modernFittings` does; no `era` is byte-identical.
+6. **Gate decisions for Kai**: the dwellings-vs-nature tradeoff
+   (`COMPOSITION_GATES` is the knob). The street-fraction bar was settled
+   2026-08-07 — measured net of the carriage spine, bar stays 0.25.
 7. **The `hillside` cutover** (SITE-PLAN WP-5): classifier + kit + alias,
    regenerate the examples that name `terraced`, delete `terraced.ts` — only
    after Kai accepts the iterated form.
@@ -781,13 +781,15 @@ repair* is locked to manual.
   fixture's summit chapel was dropped for it (WP-1, 2026-08-06): on a 1:2.5
   cone its doorstep fails under every `terrain_conform`. A seating/doorstep
   defect for lone buildings far from a district.
-- **Cropped street furniture** — a prop clipped to the sidewalk band leaves
-  wall-block fragments when its standing columns are disjoint (bollard row,
-  bicycle rack). Fix designed + tested (place whole or not at all) but it
-  moves flat worlds everywhere; awaiting Kai's explicit go.
-- **The downtown kerbside kit reaches hill villages** via `sidewalk >= 2`
-  alone — context-blind kit selection; gate on era/character like the modern
-  fittings (era gate shipped 2026-08-07).
+- ~~**Cropped street furniture**~~ — **fixed 2026-08-07.** A prop clipped to
+  the sidewalk band left wall-block fragments where its standing columns are
+  disjoint (bollard row, bicycle rack); `emitProp` now gathers a prop's ops and
+  refuses the site if a single one cannot land. It moved flat worlds, which is
+  why it waited for Kai's go.
+- ~~**The downtown kerbside kit reaches hill villages**~~ — **fixed
+  2026-08-07.** `streetscape.kerbsideKit` mirrors the modern-fittings era gate:
+  band width proposes the downtown kit, a declared pre-modern era swaps it for
+  the rustic one, and a document with no `era` still compiles byte-identically.
 - **A terraced quarter generates 11 "public squares".** Found while fixing prop
   density (2026-08-06) and deliberately not fixed there: gating plaza props
   would have moved a flat control world. The defect is that the fabric layer

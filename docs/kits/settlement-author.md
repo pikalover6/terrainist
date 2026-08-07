@@ -2134,8 +2134,11 @@ internally to one of `primitive`, `ancient`, `medieval`, `renaissance`,
 you should almost never leave out.** Omitting it does not mean "generic": it
 means the street furniture pass keeps its full modern kit, so a village with no
 `era` gets air-conditioning condensers on its flank walls, fire hydrants, phone
-boxes, wheeled dumpsters, bus shelters and parked cars at the kerb. That is
-correct for a contemporary town and ruinous for anything else. A period is
+boxes, wheeled dumpsters, bus shelters and parked cars at the kerb — and, on
+any quarter dense enough to earn a two-column sidewalk, the *downtown kerbside
+kit* (bicycle racks and bollard rows) rather than the rustic bench-and-planter
+one. That is correct for a contemporary town and ruinous for anything else. A
+period is
 implied far more often than it is stated:
 
 - "medieval", "viking", "feudal", "castle town" → `"era": "medieval"`
