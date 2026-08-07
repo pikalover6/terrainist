@@ -825,14 +825,19 @@ that is 80% pavement are all perfectly legal, and all three shipped green.
 Kai's walks are the only instrument that sees them, which is why *Critique →
 repair* is locked to manual.
 
-- **The hillside network, current truth (post-wave, 2026-08-07).** Hillside:
-  10 components, 9 orphans, entrance-reachable share **0.998**,
-  `undressedCutoffs` 0 — close to whole. Steep: 12 components, 649 orphans,
-  share **0.150** — the external road never reaches the (now 4–5-street)
-  town, and its flights do not join across streets. That entrance/spine
-  connection is the next network lever. One `unservedFace` remains on
-  hillside (the verge opening — roadmap item 4, deliberately unfixed until
-  walked).
+- **The hillside network, corrected truth (2026-08-07, instrument fixed).**
+  Both towns are **fully reachable on foot: entrance share 1.000 on both
+  fixtures** — the earlier 0.150 was the audit's paving-only movement graph
+  reading grass terraces as walls (Kai's 100%-on-foot walk was the ground
+  truth that exposed it; the graph now runs over all standable ground, with
+  `groundReachableShare` alongside). `components`/orphans stay
+  network-scoped by design — they measure paved-route coherence (flights
+  joining streets), an aesthetic-quality signal now, not a reachability
+  one. Found in the fix: **`externalEntrance` does not mean external** — it
+  picks the road column furthest from the network centroid (the summit
+  chapel on hillside), because these fixtures emit no genuinely external
+  arrival road; the name promises what nothing provides. Rename or derive
+  a real region-edge entrance when a fixture has one.
 - **c1-harbourtown moved 186 chunks at `747eaf8` — attributed and justified
   (2026-08-07).** All of it is the Kai-authorized furniture fix: 204 of 376
   kerbside props (54%) were being clipped into loose fragments on that world
