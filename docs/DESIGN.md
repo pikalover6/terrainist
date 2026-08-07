@@ -5,8 +5,11 @@
 > archived; git history is the archive. `rough-vision.txt` at the repo root is
 > the original vision, kept as a historical artifact and superseded by this file.
 >
-> Last full revision: **2026-08-06**. The next contracted change is *The
-> ground contract — declare → resolve → build*, below; start there.
+> Last full revision: **2026-08-07**, at the hillside milestone (see the
+> Roadmap banner). The ground contract (WP-1 → WP-5) and the frontage-led
+> `hillside` form are shipped; the next contracted work is the hillside
+> iteration tail + **flora grammar** (Phase 4's next item by standing plan).
+> Normative companions: `docs/GROUND-CONTRACT-v0.md`, `docs/SITE-PLAN-v0.md`.
 
 ## Product
 
@@ -129,6 +132,39 @@ A block may close its perimeter around a courtyard reached through a pend. A
 `S = ceil(blockSize / mean bench width)`, because the "a bench boundary is
 always a street" invariant became redundant the moment seam columns went into
 `blocked`. `docs/COURTYARDS-AND-LEVELS-v0.md` is the contract.
+
+**The ground contract (WP-1 → WP-5, shipped 2026-08-06).** Nothing modifies
+the ground after the ground is decided: every pass *declares* `GroundIntent`s
+and the `GroundDriver` (`layout/ground-driver.ts`) accumulates them at each
+pass's pipeline position, re-resolves the whole prefix with `resolveGround`,
+and writes the answer through over the committing pass's own columns. The
+seventeen-class `INTENT_RANK`, the equivalence shim that proved the conversion
+(three declarer bugs caught; every divergence attributed to a named
+inversion), and the mixture mechanics are `docs/GROUND-CONTRACT-v0.md` §1–§9a.
+WP-6 (the freeze) remains, gated on §13.3.
+
+**The `hillside` form (SITE-PLAN v0, shipped and walked 2026-08-07).** The
+town generates the terraces it needs — frontage-scored principal contour
+streets, strips that pinch out where the ground steepens, a replan ladder
+that ships the first street-count clearing `COMPOSITION_GATES`, lots walked
+from the frontage, the grade-capped **carriage spine** (corridor reserved
+before the terraces; switchbacks emerge from the cap), context-driven
+transitions (`treatmentForEdge`; benched banks for tall drops; masonry
+rationed per dwelling), and **recessed stairways** — flights may cut into the
+upper platform (`MAX_TREAD_CUT = 4`) so a connection earns its drop with run
+(Kai's ratified principle: never cap terrace rises; serve them). Registered
+beside `terraced` (frozen for the A/B); cutover to the classifier is WP-5,
+after acceptance. `docs/SITE-PLAN-v0.md` is the contract and carries every
+dated amendment measurement forced.
+
+**The walkability audit (`emit/walkability.ts`).** The town measured as a
+pedestrian network, not a list of passes: reciprocal-move connectivity (the
+physics walker takes 3-block drops, so it floods downhill and calls a town
+nobody can climb "connected"), junction clutter with per-pass `BlockSpan`
+attribution, unserved-face detection. Its numbers are pinned as defect
+goldens that may only improve; it is the instrument that turned a failed walk
+into named mechanisms in one pass, and audit-then-fix is now the standing
+pattern for walk-level defects.
 
 **Ground roles.** Twelve *jobs* in a built ground — pavement, kerb, tread,
 revetment, coping, plinth, weep, balustrade, stairs, slab, bank, scree — filled
@@ -579,20 +615,53 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 
 ## Roadmap
 
-**Immediate, in order.** *(The wall artifact and the ground contract's
-WP-1 → WP-5 shipped 2026-08-06 — see git history and
-`docs/GROUND-CONTRACT-v0.md` §9a for what each landed.)*
-1. **Kai walks** the post-contract worlds. Every change since the last walk is
-   attributable: the wall course + coping, or one of the named inversions
-   I1–I6.
-2. Settle **§13.3** (the pad apron as a declared transition) — the 55-column
-   golden becomes a world change at WP-6's first commit.
-3. Re-measure `RETAIN_MAX` / `RETAIN_RAIL` / `MIN_RETAIN_RUN` on a generated
+> **Milestone, 2026-08-07 (walked and accepted by Kai):** the `hillside` form
+> is a coherent, walkable town — "largely a coherent town and literally miles
+> ahead of what we had a few days ago". Shipped between 2026-08-06 and
+> 2026-08-07: the wall artifact fix; the ground contract WP-1 → WP-5 (the
+> driver; every pass declares); `docs/SITE-PLAN-v0.md` WP-0/WP-1/WP-3 plus the
+> carriage spine; the walkability audit; and the audit-driven fixes (recessed
+> stairways — flights may cut, bounded at `MAX_TREAD_CUT = 4`; tread-wide
+> flights; exposure-gated rails; era-gated street furniture; rock-faced cuts
+> finished after the last ground writer). Remaining hillside issues are
+> "moderate, mostly aesthetic, fixable via dedicated iteration" — the ledger
+> below and the SITE-PLAN open questions carry every known one.
+
+**Hillside iteration (the milestone's tail), when taken up.**
+1. **The five causeways from the lowest street** — removal measured as a big
+   connectivity win (15 → 10 components) but currently *errors*: two seams
+   lean on ground the causeways level (`offPlatform` at `(73,10)` and
+   `(75–78,16)` on the steep fixture). The decoupling is the next lever;
+   documented in `SITE-PLAN-v0` §3.6.
+2. **The entrance metric** — `entranceConnected` is a largest-component
+   tiebreak; it should be *share of walkable columns reachable from the
+   entrance*. Small `emit/walkability.ts` change; steep fixture still reads
+   false.
+3. **Uphill masonry (SITE-PLAN §5.2 rule 9)** — every cut edge along a street
+   currently gets rock where a real town would put masonry; needs a sweep face
+   whose upper side is natural ground. Reported in every compile.
+4. **Cropped street furniture** — the disjoint-prop fix (bollard rows place
+   whole or not at all) is designed and tested but moves flat worlds
+   everywhere; awaiting Kai's explicit go.
+5. **The downtown furniture kit** reaches hill villages via `sidewalk >= 2`
+   alone — gate the kerbside kit on era/character like the modern fittings.
+6. **Gate decisions for Kai**: the street-fraction bar vs the spine
+   (0.2745 measured vs 0.25; raise to ~0.28 or gate on street − spine), and
+   the dwellings-vs-nature tradeoff (`COMPOSITION_GATES` is the knob).
+7. **The `hillside` cutover** (SITE-PLAN WP-5): classifier + kit + alias,
+   regenerate the examples that name `terraced`, delete `terraced.ts` — only
+   after Kai accepts the iterated form.
+8. v1 items by name: per-bay stepped rows, undercrofts, polygon footprints,
+   graded principal streets, courtyards on a strip.
+
+**Ground contract — remaining.**
+1. Settle **GROUND-CONTRACT §13.3** (the pad apron as a declared transition) —
+   the 55-column golden becomes a world change at WP-6's first commit.
+2. Re-measure `RETAIN_MAX` / `RETAIN_RAIL` / `MIN_RETAIN_RUN` on a generated
    hill town (§13.8) — WP-6 makes them the resolver's transition table.
-4. The **ground contract WP-6** — the freeze, the deferred §9a.7 items
-   (consumers read the resolver's transitions; the retaining pass's three
-   hand-built defences and `CURB_LEVEL_TOLERANCE` deleted), and §10's
-   deletion list.
+3. **WP-6** — the freeze, the deferred §9a.7 items (consumers read the
+   resolver's transitions; the retaining pass's three hand-built defences and
+   `CURB_LEVEL_TOLERANCE` deleted), and §10's deletion list.
 
 **Bespoke tier — remaining.**
 - Terrain seating (`seatY`, pad/embed/drape), landmark interiors, anchors→roads
@@ -601,19 +670,10 @@ WP-1 → WP-5 shipped 2026-08-06 — see git history and
   Phase 3 blocker: it gates taking money from strangers, not building the tier.
 - The Tripo curated collection, if and when sculptural one-offs earn the spend.
 
-**Fabric breadth (Phase 4).** Each lands against the contracts above and
-registers its own fan-out rows.
-- **Urban forms as plugins** — radial, canal, terraced, linear, grown. The
-  direct answer to "every settlement is the same settlement", and the largest
-  single variety win available. Specified in `docs/URBAN-FORMS-v0.md`: a
-  registry of named street-skeleton generators behind one contract, with blocks,
-  lots and frontage seating shared and unchanged below it.
-- **Courtyard blocks and multi-level ground** — old-quarter and hill-town
-  texture; the two fabric rigidities most worth relaxing. Specified in
-  `docs/COURTYARDS-AND-LEVELS-v0.md`: one representation for a quarter's ground
-  (level platforms and the seams between them), a block whose perimeter closes
-  around a reached interior, and the column-ownership rule the street surfacer
-  needs before either can be built.
+**Fabric breadth (Phase 4) — remaining.** Each lands against the contracts
+above and registers its own fan-out rows. *(Urban forms and courtyards/levels
+shipped — see "What is built today". **Flora grammar is next by standing
+plan**, then infrastructure, then agriculture.)*
 - **Flora grammar** — canopy giants, ancients, fungal, fantasy strata; the
   biggest visible gap outside settlements.
 - **Infrastructure family** — aqueduct, canal, rail, mine headworks, on the
@@ -685,27 +745,49 @@ seam and asserted **zero** retaining walls — it passed for weeks and it was
 asserting the bug. Tests written from the implementation rather than from the
 intent do this, and only a walked world catches them.
 
+**A fourth, learned 2026-08-07, and it explains why four rounds of fixes can
+each verify green while the walk stays broken.** *A fix verifies a countable
+proxy; the walk fails on an emergent property nothing measures.* The
+sheer-face/disconnection round: every fix had honest before/after numbers
+(rails smoothed, dirt faces 122 → 4, tallDrop 183 → 0) and the town still had
+54 connected components, because `synthesizeTreads` capped the rise and
+nothing capped the fall — and the test guarding |Δ| ≤ 1 used a monotonically
+rising fixture on which the property was free by construction. The counter is
+**instrument-first**: when a walk fails, build the measurement that sees what
+the walk sees (the walkability audit — reciprocal connectivity, per-pass
+clutter attribution), diagnose against it, and only then fix, judged by
+predicted-vs-measured deltas. One audit pass named every mechanism four blind
+rounds had missed.
+
 **On the physics lint's limits.** It proves a world is *well-formed*, not that
 it is any good. 1,010 stub retaining walls, 314 stair lanterns and a quarter
 that is 80% pavement are all perfectly legal, and all three shipped green.
 Kai's walks are the only instrument that sees them, which is why *Critique →
 repair* is locked to manual.
 
-- **A cut face is revetted per column, so on a diagonal it reads as a sawtooth.**
-  `faceCuts` swaps the subsurface of any column whose 8-neighbour drop is ≥2;
-  along a contour that set is a lattice staircase, so the revetment shows as
-  single blocks with gaps and no coping. Walked 2026-08-06. See *The ground
-  contract* → *The wall artifact* for the fix and for why this is the third
-  instance of one lesson.
-- **`largestFreeRect` discards roughly 45% of block ground, and it is the hard
-  ceiling on how many buildings a quarter can hold.** `blocksOf` reduces every
-  block to inscribed axis-aligned rectangles, and lots are cut from rectangles,
-  so a ragged contour band or a wedge loses most of its area. Measured on the
-  hill town: 66 blocks holding 13,868 columns yield 7,573 columns of rectangle.
-  It has now surfaced three times under three names — `radial`'s wedges losing
-  area (4.1), the `COURTYARD_FILL` eligibility guard (4.2), and the hill town's
-  building count (4.2). **The fix is a polygon lot cutter**, which moves every
-  form and is a phase of its own.
+- **The hillside network is better but not whole (walked 2026-08-07).** Kai:
+  "the disconnection isn't really fixed". Measured remainder: 15/9 components
+  (was 54/53); the five causeways from the lowest street are load-bearing for
+  two seams (`offPlatform` errors on removal — SITE-PLAN §3.6's next lever);
+  `entranceConnected` is a largest-component tiebreak that should be
+  entrance-reachable share; steep-fixture entrance still false. Plus "a fair
+  bit of moderate issues, mostly aesthetic" — iterate with the audit, walk by
+  walk.
+- **`largestFreeRect` discards roughly 45% of block ground** — still the
+  ceiling for every form *except* `hillside`, whose frontage-walked lots
+  recover 62% (measured WP-0). The polygon lot cutter remains the general fix;
+  `hillside`'s frontage walk is the template.
+- **A building on extreme slope can fail `traversal.no_start`** — the steep
+  fixture's summit chapel was dropped for it (WP-1, 2026-08-06): on a 1:2.5
+  cone its doorstep fails under every `terrain_conform`. A seating/doorstep
+  defect for lone buildings far from a district.
+- **Cropped street furniture** — a prop clipped to the sidewalk band leaves
+  wall-block fragments when its standing columns are disjoint (bollard row,
+  bicycle rack). Fix designed + tested (place whole or not at all) but it
+  moves flat worlds everywhere; awaiting Kai's explicit go.
+- **The downtown kerbside kit reaches hill villages** via `sidewalk >= 2`
+  alone — context-blind kit selection; gate on era/character like the modern
+  fittings (era gate shipped 2026-08-07).
 - **A terraced quarter generates 11 "public squares".** Found while fixing prop
   density (2026-08-06) and deliberately not fixed there: gating plaza props
   would have moved a flat control world. The defect is that the fabric layer
@@ -730,21 +812,6 @@ repair* is locked to manual.
   broken town rather than an edge. The solver has no boundary margin for a
   fabric-bearing node; a district wants at least a block of clearance, and
   arguably a whole `blockSize`.
-- **Street surfacing has no column ownership, and on stepped ground it shows.**
-  `surfaceStreetGraph` dresses each segment in turn, so where two segments
-  share a column — a stair landing on a contour street, any junction on a
-  slope — whichever is reached last wins, over ground the other has already
-  cut or filled. Walked on a terraced quarter (2026-08-04) it reads as
-  pavement at conflicting levels, blocks left proud of their neighbours, and
-  grass punching up through a street. It is also why `terraced` cannot build
-  the `STAIR_PROFILE` balustrade: a rail placed on a tread is left floating
-  when another segment later lowers the column under it. The fix is a
-  surfacing order with a declared owner per column, or a dressing pass that
-  runs after every segment is laid — a change to the surfacer's shape, not to
-  any one caller. Specified in `docs/COURTYARDS-AND-LEVELS-v0.md` §2: claim →
-  level → dress → furnish, with a total rank order over segments, profiles
-  graded against a frozen snapshot with junctions pinned, and everything that
-  stands above a column emitted only after every column is written.
 - District placement scoring appears to prefer flat ground over an explicit
   `zone` constraint (seen while building the wall exhibit; not chased).
 - Hard `adjacent_to` / `terrain_conform` constraints on ordinary cottages are
