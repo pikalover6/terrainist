@@ -36,6 +36,7 @@ import type { OccupancyGrid } from "../layout/types.js";
 import type {
   GroundClaim,
   GroundIntent,
+  GroundIntentKind,
   GroundSourceClass,
   GroundTransitionKind,
 } from "../layout/ground-contract.js";
@@ -121,27 +122,53 @@ export interface SweepInput {
   /** Node path the diagnostics hang off. */
   readonly nodePath?: string;
   /**
-   * **Declaration mode** (`docs/GROUND-CONTRACT-v0.md` §3.13).
+   * **Declaration mode** (`docs/GROUND-CONTRACT-v0.md` §3.13, §9).
    *
-   * Present means: compute exactly what this sweep would build, write **nothing**
-   * to the plan (and nothing to `avoid`), and hand the run back as a
-   * {@link SweepResult.intent}. Absent means the mutating path, byte for byte as
-   * it has always been — every write below is inside `if (declareOnly ===
-   * undefined)`, so there is no path the flag's absence can change.
+   * Present means: compute the run's levels exactly as always, hand them to
+   * {@link SweepDeclaration.commit} as a `GroundIntent` **before one byte of
+   * plan is written**, and then lay the run's materials against the ground the
+   * commit left — `plan.ground`, which is the resolver's answer over the whole
+   * accumulated prefix (§9a.1 rule 2). Where the resolver agrees with the sweep,
+   * which is every column nothing outranks the run on, the two are the same
+   * number and the painting is byte-for-byte what it always was; where they
+   * disagree the resolved level wins and the surface, the fill and the cap
+   * follow it, because a course painted at a level the resolver refused is a
+   * course hanging in the air.
+   *
+   * Absent means the mutating path, byte for byte as it has always been: the
+   * sweep writes `ground`, `fluidTop` and `snow` itself. That is what every
+   * caller outside the world pipeline does — the terrarium, the exhibits, the
+   * unit tests that sweep a profile on a bare plan.
    *
    * The class is *supplied by the caller* rather than chosen here, because the
    * engine is an engine: a retaining wall swept by it declares `retaining.seam`,
    * a street `street.network`, an authored profile `sweep.run`. One optional
-   * field rather than a `declareOnly: boolean` plus a second class field, so the
-   * two can never disagree — presence of the class *is* the mode.
+   * field rather than a boolean plus a second class field, so the two can never
+   * disagree — presence of the class *is* the mode.
    */
-  readonly declareOnly?: {
-    readonly sourceClass: GroundSourceClass;
-    /** Defaults to `nodePath ?? profile.id`. */
-    readonly source?: string;
-    /** Defaults to `"ramp"`; a wall course wants `"wall"`. */
-    readonly transition?: GroundTransitionKind;
-  };
+  readonly declare?: SweepDeclaration;
+}
+
+/** How a swept run reaches the ground contract (§3.13). */
+export interface SweepDeclaration {
+  readonly sourceClass: GroundSourceClass;
+  /** Defaults to `"profile"`; a wall course is a `"face"` (§2.2). */
+  readonly kind?: GroundIntentKind;
+  /** Defaults to `nodePath ?? profile.id`. */
+  readonly source?: string;
+  /** Defaults to `"ramp"`; a wall course wants `"wall"`. */
+  readonly transition?: GroundTransitionKind;
+  /**
+   * Hands the run's intent to the caller, once, between the level phase and the
+   * material phase.
+   *
+   * The caller is what holds the driver, and it is the caller — not the engine —
+   * that knows which companion intents its class needs: a retaining wall's
+   * course is a `face` **and** a `preserve` over the same columns, and the two
+   * belong in one `commit` so the resolver sees them together. The engine's job
+   * is to say what it would build and then build what the driver decided.
+   */
+  readonly commit: (intent: GroundIntent) => void;
 }
 
 export interface SweepFeaturePlacement {
@@ -162,8 +189,8 @@ export interface SweepResult {
   readonly features: readonly SweepFeaturePlacement[];
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * Set only under {@link SweepInput.declareOnly}: the intent this run would
-   * have written. `columns` names every column the sweep would have *levelled*
+   * Set only under {@link SweepInput.declare}: the intent this run declared, as
+   * it was handed to `commit`. `columns` names every column the sweep *levelled*
    * — not the spanned ones, which it deliberately leaves alone (§2.4's bridged
    * column) and which appear in {@link claimed} without a level.
    */
@@ -1060,18 +1087,18 @@ const SWEEP_MAX_FILL = 12;
  */
 export function sweep(input: SweepInput): SweepResult {
   const { profile, plan, palette, stack } = input;
-  const declareOnly = input.declareOnly;
+  const declaration = input.declare;
   /** Declaration mode's answer, built beside the writes it replaces. */
   const declared: GroundClaim[] = [];
   const asIntent = (): GroundIntent | undefined =>
-    declareOnly === undefined
+    declaration === undefined
       ? undefined
       : {
-          source: declareOnly.source ?? input.nodePath ?? profile.id,
-          sourceClass: declareOnly.sourceClass,
-          kind: "profile",
+          source: declaration.source ?? input.nodePath ?? profile.id,
+          sourceClass: declaration.sourceClass,
+          kind: declaration.kind ?? "profile",
           columns: declared,
-          transition: declareOnly.transition ?? "ramp",
+          transition: declaration.transition ?? "ramp",
         };
   const region = plan.region;
   const nodePath = input.nodePath ?? profile.id;
@@ -1089,7 +1116,7 @@ export function sweep(input: SweepInput): SweepResult {
       datum: new Int32Array(0),
       features,
       diagnostics,
-      ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+      ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
     };
   }
 
@@ -1140,7 +1167,7 @@ export function sweep(input: SweepInput): SweepResult {
         datum: Int32Array.from(level),
         features,
         diagnostics,
-        ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+        ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
       };
     }
     for (const [i, v] of treads.levels.entries()) level[i] = v;
@@ -1182,7 +1209,14 @@ export function sweep(input: SweepInput): SweepResult {
     return stack.blockByName(symbol.replace(/^minecraft:/, ""))?.stateId ?? 0;
   };
 
+  // --- the level phase: which columns this run levels, and to what ---------
+  // Split from the material phase below by the ground contract (§9 step 2): the
+  // levels have to be a *claim* the driver can arbitrate before anything is
+  // painted at one. Without a declaration the two phases run back to back over
+  // the same list in the same order, which is byte-for-byte the single loop
+  // this was.
   let skipped = 0;
+  const run: { readonly col: SweptColumn; readonly band: ProfileBand; readonly top: number }[] = [];
   for (const col of columns) {
     const band = profile.bands[bandOfLane(profile, col.lane)] as ProfileBand;
     // **Arc, not raster index.** Every column of one cross-section shares an arc,
@@ -1200,25 +1234,35 @@ export function sweep(input: SweepInput): SweepResult {
       continue;
     }
     const top = (level[i] as number) + (band.level ?? 0);
-    if (declareOnly !== undefined) {
-      // Declaration mode: the level, and not one byte of plan, mask or block.
-      declared.push({ idx: col.idx, y: top });
-      claimed[col.idx] = 1;
-      continue;
+    declared.push({ idx: col.idx, y: top });
+    run.push({ col, band, top });
+    claimed[col.idx] = 1;
+    if (input.avoid !== undefined) input.avoid.mask[col.idx] = 1;
+  }
+
+  // The commit, between the two phases: the driver resolves the whole prefix and
+  // writes its answer over this run's columns (§9a.1 rule 2), including the snow
+  // clear the material loop below no longer carries.
+  if (declaration !== undefined) declaration.commit(asIntent() as GroundIntent);
+
+  // --- the material phase --------------------------------------------------
+  for (const { col, band, top } of run) {
+    // Declared: the level is the driver's, and the paint follows it. Undeclared:
+    // the sweep is still the writer, and writes what it computed.
+    const built = declaration === undefined ? top : (plan.ground[col.idx] as number);
+    if (declaration === undefined) {
+      plan.ground[col.idx] = top;
+      plan.fluidTop[col.idx] = top;
+      plan.snow[col.idx] = 0;
     }
-    plan.ground[col.idx] = top;
-    plan.fluidTop[col.idx] = top;
-    plan.snow[col.idx] = 0;
     plan.surface[col.idx] = stateOf(band.surface, col.x, col.z);
     plan.subsurface[col.idx] = stateOf(band.fill ?? band.surface, col.x, col.z);
     if (plan.soil[col.idx] === 0) plan.soil[col.idx] = 1;
-    claimed[col.idx] = 1;
-    if (input.avoid !== undefined) input.avoid.mask[col.idx] = 1;
 
     if (band.cap !== undefined) {
       const state = stateOf(band.cap.block, col.x, col.z);
       for (let h = 1; h <= band.cap.height; h++) {
-        blocks.push({ x: col.x, y: top + h, z: col.z, stateId: state });
+        blocks.push({ x: col.x, y: built + h, z: col.z, stateId: state });
         if (band.cap.rail === true) break;
       }
     }
@@ -1259,6 +1303,6 @@ export function sweep(input: SweepInput): SweepResult {
     datum: Int32Array.from(level),
     features,
     diagnostics,
-    ...(declareOnly === undefined ? {} : { intent: asIntent() as GroundIntent }),
+    ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
   };
 }

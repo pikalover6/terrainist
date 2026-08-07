@@ -54,9 +54,10 @@ import type { FormChannel } from "../layout/forms/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 
 import { CANAL_DEPTH, canalProfile } from "./profiles.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { index, inside } from "./roads.js";
 import { bandOfLane, profileSpan, sweptColumns, thickenCourse } from "./sweep.js";
 
@@ -79,8 +80,22 @@ export interface CanalDistrict {
 /** Everything {@link digCanals} reads. */
 export interface CanalPassInput {
   readonly districts: readonly CanalDistrict[];
-  /** Mutated exactly as the road pass mutates it. */
+  /** Mutated exactly as the road pass mutates it — materials only. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * Every level and every drop of water this pass decides goes through
+   * `commit`. Omitted only by callers that are not the pipeline — the unit tests
+   * that dig a channel on a bare plan — which then get a driver of their own
+   * over the plan as it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
+  /**
+   * The document root's node path — the prefix of the pass's two claim sources
+   * (§9 step 3). Defaults to `"world"`, which is what a bare-plan unit test has.
+   */
+  readonly nodePath?: string;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
 }
@@ -95,14 +110,9 @@ export interface CanalPassResult {
   readonly channelMask: Uint8Array;
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * What this pass would declare under the ground contract
-   * (`docs/GROUND-CONTRACT-v0.md` §3.5b), recorded as it writes.
-   *
-   * A **return value only** — WP-2's shadow declarers turn it into
-   * `GroundIntent`s (`structures/ground-declare.ts`) and nothing here reads it,
-   * so the pass's behaviour is unmoved. It is recorded rather than recomputed
-   * because the levels are only in hand while the pass is running: by the time
-   * a declarer could look, five later passes have written the same columns.
+   * What this pass declared under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.5b): the intents it handed to the driver,
+   * kept as a return value for the report and the tests.
    */
   readonly declaration: CanalDeclaration;
 }
@@ -146,6 +156,7 @@ function resolveStates(palette: Palette, stack: PrismarineStack): CanalStates {
  */
 export function digCanals(input: CanalPassInput): CanalPassResult {
   const { plan, districts } = input;
+  const nodePath = input.nodePath ?? "world";
   const region = plan.region;
   const cells = region.width * region.depth;
   const channelMask = new Uint8Array(cells);
@@ -165,6 +176,7 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
 
   const states = resolveStates(input.palette, input.stack);
   const diagnostics: LoamDiagnostic[] = [];
+  const driver = input.ground ?? driverForPlan(plan);
 
   /** Water surface per channel column. */
   const surfaceOf = new Int32Array(cells);
@@ -288,21 +300,73 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
 
   let water = 0;
   let banks = 0;
-  // §3.5b, recorded as the pass writes. Never read here.
+  // --- the claim: §3.5b's two intents, in region-major column order ---------
   const declaredChannel: GroundClaim[] = [];
   const declaredBanks: GroundClaim[] = [];
+  /** 1 where a bank was already standing at its own quay, read before the commit. */
+  const standing = new Uint8Array(cells);
   for (let k = 0; k < cells; k++) {
     if (channelMask[k] === 1) {
-      const surface = surfaceOf[k] as number;
-      const floor = floorOf[k] as number;
-      declaredChannel.push({ idx: k, y: floor, fluid: { kind: FluidKind.WATER, top: surface } });
-      plan.ground[k] = floor;
-      plan.fluidTop[k] = surface;
-      plan.fluidKind[k] = FluidKind.WATER;
+      declaredChannel.push({
+        idx: k,
+        y: floorOf[k] as number,
+        fluid: { kind: FluidKind.WATER, top: surfaceOf[k] as number },
+      });
+      continue;
+    }
+    if (coping[k] !== 1 && quay[k] !== 1) continue;
+    const level = quayOf[k] as number;
+    // Declared whether or not the bank is already there: an agreeing claim is
+    // not a conflict (§5.3), and the "already at the quay" skip below is a
+    // material decision, not a level one — so it is measured **before** the
+    // commit, at the instant the old code measured it.
+    declaredBanks.push({ idx: k, y: level });
+    if ((plan.ground[k] as number) === level && plan.fluidKind[k] === FluidKind.NONE) {
+      standing[k] = 1;
+    }
+  }
+
+  // §3.5b — one intent per pass, not per quarter: the pass claims every channel
+  // column of every quarter before writing one, so the arbitration between two
+  // canals a block apart has already happened. `fluid.channel` is rank 0 because
+  // losing a water claim is a physics failure, and the `preserve` is what keeps
+  // a later pass from raising a column out of the channel it holds.
+  const intents: GroundIntent[] = [];
+  if (declaredChannel.length > 0) {
+    intents.push(
+      {
+        source: `${nodePath}#channel`,
+        sourceClass: "fluid.channel",
+        kind: "platform",
+        columns: declaredChannel,
+        transition: "wall",
+      },
+      {
+        source: `${nodePath}#channel`,
+        sourceClass: "fluid.channel",
+        kind: "preserve",
+        columns: declaredChannel,
+        transition: "none",
+      },
+    );
+  }
+  if (declaredBanks.length > 0) {
+    intents.push({
+      source: `${nodePath}#quay`,
+      sourceClass: "fluid.channel",
+      kind: "platform",
+      columns: declaredBanks,
+      transition: "step",
+    });
+  }
+  if (intents.length > 0) driver.commit(intents);
+
+  // --- §9 step 2's second loop: the bed, the coping and the quay -----------
+  for (let k = 0; k < cells; k++) {
+    if (channelMask[k] === 1) {
       plan.surface[k] = states.bed;
       plan.subsurface[k] = states.subsurface;
       plan.soil[k] = 0;
-      plan.snow[k] = 0;
       // Deliberately **not** a lake and **not** the ocean. Those two masks are
       // what the biome painter and the land-use clamp read to decide that a
       // column is a body of water in the landscape; a dug urban channel is a
@@ -314,25 +378,16 @@ export function digCanals(input: CanalPassInput): CanalPassResult {
       continue;
     }
     if (coping[k] !== 1 && quay[k] !== 1) continue;
-    const level = quayOf[k] as number;
-    // Declared whether or not the bank is already there: an agreeing claim is
-    // not a conflict (§5.3), and the "already at the quay" skip below is a
-    // material decision, not a level one.
-    declaredBanks.push({ idx: k, y: level });
     // A bank already at the quay is left entirely alone: its surface is the
     // district's, and repainting every quay column would overwrite the sidewalk
     // the streetscape is about to lay.
-    if ((plan.ground[k] as number) === level && plan.fluidKind[k] === FluidKind.NONE) {
+    if (standing[k] === 1) {
       if (coping[k] === 1) plan.surface[k] = states.coping;
       banks++;
       continue;
     }
-    plan.ground[k] = level;
-    plan.fluidTop[k] = level;
-    plan.fluidKind[k] = FluidKind.NONE;
     plan.surface[k] = coping[k] === 1 ? states.coping : states.quay;
     plan.subsurface[k] = states.subsurface;
-    plan.snow[k] = 0;
     plan.lakeMask[k] = 0;
     plan.oceanMask[k] = 0;
     banks++;

@@ -53,6 +53,7 @@ import {
   type StructureYaw,
 } from "@terrainist/stdlib";
 import { error, warning, type LoamDiagnostic, type PortDeclaration } from "@terrainist/spec";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
@@ -249,8 +250,17 @@ export interface PrecinctDeclaration {
 /** Everything {@link buildPrecincts} reads. */
 export interface PrecinctPassInput {
   readonly jobs: readonly PrecinctJob[];
-  /** Mutated: ground works are a change to the ground, not a thing upon it. */
+  /** Mutated: the ground works' paving, and the masks under it. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * Every plane a precinct grades goes through `commit` as a `precinct.ground`
+   * platform. Omitted only by callers that are not the pipeline — the unit tests
+   * that lay a harbour on a bare plan — which then get a driver of their own
+   * over the plan as it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
   readonly stack: PrismarineStack;
   readonly occupancy?: OccupancyGrid;
 }
@@ -403,23 +413,24 @@ function resolveStates(stack: PrismarineStack): PrecinctStates {
 }
 
 /**
- * Bring one column to a plane, cutting or filling, and surface it.
+ * Surface one column of precinct ground works.
  *
  * The plan is the record of record: the emitter lays terrain from `ground` and
  * `surface`, the scatter reads `ground`, and the fluid validator reads
- * `fluidTop`. Writing all three is what makes an apron a change to the ground
- * rather than a slab lying on it — and cutting is safe here because the
- * structure pass runs *before* the scatter, so nothing is standing on the
- * blocks a cut removes.
+ * `fluidTop`. Bringing the column to the plane is what makes an apron a change
+ * to the ground rather than a slab lying on it — and cutting is safe because the
+ * structure pass runs *before* the scatter, so nothing is standing on the blocks
+ * a cut removes.
+ *
+ * **Converted at WP-5** (`docs/GROUND-CONTRACT-v0.md` §3.1b): the plane itself is
+ * a `precinct.ground` claim its caller collects and `buildPrecincts` commits, so
+ * what is left here is §3.1c's material — the paving, the stone under it, the
+ * cleared soil and the two mask clears.
  */
-function surfaceColumn(plan: ColumnPlan, idx: number, top: number, state: number, states: PrecinctStates): void {
-  plan.ground[idx] = top;
+function surfaceColumn(plan: ColumnPlan, idx: number, state: number, states: PrecinctStates): void {
   plan.surface[idx] = state;
   plan.subsurface[idx] = states.stone;
   plan.soil[idx] = 0;
-  plan.snow[idx] = 0;
-  plan.fluidKind[idx] = FluidKind.NONE;
-  plan.fluidTop[idx] = top;
   plan.lakeMask[idx] = 0;
   plan.oceanMask[idx] = 0;
 }
@@ -464,6 +475,11 @@ function claim(occupancy: OccupancyGrid | undefined, rect: Rect, tag: string): v
 
 /** Lay out every precinct, in document order. */
 export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
+  // §9a.4's view and §9a.1's accumulator. The pipeline threads one driver
+  // through every pass; a caller that is not the pipeline — the unit tests that
+  // lay a harbour on a bare plan — gets one of its own over the plan as it
+  // stands, which for the first pass in the pipeline is the same answer.
+  const driver = input.ground ?? driverForPlan(input.plan);
   const blocks: StructureBlock[] = [];
   const buildings: PrecinctBuildingSpec[] = [];
   const props: PrecinctPropSpec[] = [];
@@ -496,7 +512,26 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     ports.push(...out.ports);
     anchorPaths.push(job.nodePath);
     if (out.relocation !== undefined) relocations.set(job.nodePath, out.relocation);
-    if (out.claims.length > 0) declarations.push({ nodePath: job.nodePath, columns: out.claims });
+    if (out.claims.length > 0) {
+      declarations.push({ nodePath: job.nodePath, columns: out.claims });
+      // §3.1b — one `platform` per precinct kit, at the level it graded its
+      // apron, taxiway, quay and forecourt to, committed as soon as the kit is
+      // laid out so the next precinct measures the ground this one left.
+      // `transition: "ramp"`: the forecourt walks out to its own ground rather
+      // than ending at a cut face. A quay declares its own dry columns and
+      // declares nothing at all for the water it fronts — that water is the
+      // terrain's, which is exactly why `padFor` returns `null` for
+      // `precinct.harbour@0`.
+      driver.commit([
+        {
+          source: job.nodePath,
+          sourceClass: "precinct.ground",
+          kind: "platform",
+          columns: out.claims,
+          transition: "ramp",
+        },
+      ]);
+    }
     if (job.generator === "precinct.airport@0") airports++;
     else harbours++;
     stands += out.counts.stands;
@@ -705,19 +740,16 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
         // A dashed centreline down the taxiway, so it reads as a taxiway rather
         // than as a grey rectangle.
         const centre = v === taxiV0 + (b.taxiway >> 1);
-        surfaceColumn(plan, idx, groundY, centre && u % 5 < 3 ? states.marking : states.taxiway, states);
+        surfaceColumn(plan, idx, centre && u % 5 < 3 ? states.marking : states.taxiway, states);
         claims.push({ idx, y: groundY });
         surfaced++;
       } else if (onApron) {
-        surfaceColumn(plan, idx, groundY, states.apron, states);
+        surfaceColumn(plan, idx, states.apron, states);
         claims.push({ idx, y: groundY });
         surfaced++;
       } else if (plan.fluidKind[idx] === FluidKind.NONE) {
         // Grass, but level: the runway strip and the forecourt are graded
-        // ground, not paving.
-        plan.ground[idx] = groundY;
-        plan.fluidTop[idx] = groundY;
-        plan.snow[idx] = 0;
+        // ground, not paving — so it claims a level and paints nothing.
         claims.push({ idx, y: groundY });
       }
     }
@@ -962,7 +994,7 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
       const c = at(f, u, v);
       const idx = indexOf(plan, c.x, c.z);
       if (idx === undefined) continue;
-      surfaceColumn(plan, idx, quayTop, back === 0 ? states.quayEdge : states.quay, states);
+      surfaceColumn(plan, idx, back === 0 ? states.quayEdge : states.quay, states);
       claims.push({ idx, y: quayTop });
       surfaced++;
     }

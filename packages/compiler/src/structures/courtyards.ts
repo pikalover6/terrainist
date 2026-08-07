@@ -51,7 +51,8 @@ import type { Rect } from "../layout/frames.js";
 import { PASSAGE_HEAD, type CourtyardBlock, type CourtyardPassage } from "../layout/courtyards.js";
 import type { DistrictProduct } from "../layout/district.js";
 import type { OccupancyGrid } from "../layout/types.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { hash2, hashInt } from "../terrain/detail.js";
 import type { Palette } from "../terrain/palette.js";
@@ -74,6 +75,15 @@ export interface CourtyardPassInput {
   readonly districts: readonly DistrictProduct[];
   /** Mutated: the courtyard floor and the passage floor are ground, not blocks. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * The pend's floor and the well's dig go through `commit`; the interiors
+   * declare nothing, because they are materials. Omitted only by callers that
+   * are not the pipeline, which then get a driver of their own over the plan as
+   * it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /**
@@ -107,14 +117,12 @@ export interface CourtyardPassResult {
   readonly courtyards: readonly FurnishedCourtyard[];
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * What this pass would declare under the ground contract
-   * (`docs/GROUND-CONTRACT-v0.md` §3.4b).
-   *
-   * A **return value only**, read by WP-2's shadow declarers
-   * (`structures/ground-declare.ts`). A passage is declared whether or not it
-   * was roofed: that is the point of §3.4b — `roofPassage`'s "not one plane"
-   * refusal is silent today, and declaring turns it into either a level pend or
-   * a named conflict.
+   * What this pass declared under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.4b): the intents it handed to the driver,
+   * kept as a return value for the report and the tests. A passage is declared
+   * whether or not it was roofed — that is the point of §3.4b: `roofPassage`'s
+   * "not one plane" refusal was silent, and declaring turns it into either a
+   * level pend or a named conflict.
    */
   readonly declaration: CourtyardDeclaration;
 }
@@ -227,6 +235,8 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
   }
 
   const states = resolveStates(input.palette, input.stack);
+  const driver = input.ground ?? driverForPlan(input.plan);
+  const view = driver.view();
   const { region } = input.plan;
   const idx = (x: number, z: number): number => (z - region.z0) * region.width + (x - region.x0);
   const inside = (x: number, z: number): boolean =>
@@ -266,7 +276,10 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
       const paved = paveCore(input, states, court.core, idx, inside);
       switch (treatment) {
         case "well": {
-          const dug = buildWell(input, states, court.core, blocks, idx, inside);
+          // §3.4b: the well is §3.2b's, column for column — `plaza.well` plus a
+          // `preserve` over the eight columns its stability proof stands on.
+          const source = `${district.nodePath}#courtyard-well@${declaredWells.length}`;
+          const dug = buildWell(input, states, court.core, blocks, idx, inside, driver, source, view);
           if (dug !== undefined) declaredWells.push({ nodePath: district.nodePath, ...dug });
           break;
         }
@@ -288,12 +301,22 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
       for (const [i, passage] of court.passages.entries()) {
         // §3.4b, read before the pend is paved (paving writes no level, so the
         // two are the same number; reading first says which one is meant).
-        const columns = passageClaims(input.plan, passage.rect, idx, inside);
+        const columns = passageClaims(view, passage.rect, idx, inside);
         if (columns.length > 0) {
-          declaredPassages.push({
-            nodePath: `${district.nodePath}#courtyard@${court.core.x0},${court.core.z0}/pend@${i}`,
-            columns,
-          });
+          const nodePath = `${district.nodePath}#courtyard@${court.core.x0},${court.core.z0}/pend@${i}`;
+          declaredPassages.push({ nodePath, columns });
+          // §3.4b — the pend as one plane, at its own median level. Declaring it
+          // is what turns `roofPassage`'s silent "not one plane" refusal into
+          // either a level pend or a named conflict.
+          driver.commit([
+            {
+              source: nodePath,
+              sourceClass: "courtyard.floor",
+              kind: "platform",
+              columns,
+              transition: "step",
+            },
+          ]);
         }
         pavePassage(input, states, passage.rect, idx, inside);
         if (roofPassage(input, states, passage, readback, blocks, idx, inside)) roofed++;
@@ -330,7 +353,7 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
  * moves nothing, which is what keeps WP-2 a shadow.
  */
 function passageClaims(
-  plan: ColumnPlan,
+  view: GroundView,
   rect: Rect,
   idx: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
@@ -341,9 +364,9 @@ function passageClaims(
     for (let x = rect.x0; x <= rect.x1; x++) {
       if (!inside(x, z)) continue;
       const k = idx(x, z);
-      if (plan.fluidKind[k] !== FluidKind.NONE) continue;
+      if (view.fluidKind[k] !== FluidKind.NONE) continue;
       cells.push(k);
-      levels.push(plan.ground[k] as number);
+      levels.push(view.ground[k] as number);
     }
   }
   if (cells.length === 0) return [];
@@ -627,8 +650,10 @@ function levelCentre(
   core: Rect,
   idx: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
+  /** §9a.4's read, for the treatments that need the level before it is claimed. */
+  view?: GroundView,
 ): { cx: number; cz: number; y: number } | null {
-  const { plan } = input;
+  const ground = view ?? input.plan;
   const cx = Math.floor((core.x0 + core.x1) / 2);
   const cz = Math.floor((core.z0 + core.z1) / 2);
   let level: number | null = null;
@@ -636,8 +661,8 @@ function levelCentre(
     for (let x = cx - 1; x <= cx + 1; x++) {
       if (!inside(x, z)) return null;
       const k = idx(x, z);
-      if (plan.fluidKind[k] !== FluidKind.NONE) return null;
-      const y = plan.ground[k] as number;
+      if (ground.fluidKind[k] !== FluidKind.NONE) return null;
+      const y = ground.ground[k] as number;
       if (level === null) level = y;
       else if (y !== level) return null;
     }
@@ -661,28 +686,37 @@ function buildWell(
   blocks: StructureBlock[],
   idx: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
+  driver: GroundDriver,
+  source: string,
+  view: GroundView,
 ): { readonly centre: GroundClaim; readonly perimeter: readonly GroundClaim[] } | undefined {
-  const centre = levelCentre(input, core, idx, inside);
+  const centre = levelCentre(input, core, idx, inside, view);
   if (centre === null) return undefined;
   const { plan } = input;
   const { cx, cz, y } = centre;
 
   const middle = idx(cx, cz);
-  plan.ground[middle] = y - 1;
-  plan.surface[middle] = states.worn;
-  plan.fluidKind[middle] = FluidKind.WATER;
-  plan.fluidTop[middle] = y;
-  plan.snow[middle] = 0;
-
   /** §3.2b's `preserve`, verbatim: the eight columns the proof stands on. */
   const perimeter: GroundClaim[] = [];
+  for (let z = cz - 1; z <= cz + 1; z++) {
+    for (let x = cx - 1; x <= cx + 1; x++) {
+      if (x === cx && z === cz) continue;
+      perimeter.push({ idx: idx(x, z), y });
+    }
+  }
+  const dug: GroundClaim = { idx: middle, y: y - 1, fluid: { kind: FluidKind.WATER, top: y } };
+  driver.commit([
+    { source, sourceClass: "plaza.well", kind: "platform", columns: [dug], transition: "step" },
+    { source, sourceClass: "plaza.well", kind: "preserve", columns: perimeter, transition: "none" },
+  ]);
+  plan.surface[middle] = states.worn;
+
   for (let z = cz - 1; z <= cz + 1; z++) {
     for (let x = cx - 1; x <= cx + 1; x++) {
       if (x === cx && z === cz) continue;
       const corner = x !== cx && z !== cz;
       blocks.push({ x, y: y + 1, z, stateId: corner ? states.wallState : states.wall });
       plan.surface[idx(x, z)] = states.kerb;
-      perimeter.push({ idx: idx(x, z), y });
     }
   }
   for (const [dx, dz] of [
@@ -694,10 +728,7 @@ function buildWell(
     blocks.push({ x: cx + dx, y: y + 4, z: cz + dz, stateId: states.lantern });
   }
 
-  return {
-    centre: { idx: middle, y: y - 1, fluid: { kind: FluidKind.WATER, top: y } },
-    perimeter,
-  };
+  return { centre: dug, perimeter };
 }
 
 /** One canopy tree, a ring of packed earth, and a bench facing it. */

@@ -29,6 +29,7 @@
 import type { ResolvedPort } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -43,8 +44,17 @@ export const DOORSTEP_REACH = 6;
 export interface DoorstepInput {
   readonly buildings: readonly BuiltBuilding[];
   readonly ports: readonly ResolvedPort[];
-  /** Mutated: the ground under a dropped or underpinned doorstep column. */
+  /** Mutated: the surface and soil of a landing, and nothing else. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * Every landing this pass cuts goes through `commit`; nothing here writes
+   * `plan.ground`. Omitted only by callers that are not the pipeline — the unit
+   * tests that step a door on a bare plan — which then get a driver of their own
+   * over the plan as it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
 }
@@ -65,13 +75,12 @@ export interface DoorstepResult {
    */
   readonly touched: Uint8Array;
   /**
-   * What this pass would declare under the ground contract
+   * What this pass declared under the ground contract
    * (`docs/GROUND-CONTRACT-v0.md` §3.11b): one entry per door whose approach was
-   * **cut**, naming only the `dropped` columns and their targets.
-   *
-   * A **return value only**, read by WP-2's shadow declarers
-   * (`structures/ground-declare.ts`). The `stepped` outcome contributes nothing:
-   * it is block placement above a ground it does not move.
+   * **cut**, naming only the `dropped` columns and their targets — the intents
+   * it handed to the driver, kept as a return value for the report and the
+   * tests. The `stepped` outcome contributes nothing: it is block placement
+   * above a ground it does not move.
    */
   readonly declarations: readonly DoorstepDeclaration[];
 }
@@ -95,6 +104,11 @@ const FACINGS: readonly (readonly [number, number, string])[] = Object.freeze([
 export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   const { plan, palette, stack } = input;
   const { region } = plan;
+  // §9a.4: the one legal read. During the mixture the view is the plan at this
+  // pass's own position — which, this pass running last, is every other pass's
+  // finished work — so a door still measures the ground it actually meets.
+  const driver = input.ground ?? driverForPlan(plan);
+  const view = driver.view();
   const blocks: StructureBlock[] = [];
   let stepped = 0;
   let dropped = 0;
@@ -149,7 +163,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       const idx = index(region, x, z);
       if (plan.fluidKind[idx] !== FluidKind.NONE) break;
       touched[idx] = 1;
-      const g = plan.ground[idx] as number;
+      const g = view.ground[idx] as number;
 
       if (g >= y) {
         // The ground is at or above this step's line. If a flight is already
@@ -159,12 +173,10 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
         if (outcome === "stepped" || g === y) break;
         const target = floorY + (k - 1);
         if (g <= target) break;
+        // §9 step 2: the level goes to the driver, below, once this door's whole
+        // approach is decided. What is left here is material, and it is laid on
+        // the claimed columns whether or not the rank let the landing have them.
         cuts.push({ idx, y: target });
-        plan.ground[idx] = target;
-        plan.fluidTop[idx] = target;
-        plan.surface[idx] = stepState;
-        plan.snow[idx] = 0;
-        if (plan.soil[idx] === 0) plan.soil[idx] = 1;
         outcome = "dropped";
         continue;
       }
@@ -186,7 +198,29 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     if (outcome === "stepped") stepped++;
     else if (outcome === "dropped") dropped++;
     else flush++;
-    if (cuts.length > 0) declarations.push({ source: `${port.nodePath}#doorstep@${port.ref}`, columns: cuts });
+    if (cuts.length > 0) {
+      // §3.11b — one `doorstep.landing` platform per cut approach, committed as
+      // soon as this door's walk is finished so the next door reads the answer
+      // rather than the request. That is inversion I3: a landing cut into a
+      // column a street owns is a trench in the pavement at a threshold, and the
+      // street keeps it; the door meets a flush threshold instead.
+      const source = `${port.nodePath}#doorstep@${port.ref}`;
+      declarations.push({ source, columns: cuts });
+      driver.commit([
+        {
+          source,
+          sourceClass: "doorstep.landing",
+          kind: "platform",
+          columns: cuts,
+          transition: "step",
+        },
+      ]);
+      // §9 step 2's second loop.
+      for (const cut of cuts) {
+        plan.surface[cut.idx] = stepState;
+        if (plan.soil[cut.idx] === 0) plan.soil[cut.idx] = 1;
+      }
+    }
   }
 
   return { blocks, stepped, dropped, flush, touched, declarations };

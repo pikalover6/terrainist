@@ -56,15 +56,6 @@ import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
 import { dressStreets, type SegmentArc } from "./streetscape.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
-import {
-  declareCanals,
-  declareCourtyards,
-  declareDoorsteps,
-  declarePlaza,
-  declarePrecincts,
-  declareProps,
-  declareRetaining,
-} from "./ground-declare.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -154,11 +145,14 @@ export interface StructurePassInput {
    * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
    *
    * **The one accumulator for the whole compile.** Every pass contributes at its
-   * own pipeline position, converted or not (§9a.1, rule 1): a converted pass
-   * calls `commit` instead of writing, and an unconverted one writes exactly as
-   * it always has with its shadow declarer called immediately afterwards, into
-   * `record`. That is why there is no `declareAll` any more — §3's inventory is
-   * the list of call sites below.
+   * own pipeline position (§9a.1, rule 1), and with WP-3, WP-4 and WP-5 landed
+   * every one of the eleven contributes by **committing**: it hands the driver
+   * the levels it wants, the driver resolves the whole accumulated prefix and
+   * writes the answer back over that pass's own columns, and the pass then lays
+   * its materials against the answer. There are no shadow declarers left to
+   * `record` — the last `record` in the compile is the layout solver's pads
+   * (§3.12), which happens before this pass runs. That is why there is no
+   * `declareAll` any more: §3's inventory is the list of call sites below.
    *
    * Required: `terrain/compile.ts` builds it beside the baseline snapshot, and
    * the baseline is no longer optional on the settlement path.
@@ -399,12 +393,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       : buildPrecincts({
           jobs: precinctJobs,
           plan: input.plan,
+          ground: input.ground,
           stack: input.stack,
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
-  // §9a.1 rule 1: an unconverted pass's shadow declaration, at its own position.
-  input.ground.record(declarePrecincts(precincts));
 
   /**
    * The placements every pass after this one reads.
@@ -642,6 +635,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       nodePath: plazaNode.nodePath,
       placement: plazaPlacement,
       plan: input.plan,
+      ground: input.ground,
       palette: input.palette,
       stack: input.stack,
       seed: seed32(streamSeed(plazaNode.seed, "plaza")),
@@ -649,7 +643,6 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
     diagnostics.push(...plaza.diagnostics);
     blocks.push(...plaza.blocks);
-    input.ground.record(declarePlaza(plazaNode.nodePath, plaza));
   }
 
   // --- district streets ----------------------------------------------------
@@ -681,13 +674,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const retaining = buildRetainingWalls({
     districts,
     plan: input.plan,
+    ground: input.ground,
     palette: input.palette,
     stack: input.stack,
     footprints: buildings.built.map((b) => b.footprint),
   });
   diagnostics.push(...retaining.diagnostics);
   blocks.push(...retaining.blocks);
-  input.ground.record(declareRetaining(retaining));
 
   // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
   // SLOT, filled. It runs after `buildBuildings` and before the streetscape,
@@ -702,6 +695,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const courtyardPass = furnishCourtyards({
     districts,
     plan: input.plan,
+    ground: input.ground,
     palette: input.palette,
     stack: input.stack,
     emitted: blocks,
@@ -710,7 +704,6 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   diagnostics.push(...courtyardPass.diagnostics);
   blocks.push(...courtyardPass.blocks);
-  input.ground.record(declareCourtyards(courtyardPass));
 
   // --- the canals ----------------------------------------------------------
   // After the column plan, before the streets are surfaced, and that ordering
@@ -726,14 +719,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   const canals: CanalPassResult = digCanals({
     districts,
     plan: input.plan,
+    ground: input.ground,
+    nodePath: rootPath,
     palette: input.palette,
     stack: input.stack,
   });
   diagnostics.push(...canals.diagnostics);
-  // One source prefix per pass: the canal pass claims every channel column of
-  // every quarter before writing one, so the arbitration between two canals a
-  // block apart has already happened (§3.5b).
-  input.ground.record(declareCanals(rootPath, canals));
 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
@@ -947,13 +938,15 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       : buildProps({
           jobs: propJobs,
           plan: input.plan,
+          ground: input.ground,
           stack: input.stack,
           reserved: buildings.built.map((b) => b.footprint),
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   diagnostics.push(...props.diagnostics);
   blocks.push(...props.blocks);
-  input.ground.record(declareProps(props));
+  // §9a.1 rule 1: converted at WP-5 — `levelPropPad` commits its own `prop.pad`
+  // claims as it lays each plinth, so there is nothing to record here.
   // The grammar's fluid claim, re-derived from what it actually emitted. It is
   // reported here as well as by the readback lint because a leak is cheapest
   // to attribute at the pass that caused it.
@@ -972,11 +965,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     buildings: buildings.built,
     ports: input.ports,
     plan: input.plan,
+    ground: input.ground,
     palette: input.palette,
     stack: input.stack,
   });
   blocks.push(...doorsteps.blocks);
-  input.ground.record(declareDoorsteps(doorsteps));
 
   // --- ground treatment (F2) -----------------------------------------------
   // Dead last, and that is the whole design: every other pass has by now

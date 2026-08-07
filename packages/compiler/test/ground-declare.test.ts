@@ -1,9 +1,10 @@
 /**
- * **The shadow declarers** — `docs/GROUND-CONTRACT-v0.md` §3, §8.1 item 2.
+ * **The declaration set** — `docs/GROUND-CONTRACT-v0.md` §3, §8.1 item 2.
  *
- * WP-2 converts no caller: `structures/ground-declare.ts` recomputes, from the
- * passes' own outputs, the `GroundIntent`s each pass *would* declare after
- * conversion. These tests are about that set — that it exists, that it is
+ * WP-2 converted no caller and recomputed each pass's `GroundIntent`s from its
+ * outputs; WP-3 and WP-4 converted the passes this fixture runs, so the set
+ * under test is now the one the passes themselves committed into the driver.
+ * These tests are about that set — that it exists, that it is
  * well-formed against §2 and §4, and that it says the two things the mutating
  * pipeline does not say out loud:
  *
@@ -36,7 +37,7 @@ import {
 import { groundLevelsOf, levelSeams } from "../src/layout/levels.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
-import { declareRetaining, levelClaimsByColumn } from "../src/structures/ground-declare.js";
+import { levelClaimsByColumn } from "../src/structures/ground-declare.js";
 import { driverForPlan, type GroundDriver } from "../src/layout/ground-driver.js";
 import { dressStreets, type SegmentArc, type StreetscapeResult } from "../src/structures/streetscape.js";
 import { surfaceStreetGraph, type StreetSurfaceResult } from "../src/structures/roads.js";
@@ -181,18 +182,17 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
         seams: [],
       }
     : steppedDistrict(graph);
+  // WP-3 and WP-4: every pass here declares for itself, so the fixture threads
+  // one driver exactly as `buildStructures` does — retaining commits at its own
+  // pipeline position, which is before the surfacer and the dressing.
+  const driver = driverForPlan(plan);
   const retaining = buildRetainingWalls({
     districts: [district as never],
     plan,
+    ground: driver,
     palette,
     stack,
   });
-  // WP-3: the street family declares for itself, so the fixture threads a driver
-  // exactly as `buildStructures` does — the surfacer and the dressing commit into
-  // it, and the still-unconverted retaining pass records into it at its own
-  // pipeline position, which is before them.
-  const driver = driverForPlan(plan);
-  driver.record(declareRetaining(retaining));
   const streets = surfaceStreetGraph({
     graphs: [graph],
     ground: driver,
@@ -419,7 +419,8 @@ describe("the flat control", () => {
   });
 
   it("no retaining face is declared where there is nothing to retain", () => {
-    expect(declareRetaining(run.retaining).filter((i) => i.kind === "face")).toHaveLength(0);
+    expect(run.intents.filter((i) => i.kind === "face")).toHaveLength(0);
+    expect(run.retaining.declaration.walls).toHaveLength(0);
   });
 });
 
@@ -437,46 +438,49 @@ describe("sweep's declaration mode (§3.13)", () => {
 
   const path = Array.from({ length: 24 }, (_, i) => ({ x: -12 + i, z: 3 }));
 
-  it("writes nothing, and returns the run the mutating pass would have written", () => {
+  it("declares before it writes, and the run it declares is the run it would have written", () => {
     const mutated = planOf(stack, (x) => stepped(x));
-    const untouched = planOf(stack, (x) => stepped(x));
-    const before = {
-      ground: Int32Array.from(untouched.ground),
-      fluidTop: Int32Array.from(untouched.fluidTop),
-      fluidKind: Uint8Array.from(untouched.fluidKind),
-      surface: Int32Array.from(untouched.surface),
-      soil: Uint8Array.from(untouched.soil),
-      snow: Uint8Array.from(untouched.snow),
-    };
+    const declaring = planOf(stack, (x) => stepped(x));
+    const before = Int32Array.from(declaring.ground);
 
     const wrote = sweep({ profile: RETAINING_PROFILE, path, plan: mutated, palette, stack });
+    /** The plan as it stood when the engine handed the intent over. */
+    let atCommit: Int32Array | undefined;
+    const driver = driverForPlan(declaring);
     const declaredRun = sweep({
       profile: RETAINING_PROFILE,
       path,
-      plan: untouched,
+      plan: declaring,
       palette,
       stack,
-      declareOnly: { sourceClass: "retaining.seam", transition: "wall" },
+      declare: {
+        sourceClass: "retaining.seam",
+        kind: "face",
+        transition: "wall",
+        commit: (intent) => {
+          // §9 step 2: not one byte of plan has moved yet — the levels are a
+          // claim, and the driver is what turns a claim into a level.
+          atCommit = Int32Array.from(declaring.ground);
+          driver.commit([intent]);
+        },
+      },
     });
 
-    // 1. The declare-only plan is untouched, byte for byte.
-    expect(Array.from(untouched.ground)).toEqual(Array.from(before.ground));
-    expect(Array.from(untouched.fluidTop)).toEqual(Array.from(before.fluidTop));
-    expect(Array.from(untouched.fluidKind)).toEqual(Array.from(before.fluidKind));
-    expect(Array.from(untouched.surface)).toEqual(Array.from(before.surface));
-    expect(Array.from(untouched.soil)).toEqual(Array.from(before.soil));
-    expect(Array.from(untouched.snow)).toEqual(Array.from(before.snow));
-    expect(declaredRun.blocks).toHaveLength(0);
+    // 1. The commit happened, and it happened before any level reached the plan.
+    expect(atCommit).toBeDefined();
+    expect(Array.from(atCommit as Int32Array)).toEqual(Array.from(before));
 
-    // 2. The intent carries the class the caller supplied — the engine picks none.
+    // 2. The intent carries the class and kind the caller supplied — the engine
+    //    picks neither.
     const intent = declaredRun.intent;
     expect(intent).toBeDefined();
     expect((intent as GroundIntent).sourceClass).toBe("retaining.seam");
     expect((intent as GroundIntent).transition).toBe("wall");
-    expect((intent as GroundIntent).kind).toBe("profile");
+    expect((intent as GroundIntent).kind).toBe("face");
 
     // 3. Its columns are the mutating run's claimed columns, at the levels the
-    //    mutating run wrote there.
+    //    mutating run wrote there — and the driver, nothing outranking this run,
+    //    put exactly those levels in the plan.
     const claimedColumns: number[] = [];
     for (let k = 0; k < CELLS; k++) if (wrote.claimed[k] === 1) claimedColumns.push(k);
     expect(claimedColumns.length).toBeGreaterThan(0);
@@ -484,7 +488,15 @@ describe("sweep's declaration mode (§3.13)", () => {
     expect(declaredColumns.map((c) => c.idx).sort((a, b) => a - b)).toEqual(claimedColumns);
     for (const claim of declaredColumns) {
       expect(claim.y, `column ${claim.idx}`).toBe(mutated.ground[claim.idx] as number);
+      expect(declaring.ground[claim.idx], `plan at ${claim.idx}`).toBe(claim.y);
     }
+
+    // 4. And the world the two paths built is the same world: the declaring run
+    //    laid its masonry against the driver's answer, which here agrees with the
+    //    sweep's own datum on every column.
+    expect(Array.from(declaring.ground)).toEqual(Array.from(mutated.ground));
+    expect(Array.from(declaring.surface)).toEqual(Array.from(mutated.surface));
+    expect(declaredRun.blocks).toEqual(wrote.blocks);
   });
 
   it("the mutating path is unchanged by the flag's existence", () => {

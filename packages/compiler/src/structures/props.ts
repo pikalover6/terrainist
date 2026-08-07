@@ -56,6 +56,7 @@ import { isZoneToken } from "../layout/frames.js";
 import { jitteredZonePoint, type Frame, type Point2, type Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundDriver } from "../layout/ground-driver.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 
@@ -144,6 +145,14 @@ export interface PlacedProp {
 export interface PropPassInput {
   readonly jobs: readonly PropJob[];
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * Present on the world pipeline, where every pad's level goes through
+   * `commit`; absent for the terrarium, the exhibits and the authored programs,
+   * which write their own plans and are outside the contract (§3.12).
+   */
+  readonly ground?: GroundDriver;
   readonly stack: PrismarineStack;
   /** Claimed under the `prop` and `structure` tags when present. */
   readonly occupancy?: OccupancyGrid;
@@ -160,13 +169,11 @@ export interface PropPassResult {
   readonly placed: readonly PlacedProp[];
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * What this pass would declare under the ground contract
+   * What this pass declared under the ground contract
    * (`docs/GROUND-CONTRACT-v0.md` §3.10b): one entry per prop that needed a pad,
    * naming **only the columns its own filter selected** — the fill-never-cut
-   * `if (g >= want) continue` — at their targets.
-   *
-   * A **return value only**, read by WP-2's shadow declarers
-   * (`structures/ground-declare.ts`).
+   * `if (g >= want) continue` — at their targets. The intents it handed to the
+   * driver, kept as a return value for the report and the tests.
    */
   readonly padDeclarations: readonly PropPadDeclaration[];
 }
@@ -238,10 +245,17 @@ export function buildProps(input: PropPassInput): PropPassResult {
     // downstream. Water and shore props never get one — their base is a water
     // surface, which is level by definition.
     if (propFootprint(job.prop, job.params).base === "ground") {
-      // The sink is §3.10b's declaration and nothing else: `levelPropPad` fills
-      // it beside the writes it already makes, and reads it never.
+      // §3.10b: the pad claims, the driver decides, `levelPropPad` lays the
+      // plinth. `padDeclarations` is the same set, kept as a return value for
+      // the report and the tests.
       const pad: GroundClaim[] = [];
-      blocks.push(...levelPropPad(plan, site.footprint, site.baseY, pad));
+      blocks.push(
+        ...levelPropPad(plan, site.footprint, site.baseY, {
+          ...(input.ground === undefined ? {} : { driver: input.ground }),
+          source: `${job.nodePath}#pad`,
+          declare: pad,
+        }),
+      );
       if (pad.length > 0) padDeclarations.push({ source: `${job.nodePath}#pad`, columns: pad });
     }
 
@@ -505,6 +519,40 @@ export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
   return hi + 1;
 }
 
+/** What {@link levelPropPad} does with the level it computes. */
+export interface PropPadGround {
+  /**
+   * **WP-5** (`docs/GROUND-CONTRACT-v0.md` §3.10b, §9): commit the pad as a
+   * `prop.pad` platform and let the driver write the level, instead of writing
+   * it here.
+   *
+   * Absent for every caller that is not the world pipeline — the authored
+   * programs' pads, the terrarium, the exhibits — which have no driver to
+   * accumulate into and whose plan the contract does not govern (§3.12).
+   */
+  readonly driver?: GroundDriver;
+  /** `<nodePath>#pad` — the claim's source (§9 step 3). Used with `driver`. */
+  readonly source?: string;
+  /**
+   * Optional sink for §3.10b's `prop.pad` claim: every column this call fills,
+   * at the level it fills it to. Write-only, and never read.
+   */
+  readonly declare?: GroundClaim[];
+}
+
+/** One column of pad, decided but not yet laid. */
+interface PadColumn {
+  readonly idx: number;
+  readonly x: number;
+  readonly z: number;
+  /** The level the pad asks for. */
+  readonly want: number;
+  /** The ground under it **before** the pad, which the fill starts one above. */
+  readonly g: number;
+  readonly fill: number;
+  readonly cap: number;
+}
+
 /**
  * Bring the ground under a prop up to its base plane, and one ring beyond it.
  *
@@ -516,10 +564,16 @@ export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
  * out, and it reads the same way: a plinth.
  *
  * A no-op unless the site is rougher than {@link PROP_MAX_RELIEF}, which is
- * what keeps a cart exactly as cheap as it has always been. The plan's `ground`
- * is updated as the blocks go down, because everything downstream — the
- * scatter's occupancy, the doorstep pass, the readback lints — measures the
- * surface, not the block list.
+ * what keeps a cart exactly as cheap as it has always been.
+ *
+ * **Converted at WP-5** (`docs/GROUND-CONTRACT-v0.md` §3.10b). Given a driver,
+ * the selection below becomes a `prop.pad` claim and the driver writes the
+ * level: that is inversion I4, "everything built beats a prop pad", and the
+ * fill-never-cut rule needs no new field because the `if (g >= want) continue`
+ * filter already reads the resolved ground of every tier above (§9a.4's view).
+ * What stays here is material — the cap, the fill states and the blocks — over
+ * the columns the pad **claimed**, because ownership decides geometry and
+ * deliberately not material (§9a.6, step 4).
  *
  * Returns the blocks it laid.
  */
@@ -527,13 +581,7 @@ export function levelPropPad(
   plan: ColumnPlan,
   rect: Rect,
   baseY: number,
-  /**
-   * Optional sink for §3.10b's `prop.pad` claim: every column this call fills,
-   * at the level it fills it to. Write-only, appended to in the same statement
-   * group as the writes themselves, and never read — so the pad laid with a sink
-   * is byte-for-byte the pad laid without one.
-   */
-  declare?: GroundClaim[],
+  ground: PropPadGround = {},
 ): StructureBlock[] {
   const out: StructureBlock[] = [];
   const top = baseY - 1;
@@ -555,6 +603,7 @@ export function levelPropPad(
   };
   // Sorted iteration by construction: the loops are the order, so the block
   // list is a pure function of the geometry.
+  const pad: PadColumn[] = [];
   for (let z = skirted.z0; z <= skirted.z1; z++) {
     for (let x = skirted.x0; x <= skirted.x1; x++) {
       const idx = indexOf(plan, x, z);
@@ -567,19 +616,41 @@ export function levelPropPad(
       const g = plan.ground[idx] as number;
       if (g >= want) continue;
       const fill = plan.subsurface[idx] as number;
-      const cap = inside ? fill : (plan.surface[idx] as number);
-      for (let y = g + 1; y <= want; y++) {
-        out.push({ x, y, z, stateId: y === want ? cap : fill });
-      }
-      declare?.push({ idx, y: want });
-      plan.ground[idx] = want;
-      plan.surface[idx] = cap;
-      plan.fluidTop[idx] = want;
-      // A pad is bare ground: the snow layer that sat on the old surface is
-      // now buried, and re-laying it is the climate pass's business, not this
-      // pass's. Clearing it keeps the emitter from floating one.
-      plan.snow[idx] = 0;
+      pad.push({ idx, x, z, want, g, fill, cap: inside ? fill : (plan.surface[idx] as number) });
     }
+  }
+  if (pad.length === 0) return out;
+
+  for (const column of pad) ground.declare?.push({ idx: column.idx, y: column.want });
+  const driver = ground.driver;
+  if (driver !== undefined) {
+    driver.commit([
+      {
+        source: ground.source ?? "prop#pad",
+        sourceClass: "prop.pad",
+        kind: "platform",
+        columns: pad.map((column) => ({ idx: column.idx, y: column.want })),
+        transition: "step",
+      },
+    ]);
+  }
+
+  // §9 step 2's second loop. The fill runs from the ground the pad measured to
+  // the level it asked for whether or not the rank let it have the column: a
+  // plinth is what the prop stands on, and narrowing it to the won columns
+  // would change the painting on every contested one.
+  for (const { idx, x, z, want, g, fill, cap } of pad) {
+    for (let y = g + 1; y <= want; y++) {
+      out.push({ x, y, z, stateId: y === want ? cap : fill });
+    }
+    plan.surface[idx] = cap;
+    if (driver !== undefined) continue;
+    plan.ground[idx] = want;
+    plan.fluidTop[idx] = want;
+    // A pad is bare ground: the snow layer that sat on the old surface is
+    // now buried, and re-laying it is the climate pass's business, not this
+    // pass's. Clearing it keeps the emitter from floating one.
+    plan.snow[idx] = 0;
   }
   return out;
 }

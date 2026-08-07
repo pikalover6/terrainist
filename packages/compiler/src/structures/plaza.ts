@@ -40,7 +40,8 @@ import { warning, type LoamDiagnostic } from "@terrainist/spec";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid, Placement } from "../layout/types.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { hash2, hashInt } from "../terrain/detail.js";
 import type { Palette } from "../terrain/palette.js";
@@ -60,8 +61,18 @@ export const MAX_BENCHES = 3;
 export interface PlazaInput {
   readonly nodePath: string;
   readonly placement: Placement;
-  /** Mutated: ground surface, and the well's one water column. */
+  /** Mutated: the paving's surface, and the well's rim. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * The plaza's own level is the solver's pad and this pass never moved it; what
+   * goes through `commit` is the claim on it — `plaza.ground`, which is
+   * inversion I7: the `paved` mask's level behaviour becomes a rank — and the
+   * well's dig. Omitted only by callers that are not the pipeline, which then
+   * get a driver of their own over the plan as it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /** Detail seed for the paving mix and the bench positions. */
@@ -84,14 +95,9 @@ export interface PlazaResult {
   readonly well: boolean;
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * What this pass would declare under the ground contract
-   * (`docs/GROUND-CONTRACT-v0.md` §3.2b), recorded as it runs.
-   *
-   * A **return value only**: WP-2's shadow declarers
-   * (`structures/ground-declare.ts`) turn it into `GroundIntent`s and nothing
-   * here reads it. The plaza's *level* is the solver's pad and this pass never
-   * writes it, so the level has to be sampled while the pad's answer is still
-   * the answer — after the streets have run it is no longer legible.
+   * What this pass declared under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.2b): the intents it handed to the driver,
+   * kept as a return value for the report and the tests.
    */
   readonly declaration: PlazaDeclaration;
 }
@@ -185,6 +191,8 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
   }
 
   const states = resolveStates(input.palette, input.stack);
+  const driver = input.ground ?? driverForPlan(plan);
+  const view = driver.view();
   const index = (x: number, z: number): number =>
     (z - region.z0) * region.width + (x - region.x0);
   const inside = (x: number, z: number): boolean =>
@@ -205,10 +213,12 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
       if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
       const edge = x === rect.x0 || x === rect.x1 || z === rect.z0 || z === rect.z1;
       plan.surface[idx] = edge ? states.border : fieldState(states, input.seed, x, z);
-      plan.snow[idx] = 0;
+      // The snow clear is the driver's now (§9 step 10): `commit` clears it on
+      // every column this claim wins, which is bit-for-bit the line that was
+      // here.
       if (plan.soil[idx] === 0) plan.soil[idx] = 1;
       pavedCount++;
-      declaredPaved.push({ idx, y: plan.ground[idx] as number });
+      declaredPaved.push({ idx, y: view.ground[idx] as number });
       paved[idx] = 1;
       if (input.occupancy !== undefined) claim(input.occupancy, idx);
     }
@@ -217,7 +227,31 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
   // --- 3a: the well --------------------------------------------------------
   const cx = Math.floor((rect.x0 + rect.x1) / 2);
   const cz = Math.floor((rect.z0 + rect.z1) / 2);
-  const wellClaim = buildWell(input, states, cx, cz, blocks, index, inside);
+  // §3.2b's `plaza.ground`, committed before the well is dug: the well's
+  // 3×3 flatness test then reads the answer, exactly as it used to read the
+  // paving's untouched ground. The centre column is dropped from the claim
+  // because `plaza.ground` (30) outranks `plaza.well` (40) and would otherwise
+  // fill the well in — the pass does not own that column when it is finished.
+  const site = wellSite(view, cx, cz, index, inside);
+  if (declaredPaved.length > 0) {
+    const columns =
+      site === undefined ? declaredPaved : declaredPaved.filter((c) => c.idx !== site.centre);
+    if (columns.length > 0) {
+      driver.commit([
+        {
+          source: input.nodePath,
+          sourceClass: "plaza.ground",
+          kind: "platform",
+          columns,
+          transition: "ramp",
+        },
+      ]);
+    }
+  }
+  const wellClaim =
+    site === undefined
+      ? undefined
+      : buildWell(input, states, site, blocks, index, driver, `${input.nodePath}#well`);
   const well = wellClaim !== undefined;
   if (well) {
     for (let z = cz - WELL_RADIUS; z <= cz + WELL_RADIUS; z++) {
@@ -268,58 +302,109 @@ function fieldState(states: PlazaStates, seed: number, x: number, z: number): nu
   return states.path;
 }
 
+/** Where a well may stand: the flat, dry 3×3 the construction assumes. */
+export interface WellSite {
+  readonly cx: number;
+  readonly cz: number;
+  readonly centre: number;
+  /** The one level all nine columns stand at — the water's own surface. */
+  readonly groundY: number;
+}
+
 /**
- * The centrepiece well: a cobblestone-wall ring on stone-brick corners around
- * one block of enclosed water, with fence-and-lantern posts on two corners.
+ * The 3×3 test, taken **before** anything is committed.
  *
- * Returns `undefined` when the ground under the well is not the flat, dry
- * platform the construction assumes — better no well than a well hanging off a
- * slope. Otherwise it returns §3.2b's `plaza.well` claim: the dug centre and the
- * eight perimeter columns whose standing still *is* the stability proof. The
- * return value is the only thing that changed; every write below is untouched.
+ * The whole square must be in-region, dry and level: the stability argument
+ * depends on the eight perimeter columns standing at exactly the water level.
+ * Split out of {@link buildWell} because the paving's claim has to know whether
+ * a well will be dug before it declares — `plaza.ground` (30) outranks
+ * `plaza.well` (40), so a paving claim that kept the centre column would win it
+ * and fill the well in.
+ *
+ * Pure: reads the view (§9a.4) and writes nothing.
  */
-function buildWell(
-  input: PlazaInput,
-  states: PlazaStates,
+export function wellSite(
+  view: GroundView,
   cx: number,
   cz: number,
-  blocks: StructureBlock[],
   index: (x: number, z: number) => number,
   inside: (x: number, z: number) => boolean,
-): PlazaDeclaration["well"] {
-  const { plan } = input;
+): WellSite | undefined {
   const r = WELL_RADIUS;
-
-  // The whole 3×3 must be in-region, dry, and level: the stability argument
-  // depends on the eight perimeter columns standing at exactly the water level.
   let level: number | null = null;
   for (let z = cz - r; z <= cz + r; z++) {
     for (let x = cx - r; x <= cx + r; x++) {
       if (!inside(x, z)) return undefined;
       const idx = index(x, z);
-      if (plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
-      const y = plan.ground[idx] as number;
+      if (view.fluidKind[idx] !== FluidKind.NONE) return undefined;
+      const y = view.ground[idx] as number;
       if (level === null) level = y;
       else if (y !== level) return undefined;
     }
   }
   if (level === null) return undefined;
-  const groundY = level;
+  return { cx, cz, centre: index(cx, cz), groundY: level };
+}
 
-  const centre = index(cx, cz);
+/**
+ * The centrepiece well: a cobblestone-wall ring on stone-brick corners around
+ * one block of enclosed water, with fence-and-lantern posts on two corners.
+ *
+ * §3.2b's two claims go to the driver first — the dug centre carrying its water,
+ * and a `preserve` over the eight perimeter columns whose standing still *is*
+ * the stability proof, which is the cleanest use of the kind in the codebase —
+ * and the masonry follows. `plaza.well` is rank 40, so nothing below it can fill
+ * the hole back in and nothing at all can drop a column the proof stands on.
+ */
+function buildWell(
+  input: PlazaInput,
+  states: PlazaStates,
+  site: WellSite,
+  blocks: StructureBlock[],
+  index: (x: number, z: number) => number,
+  driver: GroundDriver,
+  source: string,
+): PlazaDeclaration["well"] {
+  const { plan } = input;
+  const r = WELL_RADIUS;
+  const { cx, cz, centre, groundY } = site;
+
+  /** §3.2b's `preserve`: the eight columns the stability proof stands on. */
+  const perimeter: GroundClaim[] = [];
+  for (let z = cz - r; z <= cz + r; z++) {
+    for (let x = cx - r; x <= cx + r; x++) {
+      if (x === cx && z === cz) continue;
+      perimeter.push({ idx: index(x, z), y: groundY });
+    }
+  }
   // Dig one block and fill it. The water's surface is the plaza's ground level,
   // and every horizontal neighbour is solid *to* that level — so the one-tick
   // spread simulation finds no exposed face. See this module's header.
-  plan.ground[centre] = groundY - 1;
+  const dug: GroundClaim = {
+    idx: centre,
+    y: groundY - 1,
+    fluid: { kind: FluidKind.WATER, top: groundY },
+  };
+  driver.commit([
+    {
+      source,
+      sourceClass: "plaza.well",
+      kind: "platform",
+      columns: [dug],
+      transition: "step",
+    },
+    {
+      source,
+      sourceClass: "plaza.well",
+      kind: "preserve",
+      columns: perimeter,
+      transition: "none",
+    },
+  ]);
   plan.surface[centre] = states.cobble;
-  plan.fluidKind[centre] = FluidKind.WATER;
-  plan.fluidTop[centre] = groundY;
-  plan.snow[centre] = 0;
 
   // The ring, one block above the plaza surface: stone brick on the corners,
   // cobblestone wall along the sides.
-  /** §3.2b's `preserve`: the eight columns the stability proof stands on. */
-  const perimeter: GroundClaim[] = [];
   for (let z = cz - r; z <= cz + r; z++) {
     for (let x = cx - r; x <= cx + r; x++) {
       if (x === cx && z === cz) continue;
@@ -327,7 +412,6 @@ function buildWell(
       blocks.push({ x, y: groundY + 1, z, stateId: corner ? states.border : states.wall });
       // The rim itself is stone brick underfoot, not paving.
       plan.surface[index(x, z)] = states.border;
-      perimeter.push({ idx: index(x, z), y: groundY });
     }
   }
 
@@ -342,10 +426,7 @@ function buildWell(
     blocks.push({ x: cx + dx, y: groundY + 4, z: cz + dz, stateId: states.lantern });
   }
 
-  return {
-    centre: { idx: centre, y: groundY - 1, fluid: { kind: FluidKind.WATER, top: groundY } },
-    perimeter,
-  };
+  return { centre: dug, perimeter };
 }
 
 /**

@@ -57,7 +57,8 @@ import { TERRAIN_DIAGNOSTICS, note, warning, type LoamDiagnostic } from "@terrai
 import type { Region } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
+import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import {
   NO_PLATFORM,
   RETAIN_RAIL,
@@ -147,8 +148,18 @@ export interface RetainingDistrict {
 /** Everything {@link buildRetainingWalls} reads. */
 export interface RetainingPassInput {
   readonly districts: readonly RetainingDistrict[];
-  /** Mutated exactly as the road pass mutates it. */
+  /** Mutated exactly as the road pass mutates it — materials only, given a driver. */
   readonly plan: ColumnPlan;
+  /**
+   * The ground contract's driver (`docs/GROUND-CONTRACT-v0.md` §9a).
+   *
+   * A wall's course is a `face` plus a `preserve` (§3.3b) and a bank's rings are
+   * a `verge` profile; both go through `commit`, and the masonry is laid against
+   * the answer. Omitted only by callers that are not the pipeline — the unit
+   * tests that wall a seam on a bare plan — which then get a driver of their own
+   * over the plan as it stands (`driverForPlan`).
+   */
+  readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
   /** Footprints of everything already built, for the `"built"` reclassification. */
@@ -209,11 +220,10 @@ export interface RetainingPassResult {
   readonly banked: number;
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
-   * What this pass would declare under the ground contract
-   * (`docs/GROUND-CONTRACT-v0.md` §3.3b), recorded as it builds.
-   *
-   * A **return value only**, read by WP-2's shadow declarers
-   * (`structures/ground-declare.ts`). Three things are in it and two are not:
+   * What this pass declared under the ground contract
+   * (`docs/GROUND-CONTRACT-v0.md` §3.3b): the intents it handed to the driver,
+   * kept as a return value for the report and the tests. Three things are in it
+   * and two are not:
    * the wall runs (`face` + `preserve`, at the coping's own walking level), and
    * `gradeBank`'s ring targets (`verge`). `kerbSeam` and `faceCuts` declare
    * **nothing** — they are materials, and the contract does not protect
@@ -340,6 +350,7 @@ function resolveStates(palette: Palette, stack: PrismarineStack): RetainingState
  */
 export function buildRetainingWalls(input: RetainingPassInput): RetainingPassResult {
   const { plan, palette, stack } = input;
+  const driver = input.ground ?? driverForPlan(plan);
   const region = plan.region;
   const cells = region.width * region.depth;
   const seam = new Uint8Array(cells);
@@ -452,6 +463,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         banked += gradeBank(
           region,
           plan,
+          driver,
+          `${district.nodePath}#bank@${jobIndex}`,
           levels,
           record,
           floorY,
@@ -600,6 +613,14 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       for (const chain of chainsOf(region, columns)) {
         chainIndex++;
         const path = orient(region, chain, levels, record.above, street, occupied);
+        // §3.3b — the course is a `face` at the coping's own walking level, plus
+        // a `preserve` over the same columns: a balustrade may never be left
+        // standing over ground something else dropped, which is the
+        // `unsupported.chain` finding that survived four rounds of fixes. Both
+        // go in one commit, because the resolver has to see them together.
+        // `transition: "wall"` — the face *is* the transition.
+        const source = `${district.nodePath}#retaining@${jobIndex}/${chainIndex}`;
+        const sourceClass = measured ? ("retaining.skirt" as const) : ("retaining.seam" as const);
         const result = sweep({
           profile: retainingProfile(record.drop, RETAIN_RAIL, states.rail, states.profile),
           path,
@@ -608,6 +629,25 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           stack,
           nodePath: district.nodePath,
           avoid: { region, mask: avoid, byTag: new Map<string, Uint8Array>() },
+          declare: {
+            sourceClass,
+            kind: "face",
+            source,
+            transition: "wall",
+            commit: (intent) => {
+              const wall: GroundIntent[] = [intent];
+              if ([...intent.columns].length > 0) {
+                wall.push({
+                  source,
+                  sourceClass,
+                  kind: "preserve",
+                  columns: intent.columns,
+                  transition: "none",
+                });
+              }
+              driver.commit(wall);
+            },
+          },
         });
         blocks.push(...result.blocks);
         // `SWEEP_FEATURES_PLACED` is a note about lamps on a bridge; a weep
@@ -621,21 +661,15 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           if (d.code === TERRAIN_DIAGNOSTICS.SWEEP_COLUMNS_SKIPPED) continue;
           diagnostics.push(d);
         }
-        // §3.3b, recorded here: the coping's own walking level, on the course
-        // the sweep actually claimed, before `deepen` (soil) or the coping block
-        // (material) touch anything. Read-only with respect to the plan.
-        const wallColumnsDeclared: GroundClaim[] = [];
-        for (let k = 0; k < cells; k++) {
-          if (result.claimed[k] !== 1) continue;
-          seam[k] = 1;
-          wallColumnsDeclared.push({ idx: k, y: plan.ground[k] as number });
-        }
+        // The seam mask is the *claimed* course — including a spanned column the
+        // sweep deliberately left alone — because what it protects is geometry:
+        // `blendShoulders` may not smooth a face, whether or not the face's own
+        // column carried a level. The declaration is the levelled half, which is
+        // what the sweep handed the driver.
+        for (let k = 0; k < cells; k++) if (result.claimed[k] === 1) seam[k] = 1;
+        const wallColumnsDeclared = [...((result.intent?.columns ?? []) as Iterable<GroundClaim>)];
         if (wallColumnsDeclared.length > 0) {
-          declaredWalls.push({
-            source: `${district.nodePath}#retaining@${jobIndex}/${chainIndex}`,
-            measured,
-            columns: wallColumnsDeclared,
-          });
+          declaredWalls.push({ source, measured, columns: wallColumnsDeclared });
         }
         // **The wall is as deep as it is tall.** `sweep()` writes one course of
         // the `fill` band and leaves `soil` alone, so a six-block wall used to
@@ -1162,6 +1196,9 @@ function kerbSeam(
 function gradeBank(
   region: Region,
   plan: ColumnPlan,
+  driver: GroundDriver,
+  /** `<nodePath>#bank@<job>` — the `verge` claim's source, unique and stable. */
+  source: string,
   levels: GroundLevels,
   record: LevelSeam,
   floorY: number,
@@ -1169,11 +1206,12 @@ function gradeBank(
   occupied: Uint8Array,
   states: RetainingStates,
   /**
-   * Optional sink for §3.3b's `verge` claim: every ring column this call
-   * raised, at the target it raised it to. Write-only and never read.
+   * Sink for §3.3b's `verge` claim: every ring column this call raised, at the
+   * target it raised it to. Write-only and never read.
    */
   declare?: GroundClaim[],
 ): number {
+  const view = driver.view();
   const cells = region.width * region.depth;
   const top = levels.levelY[record.above] as number;
   const floor = floorY;
@@ -1187,6 +1225,8 @@ function gradeBank(
     frontier.push(k);
   }
   let raised = 0;
+  /** The ring targets, with the ground each was measured against (§9 step 2). */
+  const rings: { readonly idx: number; readonly target: number; readonly g: number }[] = [];
   for (let ring = 0; ring < record.drop && frontier.length > 0; ring++) {
     const target = top - ring - 1;
     if (target <= floor) break;
@@ -1194,17 +1234,11 @@ function gradeBank(
     for (const k of frontier) {
       const x = region.x0 + (k % region.width);
       const z = region.z0 + Math.floor(k / region.width);
-      if (street[k] !== 1 && occupied[k] !== 1 && plan.fluidKind[k] === FluidKind.NONE) {
-        const g = plan.ground[k] as number;
+      if (street[k] !== 1 && occupied[k] !== 1 && view.fluidKind[k] === FluidKind.NONE) {
+        const g = view.ground[k] as number;
         if (target > g) {
           declare?.push({ idx: k, y: target });
-          plan.ground[k] = target;
-          plan.fluidTop[k] = target;
-          // Earth, and enough of it to cover what the ramp just raised: the
-          // face of a bank is the bank, and it is not masonry.
-          plan.subsurface[k] = states.bank;
-          const fill = target - g;
-          plan.soil[k] = Math.min(255, Math.max(plan.soil[k] as number, fill + 1));
+          rings.push({ idx: k, target, g });
           raised++;
         }
       }
@@ -1219,6 +1253,34 @@ function gradeBank(
       }
     }
     frontier = next;
+  }
+
+  // The rings are collected before anything is committed, which is sound because
+  // a column belongs to exactly one ring: ring `k + 1` reads columns ring `k`
+  // never claimed, so the answer is the one the interleaved form gave.
+  //
+  // §3.3b: `verge` is rank 140, the last built rank there is, so a bank can only
+  // move ground nothing else claimed — inversion I5, which is the hand-written
+  // guard list (street / footprint / water) restated as one rank. The guards
+  // above stay for this round: deleting a defence the rank makes redundant is
+  // §10's work, not a conversion's.
+  if (rings.length === 0) return raised;
+  driver.commit([
+    {
+      source,
+      sourceClass: "verge",
+      kind: "profile",
+      columns: rings.map((r) => ({ idx: r.idx, y: r.target })),
+      transition: "ramp",
+    },
+  ]);
+  // §9 step 2's second loop, over the columns the bank **claimed**. Earth, and
+  // enough of it to cover what the ramp raised: the face of a bank is the bank,
+  // and it is not masonry. The depth follows the cut the claim asked for, whether
+  // or not the rank let the bank have the column.
+  for (const { idx, target, g } of rings) {
+    plan.subsurface[idx] = states.bank;
+    plan.soil[idx] = Math.min(255, Math.max(plan.soil[idx] as number, target - g + 1));
   }
   return raised;
 }

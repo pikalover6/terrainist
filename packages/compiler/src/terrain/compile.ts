@@ -700,8 +700,9 @@ async function compileValidated(
       }
     : undefined;
   // The one thing that writes a level during the mixture (§9a.1). Every pass
-  // contributes at its own pipeline position: a converted pass commits, an
-  // unconverted one writes and its shadow declarer records immediately after.
+  // contributes at its own pipeline position, and with WP-3, WP-4 and WP-5
+  // landed every structure pass contributes by committing; the one `record` left
+  // is the layout solver's pads, whose field already carries its answer (§3.12).
   const groundDriver: GroundDriver | undefined =
     groundBaseline === undefined ? undefined : createGroundDriver(groundBaseline, plan);
 

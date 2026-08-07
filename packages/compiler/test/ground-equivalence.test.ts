@@ -92,55 +92,56 @@ interface WorldCase {
 const PAD_APRON_MISMATCHES = { "c1-harbourtown": 55 } as const;
 
 /**
- * **WP-3's finding, recorded at the golden it moved.**
+ * **WP-3's finding, and WP-4's answer to it.**
  *
  * §9a.5 says a divergence count that *grows* is never a golden update: it is a
  * finding with exactly two legitimate causes, and the cause has to be written
- * down before the number is changed. This is cause 1 — "the declaration set
- * moved" — and the declarer it moved for is not the one §9a.3 predicts.
+ * down before the number is changed. WP-3 hit cause 1 — "the declaration set
+ * moved" — for a declarer §9a.3 had not named. §9a.3 names `prop.pad` as "the
+ * one declarer whose *column* set is a function of the ground it is declared
+ * against"; **`doorstep.landing` is a second.** `buildDoorsteps` cuts a landing
+ * only where the ground stands *above* the threshold line, so converting the
+ * sidewalk — I6, on 9,921 columns of `c1-harbourtown` and 4,169 of
+ * `showcase-bayline` — changed which doors got a `dropped` outcome at all, and
+ * I3 rose to 12 and 6 respectively.
  *
- * §9a.3 names `prop.pad` as "the one declarer whose *column* set is a function of
- * the ground it is declared against", because `levelPropPad` selects with
- * `if (g >= want) continue`. **`doorstep.landing` is a second.**
- * `buildDoorsteps` cuts a landing only where the ground stands *above* the
- * threshold line, so converting the sidewalk — which is what I6 does, on 9,921
- * columns of `c1-harbourtown` and 4,169 of `showcase-bayline` — changes which
- * doors get a `dropped` outcome at all. Measured: `doorstepsDropped` 0 → 12 on
- * `c1-harbourtown` and 7 → 3 on `showcase-bayline`, and every one of the new
- * landings that lands on a street column is an I3 divergence, attributable and
- * counted. I3 therefore grows at WP-3 and goes to **zero at WP-4**, where §9a.3's
- * table already puts it — the same shape §9a.3 predicts for I4 shrinking at WP-3
- * and reaching zero at WP-5, in the other direction.
- *
- * The doc gets amended; the golden is not bent to hide it.
+ * **WP-4 converted the doorstep pass and every one of those went to zero**,
+ * which is exactly where §9a.3's table puts I3. The reselected landings are
+ * still reselected — the sidewalk's level is still I6's — but a landing that
+ * would be cut into a column a street owns is now simply not cut: the claim
+ * loses to `street.network` at rank, the door gets a flush threshold rather than
+ * a trench, and the pass writes what it declares. The constant is kept, at zero,
+ * because the shape of the finding is what the next work package needs to know.
  */
-const DOORSTEP_RESELECTION = { "c1-harbourtown": 12, "showcase-bayline": 6 } as const;
+const DOORSTEP_RESELECTION = { "c1-harbourtown": 0, "showcase-bayline": 0 } as const;
 
 /**
  * §8.4's flat controls. `showcase-*`, `demo-*` and `c1-harbourtown`: the worlds
  * §12's byte-identity argument is about.
  *
- * §8.4 predicts "zero of everything" for these, and that is very nearly what they
- * measure — but not exactly, and the goldens say so rather than the test being
- * bent to fit. `demo-deltaport` inverts 20 columns under I4 (a prop pad losing to
- * something built, which §4.4 calls the direct fix for `road.proud`), and
- * `c1-harbourtown` — a city, with a full street fabric on ground that is flat
- * only by comparison — inverts 9,921 under I6.
+ * §8.4 predicts "zero of everything" for these. With WP-3, WP-4 and WP-5 landed
+ * that is what they measure: every pass declares, every pass writes what it
+ * declared, and the two answers have nothing left to disagree about. The one
+ * number that survives is `PAD_APRON_MISMATCHES`, which is a CLEAN mismatch
+ * rather than a divergence and belongs to the layout solver's pads.
  */
 const CONTROLS: readonly WorldCase[] = [
   {
     name: "c1-harbourtown",
-    // WP-3 converted the street family. **I6: 9,921 → 0** — the largest single
-    // movement in the rewrite, and the whole of it: the sidewalk's level now
-    // comes from the flanking carriageway's `ArcLevels` rather than from a second
-    // read of `plan.ground`, so the pass writes what it declares and there is
-    // nothing left to diverge. **I3: 0 → 12** — see `DOORSTEP_RESELECTION`; it
-    // goes to zero at WP-4.
+    // WP-3 converted the street family (**I6: 9,921 → 0**, the largest single
+    // movement in the rewrite) and reselected 12 doorstep landings with it;
+    // WP-4 converted the doorsteps and those 12 went too. Every row is zero, and
+    // the only number left on this world is the pad-apron finding below, which
+    // no conversion touches (§9a.5) and which is WP-6's first item.
     inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"] },
     cleanMismatches: PAD_APRON_MISMATCHES["c1-harbourtown"],
   },
-  { name: "showcase-ironvale", inversions: { ...NONE, I4: 41 } },
-  { name: "demo-deltaport", inversions: { ...NONE, I4: 20 } },
+  // **I4: 41 → 0** and **20 → 0** at WP-5. `levelPropPad` commits its plinth as
+  // a `prop.pad` claim, so a cart's pad no longer raises a lane by two blocks
+  // behind the road pass's back: the ground the plan carries is the street's,
+  // which is what `road.proud` was measuring.
+  { name: "showcase-ironvale", inversions: NONE },
+  { name: "demo-deltaport", inversions: NONE },
 ];
 
 /**
@@ -161,26 +162,23 @@ const HILLS: readonly WorldCase[] = [
     // quarter on a slope, and the world with the richest inversion mix in the
     // repo — the only committed example that exercises I1, I2 and I3 at once.
     name: "showcase-bayline",
-    // WP-3, and the world where three of the four land at once (§9a.3's table):
-    // **I1: 3 → 0** — the street/sidewalk/verge side of "a face beats a street"
-    // is the *loser's* conversion, and the loser is WP-3's; the wall is still
-    // written by hand and still wins. **I2: 2 → 0** — a street beats a road, both
-    // of them inside WP-3's own family. **I6: 4,169 → 0**. **I3: 3 → 6** — see
-    // `DOORSTEP_RESELECTION`. §9a.3 splits I1 between WP-3 and WP-4 ("except any
-    // column whose last writer is `gradeBank`"); measured, `showcase-bayline`'s
-    // share is entirely WP-3's — there is no `gradeBank` remainder here.
+    // WP-3, and the world where three of the four landed at once (§9a.3's
+    // table): **I1: 3 → 0** — the street/sidewalk/verge side of "a face beats a
+    // street" is the *loser's* conversion, and the loser is WP-3's. **I2: 2 → 0**
+    // — a street beats a road, both inside WP-3's own family. **I6: 4,169 → 0**.
+    // **I3: 3 → 6 → 0** at WP-4, see `DOORSTEP_RESELECTION`. §9a.3 splits I1
+    // between WP-3 and WP-4 ("except any column whose last writer is
+    // `gradeBank`"); measured, this world's share was entirely WP-3's and WP-4
+    // found no `gradeBank` remainder to take.
     inversions: { ...NONE, I3: DOORSTEP_RESELECTION["showcase-bayline"] },
   },
   {
     name: "levels_scarp",
     doc: steppedWorld,
-    // **I6: 52 → 0** at WP-3. The one doorstep landing cut into a column a
-    // street owns stays, unmoved: I3 is WP-4's. That this count did *not* grow
-    // where the two city worlds' did is what makes `DOORSTEP_RESELECTION` a
-    // reselection — a door here and a door there whose approach the sidewalk's
-    // new level pushed across the threshold line — rather than a systematic
-    // shift the conversion introduced.
-    inversions: { ...NONE, I3: 1 },
+    // **I6: 52 → 0** at WP-3, and the one doorstep landing cut into a column a
+    // street owns — the count that did *not* grow where the two city worlds' did
+    // — **I3: 1 → 0** at WP-4.
+    inversions: NONE,
   },
 ];
 

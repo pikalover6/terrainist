@@ -344,6 +344,16 @@ columns of the 3×3 are in-region, dry and at one level.
   "the geometry is the proof"; the `preserve` is what makes the proof survive
   another pass, and it is the cleanest use of the kind in the codebase.
 
+**WP-4 measured one thing this mapping did not say.** The two intents are not
+independent: `plaza.ground` (30) outranks `plaza.well` (40), so a paving claim
+that keeps the centre column *wins* it and fills the well in. The shadow declarer
+could drop that column after the fact, because it saw the finished pass; a
+converted pass declares the paving **before** the well is dug, so the 3×3
+flatness test has to be split out of `buildWell` and taken first (`wellSite`).
+The paving then declares "the rect, less the column the well is about to take",
+which is what it actually owns when it is finished. Any pass whose own claims
+straddle a rank boundary has this shape, and this is the only one in the eleven.
+
 **(c) Material, stays behind.** All paving `surface` writes, the well's rim
 `surface`, the ring/post/lantern blocks.
 
@@ -388,7 +398,15 @@ and the coping-as-structure-block. All three are deletable at WP-6 (§10).
   at `levelY[above]` — the coping's walking level. Plus `preserve` over the
   same columns: a balustrade may never be left standing over ground something
   else dropped, and that is exactly the `unsupported.chain` finding that
-  survived four rounds of fixes.
+  survived four rounds of fixes. Both go in **one** `commit`, so the resolver
+  sees the face and the promise together.
+  **WP-4 refined "columns"**: the declaration is the columns the sweep would
+  *level*, which is the claimed course minus any column it spans (§2.4) — the
+  shadow declarer had declared every claimed column at its post-sweep level,
+  which for a spanned column is an agreeing claim on a level nobody moved. The
+  `seam` mask handed to `blendShoulders` keeps the **claimed** set, because what
+  it protects is geometry: a face is not to be smoothed whether or not its own
+  column carried a level.
 - Per bank: `profile`, class `verge`, `transition: "ramp"`, columns = the ring
   targets `gradeBank` computes. Tier D, so a bank can only move columns nothing
   else claimed — which is the generalisation of the `street`/`occupied`/water
@@ -567,8 +585,21 @@ target. Tier D, so the "fill only, never cut" rule needs no new field: the pass
 already filters with `if (g >= want) continue`, and under the contract `g` is
 the resolved ground of tiers A–C.
 
-**(c) Material, stays behind.** The cap and fill states, the emitted fill blocks,
-the snow clear (now the `moved`-mask rule of §1.3).
+**(c) Material, stays behind.** The cap and fill states, and the emitted fill
+blocks. The snow clear is the driver's per-commit clear (§9a.6), **not** §1.3's
+`moved`-mask rule, which is WP-6's.
+
+**WP-5 measured what I4 does and does not change.** A pad column the rank takes
+away still gets its plinth: the material loop runs over the columns the pad
+*claimed* (§9a.6, step 4), so the fill blocks and the cap are emitted exactly as
+before and only the plan's level changes. The emitted world is therefore
+near-identical on those columns — the terrain lays to the street's level and the
+pad's own blocks stand on top of it, where they used to be terrain — and the
+physics lint is unmoved (measured: zero findings on both worlds that moved).
+What I4 buys at WP-5 is that **the plan tells the truth**: everything downstream
+that measures the ground — the scatter, the doorsteps, the land-use clamp, the
+readback lints, `road.proud` — sees the lane rather than the causeway. The
+causeway itself goes when §9a.7's "build phases move behind the freeze" lands.
 
 ### 3.11 `doorsteps` — `buildDoorsteps`
 
@@ -629,6 +660,28 @@ Two consequences:
 - `sweep()` gains a declaration mode: given the same inputs it returns the
   `GroundIntent` it would have written, and writes nothing. WP-2's shim uses it;
   WP-3–5 make it the only mode.
+
+**WP-4 measured that mode and replaced it.** "Write nothing and hand back the
+intent" had no caller left once WP-3 landed — the street family declares from its
+own code paths — and it is not what a swept client needs, because for a sweep the
+*material* is written by the engine too. §9 step 2's escape hatch ("the material
+loop reads `driver.view()`") does not reach inside an engine the pass calls. So
+the mode became **declare → commit → build**, one pass over one datum:
+`SweepInput.declare` carries the class, the kind, the transition and a `commit`
+callback; the engine computes the run's levels exactly as always, hands the
+intent to the callback *before one byte of plan is written*, and then lays its
+surface, fill and cap against `plan.ground` — the driver's answer. Where the
+resolver agrees with the sweep, which is every column nothing outranks the run
+on, the two are the same number and the painting is byte-for-byte what it was;
+where they disagree the resolved level wins and the masonry follows it, which is
+the §9a invariant ("after the pass, every column it claimed holds the resolver's
+answer over the prefix") stated for an engine. The callback rather than a driver
+argument is what lets the caller commit its **companion** intents in the same
+`commit` — a wall's `face` and its `preserve` are one arbitration, not two.
+
+The mutating path is untouched and is still what every caller outside the world
+pipeline uses (the terrarium, the exhibits, the unit tests that sweep on a bare
+plan): absent `declare`, the engine writes `ground`, `fluidTop` and `snow` itself.
 
 ---
 
@@ -1554,6 +1607,34 @@ predicts the direction ("against a resolved ground a pad simply has fewer column
 to fill"), so I4's golden should shrink at WP-3 as well as reaching zero at WP-5.
 A golden that *grows* there is a finding.
 
+**WP-4 and WP-5 landed the rest of the table, and every row measured exactly
+what it predicts.** After the two work packages **every inversion row on every
+world is zero**:
+
+| world | before WP-4/5 | after | what moved |
+| --- | --- | --- | --- |
+| `c1-harbourtown` | I3 12 | 0 | the 12 reselected landings, each on a street column |
+| `showcase-bayline` | I3 6 | 0 | ditto |
+| `levels_scarp` | I3 1 | 0 | the one landing cut into a street |
+| `showcase-ironvale` | I4 41 | 0 | prop pads losing to what is built |
+| `demo-deltaport` | I4 20 | 0 | ditto |
+| `hillside-village`, `hilltop-crypt-hamlet` | all zero | all zero | nothing — per-file shasum-identical |
+
+Each world moved by **exactly** its golden and by nothing else: every moved
+column is a column the shim measured as diverging at WP-3, it left the level the
+mutating pipeline wrote, and it landed on the level `resolveGround` had said it
+should. The 55 `PAD_APRON_MISMATCHES` columns of `c1-harbourtown` diverge and do
+**not** move, which is §9a.5's proof holding: no pass commits them.
+
+Three predictions to settle:
+
+- **I1 had no `gradeBank` remainder anywhere.** §9a.3 split I1 between WP-3 and
+  WP-4 ("except any column whose last writer is `gradeBank`"); measured across
+  all seven worlds, that share is empty — WP-3 took all of I1.
+- **I5 stayed zero**, as required, through both conversions.
+- **I7 stayed zero** through the plaza's conversion, which is the point of the
+  row: the `paved` mask's level behaviour really was a rank in disguise.
+
 **WP-3 measured both predictions, and amended this subsection:**
 
 - **I4 did not shrink at WP-3** — correctly: neither `showcase-ironvale` nor
@@ -1568,6 +1649,9 @@ A golden that *grows* there is a finding.
   goes to zero at WP-4, where the table already puts it. This is the one
   legitimate exception to "goldens may only shrink", and it is bounded: every
   reselected landing is an attributable I3 divergence or the test fails.
+  **WP-4 closed it**: the landings are still reselected — the sidewalk's level is
+  still I6's — but one that would be cut into a column a street owns is simply
+  not cut, so all 12 and all 6 went to zero.
 - I1's `gradeBank` share had no WP-4 remainder on `showcase-bayline` — all
   three columns went at WP-3.
 
@@ -1762,7 +1846,18 @@ against §9a.3's table, never waved through.
   shadow declarer dies at *its own* pass's conversion, not at WP-6. The module,
   `levelClaimsByColumn`, `sidewalkWrites`, `ground-equivalence.ts` and
   `test/ground-equivalence.test.ts` are what remain to delete at WP-6, and they
-  go together.
+  go together. **After WP-5 all eleven declarers are gone**: what is left in the
+  module is `declarePadEdits` (whose "pass" is the layout solver, §3.12) and the
+  two helpers the shim reads the declaration set with — and `record` has exactly
+  one caller left for the same reason.
+
+**One thing WP-6 no longer has to do.** §10's "no module outside the resolver
+writes `plan.ground`" is, on the settlement path, already true: after WP-5 the
+only writers left in the whole compiler are `GroundDriver.commit`, and the
+undeclared fallbacks of `sweep()` and `levelPropPad()` — which exist for the
+callers the contract does not govern (the terrarium, the exhibits, the authored
+programs' pads, §3.12's second bullet). WP-6's scan is a guard against a
+regression rather than a change.
 
 **Flipped at WP-6:**
 
