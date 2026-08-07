@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import type { Region } from "@terrainist/stdlib";
 
 import {
+  MAX_TREAD_CUT,
   arcLengths,
   bandOfLane,
   carriagewaySpans,
@@ -215,6 +216,55 @@ describe("synthesizeTreads — the tread law", () => {
     for (let k = 1; k < levels.length; k++) {
       expect(Math.abs((levels[k] as number) - (levels[k - 1] as number))).toBeLessThanOrEqual(1);
     }
+  });
+
+  /**
+   * The same law, on ground that **falls**.
+   *
+   * The fixture above rises monotonically, so `|Δ| ≤ 1` is free by construction
+   * there: the backward recurrence caps the rise walking forward and nothing
+   * else can happen. Nothing capped the *fall*, and the walkability audit found
+   * what that costs — every hillside connector severed mid-run by its own
+   * five-block riser where it crossed a terrace cut, because
+   * `need[k] ≥ ground[k] + 1` forbade the flight from starting down before the
+   * edge. This is that terrace, as five numbers.
+   */
+  it("never leaves a riser taller than the grade cap where the ground FALLS", () => {
+    // A four-column upper platform at 114, then a five-block terrace cut.
+    const ground = [114, 114, 114, 114, 109, 109, 109, 109, 109];
+    const run = synthesizeTreads(ground, { maxFill: 8 });
+    const levels = run.levels as number[];
+    expect(levels).not.toBeNull();
+    for (let k = 1; k < levels.length; k++) {
+      expect(Math.abs((levels[k] as number) - (levels[k - 1] as number))).toBeLessThanOrEqual(1);
+    }
+  });
+
+  /**
+   * …and what it costs to say it: the flight is allowed to **cut**, and the
+   * recess is bounded.
+   *
+   * The descent starts back from the edge, inside the upper platform — Kai's
+   * first way of earning a drop with run — and the columns it claims below the
+   * platform are a `profile` claim like any road's cut, whose carved sides
+   * `finishCutFaces` dresses. No interior column is cut deeper than
+   * {@link MAX_TREAD_CUT}, and the two end columns are never cut at all: they
+   * are the landings the flight is measured against.
+   */
+  it("earns a terrace drop by recessing into the platform above, bounded", () => {
+    const ground = [114, 114, 114, 114, 109, 109, 109, 109, 109];
+    const run = synthesizeTreads(ground, { maxFill: 8 });
+    const levels = run.levels as number[];
+    // The descent begins three columns back from the edge and lands one block
+    // of embankment out onto the terrace below: five blocks of terrace, five
+    // columns of stair, and not one step taller than a step.
+    expect(levels).toEqual([115, 114, 113, 112, 111, 110, 110, 110, 110]);
+    for (let k = 0; k < levels.length; k++) {
+      const cut = (ground[k] as number) + 1 - (levels[k] as number);
+      expect(cut).toBeLessThanOrEqual(k === 0 || k === levels.length - 1 ? 0 : MAX_TREAD_CUT);
+    }
+    // The recess is the mechanism, so its absence is a regression too.
+    expect(Math.max(...levels.map((l, k) => (ground[k] as number) + 1 - l))).toBeGreaterThan(0);
   });
 
   it("refuses the whole run when the bottom step is out of reach", () => {

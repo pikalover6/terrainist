@@ -298,7 +298,17 @@ worth asking is asked of the line.**
 
 - **The tread law.** `need[k] = max(g[k] + 1, need[k+1] − 1)` taken backwards
   decides where steps go; slabs and stairs are decoration over that, never the
-  mechanism. A run that cannot be made climbable is refused whole.
+  mechanism. A run that cannot be made climbable is refused whole. That
+  recurrence caps the *rise*, and nothing capped the **fall**: a flight crossing
+  a terrace cut rode the platform out to the edge and dropped the whole terrace
+  in one riser, which the walkability audit read as fifty-four disconnected
+  components. Two further passes cap it. A backward pass lets the level start
+  down *before* the edge, cutting up to `MAX_TREAD_CUT` (four) into the platform
+  above — a recessed stairway, claimed through the ground contract as a
+  `profile` exactly as a road claims its bench, its carved sides dressed by
+  `finishCutFaces` — and a forward pass makes up the rest with embankment below.
+  The terrace rise itself is never capped: a large drop between two levels is
+  legitimate, and what a connection owes is to **earn its drop with run**.
 - **Band membership is perpendicular distance to the true line.** A course one
   column wide cannot be continuous on a diagonal (unit width spans ≈1.41
   lattice columns), so `thickenCourse` recruits one bridging column where the

@@ -838,6 +838,25 @@ export function profileSpan(profile: SweptProfile): LaneSpan {
 /** Why a run refused to build. */
 export type TreadRefusal = "unclimbable" | "unbuildable";
 
+/**
+ * How deep a flight may carve its own slot into the platform it starts on.
+ *
+ * Four, and the number is a shape rather than a budget. One to three is a
+ * recess: the walls of the slot rise to a walker's knee, waist and shoulder as
+ * the flight descends into it, and the whole thing still reads as a stairway cut
+ * into the terrace edge — which is exactly the first of Kai's three ways of
+ * earning a drop with run. At five the walls are over the walker's head for the
+ * length of the run and the answer has quietly become a **trench**, which is a
+ * different building and wants to be built deliberately, roofed or walled or
+ * given a mouth, rather than arrived at by a recurrence.
+ *
+ * So the bound is not "a deeper cut is unsafe"; it is "a deeper cut is a
+ * different sentence". Where it bites, the run must lengthen instead — the
+ * connector starts further back, or angles along the contour — and that decision
+ * belongs to whoever routed the flight, not to the tread law.
+ */
+export const MAX_TREAD_CUT = 4;
+
 export interface TreadRun {
   /** The level each column is built to, or `null` when the run is refused. */
   readonly levels: readonly number[] | null;
@@ -861,6 +880,38 @@ export interface TreadRun {
  * refused **whole** if the bottom step lands out of reach of the ground in
  * front of it, or if any column needs more fill than the cap allows: half a
  * staircase that ends in a two-block hop is worse than no staircase.
+ *
+ * ## The fall, and why the recurrence above is only half a law
+ *
+ * That recurrence caps the **rise** walking forward and says nothing at all
+ * about the **fall**. `need[k] ≥ ground[k] + 1` is masonry laid on the surface
+ * of the hill, so where a flight crosses a terrace cut — flat platform, then
+ * five blocks of nothing — the level rides the platform to the last column and
+ * then drops the whole five in one step. The flight is severed by its own
+ * riser, in the middle of its own run, and no test could see it: the fixtures
+ * all rose monotonically, where `|Δ| ≤ 1` is free by construction. The
+ * walkability audit found it as fifty-four disconnected components.
+ *
+ * The answer is **not** to cap the terrace. Kai's rule is the opposite: a large
+ * rise between two levels is legitimate and is what a hill town *is*; what a
+ * connection owes is to **earn its drop with run**. So the level is allowed to
+ * start down *before* the edge — a recessed stairway carved into the platform
+ * above, which is the first of the three ways of buying run — and that means
+ * the flight is allowed to **cut**:
+ *
+ * 1. a backward **cap** pass lowers each column to at most one grade above the
+ *    column ahead of it, down to a floor of `ground + 1 − {@link MAX_TREAD_CUT}`;
+ * 2. a forward **fill** pass makes up whatever the floor would not give, which
+ *    is embankment onto the ground below, capped by `maxFill` as it always was.
+ *
+ * Neither pass can touch a run that was already legal — where the fall is
+ * within the grade, the cap pass's `min` picks the value already there — so
+ * every flight this compiler builds today is bit-for-bit what it was.
+ *
+ * A cut column is a level the flight claims *below* the platform, declared as a
+ * `profile` claim through the ground-contract driver exactly as a road declares
+ * its bench; the sides of the carved slot are new cut faces, which the
+ * late-running `finishCutFaces` dresses as rock or masonry like any other.
  *
  * **Slabs and stairs are decoration on top of that level, never the
  * mechanism.** Raising every column by the same half block leaves every riser
@@ -928,6 +979,35 @@ export function synthesizeTreads(
     }
   }
 
+  // --- the fall ------------------------------------------------------------
+  // Everything above caps the rise. These two passes cap the fall, and they are
+  // written so that they cannot touch a run that was already legal: where the
+  // fall is within the grade, the `min` below picks the value already there and
+  // the `max` after it changes nothing.
+  //
+  // The **floor** is what makes the difference between the two answers a flight
+  // can give a terrace. A cut column is the flight starting down before the
+  // edge — a slot recessed into the platform above — and the endpoints are
+  // exempt: they are the landings this run is measured against, the pin's level
+  // where there is a pin and the natural ground where there is not, and a flight
+  // that carved its own landing away would land in a hole.
+  const floor = (k: number): number => {
+    if (k === 0) return pinFirst ?? (ground[0] as number) + 1;
+    if (k === n - 1) return pinLast ?? (ground[n - 1] as number) + 1;
+    return (ground[k] as number) + 1 - MAX_TREAD_CUT;
+  };
+  for (let k = n - 2; k >= 0; k--) {
+    need[k] = Math.max(Math.min(need[k] as number, (need[k + 1] as number) + maxGrade), floor(k));
+  }
+  // What the floor would not give is made up with embankment on the way down,
+  // which is the ordinary fill the cap below already governs.
+  for (let k = 1; k < n; k++) {
+    need[k] = Math.max(need[k] as number, (need[k - 1] as number) - maxGrade);
+  }
+  if (pinLast !== undefined && (need[n - 1] as number) !== pinLast) {
+    return { levels: null, refusal: "unclimbable", risers: [] };
+  }
+
   // The bottom step has to be reachable from the ground it starts on — or, when
   // the bottom landing has an owner, from that owner's level, which is the
   // measurement that is actually true once everything is built.
@@ -983,6 +1063,18 @@ export interface CartRun {
  *   the surface of the hill, and on any slope steeper than the cap the hill
  *   outruns it. A carriage road is benched *into* its hillside, which is what
  *   every mountain road in the world is.
+ *
+ *   **That sentence stays the cart's alone** (2026-08-07). {@link
+ *   synthesizeTreads} learned to cut too, and the two cuts are deliberately not
+ *   the same cut, so this profile is unchanged. The road's is *unbounded* over
+ *   the whole run and is how it climbs at all; the flight's is bounded at
+ *   {@link MAX_TREAD_CUT} and is a local recess that lets a descent begin before
+ *   an edge. Lending the flight this licence would turn every stair-alley on a
+ *   steep flank into a trench the length of the flank; lending the road the
+ *   flight's bound would refuse the routes this profile exists to build. And the
+ *   cart never had the defect that forced the flight's change: the envelope
+ *   below is a lower envelope of unit cones, so it is 1-Lipschitz in **both**
+ *   directions and its fall was capped from the first line it was written on.
  *
  * A **landing** (`landing[k] === 1`) is one group however long it is, so a
  * hairpin is level by construction rather than by a later flattening pass. The

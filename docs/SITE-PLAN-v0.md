@@ -318,6 +318,19 @@ guarantees a connected skeleton exactly as it does today. Two rules:
 - A connector that stalls without reaching another principal street is kept only
   if it left the terrace it started on, unchanged from `terraced`'s
   `keepStalled` rule.
+- **Only a principal contour street sprouts connectors** (2026-08-07). The loop
+  counted every segment laid so far, which after §3.6a includes the carriage
+  spine and its junction stubs, so the spine grew stair-alleys down the flank
+  beside a descent it had already made — parallel ramps, visible from the air,
+  and street counted twice in §6.1's composition. The `keepStalled` rule above
+  is the remaining hole: below the *lowest* contour street every walk stalls by
+  construction, and what it builds is a walled causeway into open field.
+  Refusing those was implemented and measured — it takes `site-plan-hillside`
+  from 15 walkable components to 10 and from 797 orphan columns to 9 — and
+  reverted, because on `site-plan-hillside-steep` a seam those causeways happen
+  to cover is promoted to §5.5's `offPlatform` error the moment they go. That is
+  a planning defect the causeway was masking, and it wants fixing before the
+  connector rule can be tightened.
 
 **Civic ground.** `params.plaza` and any `FormReservation` receive a platform of
 their own, at the level of the principal street they touch, sized to the

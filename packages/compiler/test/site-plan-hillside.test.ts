@@ -544,21 +544,44 @@ describe("flat ground cannot select this form", () => {
 const GOLDEN = {
   quarterColumns: 24_320,
   districtBuildings: 8,
-  /** A terrace is one building with `bays` front doors. This is the town's size. */
-  dwellings: 19,
-  lots: 14,
+  /**
+   * A terrace is one building with `bays` front doors. This is the town's size.
+   *
+   * 19 → 21 (2026-08-07): the carriage spine no longer sprouts stair-alleys of
+   * its own, so two bays' worth of frontage that a connector used to run
+   * through is ground a terrace can stand on.
+   */
+  dwellings: 21,
+  // 14 → 15 (2026-08-07), with the spine's own stair-alleys: one lot's worth of
+  // frontage that a connector ran through is a lot again.
+  lots: 15,
   lotsDropped: 7,
-  infill: 5,
-  terraceBays: 14,
+  // 5 → 4: with fifteen lots rather than fourteen, one gap the grammar used to
+  // fill with an infill block is a lot with a building on it.
+  infill: 4,
+  // 14 → 17: the same three bays the dwelling count gained, counted as bays.
+  terraceBays: 17,
   offPlatform: 0,
-  wallColumns: 150,
+  /**
+   * 150 → 156 (2026-08-07), and up is the right direction for once: a flight
+   * that cuts a slot into the platform above (`synthesizeTreads`) makes six more
+   * columns of face that the retaining pass can stand a wall against, where
+   * before the same six columns were the top of a five-block step nobody dressed.
+   */
+  wallColumns: 156,
   /** Rungs of §6.3's ladder walked, and where it landed. */
   replanRounds: 3,
   principalStreets: 2,
   // naturalFraction >= 0.40 clears; streetFraction misses 0.25 by nine
   // thousandths, and §3.6a's closing note is that measurement — see below.
-  naturalFraction: 0.4706,
-  streetFraction: 0.2745,
+  // 0.4706 → 0.4816 (2026-08-07): the carriage spine's own stair-alleys are no
+  // longer drawn, and that street went back to being hillside. The bar is 0.40
+  // and this clears it by more than it did.
+  naturalFraction: 0.4816,
+  // 0.2745 → 0.2602, the other side of the same ledger. §6.2's street bar is
+  // 0.25 and this still clears it — by one point rather than two and a half,
+  // which is the honest reading: the spine's alleys were padding the number.
+  streetFraction: 0.2602,
   /** §3.6a: the spine's own share of the street, reported and never gated. */
   spineFraction: 0.0191,
   spineArc: 53,
@@ -667,12 +690,17 @@ describe("the fixture hill town, compiled", () => {
     // proposes is right is Kai's call on a walk rather than a threshold edit.
     expect(natural / n).toBeGreaterThanOrEqual(COMPOSITION_GATES.naturalFraction);
     expect(street / n).toBeGreaterThan(COMPOSITION_GATES.streetFraction);
-    // …and the miss is **not** the spine's own columns: net of them the quarter
-    // is still over, because the corridor changed the plan around it. That is
-    // the measurement §3.6a's closing note is about, and the reason the two
-    // answers it proposes are a walk rather than a threshold edit.
+    // …and **as of 2026-08-07 the spine's own columns are now the margin**,
+    // which is a change of reading rather than of gate and is worth stating in
+    // the direction it now runs. Gross street clears 0.25 at 0.260; net of the
+    // spine's 0.019 it is 0.241, *under* the bar. Before this round the same
+    // subtraction left the quarter over it, and what closed the gap was
+    // removing the stair-alleys the spine used to sprout beside its own descent
+    // — street that was there twice. §3.6a's closing note asked whether the
+    // corridor pays for itself; the honest answer today is that the terraces
+    // need it to, which is more of a walk question than it was, not less.
     expect(district.stats["spineFraction"]).toBeCloseTo(GOLDEN.spineFraction, 3);
-    expect(street / n - (district.stats["spineFraction"] as number)).toBeGreaterThan(
+    expect(street / n - (district.stats["spineFraction"] as number)).toBeLessThan(
       COMPOSITION_GATES.streetFraction,
     );
     expect(district.form.adapted.join(" ")).toContain(
@@ -742,9 +770,17 @@ const STEEP = {
   terraceBays: 4,
   wallColumns: 85,
   replanRounds: 3,
-  /** Steep ground clears **both** bars with its spine: see the note below. */
-  naturalFraction: 0.6686,
-  streetFraction: 0.2386,
+  /**
+   * Steep ground clears **both** bars with its spine: see the note below.
+   *
+   * 0.6686 → 0.6719 (2026-08-07), three thousandths of a quarter: the spine's
+   * own stair-alleys are gone, so that much street went back to hillside.
+   */
+  naturalFraction: 0.671875,
+  // 0.2386 → 0.2347, the same four thousandths of street the hillside gave back.
+  // It clears the same bar the same way — this fixture's assertion is that steep
+  // ground stays *under* 0.25, so less street is the direction that helps.
+  streetFraction: 0.2347,
   spineFraction: 0.0284,
 } as const;
 

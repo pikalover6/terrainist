@@ -881,9 +881,21 @@ function draw(ctx: FormContext): FormResult {
   for (let k = 0; k < cells; k++) {
     if (masked(k)) terraceIndex[k] = Math.floor(((smooth[k] as number) - base) / TERRACE_RISE);
   }
+  // `segments` already holds the carriage spine and its junction stubs by the
+  // time this count is taken, so the loop below used to run over those too.
   const principals = segments.length;
   for (let s = 0; s < principals; s++) {
     const segment = segments[s] as StreetSegment;
+    // **Only a principal contour street sprouts connectors**, which is what the
+    // comment below has always claimed and nothing checked. A carriage spine
+    // already grades itself from terrace to terrace at 1 in `SPINE_GRADE_RUN`,
+    // so a stair-alley thrown downhill from one is a second connection nobody
+    // asked for, drawn beside a descent the road has already made — and `spj*`,
+    // the spine's own junction stubs, are a handful of columns long and sprout
+    // alleys off the side of a stub. The guard is inside the loop rather than in
+    // the bound because `s` has to stay the segment's own index: `flightFrom`
+    // reads it against `owner` to know which street it started from.
+    if (segment.kind !== "street") continue;
     const pitch = ctx.blockSize;
     const starts =
       segment.path.length > pitch
