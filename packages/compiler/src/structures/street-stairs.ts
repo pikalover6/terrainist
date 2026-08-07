@@ -123,6 +123,15 @@ export const STREET_STAIR_RAIL_GAP_BRIDGE = 4;
  */
 export const STREET_STAIR_MIN_RAIL_RUN = 3;
 
+/**
+ * How far the ground outside a flight's verge must fall before that side of the
+ * flight is worth railing.
+ *
+ * Two: a one-block step down off the edge of a stair is a kerb, and a kerb does
+ * not want a wall along it. Two blocks is the first drop a player can fall down.
+ */
+export const STREET_STAIR_RAIL_DROP = 2;
+
 /** Steps between lanterns on the balustrade — {@link STAIR_PROFILE}'s `lamp`. */
 function lampPitch(): number {
   return featureOf(STAIR_PROFILE, "lamp").pitch;
@@ -187,14 +196,17 @@ export interface StreetStairGeometryInput {
 /**
  * What one column of a flight is for.
  *
- * - `"tread"` — walked on, and dressed with the stair/slab/landing mix.
- * - `"parapet"` — the balustrade's plinth: the outermost *carriageway* column,
- *   levelled with the flight and left as plain masonry, because a slab under a
- *   wall post is a hole in the parapet line.
+ * - `"tread"` — walked on, and dressed with the stair/slab/landing mix. **Every
+ *   carriageway column is one**, which is the whole of the fix of 2026-08-07:
+ *   the band used to spend the two columns beside the centre line on a
+ *   balustrade plinth, so a lane-width connector was one walkable column between
+ *   two continuous wall courses and two of them crossing was the junction maze
+ *   Kai walked.
  * - `"verge"` — the column outside the carriageway, levelled so the bank does
- *   not poke through the edge of the stair. Nothing stands on it.
+ *   not poke through the edge of the stair, not dressed with the tread mix, and
+ *   **the only thing the balustrade may stand on** ({@link streetStairRail}).
  */
-export type StreetStairRole = "tread" | "parapet" | "verge";
+export type StreetStairRole = "tread" | "verge";
 
 /** One column of a flight's tread band. */
 export interface StreetStairColumn {
@@ -212,15 +224,15 @@ export interface StreetStairColumn {
 export interface StreetStairGeometry {
   readonly centre: readonly Point2[];
   readonly columns: readonly StreetStairColumn[];
-  /** Lateral offset of the balustrade course; 0 when the flight carries none. */
-  readonly parapet: number;
+  /** Lateral offset of the balustrade course — the verge line. */
+  readonly rail: number;
   /** Present when the flight is refused: why, in the author's terms. */
   readonly refusedBecause?: string;
 }
 
 /** Nothing to build, for a run that never had a chance. */
 function refusedGeometry(reason: string): StreetStairGeometry {
-  return { centre: [], columns: [], parapet: 0, refusedBecause: reason };
+  return { centre: [], columns: [], rail: 0, refusedBecause: reason };
 }
 
 /**
@@ -259,18 +271,23 @@ export function streetStairGeometry(input: StreetStairGeometryInput): StreetStai
   // steps segment is three columns of tread, and the profile's five would eat
   // the verge either side of it.
   const tread = Math.min(half, (input.width - 1) >> 1);
-  // **The balustrade stands on the outermost carriageway column, not beyond
-  // it.** The obvious place for a parapet is one column outside the tread, and
-  // it is the wrong one: that column is the innermost *sidewalk* column of the
-  // segment, and `streetscape.ts`'s `paveSidewalks` re-levels the whole sidewalk
-  // band to its street's centre line after this pass has run — which on a flight
-  // means the ground is pulled out from under a wall that was, at the time it
-  // was emitted, standing on solid tread. (Measured: 75 of 487 balustrade blocks
-  // on the terraced world, and every one of them a sidewalk column.) The
-  // streetscape skips any column in `masks.carriageway`, so a parapet inside the
-  // carriageway band is safe from it by construction — the same reason the
-  // treads themselves have never been disturbed.
-  const parapet = tread > 0 ? tread : 0;
+  // **The whole carriageway is tread, and the balustrade stands on the verge.**
+  //
+  // The old rule put the balustrade's plinth on the outermost *carriageway*
+  // column, so a lane-width flight — `tread = 1` — was one walkable column
+  // between two continuous wall courses, and the three columns of tread the
+  // comment above promises were never built. The reason it did that was a
+  // sequencing hazard that no longer exists: `streetscape.ts`'s `paveSidewalks`
+  // used to re-level the sidewalk band by hand, after this pass, which pulled the
+  // ground out from under a wall standing one column outside the carriageway.
+  // It now *declares* (`docs/GROUND-CONTRACT-v0.md` §9a): its claims are
+  // `street.sidewalk`, rank 90, and a flight declares its whole band — verges
+  // included — as `street.network`, rank 80, with `preserve`. A lower rank wins,
+  // so the sidewalk pass cannot move a column of this flight whatever the raster
+  // thinks; the hazard is arbitrated rather than avoided.
+  //
+  // So the verge carries the rail, the carriageway carries the player, and the
+  // flight's footprint is exactly the width it always was.
   const verge = tread + 1;
 
   const columns: StreetStairColumn[] = [];
@@ -286,13 +303,11 @@ export function streetStairGeometry(input: StreetStairGeometryInput): StreetStai
       const k2 = idx(x, z);
       if (input.blocked[k2] === 1 || input.paved[k2] === 1) continue;
       if (input.water[k2] === 1 || plan.fluidKind[k2] !== FluidKind.NONE) continue;
-      const d = Math.abs(a);
-      const role: StreetStairRole =
-        d === verge ? "verge" : parapet > 0 && d === parapet ? "parapet" : "tread";
+      const role: StreetStairRole = Math.abs(a) === verge ? "verge" : "tread";
       columns.push({ k, a, x, z, idx: k2, role });
     }
   }
-  return { centre, columns, parapet };
+  return { centre, columns, rail: verge };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -450,10 +465,10 @@ export function dressStreetStairs(
     if (input.occupancy !== undefined) input.occupancy.mask[k2] = 1;
     columns++;
 
-    // The parapet plinth and the verge either side are levelled with the flight
-    // — so the bank does not poke through the edge of the stair — but neither
-    // carries the tread mix. The balustrade on top of the plinth is the furnish
-    // phase's.
+    // The verge either side is levelled with the flight — so the bank does not
+    // poke through the edge of the stair — but does not carry the tread mix: a
+    // slab under a wall post is a hole in the balustrade line. The balustrade
+    // itself is the furnish phase's.
     if (column.role !== "tread") continue;
 
     // The tread law's mix, laid *into* the top course rather than on top of it:
@@ -501,6 +516,22 @@ export function dressStreetStairs(
  * A lamp is the same two courses the hillside set-piece stair uses: the wall
  * post, a second wall block, and a lantern on top, every `lamp` steps of the
  * profile's own pitch.
+ *
+ * ## A rail needs something to fall off
+ *
+ * The eligibility used to be `top === level − 1` — "the flight actually rises
+ * beside this column" — which is a *support* test wearing an exposure test's
+ * docstring: it is true by construction of every column the flight just
+ * levelled, so both rails ran the full length of every flight whether or not
+ * there was anything on the other side of them. A flight crossing a flat bench
+ * came out as two walls with a stair between them.
+ *
+ * So support is still required — a wall must stand on the flight's own masonry,
+ * or `unsupported.chain` finds it — and **exposure** is now required too: the
+ * ground one column *outside* the verge must sit at least
+ * {@link STREET_STAIR_RAIL_DROP} below the flight's own surface. An interior
+ * flight across a platform is rail-free; a flight along a real drop keeps the
+ * rail on the exposed side and nothing on the other.
  *
  * ## The rail is a *course*, not a per-column decision
  *
@@ -566,28 +597,53 @@ export function streetStairRail(
   // stubs are decided along the rail rather than across the flight.
   const sides = new Map<number, StreetStairColumn[]>();
   for (const column of geometry.columns) {
-    if (column.role !== "parapet") continue;
+    if (column.role !== "verge") continue;
     const side = Math.sign(column.a);
     const run = sides.get(side);
     if (run === undefined) sides.set(side, [column]);
     else run.push(column);
   }
 
-  /** Every parapet column that will carry a rail, in `k` order per side. */
+  /** Every verge column that will carry a rail, in `k` order per side. */
   const railed: StreetStairColumn[] = [];
+  const region = input.region;
+  const within = (x: number, z: number): boolean =>
+    x >= region.x0 &&
+    z >= region.z0 &&
+    x < region.x0 + region.width &&
+    z < region.z0 + region.depth;
+  /**
+   * The ground one column further out than this verge column, or `undefined`
+   * where there is no such column to read. Off the edge of the region is not a
+   * measured drop, so it is not an excuse for a wall.
+   */
+  const outside = (column: StreetStairColumn): number | undefined => {
+    const step = stepAt(geometry.centre, column.k);
+    const px = -step.dz;
+    const pz = step.dx;
+    const s = Math.sign(column.a);
+    const x = column.x + px * s;
+    const z = column.z + pz * s;
+    if (!within(x, z)) return undefined;
+    return input.plan.ground[(z - region.z0) * region.width + (x - region.x0)] as number;
+  };
   for (const side of [...sides.keys()].sort((a, b) => a - b)) {
     const run = (sides.get(side) as StreetStairColumn[])
       .slice()
       .sort((a, b) => a.k - b.k);
     const n = run.length;
-    // Dry ground, and the flight rising beside it — the two tests that used to
-    // be applied one column at a time.
+    // Dry ground, the flight standing beside it (so the wall has the flight's
+    // own masonry under it), **and a drop on the far side of it** — a rail with
+    // nothing to fall off is the wall that made the junctions a maze.
     const rises = new Uint8Array(n);
     for (const [i, column] of run.entries()) {
       if (input.plan.fluidKind[column.idx] !== FluidKind.NONE) continue;
       const top = input.plan.ground[column.idx] as number;
       const level = levels.levels[column.k] as number;
-      if (top === level - 1) rises[i] = 1;
+      if (top !== level - 1) continue;
+      const beyond = outside(column);
+      if (beyond === undefined || beyond > top - STREET_STAIR_RAIL_DROP) continue;
+      rises[i] = 1;
     }
     // Wet is wet: a bridged column still has to be dry ground to stand on.
     const dry = new Uint8Array(n);
@@ -637,14 +693,11 @@ export function streetStairRail(
     const top = input.plan.ground[column.idx] as number;
     // The plinth the wall stands on, emitted rather than assumed. At this point
     // it is the block the flight already levelled the column to, so on the
-    // ordinary path it rewrites stone with the same stone. It earns its place on
-    // the path that is not ordinary: `streetscape.ts` runs *after* this pass and
-    // re-levels the sidewalk band to its street's centre line, and where a bend
-    // puts a parapet column into that band by one column the ground would go out
-    // from under a wall that was standing on solid tread when it was emitted.
-    // A structure block is laid after the column plan is materialised, so the
-    // footing survives — which is the difference between a balustrade and the
-    // floating balustrade v0 refused to build.
+    // ordinary path it rewrites stone with the same stone. It earns its place
+    // where the column is *not* the flight's own masonry — a bridged landing, a
+    // column another segment owns: a structure block is laid after the column
+    // plan is materialised, so the footing survives, which is the difference
+    // between a balustrade and the floating balustrade v0 refused to build.
     out.push({ x: column.x, y: top, z: column.z, stateId: plinth });
     out.push({ x: column.x, y: top + 1, z: column.z, stateId: wall });
     if (Math.sign(column.a) !== litSide) continue;

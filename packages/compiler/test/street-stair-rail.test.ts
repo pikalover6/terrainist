@@ -150,11 +150,55 @@ describe("streetStairRail builds a course, not a row of posts", () => {
   /** A clean bank: a block of rise per column of path. */
   const bank = (x: number): number => 64 + Math.min(Math.max(x - 8, 0), 23);
 
+  /**
+   * The same bank with a **drop off its north side**, four blocks down, one
+   * column outside the flight's verge (the flight is width 5, so `verge` is 3
+   * and the column that decides exposure is `z = 16`).
+   *
+   * Without it there is nothing to fall off and — since 2026-08-07 — nothing to
+   * rail: the old fixture's flight ran across ground that was level with it on
+   * both sides and got two full-length balustrades anyway, which is exactly the
+   * defect the exposure gate removes.
+   */
+  const cliff = (x: number, z: number): number => (z <= 16 ? bank(x) - 4 : bank(x));
+
+  it("builds no rail at all where there is nothing to fall off", () => {
+    // The interior flight: it crosses ground that is level with it on both
+    // sides, so both balustrades are walls in the middle of a walkable place.
+    // Two of these crossing is the junction maze of screenshot 20.
+    const plan = planOf(stack, (x) => bank(x));
+    const { geometry, levels } = flight(plan);
+    settle(plan, geometry, levels);
+    const blocks = streetStairRail(geometry, levels, {
+      region: REGION,
+      plan,
+      stack,
+      lantern: stack.blockByName("minecraft:lantern")?.stateId ?? 0,
+    });
+    expect(blocks).toEqual([]);
+  });
+
+  it("rails the exposed side and leaves the other side open", () => {
+    const plan = planOf(stack, cliff);
+    const { geometry, levels } = flight(plan);
+    settle(plan, geometry, levels);
+    const blocks = streetStairRail(geometry, levels, {
+      region: REGION,
+      plan,
+      stack,
+      lantern: stack.blockByName("minecraft:lantern")?.stateId ?? 0,
+    });
+    expect(blocks.length).toBeGreaterThan(0);
+    // `verge` is 3, so the two candidate lines are z = 17 and z = 23; only the
+    // one above the drop carries anything.
+    expect(new Set(blocks.map((b) => b.z))).toEqual(new Set([17]));
+  });
+
   it("leaves no run shorter than the shortest rail worth building", () => {
     // A landing six columns wide — wider than the gap the rail is carried
     // across — three columns from the foot of the flight. The rail below it is
     // a two-column stub, and a two-column stub is two full-height posts.
-    const plan = planOf(stack, bank);
+    const plan = planOf(stack, cliff);
     const { geometry, levels } = flight(plan);
     settle(plan, geometry, levels, (k) => k >= 2 && k <= 7);
     const blocks = streetStairRail(geometry, levels, {
@@ -172,7 +216,7 @@ describe("streetStairRail builds a course, not a row of posts", () => {
   it("bridges a short landing rather than stopping at it", () => {
     // Three columns — inside `STREET_STAIR_RAIL_GAP_BRIDGE` — so the two halves
     // of each side's rail must come out as one run rather than as four stubs.
-    const plan = planOf(stack, bank);
+    const plan = planOf(stack, cliff);
     const { geometry, levels } = flight(plan);
     settle(plan, geometry, levels, (k) => k >= 10 && k <= 12);
     const blocks = streetStairRail(geometry, levels, {
@@ -192,7 +236,7 @@ describe("streetStairRail builds a course, not a row of posts", () => {
     // Every emitted block sits on the ground actually under it: the rule that
     // kept the balustrade off a column a later segment had lowered, and it has
     // to survive the gap bridging.
-    const plan = planOf(stack, bank);
+    const plan = planOf(stack, cliff);
     const { geometry, levels } = flight(plan);
     settle(plan, geometry, levels, (k) => k >= 10 && k <= 12);
     const blocks = streetStairRail(geometry, levels, {
