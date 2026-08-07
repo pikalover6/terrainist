@@ -569,9 +569,20 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 
 ## Roadmap
 
-**Immediate, in order.**
-1. The **wall artifact** above — swept course + coping.
-2. The **ground contract**, WP-1 → WP-6.
+**Immediate, in order.** *(The wall artifact and the ground contract's
+WP-1 → WP-5 shipped 2026-08-06 — see git history and
+`docs/GROUND-CONTRACT-v0.md` §9a for what each landed.)*
+1. **Kai walks** the post-contract worlds. Every change since the last walk is
+   attributable: the wall course + coping, or one of the named inversions
+   I1–I6.
+2. Settle **§13.3** (the pad apron as a declared transition) — the 55-column
+   golden becomes a world change at WP-6's first commit.
+3. Re-measure `RETAIN_MAX` / `RETAIN_RAIL` / `MIN_RETAIN_RUN` on a generated
+   hill town (§13.8) — WP-6 makes them the resolver's transition table.
+4. The **ground contract WP-6** — the freeze, the deferred §9a.7 items
+   (consumers read the resolver's transitions; the retaining pass's three
+   hand-built defences and `CURB_LEVEL_TOLERANCE` deleted), and §10's
+   deletion list.
 
 **Bespoke tier — remaining.**
 - Terrain seating (`seatY`, pad/embed/drape), landmark interiors, anchors→roads
