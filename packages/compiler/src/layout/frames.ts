@@ -34,6 +34,33 @@ export interface Point2 {
   readonly z: number;
 }
 
+/**
+ * The local heading of a polyline at index `i`, and its perpendicular.
+ *
+ * **The one heading rule in the compiler**, and it lives in this leaf module so
+ * that both halves of "the street" — `carriagewayCells` in `layout/streets.ts`
+ * and the street band a site planner must stand its platform under
+ * (`docs/SITE-PLAN-v0.md` §3.4 rule 2) — can read the same function without a
+ * module cycle. Two different notions of where a street is, is how a building
+ * ends up half in the road, and how a platform ends up half under one.
+ *
+ * Re-exported from `layout/streets.ts`, which is where it used to live and where
+ * every existing consumer still imports it from.
+ */
+export function headingOf(
+  path: readonly Point2[],
+  i: number,
+): { readonly dx: number; readonly dz: number; readonly px: number; readonly pz: number } {
+  const before = path[Math.max(0, i - 1)] as Point2;
+  const after = path[Math.min(path.length - 1, i + 1)] as Point2;
+  const dx = Math.sign(after.x - before.x);
+  const dz = Math.sign(after.z - before.z);
+  if (dx === 0 && dz === 0) return { dx: 0, dz: 1, px: 0, pz: 1 };
+  // Perpendicular: rotate the heading a quarter turn. `pz` scales the x offset
+  // and `px` the z offset, which is the convention `surfaceRoute` uses.
+  return { dx, dz, px: dx, pz: -dz };
+}
+
 /** The nine-grid cell indices of each token (§4.9.2). North is −Z, east is +X. */
 export const ZONE_CELL: Readonly<Record<ZoneToken, readonly [number, number]>> = Object.freeze({
   northwest: [0, 0],

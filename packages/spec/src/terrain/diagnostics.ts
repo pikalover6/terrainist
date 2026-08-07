@@ -411,6 +411,16 @@ export const TERRAIN_DIAGNOSTICS = {
   GROUND_INVARIANT: "LOAM-E494",
   /** Once per compile, summarising the transitions built and the requests overridden. */
   GROUND_TRANSITION: "LOAM-I495",
+  /**
+   * A site-planned quarter (`docs/SITE-PLAN-v0.md` §6.3) whose composition
+   * missed a gate on every rung of the replan ladder.
+   *
+   * A note rather than a warning: the ladder has already replanned the quarter
+   * smaller and shipped the best composition it found, so the world is drawn
+   * and walkable; what the author is being told is that this footprint on this
+   * slope is more engineering than town, and which measurement says so.
+   */
+  SITE_COMPOSITION: "LOAM-I496",
 } as const;
 
 /** Symbolic diagnostic name. */

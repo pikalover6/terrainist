@@ -250,6 +250,17 @@ At `medium` density with `sidewalk = 1` that is `1 + 16 + 1 = 18` columns,
 inside Sol's 16–28 band and inside the depth `MAX_INFILL_DEPTH = 16` the grammar
 will actually use.
 
+> **Amended by WP-1, 2026-08-06 — the street band comes off the raster.** The
+> claim starts at "the carriageway edge", and this section left that phrase to
+> arithmetic. `layDistrict` does not: it rasters the carriageway from the local
+> heading (`carriagewayCells`) and then **dilates** the sidewalk off that raster,
+> a ring walk that reaches a full column further on a diagonal run than
+> `half + sidewalk` says it does. A platform sized by the arithmetic leaves the
+> outermost verge column off the platform, which is exactly the `offPlatform`
+> §5.5 refuses. The planner therefore builds its band with the same two
+> functions the district will use — `headingOf` moved to `layout/frames.ts` and
+> `dilate` to one `dilateMask` — and the standing column is one ring beyond that.
+
 **Two rules make the strip a terrace rather than a stamp.**
 
 1. **A station whose claim is shallower than `MIN_STRIP_DEPTH` claims nothing.**
@@ -347,22 +358,89 @@ what it cost.
 > its transition, it is merged or dissolved.** It is never shipped for a
 > downstream pass to dress.
 
+> **Amended by WP-1, 2026-08-06 — narrowing cannot answer steepness, and does
+> not have to.** WP-0 reported (its finding 6) that `STRIP_DEPTH_MIN = 16` with
+> `TERRACE_RISE = 6` needs ground no steeper than about 1:3, while the walked
+> site is 1:2.5, and asked WP-1 to narrow `D_target` before giving up. Measured,
+> both halves of that are wrong in the same way: `STRIP_DEPTH_MIN` is a
+> **target**, not a requirement. What refuses a station is
+> `minStripDepth(sidewalk)` — ten columns at `sidewalk = 2` — and ten columns
+> stay inside one terrace rise on any slope gentler than about **1:1.7**. A
+> 1:2.5 quarter therefore plans at full depth and simply *claims less*: the
+> strips come out irregular and about thirteen deep instead of nineteen, which
+> is the sparse-but-real town narrowing was asked to produce, arrived at by the
+> claim rule that was already there. The measured steep fixture
+> (`examples/site-plan-hillside-steep.loam.json`, 208 blocks over 520) holds four
+> buildings and seven dwellings on 63% uncut hillside, `offPlatform` 0, lint 0.
+>
+> And narrowing **cannot** rescue a quarter this refuses: `D_target` is an upper
+> bound on a claim the terrace-rise test has already cut short, so a narrower
+> target lowers every candidate score and never raises one. Below ten columns
+> there is no lot the grammar will build (`MIN_INFILL_SIDE` is 7 and the verge is
+> not negotiable), so the floor is the grammar's and not the planner's to trade.
+> `narrowBy` survives as what §6.3 uses it for — a **composition** lever, a
+> shallower terrace that cuts and fills less — and is exercised as one.
+>
+> **Also added at WP-1, and not in this document:** a planned platform is
+> **closed and then opened** (`smoothTerrace` — a morphological closing at
+> radius 2, then an opening at radius 1) before it is declared as a `FormBench`,
+> and the strips are then intersected with what was actually cut, so no lot is
+> ever grown on a column no bench declares. A terrace's
+> boundary is irregular by design; a *notch* — a few columns of natural ground
+> with cut terrace either side, left where per-station depths stepped or a
+> released column sat between two kept ones — is not that, and neither is a
+> two-column spur following the last station of a claim. Both read as nothing on
+> the walk and both are expensive: `walkBack` steps back from a seam, finds one,
+> and reports `offPlatform`. On the steep fixture they were eight such columns.
+> Closing and opening is what takes the count to zero and holds it there.
+
 ### 3.8 Constants — normative
 
 | constant | value | derivation |
 | --- | --- | --- |
 | `TERRACE_RISE` | `RETAIN_MAX` (6) | The tallest step the terrace will cut or fill, tied to the tallest drop a retaining wall is built for, by the same argument `BENCH_HEIGHT_MAX` already makes. A terrace whose face is taller than any wall we build is a cliff with houses on it. A test MUST assert they cannot drift apart. |
 | `MIN_PRINCIPAL_STREETS` | 2 | Sol's floor. One contour street is `linear` on a slope. |
-| `MAX_PRINCIPAL_STREETS` | 4 | Sol's ceiling, and it is what bounds the whole composition: four streets × two sides × ~18 columns is at most ~150 columns of platform depth, against 24,320 columns of quarter. |
-| `STRIP_DEPTH_MIN` / `STRIP_DEPTH_MAX` | 16 / 28 | Sol's target lot/building depth band. |
-| `MIN_STRIP_DEPTH` | 8 | `MIN_INFILL_SIDE` (7) plus one column for the rear boundary — the same number `terraced`'s `MIN_BENCH_LOTS` already is, restated for the same reason (a form sits upstream of `district.ts`). |
+| `MAX_PRINCIPAL_STREETS` | 4 | Sol's ceiling. **The justification below is void — see the amendment after this table.** |
+| ~~`STRIP_DEPTH_MIN`~~ / `STRIP_DEPTH_MAX` | ~~16~~ / 28 | Sol's target lot/building depth band. **`STRIP_DEPTH_MIN` deleted at WP-1** — it was a target this table stated as a requirement, and the floor that refuses a station is `minStripDepth(sidewalk)`. See the amendment after this table and §3.7's. |
+| `MIN_STRIP_DEPTH` | `sidewalk + MIN_INFILL_SIDE + REAR_MARGIN` (10 at `sidewalk = 2`) | **Amended by WP-1** — was the constant 8. See the amendment after this table. |
 | `REAR_MARGIN` | 1 | The column the rear transition stands on. |
 | `MIN_STRIP_RUN` | `2 · LOT_FRONTAGE[density]` | Two lots. One lot is a building, not a terrace — the same argument `TERRACE_MIN_LOTS = 2` makes one scale down. |
 | `MIN_STRIP_SEPARATION` | 4 | Below this the two faces interfere and neither has room for a treatment. |
 | `MIN_STREET_SCORE` | `2 · blockSize` | A street shorter than two blocks of buildable frontage is not a street. |
 | `MAX_CANDIDATE_LEVELS` | 64 | A performance bound on the candidate sweep, not a design choice. |
 | `BANK_RUN(drop)` | `2 · drop` | Two columns of run per block of difference — the ratio `LevelPad.adaptiveApron` already uses and which was measured to read as a ramp rather than as a cut. |
-| `MAX_REPLAN_ROUNDS` | 3 | §6.3. |
+| `MAX_REPLAN_ROUNDS` | 3 | §6.3, and now exactly `MAX_PRINCIPAL_STREETS − MIN_PRINCIPAL_STREETS + 1`: the ladder is `4 → 3 → 2` and there is nowhere below two to go. |
+
+> **Amended by WP-1, 2026-08-06 — two rows of this table, and the argument under
+> one of them.**
+>
+> **`MAX_PRINCIPAL_STREETS`'s justification compares a depth to an area, and the
+> conclusion it draws is false.** "Four streets × two sides × ~18 columns is at
+> most ~150 columns of platform depth, against 24,320 columns of quarter" divides
+> a *depth* by an *area*: a street's platform is 18 columns deep and as long as
+> the contour it follows, so four streets on a quarter whose contours span it
+> cover a fifth to a quarter of it in platform and a further two fifths in road.
+> WP-0 measured the curve on the fixture: at four principal streets natural
+> ground is **0.199** and street **0.379**, at three **0.326 / 0.331**, at two
+> **0.481 / 0.249**. §6.1's two bars (natural ≥ 0.40, street ≤ 0.25) are
+> therefore **mutually unsatisfiable at four streets on this site**, and the
+> ceiling is not what bounds the composition — the ladder is.
+>
+> The number 4 stands, as a **ceiling on the first attempt**. What changes is
+> that §6.3's replan ladder is brought forward from WP-4 into WP-1 and is where
+> the composition is actually decided; on the ratified fixture it lands on **two**
+> principal streets, and on the steep fixture on two as well.
+>
+> **`MIN_STRIP_DEPTH` mixed two datums.** The constant 8 is `MIN_INFILL_SIDE`
+> (7) plus the rear margin, and `MIN_INFILL_SIDE` is a depth the grammar measures
+> back from the **build-to line**, while `D_target` and this floor are counted
+> from the **carriageway edge**. The two differ by the sidewalk, so at
+> `sidewalk = 2` a station could clear the rule with six buildable columns and
+> the frontage walk would drop every lot on it — a rule that passes and then
+> produces nothing, which is worse than a rule that refuses. Stated against one
+> datum it is `sidewalk + MIN_INFILL_SIDE + REAR_MARGIN`, and the code carries it
+> as `minStripDepth(sidewalk)` rather than as a constant, because it depends on a
+> quantity the context supplies.
 
 ---
 
@@ -607,7 +685,16 @@ parts for.
 | `hardenedPerimeter` | (wall + revetted) ÷ total platform perimeter | — | ≤ 0.50 |
 | `railedShare` | railed columns ÷ exposed retaining columns | ≈ 1.0 | 0.10 – 0.25 |
 | `offPlatform` | the retaining pass's count | **395** | **0** |
+| `dwellings` | buildings − terraces + terrace bays (WP-1) | — (not measured on the control) | — |
 | `wallPerFrontage` | wall columns ÷ Σ lot frontage | — | ≤ 0.60 |
+
+> **Amended by WP-1, 2026-08-06 — the town is counted in dwellings.** A terrace
+> is **one** `BuiltBuilding` with `bays` front doors, and a player walking the
+> street counts the doors. The ratified fixture holds nine buildings and
+> **seventeen dwellings**; §8.3 check 2 ("building count ≥ 30") is counting the
+> wrong noun, and every quarter now reports `dwellings` beside its building count
+> in `DistrictStats`. Additively: for a quarter with no terrace the two are
+> equal.
 
 `railedShare`'s target band is Sol's ("perhaps 10–25% of exposed retaining
 edges"). `hardenedPerimeter`'s and `wallPerFrontage`'s targets are the blunt
@@ -624,6 +711,31 @@ contour length".
 control (the streetscape's dilation, the furnishing pass's rails, the concurrent
 `faceCuts` rework), and gating on a number another subsystem owns is how a
 planner acquires responsibilities it cannot discharge.
+
+> **Amended by WP-1, 2026-08-06 — which two gates the ladder can actually
+> discharge.** This subsection is right about all four hard metrics as
+> *acceptance* checks and wrong about two of them as *replan* gates, because a
+> replan gate has to be measurable at the moment the plan exists:
+>
+> - **`naturalFraction` gates**, at 0.40. It is measured from the plan alone.
+> - **`streetFraction` gates**, at 0.25, contrary to the paragraph above. The
+>   reason given for excluding it — "the streetscape's dilation" is another
+>   subsystem's — is true of the *dilation* and beside the point: the dilation is
+>   a fixed ring count, and what moves this number by twenty points is **how many
+>   streets the planner laid**, which is exactly what the ladder changes. §8.3
+>   check 6 already treats it as a bar. On the fixture it is also the *binding*
+>   gate: natural clears at three streets, street only at two.
+> - **`platformPerBuilding` and `wallPerBuilding` do not gate the ladder.** They
+>   are counted from buildings and walls, neither of which exists when the plan
+>   is drawn; replanning on them means re-entering landmarks, terraces and the
+>   coverage draws three times per quarter, and this subsection's own sequencing
+>   puts their thresholds at WP-5 anyway. They remain acceptance checks.
+> - **`offPlatform` does not gate.** The planner makes it unrepresentable
+>   (§3.4 rule 2, §5.5); a non-zero count is a compiler bug and is raised as one,
+>   not replanned around.
+>
+> Both live thresholds are one exported `COMPOSITION_GATES` object, so WP-5's
+> calibration is one edit and one measured world.
 
 **All eight land as report metrics in Phase 1 and the four hard ones acquire
 their thresholds in Phase 2, from the accepted prototype's measurements.** This
@@ -660,6 +772,29 @@ The ladder, in fixed order, bounded by `MAX_REPLAN_ROUNDS = 3`:
 Each round is a full re-entry into §3 with a different `PlanAttempt`, so the
 result stays a pure function of `(FormContext, round)` and the whole loop is
 deterministic. Rounds are counted in the report whether or not they were needed.
+
+> **Amended by WP-1, 2026-08-06 — the ladder as built, and why it does not
+> abandon the plan.**
+>
+> **The rungs are `dropStreets = 0, 1, 2`** — a ceiling of four principal
+> streets, then three, then two — and the loop stops at the **first** rung that
+> clears both gates. `narrowBy` is not a rung: §3.7's amendment measures it to be
+> a composition lever rather than a feasibility one, and a rung that narrows
+> before it has dropped the street commanding the least frontage spends the
+> terrace before it spends the road. Round 0 is a real rung and is counted, so
+> "three rounds" here means the ladder walked `4 → 3 → 2`.
+>
+> **Step 4 is not built, deliberately.** Exhausting the ladder does *not* fall
+> back to `grown`. §6.2 says in the same breath that these thresholds are
+> calibrated at WP-5 from a world Kai has accepted, and §11.5 names "over-tight
+> gates turn every hill town into `grown`" as the risk of exactly this ordering;
+> until the thresholds are measured rather than quoted, abandoning a plan on one
+> would abandon it on a number nobody has confirmed. So the **best** rung ships —
+> by a total order of gates cleared, then most hillside, then least road, ties to
+> the earlier and larger rung — and the miss is reported as a `SITE_COMPOSITION`
+> note naming the measurement, its threshold and what to change. The fall-back
+> arm belongs with WP-5's calibration and is written down here so it is a
+> deferral rather than an omission.
 
 ---
 
@@ -841,7 +976,7 @@ measures the wrong thing.
 | # | check | control | bar |
 | --- | --- | --- | --- |
 | 1 | **Buildings, not walls, occupy the visual focus.** | fails | Kai's call, one screenshot, no metric and no proxy |
-| 2 | building count in the district | 7 | **≥ 30** |
+| 2 | building count in the district | 7 | **≥ 30** — *see the WP-1 note below* |
 | 3 | `offPlatform` | 395 | **0** |
 | 4 | wall columns | 1,566 | **< 600**, and ≤ 0.60 × developed frontage |
 | 5 | natural-ground fraction inside the quarter | 0.00 | **≥ 0.40** |
@@ -855,6 +990,18 @@ exist so that a failure of check 1 has somewhere to point.
 
 Check 9 is not negotiable and is not traded against any of the others. A prettier
 world with a floating block is a regression.
+
+> **Amended by WP-1, 2026-08-06 — checks 2, 5 and 6 are in tension, and the
+> measurement says so.** With §6.3's ladder running, the ratified fixture lands
+> on two principal streets and measures: natural **0.481** (check 5, passes),
+> street **0.249** (check 6, passes), `offPlatform` **0** (check 3), **156**
+> columns of wall (check 4), lint **0** (check 9) — and **9 buildings**, holding
+> **17 dwellings**, against check 2's 30. The curve behind that is in §3.8's
+> amendment: buildings rise and both composition bars fall as streets are added,
+> monotonically, and there is no rung of the ladder on this site where all three
+> hold. Check 2 also counts the wrong noun (§6.1's amendment). Nothing here is
+> tuned to close the gap: the gap is the finding, and which side of it Kai wants
+> is a walk, not a threshold.
 
 ---
 
@@ -879,6 +1026,12 @@ depends on both.
   an error.
 - **WP-4 — composition metrics and the replan loop.** §6, metrics first. The
   loop is a re-entry into WP-1 with a different `PlanAttempt`.
+  **Round 1 of this was taken at WP-1** (2026-08-06), because WP-0's measurement
+  made it the only way the composition bars are satisfiable at all: §6.1's
+  metrics are computed after planning and reported per quarter, and the street
+  ladder runs. What is left here is the rest of §6.1's metrics —
+  `platformPerBuilding`, `wallPerBuilding`, `hardenedPerimeter`, `railedShare`,
+  `wallPerFrontage` — which are counted from passes downstream of the planner.
 - **WP-5 — gates and the cutover.** §6.2's thresholds, calibrated from the
   accepted prototype. Then §7.1's cutover in one change: classifier, kit, alias,
   example regeneration, deletion of `terraced.ts`.

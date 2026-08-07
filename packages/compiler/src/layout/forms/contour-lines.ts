@@ -94,6 +94,57 @@ export function boxBlur(
   return current;
 }
 
+/**
+ * The `rings`-deep band around a mask, excluding the mask itself.
+ *
+ * **The one dilation in the compiler**, and the reason it lives in a module a
+ * form can import is `docs/SITE-PLAN-v0.md`'s finding 5: a sidewalk is not
+ * `sidewalk` columns of arithmetic offset from the centre line, it is a
+ * *dilation of the carriageway raster*, and a ring walk reaches a full column
+ * further on a diagonal than any width arithmetic says it does. A planner that
+ * stands its platform under the arithmetic band leaves the outermost verge
+ * column off the platform, which is precisely the `offPlatform` `walkBack`
+ * reports four passes later. `layout/district.ts`'s `dilate` delegates here, so
+ * the planner's band and the district's sidewalk are one computation.
+ *
+ * 8-connected, growing one ring at a time from the previous frontier, so a
+ * column is claimed at its Chebyshev distance and never twice.
+ */
+export function dilateMask(
+  mask: Uint8Array,
+  width: number,
+  depth: number,
+  rings: number,
+): Uint8Array {
+  const cells = width * depth;
+  const out = new Uint8Array(cells);
+  let frontier = mask;
+  const claimed = new Uint8Array(mask);
+  for (let ring = 0; ring < rings; ring++) {
+    const next = new Uint8Array(cells);
+    for (let j = 0; j < depth; j++) {
+      for (let i = 0; i < width; i++) {
+        const k = j * width + i;
+        if (frontier[k] !== 1) continue;
+        for (let dj = -1; dj <= 1; dj++) {
+          for (let di = -1; di <= 1; di++) {
+            const ii = i + di;
+            const jj = j + dj;
+            if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+            const n = jj * width + ii;
+            if (claimed[n] === 1) continue;
+            claimed[n] = 1;
+            next[n] = 1;
+            out[n] = 1;
+          }
+        }
+      }
+    }
+    frontier = next;
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 /* components and long paths                                                   */
 /* -------------------------------------------------------------------------- */

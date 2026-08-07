@@ -64,6 +64,31 @@ export interface FormFocus {
   readonly weight: number;
 }
 
+/**
+ * One rung of the composition replan ladder (`docs/SITE-PLAN-v0.md` §3.1, §6.3).
+ *
+ * A plan is a pure function of `(FormContext, PlanAttempt)`, and round 0 is
+ * `{ 0, 0, 0 }` — which is what every form that ignores the field draws. Only
+ * `hillside` reads it, so its presence moves nothing else.
+ */
+export interface PlanAttempt {
+  /** 0 for the first plan; 1 and 2 are the ladder's rungs. */
+  readonly round: number;
+  /**
+   * Principal streets taken off the ceiling before selection.
+   *
+   * `MAX_PRINCIPAL_STREETS − dropStreets`, floored at `MIN_PRINCIPAL_STREETS`:
+   * fewer streets is fewer platforms, fewer edges and less wall, and the streets
+   * that go are by construction the ones commanding the least frontage.
+   */
+  readonly dropStreets: number;
+  /** Columns taken off every strip's `D_target`. A shallower terrace cuts less. */
+  readonly narrowBy: number;
+}
+
+/** The first plan: full ceiling, full depth (`docs/SITE-PLAN-v0.md` §3.1). */
+export const ROUND_ZERO: PlanAttempt = Object.freeze({ round: 0, dropStreets: 0, narrowBy: 0 });
+
 /** What a form is asked to draw on. */
 export interface FormContext {
   /** Inclusive footprint — the tight bounding box of the domain. */
@@ -95,6 +120,14 @@ export interface FormContext {
    * borders the cell. Cell by cell, 4-connected. Read by `linear`.
    */
   readonly corridor?: readonly Point2[];
+  /**
+   * Which rung of the replan ladder this is (`docs/SITE-PLAN-v0.md` §6.3).
+   *
+   * Absent means {@link ROUND_ZERO}. Read only by `hillside`; every other form
+   * draws the same plan whatever it says, which is why the ladder can be a loop
+   * in `layDistrict` rather than a branch in seven modules.
+   */
+  readonly attempt?: PlanAttempt;
 }
 
 /* -------------------------------------------------------------------------- */

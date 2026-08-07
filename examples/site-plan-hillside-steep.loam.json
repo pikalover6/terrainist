@@ -1,0 +1,382 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hillside_town_steep",
+    "worldSeed": "12237387105847640099",
+    "prompt": "A steep hillside town in the mountains: houses stacked up the slope on stone terraces, retaining walls holding every level, narrow stairs climbing between contour streets",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.stone": "minecraft:stone",
+      "ground.cliff": "minecraft:stone_bricks",
+      "road.surface": "minecraft:stone_bricks",
+      "road.shoulder": "minecraft:cobblestone",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.border": "minecraft:stone_bricks"
+    }
+  },
+  "intent": {
+    "character": {
+      "label": "steep mountain hillside town",
+      "materialTheme": "boreal_pine",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "church"
+        ],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "spruce_squat"
+        ],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.3
+      },
+      "urbanForm": "hillside"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Hilltown on a steep mountain flank",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "one long mountain flank, falling evenly to the south",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 10,
+          "octaves": 4,
+          "frequency": 0.0024,
+          "lacunarity": 2,
+          "gain": 0.52,
+          "ridged": false,
+          "warp": {
+            "amount": 14,
+            "frequency": 0.003
+          },
+          "erosionPasses": 1,
+          "cliffThreshold": 70,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.78
+        },
+        "children": [
+          {
+            "id": "the_flank",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep mountain flank the whole town is built on - a 1:2.5 cone, the gradient of the walked hilltown, and no flat corner for the quarter to hide in",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.0
+              ],
+              "radius": 520,
+              "height": 208,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0011,
+          "humidityFrequency": 0.0014,
+          "latitudeGradient": -0.3,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "hill_town",
+        "kind": "district",
+        "label": "houses stacked across stepped mountain terraces on a 1:2.5 flank",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            160,
+            152
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "cottage"
+          ],
+          "blockSize": 32,
+          "ground": "stepped"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 72
+          }
+        ],
+        "tags": [
+          "town",
+          "settlement",
+          "terraced"
+        ]
+      },
+      {
+        "id": "lower_square",
+        "kind": "primitive",
+        "label": "the small square on the lowest town terrace",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "lower_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage beside the lower square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "lower_square",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "lower_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "terrace_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a taller cottage on the rising lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "distance": "lower_square",
+            "min": 8,
+            "max": 64
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "terrace_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "narrow contour streets and stairs between the terraces",
+        "params": {
+          "anchors": [
+            "lower_square",
+            "hill_town",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 14,
+          "curvature": 0.35,
+          "maxGrade": 4,
+          "junctionStyle": "stairs"
+        }
+      },
+      {
+        "id": "upper_spruce",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "spruce forest on the mountain shoulders above town",
+        "params": {
+          "area": {
+            "at": [
+              0.52,
+              0.22
+            ],
+            "radius": 0.32
+          },
+          "density": 0.2,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 40,
+          "elevation": [
+            20,
+            150
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "mountain_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "ridge_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse spruce cover beyond the terraces",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.035,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            140
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.02,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "foothill_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "low_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

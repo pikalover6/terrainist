@@ -24,7 +24,7 @@
 import type { DistrictDensity, DistrictFabric } from "@terrainist/spec";
 import type { Seed256 } from "@terrainist/stdlib";
 
-import type { Point2, Rect } from "./frames.js";
+import { headingOf, type Point2, type Rect } from "./frames.js";
 import { drawFabric } from "./forms/registry.js";
 import { flatGround } from "./forms/types.js";
 
@@ -232,20 +232,14 @@ export function carriagewayCells(graph: StreetGraph, bounds?: Rect): StreetCell[
   return out;
 }
 
-/** The local heading and its perpendicular at index `i` of a path. */
-export function headingOf(
-  path: readonly Point2[],
-  i: number,
-): { readonly dx: number; readonly dz: number; readonly px: number; readonly pz: number } {
-  const before = path[Math.max(0, i - 1)] as Point2;
-  const after = path[Math.min(path.length - 1, i + 1)] as Point2;
-  const dx = Math.sign(after.x - before.x);
-  const dz = Math.sign(after.z - before.z);
-  if (dx === 0 && dz === 0) return { dx: 0, dz: 1, px: 0, pz: 1 };
-  // Perpendicular: rotate the heading a quarter turn. `pz` scales the x offset
-  // and `px` the z offset, which is the convention `surfaceRoute` uses.
-  return { dx, dz, px: dx, pz: -dz };
-}
+/**
+ * The local heading and its perpendicular at index `i` of a path.
+ *
+ * Moved to `layout/frames.ts` — the leaf module — so a form may read the same
+ * rule without a cycle back through the registry, and re-exported here because
+ * this is where every existing consumer imports it from.
+ */
+export { headingOf } from "./frames.js";
 
 /**
  * The endpoints of every street on the district boundary.

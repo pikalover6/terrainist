@@ -1,5 +1,5 @@
 /**
- * WP-0 — the frontage-led hillside prototype (`docs/SITE-PLAN-v0.md` §8, §10).
+ * WP-0/WP-1 — the frontage-led hillside planner (`docs/SITE-PLAN-v0.md` §8, §10).
  *
  * **Every number below was written from the document before the code existed**,
  * except the block explicitly labelled *prototype goldens*, which is the §8.3
@@ -44,12 +44,25 @@ import { carriagewayCells } from "../src/layout/streets.js";
 import {
   HILLSIDE_FORM,
   MAX_PRINCIPAL_STREETS,
+  MIN_BUILDABLE_DEPTH,
   MIN_PRINCIPAL_STREETS,
-  MIN_STRIP_DEPTH,
+  REAR_MARGIN,
   TERRACE_RISE,
+  minStripDepth,
 } from "../src/layout/forms/hillside.js";
-import { STREET_WIDTH } from "../src/layout/forms/axial.js";
-import type { FormContext, FormPlan, GroundSample } from "../src/layout/forms/index.js";
+import {
+  COMPOSITION_GATES,
+  MAX_REPLAN_ROUNDS,
+  MIN_INFILL_SIDE,
+  compositionOf,
+  planQuarter,
+} from "../src/layout/district.js";
+import type {
+  FormContext,
+  FormPlan,
+  GroundSample,
+  PlanAttempt,
+} from "../src/layout/forms/index.js";
 
 /* -------------------------------------------------------------------------- */
 /* a hill, and a quarter on it                                                 */
@@ -94,23 +107,29 @@ function groundOf(at: (x: number) => number): GroundSample {
   };
 }
 
-function context(ground: GroundSample): FormContext {
+const SIDEWALK = 2;
+
+function context(ground: GroundSample, attempt?: PlanAttempt): FormContext {
   return {
     bounds: BOUNDS,
     seed: SEED,
     blockSize: 32,
-    sidewalk: 2,
+    sidewalk: SIDEWALK,
     density: "medium",
     ground,
     focus: [],
+    ...(attempt === undefined ? {} : { attempt }),
   };
 }
 
-function drawn(at: (x: number) => number): FormPlan {
-  const result = HILLSIDE_FORM.draw(context(groundOf(at)));
+function drawn(at: (x: number) => number, attempt?: PlanAttempt): FormPlan {
+  const result = HILLSIDE_FORM.draw(context(groundOf(at), attempt));
   if (!result.ok) throw new Error(`hillside refused: ${result.reason}`);
   return result.plan;
 }
+
+/** A slope of about 1 in 2.5 — the gradient of the walked hill town's site. */
+const steepAt = (x: number): number => 80 + Math.round((x + QUARTER / 2) / 2.5);
 
 const index = (x: number, z: number): number =>
   (z - BOUNDS.z0) * QUARTER + (x - BOUNDS.x0);
@@ -169,10 +188,12 @@ describe("a strip is a terrace, not a stamp", () => {
         if (strip.columns[k] !== 1) continue;
         deepest = Math.max(deepest, (strip.depth[k] as number) + 1);
       }
-      // `depth` is measured from the build-to line, which sits a carriageway
-      // half plus a verge plus one out from the centre; `MIN_STRIP_DEPTH` is
-      // measured from the carriageway edge. The two differ by the verge.
-      expect(deepest + (STREET_WIDTH.street >> 1) + 1).toBeGreaterThanOrEqual(MIN_STRIP_DEPTH);
+      // **One datum** (WP-1, finding 2). `depth` is measured back from the
+      // build-to line; `minStripDepth` is measured from the carriageway edge,
+      // and the two differ by the verge — which is exactly the confusion §3.8's
+      // constant 8 encoded. Adding the verge back is what states them against
+      // one datum, and the floor now carries it.
+      expect(deepest + SIDEWALK + 1).toBeGreaterThanOrEqual(minStripDepth(SIDEWALK));
     }
   });
 
@@ -232,6 +253,180 @@ describe("everything no use asked for stays natural slope", () => {
       if (plan.lotMask?.[k] === 1) expect(claimed[k]).toBe(1);
     }
     void index;
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3b — the constants stand against one datum (WP-1, finding 2)                */
+/* -------------------------------------------------------------------------- */
+
+describe("a station that clears the floor yields a lot the grammar keeps", () => {
+  /**
+   * §3.8 wrote `MIN_STRIP_DEPTH` as the constant 8 — `MIN_INFILL_SIDE` plus one
+   * — and measured `D_target` from the carriageway edge while `MIN_INFILL_SIDE`
+   * is measured from the build-to line. The two differ by the sidewalk, so at
+   * `sidewalk = 2` a station could clear the rule with six buildable columns
+   * and the frontage walk would drop every lot on it.
+   */
+  it("carries the verge in the floor, so the two are one measurement", () => {
+    expect(minStripDepth(SIDEWALK)).toBe(SIDEWALK + MIN_INFILL_SIDE + REAR_MARGIN);
+    expect(MIN_BUILDABLE_DEPTH).toBe(MIN_INFILL_SIDE);
+    // The old constant is what a zero-verge street would ask for, and no street
+    // this compiler draws has one.
+    expect(minStripDepth(0)).toBe(8);
+    expect(minStripDepth(SIDEWALK)).toBeGreaterThan(8);
+  });
+
+  it("keeps every strip deep enough to build on, measured from the build-to line", () => {
+    for (const at of [evenAt, shelfAt, steepAt]) {
+      for (const strip of drawn(at).strips ?? []) {
+        let deepest = 0;
+        for (let k = 0; k < strip.columns.length; k++) {
+          if (strip.columns[k] === 1) deepest = Math.max(deepest, (strip.depth[k] as number) + 1);
+        }
+        expect(deepest).toBeGreaterThanOrEqual(MIN_INFILL_SIDE);
+      }
+    }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3c — the steep regime (§3.7; WP-0 finding 6)                                */
+/* -------------------------------------------------------------------------- */
+
+describe("ground the walked hill town was actually built on", () => {
+  /**
+   * WP-0 read `STRIP_DEPTH_MIN = 16` as a requirement and concluded that a
+   * terrace rise of 6 needs ground no steeper than about 1:3, while the walked
+   * site is 1:2.5. `STRIP_DEPTH_MIN` is a **target**; what refuses a station is
+   * `minStripDepth`, and ten columns stay inside one terrace rise on anything
+   * gentler than about 1:1.7. So a 1:2.5 quarter plans — with shallower claims,
+   * which is the sparse town the narrow arm was asked for.
+   */
+  it("plans a town on a 1:2.5 slope rather than refusing one", () => {
+    const plan = drawn(steepAt);
+    expect(plan.graph.segments.filter((sg) => sg.kind === "street").length).toBeGreaterThanOrEqual(
+      MIN_PRINCIPAL_STREETS,
+    );
+    expect((plan.strips ?? []).length).toBeGreaterThan(0);
+    // Shallower than the same plan on a 1 in 4: the claim is cut by the terrace
+    // rise, not by the target, and that is the whole of the steep regime.
+    const deepest = (p: FormPlan): number => {
+      let d = 0;
+      for (const strip of p.strips ?? []) {
+        for (let k = 0; k < strip.columns.length; k++) {
+          if (strip.columns[k] === 1) d = Math.max(d, (strip.depth[k] as number) + 1);
+        }
+      }
+      return d;
+    };
+    expect(deepest(plan)).toBeLessThan(deepest(drawn(evenAt)));
+  });
+
+  it("honours narrowBy as a composition lever, on any ground", () => {
+    // §6.3's other rung, exercised directly: a shallower `D_target` claims
+    // strictly less ground. It is not a feasibility response — narrowing can
+    // only lower a candidate's score — and this is the property that makes it
+    // worth keeping anyway.
+    const claimed = (p: FormPlan): number => {
+      let n = 0;
+      for (const strip of p.strips ?? []) {
+        for (let k = 0; k < strip.columns.length; k++) if (strip.columns[k] === 1) n++;
+      }
+      return n;
+    };
+    const wide = drawn(evenAt);
+    const narrow = drawn(evenAt, { round: 2, dropStreets: 0, narrowBy: 6 });
+    expect(claimed(narrow)).toBeLessThan(claimed(wide));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3d — the replan ladder (§6.3)                                               */
+/* -------------------------------------------------------------------------- */
+
+describe("the ladder is deterministic, bounded and monotone", () => {
+  const streets = (p: FormPlan): number =>
+    new Set(p.graph.segments.filter((sg) => sg.kind === "street").map((sg) => sg.id.split("_")[0]))
+      .size;
+
+  it("lays no more principal contours than the rung allows", () => {
+    for (let round = 0; round < MAX_REPLAN_ROUNDS; round++) {
+      const plan = drawn(evenAt, { round, dropStreets: round, narrowBy: 0 });
+      expect(streets(plan)).toBeLessThanOrEqual(MAX_PRINCIPAL_STREETS - round);
+      expect(streets(plan)).toBeGreaterThanOrEqual(MIN_PRINCIPAL_STREETS);
+    }
+  });
+
+  it("floors at two, so the ladder has exactly three rungs", () => {
+    // Asking for more than the ceiling drop cannot go below Sol's floor.
+    const floored = drawn(evenAt, { round: 9, dropStreets: 9, narrowBy: 0 });
+    expect(streets(floored)).toBe(MIN_PRINCIPAL_STREETS);
+    expect(MAX_REPLAN_ROUNDS).toBe(MAX_PRINCIPAL_STREETS - MIN_PRINCIPAL_STREETS + 1);
+  });
+
+  it("draws the same rung twice, column for column", () => {
+    const attempt: PlanAttempt = { round: 1, dropStreets: 1, narrowBy: 0 };
+    const a = drawn(evenAt, attempt);
+    const b = drawn(evenAt, attempt);
+    expect(JSON.stringify(b.graph.segments)).toBe(JSON.stringify(a.graph.segments));
+  });
+
+  it("leaves more hillside and less road at every rung down", () => {
+    // The measured curve §3.8's justification did not have, and the reason the
+    // ladder is worth having: fewer streets is monotonically more hillside.
+    let previous: { natural: number; street: number } | null = null;
+    for (let round = 0; round < MAX_REPLAN_ROUNDS; round++) {
+      const plan = drawn(evenAt, { round, dropStreets: round, narrowBy: 0 });
+      const c = compositionOf(plan, BOUNDS, SIDEWALK);
+      if (previous !== null) {
+        expect(c.naturalFraction).toBeGreaterThan(previous.natural);
+        expect(c.streetFraction).toBeLessThan(previous.street);
+      }
+      previous = { natural: c.naturalFraction, street: c.streetFraction };
+    }
+  });
+
+  it("ships the best rung and says what it missed when none of them passes", () => {
+    // §10: "a gate nobody has seen fire is a gate nobody has tested." A quarter
+    // half the size carries the same street cross-section over a quarter of the
+    // ground, so its road share cannot come under the bar at any rung — and the
+    // ladder must then ship the *best* composition with a diagnostic naming the
+    // measurement, rather than shipping the first plan or abandoning the town.
+    const half: Rect = { x0: -48, z0: -48, x1: 47, z1: 47 };
+    const planned = planQuarter(
+      {
+        ...context(groundOf(evenAt)),
+        bounds: half,
+        fabric: "hillside",
+        nodePath: "world.small_hill_town",
+      },
+      SIDEWALK,
+    );
+    expect(planned.drawn.ok).toBe(true);
+    expect(planned.rounds).toBe(MAX_REPLAN_ROUNDS);
+    expect(planned.composition).not.toBeNull();
+    expect(planned.note).not.toBeNull();
+    const [message, fix] = planned.note as readonly [string, string];
+    expect(message).toContain("world.small_hill_town");
+    expect(message).toContain("principal street");
+    expect(message).toMatch(/road|hillside/);
+    expect(fix).toContain("zone");
+    // Never the failing first plan: the best rung is the one that ships.
+    const shipped = planned.composition as { naturalFraction: number; streetFraction: number };
+    const first = compositionOf(
+      (HILLSIDE_FORM.draw({ ...context(groundOf(evenAt)), bounds: half }) as { plan: FormPlan })
+        .plan,
+      half,
+      SIDEWALK,
+    );
+    expect(shipped.streetFraction).toBeLessThanOrEqual(first.streetFraction);
+    expect(shipped.naturalFraction).toBeGreaterThanOrEqual(first.naturalFraction);
+  });
+
+  it("states its gates as §6.1 states them", () => {
+    expect(COMPOSITION_GATES.naturalFraction).toBe(0.4);
+    expect(COMPOSITION_GATES.streetFraction).toBe(0.25);
   });
 });
 
@@ -319,31 +514,50 @@ describe("flat ground cannot select this form", () => {
 /* -------------------------------------------------------------------------- */
 
 /**
- * **Prototype goldens, renegotiated at WP-1.**
+ * **The goldens, renegotiated at WP-1** — the WP-0 block they replace is in git
+ * history, and the report on this change carries the bar-by-bar comparison.
  *
- * These are what the prototype *measured*, not what §8.3 asks for, and three of
- * them are short of the bar. They are pinned anyway, for the reason
- * `docs/DESIGN.md` gives about the physics lint: a number nobody wrote down is a
- * number that drifts, and the value of WP-0 is the measurement. The report on
- * this change carries the bar-by-bar comparison and the diagnosis.
+ * WP-0 pinned what the prototype measured at four principal streets: 17
+ * buildings, natural 0.195, street 0.388, 458 columns of wall. Three things
+ * moved them, all of them measured rather than tuned:
  *
- * The control is the walked `out/walk-hilltown`: 7 district buildings, 395
- * `offPlatform`, 1 566 wall columns, natural fraction 0.00, street fraction
- * 0.478, railed share ≈ 1.0.
+ * 1. **§6.3's replan ladder** now runs. Round 0 (four streets) measures
+ *    0.199 / 0.379, round 1 (three) 0.326 / 0.331, round 2 (two)
+ *    **0.481 / 0.249** — the first rung that clears both of §6.1's bars, and the
+ *    one that ships. That is the curve WP-0 measured, consumed the way §6.3 says
+ *    to consume it, and it is what makes the two bars satisfiable at all.
+ * 2. **One datum for the strip floor** (finding 2): a station now has to hold
+ *    its verge as well as its building, so the shallowest stations pinch out
+ *    where before they produced lots the grammar dropped.
+ * 3. **The platform is closed and opened** before it is declared, and the street
+ *    band comes off the raster rather than off the arithmetic (finding 5) — the
+ *    two together take `offPlatform` to zero and hold it there.
+ *
+ * The town is **smaller and the hillside is a hillside**: nine buildings holding
+ * **seventeen dwellings** (a terrace's bays are homes — the number §8.3 check 2
+ * should have been counting), on a quarter that is 48% uncut ground with 156
+ * columns of wall, against the walked control's 7 buildings, 0% and 1,566.
+ * §8.3's check 2 (≥ 30 buildings) is **not** met and cannot be met at two
+ * principal streets: it and the composition bars are in tension, and that
+ * tension is this package's finding rather than something to tune away.
  */
 const GOLDEN = {
   quarterColumns: 24_320,
-  districtBuildings: 17,
-  lots: 30,
-  lotsDropped: 16,
-  infill: 13,
-  terraceBays: 12,
+  districtBuildings: 9,
+  /** A terrace is one building with `bays` front doors. This is the town's size. */
+  dwellings: 17,
+  lots: 15,
+  lotsDropped: 7,
+  infill: 7,
+  terraceBays: 10,
   offPlatform: 0,
-  wallColumns: 458,
-  railColumns: 218,
-  // Bars: naturalFraction >= 0.40, streetFraction <= 0.25.
-  naturalFraction: 0.195,
-  streetFraction: 0.388,
+  wallColumns: 156,
+  /** Rungs of §6.3's ladder walked, and where it landed. */
+  replanRounds: 3,
+  principalStreets: 2,
+  // Bars: naturalFraction >= 0.40, streetFraction <= 0.25. Both cleared.
+  naturalFraction: 0.4813,
+  streetFraction: 0.2486,
 } as const;
 
 describe("the fixture hill town, compiled", () => {
@@ -426,16 +640,27 @@ describe("the fixture hill town, compiled", () => {
       else if ((district.levels?.index[String(k)] ?? -1) === NO_PLATFORM) natural++;
     }
     expect(buildings).toBe(GOLDEN.districtBuildings);
+    expect(district.stats["dwellings"]).toBe(GOLDEN.dwellings);
     expect(district.stats["lots"]).toBe(GOLDEN.lots);
     expect(district.stats["infill"]).toBe(GOLDEN.infill);
     expect(district.stats["terraceBays"]).toBe(GOLDEN.terraceBays);
+    expect(district.stats["replanRounds"]).toBe(GOLDEN.replanRounds);
+    expect(district.stats["principalStreets"]).toBe(GOLDEN.principalStreets);
     expect(natural / n).toBeCloseTo(GOLDEN.naturalFraction, 3);
     expect(street / n).toBeCloseTo(GOLDEN.streetFraction, 3);
-    // What the prototype *did* clear, against the control: 17 buildings where
-    // the control had 7, on a quarter that is one fifth natural ground where the
-    // control was none, with 458 columns of wall where the control had 1 566.
+    // The metrics the district reports are the metrics measured off the world:
+    // §6.1 is computed before a structure exists and must still describe the
+    // quarter that was built, or the gate is guarding something else.
+    expect(district.stats["naturalFraction"]).toBeCloseTo(natural / n, 6);
+    expect(district.stats["streetFraction"]).toBeCloseTo(street / n, 6);
+    // **The gates the ladder was run against** (§6.1, §6.2 as amended).
+    expect(natural / n).toBeGreaterThanOrEqual(COMPOSITION_GATES.naturalFraction);
+    expect(street / n).toBeLessThanOrEqual(COMPOSITION_GATES.streetFraction);
+    // Against the walked control: 9 buildings holding 17 dwellings where the
+    // control had 7 of each, on a quarter that is 48% natural ground where the
+    // control was 0%, with 156 columns of wall where the control had 1 566.
     expect(buildings).toBeGreaterThan(7);
-    expect(natural / n).toBeGreaterThan(0);
+    expect(district.stats["dwellings"]).toBeGreaterThan(7);
   });
 
   // Check 9, and §8.3 says it is not negotiable and is not traded against any
@@ -456,4 +681,147 @@ describe("the fixture hill town, compiled", () => {
     ).toBe("");
     for (const rule of PHYSICS_RULES) expect(report.counts[rule], rule).toBe(0);
   }, 300_000);
+});
+
+/* -------------------------------------------------------------------------- */
+/* 9 — the steep fixture: 1:2.5, the gradient of the walked hill town's site   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The steep goldens.** Same document as the gentle fixture on a cone twice as
+ * steep — 208 blocks over 520, about 1 in 2.5, which is the ground the walked
+ * hill town of §1 was actually built on. WP-0 read §3.8's `STRIP_DEPTH_MIN` as a
+ * requirement and concluded this regime was out of reach until v1's stepped
+ * rows; measured, it plans.
+ *
+ * It plans **sparsely**, and the numbers say so honestly: four buildings holding
+ * seven dwellings on a quarter that is 63% uncut hillside. Two things make it
+ * sparse and neither is a defect in the planner. The claims are cut short by the
+ * terrace rise — thirteen columns rather than nineteen — so a strip holds fewer
+ * and smaller lots; and §6.1's `streetFraction` bar takes the ladder all the way
+ * down to two principal streets, where the same quarter at four measures
+ * natural 0.418 / street 0.369 and holds a good deal more town. That trade is
+ * the open question this package hands to WP-5's calibration, not a knob to
+ * turn here.
+ *
+ * The summit chapel of the gentle fixture is **absent**, deliberately: on a cone
+ * this steep its `flatten` doorstep fails `traversal.no_start` wherever it is
+ * put, which is a building-on-extreme-slope defect a quarter away from the
+ * district and nothing to do with the planner. Keeping it would have made this
+ * fixture assert someone else's bug.
+ */
+const STEEP = {
+  quarterColumns: 24_320,
+  districtBuildings: 4,
+  dwellings: 7,
+  lots: 11,
+  infill: 3,
+  terraceBays: 4,
+  wallColumns: 161,
+  replanRounds: 3,
+  naturalFraction: 0.6278,
+  streetFraction: 0.2439,
+} as const;
+
+describe("the steep fixture hill town, compiled", () => {
+  let district: {
+    bounds: Rect;
+    stats: Record<string, number>;
+    carriageway: Record<string, number>;
+    sidewalk: Record<string, number>;
+    levels?: { index: Record<string, number> };
+    form: { id: string; requested: string };
+  };
+  let sweep: string;
+  let buildings: number;
+  let worldDir: string;
+  let lintInput: { buildings: unknown[]; roads: unknown[]; props: unknown[] };
+
+  beforeAll(async () => {
+    const doc = JSON.parse(
+      await readFile(
+        fileURLToPath(
+          new URL("../../../examples/site-plan-hillside-steep.loam.json", import.meta.url),
+        ),
+        "utf8",
+      ),
+    ) as unknown;
+    const root = await mkdtemp(path.join(tmpdir(), "terrainist-siteplan-steep-"));
+    scratch.push(root);
+    const compiled = await compileTerrain(doc, { outDir: path.join(root, "hillside_town_steep") });
+    if (!compiled.ok) throw new Error("steep fixture compile failed");
+    const report = compiled.report as unknown as {
+      layout: { districts: (typeof district)[] };
+      stats: { structures: { districtBuildings: number } };
+      diagnostics: readonly { name: string; message: string }[];
+    };
+    worldDir = path.join(root, "hillside_town_steep");
+    const structures = (
+      compiled.report as unknown as {
+        layout?: {
+          structures?: { buildings?: unknown[]; roads?: { routes?: unknown[] }; props?: unknown[] };
+        };
+      }
+    ).layout?.structures;
+    lintInput = {
+      buildings: structures?.buildings ?? [],
+      roads: structures?.roads?.routes ?? [],
+      props: structures?.props ?? [],
+    };
+    district = report.layout.districts[0] as typeof district;
+    buildings = report.stats.structures.districtBuildings;
+    sweep = report.diagnostics.find((d) => d.name === "SWEEP_FEATURES_PLACED")?.message ?? "";
+  }, 300_000);
+
+  it("plans a hill town on 1:2.5 ground rather than falling back", () => {
+    expect(district.form.requested).toBe("hillside");
+    expect(district.form.id).toBe("hillside");
+  });
+
+  it("reports zero offPlatform on ground twice as steep — check 3", () => {
+    expect(sweep).not.toContain("offPlatform");
+  });
+
+  it("measures the composition steep ground produces", () => {
+    const b = district.bounds;
+    const n = (b.x1 - b.x0 + 1) * (b.z1 - b.z0 + 1);
+    expect(n).toBe(STEEP.quarterColumns);
+    let street = 0;
+    let natural = 0;
+    for (let k = 0; k < n; k++) {
+      const paved = district.carriageway[String(k)] === 1 || district.sidewalk[String(k)] === 1;
+      if (paved) street++;
+      else if ((district.levels?.index[String(k)] ?? -1) === NO_PLATFORM) natural++;
+    }
+    expect(buildings).toBe(STEEP.districtBuildings);
+    expect(district.stats["dwellings"]).toBe(STEEP.dwellings);
+    expect(district.stats["lots"]).toBe(STEEP.lots);
+    expect(district.stats["infill"]).toBe(STEEP.infill);
+    expect(district.stats["terraceBays"]).toBe(STEEP.terraceBays);
+    expect(district.stats["replanRounds"]).toBe(STEEP.replanRounds);
+    expect(natural / n).toBeCloseTo(STEEP.naturalFraction, 3);
+    expect(street / n).toBeCloseTo(STEEP.streetFraction, 3);
+    expect(natural / n).toBeGreaterThanOrEqual(COMPOSITION_GATES.naturalFraction);
+    expect(street / n).toBeLessThanOrEqual(COMPOSITION_GATES.streetFraction);
+    const walls = Number(/over (\d+) column\(s\)/.exec(sweep)?.[1] ?? -1);
+    expect(walls).toBe(STEEP.wallColumns);
+    expect(walls).toBeLessThan(600);
+  });
+
+  it("lints zero on all 26 physics rules", async () => {
+    const stack: PrismarineStack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const report = await lintWorldPhysics(worldDir, stack, {
+      buildings: lintInput.buildings as never,
+      roads: lintInput.roads as never,
+      props: lintInput.props as never,
+    });
+    expect(report.examined).toBeGreaterThan(1_000_000);
+    expect(
+      report.findings
+        .slice(0, 12)
+        .map((f) => `${f.rule} @ ${f.x},${f.y},${f.z} ${f.block}: ${f.detail}`)
+        .join("\n"),
+    ).toBe("");
+    for (const rule of PHYSICS_RULES) expect(report.counts[rule], rule).toBe(0);
+  }, 600_000);
 });
