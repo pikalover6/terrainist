@@ -77,6 +77,7 @@ import {
 import {
   arcFrame,
   arcLevels,
+  MAX_TREAD_CUT,
   carriagewaySpans,
   simplifyPath,
   sweptColumns,
@@ -1169,6 +1170,19 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     }
   }
 
+  /* --- phase 2a: the terminus landing (§5.4, the verge opening) ------------ */
+  // The one negotiation the two laws cannot do inside themselves. Computed here
+  // because here is the first moment both are known: the flight's treads are
+  // settled and so is the street's graded profile, and nothing has been
+  // declared or painted yet.
+  const landing = terminusLandings(region, jobs, owner, columnY, blocked, paved, water);
+  for (const [idx, y] of landing) {
+    columnY[idx] = y;
+    // A yielded column *is* a step, and is painted as one: the mix that dresses
+    // a tread is the same mix that should dress the landing it arrives on.
+    stepFlag[idx] = 1;
+  }
+
   /* --- phase 2b: declare, and commit the whole subsystem ------------------- */
   // §3.6b: the street family declares as **one subsystem**, because its internal
   // arbitration — rank, ownership, endpoint pins — is already correct and is not
@@ -1206,6 +1220,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     const claimed = declareRoute(view, blocked, spots, levels, paved, water, {
       owner,
       job: job.order,
+      landing,
     });
     declaredSegments.push({
       source: `street:${job.rank.id}`,
@@ -1281,7 +1296,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // The surfacer's relief is measured against the pass-entry snapshot, which
       // no commit moves, so its timing was never in question.
       reliefOf(region, natural, spots),
-      { owner, job: job.order, step: stepFlag },
+      { owner, job: job.order, step: stepFlag, landing },
     );
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
@@ -2361,6 +2376,213 @@ function paintCentreLines(
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* the terminus landing — a street yields to the flight it dies against        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Drop, in blocks, at which a street's terminal columns are yielded.
+ *
+ * Two, because two is the drop at which a step stops being a step: the
+ * pedestrian graph joins columns whose feet differ by one, so a street standing
+ * two or more above the flight beside it is not connected to it however short
+ * the gap, and at three the walkability audit calls the edge an **unserved
+ * face** (`emit/walkability.ts`, `EARN_RATIO`).
+ */
+export const LANDING_MIN_DROP = 2;
+
+/**
+ * Longest landing, in columns, and it is {@link MAX_TREAD_CUT} for the same
+ * reason the tread law is.
+ *
+ * The landing is a **recess cut into the terrace**, exactly like the slot
+ * `synthesizeTreads` may cut to begin a descent, and it is bounded by the same
+ * number so that one law cannot dig deeper into a platform than the other. In
+ * practice the bound almost never binds: the run a landing needs is derived
+ * from the drop it stages, one column per block, so a three-block riser yields
+ * two columns and stops.
+ */
+export const LANDING_RUN_MAX = MAX_TREAD_CUT;
+
+/**
+ * No corridor level known at this column.
+ *
+ * `Int32Array`'s own floor, deliberately: the sentinel is stored in one, and a
+ * value outside 32 bits comes back truncated — `Number.MIN_SAFE_INTEGER` reads
+ * back as `0`, which is a perfectly plausible level and makes every column in
+ * the region look like a corridor.
+ */
+const NO_CORRIDOR = -0x8000_0000;
+
+/**
+ * Where a street dies against a flight, the **street** yields — §5.4's verge
+ * opening, and Kai's ruling of 2026-08-07.
+ *
+ * The situation, walked on `hillside_town` and diagnosed to the column: a
+ * terrace street's band pinches out one column short of the flight running down
+ * past it, and the verge line between them carries the whole terrace riser in
+ * one step — three blocks at (5, 44). It is not fixable on the verge, and the
+ * proof is one line: the street's edge and the flight's treads are both
+ * 1-Lipschitz lines falling in *parallel*, so no amount of work on the column
+ * between them makes them meet. Something has to give ground, and the ranking
+ * says which: a flight arrives at a street and a street does not arrive at a
+ * flight, so the flight's levels are fixed and the **street's terminal columns
+ * are the negotiable ones**.
+ *
+ * So they are yielded. A street column standing {@link LANDING_MIN_DROP} or more
+ * above the flight corridor beside it steps down to one block above it, and the
+ * street columns behind it step in turn, one block per column, until they meet
+ * the level the street was already at. The run is not a constant: it is
+ * `drop − 1` columns, derived from the geometry, which is exactly the arc a
+ * stair of one-block steps needs and is why the three-block riser at (5, 44)
+ * yields two columns and the terrace behind them does not move.
+ *
+ * Three properties this is built to have:
+ *
+ * 1. **It is a rule of the form, not a coordinate patch.** The seed is a
+ *    predicate on any street column beside any flight, so the same situation
+ *    anywhere on any fixture gets the same landing.
+ * 2. **It only ever lowers, and only by one block per column.** The result is a
+ *    1-Lipschitz surface joined to the street plane it cuts into, so the columns
+ *    it moves stay connected to the ones it does not — a landing that stranded
+ *    its own terminus would trade an unserved face for an orphan.
+ * 3. **The corridor is the flight's, verge included.** The column between the
+ *    street and the tread is unowned — it is the shoulder the blend lays flush
+ *    with the flight — so seeding on flight *ownership* alone would never fire
+ *    at the one place it is needed. A column no job owns that touches a tread
+ *    takes that tread's level, and that is the corridor the street measures
+ *    itself against.
+ *
+ * `cart` roles are deliberately **not** corridor: a carriage spine is graded at
+ * 1 in 6 and meets its streets at junctions the pins already reconcile, so it
+ * never presents the riser this exists to open.
+ */
+export function terminusLandings(
+  region: Region,
+  jobs: readonly { readonly role: "carriageway" | "steps" | "cart" }[],
+  owner: Int32Array,
+  columnY: Int32Array,
+  blocked: Uint8Array,
+  paved: Uint8Array,
+  water: Uint8Array,
+): ReadonlyMap<number, number> {
+  const cells = region.width * region.depth;
+  const roleOf = (k: number): "carriageway" | "steps" | "cart" | undefined => {
+    const j = owner[k] as number;
+    return j < 0 ? undefined : jobs[j]?.role;
+  };
+  /** The level of the flight corridor at a column, or {@link NO_CORRIDOR}. */
+  const corridor = new Int32Array(cells).fill(NO_CORRIDOR);
+  let anyFlight = false;
+  for (let k = 0; k < cells; k++) {
+    if (roleOf(k) !== "steps") continue;
+    corridor[k] = columnY[k] as number;
+    anyFlight = true;
+  }
+  // The early out is what keeps a town with no flight in it byte-identical: not
+  // one array is walked twice and not one column is looked at again.
+  if (!anyFlight) return new Map();
+  // The verge: a column nobody owns, 4-adjacent to a tread, is the shoulder that
+  // will be blended flush with it, so it stands at the tread's level. The lowest
+  // adjacent tread wins — a shoulder between two treads is at the foot of the
+  // step, not at its head.
+  const verge = Int32Array.from(corridor);
+  for (let z = region.z0; z < region.z0 + region.depth; z++) {
+    for (let x = region.x0; x < region.x0 + region.width; x++) {
+      const k = index(region, x, z);
+      if ((owner[k] as number) >= 0) continue;
+      let best = NO_CORRIDOR;
+      for (const [dx, dz] of LANDING_NEIGHBOURS) {
+        const nx = x + dx;
+        const nz = z + dz;
+        if (!inside(region, nx, nz)) continue;
+        const n = index(region, nx, nz);
+        if (roleOf(n) !== "steps") continue;
+        const y = columnY[n] as number;
+        if (best === NO_CORRIDOR || y < best) best = y;
+      }
+      verge[k] = best;
+    }
+  }
+
+  /** The level each yielded column steps down to; unset is `NO_CORRIDOR`. */
+  const target = new Int32Array(cells).fill(NO_CORRIDOR);
+  const queue: number[] = [];
+  const yieldable = (k: number): boolean => {
+    const role = roleOf(k);
+    if (role === undefined || role === "steps") return false;
+    // Nothing this pass may not move the ground under: a foreign footprint, a
+    // plaza that surfaced itself, a deck over water.
+    return blocked[k] !== 1 && paved[k] !== 1 && water[k] !== 1;
+  };
+  for (let z = region.z0; z < region.z0 + region.depth; z++) {
+    for (let x = region.x0; x < region.x0 + region.width; x++) {
+      const k = index(region, x, z);
+      if (!yieldable(k)) continue;
+      const y = columnY[k] as number;
+      let foot = NO_CORRIDOR;
+      for (const [dx, dz] of LANDING_NEIGHBOURS) {
+        const nx = x + dx;
+        const nz = z + dz;
+        if (!inside(region, nx, nz)) continue;
+        const c = verge[index(region, nx, nz)] as number;
+        if (c === NO_CORRIDOR || y - c < LANDING_MIN_DROP) continue;
+        if (foot === NO_CORRIDOR || c < foot) foot = c;
+      }
+      if (foot === NO_CORRIDOR) continue;
+      // The cap is a **clamp, not a refusal**. Refusing a riser too deep to
+      // stage leaves the landing beside it standing four blocks over the column
+      // that was not staged — the rule would cut its own cliff. Clamping cuts as
+      // deep as the tread law may and leaves the remainder to the wall that was
+      // always going to hold it, and it keeps the seeds themselves 1-Lipschitz,
+      // which is what makes the walk below lay a staircase rather than a step.
+      target[k] = Math.max(foot + 1, y - LANDING_RUN_MAX);
+      queue.push(k);
+    }
+  }
+  // One block per column, back into the street, 4-connected — the adjacency the
+  // walkability audit measures a face over, so a step this walk lays is a step
+  // that audit can see. It terminates on its own: a column whose target has
+  // climbed back to the level the street was already at is not lowered, and
+  // there is nothing beyond it to relax.
+  for (let head = 0; head < queue.length; head++) {
+    const k = queue[head] as number;
+    const y = target[k] as number;
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    for (const [dx, dz] of LANDING_NEIGHBOURS) {
+      const nx = x + dx;
+      const nz = z + dz;
+      if (!inside(region, nx, nz)) continue;
+      const n = index(region, nx, nz);
+      if (!yieldable(n)) continue;
+      const next = y + 1;
+      if (next >= (columnY[n] as number)) continue;
+      const seen = target[n] as number;
+      if (seen !== NO_CORRIDOR && seen <= next) continue;
+      target[n] = next;
+      queue.push(n);
+    }
+  }
+
+  const out = new Map<number, number>();
+  for (let k = 0; k < cells; k++) {
+    const y = target[k] as number;
+    if (y === NO_CORRIDOR) continue;
+    if (y >= (columnY[k] as number)) continue;
+    out.set(k, y);
+  }
+  return out;
+}
+
+/** 4-connected, because that is the adjacency a face and a footfall are measured over. */
+const LANDING_NEIGHBOURS = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
+
 /**
  * Write one route into the column plan.
  *
@@ -2439,14 +2661,19 @@ function surfaceRoute(
     readonly job: number;
     /** 1 where the owning segment's profile steps — a step is geometry. */
     readonly step: Uint8Array;
+    /** §5.4's yielded terminal columns, `idx` → the level they stepped down to. */
+    readonly landing?: ReadonlyMap<number, number>;
   },
 ): void {
   for (const [n, spot] of spots.entries()) {
     const x = spot.x;
     const z = spot.z;
     const idx = spot.idx;
-    // The level of this column's **cross-section**, keyed on arc length.
-    const y = levels.at(spot.arc);
+    // The level of this column's **cross-section**, keyed on arc length — or, on
+    // a column the run yielded to a stepped landing, the level it stepped to.
+    // One map, read by the declaration and by the paint, so the ground the
+    // resolver was told about and the ground that gets surfaced are one number.
+    const y = ownership?.landing?.get(idx) ?? levels.at(spot.arc);
     // Whether this segment may move the ground here. Painting is not gated on
     // it: ownership decides geometry and deliberately not material.
     const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
@@ -2556,7 +2783,12 @@ function declareRoute(
   levels: ArcLevels,
   paved: Uint8Array,
   water: Uint8Array,
-  ownership?: { readonly owner: Int32Array; readonly job: number },
+  ownership?: {
+    readonly owner: Int32Array;
+    readonly job: number;
+    /** §5.4's yielded terminal columns, `idx` → the level they stepped down to. */
+    readonly landing?: ReadonlyMap<number, number>;
+  },
 ): { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] } {
   const level: GroundClaim[] = [];
   const bridged: GroundClaim[] = [];
@@ -2570,7 +2802,7 @@ function declareRoute(
     if (blocked[idx] === 1) continue;
     if (paved[idx] === 1) continue;
     if (!owned) continue;
-    level.push({ idx, y: levels.at(spot.arc) });
+    level.push({ idx, y: ownership?.landing?.get(idx) ?? levels.at(spot.arc) });
   }
   return { level, bridged };
 }
