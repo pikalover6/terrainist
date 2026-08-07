@@ -9,6 +9,13 @@
  * nothing coped it. Walked 2026-08-06, and the third appearance of one lesson:
  * *a contour on a lattice is a staircase.*
  *
+ * **What the course is made of changed on 2026-08-07, ratified by Kai after the
+ * fortress-maze walk.** The construction below — members, 8-connected grouping,
+ * drop-1 bridging, `thickenCourse` — is unchanged and is what these tests are
+ * for. What it *paints* is not: a cut nobody walled is the hill's own rock, with
+ * no coping course, because dressing every cut in the theme's revetment made the
+ * whole hillside read as built stonework rather than as a town on a hill.
+ *
  * These tests are about the course, not about the wall: every fixture below is
  * one platform covering the whole region with no seams declared, so the wall
  * path is inert and what is measured is the finish alone.
@@ -99,14 +106,14 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
     return palette;
   };
 
-  /** The columns the finish coped, as a set of indices. */
-  function copedOf(plan: ColumnPlan, coping: number): Set<number> {
+  /** The columns the finish faced, as a set of indices. */
+  function facedOf(plan: ColumnPlan, rock: number): Set<number> {
     const out = new Set<number>();
-    for (let k = 0; k < SIZE * SIZE; k++) if (plan.surface[k] === coping) out.add(k);
+    for (let k = 0; k < SIZE * SIZE; k++) if (plan.subsurface[k] === rock) out.add(k);
     return out;
   }
 
-  it("closes the diagonal: the coped course is 4-connected", () => {
+  it("closes the diagonal: the faced course is 4-connected", () => {
     // A 45° edge. Per column, the set with an 8-neighbour drop ≥ 2 is itself a
     // staircase, and a staircase of single blocks is the artifact.
     const plan = planOf(stack, (x, z) => (x + z >= SIZE ? 70 : 66));
@@ -119,7 +126,7 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
     });
     expect(result.walls).toBe(0);
     expect(result.revetted).toBeGreaterThan(0);
-    const coped = copedOf(plan, palette.state("ground.coping"));
+    const coped = facedOf(plan, palette.state("ground.stone"));
     expect(coped.size).toBeGreaterThan(10);
     // One 4-connected piece: flood the set orthogonally from its first column
     // and it must swallow the lot. A course a player can see through the gaps
@@ -160,13 +167,17 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
       stack,
     });
     expect(result.walls).toBe(0);
-    const revetment = palette.state("ground.revetment");
-    const coping = palette.state("ground.coping");
+    // **Intent changed, ratified by Kai 2026-08-07 after the fortress-maze
+    // walk**: an unwalled cut is the hill's own rock, not the theme's masonry,
+    // and it carries no coping — every unwalled cut dressed in revetment plus a
+    // coping course is what made the hillside read as built stonework.
+    const rock = palette.state("ground.stone");
+    const grass = stack.blockByName("minecraft:grass_block")?.stateId ?? 0;
     const dip = at(16, 5);
-    expect(plan.subsurface[dip]).toBe(revetment);
-    expect(plan.surface[dip]).toBe(coping);
+    expect(plan.subsurface[dip]).toBe(rock);
+    expect(plan.surface[dip]).toBe(grass);
     // …and its neighbours along the contour, so it really is one course.
-    for (const z of [4, 5, 6]) expect(plan.surface[at(16, z)], `z=${z}`).toBe(coping);
+    for (const z of [4, 5, 6]) expect(plan.subsurface[at(16, z)], `z=${z}`).toBe(rock);
   });
 
   it("leaves a kerb line alone — a one-block step is the street's course", () => {
@@ -186,27 +197,34 @@ describe("faceCuts builds a course, not a lattice of single blocks", () => {
     }
   });
 
-  it("never copes over a carriageway — the surfacer owns that column", () => {
+  it("touches no surface at all — the cut is rock and the top is what it was", () => {
+    // **Intent changed 2026-08-07.** The finish used to lay a coping course
+    // along the top edge of every cut, withheld only over a street or a
+    // footprint. It now writes nothing to any surface: the top of an unwalled
+    // cut is grass, path or pavement, whatever the terrain and the surfacer
+    // gave it, and only the *face* changes.
     const plan = planOf(stack, (x) => (x >= 16 ? 70 : 66));
     const carriageway = new Uint8Array(SIZE * SIZE);
     for (let z = 10; z <= 14; z++) for (let x = 16; x <= 20; x++) carriageway[at(x, z)] = 1;
     const palette = themed();
     const surfaceBefore = Int32Array.from(plan.surface);
-    buildRetainingWalls({
+    const result = buildRetainingWalls({
       districts: [district(carriageway)],
       plan,
       palette,
       stack,
     });
-    const coping = palette.state("ground.coping");
+    expect(result.walls).toBe(0);
+    expect(result.revetted).toBeGreaterThan(0);
     for (let k = 0; k < SIZE * SIZE; k++) {
-      if (carriageway[k] !== 1) continue;
-      expect(plan.surface[k], `column ${k}`).not.toBe(coping);
       expect(plan.surface[k], `column ${k}`).toBe(surfaceBefore[k]);
     }
-    // The rest of the contour is still coped: the street is a hole in the
-    // coping, not a reason to abandon the face.
-    expect(plan.surface[at(16, 0)]).toBe(coping);
+    // The face is still finished, and it is rock rather than the theme's
+    // masonry — the hill's own material, the same symbol the terrain pass
+    // writes under a cliff.
+    expect(plan.subsurface[at(16, 0)]).toBe(palette.state("ground.stone"));
+    expect(palette.state("ground.stone")).not.toBe(palette.state("ground.revetment"));
+    expect(plan.soil[at(16, 0)] as number).toBeGreaterThanOrEqual(4);
   });
 
   it("leaves a column a wall stands on to the wall, and only deepens it", () => {

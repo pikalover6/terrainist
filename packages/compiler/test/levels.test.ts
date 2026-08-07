@@ -39,8 +39,8 @@ import {
 import { MIN_PLATFORM_COLUMNS, derivePlatforms } from "../src/layout/platforms.js";
 import { FLOOR_HEIGHT } from "../src/layout/district.js";
 import type { FormBench } from "../src/layout/forms/types.js";
-import { RETAINING_PROFILE, retainingProfile } from "../src/structures/profiles.js";
-import { buildRetainingWalls } from "../src/structures/retaining.js";
+import { RETAINING_PROFILE } from "../src/structures/profiles.js";
+import { MIN_RAIL_RUN, buildRetainingWalls } from "../src/structures/retaining.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
 import { defineGroundRoles, resolvePalette } from "../src/terrain/palette.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
@@ -215,16 +215,21 @@ describe("RETAINING_PROFILE", () => {
     expect(RETAINING_PROFILE.crossing).toBe("stop");
   });
 
-  it("rails a wall you could walk off, and only that one", () => {
-    expect(retainingProfile(RETAIN_RAIL - 1, RETAIN_RAIL, "stone_brick_wall")).toBe(
-      RETAINING_PROFILE,
-    );
-    const railed = retainingProfile(RETAIN_RAIL, RETAIN_RAIL, "stone_brick_wall");
-    const face = railed.bands.find((b) => b.id === "face");
-    expect(face?.cap?.rail).toBe(true);
-    // Never on the verge: a rail one column back from the edge is a fence in
-    // the middle of a terrace.
-    expect(railed.bands.find((b) => b.id === "verge")?.cap).toBeUndefined();
+  it("carries no cap at all: the wall's default top is coping only", () => {
+    // **Intent changed 2026-08-07, ratified by Kai after the fortress-maze
+    // walk.** The face band used to take a `cap { rail: true }` whenever the
+    // drop passed `RETAIN_RAIL`. `sweep()` emits a cap on every column of the
+    // band's *raster*, and a retaining wall's raster is a contour — a lattice
+    // staircase — so on every diagonal step the wall blocks had no orthogonal
+    // neighbour to connect to and rendered as full-height posts with gaps
+    // between them. Alternating post/gap over a dressed coping is a battlement,
+    // and it is why the walked hill town read as a fortress.
+    //
+    // The parapet now lives in `structures/retaining.ts`'s `railRun`, which
+    // knows the two things the cross-section cannot: which stretches of the wall
+    // the public can actually walk up to, and the 4-connected chain along which
+    // wall blocks connect into a continuous course.
+    for (const band of RETAINING_PROFILE.bands) expect(band.cap).toBeUndefined();
   });
 });
 
@@ -377,19 +382,58 @@ describe("buildRetainingWalls", () => {
     for (const block of result.blocks) expect(block.stateId).not.toBe(0);
   });
 
-  it("rails a wall you could walk off and does not rail one you could not", () => {
+  /**
+   * **The parapet is access-gated, and it is continuous** — ratified by Kai
+   * 2026-08-07 after the fortress-maze walk.
+   *
+   * The old assertion was "a tall drop is railed", full stop, and the rail came
+   * from a band cap that `sweep()` stamped over the band's whole raster. A
+   * retaining wall's raster is a contour, wall blocks do not connect diagonally,
+   * and the result was spaced full-height posts over a coping course: a
+   * battlement on every wall in the town. What a hill town actually has is a
+   * plain coping, and a parapet only where somebody can walk up to the drop.
+   */
+  it("rails a wall beside a street, continuously, and copes a private one", () => {
     const tall = 64 + RETAIN_RAIL + 1;
+    // A sidewalk on the *upper* platform, two columns back from the face at
+    // x === 24 — inside `RAIL_ACCESS_RANGE`, so the wall is public.
+    const sidewalk = new Uint8Array(48 * 48);
+    for (let z = 0; z < 48; z++) for (let x = 26; x <= 27; x++) sidewalk[z * 48 + x] = 1;
     const railed = buildRetainingWalls({
+      districts: [{ ...district(tall), sidewalk }],
+      plan: steppedPlan(stack, tall),
+      palette: paletteOf(stack),
+      stack,
+    });
+    const rails = railed.blocks.filter((b) => b.y === tall + 1);
+    expect(rails.length).toBeGreaterThanOrEqual(MIN_RAIL_RUN);
+    // Continuous, not spaced: every rail block has an orthogonal neighbour that
+    // also carries one, which is exactly the condition under which a wall block
+    // renders as a course rather than as a post.
+    const set = new Set(rails.map((b) => `${b.x},${b.z}`));
+    for (const b of rails) {
+      const joined = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) =>
+        set.has(`${b.x + (dx as number)},${b.z + (dz as number)}`),
+      );
+      expect(joined, `rail at ${b.x},${b.z} stands alone`).toBe(true);
+    }
+
+    // No street anywhere: nobody walks up to this drop, so it is coping only.
+    const private_ = buildRetainingWalls({
       districts: [district(tall)],
       plan: steppedPlan(stack, tall),
       palette: paletteOf(stack),
       stack,
     });
-    expect(railed.blocks.some((b) => b.y === tall + 1)).toBe(true);
+    expect(private_.walls).toBeGreaterThan(0);
+    expect(private_.blocks.some((b) => b.y === tall + 1)).toBe(false);
+    // …and it still has its coping, at the wall's own top.
+    expect(private_.blocks.some((b) => b.y === tall)).toBe(true);
 
+    // A drop too short to be worth a rail is never railed, street or no street.
     const short = 64 + 2;
     const plain = buildRetainingWalls({
-      districts: [district(short)],
+      districts: [{ ...district(short), sidewalk }],
       plan: steppedPlan(stack, short),
       palette: paletteOf(stack),
       stack,
@@ -572,11 +616,17 @@ describe("buildRetainingWalls", () => {
     expect(result.unfaced.street).toBeGreaterThan(0);
     // …and the face is finished anyway.
     expect(result.revetted).toBeGreaterThan(0);
-    const revetment = palette.state("ground.revetment");
-    expect(revetment).not.toBe(dirt);
+    // **Intent changed 2026-08-07, ratified by Kai after the fortress-maze
+    // walk**: the face of a cut nobody walled is the hill's own rock, not the
+    // theme's revetment. Armouring every unwalled cut in masonry is what made
+    // the hillside read as a quarry. The defect this test was written for was
+    // *dirt*, and rock answers it.
+    const rock = palette.state("ground.stone");
+    expect(rock).not.toBe(dirt);
+    expect(rock).not.toBe(palette.state("ground.revetment"));
     for (let z = 0; z < 48; z++) {
       const k = z * 48 + 24;
-      expect(plan.subsurface[k], `column 24,${z}`).toBe(revetment);
+      expect(plan.subsurface[k], `column 24,${z}`).toBe(rock);
       // As deep as the cut is tall: a one-course facing over three of dirt is
       // the same defect with a lid on it.
       expect(plan.soil[k] as number, `column 24,${z}`).toBeGreaterThanOrEqual(4);

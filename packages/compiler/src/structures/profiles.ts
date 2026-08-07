@@ -269,9 +269,24 @@ export function canalProfile(width: number, quay: number): SweptProfile {
  * platform. `follow: "step"` rather than `"level"` because one seam component
  * can run between two different platform pairs along its length.
  *
- * The balustrade is not in the profile: it is a `cap` applied by
- * {@link retainingProfile} only when the drop is worth a rail, so a two-block
- * wall is a wall and a five-block wall is a wall you cannot walk off.
+ * ## There is no balustrade in this profile, and there must not be
+ *
+ * **Ratified by Kai 2026-08-07, after the fortress-maze walk.** The profile used
+ * to carry a `cap { rail: true }` on the `face` band, applied by a
+ * `retainingProfile(drop, …)` helper whenever the drop passed `RETAIN_RAIL`. A
+ * band cap is emitted by `sweep()` on **every column the band's raster claims**,
+ * and a retaining wall's raster is a contour — a lattice staircase. Wall blocks
+ * do not connect diagonally, so each rail block on a diagonal step rendered as a
+ * full-height *post* with a visual gap beside it: alternating post/gap along
+ * every wall top, over a dressed coping course. That is a battlement, and it is
+ * why a hill town walked as a fortress.
+ *
+ * So the wall's default top is **coping only**. The parapet is not a property of
+ * the cross-section at all — it is a property of *where people can walk*, which
+ * only the pass knows, so `structures/retaining.ts` emits it itself, per column,
+ * along the 4-connected chain the sweep followed (see `railRun` there). A wall
+ * block whose neighbours along the chain also carry one connects into a
+ * continuous low course, which is what a parapet is.
  */
 export const RETAINING_PROFILE: SweptProfile = {
   id: "retaining.masonry",
@@ -292,28 +307,6 @@ export const RETAINING_PROFILE: SweptProfile = {
   features: [{ id: "weep", pitch: 9, at: "interval", offset: 0 }],
   crossing: "stop",
 };
-
-/**
- * {@link RETAINING_PROFILE} with the balustrade a drop of `drop` deserves.
- *
- * `RETAIN_RAIL` (3) is where a drop starts being worth a rail — unmeasured, and
- * §10.2 says so. Below it the profile is returned unchanged, which is the same
- * object, so a wall that gets no rail allocates nothing.
- */
-export function retainingProfile(
-  drop: number,
-  rail: number,
-  block: string,
-  base: SweptProfile = RETAINING_PROFILE,
-): SweptProfile {
-  if (drop < rail) return base;
-  return {
-    ...base,
-    bands: base.bands.map((band) =>
-      band.id === "face" ? { ...band, cap: { height: 1, block, rail: true } } : band,
-    ),
-  };
-}
 
 /* -------------------------------------------------------------------------- */
 /* shared profile geometry                                                    */

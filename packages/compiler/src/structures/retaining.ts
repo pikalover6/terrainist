@@ -72,7 +72,7 @@ import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { RETAINING_PROFILE, retainingProfile } from "./profiles.js";
+import { RETAINING_PROFILE } from "./profiles.js";
 import type { SweptProfile } from "./sweep.js";
 import { index, inside } from "./roads.js";
 import { sweep, sweptColumns, thickenCourse, type Vec2 } from "./sweep.js";
@@ -180,6 +180,15 @@ export interface RetainingPassResult {
   readonly walls: number;
   /** Columns of wall face. */
   readonly wallColumns: number;
+  /**
+   * Columns of **parapet** — the continuous balustrade course {@link railRun}
+   * stands on the stretches of wall the public can walk up to.
+   *
+   * Reported because the ratio to {@link wallColumns} is the measurement the
+   * fortress-maze walk was about: a wall top is coping, and a parapet is the
+   * exception. Every wall top railed is a battlement.
+   */
+  readonly railColumns: number;
   /** Seams of one block, treated as a kerb course. */
   readonly kerbs: number;
   /** Seams too tall for a wall, graded into a bank. */
@@ -201,7 +210,14 @@ export interface RetainingPassResult {
   readonly unfaced: Readonly<Record<UnfacedReason, number>>;
   /**
    * Columns of **cut-face course** — the contour a cut leaves that no wall
-   * stands on, finished in masonry and coped along its top edge.
+   * stands on, faced in the hill's own rock.
+   *
+   * The name is historical: until 2026-08-07 the course was dressed in the
+   * theme's `ground.revetment` and coped along its top edge, which armoured
+   * every unwalled cut in masonry and made the hillside read as a quarry. It is
+   * kept because the field is part of this pass's result contract; what it
+   * counts is unchanged — the columns of finished cut face. See
+   * {@link faceCuts}.
    *
    * The answer to the second half of the walk: *"retaining walls do not
    * properly seal the cliffside; raw dirt faces jut out underneath stone slabs
@@ -274,10 +290,20 @@ const UNFACED_REASONS: readonly UnfacedReason[] = [
 interface RetainingStates {
   readonly coping: number;
   readonly weep: number;
-  /** Palette symbol for the balustrade — resolved inside `sweep`. */
-  readonly rail: string;
-  /** The masonry a wall's body and an unwalled cut's face are made of. */
+  /** The balustrade block, emitted by {@link railRun} rather than by a cap. */
+  readonly rail: number;
+  /** The masonry a wall's body is made of. */
   readonly revetment: number;
+  /**
+   * The hill's own rock — what an **unwalled** cut face is made of.
+   *
+   * Not `ground.revetment`: dressing every cut in the theme's masonry was what
+   * made the whole hillside read as built stonework rather than as a town
+   * standing on a hill. `ground.stone` is the terrain pass's own deep-subsurface
+   * symbol — literally what `buildColumnPlan` writes under a cliff — so a cut
+   * face and the cliff beside it are made of the same thing, which is the point.
+   */
+  readonly rock: number;
   /** Earth a graded bank is finished with. */
   readonly bank: number;
   /**
@@ -309,6 +335,7 @@ const ROLE_FALLBACKS: Readonly<Record<string, string>> = Object.freeze({
   "ground.plinth": "minecraft:stone_bricks",
   "ground.balustrade": "minecraft:stone_brick_wall",
   "ground.weep": "minecraft:mossy_stone_bricks",
+  "ground.stone": "minecraft:stone",
   "ground.bank": "minecraft:coarse_dirt",
   "ground.scree": "minecraft:gravel",
   "street.sidewalk": "minecraft:smooth_stone",
@@ -333,11 +360,12 @@ function resolveStates(palette: Palette, stack: PrismarineStack): RetainingState
     profile,
     coping: state("ground.coping"),
     revetment: state("ground.revetment"),
+    rock: state("ground.stone"),
     bank: state("ground.bank"),
     // What makes a retaining wall read as *old* rather than as a slab, and it
     // is one block every nine columns.
     weep: state("ground.weep"),
-    rail: symbol("ground.balustrade"),
+    rail: state("ground.balustrade"),
   };
 }
 
@@ -358,6 +386,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   const diagnostics: LoamDiagnostic[] = [];
   let walls = 0;
   let wallColumns = 0;
+  let railColumns = 0;
   let kerbs = 0;
   let banks = 0;
   let built = 0;
@@ -383,6 +412,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       seam,
       walls,
       wallColumns,
+      railColumns,
       kerbs,
       banks,
       built,
@@ -622,7 +652,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         const source = `${district.nodePath}#retaining@${jobIndex}/${chainIndex}`;
         const sourceClass = measured ? ("retaining.skirt" as const) : ("retaining.seam" as const);
         const result = sweep({
-          profile: retainingProfile(record.drop, RETAIN_RAIL, states.rail, states.profile),
+          profile: states.profile,
           path,
           plan,
           palette,
@@ -692,6 +722,23 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           wallColumns++;
           anySwept = true;
         }
+        // The parapet, where there is anybody to keep off the drop. Emitted
+        // here rather than as a profile cap, and along the chain rather than
+        // over the band's raster, for the reason written up on
+        // `RETAINING_PROFILE`: a cap on a contour is a row of disconnected
+        // posts, which is a battlement.
+        railColumns += railRun(
+          region,
+          plan,
+          path,
+          result.claimed,
+          levels,
+          record.above,
+          record.drop,
+          street,
+          states,
+          blocks,
+        );
         // The weep courses, one below the coping so they read from the low side
         // rather than being buried under the walk on top.
         for (const feature of result.features) {
@@ -724,9 +771,9 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       note(
         "SWEEP_FEATURES_PLACED",
         relevant[0]?.nodePath ?? "world",
-        `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on` +
+        `multi-level ground: ${walls} retaining wall(s) over ${wallColumns} column(s) (${railColumns} parapeted), ${kerbs} kerb seam(s), ${banks} bank(s), and ${built} seam(s) a building already stood on` +
           (breakdown === "" ? "" : `; ${unfacedTotal} seam column(s) got no wall (${breakdown})`) +
-          `; every cut face finished: ${revetted} revetted, ${banked} graded as bank`,
+          `; every cut face finished: ${revetted} faced in rock, ${banked} graded as bank`,
         "No action needed.",
       ),
     );
@@ -737,6 +784,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     seam,
     walls,
     wallColumns,
+    railColumns,
     kerbs,
     banks,
     built,
@@ -746,6 +794,132 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     diagnostics,
     declaration: { walls: declaredWalls, banks: declaredBanks },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the parapet                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns from a wall's coping to the nearest public ground that still counts
+ * as "somebody can walk up to this drop".
+ *
+ * Three: the width of the sidewalk band plus the column the wall stands on. A
+ * wall at the back of a pavement gets a parapet; a wall at the bottom of
+ * somebody's garden, or holding a bench nothing reaches, does not — it is a
+ * retaining wall, and a retaining wall with a rail on top is a fortification.
+ *
+ * **Publicly accessible means street or sidewalk**, and only that: the district
+ * product this pass reads carries `carriageway` and `sidewalk` masks and no
+ * paved/plaza mask, so a plaza that reaches a wall edge is currently read as
+ * private. Widening it is one mask away if a walk asks for it.
+ */
+export const RAIL_ACCESS_RANGE = 3;
+
+/**
+ * The longest inaccessible stretch a parapet is carried across.
+ *
+ * A parapet that stops for two columns and starts again is two parapets with a
+ * hole in them; a parapet that runs the length of a wall nobody can reach is the
+ * battlement this replaced. Four is a doorway's worth.
+ */
+export const RAIL_GAP_BRIDGE = 4;
+
+/**
+ * The shortest run of parapet worth building.
+ *
+ * Below this a "continuous course" is indistinguishable from the spaced posts
+ * that made the town read as a fortress: one or two wall blocks on their own
+ * render as full-height posts.
+ */
+export const MIN_RAIL_RUN = 3;
+
+/**
+ * Stand a **continuous** parapet on the stretches of a wall the public reaches.
+ *
+ * The chain is 4-connected by construction (`chainsOf` walks 4-neighbours), so
+ * consecutive rail blocks connect into a low course rather than each rendering
+ * as a post. That is the whole difference between a parapet and a battlement,
+ * and it is why this runs over the chain and not over the swept band.
+ *
+ * Three passes over the chain, in order: eligibility (a claimed column with
+ * public ground within {@link RAIL_ACCESS_RANGE} on the platform the wall
+ * holds), gap closing ({@link RAIL_GAP_BRIDGE}), and run pruning
+ * ({@link MIN_RAIL_RUN}). A rail is only ever emitted over a column the sweep
+ * claimed, which is the same column the coping was emitted on as a structure
+ * block — so a rail can never be left floating.
+ */
+function railRun(
+  region: Region,
+  plan: ColumnPlan,
+  path: readonly Vec2[],
+  claimed: Uint8Array,
+  levels: GroundLevels,
+  above: number,
+  drop: number,
+  street: Uint8Array,
+  states: RetainingStates,
+  blocks: StructureBlock[],
+): number {
+  if (drop < RETAIN_RAIL) return 0;
+  const n = path.length;
+  const eligible = new Uint8Array(n);
+  const railed = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const cell = path[i] as Vec2;
+    if (!inside(region, cell.x, cell.z)) continue;
+    if (claimed[index(region, cell.x, cell.z)] !== 1) continue;
+    eligible[i] = 1;
+    let reached = false;
+    for (let dz = -RAIL_ACCESS_RANGE; dz <= RAIL_ACCESS_RANGE && !reached; dz++) {
+      for (let dx = -RAIL_ACCESS_RANGE; dx <= RAIL_ACCESS_RANGE; dx++) {
+        const x = cell.x + dx;
+        const z = cell.z + dz;
+        if (!inside(region, x, z)) continue;
+        // On the platform the wall holds: the street *below* a retaining wall is
+        // the thing you fall onto, not the thing you walk along the top of.
+        if (levels.at(x, z) !== above) continue;
+        if (street[index(region, x, z)] !== 1) continue;
+        reached = true;
+        break;
+      }
+    }
+    if (reached) railed[i] = 1;
+  }
+  // The gaps, then the stubs. Both decided from the arrays as they stand at the
+  // start of their pass, so neither depends on scan direction.
+  const access = Uint8Array.from(railed);
+  for (let i = 0; i < n; i++) {
+    if (access[i] === 1) continue;
+    let end = i;
+    while (end < n && access[end] !== 1) end++;
+    if (i > 0 && end < n && end - i <= RAIL_GAP_BRIDGE) {
+      for (let k = i; k < end; k++) if (eligible[k] === 1) railed[k] = 1;
+    }
+    i = end;
+  }
+  const runs = Uint8Array.from(railed);
+  for (let i = 0; i < n; i++) {
+    if (runs[i] !== 1) continue;
+    let end = i;
+    while (end < n && runs[end] === 1) end++;
+    if (end - i < MIN_RAIL_RUN) for (let k = i; k < end; k++) railed[k] = 0;
+    i = end;
+  }
+  let stood = 0;
+  for (let i = 0; i < n; i++) {
+    if (railed[i] !== 1 || eligible[i] !== 1) continue;
+    const cell = path[i] as Vec2;
+    const k = index(region, cell.x, cell.z);
+    blocks.push({
+      x: cell.x,
+      y: (plan.ground[k] as number) + 1,
+      z: cell.z,
+      stateId: states.rail,
+    });
+    stood++;
+  }
+  return stood;
 }
 
 /**
@@ -824,12 +998,21 @@ function deepen(plan: ColumnPlan, k: number, depth: number): void {
  *    masonry. It thickens with the *higher* ground preferred, which is **into
  *    the platform behind the edge** — never out onto the low side, where a
  *    painted column would be a patch of stone lying in the grass below the cut.
- * 5. Every course column gets the theme's revetment, a soil band as deep as its
- *    own drop, and — the new part — a **coping** on its surface, so the top edge
- *    of the face reads as something somebody built rather than as grass that
- *    happens to stop. The coping is withheld from a street column (the surfacer
- *    owns it), a footprint column (the building owns it) and a wall column (the
- *    wall pass emits its own coping there, as a structure block too).
+ * 5. Every course column gets **the hill's own rock** (`ground.stone`, the same
+ *    symbol `buildColumnPlan` writes under a cliff) and a soil band as deep as
+ *    its own drop. Its **surface is not touched**: whatever the terrain, the
+ *    climate and the streets agreed on stays.
+ *
+ * ## Rock, not masonry — ratified by Kai 2026-08-07
+ *
+ * This step used to paint `ground.revetment` and cope the top course, which
+ * dressed *every* unwalled cut in the theme's masonry. Walked: the hillside came
+ * out as continuous built stonework and the town read as a quarry with a fortress
+ * on it. A wall a sweep built is masonry because somebody built it; a cut nobody
+ * walled is the hill, and the hill is rock. The original defect was **dirt** — a
+ * four-block soil band showing under a stone kerb — and rock answers that
+ * without claiming the whole slope was quarried. `deepen` therefore stays: the
+ * face is solid rock to its full drop.
  *
  * @returns columns of course — members, gap recruits and thicken recruits alike.
  */
@@ -957,10 +1140,7 @@ function faceCuts(
     if (course[k] !== 1) continue;
     // A column a wall stands on already has the wall's material; all it wants
     // is the depth, so the wall does not sit on a dirt plinth of its own.
-    if (seam[k] !== 1) {
-      plan.subsurface[k] = states.revetment;
-      if (street[k] !== 1 && occupied[k] !== 1) plan.surface[k] = states.coping;
-    }
+    if (seam[k] !== 1) plan.subsurface[k] = states.rock;
     deepen(plan, k, dropOf(k));
     faced++;
   }
