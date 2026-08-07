@@ -87,8 +87,18 @@ describe("a flight's slab band never ends over a void", () => {
    * `drop` is how far the ground falls beyond the edge — one block is a kerb
    * and is meant to keep its slab, two is the defect.
    */
-  function dress(drop: number) {
+  function dress(drop: number, beside: "paving" | "soil" = "paving") {
     const plan = planOf(stack, (_x, z) => (z >= 22 ? 70 - drop : 70));
+    // What the ground beyond the edge is *made of*, which is the second half of
+    // the rule (2026-08-07): a lip that opens onto the next course of somebody's
+    // masonry is a step, and a lip that opens onto grass is the strip of bare
+    // earth Kai photographed. `planOf` lays grass over dirt, so the paving case
+    // has to be painted in.
+    if (beside === "paving") {
+      const stone = stack.blockByName("minecraft:stone")?.stateId ?? 0;
+      for (let z = 22; z < SIZE; z++)
+        for (let x = 0; x < SIZE; x++) plan.surface[at(x, z)] = stone;
+    }
     const n = SIZE * SIZE;
     const path = Array.from({ length: 16 }, (_, i) => ({ x: 8 + i, z: 20 }));
     // The verge on the low side belongs to somebody else — a plaza, a lot — so
@@ -132,7 +142,7 @@ describe("a flight's slab band never ends over a void", () => {
     // The tread columns nearest the edge, which is where the band ends.
     const edge = geometry.columns.filter((c) => c.role === "tread" && c.z === 21);
     expect(edge.length).toBeGreaterThan(0);
-    return { slabs, edge, blocks: result.blocks };
+    return { slabs, edge, blocks: result.blocks, plan };
   }
 
   it("closes a band end that would hang over a two-block drop", () => {
@@ -146,6 +156,27 @@ describe("a flight's slab band never ends over a void", () => {
     // stair is what a stair looks like, and the slabs stay.
     const { slabs, edge } = dress(1);
     expect(edge.some((column) => slabs.has(`${column.x},${column.z}`))).toBe(true);
+  });
+
+  it("closes the same one-block end when what it opens onto is soil", () => {
+    // The shallow cousin, and the reason the trigger is the *material* and not
+    // the depth: one block of drop onto grass shows a course of bare earth under
+    // the slab lip, which is what "persists and looks ugly" on hillside_town-7.
+    const { slabs, edge } = dress(1, "soil");
+    for (const column of edge) expect(slabs.has(`${column.x},${column.z}`)).toBe(false);
+  });
+
+  it("puts its own masonry under a lip it keeps", () => {
+    // Layer (b): the half-step survives, and the course under it is the flight's
+    // own step block rather than the street kit's dirt substrate.
+    const { slabs, edge, blocks, plan } = dress(1);
+    const kept = edge.filter((column) => slabs.has(`${column.x},${column.z}`));
+    expect(kept.length).toBeGreaterThan(0);
+    const under = new Set(blocks.filter((b) => b.stateId === 1).map((b) => `${b.x},${b.y},${b.z}`));
+    for (const column of kept) {
+      const y = (plan.ground[column.idx] as number) - 1;
+      expect(under.has(`${column.x},${y},${column.z}`)).toBe(true);
+    }
   });
 });
 

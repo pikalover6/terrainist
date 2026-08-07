@@ -201,6 +201,13 @@ export interface DressingReport {
   /** …of which the opening is one cell deep: a flight's ordinary step down. */
   readonly shallowOpen: number;
   /**
+   * …of which the opening is one cell deep **and shows soil under the lip**.
+   *
+   * The counter for the defect Kai photographed on 2026-08-07 and
+   * {@link shallowLipShowsSoil} defines. A golden pinned at **0**.
+   */
+  readonly openSidedOverSoilShallow: number;
+  /**
    * …of which the opening is **two cells or deeper**: visible daylight under
    * the tread, whatever is at the bottom of it.
    */
@@ -343,6 +350,25 @@ export const WORST_ROWS = 8;
 /* -------------------------------------------------------------------------- */
 
 /** Ground a bank, a terrace or the hill itself is finished in. */
+/**
+ * True when the strip visible under a one-deep open slab lip is soil.
+ *
+ * Two coplanar faces make up that strip and either one spoils it: the top face
+ * of the block directly under the slab (the floor of the slab's own empty lower
+ * half) and the top face of the neighbour the lip opens toward.
+ */
+function shallowLipShowsSoil(probe: DressingProbe, x: number, sy: number, z: number): boolean {
+  if (SOIL.test(probe.nameAt(x, sy - 1, z))) return true;
+  for (const [dx, dz] of NEIGHBOURS4) {
+    const nx = x + dx;
+    const nz = z + dz;
+    if (!probe.airAt(nx, sy, nz)) continue;
+    if (probe.airAt(nx, sy - 1, nz)) continue;
+    if (SOIL.test(probe.nameAt(nx, sy - 1, nz))) return true;
+  }
+  return false;
+}
+
 const SOIL =
   /(dirt|grass_block|coarse_dirt|rooted_dirt|podzol|mycelium|gravel|sand|red_sand|clay|mud|farmland|dirt_path|moss_block|snow_block)$/;
 
@@ -384,6 +410,7 @@ export function auditDressing(probe: DressingProbe): DressingReport {
   let halfTreads = 0;
   let openSided = 0;
   let openOverSoil = 0;
+  let openSidedOverSoilShallow = 0;
   let shallowOpen = 0;
   let deepOpen = 0;
   let floatingOverSoil = 0;
@@ -443,6 +470,15 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     }
     if (gap === 0) continue;
     openSided++;
+    // **The shallow cousin** (Kai's walk, 2026-08-07). `floor` above is read
+    // with `groundStanding`, which needs a 1×2 body to fit and therefore answers
+    // `"void"` for every one-cell opening — so `openOverSoil` is structurally
+    // blind to the commonest case of all: a `type: top` slab whose neighbour is
+    // exactly one block lower. There the empty lower half of the slab's own cell
+    // is floored by the block *under the slab*, and that floor is coplanar with
+    // the neighbour's top face, so the two read as one strip. When either is
+    // soil, what you see under the lip is a course of bare dirt.
+    if (gap === 1 && shallowLipShowsSoil(probe, x, sy, z)) openSidedOverSoilShallow++;
     const onSoil = SOIL.test(floor);
     if (onSoil) openOverSoil++;
     if (gap === 1) shallowOpen++;
@@ -692,6 +728,7 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     halfTreads,
     openSided,
     openOverSoil,
+    openSidedOverSoilShallow,
     shallowOpen,
     floatingDressing: deepOpen,
     floatingOverSoil,

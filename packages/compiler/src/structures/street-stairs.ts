@@ -522,8 +522,48 @@ export function dressStreetStairs(
     // claim and no mask. It is deliberately *not* applied to a one-block
     // opening, which is the ordinary step down onto the flight's own next tread
     // and is what a stair is supposed to look like.
+    //
+    // **The shallow cousin** (Kai's walk, 2026-08-07; the audit's
+    // `openSidedOverSoilShallow`). A one-block opening is only innocent when
+    // what it shows is the flight's own masonry. `ColumnPlan` carries one
+    // `subsurface` state per column and this pass writes the street kit's — and
+    // `road.subsurface` falls back to **dirt** — so the empty lower half of a
+    // top slab is floored by a course of bare earth, coplanar with the
+    // neighbour's own top face. That strip is what "persists and looks ugly".
+    //
+    // Two layers, in order:
+    //
+    // (b) where the soil under the lip is the flight's *own* substrate, swap
+    //     that column's substrate for the flight's step masonry. Materials
+    //     only — no level, claim or mask moves — which is exactly `roads.ts`'
+    //     {@link presentsExposedFace} guard, and it keeps the half-step.
+    // (a) where the soil is the *neighbour's* surface, the flight does not own
+    //     it and cannot repaint it, so the tread closes with a full block —
+    //     Kai's ratified floor, and the same level-neutral cure as the deep
+    //     case above.
+    const lip = shape === "slab" ? lipExposure(input, column, top) : undefined;
+    // (b) is applied to **every** slab tread, not only to the ones whose lip is
+    // open at dress time. `plan.ground` beside a flight is still the street
+    // subsystem's here and later passes — a plaza, a building apron — may cut a
+    // neighbour by a course afterwards, which opens a lip nobody could see when
+    // the tread was dressed; six of the seven survivors of the targeted first
+    // cut were exactly that. Repainting the substrate under a tread that is
+    // never opened costs one hidden block and is what a stair is made of anyway.
+    if (shape === "slab" && isSoilState(input.stack, input.states.subsurface)) {
+      plan.subsurface[k2] = input.states.step;
+    }
+    // …and the same course again as an emitted block wherever the lip is
+    // actually open. The plan write above is the honest one — it keeps the
+    // heightmap, the biome pass and the fluid validator looking at the same
+    // ground — but it is not the last word: a plaza or an apron surfaced after
+    // the flight repaints `subsurface` on a column it shares, and six treads on
+    // the steep fixture came back out as dirt for exactly that reason. A
+    // structure block is written over the finished terrain, so it survives.
+    if (lip !== undefined && lip.open && !lip.deep && !lip.soilBeside) {
+      blocks.push({ x: column.x, y: top - 1, z: column.z, stateId: input.states.step });
+    }
     const dressing =
-      shape === "slab" && opensDeeply(input, column, top)
+      shape === "slab" && lip !== undefined && (lip.deep || lip.soilBeside)
         ? undefined
         : shape === "stair"
         ? input.stack.blockStateOf(
@@ -548,8 +588,7 @@ export function dressStreetStairs(
 }
 
 /**
- * True when a tread column's own cell would show its underside over a drop of
- * two blocks or more.
+ * What a slab tread's empty lower half opens onto, on its worst side.
  *
  * Read off `plan.ground`, which the ground contract has already committed for
  * the whole `street.network` subsystem by the time the dress phase runs
@@ -559,12 +598,15 @@ export function dressStreetStairs(
  * `top` is the flight's own topmost solid block at this column; a neighbour
  * whose ground stands at `top − 1` is the next tread down and is not a defect.
  */
-function opensDeeply(
+function lipExposure(
   input: StreetStairDressInput,
   column: StreetStairColumn,
   top: number,
-): boolean {
+): LipExposure {
   const { region, plan } = input;
+  let deep = false;
+  let open = false;
+  let soilBeside = false;
   for (const [dx, dz] of NEIGHBOUR4) {
     const nx = column.x + dx;
     const nz = column.z + dz;
@@ -574,13 +616,49 @@ function opensDeeply(
       nx >= region.x0 + region.width ||
       nz >= region.z0 + region.depth
     ) {
-      return true;
+      deep = true;
+      continue;
     }
     const nidx = (nz - region.z0) * region.width + (nx - region.x0);
-    if ((plan.ground[nidx] as number) <= top - 2) return true;
+    const there = plan.ground[nidx] as number;
+    if (there <= top - 2) {
+      deep = true;
+      continue;
+    }
+    if (there !== top - 1) continue;
+    // The neighbour's top block sits one course down, so its top face is
+    // coplanar with the floor of the slab's own empty lower half: the two are a
+    // single visible strip, and soil in either half of it is the defect.
+    open = true;
+    if (isSoilState(input.stack, plan.surface[nidx] as number)) soilBeside = true;
   }
-  return false;
+  return { deep, open, soilBeside };
 }
+
+/** What a slab tread's open lower half is exposed to. See {@link lipExposure}. */
+interface LipExposure {
+  /** Some side opens over a drop of two blocks or more. */
+  readonly deep: boolean;
+  /** Some side opens over a drop of exactly one block. */
+  readonly open: boolean;
+  /** …and the ground it shows there is soil the flight does not own. */
+  readonly soilBeside: boolean;
+}
+
+/**
+ * True when a block state is bare ground rather than masonry.
+ *
+ * The same vocabulary the dressing audit's `SOIL` uses, kept here as a name
+ * test so it follows the palette rather than a state id: a street kit whose
+ * `road.subsurface` resolves to `stone` needs no repainting at all.
+ */
+function isSoilState(stack: PrismarineStack, stateId: number): boolean {
+  const name = stack.blockNameByStateId(stateId);
+  return name !== undefined && SOIL.test(name);
+}
+
+const SOIL =
+  /(dirt|grass_block|coarse_dirt|rooted_dirt|podzol|mycelium|gravel|sand|red_sand|clay|mud|farmland|dirt_path|moss_block|snow_block)$/;
 
 const NEIGHBOUR4 = [
   [1, 0],
