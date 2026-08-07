@@ -104,6 +104,22 @@ blocks become counted persistent). Queue when slots free: invisible
 flights (medium, first), giants-grandeur + roots iteration (medium), leaf
 flip (low).
 
+**Walk-feedback wave COMPLETE (2026-08-07 evening):** all 11 findings from
+walks 1–3 landed — Option A + overhang (`baeed2a`, terminusLandings in
+roads phase 2a), stoop stairs (`c5d0a32`), slab lips (`0c1cc0d`),
+bus-shelter panes (`a9a9012`), vegetation feather (`e00b561`),
+reachability domain (`e668053`, both towns read 1.000 — matched Kai's
+walk), leaf flip (`cf3e15e`, floating vines explained: decay-orphaned),
+giants+buttress roots (`000588b`, prominence 12/8/5 → 13–26 ×5 giants),
+tread relief (`8ea049b`, Kai's "stairs+landings" popup pick; 7→133
+stairs). Goldens reconciled 28/28; full suites green; NOTE: a concurrent
+CLOUD session pushed a pre-relief golden re-pin (90cd66d) to this branch
+— rebased over, mine superseded; watch for cross-session branch pushes.
+NEW LEDGER ITEM: the flight-pin unit mismatch (stand vs solid-top units;
+8/8 flights solve unpinned, ride one proud — next street-family lever).
+**Installed for walk 4: hillside_town-8, hillside_town_steep-6,
+oldgrowth_vale-2.** Outstanding from Kai: harbourtown A/B verdict.
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density
