@@ -107,6 +107,17 @@ export interface FloatingSlab {
   readonly cantilevered: boolean;
 }
 
+/** A flight's own tread column that surfaced as bare ground. */
+export interface SoilTread {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** The block a walker stands on there. */
+  readonly block: string;
+  /** Every emitter that declared the column. */
+  readonly emitters: readonly string[];
+}
+
 /** A lamp standing below the pavement it lights. */
 export interface SunkenProp {
   readonly x: number;
@@ -265,6 +276,42 @@ export interface DressingReport {
   readonly stepPlinthRuns: number;
   readonly stepPlinthLongestRun: number;
   readonly worstStepPlinths: readonly PlinthRun[];
+
+  /* --- 3a: a flight that is not paved ------------------------------------ */
+  /**
+   * Columns a flight declared and a walker can stand on — the denominator.
+   *
+   * Every one of them is a column `dressStreetStairs` wrote its step masonry
+   * into, so the two numbers below are a straight readback of whether that
+   * write survived to the world.
+   */
+  readonly stepColumns: number;
+  /**
+   * …whose walked tread is **natural ground cover** rather than the flight's
+   * own masonry: grass, dirt, gravel, sand.
+   *
+   * Kai's walk, 2026-08-07: a connector crossing open terraced hillside on the
+   * steep fixture read as bare stepped grass with a few slabs on it. A flight
+   * is the most visible piece of built ground in a hill town and it has to read
+   * as built for its whole run; a golden pinned at **0**.
+   */
+  readonly stepColumnsOnSoil: number;
+  /** What those columns show, by block name. */
+  readonly stepSoilCensus: Readonly<Record<string, number>>;
+  readonly worstStepSoil: readonly SoilTread[];
+  /**
+   * …carrying a **stair or slab block**: the relief that makes a flight read as
+   * a staircase rather than as a flat course of paving.
+   *
+   * The other half of Kai's 2026-08-07 walk. {@link stepColumnsOnSoil} answers
+   * "is the flight paved"; this answers "does the paving read as steps". On the
+   * steep fixture it reads 555 of 1409, and the flights emit no stair blocks at
+   * all: the tread mix calls a column a `stair` only when the column *ahead* is
+   * higher, and every flight on that hill is routed downwards.
+   */
+  readonly stepTreadsWithRelief: number;
+  /** What every flight column reads back as, by block name. */
+  readonly stepTreadCensus: Readonly<Record<string, number>>;
 
   /* --- 4: sheer built faces ----------------------------------------------- */
   /** Runs of built face at least {@link SHEER_DROP} tall and {@link SHEER_RUN} long. */
@@ -604,6 +651,39 @@ export function auditDressing(probe: DressingProbe): DressingReport {
   }
   cutoffs.sort((a, b) => b.drop - a.drop || a.x - b.x || a.z - b.z);
 
+  /* --- 3a: a flight that does not read as one --------------------------- */
+  // Two readings of one loop, both of them Kai's walk of 2026-08-07 turned into
+  // a number.
+  //
+  // A `steps` column is one `dressStreetStairs` painted with the street kit's
+  // own step masonry, verges included, so a tread that reads back as **grass**
+  // is not an aesthetic judgement — it is a write that did not survive, and the
+  // walker sees the flight vanish into the field.
+  //
+  // The second is subtler and is the one the steep fixture actually fails: a
+  // column carrying neither a stair nor a slab is a flat course of paving. It
+  // is paved, it is correct underfoot, and on a hillside made of the same stone
+  // it is invisible. A staircase reads as a staircase because of its *relief*.
+  const soilTreads: SoilTread[] = [];
+  const soilCensus = new Map<string, number>();
+  const reliefCensus = new Map<string, number>();
+  let stepColumns = 0;
+  let stepTreadsWithRelief = 0;
+  for (const key of keys) {
+    const roles = probe.roleAt.get(key);
+    if (roles === undefined || !roles.has("steps")) continue;
+    stepColumns++;
+    const [x, z] = splitKey(key);
+    const y = probe.feet.get(key) as number;
+    const tread = probe.nameAt(x, y - 1, z);
+    reliefCensus.set(tread, (reliefCensus.get(tread) ?? 0) + 1);
+    if (/_slab$|_stairs$/.test(tread)) stepTreadsWithRelief++;
+    if (!SOIL.test(tread)) continue;
+    soilCensus.set(tread, (soilCensus.get(tread) ?? 0) + 1);
+    soilTreads.push({ x, y, z, block: tread, emitters: [...(probe.laidBy.get(key) ?? [])] });
+  }
+  soilTreads.sort((a, b) => a.x - b.x || a.z - b.z);
+
   /* --- 3: roads standing proud of the ground on both sides --------------- */
 
   // Measured twice over: once for the carriageways, and once for the flights.
@@ -758,6 +838,13 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     stepPlinthRuns: stepwork.longRuns,
     stepPlinthLongestRun: stepwork.longest,
     worstStepPlinths: stepwork.worst,
+
+    stepColumns,
+    stepColumnsOnSoil: soilTreads.length,
+    stepSoilCensus: sortedCounts(soilCensus),
+    worstStepSoil: soilTreads.slice(0, WORST_ROWS),
+    stepTreadsWithRelief,
+    stepTreadCensus: sortedCounts(reliefCensus),
 
     sheerFaces: sheer.length,
     sheerColumns,
