@@ -169,6 +169,9 @@ Grammar-level tests run every program across its parameter-envelope **corners**
    *Amended 2026-08-07 — see §9.4: suspended as a universal law. Accidental
    masts are prevented at the source (`capWood` on live constructions,
    asserted per program); deliberate standing dead wood is legal.*
+   *Amended again 2026-08-07 (grandeur): `capWood` skips **buttress ridges**
+   (§3.7.1). A root ends in a root; the ridges are the one enumerated live-wood
+   exception, and the catalog matrix asserts they are the only bare tops.*
 2. **Every canopy block is within leaf-BFS distance 6 of a
    `log`/`branch`/`stem`** — BFS through the plant's own canopy blocks, which
    is the metric vanilla's `distance` actually uses (*ratified 2026-08-07; the
@@ -191,7 +194,11 @@ Grammar-level tests run every program across its parameter-envelope **corners**
    always the same — **a branch walk steps one lattice axis per block, never
    diagonally** — and every program below that grows a limb says so.
 4. **Roots seat**: `root` blocks at `dy ≤ 0` only; the scatterer sinks them to
-   ground like `claimTrunk` seats trunks today.
+   ground like `claimTrunk` seats trunks today. *Extended 2026-08-07 (§3.7.1):
+   a buttress flare also has wood **above** grade, and that wood is a `branch`,
+   not a `root` — so the law reads unchanged, and the flare seats by filling
+   every ridge column downward `rootDepth` blocks rather than by reading a
+   heightfield law 5 forbids it to see.*
 5. **Determinism**: the program sees only its `FloraVariation`, its
    `FloraSpeciesDef` and the injected RNG (§3.1). No globals, no wall-clock, no
    reads of the plan.
@@ -333,65 +340,169 @@ that read and all three are load-bearing: a trunk more than one column wide, a
 root flare that seats it into the ground so it does not look dropped, and a
 crown carried on real limbs high enough that a player walks *under* it.
 
+**Amended 2026-08-07 (the grandeur pass; code is normative).** Kai flew the
+canopy of `oldgrowth_vale` and reported *"giants def don't anchor the skyline —
+not a single growth meaningfully more grand than vanilla generation"*. The
+instrument agreed: the three placed beeches cleared the p95 canopy top within 24
+columns by **12, 8 and 5** blocks. The pseudocode below is the amended program;
+the root flare of the original — a broken ring of vertical `root` logs — is
+struck outright and replaced by §3.7.1.
+
 ```
 giant(v, def, rng):
   span = def.trunkSpan                                   # 2, or 3 when height >= 24
   cols = { (i,j) : 0 <= i,j < span }
   for dy in 0 .. v.height-1:
     for c in cols: emit log(c.i, dy, c.j)
+  # the leader: `def.leader` blocks past the trunk, so the crown centre is wood
+  # (law 2) and the upper whorl has a mast to grow from
+  for dy in v.height .. v.height + def.leader: emit log(centre, dy, centre)
 
-  # --- root flare: a skirt widening as it falls, law 4 (dy <= 0 only) --------
-  for d in 0 .. def.rootDepth-1:                         # rootDepth 2..3
-    dy = -d
-    ring = dilate(cols, d + 1) \ dilate(cols, d)         # the new columns at this depth
-    for c in ring:
-      if rng() < 0.75: emit root(c.i, dy, c.j)           # broken, not a perfect skirt
-      for dyy in dy+1 .. 0: emit root(c.i, dyy, c.j)     # and it rises to grade
+  buttressRoots(def, span, rng)                          # §3.7.1
 
-  # --- branch skeleton -------------------------------------------------------
-  n    = def.branches.lo + floor(rng() * (def.branches.hi - def.branches.lo + 1))   # 3..6
-  base = round(v.height * 0.62)
+  # --- main limbs: the ceiling a player walks under --------------------------
+  n    = def.branches.lo + floor(rng() * (def.branches.hi - def.branches.lo + 1))   # 5..8
+  base = round(v.height * 0.55)
   for k in 0 .. n-1:
     theta = 2*PI * (k + 0.6*rng()) / n
     y0    = base + floor(k * (v.height - base) / n)
     start = the column of `cols` furthest along theta
-    L     = def.limb + floor(rng() * 3)                  # 4..7
+    L     = def.limb + floor(rng() * 3)                  # 6..8
     tip   = walkLimb(from=(start, y0), dir=theta, run=L, rise=3)
     mass(tip, radius = def.mass + v.radiusDelta, squash = 0.7)
-    if def.hangingSymbol: curtain(tip, length = 2 + floor(rng()*3))
 
-  # --- crown: caps every trunk column, law 1 for all span^2 of them ----------
-  mass((centre of cols, v.height + 1), radius = def.crown + v.radiusDelta, squash = 0.6)
+  # --- the crown: a compound dome, not one mass ------------------------------
+  m = def.crownLimbs.lo + floor(rng() * (def.crownLimbs.hi - def.crownLimbs.lo + 1))  # 4..6
+  for k in 0 .. m-1:
+    theta = 2*PI * (k + 0.5 + 0.5*rng()) / m
+    tip   = walkLimb(from=(centre, v.height + min(def.leader, 1 + k mod 2)),
+                     dir=theta, run=def.crownRun + (0 or 1), rise = k mod 2)
+    mass(tip, radius = def.crown + v.radiusDelta, squash = 0.7)
+  mass((centre, v.height + def.leader), radius = def.crown + v.radiusDelta, squash = 0.6)
+  capWood()
+  if def.hangingSymbol: drapeCrown(def, rng, floor = round(v.height * 0.6))   # §3.7.2
 ```
 
-`canopyRadius = def.limb + def.mass + v.radiusDelta`, and the scatterer adds
-`span − 1` to the trunk claim exactly as it adds 1 for a mega spruce today.
+`canopyRadius` is the **max** of the three reaches the program now has — main
+limbs, crown limbs and buttress ridges — and the scatterer adds `span − 1` to
+the trunk claim exactly as it adds 1 for a mega spruce today.
 
-The invariants: **law 1 across every trunk column** (the crown is placed above
-`v.height`, and its radius is ≥ `span`, so all `span²` columns are covered) —
-this is the mega-spruce lesson generalised, and it is the reason the crown is a
-separate mass rather than the union of the limb masses. **Law 4** is why the
-root loop only ever writes `dy ≤ 0` and why it fills upward to grade: a root
-block with a gap above it is a floating block the moment the ground steps.
-**Law 3** via `walkLimb`. The 0.75 acceptance on the outer ring is what stops
-the flare reading as a machined cone.
+**Why the crown is compound, and this is the load-bearing part of the
+amendment.** Law 2 caps a single leaf mass at radius 4 (`MAX_MASS_RADIUS`):
+wider, and the leaf BFS runs past 6 and the emitter has to write `persistent`
+leaves. A radius-4 dome is not a skyline. Four to six *masses*, each centred on
+wood — a short limb off the leader — make a crown of radius 9 or 10 in which
+every leaf is still within BFS 6 of a branch. That is the difference between a
+tall tree and an emergent, and it costs nothing but limbs.
 
-`root` blocks are seated by the same mechanism that seats trunks: the scatterer
-records `baseY` from `plan.ground[idx] + 1`, so `dy = 0` is the first block
-above ground and `dy = −d` replaces the ground column's own block. A root
-column outside the region, or on a column whose ground is more than
-`def.rootDepth` below the trunk's, is dropped — a flare must not become a
-hanging skirt on a slope.
+The invariants: **law 1 across every trunk column** — the crown centre mass sits
+above `v.height + leader` and its radius is ≥ `span`, so all `span²` columns are
+covered, and `capWood` (§3.13.4) closes whatever the limbs leave proud. **Law 3**
+via `walkLimb`. **Law 4** is now §3.7.1's business.
 
 | param | default | notes |
 |---|---|---|
 | `trunkSpan` | 2 | 3 for `height ≥ 24` |
-| `rootDepth` | 2 | 3 for `trunkSpan = 3` |
-| `branches` | `[3, 6]` | |
-| `limb` | 4 | run, in blocks |
+| `branches` | `[5, 8]` | main limbs (`[3, 6]` before 2026-08-07) |
+| `limb` | 6 | run, in blocks (4 before) |
 | `mass` | 3 | tip cluster radius |
+| `leader` | 3 | blocks the trunk runs past `height` (2 before, hard-coded) |
+| `crownLimbs` | `[4, 6]` | the upper whorl that makes the crown compound |
+| `crownRun` | 4 | run of a crown limb |
 | `crown` | 4 | crown cluster radius |
-| `height` | 20–30 | species envelope; see §9.2 for the build-limit interaction |
+| `height` | 26–34 (`beech_giant`), 30–40 (`kapok_emergent`) | 20–28 / 22–30 before; see §9.2 for the build-limit interaction |
+
+### 3.7.1 `buttressRoots` — the procedural flare
+
+**Ratified by Kai's instinct, 2026-08-07:** *"the root flare doesn't look great…
+my instinct is a procedural root generator rather than just a few squares"*. The
+defect is exact and worth naming: WP-B's flare wrote **vertical** `root` logs at
+grade, and a vertical log shows its ring texture on the **top** face — which at
+grade is the only face a standing player sees. The flare read as flat brown
+tiles around the trunk.
+
+```
+buttressRoots(def, span, rng):
+  n = def.buttresses.lo + floor(rng() * (def.buttresses.hi - def.buttresses.lo + 1))   # 4..7
+  for k in 0 .. n-1:
+    theta = 2*PI * (k + 0.6*rng()) / n
+    run   = def.rootRun.lo + floor(rng() * (def.rootRun.hi - def.rootRun.lo + 1))      # 3..6
+    (x,z) = the trunk column furthest along theta
+    total = |round(cos theta * run)| + |round(sin theta * run)|
+    for s in 1 .. total:
+      step one lattice axis outward — the axis with the largest remaining error
+      h = max(1, round(def.rootRise * (1 - (s-1)/total)))       # tapers to a single block
+      for dy in 0 .. h-1: emit branch(x, dy, z, axis = the axis just stepped, buttress)
+      for dy in -1 .. -def.rootDepth: emit root(x, dy, z)       # the seat
+```
+
+Five clauses, all load-bearing:
+
+- **Radiating, seeded per tree.** `4..7` ridges at jittered angles: no two
+  giants share a root plan, and none of them reads as machined. This is what
+  replaces the old broken-ring 0.75 draw.
+- **A ridge is a chain, not a ring.** It walks outward one lattice axis per
+  column, so consecutive ridge columns are 6-adjacent and the first is
+  6-adjacent to the trunk. Live buttress wood obeys **law 3** exactly as a limb
+  does, and **law 6** follows.
+- **Tapering.** `rootRise` blocks tall against the trunk, falling linearly to a
+  single block at the toe, over `3..6` columns. Over the flare as a whole the
+  profile never rises or thickens further out — the property the tests assert,
+  since two ridges may cross and a crossed column takes the taller.
+- **Bark, never rings.** Every above-grade ridge block is a `branch` carrying
+  the axis the walk just stepped — a **horizontal** log, whose top face is bark.
+  `FloraBlock.buttress` marks it (additive to §3); the emitter ignores the flag
+  and maps it as any other live branch, so `parts.ts` needs no change. An
+  all-bark `wood.*_wood` palette symbol would be a marginal improvement (bark on
+  all six faces) and is **not** added: a horizontal log already presents bark on
+  every face a player standing at the trunk can see, and a new palette family is
+  a new failure mode in the pinned-registry check.
+- **Seated by depth, not by terrain.** A program may not read the plan (law 5),
+  so the flare cannot follow the heightfield. Instead every ridge column is
+  filled downward `rootDepth` blocks with `root` (vertical logs — invisible
+  below grade). A toe up to `rootDepth` blocks downhill of the trunk still meets
+  solid ground; one uphill is simply buried. This is why `rootDepth` rose from
+  2 to 3.
+
+**Law 4's convention is extended, and law 1 gains its one live-wood exception.**
+Law 4 said "`root` blocks at `dy ≤ 0` only"; that still holds — every block the
+generator writes below grade is a `root` at `dy ≤ 0`, and its column is filled
+to grade. What is new is that the flare also has wood *above* grade, and that
+wood is a `branch`, not a `root`. It is therefore the top of its own column, and
+**`capWood` skips it**: a root ends in a root, and a leaf on top of one is a
+shrub growing out of a tree's ankle. Law 1's target property was never "no
+topmost log" but "no *accidental* bare mast" (§9.4), so the buttress ridges are
+enumerated rather than capped — `flora-species.test.ts` asserts that the only
+bare wood tops in the whole catalog are buttress blocks at `dy ≤ rootRise`.
+
+| param | default | notes |
+|---|---|---|
+| `buttresses` | `[4, 7]` | ridges per tree |
+| `rootRun` | `[3, 6]` | columns a ridge reaches |
+| `rootRise` | 3 | ridge height against the trunk |
+| `rootDepth` | 3 | below-grade fill, i.e. the slope the flare can seat on |
+
+### 3.7.2 `drapeCrown` — hanging growth on a big tree
+
+Kai, same walk: *"hanging growth genuinely might be underdone… there isn't much
+besides vines, but it's difficult without proper large growths."* WP-C owns new
+materials (glow lichen, and whatever a "large growth" turns out to be); what WP-B
+owes is **more vine, and longer, and hung where it reads** — and, embarrassingly,
+`beech_giant` carried no `hangingSymbol` at all, so the temperate old-growth
+fixture had zero hanging growth on its landmarks.
+
+The rule is `weeping`'s (§3.12), applied to a giant's whole crown: a curtain
+hangs from a canopy column with at least one open 4-neighbour — the **rim**,
+never the whole underside, or the crown becomes a solid cylinder — with per-tree
+share `hangingShare` and length drawn from `curtain`. Only masses above
+`0.6 × height` drape: the walk-under space is the point of a giant, and a vine
+curtain across it is a curtain across a cathedral nave. `curtain` emits top-down
+and contiguous, so the emitter's support rule never has to drop one.
+
+| param | `beech_giant` | `kapok_emergent` |
+|---|---|---|
+| `hangingShare` | 0.4 | 0.55 |
+| `curtain` | `[3, 8]` | `[4, 9]` |
 
 ### 3.8 `ancient` — the tree with a history
 
@@ -454,6 +565,16 @@ than a bare pole anyway.
 | `age` | species envelope, e.g. `[0.4, 0.85]` | drawn per tree |
 | `deadSymbol` | species | a stripped log |
 | `decoSymbol` | species | shelf fungus |
+
+**Amended 2026-08-07 (the grandeur pass).** An `ancient` in the **emergent**
+stratum has a `giant`'s job — it must stand over the wood it anchors — and its
+crown *thins with age*, so it needs more trunk than a giant to clear the same
+canopy. The envelopes move with §8's prominence bar rather than by taste:
+`spruce_ancient` 16–22 → **25–33** (the boreal canopy tops out at 17), and
+`desert_ironwood` 10–15 → **17–23** (an `acacia_umbrella` plate reaches 9, and
+at `age = 0.85` the ironwood's apex mass is one block). Its limbs grow with it —
+`spruce_ancient` takes `branches [4, 6]`, `limb 4`. The geometry of the program
+is otherwise untouched; a *canopy*-stratum ancient would not need any of this.
 
 ### 3.9 `columnar` — poplar, cypress, crystal spire
 
@@ -679,17 +800,17 @@ a theme park).
 | `spruce_squat` | conifer | canopy | 5–7 | `wood.spruce_log` / `wood.spruce_leaves` | boreal | *existing* — the scrubby treeline |
 | `oak_round` | blob | canopy | 5–7 | `wood.oak_log` / `wood.oak_leaves` | temperate | *existing* — the ordinary tree |
 | `birch_slim` | blob | canopy | 6–9 | `wood.birch_log` / `wood.birch_leaves` | temperate | *existing* — the pale vertical stroke |
-| `spruce_ancient` | ancient | emergent | 16–22 | `wood.spruce_log` / `wood.spruce_leaves` | boreal | The leaning grandfather in a snowfield: half its limbs dead, shelf fungi up one side. The thing you walk towards. |
+| `spruce_ancient` | ancient | emergent | 25–33 | `wood.spruce_log` / `wood.spruce_leaves` | boreal | The leaning grandfather in a snowfield: half its limbs dead, shelf fungi up one side. The thing you walk towards. |
 | `larch_columnar` | columnar | canopy | 10–16 | `wood.spruce_log` / `wood.birch_leaves` | boreal, temperate | A pale-green exclamation mark. Breaks a dark conifer wall into vertical rhythm at any distance. |
 | `juniper_scrub` | blob | understory | 3–4 | `wood.spruce_log` / `wood.azalea_leaves` | boreal, arid | Knee-to-shoulder scrub. What makes a forest floor look occupied instead of mown. |
-| `beech_giant` | giant | emergent | 20–28 | `wood.dark_oak_log` / `wood.dark_oak_leaves` | temperate | The cathedral column. A buttressed trunk you can stand between the roots of, and a crown you walk under. |
+| `beech_giant` | giant | emergent | 26–34 | `wood.dark_oak_log` / `wood.dark_oak_leaves`, hanging `foliage.vine` | temperate | The cathedral column. A buttressed trunk you can stand between the roots of, and a crown you walk under. |
 | `oak_spreading` | broadleaf | canopy | 8–12 | `wood.oak_log` / `wood.oak_leaves` | temperate | The real oak: lumpy, asymmetric, sky between its masses. The single biggest upgrade to an ordinary wood. |
 | `willow_weeping` | weeping | canopy | 7–10 | `wood.oak_log` / `wood.oak_leaves`, hanging `foliage.vine` | temperate, tropical | A curtain over water. Reads "riverbank" in one glance and from any angle. |
 | `hazel_shrub` | blob | understory | 3–5 | `wood.oak_log` / `wood.azalea_leaves` | temperate | The layer between the grass and the canopy — the reason an old wood feels deep. |
 | `cherry_blossom` | broadleaf | canopy | 6–9 | `wood.cherry_log` / `wood.cherry_leaves` | temperate | Pink. The only pink in the block table, and worth a species on its own. |
 | `acacia_umbrella` | umbrella | canopy | 6–9 | `wood.acacia_log` / `wood.acacia_leaves` | arid | The savannah plate on a bare trunk. Unmistakable at any range and from below. |
-| `desert_ironwood` | ancient | emergent | 10–15 | `wood.acacia_log` / `wood.acacia_leaves`, dead `wood.stripped_oak_log` | arid | A bent, mostly-dead hardwood holding one live limb. Punctuation in an empty landscape. |
-| `kapok_emergent` | giant | emergent | 22–30 | `wood.jungle_log` / `wood.jungle_leaves`, hanging `foliage.vine` | tropical | *The* canopy giant: buttress roots, vines off every limb, a crown above everything else in the wood. |
+| `desert_ironwood` | ancient | emergent | 17–23 | `wood.acacia_log` / `wood.acacia_leaves`, dead `wood.stripped_oak_log` | arid | A bent, mostly-dead hardwood holding one live limb. Punctuation in an empty landscape. |
+| `kapok_emergent` | giant | emergent | 30–40 | `wood.jungle_log` / `wood.jungle_leaves`, hanging `foliage.vine` | tropical | *The* canopy giant: buttress roots, vines off every limb, a crown above everything else in the wood. |
 | `jungle_broadleaf` | broadleaf | canopy | 9–14 | `wood.jungle_log` / `wood.jungle_leaves` | tropical | The bulk tropical canopy. Tall enough to make the kapok's crown read as *above* something. |
 | `tree_fern` | umbrella | understory | 3–5 | `wood.jungle_log` / `wood.jungle_leaves` | tropical | A single small plate at head height. The tropical floor layer, and the thing that makes the ground feel humid. |
 | `mushroom_giant_red` | fungal | emergent | 8–14 | `fungal.stem` / `fungal.red_cap` | *(none — explicit only)* | The landmark of a fungal grove. Red dome on a pale stalk, visible across a valley. |
@@ -845,20 +966,36 @@ author would expect.
 
 ### 5.3 The emergent budget, and its exclusion radius
 
+**Amended 2026-08-07 (the grandeur pass).** The original arithmetic gave §7.1's
+170-radius old-growth wood a budget of **2** (the fixture wrote 3 by hand), and
+Kai's fly-over of the compiled world reported meeting *none*. Three landmarks in
+a 340-block-wide wood is a density a player does not encounter. The formula
+keeps its shape and moves its constants, and gains a floor:
+
 ```
 A       = |eligible columns of the node's mask|        # after clearing, before taper
-budget  = clamp(round(A / EMERGENT_AREA^2), 0, EMERGENT_MAX)
-EMERGENT_AREA      = 128     # one emergent per 128×128 of eligible ground
-EMERGENT_MAX       = 12
-EMERGENT_EXCLUSION = 48      # minimum trunk-to-trunk distance between two emergents
+budget  = clamp(max(round(A / EMERGENT_AREA^2),
+                    A >= EMERGENT_FLOOR_AREA ? EMERGENT_MIN : 0), 0, EMERGENT_MAX)
+EMERGENT_AREA       = 80     # one emergent per 80×80 of eligible ground (was 128)
+EMERGENT_MAX        = 18     # (was 12)
+EMERGENT_MIN        = 1      # a deliberate wood always gets a landmark
+EMERGENT_FLOOR_AREA = 2304   # …once it is at least a ~27-radius patch
+EMERGENT_EXCLUSION  = 48     # minimum trunk-to-trunk distance — DELIBERATELY UNCHANGED
 ```
 
-Sanity, which is how the constants were chosen: a `zone` patch on a 512² region
-is about 170² ≈ 29,000 eligible columns → **2**, which is the "order 1–3 per
-patch" the skeleton asked for. A whole-region `{all: true}` wilderness fill at
-512² saturates at 12 — one giant per ~85 blocks of world — which is still
-landmark density, and `EMERGENT_EXCLUSION` is comfortably satisfiable at that
-count.
+Measured, not estimated: §7.1's wood has **36,864** eligible columns of its
+90,000-column circle once slope, elevation and the edge taper have had their
+say, so it budgets **5** and places 5 — against ~2,830 canopy trees, one tree in
+560, and a giant every ~120 blocks of fly-over instead of every ~200. A
+whole-region `{all: true}` fill at 512² asks for 41 and is clamped to 18.
+
+`EMERGENT_EXCLUSION` stays at 48 on purpose. The budget is an *upper bound* and
+the exclusion radius is the *geometry*: raising the budget therefore cannot
+crowd giants together, it can only fill the room the exclusion radius already
+leaves. A landmark with a neighbour 20 blocks away is not a landmark. The floor
+(`EMERGENT_MIN`) exists for the opposite failure: an author who wrote a wood and
+switched the stratum on asked for a landmark, and "your patch rounded to
+nothing" is exactly the silent decline DESIGN.md's first failure mode is about.
 
 Placement runs **before** the canopy, on its own stream
 (`streamSeed(node.seed, "scatter.emergent")`), over the same jittered grid but
@@ -1094,8 +1231,7 @@ work, and it is deliberately short.
           "undergrowth": { "grass": 0.5, "flowers": 0.04, "deadwood": 0.08 },
           "strata": {
             "emergent": {
-              "species": [{ "id": "great_beech", "shape": "beech_giant" }],
-              "budget": 3
+              "species": [{ "id": "great_beech", "shape": "beech_giant" }]
             },
             "understory": {
               "species": [{ "id": "hazel", "shape": "hazel_shrub" }],
@@ -1127,6 +1263,11 @@ work, and it is deliberately short.
   }
 }
 ```
+
+The emergent stratum names its species and **not** its budget (amended
+2026-08-07: it wrote `"budget": 3`). §5.3's formula is the one that has been
+tuned against a walk; a hand-written budget silently opts out of that tuning,
+and the kit should teach the default.
 
 The two-node pattern the kit already teaches is unchanged: a deliberate wood
 over a shape, and a low-density `{all: true}` fill for the rest of the world.
@@ -1230,7 +1371,22 @@ fantasy, and nothing else in the document has to change.
   literals with the programs' own derivations, behaviour-preserving for the
   legacy four. Gate: a generated
   temperate-old-growth fixture, linted on all 26 rules; silhouette review
-  render for Kai's walk.
+  render for Kai's walk. **Gate added 2026-08-07 — the prominence bar:**
+
+  > **Every placed emergent clears the p95 canopy top within 24 columns by at
+  > least 8 blocks**, measured on the recompiled fixture (crown-top Y minus the
+  > p95 of the per-column canopy top over the disc of radius 24, the giant's own
+  > crown excluded), and the per-giant table is reported. The catalog is held to
+  > the same bar at every envelope corner, worst emergent corner against best
+  > canopy corner of the same climate, in `flora-grandeur.test.ts`.
+
+  The bar exists because "does the giant read as a landmark" had been a matter
+  of opinion, and the opinion was wrong: the pre-amendment fixture measured
+  12/8/5 and the walk called it *"not a single growth meaningfully more grand
+  than vanilla"*. Post-amendment the same five giants measure **20, 16, 13, 21,
+  26**. A number that Kai's eye has been calibrated against once is worth more
+  than a paragraph of intent — the same reason the settlement work has a
+  prominence field.
 - **WP-C — fungal + fantasy.** `fungal` program, fantasy species, glow/crystal
   materials, the floor variants, `character.flora` row + grounding warnings.
   Gate: fungal-grove fixture; intent byte-identity suite still green.
@@ -1247,6 +1403,26 @@ New files: `packages/compiler/test/flora-programs.test.ts` (WP-A),
 `flora-strata.test.ts` (WP-B), `flora-fungal.test.ts` (WP-C),
 `packages/compiler/test/intent-flora.test.ts` (WP-C),
 `packages/spec/test/flora-validate.test.ts` (WP-B).
+
+**`flora-grandeur.test.ts` — the emergent is an emergent** (added 2026-08-07,
+the grandeur pass). The six-law matrix cannot express "grand", so this file
+holds the properties that *are* grandeur, over the same envelope corners:
+
+- `every emergent out-tops every canopy species of its climate by the prominence
+  bar` — worst emergent corner against best canopy corner, per climate. This is
+  the assertion that fails when someone edits a height envelope down.
+- `a giant's crown is wider than one mass can be` — the compound crown, asserted
+  as a footprint of radius ≥ 6 in the top five layers of the tree, because a
+  radius-4 dome is what `MAX_MASS_RADIUS` allows and is not a skyline.
+- The buttress rules of §3.7.1: every buttress block is a **horizontal-axis
+  branch** (never a vertical-log top face); the ridges radiate into at least
+  three octants and reach 2–7 columns; the flare never rises or thickens further
+  out, and reaches grade; every ridge column is filled downward (seated) and
+  6-connected to the trunk.
+- The drape of §3.7.2: more than 20 hanging blocks per giant at every corner,
+  none of them below the crown floor or near the ground, and **both** giants
+  carry a hanging symbol at all — `beech_giant` did not, which is why the
+  temperate fixture had no hanging growth on its landmarks whatsoever.
 
 **`flora-programs.test.ts` — the laws are laws.** Every assertion runs over
 every program × its envelope corners (§3.3), which is the shape

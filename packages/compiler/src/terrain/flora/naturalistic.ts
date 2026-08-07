@@ -266,16 +266,26 @@ function curtain(b: Build, x: number, y: number, z: number, n: number): void {
  * end looks like.
  */
 function capWood(b: Build): void {
-  const tops = new Map<string, { dx: number; dy: number; dz: number }>();
+  const tops = new Map<string, { dx: number; dy: number; dz: number; buttress: boolean }>();
   for (const block of b.out) {
     if (block.part !== "log" && block.part !== "branch" && block.part !== "stem") continue;
     const k = `${block.dx},${block.dz}`;
     const seen = tops.get(k);
     if (seen === undefined || block.dy > seen.dy) {
-      tops.set(k, { dx: block.dx, dy: block.dy, dz: block.dz });
+      tops.set(k, {
+        dx: block.dx,
+        dy: block.dy,
+        dz: block.dz,
+        buttress: block.buttress === true,
+      });
     }
   }
   for (const t of tops.values()) {
+    // A buttress ridge is ground structure, not a mast: it is *supposed* to end
+    // in bark at knee height, and a leaf on top of it would be a shrub growing
+    // out of a root. Law 1 is no longer universal (§9.4), and §3.7.1 enumerates
+    // the ridges as its one live-wood exception.
+    if (t.buttress) continue;
     if (blockAt(b, t.dx, t.dy + 1, t.dz) !== undefined) continue;
     put(b, { dx: t.dx, dy: t.dy + 1, dz: t.dz, part: "leaves" });
   }
@@ -347,26 +357,158 @@ export function giantSpan(def: FloraSpeciesDef, height: number): number {
 }
 
 /**
+ * Buttress roots: radiating tapering ridges, seated into the ground (§3.7.1).
+ *
+ * This replaces the WP-B "skirt" — a broken ring of vertical `root` logs one or
+ * two blocks below grade — which Kai's walk read as *flat brown tiles* around
+ * the trunk, because a vertical log shows its ring texture on the top face and
+ * the top face is the only face a skirt at grade presents to the player.
+ *
+ * The construction, and every clause of it is load-bearing:
+ *
+ * - **Radiating**: `4..7` ridges per tree at jittered angles, seeded per tree,
+ *   so no two giants share a root plan and none of them reads as machined.
+ * - **A ridge, not a ring**: each ridge walks outward one lattice axis per
+ *   column (the 2-D form of {@link walkLimb}'s rule) from the trunk column
+ *   furthest along its angle, so consecutive ridge columns are 6-adjacent and
+ *   the first is 6-adjacent to the trunk (law 3, which live buttress wood obeys
+ *   exactly as a limb does).
+ * - **Tapering**: the ridge is `rootRise` blocks tall against the trunk and
+ *   falls linearly to a single block at its foot, over `3..6` columns.
+ * - **Bark, never rings**: every above-grade ridge block is a `branch` carrying
+ *   the axis the walk just stepped — a *horizontal* log, whose top face is bark.
+ *   That is the whole point of the rewrite.
+ * - **Seated on slope**: every ridge column is filled downward to `rootDepth`
+ *   with `root` blocks (vertical logs, and invisible: they are below grade).
+ *   The programs cannot see the terrain (law 5), so the flare seats by being
+ *   *deep* rather than by following a heightfield it is not allowed to read —
+ *   a ridge foot up to `rootDepth` blocks downhill of the trunk still meets
+ *   solid ground, and one uphill is simply buried.
+ */
+function buttressRoots(b: Build, def: FloraSpeciesDef, span: number, rng: () => number): void {
+  const n = Math.max(1, pick(rng, pair(def, "buttresses", 4, 7)));
+  const runRange = pair(def, "rootRun", 3, 6);
+  const rise = Math.max(1, Math.round(knob(def, "rootRise", span >= 3 ? 3 : 2)));
+  const depth = Math.max(1, Math.round(knob(def, "rootDepth", 3)));
+  for (let k = 0; k < n; k++) {
+    const theta = (2 * Math.PI * (k + 0.6 * rng())) / n;
+    const dirX = Math.cos(theta);
+    const dirZ = Math.sin(theta);
+    const run = Math.max(2, pick(rng, runRange));
+    let x = dirX >= 0 ? span - 1 : 0;
+    let z = dirZ >= 0 ? span - 1 : 0;
+    let rx = Math.round(dirX * run);
+    let rz = Math.round(dirZ * run);
+    const total = Math.abs(rx) + Math.abs(rz);
+    if (total === 0) continue;
+    for (let s = 1; s <= total; s++) {
+      let axis: "x" | "z";
+      if (Math.abs(rx) >= Math.abs(rz) && rx !== 0) {
+        x += Math.sign(rx);
+        rx -= Math.sign(rx);
+        axis = "x";
+      } else if (rz !== 0) {
+        z += Math.sign(rz);
+        rz -= Math.sign(rz);
+        axis = "z";
+      } else break;
+      // Tall against the trunk, one block at the foot: `h` counts the blocks
+      // this column stands above grade, and is never zero, so the ridge is one
+      // unbroken chain from the trunk to its own toe.
+      const h = Math.max(1, Math.round(rise * (1 - (s - 1) / total)));
+      for (let dy = 0; dy < h; dy++) {
+        putWood(b, { dx: x, dy, dz: z, part: "branch", axis, buttress: true });
+      }
+      // The seat. `root` (a vertical log) below grade, where nobody sees its
+      // top face, and law 4's `dy ≤ 0` convention is untouched.
+      for (let dy = -1; dy >= -depth; dy--) put(b, { dx: x, dy, dz: z, part: "root" });
+    }
+  }
+}
+
+/**
+ * Drape the underside of a crown (§3.7.2).
+ *
+ * Kai's walk: *"hanging growth genuinely might be underdone… there isn't much
+ * besides vines"*. The answer within WP-B's material budget is **more vine, and
+ * longer**, and hung where a player standing under a giant actually looks: the
+ * rim of every mass, not one strand per limb.
+ *
+ * Same rim rule as `weeping` (§3.12) — a curtain hangs from a canopy column
+ * with an open 4-neighbour, never from the whole underside, or the crown
+ * becomes a solid cylinder. Only masses well above the ground drape, so a vine
+ * never reaches down into the walk-under space the giant exists to create.
+ */
+function drapeCrown(
+  b: Build,
+  def: FloraSpeciesDef,
+  rng: () => number,
+  floor: number,
+): void {
+  const share = knob(def, "hangingShare", 0.45);
+  const [lo, hi] = pair(def, "curtain", 3, 8);
+  const lowest = new Map<string, { dx: number; dy: number; dz: number }>();
+  for (const block of b.out) {
+    if (block.part !== "leaves") continue;
+    const k = `${block.dx},${block.dz}`;
+    const seen = lowest.get(k);
+    if (seen === undefined || block.dy < seen.dy) {
+      lowest.set(k, { dx: block.dx, dy: block.dy, dz: block.dz });
+    }
+  }
+  for (const [k, c] of lowest) {
+    if (c.dy < floor) continue;
+    const [dx, dz] = k.split(",").map(Number) as [number, number];
+    const rim =
+      !lowest.has(`${dx + 1},${dz}`) ||
+      !lowest.has(`${dx - 1},${dz}`) ||
+      !lowest.has(`${dx},${dz + 1}`) ||
+      !lowest.has(`${dx},${dz - 1}`);
+    if (!rim) continue;
+    if (rng() >= share) continue;
+    curtain(b, dx, c.dy, dz, lo + Math.floor(rng() * (hi - lo + 1)));
+  }
+}
+
+/**
  * The emergent: a column with a ceiling.
  *
  * Three things carry that read and all three are load-bearing — a trunk more
  * than one column wide, a root flare that seats it into the ground, and a crown
  * carried on real limbs high enough that a player walks *under* it.
+ *
+ * **Grandeur (2026-08-07).** Kai's canopy fly-over of `oldgrowth_vale`: *"giants
+ * def don't anchor the skyline — not a single growth meaningfully more grand
+ * than vanilla generation"*, and the instrument agreed: the three placed beeches
+ * cleared the p95 canopy top within 24 columns by 12, 8 and 5 blocks. A tree
+ * that stands 5 blocks over its neighbours is not an emergent, it is a tall
+ * tree. So the program now builds:
+ *
+ * - a **leader** running `leader` blocks past the trunk top rather than 2, and
+ * - a **compound crown** — a central mass on the leader plus an upper whorl of
+ *   short limbs, each carrying its own mass — because a single mass is capped at
+ *   {@link MAX_MASS_RADIUS} by law 2 and a radius-4 dome is simply not a
+ *   skyline, while four masses on wood are a radius-9 one that still keeps every
+ *   leaf within BFS 6 of a branch, and
+ * - **longer, more numerous main limbs**, which is what makes the crown a
+ *   ceiling to walk under rather than a hat.
+ *
+ * The species envelopes carry the rest (§4.1): a beech is 26–34 and a kapok
+ * 30–40, against 20–28 and 22–30 before.
  */
 export const giant: FloraProgram = {
   id: "giant",
   canopyRadius(v, def) {
-    // A limb starts from the far trunk column (`span − 1`), runs `limb + 0..2`,
-    // and carries a mass on its tip.
     const span = giantSpan(def, Math.max(8, v.height));
-    return (
-      span -
-      1 +
-      knob(def, "limb", 4) +
-      2 +
-      knob(def, "mass", 3) +
-      Math.max(0, v.radiusDelta)
-    );
+    const rd = Math.max(0, v.radiusDelta);
+    // A main limb starts from the far trunk column (`span − 1`), runs
+    // `limb + 0..2`, and carries a mass on its tip.
+    const limbs = span - 1 + knob(def, "limb", 6) + 2 + knob(def, "mass", 3) + rd;
+    // A crown limb starts on the leader (the middle column) and is shorter.
+    const crown = span - 1 + knob(def, "crownRun", 4) + 1 + knob(def, "crown", 4) + rd;
+    // A buttress ridge reaches `rootRun` columns from the trunk's far side.
+    const roots = span - 1 + pair(def, "rootRun", 3, 6)[1];
+    return Math.max(1, limbs, crown, roots);
   },
   blocks(v, def, rng) {
     const b = build();
@@ -377,38 +519,20 @@ export const giant: FloraProgram = {
       for (let j = 0; j < span; j++) cols.push({ x: i, y: 0, z: j });
     }
     for (const c of cols) column(b, c.x, c.z, 0, height - 1);
-    // The leader carries on two blocks past the trunk so the crown's centre is
-    // itself wood — which is what keeps the crown's leaf BFS inside 6 (law 2).
+    // The leader carries on past the trunk so the crown's centre is itself wood
+    // — which is what keeps the crown's leaf BFS inside 6 (law 2) — and it is
+    // also the mast the upper whorl hangs off.
     const cx = Math.floor((span - 1) / 2);
-    column(b, cx, cx, height, height + 1);
+    const leader = Math.max(1, Math.round(knob(def, "leader", 3)));
+    column(b, cx, cx, height, height + leader);
 
-    // --- root flare (law 4: dy ≤ 0 only, and every column filled to grade) ---
-    const rootDepth = Math.max(1, Math.round(knob(def, "rootDepth", span >= 3 ? 3 : 2)));
-    const accepted = new Set<string>();
-    for (const c of cols) accepted.add(`${c.x},${c.z}`);
-    for (let d = 0; d < rootDepth; d++) {
-      const ring = ringAt(span, d + 1);
-      const added: string[] = [];
-      for (const [rx, rz] of ring) {
-        // Broken, not a machined cone — and grown only from ground the flare
-        // already holds, so no root can be left isolated (law 6).
-        const supported =
-          accepted.has(`${rx + 1},${rz}`) ||
-          accepted.has(`${rx - 1},${rz}`) ||
-          accepted.has(`${rx},${rz + 1}`) ||
-          accepted.has(`${rx},${rz - 1}`);
-        if (!supported) continue;
-        if (rng() >= 0.75) continue;
-        added.push(`${rx},${rz}`);
-        for (let dy = -d; dy <= 0; dy++) put(b, { dx: rx, dy, dz: rz, part: "root" });
-      }
-      for (const k of added) accepted.add(k);
-    }
+    // --- buttress roots (§3.7.1) ---------------------------------------------
+    buttressRoots(b, def, span, rng);
 
     // --- branch skeleton ------------------------------------------------------
-    const n = Math.max(1, pick(rng, pair(def, "branches", 3, 6)));
-    const base = Math.round(height * 0.62);
-    const limb = knob(def, "limb", 4);
+    const n = Math.max(1, pick(rng, pair(def, "branches", 5, 8)));
+    const base = Math.round(height * 0.55);
+    const limb = knob(def, "limb", 6);
     const massR = knob(def, "mass", 3);
     for (let k = 0; k < n; k++) {
       const theta = (2 * Math.PI * (k + 0.6 * rng())) / n;
@@ -419,32 +543,40 @@ export const giant: FloraProgram = {
       const L = limb + Math.floor(rng() * 3);
       const tip = walkLimb(b, { x: sx, y: y0, z: sz }, Math.cos(theta), Math.sin(theta), L, 3);
       mass(b, tip, massR + v.radiusDelta, 0.7);
-      if (def.hangingSymbol !== undefined) {
-        curtain(b, tip.x, tip.y - Math.max(1, Math.round((massR + v.radiusDelta) * 0.7)), tip.z, 2 + Math.floor(rng() * 3));
-      }
     }
 
-    // --- the crown: caps every trunk column (law 1 for all span² of them) -----
-    mass(b, { x: cx, y: height + 1, z: cx }, knob(def, "crown", 4) + v.radiusDelta, 0.6);
+    // --- the crown: a central mass on the leader, plus an upper whorl ---------
+    const crownR = knob(def, "crown", 4);
+    const crownN = Math.max(1, pick(rng, pair(def, "crownLimbs", 4, 6)));
+    const crownRun = Math.max(2, Math.round(knob(def, "crownRun", 4)));
+    for (let k = 0; k < crownN; k++) {
+      const theta = (2 * Math.PI * (k + 0.5 + 0.5 * rng())) / crownN;
+      const y0 = height + Math.min(leader, 1 + (k % 2));
+      const tip = walkLimb(
+        b,
+        { x: cx, y: y0, z: cx },
+        Math.cos(theta),
+        Math.sin(theta),
+        crownRun + (rng() < 0.5 ? 0 : 1),
+        k % 2,
+      );
+      mass(b, tip, crownR + v.radiusDelta, 0.7);
+    }
+    // The centre, which is what caps every trunk column (law 1 for all span² of
+    // them) and closes the dome the whorl opened.
+    mass(b, { x: cx, y: height + leader, z: cx }, crownR + v.radiusDelta, 0.6);
     capWood(b);
+
+    // --- the drape (§3.7.2) ---------------------------------------------------
+    if (def.hangingSymbol !== undefined) {
+      // Nothing below 60% of the trunk drapes: the walk-under space is the
+      // point of a giant, and a vine curtain in it is a curtain across a
+      // cathedral nave.
+      drapeCrown(b, def, rng, Math.round(height * 0.6));
+    }
     return b.out;
   },
 };
-
-/** The Chebyshev ring of columns at distance `d` outside a `span × span` block. */
-function ringAt(span: number, d: number): readonly (readonly [number, number])[] {
-  const out: (readonly [number, number])[] = [];
-  const lo = -d;
-  const hi = span - 1 + d;
-  for (let x = lo; x <= hi; x++) {
-    for (let z = lo; z <= hi; z++) {
-      const inner = x >= lo + 1 && x <= hi - 1 && z >= lo + 1 && z <= hi - 1;
-      if (inner) continue;
-      out.push([x, z]);
-    }
-  }
-  return out;
-}
 
 /* -------------------------------------------------------------------------- */
 /* ancient (§3.8)                                                              */

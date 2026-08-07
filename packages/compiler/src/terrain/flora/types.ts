@@ -62,6 +62,23 @@ export interface FloraBlock {
    * state; a dead one takes {@link FloraStates.branch}.
    */
   readonly dead?: boolean;
+  /**
+   * For `"branch"`: this block is part of a **buttress root ridge** (§3.7.1),
+   * not a limb.
+   *
+   * A buttress is wood at and just above grade, and it is deliberately built
+   * from horizontal-axis logs so its exposed top face reads as bark rather than
+   * as the ring texture a vertical log shows (Kai's walk, 2026-08-07: the old
+   * flat flare "doesn't look great… my instinct is a procedural root
+   * generator"). The flag carries two consequences the geometry cannot express
+   * through `part` alone: `capWood` must not put a leaf on top of a ridge (a
+   * root is not a mast), and the law-1 matrix reads it as the enumerated
+   * exception rather than as a defect.
+   *
+   * The emitter ignores it: a buttress is a `branch`, takes the trunk state and
+   * takes its own `axis`, so nothing in `parts.ts` has to know it exists.
+   */
+  readonly buttress?: boolean;
 }
 
 /**

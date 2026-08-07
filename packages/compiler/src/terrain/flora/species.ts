@@ -32,14 +32,20 @@ export const NATURALISTIC_FLORA_SPECIES = Object.freeze({
     id: "spruce_ancient",
     program: "ancient",
     stratum: "emergent",
-    height: [16, 22],
+    // 16–22 before 2026-08-07. An `ancient` in the emergent stratum has the
+    // same job a `giant` does — it must stand over the wood it anchors — and
+    // the boreal canopy it stands in (`spruce_tall`, 8–13, `larch_columnar`,
+    // 10–16) tops out at 17. §8's prominence bar of 8 blocks is what sets the
+    // floor here: at 25 the thinnest, oldest corner of the envelope still
+    // clears that canopy by 8.
+    height: [25, 33],
     age: [0.4, 0.85],
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
     deadSymbol: "wood.stripped_spruce_log",
     decoSymbol: "fungal.brown_cap",
     climates: ["boreal"],
-    knobs: { leanMax: 3, branches: [3, 5], limb: 3, mass: 3 },
+    knobs: { leanMax: 3, branches: [4, 6], limb: 4, mass: 3 },
   },
   /** A pale-green exclamation mark, breaking a dark conifer wall into rhythm. */
   larch_columnar: {
@@ -68,12 +74,34 @@ export const NATURALISTIC_FLORA_SPECIES = Object.freeze({
     id: "beech_giant",
     program: "giant",
     stratum: "emergent",
-    height: [20, 28],
+    // 20–28 before the 2026-08-07 grandeur pass. At 20 the crown top cleared
+    // the surrounding p95 canopy by 5 blocks on the old-growth fixture, which
+    // is a tall tree and not an emergent; 26–34 clears it by ~20.
+    height: [26, 34],
     trunkSymbol: "wood.dark_oak_log",
     leafSymbol: "wood.dark_oak_leaves",
     rootSymbol: "wood.dark_oak_log",
+    // Vines off the crown. A temperate old-growth beech is the tree the walk
+    // said had "nothing hanging besides vines" — so it gets the vines, in
+    // quantity, and only from the crown rim (§3.7.2).
+    hangingSymbol: "foliage.vine",
     climates: ["temperate"],
-    knobs: { trunkSpan: 2, rootDepth: 2, branches: [3, 6], limb: 4, mass: 3, crown: 4 },
+    knobs: {
+      trunkSpan: 2,
+      rootDepth: 3,
+      rootRise: 3,
+      rootRun: [3, 6],
+      buttresses: [4, 7],
+      branches: [5, 8],
+      limb: 6,
+      mass: 3,
+      leader: 3,
+      crown: 4,
+      crownLimbs: [4, 6],
+      crownRun: 4,
+      hangingShare: 0.4,
+      curtain: [3, 8],
+    },
   },
   /** The real oak: lumpy, asymmetric, sky between its masses. */
   oak_spreading: {
@@ -136,7 +164,11 @@ export const NATURALISTIC_FLORA_SPECIES = Object.freeze({
     id: "desert_ironwood",
     program: "ancient",
     stratum: "emergent",
-    height: [10, 15],
+    // Punctuation in an empty landscape, so it needs less height than a beech
+    // to read — but it still has to stand over an `acacia_umbrella` (6–9 plus
+    // its plate) by §8's prominence bar, and its crown thins with `age`, so 17
+    // is the floor. 10–15 before 2026-08-07.
+    height: [17, 23],
     age: [0.5, 0.85],
     trunkSymbol: "wood.acacia_log",
     leafSymbol: "wood.acacia_leaves",
@@ -149,13 +181,31 @@ export const NATURALISTIC_FLORA_SPECIES = Object.freeze({
     id: "kapok_emergent",
     program: "giant",
     stratum: "emergent",
-    height: [22, 30],
+    // The tallest thing in the catalog, and it has to be: `jungle_broadleaf`
+    // runs to 14 and the kapok's job is to read as *above* it (§4.1).
+    height: [30, 40],
     trunkSymbol: "wood.jungle_log",
     leafSymbol: "wood.jungle_leaves",
     rootSymbol: "wood.jungle_log",
     hangingSymbol: "foliage.vine",
     climates: ["tropical"],
-    knobs: { trunkSpan: 2, rootDepth: 3, branches: [4, 6], limb: 4, mass: 3, crown: 4 },
+    knobs: {
+      trunkSpan: 2,
+      rootDepth: 3,
+      rootRise: 3,
+      rootRun: [4, 6],
+      buttresses: [5, 7],
+      branches: [5, 8],
+      limb: 6,
+      mass: 3,
+      leader: 3,
+      crown: 4,
+      crownLimbs: [4, 6],
+      crownRun: 4,
+      // A kapok is *the* draped tree: more curtains, longer, than the beech.
+      hangingShare: 0.55,
+      curtain: [4, 9],
+    },
   },
   /** The bulk tropical canopy — what makes the kapok read as *above* something. */
   jungle_broadleaf: {

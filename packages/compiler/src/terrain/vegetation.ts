@@ -586,11 +586,46 @@ function scatterOne(
 /* Strata composition (FLORA-GRAMMAR-v0 §5)                                    */
 /* -------------------------------------------------------------------------- */
 
-/** One emergent per this many blocks square of eligible ground. */
-export const EMERGENT_AREA = 128;
-/** Upper bound on a single node's emergent budget, however large the node. */
-export const EMERGENT_MAX = 12;
-/** Minimum trunk-to-trunk distance between two emergents. */
+/**
+ * One emergent per this many blocks square of eligible ground.
+ *
+ * 128 before 2026-08-07, which gave §7.1's 170-radius old-growth wood a budget
+ * of 2 (and the fixture wrote 3 by hand). Kai walked it and reported *"not a
+ * single growth meaningfully more grand than vanilla"* — three landmarks in a
+ * 340-block-wide wood is a fly-over that meets none of them. 80 puts a giant in every 80×80 of
+ * *eligible* ground — which on §7.1's wood (36,864 eligible columns of a
+ * 90,000-column circle, once slope, elevation and the edge taper have had
+ * their say) is 6, against 2,800 canopy trees. Still one tree in 470; but a
+ * fly-over meets one every ~120 blocks instead of every ~200.
+ */
+export const EMERGENT_AREA = 80;
+/**
+ * Upper bound on a single node's emergent budget, however large the node.
+ *
+ * The clamp exists so a `{all: true}` region fill cannot turn into a plantation.
+ * At 512² that fill now asks for 28 and gets 18 — one giant per ~120 blocks of
+ * world, which `EMERGENT_EXCLUSION` can still satisfy comfortably.
+ */
+export const EMERGENT_MAX = 18;
+/**
+ * A deliberate wood gets a landmark even when the area formula rounds to zero.
+ *
+ * The floor is one emergent for any node with at least {@link EMERGENT_FLOOR_AREA}
+ * eligible columns — an author who wrote a wood and switched the stratum on
+ * asked for a landmark, and "your patch rounded to nothing" is exactly the
+ * silent decline DESIGN.md's first failure mode is about.
+ */
+export const EMERGENT_MIN = 1;
+/** Eligible columns a node needs before {@link EMERGENT_MIN} applies (a ~27-radius patch). */
+export const EMERGENT_FLOOR_AREA = 2304;
+/**
+ * Minimum trunk-to-trunk distance between two emergents.
+ *
+ * Held at 48 through the 2026-08-07 budget raise, deliberately: the budget is
+ * an upper bound and this is the *geometry*, so raising the budget cannot
+ * crowd giants together — it can only fill the room the exclusion radius
+ * leaves. A landmark that has a neighbour 20 blocks away is not a landmark.
+ */
 export const EMERGENT_EXCLUSION = 48;
 /** Understory density as a share of the node's own `density`. */
 export const UNDERSTORY_SHARE = 0.45;
@@ -829,7 +864,16 @@ function scatterEmergent(
   for (let k = 0; k < mask.length; k++) if (mask[k] === 1) area += 1;
   const budget =
     stratumNumber(spec, "budget") ??
-    Math.max(0, Math.min(EMERGENT_MAX, Math.round(area / (EMERGENT_AREA * EMERGENT_AREA))));
+    Math.max(
+      0,
+      Math.min(
+        EMERGENT_MAX,
+        Math.max(
+          Math.round(area / (EMERGENT_AREA * EMERGENT_AREA)),
+          area >= EMERGENT_FLOOR_AREA ? EMERGENT_MIN : 0,
+        ),
+      ),
+    );
   const exclusion = Math.max(1, Math.round(stratumNumber(spec, "exclusion") ?? EMERGENT_EXCLUSION));
   if (budget <= 0 || species.length === 0) return { budget, placed: 0, refused: 0 };
 
@@ -910,11 +954,17 @@ function scatterEmergent(
 
 /** How far above `height` a species' crown reaches, in blocks. */
 function knobCrownHeadroom(def: FloraSpeciesDef): number {
-  // `giant` runs its leader two blocks past the trunk and then caps it with a
-  // crown mass; every other program tops out within its own mass radius.
+  // `giant` runs its leader `leader` blocks past the trunk, hangs an upper
+  // whorl off it and then closes the dome with a crown mass; every other
+  // program tops out within its own mass radius. The number has to track the
+  // geometry: §9.2's clamp is the only thing between a high-seated giant and a
+  // crown the emitter silently drops above y = 319.
   const crown = typeof def.knobs?.["crown"] === "number" ? (def.knobs["crown"] as number) : 4;
   const mass = typeof def.knobs?.["mass"] === "number" ? (def.knobs["mass"] as number) : 3;
-  return def.program === "giant" ? 2 + Math.round((crown + 1) * 0.6) + 1 : Math.round(mass + 2);
+  const leader = typeof def.knobs?.["leader"] === "number" ? (def.knobs["leader"] as number) : 3;
+  return def.program === "giant"
+    ? leader + Math.round((crown + 1) * 0.7) + 2
+    : Math.round(mass + 2);
 }
 
 /** A giant's trunk span for a given height (§3.7). */

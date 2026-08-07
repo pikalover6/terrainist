@@ -91,7 +91,19 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
     }
   });
 
-  it("law 1: no wood-family part is the topmost block of its column", () => {
+  /**
+   * Law 1, and its one live-wood exception (amended 2026-08-07, §3.7.1).
+   *
+   * The buttress roots of a `giant` are wood at and just above grade whose top
+   * face is *supposed* to be bark — a root ends in a root, and a leaf on top of
+   * one is a shrub growing out of a tree's ankle. Law 1's target property was
+   * never "no topmost log", it was "no accidental bare mast" (§9.4), so a
+   * buttress ridge is enumerated rather than capped: `capWood` skips it and
+   * this assertion asserts that the only bare tops in the catalog are
+   * buttresses, all of them at knee height and none of them free-standing.
+   */
+  it("law 1: no wood-family part is the topmost block of its column, buttresses aside", () => {
+    let buttressTops = 0;
     for (const { id, v, blocks } of CASES) {
       const top = new Map<string, FloraBlock>();
       for (const b of blocks) {
@@ -101,8 +113,14 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
         if (seen === undefined || b.dy > seen.dy) top.set(col, b);
       }
       const bare = [...top.values()].filter((b) => WOOD_PARTS.has(b.part));
-      expect(bare, `${id} ${JSON.stringify(v)} bare wood tops`).toEqual([]);
+      for (const b of bare) {
+        expect(b.buttress, `${id} ${JSON.stringify(v)} bare wood top at ${b.dx},${b.dy},${b.dz}`).toBe(true);
+        expect(b.dy, `${id} buttress top above knee height`).toBeLessThanOrEqual(3);
+        buttressTops += 1;
+      }
     }
+    // Exercised, not vacuous: the giants are in the matrix.
+    expect(buttressTops).toBeGreaterThan(0);
   });
 
   it("law 2: the leaf BFS reaches every canopy block within 6, with zero unreachable", () => {

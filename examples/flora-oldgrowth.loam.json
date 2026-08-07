@@ -51,8 +51,7 @@
           "undergrowth": { "grass": 0.5, "flowers": 0.04, "deadwood": 0.08 },
           "strata": {
             "emergent": {
-              "species": [{ "id": "great_beech", "shape": "beech_giant" }],
-              "budget": 3
+              "species": [{ "id": "great_beech", "shape": "beech_giant" }]
             },
             "understory": {
               "species": [{ "id": "hazel", "shape": "hazel_shrub" }],
