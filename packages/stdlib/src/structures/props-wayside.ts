@@ -197,8 +197,13 @@ export const WAYSIDE_BANNERS: readonly string[] = Object.freeze([
 /* -------------------------------------------------------------------------- */
 
 /**
- * `bus_shelter` — three sides of glass on a paved pad, a slab roof, a bench and
- * a route banner on the ridge.
+ * `bus_shelter` — four corner posts with glass between them, a slab roof, a
+ * bench and a route banner on the ridge.
+ *
+ * The **posts carry the roof**, not the glass. Glass held the roof up until
+ * 2026-08-07, and a pane at eye level is near-invisible: the roof read as
+ * floating. Glazing goes *between* structure, never instead of it —
+ * `test/props-pane-support.test.ts` is that rule for the whole street family.
  *
  * The glass is `glass_pane`, which the lint treats as an ordinary block: every
  * pane either stands on the pad or on the pane below it, so the wall is a
@@ -220,11 +225,25 @@ const busShelter: PropGenerator = (ctx) => {
     for (let z = 0; z < d; z++) put(x, 0, z, stoneAt(palette, x, 0, z));
   }
 
-  // --- three sides of glass ------------------------------------------------
-  // Back wall the whole width; one bay of glass at each end; the front open,
+  // --- four corner posts ---------------------------------------------------
+  // The roof stands on these and on nothing else. It used to stand on the
+  // glass: at eye level a pane is near-invisible, so a slab roof carried by
+  // panes alone reads as *floating*, which is what Kai walked on 2026-08-07
+  // (`hillside_town-7`) and called wonky. A shelter is a frame with glass in
+  // it, and the frame is the read. The posts are `palette.log` on the y axis,
+  // the same idiom `shop_awning` stands its canopy on.
+  for (const x of [0, w - 1]) {
+    for (const z of [0, d - 1]) {
+      for (let y = 1; y <= 2; y++) put(x, y, z, palette.log, { axis: "y" });
+    }
+  }
+
+  // --- glass between the posts ---------------------------------------------
+  // The back wall spans the bays between the two back posts; one bay of glass
+  // at each end, now genuinely glazing *between* two posts; the front open,
   // which is the whole point of a shelter.
   for (let y = 1; y <= 2; y++) {
-    for (let x = 0; x < w; x++) put(x, y, 0, "glass_pane", { east: "true", west: "true" });
+    for (let x = 1; x < w - 1; x++) put(x, y, 0, "glass_pane", { east: "true", west: "true" });
     for (const x of [0, w - 1]) put(x, y, 1, "glass_pane", { north: "true", south: "true" });
   }
 

@@ -226,10 +226,12 @@ describe("wayside props", () => {
 
   it("builds the thing each prop is for", () => {
     // --- the kerb ----------------------------------------------------------
-    // Three sides of glass, an open front, a bench and a flag.
+    // Four corner posts with glass between them, an open front, a bench and a
+    // flag. The corner is a post and not a pane: the roof stands on the frame.
     const shelter = indexOf(opsOf("bus_shelter"));
     expect(shelter.get("2,1,2"), "the shelter's open front").toBeUndefined();
-    expect(shelter.get("0,1,0")?.block, "the back wall").toBe("glass_pane");
+    expect(shelter.get("0,1,0")?.block, "the back corner post").toBe("oak_log");
+    expect(shelter.get("1,1,0")?.block, "the back wall").toBe("glass_pane");
     expect(
       opsOf("bus_shelter").some((op) => op.block.endsWith("_banner")),
       "the route flag",
