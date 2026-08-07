@@ -5,11 +5,13 @@
 > archived; git history is the archive. `rough-vision.txt` at the repo root is
 > the original vision, kept as a historical artifact and superseded by this file.
 >
-> Last full revision: **2026-08-07**, at the hillside milestone (see the
-> Roadmap banner). The ground contract (WP-1 → WP-5) and the frontage-led
-> `hillside` form are shipped; the next contracted work is the hillside
-> iteration tail + **flora grammar** (Phase 4's next item by standing plan).
-> Normative companions: `docs/GROUND-CONTRACT-v0.md`, `docs/SITE-PLAN-v0.md`.
+> Last full revision: **2026-08-07**, after the hillside iteration wave (see
+> the Roadmap banners). The ground contract (WP-1 → WP-5), the frontage-led
+> `hillside` form, the walkability + dressing audits, the causeway
+> correction, junction reconciliation, and the **flora grammar through WP-B**
+> are shipped. Normative companions: `docs/GROUND-CONTRACT-v0.md`,
+> `docs/SITE-PLAN-v0.md`, `docs/FLORA-GRAMMAR-v0.md`. Project memory lives
+> in `.claude/memory/cell-1..4.md` (funnel protocol in CLAUDE.md).
 
 ## Product
 
@@ -165,6 +167,19 @@ attribution, unserved-face detection. Its numbers are pinned as defect
 goldens that may only improve; it is the instrument that turned a failed walk
 into named mechanisms in one pass, and audit-then-fix is now the standing
 pattern for walk-level defects.
+
+**The flora grammar (WP-A + WP-B, shipped 2026-08-07).** Wild flora is a
+grammar, not a template table: deterministic **shape programs** (conifer,
+blob, broadleaf, giant, ancient, columnar, umbrella, weeping) over shared
+limb/mass/plate/curtain builders, a 17-entry species registry (13
+naturalistic + the legacy four, re-expressed **list-identically** through
+the engine), vertical **strata** (emergent giants budgeted and placed first,
+canopy, understory, floor), and six grammar-level laws tested at every
+parameter-envelope corner. The **reach law** governs everything: a document
+that does not ask for new flora compiles byte-identically — capability
+arrives by authorship and the kit, never by changed defaults.
+`docs/FLORA-GRAMMAR-v0.md` is the contract; WP-C (fungal/fantasy/
+`character.flora`) and WP-D (kit + demo) remain.
 
 **Ground roles.** Twelve *jobs* in a built ground — pavement, kerb, tread,
 revetment, coping, plinth, weep, balustrade, stairs, slab, bank, scree — filled
@@ -627,24 +642,38 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 > "moderate, mostly aesthetic, fixable via dedicated iteration" — the ledger
 > below and the SITE-PLAN open questions carry every known one.
 
-**Hillside iteration (the milestone's tail), when taken up.**
-1. **The five causeways from the lowest street** — removal measured as a big
-   connectivity win (15 → 10 components) but currently *errors*: two seams
-   lean on ground the causeways level (`offPlatform` at `(73,10)` and
-   `(75–78,16)` on the steep fixture). The decoupling is the next lever;
-   documented in `SITE-PLAN-v0` §3.6.
-2. **The entrance metric** — `entranceConnected` is a largest-component
-   tiebreak; it should be *share of walkable columns reachable from the
-   entrance*. Small `emit/walkability.ts` change; steep fixture still reads
-   false.
+> **Iteration wave, 2026-08-07 (the tail, taken up and mostly landed):**
+> commits `f55cafa → a6a6fe7`. The causeways refused (they were *paying for
+> the plan*, not covering seams — SITE-PLAN §3.6's amended mechanism), the
+> dressing audit's four detectors, entrance-reachable share, the flight-floor
+> fix, junction-steps reconciliation (`undressedCutoffs` 0 on both fixtures),
+> and the flora grammar through WP-B. Current audit truth: hillside 10
+> components / 9 orphans / entrance share 0.998; steep 12 / 649 / **0.150**.
+
+**Hillside iteration — remaining.**
+1. ~~The five causeways~~ — **landed 2026-08-07**, with the documented
+   mechanism corrected: as lane paving they inflated `streetFraction` and
+   drove the replan ladder two rungs down; refusing them ships a 4–5-street
+   steep quarter. "One level is one platform" (bench merge by level) killed
+   the phantom `offPlatform`. Hillside 15→10 components, 797→9 orphans.
+2. ~~The entrance metric~~ — **landed 2026-08-07**: entrance-reachable share.
+   It exposed the real remainder: **steep's share is 0.150 — the external
+   road never reaches the town**; the flights of a 4–5-street quarter do not
+   yet join up. That is the next network lever.
 3. **Uphill masonry (SITE-PLAN §5.2 rule 9)** — every cut edge along a street
    currently gets rock where a real town would put masonry; needs a sweep face
    whose upper side is natural ground. Reported in every compile.
-4. ~~**Cropped street furniture**~~ — **fixed 2026-08-07** on Kai's go: a
-   sidewalk prop is placed whole or not at all (`structures/streetscape.ts`).
-5. ~~**The downtown furniture kit** reaches hill villages~~ — **fixed
-   2026-08-07**: `streetscape.kerbsideKit` gates the downtown kit on the era,
-   exactly as `life.modernFittings` does; no `era` is byte-identical.
+4. **The verge opening** — hillside's one `unservedFace` at (5,44): a terrace
+   street dead-ends one column from its own flight and the verge line carries
+   a 3-block riser. Diagnosed 2026-08-07, deliberately unfixed: the earn
+   needs a recessed cut into the *street's* terminal columns, which is a
+   cross-job level negotiation. Two options on file (street terminus yields
+   at planning time in `layout/levels.ts`, or a post-commit verge-opening
+   arbitration in `roads.ts`); pick after a walk, not before.
+5. **Junction-steps on flat towns** — the reconciliation pass is gated to
+   multi-level ground. Enabling it globally fixes c1-harbourtown's 1,026
+   latent cutoffs (orphans 21,412 → 288) but regresses `unservedFaces`
+   18 → 29 there. **Kai's decision, ideally after a harbourtown walk.**
 6. **Gate decisions for Kai**: the dwellings-vs-nature tradeoff
    (`COMPOSITION_GATES` is the knob). The street-fraction bar was settled
    2026-08-07 — measured net of the carriage spine, bar stays 0.25.
@@ -672,10 +701,18 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 
 **Fabric breadth (Phase 4) — remaining.** Each lands against the contracts
 above and registers its own fan-out rows. *(Urban forms and courtyards/levels
-shipped — see "What is built today". **Flora grammar is next by standing
-plan**, then infrastructure, then agriculture.)*
-- **Flora grammar** — canopy giants, ancients, fungal, fantasy strata; the
-  biggest visible gap outside settlements.
+shipped — see "What is built today".)*
+- **Flora grammar — WP-A and WP-B shipped 2026-08-07** (`docs/FLORA-GRAMMAR-
+  v0.md`: the engine, six programs, 13 naturalistic species, strata; the
+  old-growth fixture lints zero and awaits Kai's silhouette walk). Remaining:
+  **WP-C** (fungal + fantasy + `character.flora`) and **WP-D** (kit +
+  classifier + a Luna e2e flora demo), plus the queued follow-ups settled by
+  popup — per-species `snowLine` as documented, and law 1 suspended
+  (accidental masts prevented at source via `capWood`; deliberate snags
+  legal; pre-authorized fallback to a `snag: true` opt-out). Parked with
+  Kai: the `LEAF_STATE_POLICY` flip (wild-tree leaves are vanilla-decaying
+  today; fix built, inert — flip after a comparison walk, and the mega-whorl
+  narrowing rides with it) and understory density (§9.9).
 - **Infrastructure family** — aqueduct, canal, rail, mine headworks, on the
   sweep engine.
 - **Agricultural layer and camps** — field parcels following contour, hedgerows,
@@ -765,14 +802,25 @@ that is 80% pavement are all perfectly legal, and all three shipped green.
 Kai's walks are the only instrument that sees them, which is why *Critique →
 repair* is locked to manual.
 
-- **The hillside network is better but not whole (walked 2026-08-07).** Kai:
-  "the disconnection isn't really fixed". Measured remainder: 15/9 components
-  (was 54/53); the five causeways from the lowest street are load-bearing for
-  two seams (`offPlatform` errors on removal — SITE-PLAN §3.6's next lever);
-  `entranceConnected` is a largest-component tiebreak that should be
-  entrance-reachable share; steep-fixture entrance still false. Plus "a fair
-  bit of moderate issues, mostly aesthetic" — iterate with the audit, walk by
-  walk.
+- **The hillside network, current truth (post-wave, 2026-08-07).** Hillside:
+  10 components, 9 orphans, entrance-reachable share **0.998**,
+  `undressedCutoffs` 0 — close to whole. Steep: 12 components, 649 orphans,
+  share **0.150** — the external road never reaches the (now 4–5-street)
+  town, and its flights do not join across streets. That entrance/spine
+  connection is the next network lever. One `unservedFace` remains on
+  hillside (the verge opening — roadmap item 4, deliberately unfixed until
+  walked).
+- **c1-harbourtown moved 186 chunks at `747eaf8` — attributed and justified
+  (2026-08-07).** All of it is the Kai-authorized furniture fix: 204 of 376
+  kerbside props (54%) were being clipped into loose fragments on that world
+  and are now refused whole; 6 new props land where refusals freed the gap;
+  27 downstream `life` blocks follow (`existing:` changed). Zero
+  ground/level/building/road changes — every one of the 931 blocks
+  attributed. The earlier "content-identical" claim came from a probe that
+  measured a quantity with no denominator (`blockCount` counts ops that
+  *landed*; nothing records ops that didn't) — a differential build was the
+  only honest test, and the lesson joins the second failure mode: **a probe
+  must be able to see the thing it rules out.**
 - **`largestFreeRect` discards roughly 45% of block ground** — still the
   ceiling for every form *except* `hillside`, whose frontage-walked lots
   recover 62% (measured WP-0). The polygon lot cutter remains the general fix;
@@ -798,11 +846,15 @@ repair* is locked to manual.
 - **`setpieces.ts` hard-codes a `stone_bricks` masonry family** for hillside
   set-piece stair and bridge dressing, so it ignores the ground roles landed
   2026-08-06.
-- **Junctions between streets at different levels** are ~8% of cross-sections on
-  a hill town, with a 2–7 block tail. The ownership pin binds centre-line
-  *cells*; the contract says *columns*. Pinning every shared swept column is the
-  next step and was left alone because it can over-constrain a street running
-  parallel to a wider one.
+- ~~**Junctions between streets at different levels**~~ — **fixed for
+  stepped ground 2026-08-07**, and the ownership-pin theory was wrong: the
+  risers come from three owners (surfaces sharing no column; doorsteps
+  raising lane columns they don't own; a segment stepping at an arc
+  station), so `structures/junction-steps.ts` reconciles the *finished*
+  paving instead — bounded Lipschitz lift, dressed as stairs, committed
+  through the ground driver. `undressedCutoffs` 0 on both fixtures; the
+  parallel-street control lifts nothing. Flat towns stay gated (roadmap
+  item 5 — Kai's enable decision).
 - **City walls (`sweepCourse`) and the sidewalk band's own paving still use the
   pre-arc raster-perpendicular model.** If dither appears *beside* a diagonal
   street rather than on it, it lives there.
