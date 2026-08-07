@@ -79,6 +79,7 @@ import {
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, type GroundPassResult } from "./grounds.js";
+import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
@@ -356,6 +357,13 @@ export interface StructurePassResult {
   readonly precincts?: PrecinctPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
+}
+
+/** The set bits of a column mask, as indices. */
+function setColumns(mask: Uint8Array): number[] {
+  const out: number[] = [];
+  for (let idx = 0; idx < mask.length; idx++) if (mask[idx] === 1) out.push(idx);
+  return out;
 }
 
 /** Build every placed structure, then connect them. */
@@ -1040,6 +1048,60 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   });
   lay("doorsteps", doorsteps.blocks);
 
+  // --- junction steps ------------------------------------------------------
+  // Here, and not one line earlier, because this is the first point at which
+  // *every* paved surface exists: the streets, the flights, the lanes, the
+  // plaza and — the one that actually causes a third of the cuts — the
+  // doorsteps, which raise a column of a lane they do not own. A pass that
+  // reconciles seams cannot run before the surface that makes the seam.
+  // See `structures/junction-steps.ts` for the three mechanisms it treats.
+  const pavedSurfaces: PavedSurface[] = [];
+  for (const segment of streets?.declaration.segments ?? []) {
+    pavedSurfaces.push({
+      kind: segment.role === "steps" ? "steps" : "street",
+      sourceClass: "street.network",
+      columns: segment.columns.map((c) => c.idx),
+    });
+  }
+  for (const route of roads?.declaration.routes ?? []) {
+    pavedSurfaces.push({
+      kind: "road",
+      sourceClass: "road.network",
+      columns: route.columns.map((c) => c.idx),
+    });
+  }
+  if (plaza !== undefined) {
+    pavedSurfaces.push({
+      kind: "plaza",
+      sourceClass: "plaza.ground",
+      columns: setColumns(plaza.paved),
+    });
+  }
+  pavedSurfaces.push({
+    kind: "doorstep",
+    sourceClass: "doorstep.landing",
+    columns: setColumns(doorsteps.touched),
+  });
+  // Gated to multi-level ground (Kai's standing discipline, 2026-08-07): on
+  // the hillside fixtures the reconciliation is strictly beneficial and
+  // undressedCutoffs reaches 0, but flat towns were never clean — running it
+  // on c1-harbourtown lifts 1,036 columns and regresses unservedFaces 18→29.
+  // A flat world therefore keeps byte-identity (and its pre-existing cutoffs)
+  // until Kai decides the global enable with those numbers in front of him.
+  if (districts.some((d) => (d.levels?.levelY.length ?? 0) > 1)) {
+    const junctions = buildJunctionSteps({
+      region: input.plan.region,
+      plan: input.plan,
+      stack: input.stack,
+      palette: input.palette,
+      paved: pavedSurfaces,
+      ...(input.ground === undefined ? {} : { ground: input.ground }),
+      blocks,
+    });
+    lay("junction-steps", junctions.blocks);
+  }
+
+
   // --- the cut-face finish -------------------------------------------------
   // The other half of the retaining pass, and it runs *here* rather than up
   // there with the walls. Walked (the hillside prototype, 2026-08-06): a street
@@ -1092,6 +1154,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
   });
   lay("grounds", grounds.blocks);
+
 
   // --- the set pieces (C4) -------------------------------------------------
   // After the ground treatment and before the life pass, and both halves are
