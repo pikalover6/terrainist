@@ -143,6 +143,12 @@ export interface RetainingDistrict {
   readonly levels?: GroundLevels;
   /** The seams between them; absent unless the ground policy is `"stepped"`. */
   readonly seams?: readonly LevelSeam[];
+  /**
+   * The quarter is mostly natural slope with platforms cut into it, so the
+   * **uphill** edge of a platform is a real face and nothing else finishes it
+   * (`docs/SITE-PLAN-v0.md` §5.4). See {@link faceCuts}.
+   */
+  readonly naturalCuts?: boolean;
 }
 
 /** Everything {@link buildRetainingWalls} reads. */
@@ -759,7 +765,16 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // of the cut is made of, and it runs over the whole quarter rather than
     // over the seams, because "no wall here" has eight named reasons and a cut
     // face has one appearance whichever of them applied.
-    revetted += faceCuts(region, plan, levels, states, seam, street, occupied);
+    revetted += faceCuts(
+      region,
+      plan,
+      levels,
+      states,
+      seam,
+      street,
+      occupied,
+      district.naturalCuts === true,
+    );
   }
 
   const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
@@ -1024,6 +1039,12 @@ function faceCuts(
   seam: Uint8Array,
   street: Uint8Array,
   occupied: Uint8Array,
+  /**
+   * The quarter was drawn by a site planner, so its platforms are cut *into* a
+   * hillside that is mostly still there — `docs/SITE-PLAN-v0.md` §5.4, and the
+   * gate on the one behaviour change in this function.
+   */
+  naturalCuts: boolean,
 ): number {
   const bounds = levels.bounds;
   const cells = region.width * region.depth;
@@ -1046,9 +1067,50 @@ function faceCuts(
     drops[k] = drop;
     return drop;
   };
-  /** On a platform of this quarter and not under water. */
+  /**
+   * The **cut** edge: a column of natural hillside standing above a platform
+   * beside it (`docs/SITE-PLAN-v0.md` §5.4).
+   *
+   * Nothing owns this face today. `levelSeams` ignores it — natural ground is
+   * not a platform and takes part in no seam; `skirtSeams` ignores it — it only
+   * claims neighbours whose ground is *below* the platform top; and this
+   * function ignored it, because its members had to be on a platform themselves.
+   * On a quarter with 100 % platform coverage that was invisible: the uphill
+   * side of every bench was the bench above, so the whole thing fell inside
+   * `levelSeams`. Take the coverage away — which is exactly what a site planner
+   * does — and the cut edge becomes the most common edge in the quarter with
+   * nobody to finish it, and it ships as a vertical band of raw soil behind
+   * every terrace.
+   *
+   * One ring is the whole face: a cut is vertical, so the drop happens in the
+   * single column between the platform and the hill. `thickenCourse` closes the
+   * diagonal from there, into the higher ground, which is the hill.
+   *
+   * Empty unless the district asked, so no quarter that did not ask moves.
+   */
+  const naturalCut = new Uint8Array(cells);
+  if (naturalCuts) {
+    for (let z = bounds.z0; z <= bounds.z1; z++) {
+      for (let x = bounds.x0; x <= bounds.x1; x++) {
+        if (!inside(region, x, z)) continue;
+        if (levels.at(x, z) !== NO_PLATFORM) continue;
+        const k = index(region, x, z);
+        const top = plan.ground[k] as number;
+        for (const [dx, dz] of SEAM_NEIGHBOURS) {
+          const platform = levels.at(x + dx, z + dz);
+          if (platform === NO_PLATFORM) continue;
+          if (top <= (levels.levelY[platform] as number)) continue;
+          naturalCut[k] = 1;
+          break;
+        }
+      }
+    }
+  }
+
+  /** On a platform of this quarter — or on its cut edge — and not under water. */
   const facing = (x: number, z: number, k: number): boolean =>
-    levels.at(x, z) !== NO_PLATFORM && plan.fluidKind[k] === FluidKind.NONE;
+    (levels.at(x, z) !== NO_PLATFORM || naturalCut[k] === 1) &&
+    plan.fluidKind[k] === FluidKind.NONE;
 
   // --- members ------------------------------------------------------------
   const course = new Uint8Array(cells);

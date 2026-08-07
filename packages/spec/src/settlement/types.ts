@@ -228,6 +228,10 @@ export const DISTRICT_FABRICS = [
   "canal",
   "terraced",
   "linear",
+  // `docs/SITE-PLAN-v0.md` §7.1. Registered, and deliberately **absent from the
+  // classifier and the kit** until Kai accepts the §8 prototype: a generated
+  // document cannot reach it by accident, and only a document that names it can.
+  "hillside",
 ] as const;
 
 /** A street-skeleton fabric — an urban form id. */

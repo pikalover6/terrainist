@@ -16,6 +16,7 @@ import { warning, type LoamDiagnostic, type DistrictFabric } from "@terrainist/s
 import { CANAL_FORM } from "./canal.js";
 import { GRID_FORM } from "./grid.js";
 import { GROWN_FORM } from "./grown.js";
+import { HILLSIDE_FORM } from "./hillside.js";
 import { LINEAR_FORM } from "./linear.js";
 import { ORGANIC_FORM } from "./organic.js";
 import { RADIAL_FORM } from "./radial.js";
@@ -54,6 +55,7 @@ export function installUrbanForms(): void {
   registerForm(CANAL_FORM);
   registerForm(GRID_FORM);
   registerForm(GROWN_FORM);
+  registerForm(HILLSIDE_FORM);
   registerForm(LINEAR_FORM);
   registerForm(ORGANIC_FORM);
   registerForm(RADIAL_FORM);

@@ -68,9 +68,12 @@ describe("the form vocabulary is one vocabulary", () => {
     }
   });
 
-  it("is exactly the seven forms the design names", () => {
+  it("is exactly the forms the design names", () => {
+    // Seven from `docs/URBAN-FORMS-v0.md` §3, plus `hillside` — the site
+    // planner of `docs/SITE-PLAN-v0.md` §3, registered and deliberately absent
+    // from the classifier and the kit until Kai accepts the §8 prototype (§7.1).
     expect(urbanForms().map((f) => f.id).sort()).toEqual(
-      ["canal", "grid", "grown", "linear", "organic", "radial", "terraced"],
+      ["canal", "grid", "grown", "hillside", "linear", "organic", "radial", "terraced"],
     );
   });
 

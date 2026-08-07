@@ -527,15 +527,21 @@ describe("the ground policy", () => {
         if (child.kind !== "district") continue;
         const nodePath = `${doc.root.id}.${child.id}`;
         const fabric = resolveDistrictFabric(doc, child as DistrictNode, nodePath);
+        // An author who wrote `params.ground` outranks the form's implication
+        // and is not what this assertion is about — it is about the *implied*
+        // policy being the same answer at both call sites.
+        const named = (child as DistrictNode).params.ground !== undefined;
         // Same answer every time it is asked — the two call sites hand it the
         // same node, the same path and the same document, so they cannot
         // disagree unless this is false.
         expect(resolveDistrictFabric(doc, child as DistrictNode, nodePath), `${file} ${nodePath}`).toBe(
           fabric,
         );
-        expect(districtGroundPolicy(doc, child as DistrictNode, nodePath), `${file} ${nodePath}`).toBe(
-          urbanForm(fabric)?.requires.unlevelled === true ? "benched" : "pad",
-        );
+        if (!named) {
+          expect(districtGroundPolicy(doc, child as DistrictNode, nodePath), `${file} ${nodePath}`).toBe(
+            urbanForm(fabric)?.requires.unlevelled === true ? "benched" : "pad",
+          );
+        }
       }
     }
 

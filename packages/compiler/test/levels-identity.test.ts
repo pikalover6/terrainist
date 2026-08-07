@@ -77,7 +77,11 @@ describe("the ground policy a quarter gets when it asks for nothing", () => {
     installUrbanForms();
     const unlevelled = DISTRICT_FABRICS.filter((f) => urbanForm(f)?.requires.unlevelled === true);
     // If this list is ever empty the assertion below is vacuous, so say so.
-    expect(unlevelled).toEqual(["terraced"]);
+    // `hillside` joined `terraced` here with `docs/SITE-PLAN-v0.md` §7.2: it is
+    // the second form that cuts its own platforms and must not be handed a
+    // billiard table by `padFor`. No committed document names it, so nothing
+    // moves — the whole-repo byte-identity diff on this change says so.
+    expect(unlevelled).toEqual(["terraced", "hillside"]);
     for (const fabric of unlevelled) expect(policyOf(fabric)).toBe("stepped");
   });
 

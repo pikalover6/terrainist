@@ -124,6 +124,48 @@ export interface FormBench {
   readonly level: number;
 }
 
+/**
+ * A band of buildable frontage a site planner cut beside one street
+ * (`docs/SITE-PLAN-v0.md` §3.4, amending `docs/URBAN-FORMS-v0.md` §2.2
+ * additively).
+ *
+ * **Absent for every form but `hillside`**, so nothing else sees a change. Its
+ * one consumer is the frontage lot walk in `layout/frontage.ts`, which replaces
+ * `blocksOf` → `rectsOf` → `largestFreeRect` → `subdivide` for the columns
+ * inside a strip and for nothing else.
+ *
+ * The boundary is **irregular on both edges** — deep where the ground is flat,
+ * absent where it steepens — and that irregularity is the feature. A rectangle
+ * would be a bench.
+ */
+export interface FormStrip {
+  /** The {@link StreetSegment} id this strip fronts. */
+  readonly street: string;
+  /** The strip's index in the plan; the lot ids are cut from it. */
+  readonly index: number;
+  /** The level the strip's platform is cut or filled to. */
+  readonly level: number;
+  /** Stations along the build-to line — the strip's arc length, in columns. */
+  readonly stations: number;
+  /**
+   * Which station of the build-to line a column belongs to, `−1` off the strip.
+   * Row-major over `FormContext.bounds`.
+   *
+   * Assigned by a breadth-first walk out from the street rather than by marching
+   * a ray per station: a ray per station **aliases** on any run that is not axis
+   * aligned — adjacent rays diverge and leave unhit columns between them — and
+   * the resulting comb has almost no inscribed rectangle in it, which is the
+   * defect the frontage walk exists to remove rather than to reintroduce.
+   */
+  readonly station: Int32Array;
+  /** Columns back from the build-to line, `−1` off the strip. */
+  readonly depth: Int32Array;
+  /** The unit outward normal at each station — the way a lot grows. */
+  readonly outward: readonly Point2[];
+  /** 1 on a column this strip claimed, row-major over `FormContext.bounds`. */
+  readonly columns: Uint8Array;
+}
+
 /** Dug water, for the canal pass. */
 export interface FormChannel {
   /** The {@link StreetSegment} id whose role is `"channel"`. */
@@ -173,6 +215,13 @@ export interface FormPlan {
   readonly benches?: readonly FormBench[];
   /** Dug water, for the canal pass. Empty for every other form. */
   readonly channels?: readonly FormChannel[];
+  /**
+   * The frontage geometry a site planner cut (`docs/SITE-PLAN-v0.md` §3.4).
+   *
+   * Present only on a `hillside` plan. Its presence is the gate on the frontage
+   * lot walk in `layout/district.ts`, so no other form moves.
+   */
+  readonly strips?: readonly FormStrip[];
   /** What the form actually did, for the compile report. */
   readonly record: FormRecord;
 }

@@ -97,6 +97,7 @@ import {
   type GroundLevels,
   type LevelSeam,
 } from "./levels.js";
+import { largestRect } from "./masks.js";
 import { derivePlatforms } from "./platforms.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
@@ -107,6 +108,7 @@ import {
   type FormChannel,
   type FormFocus,
   type FormRecord,
+  type FormStrip,
   type GroundSample,
 } from "./forms/index.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
@@ -276,6 +278,10 @@ export interface DistrictStats {
    * parcels is a district whose `blockSize` is fighting its `density`.
    */
   readonly lotsDropped: number;
+  /** Columns the frontage lots grew. Absent unless the form planned strips. */
+  readonly lotColumns?: number;
+  /** Columns their seated rectangles took. Absent unless `lotColumns` is. */
+  readonly seatedColumns?: number;
   /** Lots inside the reserved central block, when `params.plaza` is set. */
   readonly plazaLots: number;
   readonly carriagewayColumns: number;
@@ -338,6 +344,25 @@ export interface DistrictProduct {
   readonly levels?: GroundLevels;
   /** The seams between those platforms, in a fixed order. Absent with `levels`. */
   readonly seams?: readonly LevelSeam[];
+  /**
+   * This quarter was drawn by a **site planner**, so most of its ground is
+   * natural slope and its platforms are cut *into* the hill
+   * (`docs/SITE-PLAN-v0.md` §5.4).
+   *
+   * The uphill edge of such a platform is a face nothing owns today: `levelSeams`
+   * ignores it (natural ground is not a platform), `skirtSeams` ignores it (it
+   * only claims neighbours whose ground is *below* the platform top), and
+   * `faceCuts` ignores it (its members must themselves be on a platform, and the
+   * column presenting an uphill face is natural hillside). On a quarter with
+   * 100 % platform coverage that was invisible; take the coverage away and it
+   * would ship as a vertical band of raw soil behind every terrace.
+   *
+   * Setting this lets `faceCuts` finish the one ring of natural columns that
+   * stand above a platform, in the hill's own rock — the treatment §5.2 rule 8
+   * gives an unwalled cut, reached through the pass that already paints it.
+   * **Absent for every other quarter**, so nothing that did not ask moves.
+   */
+  readonly naturalCuts?: boolean;
   readonly stats: DistrictStats;
 }
 
@@ -921,7 +946,15 @@ export function layDistrict(
   }
   // A form that cut its own benches hands the subdivision curved bands; see
   // `rectsOf`. Everything else keeps one rectangle per block, unchanged.
-  const blocks = blocksOf(grid, blocked, declared.length > 0);
+  //
+  // **Unless the form planned its own frontage** (`docs/SITE-PLAN-v0.md` §4.1).
+  // For columns inside a planned strip the chain `blocksOf` → `rectsOf` →
+  // `largestFreeRect` → `subdivide` is replaced by {@link frontageLots}, and
+  // outside strips there are no blocks at all, because there is no platform and
+  // no ground a lot may take. The gate is `plan.strips`, which only `hillside`
+  // sets, so no other form moves.
+  const planned = plan.strips;
+  const blocks = planned === undefined ? blocksOf(grid, blocked, declared.length > 0) : [];
 
   // --- the reserved square -------------------------------------------------
   // `plaza: true` keeps one block open. The block nearest the district's centre
@@ -949,6 +982,8 @@ export function layDistrict(
   const blockSites: BlockSite[] = [];
   let dropped = 0;
   let plazaLots = 0;
+  /** §4.2's recovery, measured rather than assumed. Null off the planned path. */
+  let frontage: FrontageWalk | null = null;
   // --- courtyard blocks (Phase 4.2, §4) ------------------------------------
   // The share of *eligible* blocks that close around a courtyard. Default 0,
   // which is what makes the whole feature byte-identical for a document that
@@ -990,6 +1025,13 @@ export function layDistrict(
     }
     lots.push(...cut.lots);
     if (cut.front !== null && cut.lots.length > 0) blockSites.push(cut.front);
+  }
+  if (planned !== undefined) {
+    const walked = frontageLots(planned, grid, blocked, density);
+    lots.push(...walked.lots);
+    blockSites.push(...walked.sites);
+    dropped += walked.dropped;
+    frontage = walked;
   }
   lots.sort((a, b) => (a.rect.z0 !== b.rect.z0 ? a.rect.z0 - b.rect.z0 : a.rect.x0 - b.rect.x0));
 
@@ -1285,8 +1327,9 @@ export function layDistrict(
       // quarter is `"stepped"` and actually stepped, so the product a quarter
       // written before this phase carries is the object it carried before.
       ...(levels === null || groundPolicy !== "stepped" ? {} : { levels, seams }),
+      ...(planned === undefined ? {} : { naturalCuts: true }),
       stats: {
-        blocks: blocks.length,
+        blocks: planned === undefined ? blocks.length : planned.length,
         lots: lots.length,
         landmarks: landmarks.length - unplaced,
         landmarksUnplaced: unplaced,
@@ -1299,6 +1342,11 @@ export function layDistrict(
         carriagewayColumns,
         sidewalkColumns,
         ...(courtyardBlocks.length === 0 ? {} : { courtyards: courtyardBlocks.length }),
+        // §4.2's 45 %-recovery claim, measured rather than assumed: the columns
+        // the lots grew against the columns their seated rectangles took.
+        ...(frontage === null
+          ? {}
+          : { lotColumns: frontage.lotColumns, seatedColumns: frontage.seatedColumns }),
         ...(courtyardShare <= 0
           ? {}
           : { courtyardRejects: Object.fromEntries([...courtyardRejects].sort()) }),
@@ -1845,6 +1893,209 @@ function subdivide(
   }
 
   return { lots, dropped, front, courtyard: null, rejected };
+}
+
+/* -------------------------------------------------------------------------- */
+/* lots from frontage                                                          */
+/* -------------------------------------------------------------------------- */
+
+/** What one strip's frontage walk produced. */
+interface FrontageWalk {
+  readonly lots: readonly Lot[];
+  readonly sites: readonly BlockSite[];
+  readonly dropped: number;
+  /** Columns the lots claimed — the numerator of §4.2's recovery measurement. */
+  readonly lotColumns: number;
+  /** Columns the seated rectangles took — the denominator's other half. */
+  readonly seatedColumns: number;
+}
+
+/**
+ * How many lots a frontage of `length` columns is cut into, and how wide each is
+ * (`docs/SITE-PLAN-v0.md` §4.2 step 2).
+ *
+ * **The same allocation `subdivide`'s `emit` uses**, extracted so that the
+ * frontage rhythm of a hill town and a grid town are the same rhythm and there
+ * is one place to change it: `count = max(1, round(len / target))`, sizes
+ * `floor(len / count)` with the first `len − count · base` lots one column
+ * wider.
+ */
+export function allocateFrontage(length: number, target: number): number[] {
+  const count = Math.max(1, Math.round(length / target));
+  const base = Math.floor(length / count);
+  const extra = length - base * count;
+  return Array.from({ length: count }, (_, k) => base + (k < extra ? 1 : 0));
+}
+
+/**
+ * Lots walked off a planned strip's own frontage (`docs/SITE-PLAN-v0.md` §4.2).
+ *
+ * The measured reason this exists rather than `largestFreeRect`: a curved band's
+ * largest inscribed rectangle is a *chord* of it, and on the walked hill town
+ * that discarded roughly 45 % of block ground — 66 blocks holding 13 868 columns
+ * yielding 7 573 columns of rectangle. Lots are cut from rectangles, so 61 of 63
+ * lots were dropped.
+ *
+ * So the rectangle stays and *what it is inscribed in* changes. Each lot is a
+ * **column set**, grown inward from its own span of the build-to line through
+ * the strip's mask, with an irregular rear boundary; the building is then seated
+ * in **that lot's** largest inscribed rectangle, which is a locally near-
+ * rectangular parcel of about 15 × 17 rather than a whole ragged contour band.
+ *
+ * v0 keeps **rectangular buildings** (§4.2 step 4). The grammar takes a
+ * rectangle and changing that is a phase of its own; the recovery is measured
+ * rather than assumed, which is what {@link FrontageWalk.lotColumns} and
+ * {@link FrontageWalk.seatedColumns} are for.
+ *
+ * Deterministic: no draw of any kind. `largestRect` breaks every tie on the
+ * earlier row and the earlier column, and the strips arrive in a fixed order.
+ */
+function frontageLots(
+  strips: readonly FormStrip[],
+  grid: Grid,
+  blocked: Uint8Array,
+  density: DistrictDensity,
+): FrontageWalk {
+  const bounds: Rect = {
+    x0: grid.x0,
+    z0: grid.z0,
+    x1: grid.x0 + grid.width - 1,
+    z1: grid.z0 + grid.depth - 1,
+  };
+  const lots: Lot[] = [];
+  const sites: BlockSite[] = [];
+  let dropped = 0;
+  let lotColumns = 0;
+  let seatedColumns = 0;
+  // One column belongs to one lot, across every strip: two lots sharing ground
+  // is the interpenetration failure `largestFreeRect` documents, and here it is
+  // made unrepresentable rather than argued about.
+  const taken = new Uint8Array(grid.cells);
+
+  for (const strip of strips) {
+    if (strip.stations === 0) continue;
+    const sizes = allocateFrontage(strip.stations, LOT_FRONTAGE[density] as number);
+    const stripRect = new Uint8Array(grid.cells);
+    // Every claimed column, by the station of the build-to line it belongs to.
+    // Built once per strip: the lots partition the stations, so their column
+    // sets are disjoint by construction and two lots can never take one column.
+    const byStation: number[][] = Array.from({ length: strip.stations }, () => []);
+    for (let c = 0; c < grid.cells; c++) {
+      if (strip.columns[c] !== 1 || blocked[c] === 1 || taken[c] === 1) continue;
+      const st = strip.station[c] as number;
+      if (st < 0 || st >= strip.stations) continue;
+      // Step 3: within `MAX_INFILL_DEPTH` of the frontage. Past that the ground
+      // is the terrace's back, not the lot's.
+      if ((strip.depth[c] as number) >= MAX_INFILL_DEPTH) continue;
+      (byStation[st] as number[]).push(c);
+    }
+    let cursor = 0;
+    for (const [k, size] of sizes.entries()) {
+      const from = cursor;
+      cursor += size;
+      // **Grow inward through the platform mask** (§4.2 step 3). Seeded from
+      // this lot's own span of the build-to line and grown as a *connected*
+      // parcel through ground no other lot has taken — which is what the step
+      // says, and it matters: partitioning the strip by nearest station instead
+      // cuts every parcel into a thin slice along the street's normal, and the
+      // largest inscribed **axis-aligned** rectangle of a thin diagonal slice is
+      // nothing. The rectangle is what the grammar builds on, so the parcel has
+      // to be a blob.
+      const member = new Uint8Array(grid.cells);
+      const frontier: number[] = [];
+      for (let st = from; st < from + size && st < strip.stations; st++) {
+        for (const c of byStation[st] as number[]) {
+          if (member[c] === 1 || (strip.depth[c] as number) > 1) continue;
+          member[c] = 1;
+          frontier.push(c);
+        }
+      }
+      let columns = frontier.length;
+      const budget = size * MAX_INFILL_DEPTH;
+      for (let head = 0; head < frontier.length && columns < budget; head++) {
+        const c = frontier[head] as number;
+        const x = grid.x(c);
+        const z = grid.z(c);
+        for (const [dx, dz] of NEIGHBOURS) {
+          const n = grid.index(x + dx, z + dz);
+          if (n < 0 || member[n] === 1) continue;
+          if (strip.columns[n] !== 1 || blocked[n] === 1 || taken[n] === 1) continue;
+          if ((strip.depth[n] as number) >= MAX_INFILL_DEPTH) continue;
+          member[n] = 1;
+          columns++;
+          frontier.push(n);
+        }
+      }
+      if (columns === 0) {
+        dropped++;
+        continue;
+      }
+      // Step 4: seat the building in **this lot's** own largest inscribed
+      // rectangle, over a set of at most a lot's frontage by the strip's depth.
+      const rect = largestRect(bounds, member);
+      if (rect === null || Math.min(rect.x1 - rect.x0 + 1, rect.z1 - rect.z0 + 1) < MIN_INFILL_SIDE) {
+        dropped++;
+        continue;
+      }
+      lotColumns += columns;
+      seatedColumns += (rect.x1 - rect.x0 + 1) * (rect.z1 - rect.z0 + 1);
+      for (let z = rect.z0; z <= rect.z1; z++) {
+        for (let x = rect.x0; x <= rect.x1; x++) {
+          const c = grid.index(x, z);
+          if (c >= 0) {
+            taken[c] = 1;
+            stripRect[c] = 1;
+          }
+        }
+      }
+      // Every column this lot grew is spoken for, whether or not the seated
+      // rectangle reached it: a neighbour growing through it would put two
+      // buildings' gardens inside one another.
+      for (let c = 0; c < grid.cells; c++) if (member[c] === 1) taken[c] = 1;
+      const face = faceOf(
+        strip.outward[Math.min(from + (size >> 1), strip.stations - 1)] as Point2,
+      );
+      lots.push({
+        id: `s${strip.index}f${k}`,
+        rect,
+        face,
+        side: face,
+        street: strip.street,
+        block: strip.index,
+        order: k,
+        corner: k === 0 || k === sizes.length - 1,
+        courtyard: false,
+      });
+    }
+    // The whole strip, offered to a landmark no run of lots can hold. Its face
+    // is the strip's own outward normal at its midpoint, so a church seated on
+    // it still puts its door on the street.
+    const site = largestRect(bounds, stripRect);
+    if (site !== null) {
+      sites.push({
+        block: strip.index,
+        rect: site,
+        face: faceOf(strip.outward[strip.stations >> 1] as Point2),
+        street: strip.street,
+      });
+    }
+  }
+  return { lots, sites, dropped, lotColumns, seatedColumns };
+}
+
+/**
+ * The face a lot shows the street, from the strip's outward normal.
+ *
+ * `Lot.face` is the direction from the lot **towards** its street, and `outward`
+ * points away from it, so this is the dominant axis of the negated normal. Ties
+ * — a normal at exactly 45° — go to the x axis, which is arbitrary and is the
+ * point: an arbitrary rule is still a rule, and a deterministic one.
+ */
+function faceOf(outward: Point2): HorizontalFace {
+  const dx = -outward.x;
+  const dz = -outward.z;
+  if (Math.abs(dx) >= Math.abs(dz)) return dx < 0 ? "west" : "east";
+  return dz < 0 ? "north" : "south";
 }
 
 /**

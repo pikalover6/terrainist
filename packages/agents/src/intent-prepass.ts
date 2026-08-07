@@ -127,7 +127,16 @@ const list = (xs: readonly string[]): string => xs.join(", ");
  * every intent-carrying world that already has an `era`, so the guess lives here
  * in the pre-pass, where a human can read the answer before the expensive call.
  */
-const URBAN_FORM_HINTS: Readonly<Record<(typeof DISTRICT_FABRICS)[number], string>> = {
+const UNOFFERED_FORMS = new Set<string>([
+  // `docs/SITE-PLAN-v0.md` §7.1: `hillside` is registered and reachable only
+  // from a document that names it, until Kai accepts the §8 prototype. Listing
+  // it here rather than giving it a hint line is what keeps the *rest* of the
+  // table total against `DISTRICT_FABRICS` — a form added to the vocabulary
+  // with neither a hint nor an entry here is still a build error.
+  "hillside",
+]);
+
+const URBAN_FORM_HINTS: Readonly<Record<Exclude<(typeof DISTRICT_FABRICS)[number], "hillside">, string>> = {
   canal: 'canal town, Venice, Amsterdam, "streets of water", a quarter built on a lagoon',
   terraced: 'hill town, cliffside, Cinque Terre, "a town on a mountainside", stepped streets',
   radial: 'ring town, baroque capital, star fort, "everything faces the palace or the cathedral"',
@@ -138,9 +147,12 @@ const URBAN_FORM_HINTS: Readonly<Record<(typeof DISTRICT_FABRICS)[number], strin
 };
 
 /** The hint table as prompt lines, in vocabulary order. */
-const URBAN_FORM_LINES = DISTRICT_FABRICS.map(
-  (id) => `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id]}`,
-).join("\n");
+const URBAN_FORM_LINES = DISTRICT_FABRICS.filter((id) => !UNOFFERED_FORMS.has(id))
+  .map(
+    (id) =>
+      `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id as Exclude<(typeof DISTRICT_FABRICS)[number], "hillside">]}`,
+  )
+  .join("\n");
 
 /**
  * What a prompt has to say for each ground policy, one line per id.
