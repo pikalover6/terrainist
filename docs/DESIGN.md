@@ -854,14 +854,29 @@ repair* is locked to manual.
   2026-08-07.** `streetscape.kerbsideKit` mirrors the modern-fittings era gate:
   band width proposes the downtown kit, a declared pre-modern era swaps it for
   the rustic one, and a document with no `era` still compiles byte-identically.
-- **The sheer cliffs are down to policy (2026-08-07).** The composite
-  mechanism is fixed (a seam's face is measured per column, over-ceiling
-  runs bench at the composite drop, and a wall's foot is a declared claim —
-  see `5f4a965`). Steep's two survivors are single-seam clause-9 walls at
-  exactly `RETAIN_MAX = 6` with no bench — sanctioned on purpose; whether
-  drop-5/6 walls should carry a mid-bench is **Kai's aesthetic call after a
-  walk**, and the compile report now prints faces-by-drop so the call has
-  numbers.
+- ~~**The sheer cliffs**~~ — **closed 2026-08-07, both halves.** The
+  composite mechanism is fixed (per-column face profile, over-ceiling runs
+  bench at the composite drop, a wall's foot is a declared claim —
+  `5f4a965`), and the policy half is **settled by Kai's steep walk**: tall
+  clause-9 walls stay — "what matters is that the village is walkable and
+  stairs are non-mangled; tall walls by themselves aren't bad." The
+  faces-by-drop report stays as monitoring.
+- **Flights crossing natural ground went near-invisible (walked
+  2026-08-07, steep).** Where a connector flight crosses open terraced
+  hillside, only sporadic wood slabs emit — the interior sits flush and
+  surfaces as grass. Regression from `eb93a54`'s `floorAtGrade` (the
+  in-town flights it fixed still read correctly). Queued for the next
+  medium slot; street-stairs/sweep territory.
+- **`entranceReachableShare` contradicts a human walk** — Kai genuinely
+  reaches 100% of the steep town on intended paths; the audit reads 0.150.
+  Hypothesis under test: the movement graph admits network columns only,
+  so the natural terrace ground that bridges every path is untraversable
+  in-graph. Instrument fix in flight; `components` stays network-scoped by
+  design.
+- **Small-vegetation cutoff at the settlement edge (walked 2026-08-07,
+  steep)** — grass/flowers end on a hard mask line while the biome already
+  feathers; the undergrowth suppression needs the same smoothstep-dithered
+  band. In flight.
 - **`props.ts` levels a prop pad into open hillside** — measured cutting
   4 blocks deep at `(74,2)` on the steep fixture, directly under a
   retaining wall (the foot claim now stops the *damage*, not the dig). A

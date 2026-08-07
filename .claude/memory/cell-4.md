@@ -85,6 +85,15 @@ flight: sideways doorstep stairs (junction-steps), shallow slab-lip dirt
 watch item. Lanterns otherwise very good. Steep/oldgrowth/harbourtown-A/B
 walks still incoming.
 
+**Walk 2 (hillside_town_steep-5):** terrain integration "follows the hill
+very well"; masonry happy; **sheer-wall policy CLOSED** (tall walls fine —
+walkable + non-mangled stairs is the bar); THREE new items: invisible
+nature-crossing flights (floorAtGrade regression — queued, medium),
+reachability metric contradicts his 100% on-foot walk (domain fix in
+flight), small-vegetation hard cutoff (feather in flight). Landed
+meanwhile: bus-shelter pane fix `a9a9012`, slab-lip fix `0c1cc0d`
+(shallow-lip detector was structurally blind: floor probe needs 1x2 body).
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density
