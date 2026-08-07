@@ -79,11 +79,13 @@ export interface StreetSegment {
    * segment every form but `canal` and `terraced` draws.
    *
    * The street surfacer dispatches on this and nothing else does: a channel is
-   * a street whose carriageway is water, and a flight of steps is a street the
-   * tread law lays instead of the grader. Optional, and the absent case is the
-   * code that runs today — see §5.7.
+   * a street whose carriageway is water, a flight of steps is a street the
+   * tread law lays instead of the grader, and a `"cart"` is a street the tread
+   * law lays **half a block at a time** — the carriage spine of
+   * `docs/SITE-PLAN-v0.md` §3.6a. Optional, and the absent case is the code that
+   * runs today — see §5.7.
    */
-  readonly role?: "carriageway" | "channel" | "steps";
+  readonly role?: "carriageway" | "channel" | "steps" | "cart";
 }
 
 /** Where two or more segments meet. */

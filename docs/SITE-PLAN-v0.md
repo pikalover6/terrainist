@@ -331,6 +331,206 @@ connector asked for. This is the sentence the whole document exists to make
 true, and §6's `natural-ground fraction` is how it is measured rather than
 hoped.
 
+### 3.6a S2b — the carriage spine
+
+> **Ratified by Kai 2026-08-07, on the accepted `hillside` prototype.** "A
+> horse or a cart on these roads would not be able to move from terrace to
+> terrace." Every connection this form draws across the contours is a flight of
+> stairs (§3.6). A hill town whose only vertical circulation is stairs is a
+> stair town, and no hill town in the world is one: there is always **one road
+> the carts use**, switchbacking up the flank, and the stairs are the shortcuts
+> between its legs.
+
+**One carriage spine per hill town.** Normative, and budgeted rather than
+discovered: a second spine is laid **only** when the quarter's shorter axis is
+at least `2 · SPINE_SECOND_SPAN` columns, because a spine is a traverse *across*
+the flank and two of them on a flank narrower than that are one road drawn
+twice — the defect §3.3 removes for contour streets, arriving sideways. The
+criterion is a span and not a column count so that it is a property of the
+quarter the author wrote rather than of the plan the form drew.
+
+Pedestrian connectors (§3.6) are **unchanged**, and their meaning changes: they
+become shortcuts. That is what a real hill town has, and it is why nothing in
+§3.6 is traded for this section.
+
+**1 — the switchbacks are never drawn.** They are what a grade cap produces.
+The spine is routed under a maximum gradient of `SPINE_MAX_GRADE`, one block of
+rise per `SPINE_GRADE_RUN` columns of run. A route obeying that cap between two
+streets `Δe` apart has arc length at least `SPINE_GRADE_RUN · Δe` whatever it
+does in plan, and the flank is not that long in the fall line — so the route
+*must* oblique across the contours, and where the flank runs out it *must*
+hairpin back. A hairpin is therefore a measurement, not a motif, and a quarter
+broad enough not to need one does not get one.
+
+**The cap is the step.** The router's move is one macro-step of exactly
+`SPINE_GRADE_RUN` columns in one of eight directions, changing the road's level
+by at most one block. The cap is then structural rather than checked: no state
+of the search can represent a steeper route. This is the one place where making
+the constraint the *unit of search* rather than a cost is worth a paragraph,
+because the alternative — an ordinary A\* priced on slope — produces a route
+that is cheap, direct and unclimbable, which is exactly the road the town
+already has.
+
+**2 — the routing layer is the planner, and the spine is routed before the
+strips claim.** `structures/roads.ts` routes over a `Region` and a post-pad
+`ColumnPlan`, after every building is placed; it is the pass that finds its way
+*between* districts. Inside a quarter "the way was the first thing drawn", and
+the spine has to be drawn before lots for the reason the whole document exists:
+**the corridor is level ground, and level ground must be allocated to a use
+before it is cut.**
+
+> **Amended 2026-08-07, at the implementation, and this is the one thing the
+> ratified design got wrong.** It placed the spine at §3.6 time — after the
+> strips, so it could be priced to avoid them, and before the frontage walk. That
+> is one step too late, and no cost model can recover it: **a terrace's own face
+> is 1-in-1**, and a carriage road at 1-in-6 cannot leave a terrace except where
+> the terrace meets grade, which on both fixtures is outside the quarter because
+> the strips run its full width. Three cost models were measured against it; each
+> found the same thing, which was a route that ran fifty columns across a
+> platform and then asked to climb five blocks in one column. The cart law
+> refused every one of them, whole and correctly.
+>
+> So the spine is routed at **S2b** — after the principal streets are chosen, so
+> the junction levels are known, and **before the strips claim** — and its
+> corridor is marked claimed so that the terraces are cut *around* it. The road
+> then climbs between two terraces on natural hillside, which is what a road
+> between two terraces is, and the terrace edges either side of it become
+> ordinary planned edges that §5 treats like any other. Two consequences, both
+> measured:
+>
+> - the reservation is **wider than the road** by `SPINE_RESERVE_MARGIN`, the
+>   radius `smoothTerrace` closes at, or the closing bridges the corridor and
+>   `walkBack` finds the notch (§5.5);
+> - the reservation **stops at each principal street's own standing room**. A
+>   spine arrives at a junction *on* the terrace — the platform there is level at
+>   exactly the elevation the road lands at, so there is nothing for a corridor to
+>   be a gap in, and cutting one takes the street's platform out from under its
+>   own seam. Measured at eleven `offPlatform` columns at the lower street's
+>   clipped east end, and zero once the exemption was in.
+>
+> Because the route aims at the *candidate* contour rather than at the laid
+> carriageway — which is decided after it, by the claim rule — each end is
+> carried the last few columns onto the nearest street laid **at that level**,
+> and an interior junction the road merely passes gets a short flight rather than
+> a bent carriageway: a graded road lands where its grade puts it, and bending it
+> sideways to find a centre line would spend the cap.
+
+**3 — the cart profile.** A spine is not a flight and is not a graded road. It
+is a new client of the sweep engine's tread law with one law of its own:
+
+- the running surface changes by **half a block at a time**, never a whole one,
+  so a full-block step is *unrepresentable* in this profile rather than
+  decorated away;
+- a half-block change costs `SPINE_TREAD_RUN` columns of flat tread, so a whole
+  block of rise costs `SPINE_GRADE_RUN = 2 · SPINE_TREAD_RUN` columns — the same
+  number the router climbed by, which is what makes the built road obey the cap
+  the route was chosen under;
+- the alternation is `slab, full block, slab, …`, which is a graded ramp read
+  through the block grid: a top slab is half a block down, and half a block is a
+  step a cart rolls over and a stair block is not.
+
+The tread law's own recurrence is unchanged and is not reimplemented: it is run
+in **half-block units over groups of columns** instead of in whole blocks over
+single columns, and every guarantee it carries — whole-run refusal, the fill
+cap, the endpoint pins that make a run *land* on the street it meets — comes
+with it.
+
+**4 — the corridor and its landings are reserved before the terraces, and so
+before lots.** The spine's claimed columns are marked before the first strip
+probes, so no strip claims them and no lot is grown on them. A **hairpin landing** is the run of `2 · SPINE_LANDING_HALF
++ 1` columns centred on a hairpin vertex, and it is **level**: the cart law
+holds one datum across it. Landings are the visual signature of a mountain road,
+they are what a cart needs in order to turn, and they may eat hillside — a
+landing is street, not platform, so it costs `streetFraction` and not
+`naturalFraction`.
+
+> **Measured, 2026-08-07, and it corrects the ratified design's expectation.**
+> The ratified fixture turns back **once**; the steep one not at all. That is the rule working, not failing: both
+> quarters are ~152 columns across and their principal streets are 7 and 10
+> blocks apart, so the cap demands 42 and 60 columns of arc against a flank that
+> offers 150 — the route obliques and arrives, and "a quarter broad enough not to
+> need one does not get one" is this section's own sentence. Hairpins appear the
+> moment the arithmetic asks for them: on a 64-column flank with 30 blocks
+> between streets the router turns back three times, which is the case
+> `carriage-spine.test.ts` pins. **What Kai asked for is the cart, and the cart
+> is there; the switchback is a consequence and it will show up on a site that
+> earns it.**
+
+**5 — placement.** The spine enters at the **lowest** principal street, at
+whichever of that street's two ends lies nearest the quarter's edge (ties: the
+lower ground, then the row-major index), which is the end an external road
+reaches; it climbs **leg by leg**, one leg per adjacent pair of principal
+streets, each leg ending on a column the next street up owns — so the spine
+touches every principal street exactly once, at an ordinary junction the
+ownership order already arbitrates (a spine ranks below a carriageway of its
+width and above a flight: a cart road arrives at a street, and a stair arrives
+at the cart road). It ends on the topmost principal street. It **hugs the
+flank** because crossing a claimed frontage strip is priced at
+`SPINE_STRIP_COST` per column, which is a large multiple of the run — so the
+cheapest route is the one over ground no terrace wanted.
+
+**What it never does:** invent a ground-writing path. A spine is a
+`StreetSegment` with `role: "cart"`, and it reaches the ground contract through
+`surfaceStreetGraph` exactly as a flight does — one `street.network` declaration
+with `preserve` over its tread band (§7.4, `docs/GROUND-CONTRACT-v0.md` §3.7b).
+No new source class, no new rank, no new intent.
+
+**Constants — normative.**
+
+| constant | value | derivation |
+| --- | --- | --- |
+| `SPINE_MAX_GRADE` | 1 : 6 | The gradient a loaded cart takes without a runaway. It is also the steepest grade the cart profile can *build*: a half-block per three columns is the coarsest alternation that still reads as a ramp rather than as two steps, and 1:6 is twice that. Steeper is a stair; gentler doubles the road for one point of comfort. |
+| `SPINE_GRADE_RUN` | 6 | `1 / SPINE_MAX_GRADE`, in columns. The router's macro-step. |
+| `SPINE_TREAD_RUN` | 3 | `SPINE_GRADE_RUN / 2`: columns of flat tread per half-block of rise. Inside Sol's 4–6 band read at the block. |
+| `SPINE_RESERVE_MARGIN` | 2 | Columns of hillside reserved beyond the spine's verge — `smoothTerrace`'s own closing radius, so a terrace can never close over the road. |
+| `SPINE_FILL_BAND` | 4 | Courses of embankment the road may stand on **above** its own ground. A band above and not around, and the asymmetry is the tread law's: `need[k] ≥ ground[k] + 1` is what makes a flight masonry laid *on* the hill, and the cart law inherits it, so a route chosen below its own ground is a route the profile would refuse to build. Below `TERRACE_RISE`, so a spine never stands on a face a wall would have to be built for; above 2, so a traverse crosses a gully rather than diving into it. |
+| `SPINE_LANDING_HALF` | 3 | Half the level landing at a hairpin. Seven columns is a cart and its horse standing still, and it is `SPINE_GRADE_RUN + 1` so a landing is never shorter than the step that reached it. |
+| `SPINE_STRIP_COST` | 40 | Charged per claimed strip column a macro-step crosses, against a run cost of 6. Crossing seven columns of terrace therefore costs more than a fifty-column detour, which is the ordering "hug the flank" means. |
+| `SPINE_TURN_COST` | 12 | Per eighth-turn between macro-steps. Two straight traverses beat a wander; a hairpin is worth 4 eighths and is taken only when the cap leaves nothing else. |
+| `SPINE_SECOND_SPAN` | 96 | Shorter axis at or above `2 ×` this gets a second spine. A 96-column flank at 1:6 buys sixteen blocks of climb in one traverse, which is more than two terrace rises — below that a second spine has nowhere to be that the first is not. |
+| `SPINE_MAX_FILL` | 8 | `street-stairs.ts`'s `STREET_STAIR_MAX_FILL`, and deliberately the same number: a cart road and a flight stand on the same masonry budget. |
+
+**Composition.** The spine's columns are street and are counted as street in
+§6.1's `streetFraction`, with no exemption. §6.1 additionally reports
+`spineFraction` — the share the spine itself accounts for — because that is the
+number the open question below is about, and a metric nobody can see is a
+decision nobody can take.
+
+> **Open, and deliberately not taken here (2026-08-07). The measurement is much
+> better than the argument expected, and the argument still stands.** On the
+> ratified fixture the spine is 108 columns of arc and **1,013 columns of
+> street — 4.2 points** of the quarter. It does *not* cost four points of
+> `streetFraction`, because most of what it paves is paving §3.6's connectors
+> and `linkComponents` were doing anyway: the measured totals are
+>
+> | fixture | `streetFraction` before | after | the spine's own share |
+> | --- | --- | --- | --- |
+> | `site-plan-hillside` | 0.2486 | **0.2745** | 0.0191 |
+> | `site-plan-hillside-steep` | 0.2439 | **0.2386** | 0.0284 |
+>
+> — up 2.6 points on the ratified fixture and **down** half a point on the steep
+> one, where a road that connects the terraces displaced stairs that were
+> connecting them worse. Neither number is the spine's own share, which is under
+> three points on both: the rest is the plan the corridor changed.
+>
+> Two and a half points is two and a half too many: the ratified fixture cleared
+> §6.2's 0.25 gate by a thousandth and now misses it by twenty-four, at every
+> rung, so it ships a `SITE_COMPOSITION` note it can do nothing about. And net of
+> the spine's own columns it is *still* over, at 0.2554 — the corridor changed
+> the plan around it, so this is not a number an exemption for the spine would
+> answer either. And the ladder is the wrong
+> instrument for that miss, for exactly the reason §6.2's amendment excludes
+> `platformPerBuilding`: **dropping a contour street does not shorten the
+> spine.** Its length is `SPINE_GRADE_RUN × drop` and the drop is the hill's. A
+> gate the ladder cannot move produces noise, not composition.
+>
+> The two answers, both one edit, neither taken without a walk: raise
+> `COMPOSITION_GATES.streetFraction` to a measured number that includes one spine
+> (0.28 clears both fixtures), or gate the ladder on `streetFraction −
+> spineFraction` and report the total. The second is the honest one — it gates
+> what the ladder controls — and it is a spec decision, so it is written down here
+> as a proposal and `spineFraction` ships beside it as a reported metric.
+
 ### 3.7 S6 — feasibility: narrow, merge, dissolve
 
 After all strips are claimed and before the plan is returned, each strip is
@@ -684,6 +884,7 @@ parts for.
 | `streetFraction` | carriageway + sidewalk ÷ quarter columns | **0.478** | ≤ 0.25 |
 | `hardenedPerimeter` | (wall + revetted) ÷ total platform perimeter | — | ≤ 0.50 |
 | `railedShare` | railed columns ÷ exposed retaining columns | ≈ 1.0 | 0.10 – 0.25 |
+| `spineFraction` | carriage spine's carriageway + sidewalk ÷ quarter columns | — | reported, never gated (§3.6a) |
 | `offPlatform` | the retaining pass's count | **395** | **0** |
 | `dwellings` | buildings − terraces + terrace bays (WP-1) | — (not measured on the control) | — |
 | `wallPerFrontage` | wall columns ÷ Σ lot frontage | — | ≤ 0.60 |

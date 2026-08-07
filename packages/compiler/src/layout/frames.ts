@@ -171,3 +171,34 @@ export function intersectRect(a: Rect, b: Rect): Rect | null {
   if (x0 > x1 || z0 > z1) return null;
   return { x0, z0, x1, z1 };
 }
+
+/**
+ * Where a line turns back on itself — the hairpins of a switchbacking route.
+ *
+ * Read over a window rather than between neighbours, for the reason every other
+ * heading in this compiler is: a 4-connected raster of an oblique line
+ * alternates between two axis steps, so a one-step tangent is one of four
+ * directions and every diagonal run would read as a hairpin. A vertex is a
+ * hairpin when the run *into* it and the run *out of* it point more than 90°
+ * apart, which is the turn a cart cannot take without stopping.
+ *
+ * Returns 1 on every column within `half` of such a vertex: the landing.
+ */
+export function hairpinLandings(
+  line: readonly { readonly x: number; readonly z: number }[],
+  window: number,
+  half: number,
+): Uint8Array {
+  const n = line.length;
+  const out = new Uint8Array(n);
+  if (n === 0) return out;
+  for (let k = window; k + window < n; k++) {
+    const a = line[k - window] as { x: number; z: number };
+    const b = line[k] as { x: number; z: number };
+    const c = line[k + window] as { x: number; z: number };
+    const dot = (b.x - a.x) * (c.x - b.x) + (b.z - a.z) * (c.z - b.z);
+    if (dot >= 0) continue;
+    for (let i = Math.max(0, k - half); i <= Math.min(n - 1, k + half); i++) out[i] = 1;
+  }
+  return out;
+}

@@ -69,6 +69,16 @@ import {
   linkComponents,
 } from "./contour-lines.js";
 import {
+  SPINE_GRADE_RUN,
+  SPINE_RESERVE_MARGIN,
+  SPINE_WIDTH,
+  routeCarriageSpine,
+  spineBudget,
+  spineEntry,
+  type SpineGround,
+  type SpineStreet,
+} from "./carriage-spine.js";
+import {
   ROUND_ZERO,
   drewAsAsked,
   type FormBench,
@@ -449,6 +459,84 @@ function draw(ctx: FormContext): FormResult {
   // segment ids and the bench indices climb the hill.
   chosen.sort((a, b) => (a.e !== b.e ? a.e - b.e : a.first - b.first));
 
+  /* --- S2b: the carriage spine, and its corridor (§3.6a) ------------------ */
+  // **Ratified by Kai 2026-08-07**: every connection this form draws across the
+  // contours is a flight of stairs, and a cart cannot climb one. So one road per
+  // hill town switchbacks up the flank under a 1-in-6 grade cap, and §3.6's
+  // stair-alleys — untouched below — become what they are in every real hill
+  // town, which is the shortcuts between its legs.
+  //
+  // **It is routed here, before the strips claim, and that is the layer
+  // decision.** §3.6a argues the easy half: `structures/roads.ts` routes over a
+  // `Region` and a post-pad `ColumnPlan` after every building is placed, while
+  // inside a quarter the way was the first thing drawn, so the spine cannot be
+  // the road pass's. The hard half was measured. Routing it at *connector* time,
+  // after the terraces are cut, produces a road with nowhere to go: **a
+  // terrace's own face is 1-in-1**, and a carriage road at 1-in-6 cannot leave
+  // one except where the terrace meets grade — which on this site is outside the
+  // quarter, because the strips run its full width. Three drafts of cost model
+  // could not answer that, and no cost model can: the corridor has to be ground
+  // the terraces never took. So the spine is routed on the hill as it stands,
+  // its corridor is marked `claimed` before the first strip probes, and the
+  // terraces are cut *around* it. The road then climbs between two terraces on
+  // natural ground, which is what a road between two terraces is.
+  const spineGround: SpineGround = {
+    bounds,
+    width,
+    depth,
+    height: (x, z) => ctx.ground.height(x, z),
+    at,
+    inside,
+    strip: frontageBand(chosen, claimStart + dTarget, cells, at, inside),
+  };
+  const spineStreets = chosen.map((c) => ({ path: c.path, level: c.e }));
+  /** The street's own band and the standing room beyond it — never reserved. */
+  const junctionRoom = new Uint8Array(cells);
+  for (const c of chosen) {
+    paint(junctionRoom, c.path, half + sidewalk + 1 + SPINE_RESERVE_MARGIN, at, inside);
+  }
+  /** 1 on a column the spine's carriageway and its verge occupy. */
+  const spineBand = new Uint8Array(cells);
+  const spinePaths: Point2[][] = [];
+  /** Columns where a spine meets a principal street it neither starts nor ends on. */
+  const spineJunctions: { readonly p: Point2; readonly level: number }[] = [];
+  let spineHairpins = 0;
+  let spineArc = 0;
+  for (let n = 0; n < spineBudget(bounds); n++) {
+    const entry = spineEntry(spineGround, spineStreets[0] as SpineStreet, n);
+    const spine = routeCarriageSpine(spineGround, spineStreets, entry);
+    if (spine === null) continue;
+    spinePaths.push([...spine.path]);
+    for (const j of spine.junctions) {
+      spineJunctions.push({ p: spine.path[j.at] as Point2, level: j.level });
+    }
+    spineHairpins += spine.hairpins;
+    spineArc += spine.path.length;
+    // The corridor is **reserved**: its carriageway and the verge dilated off it
+    // are marked claimed here, so every strip probe and every strip walk below
+    // stops at it. A road planned and then terraced over is a road in a trench.
+    // …and the reservation is **wider than the road**, by the closing radius the
+    // terraces are smoothed with. A corridor exactly as wide as its carriageway
+    // is a gap `smoothTerrace`'s closing can reach across, and a terrace closed
+    // over a road is a terrace with a notch in it — which is what `walkBack`
+    // finds and reports as `offPlatform` (§5.5), measured at ten columns.
+    const band = streetBand(spine.path, at, inside, masked, cells, width, depth, sidewalk);
+    const skirt = dilateMask(band, width, depth, SPINE_RESERVE_MARGIN);
+    for (let k = 0; k < cells; k++) {
+      if (band[k] === 1) spineBand[k] = 1;
+      // **The reservation stops at the street's own standing room.** A spine
+      // arrives at a junction *on* the terrace — the platform there is level at
+      // the street's own elevation, which is exactly the level the road lands
+      // at — so there is nothing for a corridor to be a gap in, and cutting one
+      // there takes the street's platform out from under its own seam:
+      // `walkBack` crosses eight columns of carriageway, finds the corridor
+      // where the strip used to be, and reports `offPlatform` (§5.5), measured
+      // at eleven columns at the lower street's clipped east end.
+      if (junctionRoom[k] === 1) continue;
+      if (band[k] === 1 || (skirt[k] === 1 && masked(k))) claimed[k] = 1;
+    }
+  }
+
   /* --- S3 + S4: strips and platforms (§3.4, §3.5) ------------------------- */
   const segments: StreetSegment[] = [];
   const strips: FormStrip[] = [];
@@ -716,6 +804,54 @@ function draw(ctx: FormContext): FormResult {
   }
   if (dissolved > 0) adapted.push(`${dissolved} frontage strip(s) dissolved back to natural ground`);
 
+  // The spine enters the graph *after* the streets, so a junction column belongs
+  // to the street: `compareStreetRank` puts a carriageway above a cart of the
+  // same width, which is what pins the road's tread run to the street's level.
+  // **Laid streets, by the level they were laid at.** A join has to reach the
+  // street it was aiming at: nearest-over-all-streets sends the top of a spine
+  // to whichever centre line is closest in plan, and on a terraced hill that is
+  // regularly the one it started from, nine blocks below.
+  const laidAt = (level: number): StreetSegment[] =>
+    segments.filter((sg, i) => sg.kind === "street" && streetLevel[i] === level);
+  const lowest = spineStreets.length === 0 ? 0 : (spineStreets[0] as SpineStreet).level;
+  const highest =
+    spineStreets.length === 0 ? 0 : (spineStreets[spineStreets.length - 1] as SpineStreet).level;
+  for (const [n, path] of spinePaths.entries()) {
+    // **Land on a street that was actually laid.** The spine aimed at the
+    // *candidate* contour, because it had to be routed before the strips claimed
+    // (§3.6a); which stretches of that contour become carriageway is decided
+    // afterwards, by the claim rule, and a run that pinched out can leave the
+    // road's landing a few columns short of any centre line. A junction that is
+    // nearly a junction is not one: the surfacer finds no owner to pin against,
+    // and `linkComponents` unions on shared columns rather than on nearness. So
+    // each end is carried the last few columns onto the nearest laid street.
+    const joined = joinToStreet(joinToStreet(path, laidAt(lowest), false), laidAt(highest), true);
+    segments.push({ id: `sp${n}`, kind: "lane", width: SPINE_WIDTH, path: joined, role: "cart" });
+    claim(segments.length - 1, joined);
+  }
+  // An **interior** junction gets the same treatment, as a short flight rather
+  // than as a detour: the road is graded and its landing is where the grade put
+  // it, so bending the carriageway sideways to find a centre line would spend
+  // the cap. A few columns of steps from the road to the street it passes is
+  // what a hill town has there anyway.
+  for (const [i, p] of spineJunctions.entries()) {
+    const stub = joinToStreet([p.p], laidAt(p.level), true);
+    if (stub.length < 2) continue;
+    segments.push({
+      id: `spj${i}`,
+      kind: "lane",
+      width: STREET_WIDTH.lane,
+      path: stub,
+      role: "steps",
+    });
+    claim(segments.length - 1, stub);
+  }
+  if (spinePaths.length > 0) {
+    adapted.push(
+      `${spinePaths.length} carriage spine(s) at 1 in ${SPINE_GRADE_RUN} over ${spineArc} column(s) of arc, with ${spineHairpins} hairpin(s)`,
+    );
+  }
+
   /* --- S5: connectors (§3.6) ---------------------------------------------- */
   // Stair-alleys every `blockSize` columns of arc, by the steepest-descent walk
   // `terraced` already uses. **A connector never gets a platform**: its ground
@@ -799,7 +935,11 @@ function draw(ctx: FormContext): FormResult {
   // with what was actually cut, after it was cut, rather than before.
   const kept = strips.map((strip) => {
     const columns = Uint8Array.from(strip.columns);
-    for (let k = 0; k < cells; k++) if (released[k] === 1 || terrace[k] !== 1) columns[k] = 0;
+    for (let k = 0; k < cells; k++) {
+      // …and the carriage spine's reserved corridor, which was taken before any
+      // lot existed and is therefore never one (§3.6a rule 4).
+      if (released[k] === 1 || terrace[k] !== 1 || spineBand[k] === 1) columns[k] = 0;
+    }
     return { ...strip, columns };
   });
 
@@ -808,6 +948,7 @@ function draw(ctx: FormContext): FormResult {
   for (const strip of kept) {
     for (let k = 0; k < cells; k++) if (strip.columns[k] === 1) lotMask[k] = 1;
   }
+  for (let k = 0; k < cells; k++) if (spineBand[k] === 1) lotMask[k] = 0;
 
   return {
     ok: true,
@@ -1082,3 +1223,59 @@ function separationRelease(
   return release;
 }
 
+
+/**
+ * The ground the frontage strips are **about** to take, before they take it.
+ *
+ * The carriage spine is routed before the strips claim (§3.6a, and the note at
+ * its call site says why), so it cannot be priced against a claim that does not
+ * exist yet. What it can be priced against is the claim's *reach*: every column
+ * within `D_target` of a principal street is ground a strip will offer to a lot
+ * if the terrace rise lets it. Charging the spine for crossing that band is what
+ * "hug the flank rather than slice the centre" means one step earlier — the road
+ * crosses a frontage band square, where crossing is cheapest, and runs its
+ * traverses on the hillside between them.
+ */
+function frontageBand(
+  streets: readonly { readonly path: readonly Point2[] }[],
+  reach: number,
+  cells: number,
+  at: (x: number, z: number) => number,
+  inside: (p: Point2) => boolean,
+): Uint8Array {
+  const band = new Uint8Array(cells);
+  for (const street of streets) paint(band, street.path, reach, at, inside);
+  return band;
+}
+
+/**
+ * Carry one end of a path onto the nearest column of a laid street.
+ *
+ * A straight run, densified, and nothing clever: the ground either side of a
+ * principal street is that street's own platform, level at its elevation, so the
+ * last few columns of the approach are flat by construction and there is nothing
+ * for a grade cap to object to.
+ */
+function joinToStreet(
+  path: readonly Point2[],
+  streets: readonly StreetSegment[],
+  tail: boolean,
+): Point2[] {
+  const end = (tail ? path[path.length - 1] : path[0]) as Point2 | undefined;
+  if (end === undefined) return [...path];
+  let best: Point2 | null = null;
+  let bestD = Number.POSITIVE_INFINITY;
+  for (const street of streets) {
+    for (const p of street.path) {
+      const d = (p.x - end.x) * (p.x - end.x) + (p.z - end.z) * (p.z - end.z);
+      if (d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    }
+  }
+  if (best === null || bestD === 0) return [...path];
+  return tail
+    ? [...path, ...densify4([end, best]).slice(1)]
+    : [...densify4([best, end]).slice(0, -1), ...path];
+}

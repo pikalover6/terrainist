@@ -25,7 +25,7 @@
  *
  * ```
  * rank(s) = ( −width(s), roleRank(s), kindRank(s), id(s) )      // lower tuple wins
- *   roleRank:  channel 0,  carriageway 1,  steps 2
+ *   roleRank:  channel 0,  carriageway 1,  cart 2,  steps 3
  *   kindRank:  arterial 0, avenue 1, street 2, lane 3
  * ```
  *
@@ -58,7 +58,7 @@
  */
 
 /** What is inside a segment's width. */
-export type StreetOwnerRole = "carriageway" | "channel" | "steps";
+export type StreetOwnerRole = "carriageway" | "channel" | "steps" | "cart";
 
 /** Width class. `"arterial"` is C1's boulevard, which outranks every street. */
 export type StreetOwnerKind = "arterial" | "avenue" | "street" | "lane";
@@ -71,11 +71,22 @@ export interface StreetRank {
   readonly kind: StreetOwnerKind;
 }
 
-/** Role precedence: a channel is never paved over by a carriageway. */
+/**
+ * Role precedence: a channel is never paved over by a carriageway.
+ *
+ * `cart` sits between a carriageway and a flight, and the two neighbours are the
+ * argument: a carriage spine (`docs/SITE-PLAN-v0.md` §3.6a) **arrives** at the
+ * contour street it joins — its junction is the street's level, which is what
+ * pins the spine's tread run — and a stair connector arrives at *it*, because a
+ * shortcut lands on the road and the road does not land on the shortcut. Only
+ * the order of these four numbers is read, so nothing that ships today moves
+ * when `steps` is renumbered around the new entry.
+ */
 export const ROLE_RANK: Readonly<Record<StreetOwnerRole, number>> = Object.freeze({
   channel: 0,
   carriageway: 1,
-  steps: 2,
+  cart: 2,
+  steps: 3,
 });
 
 /** Width-class precedence, used only to break a tie on actual width. */

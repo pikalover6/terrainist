@@ -1388,6 +1388,8 @@ export function layDistrict(
               naturalFraction: replanned.composition.naturalFraction,
               streetFraction: replanned.composition.streetFraction,
               platformFraction: replanned.composition.platformFraction,
+              spineFraction: replanned.composition.spineFraction,
+              spineColumns: replanned.composition.spineColumns,
               replanRounds: replanned.rounds,
               principalStreets: graph.segments.filter((sg) => sg.kind === "street").length,
             }),
@@ -1456,6 +1458,20 @@ export interface Composition {
   readonly naturalFraction: number;
   readonly streetFraction: number;
   readonly platformFraction: number;
+  /**
+   * Columns of {@link Composition.streetColumns} the carriage spine accounts for
+   * (`docs/SITE-PLAN-v0.md` §3.6a).
+   *
+   * **Reported, never gated, and the reason it exists is the open question that
+   * section ends on.** The spine is counted in `streetFraction` with no
+   * exemption, and its length is `SPINE_GRADE_RUN × drop` — a number the ladder
+   * cannot move, because dropping a contour street does not shorten the road up
+   * the hill. Whether the gate should therefore be raised by one spine's worth
+   * or measured net of it is a spec decision, and a decision nobody can take on
+   * a number nobody can see.
+   */
+  readonly spineColumns: number;
+  readonly spineFraction: number;
 }
 
 /**
@@ -1474,12 +1490,22 @@ export function compositionOf(plan: FormPlan, bounds: Rect, sidewalkWidth: numbe
     if (k >= 0) carriageway[k] = 1;
   }
   const verge = dilate(grid, carriageway, sidewalkWidth);
+  // The spine's own share, by the same two constructions over its own segments.
+  const spineWay = new Uint8Array(grid.cells);
+  const spineOnly = { ...plan.graph, segments: plan.graph.segments.filter((s) => s.role === "cart") };
+  for (const cell of carriagewayCells(spineOnly, bounds)) {
+    const k = grid.index(cell.x, cell.z);
+    if (k >= 0) spineWay[k] = 1;
+  }
+  const spineVerge = dilate(grid, spineWay, sidewalkWidth);
   const levels = groundLevelsOf(bounds, plan.benches ?? []);
   let street = 0;
   let natural = 0;
   let platform = 0;
+  let spine = 0;
   for (let k = 0; k < grid.cells; k++) {
     const paved = carriageway[k] === 1 || verge[k] === 1;
+    if (paved && (spineWay[k] === 1 || spineVerge[k] === 1)) spine++;
     const onPlatform =
       levels !== null && levels.at(grid.x(k), grid.z(k)) !== NO_PLATFORM;
     if (paved) street++;
@@ -1495,6 +1521,8 @@ export function compositionOf(plan: FormPlan, bounds: Rect, sidewalkWidth: numbe
     naturalFraction: natural / n,
     streetFraction: street / n,
     platformFraction: platform / n,
+    spineColumns: spine,
+    spineFraction: spine / n,
   };
 }
 

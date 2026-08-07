@@ -949,6 +949,177 @@ export function synthesizeTreads(
 }
 
 /* -------------------------------------------------------------------------- */
+/* terrain adaptation: the cart law                                            */
+/* -------------------------------------------------------------------------- */
+
+/** A run of cart treads: the stand surface per column, in **half-blocks**. */
+export interface CartRun {
+  /**
+   * Twice the level a player stands at, per column; `null` when refused.
+   *
+   * Half-blocks because that is the unit the law actually works in: an *odd*
+   * value is a column dressed with a top slab and an even one is a full block,
+   * and the whole point of the profile is that the two alternate.
+   */
+  readonly surface: readonly number[] | null;
+  readonly refusal?: TreadRefusal;
+}
+
+/**
+ * Synthesize a **cart** run — `docs/SITE-PLAN-v0.md` §3.6a's third rule.
+ *
+ * The same job as {@link synthesizeTreads} and a different law, and the two
+ * differences are the whole profile:
+ *
+ * - it works in **half-blocks over groups of `treadRun` columns**, so the
+ *   surface moves half a block at a time and a whole block costs `2 · treadRun`
+ *   columns. A full-block step is therefore not something this profile decorates
+ *   away — it cannot be *represented*.
+ * - it is the **road** construction rather than the stair one:
+ *   `gradeProfile`'s lower envelope of unit cones rooted at the ground plus the
+ *   fill band, moved into half-blocks and onto groups. Fill is capped by the
+ *   band; **cut is not**. That is the sentence a flight cannot say, and it is
+ *   why a flight cannot be a road: `need[k] ≥ ground[k] + 1` is masonry laid on
+ *   the surface of the hill, and on any slope steeper than the cap the hill
+ *   outruns it. A carriage road is benched *into* its hillside, which is what
+ *   every mountain road in the world is.
+ *
+ * A **landing** (`landing[k] === 1`) is one group however long it is, so a
+ * hairpin is level by construction rather than by a later flattening pass. The
+ * **pins** are the junction levels at either end and they are equalities, and
+ * they arrive the way a bridge deck arrives in `gradeProfile` — as a per-group
+ * floor replaced by its own upper envelope, then taken pointwise-max. A run the
+ * envelope had to lift above its pin is refused **whole**: half a carriage road
+ * stopping on the hillside is worse than none, and §3.6's stairs are still
+ * there.
+ *
+ * `ground` is the **stand level** of the ground the road is graded against
+ * (`plan.ground + 1`), exactly as {@link synthesizeTreads} takes it, and the
+ * pins are stand levels in whole blocks — a junction with a street lands on that
+ * street's level, an even number of half-blocks and therefore a full-block
+ * landing.
+ */
+export function synthesizeCartTreads(
+  ground: readonly number[],
+  options: {
+    /** Columns of flat tread per half-block of rise. */
+    readonly treadRun?: number;
+    /**
+     * Blocks the road stands proud of the ground it covers, before grading.
+     *
+     * The **target**, not the cap — `gradeProfile`'s `band`, and the distinction
+     * is not cosmetic: rooting the cones at `ground + maxFill` asks the road to
+     * ride eight blocks up in the air and then refuses itself when the envelope
+     * cannot hold that on a slope. Measured, that is what refused every route on
+     * the ratified fixture. One is a road laid on its own ground with a course
+     * under it, which is what a road is.
+     */
+    readonly band?: number;
+    /** Blocks of embankment the road may stand on. The **cap**. */
+    readonly maxFill?: number;
+    /** Blocks the road may be benched into its own hill. */
+    readonly maxCut?: number;
+    /** 1 where the column belongs to a level landing. */
+    readonly landing?: Uint8Array;
+    /** Stand level, in whole blocks, column 0 must land on. */
+    readonly pinFirst?: number;
+    /** Stand level, in whole blocks, column `n − 1` must land on. */
+    readonly pinLast?: number;
+  } = {},
+): CartRun {
+  const n = ground.length;
+  if (n === 0) return { surface: [] };
+  const treadRun = Math.max(1, options.treadRun ?? 3);
+  const band = options.band ?? 1;
+  const maxFill = options.maxFill ?? 8;
+  const maxCut = options.maxCut ?? 8;
+  const landing = options.landing;
+
+  // --- the groups ---------------------------------------------------------
+  // A landing is one group whatever its length; everything else is cut into
+  // runs of `treadRun`. Groups are contiguous by construction, so the envelope
+  // below is the ordinary one over `m` cells.
+  const group = new Int32Array(n);
+  let g = 0;
+  let held = 0;
+  let onLanding = landing !== undefined && landing[0] === 1;
+  for (let k = 0; k < n; k++) {
+    const here = landing !== undefined && landing[k] === 1;
+    if (k > 0 && (here !== onLanding || (!here && held >= treadRun))) {
+      g++;
+      held = 0;
+      onLanding = here;
+    }
+    group[k] = g;
+    held++;
+  }
+  const m = g + 1;
+
+  /** The ground each group has to answer to: its highest column, in halves. */
+  const top = new Array<number>(m).fill(Number.NEGATIVE_INFINITY);
+  for (let k = 0; k < n; k++) {
+    const j = group[k] as number;
+    const h = 2 * (ground[k] as number);
+    if (h > (top[j] as number)) top[j] = h;
+  }
+
+  const pinFirst = options.pinFirst;
+  const pinLast = options.pinLast;
+  const refuse = (refusal: TreadRefusal): CartRun => ({ surface: null, refusal });
+
+  // --- the envelope -------------------------------------------------------
+  // The **lower envelope of half-block cones rooted at the ground plus the fill
+  // band**, which is `gradeProfile`'s construction moved into half-blocks and
+  // onto groups. Two properties fall straight out of the form and they are the
+  // whole profile: a lower envelope of unit cones is 1-Lipschitz over groups, so
+  // the surface moves half a block per `treadRun` columns and no more; and fill
+  // is capped by the band while **cut is not**, which is what makes this a road
+  // rather than a flight. A carriage road benched into its own hillside is what
+  // every mountain road is; masonry laid on the surface of one is what
+  // `synthesizeTreads` builds, and it cannot climb a slope steeper than its own
+  // cap because the hill outruns it.
+  const want = new Array<number>(m);
+  for (let j = 0; j < m; j++) want[j] = (top[j] as number) + 2 * band;
+  if (pinFirst !== undefined) want[0] = Math.min(want[0] as number, 2 * pinFirst);
+  if (pinLast !== undefined) want[m - 1] = Math.min(want[m - 1] as number, 2 * pinLast);
+  for (let j = 1; j < m; j++) want[j] = Math.min(want[j] as number, (want[j - 1] as number) + 1);
+  for (let j = m - 2; j >= 0; j--) want[j] = Math.min(want[j] as number, (want[j + 1] as number) + 1);
+
+  // The pins are equalities, and they reach the answer the way a bridge deck
+  // reaches it in `gradeProfile`: a per-group floor, replaced by its own *upper*
+  // envelope of unit cones so that it is 1-Lipschitz too, and then taken
+  // pointwise-max with the profile above. The max of two 1-Lipschitz functions
+  // is 1-Lipschitz, which is how a junction survives the grade cap instead of
+  // stepping at it.
+  const floor = new Array<number>(m).fill(Number.NEGATIVE_INFINITY);
+  if (pinFirst !== undefined) floor[0] = 2 * pinFirst;
+  if (pinLast !== undefined) floor[m - 1] = 2 * pinLast;
+  for (let j = 1; j < m; j++) floor[j] = Math.max(floor[j] as number, (floor[j - 1] as number) - 1);
+  for (let j = m - 2; j >= 0; j--) floor[j] = Math.max(floor[j] as number, (floor[j + 1] as number) - 1);
+  const need = new Array<number>(m);
+  for (let j = 0; j < m; j++) need[j] = Math.max(want[j] as number, floor[j] as number);
+
+  // A pin the envelope had to climb above is a junction this road cannot reach
+  // at that grade. Refuse the whole run: half a carriage road stopping on the
+  // hillside is worse than none, and the stairs are still there.
+  if (pinFirst !== undefined && (need[0] as number) !== 2 * pinFirst) return refuse("unclimbable");
+  if (pinLast !== undefined && (need[m - 1] as number) !== 2 * pinLast) return refuse("unclimbable");
+
+  const surface = new Array<number>(n);
+  for (let k = 0; k < n; k++) {
+    const j = group[k] as number;
+    const s = need[j] as number;
+    // `ceil(s / 2)` — the level the column is built to; an odd surface is that
+    // level's top course replaced by a slab.
+    const level = (s + 1) >> 1;
+    if (level - (ground[k] as number) > maxFill) return refuse("unbuildable");
+    if ((ground[k] as number) - level > maxCut) return refuse("unbuildable");
+    surface[k] = s;
+  }
+  return { surface };
+}
+
+/* -------------------------------------------------------------------------- */
 /* terrain adaptation: the datum                                               */
 /* -------------------------------------------------------------------------- */
 

@@ -30,6 +30,7 @@
 
 import {
   bandOfLane,
+  synthesizeCartTreads,
   synthesizeTreads,
   totalHalfWidth,
   type IntervalFeature,
@@ -157,6 +158,83 @@ export const STAIR_PROFILE: SweptProfile = {
   features: [{ id: "lamp", pitch: 4, at: "interval", offset: 0 }],
   crossing: "stop",
 };
+
+/* -------------------------------------------------------------------------- */
+/* the carriage spine                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns of flat tread per **half** block of rise (`docs/SITE-PLAN-v0.md`
+ * §3.6a, `SPINE_TREAD_RUN`).
+ *
+ * Three, so a whole block costs six — the 1:6 the route was chosen under. It is
+ * also the coarsest alternation that still reads as a ramp: at two columns the
+ * slabs and the full blocks are close enough together to read as a chequer, and
+ * at four the flat runs read as landings with a step between them.
+ */
+export const CART_TREAD_RUN = 3;
+
+/**
+ * The carriage spine, as one cross-section (`docs/SITE-PLAN-v0.md` §3.6a).
+ *
+ * **A cart road is a flight the tread law lays half a block at a time.** Its
+ * cross-section is therefore {@link STAIR_PROFILE}'s — a tread band between two
+ * parapet courses, because a mountain road wants a low wall on its outside edge
+ * for the same reason a stair does — and everything that makes it a road rather
+ * than a staircase is in the *law*, not in the section: {@link cartTreadPlan}
+ * moves the surface by half a block per {@link CART_TREAD_RUN} columns, and
+ * `"stair"` is not one of the shapes it can return.
+ *
+ * `follow: "step"` for the same reason the stair says it: one run can pass
+ * between several pairs of platforms along its length.
+ */
+export const CART_PROFILE: SweptProfile = {
+  id: "cart.masonry",
+  bands: [
+    { id: "tread", role: "walkway", width: 5, centred: true, surface: "road.step" },
+    {
+      id: "balustrade",
+      role: "parapet",
+      width: 1,
+      surface: "road.step",
+      cap: { height: 1, block: "ground.balustrade", rail: true },
+    },
+  ],
+  maxGrade: 1,
+  follow: "step",
+  features: [{ id: "lamp", pitch: 4, at: "interval", offset: 0 }],
+  crossing: "stop",
+};
+
+/**
+ * A cart run's levels and its tread mix, in one call — {@link synthesizeTreadPlan}'s
+ * half-block twin.
+ *
+ * The engine owns the recurrence ({@link synthesizeCartTreads}); this adds only
+ * the decoration, and the decoration is where the profile's one promise is kept:
+ * an **odd** stand surface is a top slab, an even one a full block, and there is
+ * no third case — so `"stair"` never appears and a cart-profile tread is never a
+ * full-block step. A refused run returns `null` and the client builds nothing,
+ * exactly as a refused flight does.
+ */
+export function cartTreadPlan(
+  ground: readonly number[],
+  options: {
+    readonly treadRun?: number;
+    readonly band?: number;
+    readonly maxFill?: number;
+    readonly maxCut?: number;
+    readonly landing?: Uint8Array;
+    readonly pinFirst?: number;
+    readonly pinLast?: number;
+  } = {},
+): { readonly levels: readonly number[]; readonly shapes: readonly TreadShape[] } | null {
+  const run = synthesizeCartTreads(ground, { treadRun: CART_TREAD_RUN, ...options });
+  if (run.surface === null) return null;
+  const levels = run.surface.map((s) => (s + 1) >> 1);
+  const shapes = run.surface.map((s): TreadShape => ((s & 1) === 1 ? "slab" : "landing"));
+  return { levels, shapes };
+}
 
 /* -------------------------------------------------------------------------- */
 /* the canal                                                                  */

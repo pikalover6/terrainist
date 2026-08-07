@@ -43,13 +43,20 @@
 import type { Region } from "@terrainist/stdlib";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
-import type { Point2 } from "../layout/frames.js";
+import { hairpinLandings, type Point2 } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { STAIR_PROFILE, featureOf, treadPlan, type TreadShape } from "./profiles.js";
+import {
+  CART_TREAD_RUN,
+  STAIR_PROFILE,
+  cartTreadPlan,
+  featureOf,
+  treadPlan,
+  type TreadShape,
+} from "./profiles.js";
 import { synthesizeTreads } from "./sweep.js";
 
 /* -------------------------------------------------------------------------- */
@@ -137,6 +144,24 @@ function lampPitch(): number {
  * ({@link streetStairRail}), so a short flight is still a lit flight.
  */
 export const STREET_STAIR_LAMP_PITCH = 12;
+
+/**
+ * Columns either side of a hairpin vertex that a carriage spine holds level —
+ * `docs/SITE-PLAN-v0.md` §3.6a's `SPINE_LANDING_HALF`.
+ *
+ * Three, so the landing is seven columns: a cart and its horse standing still,
+ * and one column longer than the six-column step that reached it, so a landing
+ * is never shorter than the run it interrupts.
+ */
+export const CART_LANDING_HALF = 3;
+
+/**
+ * The window a hairpin's turn is read over, in columns.
+ *
+ * The router's own macro-step, so a turn is measured between the two traverses
+ * that meet rather than between two raster steps of one of them.
+ */
+export const CART_HAIRPIN_WINDOW = 2 * CART_TREAD_RUN;
 
 /* -------------------------------------------------------------------------- */
 /* phase 1 — geometry                                                          */
@@ -300,8 +325,31 @@ export function streetStairLevels(
   geometry: StreetStairGeometry,
   ground: (x: number, z: number) => number,
   pins: { readonly first?: number; readonly last?: number } = {},
+  options: { readonly cart?: boolean } = {},
 ): StreetStairLevels {
   const centreGround = geometry.centre.map((c) => ground(c.x, c.z) + 1);
+  if (options.cart === true) {
+    // `docs/SITE-PLAN-v0.md` §3.6a. The same three phases and the same pins; the
+    // difference is entirely in the law — half a block per `CART_TREAD_RUN`
+    // columns, level across a hairpin — and the landings are read off the line's
+    // own geometry rather than carried on the segment, so a run clipped by the
+    // region edge still lands its hairpins where its hairpins are.
+    const run = cartTreadPlan(centreGround, {
+      maxFill: STREET_STAIR_MAX_FILL,
+      maxCut: STREET_STAIR_MAX_FILL,
+      landing: hairpinLandings(geometry.centre, CART_HAIRPIN_WINDOW, CART_LANDING_HALF),
+      ...(pins.first === undefined ? {} : { pinFirst: pins.first + 1 }),
+      ...(pins.last === undefined ? {} : { pinLast: pins.last + 1 }),
+    });
+    if (run === null) {
+      return {
+        levels: [],
+        shapes: [],
+        refusedBecause: `no carriage road of ${geometry.centre.length} columns climbs this flank at one block in ${2 * CART_TREAD_RUN} within ${STREET_STAIR_MAX_FILL} courses of masonry`,
+      };
+    }
+    return { levels: run.levels, shapes: run.shapes };
+  }
   const run = synthesizeTreads(centreGround, {
     maxFill: STREET_STAIR_MAX_FILL,
     reach: 1,

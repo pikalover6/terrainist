@@ -89,6 +89,21 @@ import {
 /* tuning                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * True for the two roles the **tread law** lays rather than the grader.
+ *
+ * A flight of steps and a carriage spine (`docs/SITE-PLAN-v0.md` §3.6a) take the
+ * identical path through all four phases of {@link surfaceStreetGraph} — the
+ * same geometry, the same endpoint pins, the same whole-run refusal, the same
+ * `street.network` declaration with `preserve` over the tread band. The one
+ * thing that differs is which law computes the levels, and that is one flag
+ * handed to `streetStairLevels`. Everything else asking "is this a flight?"
+ * asks this instead, so the two can never drift apart.
+ */
+function isTreadRole(role: "carriageway" | "steps" | "cart"): boolean {
+  return role === "steps" || role === "cart";
+}
+
 /** Cost of one flat step along virgin ground. */
 export const ROAD_BASE_COST = 10;
 /** Cost of one flat diagonal step — `ROAD_BASE_COST · √2`, rounded. */
@@ -895,12 +910,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
 
   /* --- the segments, in traversal order ---------------------------------- */
 
-  /** One thing to surface: an arterial, a street, or a flight of steps. */
+  /** One thing to surface: an arterial, a street, a flight, or a cart road. */
   interface StreetJob {
     readonly rank: StreetRank;
     /** Position in the document-order walk — the painting order, unchanged. */
     readonly order: number;
-    readonly role: "carriageway" | "steps";
+    readonly role: "carriageway" | "steps" | "cart";
     readonly width: number;
     readonly path: readonly { readonly x: number; readonly z: number }[];
     readonly states: RoadStates;
@@ -970,7 +985,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       jobs.push({
         rank: { id: `segment:${segment.id}`, width: segment.width, role, kind: segment.kind },
         order: jobs.length,
-        role: role === "steps" ? "steps" : "carriageway",
+        role: role === "steps" ? "steps" : role === "cart" ? "cart" : "carriageway",
         width: segment.width,
         path,
         states: urban[segment.kind],
@@ -1010,7 +1025,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
 
   for (const j of ranked) {
     const job = jobs[j] as StreetJob;
-    if (job.role === "steps") {
+    if (isTreadRole(job.role)) {
       const geometry = streetStairGeometry({
         region,
         plan,
@@ -1027,7 +1042,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // columns owned by nobody — grass down the middle of a street that would
       // otherwise have dressed them — so the flight either can be built on the
       // natural ground or it never enters the ownership map at all.
-      const trial = streetStairLevels(geometry, naturalAt);
+      const trial = streetStairLevels(geometry, naturalAt, {}, { cart: job.role === "cart" });
       if (trial.refusedBecause !== undefined) {
         job.geometry = { ...geometry, refusedBecause: trial.refusedBecause };
         continue;
@@ -1064,7 +1079,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
 
   for (const j of ranked) {
     const job = jobs[j] as StreetJob;
-    if (job.role === "steps") {
+    if (isTreadRole(job.role)) {
       const geometry = job.geometry;
       const trial = job.stairs;
       if (geometry === undefined || trial === undefined || geometry.refusedBecause !== undefined) {
@@ -1086,10 +1101,15 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       const pinned =
         first === undefined && last === undefined
           ? trial
-          : streetStairLevels(geometry, naturalAt, {
-              ...(first === undefined ? {} : { first }),
-              ...(last === undefined ? {} : { last }),
-            });
+          : streetStairLevels(
+              geometry,
+              naturalAt,
+              {
+                ...(first === undefined ? {} : { first }),
+                ...(last === undefined ? {} : { last }),
+              },
+              { cart: job.role === "cart" },
+            );
       // A flight the pins refuse keeps the levels the snapshot allowed. It has
       // already claimed its columns, and dropping them here would leave a hole
       // in the fabric that nothing else is going to fill.
@@ -1157,7 +1177,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // to the driver in one commit. Only then does anything paint.
 
   for (const job of jobs) {
-    if (job.role === "steps") {
+    if (isTreadRole(job.role)) {
       const geometry = job.geometry;
       const levels = job.stairs;
       if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
@@ -1209,7 +1229,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   /* --- phase 3: dress ----------------------------------------------------- */
 
   for (const job of jobs) {
-    if (job.role === "steps") {
+    if (isTreadRole(job.role)) {
       const geometry = job.geometry;
       const levels = job.stairs;
       if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
@@ -1301,7 +1321,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // which is why it could not be built until `plan.ground` was final — see the
   // note at the head of `street-stairs.ts`.
   for (const job of jobs) {
-    if (job.role !== "steps") continue;
+    if (!isTreadRole(job.role)) continue;
     const geometry = job.geometry;
     const levels = job.stairs;
     if (geometry === undefined || levels === undefined || geometry.refusedBecause !== undefined) {
