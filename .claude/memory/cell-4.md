@@ -59,7 +59,15 @@ ground/building changes; probe lesson: a probe must see the thing it rules
 out. Verge fix correctly refused (cross-job negotiation; two options in
 DESIGN roadmap; unwalked). Renderer `tools/session-log/render.mjs` live —
 the artifact renders cells + transcript. New ledger entry: props pads dig
-too deep on open ground. **Worlds installed for Kai's walk.**
+too deep on open ground. **Worlds installed for Kai's walk** — plus a harbourtown A/B
+(`c1-harbourtown_stock` / `_junction`, 67 chunks apart) for the junction
+flat-town enable. Walk guide artifact:
+https://claude.ai/code/artifact/97002e69-fe21-42bc-bbe0-5a42e101f7e2
+**Protocol trap found while building it:** a worktree compile through the
+CLI resolves `@terrainist/*` back to the MAIN tree (workspace symlinks) —
+byte gates go vacuous. Use direct source-path compile (tsx + emit.mts
+shim); doctrine recorded in DESIGN.md's byte-identity section. The cliff
+commit's flat-control claim was re-verified honestly: 3× identical.
 
 **Settled by popup (2026-08-07):** snowLine → per-species as documented;
 flora law 1 → SUSPENDED (accidental masts prevented at source via capWood;

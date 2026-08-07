@@ -580,7 +580,14 @@ Six, in dependency order. WP-1 and WP-2 land alone; WP-3–5 are parallel.
 
 A flat world must not move. The technique that worked repeatedly this week: a
 git worktree at `HEAD`, compile both, diff per-file shasums of the whole world
-directory. `examples/showcase-*`, `demo-*` and `c1-harbourtown` are the flat
+directory. **Two traps, both hit and named 2026-08-07:** (1) raw region-file
+shasums false-positive — zlib framing drifts run-to-run; compare *decompressed
+chunk NBT*. (2) A worktree compile **through the CLI false-negatives** — the
+symlinked `node_modules` resolves `@terrainist/*` through workspace links back
+to the **main** tree, so both sides run the same code and the gate compares a
+world to itself. Compile via direct source-path import instead (`tsx` + the
+`emit.mts` shim pattern), and prove the harness can see a difference before
+trusting that it saw none. `examples/showcase-*`, `demo-*` and `c1-harbourtown` are the flat
 controls; `hillside-village` and any `terraced` quarter are expected to move and
 must be justified move by move.
 
