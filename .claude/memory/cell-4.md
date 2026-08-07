@@ -47,11 +47,19 @@ use TaskStop); an old stash popped into retaining.ts leaving conflict
 markers (restored; agents instrumenting unowned files → worktree isolation
 next time).
 
-**In flight (mini-wave 3):** composite-cliff fix (medium; judge: steep
-sheer 7→≤1, worst ≤6); harbourtown 186-chunk block-level attribution + the
-last hillside unservedFace verge fix (low); the transcript→HTML log
-renderer `tools/session-log/` (low). **Then:** DESIGN.md ledger refresh,
-regenerate + install three walk worlds (both hill towns + old-growth).
+**Mini-wave 3 (all landed):** composite-cliff fix `5f4a965` — the median
+was the summary (a 90-col seam "drop 6" over 7-block tails) and the foot
+was unprotected (a props pad cut 4 blocks under a wall!); per-column
+facesOf + over-ceiling-run benching + declared `/foot` claim; steep sheer
+7→2 (both survivors clause-9 policy walls at exactly RETAIN_MAX — Kai's
+walk call). §13.8 measured: RETAIN_MAX/MIN_RETAIN_RUN stay; RETAIN_RAIL
+still unmeasurable (RAIL_ACCESS_RANGE gates first). Harbourtown 186
+chunks = furniture fix alone, all 931 blocks attributed, zero
+ground/building changes; probe lesson: a probe must see the thing it rules
+out. Verge fix correctly refused (cross-job negotiation; two options in
+DESIGN roadmap; unwalked). Renderer `tools/session-log/render.mjs` live —
+the artifact renders cells + transcript. New ledger entry: props pads dig
+too deep on open ground. **Worlds installed for Kai's walk.**
 
 **Settled by popup (2026-08-07):** snowLine → per-species as documented;
 flora law 1 → SUSPENDED (accidental masts prevented at source via capWood;

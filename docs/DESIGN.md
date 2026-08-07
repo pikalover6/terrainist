@@ -838,6 +838,19 @@ repair* is locked to manual.
   2026-08-07.** `streetscape.kerbsideKit` mirrors the modern-fittings era gate:
   band width proposes the downtown kit, a declared pre-modern era swaps it for
   the rustic one, and a document with no `era` still compiles byte-identically.
+- **The sheer cliffs are down to policy (2026-08-07).** The composite
+  mechanism is fixed (a seam's face is measured per column, over-ceiling
+  runs bench at the composite drop, and a wall's foot is a declared claim —
+  see `5f4a965`). Steep's two survivors are single-seam clause-9 walls at
+  exactly `RETAIN_MAX = 6` with no bench — sanctioned on purpose; whether
+  drop-5/6 walls should carry a mid-bench is **Kai's aesthetic call after a
+  walk**, and the compile report now prints faces-by-drop so the call has
+  numbers.
+- **`props.ts` levels a prop pad into open hillside** — measured cutting
+  4 blocks deep at `(74,2)` on the steep fixture, directly under a
+  retaining wall (the foot claim now stops the *damage*, not the dig). A
+  plinth cut that deep on open ground is its own defect; unfixed, found
+  2026-08-07.
 - **A terraced quarter generates 11 "public squares".** Found while fixing prop
   density (2026-08-06) and deliberately not fixed there: gating plaza props
   would have moved a flat control world. The defect is that the fabric layer
