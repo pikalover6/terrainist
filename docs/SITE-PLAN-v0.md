@@ -610,6 +610,10 @@ what it cost.
 | `MAX_CANDIDATE_LEVELS` | 64 | A performance bound on the candidate sweep, not a design choice. |
 | `BANK_RUN(drop)` | `2 · drop` | Two columns of run per block of difference — the ratio `LevelPad.adaptiveApron` already uses and which was measured to read as a ramp rather than as a cut. |
 | `MAX_REPLAN_ROUNDS` | 3 | §6.3, and now exactly `MAX_PRINCIPAL_STREETS − MIN_PRINCIPAL_STREETS + 1`: the ladder is `4 → 3 → 2` and there is nowhere below two to go. |
+| `WALL_DEMAND_RANGE` | 2 | §5.2 rule 3, stated there and tabled here. Measured on the **low** side of the edge — see §5.2's WP-3 amendment. |
+| `EDGE_PRESSED_SHARE` | 0.25 | **Added by WP-3.** How much of a face has to be under land pressure before the whole face is. `BUILT_SHARE` is a half because a building either *is* the wall or is clipping the end of one; pressure is different in kind, and a quarter of the run is where the ground beyond the face is being used rather than crossed. |
+| `BENCH_FACE` / `BENCH_TREAD` | 2 / 2 | **Added by WP-3.** A benched bank's face and its tread. One block of face is a kerb and three is a scramble; two columns of tread is somewhere to stand and somewhere to plant. `benchedRun(drop) = ceil(drop / BENCH_FACE) · BENCH_TREAD`, which is at most `BANK_RUN(drop)` for every drop. |
+| `WALL_COLUMNS_PER_DWELLING` | 40 | **Added by WP-3.** §6.1's `wallPerBuilding` target, turned from an acceptance check into the ration §5.2 rule 7 reads: a quarter's budget is `40 × dwellings`. Dwellings rather than buildings for WP-1's reason — a row of six houses is one `BuiltBuilding` and six front doors. |
 
 > **Amended by WP-1, 2026-08-06 — two rows of this table, and the argument under
 > one of them.**
@@ -759,6 +763,34 @@ answer** rather than re-deriving one. That is the same instruction
 reads that decision instead of re-deriving it") and it removes what would
 otherwise be a fourth re-derivation of the same contour.
 
+> **Amended by WP-3, 2026-08-07 — which side the planner can answer, and which
+> side it cannot.** The paragraph above is right about the **cut** edge and
+> cannot be right about the **fill** edge, and the difference is not a
+> convenience: three of §5.2's nine clauses read state the planner does not
+> have when it runs.
+>
+> - Rule 2 needs the **building footprints**, and lots are seated after the plan
+>   is drawn.
+> - Rules 3 and 6 need the **finished ground**. Half the fill edges in a hill
+>   town are `skirtSeams` — a terrace's own edge measured against ground the
+>   pads, the streets, the stairs, the doorsteps and the carriage spine all
+>   moved after the planner ran. A planner's answer there would be an answer
+>   about ground that no longer exists.
+>
+> So: the **cut** edge is declared by the planner (§5.4, and it is pure
+> geometry the planner owns), and the **fill** edge's context is measured by
+> the pass that has it. `EdgeContext` is built in `structures/retaining.ts`'s
+> `edgeContextOf`; `FormPlan.edges` carries the cut side.
+>
+> What §5.1 actually requires survives intact and is what the tests assert:
+> **one** drop table, `treatmentForEdge`, called **once** per edge, its answer
+> read and never re-derived. `treatmentForSeam` is that table with an empty
+> context, and `site-plan-transitions.test.ts` proves it over every drop and run
+> the compiler can produce.
+>
+> `EdgeContext` also gains one field §5.1 does not list, `pressedShare` — see
+> §5.2's amendment, which is where it is argued.
+
 ### 5.2 The decision order — normative
 
 ```
@@ -801,6 +833,49 @@ belongs.
 `ctx.access` in the furnishing pass, per Sol's P5, which is out of scope here.
 The planner's contribution is to publish `access` so that pass has something to
 read.
+
+> **Amended by WP-3, 2026-08-07 — three corrections, each measured against the
+> two site-plan fixtures.**
+>
+> **1. The unbuilt answer is not always a bank.** Clauses 4, 5 and 7 all mean
+> *"do not build here, let the ground be ground"*, and this section spells all
+> three `"bank"`. That is right downhill and impossible uphill: a bank is ground
+> **added** against a face, while grading a cut back into the hill is ground
+> **removed**, and the only pass that removes ground is the terrace claim
+> itself. So the unbuilt answer is `"bank"` on the fill side and `"rock"` on the
+> cut side, and rule 3 is a fill-side clause. In the code it is one binding,
+> `soft`, read by clauses 4, 5 and 7. A cut edge that wants to be gentler is a
+> terrace that should have claimed less, which is rule 6.
+>
+> **2. `adjacentUse` is one word per edge and cannot carry rule 3 on its own.**
+> A terrace's downhill face is one 8-connected component — 191 columns on the
+> gentle fixture — and one stair-alley descending past it puts street within
+> `WALL_DEMAND_RANGE` of six of them. Asked as a yes/no the whole face is "under
+> land pressure" and is walled end to end, which is the fortress the inversion
+> exists to stop. `EdgeContext` therefore carries **`pressedShare`** — the share
+> of the face with a street or a lot within range — and rule 3 reads it against
+> `EDGE_PRESSED_SHARE = 0.25`. `adjacentUse` still names *what* presses;
+> `pressedShare` says *how much of the edge* it presses on.
+>
+> **`adjacentUse` and `availableRun` are both measured on the low side**, never
+> on the platform the face holds. §5.2 says "within `WALL_DEMAND_RANGE` columns
+> of the edge" without saying which side, and measured both ways the difference
+> is the whole rule: every terrace edge in a hill town has its own street two
+> columns behind it, so asked of the platform side rule 3 never fires at all.
+> The low side is the side a bank would spread over, which is what the rule is
+> asking about.
+>
+> **3. Rule 5's `"replan"` needs a downstream answer, and 1:1 is not it.** The
+> planner has settled by the time the retaining pass runs, so `"replan"` reaches
+> that pass as a bank — and the bank it used to build fell **one block per
+> column**. Forty-five degrees of raw earth is the cliff the wall refused to be,
+> and on the steep fixture it was 183 seam columns of exactly that, reported as
+> `tallDrop` and shipped. A tall bank is now **benched**: `BENCH_FACE = 2` blocks
+> of face with `BENCH_TREAD = 2` columns of soil between, so a seven-block drop
+> is four short faces over `benchedRun(7) = 8` columns. Measured, a benched bank
+> is **cheaper in ground than the smooth ramp §3.8 sizes** —
+> `ceil(drop / 2) · 2` against `2 · drop` — so rule 3's `BANK_RUN` test is
+> conservative and stays as written.
 
 ### 5.3 `depthAfter`, precisely
 
@@ -852,6 +927,41 @@ So, normatively:
 > treatment, and a test MUST assert that the treatments partition the edge
 > columns exactly.
 
+> **Amended by WP-3, 2026-08-07 — the declaration is real, and three things
+> about it are not what this section says.**
+>
+> `PlannedEdge` and `FormPlan.edges` exist; `forms/hillside.ts` declares one
+> edge per 8-connected component of natural hillside standing two blocks or more
+> above a terrace, with a treatment from `treatmentForEdge` on each;
+> `structures/retaining.ts` reads them; and
+> `site-plan-transitions.test.ts` asserts the partition — every declared column
+> exactly once, every edge carrying a treatment. On the steep fixture that is
+> **2 edges over 269 columns**, on the gentle one **385 columns**. The WP-0
+> stopgap (`naturalCuts`, a boolean, and a ring rediscovered inside `faceCuts`)
+> is gone as the *decision*; what it did as a *finish* survives, for the reason
+> below.
+>
+> **`"bank"` is not one of the cut side's answers.** See §5.2's amendment: a bank
+> adds ground and a cut removes it.
+>
+> **`"retaining"` is declared and deferred.** On both fixtures every cut edge
+> reaches rule 9 — a hill town puts its street at the foot of the cut, which is
+> exactly the land pressure the rule is looking for — and v0 builds no masonry
+> there. `sweep()` would need to accept a face whose **upper** side is natural
+> ground: no platform index, no declared level, no `LevelSeam` to hand it. That
+> is a piece of work of its own and it is deferred by name, not swallowed: the
+> pass reports `"N of those wanted masonry (§5.2 rule 9) and got rock — an
+> uphill wall is v1"`, so the size of the gap is in every compile report. It
+> belongs with §4.4's list.
+>
+> **The declaration governs the treatment; it does not bound the finish.**
+> Measured on the steep fixture, the planner declares 269 cut columns and the
+> *finished* ground presents 291. The 22 it cannot know about are the ones four
+> later passes cut — a stair tread, a doorstep landing, a blended shoulder —
+> which is the same reason `finishCutFaces` was moved to the end of the structure
+> pass in the first place. So the finish paints the union, and a cut edge a
+> building's own back stands on is the one subtraction.
+
 ### 5.5 `offPlatform` becomes an error
 
 `walkBack`'s `offPlatform` reason MUST be unreachable on a `hillside` quarter,
@@ -865,6 +975,12 @@ The reason to make it an error rather than a warning is the lesson
 `docs/DESIGN.md` records about the physics lint: it proves a world is
 well-formed, not that it is any good, and 395 columns of a planning failure
 shipped green. The planner's guarantee is checkable, so it is checked.
+
+> **Landed at WP-3, 2026-08-07.** `SITE_PLAN_FAILED` is `LOAM-E497`, raised by
+> `buildRetainingWalls` when a quarter carrying `plannedEdges` reports a non-zero
+> `offPlatform`, naming the count and saying in its fix that nothing in the
+> document can cause it. Both fixtures report zero and the assertion is in
+> `site-plan-transitions.test.ts` as well as in `site-plan-hillside.test.ts`.
 
 ---
 
@@ -1066,7 +1182,7 @@ unplanned quarter than as a planned one with the plan half applied.
 | section | status |
 | --- | --- |
 | §2.1 – §2.6 (the contract, the plugin, the registry, dispatch, non-rectangular cells) | **unchanged.** `hillside` is an ordinary plugin. |
-| §2.2 `FormPlan` | **amended, additively.** Two optional fields: `strips?: readonly FormStrip[]` (the frontage geometry §4 walks) and `edges?: readonly PlannedEdge[]` (§5's planned transitions). Absent for every other form, so nothing else sees a change. |
+| §2.2 `FormPlan` | **amended, additively.** Two optional fields: `strips?: readonly FormStrip[]` (the frontage geometry §4 walks) and `edges?: readonly PlannedEdge[]` (§5's planned transitions — the **cut** side; see §5.1's WP-3 amendment). Absent for every other form, so nothing else sees a change. |
 | §3.1 – §3.5, §3.7 (`grid`, `organic`, `grown`, `radial`, `canal`, `linear`) | **unchanged, and this is a hard requirement** — see §11.4. |
 | §3.6 `terraced` | **superseded** by §3 of this document. Retained verbatim until the §7.1 cutover, then deleted with the form. |
 | §4.1 (the seam in the street surfacer), §4.2 (`terraced` → the stair profile) | **survive and apply to `hillside`.** Its connectors are the same `role: "steps"` segments. |
@@ -1081,7 +1197,7 @@ unplanned quarter than as a planned one with the plan half applied.
 | §3.1 (`GroundLevels`, `LevelSeam`) | **unchanged, and it is what makes this cheap.** The representation already permits columns with no platform; the planner is the first thing to use that. |
 | §3.2 (ground policy) | **unchanged.** `hillside` implies `"benched"` and the `layout.groundPolicy` fan-out row upgrades it to `"stepped"`, exactly as it does for `terraced` today. |
 | §3.3 (platforms from blocks) | **survives, for every form that is not `hillside`.** `derivePlatforms` is what a `grid` or `grown` quarter under `params.ground: "stepped"` uses, and the planner does not call it. |
-| §3.4 (seams: kerbs, walls, banks) | **amended** by §5: the drop-and-run table stays and gains a context-aware caller, plus the `"rock"` treatment and the cut side. |
+| §3.4 (seams: kerbs, walls, banks) | **amended** by §5: the drop-and-run table stays and gains a context-aware caller, plus the `"rock"` treatment, the benched bank, and the cut side. |
 | §3.5 (steps; a platform you cannot reach is not a platform) | **survives verbatim, and matters more.** With most of the hill left natural, reachability is a real risk rather than an accident. Its step 3 — dissolve what is still orphaned — is the same operation §3.7 performs for a different reason, and the two MUST share one implementation. |
 | §3.6 (`foundationY`, the pad apron) | **survives.** `foundationY` reads the platform under the lot; a building touching a seam still gets `apron: 0`. |
 | §3.7 (undercrofts) | **survives as a hook**, and §4.3 supplies the flag it was waiting for. Still not built in v0. |
@@ -1225,6 +1341,14 @@ depends on both.
   `"rock"` treatment, the cut-side declaration, `skirtSeams` suppression inside a
   strip, and `buildRetainingWalls` reading planned edges. `offPlatform` becomes
   an error.
+  **Landed 2026-08-07**, with the amendments recorded in §5.1, §5.2 and §5.4 and
+  the constants added to §3.8. One item on this line was **not** built and is
+  not deferred but withdrawn: **`skirtSeams` suppression inside a strip.** A
+  skirt seam inside a strip is precisely the terrace's own downhill face — the
+  edge Kai's walk complained about — and suppressing it would delete the
+  treatment rather than choose one. It is now the main thing `edgeContextOf`
+  measures, and on the two fixtures it is 208 and 273 columns of treated fill
+  edge that would otherwise have had nothing.
 - **WP-4 — composition metrics and the replan loop.** §6, metrics first. The
   loop is a re-entry into WP-1 with a different `PlanAttempt`.
   **Round 1 of this was taken at WP-1** (2026-08-06), because WP-0's measurement

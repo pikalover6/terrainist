@@ -54,7 +54,13 @@
 import type { DistrictDensity } from "@terrainist/spec";
 
 import { headingOf, type Point2 } from "../frames.js";
-import { RETAIN_MAX } from "../levels.js";
+import {
+  RETAIN_MAX,
+  WALL_DEMAND_RANGE,
+  treatmentForEdge,
+  type EdgeUse,
+  type SeamTreatment,
+} from "../levels.js";
 import { maskRuns } from "../masks.js";
 import type { StreetSegment } from "../streets.js";
 
@@ -85,6 +91,7 @@ import {
   type FormContext,
   type FormResult,
   type FormStrip,
+  type PlannedEdge,
   type UrbanForm,
 } from "./types.js";
 
@@ -556,6 +563,16 @@ function draw(ctx: FormContext): FormResult {
    * rather than a number. So the ring is remembered and never given back.
    */
   const standingRoom = new Uint8Array(cells);
+  /** The bench each strip stands on, parallel to `strips` (§5.4). */
+  const stripBench: number[] = [];
+  /**
+   * Every column the principal streets pave, accumulated across the runs.
+   *
+   * The per-run `paved` raster below is local and is the only place the street
+   * band is known before `layDistrict` re-lays it; §5.2's `adjacentUse` needs
+   * it, so it is kept.
+   */
+  const paving = new Uint8Array(cells);
   const owner = new Int32Array(cells).fill(-1);
   const claim = (index: number, path: readonly Point2[]): void => {
     for (const p of path) {
@@ -614,6 +631,7 @@ function draw(ctx: FormContext): FormResult {
       // functions, and one more ring beyond it is the standing room a retaining
       // wall needs on the platform it holds.
       const paved = streetBand(run, at, inside, masked, cells, width, depth, sidewalk);
+      for (let k = 0; k < cells; k++) if (paved[k] === 1) paving[k] = 1;
       const ring = dilateMask(paved, width, depth, 1);
       for (let k = 0; k < cells; k++) if (ring[k] === 1 && !masked(k)) ring[k] = 0;
       // …**and** a standing margin about every station of the run. The dilated
@@ -788,6 +806,7 @@ function draw(ctx: FormContext): FormResult {
       streetLevel.push(e);
       claim(segments.length - 1, run);
       strips.push(...sides.map((side, n) => ({ ...side, index: strips.length + n })));
+      for (let n = 0; n < sides.length; n++) stripBench.push(platforms.length);
       platforms.push(platform);
       platformLevel.push(e);
     }
@@ -919,11 +938,14 @@ function draw(ctx: FormContext): FormResult {
   // which is what "gives its columns back" has to mean if it is to mean
   // anything the walk can see.
   const terrace = new Uint8Array(cells);
+  /** Each bench's final mask, kept for the cut-edge declaration (§5.4). */
+  const benchMask: Uint8Array[] = [];
   const benches: FormBench[] = platforms.map((platform, b) => {
     const mask = Uint8Array.from(platform);
     for (let k = 0; k < cells; k++) if (released[k] === 1 && standingRoom[k] !== 1) mask[k] = 0;
     smoothTerrace(mask, width, depth);
     for (let k = 0; k < cells; k++) if (mask[k] === 1) terrace[k] = 1;
+    benchMask.push(mask);
     return { id: `terrace.${b}`, runs: maskRuns(bounds, mask), level: platformLevel[b] as number };
   });
   // **A strip may only offer ground that is on a terrace**, and the terraces are
@@ -950,17 +972,36 @@ function draw(ctx: FormContext): FormResult {
   }
   for (let k = 0; k < cells; k++) if (spineBand[k] === 1) lotMask[k] = 0;
 
+  /* --- §5.4: the cut edge, declared ---------------------------------------- */
+  const edges = cutEdges({
+    benches,
+    benchMask,
+    stripBench,
+    strips: kept,
+    field,
+    paving,
+    lotMask,
+    terrace,
+    cells,
+    width,
+    depth,
+    bounds,
+    masked,
+  });
+
   return {
     ok: true,
     plan: {
       graph: { segments, intersections: intersectionsOf(segments), sidewalk: ctx.sidewalk },
       benches,
       strips: kept,
+      edges,
       lotMask,
       record: drewAsAsked("hillside", {
         adapted: [
           `${chosen.length} principal contour street(s) at ${chosen.map((c) => c.e).join(", ")}`,
           `${kept.length} frontage strip(s) ${dTarget} columns deep`,
+          `${edges.length} cut edge(s) declared over ${edges.reduce((n, e) => n + e.cells.length, 0)} column(s)`,
           ...(attempt.round === 0
             ? []
             : [`replan round ${attempt.round}: at most ${streetCap} principal street(s)`]),
@@ -971,6 +1012,184 @@ function draw(ctx: FormContext): FormResult {
       }),
     },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* §5.4 — the cut edge, which today nothing owns                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Declare every terrace's **cut** edge (`docs/SITE-PLAN-v0.md` §5.4).
+ *
+ * > Every planned strip MUST declare its cut edge as a `PlannedEdge` with
+ * > `side: "cut"`. No planned edge of either side may be left with no
+ * > treatment, and a test MUST assert that the treatments partition the edge
+ * > columns exactly.
+ *
+ * A cut edge's columns are the columns of **natural hillside standing above a
+ * terrace** — the face itself, and deliberately the same set `faceCuts`
+ * finishes, so the declaration and the finish are talking about the same
+ * ground rather than about two derivations of it. One column belongs to one
+ * edge: where two terraces both stand below it, the **lower** wins, because
+ * the taller face is the one that has to be answered.
+ *
+ * The context is measured on the planner's own field, which is what the
+ * platform pads will cut against, and the treatment comes from
+ * {@link treatmentForEdge} with `side: "cut"` — so a cut with a street or a lot
+ * pressed against its foot reaches rule 9 and everything else is the hill's own
+ * rock (rule 8).
+ *
+ * **What v0 does with a rule-9 cut, and this is a real gap rather than a
+ * rounding.** Building masonry against an uphill face needs the wall sweep to
+ * accept a face whose *upper* side is natural ground — no platform index, no
+ * declared level, no `LevelSeam` to hand it — and that is a piece of work of its
+ * own. So a rule-9 cut is declared, counted and reported, and finished as rock;
+ * `structures/retaining.ts` names it in the breakdown rather than swallowing it.
+ * §5.4's WP-3 amendment records the deferral by name.
+ */
+function cutEdges(input: {
+  readonly benches: readonly FormBench[];
+  readonly benchMask: readonly Uint8Array[];
+  readonly stripBench: readonly number[];
+  readonly strips: readonly FormStrip[];
+  readonly field: Float64Array;
+  readonly paving: Uint8Array;
+  readonly lotMask: Uint8Array;
+  readonly terrace: Uint8Array;
+  readonly cells: number;
+  readonly width: number;
+  readonly depth: number;
+  readonly bounds: { readonly x0: number; readonly z0: number };
+  readonly masked: (k: number) => boolean;
+}): PlannedEdge[] {
+  const { benches, benchMask, field, paving, lotMask, terrace, cells, width, depth, masked } = input;
+  const pointOf = (k: number): Point2 => ({
+    x: input.bounds.x0 + (k % width),
+    z: input.bounds.z0 + Math.floor(k / width),
+  });
+  /** Which bench a natural column faces, and how far it stands above it. */
+  const facing = new Int32Array(cells).fill(-1);
+  const fall = new Int32Array(cells);
+  for (let k = 0; k < cells; k++) {
+    if (terrace[k] === 1 || !masked(k)) continue;
+    const here = Math.round(field[k] as number);
+    const i = k % width;
+    const j = (k - i) / width;
+    for (const [di, dj] of DIAGONAL) {
+      const ii = i + di;
+      const jj = j + dj;
+      if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+      const n = jj * width + ii;
+      if (terrace[n] !== 1) continue;
+      for (const [b, mask] of benchMask.entries()) {
+        if (mask[n] !== 1) continue;
+        const drop = here - (benches[b] as FormBench).level;
+        // Two, because one block of step is a kerb — the same floor `faceCuts`
+        // uses for a member and `skirtSeams` for a face.
+        if (drop < 2) continue;
+        if ((facing[k] as number) >= 0 && (fall[k] as number) >= drop) continue;
+        facing[k] = b;
+        fall[k] = drop;
+      }
+    }
+  }
+
+  /** The nearest strip on a bench, for the report's `strip` field. */
+  const stripOf = (bench: number): number => {
+    for (const [s, b] of input.stripBench.entries()) {
+      if (b === bench) return (input.strips[s] as FormStrip | undefined)?.index ?? -1;
+    }
+    return -1;
+  };
+
+  const out: PlannedEdge[] = [];
+  const seen = new Uint8Array(cells);
+  for (let start = 0; start < cells; start++) {
+    if (seen[start] === 1 || (facing[start] as number) < 0) continue;
+    const bench = facing[start] as number;
+    seen[start] = 1;
+    const component = [start];
+    for (let head = 0; head < component.length; head++) {
+      const k = component[head] as number;
+      const i = k % width;
+      const j = (k - i) / width;
+      for (const [di, dj] of DIAGONAL) {
+        const ii = i + di;
+        const jj = j + dj;
+        if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+        const n = jj * width + ii;
+        if (seen[n] === 1 || (facing[n] as number) !== bench) continue;
+        seen[n] = 1;
+        component.push(n);
+      }
+    }
+    component.sort((a, b) => a - b);
+    // The face's drop is its **median** column, for `skirtSeams`' reason: a wall
+    // is built for the face it presents, and one column of gully at the end of a
+    // run is not that face.
+    const falls = component.map((k) => fall[k] as number).sort((a, b) => a - b);
+    const drop = falls[falls.length >> 1] as number;
+    // §5.2 rule 3's land pressure, asked of the ground at the **foot** of the
+    // cut: what a wall here would be holding back off is the pavement or the
+    // garden below it.
+    let use: EdgeUse = "natural";
+    let publicGround = false;
+    let pressed = 0;
+    for (const k of component) {
+      const i = k % width;
+      const j = (k - i) / width;
+      let here = false;
+      for (let dj = -WALL_DEMAND_RANGE; dj <= WALL_DEMAND_RANGE; dj++) {
+        for (let di = -WALL_DEMAND_RANGE; di <= WALL_DEMAND_RANGE; di++) {
+          const ii = i + di;
+          const jj = j + dj;
+          if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+          const n = jj * width + ii;
+          if (paving[n] === 1) {
+            use = "street";
+            publicGround = true;
+            here = true;
+          } else if (lotMask[n] === 1) {
+            if (use !== "street") use = "lot";
+            here = true;
+          }
+        }
+      }
+      if (here) pressed++;
+    }
+    // The terrace behind the face, in columns, which is what rule 6 asks about.
+    let behind = 0;
+    for (let k = 0; k < cells; k++) if ((benchMask[bench] as Uint8Array)[k] === 1) behind++;
+    const chosen = treatmentForEdge({
+      drop,
+      run: component.length,
+      // A cut cannot be banked — see `treatmentForEdge`'s `soft`.
+      availableRun: 0,
+      adjacentUse: use,
+      access: publicGround ? "public" : "private",
+      depthAfter: behind,
+      side: "cut",
+      budget: Number.POSITIVE_INFINITY,
+      builtShare: 0,
+      pressedShare: component.length === 0 ? 0 : pressed / component.length,
+    });
+    // The planner has already settled by the time this runs — the ladder is
+    // §6.3's and it ran on the composition, not on one face — so a `"replan"`
+    // here is the hill being the hill.
+    const treatment: SeamTreatment = chosen === "replan" ? "rock" : chosen;
+    out.push({
+      strip: stripOf(bench),
+      bench,
+      side: "cut",
+      cells: component.map(pointOf),
+      drop,
+      treatment,
+      adjacentUse: use,
+      access: publicGround ? "public" : "private",
+      why: `cut, ${drop} block(s) over ${component.length} column(s), ${use}`,
+    });
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */

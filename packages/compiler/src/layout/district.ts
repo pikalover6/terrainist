@@ -116,6 +116,7 @@ import {
   type FormRecord,
   type FormStrip,
   type GroundSample,
+  type PlannedEdge,
   type PlanAttempt,
 } from "./forms/index.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
@@ -394,6 +395,23 @@ export interface DistrictProduct {
    * **Absent for every other quarter**, so nothing that did not ask moves.
    */
   readonly naturalCuts?: boolean;
+  /**
+   * The transitions the site planner declared (`docs/SITE-PLAN-v0.md` §5.4).
+   *
+   * v0 carries the **cut** edges: the uphill faces nothing owned. Their presence
+   * is also the gate on §5's context-aware treatment of the *fill* edges the
+   * retaining pass measures, and on §5.5's promotion of `offPlatform` to an
+   * error — both of which are promises only a planned quarter makes.
+   */
+  readonly plannedEdges?: readonly PlannedEdge[];
+  /**
+   * Columns of masonry this quarter may spend (§5.2 rule 7, §6.1's
+   * `wallPerBuilding`).
+   *
+   * Absent — unlimited — for every quarter no planner drew, which is what makes
+   * the ration hillside-gated and every other world byte-identical.
+   */
+  readonly wallBudget?: number;
   readonly stats: DistrictStats;
 }
 
@@ -1364,6 +1382,16 @@ export function layDistrict(
       // written before this phase carries is the object it carried before.
       ...(levels === null || groundPolicy !== "stepped" ? {} : { levels, seams }),
       ...(planned === undefined ? {} : { naturalCuts: true }),
+      // §5: the planner's own declaration, and the masonry ration measured from
+      // it. Both are absent for every quarter no planner drew, which is the
+      // whole of the byte-identity argument for this work package.
+      ...(planned === undefined || plan.edges === undefined ? {} : { plannedEdges: plan.edges }),
+      ...(planned === undefined
+        ? {}
+        : {
+            wallBudget:
+              WALL_COLUMNS_PER_DWELLING * Math.max(1, built.length - terraces.length + terraceBays),
+          }),
       stats: {
         blocks: planned === undefined ? blocks.length : planned.length,
         lots: lots.length,
@@ -1448,6 +1476,23 @@ export const COMPOSITION_GATES = Object.freeze({
   /** §6.1, §8.3 check 6: carriageway plus sidewalk. */
   streetFraction: 0.25,
 });
+
+/**
+ * Columns of retaining wall a site-planned quarter may spend per dwelling —
+ * §6.1's `wallPerBuilding` target, turned from an acceptance check into the
+ * ration §5.2 rule 7 reads.
+ *
+ * Forty, verbatim from §6.1's table, against the walked hill town's measured
+ * **224**. Counted in **dwellings** rather than in buildings for WP-1's reason:
+ * a terrace is one `BuiltBuilding` with `bays` front doors and a player walking
+ * the street counts the doors, so a row of six houses is entitled to six houses'
+ * worth of masonry rather than one's.
+ *
+ * A budget rather than a cap: rule 7 hands the *next* edge a bank once the
+ * quarter has spent, so what runs out is the marginal wall on the least-pressed
+ * face — the edges the town is actually built against are the ones seen first.
+ */
+export const WALL_COLUMNS_PER_DWELLING = 40;
 
 /** §6.1's metrics, as far as they can be measured from a plan alone. */
 export interface Composition {

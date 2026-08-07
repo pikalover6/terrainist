@@ -46,8 +46,16 @@ export interface GroundLevels {
   at(x: number, z: number): number;
 }
 
-/** How the ground gets from one platform down to the next. */
-export type SeamTreatment = "kerb" | "retaining" | "bank" | "built";
+/**
+ * How the ground gets from one platform down to the next.
+ *
+ * `"rock"` is `docs/SITE-PLAN-v0.md` §5.4's: an **uphill cut** nothing is
+ * pressing against is exposed rock, made of `ground.stone` — the terrain pass's
+ * own deep-subsurface symbol, so a cut face and the natural cliff beside it are
+ * made of the same thing. Nothing is built there and no level moves; the finish
+ * (`structures/retaining.ts`'s `finishCutFaces`) states what it is made of.
+ */
+export type SeamTreatment = "kerb" | "retaining" | "bank" | "built" | "rock";
 
 /** Where two platforms touch, and how the ground gets between them. */
 export interface LevelSeam {
@@ -330,7 +338,246 @@ export function treatmentForDrop(drop: number): SeamTreatment {
  * material on the ground and two columns of it is a doorstep, not scree.
  */
 export function treatmentForSeam(drop: number, run: number): SeamTreatment {
-  const byDrop = treatmentForDrop(drop);
-  if (byDrop === "retaining" && run < MIN_RETAIN_RUN) return "bank";
-  return byDrop;
+  // **One table.** This is `treatmentForEdge` asked with no context at all —
+  // no land pressure, no available run, unlimited depth, unlimited budget, the
+  // fill side — and the two cannot disagree because there is only one of them
+  // (`docs/SITE-PLAN-v0.md` §5.1, and §10's "one table, proven to be one
+  // table"). The one thing a bare seam cannot do is `"replan"`: there is no
+  // planner still running to narrow, merge or dissolve the terrace that claimed
+  // the ground, so the answer collapses to the bank it always was.
+  const chosen = treatmentForEdge(seamContext(drop, run));
+  return chosen === "replan" ? "bank" : chosen;
+}
+
+/* -------------------------------------------------------------------------- */
+/* §5 — transitions by context, not by drop alone                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Run a graded bank reserves, in columns, for a drop of `drop`
+ * (`docs/SITE-PLAN-v0.md` §3.8's `BANK_RUN`).
+ *
+ * Two columns per block of difference — the ratio `LevelPad.adaptiveApron`
+ * already uses and which was measured to read as a ramp rather than as a cut.
+ * This is what §5.2 rule 3 asks `availableRun` about, and it is deliberately
+ * the **smooth** ramp's run: {@link BENCH_FACE} builds the bank as benches and
+ * gets there in fewer columns, so a rule that grants a bank on `BANK_RUN` is
+ * granting one the geometry can always afford.
+ */
+export function bankRun(drop: number): number {
+  return 2 * drop;
+}
+
+/**
+ * Blocks of face per bench of a **benched** bank, and the answer to a face
+ * taller than {@link RETAIN_MAX} (`docs/SITE-PLAN-v0.md` §5.2 rule 5).
+ *
+ * A drop past the tallest wall we build is not a dressing problem — §5 says the
+ * planner should narrow, merge or dissolve — but the retaining pass runs eight
+ * passes downstream of the planner and still has to put *something* there, and
+ * what it used to put there was a 1:1 ramp: seven blocks of fall over seven
+ * columns, which is a 45° face of raw earth and reads from below as the cliff
+ * the wall refused to be.
+ *
+ * So the bank is **benched**: faces of two blocks with {@link BENCH_TREAD}
+ * columns of soil between them. Two, because one block is a kerb — a course you
+ * step up, not a face — and three is a scramble; and because four benches of two
+ * is what a seven-block drop wants.
+ */
+export const BENCH_FACE = 2;
+
+/**
+ * Columns of soil between two faces of a benched bank.
+ *
+ * Two: enough to stand on, enough for the planting hooks a terraced bank wants,
+ * and it makes the whole bank `ceil(drop / BENCH_FACE) · BENCH_TREAD` columns —
+ * eight for a seven-block drop, against {@link bankRun}'s fourteen. A benched
+ * bank is therefore *cheaper* in ground than the smooth ramp §3.8 sizes, which
+ * is measured rather than assumed and is written up in `docs/SITE-PLAN-v0.md`
+ * §5.2's WP-3 amendment.
+ */
+export const BENCH_TREAD = 2;
+
+/** Columns of run a benched bank of `drop` reserves. */
+export function benchedRun(drop: number): number {
+  return Math.ceil(Math.max(drop, 1) / BENCH_FACE) * BENCH_TREAD;
+}
+
+/**
+ * How close a use has to be to an edge to count as **land pressure**
+ * (`docs/SITE-PLAN-v0.md` §5.2 rule 3).
+ *
+ * "A carriageway, sidewalk, plaza or lot rectangle within two columns of the
+ * edge", which is the operational meaning of the thing that makes a wall
+ * earned: a bank spreads and a wall does not, so what buys masonry is somebody
+ * needing the ground the bank would spread over.
+ */
+export const WALL_DEMAND_RANGE = 2;
+
+/**
+ * The shallowest platform worth keeping once a transition has taken its run —
+ * `district.ts`'s `MIN_INFILL_SIDE`, restated here for the reason
+ * `forms/hillside.ts` restates it as `MIN_BUILDABLE_DEPTH`: this module sits
+ * upstream of both. `site-plan-transitions.test.ts` asserts the three cannot
+ * drift apart.
+ */
+export const MIN_EDGE_DEPTH = 7;
+
+/** What a use adjacent to an edge is, for §5.2 rule 3. */
+export type EdgeUse = "street" | "lot" | "civic" | "natural";
+
+/** Everything a planned edge knows about itself (`docs/SITE-PLAN-v0.md` §5.1). */
+export interface EdgeContext {
+  /** Blocks of fall across the face. */
+  readonly drop: number;
+  /** Columns of the edge, 8-connected. */
+  readonly run: number;
+  /** Unclaimed columns beyond it, on the side a bank would be graded into. */
+  readonly availableRun: number;
+  readonly adjacentUse: EdgeUse;
+  readonly access: "public" | "private";
+  /** Platform depth left once the treatment reserves its run. */
+  readonly depthAfter: number;
+  /** §5.4: the fill edge is the downhill one, the cut edge the uphill one. */
+  readonly side: "cut" | "fill";
+  /** Columns of wall the district has left to spend. */
+  readonly budget: number;
+  /**
+   * Share of the face already standing under a building, `0`…`1` (§5.2 rule 2).
+   *
+   * A fraction rather than a flag because a seam clipped at one end by the
+   * corner of a house is still a seam and still wants its wall, while a seam a
+   * terrace stands along the length of is that terrace's own foundation skirt:
+   * the threshold is `structures/retaining.ts`'s `RETAIN_BUILT_SHARE`, which
+   * this restates as {@link BUILT_SHARE} so the decision and the pass that
+   * discovers it agree.
+   */
+  readonly builtShare: number;
+  /**
+   * Share of the face with a street or a lot within {@link WALL_DEMAND_RANGE} on
+   * the side a bank would spread over, `0`…`1`.
+   *
+   * **§5.2 states `adjacentUse` as one word per edge and that is too coarse to
+   * carry rule 3**, which is the second thing WP-3 measured. A terrace's
+   * downhill face is one 8-connected component a hundred and ninety columns
+   * long; one stair-alley descending past it puts street within two columns of
+   * six of those, and asked as a yes/no the whole face becomes "under land
+   * pressure" and is walled end to end. That is the fortress the inversion
+   * exists to stop. So `adjacentUse` names *what* presses and this names *how
+   * much of the edge* it presses on, and rule 3 reads both.
+   */
+  readonly pressedShare: number;
+}
+
+/** §5.2 rule 2's threshold — `structures/retaining.ts`'s `RETAIN_BUILT_SHARE`. */
+export const BUILT_SHARE = 0.5;
+
+/**
+ * How much of a face has to be under land pressure before the whole face is
+ * (§5.2 rule 3, as WP-3 amends it).
+ *
+ * A quarter. `BUILT_SHARE` is a half because a building either is the wall or is
+ * clipping the end of one; pressure is different in kind — a stair-alley
+ * descending past a hundred-and-ninety-column terrace face puts street within
+ * two columns of six of them, and a yes/no reading of that walls the face end to
+ * end. A quarter of the run is the point at which the ground beyond the face is
+ * being *used* rather than crossed.
+ */
+export const EDGE_PRESSED_SHARE = 0.25;
+
+/** A treatment, or the planner's instruction to go back and claim less ground. */
+export type EdgeChoice = SeamTreatment | "replan";
+
+/**
+ * `docs/SITE-PLAN-v0.md` §5.2's decision order, and the whole of WP-3.
+ *
+ * > **Transitions by context, not by drop alone.**
+ *
+ * The drop table is still here — it is rules 1, 5 and 9 — and what surrounds it
+ * is everything else the edge knows: how much room there is beyond it, what is
+ * pressing on it, whether anybody can walk up to it, what the platform has left
+ * after the treatment is paid for, which side of the cut it is, and what the
+ * district can still afford in masonry.
+ *
+ * **Rule 3 is the inversion.** Today a long seam becomes a wall because it is
+ * long; here it becomes a wall because something is pressing on it. A mid-town
+ * seam with hillside beyond it and nothing needing that hillside is a terraced
+ * bank, which is stepped earth you can plant, and that is the answer to a walk
+ * that reported sheer platform-to-platform dropoffs mid-town.
+ *
+ * **Rule 7 is the ration.** Masonry is a budget the district spends, so the
+ * walls end up where the town actually presses on the hill rather than
+ * everywhere the contour happens to be long.
+ *
+ * **Rules 5 and 6 return `"replan"`** — a face taller than any wall we build, or
+ * a terrace with no usable depth left once its transition is paid for, is a
+ * terrace that claimed ground it should not have. A caller with a planner still
+ * running acts on it; a caller downstream of the planner maps it to a benched
+ * bank ({@link BENCH_FACE}) and says so.
+ */
+export function treatmentForEdge(ctx: EdgeContext): EdgeChoice {
+  // **The unbuilt answer, and the one word §5.2 was missing.** Three of its
+  // clauses — 4, 5 and 7 — mean "do not build here, let the ground be ground",
+  // and §5.2 spells all three `"bank"`. That is right on the fill side and
+  // impossible on the cut side: a bank is ground *added* against a face, while
+  // grading a cut back into the hill is ground *removed*, and the only pass
+  // that removes ground is the terrace claim itself. So the unbuilt answer is
+  // the bank downhill and the hill's own rock uphill. This amends §5.2 and
+  // §5.4 — WP-3's note there records the measurement.
+  const soft: SeamTreatment = ctx.side === "fill" ? "bank" : "rock";
+  // 1. A single block of step is something you walk up.
+  if (ctx.drop <= 1) return "kerb";
+  // 2. A building already standing on the face: its own foundation skirt is the
+  //    wall, and a second wall in front of it is a second wall.
+  if (ctx.builtShare >= BUILT_SHARE) return "built";
+  // 3. **A bank is the default where there is space.** Nothing is pressing on
+  //    this edge and the hill beyond it is unclaimed, so the ground is graded.
+  //    Fill side only, for the reason `soft` gives.
+  if (
+    ctx.side === "fill" &&
+    ctx.availableRun >= bankRun(ctx.drop) &&
+    ctx.pressedShare <= EDGE_PRESSED_SHARE
+  ) {
+    return "bank";
+  }
+  // 4. A wall shorter than the tallest wall we build is a buttress nobody asked
+  //    for — `MIN_RETAIN_RUN`'s own argument, unchanged.
+  if (ctx.run < MIN_RETAIN_RUN) return soft;
+  // 5. Taller than any wall we build. A fill face this tall is a terrace that
+  //    claimed ground it should not have and the planner can still act on it; a
+  //    cut face this tall is a cliff, which is what a hillside is made of.
+  if (ctx.drop > RETAIN_MAX) return ctx.side === "fill" ? "replan" : soft;
+  // 6. No terrace left once the transition has taken its run.
+  if (ctx.depthAfter < MIN_EDGE_DEPTH) return "replan";
+  // 7. The district has spent its masonry.
+  if (ctx.budget <= 0) return soft;
+  // 8. An uphill cut nothing is pressing against is the hill, and the hill is
+  //    rock (§5.4).
+  if (ctx.side === "cut" && ctx.adjacentUse !== "street" && ctx.adjacentUse !== "lot") {
+    return "rock";
+  }
+  // 9. Somebody is pressing on this edge and it is a face we can build.
+  return "retaining";
+}
+
+/**
+ * The context a bare drop-and-run seam carries: none.
+ *
+ * Exported so a test can state §10's property — *"`treatmentForEdge` reduces to
+ * `treatmentForSeam` when the context carries no land pressure, no available run
+ * and an unlimited budget"* — without restating the object it reduces through.
+ */
+export function seamContext(drop: number, run: number): EdgeContext {
+  return {
+    drop,
+    run,
+    availableRun: 0,
+    adjacentUse: "lot",
+    access: "public",
+    depthAfter: Number.POSITIVE_INFINITY,
+    side: "fill",
+    budget: Number.POSITIVE_INFINITY,
+    builtShare: 0,
+    pressedShare: 1,
+  };
 }

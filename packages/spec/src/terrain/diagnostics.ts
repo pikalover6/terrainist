@@ -421,6 +421,20 @@ export const TERRAIN_DIAGNOSTICS = {
    * slope is more engineering than town, and which measurement says so.
    */
   SITE_COMPOSITION: "LOAM-I496",
+  /**
+   * A site-planned quarter reported a transition its own plan makes
+   * unrepresentable (`docs/SITE-PLAN-v0.md` §5.5).
+   *
+   * Today that is `walkBack`'s `offPlatform`: a seam whose upper platform is
+   * narrower than the road running on it, so there is no ground of the
+   * platform's own for a wall to stand on. §3.4 rule 2 refuses to claim such a
+   * station in the first place, so a non-zero count is a **compiler bug**, and
+   * an error rather than a warning for the reason `docs/DESIGN.md` records about
+   * the physics lint: it proves a world is well-formed, not that it is any good,
+   * and 395 columns of a planning failure once shipped green. The planner's
+   * guarantee is checkable, so it is checked.
+   */
+  SITE_PLAN_FAILED: "LOAM-E497",
 } as const;
 
 /** Symbolic diagnostic name. */

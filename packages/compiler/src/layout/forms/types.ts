@@ -15,6 +15,7 @@ import type { DistrictDensity, DistrictFabric } from "@terrainist/spec";
 import type { Seed256 } from "@terrainist/stdlib";
 
 import type { Point2, Rect } from "../frames.js";
+import type { EdgeUse, SeamTreatment } from "../levels.js";
 import type { StreetGraph } from "../streets.js";
 
 /* -------------------------------------------------------------------------- */
@@ -199,6 +200,58 @@ export interface FormStrip {
   readonly columns: Uint8Array;
 }
 
+/**
+ * A transition a site planner planned, rather than one a downstream pass
+ * derived (`docs/SITE-PLAN-v0.md` §5.1, §5.4).
+ *
+ * **Absent for every form but `hillside`**, so nothing else sees a change.
+ *
+ * §5.4's normative sentence is the reason this type exists at all:
+ *
+ * > Every planned strip MUST declare its **cut** edge as a `PlannedEdge` with
+ * > `side: "cut"`.
+ *
+ * The cut edge — the uphill one, where the platform has been cut *into* the hill
+ * and natural ground stands above it — is the edge nothing owned. `levelSeams`
+ * ignores it (natural ground is not a platform and takes part in no seam),
+ * `skirtSeams` ignores it (it only claims neighbours whose ground is *below* the
+ * platform top), and on a quarter with 100 % platform coverage it did not exist,
+ * because the uphill side of every bench was the bench above. A site planner
+ * leaves most of the hill alone, so the cut edge becomes the most common edge in
+ * the quarter — and unowned it ships as a vertical band of raw soil behind every
+ * terrace.
+ *
+ * **v0 declares the cut side and derives the fill side**, which amends §5.1; the
+ * WP-3 amendment there records the measurement. In one sentence: a fill edge's
+ * context includes buildings and finished ground, neither of which exists when
+ * the planner runs, so its treatment is chosen by the pass that has them — from
+ * the same {@link treatmentForEdge} table.
+ */
+export interface PlannedEdge {
+  /** The {@link FormStrip.index} this edge belongs to, or `−1` for a bench edge. */
+  readonly strip: number;
+  /** The bench (platform index) whose face this is. */
+  readonly bench: number;
+  /** §5.4: the fill edge is the downhill one, the cut edge the uphill one. */
+  readonly side: "cut" | "fill";
+  /**
+   * The columns of the edge, 8-connected, in row-major order.
+   *
+   * For a **cut** edge these are the columns of natural hillside standing above
+   * the platform — the face itself, and the same set `faceCuts` finishes — so
+   * "the treatments partition the edge columns exactly" (§5.4) is a statement
+   * about ground somebody can point at.
+   */
+  readonly cells: readonly Point2[];
+  /** Blocks of fall across the face. */
+  readonly drop: number;
+  readonly treatment: SeamTreatment;
+  readonly adjacentUse: EdgeUse;
+  readonly access: "public" | "private";
+  /** One line, for the report: `"cut, 4 blocks over 61 columns, natural"`. */
+  readonly why: string;
+}
+
 /** Dug water, for the canal pass. */
 export interface FormChannel {
   /** The {@link StreetSegment} id whose role is `"channel"`. */
@@ -255,6 +308,12 @@ export interface FormPlan {
    * lot walk in `layout/district.ts`, so no other form moves.
    */
   readonly strips?: readonly FormStrip[];
+  /**
+   * The transitions a site planner planned (`docs/SITE-PLAN-v0.md` §5).
+   *
+   * Present only on a `hillside` plan, and v0 carries its **cut** edges (§5.4).
+   */
+  readonly edges?: readonly PlannedEdge[];
   /** What the form actually did, for the compile report. */
   readonly record: FormRecord;
 }

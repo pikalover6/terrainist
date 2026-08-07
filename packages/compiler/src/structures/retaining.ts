@@ -53,20 +53,32 @@
  *   column something later dropped.
  */
 
-import { TERRAIN_DIAGNOSTICS, note, warning, type LoamDiagnostic } from "@terrainist/spec";
+import { TERRAIN_DIAGNOSTICS, error, note, warning, type LoamDiagnostic } from "@terrainist/spec";
 import type { Region } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import {
+  BENCH_FACE,
+  BENCH_TREAD,
+  BUILT_SHARE,
   NO_PLATFORM,
+  RETAIN_MAX,
   RETAIN_RAIL,
   MIN_RETAIN_RUN,
+  WALL_DEMAND_RANGE,
+  bankRun,
+  benchedRun,
+  treatmentForEdge,
   treatmentForSeam,
+  type EdgeContext,
+  type EdgeUse,
   type GroundLevels,
   type LevelSeam,
+  type SeamTreatment,
 } from "../layout/levels.js";
+import type { PlannedEdge } from "../layout/forms/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -149,6 +161,19 @@ export interface RetainingDistrict {
    * (`docs/SITE-PLAN-v0.md` §5.4). See {@link faceCuts}.
    */
   readonly naturalCuts?: boolean;
+  /**
+   * The transitions the site planner declared (`docs/SITE-PLAN-v0.md` §5.4).
+   *
+   * Its **presence** is the gate on the whole of §5 in this pass: the cut edges
+   * are read from it rather than rediscovered, the fill edges this pass measures
+   * are treated by context rather than by drop alone, banks past
+   * {@link RETAIN_MAX} are benched rather than ramped, and `offPlatform` becomes
+   * an error (§5.5). Absent for every quarter no planner drew, which is what
+   * makes all four hillside-gated.
+   */
+  readonly plannedEdges?: readonly PlannedEdge[];
+  /** Columns of masonry this quarter may spend (§5.2 rule 7). Unlimited if absent. */
+  readonly wallBudget?: number;
 }
 
 /** Everything {@link buildRetainingWalls} reads. */
@@ -216,6 +241,32 @@ export interface RetainingPassResult {
   readonly unfaced: Readonly<Record<UnfacedReason, number>>;
   /** Columns of graded bank finished as earth rather than as bare substrate. */
   readonly banked: number;
+  /**
+   * **Edge columns by the treatment §5.2 chose for them**, over every edge a
+   * site planner's quarter has: the fill edges this pass measures and the cut
+   * edges the planner declared.
+   *
+   * The measurement WP-3 exists to make. `unfaced` answers *"why did this seam
+   * get no wall"*, which was the right question while a wall was the only
+   * answer; this answers *"what did this edge get"*, which is the question once
+   * a bank, a building's own back and the hill's own rock are answers too. Empty
+   * — all zeroes — for every quarter no planner drew.
+   */
+  readonly treated: Readonly<Record<SeamTreatment, number>>;
+  /**
+   * The same count over the **cut** edges the planner declared (§5.4), kept
+   * apart from the fill edges because they are answered by different machinery:
+   * a fill edge is walled, kerbed or banked by this pass, and a cut edge is
+   * stated to be rock by {@link finishCutFaces}. Added together they are every
+   * edge column of the quarter, which is the partition §5.4 requires.
+   */
+  readonly treatedCut: Readonly<Record<SeamTreatment, number>>;
+  /**
+   * Edges whose bank was **benched** rather than ramped: a face past
+   * {@link RETAIN_MAX} answered as several short faces with {@link BENCH_TREAD}
+   * columns of soil between, rather than as one 1:1 slope of earth.
+   */
+  readonly benchedBanks: number;
   readonly diagnostics: readonly LoamDiagnostic[];
   /**
    * What this pass declared under the ground contract
@@ -373,6 +424,21 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let banks = 0;
   let built = 0;
   let banked = 0;
+  let benchedBanks = 0;
+  const treated: Record<SeamTreatment, number> = {
+    kerb: 0,
+    retaining: 0,
+    bank: 0,
+    built: 0,
+    rock: 0,
+  };
+  const treatedCut: Record<SeamTreatment, number> = {
+    kerb: 0,
+    retaining: 0,
+    bank: 0,
+    built: 0,
+    rock: 0,
+  };
   const declaredWalls: RetainingDeclaration["walls"][number][] = [];
   const declaredBanks: RetainingDeclaration["banks"][number][] = [];
   const unfaced: Record<UnfacedReason, number> = {
@@ -398,6 +464,9 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       banks,
       built,
       banked,
+      treated,
+      treatedCut,
+      benchedBanks,
       unfaced,
       diagnostics,
       declaration: { walls: [], banks: [] },
@@ -412,6 +481,18 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
 
   for (const district of relevant) {
     const levels = district.levels as GroundLevels;
+    // §5's gate, and it is one field: a quarter a site planner drew declares its
+    // cut edges, and nothing else in the compiler does.
+    const planned = district.plannedEdges !== undefined;
+    // §5.2 rule 7's ration, spent in the order the edges are seen.
+    let budget = district.wallBudget ?? Number.POSITIVE_INFINITY;
+    // The cut edges, as declared. Nothing is built on them — see
+    // `finishCutFaces`, which states what they are made of — but they are edges
+    // of this quarter and §5.4 requires the treatments to partition every edge
+    // column, so they are counted here where the count lives.
+    for (const edge of district.plannedEdges ?? []) {
+      (edge.side === "cut" ? treatedCut : treated)[edge.treatment] += edge.cells.length;
+    }
 
     // The street network of this quarter, dilated by the clearance. A wall the
     // streetscape would re-level is not a wall, it is 75 floating blocks — the
@@ -440,12 +521,42 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     jobs.push(...skirtSeams(region, plan, levels).map((j) => ({ ...j, measured: true })));
 
     for (const [jobIndex, { seam: record, floorY, measured }] of jobs.entries()) {
-      if (record.treatment === "kerb") {
+      // **§5.2, and the whole of WP-3.** On a quarter no planner drew the
+      // treatment is the one `levelSeams` derived from drop and run, exactly as
+      // before; on a planned one it is chosen from everything the edge knows —
+      // the room beyond it, what is pressing on it, what the terrace has left
+      // once the treatment is paid for, and what the district can still afford
+      // in masonry. `"replan"` reaches here as a benched bank: the planner
+      // settled eight passes upstream and its ladder ran on the composition, so
+      // what is left is to put something on the face that is not a cliff.
+      const context = planned
+        ? edgeContextOf(region, plan, levels, record, street, occupied, budget)
+        : null;
+      const answer = context === null ? record.treatment : treatmentForEdge(context);
+      const treatment: SeamTreatment = answer === "replan" ? "bank" : answer;
+      // A face past the tallest wall we build is banked in **benches** rather
+      // than ramped 1:1 — §5.2 rule 5's honest downstream answer, and the reason
+      // the walked town had sheer platform-to-platform dropoffs mid-town.
+      const bench = context !== null && record.drop > RETAIN_MAX;
+      if (context !== null) treated[treatment] += record.cells.length;
+      if (treatment === "kerb") {
         kerbs += kerbSeam(region, plan, record, states, street, occupied) > 0 ? 1 : 0;
         continue;
       }
-      if (record.treatment === "bank") {
+      if (treatment === "rock") {
+        // The uphill answer, reached on a fill edge only when the planner asked
+        // for it. Nothing is built and no level moves; `finishCutFaces` states
+        // what the face is made of.
+        continue;
+      }
+      if (treatment === "built") {
+        built++;
+        unfaced.builtSeam += record.cells.length;
+        continue;
+      }
+      if (treatment === "bank") {
         banks++;
+        if (bench) benchedBanks++;
         const ringTargets: GroundClaim[] = [];
         banked += gradeBank(
           region,
@@ -459,6 +570,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           occupied,
           states,
           ringTargets,
+          bench,
         );
         if (ringTargets.length > 0) {
           declaredBanks.push({
@@ -467,19 +579,29 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           });
         }
         const short = record.cells.length < MIN_RETAIN_RUN;
-        unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
+        // On a planned quarter a bank is a **treatment**, counted in `treated`,
+        // and not a wall that failed: `unfaced` answers "why no wall" and the
+        // answer here is "because a bank is what this edge wanted".
+        if (context === null) unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
         diagnostics.push(
           warning(
             "RETAINING_REFUSED",
             district.nodePath,
             short
               ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over only ${record.cells.length} column(s), shorter than the ${MIN_RETAIN_RUN} columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank`
-              : `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
+              : bench
+                ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so it was cut back as a benched bank — ${Math.ceil(record.drop / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between, over ${benchedRun(record.drop)} column(s) of run`
+                : `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
             "Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.",
           ),
         );
         continue;
       }
+      // §5.2 rule 9 was reached, so this edge spends from the quarter's masonry
+      // ration. Charged on the seam's own length before the face is walked,
+      // because the ration has to be decided in the same order the edges are
+      // seen or it is not a ration.
+      if (context !== null) budget -= record.cells.length;
 
       // --- a wall ---------------------------------------------------------
       // The face is the lowest row of the *upper* platform: the seam's own
@@ -719,6 +841,25 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // doc comment for the measurement.
   }
 
+  // §5.5 — `offPlatform` becomes an error on a quarter a planner drew.
+  //
+  // Not counted and survived, as it is today: §3.4 rule 2 refuses to claim a
+  // station that cannot hold its street and one column of standing room, so
+  // there is no ground on which this can legitimately happen and a non-zero
+  // count is a compiler bug. It is raised as one because the guarantee is
+  // checkable — the lesson `docs/DESIGN.md` records about a physics lint that
+  // passed 395 columns of a planning failure green.
+  if (relevant.some((d) => d.plannedEdges !== undefined) && unfaced.offPlatform > 0) {
+    diagnostics.push(
+      error(
+        "SITE_PLAN_FAILED",
+        relevant.find((d) => d.plannedEdges !== undefined)?.nodePath ?? "world",
+        `the site planner drew a quarter whose retaining pass then found ${unfaced.offPlatform} seam column(s) with no platform to stand a wall on: the upper terrace is narrower there than the road running on it, which "docs/SITE-PLAN-v0.md" §3.4 rule 2 refuses to plan and §5.5 makes an error rather than a number`,
+        "Nothing in the document can cause this — it is a compiler bug in the site planner's claim rule. File it with the quarter's node path and its seed.",
+      ),
+    );
+  }
+
   const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
   if (walls + kerbs + banks + built > 0) {
     const breakdown = UNFACED_REASONS.filter((r) => unfaced[r] > 0)
@@ -736,6 +877,32 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     );
   }
 
+  const tally = (of: Record<SeamTreatment, number>): { total: number; breakdown: string } => {
+    const keys = (Object.keys(of) as SeamTreatment[]).sort();
+    return {
+      total: keys.reduce((sum, t) => sum + of[t], 0),
+      breakdown: keys
+        .filter((t) => of[t] > 0)
+        .map((t) => `${of[t]} ${t}`)
+        .join(", "),
+    };
+  };
+  const fill = tally(treated);
+  const cut = tally(treatedCut);
+  if (fill.total + cut.total > 0) {
+    diagnostics.push(
+      note(
+        "SWEEP_FEATURES_PLACED",
+        relevant.find((d) => d.plannedEdges !== undefined)?.nodePath ?? "world",
+        `transitions by context (§5): ${fill.total + cut.total} planned edge column(s) — ` +
+          `fill ${fill.total} (${fill.breakdown === "" ? "none" : fill.breakdown}), ` +
+          `cut ${cut.total} (${cut.breakdown === "" ? "none" : cut.breakdown})` +
+          (benchedBanks === 0 ? "" : `; ${benchedBanks} bank(s) benched rather than ramped`),
+        "No action needed.",
+      ),
+    );
+  }
+
   return {
     blocks,
     seam,
@@ -746,6 +913,9 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     banks,
     built,
     banked,
+    treated,
+    treatedCut,
+    benchedBanks,
     unfaced,
     diagnostics,
     declaration: { walls: declaredWalls, banks: declaredBanks },
@@ -870,7 +1040,43 @@ export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
   const seam = input.seam ?? new Uint8Array(region.width * region.depth);
 
   let revetted = 0;
+  let declared = 0;
+  /**
+   * Declared cut columns whose treatment reached §5.2 rule 9 — masonry against
+   * an **uphill** face — and were finished as rock instead.
+   *
+   * Named rather than swallowed. Building there needs the wall sweep to accept a
+   * face whose upper side is natural ground: no platform index, no declared
+   * level, no `LevelSeam` to hand it. That is a piece of work of its own and
+   * §5.4's WP-3 amendment defers it by name; this is the number that says how
+   * much of the town is waiting on it.
+   */
+  let deferred = 0;
   for (const district of relevant) {
+    // **The planner's declaration, where there is one** (§5.4). Before WP-3 the
+    // ring of natural columns standing above a platform was rediscovered here;
+    // now a planned quarter states it, edge by edge, with a treatment on each,
+    // and this pass finishes exactly the columns whose treatment is the hill's
+    // own rock. A cut edge a building's back stands on is not painted, because
+    // there is a building there. The two derivations agreed on the ratified
+    // fixtures — which is the point of replacing one with the other rather than
+    // keeping both.
+    let ring: Uint8Array | undefined;
+    if (district.plannedEdges !== undefined) {
+      ring = new Uint8Array(region.width * region.depth);
+      for (const edge of district.plannedEdges) {
+        if (edge.side !== "cut") continue;
+        // 1 declares the column, 2 withdraws it: a cut edge a lot's own back
+        // wall stands on is that building's foundation skirt (§4.3) and nothing
+        // else is painted there.
+        const value = edge.treatment === "built" ? 2 : 1;
+        if (value === 1) declared += edge.cells.length;
+        if (edge.treatment === "retaining") deferred += edge.cells.length;
+        for (const cell of edge.cells) {
+          if (inside(region, cell.x, cell.z)) ring[index(region, cell.x, cell.z)] = value;
+        }
+      }
+    }
     revetted += faceCuts(
       region,
       plan,
@@ -880,6 +1086,7 @@ export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
       streetMaskOf(region, district),
       occupied,
       district.naturalCuts === true,
+      ring,
     );
   }
 
@@ -890,7 +1097,11 @@ export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
           note(
             "SWEEP_FEATURES_PLACED",
             relevant[0]?.nodePath ?? "world",
-            `every cut face finished: ${revetted} column(s) faced in the hill's own rock`,
+            `every cut face finished: ${revetted} column(s) faced in the hill's own rock` +
+              (declared === 0 ? "" : `, of which ${declared} were declared cut edges (§5.4)`) +
+              (deferred === 0
+                ? ""
+                : `; ${deferred} of those wanted masonry (§5.2 rule 9) and got rock — an uphill wall is v1`),
             "No action needed.",
           ),
         ];
@@ -1131,6 +1342,15 @@ function faceCuts(
    * gate on the one behaviour change in this function.
    */
   naturalCuts: boolean,
+  /**
+   * The cut-edge columns the planner declared (§5.4), when it did.
+   *
+   * Supplied, this **replaces** the derived ring below: the declaration is the
+   * edge, and rediscovering it here would be the same construction with a second
+   * chance to differ — the argument `levelSeams` makes about forms declaring
+   * their own seams, one edge over.
+   */
+  declaredCut?: Uint8Array,
 ): number {
   const bounds = levels.bounds;
   const cells = region.width * region.depth;
@@ -1191,6 +1411,21 @@ function faceCuts(
         }
       }
     }
+  }
+  // **The declaration, added to what the finished ground shows** (§5.4).
+  //
+  // Measured on the steep fixture: the planner declares 269 cut columns and the
+  // finished ground presents 291, the 269 among them. The 22 it does not know
+  // about are the ones four later passes cut — a stair tread, a doorstep
+  // landing, a shoulder the road blended — which is the same reason this whole
+  // function was moved to the end of the structure pass. So the declaration
+  // governs the **treatment** of an edge and does not bound the **finish**: a
+  // column the hill exposes after the plan was drawn is still a raw face and
+  // still gets rock. A cut edge a building's own back stands on is the one
+  // subtraction, because there is a building there.
+  if (declaredCut !== undefined) {
+    for (let k = 0; k < cells; k++) if (declaredCut[k] === 1) naturalCut[k] = 1;
+    for (let k = 0; k < cells; k++) if (declaredCut[k] === 2) naturalCut[k] = 0;
   }
 
   /** On a platform of this quarter — or on its cut edge — and not under water. */
@@ -1293,6 +1528,150 @@ function faceCuts(
     faced++;
   }
   return faced;
+}
+
+/* -------------------------------------------------------------------------- */
+/* §5 — the context a planned edge carries                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Measure an edge's {@link EdgeContext} off the finished plan
+ * (`docs/SITE-PLAN-v0.md` §5.1).
+ *
+ * ## Why the fill side is measured here and not planned upstream
+ *
+ * §5.1 says *"the planner calls `treatmentForEdge`; the retaining pass reads the
+ * planner's answer"*, and that is right for the **cut** edge, which is pure
+ * geometry the planner owns and which it now declares (§5.4). It cannot be right
+ * for the **fill** edge, and this is WP-3's one substantive amendment to §5:
+ * three of the nine clauses read state the planner does not have. Rule 2 needs
+ * the building footprints, which are seated after the plan is drawn; rules 3 and
+ * 6 need the *finished* ground, because half the fill edges in a hill town are
+ * `skirtSeams` — a terrace's own edge against ground the streets, the pads and
+ * the spine all moved after the planner ran. A planner answer here would be an
+ * answer about ground that no longer exists.
+ *
+ * So the **table** is shared and the **context** is measured where it is
+ * complete, which is what §5.1's real requirement is: *one* drop table, called
+ * once per edge, never re-derived. `treatmentForEdge` is that table.
+ *
+ * ## The side every measurement is taken on
+ *
+ * All of it is measured on the **low side** — the side a bank would be graded
+ * into — and never on the platform the face holds. §5.2 says `adjacentUse` is
+ * "within `WALL_DEMAND_RANGE` columns of the edge" without saying which side of
+ * it, and measured both ways the difference is the whole rule: every terrace
+ * edge in a hill town has its own street two columns behind it, so asked of the
+ * platform side rule 3 never fires and the inversion Sol asked for does not
+ * happen. Asked of the low side it says the thing it means — *is anybody using
+ * the ground this bank would spread over* — and a terrace backing onto open
+ * hillside gets the bank while one backing onto the street below gets the wall.
+ */
+function edgeContextOf(
+  region: Region,
+  plan: ColumnPlan,
+  levels: GroundLevels,
+  record: LevelSeam,
+  street: Uint8Array,
+  occupied: Uint8Array,
+  budget: number,
+): EdgeContext {
+  const above = record.above;
+  const drop = record.drop;
+  const reach = bankRun(drop);
+  /** The 4-neighbour direction from a seam cell towards the face it presents. */
+  const faceDir = (x: number, z: number): readonly [number, number] | null => {
+    for (const [dx, dz] of NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      if (levels.at(x + dx, z + dz) === above) return [dx, dz];
+    }
+    return null;
+  };
+  const free: number[] = [];
+  const behind: number[] = [];
+  let builtFace = 0;
+  let facedCells = 0;
+  let use: EdgeUse = "natural";
+  let publicGround = false;
+  let pressedCells = 0;
+  for (const point of record.cells) {
+    const dir = faceDir(point.x, point.z);
+    if (dir === null) continue;
+    const [dx, dz] = dir;
+    facedCells++;
+    // Rule 2, as a share: a seam clipped at one end by the corner of a house is
+    // still a seam; a seam a terrace stands along the length of is that
+    // terrace's own foundation skirt.
+    const fk = index(region, point.x + dx, point.z + dz);
+    if (occupied[fk] === 1) builtFace++;
+    // `availableRun` — unclaimed columns straight out from the face, which is
+    // the run §5.3 says a bank spends. Straight and never around, for
+    // `walkBack`'s reason: a search free to detour measures somebody else's
+    // ground.
+    let run = 0;
+    for (let step = 1; step <= reach; step++) {
+      const x = point.x - dx * step;
+      const z = point.z - dz * step;
+      if (!inside(region, x, z)) break;
+      const k = index(region, x, z);
+      if (street[k] === 1 || occupied[k] === 1) break;
+      if (plan.fluidKind[k] !== FluidKind.NONE) break;
+      // A neighbouring platform is claimed ground, not spare hillside: grading
+      // a bank across it would bury the terrace below.
+      if (levels.at(x, z) !== NO_PLATFORM) break;
+      run++;
+    }
+    free.push(run);
+    // Rule 6's `depthAfter` — the terrace behind the face, straight in.
+    let depth = 0;
+    for (let step = 0; step < RETAIN_FACE_SETBACK * 2; step++) {
+      const x = point.x + dx * (step + 1);
+      const z = point.z + dz * (step + 1);
+      if (!inside(region, x, z)) break;
+      if (levels.at(x, z) !== above) break;
+      depth++;
+    }
+    behind.push(depth);
+    // Rule 3's land pressure, on the low side only.
+    let pressed = false;
+    for (let ddz = -WALL_DEMAND_RANGE; ddz <= WALL_DEMAND_RANGE; ddz++) {
+      for (let ddx = -WALL_DEMAND_RANGE; ddx <= WALL_DEMAND_RANGE; ddx++) {
+        const x = point.x + ddx;
+        const z = point.z + ddz;
+        if (!inside(region, x, z)) continue;
+        if (levels.at(x, z) === above) continue;
+        const k = index(region, x, z);
+        if (street[k] === 1) {
+          use = "street";
+          publicGround = true;
+          pressed = true;
+        } else if (occupied[k] === 1) {
+          if (use !== "street") use = "lot";
+          pressed = true;
+        }
+      }
+    }
+    if (pressed) pressedCells++;
+  }
+  const median = (list: number[]): number => {
+    if (list.length === 0) return 0;
+    const sorted = [...list].sort((a, b) => a - b);
+    return sorted[sorted.length >> 1] as number;
+  };
+  return {
+    drop,
+    run: record.cells.length,
+    availableRun: median(free),
+    adjacentUse: use,
+    access: publicGround ? "public" : "private",
+    // The wall stands on the platform's own outermost free column, so a
+    // `retaining` answer costs the terrace one column (§5.3's table).
+    depthAfter: median(behind) - 1,
+    side: "fill",
+    budget,
+    builtShare: facedCells === 0 ? 0 : builtFace / facedCells,
+    pressedShare: facedCells === 0 ? 0 : pressedCells / facedCells,
+  };
 }
 
 /**
@@ -1537,7 +1916,23 @@ function gradeBank(
    * Sink for §3.3b's `verge` claim: every ring column this call raised, at the
    * target it raised it to. Write-only and never read.
    */
-  declare?: GroundClaim[],
+  declare: GroundClaim[] | undefined,
+  /**
+   * Grade the bank as **benches** rather than as one slope
+   * (`docs/SITE-PLAN-v0.md` §5.2 rule 5's downstream answer).
+   *
+   * The ramp above falls one block per column — 45°, which from below is the
+   * cliff the wall refused to be, and which is what the walk reported as "sheer
+   * platform-to-platform dropoffs mid-town". Benched, the same fall is
+   * `ceil(drop / BENCH_FACE)` faces of two blocks with two columns of soil
+   * between them: `benchedRun(7) = 8` columns against the ramp's seven, so it
+   * costs one more column of ground and reads as terracing rather than as a
+   * spoil heap. The soil is `gradeBank`'s own — every raised column is finished
+   * in the theme's bank earth, which is what a planting hook wants.
+   *
+   * False for every quarter no planner drew, so nothing else moves.
+   */
+  benched = false,
 ): number {
   const view = driver.view();
   const cells = region.width * region.depth;
@@ -1555,9 +1950,16 @@ function gradeBank(
   let raised = 0;
   /** The ring targets, with the ground each was measured against (§9 step 2). */
   const rings: { readonly idx: number; readonly target: number; readonly g: number }[] = [];
-  for (let ring = 0; ring < record.drop && frontier.length > 0; ring++) {
-    const target = top - ring - 1;
-    if (target <= floor) break;
+  const steps = benched ? benchedRun(record.drop) : record.drop;
+  for (let ring = 0; ring < steps && frontier.length > 0; ring++) {
+    // One block per column, or one bench of `BENCH_FACE` blocks every
+    // `BENCH_TREAD` columns. The benched profile is clamped one block above the
+    // floor rather than cut off at it, so the last face is a kerb and never a
+    // step the bench does not reach.
+    const target = benched
+      ? Math.max(floor + 1, top - BENCH_FACE * (Math.floor(ring / BENCH_TREAD) + 1))
+      : top - ring - 1;
+    if (!benched && target <= floor) break;
     const next: number[] = [];
     for (const k of frontier) {
       const x = region.x0 + (k % region.width);
