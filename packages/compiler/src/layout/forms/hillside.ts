@@ -884,6 +884,19 @@ function draw(ctx: FormContext): FormResult {
   // `segments` already holds the carriage spine and its junction stubs by the
   // time this count is taken, so the loop below used to run over those too.
   const principals = segments.length;
+  /**
+   * The level below which there is no street left to reach (§3.6, 2026-08-08).
+   *
+   * `keepStalled` keeps a walk that stalled without reaching another principal
+   * street, provided it left the terrace it started on. Above the lowest street
+   * that is the right rule — a walk stalls because the tread law ran out of run,
+   * and the street it was aiming at is still down there. Below the lowest one
+   * **every** walk stalls by construction, because there is nothing under it,
+   * and what `keepStalled` then keeps is a walled causeway striding off into
+   * open field: five of them on `site-plan-hillside`, four on the steep fixture,
+   * `dn0_128` alone dangling 495 declared columns.
+   */
+  const lowestStreetLevel = Math.min(...streetLevel);
   for (let s = 0; s < principals; s++) {
     const segment = segments[s] as StreetSegment;
     // **Only a principal contour street sprouts connectors**, which is what the
@@ -922,8 +935,10 @@ function draw(ctx: FormContext): FormResult {
           span: Number.POSITIVE_INFINITY,
           // A connector that stalls without reaching another principal street is
           // kept only if it left the terrace it started on — `terraced`'s
-          // `keepStalled` rule, unchanged.
-          keepStalled: true,
+          // `keepStalled` rule — **and only above the lowest street**, where
+          // there is still a street below for it to have been aiming at. See
+          // `lowestStreetLevel`.
+          keepStalled: streetLevel[s] !== lowestStreetLevel,
         });
         if (walk === null || walk.length < MIN_CLIPPED_RUN) continue;
         const path = densify4(walk);
@@ -950,16 +965,61 @@ function draw(ctx: FormContext): FormResult {
   // which is what "gives its columns back" has to mean if it is to mean
   // anything the walk can see.
   const terrace = new Uint8Array(cells);
-  /** Each bench's final mask, kept for the cut-edge declaration (§5.4). */
-  const benchMask: Uint8Array[] = [];
-  const benches: FormBench[] = platforms.map((platform, b) => {
+  const cutMask: Uint8Array[] = platforms.map((platform) => {
     const mask = Uint8Array.from(platform);
     for (let k = 0; k < cells; k++) if (released[k] === 1 && standingRoom[k] !== 1) mask[k] = 0;
     smoothTerrace(mask, width, depth);
     for (let k = 0; k < cells; k++) if (mask[k] === 1) terrace[k] = 1;
-    benchMask.push(mask);
-    return { id: `terrace.${b}`, runs: maskRuns(bounds, mask), level: platformLevel[b] as number };
+    return mask;
   });
+  /**
+   * **One level is one platform** (2026-08-08).
+   *
+   * A platform is a *level surface*, and the level is its whole identity:
+   * `levelSeams` already refuses to derive a face between two platforms at the
+   * same Y — "two platforms at the same Y are two platforms and no step" — so a
+   * form that hands out two indices for one elevation has declared a boundary
+   * that no seam, no wall and no player can see. Everything downstream that
+   * asks `levels.at(x, z) === above` then reads that invisible boundary as
+   * *leaving the platform*: `walkBack` crossing from one half of a terrace to
+   * the other reports `offPlatform`, which §5.5 makes a compiler error.
+   *
+   * This form produces the duplicate routinely and for a good reason — one
+   * contour at one elevation can come back as two candidate polylines, and a
+   * single street's path splits into runs wherever a station cannot hold its
+   * cross-section — so the merge is here rather than a prohibition upstream:
+   * the *streets* are two, and their **ground** is one. Measured on
+   * `site-plan-hillside-steep`, where the 157 contour is laid twice: 4 of the 6
+   * `offPlatform` columns are walks that crossed between the two.
+   *
+   * The masks are merged **after** `smoothTerrace`, never before: closing over
+   * the union would bridge whatever lies between the two halves — on the steep
+   * fixture, the carriage spine's own corridor — and §3.6a's reservation margin
+   * exists precisely to stop that.
+   */
+  const levelIndex: number[] = [];
+  const mergedOf = new Int32Array(platforms.length);
+  for (const [b, level] of platformLevel.entries()) {
+    let m = levelIndex.indexOf(level);
+    if (m < 0) {
+      m = levelIndex.length;
+      levelIndex.push(level);
+    }
+    mergedOf[b] = m;
+  }
+  /** Each bench's final mask, kept for the cut-edge declaration (§5.4). */
+  const benchMask: Uint8Array[] = levelIndex.map(() => new Uint8Array(cells));
+  for (const [b, mask] of cutMask.entries()) {
+    const into = benchMask[mergedOf[b] as number] as Uint8Array;
+    for (let k = 0; k < cells; k++) if (mask[k] === 1) into[k] = 1;
+  }
+  const benches: FormBench[] = benchMask.map((mask, m) => ({
+    id: `terrace.${m}`,
+    runs: maskRuns(bounds, mask),
+    level: levelIndex[m] as number,
+  }));
+  /** The strips' bench indices, after the merge. */
+  const stripLevelBench = stripBench.map((b) => mergedOf[b] as number);
   // **A strip may only offer ground that is on a terrace**, and the terraces are
   // now final: the release took columns back and `smoothTerrace` moved the
   // boundary a little in both directions. A lot grown on a column no bench
@@ -988,7 +1048,7 @@ function draw(ctx: FormContext): FormResult {
   const edges = cutEdges({
     benches,
     benchMask,
-    stripBench,
+    stripBench: stripLevelBench,
     strips: kept,
     field,
     paving,

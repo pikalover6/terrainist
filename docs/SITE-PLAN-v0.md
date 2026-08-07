@@ -331,6 +331,46 @@ guarantees a connected skeleton exactly as it does today. Two rules:
   to cover is promoted to §5.5's `offPlatform` error the moment they go. That is
   a planning defect the causeway was masking, and it wants fixing before the
   connector rule can be tightened.
+- **Landed 2026-08-07, and the paragraph above had the mechanism wrong.** The
+  causeways were not *covering* a seam. They were **paying for the plan**: a
+  causeway is `kind: "lane"` paving like any other, so its columns count in
+  §6.1's `streetFraction` and against `naturalFraction`, and on
+  `site-plan-hillside-steep` they are what pushed round 0 (0.4471 natural,
+  0.3076 street, one gate cleared) two rungs down §6.3's ladder to the
+  two-terrace plan that shipped. Refuse them and round 0 reads 0.5555 natural,
+  0.1850 street — **both gates clear** — so the ladder stops there and a
+  four-street quarter ships that had never been built before. The `offPlatform`
+  belongs to *that* plan, and the causeways were only ever hiding it by
+  preventing it from being drawn. Measured directly: the six columns are one
+  *skirt* seam (`retaining.ts`'s `skirtSeams`), and `walkBack` leaves the
+  platform at `(75–78, 16)` into **platform 3, which is at the same level as
+  platform 2** (both 157), and at `(73–74, 10)` into the carriage spine's
+  corridor nine columns back.
+- **So the fix is `one level is one platform`,** in the form, at S6. The 157
+  contour is laid twice on that fixture — one elevation, two candidate
+  polylines — and the form handed the two halves two bench indices. §3.5's
+  `levelSeams` already refuses to derive a face between platforms at the same Y
+  ("two platforms at the same Y are two platforms and no step"), so the second
+  index is a boundary no seam, no wall and no player can see; but every
+  consumer that asks `levels.at(x, z) === above` reads it as *leaving the
+  platform*, and §5.5 makes that an error. The benches are therefore merged by
+  level after `smoothTerrace` — never before, or the closing would bridge
+  whatever lies between the halves, which on this fixture is the spine corridor
+  §3.6a's `SPINE_RESERVE_MARGIN` exists to keep open. With that in place the
+  connector rule is tightened and both fixtures compile clean, zero
+  `offPlatform`, zero on all 26 physics rules.
+- **What it measured** (audit numbers: components / orphan columns / dead ends /
+  buried / junction density). `site-plan-hillside` keeps its rung and simply
+  loses the causeways: **15 → 10** components, **797 → 9** orphans, 5 → 3 dead
+  ends, 120 → 19 buried, 0.188 → 0.179 junction density.
+  `site-plan-hillside-steep` changes *plan*, so its numbers are not a
+  like-for-like comparison and they go the other way: 9 → 15 components,
+  941 → 1745 orphans, 7 → 14 dead ends, 211 → 125 buried, 0 → 1 unserved face.
+  That is four principal streets' worth of town where there were two — the
+  largest piece holds 2456 columns and the tail is nine one-column pieces — and
+  the fragmentation is the *next* lever rather than a regression of this one:
+  the ladder now ships the quarter §6.3 always intended it to ship, and what it
+  exposes is that the flights on a four-street quarter do not yet join up.
 
 **Civic ground.** `params.plaza` and any `FormReservation` receive a platform of
 their own, at the level of the principal street they touch, sized to the
@@ -503,8 +543,9 @@ No new source class, no new rank, no new intent.
 | `SPINE_SECOND_SPAN` | 96 | Shorter axis at or above `2 ×` this gets a second spine. A 96-column flank at 1:6 buys sixteen blocks of climb in one traverse, which is more than two terrace rises — below that a second spine has nowhere to be that the first is not. |
 | `SPINE_MAX_FILL` | 8 | `street-stairs.ts`'s `STREET_STAIR_MAX_FILL`, and deliberately the same number: a cart road and a flight stand on the same masonry budget. |
 
-**Composition.** The spine's columns are street and are counted as street in
-§6.1's `streetFraction`, with no exemption. §6.1 additionally reports
+**Composition.** The spine's columns are street, and were counted as street in
+§6.1's `streetFraction` with no exemption until the 2026-08-07 amendment below,
+which subtracts them. §6.1 additionally reports
 `spineFraction` — the share the spine itself accounts for — because that is the
 number the open question below is about, and a metric nobody can see is a
 decision nobody can take.
@@ -543,6 +584,11 @@ decision nobody can take.
 > spineFraction` and report the total. The second is the honest one — it gates
 > what the ladder controls — and it is a spec decision, so it is written down here
 > as a proposal and `spineFraction` ships beside it as a reported metric.
+
+> **Settled 2026-08-07, Kai: street fraction is measured net of the carriage
+> spine; bar stays 0.25.** The second answer above, taken as written —
+> `COMPOSITION_GATES.streetFraction` now gates `(streetColumns − spineColumns) /
+> quarterColumns`, and `streetColumns` still reports every paved column.
 
 ### 3.7 S6 — feasibility: narrow, merge, dissolve
 
@@ -1010,10 +1056,10 @@ parts for.
 | `naturalFraction` | columns with `NO_PLATFORM` and not street ÷ quarter columns | **0.00** | ≥ 0.40 |
 | `platformPerBuilding` | platform columns ÷ building footprint columns | **28.5** | ≤ 6.0 |
 | `wallPerBuilding` | wall columns ÷ buildings | **224** | ≤ 40 |
-| `streetFraction` | carriageway + sidewalk ÷ quarter columns | **0.478** | ≤ 0.25 |
+| `streetFraction` | carriageway + sidewalk, **less the carriage spine's share** (amended 2026-08-07), ÷ quarter columns | **0.478** | ≤ 0.25 |
 | `hardenedPerimeter` | (wall + revetted) ÷ total platform perimeter | — | ≤ 0.50 |
 | `railedShare` | railed columns ÷ exposed retaining columns | ≈ 1.0 | 0.10 – 0.25 |
-| `spineFraction` | carriage spine's carriageway + sidewalk ÷ quarter columns | — | reported, never gated (§3.6a) |
+| `spineFraction` | carriage spine's carriageway + sidewalk ÷ quarter columns | — | reported; **subtracted from `streetFraction`** since 2026-08-07 (§3.6a) |
 | `offPlatform` | the retaining pass's count | **395** | **0** |
 | `dwellings` | buildings − terraces + terrace bays (WP-1) | — (not measured on the control) | — |
 | `wallPerFrontage` | wall columns ÷ Σ lot frontage | — | ≤ 0.60 |

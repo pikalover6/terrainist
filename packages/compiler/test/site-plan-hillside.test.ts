@@ -257,6 +257,66 @@ describe("everything no use asked for stays natural slope", () => {
 });
 
 /* -------------------------------------------------------------------------- */
+/* 3a — S5's connectors, and the ground they stand on (§3.6, 2026-08-08)       */
+/* -------------------------------------------------------------------------- */
+
+describe("the connectors and the platforms they run between (§3.6)", () => {
+  /**
+   * **One level is one platform**, which is the fix that let the causeway rule
+   * below be tightened at all.
+   *
+   * `levelSeams` already refuses to derive a face between two platforms at the
+   * same Y, so a second index for one elevation is a boundary nothing can see —
+   * except everything downstream that asks `levels.at(x, z) === above`, which
+   * reads it as leaving the platform and, through `walkBack`, as §5.5's
+   * `offPlatform` error. The form produces the duplicate whenever one contour
+   * comes back as two candidate polylines, or one street's path splits into
+   * runs; the streets are two and their ground is one.
+   */
+  it("gives one platform to one level", () => {
+    for (const at of [evenAt, steepAt, shelfAt]) {
+      const levels = (drawn(at).benches ?? []).map((b) => b.level);
+      expect(levels.length).toBeGreaterThan(0);
+      expect(new Set(levels).size).toBe(levels.length);
+    }
+  });
+
+  /**
+   * **No causeways off the bottom of the town.** Below the lowest principal
+   * street every steepest-descent walk stalls by construction — there is
+   * nothing under it to reach — so `keepStalled` there keeps a walled causeway
+   * striding into open field rather than a connector that nearly made it.
+   */
+  it("sprouts no connector from the lowest principal street", () => {
+    for (const at of [evenAt, steepAt]) {
+      const plan = drawn(at);
+      const levels = groundLevelsOf(BOUNDS, plan.benches ?? []);
+      expect(levels).not.toBeNull();
+      const segments = plan.graph.segments;
+      // A street's level is the level of the platform its own carriageway
+      // stands on — §3.4 rule 2 is what makes that well defined.
+      const levelOf = (i: number): number => {
+        const p = segments[i]?.path[0] as { x: number; z: number };
+        return levels!.levelY[levels!.at(p.x, p.z)] ?? Number.POSITIVE_INFINITY;
+      };
+      const streets = segments
+        .map((s, i) => [s, i] as const)
+        .filter(([s]) => s.kind === "street")
+        .map(([, i]) => i);
+      expect(streets.length).toBeGreaterThan(1);
+      const lowest = Math.min(...streets.map(levelOf));
+      for (const i of streets) {
+        if (levelOf(i) !== lowest) continue;
+        expect(segments.some((s) => s.id.startsWith(`dn${i}_`))).toBe(false);
+      }
+      // …and the streets above the lowest still do sprout them, or the rule
+      // above would be passing by drawing no connectors at all.
+      expect(segments.some((s) => s.id.startsWith("dn"))).toBe(true);
+    }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
 /* 3b — the constants stand against one datum (WP-1, finding 2)                */
 /* -------------------------------------------------------------------------- */
 
@@ -533,10 +593,12 @@ describe("flat ground cannot select this form", () => {
  *    band comes off the raster rather than off the arithmetic (finding 5) — the
  *    two together take `offPlatform` to zero and hold it there.
  *
- * The town is **smaller and the hillside is a hillside**: nine buildings holding
- * **seventeen dwellings** (a terrace's bays are homes — the number §8.3 check 2
- * should have been counting), on a quarter that is 48% uncut ground with 156
- * columns of wall, against the walked control's 7 buildings, 0% and 1,566.
+ * The town is **smaller and the hillside is a hillside**: eight buildings
+ * holding **sixteen dwellings** (a terrace's bays are homes — the number §8.3
+ * check 2 should have been counting), on a quarter that is 55% uncut ground with
+ * no wall at all, against the walked control's 7 buildings, 0% and 1,566. The
+ * uncut share and the wall column both moved on 2026-08-08 with the causeway
+ * refusal (§3.6); each row below says which way and why.
  * §8.3's check 2 (≥ 30 buildings) is **not** met and cannot be met at two
  * principal streets: it and the composition bars are in tension, and that
  * tension is this package's finding rather than something to tune away.
@@ -551,38 +613,59 @@ const GOLDEN = {
    * its own, so two bays' worth of frontage that a connector used to run
    * through is ground a terrace can stand on.
    */
-  dwellings: 21,
-  // 14 → 15 (2026-08-07), with the spine's own stair-alleys: one lot's worth of
-  // frontage that a connector ran through is a lot again.
-  lots: 15,
+  /**
+   * 21 → 16 (2026-08-08, the causeway refusal, §3.6), and **down is a finding
+   * rather than a win**: the five causeways off the lowest street are gone and
+   * with them 1 042 columns of carriageway, but the block grammar subdivided the
+   * blocks those causeways used to cut, and the town came back with three
+   * terrace rows of eleven bays where it had four of seventeen. Nothing in this
+   * change touched the lot walk; it changed the streets the walk reads. **Wants
+   * a walk before it is called good.**
+   */
+  dwellings: 16,
+  // 15 → 14 (2026-08-08), the same subdivision.
+  lots: 14,
   lotsDropped: 7,
-  // 5 → 4: with fifteen lots rather than fourteen, one gap the grammar used to
-  // fill with an infill block is a lot with a building on it.
-  infill: 4,
-  // 14 → 17: the same three bays the dwelling count gained, counted as bays.
-  terraceBays: 17,
+  // 4 → 5 (2026-08-08): the lot the subdivision lost is a gap the grammar fills.
+  infill: 5,
+  // 17 → 11 (2026-08-08), the dwelling count read as bays.
+  terraceBays: 11,
   offPlatform: 0,
   /**
-   * 150 → 156 (2026-08-07), and up is the right direction for once: a flight
-   * that cuts a slot into the platform above (`synthesizeTreads`) makes six more
-   * columns of face that the retaining pass can stand a wall against, where
-   * before the same six columns were the top of a five-block step nobody dressed.
+   * 150 → 156 (2026-08-07), and up was the right direction then: a flight that
+   * cuts a slot into the platform above (`synthesizeTreads`) makes six more
+   * columns of face that the retaining pass can stand a wall against.
+   *
+   * **156 → 0 (2026-08-08), and this is the loudest thing the causeway refusal
+   * moved.** This quarter's *only* retaining wall was the face along a causeway;
+   * with the causeways gone that face is not a seam any more, and the columns
+   * that were 100 of graded bank are 831. The town is now all earthworks and no
+   * masonry, which passes check 4 by building nothing — the number to watch is
+   * the bank, and the answer belongs with §5.2 rule 9's uphill masonry rather
+   * than here.
    */
-  wallColumns: 156,
+  wallColumns: 0,
   /** Rungs of §6.3's ladder walked, and where it landed. */
   replanRounds: 3,
   principalStreets: 2,
-  // naturalFraction >= 0.40 clears; streetFraction misses 0.25 by nine
-  // thousandths, and §3.6a's closing note is that measurement — see below.
+  // naturalFraction >= 0.40 clears; gross streetFraction is over 0.25 by nine
+  // thousandths and the gate is measured net of the spine (§3.6a, settled
+  // 2026-08-07), which clears — see below.
   // 0.4706 → 0.4816 (2026-08-07): the carriage spine's own stair-alleys are no
-  // longer drawn, and that street went back to being hillside. The bar is 0.40
-  // and this clears it by more than it did.
-  naturalFraction: 0.4816,
-  // 0.2745 → 0.2602, the other side of the same ledger. §6.2's street bar is
-  // 0.25 and this still clears it — by one point rather than two and a half,
-  // which is the honest reading: the spine's alleys were padding the number.
-  streetFraction: 0.2602,
-  /** §3.6a: the spine's own share of the street, reported and never gated. */
+  // longer drawn, and that street went back to being hillside.
+  // 0.4816 → 0.5493 (2026-08-08): and the five causeways went back to being
+  // hillside too. More than half this quarter is now uncut ground, against a
+  // 0.40 bar.
+  naturalFraction: 0.5493,
+  // 0.2745 → 0.2602 → **0.1875** (2026-08-08), and **gross**: this is every
+  // paved column, spine included. The causeways were 1 042 columns of
+  // carriageway and 1 191 of sidewalk. The gross number is now well under
+  // §6.2's 0.25 bar on its own, where before it took the spine's 0.019 net to
+  // clear it — so the comparison this fixture used to make ("gross is over,
+  // net clears") no longer applies to it, and the assertion below says the
+  // other thing.
+  streetFraction: 0.1684,
+  /** §3.6a: the spine's own share, reported and subtracted from the gate. */
   spineFraction: 0.0191,
   spineArc: 53,
   spineHairpins: 1,
@@ -680,27 +763,26 @@ describe("the fixture hill town, compiled", () => {
     // §6.1 is computed before a structure exists and must still describe the
     // quarter that was built, or the gate is guarding something else.
     expect(district.stats["naturalFraction"]).toBeCloseTo(natural / n, 6);
-    expect(district.stats["streetFraction"]).toBeCloseTo(street / n, 6);
-    // **The gates the ladder was run against** (§6.1, §6.2 as amended) — and
-    // **the one the carriage spine misses** (§3.6a). The hillside bar clears;
-    // the street bar does not, by nine thousandths, and the spine's own share is
-    // 4.2 points of it. That is not loosened here and it is not tuned away: §6.2
-    // gates the ladder, dropping a contour street does not shorten a road whose
-    // length is `SPINE_GRADE_RUN × drop`, and which of the two answers §3.6a
-    // proposes is right is Kai's call on a walk rather than a threshold edit.
+    // §3.6a as amended 2026-08-07: the reported `streetFraction` is measured
+    // **net of the carriage spine**, so it is the paved share off the world
+    // *minus* the spine's own, and `streetColumns` is deliberately not its
+    // numerator.
+    expect(district.stats["streetFraction"]).toBeCloseTo(
+      street / n - (district.stats["spineFraction"] as number),
+      6,
+    );
+    // **The gates the ladder was run against** (§6.1, §6.2 as amended, §3.6a as
+    // settled by Kai 2026-08-07: street is measured net of the spine and the bar
+    // stays 0.25). Both clear — and since 2026-08-08 they clear **without
+    // needing the spine subtracted**: gross street is 0.188 against a 0.25 bar,
+    // where before the causeway refusal it was 0.260 and only the spine's own
+    // 0.019 took it under. Pinned in the direction it now runs, so a change that
+    // puts a thousand columns of road back on this hill is caught here and not
+    // only in the audit.
     expect(natural / n).toBeGreaterThanOrEqual(COMPOSITION_GATES.naturalFraction);
-    expect(street / n).toBeGreaterThan(COMPOSITION_GATES.streetFraction);
-    // …and **as of 2026-08-07 the spine's own columns are now the margin**,
-    // which is a change of reading rather than of gate and is worth stating in
-    // the direction it now runs. Gross street clears 0.25 at 0.260; net of the
-    // spine's 0.019 it is 0.241, *under* the bar. Before this round the same
-    // subtraction left the quarter over it, and what closed the gap was
-    // removing the stair-alleys the spine used to sprout beside its own descent
-    // — street that was there twice. §3.6a's closing note asked whether the
-    // corridor pays for itself; the honest answer today is that the terraces
-    // need it to, which is more of a walk question than it was, not less.
+    expect(street / n).toBeLessThan(COMPOSITION_GATES.streetFraction);
     expect(district.stats["spineFraction"]).toBeCloseTo(GOLDEN.spineFraction, 3);
-    expect(street / n - (district.stats["spineFraction"] as number)).toBeLessThan(
+    expect(district.stats["streetFraction"] as number).toBeLessThan(
       COMPOSITION_GATES.streetFraction,
     );
     expect(district.form.adapted.join(" ")).toContain(
@@ -762,26 +844,54 @@ describe("the fixture hill town, compiled", () => {
  */
 const STEEP = {
   quarterColumns: 24_320,
-  districtBuildings: 3,
-  dwellings: 6,
-  /** 11 → 8 at the spine: its corridor is ground the terraces never took. */
-  lots: 8,
+  /**
+   * **A different quarter since 2026-08-08, and that is the whole finding.**
+   *
+   * The causeways off the lowest street were not just paving, they were
+   * *paying*: they counted in §6.1's `streetFraction` and against
+   * `naturalFraction`, and on this fixture they were what pushed §6.3's ladder
+   * two rungs down to a two-street plan. Refuse them and the ladder stops
+   * early, so a **four**-street quarter ships that had never been drawn before:
+   * three buildings become five, six dwellings become thirteen, eight lots
+   * become eighteen, one terrace row becomes three. The composition still clears both
+   * gates. Every row below is that plan and not a tuning of the old one.
+   *
+   * **Measured on the shared tree at handoff, which has other work in it.** An
+   * isolated worktree carrying only this change reads four buildings, ten
+   * dwellings, sixteen lots and two replan rounds; the rows below are what the
+   * tree these numbers were re-pinned in actually produces.
+   */
+  districtBuildings: 5,
+  dwellings: 13,
+  /** 11 → 8 at the spine, 8 → 18 with the extra streets (2026-08-08). */
+  lots: 18,
   infill: 2,
-  terraceBays: 4,
-  wallColumns: 85,
-  replanRounds: 3,
+  terraceBays: 11,
+  // 85 → 129: three walls on a longer town rather than one on a short one.
+  wallColumns: 129,
+  // 3 → 1: the ladder's **first** rung now clears both gates, where before the
+  // causeways' paving pushed it two rungs down.
+  replanRounds: 1,
   /**
    * Steep ground clears **both** bars with its spine: see the note below.
    *
    * 0.6686 → 0.6719 (2026-08-07), three thousandths of a quarter: the spine's
    * own stair-alleys are gone, so that much street went back to hillside.
+   * 0.6719 → 0.5555 (2026-08-08): three more principal streets and their
+   * terraces are three more terraces' worth of cut, and 0.56 still clears 0.40
+   * comfortably.
    */
-  naturalFraction: 0.671875,
-  // 0.2386 → 0.2347, the same four thousandths of street the hillside gave back.
-  // It clears the same bar the same way — this fixture's assertion is that steep
-  // ground stays *under* 0.25, so less street is the direction that helps.
-  streetFraction: 0.2347,
-  spineFraction: 0.0284,
+  naturalFraction: 0.5555,
+  /**
+   * 0.2386 → 0.2347 → 0.2550 (2026-08-08), and this one is **gross** — every
+   * paved column, spine included. Three more principal streets cost street and
+   * the spine grew with them (0.0284 → 0.0699, a longer climb on a five-street
+   * flank). Gross is now five thousandths over §6.2's 0.25 bar, and the **net**
+   * number the gate is actually applied to — 0.1850 — clears it comfortably.
+   * That is §3.6a's whole argument, arriving on the fixture that needs it.
+   */
+  streetFraction: 0.2550,
+  spineFraction: 0.0699,
 } as const;
 
 describe("the steep fixture hill town, compiled", () => {
@@ -863,10 +973,16 @@ describe("the steep fixture hill town, compiled", () => {
     expect(natural / n).toBeCloseTo(STEEP.naturalFraction, 3);
     expect(street / n).toBeCloseTo(STEEP.streetFraction, 3);
     expect(natural / n).toBeGreaterThanOrEqual(COMPOSITION_GATES.naturalFraction);
-    // Steep ground clears the street bar **with** its carriage spine, and the
-    // spine is 2.8 points of the number that cleared it: a road that connects
-    // the terraces displaces stairs that were connecting them worse.
-    expect(street / n).toBeLessThanOrEqual(COMPOSITION_GATES.streetFraction);
+    // Steep ground used to clear the street bar **gross**, with its carriage
+    // spine inside the number. Since 2026-08-08 it ships five principal streets
+    // rather than two, so gross street is 0.255 — five thousandths over the bar
+    // — and what clears is the **net** number §3.6a says the gate is applied to,
+    // 0.185, with the spine's own 0.070 as the margin. This is the fixture that
+    // makes that amendment necessary rather than tidy.
+    expect(street / n).toBeGreaterThan(COMPOSITION_GATES.streetFraction);
+    expect(district.stats["streetFraction"] as number).toBeLessThan(
+      COMPOSITION_GATES.streetFraction,
+    );
     expect(district.stats["spineFraction"]).toBeCloseTo(STEEP.spineFraction, 3);
     const walls = Number(/over (\d+) column\(s\)/.exec(sweep)?.[1] ?? -1);
     expect(walls).toBe(STEEP.wallColumns);
