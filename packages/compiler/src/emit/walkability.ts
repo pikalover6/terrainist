@@ -222,6 +222,13 @@ export interface WalkabilityReport {
   readonly columns: number;
   /** Laid columns with no standable cell at all — paving under something. */
   readonly buried: number;
+  /**
+   * Connected pieces of the **declared network only** — paving-to-paving, with
+   * the natural ground between excluded by design. That is deliberately a
+   * narrower graph than {@link entranceReachableShare} floods: it answers "did
+   * the compiler's own surfaces join up", which stays a useful per-pass signal
+   * even on a town whose grass terraces make it whole for a walker.
+   */
   readonly components: readonly WalkComponent[];
   /** Columns outside the main component. The headline connectivity number. */
   readonly orphanColumns: number;
@@ -230,8 +237,17 @@ export interface WalkabilityReport {
   /** The column a traveller arrives on, or `null` when no road reached the town. */
   readonly entrance: { readonly x: number; readonly y: number; readonly z: number } | null;
   /**
-   * Columns a traveller can reach **on foot from the entrance**, under the same
-   * reciprocal-move rule as the rest of this module.
+   * **Network** columns a traveller can reach on foot from the entrance, under
+   * the same reciprocal-move rule as the rest of this module — the product
+   * question: can you get to the town's built fabric.
+   *
+   * The walk it floods is over **all standable ground**, not only over paving.
+   * Kai walked `hillside_town_steep-5` on 2026-08-07 and reached 100% of the
+   * town by intended paths while this field read 0.150, and he was right: the
+   * flood used to run over declared paving alone, so a grass terrace four
+   * columns wide between two flights — one-block steps a player climbs without
+   * noticing — cut the town into path-islands that exist in no pair of legs.
+   * See the ground graph in section 5.
    *
    * This replaced `entranceConnected`, which was a boolean saying whether the
    * entrance happened to fall in the *largest* component. That was a tiebreak
@@ -247,6 +263,17 @@ export interface WalkabilityReport {
    * paved column reachable from the road that arrives.
    */
   readonly entranceReachableShare: number;
+  /** Every standable column in the region — the ground graph's size. */
+  readonly groundColumns: number;
+  /** Standable columns reachable on foot from the entrance. */
+  readonly groundReachable: number;
+  /**
+   * `groundReachable / groundColumns` — the terrain control beside the product
+   * number. It says how much of the *hill* a traveller can walk, so a low
+   * {@link entranceReachableShare} beside a high share here means the paving is
+   * the thing that is broken, and a low value here means the landform is.
+   */
+  readonly groundReachableShare: number;
   /** Laid columns with no standable cell, by emitter. */
   readonly buriedByEmitter: Readonly<Record<string, number>>;
   readonly deadEnds: readonly DeadEnd[];
@@ -1032,12 +1059,79 @@ export async function auditWalkability(
 
   /* --- 5: how much of the town a traveller who walks in can reach ---------- */
 
-  // The reciprocal graph is undirected, so "reachable from the entrance" *is*
-  // the entrance's own component — no second traversal, and no chance of the two
-  // answers drifting apart.
-  const entranceIndex = entrance === null ? undefined : indexOf.get(entrance);
-  const entranceReachable =
-    entranceIndex === undefined ? 0 : (buckets.get(find(entranceIndex))?.length ?? 0);
+  /**
+   * The **ground graph**: every column in the region a pair of legs can stand
+   * on, not only the ones an emitter declared.
+   *
+   * This is the correction Kai's walk of `hillside_town_steep-5` forced
+   * (2026-08-07). He reached 100% of that town on foot, by intended paths, while
+   * this module reported an entrance-reachable share of 0.150 — and the reason
+   * was the *domain*, not the town. The first version flooded only the declared
+   * paving, so two flights that meet across four columns of grass terrace read
+   * as two islands, and the hillside's natural 1-block steps — which a player
+   * climbs without thinking and which bridge the network everywhere — did not
+   * exist in the graph at all. A town measured on a graph a player does not walk
+   * is a measurement of the graph.
+   *
+   * So the domain is now every standable column, and the **reciprocal rule is
+   * kept unchanged**: that half of the law is what stops a naive walker dropping
+   * three blocks and pronouncing a hillside connected downhill only.
+   *
+   * One standing level per column — the topmost, which is what a walker on the
+   * surface has — except where an emitter declared paving, where its own
+   * resolved level wins (a doorstep under an eave must not resolve to the roof;
+   * that is the same trap {@link topStanding}'s hint exists to avoid).
+   *
+   * Cost is linear in region columns: one downward scan each, then one flood
+   * fill. No per-column pathfinding.
+   */
+  const groundFeet = new Map<string, number>(feet);
+  if (positions.length > 0) {
+    let cx0 = Infinity;
+    let cx1 = -Infinity;
+    let cz0 = Infinity;
+    let cz1 = -Infinity;
+    for (const { chunkX, chunkZ } of positions) {
+      if (chunkX < cx0) cx0 = chunkX;
+      if (chunkX > cx1) cx1 = chunkX;
+      if (chunkZ < cz0) cz0 = chunkZ;
+      if (chunkZ > cz1) cz1 = chunkZ;
+    }
+    for (let x = cx0 * 16; x < (cx1 + 1) * 16; x++) {
+      for (let z = cz0 * 16; z < (cz1 + 1) * 16; z++) {
+        const key = `${x},${z}`;
+        if (groundFeet.has(key)) continue;
+        const y = topStanding(x, z);
+        if (y !== null) groundFeet.set(key, y);
+      }
+    }
+  }
+
+  // One flood from the entrance over the ground graph answers both questions:
+  // how much of the *built fabric* a traveller can reach (the product question)
+  // and how much of the *ground* they can reach (the terrain control).
+  let groundReachable = 0;
+  let entranceReachable = 0;
+  if (entrance !== null && groundFeet.has(entrance)) {
+    const seen = new Set<string>([entrance]);
+    const queue: string[] = [entrance];
+    for (let head = 0; head < queue.length; head++) {
+      const key = queue[head] as string;
+      const [x, z] = key.split(",").map(Number) as [number, number];
+      const y = groundFeet.get(key) as number;
+      groundReachable++;
+      if (feet.has(key)) entranceReachable++;
+      for (const [dx, dz] of NEIGHBOURS) {
+        const nk = `${x + dx},${z + dz}`;
+        if (seen.has(nk)) continue;
+        const ny = groundFeet.get(nk);
+        if (ny === undefined) continue;
+        if (!reciprocal(x, y, z, x + dx, ny, z + dz)) continue;
+        seen.add(nk);
+        queue.push(nk);
+      }
+    }
+  }
 
   /* --- 6: the four things the graph cannot see ---------------------------- */
 
@@ -1074,6 +1168,9 @@ export async function auditWalkability(
     entrance: entrance === null ? null : entranceAt(entrance, feet),
     entranceReachable,
     entranceReachableShare: keys.length === 0 ? 0 : round3(entranceReachable / keys.length),
+    groundColumns: groundFeet.size,
+    groundReachable,
+    groundReachableShare: groundFeet.size === 0 ? 0 : round3(groundReachable / groundFeet.size),
     deadEnds,
     junctions: junctions.slice(0, worst),
     junctionCount: junctions.length,
