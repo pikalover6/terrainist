@@ -417,13 +417,23 @@ export function featureOf(profile: SweptProfile, id: string): IntervalFeature {
 /**
  * What the topmost course of a tread column is made of.
  *
- * - `"stair"` — the column ahead is one block higher. A stair block facing the
- *   direction of travel turns a 1.0 hop into two 0.5 steps.
+ * - `"stair"` — the column **ahead** is one block higher. A stair block whose
+ *   `facing` points at that rise turns a 1.0 hop into two 0.5 steps.
+ * - `"fall"` — the column **behind** is one block higher: the walker descends
+ *   *into* this column. Geometrically the mirror of `"stair"` — the same stair
+ *   block, `facing` reversed so it still points at the rise — and it is the
+ *   whole of the 2026-08-07 relief redesign (see {@link treadPlan}).
  * - `"landing"` — a full block. The top of a flight, and the first tread.
- * - `"slab"` — a top slab: a half-step, only ever laid where the column ahead
- *   is at the *same* level, so a slab can never be followed by a 1.5 rise.
+ * - `"slab"` — a top slab: the flat interior of a run, its lower half cut away
+ *   so the course reads as masonry rather than as a patch of brick. Only ever
+ *   laid where the column ahead is at the *same* level or lower, so a slab can
+ *   never be followed by a 1.5 rise.
+ *
+ * **`facing` points at the rise, never at the direction of travel.** They
+ * coincide on an ascending flight and are opposite on a descending one, which
+ * is exactly the bug `"fall"` exists to fix — see `dressStreetStairs`.
  */
-export type TreadShape = "landing" | "stair" | "slab";
+export type TreadShape = "landing" | "stair" | "fall" | "slab";
 
 /**
  * The tread law: a mix of full blocks, stairs and slabs over a levelled flight.
@@ -442,20 +452,60 @@ export type TreadShape = "landing" | "stair" | "slab";
  *    squarely.
  * 3. Otherwise → `"slab"`: the flat interior of a run, dropped half a block,
  *    which is what breaks up the brick-patch look without moving a level.
+ *
+ * ## `relief` — the 2026-08-07 redesign, and why it is an option
+ *
+ * The three rules above have a blind spot that is invisible on paper and total
+ * on a hill: a riser is only ever read **ahead**, so a flight routed *downhill*
+ * from the street it leaves — which is every flight on
+ * `examples/site-plan-hillside-steep.loam.json` — never produces a single
+ * stair. Measured: 1,409 flight columns, one stair block in the whole town, and
+ * 480 columns at grade (`courses <= 0`) dressed with nothing at all, because
+ * `floorAtGrade` lays a flight *into* the top course of the hill and rule 0
+ * then reads "this column carries no masonry, leave it alone". The paving was
+ * all there; the staircase was camouflaged. Kai's ratified cure (2026-08-07) is
+ * **stairs and landings**: every riser a real stair block, every landing dressed
+ * so it reads as built, same palette, the staircase shape doing the work.
+ *
+ * Under `relief` the law is three rules and no `courses` test at all — the mix
+ * becomes a pure function of the *levels*, which is what a staircase's shape is:
+ *
+ * 1. Riser ahead of one block → `"stair"`, facing forward, up the rise.
+ * 2. Riser behind of one block → `"fall"`, facing **backward**, up the rise.
+ * 3. Otherwise flat → `"slab"`: the landings, dressed.
+ *
+ * A column at grade is dressed like any other; the flight owns and repaves its
+ * whole band whether or not it had to raise it, and `dressStreetStairs`' lip
+ * machinery — which already closes a top slab that would open over a
+ * neighbour's soil — is what keeps that honest rather than a `courses` test
+ * that cannot see the difference.
+ *
+ * It is an **option** and not the law because `structures/setpieces.ts`' hillside
+ * set-piece stair reads the same function and is a walked composition; changing
+ * what it is made of is its own judgement and its own walk, and this wave's
+ * remit is the street flights. Rule 3 of the old law (a slab is never followed
+ * by a 1.5 rise) holds under both, which is what {@link worstRise} proves.
  */
 export function treadPlan(
   need: readonly number[],
   ground: readonly number[],
+  options: { readonly relief?: boolean } = {},
 ): TreadShape[] {
   const shapes: TreadShape[] = [];
   for (let k = 0; k < need.length; k++) {
     const level = need[k] as number;
+    const ahead = k + 1 < need.length ? (need[k + 1] as number) - level : 0;
+    if (options.relief === true) {
+      // `ground` is deliberately not consulted: see the docstring.
+      const drop = k > 0 ? (need[k - 1] as number) - level : 0;
+      shapes.push(ahead >= 1 ? "stair" : drop >= 1 ? "fall" : "slab");
+      continue;
+    }
     const courses = level - (ground[k] as number);
     if (courses <= 0) {
       shapes.push("landing");
       continue;
     }
-    const ahead = k + 1 < need.length ? (need[k + 1] as number) - level : 0;
     const behind = k > 0 ? level - (need[k - 1] as number) : 1;
     shapes.push(ahead >= 1 ? "stair" : behind >= 1 ? "landing" : "slab");
   }
@@ -486,8 +536,12 @@ export function synthesizeTreadPlan(
  *
  * A stair's low half is where you land coming up and its high half is where you
  * push off; a top slab is half a block down on both counts; a full block is
- * neither. This is the model the climbability test asserts against, and it is
- * deliberately the pessimistic reading of a stair.
+ * neither. A `"fall"` is the same stair turned round: its high half is on the
+ * *behind* side, so you arrive on it square and depart off its low half. This is
+ * the model the climbability test asserts against, and it is deliberately the
+ * pessimistic reading of a stair — in the world a top slab and a bottom stair
+ * both stand a player at exactly `level`, which is why the whole mix is
+ * level-neutral.
  */
 export function treadSurfaces(
   need: readonly number[],
@@ -496,6 +550,7 @@ export function treadSurfaces(
   return need.map((level, k) => {
     const shape = shapes[k] as TreadShape;
     if (shape === "stair") return { arrive: level - 0.5, depart: level };
+    if (shape === "fall") return { arrive: level, depart: level - 0.5 };
     if (shape === "slab") return { arrive: level - 0.5, depart: level - 0.5 };
     return { arrive: level, depart: level };
   });

@@ -13,8 +13,10 @@
  *
  * - the **tread law** — `need[k] = max(g[k] + 1, need[k+1] − 1)`, the backward
  *   pass that is the entirety of "no unclimbable riser";
- * - the **slab / stair / landing mix**, so a flight reads as masonry steps
- *   rather than as a patch of bricks;
+ * - the **stair / slab mix**, so a flight reads as masonry steps rather than as
+ *   a patch of bricks: a stair block at every riser — facing back up the rise,
+ *   so a flight walked downhill is as much a staircase as one walked up — and a
+ *   dressed slab on every landing between them (`treadPlan`'s `relief`);
  * - the profile's tread width, so a street stair reads as the same masonry the
  *   hillside set-piece stair is made of;
  * - **whole-run refusal.** A flight that cannot be made climbable is not built
@@ -397,20 +399,15 @@ export function streetStairLevels(
       refusedBecause: `no flight of ${geometry.centre.length} columns climbs this bank within ${STREET_STAIR_MAX_FILL} courses of masonry`,
     };
   }
-  // The tread mix is read against the course the flight *would* have ridden.
-  // `floorAtGrade` lays the flight into the top course of the hill rather than
-  // on top of it, and `treadPlan` reads `level − ground` as "how much masonry is
-  // under me" — so at grade every flat column comes out a `landing`, and a
-  // flight loses two thirds of its half-treads to a change that is about where
-  // the flight sits, not about what it is dressed with. Shifting the datum by
-  // the course that was removed keeps the mix bit-for-bit what it was.
-  return {
-    levels: run.levels,
-    shapes: treadPlan(
-      run.levels,
-      centreGround.map((g) => g - 1),
-    ),
-  };
+  // **The relief law** (`treadPlan`'s `relief`, Kai's ratified choice of
+  // 2026-08-07): the mix is a pure function of the flight's own levels — a stair
+  // at every riser, forward up an ascent and *backward* down a descent, and a
+  // dressed slab on every landing between them. It consults no ground at all,
+  // which is why the datum shift this call used to carry is gone: that shift
+  // existed only to stop `floorAtGrade` reading a flight laid *into* the hill as
+  // a flight with no masonry under it, and the question it was answering is one
+  // the relief law does not ask.
+  return { levels: run.levels, shapes: treadPlan(run.levels, centreGround, { relief: true }) };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -477,6 +474,12 @@ export function dressStreetStairs(
   const { plan } = input;
   const blocks: StructureBlock[] = [];
   let columns = 0;
+  /** A bottom stair of the theme's stair block, facing the way it is told. */
+  const stairs = (dx: number, dz: number): number | undefined =>
+    input.stack.blockStateOf(
+      roleBlock(input.palette, "ground.stairs", "stone_brick_stairs", input.stack),
+      { facing: facingOf(dx, dz), half: "bottom", shape: "straight", waterlogged: "false" },
+    );
 
   for (const column of geometry.columns) {
     if (input.owner[column.idx] !== input.job) continue;
@@ -503,8 +506,9 @@ export function dressStreetStairs(
     if (column.role !== "tread") continue;
 
     // The tread law's mix, laid *into* the top course rather than on top of it:
-    // a stair block where the column ahead is a block higher, a top slab on the
-    // flat interior of a run, and a plain full block at a landing.
+    // a stair block at every riser — facing forward where the flight climbs,
+    // backward where it descends — and a top slab on every landing between them,
+    // less whatever the lip rules below have to close with a full block.
     const shape = levels.shapes[column.k] as TreadShape;
     const step = stepAt(geometry.centre, column.k);
     // **The band end closes with a full block** (the dressing audit's
@@ -562,25 +566,34 @@ export function dressStreetStairs(
     if (lip !== undefined && lip.open && !lip.deep && !lip.soilBeside) {
       blocks.push({ x: column.x, y: top - 1, z: column.z, stateId: input.states.step });
     }
+    // **The facing is the direction of the rise, not the direction of travel.**
+    // They are the same thing on an ascending flight, which is why the pass read
+    // correct for as long as the only riser it knew about was the one ahead —
+    // and they are exactly opposite on a descending one. A `"fall"` is the same
+    // stair block with its tall half tucked under the tread *behind* it, which
+    // is what the walker's foot comes down on; derive it from the shape and
+    // never from `step` alone (the same class of bug the stoop fix found in
+    // `junction-steps.ts`' {@link stepFacing}, and the reason that one reads the
+    // neighbour that is higher rather than the way the road runs).
+    // A `"fall"` takes the step that came *into* this column, reversed — not
+    // this column's own step reversed. A flight that turns has two different
+    // axes at the vertex and the riser the walker just came down is on the
+    // incoming one. `"fall"` is never assigned to `k === 0`, so `k − 1` is
+    // always in range.
+    const into = stepAt(geometry.centre, Math.max(0, column.k - 1));
     const dressing =
       shape === "slab" && lip !== undefined && (lip.deep || lip.soilBeside)
         ? undefined
         : shape === "stair"
-        ? input.stack.blockStateOf(
-            roleBlock(input.palette, "ground.stairs", "stone_brick_stairs", input.stack),
-            {
-              facing: facingOf(step.dx, step.dz),
-              half: "bottom",
-              shape: "straight",
-              waterlogged: "false",
-            },
-          )
-        : shape === "slab"
-          ? input.stack.blockStateOf(
-              roleBlock(input.palette, "ground.slab", "stone_brick_slab", input.stack),
-              { type: "top", waterlogged: "false" },
-            )
-          : undefined;
+          ? stairs(step.dx, step.dz)
+          : shape === "fall"
+            ? stairs(-into.dx, -into.dz)
+            : shape === "slab"
+              ? input.stack.blockStateOf(
+                  roleBlock(input.palette, "ground.slab", "stone_brick_slab", input.stack),
+                  { type: "top", waterlogged: "false" },
+                )
+              : undefined;
     if (dressing !== undefined) blocks.push({ x: column.x, y: top, z: column.z, stateId: dressing });
   }
 

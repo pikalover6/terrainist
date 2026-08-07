@@ -92,9 +92,12 @@ interface Goldens {
   readonly components: number;
   /** Columns outside the largest piece. */
   readonly orphans: number;
-  /** Columns a traveller who walks in can reach, and their share of the whole. */
+  /** Network columns a traveller who walks in can reach, and their share. */
   readonly entranceReachable: number;
   readonly entranceReachableShare: number;
+  /** All standable columns they can reach, and their share of the region. */
+  readonly groundReachable: number;
+  readonly groundReachableShare: number;
   /** Flights and streets whose far end joins nothing. */
   readonly deadEnds: number;
   /** Courses per walkable column, aggregated over junctions… */
@@ -142,24 +145,45 @@ const HILLSIDE: Goldens = {
   // ten components, nine orphan columns, 0.2% of the paving.
   components: 10,
   orphans: 9,
-  // 3963 → 3971, share → 1.000. **The walker walks on grass (e668053)**: the
-  // entrance flood now crosses every standable column rather than declared
-  // paving alone, so all that is left out is the entrance's own column. The
-  // pinned share is the instrument's ceiling now; the number to watch for
-  // regressions on this fixture is `orphans` above.
+  // 0.998 → **1.000** (domain fix, 2026-08-07): the flood now runs over all
+  // standable ground rather than over declared paving alone, so the nine
+  // orphan columns that a walker reaches across two blocks of grass are
+  // reached. Every laid column but one is reachable on foot from the entrance.
   entranceReachable: 3971,
-  entranceReachableShare: 1.0,
+  entranceReachableShare: 1,
+  // The terrain control: 71% of the region's standable columns. The remainder
+  // is the hill's own cliffs and the ground beyond them — nobody's to serve.
+  groundReachable: 185662,
+  groundReachableShare: 0.709,
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 3,
-  // 0.188 → 0.175 (eb93a54, 4b18ef5), → 0.176 with Option A's tip flights
-  // (baeed2a) adding courses at street tips. The solo control held at 0.048;
-  // junctions remain the lever. MUST GO DOWN.
+  // 0.188 → 0.175, and 0.075 → 0.048 (eb93a54, junction steps 4b18ef5). The
+  // solo control fell by a third again; junctions remain the lever.
+  //
+  // **0.175 → 0.176** with the stoop fix (2026-08-07): four lane columns beside
+  // doorsteps are no longer *raised* to meet the side of a stoop, so four
+  // courses of ground that used to be part of the paving are not, and the same
+  // clutter divides by a slightly smaller walkable count. The numerator did not
+  // move. MUST GO DOWN.
   junctionDensity: 0.176,
   soloDensity: 0.048,
-  // 4 → 1 runs, and the unearned face at (5, 44) is **served again**: Option A
-  // (baeed2a) walks a street tip down onto its own flight, which is exactly the
-  // connector the causeway landing had removed from that face's foot. Back to
-  // 0 unserved, where it MUST stay.
+  // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
+  // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
+  // a *new* row in the wrong direction and it is recorded as such rather than
+  // absorbed: the causeway landing removed the connector network that happened
+  // to serve that face's foot. MUST GO DOWN, back to 0.
+  //
+  // **4 → 1 runs and 1 → 0 unserved**, with the terminus landing (2026-08-07,
+  // `structures/roads.ts`' `terminusLandings`) — Kai's Option A after the walk:
+  // where a street stands two blocks or more above the flight corridor beside
+  // it, the *street* yields its terminal columns and steps down onto the
+  // treads, one block per column, `drop − 1` columns of them. Three of the four
+  // runs were that one situation at three places on this fixture: the unearned
+  // three-block riser at (5, 44), the pair at (−29, 40), and the served
+  // three-block run at (−1, 43) that was the flight's own head. All three are
+  // now staircases and not faces at all, which is why the *denominator* fell
+  // with the defect. The one run left is (93, 37), drop 2 — unrelated, and
+  // under the drop `unservedFaces` counts.
   faceRuns: 1,
   unservedFaces: 0,
 };
@@ -178,21 +202,28 @@ const STEEP: Goldens = {
   // DOWN, and on this fixture the entrance share below says why it matters.
   components: 12,
   orphans: 649,
-  // 633 → 4215, share 0.15 → 1.000. **The walker walks on grass (e668053).**
-  // Kai reaches 100% of this town on foot and the audit said 15%: the graph
-  // only ever held declared paving, so two flights separated by four columns of
-  // grass terrace read as islands. The town was never disconnected — the
-  // instrument was. With the ground graph the share is at its ceiling; the
-  // fragmentation this fixture still carries lives in `components`/`orphans`
-  // above, which stay network-scoped by design and MUST come down.
+  // 0.150 → **1.000**, and this row is why the domain was fixed. Kai walked
+  // `hillside_town_steep-5` on 2026-08-07 and reached 100% of the town on foot
+  // by intended paths; the instrument said 15%. It was the instrument: the
+  // flood ran over declared paving only, so the natural terrace ground that
+  // bridges these flights everywhere was not in the graph and the town read as
+  // path-islands. Over all standable ground, every laid column but one is
+  // reachable. `components` below stays network-scoped by design.
   entranceReachable: 4215,
-  entranceReachableShare: 1.0,
+  entranceReachableShare: 1,
+  groundReachable: 136343,
+  groundReachableShare: 0.755,
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
   deadEnds: 10,
-  // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5); → 0.126/0.044 with
-  // Option A's tip flights (baeed2a). MUST GO DOWN.
+  // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5). **0.124 → 0.125** with
+  // the stoop fix (2026-08-07), for the reason the hillside row gives: three
+  // fewer lifts, a marginally smaller denominator, an unmoved numerator.
+  // **0.125 → 0.126** at wave close (2026-08-07, composed tree): the relief
+  // redesign's dressed landings shave the walkable denominator once more;
+  // the clutter numerator has not moved since the stoop fix.
   junctionDensity: 0.126,
+  // 0.043 → 0.044 at wave close, the same denominator shave as the row above.
   soloDensity: 0.044,
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
@@ -240,11 +271,25 @@ interface DressingGoldens {
 }
 
 const HILLSIDE_DRESSING: DressingGoldens = {
-  // 1059 → 319 and 191 → 41: the denominators; → 312/36 as Option A (baeed2a)
-  // recuts the tip flights. The flight-floor fix (eb93a54) lays a flight *in*
-  // the ground, so most of what used to be a half-height tread over its own
-  // masonry is now full ground.
-  halfTreads: 312,
+  // 1059 → 319 and 191 → 41: the denominators. The flight-floor fix (eb93a54)
+  // lays a flight *in* the ground, so most of what used to be a half-height
+  // tread over its own masonry is now full ground.
+  //
+  // **319 → 300 and 41 → 36** with the relief redesign (2026-08-07, Kai's
+  // ratified "stairs + landings"). Both rows are *mix* rows and this wave
+  // deliberately changes the mix, so they move and the direction is not the
+  // point: 83 tread columns that used to be half-height slabs are now stair
+  // blocks — a real riser where the flight descends — which takes them out of
+  // the `halfTreads` population and out of `openSided` with them (a stair's
+  // lower half is solid, so it has no underside to open). The row that carries
+  // the judgement is `stepTreadsWithRelief`, 315 → 383 on this fixture, and
+  // `openOverSoil`/`floatingDressing` below are still nought, which is the bar:
+  // the mix changed, and nothing came loose with it.
+  //
+  // Re-pinned from the values HEAD actually produces (319/41 were stale before
+  // this wave: HEAD measured 312/36 — the two rows were red on arrival and the
+  // `openSided` assertion never ran, being shadowed by `halfTreads`).
+  halfTreads: 300,
   openSided: 36,
   // **1 → 0.** The floating slab over exposed dirt is gone from this fixture,
   // and not by deleting the tread mix — `openSided` fell with it because the
@@ -259,14 +304,35 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   streetLamps: 32,
   sunkenLamps: 0,
   deeplySunkenLamps: 0,
-  // 21 → 14 raw cuts (→ 12 with Option A re-landing two of them), and
-  // **21 → 0 undressed**: the junction-step wave (4b18ef5) dresses every one.
-  // `cutoffColumns` is the denominator and is pinned so that a fix which
-  // merely stops cutting reads as what it is.
+  // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
+  // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
+  // denominator and is pinned so that a fix which merely stops cutting reads as
+  // what it is.
+  //
+  // **14 → 18** with the stoop fix (2026-08-07), and the four are a *decision*.
+  // They are lane columns beside a doorstep whose masonry stands two above
+  // them: the pass used to climb that, which closed the cut and put a hump in
+  // dead-flat pavement with a stair turned sideways on top of it — the pair
+  // Kai walked at (−80, 177, −216). It now noses them where they stand, so the
+  // cut is *counted* rather than absorbed and `undressedCutoffs` — the row that
+  // matters — is still nought. The cheek of a stoop is architecture, not a
+  // hole; MUST GO DOWN only by the doorstep and the lane arriving level, never
+  // by climbing a step's side again.
+  //
+  // …and **18 → 12** with the terminus landing (2026-08-07), which is the other
+  // direction and is the defect going away rather than being reclassified. Six
+  // of the cuts were the street plane hanging over the head of the flight at
+  // (−1 … 2, 44) — four of them a full three blocks, the deepest cutoffs on
+  // either fixture, and the pair of drop-2 cuts at (−29 … −28, 41) and
+  // (2, 43). The street now steps down onto those treads instead of ending
+  // above them, so there is no bite left to dress. Measured in isolation the
+  // landing takes this row 14 → 8; stacked on the stoop fix, 18 → 12.
   cutoffColumns: 12,
   undressedCutoffs: 0,
-  // 32 → 30 columns of both-sides plinth, longest run two. Still the
-  // external road's own kerb, still no run of plinth road on this fixture.
+  // 32 → **30**, longest run still two. Still the external road's own kerb,
+  // still no run of plinth road on this fixture — two of the columns that read
+  // proud were lane cells raised against a stoop, and they are not raised now
+  // (2026-08-07).
   plinthColumns: 30,
   plinthLongestRun: 2,
   stepPlinthColumns: 0,
@@ -280,22 +346,36 @@ const HILLSIDE_DRESSING: DressingGoldens = {
 };
 
 const STEEP_DRESSING: DressingGoldens = {
-  // Same two levers, same direction: 1571 → 594, 551 → 178; → 548/133 as
-  // Option A (baeed2a) recuts the tip flights.
-  halfTreads: 548,
-  openSided: 133,
+  // Same two levers, same direction: 1571 → 594, 551 → 178.
+  //
+  // **594 → 520 and 178 → 123** with the relief redesign (2026-08-07) — see the
+  // hillside rows for the argument. This is the fixture the redesign was
+  // diagnosed on: 1,409 flight columns, every one of them paved, and **one
+  // stair block in the whole town**, because the tread law read a riser only
+  // *ahead* and every flight here leaves its street going down. 126 of those
+  // half-treads are now stairs facing back up the rise, which is what takes
+  // both rows down. `stepTreadsWithRelief` 555 → 653; stair blocks 7 → 133.
+  //
+  // Re-pinned from the values HEAD actually produces (594/178 were stale before
+  // this wave: HEAD measured 548/133).
+  halfTreads: 520,
+  openSided: 123,
   // 2 → 0 and 2 → 0 (eb93a54).
   openOverSoil: 0,
   floatingDressing: 0,
   streetLamps: 17,
   sunkenLamps: 0,
   deeplySunkenLamps: 0,
-  // 11 → 13 cuts (→ 16 as Option A's tip flights cut their own slots),
-  // **11 → 0 undressed** (4b18ef5): every cut stays dressed.
+  // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5). **13 → 16** with the stoop
+  // fix (2026-08-07) — three lane columns beside doorsteps that are nosed where
+  // they stand instead of climbing the side of a step. See the hillside row for
+  // the argument; `undressedCutoffs` is still nought, which is the bar.
   cutoffColumns: 16,
   undressedCutoffs: 0,
-  // 5 → 3 columns, longest run 2 → 1. A kerb detail, well under
-  // `PLINTH_MIN_RUN`. Pinned so it cannot creep.
+  // 3 → 5 columns, longest run 1 → 2, and then **5 → 3, run 2 → 1** with the
+  // stoop fix (2026-08-07): the lifts it withdrew were exactly the cells that
+  // stood proud of the ground beside them. Small either way; a kerb detail,
+  // well under `PLINTH_MIN_RUN`. Pinned so it cannot creep.
   plinthColumns: 3,
   plinthLongestRun: 1,
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
@@ -407,6 +487,9 @@ describe("the walkability audit", () => {
         // MUST GO UP, towards 1 on both fixtures.
         expect(get().entranceReachable).toBe(golden.entranceReachable);
         expect(get().entranceReachableShare).toBeCloseTo(golden.entranceReachableShare, 3);
+        // The ground control, added with the domain fix (2026-08-07).
+        expect(get().groundReachable).toBe(golden.groundReachable);
+        expect(get().groundReachableShare).toBeCloseTo(golden.groundReachableShare, 3);
       });
 
       it("DEFECT GOLDEN — flights and streets whose far end joins nothing", () => {
