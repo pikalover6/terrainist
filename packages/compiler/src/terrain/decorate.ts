@@ -177,6 +177,10 @@ export function decorate(input: DecorateInput): DecorationResult {
     patch: detailSeed(input.seed, "decor.patch"),
     water: detailSeed(input.seed, "decor.water"),
     shore: detailSeed(input.seed, "decor.shore"),
+    // One stream for the settlement-edge feather, hung off the *root* seed and
+    // not off any node's, so two woods meeting at the same column agree about
+    // whether it keeps its plants. See `undergrowthFeather` in vegetation.ts.
+    feather: detailSeed(input.seed, "decor.settlement-feather"),
   };
 
   for (const node of input.forests) {
@@ -201,7 +205,7 @@ function decorateForest(
   decorated: Uint8Array,
   blocks: DecorBlock[],
   counts: Record<string, number>,
-  seeds: { patch: number },
+  seeds: { patch: number; feather: number },
 ): void {
   const { plan, classification, temperature, palette } = input;
   const { region, ground, fluidKind, surface, volcanic, lavaFlow } = plan;
@@ -240,6 +244,15 @@ function decorateForest(
         // Bare ground stays bare.
         continue;
       }
+
+      // --- the settlement-edge feather --------------------------------------
+      // Claimed ground is already out (it never reaches the node mask); this is
+      // the *natural* side of that boundary, thinning from bare at the edge to
+      // ambient at the band's rim so the mask stops reading as a drawn line.
+      // Below the soil conversions on purpose: coarse dirt and podzol are the
+      // ground itself, and the feather is about what grows on it.
+      const survival = node.feather?.[idx] ?? 1;
+      if (survival < 1 && hash2(seeds.feather, x, z, 0) >= survival) continue;
 
       // --- fallen logs (claim several columns, so try them first) -----------
       // A log is a four-block beam, so "this column is not claimed" is not

@@ -59,6 +59,7 @@ import {
 } from "./flora/index.js";
 import type { ColumnPlan } from "./columns.js";
 import { FluidKind } from "./columns.js";
+import { chebyshevDistance, featherWeight } from "./landuse.js";
 import type { Palette } from "./palette.js";
 
 /** §7 defaults for `scatter.forest@0`. */
@@ -158,6 +159,12 @@ export interface ScatteredNode {
   readonly mask: Uint8Array;
   /** The node's resolved composition, absent when it declared no `strata`. */
   readonly strata?: ResolvedStrata;
+  /**
+   * Per-column undergrowth survival weight in `0..1` — see
+   * {@link undergrowthFeather}. Shared by every node of one compile; absent
+   * for documents with no structures to feather away from.
+   */
+  readonly feather?: Float32Array;
 }
 
 /** The outcome of the scatter pass. */
@@ -278,6 +285,59 @@ export function forestEligibility(
 }
 
 /**
+ * How far past claimed ground the undergrowth thins back in, in columns.
+ *
+ * {@link forestEligibility} excludes the occupancy union outright, and that is
+ * right for trees — a trunk in a footprint grows through a wall. The
+ * undergrowth pass reads the same mask, and there it is wrong: occupancy is a
+ * union of *rectangles*, so a walk of the first steep hillside town found the
+ * line it draws running dead straight across natural terrace after natural
+ * terrace, tall grass and ferns on one side of it and bare stepped grass on the
+ * other. Measured on that fixture the step was total: 0.000 plants per column
+ * inside the mask, 0.207 one column outside it.
+ *
+ * The biome clamp had already learned this lesson (`landuse.ts`) — the fix
+ * there was a dithered band, and it is the fix here. Ten columns is the same
+ * order as the clamp's 6–10 stored cells, and wide enough that the eye reads a
+ * thinning meadow rather than an edge.
+ */
+export const UNDERGROWTH_FEATHER = 10;
+
+/**
+ * The undergrowth's survival weight per column: 0 on claimed ground, ramping
+ * to 1 over {@link UNDERGROWTH_FEATHER} columns of natural ground beyond it.
+ *
+ * A weight, not a decision: the caller turns it into one with a position-keyed
+ * hash, so the thinning is a pure function of the column. No RNG, no traversal
+ * order, no wall clock — recompiling the same document thins the same columns.
+ *
+ * The ramp is `landuse.ts`'s smoothstep, run the other way up: `featherWeight`
+ * answers "how much does the claimed side still apply here", and what survives
+ * is one minus that.
+ */
+export function undergrowthFeather(
+  structures: StructureOccupancy,
+  width: number,
+  depth: number,
+  band: number = UNDERGROWTH_FEATHER,
+): Float32Array {
+  const weight = new Float32Array(width * depth);
+  if (band <= 0) {
+    weight.fill(1);
+    for (let i = 0; i < weight.length; i++) if (structures.mask[i] === 1) weight[i] = 0;
+    return weight;
+  }
+  const distance = chebyshevDistance(structures.mask, width, depth, band);
+  for (let i = 0; i < weight.length; i++) {
+    const d = distance[i] as number;
+    // `chebyshevDistance` reports -1 past its cap: that ground is far enough
+    // from anything claimed to be ambient.
+    weight[i] = d < 0 ? 1 : d === 0 ? 0 : 1 - featherWeight(d, band);
+  }
+  return weight;
+}
+
+/**
  * Run every forest node's scatter, in document order.
  *
  * `clearing` is the settlement's tree-density field (see `clearing.ts`): a
@@ -303,6 +363,13 @@ export function scatterForests(
   const trees: TreePlacement[] = [];
   const perNode: Record<string, number> = {};
   const scattered: ScatteredNode[] = [];
+  // One field for the whole compile: the undergrowth thins back in past claimed
+  // ground the same way for every node, because it is a property of the
+  // settlement's edge, not of any one wood.
+  const feather =
+    structures === undefined
+      ? undefined
+      : undergrowthFeather(structures, region.width, region.depth);
   const strataReports: StrataReport[] = [];
 
   for (const node of nodes) {
@@ -373,7 +440,14 @@ export function scatterForests(
       });
     }
     perNode[node.id] = trees.length - before;
-    scattered.push({ id: node.id, seed: node.seed, params, mask, ...(strata === undefined ? {} : { strata }) });
+    scattered.push({
+      id: node.id,
+      seed: node.seed,
+      params,
+      mask,
+      ...(strata === undefined ? {} : { strata }),
+      ...(feather === undefined ? {} : { feather }),
+    });
   }
 
   return { trees, coverage, perNode, nodes: scattered, strata: strataReports };
