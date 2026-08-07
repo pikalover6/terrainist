@@ -76,6 +76,15 @@ trouble). Both queued for the next flora wave. Kai also designed the
 **funnel memory** (this file system + rendered log, protocol in CLAUDE.md)
 and invited liberal AskUserQuestion popups.
 
+**Walk 1 (hillside_town-7) verdicts + wave 4 dispatched:** Option A
+ratified (street yields two columns onto the flight — planner-level, in
+flight); zero-masonry + 16 dwellings fine IF style-flexible (masonry
+ration + density must become intent dials — roadmap 4a); new defects in
+flight: sideways doorstep stairs (junction-steps), shallow slab-lip dirt
+(full-block floor ratified), glass-pane canopy support, path-overhang
+watch item. Lanterns otherwise very good. Steep/oldgrowth/harbourtown-A/B
+walks still incoming.
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density

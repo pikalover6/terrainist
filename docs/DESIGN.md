@@ -670,13 +670,22 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 3. **Uphill masonry (SITE-PLAN §5.2 rule 9)** — every cut edge along a street
    currently gets rock where a real town would put masonry; needs a sweep face
    whose upper side is natural ground. Reported in every compile.
-4. **The verge opening** — hillside's one `unservedFace` at (5,44): a terrace
-   street dead-ends one column from its own flight and the verge line carries
-   a 3-block riser. Diagnosed 2026-08-07, deliberately unfixed: the earn
-   needs a recessed cut into the *street's* terminal columns, which is a
-   cross-job level negotiation. Two options on file (street terminus yields
-   at planning time in `layout/levels.ts`, or a post-commit verge-opening
-   arbitration in `roads.ts`); pick after a walk, not before.
+4. **The verge opening** — hillside's one `unservedFace` at (5,44).
+   **Kai walked it and ratified Option A** (2026-08-07): the street ends two
+   columns earlier and steps down onto the flight, planner-level. In flight.
+   Same-area watch item from the walk: "one path overextends and hangs
+   slightly".
+4a. **Walk-1 verdicts (hillside_town-7, 2026-08-07), the aesthetic reads:**
+   zero masonry is fine; 16 dwellings is "a tad sparse but within reason" —
+   **both conditional on style flexibility**: the masonry ration
+   (`WALL_COLUMNS_PER_DWELLING`) and settlement density must become
+   intent/character-reachable dials rather than the only mode. New walk
+   defects, all in flight: redundant sideways stairs beside a doorstep
+   (junction-steps × doorsteps), shallow slab-lip dirt exposure (the 1-deep
+   cousin of the fixed ≥2 case; ratified floor: full blocks where soil
+   shows), and a prop canopy held up by glass panes. Lanterns otherwise
+   "look very good"; the bitten-junction fix is visually inconclusive (same
+   site as the verge defect).
 5. **Junction-steps on flat towns** — the reconciliation pass is gated to
    multi-level ground. Enabling it globally fixes c1-harbourtown's 1,026
    latent cutoffs (orphans 21,412 → 288) but regresses `unservedFaces`
