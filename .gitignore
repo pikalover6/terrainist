@@ -8,3 +8,4 @@ out/
 !.claude/agents/
 !.claude/settings.json
 !.claude/hooks/
+!.claude/memory/

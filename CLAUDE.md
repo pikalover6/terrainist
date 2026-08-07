@@ -46,6 +46,31 @@ Kai's MacBook (Kai-approved, informed decision). Everything lives in
   without asking Kai first. Self-granting permission rules is a hard
   boundary — route permission needs through Kai.
 
+## Project memory: the funnel cells + the rendered log
+
+**Designed by Kai 2026-08-07.** Chronological project memory lives in exactly
+four committed files, `.claude/memory/cell-1.md` … `cell-4.md`, coarse →
+fine: cell 4 holds roughly the last day at fine detail; cell 1 holds months
+at maximum compression. All four share an equal size budget (~6 KB is the
+guideline, not a hard rule). There are **no fixed time windows** — whichever
+agent is working on the project compresses periodically: when cell 4
+outgrows its budget, distill its older half into cell 3, and so on up the
+funnel. A ratified decision or standing constraint must move *up* the funnel
+when its cell is compressed — it may shrink, never silently vanish.
+
+The user-facing memory/log page is **rendered, never hand-written**:
+`node tools/session-log/render.mjs --out <html>` combines the four cells
+with the live Claude Code transcript (assistant prose only — tool calls,
+diffs, reasoning traces and system noise are stripped), and the orchestrator
+republishes it to the standing artifact at every pause where it would give
+Kai a summary. Artifact:
+https://claude.ai/code/artifact/7c312d44-f26b-4108-b98b-127a1a12cdab
+
+**Kai wants popups liberally** (2026-08-07): use AskUserQuestion freely,
+even for minor decisions — he enjoys them and answers from his phone, so a
+popup rarely blocks anything. Don't sit on a reversible-but-ambiguous choice
+when a popup would settle it.
+
 ## Development workflow (session orchestration)
 
 **Standing workflow (Kai, 2026-07-29; concurrency raised 2026-07-31):** a
