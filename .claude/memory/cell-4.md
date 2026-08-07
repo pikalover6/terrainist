@@ -94,6 +94,16 @@ flight), small-vegetation hard cutoff (feather in flight). Landed
 meanwhile: bus-shelter pane fix `a9a9012`, slab-lip fix `0c1cc0d`
 (shallow-lip detector was structurally blind: floor probe needs 1x2 body).
 
+**Walk 3 (oldgrowth_vale):** giants FAILED the skyline bar ("not a single
+growth meaningfully more grand than vanilla"); roots read as flat log-ring
+tiles → Kai ratified a procedural buttress-root generator; floating vines
+(likely downstream of leaf decay); hanging growth underdone; understory
+CLOSED good; contrast fine; **LEAF_STATE_POLICY flip = GO** (he observed
+live decay — the awaited confirmation; whorl geometry unchanged, its 32
+blocks become counted persistent). Queue when slots free: invisible
+flights (medium, first), giants-grandeur + roots iteration (medium), leaf
+flip (low).
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density

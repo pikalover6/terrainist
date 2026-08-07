@@ -718,17 +718,24 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 **Fabric breadth (Phase 4) — remaining.** Each lands against the contracts
 above and registers its own fan-out rows. *(Urban forms and courtyards/levels
 shipped — see "What is built today".)*
-- **Flora grammar — WP-A and WP-B shipped 2026-08-07** (`docs/FLORA-GRAMMAR-
-  v0.md`: the engine, six programs, 13 naturalistic species, strata; the
-  old-growth fixture lints zero and awaits Kai's silhouette walk). Remaining:
-  **WP-C** (fungal + fantasy + `character.flora`) and **WP-D** (kit +
-  classifier + a Luna e2e flora demo), plus the queued follow-ups settled by
-  popup — per-species `snowLine` as documented, and law 1 suspended
-  (accidental masts prevented at source via `capWood`; deliberate snags
-  legal; pre-authorized fallback to a `snag: true` opt-out). Parked with
-  Kai: the `LEAF_STATE_POLICY` flip (wild-tree leaves are vanilla-decaying
-  today; fix built, inert — flip after a comparison walk, and the mega-whorl
-  narrowing rides with it) and understory density (§9.9).
+- **Flora grammar — WP-A and WP-B shipped 2026-08-07; walked same day.**
+  Kai's old-growth verdicts: understory **closed, good** ("dense but the
+  right amount" — §9.9 resolved as-is); legacy/modern contrast fine; but
+  **the giants failed the silhouette bar** — "not a single growth
+  meaningfully more grand than vanilla"; the root flare reads as flat log
+  rings ("a few squares"), and hanging growth is underdone. The **WP-B
+  grandeur iteration** is therefore next in the flora line: giants that
+  genuinely tower (height/crown mass/emergent budget, judged by a measured
+  prominence bar — crown top vs the surrounding canopy sea), a
+  **procedural buttress-root generator** (Kai's ratified instinct), richer
+  hanging growth on large trees, and the floating-vines cleanup.
+  **`LEAF_STATE_POLICY` flip: GO** (Kai observed live decay on the walk —
+  the confirmation the flip was waiting for); the mega-whorl keeps its
+  geometry (its 32 unreachable blocks ride the flip as counted
+  `persistent` exceptions). Then **WP-C** (fungal + fantasy +
+  `character.flora`), **WP-D** (kit + classifier + Luna e2e demo), and the
+  popup-settled follow-ups (per-species `snowLine`; law 1 suspended with
+  `capWood` at source).
 - **Infrastructure family** — aqueduct, canal, rail, mine headworks, on the
   sweep engine.
 - **Agricultural layer and camps** — field parcels following contour, hedgerows,
