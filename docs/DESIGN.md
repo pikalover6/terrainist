@@ -670,11 +670,15 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 3. **Uphill masonry (SITE-PLAN §5.2 rule 9)** — every cut edge along a street
    currently gets rock where a real town would put masonry; needs a sweep face
    whose upper side is natural ground. Reported in every compile.
-4. **The verge opening** — hillside's one `unservedFace` at (5,44).
-   **Kai walked it and ratified Option A** (2026-08-07): the street ends two
-   columns earlier and steps down onto the flight, planner-level. In flight.
-   Same-area watch item from the walk: "one path overextends and hangs
-   slightly".
+4. ~~The verge opening~~ — **fixed 2026-08-07, Kai's Option A** as
+   `terminusLandings` (`roads.ts` phase 2a — surfacing, not layout, because
+   only surfacing knows both the street's and the flight's laws): a street
+   tip ≥2 above an adjoining flight corridor steps down `drop − 1` columns,
+   the corridor including the unowned verge shoulder. The walked "path
+   overextends and hangs" was the same mechanism (the terrace lane three
+   proud over a flight head) and fell to the same rule. Hillside
+   `unservedFaces` 1→0, `faceRuns` 4→1, cutoffs 14→8; steep provably
+   unmoved.
 4a. **Walk-1 verdicts (hillside_town-7, 2026-08-07), the aesthetic reads:**
    zero masonry is fine; 16 dwellings is "a tad sparse but within reason" —
    **both conditional on style flexibility**: the masonry ration
