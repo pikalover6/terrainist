@@ -99,12 +99,72 @@ function legacyBlob(radius: number, squash: number): (v: FloraVariation) => Flor
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* The one deliberate re-baseline                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **`birch_slim` was re-baselined on 2026-08-08, by Kai's decision, and every
+ * shipped world with birches in it moved once.**
+ *
+ * The old reference is still right there (`legacyBlob(2, 0.75)`), and the test
+ * below asserts the new geometry *differs* from it — the movement is the point,
+ * not an accident. Kai's walk-4 of the old-growth fixture: birches read as
+ * comic — one white pole after another under a single merged blob of leaves.
+ * The proven diagnosis was two-part and both parts are fixed here:
+ *
+ * 1. **Proportion.** `blob` seats its crown at `cy = height - 1` with
+ *    `ry = round(r · squash)`, so `squash 0.75` capped the crown at four to
+ *    five layers *whatever the trunk* — a h=9 birch was six or seven bare logs
+ *    under a puck. The species now asks for a taller crown (`squash 1.4`,
+ *    `crownMin 3`) dropped onto the upper half of the trunk (`crownDrop 1`)
+ *    with a bare-trunk floor (`bareShare 0.4`) so a h=6 birch does not become a
+ *    bush. The trunk is still one column and heights are still 6–9.
+ * 2. **Spacing.** `minSpacing 5` — see `vegetation.ts`'s `speciesSpacing`.
+ *
+ * The other three legacy shapes are untouched and stay list-identical; the test
+ * that asserts so is the reason this file exists. `oak_round` shares the blob
+ * law and was measured at the same time: at its tallest (h=7) it stands four
+ * bare logs under a five-layer crown — a ratio of 0.8, never the birch's 1.5 —
+ * so it keeps its geometry and its byte-identity.
+ */
+function reproportionedBlob(
+  radius: number,
+  squash: number,
+  crownMin: number,
+  crownDrop: number,
+  bareShare: number,
+): (v: FloraVariation) => FloraBlock[] {
+  return ({ height, radiusDelta }) => {
+    const out: FloraBlock[] = [];
+    for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
+    const r = Math.max(1, radius + radiusDelta);
+    const ry = Math.max(1, crownMin, Math.round(r * squash));
+    const cy = height - 1 - Math.max(0, Math.min(crownDrop, ry - 2));
+    const floorY = Math.floor(bareShare * height);
+    for (let dy = Math.max(cy - ry, floorY); dy <= cy + ry; dy++) {
+      for (let dz = -r; dz <= r; dz++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (dx === 0 && dz === 0 && dy < height) continue;
+          const vy = (dy - cy) / ry;
+          if ((dx * dx + dz * dz) / (r * r) + vy * vy > 1.15) continue;
+          out.push({ dx, dy, dz, part: "leaves" });
+        }
+      }
+    }
+    return out;
+  };
+}
+
 const LEGACY_CLOSURES: Readonly<Record<string, (v: FloraVariation) => FloraBlock[]>> = {
   spruce_tall: legacyConifer(2),
   spruce_squat: legacyConifer(3),
   oak_round: legacyBlob(2, 1),
-  birch_slim: legacyBlob(2, 0.75),
+  birch_slim: reproportionedBlob(2, 1.4, 3, 1, 0.4),
 };
+
+/** The pre-2026-08-08 birch, kept so the re-baseline stays visible forever. */
+const PRE_REPROPORTION_BIRCH = legacyBlob(2, 0.75);
 
 /**
  * The envelope corners (§3.3), plus the `+4` a mega spruce's height carries in
@@ -136,6 +196,36 @@ describe("flora: the legacy re-expression", () => {
         expect(actual.length, `${id} ${JSON.stringify(v)} length`).toBe(expected.length);
         expect(actual, `${id} ${JSON.stringify(v)}`).toEqual(expected);
       }
+    }
+  });
+
+  it("birch_slim, and only birch_slim, moved off its pre-2026-08-08 geometry", () => {
+    const birch = LEGACY_FLORA_SPECIES.birch_slim as FloraSpeciesDef;
+    const program = SHAPE_PROGRAMS[birch.program as keyof typeof SHAPE_PROGRAMS];
+    let moved = 0;
+    for (const v of corners(birch)) {
+      const before = PRE_REPROPORTION_BIRCH(v);
+      const after = program.blocks(v, birch, noRng);
+      if (JSON.stringify(before) !== JSON.stringify(after)) moved += 1;
+      // The crown must clothe the trunk, not perch on it: at the middle draw
+      // the lowest leaf sits at or below the trunk's midpoint.
+      // Only over the species' real envelope: `corners` also probes the `+4`
+      // a mega spruce carries, and birch has no `megaShare`.
+      if (v.radiusDelta >= 0 && v.height <= birch.height[1]) {
+        const lowest = Math.min(...after.filter((b) => b.part === "leaves").map((b) => b.dy));
+        expect(lowest, `birch ${JSON.stringify(v)} crown base`).toBeLessThanOrEqual(
+          Math.ceil(v.height * 0.6),
+        );
+      }
+    }
+    // Every corner but the ones the clamps neutralise actually moved.
+    expect(moved).toBeGreaterThan(corners(birch).length / 2);
+    // The other three are byte-frozen: their closures are the untouched originals.
+    for (const id of ["spruce_tall", "spruce_squat", "oak_round"]) {
+      const def = LEGACY_FLORA_SPECIES[id as keyof typeof LEGACY_FLORA_SPECIES] as FloraSpeciesDef;
+      expect(def.knobs, `${id} knobs`).toEqual(
+        id === "oak_round" ? { radius: 2, squash: 1 } : { spread: id === "spruce_tall" ? 2 : 3 },
+      );
     }
   });
 

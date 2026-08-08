@@ -83,6 +83,21 @@ export const conifer: FloraProgram = {
  * `dx==0 && dz==0 && dy < height` guard lets the trunk column take leaves at and
  * above `height`. The `1.15` rather than `1` is what stops the equator reading
  * as a faceted disc.
+ *
+ * Three knobs, all no-ops at their defaults, exist because the crown law above
+ * is *tied to the trunk top* and therefore says nothing about how far down the
+ * trunk the crown reaches. With `squash ≤ 1` a tall species gets a fixed squat
+ * disc over an ever-longer bare pole — the comic birch Kai walked on
+ * 2026-08-08 (h=9 birch: seven bare white blocks under a four-layer puck):
+ *
+ * - `crownMin` — a floor under `ry`, so the narrow (`radiusDelta = -1`) draw
+ *   is a slim column of leaves rather than a five-block tuft.
+ * - `crownDrop` — lowers the crown centre by up to `ry - 2` blocks, which is
+ *   exactly the clamp that keeps the crown top at or above `height + 1` and so
+ *   keeps law 1 true by construction for every drop.
+ * - `bareShare` — the fraction of the trunk that stays bare; the crown is
+ *   clipped below `floor(bareShare · height)`, so a short tree does not turn
+ *   into a bush when the drop reaches the ground.
  */
 export const blob: FloraProgram = {
   id: "blob",
@@ -92,13 +107,19 @@ export const blob: FloraProgram = {
   blocks(v: FloraVariation, def: FloraSpeciesDef): FloraBlock[] {
     const radius = knob(def, "radius", 2);
     const squash = knob(def, "squash", 1);
+    const crownMin = knob(def, "crownMin", 1);
+    const crownDrop = knob(def, "crownDrop", 0);
+    const bareShare = knob(def, "bareShare", 0);
     const { height, radiusDelta } = v;
     const out: FloraBlock[] = [];
     for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
     const r = Math.max(1, radius + radiusDelta);
-    const cy = height - 1;
-    const ry = Math.max(1, Math.round(r * squash));
-    for (let dy = cy - ry; dy <= cy + ry; dy++) {
+    const ry = Math.max(1, crownMin, Math.round(r * squash));
+    // `ry - 2` is the law-1 clamp: it holds `cy + ry ≥ height + 1`, so the
+    // crown's top layer always sits above the last log whatever the drop asks.
+    const cy = height - 1 - Math.max(0, Math.min(crownDrop, ry - 2));
+    const floorY = Math.floor(bareShare * height);
+    for (let dy = Math.max(cy - ry, floorY); dy <= cy + ry; dy++) {
       for (let dz = -r; dz <= r; dz++) {
         for (let dx = -r; dx <= r; dx++) {
           if (dx === 0 && dz === 0 && dy < height) continue;
@@ -160,6 +181,13 @@ export const LEGACY_FLORA_SPECIES = Object.freeze({
     height: [6, 9],
     trunkSymbol: "wood.birch_log",
     leafSymbol: "wood.birch_leaves",
-    knobs: { radius: 2, squash: 0.75 },
+    // Reproportioned 2026-08-08 (Kai's walk-4 decision, FLORA-GRAMMAR §3.5):
+    // `squash: 0.75` gave every birch a four-layer puck on top of a 6–7 block
+    // bare pole, and at `spacing 3` half of all birches stood three blocks from
+    // another, so the pucks merged into one blob over a picket of white poles.
+    // The crown now stands 6–8 layers tall and is dropped onto the upper half
+    // of the trunk; `minSpacing` keeps two crowns from fusing (see
+    // `vegetation.ts`, `speciesSpacing`).
+    knobs: { radius: 2, squash: 1.4, crownMin: 3, crownDrop: 1, bareShare: 0.4, minSpacing: 5 },
   },
 } satisfies Readonly<Record<string, FloraSpeciesDef>>);

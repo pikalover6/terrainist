@@ -290,10 +290,67 @@ what stops the equator reading as a faceted disc. Law 2 holds for `r ≤ 3`.
 | param | source | value |
 |---|---|---|
 | `radius` | species | 2 (`oak_round`, `birch_slim`) |
-| `squash` | species | 1.0 (`oak_round`), 0.75 (`birch_slim`) |
+| `squash` | species | 1.0 (`oak_round`), 1.4 (`birch_slim`) |
+| `crownMin` | species | 1 (default), 3 (`birch_slim`) |
+| `crownDrop` | species | 0 (default), 1 (`birch_slim`) |
+| `bareShare` | species | 0 (default), 0.4 (`birch_slim`) |
 
 `blob` ignores `mega` entirely, which is why only `spruce_tall` carries a
 `megaShare`.
+
+**Amendment, 2026-08-08 — the birch reproportion (Kai's decision after walk-4).**
+The crown law above is tied to the *trunk top* and therefore says nothing about
+how far **down** the trunk the crown reaches. With `squash ≤ 1` that is a
+species-independent bug wearing a species costume: a taller tree gets the same
+squat disc over an ever-longer bare pole. Measured on `birch_slim` (heights
+6–9, one trunk column): at `h = 9`, `radiusDelta = 0`, the crown was four
+layers (`dy` 7–10) over **seven bare white logs** — and at `spacing 3` half of
+all birches stood three blocks from another birch (nearest-neighbour Chebyshev
+histogram on `oldgrowth_vale`: 3:1158, 4:449, 5:326, …), so several of those
+pucks merged into one blob standing over a picket of poles. Kai's word for the
+result was *comic*.
+
+Three knobs, each a no-op at its default, so nothing but `birch_slim` moves:
+
+```
+  ry = max(1, crownMin, round(r * squash))
+  cy = v.height - 1 - clamp(crownDrop, 0, ry - 2)     # law 1, by construction
+  floorY = floor(bareShare * v.height)                 # crown clipped below it
+  for dy in max(cy-ry, floorY) .. cy+ry: ...           # otherwise unchanged
+```
+
+- `crownMin` floors `ry`, so the narrow (`radiusDelta = -1`) draw is a slim
+  column of leaves rather than a five-block tuft on a stick.
+- `crownDrop` lowers the crown centre. The `ry - 2` clamp is exactly what holds
+  `cy + ry ≥ height + 1`, so **law 1 stays true by construction for any drop** —
+  no cap block, same argument as before.
+- `bareShare` keeps the short end of the envelope from becoming a bush.
+
+`birch_slim` now reads `squash 1.4, crownMin 3, crownDrop 1, bareShare 0.4`: at
+`h = 9, rd = 0` the crown is six layers (`dy` 5–10) over five bare logs; at
+`h = 6, rd = 0` it is six layers (`dy` 2–7) over two. Law 2 (leaf-BFS ≤ 6) and
+the whole six-law matrix are green at every envelope corner.
+
+`oak_round` shares the program and was measured at the same time: at its tallest
+(`h = 7`) it stands four bare logs under a five-layer crown — a ratio of 0.8,
+never the birch's 1.5–1.75 — so it is **left alone** and keeps its byte-identity.
+Every other legacy shape stays list-identical; `flora-identity.test.ts` asserts
+both halves of that sentence.
+
+**Species spacing (the second half of the same fix).** `params.spacing` is a
+*node* number, and it is the right default: a mixed forest wants its trunks on
+one lattice. But a species whose crown is wider than that lattice fuses with its
+own kin. `FloraSpeciesDef.knobs.minSpacing` is a **per-species floor** on the
+trunk-exclusion distance, enforced by `vegetation.ts`'s `speciesSpacing` against
+a **species-private** mask (never the shared `occupancy`, which would push
+*other* species away and thin the wood), shared across nodes so two overlapping
+forests that both plant birch honour it across the seam, and stamped as a
+**Chebyshev square** because `blob` crowns are square in plan — a disk leaves
+the diagonals, where two trunks 3 apart pass a Euclidean test of 4. Species
+without the knob behave exactly as before. `birch_slim: minSpacing 5` — the new
+crown diameter. Measured after: no birch on `oldgrowth_vale` has a birch nearer
+than 5 (5:597, 6:564, 7:234, …), and the wood carries 5,533 trees where it
+carried 6,025.
 
 ### 3.6 `broadleaf` — a deciduous tree that has branches
 
@@ -799,7 +856,7 @@ a theme park).
 | `spruce_tall` | conifer | canopy | 8–13 | `wood.spruce_log` / `wood.spruce_leaves` | boreal, temperate | *existing* — the dark northern wall |
 | `spruce_squat` | conifer | canopy | 5–7 | `wood.spruce_log` / `wood.spruce_leaves` | boreal | *existing* — the scrubby treeline |
 | `oak_round` | blob | canopy | 5–7 | `wood.oak_log` / `wood.oak_leaves` | temperate | *existing* — the ordinary tree |
-| `birch_slim` | blob | canopy | 6–9 | `wood.birch_log` / `wood.birch_leaves` | temperate | *existing* — the pale vertical stroke |
+| `birch_slim` | blob | canopy | 6–9 | `wood.birch_log` / `wood.birch_leaves` | temperate | *existing, reproportioned 2026-08-08 (§3.5)* — the pale vertical stroke, now with a crown that clothes the upper half of its trunk and a `minSpacing 5` floor so two of them never fuse |
 | `spruce_ancient` | ancient | emergent | 25–33 | `wood.spruce_log` / `wood.spruce_leaves` | boreal | The leaning grandfather in a snowfield: half its limbs dead, shelf fungi up one side. The thing you walk towards. |
 | `larch_columnar` | columnar | canopy | 10–16 | `wood.spruce_log` / `wood.birch_leaves` | boreal, temperate | A pale-green exclamation mark. Breaks a dark conifer wall into vertical rhythm at any distance. |
 | `juniper_scrub` | blob | understory | 3–4 | `wood.spruce_log` / `wood.azalea_leaves` | boreal, arid | Knee-to-shoulder scrub. What makes a forest floor look occupied instead of mown. |

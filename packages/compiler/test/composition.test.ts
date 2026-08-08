@@ -668,7 +668,13 @@ describe("forest area feathering", () => {
         spacing: 2,
         clumping: 0,
         edgeFalloff: 10,
-        species: [{ id: "b", shape: "birch_slim" as const }],
+        // `oak_round`, not `birch_slim`, since 2026-08-08: birch now carries a
+        // species spacing floor of 5 (the birch reproportion, FLORA-GRAMMAR
+        // §3.5), and at this deliberately saturating synthetic density
+        // (`density 0.5` over `spacing 2` cells) that floor caps the interior
+        // at its own lattice, which compresses the very density contrast this
+        // test measures. The feather law under test is species-independent.
+        species: [{ id: "b", shape: "oak_round" as const }],
       },
     };
     const out = scatterForests([node], p, classification, palette);

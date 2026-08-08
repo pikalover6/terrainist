@@ -49,6 +49,7 @@ import {
   LEGACY_FLORA_SPECIES,
   SHAPE_PROGRAMS,
   CLIMATE_STRATA,
+  knob,
   speciesFor,
   type FloraBlock,
   type FloraSpeciesDef,
@@ -536,6 +537,12 @@ export function scatterForests(
   // Trunk exclusion zones already claimed, shared across nodes so a wilderness
   // fill cannot plant a trunk on top of a deliberate forest's tree.
   const occupancy = new Uint8Array(region.width * region.depth);
+  // Per-species exclusion masks, shared across nodes for the same reason
+  // `occupancy` is: two overlapping forest nodes that both plant birch are one
+  // birch wood on the ground, and the species' own clearance has to hold across
+  // the seam. Allocated lazily, so a species without a `minSpacing` knob costs
+  // nothing (§3.5, 2026-08-08).
+  const kinMasks = new Map<string, Uint8Array>();
   const trees: TreePlacement[] = [];
   const perNode: Record<string, number> = {};
   const scattered: ScatteredNode[] = [];
@@ -586,7 +593,7 @@ export function scatterForests(
     // which is already order-dependent (row-major) today; naming the order in
     // one place is what keeps it deterministic.
     if (strata === undefined) {
-      scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing, false);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false);
     } else {
       const theme = nodeClimateTheme(mask, climate);
       const emergentLive = stratumLive(strata.emergent);
@@ -603,7 +610,7 @@ export function scatterForests(
         strata.canopy === "default"
           ? { ...strata, canopy: { species: stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA) } }
           : strata;
-      scatterOne(node, params, plan, mask, occupancy, palette, trees, clearing, emergentLive, resolvedCanopy);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy);
       let understory = 0;
       if (stratumLive(strata.understory)) {
         const shade = canopyCover(plan, trees.slice(before));
@@ -651,6 +658,7 @@ function scatterOne(
   plan: ColumnPlan,
   mask: Uint8Array,
   occupancy: Uint8Array,
+  kinMasks: Map<string, Uint8Array>,
   palette: Palette,
   out: TreePlacement[],
   clearing: Float32Array | undefined,
@@ -688,7 +696,6 @@ function scatterOne(
 
   const cellsX = Math.ceil(region.width / spacing);
   const cellsZ = Math.ceil(region.depth / spacing);
-
   for (let cz = 0; cz < cellsZ; cz++) {
     for (let cx = 0; cx < cellsX; cx++) {
       for (let attempt = 0; attempt < attempts; attempt++) {
@@ -735,7 +742,26 @@ function scatterOne(
 
         // Only the trunk is exclusive; a mega spruce occupies 2×2, so it claims
         // one more block of clearance.
+        // A species-private clearance, on top of the shared one (§3.5).
+        const kin = speciesSpacing(def, spacing);
+        let kinMask: Uint8Array | undefined;
+        if (kin > spacing) {
+          kinMask = kinMasks.get(def.id);
+          if (kinMask === undefined) {
+            kinMask = new Uint8Array(region.width * region.depth);
+            kinMasks.set(def.id, kinMask);
+          }
+          if (kinMask[idx] === 1) continue;
+        }
+
         if (!claimTrunk(region, occupancy, x, z, spacing + (mega ? 1 : 0), mega)) continue;
+        // A **square** stamp, unlike `claimTrunk`'s disk: the crowns this keeps
+        // apart are square in plan too (`blob` fills `|dx| ≤ r`, `|dz| ≤ r`), and
+        // a disk leaves the diagonals — two birches at (3, 3) are 4.24 apart by
+        // Euclid and pass, yet their crowns overlap by two columns. `kin - 1`
+        // rather than `kin`, so a sibling exactly `kin` away is still legal —
+        // the same "exactly spacing apart is fine" rule `claimTrunk` follows.
+        if (kinMask !== undefined) paintSquare(region, kinMask, x, z, kin - 1);
 
         const base: TreePlacement = {
           nodeId: node.id,
@@ -1166,6 +1192,22 @@ function giantTrunkSpan(def: FloraSpeciesDef, height: number): number {
 }
 
 /** Paint a disc of radius `r` into a mask. */
+/** Paint a Chebyshev square of radius `r` — the species-clearance stamp (§3.5). */
+function paintSquare(region: Region, mask: Uint8Array, x: number, z: number, r: number): void {
+  const i = x - region.x0;
+  const j = z - region.z0;
+  const ri = Math.floor(r);
+  for (let dj = -ri; dj <= ri; dj++) {
+    const jj = j + dj;
+    if (jj < 0 || jj >= region.depth) continue;
+    for (let di = -ri; di <= ri; di++) {
+      const ii = i + di;
+      if (ii < 0 || ii >= region.width) continue;
+      mask[jj * region.width + ii] = 1;
+    }
+  }
+}
+
 function paint(region: Region, mask: Uint8Array, x: number, z: number, r: number): void {
   const i = x - region.x0;
   const j = z - region.z0;
@@ -1362,6 +1404,23 @@ function edgeTaper(region: Region, x: number, z: number, falloff: number): numbe
   const dz = Math.min(z - region.z0, region.z0 + region.depth - 1 - z);
   const d = Math.min(dx, dz);
   return d >= falloff ? 1 : clamp01(d / falloff);
+}
+
+/**
+ * The trunk-exclusion radius for one species, which is `params.spacing` unless
+ * the species asks for more.
+ *
+ * Added 2026-08-08 with the birch reproportion (FLORA-GRAMMAR §3.5). `spacing`
+ * is a *node* parameter — one number for a whole forest — and it is the right
+ * default, because a mixed forest wants its trunks on one lattice. But a
+ * species whose crown is wider than that lattice fuses with its own neighbours:
+ * at `spacing 3` half of all birches stood exactly three blocks from another
+ * birch, so two five-wide crowns merged into a single mass over two bare white
+ * poles. The floor is per-species and additive: a species without a
+ * `minSpacing` knob claims exactly what it claimed before.
+ */
+function speciesSpacing(def: FloraSpeciesDef, spacing: number): number {
+  return Math.max(spacing, knob(def, "minSpacing", 0));
 }
 
 /**
