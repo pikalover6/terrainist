@@ -697,9 +697,10 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 6. **Gate decisions for Kai**: the dwellings-vs-nature tradeoff
    (`COMPOSITION_GATES` is the knob). The street-fraction bar was settled
    2026-08-07 — measured net of the carriage spine, bar stays 0.25.
-7. **The `hillside` cutover** (SITE-PLAN WP-5): classifier + kit + alias,
-   regenerate the examples that name `terraced`, delete `terraced.ts` — only
-   after Kai accepts the iterated form.
+7. **The `hillside` cutover** (SITE-PLAN WP-5) — **ACCEPTED by Kai
+   2026-08-08** ("really clean"): classifier + kit + alias, regenerate the
+   examples that name `terraced`, delete `terraced.ts`. Queued for the next
+   medium slot; the last step before the baseline battery.
 8. v1 items by name: per-bay stepped rows, undercrofts, polygon footprints,
    graded principal streets, courtyards on a strip.
 
@@ -763,6 +764,23 @@ natural waterfront slope) — but Kai chose to give the pass "a couple
 iterations" before ruling. The gate stays; iteration 1 (area caps, no
 dressing into natural ground, tread alignment, sunken-stair removal) is in
 flight with new detectors.
+
+**The road to shipping (ratified with Kai, 2026-08-08).** The dressing
+iteration loop is retired as the default mode — detectors catch
+regressions; minor bugs go to this ledger and get squashed opportunistically
+("at some point we need to go on with the bigger picture"). The sequence:
+1. Close the in-flight wave (in-town vegetation, junction iteration, birch
+   reproportion), then the **hillside cutover**.
+2. **Quick walk-5** of regenerated fixtures — Kai's standing rule applies
+   double here: *code detectors never verify a fix; only a walk does*.
+   Outstanding nits get noted, not chased.
+3. **Baseline battery — five Luna e2e worlds** from diverse prompts (hill
+   town, harbour city, fantasy landmark, plains village, wildcard), the
+   full product path with bespoke tier and all features. Triage: ledger
+   unless product-path blocking.
+4. **SHIP-PLAN doc** from the baseline evidence: sandbox isolation (the
+   named launch blocker), authoring robustness, delivery wrapper, demo
+   assets, pricing posture. **The end goal is shipping terrainist.**
 
 **Smaller, high-leverage.**
 - Per-district street palettes (streets still take the settlement root theme).
