@@ -32,7 +32,7 @@ import { FluidKind, type ColumnPlan } from "./columns.js";
 import { detailSeed, hash2, hashInt, hashPick } from "./detail.js";
 import type { Palette } from "./palette.js";
 import type { ScatteredNode, TreePlacement } from "./vegetation.js";
-import { canopyCover } from "./vegetation.js";
+import { TOWN_GREEN_DENSITY, canopyCover } from "./vegetation.js";
 
 /** One decoration block, in absolute world coordinates. */
 export interface DecorBlock {
@@ -71,6 +71,37 @@ export interface DecorateInput {
   /** Root node seed; the decoration streams hang off it. */
   readonly seed: Seed256;
 }
+
+/**
+ * Surfaces the town green will grow on — the natural ones, by name.
+ *
+ * The green's other tests ask *who claimed this column*; this one asks what the
+ * ground actually is, and it is the backstop for everything the claims miss.
+ * With the claims at their finest — every block every pass wrote — the compiled
+ * fixture still grew short grass and ferns on `cobblestone` and `stone`: a
+ * terrace revetment materialised into the column plan's own *surface* array
+ * rather than pushed as structure blocks, so neither the block-column mask nor
+ * any occupancy tag knew about it. A whitelist rather than a list of paving
+ * materials, so the next material the fabric learns to build with is excluded
+ * by default rather than included by omission.
+ *
+ * `ground.stone` is deliberately absent: nothing tufts out of bare rock in
+ * vanilla either, and on a cut hillside a stone surface is nearly always
+ * something somebody cut.
+ */
+const NATURAL_SURFACE_SYMBOLS: readonly string[] = Object.freeze([
+  "ground.surface",
+  "ground.subsurface",
+  "ground.coarse_dirt",
+  "ground.rooted_dirt",
+  "ground.podzol",
+  "ground.gravel",
+  "ground.sand",
+  "ground.beach",
+  "ground.clay",
+  "ground.mud",
+  "ground.snow_block",
+]);
 
 /** Temperature below which a forest floor dresses as taiga (ferns, berries). */
 const TAIGA_TEMPERATURE = 0.4;
@@ -181,10 +212,29 @@ export function decorate(input: DecorateInput): DecorationResult {
     // not off any node's, so two woods meeting at the same column agree about
     // whether it keeps its plants. See `undergrowthFeather` in vegetation.ts.
     feather: detailSeed(input.seed, "decor.settlement-feather"),
+    // The interior thinning, on its own stream for the same reason: the town
+    // green is a property of the settlement, not of whichever wood happens to
+    // reach it.
+    green: detailSeed(input.seed, "decor.town-green"),
   };
 
+  const naturalSurface = new Set<number>(
+    NATURAL_SURFACE_SYMBOLS.map((symbol) => palette.state(symbol)),
+  );
+
   for (const node of input.forests) {
-    decorateForest(node, input, states, canopy, occupied, decorated, blocks, counts, seeds);
+    decorateForest(
+      node,
+      input,
+      states,
+      canopy,
+      occupied,
+      decorated,
+      blocks,
+      counts,
+      seeds,
+      naturalSurface,
+    );
   }
   decorateWater(input, states, blocks, counts, seeds.water);
   decorateShore(input, states, occupied, blocks, counts, seeds.shore);
@@ -205,7 +255,8 @@ function decorateForest(
   decorated: Uint8Array,
   blocks: DecorBlock[],
   counts: Record<string, number>,
-  seeds: { patch: number; feather: number },
+  seeds: { patch: number; feather: number; green: number },
+  naturalSurface: ReadonlySet<number>,
 ): void {
   const { plan, classification, temperature, palette } = input;
   const { region, ground, fluidKind, surface, volcanic, lavaFlow } = plan;
@@ -216,7 +267,13 @@ function decorateForest(
     const z = region.z0 + j;
     for (let i = 0; i < region.width; i++) {
       const idx = j * region.width + i;
-      if (node.mask[idx] !== 1) continue;
+      // Two grounds this pass dresses, and the difference is the whole of the
+      // town-green fix: the node's own eligibility mask (natural ground the
+      // wood may plant on), and — where the settlement claimed a rectangle but
+      // nobody built in it — the green (see `townGreenMask`). Everything below
+      // treats them alike except where `green` says otherwise.
+      const green = node.green?.[idx] === 1;
+      if (node.mask[idx] !== 1 && !green) continue;
       if (decorated[idx] === 1) continue;
       if (occupied[idx] === 1) continue;
       if (input.clip?.blockedColumn(region.x0 + i, z) === true) continue;
@@ -237,7 +294,17 @@ function decorateForest(
         lacunarity: 2,
         gain: 0.5,
       });
-      if (cold && shade >= DENSE_SHADE && hash2(cover, x, z, 1) < 0.7) {
+      // The green's backstop: whatever the claims said, the ground itself has
+      // to still be ground. See {@link NATURAL_SURFACE_SYMBOLS}.
+      if (green && !naturalSurface.has(surface[idx] as number)) continue;
+
+      if (green) {
+        // Inside the town nothing here converts the ground: podzol and coarse
+        // dirt are the *surface*, and rewriting a swept yard's grass into bare
+        // dirt is a change to what was built, not to what grows on it. The
+        // green adds plants and only plants.
+        if (hash2(seeds.green, x, z, 0) >= TOWN_GREEN_DENSITY) continue;
+      } else if (cold && shade >= DENSE_SHADE && hash2(cover, x, z, 1) < 0.7) {
         surface[idx] = states.podzol;
       } else if (soilNoise > 0.42) {
         surface[idx] = hash2(cover, x, z, 2) < 0.6 ? states.coarseDirt : states.rootedDirt;
@@ -251,14 +318,24 @@ function decorateForest(
       // ambient at the band's rim so the mask stops reading as a drawn line.
       // Below the soil conversions on purpose: coarse dirt and podzol are the
       // ground itself, and the feather is about what grows on it.
-      const survival = node.feather?.[idx] ?? 1;
+      //
+      // Not on the green: the feather is zero on every claimed column by
+      // construction, and it must stay that way — it is the ramp for the
+      // *outside* of the boundary. Inside, `TOWN_GREEN_DENSITY` above has
+      // already had its say.
+      const survival = green ? 1 : (node.feather?.[idx] ?? 1);
       if (survival < 1 && hash2(seeds.feather, x, z, 0) >= survival) continue;
 
       // --- fallen logs (claim several columns, so try them first) -----------
       // A log is a four-block beam, so "this column is not claimed" is not
       // enough: it must start, and stay, outside the structure apron, or it
       // ends up lying against a wall reading as a dropped roof timber.
+      // A fallen log is not small vegetation: it is a metre-thick beam that
+      // claims up to four columns, and in a back yard it reads as timber
+      // somebody dumped. The green grows grass and flowers, nothing that lies
+      // down.
       if (
+        !green &&
         shade === 0 &&
         input.clip?.inApron(x, z) !== true &&
         hash2(cover, x, z, 3) < deadwood * 0.15

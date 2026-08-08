@@ -148,7 +148,13 @@ import {
   checkFluidStability,
   validatorDiagnostics,
 } from "./validate.js";
-import { scatterForests, type ForestNodeInput, type StrataReport, type TreePlacement } from "./vegetation.js";
+import {
+  builtColumnMask,
+  scatterForests,
+  type ForestNodeInput,
+  type StrataReport,
+  type TreePlacement,
+} from "./vegetation.js";
 import {
   buildStructures,
   buildTransitionBand,
@@ -923,6 +929,21 @@ async function compileValidated(
       centers: THEME_CENTERS,
       themes: CLIMATE_THEMES,
     },
+    // What the structure passes actually put blocks on, for the town green
+    // (`townGreenMask`): the scatter itself never reads it. The blocks, not the
+    // claims — a district street and a stair flight write no occupancy tag, and
+    // the first run of the green grew grass on both.
+    structures === undefined
+      ? undefined
+      : builtColumnMask(
+          region,
+          programs?.blocks ?? [],
+          builtColumnMask(
+            region,
+            structures.blocks,
+            clip === undefined ? undefined : Uint8Array.from(clip.columns),
+          ),
+        ),
   );
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.

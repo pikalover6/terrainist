@@ -165,6 +165,15 @@ export interface ScatteredNode {
    * for documents with no structures to feather away from.
    */
   readonly feather?: Float32Array;
+  /**
+   * The town green: 1 on a column inside the settlement's occupancy claim that
+   * nothing was ever built or paved on. See {@link townGreenMask}.
+   *
+   * Read by the undergrowth pass and by nothing else — a trunk inside a
+   * footprint's clearance is still a trunk through a wall, so
+   * {@link forestEligibility} is unchanged and no tree stands here.
+   */
+  readonly green?: Uint8Array;
 }
 
 /** The outcome of the scatter pass. */
@@ -337,6 +346,165 @@ export function undergrowthFeather(
   return weight;
 }
 
+/* -------------------------------------------------------------------------- */
+/* The town green                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Occupancy tags a *pass* claimed, column by column, as opposed to the tags the
+ * layout solver stamps over a whole inflated rectangle.
+ *
+ * The distinction is the whole point of this file's second lesson. The solver's
+ * `structure` tag (and every node tag beside it) covers `footprint + clearance`
+ * — a claim on the *area*, not a record of what was built in it. These five are
+ * written by the passes that actually put something down: the road surfacer,
+ * the plaza paver, the ground-treatment pass (`grounds.ts`, whose `taken` set is
+ * the ground contract's own declared claim — dressed lots, forecourts, worn
+ * paths), the courtyard pass and the prop pass.
+ */
+export const BUILT_OCCUPANCY_TAGS: readonly string[] = Object.freeze([
+  "road",
+  "plaza",
+  "ground",
+  "courtyard",
+  "prop",
+]);
+
+/**
+ * Columns a pass actually put a block in — the finest "is this built" signal
+ * the pipeline has, because it is not a claim at all but the blocks themselves.
+ *
+ * The occupancy tags miss things, and the miss is visible: the first compiled
+ * run of the town green grew short grass on `cobblestone_slab`,
+ * `polished_andesite`, `polished_diorite`, `smooth_quartz` and
+ * `cobblestone_stairs` — a district street, a stair flight and a retained
+ * terrace, none of which writes a per-column occupancy tag. Whatever a pass
+ * builds it builds out of blocks, so this mask cannot be behind.
+ *
+ * Air is skipped: several passes clear headroom above ground they never
+ * touched, and a cleared column is not a paved one.
+ */
+export function builtColumnMask(
+  region: Region,
+  blocks: readonly { readonly x: number; readonly z: number; readonly stateId: number }[],
+  into?: Uint8Array,
+): Uint8Array {
+  const mask = into ?? new Uint8Array(region.width * region.depth);
+  for (const b of blocks) {
+    if (b.stateId === 0) continue;
+    const i = b.x - region.x0;
+    const j = b.z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+    mask[j * region.width + i] = 1;
+  }
+  return mask;
+}
+
+/**
+ * How far small vegetation stays off built ground, in columns.
+ *
+ * Two, not four: `DECOR_APRON` (clip.ts) is the *deadwood* standoff, sized so a
+ * four-block log cannot point at a wall, and applying it to a grass tuft would
+ * strip every yard narrower than nine columns — which, in a town, is every
+ * yard. Two columns is enough that a paving edge still reads as a line and a
+ * doorstep still reads as swept.
+ */
+export const TOWN_GREEN_STANDOFF = 2;
+
+/**
+ * Small vegetation's share of ambient density inside the settlement.
+ *
+ * A yard is *tended*: not bare — that was the defect — but not the meadow
+ * outside the walls either. Half is the middle of the 40–60% band the walk
+ * asked for, and it is one constant rather than a per-plant table because the
+ * thinning is a property of the place, not of the species: the flower patches
+ * and the grass draw are already tuned relative to each other, and scaling both
+ * by the same number keeps that mix intact while halving how much of it there is.
+ */
+export const TOWN_GREEN_DENSITY = 0.5;
+
+/**
+ * Where small vegetation may grow *inside* the settlement's claim.
+ *
+ * `UNDERGROWTH_FEATHER` fixed the outside of this boundary — the straight line
+ * the occupancy rectangles drew across natural terrain. This is the same lesson
+ * one level in: inside the rectangles, a walk of `hillside_town-8` found the
+ * town interior totally bare, because the union of *rectangles* the solver
+ * claimed is very much larger than what the fabric actually built on. Between
+ * the lots, behind the houses and over every natural pocket the streets never
+ * reached, the ground was mown to nothing.
+ *
+ * A column is green when the node would plant there if the settlement were not
+ * in the way (`natural`), the settlement *is* in the way (`structures.mask`),
+ * and nothing was built or paved on it or within {@link TOWN_GREEN_STANDOFF}
+ * columns of it. "Built or paved" is the union of the finest signals the
+ * pipeline genuinely records:
+ *
+ * - `built` — {@link builtColumnMask} over every block the structure and
+ *   program passes wrote, plus the clip's own column mask (which adds a
+ *   building's eave ring and a road's verge). This is geometry the passes
+ *   produced, not area they reserved.
+ * - {@link BUILT_OCCUPANCY_TAGS} — the per-column claims listed there.
+ *
+ * `avoidTags` is honoured **only where it names a per-column claim**. Every
+ * fixture in the tree writes `avoidTags: ["structure", "road", "plaza"]`, and
+ * `structure` is the solver's rectangle union — 25,047 columns of the 26,529
+ * this settlement claims, of which 6,891 have anything built on them. Applying
+ * it here would re-impose the exact bound the green exists to look inside of,
+ * and measurably did: the first run of this function returned 8 green columns.
+ * A tag that names something a pass actually paved is honoured; a tag that
+ * names an area the solver reserved is not, because the ground is what it is
+ * and the flagstones are excluded by the paving signal either way.
+ */
+export function townGreenMask(
+  natural: Uint8Array,
+  structures: StructureOccupancy,
+  width: number,
+  depth: number,
+  built?: Uint8Array,
+  avoidTags: readonly string[] = [],
+  standoff: number = TOWN_GREEN_STANDOFF,
+): Uint8Array {
+  const cells = width * depth;
+  const claimed = new Uint8Array(cells);
+  if (built !== undefined && built.length === cells) {
+    for (let k = 0; k < cells; k++) if (built[k] === 1) claimed[k] = 1;
+  }
+  for (const tag of BUILT_OCCUPANCY_TAGS) {
+    const m = structures.byTag.get(tag);
+    if (m === undefined || m.length !== cells) continue;
+    for (let k = 0; k < cells; k++) if (m[k] === 1) claimed[k] = 1;
+  }
+  // The standoff is the same Chebyshev field the feather runs on, read as a
+  // hard test rather than a ramp: inside the town the transition the eye wants
+  // is a swept edge, not a gradient.
+  const distance = chebyshevDistance(claimed, width, depth, Math.max(1, standoff));
+  const avoided: Uint8Array[] = [];
+  for (const tag of avoidTags) {
+    if (!BUILT_OCCUPANCY_TAGS.includes(tag)) continue;
+    const m = structures.byTag.get(tag);
+    if (m !== undefined && m.length === cells) avoided.push(m);
+  }
+
+  const green = new Uint8Array(cells);
+  for (let k = 0; k < cells; k++) {
+    if (natural[k] !== 1) continue;
+    if (structures.mask[k] !== 1) continue;
+    const d = distance[k] as number;
+    if (d >= 0 && d <= standoff) continue;
+    let skip = false;
+    for (const m of avoided) {
+      if (m[k] === 1) {
+        skip = true;
+        break;
+      }
+    }
+    if (skip) continue;
+    green[k] = 1;
+  }
+  return green;
+}
+
 /**
  * Run every forest node's scatter, in document order.
  *
@@ -354,6 +522,14 @@ export function scatterForests(
   structures?: StructureOccupancy,
   clearing?: Float32Array,
   climate?: ClimateSample,
+  /**
+   * Columns a structure's blocks actually cover — {@link builtColumnMask} over
+   * what the passes wrote, unioned with the clip's column mask. Only
+   * the town green reads it (see {@link townGreenMask}); the scatter itself is
+   * unchanged, because a trunk inside a claimed rectangle is still a trunk in
+   * somebody's yard.
+   */
+  built?: Uint8Array,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -383,6 +559,21 @@ export function scatterForests(
       node.params.avoidTags ?? [],
       areaWobbleSeed,
     );
+    // The town green: the same eligibility, asked *without* the settlement in
+    // the way, then narrowed to the claimed ground nothing was built on. Same
+    // wobble seed as the mask above, so the two answers agree about where the
+    // node's area ends.
+    const green =
+      structures === undefined
+        ? undefined
+        : townGreenMask(
+            forestEligibility(plan, classification, params, undefined, [], areaWobbleSeed),
+            structures,
+            region.width,
+            region.depth,
+            built,
+            node.params.avoidTags ?? [],
+          );
     // Coverage feeds the biome rule, so a fully cleared column must not report
     // as forested — a village green painted `forest` is exactly the wrong colour.
     for (let k = 0; k < coverage.length; k++) {
@@ -447,6 +638,7 @@ export function scatterForests(
       mask,
       ...(strata === undefined ? {} : { strata }),
       ...(feather === undefined ? {} : { feather }),
+      ...(green === undefined ? {} : { green }),
     });
   }
 
