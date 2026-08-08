@@ -178,6 +178,74 @@ export function leafDistances(blocks: readonly FloraBlock[]): {
   return { distance, unreachable };
 }
 
+/** The parts a `hanging` block may attach to (§3.2, amended 2026-08-08). */
+const HANGING_SUPPORT_PARTS: ReadonlySet<FloraPart> = new Set<FloraPart>([
+  "log",
+  "branch",
+  "root",
+  "stem",
+  "leaves",
+  "cap",
+]);
+
+const HORIZONTAL_FACES = FACES.filter(([face]) => face !== "up" && face !== "down");
+
+/**
+ * Attachment faces per `hanging` block (§3.2, amended 2026-08-08).
+ *
+ * Vanilla's `vine` carries five booleans, each meaning *"attached to the block
+ * in that direction"*, and each true face draws a panel on that side of the
+ * cube. Writing `up=true` universally — which is what this module did until
+ * 2026-08-08 — draws a horizontal ceiling panel for every vine, so a curtain
+ * running down beside a giant's trunk rendered as a stack of flat plates at
+ * odd angles instead of a sheet against the wood (Kai's walk, `oldgrowth_vale-2`).
+ *
+ * The derivation reads the plant's own block set only (the §3.2 law):
+ *
+ * 1. every horizontal 6-neighbour that is a support part of the same plant
+ *    gets its face set `true` — the sheet lies against the wood;
+ * 2. `up=true` only when the block **directly above** is a support part, i.e.
+ *    the vine genuinely hangs off a ceiling;
+ * 3. otherwise the block inherits the faces of the `hanging` block directly
+ *    above it — vanilla's own chain rule, so a strand keeps hanging off
+ *    whatever the top of the strand caught, plus any wood it passes;
+ * 4. a block that ends with no face at all has no deducible support and is
+ *    **dropped**, as before.
+ *
+ * Blocks are resolved top-down so rule 3 always sees a settled parent.
+ */
+export function hangingFaces(
+  blocks: readonly FloraBlock[],
+): ReadonlyMap<string, Readonly<Record<string, string>>> {
+  const occupied = new Map<string, FloraPart>();
+  for (const b of blocks) occupied.set(key(b.dx, b.dy, b.dz), b.part);
+  const hanging = blocks.filter((b) => b.part === "hanging").sort((a, b) => b.dy - a.dy);
+  const faces = new Map<string, Readonly<Record<string, string>>>();
+  for (const b of hanging) {
+    const on = new Set<string>();
+    for (const [face, ox, oy, oz] of HORIZONTAL_FACES) {
+      const n = occupied.get(key(b.dx + ox, b.dy + oy, b.dz + oz));
+      if (n !== undefined && HANGING_SUPPORT_PARTS.has(n)) on.add(face);
+    }
+    const aboveKey = key(b.dx, b.dy + 1, b.dz);
+    const above = occupied.get(aboveKey);
+    if (above !== undefined && HANGING_SUPPORT_PARTS.has(above)) {
+      on.add("up");
+    } else if (above === "hanging") {
+      const parent = faces.get(aboveKey);
+      // A dropped parent hands down nothing; the chain ends with it.
+      if (parent !== undefined) {
+        for (const [face, value] of Object.entries(parent)) if (value === "true") on.add(face);
+      }
+    }
+    if (on.size === 0) continue; // dropped: no deducible support
+    const props: Record<string, string> = {};
+    for (const [face] of FACES) props[face] = on.has(face) ? "true" : "false";
+    faces.set(key(b.dx, b.dy, b.dz), Object.freeze(props));
+  }
+  return faces;
+}
+
 function baseStateFor(part: FloraPart, states: FloraStates): number | undefined {
   switch (part) {
     case "log":
@@ -217,6 +285,7 @@ export function emitFloraBlocks(
   for (const b of blocks) occupied.set(key(b.dx, b.dy, b.dz), b.part);
 
   const leaf = policy === "computed" ? leafDistances(blocks) : undefined;
+  const faces = hangingFaces(blocks);
   const out: EmittedFloraBlock[] = [];
   let droppedHanging = 0;
   let droppedDeco = 0;
@@ -265,11 +334,12 @@ export function emitFloraBlocks(
       case "hanging": {
         // Never emitted unsupported: a curtain clipped from above degrades to a
         // shorter curtain, not to a floating strand.
-        if (occupied.get(key(b.dx, b.dy + 1, b.dz)) === undefined) {
+        const props = faces.get(key(b.dx, b.dy, b.dz));
+        if (props === undefined) {
           droppedHanging += 1;
           continue;
         }
-        stateId = withProps(codec, base, { up: "true" });
+        stateId = withProps(codec, base, props);
         break;
       }
       case "deco": {

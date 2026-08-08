@@ -351,7 +351,7 @@ describe("flora: the parts → blockstate mapping", () => {
     expect(cap?.up).toBe("true");
   });
 
-  it("a hanging block with nothing above it is dropped, and the rest take up=true", () => {
+  it("a hanging block with nothing above it is dropped; a ceiling strand takes up=true", () => {
     const out = emitFloraBlocks(
       [
         { dx: 0, dy: 4, dz: 0, part: "leaves" },
@@ -366,6 +366,78 @@ describe("flora: the parts → blockstate mapping", () => {
     expect(out.blocks).toHaveLength(3);
     for (const b of out.blocks.slice(1)) {
       expect(codec.blockStateProps(b.stateId)?.props.up).toBe("true");
+    }
+  });
+
+  // Kai's walk, oldgrowth_vale-2: "vines are oriented wrong" — a curtain beside
+  // a trunk rendered as flat ceiling plates because `up=true` was written
+  // universally. Faces now name the actual support (§3.2, amended 2026-08-08).
+  it("a hanging block beside wood attaches to the wood, not to the sky", () => {
+    const out = emitFloraBlocks(
+      [
+        { dx: 0, dy: 4, dz: 0, part: "log" },
+        { dx: 0, dy: 3, dz: 0, part: "log" },
+        { dx: 1, dy: 3, dz: 0, part: "hanging" },
+      ],
+      states,
+      codec,
+    );
+    expect(out.droppedHanging).toBe(0);
+    const p = codec.blockStateProps((out.blocks[2] as { stateId: number }).stateId)?.props;
+    expect(p?.west).toBe("true"); // the trunk is at −x
+    expect(p?.up).toBe("false"); // nothing of the plant is above it
+    expect(p?.east).toBe("false");
+  });
+
+  it("a hanging block both beside wood and under leaves carries both faces", () => {
+    const out = emitFloraBlocks(
+      [
+        { dx: 0, dy: 3, dz: 0, part: "log" },
+        { dx: 1, dy: 4, dz: 0, part: "leaves" },
+        { dx: 1, dy: 3, dz: 0, part: "hanging" },
+      ],
+      states,
+      codec,
+    );
+    const p = codec.blockStateProps((out.blocks[2] as { stateId: number }).stateId)?.props;
+    expect(p?.west).toBe("true");
+    expect(p?.up).toBe("true");
+  });
+
+  it("a chain segment inherits the faces of the vine above it", () => {
+    const out = emitFloraBlocks(
+      [
+        { dx: 0, dy: 5, dz: 0, part: "log" },
+        { dx: 1, dy: 5, dz: 0, part: "hanging" }, // beside the trunk: west
+        { dx: 1, dy: 4, dz: 0, part: "hanging" }, // past the trunk: inherits west
+        { dx: 1, dy: 3, dz: 0, part: "hanging" },
+      ],
+      states,
+      codec,
+    );
+    expect(out.droppedHanging).toBe(0);
+    for (const b of out.blocks.slice(1)) {
+      const p = codec.blockStateProps(b.stateId)?.props;
+      expect(p?.west).toBe("true");
+      expect(p?.up).toBe("false");
+    }
+  });
+
+  it("every emitted hanging block carries at least one attachment face", () => {
+    const out = emitFloraBlocks(
+      [
+        { dx: 0, dy: 4, dz: 0, part: "leaves" },
+        { dx: 0, dy: 3, dz: 0, part: "hanging" },
+        { dx: 0, dy: 2, dz: 0, part: "hanging" },
+        { dx: 7, dy: 7, dz: 7, part: "hanging" },
+      ],
+      states,
+      codec,
+    );
+    for (const b of out.blocks) {
+      const d = codec.blockStateProps(b.stateId);
+      if (d?.name !== "vine") continue;
+      expect(Object.values(d.props).some((v) => v === "true")).toBe(true);
     }
   });
 
