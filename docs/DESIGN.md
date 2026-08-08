@@ -697,10 +697,11 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
 6. **Gate decisions for Kai**: the dwellings-vs-nature tradeoff
    (`COMPOSITION_GATES` is the knob). The street-fraction bar was settled
    2026-08-07 — measured net of the carriage spine, bar stays 0.25.
-7. **The `hillside` cutover** (SITE-PLAN WP-5) — **ACCEPTED by Kai
-   2026-08-08** ("really clean"): classifier + kit + alias, regenerate the
-   examples that name `terraced`, delete `terraced.ts`. Queued for the next
-   medium slot; the last step before the baseline battery.
+7. ~~The `hillside` cutover~~ — **DONE 2026-08-08** (`5084a02`):
+   `terraced` is an alias resolving at `urbanForm()` (LOAM-I498 when
+   drawn), classifier + kit teach `hillside`, `terraced.ts` deleted. WP-5's
+   mover list was stale — no example ever named `terraced` — so the strict
+   byte verdict applied and held: twelve of twelve worlds hash-identical.
 8. v1 items by name: per-bay stepped rows, undercrofts, polygon footprints,
    graded principal streets, courtyards on a strip.
 

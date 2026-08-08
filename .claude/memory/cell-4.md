@@ -131,6 +131,24 @@ rid of this type"; low). Roadmap notes added: controllable biome
 gradients (intent dial), colossal flora tier ("orders of magnitude"
 larger, eventually).
 
+**Wave 5 + strategy (2026-08-08):** ALL walk-4 items landed — town-green
+`d974b14` (74% of the occupancy union was natural ground being
+sterilized; 45→1,791 in-town plants), junction iteration `5446a25`
+(steps-only + walls-not-surfaces + alignment + patch refusal; the pass
+itself was the third fighting generator; harbourtown cascade 178→46;
+strategic finding: the flat-town orphan win lives in the same patches as
+the walked horror — on flat ground the pass does levels' job), vines
+`a7528cc`, birch reproportion `7fa0a88` (blob knobs + species-private
+Chebyshev spacing; oak measured fine), **hillside cutover `5084a02`**
+(terraced deleted, alias at urbanForm(), 12/12 strict byte verdict).
+SHIP-PLAN-v0 drafted (`abdc901`): canonical prompt battery as
+termination device; four rungs; rec = B + single ascent; day-3 rung
+decision after baselines. Kai steer: prefers bigger push over minimal v1
+but needs a concrete end condition; Tripo deprecated `d57ac05`.
+Orchestrator's narrowing: ascent = the aqueduct alone; colossal flora =
+post-launch flagship. **Next: walk-5 (fixtures -9/-7/-3), rung consult,
+then baselines.**
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density
