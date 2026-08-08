@@ -92,6 +92,15 @@ parallel work has in flight.
 say so in every brief — and the orchestrator counts any nested agent against
 the same budget. Four concurrent means four agents running, full stop.
 
+**Shared-tree git discipline (2026-08-08, after three clobber incidents):**
+an agent working in the shared checkout must NEVER run tree-wide git state
+operations — `git checkout -- .`, `git restore .`, `git stash` /
+`stash pop`, `git clean` — nor revert files it does not own. Demonstrating
+a pre-fix failure or building a baseline happens in an isolated copy
+(`git worktree` + direct source-path compile, or a `cp -Rc` clone with
+relative `@terrainist/*` symlinks), never by rewinding the shared tree.
+The orchestrator commits finished work promptly to shrink the window.
+
 ### How to spawn subagents at a chosen model + reasoning effort
 
 The repo commits a generic 15-type agent matrix in `.claude/agents/`:
