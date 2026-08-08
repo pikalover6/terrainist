@@ -154,6 +154,51 @@ export interface Cutoff {
   readonly neighbourEmitters: readonly string[];
 }
 
+/**
+ * One stair the junction pass laid, read back off the world.
+ *
+ * The three detectors below (`2c`) all key on the emitter rather than on the
+ * block, because the question they answer is not "is this stair wrong" — it is
+ * "did the *reconciliation* pass stay inside its remit". A stair `street-stairs`
+ * laid in the middle of a flight has a whole flight's worth of context making it
+ * legible; a stair `junction-steps` laid on its own does not, and every one of
+ * the three shapes Kai walked on 2026-08-08 is a junction stair standing where
+ * no seam is.
+ */
+export interface JunctionStair {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly block: string;
+  /** The stair's own `facing`. */
+  readonly facing: string;
+  /** Top surfaces of the four neighbours, relative to this stair's own top. */
+  readonly deltas: readonly number[];
+  /** Which of `facing` / its opposite land on declared paving. */
+  readonly frontPaved: boolean;
+  readonly backPaved: boolean;
+}
+
+/** A connected patch of ground the junction pass dressed. */
+export interface JunctionCascade {
+  /** A cell of the component — the westmost of its northmost row. */
+  readonly x: number;
+  readonly z: number;
+  /** Columns in it. */
+  readonly columns: number;
+  /** Its bounding box, in columns. */
+  readonly width: number;
+  readonly depth: number;
+  /** Levels its dressing spans: `y1 − y0`. */
+  readonly fall: number;
+  /**
+   * Share of the component's columns whose *four* neighbours are all declared
+   * paving. A seam between two paved surfaces is interior to the paving and
+   * reads near 1; a terrace cut into a natural bank reads near 0.
+   */
+  readonly interiorShare: number;
+}
+
 /** A run of carriageway standing proud of the ground on both sides. */
 export interface PlinthRun {
   readonly x: number;
@@ -251,6 +296,69 @@ export interface DressingReport {
   /** …whose own tread carries no stair or slab: a raw cut nobody dressed. */
   readonly undressedCutoffs: number;
   readonly worstCutoffs: readonly Cutoff[];
+
+  /* --- 2c: the junction pass, kept inside its remit ---------------------- */
+  /**
+   * Columns carrying a stair `structures/junction-steps.ts` laid. The
+   * denominator every row below is read against: a fix that lowers the three
+   * defects by laying fewer stairs everywhere has to be visible as such.
+   */
+  readonly junctionColumns: number;
+  /**
+   * …whose top is **at or below every four-neighbour's standing surface**.
+   *
+   * A stair is a transition, and a transition is approached from below. When
+   * nothing around a junction stair is lower than it is, there is no low side
+   * to arrive from and the block connects nothing — Kai walked one on
+   * `hillside_town_steep-6` (2026-08-08) as "a stair block sunk in a pit in
+   * otherwise flat pavement".
+   *
+   * This is the **population**, not the defect: one honest shape lives in it,
+   * and it is the commonest one — a step up out of dead-flat paving, where the
+   * walker arrives on the flat and the stair hands them onto the column one
+   * above that it faces. Nothing is lower than that stair either, and it is
+   * still a step. {@link blindStairs} is the row that carries the judgement.
+   */
+  readonly sunkenStairs: number;
+  /**
+   * …split by **what the stair faces**: `stepUp` (the column it points at is
+   * exactly one above — a step, and not a defect), `kerb` (two or more above: a
+   * stair standing at the foot of a wall it cannot climb) and `blind` (the
+   * column it points at is no higher than the stair itself, or is not a surface
+   * at all).
+   */
+  readonly sunkenStairCensus: Readonly<Record<string, number>>;
+  /**
+   * `kerb` + `blind`: a junction stair with no low side to be approached from
+   * **and** nothing one step up in front of it. This is Kai's "connects
+   * nothing" stated so that it excludes the one shape that does connect
+   * something, and **zero is the bar**.
+   */
+  readonly blindStairs: number;
+  readonly worstSunkenStairs: readonly JunctionStair[];
+  /**
+   * Junction stairs whose facing neighbour **and** back neighbour are both off
+   * the declared paving.
+   *
+   * The pass reconciles *paving against paving*. A tread with nothing paved on
+   * either side of its own axis is dressing laid into natural ground — it is
+   * not closing a seam, it is terracing a hill, which is `layout/levels.ts`'
+   * job and not this pass's. **Zero is the bar.**
+   */
+  readonly strandedTreads: number;
+  readonly worstStranded: readonly JunctionStair[];
+  /**
+   * Connected components of junction dressing, and the size of the largest.
+   *
+   * The scale test, and the one that separates the two walked worlds. A point
+   * seam between two streets is a handful of columns; the wide mossy-cobble
+   * terracing Kai walked down a natural waterfront on `c1-harbourtown` is one
+   * component of dozens. A reconciliation pass that produces a beach-sized
+   * component has stopped reconciling and started grading.
+   */
+  readonly cascadeComponents: number;
+  readonly cascadeLargest: number;
+  readonly worstCascades: readonly JunctionCascade[];
 
   /* --- 3: plinth roads ---------------------------------------------------- */
   /**
@@ -651,6 +759,10 @@ export function auditDressing(probe: DressingProbe): DressingReport {
   }
   cutoffs.sort((a, b) => b.drop - a.drop || a.x - b.x || a.z - b.z);
 
+  /* --- 2c: the junction pass, kept inside its remit ---------------------- */
+
+  const junction = auditJunctionDressing(probe);
+
   /* --- 3a: a flight that does not read as one --------------------------- */
   // Two readings of one loop, both of them Kai's walk of 2026-08-07 turned into
   // a number.
@@ -826,6 +938,8 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     undressedCutoffs,
     worstCutoffs: cutoffs.slice(0, WORST_ROWS),
 
+    ...junction,
+
     plinthCensus: carriageway.census,
     plinthColumns: carriageway.columns,
     plinthRunCount: carriageway.runCount,
@@ -858,6 +972,200 @@ export function auditDressing(probe: DressingProbe): DressingReport {
 /* -------------------------------------------------------------------------- */
 /* helpers                                                                     */
 /* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/* 2c: the junction pass, kept inside its remit                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The name `structures/index.ts` lays the reconciliation pass's blocks under.
+ *
+ * A string rather than an import because this module is a **readback**: it is
+ * handed a block list with an emitter on every row and it must not be able to
+ * ask the pass anything. If the label is renamed, these three rows read zero
+ * and the `junctionColumns` denominator says so out loud.
+ */
+export const JUNCTION_EMITTER = "junction-steps";
+
+/** Neighbour offsets by cardinal name, for reading a stair's own facing. */
+const WAYS: Readonly<Record<string, readonly [number, number]>> = {
+  north: [0, -1],
+  south: [0, 1],
+  east: [1, 0],
+  west: [-1, 0],
+};
+
+/** What the three junction detectors return, as the report's own fields. */
+interface JunctionAudit {
+  readonly junctionColumns: number;
+  readonly sunkenStairs: number;
+  readonly sunkenStairCensus: Readonly<Record<string, number>>;
+  readonly blindStairs: number;
+  readonly worstSunkenStairs: readonly JunctionStair[];
+  readonly strandedTreads: number;
+  readonly worstStranded: readonly JunctionStair[];
+  readonly cascadeComponents: number;
+  readonly cascadeLargest: number;
+  readonly worstCascades: readonly JunctionCascade[];
+}
+
+/**
+ * The top surface a walker's foot rests on at a column, or `null`.
+ *
+ * The paving's own answer first — `feet` is the audit's single agreed reading of
+ * where a walker stands — and the terrain's second, searched down from three
+ * above the stair because a neighbour higher than that is above it by any
+ * measure and its exact level does not change a comparison.
+ */
+function surfaceTop(probe: DressingProbe, x: number, z: number, from: number): number | null {
+  const feet = probe.feet.get(`${x},${z}`);
+  if (feet !== undefined) return feet - 1;
+  const standing = probe.groundStanding(x, z, from);
+  return standing === null ? null : standing - 1;
+}
+
+/**
+ * Measure what the reconciliation pass actually laid: is each stair a
+ * transition, is each tread between two paved things, and how big are the
+ * patches.
+ */
+function auditJunctionDressing(probe: DressingProbe): JunctionAudit {
+  const stairs: JunctionStair[] = [];
+  const columns = new Map<string, number>();
+  const seen = new Set<string>();
+  for (const block of probe.blocks) {
+    if (block.emitter !== JUNCTION_EMITTER) continue;
+    const key = `${block.x},${block.z}`;
+    if (seen.has(key)) continue;
+    // **What survived.** A later pass may have written over the tread, and a
+    // block that is no longer a stair is no longer this pass's dressing — the
+    // detector reads the world, not the queue.
+    const decoded = probe.propsAt(block.x, block.y, block.z);
+    if (decoded === undefined || !decoded.name.endsWith("_stairs")) continue;
+    seen.add(key);
+    columns.set(key, block.y);
+    const facing = decoded.props["facing"] ?? "north";
+    const way = WAYS[facing] ?? WAYS["north"];
+    const deltas: number[] = [];
+    for (const [dx, dz] of NEIGHBOURS4) {
+      const top = surfaceTop(probe, block.x + dx, block.z + dz, block.y + 3);
+      deltas.push(top === null ? Number.NaN : top - block.y);
+    }
+    const front = way as readonly [number, number];
+    stairs.push({
+      x: block.x,
+      y: block.y,
+      z: block.z,
+      block: decoded.name,
+      facing,
+      deltas,
+      frontPaved: probe.feet.has(`${block.x + front[0]},${block.z + front[1]}`),
+      backPaved: probe.feet.has(`${block.x - front[0]},${block.z - front[1]}`),
+    });
+  }
+
+  /* --- a stair that connects nothing ------------------------------------- */
+
+  const sunken: JunctionStair[] = [];
+  const blind: JunctionStair[] = [];
+  const census = new Map<string, number>();
+  for (const stair of stairs) {
+    const known = stair.deltas.filter((d) => !Number.isNaN(d));
+    if (known.length === 0) continue;
+    // "At or below every neighbour": nothing around it is lower, so there is no
+    // side a walker arrives from — which is the population, not yet the defect.
+    if (known.some((d) => d < 0)) continue;
+    const way = WAYS[stair.facing] ?? WAYS["north"];
+    const front = NEIGHBOURS4.findIndex(
+      ([dx, dz]) => dx === (way as readonly [number, number])[0] && dz === (way as readonly [number, number])[1],
+    );
+    const ahead = stair.deltas[front];
+    // …and the judgement is what it *faces*. A stair whose raised half stands
+    // against a column exactly one above hands a walker up onto it from the
+    // flat, which is a step and is the shape a junction is supposed to produce.
+    const label =
+      ahead === 1 ? "stepUp" : ahead !== undefined && ahead >= 2 ? "kerb" : "blind";
+    census.set(label, (census.get(label) ?? 0) + 1);
+    sunken.push(stair);
+    if (label !== "stepUp") blind.push(stair);
+  }
+  sunken.sort(
+    (a, b) =>
+      Math.min(...b.deltas.filter((d) => !Number.isNaN(d))) -
+        Math.min(...a.deltas.filter((d) => !Number.isNaN(d))) ||
+      a.x - b.x ||
+      a.z - b.z,
+  );
+
+  /* --- a tread with no paving on either side of its own axis ------------- */
+
+  const stranded = stairs.filter((s) => !s.frontPaved && !s.backPaved);
+
+  /* --- how big the patches are ------------------------------------------- */
+
+  const cascades: JunctionCascade[] = [];
+  const visited = new Set<string>();
+  for (const key of [...columns.keys()].sort()) {
+    if (visited.has(key)) continue;
+    const run = [key];
+    visited.add(key);
+    // Eight-connected: a terraced patch steps diagonally as often as it steps
+    // square, and counting the diagonals as separate components would split the
+    // very thing this row exists to see.
+    for (let head = 0; head < run.length; head++) {
+      const [cx, cz] = splitKey(run[head] as string);
+      for (let dz = -1; dz <= 1; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nk = `${cx + dx},${cz + dz}`;
+          if (visited.has(nk) || !columns.has(nk)) continue;
+          visited.add(nk);
+          run.push(nk);
+        }
+      }
+    }
+    let x0 = Number.POSITIVE_INFINITY;
+    let x1 = Number.NEGATIVE_INFINITY;
+    let z0 = Number.POSITIVE_INFINITY;
+    let z1 = Number.NEGATIVE_INFINITY;
+    let y0 = Number.POSITIVE_INFINITY;
+    let y1 = Number.NEGATIVE_INFINITY;
+    let interior = 0;
+    for (const cell of run) {
+      const [cx, cz] = splitKey(cell);
+      x0 = Math.min(x0, cx);
+      x1 = Math.max(x1, cx);
+      z0 = Math.min(z0, cz);
+      z1 = Math.max(z1, cz);
+      const y = columns.get(cell) as number;
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+      if (NEIGHBOURS4.every(([dx, dz]) => probe.feet.has(`${cx + dx},${cz + dz}`))) interior++;
+    }
+    cascades.push({
+      x: x0,
+      z: z0,
+      columns: run.length,
+      width: x1 - x0 + 1,
+      depth: z1 - z0 + 1,
+      fall: y1 - y0,
+      interiorShare: round3(interior / run.length),
+    });
+  }
+  cascades.sort((a, b) => b.columns - a.columns || a.x - b.x || a.z - b.z);
+
+  return {
+    junctionColumns: columns.size,
+    sunkenStairs: sunken.length,
+    sunkenStairCensus: sortedCounts(census),
+    blindStairs: blind.length,
+    worstSunkenStairs: blind.concat(sunken).slice(0, WORST_ROWS),
+    strandedTreads: stranded.length,
+    worstStranded: stranded.slice(0, WORST_ROWS),
+    cascadeComponents: cascades.length,
+    cascadeLargest: cascades[0]?.columns ?? 0,
+    worstCascades: cascades.slice(0, WORST_ROWS),
+  };
+}
 
 /** What one pass of the plinth measurement found over one role. */
 interface PlinthMeasure {

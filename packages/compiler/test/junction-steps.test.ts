@@ -32,6 +32,8 @@ import type { StructureBlock } from "../src/structures/buildings.js";
 import {
   JUNCTION_CUT,
   MAX_JUNCTION_LIFT,
+  MAX_SEAM_COLUMNS,
+  MAX_SEAM_THICKNESS,
   buildJunctionSteps,
   type PavedKind,
 } from "../src/structures/junction-steps.js";
@@ -170,18 +172,25 @@ describe("a seam between two paved surfaces at different levels", () => {
       ];
       expect(p.ground[at(r, block.x + dx, block.z + dz)] as number).toBeGreaterThanOrEqual(block.y);
     }
-    // Every column of the two-course run, and nothing else.
-    expect(result.blocks.length).toBe(19 + 15);
+    // Every column of the two-course run, **less the two corners**.
+    //
+    // 34 → 32 with the 2026-08-08 walk fixes. The two that went are the column
+    // at each end of the staircase, where the run has turned the corner and the
+    // only neighbour above is *diagonal*: those were the `backless` residue this
+    // file used to pin at 2, dressed anyway on the argument that a bevel beats a
+    // bare riser. Kai walked the result on `hillside_town_steep-6` as "random
+    // useless stairs" and the argument does not survive it — a stair with
+    // nothing one step up in front of it is not dressing, it is litter. They are
+    // no longer laid; the cut under them is counted instead.
+    expect(result.blocks.length).toBe(32);
   });
 
-  it("stops at MAX_JUNCTION_LIFT and dresses what it could not reach", () => {
+  it("stops at MAX_JUNCTION_LIFT and reports what it could not reach", () => {
     const { r, p, high, low } = seam(6);
     const result = run(p, [high, low]);
     expect(Math.max(...Object.keys(result.liftHistogram).map(Number))).toBe(MAX_JUNCTION_LIFT);
     // An interior seam column climbed as far as it is allowed — three — and is
-    // still three below the street it meets. It carries a stair anyway, which
-    // is the honest half-answer this pass gives when the drop is bigger than a
-    // run of steps can absorb: a nosed kerb, counted rather than hidden.
+    // still three below the street it meets.
     expect(p.ground[at(r, 12, 10)]).toBe(77 + MAX_JUNCTION_LIFT);
     // …and the run behind it is the full three columns, one block apiece.
     expect(row(p, 11, 12, 12)).toEqual([79]);
@@ -189,7 +198,17 @@ describe("a seam between two paved surfaces at different levels", () => {
     expect(row(p, 13, 12, 12)).toEqual([77]);
     // The worst rows are the ends of the seam, which `wouldStrand` held back.
     expect(result.worst[0]?.residual).toBe(6 - 1);
-    expect(result.unresolved).toBe(0);
+    // **0 → 17, and the change is the whole 2026-08-08 fix.** These seventeen
+    // columns are the top of the run against a six-block face: they climbed
+    // their three and the face still stands three above them. The pass used to
+    // lay a "kerb" on each — a stair at the *foot* of a wall — and call the cut
+    // settled. A nosing is architecture on the side you look over, and this pass
+    // only ever dresses the low side, so every one of those was a stair standing
+    // in pavement with an unclimbable wall in front of it. Kai walked exactly
+    // that. The cut is now reported instead, and shows up honestly in the
+    // audit's `undressedCutoffs`.
+    expect(result.unresolved).toBe(17);
+    expect(result.nosed).toBe(0);
   });
 
   it("does nothing at all where the two surfaces differ by one", () => {
@@ -199,6 +218,110 @@ describe("a seam between two paved surfaces at different levels", () => {
     expect(result.blocks).toHaveLength(0);
     expect(result.lifted).toBe(0);
     expect([...p.ground]).toEqual([...before]);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the three rules Kai's 2026-08-08 walks bought                               */
+/* -------------------------------------------------------------------------- */
+
+describe("a slope is not a seam", () => {
+  /**
+   * The shape Kai walked on `c1-harbourtown` with the gate forced on: not two
+   * finished surfaces meeting along a line, but **one continuous natural
+   * gradient** with paving declared across the whole of it. Every column of it
+   * is two below the column behind it, so every local rule in the pass says
+   * "climb", and what comes out is the whole hillside terraced in stairs — "a
+   * wide cascade of mossy-cobble steps terracing an entire waterfront slope down
+   * to a dock".
+   */
+  it("refuses a whole patch of lift rather than terracing a gradient", () => {
+    const r = region(48);
+    // A 20 × 20 field of paving falling two blocks every two columns: a slope,
+    // declared as one surface, with nothing to reconcile it *to*.
+    const p = plan(r, (x, z) => 100 - 2 * Math.floor((x + z) / 3));
+    const before = Int32Array.from(p.ground);
+    const result = run(p, [{ kind: "street", columns: rect(r, 10, 10, 29, 29) }]);
+
+    // Nothing moved, and the patch that wanted to move is reported as refused.
+    expect([...p.ground]).toEqual([...before]);
+    expect(result.lifted).toBe(0);
+    expect(result.refused).toBeGreaterThan(MAX_SEAM_COLUMNS);
+    expect(result.refusedPatches).toBe(1);
+    // …and no stair is laid over a refusal: the cut goes to the ledger whole.
+    expect(result.blocks).toHaveLength(0);
+    expect(result.unresolved).toBeGreaterThan(0);
+  });
+
+  it("states the scale rule as numbers", () => {
+    // A band that climbs three blocks is three columns wide; the fourth column
+    // is the diagonal's, measured on harbourtown — see the module note.
+    expect(MAX_SEAM_THICKNESS).toBe(MAX_JUNCTION_LIFT + 1);
+    // Four times the widest junction this compiler lays.
+    expect(MAX_SEAM_COLUMNS).toBe(64);
+  });
+});
+
+describe("a tread line with a hole in it", () => {
+  /**
+   * **Kai's 2026-08-08 walk, defect 1** — "a recessed stair slot with a
+   * one-block jog where treads misalign", measured at `(62 … 63, 12)` on
+   * `site-plan-hillside-steep`.
+   *
+   * The relaxation is synchronous and every column asks its *own* neighbourhood
+   * whether it is cut, so where the high side steps along its own run, one
+   * column of the low side sees a two-block cut in round 0 and its neighbour
+   * sees one in round 1 — by which time the first has risen and the cut has
+   * closed to one. Built here as the smallest thing that reproduces it: a high
+   * street whose level steps down partway along, so the low side's second row
+   * climbs at one end and not at the other.
+   */
+  it("fills a gap left by the relaxation's own arithmetic", () => {
+    const r = region();
+    // The high side: 80 for x ≤ 11, then 79 — one step along its own run.
+    const p = plan(r, (x, z) => (z <= 9 ? (x <= 11 ? 80 : 79) : 77));
+    const high = { kind: "street" as const, columns: rect(r, 4, 4, 20, 9) };
+    const low = { kind: "street" as const, columns: rect(r, 4, 10, 20, 24) };
+    run(p, [high, low]);
+
+    // The seam row is one continuous line, and so is the row behind it: no
+    // column of either sits below both of its neighbours along the seam.
+    for (const z of [10, 11] as const) {
+      const line = row(p, z, 6, 18);
+      for (let i = 1; i < line.length - 1; i++) {
+        const dip =
+          (line[i] as number) < (line[i - 1] as number) &&
+          (line[i] as number) < (line[i + 1] as number);
+        expect(dip, `notch at x=${6 + i}, z=${z} in ${line.join(",")}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe("a wall is not a surface", () => {
+  /**
+   * The residue the first cut of the 2026-08-08 fix left: `blindStairs` 3 on the
+   * steep fixture and 4 on `site-plan-hillside`, every one a lane tread beside a
+   * doorstep, turned at the **base of a cottage wall**. The pass's own model
+   * cannot see it — `top` for an unclaimed column is the plan's ground, and the
+   * plan's ground under a house is the floor it stands on — so a wall reads as a
+   * neighbour one block up and a step gets turned at it. A step into a wall
+   * hands a walker into somebody's front room.
+   */
+  it("never faces a tread at masonry standing on unclaimed ground", () => {
+    const r = region();
+    const p = plan(r, (_x, z) => (z <= 9 ? 79 : 77));
+    const bricks = stack.blockByName("stone_bricks")?.stateId ?? 1;
+    // A cottage wall on the unclaimed row at z = 9, standing on ground 79 — one
+    // above the level the lane's own lift can reach.
+    const laid: StructureBlock[] = [];
+    for (let x = 4; x <= 20; x++) for (let y = 80; y <= 84; y++) laid.push({ x, y, z: 9, stateId: bricks });
+    const result = run(p, [{ kind: "street", columns: rect(r, 4, 10, 20, 24) }], laid);
+
+    for (const block of result.blocks) {
+      const facing = stack.blockStateProps(block.stateId)?.props["facing"];
+      expect(facing, `tread at ${block.x},${block.z} faces the wall`).not.toBe("north");
+    }
   });
 });
 
@@ -266,16 +389,21 @@ describe("what a lift is not allowed to touch", () => {
     const { p, before, result } = cut("doorstep");
     expect(result.lifted).toBe(0);
     expect([...p.ground]).toEqual([...before]);
-    // It is still dressed where it stands, so the cut is not left raw.
-    expect(result.nosed).toBeGreaterThan(0);
-    expect(result.unresolved).toBe(0);
+    // **The cut is reported, not dressed** (2026-08-08). A three-block face a
+    // doorstep cannot climb has nothing a stair can do for it: the tread this
+    // used to lay stood at the bottom of the wall facing into it. The pass now
+    // says so — `unresolved` is the honest residue and `undressedCutoffs` in the
+    // world audit is where a reader meets it.
+    expect(result.nosed).toBe(0);
+    expect(result.unresolved).toBeGreaterThan(0);
   });
 
   it("never raises a flight: its levels are the tread law's", () => {
     const { p, before, result } = cut("steps");
     expect(result.lifted).toBe(0);
     expect([...p.ground]).toEqual([...before]);
-    expect(result.nosed).toBeGreaterThan(0);
+    expect(result.nosed).toBe(0);
+    expect(result.unresolved).toBeGreaterThan(0);
   });
 
   it("never raises a column something already stands on", () => {
@@ -482,14 +610,25 @@ describe("a lane running past a doorstep", () => {
     expect([...p.ground]).toEqual([...before]);
   });
 
-  it("…but still dresses the cheek, so the cut is never left raw", () => {
+  it("…and reports the cheek as the cut it is, rather than dressing it", () => {
     const { p, paved, laid } = stoop();
     const result = run(p, paved, laid);
-    // The audit counts an undressed cut whatever caused it, so refusing the
-    // lift must not become refusing the tread: this trades a staircase for a
-    // kerb, not for a bare riser.
-    expect(result.nosed).toBeGreaterThan(0);
-    expect(result.unresolved).toBe(0);
+    // **Reversed on 2026-08-08, and the earlier reading was the defect.** This
+    // used to insist the cheek be *nosed* so the audit would not count it. Kai
+    // then walked the nosings — here and on both hillside fixtures — as
+    // "random useless stairs": a stair block laid flat in the pavement at the
+    // side of a stoop, pointing at a threshold two blocks up that nobody enters
+    // sideways. The lane column beside the *lower* tread is one block down and
+    // still gets its step (the test below); the one beside the upper tread is
+    // two down, has no step to be, and is now simply reported.
+    // The two treads that stay are the ones beside the flight's *lower* tread,
+    // one either side of the door: each is one block under the stoop it faces,
+    // which is a real way up onto it. `nosed` counts a tread laid on a column
+    // that did not have to move, and both of these are that.
+    expect(result.nosed).toBe(2);
+    // The two that go are the ones beside the *upper* tread, two blocks under a
+    // threshold nobody enters sideways. They are the cut now, not the dressing.
+    expect(result.unresolved).toBe(2);
   });
 
   it("faces every tread it lays along the connection that tread serves", () => {
@@ -497,22 +636,16 @@ describe("a lane running past a doorstep", () => {
     const result = run(p, paved, laid);
     expectEveryStairServesItsFacing(p, result, laid);
     // The two columns beside the flight are the ones Kai walked, and they come
-    // out as the two things a junction stair is allowed to be. Beside the
-    // flight's *lower* tread the rise is one block — a real way onto the
-    // doorstep from the side — so that stair is **a step**; beside the *upper*
-    // tread the rise is two and unclimbable, so that one is **a kerb**. Both
-    // face east, which is the direction of the thing they serve; before the fix
-    // both faced east too, and neither served anything, because one of them had
-    // been raised a block first so that its facing pointed at a column level
-    // with it.
-    for (const [z, rise] of [
-      [11, 1],
-      [10, 2],
-    ] as const) {
-      const block = result.blocks.find((b) => b.x === 11 && b.z === z);
-      expect(stack.blockStateProps(block?.stateId ?? 0)?.props["facing"]).toBe("east");
-      expect(standingAt(p, laid, 12, z) - (block?.y ?? 0)).toBe(rise);
-    }
+    // out as **one** thing a junction stair is allowed to be, and one nothing.
+    // Beside the flight's *lower* tread the rise is one block — a real way onto
+    // the doorstep from the side — so that stair is a **step**, faces east, and
+    // stays. Beside the *upper* tread the rise is two and unclimbable: that was
+    // the "kerb", it is one of the blocks Kai walked, and since 2026-08-08 it is
+    // not laid at all.
+    const step = result.blocks.find((b) => b.x === 11 && b.z === 11);
+    expect(stack.blockStateProps(step?.stateId ?? 0)?.props["facing"]).toBe("east");
+    expect(standingAt(p, laid, 12, 11) - (step?.y ?? 0)).toBe(1);
+    expect(result.blocks.find((b) => b.x === 11 && b.z === 10)).toBeUndefined();
   });
 
   it("holds the same rule on the seams, which are not doorsteps at all", () => {
@@ -526,17 +659,16 @@ describe("a lane running past a doorstep", () => {
       { kind: "street", columns: rect(r, 4, 10, 20, 24) },
     ]);
     expect(result.stoopLifts).toBe(0);
-    // **The residue, pinned rather than hidden.** Two of the thirty-four treads
-    // here are `backless`, and both are the same thing: the column at each end
-    // of the staircase, where the run has turned the corner and the only
-    // neighbour above it is *diagonal*. A stair has four facings and no
-    // diagonal one, so there is no direction in which that block can stand
-    // against something higher; it reads as a bevel in the pavement rather than
-    // as a stair beside a stair, and it is the lattice-corner artifact
-    // `docs/DESIGN.md` names, not the defect Kai walked. **It MUST GO DOWN**,
-    // and it will not go down by turning the block — it needs the corner
-    // treated as a corner.
-    expect(result.backless).toBe(2);
-    expect(result.blocks).toHaveLength(34);
+    // **2 → 0, and the residue went by not being laid.** The two `backless`
+    // treads were the ends of the staircase, where the run turns the corner and
+    // the only neighbour above is *diagonal* — a stair has four facings and no
+    // diagonal one, so there was no direction in which either could stand
+    // against anything higher. This file used to pin them at 2 and call it the
+    // lattice-corner artifact that MUST GO DOWN. It has: since 2026-08-08 the
+    // pass lays a tread only where it is a step, so a block with nothing one
+    // above it in any cardinal direction is never emitted, and `backless` is
+    // structurally zero rather than merely small.
+    expect(result.backless).toBe(0);
+    expect(result.blocks).toHaveLength(32);
   });
 });

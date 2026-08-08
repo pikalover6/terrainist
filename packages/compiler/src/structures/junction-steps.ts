@@ -66,14 +66,52 @@
  * across a town: the relaxation only ever touches columns within
  * `MAX_JUNCTION_LIFT` of a seam.
  *
- * Every column the pass raises, **and every column it could not raise that is
- * still cut**, gets a stair laid *into* its top course — the same convention
- * `street-stairs.ts` uses for a flight's own tread mix, and the same convention
- * the audit reads (`nameAt(x, feet − 1, z)`). A raised column reads as a step
- * you walk up; a column that could not move reads as a nosing at the edge,
- * which is a kerb rather than a stair and is honestly less than the drop
- * deserves. The residue is counted and returned
- * ({@link JunctionStepResult.unresolved}) rather than hidden.
+ * Every column that ends up **one block under the surface it faces** gets a
+ * stair laid *into* its top course — the same convention `street-stairs.ts`
+ * uses for a flight's own tread mix, and the same convention the audit reads
+ * (`nameAt(x, feet − 1, z)`). That is the only shape laid, and the restriction
+ * is the 2026-08-08 walk fix; see below.
+ *
+ * ## What Kai walked on 2026-08-08, and the three rules it bought
+ *
+ * Two worlds, one diagnosis: **every defect was this pass working outside its
+ * remit.** A reconciliation pass closes a seam between two finished surfaces. It
+ * is not a grader, not a stair-builder and not a mason, and each of the three
+ * shapes below is it trying to be one of those.
+ *
+ * 1. **"Random useless stairs"** — a stair block laid flat in otherwise level
+ *    pavement, connecting nothing. Every one of them was this module's own
+ *    invention, the **kerb**: where a cut was too deep to climb, it laid the
+ *    tread anyway, "an honest half-answer", full-height half against the wall.
+ *    But a nosing is architecture on the side you *look over* and this pass only
+ *    ever dresses the **low** side, so a kerb here is always a stair standing at
+ *    the foot of something unclimbable. Measured off the finished world
+ *    (`emit/dressing.ts`, `sunkenStairs`): 16 on the steep fixture, 241 on
+ *    harbourtown with the gate forced on, every one a kerb or a backless tread.
+ *    So a tread is now laid **only where it is a step** — one block under the
+ *    thing it faces — and only where paving lies on its own axis. The cut it
+ *    leaves goes to {@link JunctionStepResult.unresolved} and the audit's
+ *    `undressedCutoffs`, which rose from 0 to 7 and 5 on the two fixtures. That
+ *    is the honest number and it is the point: a bare riser the ledger can see
+ *    beats a stair that lies about being a way up.
+ * 2. **A jog in a tread line** — "a recessed stair slot where treads misalign",
+ *    at `(62 … 63, 12)` on the steep fixture. The relaxation is synchronous and
+ *    each column asks its own neighbourhood, so where the high side steps along
+ *    its own run, one column sees a two-block cut a round before its neighbour
+ *    does — and by the time the neighbour looks, the cut has closed to one and
+ *    it never climbs. An **alignment round** now fills a hole up to
+ *    {@link NOTCH_SPAN} columns wide that is pinched between lifted columns on
+ *    one axis, under exactly the guards the climb obeys.
+ * 3. **A cascade** — "a wide cascade of mossy-cobble steps terracing an entire
+ *    natural waterfront slope down to a dock". Every guard in this module is
+ *    *local*, and on a hillside the local answer is yes hundreds of times over.
+ *    The lift is now grouped into connected patches and judged **as a patch**
+ *    against {@link MAX_SEAM_THICKNESS} and {@link MAX_SEAM_COLUMNS}: a seam is a
+ *    band, a slope is not, and a patch that is a slope is put back whole
+ *    ({@link JunctionStepResult.refused}). It takes harbourtown's largest
+ *    connected patch of junction dressing from 178 columns to 46 while its
+ *    orphan columns and components come out at 299 and 196 against 300 and 197 —
+ *    the refusal costs the network nothing.
  *
  * ## What is not a cut: a stoop's cheek (walked 2026-08-07)
  *
@@ -170,6 +208,59 @@ export const MAX_JUNCTION_LIFT = 3;
 export const JUNCTION_CUT = 2;
 
 /**
+ * The thickest a lift may be, averaged over the seam it runs along.
+ *
+ * **The scale rule, and the one Kai's 2026-08-08 walks are about.** A seam is a
+ * *line*: two finished surfaces meet along an edge and the low one climbs a
+ * band of at most {@link MAX_JUNCTION_LIFT} columns to reach it, so the patch of
+ * lifted ground is long and thin — `columns / longest side` is at most three by
+ * construction. A **slope** is not a line, and terracing one produces a patch
+ * that is thick in both directions.
+ *
+ * Measured on the two walked worlds: the hillside fixtures' largest lifted patch
+ * runs 2.4 columns thick and the unit-test seam 2.0 — both bands. On
+ * `c1-harbourtown` with the gate forced on, the patches that terrace a gradient
+ * run 4.8, 4.9, 5.1, 6.1 and 6.2, and the one Kai walked as "a wide cascade of
+ * mossy-cobble steps terracing an entire natural waterfront down to a dock" is
+ * in that group.
+ *
+ * **Four, and the fourth column is measured rather than argued.** Three is where
+ * the mechanism says the bar is — a band that climbs three blocks is three
+ * columns wide — but a seam that runs on the diagonal measures a column wider
+ * than it is, because the raster steps sideways as it steps along. At three the
+ * refusal takes five harbourtown patches of thickness 3.3 to 3.8 with it, and
+ * those are real seams: refusing them costs the town **20,638 orphan columns**
+ * against 300 with them kept. At four, harbourtown's orphans and components come
+ * out at 299 and 196 against 300 and 197 — no regression at all — and every
+ * gradient-terracing patch is still refused. The number is where those two
+ * measurements meet.
+ *
+ * A patch over the bar is refused **whole** — every column of it put back where
+ * it started. Grading a hillside is `layout/levels.ts`' job and it has benches,
+ * retaining and a flight solver to do it with; this pass has one block of lift
+ * per column and no plan, and what it produces at that size is a staircase
+ * poured over a beach.
+ */
+export const MAX_SEAM_THICKNESS = MAX_JUNCTION_LIFT + 1;
+
+/**
+ * …and an absolute ceiling on one patch, whatever its shape.
+ *
+ * The thickness rule alone lets a single component grow without limit as long as
+ * it grows lengthwise, and on harbourtown that licence is taken: one patch runs
+ * **178 columns** along a 166-column front at a thickness of 1.07. Thin or not,
+ * that is not a junction — it is a shoreline — and it is the single largest
+ * connected patch of junction dressing on any world measured.
+ *
+ * Sixty-four columns is four times the widest junction this compiler lays (a
+ * nine-wide avenue meeting a seven-wide street), comfortably above both hillside
+ * fixtures' worst patch of 31 and above the 34-column seam the unit tests pin.
+ * Capping there takes harbourtown's largest dressed component from 178 to 46 and
+ * costs one orphan column and one component — measured, both directions.
+ */
+export const MAX_SEAM_COLUMNS = 64;
+
+/**
  * Rounds of relaxation before the pass gives up.
  *
  * A staircase of `n` steps needs about `2n` synchronous rounds to form — the
@@ -262,12 +353,25 @@ export interface JunctionStepResult {
   readonly blocks: readonly StructureBlock[];
   /** Columns raised to climb towards the paving beside them. */
   readonly lifted: number;
-  /** Columns dressed where they stood, because they could not be raised. */
+  /**
+   * Columns dressed **without being raised**: a step laid where the column
+   * already stood one under the surface it faces.
+   *
+   * Until 2026-08-08 this also counted the *kerb* — a tread at the foot of a
+   * face too deep to climb — which is why the name is what it is. Those are no
+   * longer laid at all, so every row in this number is now a step.
+   */
   readonly nosed: number;
   /**
    * Columns still two or more below a paved neighbour **and** carrying no
-   * stair — what the audit will still count. The honest residue; zero is the
-   * bar.
+   * stair — what the audit will still count as `undressedCutoffs`.
+   *
+   * **Zero stopped being the bar on 2026-08-08.** It was reached by dressing
+   * every cut whatever its depth, and half of what that laid was the "random
+   * useless stairs" Kai walked. This is now the pass's honest refusal: a cut it
+   * has no step to offer, named rather than papered over. It should go down, by
+   * the two surfaces meeting at a level a step can bridge or by a flight being
+   * built between them — never by dressing a wall's foot again.
    */
   readonly unresolved: number;
   /**
@@ -283,6 +387,16 @@ export interface JunctionStepResult {
    * bar**.
    */
   readonly stoopLifts: number;
+  /**
+   * Columns whose lift was withdrawn because the patch they belonged to was a
+   * **slope rather than a seam**, and how many patches that was. See
+   * {@link MAX_SEAM_THICKNESS}: this is the pass declining work it has no plan
+   * for, and a large number here on a flat town is the reason the gate exists.
+   */
+  readonly refused: number;
+  readonly refusedPatches: number;
+  /** The largest patch of lift the pass kept, in columns. */
+  readonly largestSeam: number;
   /** How much was lifted, by lift: `"1"`, `"2"`, `"3"`. */
   readonly liftHistogram: Readonly<Record<string, number>>;
   /** The worst cuts the pass touched, deepest first. */
@@ -345,7 +459,7 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
     }
   }
 
-  const { mask: occupied, standing } = occupiedAbove(input, paved);
+  const { mask: occupied, standing, built } = occupiedAbove(input, paved);
 
   const top = Int32Array.from(standing);
   const lift = new Int32Array(cells);
@@ -430,6 +544,63 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
     if (!changed) break;
   }
 
+  /* --- alignment: a tread line with a notch in it is not a tread line ----- */
+  //
+  // **Kai's 2026-08-08 walk, defect 1** — "a recessed stair slot with a
+  // one-block jog where treads misalign" — measured at `(62 … 63, 12)` on
+  // `site-plan-hillside-steep`. The relaxation is synchronous and every column
+  // asks its *own* neighbourhood whether it is cut, so where the high side is a
+  // flight whose own level steps along its run, one column of the low side sees
+  // a two-block cut in round 0 and the column beside it sees one in round 1 —
+  // by which time the first has already risen and the cut has closed to one.
+  // The second never climbs, and the finished tread line reads 158 · 158 · 157 ·
+  // 157 · 158 with stairs on the outer four: a slot you walk into.
+  //
+  // The trigger is deliberately **not** a cut. A column pinched between two
+  // lifted columns that both stand above it is not climbing towards anything —
+  // it is filling a hole in a step the pass itself made — so it is allowed to
+  // rise on alignment alone, under exactly the same guards as the climb, and
+  // never past {@link MAX_JUNCTION_LIFT}.
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    let changed = false;
+    const next = Int32Array.from(top);
+    const lifted0 = Int32Array.from(lift);
+    for (let z = 0; z < region.depth; z++) {
+      for (let x = 0; x < region.width; x++) {
+        const idx = z * region.width + x;
+        if (movable[idx] !== 1) continue;
+        if ((lift[idx] as number) >= MAX_JUNCTION_LIFT) continue;
+        if (!isNotch(region, top, lift, x, z)) continue;
+        if (wouldStrand(region, top, movable, lifted0, x, z)) continue;
+        if (wouldBeCauseway(region, top, x, z)) continue;
+        next[idx] = (top[idx] as number) + 1;
+        lift[idx] = (lift[idx] as number) + 1;
+        changed = true;
+      }
+    }
+    top.set(next);
+    if (!changed) break;
+  }
+
+  /* --- refusal: a seam, not a slope --------------------------------------- */
+  //
+  // **Kai's 2026-08-08 A/B walk of `c1-harbourtown`, defect B**, and the reason
+  // this pass needs a scale rule at all. Every guard above is *local*: it asks
+  // whether one column may rise, and a hillside is a place where the answer is
+  // yes for hundreds of them in a row. What comes out is not a reconciled seam,
+  // it is a natural gradient flooded with stairs — "a wide cascade of
+  // mossy-cobble steps terracing an entire waterfront slope down to a dock".
+  //
+  // So the lift is grouped into connected patches and each patch is judged as a
+  // whole against {@link MAX_SEAM_THICKNESS} and {@link MAX_SEAM_COLUMNS}. A
+  // patch that fails is put back exactly where it started, and whatever cut it
+  // was covering goes back to being a cut — reported through
+  // {@link JunctionStepResult.refused} and, where it cannot be dressed as a
+  // step, counted in `undressedCutoffs` by the audit. That is the honest
+  // outcome: a bare face the ledger can see beats a terrace this pass has no
+  // plan for.
+  const refusal = refuseSlopes(region, top, standing, lift);
+
   /* --- apply: the plan first, then the tread ------------------------------ */
 
   const stairName = roleBlockName(input.palette, "ground.stairs", "stone_brick_stairs", stack);
@@ -490,9 +661,40 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
       // flight's mix the same way and for the same reason: a dressing block on
       // top of the surface is a block standing on the pavement, which is a
       // different defect in the same audit.
-      const dressing = alreadyDressed
+      const candidate = alreadyDressed
         ? undefined
-        : stepFacing(region, top, x, z, after, highest);
+        : stepFacing(region, top, built, x, z, after, highest);
+      // **A stair that connects nothing is not dressing** (Kai's 2026-08-08
+      // walk, defect 3: "random useless stairs — a stair block sunk in a pit in
+      // otherwise flat pavement"). Only a `"step"` is laid now. The two shapes
+      // that go are:
+      //
+      // - the **kerb**, this pass's own invention: a stair at the *foot* of a
+      //   face two or more blocks tall. A nosing is architecture on the side you
+      //   look over — the top of the wall — and this pass only ever dresses the
+      //   low side, so every kerb it laid was a stair standing in flat pavement
+      //   with an unclimbable wall in front of it, which is precisely the block
+      //   Kai walked. `emit/dressing.ts`' `sunkenStairs` counts it off the
+      //   finished world: 16 on the steep fixture, 241 on harbourtown with the
+      //   gate forced on, and every one of them was a kerb or a backless tread.
+      // - the **backless** tread, which the module note already called residue
+      //   and which now simply is not laid.
+      //
+      // The cut underneath is not hidden by the refusal: it stays in
+      // {@link JunctionStepResult.unresolved} and the audit counts it in
+      // `undressedCutoffs`. A bare riser the ledger can see is a better world
+      // than a stair that lies about being a way up.
+      //
+      // …and a step is only dressed where it is **between two pieces of
+      // paving**. A tread with paving on neither side of its own axis is
+      // dressing laid into natural ground: not a seam being closed, a hill
+      // being terraced, which is `layout/levels.ts`' job. (`strandedTreads`.)
+      const dressing =
+        candidate === undefined || candidate.kind !== "step"
+          ? undefined
+          : pavedOnAxis(region, paved, x, z, candidate.facing)
+            ? candidate
+            : undefined;
       const state =
         dressing === undefined
           ? undefined
@@ -544,6 +746,9 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
     unresolved,
     backless,
     stoopLifts,
+    refused: refusal.columns,
+    refusedPatches: refusal.patches,
+    largestSeam: refusal.largestKept,
     liftHistogram: Object.fromEntries([...histogram].sort(([a], [b]) => (a < b ? -1 : 1))),
     worst: steps.slice(0, WORST_STEPS),
   };
@@ -607,6 +812,141 @@ const NEIGHBOURS4 = [
   [0, 1],
   [0, -1],
 ] as const;
+
+/**
+ * True when a column is a **notch**: pinched on one axis between two columns
+ * this pass lifted, both of which now stand above it.
+ *
+ * Read on an axis rather than over the four neighbours because that is the shape
+ * of the defect — a tread line runs along the seam, and a hole in it is a column
+ * with the line on either side of it and open ground front and back.
+ */
+function isNotch(region: Region, top: Int32Array, lift: Int32Array, x: number, z: number): boolean {
+  const here = top[z * region.width + x] as number;
+  for (const [dx, dz] of [
+    [1, 0],
+    [0, 1],
+  ] as const) {
+    if (
+      reachesLiftedAbove(region, top, lift, x, z, dx, dz, here) &&
+      reachesLiftedAbove(region, top, lift, x, z, -dx, -dz, here)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * How wide a hole in a tread line still counts as a notch.
+ *
+ * Three, and it is the same three as everywhere else in this module: a gap
+ * wider than the tallest step the pass can build is not a notch in a line, it is
+ * a stretch of the line that never formed, and filling it would be climbing
+ * rather than aligning. Measured on `site-plan-hillside-steep`, the walked jog
+ * at `(62 … 63, 12)` is **two** columns wide, so a one-column rule — which is
+ * what this was on its first cut — leaves the defect exactly where it was.
+ */
+const NOTCH_SPAN = MAX_JUNCTION_LIFT;
+
+/**
+ * True when walking one way along an axis reaches a column this pass lifted that
+ * stands above `here`, without climbing over anything on the way.
+ */
+function reachesLiftedAbove(
+  region: Region,
+  top: Int32Array,
+  lift: Int32Array,
+  x: number,
+  z: number,
+  dx: number,
+  dz: number,
+  here: number,
+): boolean {
+  for (let step = 1; step <= NOTCH_SPAN; step++) {
+    const nx = x + step * dx;
+    const nz = z + step * dz;
+    if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) return false;
+    const nidx = nz * region.width + nx;
+    if ((top[nidx] as number) > here) return (lift[nidx] as number) >= 1;
+    // Level with the hole, or below it: still inside the hole, keep looking.
+  }
+  return false;
+}
+
+/** What {@link refuseSlopes} put back. */
+interface Refusal {
+  /** Columns whose lift was withdrawn. */
+  readonly columns: number;
+  /** Patches refused. */
+  readonly patches: number;
+  /** The largest patch the pass kept, in columns. */
+  readonly largestKept: number;
+}
+
+/**
+ * Group the lift into connected patches and put back every patch that is a
+ * slope rather than a seam. Mutates `top` and `lift` in place.
+ *
+ * Eight-connected, because a terrace steps diagonally as often as it steps
+ * square and splitting the diagonals would hide the very shape this refuses.
+ */
+function refuseSlopes(
+  region: Region,
+  top: Int32Array,
+  standing: Int32Array,
+  lift: Int32Array,
+): Refusal {
+  const cells = region.width * region.depth;
+  const seen = new Uint8Array(cells);
+  const stack: number[] = [];
+  let columns = 0;
+  let patches = 0;
+  let largestKept = 0;
+  for (let start = 0; start < cells; start++) {
+    if (seen[start] === 1 || (lift[start] as number) < 1) continue;
+    seen[start] = 1;
+    stack.length = 0;
+    stack.push(start);
+    const patch: number[] = [];
+    let x0 = region.width;
+    let x1 = -1;
+    let z0 = region.depth;
+    let z1 = -1;
+    while (stack.length > 0) {
+      const idx = stack.pop() as number;
+      patch.push(idx);
+      const x = idx % region.width;
+      const z = (idx - x) / region.width;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (z < z0) z0 = z;
+      if (z > z1) z1 = z;
+      for (const [dx, dz] of NEIGHBOURS8) {
+        const nx = x + dx;
+        const nz = z + dz;
+        if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
+        const nidx = nz * region.width + nx;
+        if (seen[nidx] === 1 || (lift[nidx] as number) < 1) continue;
+        seen[nidx] = 1;
+        stack.push(nidx);
+      }
+    }
+    const longest = Math.max(x1 - x0 + 1, z1 - z0 + 1);
+    const thickness = patch.length / longest;
+    if (thickness <= MAX_SEAM_THICKNESS && patch.length <= MAX_SEAM_COLUMNS) {
+      if (patch.length > largestKept) largestKept = patch.length;
+      continue;
+    }
+    patches++;
+    columns += patch.length;
+    for (const idx of patch) {
+      lift[idx] = 0;
+      top[idx] = standing[idx] as number;
+    }
+  }
+  return { columns, patches, largestKept };
+}
 
 /** The highest paved neighbour of a column, and the way to it. */
 function highestNeighbour(
@@ -676,10 +1016,21 @@ function highestNeighbour(
 function occupiedAbove(
   input: JunctionStepInput,
   paved: Uint8Array,
-): { readonly mask: Uint8Array; readonly standing: Int32Array } {
+): { readonly mask: Uint8Array; readonly standing: Int32Array; readonly built: Uint8Array } {
   const { region, plan, stack } = input;
   const cells = region.width * region.depth;
   const mask = new Uint8Array(cells);
+  /**
+   * **1 where an unpaved column carries masonry.** A wall is not a surface: a
+   * step that hands a walker "up" onto the foot of a cottage hands them into it.
+   * The pass's own model cannot tell — `top` for an unclaimed column is the
+   * plan's ground, and the plan's ground under a house is the floor it stands
+   * on — so the block list is asked instead. Measured on both hillside fixtures
+   * this is the whole residue of `blindStairs`: three lane treads on the steep
+   * document and four on the hillside, every one of them turned at the base of a
+   * building wall beside a doorstep.
+   */
+  const built = new Uint8Array(cells);
   const standing = Int32Array.from(plan.ground);
   /** `idx → y → block`, for the paved columns only. */
   const above = new Map<number, Map<number, number>>();
@@ -688,7 +1039,10 @@ function occupiedAbove(
     const z = block.z - region.z0;
     if (x < 0 || z < 0 || x >= region.width || z >= region.depth) continue;
     const idx = z * region.width + x;
-    if (paved[idx] !== 1) continue;
+    if (paved[idx] !== 1) {
+      if (block.y > (plan.ground[idx] as number)) built[idx] = 1;
+      continue;
+    }
     const ground = plan.ground[idx] as number;
     if (block.y > ground) {
       mask[idx] = 1;
@@ -725,7 +1079,7 @@ function occupiedAbove(
     }
     standing[idx] = y;
   }
-  return { mask, standing };
+  return { mask, standing, built };
 }
 
 /**
@@ -781,6 +1135,30 @@ function onlyStoopAbove(
 }
 
 /**
+ * True when the column in front of a tread, or the one behind it, is paving.
+ *
+ * The axis, not the neighbourhood: a tread is a piece of *connection*, and the
+ * connection it makes runs along its own facing. Paving on the side of it is a
+ * different street going past.
+ */
+function pavedOnAxis(
+  region: Region,
+  paved: Uint8Array,
+  x: number,
+  z: number,
+  facing: string,
+): boolean {
+  const [dx, dz] = facing === "east" ? [1, 0] : facing === "west" ? [-1, 0] : facing === "south" ? [0, 1] : [0, -1];
+  for (const sign of [1, -1] as const) {
+    const nx = x + sign * (dx as number);
+    const nz = z + sign * (dz as number);
+    if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
+    if (paved[nz * region.width + nx] === 1) return true;
+  }
+  return false;
+}
+
+/**
  * The cardinal name of a step, for a stair's `facing`.
  *
  * The same convention `street-stairs.ts` uses: **facing points uphill**, so the
@@ -821,6 +1199,7 @@ function facingOf(dx: number, dz: number): string {
 function stepFacing(
   region: Region,
   top: Int32Array,
+  built: Uint8Array,
   x: number,
   z: number,
   after: number,
@@ -834,7 +1213,11 @@ function stepFacing(
     const nz = z + dz;
     if (nx < 0 || nz < 0 || nx >= region.width || nz >= region.depth) continue;
     const nidx = nz * region.width + nx;
-    // **Every** neighbour, paved or not. What a stair's raised half stands
+    // …except a **wall**: an unclaimed column with masonry standing on it is
+    // the side of a building, and a step turned at one hands a walker into a
+    // house. `emit/dressing.ts`' `blindStairs` counts what this clause removes.
+    if (built[nidx] === 1) continue;
+    // **Every** other neighbour, paved or not. What a stair's raised half stands
     // against is a question about the ground, and an unclaimed bank a block up
     // is as real a thing to step onto — and two blocks up as real a thing to
     // nose against — as a street is. Reading only the paving is what left a

@@ -258,6 +258,14 @@ interface DressingGoldens {
   /** Paved columns two or more blocks under the paving beside them. */
   readonly cutoffColumns: number;
   readonly undressedCutoffs: number;
+  /** Columns carrying a stair the junction pass laid — the 2c denominator. */
+  readonly junctionColumns: number;
+  /** …with no low side and nothing one step up in front of them. */
+  readonly blindStairs: number;
+  /** …laid into natural ground on both sides of their own axis. */
+  readonly strandedTreads: number;
+  /** The largest connected patch of junction dressing, in columns. */
+  readonly cascadeLargest: number;
   /** Carriageway proud of open ground on both sides, and the longest such run. */
   readonly plinthColumns: number;
   readonly plinthLongestRun: number;
@@ -327,8 +335,38 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // (2, 43). The street now steps down onto those treads instead of ending
   // above them, so there is no bite left to dress. Measured in isolation the
   // landing takes this row 14 → 8; stacked on the stoop fix, 18 → 12.
+  //
+  // …and **0 → 5 undressed** with the 2026-08-08 walk fixes, which is a row
+  // going the wrong way on purpose and the argument has to carry it. Five of the
+  // twelve cuts are two or more blocks deep at a face the low side cannot climb
+  // — the top of a lift run against a three-block bank, and lane columns beside
+  // a stoop's upper tread. The pass used to lay a "kerb" on each: a stair at the
+  // **foot** of a wall, its raised half against masonry nobody can climb, laid
+  // flat in otherwise level pavement. Kai walked those on `hillside_town_steep-6`
+  // as "random useless stairs", and they are the same block on this fixture.
+  // A nosing is architecture on the side you *look over*; this pass only ever
+  // dresses the low side, so it has no honest nosing to lay. It now says so, and
+  // these five are the saying. They MUST GO DOWN — by the two surfaces arriving
+  // at a level a step can bridge, or by a flight being built there — never by
+  // going back to dressing a wall's foot.
   cutoffColumns: 12,
-  undressedCutoffs: 0,
+  undressedCutoffs: 5,
+  // The 2c rows (2026-08-08), pinned from the first compile that has them.
+  // `blindStairs` and `strandedTreads` MUST GO DOWN, to 0. `junctionColumns` is
+  // the denominator: a "fix" that stops laying junction dressing altogether
+  // would take both defects with it and must not read as a win.
+  //
+  // The one blind stair left on this fixture is at `(50, 70, 227)` — a lane
+  // tread facing a column that reads back as no surface at all, beside the
+  // lower cottage's doorstep. It is the same site on both fixtures.
+  junctionColumns: 11,
+  blindStairs: 1,
+  // `(75, 70, 244)`, both fixtures: a tread whose four neighbours all read back
+  // as unstandable. The columns round it are declared paving that the audit
+  // counts as `buried` — a defect of a different pass, showing up here.
+  strandedTreads: 1,
+  // A point seam is a handful of columns. Four.
+  cascadeLargest: 4,
   // 32 → **30**, longest run still two. Still the external road's own kerb,
   // still no run of plinth road on this fixture — two of the columns that read
   // proud were lane cells raised against a stoop, and they are not raised now
@@ -370,8 +408,27 @@ const STEEP_DRESSING: DressingGoldens = {
   // fix (2026-08-07) — three lane columns beside doorsteps that are nosed where
   // they stand instead of climbing the side of a step. See the hillside row for
   // the argument; `undressedCutoffs` is still nought, which is the bar.
+  //
+  // **0 → 7 undressed** with the 2026-08-08 walk fixes — see the hillside row
+  // for the full argument. This is the fixture Kai walked the defect on: the
+  // seven are the treads that used to stand at the foot of a face they could not
+  // climb, including the pair at the mangled corner where the carriage spine
+  // `sp0` meets the terrace street `hs2_0` three blocks down.
   cutoffColumns: 16,
-  undressedCutoffs: 0,
+  undressedCutoffs: 7,
+  // The 2c rows (2026-08-08). See the hillside block for what each one is.
+  //
+  // `cascadeLargest` 31 → **24** is the mangled corner at `(53 … 65, 9 … 12)`,
+  // where cobblestone, stone brick and polished andesite met in offset steps —
+  // three surfaces' worth of material in a four-row terraced apron. The patch is
+  // smaller because the treads that served nothing are gone; what is left is a
+  // continuous tread line, which is the other half of the fix (the walked jog at
+  // `(62 … 63, 12)` is filled by the alignment round). It MUST GO DOWN further,
+  // and the lever is a *flight* between those two streets, not more dressing.
+  junctionColumns: 45,
+  blindStairs: 1,
+  strandedTreads: 1,
+  cascadeLargest: 24,
   // 3 → 5 columns, longest run 1 → 2, and then **5 → 3, run 2 → 1** with the
   // stoop fix (2026-08-07): the lifts it withdrew were exactly the cells that
   // stood proud of the ground beside them. Small either way; a kerb detail,
@@ -533,6 +590,21 @@ describe("the walkability audit", () => {
         expect(get().dressing.deeplySunkenLamps).toBe(dressed.deeplySunkenLamps);
         expect(get().dressing.cutoffColumns).toBe(dressed.cutoffColumns);
         expect(get().dressing.undressedCutoffs).toBe(dressed.undressedCutoffs);
+      });
+
+      it("DEFECT GOLDEN 2c — the junction pass inside its own remit", () => {
+        // `blindStairs` and `strandedTreads` MUST GO DOWN, to 0.
+        // `junctionColumns` is the denominator and `cascadeLargest` is the
+        // scale: a reconciliation pass fixes seams, so its largest connected
+        // patch of dressing is a junction and not a hillside.
+        expect(get().dressing.junctionColumns).toBe(dressed.junctionColumns);
+        expect(get().dressing.blindStairs).toBe(dressed.blindStairs);
+        expect(get().dressing.strandedTreads).toBe(dressed.strandedTreads);
+        expect(get().dressing.cascadeLargest).toBe(dressed.cascadeLargest);
+        // Every stair the pass laid that has no low side is either a step up out
+        // of flat pavement — the one honest shape — or a defect. Nothing lives
+        // in the `kerb` bucket any more: the pass stopped laying them.
+        expect(get().dressing.sunkenStairCensus["kerb"] ?? 0).toBe(0);
       });
 
       it("DEFECT GOLDEN 3 — road standing proud of the ground on both sides", () => {
