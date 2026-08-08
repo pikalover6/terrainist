@@ -28,6 +28,7 @@
 import {
   COURTYARD_SHARE_MAX,
   COURTYARD_SHARE_MIN,
+  DISTRICT_FABRIC_ALIASES,
   DISTRICT_FABRICS,
   DISTRICT_GROUND_POLICIES,
   ERA_ALIASES,
@@ -118,6 +119,23 @@ function eraVocabularyLines(): string {
 const list = (xs: readonly string[]): string => xs.join(", ");
 
 /**
+ * Ids the classifier is never shown.
+ *
+ * **Exactly the aliases** (`docs/SITE-PLAN-v0.md` §7.1, cutover 2026-08-08).
+ * `terraced` is now a legal spelling of `hillside`, so teaching it would teach
+ * the model an indirection for nothing; a document that already says it still
+ * compiles, and says so. Deriving this set from `DISTRICT_FABRIC_ALIASES` rather
+ * than hand-listing keeps the rest of the table total against
+ * `DISTRICT_FABRICS` — a form added to the vocabulary with no hint line is still
+ * a build error — and makes "a form nothing can select cannot exist" a property
+ * of the vocabulary rather than of this file.
+ */
+const UNOFFERED_FORMS: ReadonlySet<string> = new Set(Object.keys(DISTRICT_FABRIC_ALIASES));
+
+/** An offered urban form — every id in the vocabulary that is not an alias. */
+type OfferedForm = Exclude<(typeof DISTRICT_FABRICS)[number], keyof typeof DISTRICT_FABRIC_ALIASES>;
+
+/**
  * What a prompt has to say for each urban form, one line per id.
  *
  * Keyed off `DISTRICT_FABRICS` rather than hand-listed, so a form added to the
@@ -127,18 +145,9 @@ const list = (xs: readonly string[]): string => xs.join(", ");
  * every intent-carrying world that already has an `era`, so the guess lives here
  * in the pre-pass, where a human can read the answer before the expensive call.
  */
-const UNOFFERED_FORMS = new Set<string>([
-  // `docs/SITE-PLAN-v0.md` §7.1: `hillside` is registered and reachable only
-  // from a document that names it, until Kai accepts the §8 prototype. Listing
-  // it here rather than giving it a hint line is what keeps the *rest* of the
-  // table total against `DISTRICT_FABRICS` — a form added to the vocabulary
-  // with neither a hint nor an entry here is still a build error.
-  "hillside",
-]);
-
-const URBAN_FORM_HINTS: Readonly<Record<Exclude<(typeof DISTRICT_FABRICS)[number], "hillside">, string>> = {
+const URBAN_FORM_HINTS: Readonly<Record<OfferedForm, string>> = {
   canal: 'canal town, Venice, Amsterdam, "streets of water", a quarter built on a lagoon',
-  terraced: 'hill town, cliffside, Cinque Terre, "a town on a mountainside", stepped streets',
+  hillside: 'hill town, cliffside, Cinque Terre, "a town on a mountainside", terraces, stepped streets',
   radial: 'ring town, baroque capital, star fort, "everything faces the palace or the cathedral"',
   linear: 'ribbon village, roadside village, valley village, "strung along the road"',
   grown: 'medieval, an old quarter, "grew over centuries", "no two streets parallel", winding lanes',
@@ -150,7 +159,7 @@ const URBAN_FORM_HINTS: Readonly<Record<Exclude<(typeof DISTRICT_FABRICS)[number
 const URBAN_FORM_LINES = DISTRICT_FABRICS.filter((id) => !UNOFFERED_FORMS.has(id))
   .map(
     (id) =>
-      `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id as Exclude<(typeof DISTRICT_FABRICS)[number], "hillside">]}`,
+      `    ${id.padEnd(Math.max(...DISTRICT_FABRICS.map((f) => f.length)))}  <- ${URBAN_FORM_HINTS[id as OfferedForm]}`,
   )
   .join("\n");
 
@@ -284,9 +293,10 @@ had, which is always safe; a guessed one restyles the whole settlement.
 ${URBAN_FORM_LINES}
 
   Notes on three of them:
-  - "terraced" needs a genuinely steep site. Write it for a town that is ON a
+  - "hillside" needs a genuinely steep site. Write it for a town that is ON a
     mountainside or a cliff, not for one that merely has hills nearby — on
-    gentle ground it falls back and warns.
+    gentle ground it falls back and warns. It is the form for anything the
+    prompt calls terraced.
   - "grown" is the medieval default. "organic" is a legacy value that means
     much the same thing but flatter; prefer "grown".
   - "grid" is worth writing explicitly for a planned or colonial town, because
@@ -294,7 +304,7 @@ ${URBAN_FORM_LINES}
 
 ground: exactly these ${DISTRICT_GROUND_POLICIES.length} ids. It is ORTHOGONAL to urbanForm — any form can
 have any ground — so write it when the prompt says something about levels, not
-because you already wrote "terraced".
+because you already wrote "hillside".
 
 ${GROUND_POLICY_LINES}
 

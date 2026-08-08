@@ -22,11 +22,21 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { DISTRICT_FABRICS, validateIntentValue, validateSettlementDocument, type DistrictFabric } from "@terrainist/spec";
+import {
+  DISTRICT_FABRIC_ALIASES,
+  DISTRICT_FABRICS,
+  URBAN_FORM_IDS,
+  resolveDistrictFabricAlias,
+  validateIntentValue,
+  validateSettlementDocument,
+  type DistrictFabric,
+} from "@terrainist/spec";
+
+import { nodeSeed } from "@terrainist/stdlib";
 
 import { CITY_ROWS, type CellFormTable } from "../src/layout/city-intent.js";
 import { fanOut, installFanOutRows, intentFor, resolveIntents } from "../src/intent/index.js";
-import { installUrbanForms, urbanForms } from "../src/layout/forms/index.js";
+import { drawFabric, flatGround, installUrbanForms, urbanForm, urbanForms } from "../src/layout/forms/index.js";
 import { LAYOUT_ROWS } from "../src/layout/streets-intent.js";
 import { checkScopeVocabulary } from "../src/structures/vocabulary.js";
 
@@ -59,7 +69,50 @@ const FROZEN_CELLS = Object.freeze({
 describe("the form vocabulary is one vocabulary", () => {
   it("registers a form for every id the spec's vocabulary carries", () => {
     const registered = urbanForms().map((f) => f.id);
-    for (const id of DISTRICT_FABRICS) expect(registered).toContain(id);
+    for (const id of URBAN_FORM_IDS) expect(registered).toContain(id);
+  });
+
+  it("resolves every alias to a registered form, so no legal document is refused", () => {
+    // The reach law (`docs/SITE-PLAN-v0.md` §7.1). An alias is a legal spelling
+    // an author or a model may already have written; it must reach a form, and
+    // it must reach a *different* one, or it is not an alias.
+    const registered = new Set(urbanForms().map((f) => f.id));
+    for (const [alias, target] of Object.entries(DISTRICT_FABRIC_ALIASES)) {
+      expect(DISTRICT_FABRICS as readonly string[]).toContain(alias);
+      expect(registered.has(target)).toBe(true);
+      expect(target).not.toBe(alias);
+      expect(urbanForm(alias as DistrictFabric)?.id).toBe(target);
+    }
+  });
+
+  it("retires terraced into hillside, and says so rather than silently", () => {
+    // §7.1's cutover, in one assertion: the old id still draws, it draws the
+    // site planner, and the substitution is stated as an informational note.
+    expect(resolveDistrictFabricAlias("terraced")).toBe("hillside");
+    const drawn = drawFabric({
+      bounds: { x0: 0, z0: 0, x1: 199, z1: 179 },
+      seed: nodeSeed(20260808n, "world.hill_town", ""),
+      blockSize: 34,
+      sidewalk: 2,
+      density: "medium",
+      ground: flatGround(),
+      focus: [],
+      fabric: "terraced",
+      nodePath: "world.hill_town",
+    });
+    expect(drawn.ok).toBe(true);
+    if (!drawn.ok) return;
+    const aliased = drawn.outcome.diagnostics.find((d) => d.name === "DISTRICT_FORM_ALIAS");
+    expect(aliased).toBeDefined();
+    expect(aliased?.severity).toBe("note");
+    expect(aliased?.code).toBe("LOAM-I498");
+    expect(aliased?.message).toContain("terraced");
+    expect(aliased?.message).toContain("hillside");
+    expect(aliased?.fix).toContain("hillside");
+    // Flat ground: `hillside` refuses it and the announced fallback is drawn —
+    // which is the *hillside* fallback, proving the alias resolved before the
+    // requirement check rather than after it.
+    expect(drawn.outcome.plan.record.id).toBe("grown");
   });
 
   it("registers no form the spec's vocabulary does not carry", () => {
@@ -69,11 +122,11 @@ describe("the form vocabulary is one vocabulary", () => {
   });
 
   it("is exactly the forms the design names", () => {
-    // Seven from `docs/URBAN-FORMS-v0.md` §3, plus `hillside` — the site
-    // planner of `docs/SITE-PLAN-v0.md` §3, registered and deliberately absent
-    // from the classifier and the kit until Kai accepts the §8 prototype (§7.1).
+    // Seven from `docs/URBAN-FORMS-v0.md` §3 minus `terraced`, which the
+    // §7.1 cutover retired into `hillside` (2026-08-08) — its module is deleted
+    // and its id is an alias.
     expect(urbanForms().map((f) => f.id).sort()).toEqual(
-      ["canal", "grid", "grown", "hillside", "linear", "organic", "radial", "terraced"],
+      ["canal", "grid", "grown", "hillside", "linear", "organic", "radial"],
     );
   });
 
@@ -127,7 +180,12 @@ describe("grounding — an ungrounded word is named, never dropped", () => {
     expect(warned).toBeDefined();
     expect(warned?.severity).toBe("warning");
     expect(warned?.code).toBe("LOAM-W487");
-    for (const id of DISTRICT_FABRICS) expect(warned?.fix).toContain(id);
+    // The offered ids, not the aliases: an author who wrote something unknown is
+    // pointed at the forms, and the retired spelling is never taught back (§7.1).
+    for (const id of URBAN_FORM_IDS) expect(warned?.fix).toContain(id);
+    for (const alias of Object.keys(DISTRICT_FABRIC_ALIASES)) {
+      expect(warned?.fix).not.toContain(alias);
+    }
   });
 
   it("says nothing about a form the registry can draw", () => {

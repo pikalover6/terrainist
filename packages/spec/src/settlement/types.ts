@@ -218,7 +218,9 @@ export interface PlazaNode extends StructureBase {
  * `grid` and `organic` are frozen — `organic` is a grid that has been let go of,
  * it is what four city characters map to and what half the goldens are built on,
  * and `grown` is the real unplanned town. Every id here is checked against the
- * compiler's form registry by a test, in both directions.
+ * compiler's form registry by a test, in both directions — **except an id in
+ * {@link DISTRICT_FABRIC_ALIASES}**, which is a legal spelling of another id
+ * rather than a form of its own.
  */
 export const DISTRICT_FABRICS = [
   "grid",
@@ -226,16 +228,54 @@ export const DISTRICT_FABRICS = [
   "grown",
   "radial",
   "canal",
+  // An **alias** since the `docs/SITE-PLAN-v0.md` §7.1 cutover (2026-08-08):
+  // still legal to write, and it draws `hillside`. See
+  // {@link DISTRICT_FABRIC_ALIASES}.
   "terraced",
   "linear",
-  // `docs/SITE-PLAN-v0.md` §7.1. Registered, and deliberately **absent from the
-  // classifier and the kit** until Kai accepts the §8 prototype: a generated
-  // document cannot reach it by accident, and only a document that names it can.
+  // `docs/SITE-PLAN-v0.md` §7.1: the site planner, and since the cutover the
+  // one form a hill-town prompt reaches.
   "hillside",
 ] as const;
 
 /** A street-skeleton fabric — an urban form id. */
 export type DistrictFabric = (typeof DISTRICT_FABRICS)[number];
+
+/**
+ * Ids that are a **legal spelling of another id**, not a form of their own
+ * (`docs/SITE-PLAN-v0.md` §7.1).
+ *
+ * The reach law: a document that names a retired form keeps compiling. When the
+ * site planner replaced the bench-field construction at the 2026-08-08 cutover,
+ * `terraced` was not deleted from the vocabulary — deleting it would have turned
+ * every document, every kit example and every model that learned the old id into
+ * a validation error for a rename. It resolves to `hillside` at the registry
+ * lookup, which is the single place the compiler turns a fabric id into a form,
+ * and the compiler emits one informational diagnostic naming the alias so the
+ * substitution is never silent.
+ *
+ * An alias is **not offered** anywhere an id is taught: the classifier's hint
+ * table and the settlement kit both key off this map to exclude it, so nothing
+ * generated reaches the old spelling and only a document that already carries it
+ * does.
+ */
+export const DISTRICT_FABRIC_ALIASES = Object.freeze({
+  terraced: "hillside",
+} as const) satisfies Readonly<Partial<Record<DistrictFabric, DistrictFabric>>>;
+
+/** An id that is a spelling of another id. */
+export type DistrictFabricAlias = keyof typeof DISTRICT_FABRIC_ALIASES;
+
+/** The fabric this id draws — itself, unless it is an alias. */
+export function resolveDistrictFabricAlias(id: DistrictFabric): DistrictFabric {
+  const aliases = DISTRICT_FABRIC_ALIASES as Readonly<Record<string, DistrictFabric | undefined>>;
+  return aliases[id] ?? id;
+}
+
+/** Every fabric id that is a form of its own — the vocabulary minus the aliases. */
+export const URBAN_FORM_IDS: readonly DistrictFabric[] = DISTRICT_FABRICS.filter(
+  (id) => resolveDistrictFabricAlias(id) === id,
+);
 
 /** How much of a district's lot supply is actually built on. */
 export const DISTRICT_DENSITIES = ["low", "medium", "high"] as const;

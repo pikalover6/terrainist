@@ -1178,6 +1178,12 @@ deterministic. Rounds are counted in the report whether or not they were needed.
 
 ### 7.1 A new form id, and a named cutover
 
+> **DONE 2026-08-08.** The cutover happened; see WP-5 in §9 for what landed and
+> for the one claim below that measurement contradicted (reason 1: no committed
+> document ever named `terraced`). Below is the plan as ratified, kept as the
+> contract it was judged against. From that date `terraced` is an alias, not a
+> form, and `layout/forms/terraced.ts` no longer exists.
+
 **The planner lands as a new form, `hillside`. `terraced` is frozen and marked
 superseded; it keeps drawing exactly what it draws today.**
 
@@ -1419,6 +1425,44 @@ depends on both.
 - **WP-5 — gates and the cutover.** §6.2's thresholds, calibrated from the
   accepted prototype. Then §7.1's cutover in one change: classifier, kit, alias,
   example regeneration, deletion of `terraced.ts`.
+  **The cutover landed 2026-08-08**, accepted by Kai. What it did, and the one
+  thing this document had wrong about it:
+
+  - `terraced` is an **alias**, not an error: it stays in `DISTRICT_FABRICS` and
+    `urbanForm()` resolves it to `hillside`. That function is the alias site
+    because it is the *only* place a fabric id becomes a form — `layDistrict`
+    draws through `drawFabric`, and `districtGroundPolicy` asks it for the
+    `requires.unlevelled` that stops the solver laying a pad — so resolving
+    there is what makes a `terraced` document get a hill town all the way down
+    rather than a hill town on a billiard table. `drawFabric` emits one
+    informational `DISTRICT_FORM_ALIAS` (`LOAM-I498`) naming what was written,
+    what was drawn and what to write instead. `isUrbanFormId` is alias-aware for
+    the same reason, so `intent.character.urbanForm: "terraced"` is honoured
+    rather than warned about; the *fix* line of `LOAM-W487` still lists only the
+    forms, so the retired spelling is never taught back.
+  - The classifier and `docs/kits/settlement-author.md` now teach `hillside` and
+    derive their unoffered set from `DISTRICT_FABRIC_ALIASES`, so "a form nothing
+    can select cannot exist" is a property of the vocabulary rather than of a
+    hand-kept list. A test asserts every non-alias id has a hint line and no
+    alias does.
+  - **§7.1 reason 1 was stale, and no example moved.** It says `terraced` is
+    named by five committed documents (`showcase-bayline`,
+    `showcase-heathershire`, `world-bayline`, `world-oldharrow`,
+    `world-meridian`). Measured at the cutover: not one of them carries
+    `"fabric": "terraced"` or `"urbanForm": "terraced"` — four are `city` nodes
+    whose cells come from the frozen `CELL_FABRIC` table, and the only
+    occurrences of the word anywhere under `examples/` are the `terraced_row`
+    archetype, two prompts and one node tag. **No committed document names the
+    form**, so the authorised golden movement this document budgeted for was
+    empty and the byte-identity requirement is the strict one: nothing moves at
+    all. That is what was measured (§10's identity line).
+  - `layout/forms/terraced.ts` is deleted, with `forms-terraced.test.ts`,
+    `terraced-stride.test.ts` and `terraced-bench-height.test.ts` — §11.2's rule,
+    honoured: they were not ported. `levels-identity.test.ts`, named alongside
+    them, is **kept**: it tests the ground-policy row across every form rather
+    than the dead construction, and it is now where the alias is proved to reach
+    all the way down to `padFor`. `forms/contour-lines.ts` survives — `hillside`
+    imports it, which is why it was extracted at WP-0.
 
 **v1, contracted but not scheduled:** graded principal streets and per-bay
 stepped rows (§3.5, §4.4); undercrofts (§4.3); polygon building footprints

@@ -5,6 +5,20 @@
 > adding a module rather than editing a switch. `docs/DESIGN.md` remains the
 > description of the system as a whole; this file is the contract the forms and
 > their callers are written against.
+>
+> **Amended 2026-08-08 — the `hillside` cutover (`docs/SITE-PLAN-v0.md` §7.1,
+> WP-5), accepted by Kai.** `terraced` is no longer a form. Its module,
+> `layout/forms/terraced.ts`, is deleted and the frontage-led site planner
+> `hillside` is what a hill-town prompt, a hill-town kit example and a hill-town
+> document now reach. `terraced` survives as an **alias**: it stays in
+> `DISTRICT_FABRICS`, so every committed document and every model that learned
+> the old id keeps compiling, and `urbanForm()` — the one place a fabric id
+> becomes a form — resolves it to `hillside` and the compiler states the
+> substitution once, as `DISTRICT_FORM_ALIAS` (`LOAM-I498`). Every `terraced`
+> row in this document is read as `hillside` from that date, and §3.6 is
+> superseded whole by `docs/SITE-PLAN-v0.md` §3. The classifier and the kit
+> teach `hillside` and offer the alias to nobody: an alias is never a thing to
+> learn, only a thing to honour.
 
 ## 1. Why
 
@@ -300,7 +314,8 @@ kept, frozen, for the reason §5 gives.
 | `grown` | no plan at all: a town that accreted | span ≥ 38 | `organic` |
 | `radial` | everything faces one place | span ≥ 6·blockSize | `grown` |
 | `canal` | the primary circulation is water | span ≥ 3·blockSize | `grid` |
-| `terraced` | the hill decides where the streets go | relief ≥ 2·bench, unlevelled | `grown` |
+| `hillside` | the town plans the terraces it needs (`docs/SITE-PLAN-v0.md` §3) | relief ≥ 2·terrace rise, unlevelled | `grown` |
+| ~~`terraced`~~ | **alias of `hillside`** since 2026-08-08 — a legal spelling, not a form | — | — |
 | `linear` | one street, and the town is what fronts it | span ≥ 3·blockSize | `grid` |
 
 ### 3.1 `grid`
@@ -476,7 +491,14 @@ where water meets a building footprint. `prop.fluid_leak`, `road.proud` and
 `traversal.unreachable` are the three rules that will find a mistake, and a
 compiled canal world at zero findings is the acceptance test.
 
-### 3.6 `terraced`
+### 3.6 `terraced` — DELETED 2026-08-08
+
+> **Superseded whole by `docs/SITE-PLAN-v0.md` §3 and deleted at the WP-5
+> cutover.** The construction below cut its bench field over the *entire*
+> quarter, so the quantity of retaining work scaled with the relief of the hill
+> rather than with the size of the town; the measurement that retired it is
+> SITE-PLAN §1. Retained here as the record of what `hillside` replaced — no
+> module implements it, and the id is now an alias.
 
 **The idea.** On a real slope the streets are not a plan imposed on the ground —
 they are the two things the ground allows. Streets that run *along* the contour
@@ -737,7 +759,7 @@ already knows to look.
 
 | key | values | notes |
 |---|---|---|
-| `params.fabric` | `grid`, `organic`, `grown`, `radial`, `canal`, `terraced`, `linear` | **required**; unknown value is `LOAM-T210` with near-misses |
+| `params.fabric` | `grid`, `organic`, `grown`, `radial`, `canal`, `hillside`, `linear` | **required**; unknown value is `LOAM-T210` with near-misses. `terraced` is still accepted and draws `hillside` (`LOAM-I498`) |
 | `params.focus` | `"plaza"` or the id of one of this district's `children` | optional; `radial` only. Any other value is `LOAM-T210` with the legal ids listed. Written on a non-radial district it is a `LOAM-T210` note saying which form reads it |
 | `city.params.forms` | object keyed by the eight characters, values from the list above | optional; per-quarter form, exactly parallel to `params.characters`. An unknown character key or form id is `LOAM-T213` |
 | `intent.character.urbanForm` | one of the seven ids | optional; the form for every quarter in scope that gets a fabric. Unknown value is `LOAM-W487`, a warning naming the legal values |
@@ -783,7 +805,7 @@ one table:
 | the prompt says | `character.urbanForm` |
 |---|---|
 | canal town, Venice, Amsterdam, "streets of water" | `canal` |
-| hill town, terraced, cliffside, Cinque Terre, "town on a mountainside" | `terraced` |
+| hill town, terraced, cliffside, Cinque Terre, "town on a mountainside" | `hillside` |
 | ring town, baroque capital, star fort, "everything faces the palace" | `radial` |
 | ribbon village, roadside, valley village, "strung along the road" | `linear` |
 | medieval, old quarter, "grew over centuries", "no two streets parallel" | `grown` |

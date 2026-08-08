@@ -435,6 +435,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * guarantee is checkable, so it is checked.
    */
   SITE_PLAN_FAILED: "LOAM-E497",
+  /**
+   * A district named an urban form that is an **alias** of another
+   * (`docs/SITE-PLAN-v0.md` §7.1) — today `terraced`, which draws `hillside`.
+   *
+   * Informational, and never suppressible: the reach law says a document that
+   * names a retired form keeps compiling, and the other half of that bargain is
+   * that the substitution is stated. The author is told what was written, what
+   * was drawn, and what to write instead.
+   */
+  DISTRICT_FORM_ALIAS: "LOAM-I498",
 } as const;
 
 /** Symbolic diagnostic name. */

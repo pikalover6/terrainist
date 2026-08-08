@@ -33,14 +33,16 @@ import {
 import {
   COURTYARD_SHARE_MAX,
   COURTYARD_SHARE_MIN,
+  DISTRICT_FABRICS,
   DISTRICT_GROUND_POLICIES,
   TREE_SHAPES,
   warning,
+  type DistrictFabric,
   type LoamDiagnostic,
 } from "@terrainist/spec";
 
 import type { IntentResolution, ResolvedIntent } from "../intent/index.js";
-import { installUrbanForms, urbanForms } from "../layout/forms/index.js";
+import { installUrbanForms, urbanForm, urbanForms } from "../layout/forms/index.js";
 
 /* -------------------------------------------------------------------------- */
 /* material themes                                                             */
@@ -363,7 +365,19 @@ export function urbanFormIds(): readonly string[] {
   return urbanForms().map((f) => f.id);
 }
 
-/** True when the word is an id the form registry can actually draw. */
+/**
+ * True when the word is an id the form registry can actually draw.
+ *
+ * **Including an alias** (`docs/SITE-PLAN-v0.md` §7.1). `terraced` is a legal
+ * spelling of `hillside`, so an intent that names it is honoured — the row
+ * resolves it and the registry draws a hill town. Warning about it here would
+ * refuse, in the intent surface, a word the document surface accepts. The *fix*
+ * line still lists {@link urbanFormIds} — the forms themselves — so an author
+ * who wrote something genuinely unknown is pointed at what to write, and the
+ * retired spelling is never taught back to anyone.
+ */
 export function isUrbanFormId(word: string): boolean {
-  return urbanFormIds().includes(word);
+  installUrbanForms();
+  if (!(DISTRICT_FABRICS as readonly string[]).includes(word)) return false;
+  return urbanForm(word as DistrictFabric) !== undefined;
 }

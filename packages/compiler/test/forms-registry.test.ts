@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { DISTRICT_FABRICS } from "@terrainist/spec";
+import { DISTRICT_FABRICS, URBAN_FORM_IDS } from "@terrainist/spec";
 import { nodeSeed } from "@terrainist/stdlib";
 
 import {
@@ -56,7 +56,11 @@ describe("the urban form registry", () => {
     // in the vocabulary is a form no author can ask for. This assertion was
     // one-directional only while the vocabulary was widened ahead of the
     // registry, between the contract landing and the forms filling it in.
-    expect(urbanForms().map((f) => f.id).sort()).toEqual([...DISTRICT_FABRICS].sort());
+    //
+    // Measured against `URBAN_FORM_IDS` rather than `DISTRICT_FABRICS` since the
+    // `docs/SITE-PLAN-v0.md` §7.1 cutover: an **alias** is a legal spelling of
+    // another form's id, not a module of its own, and `urbanForm` resolves it.
+    expect(urbanForms().map((f) => f.id).sort()).toEqual([...URBAN_FORM_IDS].sort());
   });
 
   it("registers only ids the authoring vocabulary carries", () => {
@@ -64,6 +68,13 @@ describe("the urban form registry", () => {
     for (const form of urbanForms()) {
       expect(DISTRICT_FABRICS as readonly string[]).toContain(form.id);
     }
+  });
+
+  it("resolves every id in the vocabulary to a form, alias or not", () => {
+    installUrbanForms();
+    // The reach law (§7.1): a document that names a retired form keeps
+    // compiling. Every id an author may legally write must therefore answer.
+    for (const id of DISTRICT_FABRICS) expect(urbanForm(id)).toBeDefined();
   });
 
   it("describes every form it carries, for `terrainist forms`", () => {

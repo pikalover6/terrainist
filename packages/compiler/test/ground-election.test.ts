@@ -13,7 +13,7 @@
  * The election sits at the bottom of the precedence — below `params.ground`,
  * below `intent.character.ground`, and refining only the *form's* implication —
  * so it can turn `"pad"` into `"stepped"` and can do nothing else. That is what
- * makes it impossible for it to fight `terraced`, which resolves `"stepped"`
+ * makes it impossible for it to fight `hillside`, which resolves `"stepped"`
  * before the election is ever consulted.
  *
  * Two halves are asserted here and both matter:
@@ -154,16 +154,20 @@ describe("an answered question is not re-opened by the terrain", () => {
     expect(ask({ ground: "pad" })).toBe(false);
     expect(ask({ ground: "stepped" })).toBe(false);
     expect(ask({}, { character: { ground: "pad" } })).toBe(false);
-    // A form that cuts its own benches has already answered; `terraced`
-    // resolves `"stepped"` and never reaches the election at all.
+    // A form that cuts its own benches has already answered; `hillside`
+    // resolves `"stepped"` and never reaches the election at all — and so does
+    // `terraced`, which is a spelling of it (`docs/SITE-PLAN-v0.md` §7.1).
+    expect(ask({ fabric: "hillside" })).toBe(false);
     expect(ask({ fabric: "terraced" })).toBe(false);
   });
 });
 
 describe("the election does not fight the form that already steps", () => {
-  it("leaves terraced stepped on flat ground and on steep", () => {
-    for (const relief of [0, 3, STEP_RELIEF, 60]) {
-      expect(policyAt(relief, { fabric: "terraced" })).toBe("stepped");
+  it("leaves a hill-town quarter stepped on flat ground and on steep", () => {
+    for (const fabric of ["hillside", "terraced"]) {
+      for (const relief of [0, 3, STEP_RELIEF, 60]) {
+        expect(policyAt(relief, { fabric })).toBe("stepped");
+      }
     }
   });
 });

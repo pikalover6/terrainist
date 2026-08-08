@@ -36,7 +36,7 @@ import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain } from "../src/terrain/compile.js";
 
 import { nodeSeed } from "@terrainist/stdlib";
-import { DISTRICT_FABRICS } from "@terrainist/spec";
+import { DISTRICT_FABRICS, resolveDistrictFabricAlias } from "@terrainist/spec";
 
 import { NO_PLATFORM, RETAIN_MAX, groundLevelsOf } from "../src/layout/levels.js";
 import type { Rect } from "../src/layout/frames.js";
@@ -497,31 +497,54 @@ describe("the ladder is deterministic, bounded and monotone", () => {
 const AGENTS = fileURLToPath(new URL("../../agents/src/intent-prepass.ts", import.meta.url));
 const KIT = fileURLToPath(new URL("../../../docs/kits/settlement-author.md", import.meta.url));
 
-describe("hillside is registered and nothing can reach it by accident", () => {
+describe("hillside is the form a hill town reaches (§7.1, cutover 2026-08-08)", () => {
   it("is in the fabric vocabulary, so a document may name it", () => {
     expect(DISTRICT_FABRICS as readonly string[]).toContain("hillside");
     expect(HILLSIDE_FORM.id).toBe("hillside");
   });
 
-  it("is absent from the classifier's urban-form table", async () => {
+  it("is what the classifier's urban-form table teaches, and terraced is not", async () => {
     const source = await readFile(AGENTS, "utf8");
     // The hint table is what the classifier is shown; a form with no line in it
-    // is a form no prompt can ever be classified into.
+    // is a form no prompt can ever be classified into. Since the cutover that
+    // cuts the other way: the hill-town hint is `hillside`'s, and the retired
+    // spelling is offered nowhere.
     const table = source.slice(
       source.indexOf("const URBAN_FORM_HINTS"),
-      source.indexOf("const URBAN_FORM_LINES"),
+      source.indexOf("The hint table as prompt lines"),
     );
-    expect(table).not.toContain("hillside:");
-    expect(source).toContain('UNOFFERED_FORMS');
+    expect(table).toContain("hillside:");
+    expect(table).not.toContain("terraced:");
+    expect(table).toMatch(/hillside: .*hill town/);
   });
 
-  it("is absent from the settlement author kit's fabric vocabulary", async () => {
-    // The word "hillside" appears in the kit's prose about slopes; what must
-    // not appear is the *id*, in the row that lists what `params.fabric` takes.
+  it("leaves no id in the vocabulary that no phrase can select (§7.1, §10)", async () => {
+    // "A form nothing can select cannot exist." Every id is either taught to
+    // the classifier or is an alias of one that is — nothing in between, which
+    // is what makes an unreachable form a red build rather than dead machinery.
+    // Read out of the source rather than imported: the compiler package does
+    // not depend on `@terrainist/agents`, and the hint table is the artifact.
+    const source = await readFile(AGENTS, "utf8");
+    const table = source.slice(
+      source.indexOf("const URBAN_FORM_HINTS"),
+      source.indexOf("The hint table as prompt lines"),
+    );
+    for (const id of DISTRICT_FABRICS) {
+      const aliased = resolveDistrictFabricAlias(id) !== id;
+      expect(table.includes(`  ${id}:`), `${id} hint line`).toBe(!aliased);
+    }
+  });
+
+  it("is the id the settlement author kit's fabric vocabulary offers", async () => {
     const kit = await readFile(KIT, "utf8");
-    const row = kit.split("\n").find((line) => line.includes("`params.fabric`") && line.includes("`terraced`"));
+    const row = kit.split("\n").find((line) => line.includes("`params.fabric`") && line.includes("`grid`"));
     expect(row).toBeDefined();
-    expect(row).not.toContain("`hillside`");
+    expect(row).toContain("`hillside`");
+    expect(row).not.toContain("`terraced`");
+    // …and the retired spelling is documented once, as an alias, so a model
+    // that already knows it is told what to write instead rather than left to
+    // discover the note at compile time.
+    expect(kit).toContain("**`terraced` is an old name for `hillside`.**");
   });
 });
 

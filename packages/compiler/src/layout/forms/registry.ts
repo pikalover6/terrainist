@@ -11,7 +11,13 @@
  * adding a module and one line here; it is never editing a switch.
  */
 
-import { warning, type LoamDiagnostic, type DistrictFabric } from "@terrainist/spec";
+import {
+  note,
+  resolveDistrictFabricAlias,
+  warning,
+  type LoamDiagnostic,
+  type DistrictFabric,
+} from "@terrainist/spec";
 
 import { CANAL_FORM } from "./canal.js";
 import { GRID_FORM } from "./grid.js";
@@ -20,7 +26,6 @@ import { HILLSIDE_FORM } from "./hillside.js";
 import { LINEAR_FORM } from "./linear.js";
 import { ORGANIC_FORM } from "./organic.js";
 import { RADIAL_FORM } from "./radial.js";
-import { TERRACED_FORM } from "./terraced.js";
 import type { FormContext, FormPlan, UrbanForm } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
@@ -35,9 +40,20 @@ export function registerForm(form: UrbanForm): void {
   FORMS.set(form.id, form);
 }
 
-/** The form with this id, or `undefined` if none is registered. */
+/**
+ * The form with this id, or `undefined` if none is registered.
+ *
+ * **This is the alias site** (`docs/SITE-PLAN-v0.md` §7.1). An id in
+ * `DISTRICT_FABRIC_ALIASES` is a legal spelling of another form's id, and this
+ * is the one place the compiler turns a fabric id into a form — `layDistrict`
+ * draws through `drawFabric`, and `districtGroundPolicy` asks *this* function
+ * for the `requires.unlevelled` that decides whether the solver lays a pad. So
+ * resolving here, rather than at either caller, is what makes a document that
+ * says `terraced` get a hill town all the way down instead of a hill town with
+ * a pad under it.
+ */
 export function urbanForm(id: DistrictFabric): UrbanForm | undefined {
-  return FORMS.get(id);
+  return FORMS.get(resolveDistrictFabricAlias(id));
 }
 
 /** Every registered form, sorted by id — a fixed order for `terrainist forms`. */
@@ -59,7 +75,6 @@ export function installUrbanForms(): void {
   registerForm(LINEAR_FORM);
   registerForm(ORGANIC_FORM);
   registerForm(RADIAL_FORM);
-  registerForm(TERRACED_FORM);
   installed = true;
 }
 
@@ -126,7 +141,22 @@ export type FabricResult =
 export function drawFabric(request: FabricRequest): FabricResult {
   installUrbanForms();
   const diagnostics: LoamDiagnostic[] = [];
-  const attempt = attemptForm(request, request.fabric, diagnostics, true);
+  // **The alias, stated** (§7.1). Resolved before anything else, so every
+  // sentence below — a requirement miss, a fallback, a refusal — names the form
+  // that was actually drawn rather than the spelling the document used. The
+  // note is not a warning: writing `terraced` is legal and always will be.
+  const drawnId = resolveDistrictFabricAlias(request.fabric);
+  if (drawnId !== request.fabric) {
+    diagnostics.push(
+      note(
+        "DISTRICT_FORM_ALIAS",
+        request.nodePath,
+        `"${request.fabric}" is now another name for the "${drawnId}" urban form, so this quarter is drawn as "${drawnId}"`,
+        `write "${drawnId}" for "params.fabric" — it is the same hill town, planned around the streets the town needs rather than cut over the whole hill`,
+      ),
+    );
+  }
+  const attempt = attemptForm(request, drawnId, diagnostics, true);
   if ("graph" in attempt) return { ok: true, outcome: { plan: attempt, diagnostics } };
   return { ok: false, refusal: attempt };
 }
@@ -145,10 +175,12 @@ function attemptForm(
 ): FormPlan | FabricRefusal {
   const form = urbanForm(id);
   if (form === undefined) {
-    // Every id in the vocabulary now has a module, and a test asserts both
-    // directions of that (`forms-vocabulary.test.ts`). So an id with no form is
-    // a compiler bug either way: the validator has already refused anything
-    // outside `DISTRICT_FABRICS`, and anything inside it is registered.
+    // Every id in the vocabulary that is not an alias has a module, and a test
+    // asserts both directions of that (`forms-vocabulary.test.ts`); `drawFabric`
+    // resolves the aliases before it gets here. So an id with no form is a
+    // compiler bug either way: the validator has already refused anything
+    // outside `DISTRICT_FABRICS`, and anything inside it is registered or is a
+    // spelling of something that is.
     throw new Error(
       `no urban form is registered for "${id}" — every id in DISTRICT_FABRICS has a module, so this is a compiler bug, not an authoring error`,
     );

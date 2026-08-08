@@ -5,14 +5,21 @@
  * intent key, compiles to exactly the world it compiles to today — with one
  * enumerated exception.
  *
- * **The exception, in full.** `terraced` now defaults to `"stepped"` rather
- * than to `"benched"`. §10 open question 4 left this open; Kai overruled it
- * towards `stepped` on 2026-08-05, on the grounds that a hill town's blocks
+ * **The exception, in full.** A contour-led quarter now defaults to `"stepped"`
+ * rather than to `"benched"`. §10 open question 4 left this open; Kai overruled
+ * it towards `stepped` on 2026-08-05, on the grounds that a hill town's blocks
  * *are* split-level and the flagship hill-town form seating every block on one
  * plane cannot express the thing it exists for. It is the only golden movement
  * authorised in WP-D, it is confined to quarters whose resolved form declares
- * `requires.unlevelled`, and it is asserted here in both directions: a
- * `terraced` quarter moves, and a quarter of every other form does not.
+ * `requires.unlevelled`, and it is asserted here in both directions: a hill-town
+ * quarter moves, and a quarter of every other form does not.
+ *
+ * **Since the `docs/SITE-PLAN-v0.md` §7.1 cutover (2026-08-08)** this file is
+ * also where the alias is proved to reach all the way down. `terraced` is a
+ * spelling of `hillside`, and `districtGroundPolicy` asks the registry — not a
+ * list of ids — whether the resolved form cuts its own platforms. A document
+ * that still says `terraced` therefore gets `"stepped"` and no pad, which is the
+ * difference between a hill town and a hill town on a billiard table.
  *
  * The other half of the file is the defect Phase 4.1 shipped three of: a dial
  * that passes every unit test and does nothing to a world. Unit-testing a
@@ -77,17 +84,19 @@ describe("the ground policy a quarter gets when it asks for nothing", () => {
     installUrbanForms();
     const unlevelled = DISTRICT_FABRICS.filter((f) => urbanForm(f)?.requires.unlevelled === true);
     // If this list is ever empty the assertion below is vacuous, so say so.
-    // `hillside` joined `terraced` here with `docs/SITE-PLAN-v0.md` §7.2: it is
-    // the second form that cuts its own platforms and must not be handed a
-    // billiard table by `padFor`. No committed document names it, so nothing
-    // moves — the whole-repo byte-identity diff on this change says so.
+    // Both ids answer, and they answer with the *same* form: `hillside` is the
+    // only module that cuts its own platforms, and `terraced` is a spelling of
+    // it (§7.1). A hill town written either way must not be handed a billiard
+    // table by `padFor`.
     expect(unlevelled).toEqual(["terraced", "hillside"]);
+    expect(urbanForm("terraced")).toBe(urbanForm("hillside"));
     for (const fabric of unlevelled) expect(policyOf(fabric)).toBe("stepped");
   });
 
   it("gives an author who writes params.ground exactly what they wrote", () => {
     // Explicit params outrank the row, which is never even consulted — so a
-    // `terraced` quarter can still ask for the pre-4.2 behaviour by name.
+    // hill-town quarter can still ask for the pre-4.2 behaviour by name, under
+    // either spelling of the form.
     expect(policyOf("terraced", { ground: "benched" })).toBe("benched");
     expect(policyOf("terraced", { ground: "pad" })).toBe("pad");
     expect(policyOf("grid", { ground: "stepped" })).toBe("stepped");
