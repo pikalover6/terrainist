@@ -746,6 +746,24 @@ shipped — see "What is built today".)*
   orchards, farmsteads sited to the fields they serve; fishing camps, logging
   camps, waystations. What makes a settlement look like it eats.
 
+**From Kai's walk 4 (2026-08-08), two feature notes — wanted, not urgent.**
+- **Controllable biome gradients**: harsh borders are right in some places
+  and jarring in others (the walked snow-line/forest edge on a bare summit
+  cone); blending width should be an author-facing dial (`intent.climate`
+  is the natural home), defaulting to today's behaviour.
+- **Flora beyond the old-growth ceiling**: "there should be support for
+  larger foliage by multiple orders of magnitude, eventually at least" —
+  a colossal tier (hill-scale growths) as a future flora phase; the giants
+  bar was passed, but it is a floor, not the ceiling.
+
+**Harbourtown junction A/B (Kai, 2026-08-08): no final decision — iterate.**
+"Streets/intersections don't really improve, and it introduced a lot of
+really horrifying looking stairs" (the walked mossy cascade terracing a
+natural waterfront slope) — but Kai chose to give the pass "a couple
+iterations" before ruling. The gate stays; iteration 1 (area caps, no
+dressing into natural ground, tread alignment, sunken-stair removal) is in
+flight with new detectors.
+
 **Smaller, high-leverage.**
 - Per-district street palettes (streets still take the settlement root theme).
 - Biome tint in `packages/render` — its absence is why grass-seam defects are

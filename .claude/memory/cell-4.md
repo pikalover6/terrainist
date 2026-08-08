@@ -120,6 +120,17 @@ NEW LEDGER ITEM: the flight-pin unit mismatch (stand vs solid-top units;
 **Installed for walk 4: hillside_town-8, hillside_town_steep-6,
 oldgrowth_vale-2.** Outstanding from Kai: harbourtown A/B verdict.
 
+**Walk 4 (worlds -8/-6/-2 + harbourtown A/B, 2026-08-08):** hillside
+"really clean"; oldgrowth PASSES. New wave dispatched (4 agents): in-town
+vegetation (bare interior — suppress by actual claim, not district
+rectangle; medium), junction-pass quality iteration (steep jog/mangled
+corner/pit stair + harbourtown's "horrifying" beach cascade — area caps,
+no-natural dressing, alignment; Kai: iterate before ruling on the A/B;
+medium), vine face orientation (low), fat-birch species cull (Kai: "get
+rid of this type"; low). Roadmap notes added: controllable biome
+gradients (intent dial), colossal flora tier ("orders of magnitude"
+larger, eventually).
+
 **Parked for Kai:** leaf-state flip (built, inert; flip after comparison
 walk); junction pass on flat towns (after harbourtown walk); mega-whorl
 narrowing (rides with leaf flip); snow on tall crowns; understory density
