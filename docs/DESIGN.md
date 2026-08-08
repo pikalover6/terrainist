@@ -41,7 +41,7 @@ Two properties are the moat, and every design decision defends them:
 | Planner | **None** | The Opus-class planner is canned indefinitely. Production authoring is cheap-model-first; escalate only at a hard capability wall. |
 | Critique → repair | **Manual** | Deterministic diagnostics feed back automatically; *visual* critique is Kai's, and autonomous repair iteration is never to be built. A repair loop optimises against the lint, and the lint is not the same thing as good. |
 | Demos | **Luna e2e from a text prompt** | Every demo/acceptance world is produced by `terrainist generate`, so demos measure the real product path. Hand-authored documents remain legitimate as test fixtures and exhibits only. |
-| Mesh assets (Tripo) | **Offline foundry, never in the compile path** | See *Mesh assets* below. |
+| Mesh assets (Tripo) | **DEPRECATED, 2026-08-08 (Kai)** | Superseded entirely by Luna bespoke generation; not to be used for anything. The section below is historical. |
 
 ## Loam: the spec language
 
@@ -718,7 +718,6 @@ contract — it is what Kai is looking at, and it is independent of the rewrite.
   and the classifier revision — in flight this session.
 - Real sandbox isolation (worker or `isolated-vm`) — a **launch blocker**, not a
   Phase 3 blocker: it gates taking money from strangers, not building the tier.
-- The Tripo curated collection, if and when sculptural one-offs earn the spend.
 
 **Fabric breadth (Phase 4) — remaining.** Each lands against the contracts
 above and registers its own fan-out rows. *(Urban forms and courtyards/levels
