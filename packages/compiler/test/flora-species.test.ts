@@ -142,7 +142,7 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
     }
   });
 
-  it("law 4: every root is at dy <= 0 and its column is filled to grade", () => {
+  it("law 4: every root is at dy <= 0 and its column has no gap above it", () => {
     let roots = 0;
     for (const { id, blocks } of CASES) {
       const solid = new Set<string>();
@@ -151,9 +151,13 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
         if (b.part !== "root") continue;
         roots += 1;
         expect(b.dy, `${id} root above grade`).toBeLessThanOrEqual(0);
-        for (let y = b.dy + 1; y <= 0; y++) {
-          expect(solid.has(key(b.dx, y, b.dz)), `${id} root column gap`).toBe(true);
-        }
+        // No gap above a root — which chains, so every root column is solid
+        // from its deepest block up to the wood it seats. That used to read
+        // "filled to grade"; since 2026-08-09 a buttress ridge is sunk one
+        // course (§3.7.1), so a ridge toe's topmost block is a buried `branch`
+        // at dy = -1 and grade itself is terrain, not wood. The property that
+        // matters — a root never floats under a hole — is unchanged.
+        expect(solid.has(key(b.dx, b.dy + 1, b.dz)), `${id} root column gap`).toBe(true);
       }
     }
     // The giants are in the matrix, so the law is exercised rather than vacuous.

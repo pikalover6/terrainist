@@ -150,6 +150,8 @@ describe("flora grandeur: the emergent clears the canopy", () => {
 });
 
 describe("flora grandeur: buttress roots (§3.7.1)", () => {
+  /** How far below grade the ridge profile starts (§3.7.1, 2026-08-09). */
+  const RIDGE_SINK = 1;
   const CASES = GIANTS.flatMap((def) => corners(def));
 
   it("every buttress block is a horizontal-axis branch — never a vertical log top", () => {
@@ -164,7 +166,10 @@ describe("flora grandeur: buttress roots (§3.7.1)", () => {
         seen += 1;
         expect(b.part, `${id} buttress part`).toBe("branch");
         expect(b.axis === "x" || b.axis === "z", `${id} buttress axis ${String(b.axis)}`).toBe(true);
-        expect(b.dy, `${id} buttress below grade`).toBeGreaterThanOrEqual(0);
+        // The ridge profile is sunk one course into the ground (§3.7.1,
+        // 2026-08-09) so it emerges from the terrain instead of resting on it;
+        // nothing below that course is a `branch`.
+        expect(b.dy, `${id} buttress below grade`).toBeGreaterThanOrEqual(-1);
       }
     }
     expect(seen).toBeGreaterThan(0);
@@ -199,7 +204,10 @@ describe("flora grandeur: buttress roots (§3.7.1)", () => {
       for (const b of blocks) {
         if (b.buttress !== true) continue;
         const k = `${b.dx},${b.dz}`;
-        heights.set(k, Math.max(heights.get(k) ?? 0, b.dy + 1));
+        // The ridge profile is sunk one course (§3.7.1, 2026-08-09), so a
+        // column's *profile* height is measured from `dy = -RIDGE_SINK`, not
+        // from grade: a toe is one block tall and buried, not zero blocks tall.
+        heights.set(k, Math.max(heights.get(k) ?? 0, b.dy + 1 + RIDGE_SINK));
       }
       const rise = typeof def.knobs?.["rootRise"] === "number" ? (def.knobs["rootRise"] as number) : 3;
       // The profile of the whole flare, by distance from the trunk footprint.

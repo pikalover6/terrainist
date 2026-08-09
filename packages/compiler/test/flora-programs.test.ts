@@ -351,7 +351,13 @@ describe("flora: the parts → blockstate mapping", () => {
     expect(cap?.up).toBe("true");
   });
 
-  it("a hanging block with nothing above it is dropped; a ceiling strand takes up=true", () => {
+  it("a ceiling-only strand keeps its head and drops below it", () => {
+    // Corrected 2026-08-09 (Kai's walk of `oldgrowth_vale-3`). The head hangs
+    // off leaves with `up=true`, which vanilla supports. Nothing below it can:
+    // `VineBlock` re-derives `up` from a *sturdy* block above, and a vine is
+    // not sturdy, so an inherited `up` is illegal and renders as a flat plate
+    // in mid-air. With no horizontal support anywhere in the strand there is no
+    // legal face to carry down, so the chain ends at the head.
     const out = emitFloraBlocks(
       [
         { dx: 0, dy: 4, dz: 0, part: "leaves" },
@@ -362,11 +368,10 @@ describe("flora: the parts → blockstate mapping", () => {
       states,
       codec,
     );
-    expect(out.droppedHanging).toBe(1);
-    expect(out.blocks).toHaveLength(3);
-    for (const b of out.blocks.slice(1)) {
-      expect(codec.blockStateProps(b.stateId)?.props.up).toBe("true");
-    }
+    expect(out.droppedHanging).toBe(2);
+    expect(out.blocks).toHaveLength(2);
+    const head = codec.blockStateProps((out.blocks[1] as { stateId: number }).stateId)?.props;
+    expect(head?.up).toBe("true");
   });
 
   // Kai's walk, oldgrowth_vale-2: "vines are oriented wrong" — a curtain beside
@@ -404,23 +409,62 @@ describe("flora: the parts → blockstate mapping", () => {
     expect(p?.up).toBe("true");
   });
 
-  it("a chain segment inherits the faces of the vine above it", () => {
+  it("a chain carries one consistent horizontal face, never an inherited up", () => {
     const out = emitFloraBlocks(
       [
         { dx: 0, dy: 5, dz: 0, part: "log" },
+        { dx: 1, dy: 6, dz: 0, part: "leaves" }, // a ceiling over the head
         { dx: 1, dy: 5, dz: 0, part: "hanging" }, // beside the trunk: west
-        { dx: 1, dy: 4, dz: 0, part: "hanging" }, // past the trunk: inherits west
+        { dx: 1, dy: 4, dz: 0, part: "hanging" }, // past the trunk: west only
         { dx: 1, dy: 3, dz: 0, part: "hanging" },
       ],
       states,
       codec,
     );
     expect(out.droppedHanging).toBe(0);
-    for (const b of out.blocks.slice(1)) {
+    const head = codec.blockStateProps((out.blocks[2] as { stateId: number }).stateId)?.props;
+    expect(head?.west).toBe("true");
+    expect(head?.up).toBe("true"); // genuine: leaves directly above
+    for (const b of out.blocks.slice(3)) {
       const p = codec.blockStateProps(b.stateId)?.props;
-      expect(p?.west).toBe("true");
-      expect(p?.up).toBe("false");
+      expect(p?.west).toBe("true"); // the strand's canonical face, all the way
+      expect(p?.up).toBe("false"); // never inherited: a vine is not sturdy
+      expect(p?.east).toBe("false");
+      expect(p?.north).toBe("false");
+      expect(p?.south).toBe("false");
     }
+  });
+
+  it("a strand whose head touches two supports picks one face, and keeps it", () => {
+    // The zigzag Kai saw: adjacent segments of one strand carrying different
+    // faces. The canonical face is chosen once, at the topmost genuinely
+    // supported segment, and every segment below carries exactly it.
+    const blocks: FloraBlock[] = [
+      { dx: 0, dy: 5, dz: 1, part: "log" }, // west of the vine
+      { dx: 1, dy: 5, dz: 0, part: "log" }, // north of the vine  (dz-1)
+      { dx: 1, dy: 5, dz: 1, part: "hanging" },
+      { dx: 1, dy: 4, dz: 1, part: "hanging" },
+      { dx: 1, dy: 3, dz: 1, part: "hanging" },
+    ];
+    const out = emitFloraBlocks(blocks, states, codec);
+    expect(out.droppedHanging).toBe(0);
+    const faces = out.blocks
+      .slice(2)
+      .map((b) => codec.blockStateProps(b.stateId)?.props as Record<string, string>);
+    const canonical = ["north", "south", "east", "west"].filter(
+      (f) => (faces[1] as Record<string, string>)[f] === "true",
+    );
+    expect(canonical).toHaveLength(1); // one face below the head, not two
+    for (const p of faces.slice(1)) {
+      expect(p[canonical[0] as string]).toBe("true");
+      expect(p.up).toBe("false");
+    }
+    // The head shows the canonical face too, plus whatever it is genuinely
+    // flush against — a subset relation, so the sheet never steps sideways.
+    expect((faces[0] as Record<string, string>)[canonical[0] as string]).toBe("true");
+    // And the same block set always picks the same face.
+    const again = emitFloraBlocks(blocks, states, codec);
+    expect(again.blocks.map((b) => b.stateId)).toEqual(out.blocks.map((b) => b.stateId));
   });
 
   it("every emitted hanging block carries at least one attachment face", () => {

@@ -384,7 +384,20 @@ export function giantSpan(def: FloraSpeciesDef, height: number): number {
  *   *deep* rather than by following a heightfield it is not allowed to read —
  *   a ridge foot up to `rootDepth` blocks downhill of the trunk still meets
  *   solid ground, and one uphill is simply buried.
+ * - **Sunk one block** *(2026-08-09, Kai's walk of `oldgrowth_vale-3`: "roots
+ *   look decent but allow them to go one block lower into the terrain")*: the
+ *   ridge profile starts at `dy = -ROOT_SINK`, not at grade, so its bottom
+ *   course is buried and the ridge **emerges** from the ground instead of
+ *   resting on it. The seat is measured from the sunk ridge, not from grade, so
+ *   `rootDepth` still buys `rootDepth` courses of `root` *below* the buried
+ *   ridge block — the fill reaches `rootDepth + 1` below grade and the flare
+ *   grips one block further down the slope than it did. (Measuring from the
+ *   ridge rather than bumping the knob keeps the species table untouched: the
+ *   shipped giants pin `rootDepth: 3` explicitly, so a default bump would have
+ *   been inert for exactly the trees Kai walked.)
  */
+/** How far below grade the visible ridge profile begins (§3.7.1). */
+const ROOT_SINK = 1;
 function buttressRoots(b: Build, def: FloraSpeciesDef, span: number, rng: () => number): void {
   const n = Math.max(1, pick(rng, pair(def, "buttresses", 4, 7)));
   const runRange = pair(def, "rootRun", 3, 6);
@@ -413,15 +426,17 @@ function buttressRoots(b: Build, def: FloraSpeciesDef, span: number, rng: () => 
         axis = "z";
       } else break;
       // Tall against the trunk, one block at the foot: `h` counts the blocks
-      // this column stands above grade, and is never zero, so the ridge is one
-      // unbroken chain from the trunk to its own toe.
+      // in this column's ridge profile, and is never zero, so the ridge is one
+      // unbroken chain from the trunk to its own toe. The profile starts one
+      // block *below* grade (`ROOT_SINK`), so every ridge grows out of the
+      // ground rather than sitting on top of it.
       const h = Math.max(1, Math.round(rise * (1 - (s - 1) / total)));
-      for (let dy = 0; dy < h; dy++) {
+      for (let dy = -ROOT_SINK; dy < h - ROOT_SINK; dy++) {
         putWood(b, { dx: x, dy, dz: z, part: "branch", axis, buttress: true });
       }
-      // The seat. `root` (a vertical log) below grade, where nobody sees its
-      // top face, and law 4's `dy ≤ 0` convention is untouched.
-      for (let dy = -1; dy >= -depth; dy--) put(b, { dx: x, dy, dz: z, part: "root" });
+      // The seat. `root` (a vertical log) below the buried ridge course, where
+      // nobody sees its top face, and law 4's `dy ≤ 0` convention is untouched.
+      for (let dy = -ROOT_SINK - 1; dy >= -depth - ROOT_SINK; dy--) put(b, { dx: x, dy, dz: z, part: "root" });
     }
   }
 }

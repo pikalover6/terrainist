@@ -206,11 +206,33 @@ const HORIZONTAL_FACES = FACES.filter(([face]) => face !== "up" && face !== "dow
  *    gets its face set `true` — the sheet lies against the wood;
  * 2. `up=true` only when the block **directly above** is a support part, i.e.
  *    the vine genuinely hangs off a ceiling;
- * 3. otherwise the block inherits the faces of the `hanging` block directly
- *    above it — vanilla's own chain rule, so a strand keeps hanging off
- *    whatever the top of the strand caught, plus any wood it passes;
+ * 3. otherwise the block belongs to a **chain**, and carries exactly the
+ *    strand's one canonical face (see below);
  * 4. a block that ends with no face at all has no deducible support and is
  *    **dropped**, as before.
+ *
+ * **The chain rule, corrected 2026-08-09** (Kai's walk of `oldgrowth_vale-3`:
+ * *"some vines are corrected, some still mis-faced"* — strands rendering as
+ * flat plates at odd offsets in mid-air). Until today rule 3 inherited the
+ * parent's *whole* resolved face set, which propagated `up=true` down an entire
+ * curtain: 9,148 of the fixture's 14,102 vine blocks carried a face set whose
+ * every true face pointed at air, and the `up` panel is the flat plate Kai saw.
+ * Vanilla is unambiguous here — `VineBlock.getUpdatedState` re-derives `up`
+ * from *"is the block above a sturdy down-face"* (a vine is not sturdy, so an
+ * inherited `up` is illegal and would pop on the first block update), while a
+ * **horizontal** face survives when *"the vine directly above has that same
+ * face"*. So a chain may propagate exactly one thing: a horizontal face.
+ *
+ * Hence: each strand (a contiguous vertical run of `hanging`) has one
+ * **canonical face** — chosen at the topmost segment that has a genuine
+ * horizontal support of its own, deterministically, position-keyed when that
+ * segment touches several supports. Every segment of the strand from there down
+ * carries that face, so the sheet never zigzags between cell edges. A segment
+ * may additionally show a face it is *genuinely* flush against at its own
+ * level (rule 1 stands, and such a face is legal on its own merits); it may
+ * never show one it is not. A strand that never finds a horizontal support
+ * (a head hanging off a ceiling and nothing else) keeps its legal `up` head and
+ * **drops** below it: there is no legal face for the rest to carry.
  *
  * Blocks are resolved top-down so rule 3 always sees a settled parent.
  */
@@ -221,29 +243,62 @@ export function hangingFaces(
   for (const b of blocks) occupied.set(key(b.dx, b.dy, b.dz), b.part);
   const hanging = blocks.filter((b) => b.part === "hanging").sort((a, b) => b.dy - a.dy);
   const faces = new Map<string, Readonly<Record<string, string>>>();
+  /** The strand's canonical horizontal face, carried down from block to block. */
+  const canonical = new Map<string, string>();
   for (const b of hanging) {
-    const on = new Set<string>();
+    const own: string[] = [];
     for (const [face, ox, oy, oz] of HORIZONTAL_FACES) {
       const n = occupied.get(key(b.dx + ox, b.dy + oy, b.dz + oz));
-      if (n !== undefined && HANGING_SUPPORT_PARTS.has(n)) on.add(face);
+      if (n !== undefined && HANGING_SUPPORT_PARTS.has(n)) own.push(face);
     }
     const aboveKey = key(b.dx, b.dy + 1, b.dz);
     const above = occupied.get(aboveKey);
-    if (above !== undefined && HANGING_SUPPORT_PARTS.has(above)) {
-      on.add("up");
-    } else if (above === "hanging") {
-      const parent = faces.get(aboveKey);
+    const k = key(b.dx, b.dy, b.dz);
+
+    let strandFace: string | undefined;
+    if (above === "hanging") {
       // A dropped parent hands down nothing; the chain ends with it.
-      if (parent !== undefined) {
-        for (const [face, value] of Object.entries(parent)) if (value === "true") on.add(face);
-      }
+      if (!faces.has(aboveKey)) continue;
+      strandFace = canonical.get(aboveKey);
+    }
+    // No inherited face yet (strand head, or a head that had only a ceiling):
+    // this block may found the strand's canonical face, but only off a support
+    // it genuinely touches.
+    if (strandFace === undefined && own.length > 0) strandFace = chooseCanonicalFace(own, b);
+
+    const on = new Set<string>(own);
+    if (strandFace !== undefined) on.add(strandFace);
+    if (above !== undefined && above !== "hanging" && HANGING_SUPPORT_PARTS.has(above)) {
+      on.add("up");
     }
     if (on.size === 0) continue; // dropped: no deducible support
+    if (strandFace !== undefined) canonical.set(k, strandFace);
     const props: Record<string, string> = {};
     for (const [face] of FACES) props[face] = on.has(face) ? "true" : "false";
-    faces.set(key(b.dx, b.dy, b.dz), Object.freeze(props));
+    faces.set(k, Object.freeze(props));
   }
   return faces;
+}
+
+/**
+ * Pick one horizontal face out of the several a block genuinely touches.
+ *
+ * Deterministic and position-keyed: the same block offset in the same plant
+ * always picks the same face, and two neighbouring curtains off the same limb
+ * do not all pick `north`. Candidates arrive in `HORIZONTAL_FACES` order, which
+ * is fixed, so the choice does not depend on traversal order.
+ */
+function chooseCanonicalFace(
+  candidates: readonly string[],
+  at: { readonly dx: number; readonly dy: number; readonly dz: number },
+): string {
+  if (candidates.length === 1) return candidates[0] as string;
+  // A small, stable integer hash of the offset — no RNG, no wall clock.
+  let h = 2166136261;
+  for (const v of [at.dx, at.dy, at.dz]) {
+    h = Math.imul(h ^ (v + 0x7fff), 16777619) >>> 0;
+  }
+  return candidates[h % candidates.length] as string;
 }
 
 function baseStateFor(part: FloraPart, states: FloraStates): number | undefined {

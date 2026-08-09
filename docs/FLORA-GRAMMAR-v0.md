@@ -140,7 +140,7 @@ leafState`. The parts model needs five more, and all of them obey one rule:
 | `leaves` | species `leafSymbol` | see §9.1 — `distance`/`persistent` are the open decision |
 | `stem` | species `stemSymbol` | the six mushroom booleans: a face is `true` iff no `stem`/`cap` block of the same plant sits against it |
 | `cap` | species `capSymbol` | same six-boolean rule |
-| `hanging` | species `hangingSymbol` | **one boolean per face, each naming a face the block is actually attached to** (*corrected 2026-08-08; this row originally said `up=true` universally, which renders every vine as a flat ceiling plate — Kai's walk of `oldgrowth_vale-2`, "vines are oriented wrong"*). Derived top-down from the plant's own block set: (1) each **horizontal** 6-neighbour that is a `log`/`branch`/`root`/`stem`/`leaves`/`cap` of the same plant sets its face `true` — the sheet lies against the wood; (2) `up=true` **only** when the block directly above is such a support; (3) otherwise the block **inherits the resolved faces of the `hanging` block directly above it**, which is vanilla's own chain rule and keeps a strand hanging off whatever its top caught; (4) a block left with no face has no deducible support and is **dropped**, not emitted unsupported |
+| `hanging` | species `hangingSymbol` | **one boolean per face, each naming a face the block is actually attached to** (*corrected 2026-08-08; this row originally said `up=true` universally, which renders every vine as a flat ceiling plate — Kai's walk of `oldgrowth_vale-2`, "vines are oriented wrong"*). Derived top-down from the plant's own block set: (1) each **horizontal** 6-neighbour that is a `log`/`branch`/`root`/`stem`/`leaves`/`cap` of the same plant sets its face `true` — the sheet lies against the wood; (2) `up=true` **only** when the block directly above is such a support; (3) otherwise the block belongs to a chain and carries the **strand's one canonical horizontal face**; (4) a block left with no face has no deducible support and is **dropped**, not emitted unsupported.<br/>*Chain rule corrected 2026-08-09* (Kai, walk of `oldgrowth_vale-3`: "some vines are corrected, some still mis-faced"). Rule 3 previously inherited the parent's **whole** face set, which propagated `up=true` down entire curtains — 9,148 of the fixture's 14,102 vine blocks then carried a face set whose every true face pointed at air, and that inherited `up` is the flat plate hanging at an odd offset in mid-air. Vanilla's `VineBlock.getUpdatedState` re-derives `up` from "is the block above a sturdy down-face" (a vine is not sturdy, so an inherited `up` is illegal and pops on the first block update), while a **horizontal** face survives when "the vine directly above carries that same face". A chain may therefore propagate exactly one thing: one horizontal face. Each strand (a contiguous vertical run of `hanging`) takes its **canonical face** from the topmost segment with a genuine horizontal support of its own — position-keyed tiebreak when that segment touches several — and every segment below carries it, so the sheet never zigzags between cell edges. Rule 1 still stands on top of that: a segment may additionally show a face it is genuinely flush against at its own level, never one it is not. A strand that never finds a horizontal support keeps its legal `up` head and is dropped below it |
 | `deco` | species `decoSymbol` | if the block declares `facing`, it faces **away from** the one 6-neighbour that is a `log`/`branch`/`stem` of the same plant — the amethyst convention: `facing` is the growth direction and the support sits on the opposite face (*corrected 2026-08-07; this row originally said "toward", which renders the cluster detached*); if there is no such neighbour, the block is dropped |
 
 The mushroom-face rule is what makes a giant mushroom read as a mushroom rather
@@ -489,8 +489,8 @@ buttressRoots(def, span, rng):
     for s in 1 .. total:
       step one lattice axis outward — the axis with the largest remaining error
       h = max(1, round(def.rootRise * (1 - (s-1)/total)))       # tapers to a single block
-      for dy in 0 .. h-1: emit branch(x, dy, z, axis = the axis just stepped, buttress)
-      for dy in -1 .. -def.rootDepth: emit root(x, dy, z)       # the seat
+      for dy in -1 .. h-2: emit branch(x, dy, z, axis = the axis just stepped, buttress)
+      for dy in -2 .. -def.rootDepth: emit root(x, dy, z)       # the seat
 ```
 
 Five clauses, all load-bearing:
@@ -520,6 +520,18 @@ Five clauses, all load-bearing:
   below grade). A toe up to `rootDepth` blocks downhill of the trunk still meets
   solid ground; one uphill is simply buried. This is why `rootDepth` rose from
   2 to 3.
+- **Sunk one course** *(amended 2026-08-09 — Kai's walk of `oldgrowth_vale-3`:
+  "roots look decent but allow them to go one block lower into the terrain")*.
+  The ridge profile now starts at `dy = -1` rather than at grade, so its bottom
+  course is buried and the ridge **emerges** from the ground instead of resting
+  on it; the toe column, being one block tall, disappears into the terrain and
+  the taper melts out rather than stopping dead. `rootDepth` rose 3 → 4 in the
+  same move, so three courses of `root` still sit below the buried ridge block
+  and the flare grips one block further down a slope than it did. Law 4 is
+  unchanged in letter — the buried course is a `branch`, and the law's extension
+  already reads "the flare also has wood at and below grade"; what changes is
+  that a `branch` may now sit at `dy = -1`, which is what
+  `flora-grandeur.test.ts` asserts as its floor.
 
 **Law 4's convention is extended, and law 1 gains its one live-wood exception.**
 Law 4 said "`root` blocks at `dy ≤ 0` only"; that still holds — every block the
@@ -537,7 +549,7 @@ bare wood tops in the whole catalog are buttress blocks at `dy ≤ rootRise`.
 | `buttresses` | `[4, 7]` | ridges per tree |
 | `rootRun` | `[3, 6]` | columns a ridge reaches |
 | `rootRise` | 3 | ridge height against the trunk |
-| `rootDepth` | 3 | below-grade fill, i.e. the slope the flare can seat on |
+| `rootDepth` | 4 | below-grade fill, i.e. the slope the flare can seat on (3 before 2026-08-09) |
 
 ### 3.7.2 `drapeCrown` — hanging growth on a big tree
 
