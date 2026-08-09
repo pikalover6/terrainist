@@ -68,6 +68,16 @@ export interface DecorateInput {
    * *stops* at a wall is still a log lying against it.
    */
   readonly clip?: StructureClip;
+  /**
+   * The settlement's share of ambient undergrowth density on its own unbuilt
+   * ground — the `terrain.settlementGreenery` fan-out's answer, defaulting to
+   * {@link TOWN_GREEN_DENSITY}.
+   *
+   * The *same* number the scatter pass handed {@link undergrowthFeather} as the
+   * ramp's inner endpoint, which is what makes the two one field: the interior
+   * sits flat at this share and the band outside climbs from it to ambient.
+   */
+  readonly greenShare?: number;
   /** Root node seed; the decoration streams hang off it. */
   readonly seed: Seed256;
 }
@@ -260,6 +270,10 @@ function decorateForest(
 ): void {
   const { plan, classification, temperature, palette } = input;
   const { region, ground, fluidKind, surface, volcanic, lavaFlow } = plan;
+  // Law 2 of the intent layer, spelled out at the point of use: no fan-out
+  // answer means today's constant, which is what every document without an
+  // `era` has always compiled to.
+  const greenShare = input.greenShare ?? TOWN_GREEN_DENSITY;
   const cover = detailSeed(node.seed, "undergrowth");
   const { grass, flowers, deadwood } = node.params.undergrowth;
 
@@ -303,7 +317,7 @@ function decorateForest(
         // dirt are the *surface*, and rewriting a swept yard's grass into bare
         // dirt is a change to what was built, not to what grows on it. The
         // green adds plants and only plants.
-        if (hash2(seeds.green, x, z, 0) >= TOWN_GREEN_DENSITY) continue;
+        if (hash2(seeds.green, x, z, 0) >= greenShare) continue;
       } else if (cold && shade >= DENSE_SHADE && hash2(cover, x, z, 1) < 0.7) {
         surface[idx] = states.podzol;
       } else if (soilNoise > 0.42) {
@@ -314,17 +328,25 @@ function decorateForest(
 
       // --- the settlement-edge feather --------------------------------------
       // Claimed ground is already out (it never reaches the node mask); this is
-      // the *natural* side of that boundary, thinning from bare at the edge to
-      // ambient at the band's rim so the mask stops reading as a drawn line.
-      // Below the soil conversions on purpose: coarse dirt and podzol are the
-      // ground itself, and the feather is about what grows on it.
+      // the *natural* side of that boundary, climbing from the interior share at
+      // the edge to ambient at the band's rim so the mask stops reading as a
+      // drawn line. Below the soil conversions on purpose: coarse dirt and
+      // podzol are the ground itself, and the feather is about what grows on it.
       //
-      // Not on the green: the feather is zero on every claimed column by
-      // construction, and it must stay that way — it is the ramp for the
-      // *outside* of the boundary. Inside, `TOWN_GREEN_DENSITY` above has
-      // already had its say.
+      // Not applied on the green — but not because the two disagree: the
+      // feather's inner endpoint *is* `greenShare`, so the interior draw above
+      // and this ramp are one density field, and asking both would square it.
+      // One test per column, on whichever side of the boundary it lies.
       const survival = green ? 1 : (node.feather?.[idx] ?? 1);
-      if (survival < 1 && hash2(seeds.feather, x, z, 0) >= survival) continue;
+      const draw = hash2(seeds.feather, x, z, 0);
+      if (survival < 1 && draw >= survival) continue;
+      // The share of the field that is *ambient wood* rather than town: 0 at the
+      // claim edge, 1 at the band's rim. Small vegetation rides the whole field
+      // (the town has grass too); deadwood rides only this part. Same draw, so
+      // the two are nested rather than independent — a column that keeps a log
+      // has already kept its grass.
+      const ambient =
+        greenShare >= 1 ? 1 : Math.max(0, (survival - greenShare) / (1 - greenShare));
 
       // --- fallen logs (claim several columns, so try them first) -----------
       // A log is a four-block beam, so "this column is not claimed" is not
@@ -333,10 +355,12 @@ function decorateForest(
       // A fallen log is not small vegetation: it is a metre-thick beam that
       // claims up to four columns, and in a back yard it reads as timber
       // somebody dumped. The green grows grass and flowers, nothing that lies
-      // down.
+      // down — and the feather band is the same story told as a gradient, which
+      // is why deadwood is held to `ambient` while the plants are not.
       if (
         !green &&
         shade === 0 &&
+        (ambient >= 1 || draw < ambient) &&
         input.clip?.inApron(x, z) !== true &&
         hash2(cover, x, z, 3) < deadwood * 0.15
       ) {

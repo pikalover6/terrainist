@@ -314,8 +314,24 @@ export function forestEligibility(
 export const UNDERGROWTH_FEATHER = 10;
 
 /**
- * The undergrowth's survival weight per column: 0 on claimed ground, ramping
- * to 1 over {@link UNDERGROWTH_FEATHER} columns of natural ground beyond it.
+ * The undergrowth's survival weight per column: `interiorShare` on claimed
+ * ground, ramping to 1 (ambient) over {@link UNDERGROWTH_FEATHER} columns of
+ * natural ground beyond it.
+ *
+ * **One density field, not two mechanisms.** The first version of this ramp
+ * ended at 0 on the claim, because at the time the claim really was bare. The
+ * town green then gave the settlement's own unbuilt ground a flat
+ * {@link TOWN_GREEN_DENSITY} of ambient — and the two together drew a *trough*:
+ * half-ambient inside the claim, near-nothing one column outside it, ambient ten
+ * columns further out. Kai walked it (2026-08-09) and the trough is the harsh
+ * cutoff he named. So the ramp's inner endpoint is the interior share itself:
+ * density runs ambient → gradient → interior share, and it is monotone the whole
+ * way. There is no zero anywhere unless the interior share is itself 0.
+ *
+ * The gradient stays fairly harsh on purpose — the smoothstep is unchanged, only
+ * its floor moved. A town that is genuinely sparser than its wood should still
+ * *look* sparser at the wall; what it must not do is pass through bare ground to
+ * get there.
  *
  * A weight, not a decision: the caller turns it into one with a position-keyed
  * hash, so the thinning is a pure function of the column. No RNG, no traversal
@@ -323,18 +339,20 @@ export const UNDERGROWTH_FEATHER = 10;
  *
  * The ramp is `landuse.ts`'s smoothstep, run the other way up: `featherWeight`
  * answers "how much does the claimed side still apply here", and what survives
- * is one minus that.
+ * is the interior share plus that much of the way back to ambient.
  */
 export function undergrowthFeather(
   structures: StructureOccupancy,
   width: number,
   depth: number,
   band: number = UNDERGROWTH_FEATHER,
+  interiorShare: number = TOWN_GREEN_DENSITY,
 ): Float32Array {
+  const share = interiorShare < 0 ? 0 : interiorShare > 1 ? 1 : interiorShare;
   const weight = new Float32Array(width * depth);
   if (band <= 0) {
     weight.fill(1);
-    for (let i = 0; i < weight.length; i++) if (structures.mask[i] === 1) weight[i] = 0;
+    for (let i = 0; i < weight.length; i++) if (structures.mask[i] === 1) weight[i] = share;
     return weight;
   }
   const distance = chebyshevDistance(structures.mask, width, depth, band);
@@ -342,7 +360,7 @@ export function undergrowthFeather(
     const d = distance[i] as number;
     // `chebyshevDistance` reports -1 past its cap: that ground is far enough
     // from anything claimed to be ambient.
-    weight[i] = d < 0 ? 1 : d === 0 ? 0 : 1 - featherWeight(d, band);
+    weight[i] = d < 0 ? 1 : d === 0 ? share : share + (1 - share) * (1 - featherWeight(d, band));
   }
   return weight;
 }
@@ -421,6 +439,13 @@ export const TOWN_GREEN_STANDOFF = 2;
  * thinning is a property of the place, not of the species: the flower patches
  * and the grass draw are already tuned relative to each other, and scaling both
  * by the same number keeps that mix intact while halving how much of it there is.
+ *
+ * Since 2026-08-09 this is the *default* interior share rather than the only
+ * one: `terrain.settlementGreenery` (terrain/climate-intent.ts) lets a declared
+ * era nudge it to a quarter or three quarters, and a document with no `era`
+ * resolves to exactly this number. It is also the inner endpoint of
+ * {@link undergrowthFeather}'s ramp, so the two edges of the settlement boundary
+ * are one field.
  */
 export const TOWN_GREEN_DENSITY = 0.5;
 
@@ -531,6 +556,14 @@ export function scatterForests(
    * somebody's yard.
    */
   built?: Uint8Array,
+  /**
+   * The settlement's interior share of ambient undergrowth density — the
+   * `terrain.settlementGreenery` fan-out's answer. Defaults to
+   * {@link TOWN_GREEN_DENSITY}, which is what a document with no intent gets.
+   * Read only by {@link undergrowthFeather} here; the decoration pass reads the
+   * same number for the green itself.
+   */
+  greenShare: number = TOWN_GREEN_DENSITY,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -552,7 +585,7 @@ export function scatterForests(
   const feather =
     structures === undefined
       ? undefined
-      : undergrowthFeather(structures, region.width, region.depth);
+      : undergrowthFeather(structures, region.width, region.depth, UNDERGROWTH_FEATHER, greenShare);
   const strataReports: StrataReport[] = [];
 
   for (const node of nodes) {

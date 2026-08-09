@@ -2159,6 +2159,12 @@ implied far more often than it is stated:
 Only leave `era` out when the prompt genuinely fixes no period *and* a
 contemporary street would be right.
 
+`era` also **weakly** sets how green the settlement's own unbuilt ground is —
+a quarter, half or three quarters of the wild undergrowth outside it
+(pre-industrial eras lean green, `modern` and `far_future` lean swept, everything
+else and every document with no `era` sits on the default half). It is one
+number nudged one notch; there is no key for it and nothing else changes.
+
 ### `character` — how two regions differ
 
 This is the part that matters most, because it is the only way to make **one

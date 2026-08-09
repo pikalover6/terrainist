@@ -149,6 +149,7 @@ import {
   validatorDiagnostics,
 } from "./validate.js";
 import {
+  TOWN_GREEN_DENSITY,
   builtColumnMask,
   scatterForests,
   type ForestNodeInput,
@@ -914,6 +915,14 @@ async function compileValidated(
       seed: nodeSeed(worldSeed, `${rootPath}.${node.id}`, node.seedSalt ?? ""),
       params: node.params,
     }));
+  // How green this settlement keeps its own unbuilt ground, as a share of the
+  // ambient wood. One number, read twice: it is the town green's density and the
+  // settlement-edge feather's inner endpoint, which is what keeps the two sides
+  // of the boundary one field rather than two mechanisms with a trough between.
+  const greenShare = fanOut<number>(TERRAIN_ROWS.settlementGreenery, intents.root, {
+    nodePath: rootPath,
+    today: TOWN_GREEN_DENSITY,
+  });
   const scatter = scatterForests(
     forestNodes,
     plan,
@@ -944,6 +953,7 @@ async function compileValidated(
             clip === undefined ? undefined : Uint8Array.from(clip.columns),
           ),
         ),
+    greenShare,
   );
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
@@ -977,6 +987,7 @@ async function compileValidated(
     palette,
     stack,
     ...(clip === undefined ? {} : { clip }),
+    greenShare,
     seed: rootSeed,
   });
   // Cave dressing rides the same decoration list: it is the same kind of thing

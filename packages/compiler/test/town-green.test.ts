@@ -31,6 +31,7 @@
  * 4. Two compiles of the same document agree, block for block, on what grew.
  */
 
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -38,6 +39,11 @@ import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ERA_CLASSES } from "@terrainist/spec";
+
+import { fanOut, installFanOutRows } from "../src/intent/index.js";
+import { resolveIntents, intentFor, type ResolvedIntent } from "../src/intent/resolve.js";
+import { SETTLEMENT_GREENERY, TERRAIN_ROWS } from "../src/terrain/climate-intent.js";
 import { listChunks, loadPrismarine, type EmitChunk, type PrismarineStack } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain } from "../src/terrain/compile.js";
@@ -143,6 +149,176 @@ describe("townGreenMask", () => {
   it("thins rather than clears: the density constant is a tended yard, not a meadow", () => {
     expect(TOWN_GREEN_DENSITY).toBeGreaterThanOrEqual(0.4);
     expect(TOWN_GREEN_DENSITY).toBeLessThanOrEqual(0.6);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 1b — the weak author dial                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `terrain.settlementGreenery` — one number, nudged by era, read twice.
+ *
+ * Kai's walk (2026-08-09) asked for interior density to be *weakly* controlled
+ * by the author model, "influenced by era/theme", without overcomplicating it.
+ * Weak means: three values, one of which is today's, and the dial moves the
+ * share and nothing else — not the band width, not the standoff, not what grows.
+ */
+describe("the settlement-greenery dial", () => {
+  beforeAll(() => {
+    installFanOutRows();
+  });
+  const scope = (intent: Record<string, unknown>): ResolvedIntent =>
+    intentFor(resolveIntents({ intent, root: { id: "world" } }), "world");
+
+  it("is today's constant when nothing declares an era — law 2", () => {
+    expect(
+      fanOut<number>(TERRAIN_ROWS.settlementGreenery, scope({}), {
+        nodePath: "world",
+        today: TOWN_GREEN_DENSITY,
+      }),
+    ).toBe(TOWN_GREEN_DENSITY);
+    // And the named default *is* that constant, not a number that happens to
+    // match it: the reach law downstream depends on the two being one value.
+    expect(SETTLEMENT_GREENERY.tended).toBe(TOWN_GREEN_DENSITY);
+  });
+
+  it("leans lush for the pre-industrial eras and sparse for the paved ones", () => {
+    const share = (era: string): number =>
+      fanOut<number>(TERRAIN_ROWS.settlementGreenery, scope({ era }), {
+        nodePath: "world",
+        today: TOWN_GREEN_DENSITY,
+      });
+    expect(share("medieval")).toBe(SETTLEMENT_GREENERY.lush);
+    expect(share("primitive")).toBe(SETTLEMENT_GREENERY.lush);
+    expect(share("modern")).toBe(SETTLEMENT_GREENERY.sparse);
+    expect(share("far_future")).toBe(SETTLEMENT_GREENERY.sparse);
+    // The middle of the table stays on today's value on purpose.
+    expect(share("renaissance")).toBe(SETTLEMENT_GREENERY.tended);
+    expect(share("industrial")).toBe(SETTLEMENT_GREENERY.tended);
+    // An open era word dispatches through the alias table like every other row.
+    expect(share("viking")).toBe(SETTLEMENT_GREENERY.lush);
+    expect(share("cyberpunk")).toBe(SETTLEMENT_GREENERY.sparse);
+    // ...and an era nobody knows lands on DEFAULT_ERA_CLASS (medieval), warned
+    // about by the resolver — never off the table.
+    expect(share("gronkulon")).toBe(SETTLEMENT_GREENERY.lush);
+  });
+
+  it("is a closed set of three — a weak dial cannot invent a density", () => {
+    for (const era of ERA_CLASSES) {
+      const answer = fanOut<number>(TERRAIN_ROWS.settlementGreenery, scope({ era }), {
+        nodePath: "world",
+        today: TOWN_GREEN_DENSITY,
+      });
+      expect(GREENERY_VALUES.has(answer)).toBe(true);
+    }
+  });
+});
+
+const GREENERY_VALUES = new Set<number>(Object.values(SETTLEMENT_GREENERY));
+
+/* -------------------------------------------------------------------------- */
+/* 1c — the dial, through a whole compile                                      */
+/* -------------------------------------------------------------------------- */
+
+/** A settlement small enough to compile three times in a test. */
+function dialDocument(intent?: unknown): Record<string, unknown> {
+  return {
+    loam: "0.1",
+    profile: "settlement",
+    meta: { name: "greenery_dale", worldSeed: 8109 },
+    ...(intent === undefined ? {} : { intent }),
+    root: {
+      id: "world",
+      kind: "composite",
+      envelope: { shape: "region", size: [192, 192] },
+      children: [
+        {
+          id: "terrain",
+          kind: "generator",
+          generator: "terrain.heightfield@0",
+          params: { amplitude: 18, seaLevel: 63, baseHeight: 70, erosionPasses: 1 },
+        },
+        {
+          id: "climate",
+          kind: "generator",
+          generator: "terrain.climate@0",
+          params: { forceTheme: "temperate" },
+        },
+        {
+          id: "quarter",
+          kind: "district",
+          envelope: { shape: "region", size: [96, 96] },
+          constraints: [{ zone: "center" }],
+          params: { fabric: "grid", density: "medium", mix: ["townhouse", "cottage"] },
+        },
+        {
+          id: "wood",
+          kind: "generator",
+          generator: "scatter.forest@0",
+          params: {
+            area: { all: true },
+            density: 0.06,
+            spacing: 4,
+            clumping: 0.5,
+            maxSlope: 35,
+            elevation: [2, 140],
+            edgeFalloff: 16,
+            avoidTags: ["structure", "road", "plaza"],
+            undergrowth: { grass: 0.3, flowers: 0.02, deadwood: 0.03 },
+            species: [{ id: "oak", weight: 1, shape: "oak_round" }],
+          },
+        },
+      ],
+    },
+  };
+}
+
+/** Every decoration block the pipeline produced, as one hash. */
+async function decorHash(doc: Record<string, unknown>): Promise<{ hash: string; plants: number }> {
+  const h = createHash("sha256");
+  let plants = 0;
+  const result = await compileTerrain(doc, {
+    outDir: "/dev/null/never-written",
+    skipEmit: true,
+    onArtifacts: (artifacts) => {
+      for (const d of artifacts.decor) {
+        h.update(`${d.x},${d.y},${d.z}=${d.stateId}\n`);
+        plants++;
+      }
+    },
+  });
+  if (!result.ok) throw new Error(`compile failed: ${result.diagnostics.map((d) => d.code).join(", ")}`);
+  return { hash: h.digest("hex"), plants };
+}
+
+describe("the settlement-greenery dial, compiled", () => {
+  let none: { hash: string; plants: number };
+  let modern: { hash: string; plants: number };
+  let medieval: { hash: string; plants: number };
+
+  beforeAll(async () => {
+    installFanOutRows();
+    none = await decorHash(dialDocument());
+    modern = await decorHash(dialDocument({ era: "modern" }));
+    medieval = await decorHash(dialDocument({ era: "medieval" }));
+  }, 600_000);
+
+  it("reaches: a declared era changes what grows in the town", () => {
+    // Sensitivity first — a reach law asserted by a harness that cannot see a
+    // difference is not a law.
+    expect(modern.hash).not.toBe(none.hash);
+    expect(medieval.hash).not.toBe(none.hash);
+    expect(modern.plants).toBeLessThan(none.plants);
+    expect(medieval.plants).toBeGreaterThan(none.plants);
+  });
+
+  it("stays weak: the dial moves plants, and only by its own share", () => {
+    // Three quarters against a quarter is a factor of three on the interior and
+    // the ramp beside it, and *nothing* elsewhere — so the whole-world plant
+    // count moves by far less than that. If this ever fails high, the dial has
+    // reached past the settlement.
+    expect(medieval.plants / modern.plants).toBeLessThan(1.5);
   });
 });
 
