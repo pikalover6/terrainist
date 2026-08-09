@@ -616,3 +616,41 @@ Reserved for Kai; the plan cannot be ratified without Q1, Q2 and Q3.
 - **Post-launch order.** v1.1 / v1.2 / v1.3 should be ordered by what
   customers' prompts actually ask for, which is evidence that does not exist
   yet. Deferred deliberately.
+
+## 7. Kai's answers (2026-08-09) — §5 resolved
+
+Recorded verbatim in substance; each supersedes its open question.
+
+- **Q1 (Mojang/EULA):** comfortable selling world `.zip`s of original
+  content with no Minecraft assets inside; Kai reads the EULA as permitting
+  it. Stance taken; no further legal work gates the plan.
+- **Q2 (price/unit):** target **$5 for 3 variations of 1 prompt**
+  (three generated worlds per purchase). Refunds/rerolls only for
+  **objective technical failures** — never for taste.
+- **Q4 (beta):** free access for friends, roughly one week.
+- **Q5 (moderation):** prompts already pass through OpenAI's safety layer
+  (Luna) — as strong as any bolt-on classifier; **test for gaps before
+  launch**, add a safety model on prompts only if gaps show.
+- **Q6 (what ships):** **no `.loam.json`, no compile report** — only a
+  small English description. Technical details deliberately obscured.
+- **Q7 (size/tiers):** one world size, one product at launch;
+  **1024² initial target**; scale later. (Lint at 1024² is minutes —
+  inside the envelope; no sharding needed for v1.)
+- **Q8 (infra):** whatever is necessary, North America, tried paths —
+  React site + cloud Linux box + Stripe.
+- **Q9 (battery = gallery):** **partially** — some battery prompts written
+  to be visually stunning (gallery double-duty), others are targeted
+  debugging worlds and stay internal.
+- **Q10 (post-launch walks):** Kai can routinely walk post-launch.
+- **Q11 (version promise):** worlds are **for the latest Minecraft
+  version (26.2 today) at shipping** — the auto-upgrade path is the
+  mechanism, and work to keep it healthy is authorized. Launch gate: a
+  load-in-current-client verification.
+- **Q12 (reroll semantics):** subsumed by Q2 — a purchase is three
+  authored variations; technical-failure replacement only.
+- **Q13 (age posture):** not targeting young children; otherwise the
+  general Minecraft audience.
+
+One product consequence worth naming now: **$5 → 3 generations** sets the
+unit economics at three authoring runs + three compiles per sale, so the
+cost model in §3/S2 measures per-variation cost × 3 against $5.
