@@ -27,15 +27,28 @@ fixed — residue = chain segments with inherited faces pointing at air /
 mixed faces per strand — IN FLIGHT (low). Buttress roots: bed ONE BLOCK
 deeper — same low agent. Cutover live: hill prompts now route to hillside.
 
-**One-Punch Man world (Kai's fun request + the battery's sixth one-off):**
-generating NOW in background — 1024², seed 100, `terrainist generate`,
-Luna e2e — the FIRST full product-path run since the entire iteration arc;
-doubles as the S2 smoke test. Install when done (never --replace).
+**OPM world done (seed 100, $0.088, installed):** first full product-path
+run; Luna authored + gated ONE bespoke landmark (hero_association_
+headquarters, 90×220×90). Its "ruins" archetype request (LOAM-W483) was
+the first product-path finding.
 
-**Next after current agents + OPM land:** commit fixes, regenerate
-fixtures if walk-6 wanted, then the **five-world baseline battery** (hill
-town / harbour city / fantasy landmark / plains village / wildcard), then
-the rung consult (B vs B+aqueduct) at day-3 per SHIP-PLAN.
+**S2 baseline battery (08-09, running):** five worlds, 1024², product
+defaults, installed as `*_baseline` (never --replace). Done: hillkeep
+(201), harbour_city (202), sleepy_farm_village (204), overgrown_city_
+ruins (205); fantasy_landmark (203) in flight. Cheap ($0.015–0.04) and
+fast. **Kai walked the ruins world: a forest with 4 buildings — diagnosis:
+the kit cannot say "ruined city"** (ruin vocabulary = 5 relic archetypes;
+decline never ruins district buildings), plus ScatterArea radius-units
+footgun (0.55 fraction read as blocks → 0-tree forest, silent) and
+dark_forest missing from the biome table. **Kai's triage call: LEDGER
+EVERYTHING, no hotfixes** — all in DESIGN.md ledger with the battery
+signatures (zero bespoke programs 4/4 so far; main-district UNSATISFIABLE
+on both hillside worlds; ambient terrain ignores "open plains").
+
+**Next:** fantasy_landmark lands → full battery report → Kai walks all
+five + hero_metropolis → **rung consult AFTER the walks** (Kai's popup
+answer; doc recommends B + one ascent, orchestrator narrows ascent to the
+aqueduct; ruins treatment is now prime rung-B scope evidence).
 
 **Parked/open:** flight-pin unit mismatch (next street lever); junction
 flat-town ruling (after iterations; the orphan win lives in the same

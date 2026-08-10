@@ -990,6 +990,42 @@ repair* is locked to manual.
   emit agree on fences. Other emit-time passes are still gate-invisible — if
   one is added, the gate has to grow with it or it goes back to judging a world
   production never writes.
+- **"Ruins of a city" cannot be said (battery wildcard walk, 2026-08-09;
+  Kai: ledger, do not hotfix).** The prompt "overgrown ruins of a once-great
+  city" authored as one `ruined_keep` + four `collapsed_tower`s + a road
+  grid — the kit's entire ruin vocabulary is the five wave-6E relics, and
+  **decline has no building story at district scale**: the intent fan-out
+  drives road wear, ground decay (`decayCoverage` → grounds.ts) and
+  vegetation reclaim, but no mechanism rolls a district's lots into their
+  ruined-variant shells. Luna's sparse answer was the best sentence the
+  language can say. Third ruins-flavored finding (OPM's W483 request, the
+  kit's own open question at settlement-author.md §table-14, this walk) —
+  prime scope evidence for the rung consult. The fix direction, when scoped:
+  district lots roll deterministically into ruined shells at high decline,
+  per the existing ruin law ("the ordinary shell fit-out decayed, not a
+  second grammar").
+- **`ScatterArea` mixes units and swallows the mistake** — `at` is
+  fractional, `radius` is blocks; Luna wrote `radius: 0.55` (meaning 55% of
+  the region) and the central "ruin canopy" forest placed **zero trees**,
+  silently: no validator floor on radius, and a scatter node with zero yield
+  draws no author-actionable finding, so the compile-feedback loop (0 rounds
+  on that world) never heard about it. Either guard would have let the
+  feedback round fix the run. Ledgered by Kai's call, 2026-08-09.
+- **The emitter's biome-intent table is narrower than Luna's vocabulary** —
+  the ruins world asked for `minecraft:dark_forest` (the right biome) and
+  drew LOAM-W472, falling back to a stony_peaks clamp. Audit which vanilla
+  biomes are worth carrying rows for. Ledgered 2026-08-09.
+- **S2 battery signatures (2026-08-09, first four worlds; for the rung
+  consult).** (a) **Zero bespoke programs in every world so far** — even
+  prompts with "colossal"/monumental language may not clear the stdlib
+  bias; the OPM run proved the tier fires, the battery is measuring the
+  trigger threshold as very high. (b) The **main town district ends
+  UNSATISFIABLE** (placed least-violating) on both hillside-form worlds
+  even after a feedback round, behind a spray of `terrain_conform` /
+  `adjacent_to` demotions — uniform enough to implicate how the kit teaches
+  constraints at 1024². (c) **Ambient terrain ignores the prompt's
+  landscape**: "open plains" produced 3.2% plains / 57% stony_peaks +
+  windswept_hills outside the clamped village footprint.
 
 ## Keys and infrastructure
 
