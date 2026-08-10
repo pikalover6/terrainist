@@ -130,10 +130,21 @@ unsupported.multiface — first sweep found 435 real mis-faced vines
 (4.7%) in flora-oldgrowth (Kai's #44/#47 machine-visible: per-plant
 face derivation blind to interleaved neighbours' support).
 
-**IN FLIGHT (wave 8):** vine-face world fixup (fix faces against the
-composed world via shared growthFaces; state-only movement; rule 27
-zero across corpus = acceptance) + green-skin WP-6b. Then 6c-6e → P4
-regeneration (candidate 2) → Kai walks farmtown_invasion_c2 vs c1 and
-the new P4. Ruling batch (terrace bays / collapse promotion / light
-band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density) still
-open. Backstop 2026-08-28.
+**GREEN SKIN COMPLETE (waves 8-10, all committed):** vine-face fixup
+(ca5b688: faces vs the composed world, 435→0, state-only, Kai's
+#44/#47 dead); 6b vertical skin (e2835e7); 6c horizontal (344e9ff);
+6d street colonizer (73acae5: meandering spine, election+withdraw,
+52 street trunks, walkability identical on/off); 6e (e4ec465: rule 17
+learns elected shell trunks — Kai's ruling — traversal still enforced,
+every-storey siting; pane substitution — Kai chose skin-eats-glass
+over crumble-breaks — plugs 14→56; 15 shell trees standing; separate
+ruined goldens; stairwell guard normative after a 146-finding leaf).
+Kit teaches the green skin; never-inside-a-shell pinned ABSENT.
+
+**IN FLIGHT: P4 candidate 2** (seed 304, full product path, green skin
+live) → installs as *_c2, archived battery/candidates/p4-c2. Kai then
+walks farmtown_invasion_c2 (steering: mothership 38k blocks + 13 pods,
+medieval timber town) and the new P4. Ruling batch open: terrace bays /
+collapse promotion / light band / STREET_BREAK_FLOOR / intact-lot
+yards / reclaim density / shellTrees-off has no caller (ledger).
+Backstop 2026-08-28.
