@@ -204,6 +204,32 @@ export function terrainFeasible(
   return null;
 }
 
+/**
+ * Hard ground checks for a **ground-scale** footprint — a city or a district,
+ * i.e. a piece of landscape rather than a building pad.
+ *
+ * Same tests as {@link terrainFeasible}, with the two extrema replaced by the
+ * median. A quarter of a square kilometre of real hillside contains a hollow
+ * below sea level and a pond somewhere almost by definition, and `stats.min` /
+ * `stats.hazard` are extrema over every column in it: one wet cell out of
+ * 160,000 vetoed the entire candidate, so every candidate was infeasible and
+ * the node fell to the least-violating position with an `UNSATISFIABLE`
+ * warning naming constraints that were innocent. What a district actually
+ * needs is that its *ground* — the foundation reference, the median — is dry
+ * land. Slope still costs (`terrainCost` reads the mean), and the district
+ * fabric already routes around water itself.
+ */
+export function groundFeasible(
+  stats: FootprintStats,
+  maxSlopeLimit: number,
+  minGroundY: number,
+): TerrainVeto {
+  if (stats.outOfRegion) return "out_of_region";
+  if (stats.median < minGroundY) return "underwater";
+  if (stats.maxSlope > maxSlopeLimit) return "too_steep";
+  return null;
+}
+
 function clamp01(v: number): number {
   return v < 0 ? 0 : v > 1 ? 1 : v;
 }

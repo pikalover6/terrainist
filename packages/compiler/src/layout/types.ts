@@ -196,6 +196,20 @@ export interface SolverNodeReport {
   readonly score: { readonly terrain: number; readonly soft: number; readonly total: number };
   /** How many candidate (position, yaw) pairs were evaluated. */
   readonly candidatesConsidered: number;
+  /**
+   * Why the ground rejected each candidate, counted over the whole pool.
+   *
+   * Only present when the node ended `unsatisfiable`: it is the answer to "no
+   * constraint of mine is violated, so why was nothing satisfiable?", which is
+   * otherwise unanswerable from this report.
+   */
+  readonly terrainVeto?: {
+    readonly out_of_region: number;
+    readonly hazard: number;
+    readonly underwater: number;
+    readonly too_steep: number;
+    readonly feasible: number;
+  };
 }
 
 /** One frozen route corridor, as the solver report records it (§4.9.6). */

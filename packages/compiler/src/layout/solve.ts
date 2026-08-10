@@ -60,7 +60,14 @@ import {
   type EvalContext,
 } from "./cost.js";
 import { STEP_RELIEF, reliefOf } from "./district.js";
-import { footprintStats, terrainCost, terrainFeasible, type FootprintStats } from "./fitness.js";
+import {
+  footprintStats,
+  groundFeasible,
+  terrainCost,
+  terrainFeasible,
+  type FootprintStats,
+  type TerrainVeto,
+} from "./fitness.js";
 import { resolvePorts, rotatedSize } from "./ports.js";
 import {
   DEFAULT_BLEND,
@@ -120,6 +127,8 @@ interface Scored {
   readonly evals: readonly { index: number; cost: number; satisfied: boolean; feasible: boolean }[];
   /** How badly an infeasible candidate misses, for the last-resort fallback. */
   readonly penalty: number;
+  /** Why the ground rejected this candidate, or `null` when it did not. */
+  readonly veto: TerrainVeto;
 }
 
 /** Place every structure node. */
@@ -205,14 +214,9 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
       // look at.
       best = leastBad(node, pool, ctx, request, demoted);
       report.appliedRungs.push("unsatisfiable");
-      diagnostics.push(
-        warning(
-          "UNSATISFIABLE",
-          node.nodePath,
-          "no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position",
-          "loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften",
-        ),
-      );
+      const histogram = vetoHistogram(node, pool, ctx, request, demoted);
+      report.terrainVeto = histogram;
+      diagnostics.push(unsatisfiableDiagnostic(node, pool.length, histogram));
     }
     if (best === null) continue; // Only when the pool is empty (a degenerate region).
 
@@ -352,12 +356,17 @@ function candidateAt(node: LayoutNodeInput, anchor: Point2, yaw: Yaw, frame: Fra
 /* scoring                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** `terrain_conform.maxSlope`, or the profile default. */
-export function maxSlopeOf(node: LayoutNodeInput): number {
+/** An authored `terrain_conform.maxSlope`, or `null` when the author named none. */
+export function explicitMaxSlopeOf(node: LayoutNodeInput): number | null {
   for (const c of node.constraints) {
     if (c.type === "terrain_conform" && typeof c["maxSlope"] === "number") return c["maxSlope"];
   }
-  return DEFAULT_MAX_SLOPE;
+  return null;
+}
+
+/** `terrain_conform.maxSlope`, or the profile default. */
+export function maxSlopeOf(node: LayoutNodeInput): number {
+  return explicitMaxSlopeOf(node) ?? DEFAULT_MAX_SLOPE;
 }
 
 /** The keep-clear margin around a node: `clearance` plus envelope `padding`. */
@@ -409,14 +418,26 @@ function scoreCandidate(
   // position, i.e. a coin toss, with an `UNSATISFIABLE` warning the author
   // cannot act on. Slope still *costs* (`terrainCost` reads the mean), and C1
   // gives the cells the ground made steep over to parks.
-  const slopeLimit = node.kind === "city" ? CITY_MAX_SLOPE : maxSlopeOf(node);
+  // A district is ground on the same terms — the reasoning above was right and
+  // was simply applied to one `kind` and not the other. An *authored*
+  // `terrain_conform.maxSlope` still wins: saying a number out loud is the one
+  // way an author asks for a stricter (or looser) limit than the default.
+  const districtGround = node.kind === "district";
+  const slopeLimit =
+    node.kind === "city"
+      ? CITY_MAX_SLOPE
+      : node.kind === "district"
+        ? (explicitMaxSlopeOf(node) ?? CITY_MAX_SLOPE)
+        : maxSlopeOf(node);
   // A harbour is the one node type that is *supposed* to straddle the
   // waterline: the freeboard veto — no footprint may reach below sea level —
   // is what a quay exists to overcome, and applying it here would push every
   // port inland until it had no water to face. Its slope and hazard vetoes
   // still apply; only the water floor is lifted.
   const floorY = amphibious ? -Infinity : request.seaLevel + MIN_FREEBOARD;
-  const veto = terrainFeasible(stats, slopeLimit, floorY);
+  const veto = districtGround
+    ? groundFeasible(stats, slopeLimit, floorY)
+    : terrainFeasible(stats, slopeLimit, floorY);
   let feasible = veto === null;
   let penalty = veto === null ? 0 : veto === "too_steep" ? stats.maxSlope - slopeLimit : 1000;
 
@@ -499,7 +520,17 @@ function scoreCandidate(
   }
 
   const terrain = terrainCost(stats, slopeLimit);
-  return { candidate, stats, terrain, soft, total: terrain + soft, feasible, evals, penalty };
+  return {
+    candidate,
+    stats,
+    terrain,
+    soft,
+    total: terrain + soft,
+    feasible,
+    evals,
+    penalty,
+    veto,
+  };
 }
 
 /**
@@ -597,7 +628,9 @@ function demotionDiagnostic(node: LayoutNodeInput, index: number, what: string):
     "CONSTRAINT_DEMOTED",
     node.nodePath,
     `hard "${c.type}" constraint [${index}] was demoted to soft so this node could be placed`,
-    `write "strength": "soft" on that constraint if you meant it as a preference, or change what it asks for — the solver report lists its final cost`,
+    `widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. ` +
+      `Only write "strength": "soft" if the relationship was a preference all along. ` +
+      `If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.`,
   );
 }
 
@@ -616,7 +649,83 @@ interface MutableNodeReport {
   coarse: CoarseReport[];
   score: { terrain: number; soft: number; total: number };
   candidatesConsidered: number;
+  terrainVeto?: VetoHistogram;
   demotedIndices?: number[];
+}
+
+/** Veto counts over a whole candidate pool. */
+interface VetoHistogram {
+  out_of_region: number;
+  hazard: number;
+  underwater: number;
+  too_steep: number;
+  feasible: number;
+}
+
+/**
+ * Why the ground rejected each candidate, counted over the pool.
+ *
+ * Only ever computed on the `unsatisfiable` path, where one extra scoring pass
+ * is cheap against the answer it buys: without it the report says "nothing was
+ * satisfiable" while listing zero violated constraints, which is the state a
+ * feedback round cannot act on.
+ */
+function vetoHistogram(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): VetoHistogram {
+  const counts: VetoHistogram = {
+    out_of_region: 0,
+    hazard: 0,
+    underwater: 0,
+    too_steep: 0,
+    feasible: 0,
+  };
+  for (const candidate of pool) {
+    const { veto } = scoreCandidate(node, candidate, ctx, request, demoted);
+    if (veto === null) counts.feasible++;
+    else counts[veto]++;
+  }
+  return counts;
+}
+
+function unsatisfiableDiagnostic(
+  node: LayoutNodeInput,
+  poolSize: number,
+  veto: VetoHistogram,
+): LoamDiagnostic {
+  const vetoed = poolSize - veto.feasible;
+  if (vetoed === poolSize && poolSize > 0) {
+    // Not a constraint conflict at all: the ground refused every candidate, and
+    // saying "soften the largest cost" here sends the author (or the authoring
+    // model) to delete constraints that were never violated.
+    const parts: string[] = [];
+    if (veto.underwater > 0) parts.push(`${veto.underwater} sat below sea level`);
+    if (veto.hazard > 0) parts.push(`${veto.hazard} touched water or lava`);
+    if (veto.too_steep > 0) parts.push(`${veto.too_steep} were too steep`);
+    if (veto.out_of_region > 0) parts.push(`${veto.out_of_region} left the region`);
+    return warning(
+      "UNSATISFIABLE",
+      node.nodePath,
+      `none of the ${poolSize} candidate footprints could stand on the ground — ${parts.join(", ")}. ` +
+        `No constraint on this node was violated; it was placed at the least-violating position`,
+      "this is the ground, not your constraints: shrink the node's envelope size, move it with a \"zone\"/\"at\" constraint, or raise \"terrain_conform\".\"maxSlope\"",
+    );
+  }
+  const ground =
+    vetoed > 0
+      ? ` (${vetoed} of ${poolSize} candidates were also vetoed by the ground: ` +
+        `${veto.underwater} below sea level, ${veto.hazard} on water or lava, ${veto.too_steep} too steep)`
+      : "";
+  return warning(
+    "UNSATISFIABLE",
+    node.nodePath,
+    `no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position${ground}`,
+    "loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften",
+  );
 }
 
 function commit(

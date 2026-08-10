@@ -688,3 +688,126 @@ describe("frames", () => {
     expect(frameNorm({ x0: 0, z0: 0, width: 6, depth: 8 })).toBe(5);
   });
 });
+
+/**
+ * F22: a district is *ground*, not a building pad.
+ *
+ * The exemption `kind: "city"` had — the ground vetoes measured over a
+ * landscape-sized footprint rather than a cottage-sized one — was never given
+ * to `kind: "district"`, so a single wet or cliffed column out of a hundred
+ * thousand vetoed every candidate and the quarter fell to the least-violating
+ * position with an `UNSATISFIABLE` warning naming constraints that were
+ * innocent.
+ */
+describe("solver — district ground semantics", () => {
+  /**
+   * Flat dry land with one gentle hollow whose floor is below sea level — the
+   * shape of the district that shipped from `hillkeep`: dry everywhere it is
+   * built, rejected on one low column.
+   */
+  function worldWithOneHollow(): { field: HeightField; classification: Classification } {
+    const world = makeWorld();
+    const cx = REGION.width >> 1;
+    const cz = REGION.depth >> 1;
+    for (let j = 0; j < REGION.depth; j++) {
+      for (let i = 0; i < REGION.width; i++) {
+        const r = Math.hypot(i - cx, j - cz);
+        if (r >= 20) continue;
+        const k = j * REGION.width + i;
+        // 12 blocks over 20 columns: ~31°, inside the building slope limit, so
+        // the only thing wrong with this ground is that it dips under water.
+        world.field.values[k] = SEA_LEVEL + 6 - Math.round((20 - r) * 0.6);
+      }
+    }
+    const params = resolveHeightfieldParams({ seaLevel: SEA_LEVEL });
+    return { field: world.field, classification: classify(world.field, params, {}) };
+  }
+
+  /** Uniformly steep ground: every slope is past 35°, none past 82°. */
+  function steepWorld(): { field: HeightField; classification: Classification } {
+    const field = new HeightField(REGION);
+    for (let j = 0; j < REGION.depth; j++) {
+      for (let i = 0; i < REGION.width; i++) {
+        field.values[j * REGION.width + i] = SEA_LEVEL + 6 + i * 2;
+      }
+    }
+    const params = resolveHeightfieldParams({ seaLevel: SEA_LEVEL });
+    return { field, classification: classify(field, params, {}) };
+  }
+
+  it("places a district over one column below sea level", () => {
+    const world = worldWithOneHollow();
+    const district = node("quarter", [60, 1, 60], [], { kind: "district", generator: undefined });
+    const result = solveLayout(request([district], world));
+    expect(result.report.nodes[0]?.appliedRungs).toEqual(["absorbed"]);
+    expect(result.diagnostics.find((d) => d.code === "LOAM-E406")).toBeUndefined();
+  });
+
+  it("still vetoes a building pad over that same hollow", () => {
+    // The counterpart: the extremum veto is right for a cottage, and stays.
+    const world = worldWithOneHollow();
+    const result = solveLayout(
+      request([node("hall", [92, 8, 92])], world),
+    );
+    expect(result.report.nodes[0]?.appliedRungs).toContain("unsatisfiable");
+  });
+
+  it("places a district on ground steeper than a building tolerates", () => {
+    const world = steepWorld();
+    const district = node("upper_quarter", [60, 1, 60], [], { kind: "district", generator: undefined });
+    const result = solveLayout(request([district], world));
+    expect(result.report.nodes[0]?.appliedRungs).toEqual(["absorbed"]);
+    const pad = solveLayout(request([node("hall", [60, 8, 60])], world));
+    expect(pad.report.nodes[0]?.appliedRungs).toContain("unsatisfiable");
+  });
+
+  it("honours an authored maxSlope over the district default", () => {
+    const world = steepWorld();
+    const district = node(
+      "strict_quarter",
+      [60, 1, 60],
+      [{ type: "terrain_conform", mode: "cut_fill", maxSlope: 20 } as unknown as CanonicalConstraint],
+      { kind: "district", generator: undefined },
+    );
+    const result = solveLayout(request([district], world));
+    expect(result.report.nodes[0]?.appliedRungs).toContain("unsatisfiable");
+  });
+});
+
+describe("solver — diagnostics tell the truth", () => {
+  it("E406 carries the ground's veto histogram, not a constraint story", () => {
+    const world = makeWorld({ water: true });
+    // A pad wider than the dry third of the map: every candidate reaches the sea.
+    const result = solveLayout(request([node("wharf_hall", [80, 8, 80])], world));
+    const diag = result.diagnostics.find((d) => d.code === "LOAM-E406");
+    expect(diag?.message).toContain("could stand on the ground");
+    expect(diag?.message).toContain("No constraint on this node was violated");
+    expect(diag?.message).toMatch(/\d+ (sat below sea level|touched water or lava|were too steep|left the region)/);
+    expect(diag?.fix).toContain("this is the ground, not your constraints");
+    const report = result.report.nodes[0];
+    const veto = report?.terrainVeto;
+    expect(veto).toBeDefined();
+    expect(veto?.feasible).toBe(0);
+    const total =
+      (veto?.underwater ?? 0) +
+      (veto?.hazard ?? 0) +
+      (veto?.too_steep ?? 0) +
+      (veto?.out_of_region ?? 0);
+    expect(total).toBe(report?.candidatesConsidered);
+  });
+
+  it("the E404 fix-hint says widen before it says soften", () => {
+    const result = solveLayout(
+      request([
+        node("well", [4, 4, 4]),
+        node("outpost", [8, 8, 8], [{ type: "distance", target: "well", min: 4000, max: 5000 }]),
+      ]),
+    );
+    const diag = result.diagnostics.find((d) => d.code === "LOAM-E404");
+    const fix = diag?.fix ?? "";
+    expect(fix).toContain("widen what it asks for first");
+    expect(fix.indexOf("widen what it asks for first")).toBeLessThan(fix.indexOf('"strength": "soft"'));
+    // …and never soften what the prompt itself named.
+    expect(fix).toContain("do not soften it");
+  });
+});
