@@ -40,6 +40,17 @@ import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.j
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
 import { verifyOutputHash } from "./verify.js";
 
+/**
+ * `target.push(...source)` passes every element as a call argument, and a
+ * colossal landmark's block list is longer than V8's argument budget (~125k)
+ * — the mistwood citadel killed the whole compile that way, in one spread.
+ * Program output is the one place the compiler appends an array whose length
+ * a model chooses, so it is appended by loop, never by spread.
+ */
+function appendAll<T>(target: T[], source: readonly T[]): void {
+  for (const item of source) target.push(item);
+}
+
 /** Where a landmark program was placed by the solver. */
 export interface ProgramPlacement {
   /** World footprint, inclusive; matches the program's declared `[w, d]`. */
@@ -188,7 +199,7 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
     // the ground it will actually stand on rather than the ground that was
     // there first. Fill-only, exactly as a prop's pad is: see `levelPropPad`.
     if (seat?.policy === "pad") {
-      for (const site of sites) blocks.push(...levelPropPad(input.plan, site.footprint, site.baseY));
+      for (const site of sites) appendAll(blocks, levelPropPad(input.plan, site.footprint, site.baseY));
     }
 
     const runs = executeSites(job, input, sites, diagnostics);
@@ -203,10 +214,10 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       // A hovering instance stands over the ground, not on it: the ground
       // beneath stays buildable, so its footprint is never claimed.
       if (!isHovering(job)) claimed.push(site.footprint);
-      blocks.push(...lowered.blocks);
+      appendAll(blocks, lowered.blocks);
       // v2: the shell is the program's, the fit-out inside it is the grammar's.
-      blocks.push(...furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
-      markers.push(...lowered.markers);
+      appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
+      appendAll(markers, lowered.markers);
       placed.push(lowered.placed);
     }
   }

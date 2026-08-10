@@ -408,6 +408,41 @@ describe("the pass", () => {
     expect(new Set(once.placed.map((p) => p.index)).size).toBe(once.placed.length);
   });
 
+  it("builds a colossal program without blowing the argument limit", () => {
+    // The mistwood citadel crashed the whole compile with "Maximum call stack
+    // size exceeded": `blocks.push(...lowered.blocks)` passes every block as a
+    // call argument, and a landmark bigger than V8's argument budget (~125k)
+    // dies in a single spread. This program fills 64×48×64 = 196,608 voxels.
+    const colossal = record(
+      [
+        "export const envelope = [64, 48, 64];",
+        "export default function build(api) {",
+        "  for (let y = 0; y < 48; y++) {",
+        "    for (let z = 0; z < 64; z++) { for (let x = 0; x < 64; x++) { api.set(x, y, z, 'minecraft:stone'); } }",
+        "  }",
+        "  return { name: 'slab', seatY: 0 };",
+        "}",
+      ].join("\n"),
+      [64, 48, 64],
+    );
+    const result = buildPrograms({
+      jobs: [
+        {
+          nodePath: "world.colossus",
+          programId: "colossus",
+          program: frozen(colossal, "colossus"),
+          mode: "landmark",
+          placement: { footprint: { x0: 0, z0: 0, x1: 64, z1: 64 }, baseY: 64 },
+        },
+      ],
+      plan,
+      stack,
+      worldSeed: 0n,
+    });
+    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(result.blocks.length).toBeGreaterThan(196_000);
+  });
+
   it("refuses a document whose source was edited after the gate signed it", () => {
     const result = buildPrograms({
       jobs: [
