@@ -53,6 +53,7 @@ import {
   type TerraceBay,
   type TerraceBayPlan,
 } from "./terrace.js";
+import type { DecayPassReport } from "./decay.js";
 import { pickTheme, styleOf, type BuildingMaterials, type MaterialTheme } from "./themes.js";
 import {
   cellarDressing,
@@ -358,6 +359,17 @@ export interface BuildingParams {
    * no-intent compile byte-identical.
    */
   readonly ornamentDensity?: number;
+  /**
+   * How far gone this building is, 0..1 — `params.decay` (RUINS-PLAN §4.3).
+   *
+   * The one authoring surface for ruining a **named** building: the ordinary
+   * shell is built and furnished, and the decay engine then writes over it (the
+   * ruin law — there is no ruin builder). Absent or zero changes nothing at all,
+   * which is what keeps every world that says nothing about decline
+   * byte-identical. Out-of-range values are clamped here; the validator is what
+   * tells the author about them (`LOAM-T227`).
+   */
+  readonly decay?: number;
   /** True when the terrace's low-x / high-x end stands at an intersection. */
   readonly cornerStart?: boolean;
   readonly cornerEnd?: boolean;
@@ -897,6 +909,16 @@ export interface BuildingMeta {
   readonly apronOps: number;
   /** Interior props placed (furniture, not lights). */
   readonly furnitureCount: number;
+  /**
+   * What the decay pass did, when `params.decay` asked for one.
+   *
+   * Absent on every building that was not decayed, which is every building in a
+   * document that never says `decay` — so nothing downstream can read a ruin
+   * into a world that has none. RUINS-PLAN §9: `refused` is what WP-3's
+   * `LOAM-W510 RUIN_LOT_REFUSED` reports, and the counts are what makes
+   * "the district ruined 0 of 84 lots" a sentence a human can see.
+   */
+  readonly decay?: DecayPassReport;
   /** True when a chimney was built. */
   readonly chimney: boolean;
   /** The material triple, as block ids, for the report and the uniqueness test. */
@@ -1522,6 +1544,11 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   }
 
   // --- fit-out -------------------------------------------------------------
+  /** Where the decay pass writes its record, for a building that asked for one. */
+  const decayReport: DecayPassReport | undefined =
+    params.decay === undefined || params.decay <= 0
+      ? undefined
+      : { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false };
   const furnitureCount = hasInterior
     ? furnish({
         put,
@@ -1546,9 +1573,22 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         // silently strand.
         floorCells: shell.interiorCells,
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
+        // `params.decay`: the fit-out runs, and then the decay engine writes
+        // over what it built. Clamped here rather than trusted — the grammar
+        // never fails a document, and the validator is where an author hears
+        // about a value out of range.
+        ...(params.decay === undefined
+          ? {}
+          : { decay: Math.min(1, Math.max(0, params.decay)) }),
+        ...(decayReport === undefined ? {} : { decayReport }),
       })
     : 0;
-  if (door !== null) {
+  // The porch lamp is emitted after the fit-out, which puts it out of the decay
+  // pass's reach — so a ruin's own lamp has to be refused here rather than
+  // quenched there. A ruin is cold and dry by law (RUINS-PLAN §5.5) and a lit
+  // porch lamp is the one fixture that would say, from across the street, that
+  // somebody still lives in it.
+  if (door !== null && decayReport === undefined) {
     apronOps += emitPorchLamp(put, style, door, sx, sz, (x, y, z) => cells.has(`${x},${y},${z}`));
   }
 
@@ -1597,6 +1637,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       lanternCount: lanternCount + cellarLanterns,
       apronOps,
       furnitureCount,
+      ...(decayReport === undefined ? {} : { decay: decayReport }),
       chimney,
       materialKey: `${materials.wood.planks}|${materials.stone.primary}|${materials.roof.stairs}`,
     },

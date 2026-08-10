@@ -54,6 +54,7 @@ import { relicFacadeDefaults } from "./archetypes-relic.js";
 import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
+import type { DecayPassReport } from "./decay.js";
 
 /* -------------------------------------------------------------------------- */
 /* the new archetypes                                                          */
@@ -260,6 +261,22 @@ export interface FitOutContext {
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** What earlier stages wrote at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
+  /**
+   * `params.decay` — 0..1, how far gone this building is (RUINS-PLAN §4.3).
+   *
+   * Read by the general decay pass `furnish` runs **after** every `furnish*`
+   * call, never by an archetype's own fit-out: the ruin law says a ruined
+   * building is the ordinary fit-out decayed, so an archetype that consulted it
+   * would be the second grammar the law forbids. Absent means no decay at all.
+   */
+  readonly decay?: number;
+  /**
+   * Where the decay pass records what it did, when the caller wants to know.
+   *
+   * Mutated in place by `furnish`; the grammar hands it straight to
+   * `BuildingMeta.decay`. Absent for every caller that does not care.
+   */
+  readonly decayReport?: DecayPassReport;
 }
 
 /** Plan width, from the interior rect: the interior is inset one cell all round. */

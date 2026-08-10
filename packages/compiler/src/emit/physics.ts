@@ -37,6 +37,8 @@
 
 import { readFile } from "node:fs/promises";
 
+import { needsGround } from "@terrainist/stdlib";
+
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { listChunks, listRegionFiles, readRegionChunksNbt } from "./prismarine.js";
 import { applyConnectionStates, connectiveKindOf } from "./connections.js";
@@ -237,20 +239,11 @@ const SOLID_TOP = /^(dirt_path|farmland)$/;
  * every link in the chain was happy with the link below it and nobody asked
  * whether the chain reached the ground.
  */
-const NEEDS_GROUND = /(_fence|_wall|_fence_gate|_carpet|_pressure_plate|_sign|torch|campfire|lantern)$/;
-
-/** True for a block that stands on the one below it — a link in a support chain. */
-function needsGround(name: string): boolean {
-  if (name.startsWith("potted_")) return true;
-  // The blocks whose name ends in the suffix of a standing block but which
-  // hang off a *neighbour* instead: a wall torch brackets to the block behind
-  // it, and so does a wall sign. Both are checked by their own attachment rule
-  // below; asking the support chain about them reads the air under a wall sign
-  // as a defect, which is a finding with no defect under it.
-  if (name.endsWith("wall_torch")) return false;
-  if (name.endsWith("_wall_sign") || name.endsWith("_wall_hanging_sign")) return false;
-  return NEEDS_GROUND.test(name);
-}
+// RUINS-PLAN-v0 §5.6: the set and the predicate now live in
+// `structures/support.ts`, imported above, because the decay's `settleFixtures`
+// fixpoint sweeps for exactly this property before the world exists and two
+// mechanisms for one invariant is how `CURB_LEVEL_TOLERANCE` happened. The
+// comment that used to live here is the shared module's.
 
 /** `(dx, dz)` per cardinal name. */
 const STEP: Readonly<Record<string, readonly [number, number]>> = Object.freeze({

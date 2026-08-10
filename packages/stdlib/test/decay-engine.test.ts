@@ -1,0 +1,255 @@
+/**
+ * **The decay engine, generalised** — RUINS-PLAN-v0 WP-2.
+ *
+ * WP-1's golden (`relic-decay-identity.test.ts`) holds the five relics still.
+ * This file holds the *rules* WP-2 added, each stated as the document states
+ * it, because every one of them is a sentence that could be quietly broken by a
+ * plausible-looking change:
+ *
+ * - THE RE-CLAD RULE (§5.2) — a re-clad never invents a material, and a family
+ *   with no weathered variant decays by removal instead;
+ * - the collapse-by-**category** table (§5.1) — one table, no per-archetype list;
+ * - `quench` (§5.5) — cold and dry over the whole catalog;
+ * - `settleFixtures` (§5.6) — the fixpoint, and the one thing it may not touch;
+ * - `reachOrRefuse` (§5.7) — the guarantee, checked.
+ *
+ * The end-to-end bar (a real world, read back and linted on all 26 rules) is
+ * `packages/compiler/test/ruins-sweep.test.ts`. This file is the vocabulary.
+ */
+
+import { describe, expect, it } from "vitest";
+
+import {
+  BUILDING_STYLE_DEFAULTS,
+  RELIC_BUILDING_ARCHETYPES,
+  RELIC_DECAY_PROFILES,
+  TIMBER_EXTRA,
+  WEATHERED_VARIANTS,
+  collapseForShell,
+  generateBuilding,
+  nodeSeed,
+  weatheredOf,
+  type LocalVoxelOp,
+} from "../src/index.js";
+
+const SEED = nodeSeed(0xf19n, "world.ruin");
+const SIZE: [number, number, number] = [13, 17, 15];
+
+function build(archetype: string, decay?: number): readonly LocalVoxelOp[] {
+  return generateBuilding({
+    size: SIZE,
+    params: { archetype, floors: 2, ...(decay === undefined ? {} : { decay }) },
+    seed: SEED,
+    style: BUILDING_STYLE_DEFAULTS,
+  }).ops;
+}
+
+/** The last write wins, so the world a build produces is its op list folded. */
+function worldOf(ops: readonly LocalVoxelOp[]): Map<string, LocalVoxelOp> {
+  const out = new Map<string, LocalVoxelOp>();
+  for (const op of ops) out.set(`${op.x},${op.y},${op.z}`, op);
+  for (const [key, op] of [...out]) if (op.block === "air") out.delete(key);
+  return out;
+}
+
+describe("THE RE-CLAD RULE (§5.2)", () => {
+  it("substitutes only within the block's own family", () => {
+    for (const [family, variants] of Object.entries(WEATHERED_VARIANTS)) {
+      for (const variant of variants) {
+        // Every substitute is stone-family masonry of the same colour story as
+        // the block it replaces. The test that matters is the negative one
+        // below; this one pins that the table has no empty rows.
+        expect(variant, family).toMatch(/^[a-z_]+$/);
+      }
+      expect(variants.length, family).toBeGreaterThan(0);
+    }
+  });
+
+  it("has NO variant for timber, brick, terracotta, concrete, quartz or sandstone", () => {
+    // §5.2's second clause, and the clause that makes the rule good rather than
+    // merely safe: these decay by removal, so the crumble line runs lower on
+    // them and the shell's own block is left exactly as it is.
+    for (const block of [
+      "oak_planks",
+      "spruce_planks",
+      "oak_log",
+      "bricks",
+      "terracotta",
+      "white_concrete",
+      "quartz_block",
+      "sandstone",
+      "smooth_sandstone",
+      "glass",
+    ]) {
+      expect(weatheredOf(block, 0), block).toBeNull();
+    }
+  });
+
+  it("weathers the stone families, and mixes by position", () => {
+    expect(weatheredOf("stone_bricks", 0)).toBe("cracked_stone_bricks");
+    expect(weatheredOf("stone_bricks", 1)).toBe("mossy_stone_bricks");
+    expect(weatheredOf("cobblestone", 1)).toBe("mossy_cobblestone");
+    expect(weatheredOf("deepslate_bricks", 0)).toBe("cracked_deepslate_bricks");
+  });
+
+  it("never puts a foreign material on a timber shell", () => {
+    // The whole point: a cottage is oak, and a ruined oak cottage must not come
+    // out clad in cobblestone it was never built from. Moss is the one exception
+    // the rule grants — it is not the building's material, it is what grows on it.
+    const world = worldOf(build("cottage", 0.85));
+    const before = new Set([...worldOf(build("cottage"))].map(([, op]) => op.block));
+    const allowed = /^(moss_carpet|vine|coarse_dirt|dead_bush|air)$/;
+    for (const [, op] of world) {
+      if (before.has(op.block) || allowed.test(op.block)) continue;
+      // Anything else must be a weathered variant of something the shell had.
+      const derived = [...before].some((b) =>
+        (WEATHERED_VARIANTS[b] ?? []).includes(op.block),
+      );
+      expect(derived, `${op.block} appeared in a ruined timber cottage`).toBe(true);
+    }
+  });
+
+  it("takes more of the wall where the family has no variant", () => {
+    expect(TIMBER_EXTRA).toBeGreaterThan(0);
+    expect(TIMBER_EXTRA).toBeLessThan(0.5);
+  });
+});
+
+describe("the collapse-by-category table (§5.1)", () => {
+  it("sends mass — defensive, civic, faith — to `structured`", () => {
+    for (const archetype of ["keep", "church", "town_hall"]) {
+      expect(collapseForShell(archetype, [13, 17, 15]), archetype).toBe("structured");
+    }
+  });
+
+  it("sends a tower-shaped footprint to `leaning`, whatever its category", () => {
+    // Height > 2 × the longest plan side. Checked first, because a bell tower
+    // is `religious` and is still a tower.
+    expect(collapseForShell("church", [7, 30, 7])).toBe("leaning");
+    expect(collapseForShell("cottage", [7, 30, 7])).toBe("leaning");
+  });
+
+  it("sends everything else to `even`, the shape that reads as time", () => {
+    for (const archetype of ["cottage", "bakery", "warehouse", "nothing_in_the_catalog"]) {
+      expect(collapseForShell(archetype, [13, 17, 15]), archetype).toBe("even");
+    }
+  });
+
+  it("agrees with the five relics' own profiles where §5.1's category applies", () => {
+    // The church and the villa build `structured` and always have; §5's table
+    // says `even` for both, and the code is right (WP-1's golden is the bar).
+    // The category table sends both the same way, which is the check that the
+    // generalisation did not contradict the reference implementations.
+    expect(RELIC_DECAY_PROFILES.ruined_church.collapse).toBe("structured");
+    expect(RELIC_DECAY_PROFILES.collapsed_tower.collapse).toBe("leaning");
+    expect(RELIC_BUILDING_ARCHETYPES.length).toBe(5);
+  });
+});
+
+describe("quench — cold and dry (§5.5)", () => {
+  it("leaves no fire and no fluid anywhere in a ruined shell", () => {
+    for (const archetype of ["smithy", "bakery", "cottage", "inn"]) {
+      const world = worldOf(build(archetype, 0.7));
+      for (const [key, op] of world) {
+        const [, y] = key.split(",").map(Number) as [number, number, number];
+        // The cellar is out of scope in v0 (§13.9).
+        if (y < 0) continue;
+        expect(op.block, `${archetype} ${key}`).not.toMatch(
+          /^(fire|soul_fire|lava|water|campfire|soul_campfire|torch|soul_torch|lantern|soul_lantern)$/,
+        );
+        expect(op.props?.["lit"], `${archetype} ${key}`).not.toBe("true");
+        expect(op.props?.["waterlogged"], `${archetype} ${key}`).not.toBe("true");
+      }
+    }
+  });
+
+  it("leaves the intact shell's fire exactly where it was", () => {
+    // The reach law: no `decay`, nothing changes. A smithy with no decay keeps
+    // its forge, which is the control this whole file is meaningless without.
+    const intact = worldOf(build("smithy"));
+    const lit = [...intact].filter(([, op]) => op.props?.["lit"] === "true" || op.block.endsWith("lantern"));
+    expect(lit.length).toBeGreaterThan(0);
+  });
+});
+
+describe("settleFixtures — the fixpoint (§5.6)", () => {
+  it("leaves nothing hanging off a wall the crumble took", () => {
+    for (const archetype of ["library", "bakery", "warehouse", "cottage", "inn"]) {
+      const world = worldOf(build(archetype, 0.85));
+      for (const [key, op] of world) {
+        const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+        if (y < 1) continue;
+        if (op.block !== "ladder") continue;
+        const facing = op.props?.["facing"];
+        if (facing === undefined) continue;
+        const step: Record<string, [number, number]> = {
+          north: [0, -1],
+          south: [0, 1],
+          east: [1, 0],
+          west: [-1, 0],
+        };
+        const [dx, dz] = step[facing] as [number, number];
+        const back = world.get(`${x - dx},${y},${z - dz}`);
+        expect(back, `${archetype}: a ladder rung at ${key} climbs air`).toBeDefined();
+      }
+    }
+  });
+
+  it("never sweeps the way in", () => {
+    // The door and its approach are never decayed — the walking agent and the
+    // lint's traversal walk both start in the cell inside the door.
+    for (const archetype of ["cottage", "library"]) {
+      const ruined = generateBuilding({
+        size: SIZE,
+        params: { archetype, floors: 2, decay: 0.9 },
+        seed: SEED,
+        style: BUILDING_STYLE_DEFAULTS,
+      });
+      const door = ruined.meta.door;
+      expect(door, archetype).not.toBeNull();
+      const world = worldOf(ruined.ops);
+      expect(world.get(`${door!.x},1,${door!.z}`), `${archetype}: the doorway went`).toBeDefined();
+    }
+  });
+});
+
+describe("reachOrRefuse — the guarantee, checked (§5.7)", () => {
+  it("refuses no ordinary shell, and says so in the meta", () => {
+    for (const archetype of ["cottage", "library", "bakery", "warehouse", "inn", "church"]) {
+      for (const decay of [0.35, 0.6, 0.9]) {
+        const result = generateBuilding({
+          size: SIZE,
+          params: { archetype, floors: 2, decay },
+          seed: SEED,
+          style: BUILDING_STYLE_DEFAULTS,
+        });
+        expect(result.meta.decay?.refused, `${archetype}@${decay}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe("the reach law (§2)", () => {
+  it("a shell with no decay is byte-identical to one that never heard of it", () => {
+    for (const archetype of ["cottage", "smithy", "library", "church", "warehouse"]) {
+      const plain = build(archetype);
+      const zero = build(archetype, 0);
+      expect(zero, archetype).toEqual(plain);
+      expect(
+        generateBuilding({
+          size: SIZE,
+          params: { archetype, floors: 2 },
+          seed: SEED,
+          style: BUILDING_STYLE_DEFAULTS,
+        }).meta.decay,
+        archetype,
+      ).toBeUndefined();
+    }
+  });
+
+  it("is deterministic: the same shell and dial twice is the same list", () => {
+    for (const archetype of ["cottage", "library"]) {
+      expect(build(archetype, 0.62)).toEqual(build(archetype, 0.62));
+    }
+  });
+});

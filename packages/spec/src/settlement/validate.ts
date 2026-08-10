@@ -2310,13 +2310,14 @@ function validateBuildingParams(
       "floors", "floorHeight", "footprint", "bays", "roof", "roofPitch",
       "wallSymbol", "trimSymbol", "roofSymbol", "windowRhythm", "windowRatio",
       "entrance", "interior", "furnish", "basement", "tower", "variance", "decayOverride",
-      "wing", "archetype", "vista",
+      "wing", "archetype", "vista", "decay",
     ],
     "building.grammar@0 params",
   );
   validateVistaParam(out, at, params["vista"], inCity);
   checkNumbers(out, at, params, BUILDING_NUMS);
   validateArchetypeParam(out, at, params["archetype"]);
+  validateDecayParam(out, at, params["decay"]);
   validateBasementParam(out, at, params["basement"]);
   validateWingParam(out, at, params["wing"]);
   checkEnumParam(out, at, params, "footprint", BUILDING_FOOTPRINTS);
@@ -2332,6 +2333,29 @@ function validateBuildingParams(
     if (v !== undefined && !isObject(v)) {
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
+  }
+}
+
+/**
+ * Validate `params.decay` (RUINS-PLAN-v0 §4.3) — "ruin this one building".
+ *
+ * A `0..1` scalar and nothing else. It is how an author ruins **one named
+ * thing** — a broken watchtower on a ridge — without a district: the ordinary
+ * shell is built and furnished, and the decay engine writes over it. A district
+ * says the same thing at scale with `intent.decline`, and a landmark declared as
+ * a child is never ruined by that roll, which is why this key exists.
+ */
+function validateDecayParam(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+    out.push(
+      error(
+        "DECAY_PARAM",
+        at,
+        `"decay" must be a number in 0..1, got ${describe(value)}`,
+        'write "decay": 0.8 for a building that has fallen in — or set "decline" on the district to ruin a share of a whole quarter',
+      ),
+    );
   }
 }
 

@@ -19,6 +19,7 @@ import {
   furnishUpperFloors,
   furnishWing,
   isPassable,
+  PropCounter,
   wholeFloorPlan,
   type FitOutContext,
 } from "./archetypes-civic.js";
@@ -171,9 +172,16 @@ export * from "./archetypes-arcana.js";
 import {
   RELIC_BUILDING_ARCHETYPES,
   furnishRelic,
+  isRelicArchetype,
   relicArchetypeOfTags,
   relicBareRuinArchetype,
 } from "./archetypes-relic.js";
+import {
+  decayProfileFor,
+  decayShellChecked,
+  settleDecayedFixtures,
+  type DecayPassReport,
+} from "./decay.js";
 
 export * from "./archetypes-relic.js";
 
@@ -516,6 +524,18 @@ interface FurnishRequest {
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** What the earlier stages have already written at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
+  /**
+   * `params.decay` — how far gone this one building is, 0..1 (RUINS-PLAN §4.3).
+   *
+   * The author's way to ruin **one named thing** — a broken watchtower on a
+   * ridge — without a district and without a second grammar: the ordinary shell
+   * is built and fitted out exactly as it always is, and then written over by
+   * the decay engine. Absent, or zero, and not one cell changes, which is what
+   * keeps every world with no `decay` byte-identical.
+   */
+  readonly decay?: number;
+  /** Where the decay pass records what it did. See {@link FitOutContext}. */
+  readonly decayReport?: DecayPassReport;
 }
 
 /**
@@ -797,6 +817,8 @@ export function furnish(r: FurnishRequest): number {
     roofTop: r.roofTop,
     floorCells: r.floorCells,
     blockAt: r.blockAt,
+    ...(r.decay === undefined ? {} : { decay: r.decay }),
+    ...(r.decayReport === undefined ? {} : { decayReport: r.decayReport }),
   };
   n += furnishExtended(ctx);
   n += furnishBlitz(ctx);
@@ -824,6 +846,31 @@ export function furnish(r: FurnishRequest): number {
   n += furnishDepths(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
+  // --- the decay (RUINS-PLAN-v0 WP-2) --------------------------------------
+  // **Last, and after every `furnish*` pass**, because THE RUIN LAW says a
+  // ruined building is the ordinary shell fit-out DECAYED: the same shell is
+  // built, the same archetype furnishes it, and then it is written over. A
+  // decay that ran earlier would be decorating a ruin, which is the second
+  // grammar the law forbids.
+  //
+  // The five relics are exempt because they run the engine themselves, from
+  // their own profiles — `params.decay` on a `ruined_cottage` would be a decay
+  // over a decay, and the relic's own list is a WP-1 golden.
+  if (r.decay !== undefined && r.decay > 0 && !isRelicArchetype(r.archetype)) {
+    const c = new PropCounter(ctx);
+    const outcome = decayShellChecked(ctx, c, decayProfileFor(ctx, r.decay));
+    // Nothing the decay unsupported may survive it. One entry point, one
+    // invariant — see the note on `settleDecayedFixtures`.
+    const settled = settleDecayedFixtures(ctx);
+    if (r.decayReport !== undefined) {
+      r.decayReport.written = outcome.written;
+      r.decayReport.quenched = outcome.quenched;
+      r.decayReport.withdrawn = outcome.withdrawn;
+      r.decayReport.refused = outcome.refused;
+      r.decayReport.settled = settled;
+    }
+    n += c.n;
+  }
   return n;
 }
 

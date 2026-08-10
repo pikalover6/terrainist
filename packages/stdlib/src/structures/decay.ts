@@ -56,15 +56,26 @@
  *   refuses any placement that would strand a cell. (WP-2's `reachOrRefuse`
  *   turns that construction into a check.)
  *
+ * ## WP-2 — the general case
+ *
+ * WP-1 made the five relics five parameter sets. WP-2 makes the engine take an
+ * **arbitrary** shell: {@link WEATHERED_VARIANTS} and the re-clad rule (§5.2),
+ * timber by removal, {@link quench} (§5.5), the {@link settleDecayedFixtures}
+ * fixpoint (§5.6), {@link reachOrRefuse} (§5.7), {@link collapseForShell}
+ * (§5.1) and {@link decayProfileFor}, which is where `params.decay` lands.
+ *
+ * **None of it moves a relic.** The general moves are dials
+ * ({@link DecayProfile.quench}, {@link DecayProfile.timberByRemoval}) that the
+ * general profile constructor sets and the five literals leave absent, and the
+ * derived materials are only consulted by a profile that did not state its own.
+ * WP-1's list-identity golden is still the bar and still passes unchanged.
+ *
  * ## Not yet here, deliberately
  *
- * `quench`, `settleFixtures`, `reachOrRefuse`, the `WEATHERED_VARIANTS` re-clad
- * rule, the collapse-by-category table and the band table are **WP-2 and WP-3**
- * (RUINS-PLAN §5, §6). WP-1 changes nothing at all, by design: it is the
- * extraction and its proof. {@link DecayProfile.intensity} and
- * {@link DecayProfile.mode} are carried now because they are the profile's
- * shape and the five relics' values for them are recorded data (§5's table);
- * no operator reads them yet.
+ * The **band table** (§6) and the **per-lot roll** (§4) are WP-3;
+ * {@link DecayProfile.intensity} is now read by {@link decayProfileFor} but the
+ * one function from `decline` to a profile is still to come.
+ * {@link DecayProfile.mode}`: "facade"` is **WP-6** and no operator reads it.
  */
 
 import {
@@ -72,7 +83,9 @@ import {
   ROOF_FLOURISH_RISE,
   type FitOutContext,
 } from "./archetypes-civic.js";
+import { STRUCTURE_CATALOG } from "./catalog.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
+import { canSupport, supportDirection } from "./support.js";
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */
@@ -88,8 +101,17 @@ import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
  * them, which is exactly what it stated before.
  */
 export interface DecayMaterials {
-  /** The survivor cladding for a ring column at `(x, y, z)`. */
-  readonly clad: (x: number, y: number, z: number) => string;
+  /**
+   * The survivor cladding for a ring column at `(x, y, z)`, or `null` to leave
+   * the block that is standing there alone.
+   *
+   * **THE RE-CLAD RULE, in the type.** `null` is the second clause: a family
+   * with no weathered variant is not re-clad at all — the timber, the concrete
+   * and the quartz keep their own block and the crumble line simply runs lower
+   * on them (WP-2, {@link TIMBER_EXTRA}). The five relics never return it,
+   * which is why their output cannot move.
+   */
+  readonly clad: (x: number, y: number, z: number) => string | null;
   /** Style key of the slab a roof fragment is made of — e.g. `"stone.slab"`. */
   readonly fragmentStyle: string;
   /** The apron spill block. */
@@ -150,6 +172,30 @@ export interface DecayProfile {
    */
   readonly mode?: "shell" | "facade";
   readonly materials: DecayMaterials;
+  /**
+   * **WP-2.** Run {@link quench} before the crumble: fire out, fluids out,
+   * crops to dead bush. Absent means `false`.
+   *
+   * Explicit rather than implied, and the five relics leave it absent. A ruin
+   * is cold and dry by law, and the relics *are* cold and dry by construction —
+   * the five ruined shells put no fire and no water in themselves. `quench` is
+   * the cost of the **general** case (a smithy has a forge, a bathhouse a pool,
+   * a greenhouse farmland), and turning it on for the relics too would rewrite
+   * their hanging lantern and move a list WP-1 pinned. So it is a dial the
+   * general profile constructor sets and the five literals do not.
+   */
+  readonly quench?: boolean;
+  /**
+   * **WP-2.** Timber decays by removal: a survivor course whose block has no
+   * weathered variant loses {@link TIMBER_EXTRA} of the wall instead of being
+   * re-clad in something the building is not made of. Absent means `false`.
+   *
+   * Absent on the five relics for the same reason as {@link quench}: each of
+   * them states its own cladding, every one of which *is* a weathered variant
+   * of its own family, so the rule would change nothing except by moving the
+   * crumble line — which is the list WP-1 pinned.
+   */
+  readonly timberByRemoval?: boolean;
 }
 
 /** How a ruin's wall heads are shaped, resolved from {@link DecayProfile}. */
@@ -186,6 +232,79 @@ function crumbleStyleOf(profile: DecayProfile, plan: DecayPlan): CrumbleStyle {
 function pct(share: number): number {
   return Math.round(share * 100);
 }
+
+/* -------------------------------------------------------------------------- */
+/* WP-2: the re-clad rule                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **THE RE-CLAD RULE** (RUINS-PLAN §5.2).
+ *
+ * > A re-clad never invents a material. It substitutes within the block's own
+ * > family, and where the family has no weathered variant, the decay takes the
+ * > block away instead.
+ *
+ * This is the real generalisation work of WP-2. Today's cottage re-clads its
+ * survivors in mossy cobblestone because a cottage is made of cobblestone; a
+ * concrete tower re-clad in mossy cobblestone is not a ruin, it is a bug.
+ *
+ * The table is small, explicit and over the **pinned 1.21.11 set** — every id
+ * below was checked against `minecraft-data`, never assumed, exactly as the
+ * vine block was. A family absent from the table has no weathered variant *on
+ * purpose*: bricks, terracotta, concrete, quartz, sandstone, and every plank
+ * and wood family. Those decay by removal, which is §5.2's second clause and
+ * the clause that makes the rule good rather than merely safe — a wooden house
+ * that fell in leaves its plinth, its chimney and a few studs.
+ */
+export const WEATHERED_VARIANTS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  stone_bricks: ["cracked_stone_bricks", "mossy_stone_bricks"],
+  stone: ["cobblestone", "mossy_cobblestone"],
+  cobblestone: ["cobblestone", "mossy_cobblestone"],
+  mossy_cobblestone: ["mossy_cobblestone", "cobblestone"],
+  mossy_stone_bricks: ["mossy_stone_bricks", "cracked_stone_bricks"],
+  chiseled_stone_bricks: ["cracked_stone_bricks", "mossy_stone_bricks"],
+  smooth_stone: ["cobblestone", "mossy_cobblestone"],
+  andesite: ["cobblestone", "mossy_cobblestone"],
+  polished_andesite: ["cobblestone", "mossy_cobblestone"],
+  granite: ["cobblestone", "mossy_cobblestone"],
+  polished_granite: ["cobblestone", "mossy_cobblestone"],
+  diorite: ["cobblestone", "mossy_cobblestone"],
+  polished_diorite: ["cobblestone", "mossy_cobblestone"],
+  deepslate: ["cobbled_deepslate", "cobbled_deepslate"],
+  deepslate_bricks: ["cracked_deepslate_bricks", "cobbled_deepslate"],
+  deepslate_tiles: ["cracked_deepslate_tiles", "cobbled_deepslate"],
+  polished_deepslate: ["cobbled_deepslate", "cracked_deepslate_bricks"],
+  polished_blackstone_bricks: [
+    "cracked_polished_blackstone_bricks",
+    "cracked_polished_blackstone_bricks",
+  ],
+  nether_bricks: ["cracked_nether_bricks", "cracked_nether_bricks"],
+});
+
+/**
+ * A block's weathered variant, or `null` when its family has none.
+ *
+ * `k` is the cell's own hash, so a wall comes up mixed rather than uniformly
+ * cracked — the same positional variation the five relics get from their own
+ * `cellHash` calls, and no draw and no seed, because a fit-out has neither.
+ */
+export function weatheredOf(block: string, k: number): string | null {
+  const family = WEATHERED_VARIANTS[block];
+  if (family === undefined) return null;
+  return family[k % family.length] as string;
+}
+
+/**
+ * How much extra of the wall a variant-less column loses.
+ *
+ * RUINS-PLAN §5.2: *"`intensity` is raised by `TIMBER_EXTRA = 0.15` for a
+ * survivor course whose block has no variant"*. Expressed here as courses off
+ * the crumble line, because that is what "raise the intensity for this column"
+ * means once the profile's dials are already fixed — the crumble simply runs
+ * lower on wood, which is exactly the read: a timber ruin is a plinth and a few
+ * studs, a stone ruin is a standing wall.
+ */
+export const TIMBER_EXTRA = 0.15;
 
 /* -------------------------------------------------------------------------- */
 /* the plan                                                                    */
@@ -280,12 +399,23 @@ function crumbleHeight(
   style: CrumbleStyle,
   x: number,
   z: number,
+  timberByRemoval = false,
 ): number {
   if (protectedColumn(ctx, x, z)) return plan.wallTop;
   if (style.cornersStand && isCorner(plan, x, z)) return plan.wallTop;
   const salt = saltOf(ctx.archetype);
   const spread = Math.max(1, Math.min(style.spread, plan.wallTop));
   let h = style.floor + (cellHash(salt, x, z) % spread);
+  // **Timber decays by removal** (§5.2). A column whose own block has no
+  // weathered variant is not re-clad in something the building is not made of;
+  // the crumble line runs lower on it instead. Off unless the profile asks for
+  // it, so the five relics' heights cannot move.
+  if (timberByRemoval) {
+    const standing = ctx.blockAt(x, 2, z);
+    if (standing !== undefined && weatheredOf(standing.block, 0) === null) {
+      h -= Math.max(1, Math.round(TIMBER_EXTRA * plan.wallTop));
+    }
+  }
   if (style.lean > 0 && plan.sx > 2) {
     // The fall direction: linear in x, so the wall head slopes rather than
     // stepping at random, which is what makes a collapse read as one event.
@@ -352,7 +482,8 @@ function crumbleWalls(
   c: PropCounter,
   plan: DecayPlan,
   style: CrumbleStyle,
-  clad: (x: number, y: number, z: number) => string,
+  clad: (x: number, y: number, z: number) => string | null,
+  timberByRemoval = false,
 ): Map<string, number> {
   const heads = new Map<string, number>();
   // The wall the stair flight leans on survives with it. A two-storey shell
@@ -382,7 +513,10 @@ function crumbleWalls(
   }
   for (const cell of ringOf(plan.sx, plan.sz)) {
     const floor = stairMin.get(`${cell.x},${cell.z}`) ?? 0;
-    const h = Math.max(crumbleHeight(ctx, plan, style, cell.x, cell.z), floor);
+    const h = Math.max(
+      crumbleHeight(ctx, plan, style, cell.x, cell.z, timberByRemoval),
+      floor,
+    );
     heads.set(`${cell.x},${cell.z}`, h);
     // Clear from the top of the envelope DOWN to the survivor. A whole run, so
     // nothing is ever left with air above it and air below it. The door column
@@ -399,7 +533,12 @@ function crumbleWalls(
       const standing = ctx.blockAt(cell.x, y, cell.z);
       if (standing !== undefined && PRESERVE.test(standing.block)) continue;
       if (protectedColumn(ctx, cell.x, cell.z)) continue;
-      ctx.put(cell.x, y, cell.z, clad(cell.x, y, cell.z));
+      // THE RE-CLAD RULE's second clause: no variant, no re-clad. The block the
+      // shell built with stays exactly as it is, and the crumble line has
+      // already run lower here (see {@link TIMBER_EXTRA}).
+      const dressed = clad(cell.x, y, cell.z);
+      if (dressed === null) continue;
+      ctx.put(cell.x, y, cell.z, dressed);
       c.n++;
     }
   }
@@ -483,19 +622,19 @@ function rubble(
   c: PropCounter,
   density: number,
   heap: (x: number, z: number) => string,
-): number {
+): { x: number; z: number }[] {
   const it = ctx.interior;
   const salt = saltOf(ctx.archetype);
   const lampX = Math.floor((it.x0 + it.x1) / 2);
   const lampZ = Math.floor((it.z0 + it.z1) / 2);
-  let laid = 0;
+  const laid: { x: number; z: number }[] = [];
   for (let z = it.z0; z <= it.z1; z++) {
     for (let x = it.x0; x <= it.x1; x++) {
       if (protectedColumn(ctx, x, z)) continue;
       if (x === lampX && z === lampZ) continue;
       if (cellHash(salt + 19, x, z) % 100 >= density) continue;
       if (!c.put1(x, z, heap(x, z))) continue;
-      laid++;
+      laid.push({ x, z });
       // Moss on the top of the heap — the one place a carpet has ground.
       if (cellHash(salt + 23, x, z) % 3 === 0) c.stack(x, z, 2, "moss_carpet");
     }
@@ -599,6 +738,344 @@ function floorPaint(
   }
 }
 
+/**
+ * Operator: **strip the roof plant** — the flourish above the roof goes too.
+ *
+ * {@link breakRoof} clears the band the *shell* built in, `wallTop + 1` up to
+ * the roof's own ceiling. An archetype's exterior flourish stands above that:
+ * a windmill's cross, a steeple, a mast, a canopy's posts are emitted by the
+ * fit-out at heights the roof generator never reached, and the first WP-2
+ * catalog sweep found them still hanging in the air over a shell whose roof was
+ * gone — `floating.isolated`, four oak logs at a time.
+ *
+ * Written as "air where something is" rather than "air over the whole band",
+ * which is what keeps it free for the five relics: none of them builds a
+ * flourish, so this operator emits nothing at all for them and WP-1's
+ * list-identity holds.
+ */
+function stripRoofPlant(ctx: FitOutContext, plan: DecayPlan): void {
+  for (let y = plan.top + 3; y <= plan.top + FLOURISH_CEILING; y++) {
+    for (let z = -1; z <= plan.sz; z++) {
+      for (let x = -1; x <= plan.sx; x++) {
+        const op = ctx.blockAt(x, y, z);
+        if (op === undefined || op.block === "air") continue;
+        ctx.put(x, y, z, "air");
+      }
+    }
+  }
+}
+
+/**
+ * How far above the roof a flourish can reach.
+ *
+ * The tallest exterior flourish in the catalog is a windmill's cross; this is a
+ * generous ceiling over it rather than a measured one, because the scan costs a
+ * lookup per cell and emits nothing where nothing stands.
+ */
+const FLOURISH_CEILING = 40;
+
+/* -------------------------------------------------------------------------- */
+/* WP-2: quench — cold and dry, over the whole catalog                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Operator: **`quench`** (RUINS-PLAN §5.5) — the fire out and the water gone.
+ *
+ * "A ruin is cold and dry" is free while the only ruins are five shells that
+ * were never lit. It stops being free the moment the input is an arbitrary
+ * archetype: a smithy has a forge fire, a bathhouse has a pool, a greenhouse
+ * has farmland and crops. This is the general answer, and it runs **before**
+ * the crumble so the crumble can then take the emptied fixture away.
+ *
+ * - the **fire family** goes out: `fire`/`soul_fire` and every torch, lantern
+ *   and candle to air or unlit, `lit=true` furnaces/smokers/blast furnaces and
+ *   campfires to `lit=false`, `lava` to air;
+ * - **fluids** go to air, and `waterlogged=true` becomes `false` on anything
+ *   that survives — a ruin that holds water is a fluid-lint finding waiting for
+ *   the first tick;
+ * - **the basins stay.** Removing the water leaves the dressed basin, which
+ *   reads as a drained pool, and it costs nothing;
+ * - **crops and farmland** become a `dead_bush` on `coarse_dirt`, because
+ *   farmland with no crop reverts to dirt anyway (FARM-PLAN §6.2's persistence
+ *   law) and a dead bush says the same thing on purpose.
+ *
+ * Returns the number of cells it changed, for the report.
+ */
+export function quench(ctx: FitOutContext, plan: DecayPlan): number {
+  let n = 0;
+  const kill = (x: number, y: number, z: number): void => {
+    ctx.put(x, y, z, "air");
+    n++;
+  };
+  for (let y = 0; y <= plan.top + 2; y++) {
+    for (let z = -1; z <= plan.sz; z++) {
+      for (let x = -1; x <= plan.sx; x++) {
+        const op = ctx.blockAt(x, y, z);
+        if (op === undefined) continue;
+        const b = op.block;
+        const props = op.props;
+        if (b === "farmland" || b === "soul_sand" && props?.["farm"] === "true") {
+          ctx.put(x, y, z, "coarse_dirt");
+          n++;
+          continue;
+        }
+        if (CROPS.test(b)) {
+          // A dead bush needs ground, and the cell under a crop is farmland,
+          // which the sweep above has already turned into coarse dirt.
+          ctx.put(x, y, z, "dead_bush");
+          n++;
+          continue;
+        }
+        if (FIRE_OUT.test(b) || b === "water" || b === "lava" || b === "bubble_column") {
+          kill(x, y, z);
+          continue;
+        }
+        if (props === undefined) continue;
+        if (props["lit"] === "true") {
+          ctx.put(x, y, z, b, { ...props, lit: "false" });
+          n++;
+          continue;
+        }
+        if (props["waterlogged"] === "true") {
+          ctx.put(x, y, z, b, { ...props, waterlogged: "false" });
+          n++;
+        }
+      }
+    }
+  }
+  return n;
+}
+
+/** Blocks the quench removes outright — the fire family and the fluids. */
+const FIRE_OUT =
+  /^(fire|soul_fire|torch|soul_torch|redstone_torch|wall_torch|soul_wall_torch|redstone_wall_torch|lantern|soul_lantern|candle|.*_candle|flowing_water|flowing_lava)$/;
+
+/** Crops the quench replaces with a dead bush. See §5.5. */
+const CROPS =
+  /^(wheat|carrots|potatoes|beetroots|melon_stem|pumpkin_stem|attached_melon_stem|attached_pumpkin_stem|sweet_berry_bush|torchflower_crop|pitcher_crop|nether_wart|cocoa)$/;
+
+/* -------------------------------------------------------------------------- */
+/* WP-2: reachOrRefuse — the guarantee, checked                                */
+/* -------------------------------------------------------------------------- */
+
+/** What {@link reachOrRefuse} concluded about an interior. */
+export interface ReachResult {
+  /** Rubble heaps withdrawn to re-open a stranded cell. */
+  readonly withdrawn: number;
+  /** Open interior cells still unreachable from the door. */
+  readonly unreachable: number;
+  /** True when the lot's decay must be refused whole (RUINS-PLAN §5.7). */
+  readonly refused: boolean;
+}
+
+/**
+ * Operator: **`reachOrRefuse`** (RUINS-PLAN §5.7) — every open interior cell
+ * still reaches the door, **checked** rather than argued.
+ *
+ * The relic file gets this by construction: rubble goes through
+ * {@link PropCounter.put1}, which honours the ground floor's own reservation.
+ * That still holds — which is why the five relics never lose a heap here — but
+ * on an arbitrary plan it is no longer *obvious*, so:
+ *
+ * 1. flood the shell's open interior cells from the cell inside the door;
+ * 2. any open cell not reached: withdraw the rubble heap that sealed it —
+ *    rubble is the only *additive* interior move — and re-flood. **Once**;
+ * 3. still unreachable: the caller must refuse the lot's decay whole and build
+ *    the intact shell instead (`LOAM-W510 RUIN_LOT_REFUSED`, WP-3). Refused
+ *    whole rather than shipped broken is the standing pattern.
+ *
+ * The refusal is *reported*, not enacted, because a fit-out cannot un-build the
+ * shell it has already written over. WP-3's per-lot roll is the caller that can.
+ */
+export function reachOrRefuse(
+  ctx: FitOutContext,
+  heaps: readonly { readonly x: number; readonly z: number }[],
+): ReachResult {
+  const start = insideDoor(ctx);
+  if (start === null) return { withdrawn: 0, unreachable: 0, refused: false };
+  const floor = new Set(ctx.floorCells.map((cell) => `${cell.x},${cell.z}`));
+  const open = (x: number, z: number): boolean => {
+    if (!floor.has(`${x},${z}`)) return false;
+    const op = ctx.blockAt(x, 1, z);
+    return op === undefined || op.block === "air" || PASSABLE_IN_RUIN.test(op.block);
+  };
+  const flood = (): Set<string> => {
+    const seen = new Set<string>();
+    if (!open(start.x, start.z)) return seen;
+    const queue = [start];
+    seen.add(`${start.x},${start.z}`);
+    while (queue.length > 0) {
+      const cell = queue.pop() as { x: number; z: number };
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const nx = cell.x + dx;
+        const nz = cell.z + dz;
+        const key = `${nx},${nz}`;
+        if (seen.has(key) || !open(nx, nz)) continue;
+        seen.add(key);
+        queue.push({ x: nx, z: nz });
+      }
+    }
+    return seen;
+  };
+  const stranded = (seen: ReadonlySet<string>): { x: number; z: number }[] =>
+    ctx.floorCells
+      .filter((cell) => open(cell.x, cell.z) && !seen.has(`${cell.x},${cell.z}`))
+      .map((cell) => ({ x: cell.x, z: cell.z }));
+
+  let lost = stranded(flood());
+  if (lost.length === 0) return { withdrawn: 0, unreachable: 0, refused: false };
+  // The heaps that touch a stranded cell are the ones that sealed it. Withdraw
+  // those and nothing else: a ruin that loses every heap on one bad corner is a
+  // swept ruin.
+  let withdrawn = 0;
+  const lostSet = new Set(lost.map((cell) => `${cell.x},${cell.z}`));
+  for (const heap of heaps) {
+    const touches = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].some(([dx, dz]) => lostSet.has(`${heap.x + (dx as number)},${heap.z + (dz as number)}`));
+    if (!touches) continue;
+    ctx.put(heap.x, 1, heap.z, "air");
+    // The moss carpet stood on the heap; it has nothing to stand on now.
+    const above = ctx.blockAt(heap.x, 2, heap.z);
+    if (above !== undefined && above.block.endsWith("_carpet")) ctx.put(heap.x, 2, heap.z, "air");
+    withdrawn++;
+  }
+  lost = stranded(flood());
+  return { withdrawn, unreachable: lost.length, refused: lost.length > 0 };
+}
+
+/** What a player walks through on a ruined floor without it counting as sealed. */
+const PASSABLE_IN_RUIN = /^(vine|cobweb|.*_carpet|dead_bush|.*_torch|torch|snow|light)$/;
+
+/* -------------------------------------------------------------------------- */
+/* WP-2: the collapse-by-category table                                        */
+/* -------------------------------------------------------------------------- */
+
+/** Catalog categories whose masonry goes last at the corners (§5.1). */
+const STRUCTURED_CATEGORIES: ReadonlySet<string> = new Set([
+  "military",
+  "civic",
+  "religious",
+  "memorial",
+]);
+
+/** Catalog category per archetype id, resolved once. */
+const CATEGORY_OF: ReadonlyMap<string, string> = new Map(
+  STRUCTURE_CATALOG.map((entry) => [entry.id, entry.category] as const),
+);
+
+/**
+ * A shell's default collapse shape (RUINS-PLAN §5.1).
+ *
+ * Drawn from the catalog **category** rather than from a per-archetype list,
+ * which is the whole point: one table, nothing to maintain, and a new catalog
+ * entry inherits a sane collapse the day it lands.
+ *
+ * - `defensive`/`civic`/`faith` — `military`, `civic`, `religious`, `memorial`
+ *   in the catalog's own vocabulary — read as *mass* and get `structured`;
+ * - a **tower-shaped** footprint (height > 2 × the longest plan side) reads as
+ *   *one event* and gets `leaning`: a tower falls over, it does not weather
+ *   away. Checked first, because a bell tower is `religious` and is still a
+ *   tower;
+ * - everything else gets `even`, the shape that reads as *time*.
+ *
+ * The band draw's one-in-six promotion of `even` → `structured` is **WP-3**:
+ * it belongs beside the band table, which is the one function from `decline` to
+ * a profile.
+ */
+export function collapseForShell(
+  archetype: string,
+  size: readonly [number, number, number],
+): "even" | "structured" | "leaning" {
+  const [sx, sy, sz] = size;
+  if (sy > 2 * Math.max(sx, sz)) return "leaning";
+  const category = CATEGORY_OF.get(archetype);
+  if (category !== undefined && STRUCTURED_CATEGORIES.has(category)) return "structured";
+  return "even";
+}
+
+/* -------------------------------------------------------------------------- */
+/* WP-2: a decay profile for an arbitrary shell                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The materials a decay writes with, **derived from the shell itself**.
+ *
+ * THE RE-CLAD RULE in the form the general case needs it: every block this
+ * returns is either a weathered variant of the block that is already standing
+ * in that column, or `null`, which leaves the shell's own block alone. Nothing
+ * is invented. Moss is the single exception the rule itself grants, and it is
+ * added by `green` and by the heap carpet — not here — because moss is not the
+ * building's material, it is what is growing on it.
+ */
+export function derivedMaterials(ctx: FitOutContext): DecayMaterials {
+  const salt = saltOf(ctx.archetype);
+  const wall = (ctx.style["wall.primary"] ?? "cobblestone") as string;
+  /** The weathered form of whatever stands at a cell, or of the wall block. */
+  const weatherAt = (x: number, y: number, z: number, k: number): string | null => {
+    const standing = ctx.blockAt(x, y, z);
+    const block = standing === undefined ? wall : standing.block;
+    return weatheredOf(block, k);
+  };
+  const rubbleBlock = (x: number, z: number): string => {
+    // A heap is made of what fell: the wall's own weathered form where it has
+    // one, and the wall block itself where it has not — a timber ruin heaps
+    // timber, which is both honest and the only answer the rule allows.
+    return weatheredOf(wall, cellHash(salt + 71, x, z)) ?? wall;
+  };
+  return {
+    clad: (x, y, z) => weatherAt(x, y, z, cellHash(salt + 61, x + y, z)),
+    fragmentStyle: "roof.slab",
+    spill: rubbleBlock(0, 0),
+    heap: rubbleBlock,
+    // Not the relics' recolour: a general shell's floor is its own, and
+    // repainting a bathhouse's tiles brown is inventing a material by another
+    // route. The rubble and the green are what say "nobody has swept here".
+    floorPaint: () => null,
+  };
+}
+
+/**
+ * **A decay profile for any shell**, from one 0..1 dial.
+ *
+ * The landing place of `params.decay` on a `building.grammar@0` node — "a
+ * broken watchtower on a ridge", one named thing ruined without a district —
+ * and the shape WP-3's per-lot roll will hand its band to.
+ *
+ * **The dials are derived here only until WP-3 lands the band table.**
+ * RUINS-PLAN §6 is explicit that the bands are the *only* place those numbers
+ * are meant to appear, so this derivation is deliberately a straight line
+ * through §6's three rows rather than a second set of tuned constants: at
+ * `intensity` 0.35 it lands near `light`, at 0.6 near `heavy`, at 0.85 near
+ * `total`. WP-3 replaces the body, not the signature.
+ */
+export function decayProfileFor(ctx: FitOutContext, intensity: number): DecayProfile {
+  const i = Math.min(1, Math.max(0, intensity));
+  const collapse = collapseForShell(ctx.archetype, ctx.size);
+  // Deeper decay means a lower crumble line and a wider spread of heights.
+  const floor = Math.max(1, Math.round(ctx.wallTop - 2 - i * (ctx.wallTop - 3)));
+  return {
+    intensity: i,
+    collapse,
+    collapseFloor: floor,
+    collapseSpread: i < 0.55 ? 2 : 3,
+    // §6's rubble and overgrowth columns, as the line through them.
+    overgrowth: Math.round(i * 0.8 * 100) / 100,
+    rubble: Math.round((0.06 + i * 0.4) * 100) / 100,
+    quench: true,
+    timberByRemoval: true,
+    materials: derivedMaterials(ctx),
+  };
+}
+
 /* -------------------------------------------------------------------------- */
 /* the entry point                                                             */
 /* -------------------------------------------------------------------------- */
@@ -616,12 +1093,75 @@ function floorPaint(
  * to crumble is still a shell nobody has swept in a century.
  */
 export function decayShell(ctx: FitOutContext, c: PropCounter, profile: DecayProfile): number {
+  return decayShellChecked(ctx, c, profile).written;
+}
+
+/**
+ * What one decay pass did — the record `BuildingMeta.decay` carries.
+ *
+ * A mutable sink rather than a return value because the fit-out chain reports
+ * one number (blocks written) and this is four facts about a pass that ran deep
+ * inside it. RUINS-PLAN §9's diagnostics are built from these.
+ */
+export interface DecayPassReport {
+  /** Blocks written by the decay. */
+  written: number;
+  /** Cells the quench emptied of fire, fluid or crop. */
+  quenched: number;
+  /** Rubble heaps withdrawn to keep the interior reachable. */
+  withdrawn: number;
+  /** Ops the `settleFixtures` fixpoint deleted. */
+  settled: number;
+  /** True when an open interior cell is still unreachable from the door. */
+  refused: boolean;
+}
+
+/** What a decay pass did, and whether the lot must be refused (§5.7). */
+export interface DecayOutcome {
+  /** Blocks written by the decay. */
+  readonly written: number;
+  /** Cells the quench emptied of fire, fluid or crop. */
+  readonly quenched: number;
+  /** Rubble heaps withdrawn to keep the interior reachable. */
+  readonly withdrawn: number;
+  /**
+   * True when an open interior cell is still unreachable from the door, so the
+   * caller must build the intact shell instead (`LOAM-W510`, WP-3).
+   */
+  readonly refused: boolean;
+}
+
+/**
+ * {@link decayShell}, with the WP-2 checks' verdict handed back.
+ *
+ * Same pass, same order, same output. The five relics call `decayShell` and
+ * ignore the verdict because they cannot fail it — a relic's rubble goes
+ * through the same reservation it always did — and WP-3's per-lot roll calls
+ * this one, because a roll is the only caller that can act on a refusal.
+ */
+export function decayShellChecked(
+  ctx: FitOutContext,
+  c: PropCounter,
+  profile: DecayProfile,
+): DecayOutcome {
   const before = c.n;
   const m = profile.materials;
   const plan = decayPlan(ctx);
+  let quenched = 0;
+  let heaps: readonly { readonly x: number; readonly z: number }[] = [];
   if (plan !== null) {
-    const heads = crumbleWalls(ctx, c, plan, crumbleStyleOf(profile, plan), m.clad);
+    // Cold and dry FIRST, so the crumble can take the emptied fixture away.
+    if (profile.quench === true) quenched = quench(ctx, plan);
+    const heads = crumbleWalls(
+      ctx,
+      c,
+      plan,
+      crumbleStyleOf(profile, plan),
+      m.clad,
+      profile.timberByRemoval === true,
+    );
     breakRoof(ctx, c, plan, heads, ctx.style[m.fragmentStyle] as string);
+    stripRoofPlant(ctx, plan);
     if (profile.clearInteriorFrom !== undefined) {
       const it = ctx.interior;
       for (let z = it.z0; z <= it.z1; z++) {
@@ -634,8 +1174,17 @@ export function decayShell(ctx: FitOutContext, c: PropCounter, profile: DecayPro
     green(ctx, c, plan, pct(profile.overgrowth));
   }
   floorPaint(ctx, c, ctx.interior, m.floorPaint);
-  rubble(ctx, c, pct(profile.rubble), m.heap);
-  return c.n - before;
+  heaps = rubble(ctx, c, pct(profile.rubble), m.heap);
+  // The guarantee, checked. Construction still gives it to the relics; an
+  // arbitrary plan is asked rather than trusted.
+  const reach =
+    plan === null ? { withdrawn: 0, unreachable: 0, refused: false } : reachOrRefuse(ctx, heaps);
+  return {
+    written: c.n - before,
+    quenched,
+    withdrawn: reach.withdrawn,
+    refused: reach.refused,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -646,51 +1195,87 @@ export function decayShell(ctx: FitOutContext, c: PropCounter, profile: DecayPro
  * **Nothing the decay unsupported may survive it.** Run after the decay and
  * after the ruin's own furniture.
  *
- * Today this is the two guards wave 6E wrote by hand, because the cottage had
- * exactly two ways to leave something hanging: a ladder rung whose backing
- * wall crumbled, and a hanging lantern whose ceiling went. They live behind
- * **one** entry point on purpose — RUINS-PLAN §5.6 replaces this body with the
- * `settleFixtures` fixpoint (sweep every remaining op, delete any whose
- * support is gone, repeat until nothing is deleted, using the physics lint's
- * own support predicate), and two mechanisms for one invariant is how
- * `CURB_LEVEL_TOLERANCE` happened. There must never be a second guard beside
- * this function; there must only ever be a better body inside it.
+ * **WP-2 put the better body inside it.** This used to be the two guards wave
+ * 6E wrote by hand, because the cottage had exactly two ways to leave something
+ * hanging: a ladder rung whose backing wall crumbled, and a hanging lantern
+ * whose ceiling went. An arbitrary archetype has dozens — wall banners, signs,
+ * item frames, paintings, flower pots, carpets, beds, hanging signs, ladders,
+ * torches, upper-floor furniture whose floor plane survived but whose wall did
+ * not — so the two guards are now RUINS-PLAN §5.6's **fixpoint**:
+ *
+ * > after the removal operators, sweep every remaining op in the shell and
+ * > delete any whose support is gone, and repeat until nothing is deleted.
+ *
+ * Fixpoint, because a removal can unsupport the next thing; bounded by
+ * {@link MAX_SETTLE_PASSES}, so it terminates. The support classification is
+ * the **physics lint's own**, imported from `support.ts` rather than restated,
+ * so the sweep and the lint cannot disagree — two mechanisms for one invariant
+ * is how `CURB_LEVEL_TOLERANCE` happened. There must never be a second guard
+ * beside this function; there must only ever be a better body inside it.
+ *
+ * Returns the number of ops it deleted, for the report.
  */
-export function settleDecayedFixtures(ctx: FitOutContext): void {
+export function settleDecayedFixtures(ctx: FitOutContext): number {
   const plan = decayPlan(ctx);
-  if (plan === null) return;
-  const it = ctx.interior;
-  // A ladder stands on the wall face behind it, rung by rung, and the crumble
-  // never touches interior cells — so a tower whose west wall fell to a stub
-  // was left with six rungs of ladder climbing air.
-  for (let z = it.z0; z <= it.z1; z++) {
-    for (let x = it.x0; x <= it.x1; x++) {
-      for (let y = 2; y <= plan.top + 2; y++) {
-        const op = ctx.blockAt(x, y, z);
-        if (op === undefined || op.block !== "ladder") continue;
-        const facing = op.props?.["facing"];
-        if (facing === undefined) continue;
-        // A ladder's `facing` points at the climber, away from the wall it
-        // hangs on; the backing block is one step the other way.
-        const [dx, dz] = cardinalStep(facing as Cardinal);
-        const back = ctx.blockAt(x - dx, y, z - dz);
-        if (back === undefined || back.block === "air") ctx.put(x, y, z, "air");
+  if (plan === null) return 0;
+  /** Is there something at this cell that a fixture could hang on? */
+  const solid = (x: number, y: number, z: number): boolean => {
+    const op = ctx.blockAt(x, y, z);
+    if (op === undefined) return false;
+    return canSupport(op.block);
+  };
+  let removed = 0;
+  // The fixpoint. Bounded by the op count in the shell — every pass either
+  // deletes something or is the last one — because a removal can unsupport the
+  // next thing: the crumble takes a wall, the wall took a banner, the banner
+  // was what a pot stood on.
+  //
+  // Over the footprint **and its apron**, not the interior: a windmill's access
+  // ladder and a warehouse's wall bracket are fixed to the *outside* face of a
+  // wall the crumble has just taken away, and the first catalog sweep found
+  // exactly that — four courses of ladder climbing air one cell outside the
+  // shell. The relics never had one, which is why the interior-only sweep
+  // survived WP-1.
+  for (let pass = 0; pass < MAX_SETTLE_PASSES; pass++) {
+    let deleted = 0;
+    for (let z = -1; z <= plan.sz; z++) {
+      for (let x = -1; x <= plan.sx; x++) {
+        for (let y = 1; y <= plan.top + 2; y++) {
+          const op = ctx.blockAt(x, y, z);
+          if (op === undefined || op.block === "air") continue;
+          // The way in is never swept: the door, its step and the cell inside
+          // it are what the walking agent and the traversal lint start from.
+          if (protectedColumn(ctx, x, z)) continue;
+          const dir = supportDirection(op.block, op.props);
+          if (dir === null) continue;
+          let held: boolean;
+          if (dir === "below") held = y === 1 ? true : solid(x, y - 1, z);
+          else if (dir === "above") held = solid(x, y + 1, z);
+          else {
+            // Bracketed: `facing` points at the viewer, away from the block the
+            // fixture hangs on, so the backing cell is one step the other way.
+            const facing = op.props?.["facing"];
+            if (facing === undefined) continue;
+            const [dx, dz] = cardinalStep(facing as Cardinal);
+            held = solid(x - dx, y, z - dz);
+          }
+          if (held) continue;
+          ctx.put(x, y, z, "air");
+          deleted++;
+        }
       }
     }
+    removed += deleted;
+    if (deleted === 0) break;
   }
-  // A ruin has no lantern. The shell hangs one from the ceiling before decay
-  // runs, and the decay takes the ceiling — leaving a lit lamp dangling from
-  // open sky, which is both the `unsupported.lantern` finding and a building
-  // that reads inhabited.
-  for (let z = it.z0; z <= it.z1; z++) {
-    for (let x = it.x0; x <= it.x1; x++) {
-      for (let y = 1; y <= plan.top + 2; y++) {
-        const op = ctx.blockAt(x, y, z);
-        if (op === undefined || op.block !== "lantern") continue;
-        if (op.props?.["hanging"] !== "true") continue;
-        const above = ctx.blockAt(x, y + 1, z);
-        if (above === undefined || above.block === "air") ctx.put(x, y, z, "air");
-      }
-    }
-  }
+  return removed;
 }
+
+/**
+ * The fixpoint's bound.
+ *
+ * A support chain inside one shell cannot be deeper than the shell is tall, and
+ * every pass but the last deletes at least one op — so this is a very generous
+ * ceiling that exists so a bug can never spin, not a tuning knob.
+ */
+const MAX_SETTLE_PASSES = 32;
