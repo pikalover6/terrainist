@@ -80,7 +80,7 @@ One node is one holding — a farmstead and the fields that belong to it.**
   "params": { "parcels": 6, "parcelSize": 18, "crops": ["wheat", "potatoes"] },
   "constraints": [
     { "adjacent_to": "village" },
-    { "distance": [8, 40] },
+    { "distance": "village", "min": 8, "max": 40 },
     { "terrain_conform": "drape" }
   ],
   "ports": { "gate": { "type": "road_stub", "face": "any", "tags": ["primary"] } },

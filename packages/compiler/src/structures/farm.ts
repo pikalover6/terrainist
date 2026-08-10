@@ -86,6 +86,24 @@ export interface FarmJob {
   readonly tags: readonly string[];
   /** Ports the document declared on the holding — `gate`, by convention. */
   readonly ports: Readonly<Record<string, PortDeclaration>>;
+  /**
+   * What §10's fan-out rows answered for this holding, if anybody asked.
+   *
+   * Defaults, never overrides: a param the author wrote outranks every one of
+   * them (§10, and the same precedence `params.fabric` has over
+   * `character.urbanForm`). Absent — which is what every caller that is not the
+   * compiler's structure pass hands in — means the param defaults of §3.3, so
+   * the pass behaves exactly as it did before the rows existed.
+   */
+  readonly defaults?: FarmDefaults;
+}
+
+/** The three §10 rows' answers, as the pass consumes them. */
+export interface FarmDefaults {
+  readonly edge?: FarmEdge;
+  readonly fallow?: number;
+  /** The crop vocabulary to draw from when `params.crops` names none. */
+  readonly crops?: readonly string[];
 }
 
 /**
@@ -382,12 +400,20 @@ export interface FarmPassInput {
  * holding of its own), and a holding is better off with a legal number than
  * with a crash.
  */
-export function farmSettings(params: Readonly<Record<string, unknown>>): FarmSettings {
-  const crops = Array.isArray(params["crops"])
+export function farmSettings(
+  params: Readonly<Record<string, unknown>>,
+  defaults?: FarmDefaults,
+): FarmSettings {
+  const declared = Array.isArray(params["crops"])
     ? (params["crops"] as readonly unknown[]).filter(
         (c): c is string => typeof c === "string" && (FARM_CROPS as readonly string[]).includes(c),
       )
     : [];
+  // §10's `farm.cropList` is a *default*: the declared vocabulary wins whenever
+  // it has anything in it, and the row's answer fills the silence. An empty
+  // list here still means "the pass's own default list" (see FARM_DEFAULT_CROPS)
+  // so a caller that asks nothing of the intent layer is unaffected.
+  const crops = declared.length > 0 ? declared : (defaults?.crops ?? []);
   const farmsteadRaw = params["farmstead"];
   const farmstead: FarmSettings["farmstead"] =
     farmsteadRaw === "none"
@@ -399,7 +425,7 @@ export function farmSettings(params: Readonly<Record<string, unknown>>): FarmSet
   const edge: FarmEdge =
     edgeRaw === "wall" || edgeRaw === "none" || edgeRaw === "fence"
       ? edgeRaw
-      : FARM_PARAM_DEFAULTS.edge;
+      : (defaults?.edge ?? FARM_PARAM_DEFAULTS.edge);
   return {
     parcels: clampInt(params["parcels"], FARM_PARAM_DEFAULTS.parcels, FARM_PARAM_RANGES.parcels),
     parcelSize: clampInt(
@@ -410,7 +436,11 @@ export function farmSettings(params: Readonly<Record<string, unknown>>): FarmSet
     crops,
     farmstead,
     edge,
-    fallow: clampFraction(params["fallow"], FARM_PARAM_DEFAULTS.fallow, FARM_PARAM_RANGES.fallow),
+    fallow: clampFraction(
+      params["fallow"],
+      defaults?.fallow ?? FARM_PARAM_DEFAULTS.fallow,
+      FARM_PARAM_RANGES.fallow,
+    ),
   };
 }
 
@@ -443,7 +473,7 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
   const sowable: (SowJob | undefined)[] = [];
 
   for (const job of input.jobs) {
-    const settings = farmSettings(job.params);
+    const settings = farmSettings(job.params, job.defaults);
     const envelope = job.placement.footprint;
     const row = {
       nodePath: job.nodePath,
@@ -1414,8 +1444,14 @@ function farmStates(input: FarmPassInput): FarmStates | undefined {
   };
 }
 
-/** §10's `farm.cropList` resolve when no `era`/`climate` has spoken: temperate. */
-const DEFAULT_CROPS: readonly string[] = ["wheat", "carrots", "potatoes", "beetroots"];
+/**
+ * §10's `farm.cropList` resolve when no `era`/`climate` has spoken: temperate.
+ *
+ * Exported because it is the fan-out row's `today`: the row is handed this list
+ * and returns it unchanged when the intent declares nothing, which is what makes
+ * the row total and the reach law hold.
+ */
+export const FARM_DEFAULT_CROPS: readonly string[] = ["wheat", "carrots", "potatoes", "beetroots"];
 
 /** How `report.farms[].crops` names a parcel §6.5 sent fallow. */
 export const FALLOW = "fallow";
@@ -1451,7 +1487,7 @@ function sowHolding(
   const { job, settings, parcels } = sow;
   const plan = input.plan;
   const region = plan.region;
-  const list = settings.crops.length > 0 ? settings.crops : DEFAULT_CROPS;
+  const list = settings.crops.length > 0 ? settings.crops : FARM_DEFAULT_CROPS;
   /**
    * Fence columns this holding has already run, plus their orthogonal
    * neighbours (§6.3): two parcels that touch share **one** boundary, and a

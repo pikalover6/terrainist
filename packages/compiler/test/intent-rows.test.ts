@@ -12,6 +12,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { fanOut, installFanOutRows } from "../src/intent/index.js";
 import { resolveIntents, intentFor } from "../src/intent/resolve.js";
 import { LAYOUT_ROWS } from "../src/layout/streets-intent.js";
+import { COLD_CROPS, FARM_ROWS, FARM_TODAY, WARM_CROPS } from "../src/structures/farm-intent.js";
+import { FARM_DEFAULT_CROPS, farmSettings } from "../src/structures/farm.js";
 import { STRUCTURE_ROWS } from "../src/structures/themes-intent.js";
 import { TERRAIN_ROWS, NO_CLIMATE_OFFSET } from "../src/terrain/climate-intent.js";
 import type { ClimateIntent } from "../src/terrain/landuse.js";
@@ -111,6 +113,132 @@ describe("roofs, ornament, wear and decay", () => {
     // Not declared: today, whatever today is — the identity law.
     expect(fanOut<string>(STRUCTURE_ROWS.kerbsideKit, NOTHING, { nodePath: "w", today: "downtown" })).toBe("downtown");
     expect(fanOut<string>(STRUCTURE_ROWS.kerbsideKit, NOTHING, { nodePath: "w", today: "village" })).toBe("village");
+  });
+});
+
+describe("the holding's rows (FARM-PLAN §10)", () => {
+  it("walls a holding's fields only for the one era that means dry stone", () => {
+    const edge = (intent: unknown): string =>
+      fanOut<string>(FARM_ROWS.edgeKit, scope(intent), { nodePath: "w", today: FARM_TODAY.edge });
+    expect(edge({ era: "ancient" })).toBe("wall");
+    expect(edge({ era: "roman" })).toBe("wall");
+    expect(edge({ era: "medieval" })).toBe("fence");
+    expect(edge({ era: "modern" })).toBe("fence");
+    // Absent: today's default, which is the fence — the reach law, stated at
+    // the one row an author is most likely to leave alone.
+    expect(edge(undefined)).toBe(FARM_TODAY.edge);
+    expect(fanOut<string>(FARM_ROWS.edgeKit, NOTHING, { nodePath: "w", today: "none" })).toBe("none");
+  });
+
+  it("rests a few fields at half decline and most of them at full", () => {
+    const fallow = (intent: unknown, today = FARM_TODAY.fallow): number =>
+      fanOut<number>(FARM_ROWS.fallowShare, scope(intent), { nodePath: "w", today });
+    expect(fallow(undefined)).toBe(0);
+    expect(fallow({ decline: 0 })).toBe(0);
+    expect(fallow({ decline: 0.5 })).toBeCloseTo(0.25);
+    expect(fallow({ decline: 1 })).toBeCloseTo(1);
+    // Never un-rests a share the author already asked for.
+    expect(fallow({ decline: 0.2 }, 0.5)).toBeCloseTo(0.5);
+  });
+
+  it("gives a hot country and a cold one different crops, and silence the temperate list", () => {
+    const crops = (intent: unknown): readonly string[] =>
+      fanOut<readonly string[]>(FARM_ROWS.cropList, scope(intent), {
+        nodePath: "w",
+        today: FARM_TODAY.crops,
+      });
+    // Law 2, by reference: an absent climate hands back the very list the pass
+    // was about to use.
+    expect(crops(undefined)).toBe(FARM_TODAY.crops);
+    expect(crops({ climate: { humidity: 0.8 } })).toBe(FARM_TODAY.crops);
+    expect(crops({ climate: { biome: "minecraft:desert" } })).toEqual(WARM_CROPS);
+    expect(crops({ climate: { temperature: 0.6 } })).toEqual(WARM_CROPS);
+    expect(crops({ climate: { biome: "minecraft:snowy_taiga" } })).toEqual(COLD_CROPS);
+    expect(crops({ climate: { temperature: -0.6 } })).toEqual(COLD_CROPS);
+    // A biome named but unknown to the keyword table is not a guess.
+    expect(crops({ climate: { biome: "minecraft:plains" } })).toBe(FARM_TODAY.crops);
+    // A temperature inside the band is "a bit warm", not a different farm.
+    expect(crops({ climate: { temperature: 0.2 } })).toBe(FARM_TODAY.crops);
+  });
+
+  it("lets an author name crops, and forbid them, over the climate", () => {
+    const crops = (intent: unknown): readonly string[] =>
+      fanOut<readonly string[]>(FARM_ROWS.cropList, scope(intent), {
+        nodePath: "w",
+        today: FARM_TODAY.crops,
+      });
+    // `prefer` in declaration order, and only ids the crop table grows: an
+    // ungrounded word (a tree shape, a phrase) must never become a crop.
+    expect(crops({ character: { flora: { prefer: ["pumpkin", "broadleaf", "wheat"] } } })).toEqual([
+      "pumpkin",
+      "wheat",
+    ]);
+    expect(crops({ character: { flora: { prefer: ["conifer"] } } })).toBe(FARM_TODAY.crops);
+    // `forbid` filters whatever the climate chose.
+    expect(
+      crops({ climate: { biome: "minecraft:desert" }, character: { flora: { forbid: ["pasture"] } } }),
+    ).toEqual(["wheat", "pumpkin", "beetroots"]);
+    // Forbidding the whole table is not a holding of empty fields.
+    expect(crops({ character: { flora: { forbid: [...FARM_TODAY.crops] } } })).toBe(FARM_TODAY.crops);
+  });
+});
+
+describe("the holding's seam", () => {
+  it("hands farmSettings exactly its own defaults when nothing is declared", () => {
+    // The reach law at the one place it could leak: the rows are consulted per
+    // holding and their answers become `farmSettings`'s defaults, so a document
+    // with no intent must produce the settings the pass would have chosen on its
+    // own — not merely equal values, but the same holding.
+    const defaults = {
+      edge: fanOut<"fence" | "wall" | "none">(FARM_ROWS.edgeKit, NOTHING, {
+        nodePath: "w",
+        today: FARM_TODAY.edge,
+      }),
+      fallow: fanOut<number>(FARM_ROWS.fallowShare, NOTHING, { nodePath: "w", today: FARM_TODAY.fallow }),
+      crops: fanOut<readonly string[]>(FARM_ROWS.cropList, NOTHING, {
+        nodePath: "w",
+        today: FARM_TODAY.crops,
+      }),
+    };
+    for (const params of [{}, { parcels: 6, parcelSize: 18 }, { edge: "wall", fallow: 0.4 }]) {
+      const withRows = farmSettings(params, defaults);
+      const without = farmSettings(params);
+      // The crop list is the one field the seam fills in rather than leaves
+      // empty, and it fills it with the very list the emitter falls back to.
+      expect(withRows.crops).toEqual(FARM_DEFAULT_CROPS);
+      expect({ ...withRows, crops: [] }).toEqual({ ...without, crops: [] });
+    }
+  });
+
+  it("lets an intent move a holding that wrote no params, and never one that did", () => {
+    const defaults = (intent: unknown) => ({
+      edge: fanOut<"fence" | "wall" | "none">(FARM_ROWS.edgeKit, scope(intent), {
+        nodePath: "w",
+        today: FARM_TODAY.edge,
+      }),
+      fallow: fanOut<number>(FARM_ROWS.fallowShare, scope(intent), {
+        nodePath: "w",
+        today: FARM_TODAY.fallow,
+      }),
+      crops: fanOut<readonly string[]>(FARM_ROWS.cropList, scope(intent), {
+        nodePath: "w",
+        today: FARM_TODAY.crops,
+      }),
+    });
+    const declared = defaults({
+      era: "ancient",
+      decline: 0.6,
+      climate: { biome: "minecraft:desert" },
+    });
+    const silent = farmSettings({}, declared);
+    expect(silent.edge).toBe("wall");
+    expect(silent.fallow).toBeCloseTo(0.36);
+    expect(silent.crops).toEqual(WARM_CROPS);
+    // The author outranks every one of them.
+    const written = farmSettings({ edge: "none", fallow: 0, crops: ["berries"] }, declared);
+    expect(written.edge).toBe("none");
+    expect(written.fallow).toBe(0);
+    expect(written.crops).toEqual(["berries"]);
   });
 });
 

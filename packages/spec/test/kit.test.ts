@@ -158,6 +158,50 @@ describe("settlement-author kit", () => {
     }
   });
 
+  it("teaches a holding an author can copy — and it validates in a document", () => {
+    // The kit's precinct fragments are not complete documents, so the bar above
+    // only parses them. A holding is the one fragment whose *constraints* are
+    // the teaching (two of them, split, plus a `drape`), and the plan's own
+    // example carried a `T206` and an `E169` until WP-3 fixed it. So this case
+    // does what an author does: drops the block into a real document and
+    // validates. The only edit is the neighbour it names, because the kit's
+    // complete example has a green rather than a village.
+    const farm = settlementBlocks.find((b) => b.source.includes("precinct.farm@0"));
+    expect(farm, "the kit teaches no precinct.farm@0").toBeDefined();
+    const node = JSON.parse((farm as { source: string }).source.replace('"village"', '"green"')) as unknown;
+
+    const host = completeDocuments(settlementBlocks).at(-1);
+    expect(host, "the kit embeds no complete settlement to host the holding").toBeDefined();
+    const doc = JSON.parse(JSON.stringify((host as { value: unknown }).value)) as {
+      root: { children: unknown[] };
+    };
+    doc.root.children.push(node);
+
+    const result = validateSettlementDocument(doc);
+    const errors = result.diagnostics
+      .filter((d) => d.severity === "error")
+      .map(formatDiagnostic)
+      .join("\n");
+    expect(errors).toBe("");
+  });
+
+  it("tells the author when a prompt needs a holding, and what a holding costs", () => {
+    // The section is the whole of FARM-PLAN §11: a model that does not know the
+    // node exists writes a farm town with no fields in it, and one that does not
+    // know the ground bar puts a holding on a mountainside and gets a yard.
+    const farm = settlementSource.slice(settlementSource.indexOf("### `precinct.farm@0`"));
+    expect(farm).toContain("precinct.farm@0");
+    expect(farm).toMatch(/3 blocks of level/);
+    expect(farm).toContain("40 × 40");
+    // Never flatten a holding, and one crop to a field.
+    expect(farm).toMatch(/Do \*\*not\*\* give a farm `terrain_conform: "flatten"`/);
+    expect(farm).toContain("One crop to a field");
+    // And the checklist must send a farming prompt to the node at all.
+    expect(settlementSource.slice(settlementSource.indexOf("## 14. Before you answer"))).toContain(
+      "precinct.farm@0",
+    );
+  });
+
   it("teaches the settlement profile, not the terrain one", () => {
     for (const doc of completeDocuments(settlementBlocks)) {
       expect((doc.value as { profile: string }).profile, `kit line ${doc.line}`).toBe("settlement");

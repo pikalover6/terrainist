@@ -12,6 +12,7 @@
  */
 
 import { registerLayoutFanOut } from "../layout/streets-intent.js";
+import { registerFarmFanOut } from "../structures/farm-intent.js";
 import { registerStructureFanOut } from "../structures/themes-intent.js";
 import { registerTerrainFanOut } from "../terrain/climate-intent.js";
 
@@ -21,6 +22,7 @@ let installed = false;
 export function installFanOutRows(): void {
   registerLayoutFanOut();
   registerStructureFanOut();
+  registerFarmFanOut();
   registerTerrainFanOut();
   installed = true;
 }

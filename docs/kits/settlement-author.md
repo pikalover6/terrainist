@@ -1506,7 +1506,7 @@ always implies one:
 | `radial` | everything faces one place: a round-point, concentric ring streets, radial avenues that double in as they go out | a ring town, a baroque capital, a star fort, "everything faces the palace" | `6 × blockSize` on the short axis — a big quarter |
 | `canal` | the primary circulation is **water**: every second or third street is a channel with quays, and the cross streets bridge it | a canal town, Venice, Amsterdam, "streets of water" | `3 × blockSize`. Water nearby is optional — a landlocked quarter gets a closed pound and a note saying so |
 | `hillside` | the town plans its own terraces: two to four **principal streets along the contours**, level, each with a buildable strip cut beside it and nothing cut anywhere else, one carriage road switchbacking up the flank for the carts, and stairs for every other cross-connection. Most of the hillside stays hillside | a hill town, cliffside, Cinque Terre, "a town on a mountainside", "houses stacked on terraces" | real relief — at least 8 blocks of it — and ground the compiler has **not** levelled |
-| `linear` | one street, and the town is what fronts it: an avenue the length of the quarter, dead-end ribs off it, and open ground beyond the lots that becomes fields | a ribbon village, a roadside village, a valley village, "strung along the road" | `3 × blockSize` along its long axis |
+| `linear` | one street, and the town is what fronts it: an avenue the length of the quarter, dead-end ribs off it, and open ground beyond the lots (which stays open ground — write a `precinct.farm@0` beside it if you want fields there) | a ribbon village, a roadside village, a valley village, "strung along the road" | `3 × blockSize` along its long axis |
 
 Two things follow from the table and are worth stating plainly.
 
@@ -2139,7 +2139,7 @@ warning. Per-building overrides are what `params` are for.
 |---|---|---|
 | `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `early_modern` / `industrial` / `modern` / `far_future`. Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
 | `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
-| `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim. **Orthogonal to wealth: a rich ruin exists.** |
+| `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim; it also sends fields fallow, so a declining farm town's holdings rest their ground without you writing `fallow`. **Orthogonal to wealth: a rich ruin exists.** |
 | `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength. Outranked by `character.urbanForm` |
 | `event` | `{ "kind": "flood"\|"fire"\|"siege"\|"boom", "severity": 0..1, "recency": 0..1 }` | dressing for a one-off event. `recency` 0 = happening now, 1 = a lifetime ago |
 | `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town" |
@@ -3151,6 +3151,97 @@ field.
 Add `"precinct"` to every `scatter.forest@0`'s `avoidTags` when a document uses
 one, so the woods stop at the fence rather than growing through the apron.
 
+### `precinct.farm@0`
+
+One node is **one holding**: a farmyard with a house and its outbuildings, and
+the fields that belong to it. Reach for it whenever the prompt says farm,
+farming, agricultural, croft, homestead, smallholding, or describes a village
+that eats. A prompt that names farming and gets no holding has no fields at
+all — a `farmhouse` in the archetype mix is a building, not agriculture.
+
+A holding needs a **region envelope** (`{"shape": "region", "size": [x, z]}`,
+floor 40 × 40; 80 × 80 upward reads as a real farm) and **gentle ground** —
+fields are seated only where the ground is already within 3 blocks of level, and
+a holding dropped on a mountainside gets a yard and very few fields, with a
+warning saying so. Put it on a valley floor or a plain, next to the town, with
+an `adjacent_to` and a `distance` range as two separate constraints.
+
+Do **not** give a farm `terrain_conform: "flatten"`. A holding levels its own
+yard and each of its fields separately; a flattened envelope is a table with
+crops on it. `"drape"` is the honest thing to write — it says "leave my ground
+alone", which is what the holding does anyway.
+
+| param | type | default | meaning |
+| --- | --- | --- | --- |
+| `parcels` | integer 1–24 | `4` | Fields to seat. You get that many or a warning naming how many the ground allowed. |
+| `parcelSize` | integer 10–28 | `16` | Target side of a field before jitter. Below 10 the rows have no rhythm; above 28 one field eats a small envelope. |
+| `crops` | array of `wheat`, `carrots`, `potatoes`, `beetroots`, `pumpkin`, `berries`, `pasture` | the climate's list | The vocabulary this holding draws from. One crop to a field, always. |
+| `farmstead` | `"auto"`, `"none"`, or an array of archetype ids | `"auto"` | `"none"` is fields with no yard — how you write outfields for a town that already has its farmhouse. |
+| `edge` | `"fence"`, `"wall"`, `"none"` | `"fence"` | `"wall"` is a dry-stone course for upland and Mediterranean holdings; `"none"` is open-field. |
+| `fallow` | 0..1 | `0` | Share of fields left unsown and rested. `intent.decline` drives this for you; write it only to override. |
+
+What you get, and the numbers behind it, because they decide what a small
+envelope can hold:
+
+- **The yard** is square, a **third of the envelope's shorter side** clamped
+  into 16–24 — so a 40 × 40 croft gets a 16-square yard and anything 72 or wider
+  gets the full 24. It is the one part of a holding that is levelled, and it is
+  surfaced as work ground: `dirt_path` in the middle, `coarse_dirt` at the rim,
+  never grass and never snow.
+- **The farmstead** is drawn from the fields that were actually **seated**, not
+  from the ones you asked for: 1–2 fields is a `farmhouse`, 3–5 adds a `barn`,
+  6–9 adds one of `granary` / `stable` / `chicken_coop`, and 10+ adds one of
+  `silo` / `windmill` / `dovecote` / `apiary`. They pack three sides of the yard
+  with their doors facing in, the gate side left open, and a building that does
+  not fit on any of the three is simply not built — a farmhouse and a barn are
+  11 × 9 each, so a 16-square yard holds two and a 24-square yard holds the lot.
+  If you want more fields *and* the big outbuildings, give the holding a bigger
+  envelope, not a bigger `parcels`.
+- **Each field** gets rows on one axis, `dirt_path` baulks every seven rows and
+  a `dirt_path` headland at each end, a grass edge course with a fence on it,
+  and **exactly one gate** facing the yard. Two fields that touch share one
+  boundary and one fence. A lane cut through the holding wins: the rows stop at
+  it and the fence closes across the gap.
+- **Crops are emitted mature and dry**, and no field is ever left as bare tilled
+  soil — that would un-till itself in front of the player. A rested field is
+  `coarse_dirt` and grass with its baulks kept.
+- **At most three props** per holding — a scarecrow on a baulk, hay bales in a
+  rested or grazed field, a cart on the headland by the yard. Each treads its
+  own ground bare, so do not also scatter `prop.place@0` scarecrows at a farm.
+
+`pasture` is in the crop list and is not a crop: it is a grazed field — grass,
+tufts and a stack of hay in the corner. It is in the table on purpose, because a
+grazing field beside a wheat field is what makes a holding read as a holding.
+
+Join it to the town with an ordinary `road.network@0` `lanes` node anchored on
+the holding's id: the holding publishes a `road_stub` at its gate, and the
+compile prints `LOAM-I504` naming the anchor to write.
+
+**Two or three small holdings around a village read far better than one big
+one**, and it is the cheapest way to make a settlement look like it eats.
+
+```json
+{
+  "id": "east_farm",
+  "kind": "generator",
+  "generator": "precinct.farm@0",
+  "label": "the holding east of the village, wheat and roots",
+  "envelope": { "shape": "region", "size": [96, 80] },
+  "params": { "parcels": 6, "parcelSize": 18, "crops": ["wheat", "potatoes"] },
+  "constraints": [
+    { "adjacent_to": "village" },
+    { "distance": "village", "min": 8, "max": 40 },
+    { "terrain_conform": "drape" }
+  ],
+  "ports": { "gate": { "type": "road_stub", "face": "any", "tags": ["primary"] } },
+  "tags": ["farm", "rural"]
+}
+```
+
+Fields clear their own ground, so a `scatter.forest@0` does not need a new
+`avoidTags` entry for a holding — the wood stops four columns short of the
+fields by itself.
+
 
 ---
 
@@ -3321,3 +3412,6 @@ far shore"*.
   port, a `terrain_conform`, and one `road.network@0` anchored on the plaza and
   `#tag:house`. If it does not: no structure nodes at all.
 - No absolute coordinates on any building — constraints only.
+- If the prompt names farming — a farm, a croft, an agricultural village, a
+  place that feeds a town — write at least one `precinct.farm@0` holding with a
+  region envelope on gentle ground. Nothing else in the language tills a field.
