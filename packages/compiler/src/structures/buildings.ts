@@ -188,16 +188,75 @@ export function buildBuildings(
   // nothing about what is emitted or in what order.
   const results = jobs.map((job) => {
     const door = doorOf(job.ports);
-    return generateBuilding({
-      size: job.size,
-      params: job.params,
-      seed: job.seed,
-      foundationDepth: skirtDepth(plan, job.placement),
-      ...(door === null ? {} : { door }),
-      ...(job.materials === undefined ? {} : { materials: job.materials }),
-      ...(job.theme === undefined ? {} : { theme: job.theme }),
-      ...(job.style === undefined ? {} : { style: job.style }),
-    });
+    const build = (params: BuildingParams): ReturnType<typeof generateBuilding> =>
+      generateBuilding({
+        size: job.size,
+        params,
+        seed: job.seed,
+        foundationDepth: skirtDepth(plan, job.placement),
+        ...(door === null ? {} : { door }),
+        ...(job.materials === undefined ? {} : { materials: job.materials }),
+        ...(job.theme === undefined ? {} : { theme: job.theme }),
+        ...(job.style === undefined ? {} : { style: job.style }),
+      });
+    const result = build(job.params);
+    const decay = result.meta.decay;
+    const asked = typeof job.params.decay === "number" && job.params.decay > 0;
+    if (decay === undefined) {
+      // A shell that never reached the decay engine at all. The two shapes that
+      // do this are the ones RUINS-PLAN names: a **watchtower**, whose stepped
+      // plan is emitted by its own generator and never enters the fit-out
+      // chain, and a **skyscraper**, whose frame is the high-rise emitter's and
+      // whose `mode: "facade"` is WP-6. Both are `LOAM-W511`.
+      if (asked) {
+        diagnostics.push(
+          warning(
+            "DECAY_MODE_FALLBACK",
+            job.nodePath,
+            `"${job.params.archetype ?? "building"}" has no shell decay mode — it is built by its own ` +
+              "generator rather than the shell fit-out — so the decay was not applied at all",
+            "leave this node intact, or use an archetype the shell grammar builds if you want it ruined",
+          ),
+        );
+      }
+      return result;
+    }
+    // **The refusal, enacted** (RUINS-PLAN §5.7, `LOAM-W510`). The engine can
+    // only *report* a refusal — a fit-out cannot un-build the shell it has
+    // already written over — so this is the caller that acts on it: the same
+    // job is generated again with the decay taken off, and the **intact** shell
+    // is what ships. Refused whole rather than shipped broken.
+    if (decay.refused) {
+      const { decay: _asked, ...intact } = job.params;
+      diagnostics.push(
+        warning(
+          "RUIN_LOT_REFUSED",
+          job.nodePath,
+          `the decay of "${job.params.archetype ?? "building"}" left an interior cell unreachable ` +
+            "from its door, so the intact shell was built instead",
+          "nothing to change in the document — a refusal rate above a few percent is a finding about the decay operators",
+        ),
+      );
+      return build(intact as BuildingParams);
+    }
+    // **The mode fallback** (`LOAM-W511`). A footprint that is not the plain
+    // rect (a watchtower's stepped plan) or a wall of fewer than three courses
+    // takes the sweep and the rubble and no crumble; a high-rise frame takes
+    // nothing at all until WP-6 builds `mode: "facade"`. Said out loud, because
+    // an author who asked for a ruin and got a tidy building deserves the
+    // sentence rather than the silence.
+    if (decay.mode === "none") {
+      diagnostics.push(
+        warning(
+          "DECAY_MODE_FALLBACK",
+          job.nodePath,
+          `"${job.params.archetype ?? "building"}" cannot take the shell decay mode — its footprint is ` +
+            "not a plain rect, or its wall is under three courses — so it was swept and heaped but not crumbled",
+          "use an archetype with a plain rectangular footprint and a taller wall if you want a crumble line on this node",
+        ),
+      );
+    }
+    return result;
   });
 
   // The grammar's decorations (eaves, shutters, window boxes, the porch lamp)

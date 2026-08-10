@@ -1043,33 +1043,165 @@ export function derivedMaterials(ctx: FitOutContext): DecayMaterials {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* WP-3: the onset curve and the intensity bands                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Below this, `decline` is **wear, not ruin** (RUINS-PLAN §4.1).
+ *
+ * `0.3² = 0.09` — nine percent of a kept-up town's houses fallen in. A single
+ * ruined house on an otherwise maintained street does not read as decline, it
+ * reads as a bug, so the curve gets a step: at the onset a place stops being
+ * tired and starts being abandoned.
+ */
+export const RUIN_ONSET = 0.35;
+
+/**
+ * The share of a district's infill lots that roll into ruined shells.
+ *
+ * Squared, sharing the curve `decay.coverage` already uses — one dial, one
+ * curve, ground decay and building ruin rising together — plus the onset.
+ * **There is no survivor cap** (ratified by Kai, 2026-08-09, overriding the
+ * draft's `RUIN_SHARE_MAX = 0.92`): a prompt that says "nothing left standing"
+ * gets literal truth, and `decline = 1.0` is total desolation.
+ */
+export function ruinShare(decline: number): number {
+  if (!Number.isFinite(decline) || decline < RUIN_ONSET) return 0;
+  return Math.min(1, decline * decline);
+}
+
+/** How far gone one ruin is (RUINS-PLAN §6). The share says *how many*. */
+export type DecayBand = "light" | "heavy" | "total";
+
+/** One row of §6's band table. */
+export interface DecayBandRow {
+  /** The `intensity` this band carries, and the value `params.decay` takes. */
+  readonly intensity: number;
+  /** The spread of surviving wall heights above the crumble floor. */
+  readonly collapseSpread: number;
+  readonly rubble: number;
+  readonly overgrowth: number;
+  /** `total` stands the corners: a stump at each quoin is what is left. */
+  readonly cornersStand: boolean;
+  /** The crumble floor, which `light` states relative to the eave plate. */
+  readonly collapseFloor: (wallTop: number) => number;
+}
+
+/**
+ * **RUINS-PLAN §6's band table — the only place these numbers appear.**
+ *
+ * The share (§4.1) says how many lots ruin; the band says how far gone each
+ * one is, and without it a district at 0.5 and one at 0.95 differ only in
+ * count, which reads as "more of the same houses" rather than as a deeper
+ * ruin. An operator reads a {@link DecayProfile}; this table is the one
+ * function from `decline` to a profile, so re-tuning after a walk is one table.
+ *
+ * | band | `decline` | the read |
+ * |---|---|---|
+ * | `light` | 0.35–0.55 | roof gone in places, walls up. *Derelict.* |
+ * | `heavy` | 0.55–0.80 | roofless, walls at head height, floor heaped. *Ruined.* |
+ * | `total` | 0.80–1.00 | one to three courses, corner stumps, dense green. *Archaeology.* |
+ *
+ * §6's roof column is **not** a fourth dial: {@link breakRoof} already lays a
+ * fragment on two heads in three, and only on a head that survived to the
+ * plate — so `light`'s high crumble line keeps the plate course and its
+ * fragments, and `heavy`/`total` take both away by taking the wall away. The
+ * roof read is a consequence of the crumble floor rather than a knob beside it,
+ * which is what keeps one mechanism for one invariant.
+ */
+export const DECAY_BANDS: Readonly<Record<DecayBand, DecayBandRow>> = Object.freeze({
+  light: {
+    intensity: 0.35,
+    collapseSpread: 2,
+    rubble: 0.15,
+    overgrowth: 0.25,
+    cornersStand: false,
+    // `wallTop − 2`: the wall is up, the head is ragged, the plate is mostly
+    // there. Floored at 1 for a three-course shell, which is the shortest
+    // shell `decayPlan` accepts at all.
+    collapseFloor: (wallTop: number) => Math.max(1, wallTop - 2),
+  },
+  heavy: {
+    intensity: 0.6,
+    collapseSpread: 3,
+    rubble: 0.28,
+    overgrowth: 0.45,
+    cornersStand: false,
+    collapseFloor: () => 3,
+  },
+  total: {
+    intensity: 0.85,
+    collapseSpread: 3,
+    rubble: 0.4,
+    overgrowth: 0.7,
+    cornersStand: true,
+    collapseFloor: () => 1,
+  },
+});
+
+/** §6's band boundaries on `decline`, low to high. */
+const BAND_ORDER: readonly DecayBand[] = Object.freeze(["light", "heavy", "total"] as const);
+
+/**
+ * The band a lot takes, from the district's `decline` and one positional draw.
+ *
+ * `jitter` is a 0..1 positional float (channel 43 in the district's roll), and
+ * it moves **one lot in six** up or down one band, so a street is not uniform:
+ * a derelict house among ruins and an archaeological corner in a merely
+ * derelict quarter are what stop the band from reading as a setting.
+ */
+export function bandForDecline(decline: number, jitter: number): DecayBand {
+  const base = decline < 0.55 ? 0 : decline < 0.8 ? 1 : 2;
+  // A twelfth each way: a sixth of the lots move, and which way is the draw's.
+  const step = jitter < 1 / 12 ? -1 : jitter >= 11 / 12 ? 1 : 0;
+  const k = Math.min(BAND_ORDER.length - 1, Math.max(0, base + step));
+  return BAND_ORDER[k] as DecayBand;
+}
+
+/**
+ * The band an `intensity` belongs to — the seam the per-lot roll travels on.
+ *
+ * A lot's band reaches the grammar as `params.decay`, a single 0..1 scalar,
+ * because that is the authoring surface §4.3 already defines and a second
+ * per-lot channel would be a second way to say the same thing. The boundaries
+ * are the midpoints between the three bands' own intensities, so a band's value
+ * always round-trips to itself and an author who writes `0.8` gets `total`.
+ */
+export function bandForIntensity(intensity: number): DecayBand {
+  if (intensity < (DECAY_BANDS.light.intensity + DECAY_BANDS.heavy.intensity) / 2) return "light";
+  if (intensity < (DECAY_BANDS.heavy.intensity + DECAY_BANDS.total.intensity) / 2) return "heavy";
+  return "total";
+}
+
 /**
  * **A decay profile for any shell**, from one 0..1 dial.
  *
  * The landing place of `params.decay` on a `building.grammar@0` node — "a
  * broken watchtower on a ridge", one named thing ruined without a district —
- * and the shape WP-3's per-lot roll will hand its band to.
+ * and the shape the district's per-lot roll hands its band to.
  *
- * **The dials are derived here only until WP-3 lands the band table.**
- * RUINS-PLAN §6 is explicit that the bands are the *only* place those numbers
- * are meant to appear, so this derivation is deliberately a straight line
- * through §6's three rows rather than a second set of tuned constants: at
- * `intensity` 0.35 it lands near `light`, at 0.6 near `heavy`, at 0.85 near
- * `total`. WP-3 replaces the body, not the signature.
+ * **WP-3 put §6's band table inside this function and took the straight-line
+ * placeholder out.** There is no second set of tuned constants: every dial
+ * below is read from {@link DECAY_BANDS}, which is the one table a walk
+ * re-tunes.
  */
 export function decayProfileFor(ctx: FitOutContext, intensity: number): DecayProfile {
   const i = Math.min(1, Math.max(0, intensity));
-  const collapse = collapseForShell(ctx.archetype, ctx.size);
-  // Deeper decay means a lower crumble line and a wider spread of heights.
-  const floor = Math.max(1, Math.round(ctx.wallTop - 2 - i * (ctx.wallTop - 3)));
+  const band = DECAY_BANDS[bandForIntensity(i)];
+  // `total` stands the corners (§6), which is `structured` in the collapse
+  // vocabulary — but never at the cost of a tower's lean, because a tower that
+  // fell over did not weather away and a stump at each corner of a round-ish
+  // tower is not a read anyone asked for.
+  const shape = collapseForShell(ctx.archetype, ctx.size);
+  const collapse = band.cornersStand && shape === "even" ? "structured" : shape;
   return {
     intensity: i,
     collapse,
-    collapseFloor: floor,
-    collapseSpread: i < 0.55 ? 2 : 3,
-    // §6's rubble and overgrowth columns, as the line through them.
-    overgrowth: Math.round(i * 0.8 * 100) / 100,
-    rubble: Math.round((0.06 + i * 0.4) * 100) / 100,
+    collapseFloor: Math.max(1, Math.min(band.collapseFloor(ctx.wallTop), ctx.wallTop)),
+    collapseSpread: band.collapseSpread,
+    overgrowth: band.overgrowth,
+    rubble: band.rubble,
     quench: true,
     timberByRemoval: true,
     materials: derivedMaterials(ctx),
@@ -1114,6 +1246,17 @@ export interface DecayPassReport {
   settled: number;
   /** True when an open interior cell is still unreachable from the door. */
   refused: boolean;
+  /**
+   * Which mode the shell could actually take (RUINS-PLAN §9, `LOAM-W511`).
+   *
+   * `"shell"` is the whole engine. `"none"` is a shell {@link decayPlan}
+   * refused — a footprint that is not the plain rect, or a wall of fewer than
+   * three courses, which table 14 has always excluded because a crumble line
+   * drawn on it has nothing to take away. A `"none"` shell still takes the
+   * floor paint and the rubble; what it does not take is a crumble.
+   * `"facade"` is WP-6.
+   */
+  mode: "shell" | "facade" | "none";
 }
 
 /** What a decay pass did, and whether the lot must be refused (§5.7). */
@@ -1129,6 +1272,8 @@ export interface DecayOutcome {
    * caller must build the intact shell instead (`LOAM-W510`, WP-3).
    */
   readonly refused: boolean;
+  /** Which mode the shell took — see {@link DecayPassReport.mode}. */
+  readonly mode: "shell" | "facade" | "none";
 }
 
 /**
@@ -1184,6 +1329,7 @@ export function decayShellChecked(
     quenched,
     withdrawn: reach.withdrawn,
     refused: reach.refused,
+    mode: plan === null ? "none" : "shell",
   };
 }
 
@@ -1247,7 +1393,44 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
           // it are what the walking agent and the traversal lint start from.
           if (protectedColumn(ctx, x, z)) continue;
           const dir = supportDirection(op.block, op.props);
-          if (dir === null) continue;
+          if (dir === null) {
+            // **The stranded fitting** (WP-3). The lint's `floating.slab` and
+            // `floating.stair` rules are *geometric* rather than support-typed:
+            // a slab or a stair with air on all six sides is a floating cube
+            // whatever the support table says about it, and the first district
+            // sweep found nine of them — a shop row's awning and a warehouse's
+            // canopy left hanging in the street once the wall behind them
+            // crumbled. Those blocks have no `supportDirection`, so the clause
+            // above never saw them.
+            //
+            // Deliberately narrow: the two block families the lint polices
+            // geometrically, above the plinth (`y >= 2`, so nothing standing on
+            // ground the op list cannot see is ever swept), and only when *this
+            // shell* holds nothing beside them.
+            if (!FLOATABLE.test(op.block) || y < 2) continue;
+            const braced = [
+              [1, 0, 0],
+              [-1, 0, 0],
+              [0, 0, 1],
+              [0, 0, -1],
+              [0, -1, 0],
+              [0, 1, 0],
+            ].some(([dx, dy, dz]) => {
+              const near = ctx.blockAt(x + (dx as number), y + (dy as number), z + (dz as number));
+              // A neighbour that is itself a slab or a stair does not count.
+              // A shop row's awning is two stairs side by side: each braces the
+              // other in the shell's own op list, and the world then drops one
+              // of them where it reaches into a neighbour's claim — leaving the
+              // survivor with air on all six sides, which is precisely the
+              // finding. Bracing has to come from something that is actually
+              // holding the fitting up.
+              return near !== undefined && near.block !== "air" && !FLOATABLE.test(near.block);
+            });
+            if (braced) continue;
+            ctx.put(x, y, z, "air");
+            deleted++;
+            continue;
+          }
           let held: boolean;
           if (dir === "below") held = y === 1 ? true : solid(x, y - 1, z);
           else if (dir === "above") held = solid(x, y + 1, z);
@@ -1279,3 +1462,10 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
  * ceiling that exists so a bug can never spin, not a tuning knob.
  */
 const MAX_SETTLE_PASSES = 32;
+
+/**
+ * The two families the physics lint polices **geometrically** rather than by
+ * support type: a slab or a stair with air on all six sides is a floating cube.
+ * See the stranded-fitting clause in {@link settleDecayedFixtures}.
+ */
+const FLOATABLE = /(_slab|_stairs)$/;

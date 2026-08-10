@@ -1548,7 +1548,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
   const decayReport: DecayPassReport | undefined =
     params.decay === undefined || params.decay <= 0
       ? undefined
-      : { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false };
+      : { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false, mode: "none" };
   const furnitureCount = hasInterior
     ? furnish({
         put,

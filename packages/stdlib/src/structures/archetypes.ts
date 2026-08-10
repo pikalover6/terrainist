@@ -868,6 +868,7 @@ export function furnish(r: FurnishRequest): number {
       r.decayReport.withdrawn = outcome.withdrawn;
       r.decayReport.refused = outcome.refused;
       r.decayReport.settled = settled;
+      r.decayReport.mode = outcome.mode;
     }
     n += c.n;
   }

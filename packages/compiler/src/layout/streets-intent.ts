@@ -15,6 +15,7 @@ import {
   type DistrictFabric,
   type DistrictGroundPolicy,
 } from "@terrainist/spec";
+import { ruinShare } from "@terrainist/stdlib";
 
 import { registerFanOut } from "../intent/fanout.js";
 import { registerCityFanOut } from "./city-intent.js";
@@ -28,6 +29,7 @@ export const LAYOUT_ROWS = {
   storeyMultiplier: "layout.storeyMultiplier",
   courtyardShare: "layout.courtyardShare",
   groundPolicy: "layout.groundPolicy",
+  ruinShare: "decay.ruinShare",
 } as const;
 
 /**
@@ -135,6 +137,27 @@ export function registerLayoutFanOut(): void {
       const wealth = intent.intent.wealth;
       if (wealth === undefined) return ctx.today;
       return ctx.today * (1 + (wealth - 0.5) * 0.4);
+    },
+  });
+
+  /* --- decline → the share of lots built as ruins ------------------------- */
+  registerFanOut<number>({
+    id: LAYOUT_ROWS.ruinShare,
+    reads: ["decline"],
+    status: "today",
+    drives: "the share of a district's infill lots built as ruins (layout/district.ts)",
+    resolve(intent, ctx) {
+      const decline = intent.intent.decline;
+      if (decline === undefined) return ctx.today;
+      // The onset curve (RUINS-PLAN §4.1), shared with `decay.coverage`'s
+      // square so that ground decay and building ruin rise together — one dial,
+      // one curve — with the step at `RUIN_ONSET` that keeps a merely tired
+      // town from getting one fallen-in house on an otherwise kept street.
+      //
+      // `today` is 0 and a `decline` below the onset returns exactly 0, which
+      // is the reach law: no `decline`, no ruins, and a modest `decline` is
+      // still wear rather than ruin.
+      return Math.max(ctx.today, ruinShare(decline));
     },
   });
 

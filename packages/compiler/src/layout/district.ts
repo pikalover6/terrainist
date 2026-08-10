@@ -40,8 +40,11 @@
  */
 
 import {
+  DECAY_BANDS,
   HIGHRISE_MAX_WIDTH,
   HIGHRISE_MIN_WIDTH,
+  RUIN_ONSET,
+  bandForDecline,
   TERRACE_MIN_FRONTAGE,
   isHighriseArchetype,
   nodeSeed,
@@ -50,6 +53,7 @@ import {
   positionInt,
   streamSeed,
   terraceMinDepth,
+  type DecayBand,
   type HeightField,
   type Seed256,
   type TerraceBay,
@@ -1178,6 +1182,16 @@ export function layDistrict(
     built.push(terrace.built);
   }
 
+  // --- the ruin roll (RUINS-PLAN-v0 WP-3, §4.2) ----------------------------
+  // `decay.ruinShare` is total and reads `today = 0`, so a district with no
+  // `decline` — and every district with a `decline` below `RUIN_ONSET` — rolls
+  // nothing and compiles byte-identically to before this row existed.
+  const share = fanOut<number>(LAYOUT_ROWS.ruinShare, intent, { nodePath, today: 0 });
+  const declineOf = intent.intent.decline ?? 0;
+  /** Lots rolled / ruined, and the band histogram, for `LOAM-I512`. */
+  let rolled = 0;
+  let ruined = 0;
+  const bandCounts = new Map<DecayBand, number>();
   let infilled = 0;
   for (const lot of lots) {
     if (claimed.has(lot.id)) continue;
@@ -1196,6 +1210,22 @@ export function layDistrict(
       continue;
     }
     infilled++;
+    rolled++;
+    // The per-lot roll. Positional, clustered, and keyed exactly the way
+    // `infillLot`'s own draws are — on the lot's min corner, never on a
+    // counter — so adding a landmark somewhere else in the district leaves the
+    // same lots ruined and the same lots standing.
+    const decay = ruinDecayOf(
+      lot,
+      blocks[lot.block] as Block | undefined,
+      infillStream,
+      share,
+      declineOf,
+    );
+    if (decay !== null) {
+      ruined++;
+      bandCounts.set(decay.band, (bandCounts.get(decay.band) ?? 0) + 1);
+    }
     built.push({
       nodePath: `${nodePath}.${filled.id}`,
       id: filled.id,
@@ -1203,11 +1233,33 @@ export function layDistrict(
       face: lot.face,
       size: filled.size,
       ports: INFILL_PORTS,
-      params: filled.params,
+      params: decay === null ? filled.params : { ...filled.params, decay: decay.intensity },
       tags: filled.tags,
       seed: nodeSeed(input.worldSeed, `${nodePath}.${filled.id}`, ""),
       frontPort: undefined,
     });
+  }
+
+  // --- the ruins record (RUINS-PLAN §9, `LOAM-I512`) ------------------------
+  // Never optional, and never suppressed by a zero: "the district ruined 0 of
+  // 84 lots because `decline` never reached the row" is exactly the sentence
+  // DESIGN's second failure mode hides. It is only silent when the district has
+  // no opinion at all — no `decline`, no row, nothing to say.
+  if (share > 0 || declineOf > 0) {
+    const histogram = ["light", "heavy", "total"]
+      .map((band) => `${band} ${bandCounts.get(band as DecayBand) ?? 0}`)
+      .join(", ");
+    diagnostics.push(
+      note(
+        "DISTRICT_RUINS",
+        nodePath,
+        `decline ${declineOf.toFixed(2)} gives a ruin share of ${share.toFixed(2)}: ` +
+          `${ruined} of ${rolled} infill lots roll into ruined shells (${histogram})`,
+        share === 0
+          ? `decline is below the ruin onset of ${RUIN_ONSET} — below it decline is wear, not ruin; raise it to ruin buildings`
+          : "raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay",
+      ),
+    );
   }
 
   // --- the courtyard records ------------------------------------------------
@@ -3049,6 +3101,81 @@ function infillLot(
     params: { archetype, floors, floorHeight: FLOOR_HEIGHT },
     tags: ["district", "infill", archetype, ...(lot.corner ? ["corner"] : [])],
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the ruin roll (RUINS-PLAN-v0 §4.2)                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Channels 41–49 are **reserved for the ruins feature**.
+ *
+ * Reusing an existing channel would correlate ruin with something else — `2` is
+ * the archetype draw, and the prominence field owns others — which is a bug you
+ * would only ever find by noticing that every tavern in the world is intact.
+ */
+const RUIN_ROLL_CHANNEL = 41;
+/** Keyed on the **block's** min corner, not the lot's: whole blocks go. */
+const RUIN_CLUSTER_CHANNEL = 42;
+/** The band jitter, so a street is not uniformly derelict (§6). */
+const RUIN_BAND_CHANNEL = 43;
+
+/**
+ * How far a block may lean away from the district's share.
+ *
+ * Independent per-lot rolls give salt and pepper; a real ruined city has whole
+ * blocks gone and pockets standing. One extra positional draw at block scale
+ * buys that, deterministically, for nothing — and it is clamped, so a block can
+ * lean but never invert.
+ */
+const RUIN_CLUSTER_AMPLITUDE = 0.5;
+
+/** What the roll decided for one lot: its band, and the dial the grammar takes. */
+interface RuinRoll {
+  readonly band: DecayBand;
+  readonly intensity: number;
+}
+
+/**
+ * Roll one infill lot into a ruin, or `null` to leave it standing.
+ *
+ * Every draw is keyed on a min corner and nothing else — no counter, no pass
+ * order, no wall clock — which is `infillLot`'s own discipline and is what
+ * makes the roll survive a landmark being added elsewhere in the district.
+ *
+ * The band travels to the grammar as `params.decay`, the same 0..1 scalar
+ * §4.3 gives an author for ruining one named building. One authoring surface,
+ * one seam, and the band table on the far side of it.
+ */
+function ruinDecayOf(
+  lot: Lot,
+  block: Block | undefined,
+  stream: Seed256,
+  share: number,
+  decline: number,
+): RuinRoll | null {
+  if (share <= 0) return null;
+  const cluster =
+    block === undefined
+      ? 0.5
+      : positionFloat(stream, block.rect.x0, RUIN_CLUSTER_CHANNEL, block.rect.z0);
+  // The lean, windowed so it cannot fight the ends of the dial. A raw
+  // `clamp01(share + A · (cluster − 0.5))` leaves a low-cluster block standing
+  // at `decline: 1.0` — five of sixty-four shells intact in a "dead city",
+  // which is exactly the literal truth Kai's no-survivor-cap ruling asked for
+  // and did not get. `4 · share · (1 − share)` is 1 in the middle of the dial,
+  // where clustering is the whole read, and 0 at both ends, where the dial has
+  // already said what it wants: nothing ruined, or nothing standing.
+  const window = 4 * share * (1 - share);
+  const local = Math.min(
+    1,
+    Math.max(0, share + RUIN_CLUSTER_AMPLITUDE * window * (cluster - 0.5)),
+  );
+  const roll = positionFloat(stream, lot.rect.x0, RUIN_ROLL_CHANNEL, lot.rect.z0);
+  if (roll >= local) return null;
+  const jitter = positionFloat(stream, lot.rect.x0, RUIN_BAND_CHANNEL, lot.rect.z0);
+  const band = bandForDecline(decline, jitter);
+  return { band, intensity: DECAY_BANDS[band].intensity };
 }
 
 /**
