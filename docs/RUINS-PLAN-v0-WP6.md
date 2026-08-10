@@ -10,6 +10,13 @@
 > strictness must not over-constrain the aesthetic; rough walking is in
 > character.
 >
+> **6e rulings (Kai, 2026-08-10):** rule 17 is refined — a deliberately
+> elected shell trunk, verifiable from the plan, is not an accidental
+> obstruction; interior reachability stays enforced; `shellTrees` ships ON
+> at heavy+total. Glazing: the crumble keeps its glass; **the skin may
+> substitute a pane with leaves directly** (plug openings become real via
+> substitution, not breakage).
+>
 > **NORMATIVE ADDENDUM to `docs/RUINS-PLAN-v0.md`, drafted 2026-08-10.**
 > It adds a work package; it does not edit the ratified base plan, and every
 > ruling in that plan — the reach law (§2), the ruin law (§3), the roll (§4),
