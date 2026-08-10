@@ -285,17 +285,16 @@ interface GroundStates {
   readonly soft: ReadonlySet<number>;
 }
 
-function resolveStates(palette: Palette, stack: PrismarineStack): GroundStates {
-  const named = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
-  const symbol = (s: string, fallback: string): number =>
-    palette.has(s) ? palette.state(s) : named(fallback);
-  const gate = (facing: string): number =>
-    stack.blockStateOf("minecraft:oak_fence_gate", {
-      facing,
-      in_wall: "false",
-      open: "false",
-      powered: "false",
-    }) ?? named("minecraft:oak_fence_gate");
+/**
+ * The soil family — surface states a treatment is willing to paint over.
+ *
+ * Exported because it is now read by two passes rather than one: this pass
+ * decides what it may dress, and the gentle-ground scan of `structures/farm.ts`
+ * decides what a field may be seated on (`docs/FARM-PLAN-v0.md` §5.1 names this
+ * very set). Two hand-kept copies of "what counts as soil" would drift, and the
+ * drift would look like a farm refusing perfectly good ground.
+ */
+export function softSurfaceStates(palette: Palette, stack: PrismarineStack): ReadonlySet<number> {
   const soft = new Set<number>();
   for (const name of [
     "minecraft:grass_block",
@@ -312,6 +311,21 @@ function resolveStates(palette: Palette, stack: PrismarineStack): GroundStates {
   for (const s of ["ground.surface", "ground.coarse_dirt", "ground.podzol", "ground.mud"]) {
     if (palette.has(s)) soft.add(palette.state(s));
   }
+  return soft;
+}
+
+function resolveStates(palette: Palette, stack: PrismarineStack): GroundStates {
+  const named = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
+  const symbol = (s: string, fallback: string): number =>
+    palette.has(s) ? palette.state(s) : named(fallback);
+  const gate = (facing: string): number =>
+    stack.blockStateOf("minecraft:oak_fence_gate", {
+      facing,
+      in_wall: "false",
+      open: "false",
+      powered: "false",
+    }) ?? named("minecraft:oak_fence_gate");
+  const soft = softSurfaceStates(palette, stack);
   return {
     // The ground roles first, with the pre-role symbol as the fallback, so a
     // caller that never ran `defineGroundRoles` — every unit test that dresses

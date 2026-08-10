@@ -79,7 +79,7 @@ import {
 } from "./retaining.js";
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
-import { buildGrounds, type GroundPassResult } from "./grounds.js";
+import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./grounds.js";
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
@@ -511,6 +511,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         // exception, and the terrace grammar draws its own bays when it gets
         // nothing. The two corner flags travel with them.
         ...(bays === undefined ? {} : { bays }),
+        // `params.decay` — RUINS-PLAN-v0 §4.3, the author's way to ruin one
+        // named building. Read straight through: the grammar clamps it, and
+        // `LOAM-T227` is what tells an author who wrote 1.5.
+        ...(typeof params["decay"] === "number" ? { decay: params["decay"] } : {}),
         ...(params["cornerStart"] === true ? { cornerStart: true } : {}),
         ...(params["cornerEnd"] === true ? { cornerEnd: true } : {}),
         archetype:
@@ -969,8 +973,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // built things have run; and the grounds pass must not dress a field, so it
   // must not run before this one.
   //
-  // WP-1 emits nothing: the pass exists, it reads its params, and it reports
-  // one row per holding.
+  // WP-2 still emits no blocks: the pass seats each holding's yard, packs its
+  // fields on gentle ground, and declares them as `farm.parcel` (rank 125) —
+  // so the fields are level and their edges have transitions, and nothing is
+  // sown on them until WP-3.
   const farmJobs: FarmJob[] = [];
   for (const placement of placements) {
     const node = byId.get(placement.nodePath);
@@ -985,7 +991,23 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
   }
   const farms: FarmPassResult | undefined =
-    farmJobs.length === 0 ? undefined : buildFarms({ jobs: farmJobs });
+    farmJobs.length === 0
+      ? undefined
+      : buildFarms({
+          jobs: farmJobs,
+          ground: input.ground,
+          plan: input.plan,
+          // One copy of "what counts as soil", shared with the pass that dresses
+          // it: two hand-kept copies would drift, and the drift would look like
+          // a farm refusing perfectly good ground.
+          soil: softSurfaceStates(input.palette, input.stack),
+          ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+          // §4.1's second rung: with no road in the region, the gate faces the
+          // nearest thing anybody built.
+          buildings: placements
+            .filter((p) => buildingPaths.has(p.nodePath))
+            .map((p) => p.footprint),
+        });
   if (farms !== undefined) diagnostics.push(...farms.diagnostics);
 
   // --- props ---------------------------------------------------------------

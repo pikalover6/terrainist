@@ -52,7 +52,8 @@ describe("INTENT_RANK", () => {
     // members so an entry for a class that is not in the union also fails.
     const ranked = Object.keys(INTENT_RANK).sort();
     expect(ranked).toEqual([...GROUND_SOURCE_CLASSES].sort());
-    expect(GROUND_SOURCE_CLASSES).toHaveLength(17);
+    // 18 since F17 inserted `farm.parcel` at 125 (`docs/FARM-PLAN-v0.md` §5.3).
+    expect(GROUND_SOURCE_CLASSES).toHaveLength(18);
     for (const cls of GROUND_SOURCE_CLASSES) {
       expect(Number.isInteger(INTENT_RANK[cls])).toBe(true);
       expect(GROUND_TIERS[cls]).toMatch(/^[ABCDE]$/);

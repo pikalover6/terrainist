@@ -267,6 +267,37 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   FARM_CROP_UNKNOWN: "LOAM-W502",
 
+  // --- F19: the ruins treatment (`docs/RUINS-PLAN-v0.md` §9) ---------------
+  /**
+   * `building.grammar@0` — `params.decay` is not a number in 0..1.
+   *
+   * The one authoring surface for ruining a **named** building. An error rather
+   * than a clamp-and-carry-on because "decay": 80 is an author who meant 0.8 and
+   * would far rather be told than handed an intact building.
+   */
+  DECAY_PARAM: "LOAM-T227",
+  /**
+   * A holding seated its yard and **not one field**.
+   *
+   * Names the relief measured against `FIELD_MAX_RELIEF`, because the fix is
+   * almost always the ground rather than the params: a holding is fields on
+   * ground that is already close to level, and a mountainside has none.
+   */
+  FARM_NO_GROUND: "LOAM-W500",
+  /**
+   * Fewer fields than `params.parcels` — the crop-circle rule applied to
+   * fields: a count you asked for is delivered or diagnosed, never silently
+   * rounded. Names requested, delivered, and the dominant refusal reason.
+   */
+  FARM_PARCELS_SHORT: "LOAM-W501",
+  /**
+   * No seatable yard anywhere in the envelope, so the holding places nothing.
+   *
+   * A refusal rather than a farmstead floating over its fields, and a warning
+   * rather than a silence: the report row says so too.
+   */
+  FARM_REFUSED: "LOAM-W503",
+
   // --- Phase 0 contract 2: authored programs -------------------------------
   // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
   // quoted in the design doc and one printed by the compiler are the same

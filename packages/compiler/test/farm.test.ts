@@ -1,6 +1,12 @@
 /**
  * `precinct.farm@0` — WP-1 (`docs/FARM-PLAN-v0.md` §13).
  *
+ * Amended at WP-2 in exactly two places: the holding now seats fields, so the
+ * counts WP-2 fills are no longer zero. Everything else here is untouched, and
+ * deliberately: WP-1's claim — the node exists, is seated as ground, lays no
+ * pad, and emits no block — is WP-2's claim too. WP-2's own surface is
+ * `farm-plan.test.ts`.
+ *
  * WP-1's whole claim is small and worth pinning exactly: the node exists, the
  * solver seats it on a footprint, its params are read and defaulted in one
  * place, every holding gets a report row — and **not one block is emitted**.
@@ -135,15 +141,16 @@ describe("the node", () => {
 });
 
 describe("the report row", () => {
-  it("reports the holding, with every WP-2..4 count at zero", () => {
+  it("reports the holding, with every WP-3..4 count at zero", () => {
     const farms = withFarm.report.farms;
     expect(farms).toHaveLength(1);
     const row = farms?.[0];
     expect(row?.nodePath).toBe("world.east_farm");
     expect(row?.id).toBe("east_farm");
     expect(row?.parcelsRequested).toBe(6);
-    expect(row?.parcelsSeated).toBe(0);
-    expect(row?.columnsClaimed).toBe(0);
+    // WP-2 packs the fields; WP-3 sows them and WP-4 builds the yard.
+    expect(row?.parcelsSeated).toBe(6);
+    expect(row?.columnsClaimed).toBeGreaterThan(0);
     expect(row?.parcelWalls).toBe(0);
     expect(row?.crops).toEqual([]);
     expect(row?.farmstead).toEqual([]);
@@ -168,12 +175,12 @@ describe("the report row", () => {
 
   it("counts the holding in the structure stats", () => {
     expect(withFarm.report.stats.structures?.holdings).toBe(1);
-    expect(withFarm.report.stats.structures?.farmParcels).toBe(0);
-    expect(withFarm.report.stats.structures?.farmColumns).toBe(0);
+    expect(withFarm.report.stats.structures?.farmParcels).toBe(6);
+    expect(withFarm.report.stats.structures?.farmColumns).toBeGreaterThan(0);
   });
 });
 
-describe("no blocks — the WP-1 bar", () => {
+describe("no blocks — the WP-1 bar, kept at WP-2", () => {
   it("emits nothing at all", () => {
     expect(withFarm.structures?.farms?.blocks).toEqual([]);
   });

@@ -53,6 +53,7 @@ export type GroundSourceClass =
   | "road.network"
   | "sweep.run"
   | "doorstep.landing"
+  | "farm.parcel"
   | "prop.pad"
   | "verge"
   | "pad.record";
@@ -79,6 +80,7 @@ export const GROUND_SOURCE_CLASSES = Object.freeze([
   "road.network",
   "sweep.run",
   "doorstep.landing",
+  "farm.parcel",
   "prop.pad",
   "verge",
   "pad.record",
@@ -211,6 +213,15 @@ export const INTENT_RANK: Readonly<Record<GroundSourceClass, number>> = Object.f
   "road.network": 100,
   "sweep.run": 110,
   "doorstep.landing": 120,
+  // F17 (`docs/FARM-PLAN-v0.md` §5.3). A field is the ground nobody built on,
+  // tilled. It yields to every built thing and to every accommodation of a
+  // built thing, and it beats only the pads and the ramps — because a
+  // scarecrow's plinth must not re-level a field, and a road's bank must not
+  // re-grade one. Inserted, never renumbered: the table is spaced by 10 exactly
+  // so a class can arrive without moving the others, and no world before F17
+  // holds a `farm.parcel` claim, so the insertion is byte-identity-free by
+  // construction.
+  "farm.parcel": 125,
   "prop.pad": 130,
   verge: 140,
   "pad.record": 150,
@@ -240,6 +251,12 @@ export const GROUND_TIERS: Readonly<Record<GroundSourceClass, GroundTier>> = Obj
   "road.network": "C",
   "sweep.run": "C",
   "doorstep.landing": "D",
+  // Tier D by arithmetic, not by taste: rank 125 sits between two tier-D
+  // classes and the tiers must ascend with the ranks. A field is not an
+  // accommodation of a built thing in the way a doorstep is, but it declares
+  // against everything above it and nothing above declares against it, which is
+  // what the tier actually means to the resolver.
+  "farm.parcel": "D",
   "prop.pad": "D",
   verge: "D",
   "pad.record": "E",
