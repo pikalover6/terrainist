@@ -92,18 +92,25 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
   });
 
   /**
-   * Law 1, and its one live-wood exception (amended 2026-08-07, §3.7.1).
+   * Law 1 at the source, and its two enumerated exceptions (§9.4, §3.7.1).
    *
-   * The buttress roots of a `giant` are wood at and just above grade whose top
-   * face is *supposed* to be bark — a root ends in a root, and a leaf on top of
-   * one is a shrub growing out of a tree's ankle. Law 1's target property was
-   * never "no topmost log", it was "no accidental bare mast" (§9.4), so a
-   * buttress ridge is enumerated rather than capped: `capWood` skips it and
-   * this assertion asserts that the only bare tops in the catalog are
-   * buttresses, all of them at knee height and none of them free-standing.
+   * Law 1 is **suspended as a universal law**: the target property was never
+   * "no topmost log", it was "no *accidental* bare mast", and that is bought by
+   * `capWood` over live construction. Two kinds of bare top are the intent
+   * rather than the defect, and this test enumerates them and nothing else:
+   *
+   * - a **buttress** ridge of a `giant` — wood at and just above grade whose
+   *   top face is supposed to be bark; a leaf on it is a shrub growing out of a
+   *   tree's ankle. Still bounded to knee height.
+   * - a **dead** limb of an `ancient` — a stripped, sun-bleached limb ends in
+   *   the dead wood it is made of. It used to carry a single terminating leaf,
+   *   which was law 1 speaking and looked like a green sprig on a bone.
+   *
+   * Every other bare wood top in the catalog is still a failure.
    */
-  it("law 1: no wood-family part is the topmost block of its column, buttresses aside", () => {
+  it("law 1: the only bare wood tops are buttress ridges and dead limbs", () => {
     let buttressTops = 0;
+    let deadTops = 0;
     for (const { id, v, blocks } of CASES) {
       const top = new Map<string, FloraBlock>();
       for (const b of blocks) {
@@ -114,13 +121,23 @@ describe("flora WP-B: the six laws, over the naturalistic catalog", () => {
       }
       const bare = [...top.values()].filter((b) => WOOD_PARTS.has(b.part));
       for (const b of bare) {
-        expect(b.buttress, `${id} ${JSON.stringify(v)} bare wood top at ${b.dx},${b.dy},${b.dz}`).toBe(true);
-        expect(b.dy, `${id} buttress top above knee height`).toBeLessThanOrEqual(3);
-        buttressTops += 1;
+        expect(
+          b.buttress === true || b.dead === true,
+          `${id} ${JSON.stringify(v)} bare wood top at ${b.dx},${b.dy},${b.dz}`,
+        ).toBe(true);
+        if (b.buttress === true) {
+          expect(b.dy, `${id} buttress top above knee height`).toBeLessThanOrEqual(3);
+          buttressTops += 1;
+        } else {
+          // Dead wood is a limb, never the trunk: an `ancient` still stands.
+          expect(b.part, `${id} dead bare top is not a limb`).toBe("branch");
+          deadTops += 1;
+        }
       }
     }
-    // Exercised, not vacuous: the giants are in the matrix.
+    // Exercised, not vacuous: the giants and the ancients are in the matrix.
     expect(buttressTops).toBeGreaterThan(0);
+    expect(deadTops).toBeGreaterThan(0);
   });
 
   it("law 2: the leaf BFS reaches every canopy block within 6, with zero unreachable", () => {

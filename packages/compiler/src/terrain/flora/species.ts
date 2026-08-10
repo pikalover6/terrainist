@@ -22,8 +22,9 @@ import type { FloraSpeciesDef } from "./types.js";
  * The naturalistic catalog.
  *
  * Curation notes, because the count is a decision: there is no poplar
- * (`larch_columnar` already owns the column), no standing dead snag (law 1
- * forbids it — §3.8), no small toadstool species, and no second cherry-class
+ * (`larch_columnar` already owns the column), no standing dead snag (curation,
+ * not law: §9.4 suspended law 1, so a snag is legal geometry — it simply has
+ * not earned a catalog slot), no small toadstool species, and no second cherry-class
  * colour tree (one pink is a feature, two is a theme park).
  */
 export const NATURALISTIC_FLORA_SPECIES = Object.freeze({

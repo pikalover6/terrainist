@@ -258,7 +258,7 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 
 | param | default | notes |
 |---|---|---|
-| `species` | **required** | non-empty array. Each entry: `id` (loam id), `shape` (required), optional `weight`, `minHeight`/`maxHeight` (2..64, int). |
+| `species` | **required** | non-empty array. Each entry: `id` (loam id), `shape` (required), optional `weight`, `minHeight`/`maxHeight` (2..64, int), optional `snowLine` (absolute Y ceiling for this species). |
 | `area` | `{"all": true}` | `{"zone": "<token>"}`, `{"at": [fx,fz], "radius": <blocks>}`, or `{"all": true}`. |
 | `density` | 0.15 | 0..1, trees per eligible column. 0.15–0.3 = closed-canopy forest, 0.02–0.05 = wilderness fill. |
 | `undergrowth` | `{grass: 0.35, flowers: 0.05, deadwood: 0.02}` | per-column probabilities, each 0..1: grass/ferns, flower patches, dead bushes and fallen logs. Raise `grass`/`flowers` for a lush floor, `deadwood` for an old or blighted wood. |
@@ -267,7 +267,7 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 | `maxSlope` | 35 | 0..90 degrees; trees refuse steeper ground. |
 | `elevation` | `[1, 200]` | `[min, max]` **relative to sea level**. `[2, 70]` = from just above the shore to 70 blocks up. |
 | `edgeFalloff` | 12 | 0..256, int; fades the scatter out at the region border. |
-| `snowLine` | — | absolute Y above which this species stops. |
+| `snowLine` | — | absolute Y (int, -64..319) above which trees stop — a treeline. Node-level it applies to every species; write it on a species entry instead (or as well) to give one species its own ceiling: `{"id": "birch", "shape": "birch_slim", "snowLine": 92}`. |
 | `avoidTags` | — | array of strings. |
 
 `shape` is one of exactly four: `spruce_tall`, `spruce_squat`, `oak_round`,

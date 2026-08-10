@@ -5,8 +5,9 @@
  * satisfies the six laws of §3.3 at every corner of its envelope, and the laws
  * are what the constructions in here are *for*:
  *
- * - **Law 1** (no wood is the top of its column) is why every program ends with
- *   a cap mass or a plate over its own leader.
+ * - **Law 1** (no *live* wood is the top of its column — suspended as a
+ *   universal law by §9.4, kept at the source by {@link capWood}) is why every
+ *   program ends with a cap mass or a plate over its own leader.
  * - **Law 2** (leaf BFS ≤ 6 from wood, zero unreachable) is why `mass` is
  *   always centred on a wood block and why its radius is bounded. The
  *   ellipsoid test is monotone in `|dx|`, `|dy|`, `|dz|`, so a staircase path
@@ -253,8 +254,14 @@ function curtain(b: Build, x: number, y: number, z: number, n: number): void {
 }
 
 /**
- * Law 1, enforced over the finished plant: no wood block is the top of its
- * column.
+ * Law 1 at the source: no block of **live** wood is the top of its column.
+ *
+ * Law 1 is suspended as a universal law (§9.4, ratified 2026-08-07). The target
+ * property was never "no topmost log" — it was "no *accidental* bare mast", and
+ * this pass is where that property is bought. It caps live construction, and it
+ * leaves deliberately dead wood alone: a dead limb (`dead`) and a buttress ridge
+ * (`buttress`) are the two enumerated things whose exposed top face is the
+ * intent rather than the defect.
  *
  * Every program here ends with a cap mass or a plate over its own leader, which
  * is what §3.6–§3.10 argue is sufficient. It is not, and both counter-examples
@@ -266,7 +273,7 @@ function curtain(b: Build, x: number, y: number, z: number, n: number): void {
  * end looks like.
  */
 function capWood(b: Build): void {
-  const tops = new Map<string, { dx: number; dy: number; dz: number; buttress: boolean }>();
+  const tops = new Map<string, { dx: number; dy: number; dz: number; exempt: boolean }>();
   for (const block of b.out) {
     if (block.part !== "log" && block.part !== "branch" && block.part !== "stem") continue;
     const k = `${block.dx},${block.dz}`;
@@ -276,7 +283,9 @@ function capWood(b: Build): void {
         dx: block.dx,
         dy: block.dy,
         dz: block.dz,
-        buttress: block.buttress === true,
+        // The two enumerated exemptions of §9.4/§3.7.1: a root ends in a root,
+        // and a dead limb ends in dead wood.
+        exempt: block.buttress === true || block.dead === true,
       });
     }
   }
@@ -285,7 +294,7 @@ function capWood(b: Build): void {
     // in bark at knee height, and a leaf on top of it would be a shrub growing
     // out of a root. Law 1 is no longer universal (§9.4), and §3.7.1 enumerates
     // the ridges as its one live-wood exception.
-    if (t.buttress) continue;
+    if (t.exempt) continue;
     if (blockAt(b, t.dx, t.dy + 1, t.dz) !== undefined) continue;
     put(b, { dx: t.dx, dy: t.dy + 1, dz: t.dz, part: "leaves" });
   }
@@ -618,9 +627,10 @@ export const ancient: FloraProgram = {
     const b = build();
     const height = Math.max(4, v.height);
     const leanMax = Math.max(1, knob(def, "leanMax", 3));
-    // `age` is capped at 0.85: a fully dead standing snag is a log at the top of
-    // its column, which law 1 forbids outright (§3.8, §9.4).
-    const age = Math.min(0.85, Math.max(0, v.age ?? 0.5));
+    // `age` is the full `0..1` since §9.4's suspension: a fully dead standing
+    // snag ends in bare wood, and bare wood is legal geometry now. What bounds
+    // the age of a shipped tree is the species' own `age` envelope, not a law.
+    const age = Math.min(1, Math.max(0, v.age ?? 0.5));
     let lean = v.lean;
     if (lean === undefined) {
       const theta = 2 * Math.PI * rng();
@@ -680,13 +690,12 @@ export const ancient: FloraProgram = {
         1 + (k % 2),
         dead,
       );
-      if (!dead) {
-        mass(b, tip, massR + v.radiusDelta, 0.75);
-      } else {
-        // A dead limb is a limb without a cluster — but it may not end in bare
-        // wood (law 1), so it is terminated by a single leaf above its tip.
-        put(b, { dx: tip.x, dy: tip.y + 1, dz: tip.z, part: "leaves" });
-      }
+      // A dead limb is a limb without a cluster, and since §9.4's suspension it
+      // ends in the dead wood it is made of: the single terminating leaf it
+      // used to carry was law 1 speaking, and a green sprig on the tip of a
+      // stripped, sun-bleached limb is precisely the thing the law was never
+      // meant to buy.
+      if (!dead) mass(b, tip, massR + v.radiusDelta, 0.75);
     }
     mass(b, { x, y: height, z }, Math.max(1, massR - Math.round(2 * age)), 0.8);
 

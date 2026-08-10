@@ -955,6 +955,9 @@ async function compileValidated(
         ),
     greenShare,
   );
+  // F21: a forest node that planted nothing is author-actionable, and in the
+  // feedback set — the ruins world lost a whole canopy to silence.
+  diagnostics.push(...scatter.diagnostics);
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
   const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip);

@@ -1695,7 +1695,12 @@ target property was never "no topmost log" — it was "no *accidental* bare
 mast", and that is enforced at the source: live constructions cap their wood
 columns (`capWood`, §3.13.4), and the grammar tests assert it per program for
 live output. Deliberately dead standing wood (a snag, a fully dead ancient)
-is **legal geometry** — maximum flexibility. Fallback, pre-authorized: if
+is **legal geometry** — maximum flexibility.
+*Implemented 2026-08-09:* `capWood` now exempts `dead` wood alongside
+`buttress`, the `ancient`'s dead limbs lost the single terminating leaf law 1
+used to require of them, and the program's `age` clamp went back to the full
+`0..1` (the species envelope, not a law, is what bounds a shipped tree's age).
+The catalog matrix asserts the two exemptions and nothing else. Fallback, pre-authorized: if
 suspension causes trouble (lint noise, accidental masts creeping back), switch
 to an enumerable per-species `snag: true` opt-out without asking again.
 Implementation queued with the next flora wave (with §9.6's).
@@ -1719,7 +1724,13 @@ The flora grammar is its natural owner (a per-species elevation ceiling is the
 same idea as `elevation`, applied per species rather than per node).
 **RESOLVED — Kai, 2026-08-07 (by popup): implement as documented,
 per-species** — the key moves onto the species entry and the node-level value
-stays as the default. Implementation queued with the next flora wave (with
+stays as the default. *Implemented 2026-08-09:* `ForestSpecies.snowLine`
+(validated `−64..319`, int) beats `params.snowLine`, which beats "no ceiling";
+all three scatter passes (canopy, emergent, understory) test it **after** they
+claim the trunk lattice, so a snow line only ever *removes* trees and the wood
+below it is placement-identical to the same document without the key. An
+emergent the ceiling refuses spends its budget slot and is reported as
+`refused`. Implementation queued with the next flora wave (with
 §9.4's).
 
 ### 9.7 Snow on canopy tops

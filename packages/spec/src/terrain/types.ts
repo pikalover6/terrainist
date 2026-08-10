@@ -240,6 +240,15 @@ export interface ForestSpecies {
   readonly maxHeight?: number;
   readonly trunkPalette?: string;
   readonly leafPalette?: string;
+  /**
+   * Absolute world Y above which this species stops (FLORA-GRAMMAR-v0 §9.6).
+   *
+   * A per-species elevation ceiling: the same idea as `params.elevation`,
+   * applied to one species rather than to the whole node, and absolute rather
+   * than relative to sea level. Absent, the node's `params.snowLine` applies;
+   * absent there too, the species has no ceiling.
+   */
+  readonly snowLine?: number;
 }
 
 /**

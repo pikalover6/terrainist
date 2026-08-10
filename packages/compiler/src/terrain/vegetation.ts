@@ -43,7 +43,7 @@ import type {
   StratumSpec,
   TreeShape,
 } from "@terrainist/spec";
-import { ZONE_TOKENS } from "@terrainist/spec";
+import { ZONE_TOKENS, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import {
   LEGACY_FLORA_SPECIES,
@@ -193,6 +193,14 @@ export interface ScatterResult {
    * DESIGN.md's first failure mode is about, so it is printed.
    */
   readonly strata: readonly StrataReport[];
+  /**
+   * Author-actionable findings from the scatter itself (F21).
+   *
+   * Today that is `LOAM-T119`: a node that planted nothing. Empty on every
+   * document whose woods have trees in them, which is why adding it moves no
+   * existing world.
+   */
+  readonly diagnostics: readonly LoamDiagnostic[];
 }
 
 /**
@@ -218,8 +226,15 @@ export interface ForestNodeInput {
 /** Fill in `scatter.forest@0` defaults. */
 export function resolveForestParams(params: ForestParams): Required<
   Pick<ForestParams, "density" | "spacing" | "clumping" | "maxSlope" | "edgeFalloff">
-> & { elevation: readonly [number, number]; area: ScatterArea; undergrowth: ResolvedUndergrowth } {
+> & {
+  elevation: readonly [number, number];
+  area: ScatterArea;
+  undergrowth: ResolvedUndergrowth;
+  /** §9.6: the node-level default ceiling; `undefined` means "no ceiling". */
+  snowLine: number | undefined;
+} {
   return {
+    snowLine: params.snowLine,
     undergrowth: {
       grass: params.undergrowth?.grass ?? UNDERGROWTH_DEFAULTS.grass,
       flowers: params.undergrowth?.flowers ?? UNDERGROWTH_DEFAULTS.flowers,
@@ -233,6 +248,34 @@ export function resolveForestParams(params: ForestParams): Required<
     elevation: params.elevation ?? FOREST_DEFAULTS.elevation,
     area: params.area ?? { all: true },
   };
+}
+
+/**
+ * Whether a species may stand on a column at this ground height (§9.6).
+ *
+ * `snowLine` is an **absolute** Y — unlike `params.elevation`, which is
+ * relative to sea level — and it is a ceiling: at or below it the species
+ * stands, above it the species stops. The species entry's own key wins; absent,
+ * the node's `params.snowLine` is the default; absent there too the species has
+ * no ceiling and every eligible column is fair game (the reach law: a document
+ * that writes neither key compiles byte-identically).
+ *
+ * Refusal is a *stop*, not a re-roll: the candidate is simply dropped. Re-picking
+ * a lower species there would put a full-density wood above the line wearing
+ * different leaves, which is the opposite of what an author writing a snow line
+ * asked for, and it would make the draw order depend on terrain height.
+ *
+ * Each caller tests this **after** it has claimed the trunk lattice, so a snow
+ * line only ever *removes* trees: the wood below the line is placement-identical
+ * to the same document without the key.
+ */
+function speciesStands(
+  entry: ForestSpecies,
+  params: ReturnType<typeof resolveForestParams>,
+  groundY: number,
+): boolean {
+  const ceiling = entry.snowLine ?? params.snowLine;
+  return ceiling === undefined || groundY <= ceiling;
 }
 
 /**
@@ -587,6 +630,7 @@ export function scatterForests(
       ? undefined
       : undergrowthFeather(structures, region.width, region.depth, UNDERGROWTH_FEATHER, greenShare);
   const strataReports: StrataReport[] = [];
+  const diagnostics: LoamDiagnostic[] = [];
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
@@ -671,6 +715,12 @@ export function scatterForests(
       });
     }
     perNode[node.id] = trees.length - before;
+    // F21: a wood with no trees in it is the silent failure the ledger names.
+    // Measured only when the yield is zero, so the ordinary path costs nothing.
+    if (trees.length === before) {
+      const d = emptyScatterDiagnostic(node, params, plan, mask, clearing, areaWobbleSeed);
+      if (d !== undefined) diagnostics.push(d);
+    }
     scattered.push({
       id: node.id,
       seed: node.seed,
@@ -682,7 +732,87 @@ export function scatterForests(
     });
   }
 
-  return { trees, coverage, perNode, nodes: scattered, strata: strataReports };
+  return { trees, coverage, perNode, nodes: scattered, strata: strataReports, diagnostics };
+}
+
+/**
+ * Why a forest node planted nothing, said in the author's own vocabulary (F21).
+ *
+ * Three causes, distinguished by two measurements over the region:
+ *
+ * 1. **The area resolves to no columns at all.** Overwhelmingly the units trap
+ *    (`{ at: [0.5, 0.5], radius: 0.55 }` — `at` fractional, `radius` blocks),
+ *    so the fix names it outright.
+ * 2. **The area has columns, but none is eligible** — slope, elevation band,
+ *    surface class, water, or claimed ground took every one.
+ * 3. **Columns were eligible and the sampler still placed nothing** — density,
+ *    spacing, or the settlement clearing.
+ *
+ * Returns `undefined` when the area is *deliberately* degenerate is not a case
+ * we can tell apart, so it never does: a zero-yield node always speaks.
+ */
+function emptyScatterDiagnostic(
+  node: ForestNodeInput,
+  params: ReturnType<typeof resolveForestParams>,
+  plan: ColumnPlan,
+  mask: Uint8Array,
+  clearing: Float32Array | undefined,
+  areaWobbleSeed: number,
+): LoamDiagnostic | undefined {
+  const { region } = plan;
+  let eligible = 0;
+  let uncleared = 0;
+  for (let k = 0; k < mask.length; k++) {
+    if (mask[k] !== 1) continue;
+    eligible++;
+    if (clearing === undefined || (clearing[k] as number) > 0) uncleared++;
+  }
+  let areaColumns = 0;
+  const inside = areaTest(region, params.area, areaWobbleSeed);
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      if (inside(region.x0 + i, region.z0 + j)) areaColumns++;
+    }
+  }
+
+  const where = node.nodePath;
+  const areaText = JSON.stringify(params.area);
+  const radius = "radius" in params.area ? params.area.radius : undefined;
+  // A sub-block radius that resolved to a handful of columns is the same
+  // mistake as one that resolved to none — the wobble on the boundary is the
+  // only reason it is not exactly zero — so it gets the same sentence.
+  if (areaColumns === 0 || (radius !== undefined && radius < 2)) {
+    return warning(
+      "SCATTER_EMPTY",
+      where,
+      `forest node "${node.id}" placed 0 trees: its area ${areaText} covers ${areaColumns} of the region's ${region.width}×${region.depth} columns.`,
+      radius !== undefined
+        ? `"area.radius" is in BLOCKS while "at" is fractional (0..1). ${radius} blocks is a patch smaller than one tree. For a fraction f of a ${region.width}-wide region write radius = f × ${region.width} / 2 — e.g. "radius": ${Math.max(2, Math.round(region.width * 0.25))}.`
+        : `widen "area" — use { "all": true }, a "zone" token, or { "at": [fx, fz], "radius": <blocks> } with a radius in blocks.`,
+    );
+  }
+  if (eligible === 0) {
+    return warning(
+      "SCATTER_EMPTY",
+      where,
+      `forest node "${node.id}" placed 0 trees: its area ${areaText} covers ${areaColumns} columns, but none of them is plantable ground (maxSlope ${params.maxSlope}°, elevation ${params.elevation[0]}..${params.elevation[1]} relative to sea level, no water, not built on).`,
+      `relax the filters — raise "maxSlope", widen "elevation", or move "area" onto soil rather than rock, water or the settlement footprint.`,
+    );
+  }
+  if (uncleared === 0) {
+    return warning(
+      "SCATTER_EMPTY",
+      where,
+      `forest node "${node.id}" placed 0 trees: all ${eligible} of its eligible columns fall inside the settlement clearing, which suppresses tree density to zero.`,
+      `move "area" off the town — use a "zone" token away from the settlement, or an "at"/"radius" centred outside it.`,
+    );
+  }
+  return warning(
+    "SCATTER_EMPTY",
+    where,
+    `forest node "${node.id}" placed 0 trees despite ${uncleared} plantable columns: density ${params.density} at spacing ${params.spacing} drew no accepted candidate.`,
+    `raise "density" (toward 1) or lower "spacing" (toward 4), or enlarge "area" so the jittered grid offers more candidates.`,
+  );
 }
 
 function scatterOne(
@@ -795,6 +925,13 @@ function scatterOne(
         // rather than `kin`, so a sibling exactly `kin` away is still legal —
         // the same "exactly spacing apart is fine" rule `claimTrunk` follows.
         if (kinMask !== undefined) paintSquare(region, kinMask, x, z, kin - 1);
+
+        // §9.6, and deliberately *after* every shared-state mutation above: a
+        // snow line only ever removes trees, it never moves one. Refusing
+        // earlier would leave the trunk lattice unclaimed and let a
+        // below-the-line neighbour drift into the gap, so raising a ceiling
+        // would reshuffle the wood underneath it.
+        if (!speciesStands(chosen, params, ground[idx] as number)) continue;
 
         const base: TreePlacement = {
           nodeId: node.id,
@@ -1155,8 +1292,12 @@ function scatterEmergent(
   const emergentOccupancy = new Uint8Array(region.width * region.depth);
   let placed = 0;
   let refused = 0;
+  // Budget *spent*, which is placements plus §9.6 snow-line refusals: a
+  // candidate the ceiling turns down has still had its slot, so raising a snow
+  // line thins the emergents rather than shuffling them downhill.
+  let spent = 0;
   for (const c of candidates) {
-    if (placed >= budget) break;
+    if (spent >= budget) break;
     if (emergentOccupancy[c.idx] === 1) continue;
     const entry = species[positionWeighted(stream, c.x, 4, c.z, weights)] as ForestSpecies;
     const def = speciesFor(entry.shape);
@@ -1181,6 +1322,15 @@ function scatterEmergent(
     const span = program.id === "giant" ? Math.max(1, giantTrunkSpan(def, height)) : 1;
     if (!claimTrunk(region, occupancy, c.x, c.z, spacing + span - 1, span > 1)) continue;
     paint(region, emergentOccupancy, c.x, c.z, exclusion);
+    // §9.6: the ceiling refuses the landmark, and the refusal is reported
+    // rather than silently retried lower down — the budget and the exclusion
+    // stamp are spent, so the emergents below the line stand exactly where they
+    // stood before the line was written.
+    if (!speciesStands(entry, params, ground[c.idx] as number)) {
+      refused += 1;
+      spent += 1;
+      continue;
+    }
     out.push(
       makePlacement({
         node,
@@ -1199,6 +1349,7 @@ function scatterEmergent(
       }),
     );
     placed += 1;
+    spent += 1;
   }
   return { budget, placed, refused };
 }
@@ -1326,6 +1477,8 @@ function scatterUnderstory(
       const height = positionInt(stream, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
       const radiusDelta = positionInt(stream, x, 6, z, -1, 1);
       if (!claimTrunk(region, occupancy, x, z, spacing, false)) continue;
+      // §9.6, after the claim for the same reason the canopy pass is.
+      if (!speciesStands(entry, params, ground[idx] as number)) continue;
       out.push(
         makePlacement({
           node,
