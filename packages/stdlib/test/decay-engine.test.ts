@@ -20,11 +20,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BODY_BLOCKING,
   BUILDING_STYLE_DEFAULTS,
   RELIC_BUILDING_ARCHETYPES,
   RELIC_DECAY_PROFILES,
   TIMBER_EXTRA,
   WEATHERED_VARIANTS,
+  bodyBlocking,
+  bodyFits,
   collapseForShell,
   generateBuilding,
   nodeSeed,
@@ -226,6 +229,55 @@ describe("reachOrRefuse — the guarantee, checked (§5.7)", () => {
         expect(result.meta.decay?.refused, `${archetype}@${decay}`).toBe(false);
       }
     }
+  });
+});
+
+describe("the flood reads the lint's own vocabulary (§5.7, §8)", () => {
+  it("calls a body-sized cell open and an obstacle sealed, exactly as `passableAt` does", () => {
+    // The shipped defect: `reachOrRefuse`'s flood called a **flower pot's**
+    // cell sealed, so a cell walled in on its other three sides never appeared
+    // in `stranded`, the heap that walled it in was never withdrawn — and the
+    // physics lint, which calls a pot's cell a place a player stands, reported
+    // `traversal.unreachable` on it. Seeds 304, 305 and 306 of the WP-4 fixture
+    // family, 1/1/3 findings; the fix is one vocabulary rather than two.
+    for (const name of [
+      "potted_red_tulip",
+      "potted_dandelion",
+      "flower_pot",
+      "moss_carpet",
+      "vine",
+      "torch",
+      "oak_door",
+      "ladder",
+      "stone_button",
+      "oak_sign",
+    ]) {
+      expect(bodyFits(name), name).toBe(true);
+    }
+    for (const name of [
+      "spruce_planks",
+      "cobblestone",
+      "cobbled_deepslate",
+      "spruce_stairs",
+      "oak_slab",
+      "spruce_fence",
+      "lantern",
+      "cauldron",
+      "chest",
+      "white_bed",
+      "iron_bars",
+      "campfire",
+    ]) {
+      expect(bodyFits(name), name).toBe(false);
+    }
+  });
+
+  it("is the physics lint's set, not a copy of it", () => {
+    // `emit/physics.ts` imports `bodyBlocking` from here; the constant is the
+    // shared one, and a second BODY_BLOCKING regex anywhere is the defect.
+    expect(BODY_BLOCKING.test("oak_stairs")).toBe(true);
+    expect(BODY_BLOCKING.test("potted_cactus")).toBe(false);
+    expect(bodyBlocking("cauldron")).toBe(true);
   });
 });
 

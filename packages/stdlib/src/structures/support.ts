@@ -122,3 +122,49 @@ export function canSupport(name: string): boolean {
   if (name.startsWith("potted_")) return false;
   return true;
 }
+
+/**
+ * Blocks a 1×2 player body cannot stand inside — **the physics lint's own set**,
+ * and now literally the same constant.
+ *
+ * `emit/physics.ts` owned this regex; `decay.ts`'s `reachOrRefuse` needed the
+ * same question answered on an op list, and asking it with a *different*
+ * vocabulary is what the shipped defect was: the flood treated a flower pot's
+ * cell as sealed, so it never noticed the cell was stranded, while the lint
+ * treated the same cell as a place a player stands and demanded a route to it —
+ * `traversal.unreachable` on a potted plant in a decayed shell.
+ *
+ * Deliberately a positive list of *obstacles* rather than a list of things you
+ * can walk through: the failure mode that matters is calling something passable
+ * that is not, because that makes a traversal simulation report a route the
+ * player does not have. The lint falls through to the block registry's
+ * `isFullCube` for everything else; the op-list side falls through to
+ * {@link canSupport}, which is the same question answered by name.
+ */
+export const BODY_BLOCKING =
+  /(_slab|_stairs|_fence|_wall|_bed|_pane|iron_bars|_gate|chest|barrel|furnace|smithing_table|crafting_table|fletching_table|cartography_table|loom|anvil|cauldron|composter|bookshelf|lectern|campfire|_shulker_box|hopper|beacon|conduit|lantern|bell|grindstone|stonecutter|brewing_stand|enchanting_table|_cake|dragon_egg)$/;
+
+/** True for a block a standing player's body cannot occupy the cell of. */
+export function bodyBlocking(name: string): boolean {
+  return BODY_BLOCKING.test(name);
+}
+
+/**
+ * Whether a player's body fits in a cell holding this block, **on the evidence
+ * a fit-out has** — the op-list twin of the lint's `passableAt`.
+ *
+ * Two answers composed, in the lint's own order: an obstacle blocks
+ * ({@link bodyBlocking}), and anything the name says is a full cube blocks
+ * ({@link canSupport}, which is exactly "a full cube by name"). What is left —
+ * a pot, a carpet, a torch, a sign, a button, a door, a ladder, a vine — is
+ * what the lint's registry answer also lets a body stand in.
+ *
+ * Where the two can still differ, this side is the *narrower* one only for
+ * names it cannot classify, and callers are expected to union it with whatever
+ * else they know is passable.
+ */
+export function bodyFits(name: string): boolean {
+  if (INSUBSTANTIAL.test(name)) return true;
+  if (bodyBlocking(name)) return false;
+  return !canSupport(name);
+}

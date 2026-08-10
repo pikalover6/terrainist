@@ -1568,10 +1568,13 @@ under three courses is swept and heaped but never crumbled, for the same reason
 table 14 gives: there is nothing to take away.
 
 Keep `avoidTags: ["structure", "road", "plaza"]` on your `scatter.forest@0`
-nodes as always. The reclaim at high decline is **ground green** — grass, tufts
-and flowers over the ruin yards and the broken paving; trees still stop at the
-settlement's edge, so an overgrown quarter is scrub through the fabric, not a
-forest with a city buried under it.
+nodes as always — over ruined ground the compiler opens that gate for you.
+The reclaim at high decline is ground green **and canopy**: grass, tufts and
+flowers over the ruin yards and the broken paving, and the surrounding
+forest's own trees coming back through the quarter's open ground — never
+inside a shell, never on a street or its sidewalk band. How thick the wood
+returns follows the forest node you scattered around the town: a ruined city
+in deep forest is buried in it, one on open plains gets volunteers.
 
 ### The urban forms
 

@@ -963,12 +963,27 @@ async function compileValidated(
     nodePath: rootPath,
     today: TOWN_GREEN_DENSITY,
   });
+  // §7.4's other half. The lift above raises a *density*; this hands the scatter
+  // the field itself, because the eligibility mask — not the density — is what
+  // actually keeps a tree out of a settlement, and a lift on ground the mask has
+  // already excluded plants nothing. Threaded rather than global, and **by
+  // reference when there is no ruin field**: a document that ruined nothing
+  // hands the scatter the very object it handed it before F19, so the reclaim is
+  // structurally absent rather than conditionally skipped.
+  const scatterOccupancy =
+    occupancy === undefined || structures?.ruinField === undefined
+      ? occupancy
+      : {
+          ...occupancy,
+          ruin: structures.ruinField.field,
+          ruinPaved: streetBandColumns(region, structures.districts),
+        };
   const scatter = scatterForests(
     forestNodes,
     plan,
     classification,
     palette,
-    occupancy,
+    scatterOccupancy,
     clearing?.density,
     // §5.2: the strata tables are per climate theme, and a forest node does not
     // carry one — it is resolved by ambient majority over the node's own mask.
@@ -1909,6 +1924,40 @@ function claimProgramFootprints(
       }
     }
   }
+}
+
+/**
+ * Every district street column, carriageway and sidewalk, over the region.
+ *
+ * RUINS-PLAN §7.4's reclaim opens the settlement's claim to the wood, and the
+ * claim is the only thing that was keeping a trunk off a **district** street:
+ * the road surfacer writes a `road` occupancy tag, but the street bands a
+ * quarter draws for itself write none, which is the same hole the town green
+ * found from the other side. Read only by the reclaim gate, and built only on a
+ * world that ruined something.
+ */
+function streetBandColumns(
+  region: Region,
+  districts: readonly { readonly bounds: Rect; readonly carriageway: Uint8Array; readonly sidewalk: Uint8Array }[],
+): Uint8Array {
+  const paved = new Uint8Array(region.width * region.depth);
+  for (const district of districts) {
+    const { bounds } = district;
+    const width = bounds.x1 - bounds.x0 + 1;
+    for (let z = bounds.z0; z <= bounds.z1; z++) {
+      const j = z - region.z0;
+      if (j < 0 || j >= region.depth) continue;
+      for (let x = bounds.x0; x <= bounds.x1; x++) {
+        const i = x - region.x0;
+        if (i < 0 || i >= region.width) continue;
+        const local = (z - bounds.z0) * width + (x - bounds.x0);
+        if (district.carriageway[local] === 1 || district.sidewalk[local] === 1) {
+          paved[j * region.width + i] = 1;
+        }
+      }
+    }
+  }
+  return paved;
 }
 
 /** One report row per authored-program node, in job order. */

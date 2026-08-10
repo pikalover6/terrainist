@@ -420,14 +420,39 @@ describe("the reclaim (§7.4)", () => {
     expect(lifted).toBe((structures.ruinField as { columns: number }).columns);
   });
 
+  it("grows the wood back **through** the fabric — trees over ruined ground", () => {
+    // The other half of §7.4, and the half the lift alone does not buy: the
+    // eligibility mask, not the density, is what keeps a tree out of a
+    // settlement, so a clearing lifted over ground the mask still excludes
+    // plants nothing. Measured before the gate opened: 847 trees, 0 of them
+    // over ruined ground, the nearest trunk 71 blocks from the quarter's
+    // centre.
+    const over = trees.filter((t) => ruinAt(t.x, t.z) > 0);
+    expect(over.length).toBeGreaterThan(0);
+  });
+
   it("keeps the wood out of the shells and off the streets — the avoidTags line", () => {
     // Unchanged by F19, and asserted rather than assumed: no trunk stands in a
     // footprint or on a surfaced street anywhere in the world.
+    //
+    // The **sidewalk** is checked from the district product rather than from
+    // the occupancy grid on purpose: a quarter's own street bands write no
+    // occupancy tag (the town green found the same hole from the other side),
+    // so while the settlement's whole rectangle was excluded outright nothing
+    // noticed. The reclaim removes that exclusion, and the first measurement
+    // after it stood 67 of 111 reclaim trunks in the middle of the pavement.
     const footprints = structures.buildings.map((b) => b.footprint);
     const road = structures.streets?.road;
     for (const t of trees) {
       expect(footprints.some((r) => within(r, t.x, t.z))).toBe(false);
       if (road !== undefined) expect(road[idx(t.x, t.z)]).not.toBe(1);
+      for (const district of structures.districts) {
+        const b = district.bounds;
+        if (!within(b, t.x, t.z)) continue;
+        const local = (t.z - b.z0) * (b.x1 - b.x0 + 1) + (t.x - b.x0);
+        expect(district.carriageway[local]).not.toBe(1);
+        expect(district.sidewalk[local]).not.toBe(1);
+      }
     }
   });
 

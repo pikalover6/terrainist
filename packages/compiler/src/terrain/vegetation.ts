@@ -233,6 +233,47 @@ export interface ScatterResult {
 export interface StructureOccupancy {
   readonly mask: Uint8Array;
   readonly byTag: ReadonlyMap<string, Uint8Array>;
+  /**
+   * The per-column ruin field (RUINS-PLAN-v0 §7.1), when a document ruined
+   * anything — 0 everywhere no ruin reaches.
+   *
+   * Present only on a world with decayed shells in it, which is the reach law
+   * (§2) made structural: with no ruins the field is absent, the reclaim gate
+   * below is unreachable code, and every decline-free document compiles the
+   * eligibility mask it compiled before F19 existed.
+   */
+  readonly ruin?: Float32Array;
+  /**
+   * Columns a pass paved that write **no occupancy tag** — today the district
+   * street bands, carriageway and sidewalk both.
+   *
+   * The town green already found this hole from the other side ("a district
+   * street and a stair flight write no occupancy tag"), and it is harmless
+   * while the settlement's whole rectangle is excluded outright. §7.4's reclaim
+   * removes that outright exclusion, so the hole becomes a tree standing in the
+   * middle of a pavement — measured, on the WP-4 fixture: 67 of 111 reclaim
+   * trunks stood on the sidewalk band. Supplied beside {@link ruin} and read
+   * only by the reclaim, so nothing outside a ruined world sees it.
+   */
+  readonly ruinPaved?: Uint8Array;
+}
+
+/**
+ * Whether §7.4's reclaim opens this claimed column to a trunk.
+ *
+ * Two conditions, and both are the plan's: the ruin field is positive here (the
+ * ground is *ruined* ground, not merely inside a settlement that has ruins
+ * somewhere), and no pass has actually built on the column
+ * ({@link RUIN_RECLAIM_HARD_TAGS}).
+ */
+function reclaimOpen(structures: StructureOccupancy, idx: number): boolean {
+  const ruin = structures.ruin;
+  if (ruin === undefined || (ruin[idx] as number) <= 0) return false;
+  if (structures.ruinPaved?.[idx] === 1) return false;
+  for (const tag of RUIN_RECLAIM_HARD_TAGS) {
+    if (structures.byTag.get(tag)?.[idx] === 1) return false;
+  }
+  return true;
 }
 
 /** A forest node flattened to what the scatter pass needs. */
@@ -306,11 +347,21 @@ function speciesStands(
  * elevation band relative to sea level.
  *
  * `structures` is the layout solver's occupancy grid, absent for terrain-profile
- * documents. Its union mask is excluded **unconditionally**: a footprint plus
- * its clearance is claimed ground, and a tree standing in it would grow through
- * a wall whatever the document's `avoidTags` say. `avoidTags` then excludes
- * further per-tag slices on top, which is how an author keeps an orchard out of
- * the market square without banning it from the whole settlement.
+ * documents. Its union mask is excluded: a footprint plus its clearance is
+ * claimed ground, and a tree standing in it would grow through a wall whatever
+ * the document's `avoidTags` say. `avoidTags` then excludes further per-tag
+ * slices on top, which is how an author keeps an orchard out of the market
+ * square without banning it from the whole settlement.
+ *
+ * **The one exception is RUINS-PLAN-v0 §7.4's reclaim.** Where the ruin field
+ * is positive and no pass actually built on the column
+ * ({@link RUIN_RECLAIM_HARD_TAGS}), the claim is opened and the wood comes back
+ * *through* the fabric. Without it §7.4's clearing lift is inert — a density
+ * multiplier raised on ground the eligibility mask had already excluded — and
+ * the measurement on the WP-4 fixture was exactly that: 847 trees, 0 over
+ * ruined ground, the nearest trunk 71 blocks from the dead quarter's centre.
+ * `structures.ruin` is absent for every document that ruined nothing, so this
+ * is structurally unreachable there.
  *
  * `areaWobbleSeed` bends the `area` boundary (see {@link AREA_EDGE_WOBBLE}). It
  * must be the same seed the scatter's taper uses, or the mask and the density
@@ -341,9 +392,22 @@ export function forestEligibility(
       if (relative < eMin || relative > eMax) continue;
       if (!area(region.x0 + i, z)) continue;
       if (structures !== undefined) {
-        if (structures.mask[idx] === 1) continue;
+        // RUINS-PLAN §7.4. On ruined ground with nothing built on it the
+        // settlement's *claim* stops being a reason to keep the wood out — the
+        // quarter is coming down and the green is coming through it. Everywhere
+        // else, and in every document with no ruins in it, this is the
+        // unconditional exclusion it has always been.
+        const reclaimed = structures.mask[idx] === 1 && reclaimOpen(structures, idx);
+        if (structures.mask[idx] === 1 && !reclaimed) continue;
         let avoided = false;
         for (const tag of avoidTags) {
+          // `structure` is the reserved rectangle, and on a district it is the
+          // whole quarter — the same claim the line above just opened, so
+          // honouring it here would close the reclaim again from the author's
+          // own standing `avoidTags` line. Every *other* tag is a per-column
+          // claim and stays hard: `road` and `plaza` are why a reclaimed
+          // street grows scrub and not a forest with a buried road under it.
+          if (tag === "structure" && reclaimed) continue;
           if (structures.byTag.get(tag)?.[idx] === 1) {
             avoided = true;
             break;
@@ -450,6 +514,30 @@ export const BUILT_OCCUPANCY_TAGS: readonly string[] = Object.freeze([
   "ground",
   "courtyard",
   "prop",
+]);
+
+/**
+ * The per-column claims that stay closed to a tree even on ruined ground
+ * (RUINS-PLAN-v0 §7.4).
+ *
+ * The reclaim opens the settlement to the wood — but "open ground in a ruined
+ * quarter" is not "anywhere in a ruined quarter". These are the tags a pass
+ * writes when it actually put something on a column: the shell and its room,
+ * the carriageway, the flagstones, a dressed ground treatment, a courtyard, a
+ * prop's stand, a field. A trunk on any of them is a tree through a wall or a
+ * tree in the middle of a street, which is exactly what the kit's standing
+ * `avoidTags: ["structure", "road", "plaza"]` line promises never happens.
+ *
+ * What is *not* here is `structure` — the solver's reserved rectangle, which on
+ * a district is the whole quarter. That claim is the one the reclaim exists to
+ * open; leaving it closed is why the WP-4 fixture stood 847 trees around a
+ * ruined city and none in it.
+ */
+export const RUIN_RECLAIM_HARD_TAGS: readonly string[] = Object.freeze([
+  "building",
+  "interior",
+  "farm",
+  ...BUILT_OCCUPANCY_TAGS,
 ]);
 
 /**

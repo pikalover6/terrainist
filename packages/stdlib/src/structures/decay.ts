@@ -85,7 +85,7 @@ import {
 } from "./archetypes-civic.js";
 import { STRUCTURE_CATALOG } from "./catalog.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
-import { canSupport, supportDirection } from "./support.js";
+import { bodyFits, canSupport, supportDirection } from "./support.js";
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */
@@ -897,7 +897,20 @@ export function reachOrRefuse(
   const open = (x: number, z: number): boolean => {
     if (!floor.has(`${x},${z}`)) return false;
     const op = ctx.blockAt(x, 1, z);
-    return op === undefined || op.block === "air" || PASSABLE_IN_RUIN.test(op.block);
+    if (op === undefined || op.block === "air") return true;
+    // The lint's own vocabulary, not a second one. A cell holding a flower pot
+    // is a cell the physics lint calls *standable* — a pot is not a full cube
+    // and not an obstacle — so it is a cell the lint demands a walking route
+    // to. This flood used to call it sealed, so it never appeared in `stranded`
+    // and the heap that had walled it in was never withdrawn: a shipped
+    // `traversal.unreachable` on a potted plant in a decayed shell, on any seed
+    // whose rubble happened to land on the three cells around a pot.
+    //
+    // `bodyFits` is the op-list twin of the lint's `passableAt` (shared
+    // `BODY_BLOCKING`, `canSupport` standing in for the registry's
+    // `isFullCube`); {@link PASSABLE_IN_RUIN} stays as its floor, for the few
+    // names — a dead bush, snow, a light — a name-level cube test calls solid.
+    return PASSABLE_IN_RUIN.test(op.block) || bodyFits(op.block);
   };
   const flood = (): Set<string> => {
     const seen = new Set<string>();

@@ -37,7 +37,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import { needsGround } from "@terrainist/stdlib";
+import { bodyBlocking, needsGround } from "@terrainist/stdlib";
 
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { listChunks, listRegionFiles, readRegionChunksNbt } from "./prismarine.js";
@@ -205,17 +205,18 @@ const AIR = new Set(["air", "cave_air", "void_air"]);
 /* the walking agent's block vocabulary                                        */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Blocks a 1×2 player body cannot stand inside.
- *
- * Deliberately a positive list of *obstacles* rather than a list of things you
- * can walk through: the failure mode that matters is calling something passable
- * that is not, because that makes the traversal simulation report a route the
- * player does not have. Anything unrecognised falls through to `isFullCube`,
- * which is the block table's own answer.
- */
-const BODY_BLOCKING =
-  /(_slab|_stairs|_fence|_wall|_bed|_pane|iron_bars|_gate|chest|barrel|furnace|smithing_table|crafting_table|fletching_table|cartography_table|loom|anvil|cauldron|composter|bookshelf|lectern|campfire|_shulker_box|hopper|beacon|conduit|lantern|bell|grindstone|stonecutter|brewing_stand|enchanting_table|_cake|dragon_egg)$/;
+// **Blocks a 1x2 player body cannot stand inside** — `bodyBlocking`, imported
+// above. Deliberately a positive list of *obstacles* rather than a list of
+// things you can walk through: the failure mode that matters is calling
+// something passable that is not, because that makes the traversal simulation
+// report a route the player does not have. Anything unrecognised falls through
+// to `isFullCube`, which is the block table's own answer.
+//
+// The set itself lives in `structures/support.ts`, for the reason RUINS-PLAN
+// §5.6 already moved the *support* vocabulary there: the decay's
+// `reachOrRefuse` flood asks the same question of an op list, and a flood that
+// called a flower pot's cell sealed while this rule called it a place a player
+// stands is exactly the `traversal.unreachable` defect that made it shared.
 
 /** Blocks that a foot may rest on even though they are not full cubes. */
 const STANDABLE_PARTIAL = /(_slab|_stairs)$/;
@@ -914,7 +915,7 @@ export async function lintWorldPhysics(
     if (AIR.has(name)) return true;
     if (stack.isFullCube(id)) return false;
     if (name.endsWith("wall_torch")) return true;
-    return !BODY_BLOCKING.test(name);
+    return !bodyBlocking(name);
   }
 
   /** True when a foot resting on the top of this cell has something under it. */
