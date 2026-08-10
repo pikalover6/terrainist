@@ -1001,6 +1001,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           // it: two hand-kept copies would drift, and the drift would look like
           // a farm refusing perfectly good ground.
           soil: softSurfaceStates(input.palette, input.stack),
+          // WP-3's emitter: the crop table is addressed through the pinned block
+          // set, and the edge course and the dry-stone wall through the theme's
+          // ground roles.
+          palette: input.palette,
+          stack: input.stack,
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
           // §4.1's second rung: with no road in the region, the gate faces the
           // nearest thing anybody built.
@@ -1009,6 +1014,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
             .map((p) => p.footprint),
         });
   if (farms !== undefined) diagnostics.push(...farms.diagnostics);
+  lay("farms", farms?.blocks ?? []);
 
   // --- props ---------------------------------------------------------------
   // After the roads, and that ordering is the point: a prop is placed against
@@ -1023,6 +1029,16 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // The precinct's props first, and in its own layout order: a pier has to be
   // placed before the hull that moors beside it, and both were sited by the kit
   // against the ground it graded a moment ago.
+  for (const spec of farms?.props ?? []) {
+    const seed: Seed256 = nodeSeed(input.worldSeed, spec.nodePath, "");
+    propJobs.push({
+      nodePath: spec.nodePath,
+      prop: spec.prop,
+      params: spec.params,
+      seed,
+      materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
+    });
+  }
   for (const spec of precincts?.props ?? []) {
     const seed: Seed256 = nodeSeed(input.worldSeed, spec.nodePath, "");
     propJobs.push({
@@ -1308,7 +1324,18 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     stack: input.stack,
     seed: themeSeed,
     nodePath: rootPath,
-    buildings: buildings.built.map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
+    // **A ruin is not dressed** (RUINS-PLAN-v0 WP-3). The life pass hangs
+    // awnings, signs, planters and interior lanterns off a building's walls,
+    // and it runs long after the decay has taken those walls away — the first
+    // district sweep left nine awning slabs and stairs floating in the street
+    // over shells that had crumbled under them (`floating.slab`,
+    // `floating.stair`). A decayed shell is therefore withheld from the pass
+    // outright, which is also the right read: an abandoned house has no awning
+    // over its shopfront and no lamp lit in its front room. Absent on every
+    // building in a world that never says `decline`, so nothing else moves.
+    buildings: buildings.built
+      .filter((b) => b.meta.decay === undefined)
+      .map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
     districts: streetMasks,
     existing: blocks,
     // `props.family`: the prop the pavement furniture draw reaches for first.

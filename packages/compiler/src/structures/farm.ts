@@ -46,8 +46,15 @@ import {
   type LoamDiagnostic,
   type PortDeclaration,
 } from "@terrainist/spec";
-import { positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
+import {
+  positionFloat,
+  positionInt,
+  propFootprint,
+  type Region,
+  type Seed256,
+} from "@terrainist/stdlib";
 
+import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import {
   INTENT_RANK,
@@ -59,6 +66,8 @@ import type { GroundDriver } from "../layout/ground-driver.js";
 import type { OccupancyGrid, Placement } from "../layout/types.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { ColumnPlan } from "../terrain/columns.js";
+import type { Palette } from "../terrain/palette.js";
+import type { StructureBlock } from "./buildings.js";
 import { index, inside } from "./roads.js";
 
 /** One holding the structure pass is asked to lay out. */
@@ -112,8 +121,47 @@ export const YARD_SETBACK = 2;
 /** Shortest side a parcel may be jittered down to (§3.3's `parcelSize` floor). */
 const PARCEL_MIN_SIDE = 10;
 
-/** Positional draw channels this pass owns (§6.4). WP-2 uses 30 only. */
+/** Positional draw channels this pass owns (§6.4). 30..39 are reserved. */
 const CHANNEL_PARCEL_JITTER = 30;
+/** Crop index into the holding's crop list. */
+const CHANNEL_CROP = 31;
+/** Row direction tie-break on a square parcel. */
+const CHANNEL_ROW_AXIS = 32;
+/** Baulk phase, 0..2 rows. */
+const CHANNEL_BAULK_PHASE = 33;
+/** Fallow (§6.5). */
+const CHANNEL_FALLOW = 34;
+/** Gate position along the chosen edge run. */
+const CHANNEL_GATE = 35;
+/** Which parcel carries the scarecrow / hay / cart prop. */
+const CHANNEL_PROP = 36;
+/**
+ * Pasture tuft density — §6.2's "`short_grass` at a lifted density".
+ *
+ * The next free number in the block §6.4 reserved, taken under that section's
+ * own instruction ("an implementer adding a draw takes the next free number and
+ * adds a row here"); the row is added to the plan's table alongside this line.
+ * 37 belongs to WP-4's farmstead draw and is left alone.
+ */
+const CHANNEL_PASTURE = 38;
+
+/** Rows of pasture that get a tuft — §6.2's "lifted density". */
+const PASTURE_TUFT_DENSITY = 0.55;
+
+/** §6.1's baulk pitch: an unsown walking strip every seven rows. */
+export const BAULK_PITCH = 7;
+
+/** §6.1: the first baulk, before the phase draw shifts it. */
+const BAULK_FIRST_ROW = 3;
+
+/** §6.1: a parcel this wide or wider also gets a centreline baulk. */
+const CENTRELINE_BAULK_SPAN = 20;
+
+/** §6.1's turning strip: two rows at each end of the run. */
+const HEADLAND_DEPTH = 2;
+
+/** §6.5: at most one prop per parcel, at most three per holding. */
+const MAX_HOLDING_PROPS = 3;
 
 /** Why a candidate cell was refused. The keys of `FarmReportRow.refusals`. */
 export type FarmRefusal = "envelope" | "claimed" | "wet" | "soil" | "relief";
@@ -212,10 +260,26 @@ export interface FarmStats {
   readonly farmColumns: number;
 }
 
+/**
+ * A prop the holding offers to the ordinary `prop.place@0` emitter (§6.5).
+ *
+ * Handed back rather than emitted: a scarecrow is a prop, and the prop pass is
+ * what knows how to refuse one whole when a single op cannot land — the standing
+ * rule since the cropped-street-furniture fix. The shape is
+ * `PrecinctPropSpec`'s, for the same reason and through the same seam.
+ */
+export interface FarmPropSpec {
+  readonly nodePath: string;
+  readonly prop: string;
+  readonly params: Readonly<Record<string, unknown>>;
+}
+
 /** What {@link buildFarms} produced. */
 export interface FarmPassResult {
-  /** WP-3's rows, baulks, edges and crops. Empty at WP-1, by construction. */
-  readonly blocks: readonly never[];
+  /** WP-3's crops, fences, gates and hay — the things that stand above ground. */
+  readonly blocks: readonly StructureBlock[];
+  /** §6.5's props, for the caller to hand to `buildProps`. */
+  readonly props: readonly FarmPropSpec[];
   readonly farms: readonly FarmReportRow[];
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: FarmStats;
@@ -243,6 +307,18 @@ export interface FarmPassInput {
   readonly occupancy?: OccupancyGrid;
   /** Placed building footprints — the gate rule's second fallback (§4.1). */
   readonly buildings?: readonly Rect[];
+  /**
+   * The theme's ground roles, for the edge course and the dry-stone wall.
+   *
+   * Optional with {@link FarmPassInput.stack}, and the pair is the seam between
+   * WP-2's planner and WP-3's emitter: a caller that hands neither gets the plan,
+   * the claims and the report and **no blocks**. That is what the planner's own
+   * tests want — a holding's packing is a fact about geometry, and asking them to
+   * load a block stack to assert it would be asking the wrong question.
+   */
+  readonly palette?: Palette;
+  /** The pinned 1.21.11 block set — §6.2's crop states are addressed through it. */
+  readonly stack?: PrismarineStack;
 }
 
 /**
@@ -311,6 +387,8 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
   const base = input.ground.intents.length;
   /** Per report row, the intent indices of its parcels — filled in after resolve. */
   const owned: number[][] = [];
+  /** Per report row, what the emitter needs once the resolver has spoken. */
+  const sowable: (SowJob | undefined)[] = [];
 
   for (const job of input.jobs) {
     const settings = farmSettings(job.params);
@@ -340,6 +418,7 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
         parcelWalls: 0,
       });
       owned.push([]);
+      sowable.push(undefined);
       continue;
     }
 
@@ -360,6 +439,7 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
       });
     }
     owned.push(mine);
+    sowable.push({ job, settings, yard: yard.rect, parcels: packed.parcels, intents: mine });
     // No `preserve` (§5.3): losing columns to a lane, a doorstep or a wall is
     // normal, and it is exactly the behaviour we want.
     if (packed.parcels.length === 0) {
@@ -383,9 +463,25 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
   const resolved = intents.length === 0 ? undefined : input.ground.finish();
   const settled = farms.map((row, i) => settle(row, owned[i] ?? [], resolved));
 
+  // WP-3, and the ordering is the whole of §5.4's last sentence: the rows are
+  // drawn against the **resolved** ground and the resolved ownership, never
+  // against the plan the packer made. A column the parcel claimed and lost — to
+  // a lane, a doorstep, a wall — is simply not one of the columns drawn on, so a
+  // row stops where the field stops and the fence closes across the gap.
+  const states = resolved === undefined ? undefined : farmStates(input);
+  const blocks: StructureBlock[] = [];
+  const props: FarmPropSpec[] = [];
+  const sown = settled.map((row, i) => {
+    const job = sowable[i];
+    if (states === undefined || resolved === undefined || job === undefined) return row;
+    const crops = sowHolding(job, states, input, resolved, blocks, props);
+    return { ...row, crops };
+  });
+
   return {
-    blocks: [],
-    farms: settled,
+    blocks,
+    props,
+    farms: sown,
     diagnostics,
     stats: {
       holdings: settled.length,
@@ -1049,4 +1145,678 @@ function clampFraction(
 ): number {
   if (typeof raw !== "number" || !Number.isFinite(raw)) return fallback;
   return Math.min(range.max, Math.max(range.min, raw));
+}
+
+/* -------------------------------------------------------------------------- */
+/* §6 the parcel emitter — WP-3                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One holding, carried from the planning loop to the emitter.
+ *
+ * The two are separated by exactly one thing: the resolver. The packer decides
+ * *where* a field is, the resolver decides *what the ground under it is*, and
+ * only then may a row be drawn — §5.4's last sentence, and the reason this
+ * struct exists rather than the emitter running inline.
+ */
+interface SowJob {
+  readonly job: FarmJob;
+  readonly settings: FarmSettings;
+  readonly yard: Rect;
+  readonly parcels: readonly FarmParcelPlan[];
+  /** The driver-array index of each parcel's intent, parallel to `parcels`. */
+  readonly intents: readonly number[];
+}
+
+type Facing = "north" | "south" | "east" | "west";
+
+/** Every block state the emitter lays, resolved once per compile. */
+interface FarmStates {
+  /** §6.2's persistence law, second half: farmland is written at moisture 0. */
+  readonly farmland: number;
+  readonly path: number;
+  readonly coarse: number;
+  /** The edge course, and pasture's own surface: the theme's soil. */
+  readonly soil: number;
+  readonly tuft: number;
+  readonly hay: number;
+  readonly fence: number;
+  readonly gate: Readonly<Record<Facing, number>>;
+  /** `edge: "wall"` — a dry-stone course in the theme's bank/revetment role. */
+  readonly wall: number;
+  /** The block that stands **above** a sown column, by crop id. */
+  readonly crop: Readonly<Record<string, number>>;
+}
+
+/**
+ * §6.2's table, in the pinned 1.21.11 set.
+ *
+ * Every crop is emitted mature (§14's exclusion 9: a field of `age=2` wheat is a
+ * field that looks broken), and `beetroots` is the one whose mature stage is 3
+ * rather than 7.
+ */
+function farmStates(input: FarmPassInput): FarmStates | undefined {
+  const { palette, stack } = input;
+  if (palette === undefined || stack === undefined) return undefined;
+  const named = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
+  const symbol = (s: string, fallback: string): number =>
+    palette.has(s) ? palette.state(s) : named(fallback);
+  const state = (name: string, props: Readonly<Record<string, string>>): number =>
+    stack.blockStateOf(name, props) ?? named(name);
+  const gate = (facing: Facing): number =>
+    state("minecraft:oak_fence_gate", {
+      facing,
+      in_wall: "false",
+      open: "false",
+      powered: "false",
+    });
+  return {
+    farmland: state("minecraft:farmland", { moisture: "0" }),
+    path: named("minecraft:dirt_path"),
+    coarse: symbol("ground.coarse_dirt", "minecraft:coarse_dirt"),
+    soil: symbol("ground.surface", "minecraft:grass_block"),
+    tuft: symbol("foliage.short_grass", "minecraft:short_grass"),
+    hay: state("minecraft:hay_block", { axis: "y" }),
+    fence: symbol("road.post", "minecraft:oak_fence"),
+    gate: { north: gate("north"), south: gate("south"), east: gate("east"), west: gate("west") },
+    // A field edge is not a building: the bank is the dry-stone course, and the
+    // revetment is what a theme that has no bank falls back to.
+    wall: palette.has("ground.bank")
+      ? palette.state("ground.bank")
+      : symbol("ground.revetment", "minecraft:cobblestone"),
+    crop: {
+      wheat: state("minecraft:wheat", { age: "7" }),
+      carrots: state("minecraft:carrots", { age: "7" }),
+      potatoes: state("minecraft:potatoes", { age: "7" }),
+      beetroots: state("minecraft:beetroots", { age: "3" }),
+      // No stems (§6.2): an attached stem needs a facing a lattice cannot
+      // guarantee, and an unattached one reads as nothing.
+      pumpkin: named("minecraft:pumpkin"),
+      berries: state("minecraft:sweet_berry_bush", { age: "3" }),
+    },
+  };
+}
+
+/** §10's `farm.cropList` resolve when no `era`/`climate` has spoken: temperate. */
+const DEFAULT_CROPS: readonly string[] = ["wheat", "carrots", "potatoes", "beetroots"];
+
+/** How `report.farms[].crops` names a parcel §6.5 sent fallow. */
+export const FALLOW = "fallow";
+
+/**
+ * The shortest interior side a crop's pattern needs.
+ *
+ * §6.2 says the crop draw skips "any crop the parcel is too small for", and this
+ * is that test. Only `pumpkin` has a pattern with a period — a 2-column lattice
+ * — and it wants an interior wide enough for two pumpkins on a side; every other
+ * crop fills whatever row it is given. At the 10-block parcel floor the interior
+ * is 8, so nothing in the table is refused in practice: the mechanism is here
+ * because §6.2 names it, not because a v0 crop trips it.
+ */
+const CROP_MIN_INTERIOR: Readonly<Record<string, number>> = Object.freeze({ pumpkin: 5 });
+
+/** What one parcel's interior is made of, before ownership is consulted. */
+type CellKind = "sown" | "baulk" | "headland" | "edge" | "standing";
+
+/**
+ * Sow one holding: every field, its edge, its gate, and at most three props.
+ *
+ * Returns the crops drawn, one per seated parcel, for the report row.
+ */
+function sowHolding(
+  sow: SowJob,
+  states: FarmStates,
+  input: FarmPassInput,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+  blocks: StructureBlock[],
+  props: FarmPropSpec[],
+): readonly string[] {
+  const { job, settings, parcels } = sow;
+  const plan = input.plan;
+  const region = plan.region;
+  const list = settings.crops.length > 0 ? settings.crops : DEFAULT_CROPS;
+  /**
+   * Fence columns this holding has already run, plus their orthogonal
+   * neighbours (§6.3): two parcels that touch share **one** boundary, and a
+   * double fence with a one-column dead alley between it is the single most
+   * common way this feature can look wrong.
+   */
+  const fenced = new Uint8Array(region.width * region.depth);
+  const crops: string[] = [];
+  const layouts: ParcelLayout[] = [];
+
+  for (const [i, parcel] of parcels.entries()) {
+    const layout = parcelLayout(parcel, job.seed, settings);
+    const crop = pickCrop(parcel, list, layout, crops, parcels, job.seed);
+    // A rested field is named in the report rather than blanked: "fallow" and
+    // "no crop drawn" are different facts (§6.5, and §12's crop-circle rule).
+    crops.push(layout.fallow ? FALLOW : crop);
+    layouts.push(layout);
+  }
+
+  // The props are sited **before** a single row is drawn, and the ground each of
+  // them stands on is trodden bare (§6.5's "at most one per parcel"). Both
+  // halves are the persistence law defending itself: a prop is placed by the
+  // ordinary `prop.place@0` emitter, which sites the thing from its own search
+  // and would happily set a handcart down in the wheat — and a prop that took a
+  // crop and left the farmland under it would un-till that column on the first
+  // random tick. Ground a prop may stand on is therefore ground with no crop on
+  // it, decided here, before the crop exists.
+  const trodden = placeProps(sow, layouts, crops, states, region, resolved, blocks, props);
+
+  for (const [i, parcel] of parcels.entries()) {
+    sowParcel(
+      parcel,
+      layouts[i] as ParcelLayout,
+      crops[i] === FALLOW ? (list[0] as string) : (crops[i] as string),
+      sow.intents[i] as number,
+      states,
+      input,
+      resolved,
+      fenced,
+      trodden,
+      blocks,
+      sow,
+    );
+  }
+  return crops;
+}
+
+/** One parcel's fixed decisions, drawn once and read by everything below. */
+interface ParcelLayout {
+  /** `true` when rows run along x — §6.1's "one axis for the whole parcel". */
+  readonly alongX: boolean;
+  readonly interior: Rect;
+  readonly baulkPhase: number;
+  readonly fallow: boolean;
+  /** Interior span across the rows, in columns. */
+  readonly rows: number;
+}
+
+/** §6.1's row direction and §6.5's fallow draw, for one parcel. */
+function parcelLayout(parcel: FarmParcelPlan, seed: Seed256, settings: FarmSettings): ParcelLayout {
+  const rect = parcel.rect;
+  const width = rect.x1 - rect.x0 + 1;
+  const depth = rect.z1 - rect.z0 + 1;
+  // The parcel's long axis; on a square parcel, channel 32's tie-break. §6.1
+  // reads "the axis of the holding's yaw" there, and a holding is always seated
+  // at yaw 0, which would make every square parcel in the world identical — the
+  // channel table reserves 32 for exactly this tie, so the draw is what breaks
+  // it. Documented rather than improvised: it is the only reading under which
+  // channel 32 has anything to decide.
+  const alongX =
+    width !== depth
+      ? width > depth
+      : positionInt(seed, rect.x0, CHANNEL_ROW_AXIS, rect.z0, 0, 1) === 0;
+  const interior: Rect = { x0: rect.x0 + 1, z0: rect.z0 + 1, x1: rect.x1 - 1, z1: rect.z1 - 1 };
+  const rows = alongX ? interior.z1 - interior.z0 + 1 : interior.x1 - interior.x0 + 1;
+  return {
+    alongX,
+    interior,
+    baulkPhase: positionInt(seed, rect.x0, CHANNEL_BAULK_PHASE, rect.z0, 0, 2),
+    fallow: positionFloat(seed, rect.x0, CHANNEL_FALLOW, rect.z0) < settings.fallow,
+    rows,
+  };
+}
+
+/**
+ * §6.2's crop draw: positional, keyed on the parcel's min corner, walked forward
+ * from the drawn index like `pickArchetype` does — skipping any crop the parcel
+ * is too small for, and skipping the crop a touching, already-placed parcel
+ * took. The last parcel in a holding may repeat.
+ */
+function pickCrop(
+  parcel: FarmParcelPlan,
+  list: readonly string[],
+  layout: ParcelLayout,
+  taken: readonly string[],
+  parcels: readonly FarmParcelPlan[],
+  seed: Seed256,
+): string {
+  const interiorSide = Math.min(
+    layout.interior.x1 - layout.interior.x0 + 1,
+    layout.interior.z1 - layout.interior.z0 + 1,
+  );
+  const neighbours = new Set<string>();
+  for (const [i, other] of parcels.entries()) {
+    if (i >= taken.length) break;
+    if (!adjacent(parcel.rect, other.rect)) continue;
+    const crop = taken[i];
+    if (crop !== undefined && crop !== "") neighbours.add(crop);
+  }
+  const start = positionInt(seed, parcel.rect.x0, CHANNEL_CROP, parcel.rect.z0, 0, list.length - 1);
+  let fallback: string | undefined;
+  for (let step = 0; step < list.length; step++) {
+    const crop = list[(start + step) % list.length] as string;
+    if ((CROP_MIN_INTERIOR[crop] ?? 0) > interiorSide) continue;
+    fallback ??= crop;
+    if (neighbours.has(crop)) continue;
+    return crop;
+  }
+  // Every crop the parcel can grow is already growing next door: the last parcel
+  // in a holding may repeat (§6.2), and this is that sentence.
+  return fallback ?? (list[start] as string);
+}
+
+/**
+ * Two parcels a player reads as neighbours — §6.2's "the previously-placed
+ * adjacent parcel", whose crop this one must not take.
+ *
+ * The bar is the jitter span, not zero: two parcels on neighbouring grid cells
+ * are inset 0..2 each (§6.4 channel 30), so "abutting" would catch only the
+ * quarter of neighbour pairs that both drew a zero inset — and the colour change
+ * at a boundary is what makes a parcel legible whether the gap is nothing or
+ * four columns.
+ */
+function adjacent(a: Rect, b: Rect): boolean {
+  return chebyshev(a, b) <= PARCEL_ADJACENT_GAP;
+}
+
+/** Widest gap across which two parcels still read as neighbours (§6.2). */
+const PARCEL_ADJACENT_GAP = 4;
+
+/**
+ * Draw one parcel: the edge course and its fence, the headlands, the baulks and
+ * the rows.
+ *
+ * Every column is checked against `resolved.owner` first. That check is the
+ * whole of §5.4's instruction — a column the parcel lost is not drawn on, so a
+ * lane through a field is a lane through a field rather than a lane with wheat
+ * laid over it — and it is also what makes the persistence law safe: the pair
+ * (farmland, crop) is written in one place, under one ownership test, so there
+ * is no path that writes the farmland and skips the crop.
+ */
+function sowParcel(
+  parcel: FarmParcelPlan,
+  layout: ParcelLayout,
+  crop: string,
+  mine: number,
+  states: FarmStates,
+  input: FarmPassInput,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+  fenced: Uint8Array,
+  trodden: ReadonlySet<number>,
+  blocks: StructureBlock[],
+  sow: SowJob,
+): void {
+  const plan = input.plan;
+  const region = plan.region;
+  const rect = parcel.rect;
+  const gate = gateColumn(parcel, sow, fenced, region, mine, resolved);
+
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      const idx = index(region, x, z);
+      // §5.4: the resolved ground and the resolved ownership, never the plan the
+      // packer made.
+      if (resolved.owner[idx] !== mine) continue;
+      const y = resolved.ground[idx] as number;
+      const plotted = cellKind(x, z, rect, layout);
+      // The edge is never trodden away: a parcel keeps its boundary and its one
+      // gate whatever stands inside it.
+      const kind: CellKind = plotted !== "edge" && trodden.has(idx) ? "standing" : plotted;
+      const surface =
+        kind === "edge"
+          ? states.soil
+          : // A prop's standing: trodden bare, and `coarse_dirt` rather than
+            // `dirt_path` because a hay bale is a full block and `dirt_path`
+            // reverts to `dirt` under one.
+            kind === "standing"
+            ? states.coarse
+            : kind === "headland" || kind === "baulk"
+              ? states.path
+              : sownSurface(x, z, layout, crop, states);
+      plan.surface[idx] = surface;
+      // Snow over a crop is not a season, it is a compile that disagreed with
+      // itself (§8) — and a snow layer standing where the wheat goes is also a
+      // block in the crop's own space.
+      plan.snow[idx] = 0;
+      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+
+      if (kind === "edge") {
+        edgeVertical(x, z, y, idx, gate, states, sow.settings, fenced, region, blocks);
+        continue;
+      }
+      if (surface === states.farmland) {
+        // THE PERSISTENCE LAW, first half: every farmland column carries a crop.
+        // Farmland with nothing above it reverts to dirt on a random tick, so a
+        // world shipped with bare tilled rows is a world that un-tills itself in
+        // front of the player.
+        blocks.push({ x, y: y + 1, z, stateId: states.crop[crop] as number });
+      } else if (crop === "berries" && kind === "sown" && !layout.fallow) {
+        blocks.push({ x, y: y + 1, z, stateId: states.crop["berries"] as number });
+      } else if (crop === "pasture" && kind === "sown" && !layout.fallow) {
+        if (positionFloat(sow.job.seed, x, CHANNEL_PASTURE, z) < PASTURE_TUFT_DENSITY) {
+          blocks.push({ x, y: y + 1, z, stateId: states.tuft });
+        }
+      }
+    }
+  }
+}
+
+/** Which of §6.1's four things a column is. */
+function cellKind(x: number, z: number, rect: Rect, layout: ParcelLayout): CellKind {
+  if (x === rect.x0 || x === rect.x1 || z === rect.z0 || z === rect.z1) return "edge";
+  const interior = layout.interior;
+  const u = layout.alongX ? x : z;
+  const u0 = layout.alongX ? interior.x0 : interior.z0;
+  const u1 = layout.alongX ? interior.x1 : interior.z1;
+  // §6.1's headlands: the turning strip at each end of the run, and the single
+  // cue that most reliably says "ploughed" from a distance.
+  if (u < u0 + HEADLAND_DEPTH || u > u1 - HEADLAND_DEPTH) return "headland";
+  const v = layout.alongX ? z : x;
+  const v0 = layout.alongX ? interior.z0 : interior.x0;
+  const row = v - v0;
+  if (row >= BAULK_FIRST_ROW && (row - BAULK_FIRST_ROW - layout.baulkPhase) % BAULK_PITCH === 0) {
+    return "baulk";
+  }
+  if (layout.rows >= CENTRELINE_BAULK_SPAN && row === layout.rows >> 1) return "baulk";
+  return "sown";
+}
+
+/** The surface of a sown column: §6.2's table, and §6.5's fallow. */
+function sownSurface(
+  x: number,
+  z: number,
+  layout: ParcelLayout,
+  crop: string,
+  states: FarmStates,
+): number {
+  // A fallow parcel is rested ground with the baulks and the edge kept (§6.5) —
+  // and, under the persistence law, it is `coarse_dirt` rather than bare tilth.
+  if (layout.fallow) return states.coarse;
+  switch (crop) {
+    case "berries":
+      return states.coarse;
+    case "pasture":
+      return states.soil;
+    case "pumpkin": {
+      // A 2-column lattice, `dirt_path` between (§6.2). The lattice cells are
+      // the farmland ones, so every farmland column still carries a pumpkin.
+      const u = layout.alongX ? x - layout.interior.x0 : z - layout.interior.z0;
+      const v = layout.alongX ? z - layout.interior.z0 : x - layout.interior.x0;
+      return (u & 1) === 0 && (v & 1) === 0 ? states.farmland : states.path;
+    }
+    default:
+      return states.farmland;
+  }
+}
+
+/** Where a parcel's one gate stands, and which way it faces (§6.3). */
+interface FarmGateColumn {
+  readonly x: number;
+  readonly z: number;
+  readonly facing: Facing;
+}
+
+/**
+ * §6.3's one gate per parcel: in the edge run facing the yard, at a position
+ * drawn on channel 35, never at a corner — and never on a run this holding has
+ * already fenced, because a shared boundary carries one fence and both parcels'
+ * gates are elsewhere.
+ */
+function gateColumn(
+  parcel: FarmParcelPlan,
+  sow: SowJob,
+  fenced: Uint8Array,
+  region: Region,
+  mine: number,
+  resolved: { readonly owner: Int32Array },
+): FarmGateColumn | undefined {
+  const rect = parcel.rect;
+  if (rect.x1 - rect.x0 < 2 || rect.z1 - rect.z0 < 2) return undefined;
+  const cx = (rect.x0 + rect.x1) >> 1;
+  const cz = (rect.z0 + rect.z1) >> 1;
+  const yx = (sow.yard.x0 + sow.yard.x1) >> 1;
+  const yz = (sow.yard.z0 + sow.yard.z1) >> 1;
+  // The side facing the yard first, then the rest in a fixed order: a parcel
+  // with no line of sight to the yard still gets exactly one gate.
+  const facing: Facing =
+    Math.abs(yx - cx) > Math.abs(yz - cz) ? (yx < cx ? "west" : "east") : yz < cz ? "north" : "south";
+  const order: readonly Facing[] = [facing, "north", "west", "east", "south"];
+  const seen = new Set<Facing>();
+  for (const side of order) {
+    if (seen.has(side)) continue;
+    seen.add(side);
+    const run = edgeRun(rect, side);
+    const draw = positionInt(sow.job.seed, rect.x0, CHANNEL_GATE, rect.z0, 0, run.length - 1);
+    for (let step = 0; step < run.length; step++) {
+      const column = run[(draw + step) % run.length] as { x: number; z: number };
+      if (!inside(region, column.x, column.z)) continue;
+      const idx = index(region, column.x, column.z);
+      // A column the parcel lost is not the parcel's to hang a gate on (§5.4),
+      // and a column already fenced belongs to the shared boundary (§6.3).
+      if (resolved.owner[idx] !== mine) continue;
+      if (fenced[idx] === 1) continue;
+      return { ...column, facing: side };
+    }
+  }
+  return undefined;
+}
+
+/** One side of a parcel's edge course, corners excluded. */
+function edgeRun(rect: Rect, side: Facing): readonly { x: number; z: number }[] {
+  const run: { x: number; z: number }[] = [];
+  if (side === "north" || side === "south") {
+    const z = side === "north" ? rect.z0 : rect.z1;
+    for (let x = rect.x0 + 1; x <= rect.x1 - 1; x++) run.push({ x, z });
+  } else {
+    const x = side === "west" ? rect.x0 : rect.x1;
+    for (let z = rect.z0 + 1; z <= rect.z1 - 1; z++) run.push({ x, z });
+  }
+  return run;
+}
+
+/**
+ * The vertical that stands on one edge column: a fence post, a dry-stone
+ * course, a gate, or nothing.
+ *
+ * Fence posts stand on the **edge course** and never on farmland or
+ * `dirt_path` (§6.3): `dirt_path` reverts to `dirt` under a solid block, and a
+ * fence on farmland reads as a mistake. Putting the posts on soil dodges both,
+ * and the surface has already been written as soil by the caller.
+ */
+function edgeVertical(
+  x: number,
+  z: number,
+  y: number,
+  idx: number,
+  gate: FarmGateColumn | undefined,
+  states: FarmStates,
+  settings: FarmSettings,
+  fenced: Uint8Array,
+  region: Region,
+  blocks: StructureBlock[],
+): void {
+  if (settings.edge === "none") return;
+  const isGate = gate !== undefined && gate.x === x && gate.z === z;
+  if (isGate) {
+    // `edge: "wall"` leaves a one-column gap where the gate would be (§6.3).
+    if (settings.edge === "fence") {
+      blocks.push({ x, y: y + 1, z, stateId: states.gate[gate.facing] });
+    }
+    fenced[idx] = 1;
+    return;
+  }
+  // §6.3's shared boundary: a column orthogonally beside a run this holding has
+  // already fenced is the other parcel's fence, seen from this side.
+  for (const [dx, dz] of [
+    [0, 0],
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ] as const) {
+    if (!inside(region, x + dx, z + dz)) continue;
+    if (fenced[index(region, x + dx, z + dz)] === 1) return;
+  }
+  blocks.push({ x, y: y + 1, z, stateId: settings.edge === "wall" ? states.wall : states.fence });
+  fenced[idx] = 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* §6.5 the props                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * At most one prop per parcel and at most three per holding (§6.5).
+ *
+ * Each stands on ground that carries no crop — a scarecrow on a baulk, a cart
+ * on a headland, the hay in the corner of a rested field — which is both what
+ * §6.5 says and what the persistence law needs: a prop that landed on a sown
+ * column would take the crop and leave the farmland bare.
+ *
+ * The scarecrow and the cart go through the ordinary `prop.place@0` emitter, so
+ * they are refused whole when a single op cannot land. The hay is four blocks
+ * and has no prop generator behind it — the same call the precinct's windsock
+ * makes, and for the same reason.
+ */
+function placeProps(
+  sow: SowJob,
+  layouts: readonly ParcelLayout[],
+  crops: readonly string[],
+  states: FarmStates,
+  region: Region,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+  blocks: StructureBlock[],
+  props: FarmPropSpec[],
+): ReadonlySet<number> {
+  const { parcels, job } = sow;
+  const trodden = new Set<number>();
+  if (parcels.length === 0) return trodden;
+  const used = new Set<number>();
+  let placed = 0;
+  /**
+   * The scrap of bare ground a prop stands on, cleared before the rows exist.
+   *
+   * Sized from the prop's own footprint and a ring beyond it, because
+   * `planPropPlacement` lays a prop's rectangle out from the target column
+   * rather than around it, and takes the first candidate that fits: on the level
+   * ground of a field, that candidate is the target column itself, and the
+   * cleared patch is therefore exactly the ground the prop will cover.
+   */
+  const tread = (site: { readonly x: number; readonly z: number }, span: number): void => {
+    for (let dz = -1; dz <= span; dz++) {
+      for (let dx = -1; dx <= span; dx++) {
+        const x = site.x + dx;
+        const z = site.z + dz;
+        if (!inside(region, x, z)) continue;
+        trodden.add(index(region, x, z));
+      }
+    }
+  };
+
+  // The cart, on the headland of the parcel nearest the yard.
+  let nearest = 0;
+  for (let i = 1; i < parcels.length; i++) {
+    const a = chebyshev((parcels[i] as FarmParcelPlan).rect, sow.yard);
+    const b = chebyshev((parcels[nearest] as FarmParcelPlan).rect, sow.yard);
+    if (a < b) nearest = i;
+  }
+  const cart = columnOfKind(
+    parcels[nearest] as FarmParcelPlan,
+    layouts[nearest] as ParcelLayout,
+    "headland",
+    sow.intents[nearest] as number,
+    region,
+    resolved,
+  );
+  if (cart !== undefined) {
+    used.add(nearest);
+    placed++;
+    tread(cart, propSpan("cart"));
+    props.push({
+      nodePath: `${job.nodePath}.cart`,
+      prop: "cart",
+      params: { at: { x: cart.x, z: cart.z } },
+    });
+  }
+
+  // The scarecrow, on a baulk of a sown parcel — drawn on channel 36 over the
+  // eligible parcels, keyed on the holding's own gate corner so that adding a
+  // field somewhere else does not move it.
+  const sownParcels = parcels
+    .map((_, i) => i)
+    .filter((i) => !used.has(i) && (layouts[i] as ParcelLayout).fallow === false && crops[i] !== "pasture");
+  if (placed < MAX_HOLDING_PROPS && sownParcels.length > 0) {
+    const pick = sownParcels[
+      positionInt(job.seed, sow.yard.x0, CHANNEL_PROP, sow.yard.z0, 0, sownParcels.length - 1)
+    ] as number;
+    const site = columnOfKind(
+      parcels[pick] as FarmParcelPlan,
+      layouts[pick] as ParcelLayout,
+      "baulk",
+      sow.intents[pick] as number,
+      region,
+      resolved,
+    );
+    if (site !== undefined) {
+      used.add(pick);
+      placed++;
+      tread(site, propSpan("scarecrow"));
+      props.push({
+        nodePath: `${job.nodePath}.scarecrow`,
+        prop: "scarecrow",
+        params: { at: { x: site.x, z: site.z } },
+      });
+    }
+  }
+
+  // The hay, in the corner of the first rested or grazed field.
+  if (placed < MAX_HOLDING_PROPS) {
+    for (let i = 0; i < parcels.length; i++) {
+      if (used.has(i)) continue;
+      if (!(layouts[i] as ParcelLayout).fallow && crops[i] !== "pasture") continue;
+      const corner = columnOfKind(
+        parcels[i] as FarmParcelPlan,
+        layouts[i] as ParcelLayout,
+        "headland",
+        sow.intents[i] as number,
+        region,
+        resolved,
+      );
+      if (corner === undefined) continue;
+      blocks.push({ x: corner.x, y: corner.y + 1, z: corner.z, stateId: states.hay });
+      blocks.push({ x: corner.x, y: corner.y + 2, z: corner.z, stateId: states.hay });
+      // The hay is two blocks and has no prop generator behind it.
+      tread(corner, 1);
+      used.add(i);
+      break;
+    }
+  }
+  return trodden;
+}
+
+
+/**
+ * The first column of a parcel of the given kind that the parcel actually won,
+ * in (z, x) order — a total order, so which column a prop stands on is a fact
+ * about the field rather than about the loop.
+ */
+function columnOfKind(
+  parcel: FarmParcelPlan,
+  layout: ParcelLayout,
+  want: CellKind,
+  mine: number,
+  region: Region,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+): { readonly x: number; readonly z: number; readonly y: number } | undefined {
+  const rect = parcel.rect;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      const idx = index(region, x, z);
+      if (resolved.owner[idx] !== mine) continue;
+      if (cellKind(x, z, rect, layout) !== want) continue;
+      return { x, z, y: resolved.ground[idx] as number };
+    }
+  }
+  return undefined;
+}
+
+/** The widest side of a prop's footprint, in columns. */
+function propSpan(prop: "cart" | "scarecrow"): number {
+  const size = propFootprint(prop, {}).size;
+  return Math.max(size[0] as number, size[2] as number);
 }

@@ -79,10 +79,11 @@ One node is one holding — a farmstead and the fields that belong to it.**
   "envelope": { "shape": "region", "size": [96, 80] },
   "params": { "parcels": 6, "parcelSize": 18, "crops": ["wheat", "potatoes"] },
   "constraints": [
-    { "adjacent_to": "village", "distance": [8, 40] },
+    { "adjacent_to": "village" },
+    { "distance": [8, 40] },
     { "terrain_conform": "drape" }
   ],
-  "ports": { "gate": { "type": "road_stub", "face": "auto", "tags": ["primary"] } },
+  "ports": { "gate": { "type": "road_stub", "face": "any", "tags": ["primary"] } },
   "tags": ["farm", "rural"]
 }
 ```
@@ -418,6 +419,7 @@ somewhere else must leave the rest of the holding exactly as it was.
 | 35 | gate position along the chosen edge run |
 | 36 | which parcel carries the scarecrow / hay / cart prop |
 | 37 | farmstead outbuilding draw (§7.2) |
+| 38 | pasture tuft density — §6.2's `short_grass` "at a lifted density" (added at WP-3, under this section's own instruction) |
 
 Channels 30–39 are reserved for this feature. An implementer adding a draw
 takes the next free number and adds a row here; reusing a channel silently

@@ -141,18 +141,20 @@ describe("the node", () => {
 });
 
 describe("the report row", () => {
-  it("reports the holding, with every WP-3..4 count at zero", () => {
+  it("reports the holding, with every WP-4 count at zero", () => {
     const farms = withFarm.report.farms;
     expect(farms).toHaveLength(1);
     const row = farms?.[0];
     expect(row?.nodePath).toBe("world.east_farm");
     expect(row?.id).toBe("east_farm");
     expect(row?.parcelsRequested).toBe(6);
-    // WP-2 packs the fields; WP-3 sows them and WP-4 builds the yard.
+    // WP-2 packs the fields, WP-3 sows them; WP-4 builds the yard.
     expect(row?.parcelsSeated).toBe(6);
     expect(row?.columnsClaimed).toBeGreaterThan(0);
     expect(row?.parcelWalls).toBe(0);
-    expect(row?.crops).toEqual([]);
+    // One crop per seated parcel, all of them from the list the author wrote.
+    expect(row?.crops).toHaveLength(6);
+    for (const crop of row?.crops ?? []) expect(["wheat", "potatoes"]).toContain(crop);
     expect(row?.farmstead).toEqual([]);
     expect(row?.yard).toBeUndefined();
     expect(row?.portAnchor).toBe("world.east_farm");
@@ -180,9 +182,9 @@ describe("the report row", () => {
   });
 });
 
-describe("no blocks — the WP-1 bar, kept at WP-2", () => {
-  it("emits nothing at all", () => {
-    expect(withFarm.structures?.farms?.blocks).toEqual([]);
+describe("what the holding lays — the WP-1 bar, amended once at WP-3", () => {
+  it("sows: WP-1 and WP-2 emitted nothing, and WP-3 is where the blocks arrive", () => {
+    expect((withFarm.structures?.farms?.blocks ?? []).length).toBeGreaterThan(0);
   });
 
   it("lays no pad — a holding never levels its envelope", () => {
