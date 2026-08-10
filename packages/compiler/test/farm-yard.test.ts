@@ -14,7 +14,7 @@
  * 2. **no tree inside a parcel**;
  * 3. the walkability audit's goldens do not regress — carried by the suite's
  *    own fixtures, and joined here by the harder bar §13.1 sets for every farm
- *    WP: a compiled world read back off disk, linted zero on all 26 rules.
+ *    WP: a compiled world read back off disk, linted zero on all 27 rules.
  */
 
 import { mkdtemp, rm } from "node:fs/promises";
@@ -398,8 +398,8 @@ describe("the other passes stay out (§9)", () => {
 });
 
 describe("the world (§13.1)", () => {
-  it("lints zero on all 26 physics rules", () => {
+  it("lints zero on all 27 physics rules", () => {
     expect(physics.findings).toEqual([]);
-    expect(PHYSICS_RULES.length).toBe(26);
+    expect(PHYSICS_RULES.length).toBe(27);
   });
 });

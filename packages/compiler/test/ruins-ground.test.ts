@@ -19,7 +19,7 @@
  *    and off the streets.
  *
  * §8's bar applies as it does to every WP: a compiled world read back off disk
- * and linted zero on all 26 physics rules, not a unit test.
+ * and linted zero on all 27 physics rules, not a unit test.
  */
 
 import { mkdtemp, rm } from "node:fs/promises";
@@ -501,8 +501,8 @@ describe("the reach law (§2)", () => {
 });
 
 describe("physics (§8)", () => {
-  it("lints zero on all 26 rules", () => {
+  it("lints zero on all 27 rules", () => {
     expect(physics.findings).toEqual([]);
-    expect(PHYSICS_RULES.length).toBe(26);
+    expect(PHYSICS_RULES.length).toBe(27);
   });
 });

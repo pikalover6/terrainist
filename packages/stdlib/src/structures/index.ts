@@ -58,4 +58,5 @@ export * from "./archetypes-arcana.js";
 export * from "./archetypes-relic.js";
 export * from "./decay.js";
 export * from "./support.js";
+export * from "./greenery.js";
 export * from "./archetypes-spectacle.js";

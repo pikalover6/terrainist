@@ -62,7 +62,12 @@ import type { GroundDriver } from "../layout/ground-driver.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import { PALETTE_THEME_KEY, defineGroundRoles, type Palette } from "../terrain/palette.js";
+import {
+  PALETTE_THEME_KEY,
+  defineGreenSkinSymbols,
+  defineGroundRoles,
+  type Palette,
+} from "../terrain/palette.js";
 
 import {
   buildBuildings,
@@ -84,6 +89,7 @@ import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./grounds.js";
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
 import { buildRuinField, type RuinField } from "./ruin-field.js";
+import { growGreenSkin, type GreenSkinResult } from "./green-skin.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
@@ -280,6 +286,10 @@ export interface StructureStats {
   readonly ruinYards: number;
   /** Columns the ruin field reaches at all (§7.1). */
   readonly ruinFieldColumns: number;
+  /** Ruined columns the green skin's surface index covered (WP-6 §3.2). */
+  readonly greenSkinColumns: number;
+  /** Blocks the green skin wrote. Zero at WP-6a, by design. */
+  readonly greenSkinBlocks: number;
   /** Carriageway columns broken back to soil (§7.3). */
   readonly brokenStreetColumns: number;
   /** Volunteer plants grown on those broken columns (§7.3). */
@@ -384,6 +394,14 @@ export interface StructurePassResult {
    * because it is derived from what they actually put on the ground.
    */
   readonly ruinField?: RuinField;
+  /**
+   * WP-6's green skin, absent when no shell ruined (the reach law, §3.4).
+   *
+   * Carried out of the pass because WP-6d's `colonized` mask travels to
+   * `terrain/compile.ts`, where the scatter reads it. At WP-6a the mask is
+   * empty and the block list is empty, so nothing downstream moves.
+   */
+  readonly greenSkin?: GreenSkinResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -618,6 +636,21 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         rootPath,
         `the "${theme.id}" material theme gives ground role "${bad.symbol}" the block "${bad.block}", which does not exist in this Minecraft version`,
         "this is a compiler bug rather than a document problem — the role keeps its previous value meanwhile",
+      ),
+    );
+  }
+
+  // RUINS-PLAN-v0-WP6 §4.4 / Q1: the green skin's one theme-gated symbol. It
+  // resolves in the themes that declare it and simply does not exist in the
+  // others, which is the whole of the gate — a theme with no `foliage.glow_lichen`
+  // grows no lichen because the substitution has nothing to write.
+  for (const bad of defineGreenSkinSymbols(input.palette, input.stack, theme)) {
+    diagnostics.push(
+      warning(
+        "BAD_PALETTE",
+        rootPath,
+        `the "${theme.id}" material theme gives green-skin symbol "${bad.symbol}" the block "${bad.block}", which does not exist in this Minecraft version`,
+        "this is a compiler bug rather than a document problem — the symbol stays unresolved and the skin writes no lichen",
       ),
     );
   }
@@ -1514,6 +1547,37 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   diagnostics.push(...life.diagnostics);
   lay("life", life.blocks);
 
+  // --- the green skin (RUINS-PLAN-v0-WP6 §3.1) -----------------------------
+  // The last structure pass, and there is no other legal slot: it must see the
+  // ruin field (built right after `buildBuildings`), the *finished* ground (a
+  // substitution on a column the ground pass is about to repaint never
+  // happened), and every built surface — the streetscape's kerbs and the life
+  // pass's awnings are among the last blocks laid.
+  //
+  // WP-6a writes **no blocks**: this call builds the surface index, proves the
+  // reach law structurally, and returns an empty list and an empty `colonized`
+  // mask. Guarded on the field as well as returning early on it, so a world
+  // that ruins nothing does not even walk the laid list.
+  const greenSkin =
+    ruinField === undefined
+      ? undefined
+      : growGreenSkin({
+          plan: input.plan,
+          palette: input.palette,
+          stack: input.stack,
+          seed: seed32(streamSeed(themeSeed, "green-skin")),
+          ruinField,
+          laid: blocks,
+          districts,
+          ...(grounds.ruinYardColumns === undefined
+            ? {}
+            : { ruinYardColumns: grounds.ruinYardColumns }),
+        });
+  if (greenSkin !== undefined) {
+    diagnostics.push(...greenSkin.diagnostics);
+    lay("green-skin", greenSkin.blocks);
+  }
+
   return {
     blocks,
     blockSpans,
@@ -1527,6 +1591,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(precincts === undefined ? {} : { precincts }),
     ...(farms === undefined ? {} : { farms }),
     ...(ruinField === undefined ? {} : { ruinField }),
+    ...(greenSkin === undefined ? {} : { greenSkin }),
     districts,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
@@ -1568,6 +1633,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       wornColumns: grounds.wornColumns,
       ruinYards: grounds.ruinYards,
       ruinFieldColumns: ruinField?.columns ?? 0,
+      greenSkinColumns: greenSkin?.counts.indexedColumns ?? 0,
+      greenSkinBlocks: greenSkin?.blocks.length ?? 0,
       brokenStreetColumns: countMask(streets?.broken),
       streetReclaimBlocks: grounds.streetReclaim,
       airports: precincts?.stats.airports ?? 0,

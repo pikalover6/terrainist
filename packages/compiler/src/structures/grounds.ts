@@ -326,6 +326,19 @@ export interface GroundPassResult {
   readonly wornColumns: number;
   /** Lots that took the `ruin_yard` treatment (§7.2). */
   readonly ruinYards: number;
+  /**
+   * 1 on every column a `ruin_yard` treatment dressed, row-major over the
+   * plan's region; absent when no lot took the treatment.
+   *
+   * Published for RUINS-PLAN-v0-WP6 §6.1, which names the accidental closure
+   * this mask exists to undo: the yard is claimed `ground` by the sweep at the
+   * end of {@link buildGrounds}, `ground` is one of the reclaim's hard tags, so
+   * the one treatment invented to say *this ground is ruined ground* is also
+   * the treatment that forbids a tree from standing on it. Nothing reads the
+   * mask yet — WP-6d's street colonizer is its first reader — and publishing it
+   * writes no block and moves no world.
+   */
+  readonly ruinYardColumns?: Uint8Array;
   /** Volunteer plants grown on broken street columns (§7.3). */
   readonly streetReclaim: number;
 }
@@ -469,6 +482,9 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
 
   let dressedColumns = 0;
   let ruinYards = 0;
+  // §6.1's published mask. Allocated only when a ruin yard actually appears, so
+  // a world that ruins nothing allocates nothing and returns nothing.
+  let ruinYardColumns: Uint8Array | undefined;
   for (const built of input.buildings) {
     // §7.2: the ruin field is asked **first**, ahead of the category table. A
     // ruined shell's ground is ruined ground whatever the archetype's category
@@ -483,7 +499,16 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
     const before = blocks.length;
     const columns =
       treatment === "ruin_yard"
-        ? dressRuinYard(input, states, built, ruin, free, taken, blocks)
+        ? dressRuinYard(
+            input,
+            states,
+            built,
+            ruin,
+            free,
+            taken,
+            blocks,
+            (ruinYardColumns ??= new Uint8Array(cells)),
+          )
         : treatment === "garden"
           ? dressGarden(input, states, built, free, taken, blocks)
           : dressRing(input, states, built, treatment, free, taken, blocks);
@@ -522,7 +547,15 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
     }
   }
 
-  return { blocks, lots, dressedColumns, wornColumns, ruinYards, streetReclaim };
+  return {
+    blocks,
+    lots,
+    dressedColumns,
+    wornColumns,
+    ruinYards,
+    streetReclaim,
+    ...(ruinYardColumns === undefined ? {} : { ruinYardColumns }),
+  };
 }
 
 /** How ruined the ground under one building is, 0 when the field is absent. */
@@ -861,6 +894,8 @@ function dressRuinYard(
   free: (x: number, z: number) => number,
   taken: Uint8Array,
   blocks: StructureBlock[],
+  /** §6.1's mask, marked for every column this treatment claims. */
+  yardColumns: Uint8Array,
 ): number {
   const { plan, seed } = input;
   const rect = built.footprint;
@@ -895,6 +930,7 @@ function dressRuinYard(
       const g = plan.ground[idx] as number;
       if (Math.abs(g - built.floorY) > LOT_MAX_RELIEF) continue;
       taken[idx] = 1;
+      yardColumns[idx] = 1;
       count++;
 
       const edge = x === plot.x0 || x === plot.x1 || z === plot.z0 || z === plot.z1;

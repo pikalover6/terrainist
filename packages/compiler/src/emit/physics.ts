@@ -37,7 +37,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import { bodyBlocking, needsGround } from "@terrainist/stdlib";
+import { GROWTH_FACES, bodyBlocking, isMultifaceGrowth, needsGround } from "@terrainist/stdlib";
 
 import type { EmitAnvil, EmitChunk, PrismarineStack } from "./prismarine.js";
 import { listChunks, listRegionFiles, readRegionChunksNbt } from "./prismarine.js";
@@ -197,7 +197,13 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
   "cave.fluid_shell",
   "cave.surface_breach",
   "blockentity.orphan",
+  // RUINS-PLAN-v0-WP6 §8's rule 27, and the first rule in this list that
+  // polices a block whose whole state *is* its attachment.
+  "unsupported.multiface",
 ]);
+
+/** The six faces a multi-face growth block may claim, and where each points. */
+const MULTIFACE_STEP = GROWTH_FACES;
 
 const AIR = new Set(["air", "cave_air", "void_air"]);
 
@@ -412,6 +418,62 @@ export async function lintWorldPhysics(
               other.props["part"] === (part === "foot" ? "head" : "foot");
             if (!ok) {
               add("bed.pairing", x, y, z, `${part} has no matching half at ${x + dx * sign},${y},${z + dz * sign}`);
+            }
+          }
+
+          // --- multi-face growth (rule 27) --------------------------------
+          // RUINS-PLAN-v0-WP6 §8. A `vine`, a `glow_lichen` or a `sculk_vein`
+          // does not stand on anything and does not hang off anything: its
+          // whole state is a set of attachment faces, and each true face draws
+          // a panel on that side of the cube. The other 26 rules cannot see
+          // this class of defect at all — `support.ts` puts `vine` in
+          // `INSUBSTANTIAL` and `supportDirection` returns `null` for it, which
+          // is right for what those rules ask and leaves a mis-faced vine
+          // invisible to every one of them. It is also the exact defect Kai
+          // found by eye twice on the flora side (`oldgrowth_vale-2` and `-3`):
+          // a face set whose every true face points at air renders as a flat
+          // plate in mid-air and vanilla pops it on the first block update.
+          //
+          // Two clauses, matching `growthFaces`' laws 1 and 2 read back off
+          // disk: at least one true face names a full cube, and `up` is true
+          // only under one.
+          if (isMultifaceGrowth(name)) {
+            // Vanilla's own two ways for a face to be held, and no third:
+            // the neighbour on that face is a full cube, or the block directly
+            // above is the same growth carrying the same face — which is how a
+            // legal strand runs down a wall and one course past its last block
+            // without popping (`VineBlock.getUpdatedState`). `up` gets no such
+            // clause: a vine is not a sturdy down-face, so an inherited `up` is
+            // the flat plate hanging in space and is always a finding.
+            const above = stack.blockStateProps(stateAt(x, y + 1, z));
+            const carried =
+              above !== undefined && above.name === name ? above.props : undefined;
+            const anchored: string[] = [];
+            for (const [face, ox, oy, oz] of MULTIFACE_STEP) {
+              if (props[face] !== "true") continue;
+              if (face === "up" || face === "down") continue;
+              if (solidAt(x + ox, y + oy, z + oz) || carried?.[face] === "true") {
+                anchored.push(face);
+              }
+            }
+            const ceiling = props["up"] === "true" && solidAt(x, y + 1, z);
+            if (anchored.length === 0 && !ceiling) {
+              add(
+                "unsupported.multiface",
+                x,
+                y,
+                z,
+                "no true face names a full cube — every face it claims points at air",
+              );
+            }
+            if (props["up"] === "true" && !solidAt(x, y + 1, z)) {
+              add(
+                "unsupported.multiface",
+                x,
+                y,
+                z,
+                `up=true but nothing solid above at ${x},${y + 1},${z}`,
+              );
             }
           }
 

@@ -17,6 +17,8 @@
  * those two can actually be produced.
  */
 
+import { chooseGrowthFace, growthFaces, ownGrowthFaces } from "@terrainist/stdlib";
+
 import { WOOD_PARTS, type FloraBlock, type FloraPart } from "./types.js";
 
 /**
@@ -188,8 +190,6 @@ const HANGING_SUPPORT_PARTS: ReadonlySet<FloraPart> = new Set<FloraPart>([
   "cap",
 ]);
 
-const HORIZONTAL_FACES = FACES.filter(([face]) => face !== "up" && face !== "down");
-
 /**
  * Attachment faces per `hanging` block (§3.2, amended 2026-08-08).
  *
@@ -245,12 +245,17 @@ export function hangingFaces(
   const faces = new Map<string, Readonly<Record<string, string>>>();
   /** The strand's canonical horizontal face, carried down from block to block. */
   const canonical = new Map<string, string>();
+  // The one predicate this derivation is built on, in the shape the shared
+  // vocabulary asks for: *is the block at this offset something a sheet may lie
+  // against*. `hanging` is deliberately not in the support set, which is what
+  // makes law 2's `up` un-inheritable down a strand.
+  const solid = (x: number, y: number, z: number): boolean => {
+    const part = occupied.get(key(x, y, z));
+    return part !== undefined && HANGING_SUPPORT_PARTS.has(part);
+  };
   for (const b of hanging) {
-    const own: string[] = [];
-    for (const [face, ox, oy, oz] of HORIZONTAL_FACES) {
-      const n = occupied.get(key(b.dx + ox, b.dy + oy, b.dz + oz));
-      if (n !== undefined && HANGING_SUPPORT_PARTS.has(n)) own.push(face);
-    }
+    const at = { x: b.dx, y: b.dy, z: b.dz };
+    const own = ownGrowthFaces(at, solid);
     const aboveKey = key(b.dx, b.dy + 1, b.dz);
     const above = occupied.get(aboveKey);
     const k = key(b.dx, b.dy, b.dz);
@@ -264,41 +269,17 @@ export function hangingFaces(
     // No inherited face yet (strand head, or a head that had only a ceiling):
     // this block may found the strand's canonical face, but only off a support
     // it genuinely touches.
-    if (strandFace === undefined && own.length > 0) strandFace = chooseCanonicalFace(own, b);
+    if (strandFace === undefined && own.length > 0) strandFace = chooseGrowthFace(own, at);
 
-    const on = new Set<string>(own);
-    if (strandFace !== undefined) on.add(strandFace);
-    if (above !== undefined && above !== "hanging" && HANGING_SUPPORT_PARTS.has(above)) {
-      on.add("up");
-    }
-    if (on.size === 0) continue; // dropped: no deducible support
+    // The three laws, applied by the shared vocabulary rather than here: law 1
+    // (`own`) and law 2 (`up`) are re-derived from `solid` at this cell, and
+    // law 3 hands down `strandFace` and nothing else.
+    const props = growthFaces(at, solid, strandFace);
+    if (props === null) continue; // dropped: no deducible support
     if (strandFace !== undefined) canonical.set(k, strandFace);
-    const props: Record<string, string> = {};
-    for (const [face] of FACES) props[face] = on.has(face) ? "true" : "false";
-    faces.set(k, Object.freeze(props));
+    faces.set(k, props);
   }
   return faces;
-}
-
-/**
- * Pick one horizontal face out of the several a block genuinely touches.
- *
- * Deterministic and position-keyed: the same block offset in the same plant
- * always picks the same face, and two neighbouring curtains off the same limb
- * do not all pick `north`. Candidates arrive in `HORIZONTAL_FACES` order, which
- * is fixed, so the choice does not depend on traversal order.
- */
-function chooseCanonicalFace(
-  candidates: readonly string[],
-  at: { readonly dx: number; readonly dy: number; readonly dz: number },
-): string {
-  if (candidates.length === 1) return candidates[0] as string;
-  // A small, stable integer hash of the offset — no RNG, no wall clock.
-  let h = 2166136261;
-  for (const v of [at.dx, at.dy, at.dz]) {
-    h = Math.imul(h ^ (v + 0x7fff), 16777619) >>> 0;
-  }
-  return candidates[h % candidates.length] as string;
 }
 
 function baseStateFor(part: FloraPart, states: FloraStates): number | undefined {

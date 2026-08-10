@@ -675,6 +675,18 @@ function green(ctx: FitOutContext, c: PropCounter, plan: DecayPlan, share: numbe
         if (wx > 0 && wx < plan.sx - 1 && wz > 0 && wz < plan.sz - 1) continue; // not a wall
         const wall = ctx.blockAt(wx, 2, wz);
         if (wall === undefined || wall.block === "air") continue;
+        // The wall has to be a **full cube** for the vine's face to hold on to
+        // it, and `canSupport` is the one place that question is answered
+        // (§5.6's rule, and `support.ts`'s opening paragraph). A window pane, a
+        // stair, a fence or a trapdoor in the wall plane is not something a
+        // vine sheet lies against: vanilla drops that face on the first block
+        // update, and until then it renders as a plate in mid-air.
+        //
+        // Found by RUINS-PLAN-v0-WP6 §8's **rule 27** on the WP-2 catalog sweep
+        // and on the F19 ruined-district fixture, which is the whole reason the
+        // rule exists — the 26 shipped rules put `vine` in `INSUBSTANTIAL` and
+        // could not see this at all.
+        if (!canSupport(wall.block)) continue;
         if (cellHash(salt + 31, x * 7 + wx, z * 11 + wz) % 100 >= share) continue;
         if (ctx.blockAt(x, 2, z) !== undefined) continue;
         ctx.put(x, 2, z, "vine", {

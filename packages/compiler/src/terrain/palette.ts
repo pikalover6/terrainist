@@ -709,6 +709,58 @@ export function resolvePalette(
  * @returns the roles whose block the pinned block table did not recognize —
  *   empty for every shipped theme, and a test keeps it that way.
  */
+/**
+ * The palette symbol the green skin's glow lichen resolves through.
+ *
+ * A **new symbol**, and deliberately not a member of {@link DEFAULT_PALETTE}:
+ * RUINS-PLAN-v0-WP6 §4.4 and Q1 ratify glow lichen as *theme-gated*, so a
+ * medieval-realist ruined village does not glow at night while a high-tech
+ * apocalyptic hideout does. A theme that does not declare it leaves the symbol
+ * unresolved, and §4.4's substitution is skipped rather than defaulted.
+ */
+export const GLOW_LICHEN_SYMBOL = "foliage.glow_lichen";
+
+/**
+ * The themes that may grow glow lichen.
+ *
+ * > **Glow lichen is the only light a ruin may have, because it is not fire.**
+ * > `quench` takes every torch, lantern, candle and campfire out by law, which
+ * > is correct and leaves a dead city that is literally unreadable after dusk.
+ *
+ * Q1's recommendation names `fantasy`, `arcane` and `tech`; the shipped theme
+ * set has no theme by any of those names, so the gate is expressed against the
+ * ids that actually exist. `modern_city` is the "high-tech apocalyptic hideout"
+ * theme the P4 battery candidate is drawn in, and it is the one the ruling
+ * explicitly says to ship the lichen with. **Membership is one line and
+ * trivially reversible either way** — Kai may simply want it everywhere.
+ */
+export const GLOW_LICHEN_THEMES: ReadonlySet<string> = new Set(["modern_city"]);
+
+/**
+ * Give the palette its green-skin symbols, gated on the settlement's theme.
+ *
+ * The twin of {@link defineGroundRoles}, called from the same place and for the
+ * same reason: a symbol that arrived halfway through a compile would make two
+ * columns of one wall different. `Palette.derive` refuses to move a symbol the
+ * document itself wrote, so `style.palettes` is still the last word — an author
+ * who wants lichen in a timber village writes it and gets it.
+ *
+ * @returns the symbols whose block the pinned block table did not recognize —
+ *   empty for every shipped theme, and a test keeps it that way.
+ */
+export function defineGreenSkinSymbols(
+  palette: Palette,
+  stack: PrismarineStack,
+  theme: MaterialTheme | undefined,
+): readonly { readonly symbol: string; readonly block: string }[] {
+  if (theme === undefined || !GLOW_LICHEN_THEMES.has(theme.id)) return [];
+  const name = "minecraft:glow_lichen";
+  const block = stack.blockByName(name);
+  if (block === undefined) return [{ symbol: GLOW_LICHEN_SYMBOL, block: name }];
+  palette.derive(GLOW_LICHEN_SYMBOL, block.stateId);
+  return [];
+}
+
 export function defineGroundRoles(
   palette: Palette,
   stack: PrismarineStack,
