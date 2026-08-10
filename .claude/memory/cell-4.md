@@ -102,26 +102,38 @@ trees over ruined ground (was 0); kit's trees-stop sentence retired
 with its pin test. Physics.ts has an invalid UTF-8 byte (pre-existing,
 grep needs -a) — minor ledger item.
 
-**IN FLIGHT: battery candidates P2 (seed 302, farm+aliens) and P4
-(seed 304, hideout in overgrown metropolis ruins)** — first unattended
-product-path test of farm, ruins, and centerpiece steering; install as
-*_c1 channel. P2 doubles as the farm-plan demo world.
+**Candidates walked (Kai, 08-10 morning):** P2 alien_farm_town_c1 —
+invasion undershoot (spire+3 pods vs the mothership image; "4 smallish
+structures") + QUARTZ question (era far_future stamped the whole town).
+P4 overgrown_metropolis_c1 — "does not read as ruined+overgrown at
+all"; needs surfaces actively overtaken, not scattered foliage; Kai
+added: growth in unusual places (mid-road trees). Scratchpad wiped by
+OS → candidate docs lost → battery/ dir in repo is now the durable
+archive (docs+logs committed; worlds/reports ignored, re-derivable).
 
-**Kai's ruling batch (with the candidate walks):** terrace bays don't
-roll (pristine amid total ruin); one-in-six collapse promotion (needs
-2nd param); light band roof fragments unreachable (retune); ruins
-STREET_BREAK_FLOOR=0.5; intact-lot-may-take-ruined-yard nuance;
-reclaim density read ("47-68 trees = reclaimed city?" — walk question).
+**Fixes landed (08-10):** steering (73373d7: kit event-mass "three pods
+is a rumor, eighteen is an invasion"; pre-pass era-describes-the-
+settlement-never-the-event + white_quartz narrowed to sacred/palatial
+— also cures the quartz creep Kai noticed). **P2-c2 REGENERATED
+(5c5482c, installed farmtown_invasion_c2): mothership 38,049 blocks
+(7× c1) + 13 pods, era medieval temperate_timber, Luna's own token
+"the settlement itself is not futuristic" — steering measured working.**
 
-**After candidates:** Kai walks P2/P4 + ruling batch → then F3
-junctions, F5 WP-6, F6/F7 flora WP-C/D, F9, F10 per SHIP-PLAN §8.
-Backstop 2026-08-28.
+**GREEN SKIN (RUINS WP-6, ratified 1dcbe47):** addendum docs/RUINS-
+PLAN-v0-WP6.md — surface colonization (walls/openings/carpet/street
+trees via meandering open spine), Kai's rulings: shell trees HEAVY+
+TOTAL, lichen theme-gated (shipped modern_city — addendum's theme
+names didn't exist), separate ruin goldens + walkability deprioritized
+in ruin scenes. WP-6a landed (ae607b8): surface index (60ms/quarter),
+shared growthFaces (hangingFaces now CALLS it), LINT RULE 27
+unsupported.multiface — first sweep found 435 real mis-faced vines
+(4.7%) in flora-oldgrowth (Kai's #44/#47 machine-visible: per-plant
+face derivation blind to interleaved neighbours' support).
 
-**Rulings owed to Kai (batch, next active):** terrace bays don't roll
-yet (separate emitter — pristine rows amid total ruin, visible in P4);
-one-in-six collapse promotion needs second param; light band's roof
-fragments unreachable (walk retune).
-
-**Next:** commit wave 6; ruins WP-5 (kit); then F3 junctions, F5 WP-6,
-F6/F7 flora WP-C/D, F9, F10; first battery candidate once P2/P4
-features complete.
+**IN FLIGHT (wave 8):** vine-face world fixup (fix faces against the
+composed world via shared growthFaces; state-only movement; rule 27
+zero across corpus = acceptance) + green-skin WP-6b. Then 6c-6e → P4
+regeneration (candidate 2) → Kai walks farmtown_invasion_c2 vs c1 and
+the new P4. Ruling batch (terrace bays / collapse promotion / light
+band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density) still
+open. Backstop 2026-08-28.
