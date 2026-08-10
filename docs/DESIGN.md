@@ -1015,17 +1015,28 @@ repair* is locked to manual.
   the ruins world asked for `minecraft:dark_forest` (the right biome) and
   drew LOAM-W472, falling back to a stony_peaks clamp. Audit which vanilla
   biomes are worth carrying rows for. Ledgered 2026-08-09.
-- **S2 battery signatures (2026-08-09, first four worlds; for the rung
-  consult).** (a) **Zero bespoke programs in every world so far** — even
-  prompts with "colossal"/monumental language may not clear the stdlib
-  bias; the OPM run proved the tier fires, the battery is measuring the
-  trigger threshold as very high. (b) The **main town district ends
-  UNSATISFIABLE** (placed least-violating) on both hillside-form worlds
-  even after a feedback round, behind a spray of `terrain_conform` /
-  `adjacent_to` demotions — uniform enough to implicate how the kit teaches
-  constraints at 1024². (c) **Ambient terrain ignores the prompt's
-  landscape**: "open plains" produced 3.2% plains / 57% stony_peaks +
-  windswept_hills outside the clamped village footprint.
+- **S2 battery signatures (2026-08-09, all five worlds; for the rung
+  consult).** (a) **Bespoke steering read as correct, not timid**: four
+  worlds authored zero programs and the one prompt that demanded a
+  landmark (the wizard's citadel) got one — authored, gated, and, when
+  Luna forgot to invoke it, **rescued by the wiring check's first
+  production catch**. (b) The **main town district ends UNSATISFIABLE**
+  (placed least-violating) on both hillside-form worlds even after a
+  feedback round, behind a spray of `terrain_conform` / `adjacent_to`
+  demotions — uniform enough to implicate how the kit teaches constraints
+  at 1024². (c) **Ambient terrain ignores the prompt's landscape**: "open
+  plains" produced 3.2% plains / 57% stony_peaks + windswept_hills outside
+  the clamped village footprint.
+- ~~**A large program's block list crashed the whole compile**~~ — **fixed
+  2026-08-09 (`d4e7f47`), found by battery world 5/5.** The citadel's
+  165,117 blocks passed through `blocks.push(...lowered.blocks)`, past
+  V8's ~125k argument budget: "Maximum call stack size exceeded", rc 1,
+  no world. Product-path blocking (any big-landmark prompt died), so it
+  crossed the ledger bar. The pass appends by loop at all four sites; the
+  regression test builds a 196,608-voxel landmark and was proven to die
+  at the production frame before the fix. Reminder the crash almost
+  hid: program output is the one array whose length a *model* chooses —
+  audit any future spread-append against that class.
 
 ## Keys and infrastructure
 

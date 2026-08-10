@@ -32,23 +32,30 @@ run; Luna authored + gated ONE bespoke landmark (hero_association_
 headquarters, 90×220×90). Its "ruins" archetype request (LOAM-W483) was
 the first product-path finding.
 
-**S2 baseline battery (08-09, running):** five worlds, 1024², product
-defaults, installed as `*_baseline` (never --replace). Done: hillkeep
-(201), harbour_city (202), sleepy_farm_village (204), overgrown_city_
-ruins (205); fantasy_landmark (203) in flight. Cheap ($0.015–0.04) and
-fast. **Kai walked the ruins world: a forest with 4 buildings — diagnosis:
-the kit cannot say "ruined city"** (ruin vocabulary = 5 relic archetypes;
-decline never ruins district buildings), plus ScatterArea radius-units
-footgun (0.55 fraction read as blocks → 0-tree forest, silent) and
-dark_forest missing from the biome table. **Kai's triage call: LEDGER
-EVERYTHING, no hotfixes** — all in DESIGN.md ledger with the battery
-signatures (zero bespoke programs 4/4 so far; main-district UNSATISFIABLE
-on both hillside worlds; ambient terrain ignores "open plains").
+**S2 baseline battery (08-09, COMPLETE — 5/5 installed as `*_baseline`):**
+hillkeep (201), harbour_city (202), mistwood_citadel (203), sleepy_farm_
+village (204), overgrown_city_ruins (205); 1024², product defaults,
+$0.015–0.14/world. **Kai walked the ruins world: a forest with 4
+buildings — the kit cannot say "ruined city"** (ruin vocabulary = 5 relic
+archetypes; decline never ruins district buildings), plus ScatterArea
+radius-units footgun (fraction read as blocks → 0-tree forest, silent)
+and dark_forest missing from the biome table. **Kai's triage: LEDGER
+EVERYTHING, no hotfixes.** Battery signatures ledgered: bespoke steering
+correct (4× zero programs rightly, citadel fired + wiring check's first
+production catch); main-district UNSATISFIABLE on both hillside worlds;
+ambient terrain ignores "open plains".
 
-**Next:** fantasy_landmark lands → full battery report → Kai walks all
-five + hero_metropolis → **rung consult AFTER the walks** (Kai's popup
-answer; doc recommends B + one ascent, orchestrator narrows ascent to the
-aqueduct; ruins treatment is now prime rung-B scope evidence).
+**The one fix past the ledger bar (d4e7f47):** citadel's 165,117-block
+program crashed compile — `push(...blocks)` past V8's ~125k arg budget.
+Product-path blocking → fixed test-first (196k-voxel regression, proven
+to die pre-fix). mistwood_citadel_baseline provenance: compiled from the
+first run's kept wired doc (regen was stopped mid-run — respected, not
+relaunched); 0 feedback rounds, but its only finding was an advisory
+W411, so the delta is likely nil.
+
+**Next:** Kai walks five baselines + hero_metropolis → **rung consult
+AFTER the walks** (doc recommends B + one ascent; orchestrator narrows
+ascent to the aqueduct; ruins treatment is prime rung-B scope evidence).
 
 **Parked/open:** flight-pin unit mismatch (next street lever); junction
 flat-town ruling (after iterations; the orphan win lives in the same
