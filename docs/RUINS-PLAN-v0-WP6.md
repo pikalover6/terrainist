@@ -1,6 +1,16 @@
 # Ruins Plan v0 — WP-6, the green skin (addendum)
 
-> **STATUS: NORMATIVE ADDENDUM to `docs/RUINS-PLAN-v0.md`, drafted 2026-08-10.**
+> **STATUS: RATIFIED 2026-08-10, with Kai's three rulings:** shell trees at
+> **heavy AND total** bands (bolder than this draft's total-only — a trunk may
+> burst from a roofless shell in half-ruined quarters too, one per shell,
+> sited where the interior flood does not need it); glow lichen
+> **theme-gated** as drafted; walkability goldens **separate set**, with the
+> explicit calibration that *walkability is less important for ruin scenes* —
+> the spine and sight-line laws serve legibility first, and U2-style
+> strictness must not over-constrain the aesthetic; rough walking is in
+> character.
+>
+> **NORMATIVE ADDENDUM to `docs/RUINS-PLAN-v0.md`, drafted 2026-08-10.**
 > It adds a work package; it does not edit the ratified base plan, and every
 > ruling in that plan — the reach law (§2), the ruin law (§3), the roll (§4),
 > the re-clad rule (§5.2), the band table (§6), the exclusions (§13) — stands
