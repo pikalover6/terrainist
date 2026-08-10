@@ -18,6 +18,7 @@ import {
   loadPrismarine,
 } from "@terrainist/compiler";
 
+import { biomeNamesById } from "./biome-registry.js";
 import { VoxelGrid } from "./voxel/grid.js";
 import { isRenderAir } from "./voxel/palette.js";
 
@@ -31,6 +32,8 @@ export interface WorldToGridOptions {
   readonly minY?: number;
   /** Highest y to read. Defaults to the world ceiling. */
   readonly maxY?: number;
+  /** Record each column's biome so renderers can tint (default true). */
+  readonly biomes?: boolean;
 }
 
 /**
@@ -54,7 +57,10 @@ export async function worldToGrid(
     throw new Error(`render: no chunks found in ${regionDir}`);
   }
 
-  const mc = loadPrismarine(options.minecraftVersion ?? EMIT_MINECRAFT_VERSION);
+  const version = options.minecraftVersion ?? EMIT_MINECRAFT_VERSION;
+  const withBiomes = options.biomes ?? true;
+  const biomeNames = withBiomes ? biomeNamesById(version) : undefined;
+  const mc = loadPrismarine(version);
   const anvil = mc.openAnvil(regionDir);
 
   // Buffer the non-air voxels: a VoxelGrid needs its bounds up front, and
@@ -63,6 +69,8 @@ export async function worldToGrid(
   const ys: number[] = [];
   const zs: number[] = [];
   const names: string[] = [];
+  /** Packed (x, z) → biome name, sampled at each column's surface. */
+  const columnBiomes = new Map<number, string>();
   let minX = Number.POSITIVE_INFINITY;
   let minY = Number.POSITIVE_INFINITY;
   let minZ = Number.POSITIVE_INFINITY;
@@ -87,6 +95,21 @@ export async function worldToGrid(
       if (chunk === null) continue;
       const baseX = chunkX * CHUNK_WIDTH;
       const baseZ = chunkZ * CHUNK_WIDTH;
+      if (biomeNames !== undefined) {
+        // One sample per column, taken at the surface — that is the biome the
+        // client tints the visible blocks by, and it costs 256 lookups per
+        // chunk instead of one per voxel.
+        for (let localZ = 0; localZ < CHUNK_WIDTH; localZ++) {
+          for (let localX = 0; localX < CHUNK_WIDTH; localX++) {
+            const top = chunk.highestBlock(localX, localZ);
+            if (top === null) continue;
+            const biome = biomeNames.get(chunk.getBiomeId(localX, top.y, localZ));
+            if (biome !== undefined) {
+              columnBiomes.set((baseX + localX) * 0x2000000 + (baseZ + localZ), biome);
+            }
+          }
+        }
+      }
       for (let y = scanMinY; y <= scanMaxY; y++) {
         for (let localZ = 0; localZ < CHUNK_WIDTH; localZ++) {
           for (let localX = 0; localX < CHUNK_WIDTH; localX++) {
@@ -119,6 +142,12 @@ export async function worldToGrid(
   }
 
   const grid = new VoxelGrid({ minX, minY, minZ, maxX, maxY, maxZ });
+  for (let i = 0; i < names.length; i++) {
+    const x = xs[i] as number;
+    const z = zs[i] as number;
+    const biome = columnBiomes.get(x * 0x2000000 + z);
+    if (biome !== undefined) grid.setColumnBiome(x, z, biome);
+  }
   for (let i = 0; i < names.length; i++) {
     grid.set(xs[i] as number, ys[i] as number, zs[i] as number, names[i] as string);
   }

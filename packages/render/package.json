@@ -21,6 +21,7 @@
   "dependencies": {
     "@terrainist/compiler": "*",
     "@terrainist/spec": "*",
+    "minecraft-data": "^3.111.0",
     "pngjs": "^7.0.0"
   },
   "devDependencies": {

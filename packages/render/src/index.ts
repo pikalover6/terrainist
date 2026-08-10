@@ -14,6 +14,15 @@
 
 import type { LoamDocument } from "@terrainist/spec";
 
+export { biomeNamesById } from "./biome-registry.js";
+export {
+  BIOME_TINTS,
+  DEFAULT_TINT,
+  applyBiomeTint,
+  biomeTint,
+  tintKindOf,
+} from "./biome-tint.js";
+export type { BiomeTint, TintKind } from "./biome-tint.js";
 export { blockColor, isAir } from "./block-colors.js";
 export type { Rgb } from "./block-colors.js";
 

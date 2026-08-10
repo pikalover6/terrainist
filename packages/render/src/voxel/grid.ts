@@ -30,6 +30,16 @@ export class VoxelGrid {
 
   private readonly paletteIndex = new Map<string, number>();
 
+  /**
+   * Per-column biome, interned like the block palette; index 0 means "unknown"
+   * (untinted). Biomes are stored per 4x4x4 cell in a world, but every renderer
+   * here tints by the surface column, so one biome per (x, z) is enough — and
+   * it keeps the extra memory at 1/height of a full 3D array.
+   */
+  private biomeCells?: Uint16Array;
+  readonly biomePalette: string[] = [""];
+  private readonly biomeIndex = new Map<string, number>([["", 0]]);
+
   constructor(readonly bounds: GridBounds) {
     this.sizeX = bounds.maxX - bounds.minX + 1;
     this.sizeY = bounds.maxY - bounds.minY + 1;
@@ -78,6 +88,40 @@ export class VoxelGrid {
 
   blockAt(x: number, y: number, z: number): string {
     return this.palette[this.indexAt(x, y, z)]!;
+  }
+
+  /** Record the biome of a column (namespaced name); "" clears it. */
+  setColumnBiome(x: number, z: number, biome: string): void {
+    if (!this.containsColumn(x, z)) return;
+    let index = this.biomeIndex.get(biome);
+    if (index === undefined) {
+      index = this.biomePalette.length;
+      this.biomePalette.push(biome);
+      this.biomeIndex.set(biome, index);
+    }
+    this.biomeCells ??= new Uint16Array(this.sizeX * this.sizeZ);
+    this.biomeCells[this.columnOffset(x, z)] = index;
+  }
+
+  /** Biome of a column, or `undefined` when none was recorded. */
+  biomeAt(x: number, z: number): string | undefined {
+    if (this.biomeCells === undefined || !this.containsColumn(x, z)) return undefined;
+    const name = this.biomePalette[this.biomeCells[this.columnOffset(x, z)]!];
+    return name === undefined || name === "" ? undefined : name;
+  }
+
+  /** True when any column carries a biome, i.e. tinting has something to do. */
+  get hasBiomes(): boolean {
+    return this.biomeCells !== undefined;
+  }
+
+  private containsColumn(x: number, z: number): boolean {
+    const b = this.bounds;
+    return x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
+  }
+
+  private columnOffset(x: number, z: number): number {
+    return (z - this.bounds.minZ) * this.sizeX + (x - this.bounds.minX);
   }
 
   /** Fill from any block accessor, one call per cell. */

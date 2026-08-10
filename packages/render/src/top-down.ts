@@ -22,6 +22,8 @@ import {
 import type { ChunkPos, EmitColumnTop } from "@terrainist/compiler";
 import { PNG } from "pngjs";
 
+import { biomeNamesById } from "./biome-registry.js";
+import { applyBiomeTint } from "./biome-tint.js";
 import { blockColor, isAir } from "./block-colors.js";
 
 /** Blocks per chunk edge. */
@@ -62,6 +64,11 @@ export interface TopDownOptions {
   readonly scale?: number;
   /** Version the world was emitted at. Defaults to the compiler's emit version. */
   readonly minecraftVersion?: string;
+  /**
+   * Tint grass, foliage and water by the biome of their column (default true).
+   * Off gives the pre-biome flat palette, which some structural diffs prefer.
+   */
+  readonly biomeTint?: boolean;
 }
 
 /**
@@ -92,11 +99,16 @@ export async function renderTopDown(
   // Pass 1: read the surface of every column, remembering the y range so the
   // height shading can be normalised over what the world actually contains.
   const surface = new Array<EmitColumnTop | null>(blocksWide * blocksTall).fill(null);
+  // Biome of each rendered column, parallel to `surface`; "" where unknown.
+  const columnBiome = new Array<string>(blocksWide * blocksTall).fill("");
   let minY = Number.POSITIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
   let columnCount = 0;
 
-  const mc = loadPrismarine(options.minecraftVersion ?? EMIT_MINECRAFT_VERSION);
+  const version = options.minecraftVersion ?? EMIT_MINECRAFT_VERSION;
+  const tintEnabled = options.biomeTint ?? true;
+  const biomeNames = tintEnabled ? biomeNamesById(version) : undefined;
+  const mc = loadPrismarine(version);
   const anvil = mc.openAnvil(regionDir);
   try {
     for (const { chunkX, chunkZ } of chunks) {
@@ -108,7 +120,13 @@ export async function renderTopDown(
           if (top === null || isAir(top.name)) continue;
           const x = chunkX * CHUNK_WIDTH + localX;
           const z = chunkZ * CHUNK_WIDTH + localZ;
-          surface[(z - extent.minZ) * blocksWide + (x - extent.minX)] = top;
+          const cell = (z - extent.minZ) * blocksWide + (x - extent.minX);
+          surface[cell] = top;
+          if (biomeNames !== undefined) {
+            // Biomes are stored per 4x4x4 cell; sample the one the surface
+            // block itself sits in, which is what the client tints by.
+            columnBiome[cell] = biomeNames.get(chunk.getBiomeId(localX, top.y, localZ)) ?? "";
+          }
           if (top.y < minY) minY = top.y;
           if (top.y > maxY) maxY = top.y;
           columnCount++;
@@ -137,7 +155,10 @@ export async function renderTopDown(
       const top = surface[row * blocksWide + column];
       if (top === undefined || top === null) continue; // transparent (fill is already 0)
 
-      const [r, g, b] = blockColor(top.name);
+      const biome = columnBiome[row * blocksWide + column];
+      const [r, g, b] = tintEnabled
+        ? applyBiomeTint(blockColor(top.name), top.name, biome === "" ? undefined : biome)
+        : blockColor(top.name);
       const brightness =
         span === 0
           ? MAX_BRIGHTNESS

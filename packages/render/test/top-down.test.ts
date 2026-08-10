@@ -8,6 +8,7 @@ import type { EmitSummary } from "@terrainist/compiler";
 import { PNG } from "pngjs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { applyBiomeTint } from "../src/biome-tint.js";
 import { blockColor } from "../src/block-colors.js";
 import { renderTopDown } from "../src/top-down.js";
 import type { TopDownRender } from "../src/top-down.js";
@@ -15,6 +16,8 @@ import type { TopDownRender } from "../src/top-down.js";
 const SPEC_PATH = fileURLToPath(new URL("../../../examples/pyramid.spike.json", import.meta.url));
 
 const SCALE = 4;
+/** The biome `emitWorld` paints a world with when the spec asks for none. */
+const EMIT_BIOME = "minecraft:plains";
 /** The example world: 64x64 platform at y=63, hollow pyramid up to y=71. */
 const PLATFORM_MIN_Y = 63;
 const APEX_Y = 71;
@@ -40,12 +43,16 @@ function sampleBlock(x: number, z: number): [number, number, number, number] {
   return rgba as [number, number, number, number];
 }
 
-/** Colour a block reads as at a given surface height, given the render's y range. */
+/**
+ * Colour a block reads as at a given surface height, given the render's y
+ * range. The example world is emitted entirely in the default biome, so grass
+ * and foliage carry that biome's tint.
+ */
 function expectedShade(blockName: string, y: number): [number, number, number] {
   const { minY, maxY } = render.bounds;
   const span = maxY - minY;
   const brightness = span === 0 ? 1 : 0.6 + (0.4 * (y - minY)) / span;
-  const [r, g, b] = blockColor(blockName);
+  const [r, g, b] = applyBiomeTint(blockColor(blockName), blockName, EMIT_BIOME);
   return [
     Math.round(r * brightness),
     Math.round(g * brightness),

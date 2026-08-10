@@ -5,6 +5,7 @@
 
 import { Canvas } from "./canvas.js";
 import type { VoxelGrid } from "./grid.js";
+import { applyBiomeTint } from "../biome-tint.js";
 import { appearanceOf, isRenderAir } from "./palette.js";
 
 export interface OrthoOptions {
@@ -21,7 +22,7 @@ function pickScale(spanA: number, spanB: number, options: OrthoOptions): number 
   return scale;
 }
 
-function put(canvas: Canvas, px: number, py: number, scale: number, color: [number, number, number], shade: number, alpha = 1): void {
+function put(canvas: Canvas, px: number, py: number, scale: number, color: readonly [number, number, number], shade: number, alpha = 1): void {
   for (let dy = 0; dy < scale; dy++) {
     for (let dx = 0; dx < scale; dx++) {
       canvas.blend(px + dx, py + dy, Math.min(255, Math.round(color[0] * shade)), Math.min(255, Math.round(color[1] * shade)), Math.min(255, Math.round(color[2] * shade)), alpha);
@@ -63,13 +64,15 @@ export function renderTopDown(grid: VoxelGrid, options: OrthoOptions & { ceiling
       const cell = (z - b.minZ) * spanX + (x - b.minX);
       const index = blocks[cell]!;
       if (index === 0) continue;
-      const appearance = appearanceOf(grid.palette[index]!);
+      const block = grid.palette[index]!;
+      const appearance = appearanceOf(block);
+      const color = applyBiomeTint(appearance.color, block, grid.biomeAt(x, z));
       const height = heights[cell]!;
       const west = x > b.minX ? heights[cell - 1]! : height;
       const north = z > b.minZ ? heights[cell - spanX]! : height;
       const relief = (height - west) + (height - north);
       const shade = Math.max(0.45, Math.min(1.5, 1 + relief * 0.11)) * (appearance.emissive ? 1.3 : 1);
-      put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, appearance.color, shade);
+      put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, color, shade);
     }
   }
   return canvas;
@@ -90,13 +93,15 @@ export function renderFloorPlan(grid: VoxelGrid, y: number, options: OrthoOption
     for (let x = b.minX; x <= b.maxX; x++) {
       const below = grid.indexAt(x, y - 1, z);
       if (below !== 0) {
-        const appearance = appearanceOf(grid.palette[below]!);
-        put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, appearance.color, 0.42);
+        const block = grid.palette[below]!;
+        const appearance = appearanceOf(block);
+        put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, applyBiomeTint(appearance.color, block, grid.biomeAt(x, z)), 0.42);
       }
       const here = grid.indexAt(x, y, z);
       if (here === 0) continue;
-      const appearance = appearanceOf(grid.palette[here]!);
-      put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, appearance.color, appearance.emissive ? 1.3 : 1, appearance.thin ? 0.85 : 1);
+      const hereBlock = grid.palette[here]!;
+      const appearance = appearanceOf(hereBlock);
+      put(canvas, (x - b.minX) * scale, (z - b.minZ) * scale, scale, applyBiomeTint(appearance.color, hereBlock, grid.biomeAt(x, z)), appearance.emissive ? 1.3 : 1, appearance.thin ? 0.85 : 1);
     }
   }
   return canvas;
@@ -134,10 +139,12 @@ export function renderSection(
         const depth = depthOrder[step]!;
         const index = axis === "z" ? grid.indexAt(across, y, depth) : grid.indexAt(depth, y, across);
         if (index === 0) continue;
-        const appearance = appearanceOf(grid.palette[index]!);
+        const block = grid.palette[index]!;
+        const appearance = appearanceOf(block);
+        const [wx, wz] = axis === "z" ? [across, depth] : [depth, across];
         // Fade with depth into the slab so the cut face stands forward.
         const shade = (appearance.emissive ? 1.3 : 1) * Math.max(0.5, 1 - step * 0.06);
-        put(canvas, (across - acrossMin) * scale, (b.maxY - y) * scale, scale, appearance.color, shade);
+        put(canvas, (across - acrossMin) * scale, (b.maxY - y) * scale, scale, applyBiomeTint(appearance.color, block, grid.biomeAt(wx!, wz!)), shade);
         break;
       }
     }

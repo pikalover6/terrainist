@@ -5,6 +5,7 @@
 
 import { Canvas } from "./canvas.js";
 import { VoxelGrid, type GridBounds } from "./grid.js";
+import { applyBiomeTint } from "../biome-tint.js";
 import { appearanceOf, isRenderAir, type BlockAppearance } from "./palette.js";
 
 /**
@@ -175,12 +176,15 @@ export function renderIsometric(grid: VoxelGrid, corner: IsoCorner = "east-south
         const py = Math.round((u + w) * (scale / 2) - y * scale + offsetY);
         const shade = shadeOf(view, u, y, w, opaque, ao);
         const grainOf = jitter(wx, y, wz, grain);
+        const color = grid.hasBiomes
+          ? applyBiomeTint(appearance.color, grid.palette[index]!, grid.biomeAt(wx, wz))
+          : appearance.color;
         if (drawScale[index] === 1) {
-          drawCube(canvas, sprite, px, py, appearance, shade, grainOf);
+          drawCube(canvas, sprite, px, py, appearance, shade, grainOf, color);
         } else {
           // Centre a smaller cube horizontally and rest it on the cell floor,
           // so plants, rails and panes read as detail sitting on their support.
-          drawCube(canvas, thinSprite, px + (scale - thinScale), py + 2 * (scale - thinScale), appearance, shade, grainOf);
+          drawCube(canvas, thinSprite, px + (scale - thinScale), py + 2 * (scale - thinScale), appearance, shade, grainOf, color);
         }
       }
     }
@@ -215,10 +219,11 @@ function drawCube(
   appearance: BlockAppearance,
   ao: { top: number; right: number; front: number },
   grain: number,
+  override?: readonly [number, number, number],
 ): void {
   const alpha = appearance.alpha ?? 1;
   const emissiveBoost = appearance.emissive ? 1.35 : 1;
-  const [r, g, b] = appearance.color;
+  const [r, g, b] = override ?? appearance.color;
   const size = sprite.size;
 
   for (let v = 0; v < size; v++) {
