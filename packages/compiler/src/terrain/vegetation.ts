@@ -256,24 +256,116 @@ export interface StructureOccupancy {
    * only by the reclaim, so nothing outside a ruined world sees it.
    */
   readonly ruinPaved?: Uint8Array;
+  /**
+   * The green skin's `colonized` mask — street and yard columns the **street
+   * law** elected for a trunk (`docs/RUINS-PLAN-v0-WP6.md` §6.1).
+   *
+   * > **Ruling (Kai, 2026-08-10): trees and plants in the middle of a road are
+   * > part of an overgrown settlement.** This supersedes the closure's
+   * > streets-stay-clear rule **for ruined quarters only.**
+   *
+   * The opening is narrow on purpose: a column in this mask is open whatever
+   * {@link ruinPaved} says and whatever `road` / `plaza` / `ground` say, and
+   * nothing else changes — `building`, `interior`, `farm`, `courtyard` and
+   * `prop` stay hard, so no street trunk ever stands in a shell, in a cellar
+   * mouth, in a field or on a prop's stand. The discipline that keeps the grid
+   * readable (the spine, the junction clearance, the sight-line runs, the
+   * spacing and the U2 withdraw loop) is all upstream, in the structures pass,
+   * where the street masks live.
+   */
+  readonly ruinColonized?: Uint8Array;
+  /**
+   * Interior columns of roofless shells that may stand **one** trunk each
+   * (WP-6 §14 Q5, as Kai ruled it: `heavy` **and** `total`).
+   *
+   * A second mask because it crosses a line the base plan drew deliberately —
+   * base §4.3's *"a tree standing in a footprint grows through a wall"* — and
+   * it is worth crossing only for the image Kai asked for. It is the **only**
+   * thing that opens `building` and `interior`, and the skin elects at most one
+   * column per shell, sited where the interior flood does not need it.
+   */
+  readonly ruinShellTrunks?: Uint8Array;
+}
+
+/** How open a claimed column is to a trunk — nothing, §7.4, §6.1, or Q5. */
+const enum ReclaimGate {
+  Closed = 0,
+  /** §7.4: open ground inside a ruined quarter. */
+  Reclaimed = 1,
+  /** §6.1: a street or yard column the street law elected. */
+  Colonized = 2,
+  /** Q5: one interior column of a roofless shell. */
+  Shell = 3,
 }
 
 /**
- * Whether §7.4's reclaim opens this claimed column to a trunk.
+ * Whether the ruin opens this claimed column to a trunk, and how far.
  *
- * Two conditions, and both are the plan's: the ruin field is positive here (the
- * ground is *ruined* ground, not merely inside a settlement that has ruins
- * somewhere), and no pass has actually built on the column
- * ({@link RUIN_RECLAIM_HARD_TAGS}).
+ * §7.4's two conditions are still the base case, and both are the plan's: the
+ * ruin field is positive here (the ground is *ruined* ground, not merely inside
+ * a settlement that has ruins somewhere), and no pass has actually built on the
+ * column ({@link RUIN_RECLAIM_HARD_TAGS}).
+ *
+ * WP-6d adds the two masks above, and they are the *only* way past a hard tag.
+ * Both are empty on every world that ruins nothing, so this is structurally the
+ * function it was before WP-6d existed everywhere it was before.
  */
-function reclaimOpen(structures: StructureOccupancy, idx: number): boolean {
+function reclaimOpen(structures: StructureOccupancy, idx: number): ReclaimGate {
   const ruin = structures.ruin;
-  if (ruin === undefined || (ruin[idx] as number) <= 0) return false;
-  if (structures.ruinPaved?.[idx] === 1) return false;
-  for (const tag of RUIN_RECLAIM_HARD_TAGS) {
-    if (structures.byTag.get(tag)?.[idx] === 1) return false;
+  if (ruin === undefined || (ruin[idx] as number) <= 0) return ReclaimGate.Closed;
+  if (structures.ruinShellTrunks?.[idx] === 1) return ReclaimGate.Shell;
+  const colonized = structures.ruinColonized?.[idx] === 1;
+  if (colonized) {
+    // Everything §6.1 leaves hard, and nothing else.
+    for (const tag of RUIN_COLONIZE_HARD_TAGS) {
+      if (structures.byTag.get(tag)?.[idx] === 1) return ReclaimGate.Closed;
+    }
+    return ReclaimGate.Colonized;
   }
-  return true;
+  if (structures.ruinPaved?.[idx] === 1) return ReclaimGate.Closed;
+  for (const tag of RUIN_RECLAIM_HARD_TAGS) {
+    if (structures.byTag.get(tag)?.[idx] === 1) return ReclaimGate.Closed;
+  }
+  return ReclaimGate.Reclaimed;
+}
+
+/**
+ * The author's `avoidTags` a given gate may step over.
+ *
+ * The kit's standing `avoidTags: ["structure", "road", "plaza"]` line is what
+ * keeps trees out of buildings and off streets everywhere else, and §10 amends
+ * exactly this much of its promise: *"except inside a ruined quarter at high
+ * `decline`, where the compiler deliberately lets a share of the street back to
+ * the wood."* Without this the colonizer's mask would open `reclaimOpen` and
+ * the author's own line would close it again one branch later.
+ */
+const RECLAIM_SOFT_TAGS: Readonly<Record<ReclaimGate, readonly string[]>> = Object.freeze({
+  [ReclaimGate.Closed]: [],
+  [ReclaimGate.Reclaimed]: ["structure"],
+  [ReclaimGate.Colonized]: ["structure", "road", "plaza", "ground"],
+  [ReclaimGate.Shell]: ["structure", "road", "plaza", "ground", "building", "interior"],
+} as const);
+
+/**
+ * The union of the two WP-6d masks, or `undefined` when neither is there.
+ *
+ * `undefined` rather than an empty array on purpose: the scatter's candidate
+ * loop takes a different shape when it is present, and a world that ruins
+ * nothing must take the shape it took before WP-6d existed.
+ */
+function electedColumns(
+  structures: StructureOccupancy | undefined,
+  cells: number,
+): Uint8Array | undefined {
+  const street = structures?.ruinColonized;
+  const shells = structures?.ruinShellTrunks;
+  if (street === undefined && shells === undefined) return undefined;
+  const out = new Uint8Array(cells);
+  if (street !== undefined) for (let k = 0; k < Math.min(cells, street.length); k++) out[k] = street[k] as number;
+  if (shells !== undefined) {
+    for (let k = 0; k < Math.min(cells, shells.length); k++) if (shells[k] === 1) out[k] = 1;
+  }
+  return out;
 }
 
 /** A forest node flattened to what the scatter pass needs. */
@@ -397,17 +489,21 @@ export function forestEligibility(
         // quarter is coming down and the green is coming through it. Everywhere
         // else, and in every document with no ruins in it, this is the
         // unconditional exclusion it has always been.
-        const reclaimed = structures.mask[idx] === 1 && reclaimOpen(structures, idx);
-        if (structures.mask[idx] === 1 && !reclaimed) continue;
+        const gate = structures.mask[idx] === 1 ? reclaimOpen(structures, idx) : ReclaimGate.Closed;
+        if (structures.mask[idx] === 1 && gate === ReclaimGate.Closed) continue;
+        const soft = RECLAIM_SOFT_TAGS[gate];
         let avoided = false;
         for (const tag of avoidTags) {
           // `structure` is the reserved rectangle, and on a district it is the
           // whole quarter — the same claim the line above just opened, so
           // honouring it here would close the reclaim again from the author's
           // own standing `avoidTags` line. Every *other* tag is a per-column
-          // claim and stays hard: `road` and `plaza` are why a reclaimed
-          // street grows scrub and not a forest with a buried road under it.
-          if (tag === "structure" && reclaimed) continue;
+          // claim and stays hard for a merely reclaimed column: `road` and
+          // `plaza` are why a reclaimed street grows scrub and not a forest
+          // with a buried road under it. On a column the **street law** elected
+          // they are soft, which is §10's amendment to the kit's promise and
+          // the whole of Kai's "trees in the middle of a road" ruling.
+          if (soft.includes(tag)) continue;
           if (structures.byTag.get(tag)?.[idx] === 1) {
             avoided = true;
             break;
@@ -538,6 +634,27 @@ export const RUIN_RECLAIM_HARD_TAGS: readonly string[] = Object.freeze([
   "interior",
   "farm",
   ...BUILT_OCCUPANCY_TAGS,
+]);
+
+/**
+ * The per-column claims that stay closed even on a column the **street law**
+ * elected (RUINS-PLAN-v0-WP6 §6.1).
+ *
+ * The colonizer's opening is narrow, and this list is the whole of its
+ * narrowness: `road`, `plaza` and `ground` come off — those are the paving,
+ * the flagstones and the ruin yard, which is exactly the ground Kai's ruling
+ * gives back to the wood — and `building`, `interior`, `farm`, `courtyard` and
+ * `prop` stay. *"So no trunk ever stands in a shell, in a cellar mouth, in a
+ * field or on a prop's stand."* The one exception in the whole pipeline is the
+ * shell-tree mask, which is elected one column per roofless shell and reaches
+ * `reclaimOpen` by its own door.
+ */
+export const RUIN_COLONIZE_HARD_TAGS: readonly string[] = Object.freeze([
+  "building",
+  "interior",
+  "farm",
+  "courtyard",
+  "prop",
 ]);
 
 /**
@@ -739,6 +856,9 @@ export function scatterForests(
       : undergrowthFeather(structures, region.width, region.depth, UNDERGROWTH_FEATHER, greenShare);
   const strataReports: StrataReport[] = [];
   const diagnostics: LoamDiagnostic[] = [];
+  // WP-6 §6.4: the street law's elected columns and Kai's Q5 shells, as one
+  // set. Built only when the skin ran, which is only on a world with ruins.
+  const elected = electedColumns(structures, region.width * region.depth);
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
@@ -783,7 +903,7 @@ export function scatterForests(
     // which is already order-dependent (row-major) today; naming the order in
     // one place is what keeps it deterministic.
     if (strata === undefined) {
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false, undefined, elected);
     } else {
       const theme = nodeClimateTheme(mask, climate);
       const emergentLive = stratumLive(strata.emergent);
@@ -800,7 +920,7 @@ export function scatterForests(
         strata.canopy === "default"
           ? { ...strata, canopy: { species: stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA) } }
           : strata;
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy, elected);
       let understory = 0;
       if (stratumLive(strata.understory)) {
         const shade = canopyCover(plan, trees.slice(before));
@@ -940,6 +1060,28 @@ function scatterOne(
   clearing: Float32Array | undefined,
   suppressMega: boolean,
   strata?: ResolvedStrata,
+  /**
+   * Columns the green skin's **street law** elected for a trunk
+   * (`docs/RUINS-PLAN-v0-WP6.md` §6.4), if any.
+   *
+   * > An elected column is one the street law has already decided should carry
+   * > a tree; the scatter's job there is to say *which* tree, not whether.
+   *
+   * `clearing[idx] := 1` alone does not buy that. The lattice is jittered, so a
+   * given column is offered to the sampler only when a dart happens to land on
+   * it: measured on the WP-6d fixture, 83 elected columns produced **10**
+   * standing trunks, and the discipline that makes the grid readable — the
+   * spine, the junction clearance, the sight lines, the spacing, the withdraw
+   * loop — had all been spent on columns no tree ever reached. So an elected
+   * column is offered as a candidate **in its own right**, one per attempt slot
+   * in its cell, and it skips the density draw it has already passed upstream.
+   * Everything after that is the scatter's unchanged: species, height, the
+   * trunk lattice, the kin clearance and the snow line all still get to refuse.
+   *
+   * Absent on every world that ruins nothing, so this is structurally the loop
+   * it was before WP-6d existed.
+   */
+  elected?: Uint8Array,
 ): void {
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
@@ -972,32 +1114,59 @@ function scatterOne(
 
   const cellsX = Math.ceil(region.width / spacing);
   const cellsZ = Math.ceil(region.depth / spacing);
+  // §6.4's offer, bucketed by the cell it falls in. Row-major over the columns,
+  // which is a fixed positional order, so the list a cell hands out is a pure
+  // function of the mask.
+  const forcedByCell = new Map<number, number[]>();
+  if (elected !== undefined) {
+    for (let k = 0; k < elected.length; k++) {
+      if (elected[k] !== 1 || mask[k] !== 1) continue;
+      const i = k % region.width;
+      const j = (k - i) / region.width;
+      const cell = Math.floor(j / spacing) * cellsX + Math.floor(i / spacing);
+      const bucket = forcedByCell.get(cell);
+      if (bucket === undefined) forcedByCell.set(cell, [k]);
+      else bucket.push(k);
+    }
+  }
   for (let cz = 0; cz < cellsZ; cz++) {
     for (let cx = 0; cx < cellsX; cx++) {
-      for (let attempt = 0; attempt < attempts; attempt++) {
-        // Candidate position: cell origin plus a position-keyed jitter.
+      const forced = forcedByCell.get(cz * cellsX + cx);
+      const tries = Math.max(attempts, forced?.length ?? 0);
+      for (let attempt = 0; attempt < tries; attempt++) {
+        const claimed = forced !== undefined && attempt < forced.length ? forced[attempt] : undefined;
+        // Candidate position: an elected column outright, or the cell origin
+        // plus a position-keyed jitter.
         const jx = positionFloat(scatter, cx, 1 + attempt * 2, cz);
         const jz = positionFloat(scatter, cx, 2 + attempt * 2, cz);
-        const x = region.x0 + Math.min(region.width - 1, Math.floor(cx * spacing + jx * spacing));
-        const z = region.z0 + Math.min(region.depth - 1, Math.floor(cz * spacing + jz * spacing));
+        const x =
+          claimed === undefined
+            ? region.x0 + Math.min(region.width - 1, Math.floor(cx * spacing + jx * spacing))
+            : region.x0 + (claimed % region.width);
+        const z =
+          claimed === undefined
+            ? region.z0 + Math.min(region.depth - 1, Math.floor(cz * spacing + jz * spacing))
+            : region.z0 + Math.floor(claimed / region.width);
         const idx = (z - region.z0) * region.width + (x - region.x0);
         if (mask[idx] !== 1) continue;
 
-        let p = cellProbability;
-        if (params.clumping > 0) {
-          const n = fbm2(clumpSeed, x, z, { octaves: 2, frequency: 0.02, lacunarity: 2, gain: 0.5 });
-          p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
+        if (claimed === undefined) {
+          let p = cellProbability;
+          if (params.clumping > 0) {
+            const n = fbm2(clumpSeed, x, z, { octaves: 2, frequency: 0.02, lacunarity: 2, gain: 0.5 });
+            p *= 1 - params.clumping + params.clumping * 2 * clamp01(0.5 + 0.5 * n);
+          }
+          p *= edgeTaper(region, x, z, params.edgeFalloff);
+          p *= areaTaper(region, params.area, x, z, params.edgeFalloff, areaWobbleSeed);
+          // The settlement clearing. Zero inside the hull, so the test below can
+          // never pass there; a ramp outside it, so the treeline feathers.
+          if (clearing !== undefined) {
+            const f = clearing[idx] as number;
+            if (f <= 0) continue;
+            p *= f;
+          }
+          if (columnFloat(scatter, x, z, 3) >= p) continue;
         }
-        p *= edgeTaper(region, x, z, params.edgeFalloff);
-        p *= areaTaper(region, params.area, x, z, params.edgeFalloff, areaWobbleSeed);
-        // The settlement clearing. Zero inside the hull, so the test below can
-        // never pass there; a ramp outside it, so the treeline feathers.
-        if (clearing !== undefined) {
-          const f = clearing[idx] as number;
-          if (f <= 0) continue;
-          p *= f;
-        }
-        if (columnFloat(scatter, x, z, 3) >= p) continue;
 
         const pick = positionWeighted(scatter, x, 4, z, weights);
         const chosen = species[pick] as ForestSpecies;

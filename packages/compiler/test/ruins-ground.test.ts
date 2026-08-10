@@ -431,9 +431,22 @@ describe("the reclaim (§7.4)", () => {
     expect(over.length).toBeGreaterThan(0);
   });
 
-  it("keeps the wood out of the shells and off the streets — the avoidTags line", () => {
-    // Unchanged by F19, and asserted rather than assumed: no trunk stands in a
-    // footprint or on a surfaced street anywhere in the world.
+  it("keeps the wood out of the shells, and off every street it did not elect", () => {
+    // Asserted rather than assumed: no trunk stands in a footprint anywhere in
+    // the world, and none stands on a surfaced street **except the columns the
+    // green skin's street law elected**.
+    //
+    // > **Ruling (Kai, 2026-08-10): trees and plants in the middle of a road
+    // > are part of an overgrown settlement.** This supersedes the closure's
+    // > streets-stay-clear rule **for ruined quarters only.**
+    //
+    // WP-6d is where that lands (`docs/RUINS-PLAN-v0-WP6.md` §6), and it is
+    // narrow by construction: the opening is a mask, one column at a time,
+    // disciplined by the spine, the junction clearance, the sight-line runs,
+    // the trunk spacing and the U2 withdraw loop. Everything the mask does not
+    // name is the closure exactly as WP-4 wrote it — which is what the rest of
+    // this assertion still checks, and what every column of every world that
+    // ruins nothing still gets.
     //
     // The **sidewalk** is checked from the district product rather than from
     // the occupancy grid on purpose: a quarter's own street bands write no
@@ -443,8 +456,15 @@ describe("the reclaim (§7.4)", () => {
     // after it stood 67 of 111 reclaim trunks in the middle of the pavement.
     const footprints = structures.buildings.map((b) => b.footprint);
     const road = structures.streets?.road;
+    const colonized = (structures.greenSkin as { colonized: Uint8Array } | undefined)?.colonized;
+    const elected = (x: number, z: number): boolean => colonized?.[idx(x, z)] === 1;
+    let onElected = 0;
     for (const t of trees) {
       expect(footprints.some((r) => within(r, t.x, t.z))).toBe(false);
+      if (elected(t.x, t.z)) {
+        onElected++;
+        continue;
+      }
       if (road !== undefined) expect(road[idx(t.x, t.z)]).not.toBe(1);
       for (const district of structures.districts) {
         const b = district.bounds;
@@ -454,6 +474,9 @@ describe("the reclaim (§7.4)", () => {
         expect(district.sidewalk[local]).not.toBe(1);
       }
     }
+    // …and the exception is not vacuous: this fixture ruins enough that the
+    // street law actually elected something.
+    expect(onElected).toBeGreaterThan(0);
   });
 
   it("greens the survivors — vines over ruined ground", () => {

@@ -18,7 +18,7 @@ import type { EmitChunk, PrismarineStack } from "../emit/prismarine.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
 import { writeWorldFiles } from "../emit/write.js";
 
-import { isMultifaceGrowth } from "@terrainist/stdlib";
+import { GROWTH_FACES, isMultifaceGrowth } from "@terrainist/stdlib";
 
 import type { ColumnPlan } from "./columns.js";
 import {
@@ -62,6 +62,28 @@ export interface TerrainEmitInput {
    * is where the survivors' individual leaf and log voxels are withheld.
    */
   readonly clip?: StructureClip;
+  /**
+   * Columns whose flora the clip may not touch — the green skin's elected
+   * trunks (`docs/RUINS-PLAN-v0-WP6.md` §6.4, §14 Q5).
+   *
+   * The clip is asked **twice**: once per tree in `clipTrees`, which decides
+   * whether a tree stands at all, and once per *block* here, which decides
+   * which of a standing tree's voxels survive. Exempting only the first leaves
+   * the tree standing and erases it block by block — measured on the WP-6d
+   * fixture: 61 trees on elected columns, 27 visible in the world, and every
+   * shell tree Kai's ruling elected in the missing 34. Both readers take the
+   * exemption or neither does.
+   *
+   * Two strengths, because the two elections are not the same promise.
+   * `"whole"` is a street trunk: the street law gave it the ground outright.
+   * `"wood"` is a shell trunk, and it is the difference between Q5's image and
+   * a physics finding — the trunk goes up through the roofless shell and the
+   * **canopy is still clipped inside it**, so what survives is the crown above
+   * the wall head and a bare trunk in the room. A crown allowed to fill the
+   * nave blocks the room outright: 83 `interior.blocked_column` and 438
+   * `traversal.unreachable` findings, measured, against a zero bar.
+   */
+  readonly clipExempt?: (x: number, z: number) => "whole" | "wood" | undefined;
   readonly stack: PrismarineStack;
   readonly worldDir: string;
   readonly levelName: string;
@@ -99,7 +121,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   const { region } = plan;
 
   const growthCells: GrowthCell[] = [];
-  const treesByChunk = bucketTrees(input.trees, stack, input.clip, growthCells);
+  const treesByChunk = bucketTrees(input.trees, stack, input.clip, growthCells, input.clipExempt);
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
   // A face is a property of a **neighbourhood, not of which pass wrote the
@@ -422,6 +444,15 @@ function collectGrowthCells(
   out: GrowthCell[],
 ): void {
   const growthState = new Map<number, boolean>();
+  const leafState = new Map<number, boolean>();
+  const isLeaf = (stateId: number): boolean => {
+    const cached = leafState.get(stateId);
+    if (cached !== undefined) return cached;
+    const decoded = codec.blockStateProps(stateId);
+    const is = decoded !== undefined && decoded.name.endsWith("_leaves");
+    leafState.set(stateId, is);
+    return is;
+  };
   for (const block of blocks) {
     if (block.y < WORLD_MIN_Y || block.y > 319) continue;
     let is = growthState.get(block.stateId);
@@ -462,12 +493,22 @@ function bucketTrees(
   codec: FloraStateCodec,
   clip: StructureClip | undefined,
   growth: GrowthCell[],
+  exempt?: (x: number, z: number) => "whole" | "wood" | undefined,
 ): Map<string, PlacedBlock[]> {
   const out = new Map<string, PlacedBlock[]>();
   // Which state ids are multi-face growth is a property of the palette, not of
   // the plant, so the answer is cached per state id rather than re-decoded per
   // block: a giant's curtain is thousands of vines off one state.
   const growthState = new Map<number, boolean>();
+  const leafState = new Map<number, boolean>();
+  const isLeaf = (stateId: number): boolean => {
+    const cached = leafState.get(stateId);
+    if (cached !== undefined) return cached;
+    const decoded = codec.blockStateProps(stateId);
+    const is = decoded !== undefined && decoded.name.endsWith("_leaves");
+    leafState.set(stateId, is);
+    return is;
+  };
   const isGrowth = (stateId: number): boolean => {
     const cached = growthState.get(stateId);
     if (cached !== undefined) return cached;
@@ -477,6 +518,22 @@ function bucketTrees(
     return is;
   };
   for (const tree of trees) {
+    const strength = exempt?.(tree.x, tree.z);
+    const clipped = strength === "whole" ? undefined : clip;
+    const woodOnly = strength === "wood";
+    /**
+     * A `"wood"` tree's surviving cells, for the orphan-leaf sweep below.
+     *
+     * Exempting the trunk and clipping the crown leaves a crown with holes in
+     * it, and a hole in a crown can strand a single outlying leaf with air on
+     * all six faces — `floating.isolated`, measured once on the WP-4 ground
+     * fixture. So the kept set is collected first and any leaf with no kept
+     * neighbour of its own tree is dropped, to a fixpoint. Dropping a leaf that
+     * happens to touch masonry instead costs nothing: it is one leaf, and the
+     * bar is zero findings.
+     */
+    const keptCells = woodOnly ? new Set<string>() : undefined;
+    const pending: PlacedBlock[] = [];
     // The parts → blockstate mapping (§3.2). Under `LEAF_STATE_POLICY =
     // "legacy"` and for a plant that emits only `log` and `leaves` — which is
     // every tree of every document that declares no `strata` — this is
@@ -488,15 +545,51 @@ function bucketTrees(
       const y = tree.baseY + block.dy;
       const z = tree.z + block.dz;
       if (y < WORLD_MIN_Y || y > 319) continue;
-      if (clip !== undefined && clip.blocked(x, y, z)) continue;
+      if (clipped !== undefined && clipped.blocked(x, y, z) && !(woodOnly && !isLeaf(block.stateId))) {
+        continue;
+      }
       const key = `${x >> 4},${z >> 4}`;
       let bucket = out.get(key);
       if (bucket === undefined) {
         bucket = [];
         out.set(key, bucket);
       }
+      if (keptCells !== undefined) {
+        keptCells.add(`${x},${y},${z}`);
+        pending.push({ x, y, z, stateId: block.stateId });
+        continue;
+      }
       bucket.push({ x, y, z, stateId: block.stateId });
       if (isGrowth(block.stateId)) growth.push({ x, y, z });
+    }
+    if (keptCells === undefined) continue;
+    for (let again = true; again; ) {
+      again = false;
+      for (const b of pending) {
+        const key = `${b.x},${b.y},${b.z}`;
+        if (!keptCells.has(key) || !isLeaf(b.stateId)) continue;
+        let touching = false;
+        for (const [, ox, oy, oz] of GROWTH_FACES) {
+          if (keptCells.has(`${b.x + ox},${b.y + oy},${b.z + oz}`)) {
+            touching = true;
+            break;
+          }
+        }
+        if (touching) continue;
+        keptCells.delete(key);
+        again = true;
+      }
+    }
+    for (const b of pending) {
+      if (!keptCells.has(`${b.x},${b.y},${b.z}`)) continue;
+      const key = `${b.x >> 4},${b.z >> 4}`;
+      let bucket = out.get(key);
+      if (bucket === undefined) {
+        bucket = [];
+        out.set(key, bucket);
+      }
+      bucket.push(b);
+      if (isGrowth(b.stateId)) growth.push({ x: b.x, y: b.y, z: b.z });
     }
   }
   return out;

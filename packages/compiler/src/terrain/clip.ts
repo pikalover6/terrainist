@@ -257,12 +257,31 @@ export interface TreeClipResult {
 export function clipTrees(
   trees: readonly TreePlacement[],
   clip: StructureClip,
+  /**
+   * Columns whose tree the clip may not touch — the green skin's elected
+   * trunks (`docs/RUINS-PLAN-v0-WP6.md` §6.4, and §14 Q5 as Kai ruled it).
+   *
+   * The clip exists to keep the wood off the fabric, and for every tree in
+   * every world that is exactly right. WP-6d's trunks are the one set the
+   * fabric has already been asked to give ground to: the street law elected
+   * them *on* the carriageway, and Kai's shell ruling elected them *inside* a
+   * roofless shell, so a clip that drops any tree touching a structure box
+   * drops every one of them (measured: 61 placed, 27 standing, 0 in a shell).
+   * A tree *bursting* from a ruin is a tree the clip does not get a vote on.
+   *
+   * Absent for every world that ruins nothing.
+   */
+  exempt?: (x: number, z: number) => boolean,
 ): TreeClipResult {
   const kept: TreePlacement[] = [];
   let dropped = 0;
   let clippedBlocks = 0;
 
   for (const tree of trees) {
+    if (exempt?.(tree.x, tree.z) === true) {
+      kept.push(tree);
+      continue;
+    }
     const radius = treeCanopyRadius(tree) + (tree.mega ? 2 : 0);
     // Cheap rejection: a tree whose whole horizontal reach misses every claimed
     // column cannot be clipped, and that is nearly all of them.

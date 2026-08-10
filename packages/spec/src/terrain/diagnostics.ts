@@ -317,6 +317,16 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   GREEN_SKIN: "LOAM-I514",
   /**
+   * The street colonizer's withdraw loop removed elected trunks (WP-6 §6.3).
+   *
+   * U2 — *growth never seals a route* — is not argued, it is checked and then
+   * repaired: the pedestrian graph over the district's street bands must keep
+   * exactly the components it had with the colonizer off, and any trunk that
+   * breaks that is withdrawn in reverse election order. A sustained rate here
+   * is a finding about `STREET_TRUNK_SHARE`, not about the withdraw loop.
+   */
+  GREEN_SKIN_WITHDRAWN: "LOAM-W513",
+  /**
    * The green rule fell through to the climate fallback (WP-6 §4.6, Q2).
    *
    * No `scatter.forest@0` node covers this settlement, so the skin cannot grow

@@ -928,7 +928,10 @@ async function compileValidated(
   const clearing =
     structures?.ruinField === undefined
       ? farmed
-      : liftRuinClearing(region, farmed, structures.ruinField.field);
+      : liftColonizedClearing(
+          liftRuinClearing(region, farmed, structures.ruinField.field),
+          structures.greenSkin,
+        );
   const clip =
     structures === undefined
       ? undefined
@@ -977,6 +980,16 @@ async function compileValidated(
           ...occupancy,
           ruin: structures.ruinField.field,
           ruinPaved: streetBandColumns(region, structures.districts),
+          // WP-6 §6.1: the street law's own election, and Kai's Q5 shells.
+          // Both are `undefined` on a world the skin did not run on, and the
+          // skin does not run without a ruin field — so the closure is exactly
+          // as closed as it was everywhere it was.
+          ...(structures.greenSkin === undefined
+            ? {}
+            : {
+                ruinColonized: structures.greenSkin.colonized,
+                ruinShellTrunks: structures.greenSkin.shellTrunks,
+              }),
         };
   const scatter = scatterForests(
     forestNodes,
@@ -1015,7 +1028,22 @@ async function compileValidated(
   diagnostics.push(...scatter.diagnostics);
   // A tree that a building would eat most of was never really there; the
   // survivors keep their placements and lose only the voxels that intersect.
-  const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip);
+  // WP-6 §6.4: the elected trunks are exempt from the clip. Everything else in
+  // the wood is clipped exactly as it always was.
+  const electedTrunks = structures?.greenSkin;
+  const exemptTrunk =
+    electedTrunks === undefined
+      ? undefined
+      : (x: number, z: number): "whole" | "wood" | undefined => {
+          const i = x - region.x0;
+          const j = z - region.z0;
+          if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return undefined;
+          const k = j * region.width + i;
+          return electedTrunks.colonized[k] === 1 || electedTrunks.shellTrunks[k] === 1
+            ? "wood"
+            : undefined;
+        };
+  const clipped = clip === undefined ? undefined : clipTrees(scatter.trees, clip, (x, z) => exemptTrunk?.(x, z) !== undefined);
   const standing = clipped?.trees ?? scatter.trees;
   // --- pass 6b: the clearing transition band (fabric v2, F2) ---------------
   // A post-pass over the planted forest, and it has to be: whether a settlement
@@ -1124,6 +1152,7 @@ async function compileValidated(
     decor: [...caveDecor.blocks, ...decoration.blocks, ...(transition?.blocks ?? [])],
     ...(structureBlocks === undefined ? {} : { structures: structureBlocks }),
     ...(clip === undefined ? {} : { clip }),
+    ...(exemptTrunk === undefined ? {} : { clipExempt: exemptTrunk }),
     stack,
     worldDir: options.outDir,
     levelName: doc.meta.name,
@@ -1423,6 +1452,33 @@ export function liftRuinClearing(
   let cleared = 0;
   for (let k = 0; k < density.length; k++) if (density[k] === 0) cleared++;
   return { hulls: clearing?.hulls ?? [], density, clearedColumns: cleared };
+}
+
+/**
+ * §6.4's coupling: `clearing[idx] := 1` on every elected column.
+ *
+ * > An elected column is one the street law has already decided should carry a
+ * > tree; the scatter's job there is to say *which* tree, not whether.
+ *
+ * Without it the feature is inert at exactly the place it is supposed to be
+ * loudest: {@link RECLAIM_CANOPY_GAIN} raises a *density*, and a density of 0.8
+ * on a lattice with spacing 5–7 declines most elected columns. The lift stays
+ * as it is for the surrounding open ground — this touches only the columns the
+ * election, the spine, the junction clearance, the sight-line law, the spacing
+ * and the U2 withdraw loop have already agreed on.
+ */
+function liftColonizedClearing(
+  clearing: SettlementClearing,
+  skin: { readonly colonized: Uint8Array; readonly shellTrunks: Uint8Array } | undefined,
+): SettlementClearing {
+  if (skin === undefined) return clearing;
+  const { density } = clearing;
+  let cleared = 0;
+  for (let k = 0; k < density.length; k++) {
+    if (skin.colonized[k] === 1 || skin.shellTrunks[k] === 1) density[k] = 1;
+    if (density[k] === 0) cleared++;
+  }
+  return { hulls: clearing.hulls, density, clearedColumns: cleared };
 }
 
 /** §9.1's 4-column margin around the parcel union, chebyshev. */
