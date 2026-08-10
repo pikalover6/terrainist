@@ -13,9 +13,12 @@ import path from "node:path";
 
 import type { BlockEntity } from "../emit/block-entities.js";
 import { applyConnectionStates, type ConnectionStats } from "../emit/connections.js";
+import { applyGrowthFaces, type GrowthCell, type GrowthFixupStats } from "../emit/growth-fixup.js";
 import type { EmitChunk, PrismarineStack } from "../emit/prismarine.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
 import { writeWorldFiles } from "../emit/write.js";
+
+import { isMultifaceGrowth } from "@terrainist/stdlib";
 
 import type { ColumnPlan } from "./columns.js";
 import {
@@ -86,6 +89,8 @@ export interface TerrainEmitSummary {
   readonly spawn: readonly [number, number, number];
   /** What the connection-state pass examined and rewrote. */
   readonly connections: ConnectionStats;
+  /** What the multi-face growth fixup examined, rewrote and dropped. */
+  readonly growth: GrowthFixupStats;
 }
 
 /** Materialize and write. */
@@ -93,9 +98,18 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
   const { plan, stack } = input;
   const { region } = plan;
 
-  const treesByChunk = bucketTrees(input.trees, stack, input.clip);
+  const growthCells: GrowthCell[] = [];
+  const treesByChunk = bucketTrees(input.trees, stack, input.clip, growthCells);
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
+  // A face is a property of a **neighbourhood, not of which pass wrote the
+  // block** — the sentence the connection pass below already stands on. The
+  // structure layer writes multi-face growth too (the decay's interior vines,
+  // and from WP-6b the green skin's climbers and glow lichen), and it derives
+  // its faces against a *surface index* that stops at the ruin field's edge.
+  // So its growth cells go through the same fixup the flora side does, settled
+  // once at the end against the composed world.
+  collectGrowthCells(input.structures ?? [], stack, growthCells);
   const blockEntityByChunk = bucketBlockEntities(input.blockEntities ?? []);
   const chunks = new Map<string, EmitChunk>();
 
@@ -130,6 +144,14 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
       chunks.set(`${cx},${cz}`, chunk);
     }
   }
+
+  // Vine faces, for the same reason and one pass earlier: a `vine`'s whole
+  // state is the set of blocks it claims to be stuck to, and which blocks are
+  // there is only knowable once every plant, every ground treatment and every
+  // wall has been stamped. `hangingFaces` derived them from one plant's own
+  // parts, so where two plants interleave — or a clip removes the support one
+  // assumed — the claimed face pointed at air. See `emit/growth-fixup.ts`.
+  const growth = applyGrowthFaces(chunks, growthCells, stack);
 
   // Connections last, over the finished world. Fences, panes, walls and bars
   // store their neighbours in their own block state and Minecraft never
@@ -179,6 +201,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     dataVersion: stack.dataVersion,
     spawn: [input.spawn.x, input.spawn.y, input.spawn.z],
     connections,
+    growth,
   };
 }
 
@@ -387,6 +410,30 @@ interface PlacedBlock {
 }
 
 /** Bucket decoration blocks by chunk, preserving their deterministic order. */
+/**
+ * Every multi-face growth block in a flat block list, as fixup candidates.
+ *
+ * Cached per state id rather than decoded per block, for `bucketTrees`'s own
+ * reason: a city's worth of ivy is thousands of vines off a handful of states.
+ */
+function collectGrowthCells(
+  blocks: readonly DecorBlock[],
+  codec: FloraStateCodec,
+  out: GrowthCell[],
+): void {
+  const growthState = new Map<number, boolean>();
+  for (const block of blocks) {
+    if (block.y < WORLD_MIN_Y || block.y > 319) continue;
+    let is = growthState.get(block.stateId);
+    if (is === undefined) {
+      const decoded = codec.blockStateProps(block.stateId);
+      is = decoded !== undefined && isMultifaceGrowth(decoded.name);
+      growthState.set(block.stateId, is);
+    }
+    if (is) out.push({ x: block.x, y: block.y, z: block.z });
+  }
+}
+
 function bucketDecor(decor: readonly DecorBlock[]): Map<string, PlacedBlock[]> {
   const out = new Map<string, PlacedBlock[]>();
   for (const block of decor) {
@@ -413,9 +460,22 @@ function bucketDecor(decor: readonly DecorBlock[]): Map<string, PlacedBlock[]> {
 function bucketTrees(
   trees: readonly TreePlacement[],
   codec: FloraStateCodec,
-  clip?: StructureClip,
+  clip: StructureClip | undefined,
+  growth: GrowthCell[],
 ): Map<string, PlacedBlock[]> {
   const out = new Map<string, PlacedBlock[]>();
+  // Which state ids are multi-face growth is a property of the palette, not of
+  // the plant, so the answer is cached per state id rather than re-decoded per
+  // block: a giant's curtain is thousands of vines off one state.
+  const growthState = new Map<number, boolean>();
+  const isGrowth = (stateId: number): boolean => {
+    const cached = growthState.get(stateId);
+    if (cached !== undefined) return cached;
+    const decoded = codec.blockStateProps(stateId);
+    const is = decoded !== undefined && isMultifaceGrowth(decoded.name);
+    growthState.set(stateId, is);
+    return is;
+  };
   for (const tree of trees) {
     // The parts → blockstate mapping (§3.2). Under `LEAF_STATE_POLICY =
     // "legacy"` and for a plant that emits only `log` and `leaves` — which is
@@ -436,6 +496,7 @@ function bucketTrees(
         out.set(key, bucket);
       }
       bucket.push({ x, y, z, stateId: block.stateId });
+      if (isGrowth(block.stateId)) growth.push({ x, y, z });
     }
   }
   return out;

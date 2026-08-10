@@ -1273,6 +1273,7 @@ function unwrittenEmit(
     dataVersion: stack.dataVersion,
     spawn: [spawn.x, spawn.y, spawn.z],
     connections: { examined: 0, rewritten: 0 },
+    growth: { examined: 0, rewritten: 0, dropped: 0 },
   };
 }
 
