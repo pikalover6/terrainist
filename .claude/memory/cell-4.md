@@ -141,10 +141,25 @@ over crumble-breaks — plugs 14→56; 15 shell trees standing; separate
 ruined goldens; stairwell guard normative after a 146-finding leaf).
 Kit teaches the green skin; never-inside-a-shell pinned ABSENT.
 
-**IN FLIGHT: P4 candidate 2** (seed 304, full product path, green skin
-live) → installs as *_c2, archived battery/candidates/p4-c2. Kai then
-walks farmtown_invasion_c2 (steering: mothership 38k blocks + 13 pods,
-medieval timber town) and the new P4. Ruling batch open: terrace bays /
-collapse promotion / light band / STREET_BREAK_FLOOR / intact-lot
-yards / reclaim density / shellTrees-off has no caller (ledger).
-Backstop 2026-08-28.
+**C2 WALK VERDICTS (Kai, 08-10 evening): overgrown_hideout_c2 =
+"actually so amazing! Maybe my favorite generate of terrainist so far.
+Feels undeniably like the prompt."** (green skin fired: 60,860 columns,
+50,640 strands, 428 street trunks, 49 shell trees, I514 reports it
+all). farmtown_invasion_c2 "much better." Three follow-ups, all in
+motion (wave 11): (1) urban trees converge on tall-bare-trunk+top-
+mullet — doc had real variety, so it's OUR mechanism (crowns forced
+above rooflines in street canyons); medium diagnosing+fixing (fit the
+corridor, don't flee it). (2) Roads read "gray blob with speckles" —
+Kai's OLD item resurfaced (was lost in compaction); low implementing
+borders-everywhere + carriageway texture + F10 per-district palettes;
+street-bearing worlds MAY move (that's the point). (3) Invasion
+"lacks spectacle... reads as a ufo and odd structures" — mass without
+composition; kit staging teaching committed (7fbb66c: loom over the
+heart / advance don't sprinkle / connect sky to ground); deeper event-
+staging mechanism ledgered.
+
+**Ruling batch still open:** terrace bays / collapse promotion / light
+band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
+shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
+wave 11: F3 junctions, F5 WP-6, F6/F7 flora WP-C/D, F9; P1/P3/P5/P6/P7
+first candidates.
