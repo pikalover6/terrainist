@@ -90,11 +90,32 @@ ruling: open for ruin-field>0 columns, keep building/interior/road/
 plaza/prop excluded), and pre-existing traversal.unreachable on potted
 plants in decayed shells (seeds 304-306; breaks lint-zero gate).
 
-**IN FLIGHT (wave 7):** ruins-closure medium (both findings — the P4
-gate) + ruins WP-5 kit (low). After: F19 code-complete → first battery
-candidates P2+P4 (also serves as farm demo). Kai's ruling batch still
-queued (terrace bays / collapse promotion / light-band retune /
-STREET_BREAK_FLOOR / intact-lot-ruined-yard nuance).
+**Wave 7 LANDED — F17 AND F19 BOTH CODE-COMPLETE (2026-08-10 ~02:00).**
+Ruins WP-5 kit (210db8d: "A ruined city is a district with a high
+decline — not a list of ruins"; table-14's cannot-say-yet line gone,
+test-pinned). Closure (9af28e4): potted-plant lint defect was two
+vocabularies for one question — BODY_BLOCKING now shared via
+support.ts, flood widened monotonically; tree gate opens where ruin
+field>0 with per-column claims held, exposing+closing the untagged
+sidewalk band (ruinPaved mask); seeds 300-310 all lint zero, 47-68
+trees over ruined ground (was 0); kit's trees-stop sentence retired
+with its pin test. Physics.ts has an invalid UTF-8 byte (pre-existing,
+grep needs -a) — minor ledger item.
+
+**IN FLIGHT: battery candidates P2 (seed 302, farm+aliens) and P4
+(seed 304, hideout in overgrown metropolis ruins)** — first unattended
+product-path test of farm, ruins, and centerpiece steering; install as
+*_c1 channel. P2 doubles as the farm-plan demo world.
+
+**Kai's ruling batch (with the candidate walks):** terrace bays don't
+roll (pristine amid total ruin); one-in-six collapse promotion (needs
+2nd param); light band roof fragments unreachable (retune); ruins
+STREET_BREAK_FLOOR=0.5; intact-lot-may-take-ruined-yard nuance;
+reclaim density read ("47-68 trees = reclaimed city?" — walk question).
+
+**After candidates:** Kai walks P2/P4 + ruling batch → then F3
+junctions, F5 WP-6, F6/F7 flora WP-C/D, F9, F10 per SHIP-PLAN §8.
+Backstop 2026-08-28.
 
 **Rulings owed to Kai (batch, next active):** terrace bays don't roll
 yet (separate emitter — pristine rows amid total ruin, visible in P4);
