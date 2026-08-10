@@ -1,6 +1,7 @@
 # Farm Plan v0 — the minimal farm (SHIP-PLAN F17)
 
-> **STATUS: DRAFT v0 — awaiting Kai's ratification (written 2026-08-09).**
+> **STATUS: RATIFIED 2026-08-09** (drafted and ratified the same day; the
+> land-use clamp amendment in §8 carries Kai's explicit approval — see Q3).
 > Written to be built from cold: an implementer with no memory of the
 > conversation that produced it should be able to land WP-1 from §3–§5 alone.
 > Nothing here changes any existing world — see §2, the reach law.
@@ -727,13 +728,10 @@ of JSON and the report reads better; a `count` param can be added later without
 moving anything.
 
 **Q3 — does the clamp amendment (§8) need Kai's ratification separately?**
-It amends a ratified disposition (number 8) even though it preserves its
-reasoning.
-*Recommendation:* **yes, and it is the one thing in this document that should
-be a popup.** The amendment is narrow and defensible, but disposition 8 was
-ratified deliberately and a session should not quietly reinterpret a ratified
-decision — CLAUDE.md's funnel rule says a ratified decision may shrink, never
-silently vanish, and the same spirit applies to amending one.
+**RESOLVED (Kai, 2026-08-09): ratified as designed.** Disposition 8 is
+amended narrowly — parcel and yard rects join `LandUseSources` via the
+`farmParcels` seam exactly as camp cores do; the original disposition's
+reasoning (excluding F13's large soft farm masks) survives intact.
 
 **Q4 — `pasture` as a crop id.**
 It is not a crop; it is a land use, and putting it in the crop table is a small

@@ -1,6 +1,8 @@
 # Ruins Plan v0 — district ruins treatment (SHIP-PLAN F19)
 
-> **STATUS: DRAFT v0 — awaiting Kai's ratification (written 2026-08-09).**
+> **STATUS: RATIFIED 2026-08-09, with one amendment** — the survivor cap is
+> removed (total desolation at `decline = 1.0`; §4.1 and Q2 record the
+> ruling) and bare `ruin`/`ruins` tags resolve to `ruined_cottage` (Q3).
 > Written to be built from cold. Nothing here changes any existing world — see
 > §2, the reach law.
 >
@@ -165,11 +167,10 @@ different hat. So the curve gets an **onset**:
 
 ```ts
 export const RUIN_ONSET = 0.35;      // below this, decline is wear, not ruin
-export const RUIN_SHARE_MAX = 0.92;  // even a dead city keeps a few shells
 
 export function ruinShare(decline: number): number {
   if (decline < RUIN_ONSET) return 0;
-  return Math.min(RUIN_SHARE_MAX, decline * decline);
+  return Math.min(1, decline * decline);
 }
 ```
 
@@ -180,15 +181,16 @@ export function ruinShare(decline: number): number {
 | 0.5 | 0.25 | one lot in four; the street still works |
 | 0.7 | 0.49 | half the street; gaps you can see through |
 | 0.85 | 0.72 | a ruin field with survivors |
-| 0.95 | 0.90 | a dead city |
-| 1.0 | 0.92 | the ceiling |
+| 0.95 | 0.90 | a dead city, a few shells standing |
+| 1.0 | 1.00 | total desolation — nothing intact |
 
-**`RUIN_SHARE_MAX = 0.92` is not a rounding artefact.** Contrast is what makes
-ruins read as ruins: a street where every shell is knee-high is a rubble field
-with no reference for how tall the buildings were. Keeping roughly one shell in
-twelve intact at the top of the dial gives the eye its measure, gives the
-player somewhere dry to stand, and is what the P4 assertion's "once-great" is
-actually asking for.
+**There is no survivor cap — ratified by Kai, 2026-08-09, overriding this
+draft's `RUIN_SHARE_MAX = 0.92`.** The draft argued contrast (a ruin field
+with no intact shell loses its yardstick); Kai ruled that a prompt saying
+"nothing left standing" deserves literal truth, and the yardstick argument
+holds anyway for every value below 1.0 — the survivors thin gradually, so
+only the dial's very top is total. The decay operators still leave partial
+walls at graded heights (§5), so even 1.0 is legible ruin, not bare ground.
 
 **The register.** `decay.ruinShare`, reads `decline`, `status: "today"` with
 `today = 0`, drives "the share of a district's infill lots built as ruins
@@ -672,23 +674,16 @@ discontinuity at the threshold is deliberate.
 (0.5-ish) in the same session, and expect to move it once. It is one constant.
 
 **Q2 — should the ceiling be 0.92, or should a dead city be total?**
-The contrast argument (§4.1) says keep survivors. The counter-argument is that
-"once-great" might want total desolation with the *street grid* carrying the
-memory instead of the shells.
-*Recommendation:* keep 0.92; it is the safer read and the P4 walk will settle
-it in one visit. **This is a good popup** — it is exactly the kind of small,
-reversible aesthetic call Kai answers from his phone.
+**RESOLVED (Kai, 2026-08-09): total.** The cap is removed; `ruinShare` runs
+to 1.0 at `decline = 1.0` (§4.1 records the ruling and the surviving half of
+the contrast argument).
 
 **Q3 — table 14's own open question: bare `ruin` / `ruins` as building tags.**
-The kit deliberately leaves them unclaimed, with three options on the table
-(leave it; point at `ruined_cottage`; a seeded pick among the five). F19 adds a
-fourth reading: at district scale, "ruins" is now `decline`, so the tag question
-only ever concerns a single building.
-*Recommendation:* **(b) — point both at `ruined_cottage`**, the gentlest and
-most generic of the five, now that the ambiguity is small and the scale answer
-lives elsewhere. A seeded pick is fun and unpredictable, and unpredictable is
-the wrong property for a word an author wrote on purpose. This closes a
-long-standing kit question as a side effect and wants Kai's word.
+**RESOLVED (Kai, 2026-08-09): option (b)** — both bare tags point at
+`ruined_cottage`, the gentlest and most generic of the five, now that the
+scale answer lives in `decline`. A seeded pick was rejected: unpredictable is
+the wrong property for a word an author wrote on purpose. This closes the
+kit's long-standing open authoring question; the kit edit lands with WP-1.
 
 **Q4 — should `decline` also reduce a district's *coverage* (lots left empty)?**
 An abandoned city plausibly has cleared plots, not only ruined ones.
