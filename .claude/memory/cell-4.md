@@ -68,13 +68,27 @@ recorded in RUINS-PLAN status block; FARM-PLAN example fixed
 (drape). Ledgered: DEFAULT_CANDIDATES=96 thin; T107 coastal spawn
 self-heals to land (benign).
 
-**IN FLIGHT (wave 5):** farm WP-3 (blocks: rows/crops vs RESOLVED
-ground, persistence law, lint-zero bar) and ruins WP-3 (§6 band table
-replaces decayProfileFor body; per-lot roll via decay.ruinShare
-fan-out + cluster field channels 41–49; W510 refused-whole; W511
-watchtower/skyscraper fallback). Identity golden = hard gate.
+**Wave 5 LANDED:** farm WP-3 (1c8e327: fields sown vs resolved ground,
+persistence law by construction, lint-zero; plan §3.1 example now fully
+valid Loam) + WP-4 (ef4fc49: yard levelled+claimed, farmstead packed on
+non-gate sides, farmParcels clamp seam live, clearing suppression,
+fields carry town biome; two archetype minima enlarged after
+traversal.no_start). Ruins WP-3 (8dcb8ff: band table, per-lot roll,
+NO-CAP ruling enforced past the plan's own pseudocode via
+4·share·(1−share) window — decline 1.0 fells 64/64; W510 enacted
+refusal, W511, I512; lint-zero at 0.9 and 1.0). Hygiene wart: 8dcb8ff
+alone doesn't build (shared diagnostics rode with ef4fc49).
 
-**Next:** commit wave 5; farm WP-4/5 (yard, kit) + ruins WP-4+ (ground
-/reclaim, kit); then F3 junctions, F5 WP-6, F6/F7 flora WP-C/D, F9,
-F10; first battery candidate once P2/P4 features walk-ready. Open
-popups owed to Kai: none.
+**IN FLIGHT (wave 6):** ruins WP-4 (ground/reclaim: ruin_yard, wear
+lift, street breaking ≥0.8, trees through fabric) + farm WP-5 (kit
+teaching + total fan-out rows; kit docs owned by farm this wave; ruins
+WP-5 kit queued after).
+
+**Rulings owed to Kai (batch, next active):** terrace bays don't roll
+yet (separate emitter — pristine rows amid total ruin, visible in P4);
+one-in-six collapse promotion needs second param; light band's roof
+fragments unreachable (walk retune).
+
+**Next:** commit wave 6; ruins WP-5 (kit); then F3 junctions, F5 WP-6,
+F6/F7 flora WP-C/D, F9, F10; first battery candidate once P2/P4
+features complete.
