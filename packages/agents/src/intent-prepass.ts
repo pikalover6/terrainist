@@ -275,8 +275,28 @@ ${eraVocabularyLines()}
   Leave "era" out ONLY when the prompt fixes no period AND a present-day street
   full of cars and hydrants would look right.
 
+  ERA DESCRIBES THE SETTLEMENT, NEVER AN EVENT OR ITS VISITORS. A place that
+  is invaded, attacked, haunted or visited keeps its own period: "a farm town
+  being invaded by aliens" is a rural town (medieval or industrial by its own
+  look) — the aliens live in "event" and in bespoke programs, not in "era".
+  Writing far_future there re-clads every cottage in alien materials, which is
+  exactly backwards: the horror of an invasion is modern things standing over
+  ordinary ones. Write far_future only when the PLACE ITSELF is far-future — a
+  cyberpunk city, a space colony, an arcology.
+
 materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exist:
     ${list(MATERIAL_THEME_IDS)}
+
+  Pick by the place's own material logic, and default toward the modest end:
+  villages, farms, ports, market towns -> temperate_timber; taiga, alpine,
+  fjord -> boreal_pine; parkland, downs, spa towns -> birchwood_downs;
+  contemporary or futuristic cities -> modern_city. "white_quartz" is the
+  PRESTIGE exception and is almost always the wrong answer: write it only for
+  the sacred, the palatial or the otherworldly-refined (a temple city, a
+  wizard's citadel, an elven capital) — never for an ordinary town however
+  scenic, and never merely because the prompt says "stone". Stone-built
+  ordinary towns are a palette question the compiler already answers; a
+  medieval hill town in white_quartz reads as a wedding cake.
 
 flora: exactly these ${TREE_SHAPES.length} tree shapes:
     ${list(TREE_SHAPES)}

@@ -2418,6 +2418,17 @@ and its supporting cast (the citadel and its shattered gatehouse; the wreck
 and the beachhead command post). Spend them like shots in a film: one wide,
 one close — not twelve of everything.
 
+**When the prompt is an event — an invasion, a siege, a disaster in
+progress — the event is the second protagonist, and it needs MASS.** A
+player must not be able to stand anywhere in the settlement without seeing
+evidence. That takes both registers at once: the centerpiece at a scale that
+dwarfs the town (the mothership below is 64 × 48 × 64 — that scale, not a
+statue's), **and** a scattered plugin in the double digits with its ground
+traces (`count: 18`, not 3 — three pods is a rumor; eighteen is an
+invasion). Underscaling the event is the most common way a strong prompt
+comes out timid: the town reads fine, and nothing appears to be happening
+to it.
+
 Do **not** ask for one for the fabric the kit already builds well — houses,
 towers, walls, bridges, roads, docks, trees, fountains, carts. A program
 costs a model call and a verification pass; a cottage costs neither. A padded
