@@ -9,7 +9,11 @@
 import { nodeSeed, type Seed256 } from "@terrainist/stdlib";
 import {
   authoredProgramId,
+  boxEnvelopeOf,
   canonicalize,
+  farmEnvelopeOf,
+  isFarmGenerator,
+  FARM_MIN_ENVELOPE,
   hoverOf,
   isAuthoredGenerator,
   isPlaceableNode,
@@ -117,8 +121,39 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
   return { nodes, diagnostics };
 }
 
+/**
+ * A holding, as the solver sees it: **one footprint of ground and nothing
+ * else** — the same shape a district and a city take, and for the same reason.
+ *
+ * Height 1 because a holding reserves ground, not a volume: it levels its own
+ * yard and each field separately (`docs/FARM-PLAN-v0.md` §5) and leaves the
+ * rest of the envelope untouched, so there is no box to keep clear. One
+ * rotation for the district's reason: a field grid is arithmetic inside the
+ * rect, so a yaw the solver chose would only have to be undone again.
+ */
+function farmInput(node: StructureNode, nodePath: string, seed: Seed256): LayoutNodeInput {
+  const envelope = farmEnvelopeOf(node);
+  const [w, d] = envelope?.size ?? FARM_MIN_ENVELOPE;
+  return {
+    id: node.id,
+    nodePath,
+    kind: "generator",
+    generator: node.generator,
+    size: [w, 1, d],
+    flexible: false,
+    padding: envelope?.padding ?? 0,
+    rotations: [0],
+    constraints: canonicalConstraints(node.constraints),
+    ports: node.ports ?? {},
+    optional: node.optional === true,
+    tags: node.tags ?? [],
+    seed,
+  };
+}
+
 function structureInput(node: StructureNode, nodePath: string, seed: Seed256): LayoutNodeInput {
-  const envelope = node.envelope;
+  if (isFarmGenerator(node.generator)) return farmInput(node, nodePath, seed);
+  const envelope = boxEnvelopeOf(node);
   const size = envelope?.size ?? defaultBuildingSize(node);
   return {
     id: node.id,

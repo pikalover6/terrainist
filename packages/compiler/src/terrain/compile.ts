@@ -161,6 +161,7 @@ import {
   buildTransitionBand,
   checkTunnelIntegrity,
   roadParamsOf,
+  type FarmReportRow,
   type StructurePassResult,
   type StructureStats,
 } from "../structures/index.js";
@@ -432,6 +433,13 @@ export interface TerrainCompileReport {
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly timings: CompileTimings;
   readonly emit: TerrainEmitSummary;
+  /**
+   * One row per `precinct.farm@0` holding (`docs/FARM-PLAN-v0.md` §12).
+   *
+   * Absent — not empty — for a document with no farm node, so a world without
+   * agriculture writes exactly the report it wrote before F17 existed.
+   */
+  readonly farms?: readonly FarmReportRow[];
   /** Present only for settlement-profile documents. */
   readonly layout?: LayoutOutcome;
 }
@@ -1153,6 +1161,7 @@ async function compileValidated(
       ...(programs === undefined ? {} : { programs: programStatsOf(programJobs, programs.placed) }),
     },
     diagnostics,
+    ...(structures?.farms === undefined ? {} : { farms: structures.farms.farms }),
     ...(layoutOutcome === undefined ? {} : { layout: layoutOutcome }),
     timings: {
       validate: clock.validateMs,

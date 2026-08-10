@@ -82,6 +82,11 @@ import {
   WALL_MIN_MARGIN,
   WALL_MIN_TOWER_PITCH,
   WALL_STYLES,
+  FARM_CROPS,
+  FARM_EDGES,
+  FARM_MIN_ENVELOPE,
+  FARM_PARAM_RANGES,
+  isFarmGenerator,
   isPrecinctGenerator,
   V02_FACES,
   V02_PORT_TYPES,
@@ -447,10 +452,14 @@ function validateStructureNode(
     if (generator === "building.grammar@0") validateBuildingParams(out, `${path}.params`, params, inCity);
     else if (generator === "precinct.airport@0") validateAirportParams(out, `${path}.params`, params);
     else if (generator === "precinct.harbour@0") validateHarbourParams(out, `${path}.params`, params);
+    else if (isFarmGenerator(generator)) validateFarmParams(out, `${path}.params`, params);
     else validateRoadParams(out, `${path}.params`, params);
   }
 
-  validateBoxEnvelope(out, path, node["envelope"]);
+  // A holding's envelope is a *region* — see `FarmEnvelope` — so it is checked
+  // by its own rule and never against the box vocabulary.
+  if (isFarmGenerator(generator)) validateFarmEnvelope(out, path, node["envelope"]);
+  else validateBoxEnvelope(out, path, node["envelope"]);
   if (generator === "building.grammar@0") {
     validateHighriseEnvelope(out, path, node, isObject(params) ? params : {});
   }
@@ -3124,6 +3133,153 @@ function validatePrecinctEnvelope(
         `${path}.envelope`,
         `${generator} was given a ${x}×${z} footprint; ${kind} needs at least ${min[0]}×${min[1]} (either way round)`,
         `set "size": [${min[0]}, ${(envelope["size"] as unknown[])[1] ?? 24}, ${min[1]}] or larger — the kit refuses to build a partial compound`,
+      ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* precinct.farm@0 — the holding (docs/FARM-PLAN-v0.md §3.3, §12)              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A holding's envelope: required, `"shape": "region"`, and at least 40 × 40.
+ *
+ * The floor is one farmstead yard (20 × 20) plus one parcel plus the setbacks:
+ * below it there is nowhere to put a field, and a holding with no fields is not
+ * a holding.
+ */
+function validateFarmEnvelope(out: LoamDiagnostic[], path: string, envelope: unknown): void {
+  const at = `${path}.envelope`;
+  const [minX, minZ] = FARM_MIN_ENVELOPE;
+  const fix = `add "envelope": { "shape": "region", "size": [64, 64] } — a holding is a piece of ground, so its size has two elements, and it needs at least ${minX} × ${minZ}`;
+  if (!isObject(envelope)) {
+    out.push(
+      error("FARM_TOO_SMALL", at, `precinct.farm@0 needs a region envelope, got ${describe(envelope)}`, fix),
+    );
+    return;
+  }
+  unknownKeys(out, envelope, at, ["shape", "size", "padding"], "farm envelope");
+  if (envelope["shape"] !== "region") {
+    out.push(
+      error(
+        "FARM_TOO_SMALL",
+        at,
+        `the farm envelope "shape" must be "region", got ${describe(envelope["shape"])}`,
+        fix,
+      ),
+    );
+  }
+  checkNumbers(out, at, envelope, { padding: { min: 0, max: 64, int: true } });
+  const size = envelope["size"];
+  if (!Array.isArray(size) || size.length !== 2 || size.some((v) => typeof v !== "number")) {
+    out.push(
+      error("FARM_TOO_SMALL", at, `the farm envelope "size" must be [x, z], got ${describe(size)}`, fix),
+    );
+    return;
+  }
+  const [x, z] = size as [number, number];
+  if (!Number.isInteger(x) || !Number.isInteger(z) || x < minX || z < minZ) {
+    out.push(
+      error(
+        "FARM_TOO_SMALL",
+        at,
+        `precinct.farm@0 was given a ${x}×${z} envelope; a holding needs at least ${minX}×${minZ} in whole blocks — one yard, one field and the setbacks`,
+        fix,
+      ),
+    );
+  }
+}
+
+/** `precinct.farm@0` params (`docs/FARM-PLAN-v0.md` §3.3). */
+function validateFarmParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(
+    out,
+    params,
+    at,
+    ["parcels", "parcelSize", "crops", "farmstead", "edge", "fallow"],
+    "precinct.farm@0 params",
+  );
+
+  for (const [key, range, hint] of [
+    ["parcels", FARM_PARAM_RANGES.parcels, 'write "parcels": 6 for a holding that reads as a working farm'],
+    ["parcelSize", FARM_PARAM_RANGES.parcelSize, 'write "parcelSize": 18 — below 10 the rows have no rhythm'],
+    ["fallow", FARM_PARAM_RANGES.fallow, 'write "fallow": 0.25 to rest a quarter of the fields'],
+  ] as const) {
+    const value = params[key];
+    if (value === undefined) continue;
+    const whole = key !== "fallow";
+    const bad =
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      (whole && !Number.isInteger(value)) ||
+      value < range.min ||
+      value > range.max;
+    if (bad) {
+      out.push(
+        error(
+          "FARM_PARAM",
+          at,
+          `"${key}" must be ${whole ? "a whole number" : "a number"} from ${range.min} to ${range.max}, got ${describe(value)}`,
+          hint,
+        ),
+      );
+    }
+  }
+
+  const crops = params["crops"];
+  if (crops !== undefined) {
+    if (!Array.isArray(crops) || crops.length === 0) {
+      out.push(
+        error(
+          "FARM_PARAM",
+          at,
+          `"crops" must be a non-empty array of crop ids, got ${describe(crops)}`,
+          `write "crops": ["wheat", "potatoes"] — the vocabulary is ${FARM_CROPS.join(", ")}`,
+        ),
+      );
+    } else {
+      for (const crop of crops) {
+        if (typeof crop === "string" && (FARM_CROPS as readonly string[]).includes(crop)) continue;
+        out.push(
+          warning(
+            "FARM_CROP_UNKNOWN",
+            at,
+            `"crops" names ${describe(crop)}, which is not a crop this kit grows; the holding keeps its seeded draw over the crops it understands`,
+            `use one of ${FARM_CROPS.join(", ")}`,
+          ),
+        );
+      }
+    }
+  }
+
+  const edge = params["edge"];
+  if (edge !== undefined && !(typeof edge === "string" && (FARM_EDGES as readonly string[]).includes(edge))) {
+    out.push(
+      error(
+        "FARM_PARAM",
+        at,
+        `"edge" must be one of ${FARM_EDGES.join(", ")}, got ${describe(edge)}`,
+        'write "edge": "fence" for the ordinary field boundary, or "wall" for dry stone',
+      ),
+    );
+  }
+
+  const farmstead = params["farmstead"];
+  const farmsteadOk =
+    farmstead === undefined ||
+    farmstead === "auto" ||
+    farmstead === "none" ||
+    (Array.isArray(farmstead) &&
+      farmstead.length > 0 &&
+      farmstead.every((a) => typeof a === "string"));
+  if (!farmsteadOk) {
+    out.push(
+      error(
+        "FARM_PARAM",
+        at,
+        `"farmstead" must be "auto", "none", or a non-empty array of archetype ids, got ${describe(farmstead)}`,
+        'write "farmstead": "auto" and let the holding size choose, or ["farmhouse", "barn"] to name them',
       ),
     );
   }

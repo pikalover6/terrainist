@@ -34,6 +34,7 @@ import {
 } from "@terrainist/stdlib";
 import {
   canonicalize,
+  isFarmGenerator,
   isImplementedVia,
   isPropNode,
   resolveTypeKey,
@@ -91,6 +92,7 @@ import {
   type PropPassResult,
 } from "./props.js";
 
+import { buildFarms, type FarmJob, type FarmPassResult } from "./farm.js";
 import {
   buildPrecincts,
   isPrecinctGenerator,
@@ -127,6 +129,7 @@ export * from "./doorsteps.js";
 export * from "./life.js";
 export * from "./grounds.js";
 export * from "./plaza.js";
+export * from "./farm.js";
 export * from "./precincts.js";
 export * from "./setpieces.js";
 export * from "./props.js";
@@ -279,6 +282,10 @@ export interface StructureStats {
   /** Piers run out from a quay, and hulls moored alongside them. */
   readonly piersBuilt: number;
   readonly shipsMoored: number;
+  /** F17 holdings placed, the fields seated in them, and the columns tilled. */
+  readonly holdings: number;
+  readonly farmParcels: number;
+  readonly farmColumns: number;
   /**
    * The life pass's own counters, one per prop kind plus `lifeTotal` and
    * `lifeBlocks`.
@@ -355,6 +362,8 @@ export interface StructurePassResult {
    */
   readonly courtyards?: CourtyardPassResult;
   readonly precincts?: PrecinctPassResult;
+  /** F17's holdings; absent for a document with no `precinct.farm@0` node. */
+  readonly farms?: FarmPassResult;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
 }
@@ -952,6 +961,33 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     lay("roads", roads.blocks);
   }
 
+  // --- farms ---------------------------------------------------------------
+  // `docs/FARM-PLAN-v0.md` §5.5: after the roads, the streets, the precincts
+  // and the retaining, and before the grounds, the props and the life pass. A
+  // holding seats its fields against the ground the lanes have already cut and
+  // yields every column a built thing claimed, so it must not run until the
+  // built things have run; and the grounds pass must not dress a field, so it
+  // must not run before this one.
+  //
+  // WP-1 emits nothing: the pass exists, it reads its params, and it reports
+  // one row per holding.
+  const farmJobs: FarmJob[] = [];
+  for (const placement of placements) {
+    const node = byId.get(placement.nodePath);
+    if (node?.generator === undefined || !isFarmGenerator(node.generator)) continue;
+    farmJobs.push({
+      nodePath: placement.nodePath,
+      placement,
+      params: (docNodes.get(placement.nodePath)?.params ?? {}) as Record<string, unknown>,
+      seed: node.seed,
+      tags: node.tags,
+      ports: node.ports as Readonly<Record<string, PortDeclaration>>,
+    });
+  }
+  const farms: FarmPassResult | undefined =
+    farmJobs.length === 0 ? undefined : buildFarms({ jobs: farmJobs });
+  if (farms !== undefined) diagnostics.push(...farms.diagnostics);
+
   // --- props ---------------------------------------------------------------
   // After the roads, and that ordering is the point: a prop is placed against
   // the *finished* ground, and until the lanes have cut and their shoulders
@@ -1292,6 +1328,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     grounds,
     ...(courtyardPass.courtyards.length === 0 ? {} : { courtyards: courtyardPass }),
     ...(precincts === undefined ? {} : { precincts }),
+    ...(farms === undefined ? {} : { farms }),
     districts,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
@@ -1333,6 +1370,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       wornColumns: grounds.wornColumns,
       airports: precincts?.stats.airports ?? 0,
       harbours: precincts?.stats.harbours ?? 0,
+      holdings: farms?.stats.holdings ?? 0,
+      farmParcels: farms?.stats.farmParcels ?? 0,
+      farmColumns: farms?.stats.farmColumns ?? 0,
       standsCut: precincts?.stats.stands ?? 0,
       aircraftParked: precincts?.stats.aircraft ?? 0,
       piersBuilt: precincts?.stats.piers ?? 0,
@@ -1627,7 +1667,10 @@ function structureNodesOf(
     if (
       node.generator !== "building.grammar@0" &&
       node.generator !== "road.network@0" &&
-      !isPrecinctGenerator(node.generator)
+      !isPrecinctGenerator(node.generator) &&
+      // F17: a holding is in the precinct family but not in the kit set that
+      // levels its envelope, so it is named here explicitly.
+      !isFarmGenerator(node.generator)
     ) {
       return;
     }

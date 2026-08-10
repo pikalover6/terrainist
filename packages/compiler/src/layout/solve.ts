@@ -26,6 +26,7 @@ import {
   type Region,
 } from "@terrainist/stdlib";
 import {
+  isFarmGenerator,
   isImplementedConstraint,
   isTier2,
   strengthOf,
@@ -934,6 +935,13 @@ export function padFor(
   // ground of the box and there would be no harbour left to build, so the quay
   // grades its own strip in the structure pass, against the waterline it finds.
   if (node.generator === "precinct.harbour@0") return null;
+  // A holding is the third such node, and the most emphatic
+  // (`docs/FARM-PLAN-v0.md` §3.2's caveat and §5): a farm must **never** level
+  // its envelope. It levels its yard, and each field separately, on ground the
+  // gentle-slope scan already found close to level; a pad laid first would give
+  // the fields a table to stand on and the holding would read as a crop circle.
+  // Most of a holding is ground nobody touched, which is what a holding is.
+  if (isFarmGenerator(node.generator ?? "")) return null;
   // A city is the other one, and for the same reason one level up: levelling a
   // whole city to a single plane would raise the sea bed inside its own bay,
   // erase the shoreline its drive was going to follow, and flatten the hill the

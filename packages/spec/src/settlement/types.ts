@@ -35,10 +35,31 @@ export const STRUCTURE_GENERATORS = [
   // deterministically rather than solved.
   "precinct.airport@0",
   "precinct.harbour@0",
+  // F17's holding (`docs/FARM-PLAN-v0.md` §3). It joins the precinct *family* —
+  // one node is one whole compound laid out deterministically from one
+  // envelope — but deliberately **not** {@link PRECINCT_GENERATORS}: that set
+  // is the two kits that level their envelope and declare `precinct.ground`,
+  // and a farm must never level its envelope (§3.2's caveat). It also takes a
+  // *region* envelope rather than a box, because a holding is a piece of
+  // ground.
+  "precinct.farm@0",
 ] as const;
 
-/** The `precinct.*@0` family, which lays out a compound from one envelope. */
+/**
+ * The `precinct.*@0` kits that level an envelope and lay a compound in it.
+ *
+ * `precinct.farm@0` is in the family and not in this set — see the comment on
+ * {@link STRUCTURE_GENERATORS}.
+ */
 export const PRECINCT_GENERATORS = ["precinct.airport@0", "precinct.harbour@0"] as const;
+
+/** The F17 holding generator (`docs/FARM-PLAN-v0.md`). */
+export const FARM_GENERATOR = "precinct.farm@0";
+
+/** True for a `precinct.farm@0` node. */
+export function isFarmGenerator(generator: string): generator is "precinct.farm@0" {
+  return generator === FARM_GENERATOR;
+}
 
 /** A precinct generator id. */
 export type PrecinctGenerator = (typeof PRECINCT_GENERATORS)[number];
@@ -137,6 +158,81 @@ export interface BoxEnvelope {
   readonly padding?: number;
 }
 
+/**
+ * A `precinct.farm@0` envelope: a piece of ground, so two numbers.
+ *
+ * `docs/FARM-PLAN-v0.md` §3.3 — required, `"shape": "region"`, floor 40 × 40.
+ * A holding is not a box: it levels its own yard and each of its fields
+ * separately and leaves the rest of the envelope alone, so there is no height
+ * to reserve.
+ */
+export interface FarmEnvelope {
+  readonly shape: "region";
+  readonly size: readonly [number, number];
+  readonly padding?: number;
+}
+
+/** Smallest holding envelope: one yard, one parcel and the setbacks (§3.3). */
+export const FARM_MIN_ENVELOPE = Object.freeze([40, 40] as const);
+
+/** The crop ids `params.crops` may name (`docs/FARM-PLAN-v0.md` §6.2). */
+export const FARM_CROPS = [
+  "wheat",
+  "carrots",
+  "potatoes",
+  "beetroots",
+  "pumpkin",
+  "berries",
+  "pasture",
+] as const;
+
+/** A crop id. */
+export type FarmCrop = (typeof FARM_CROPS)[number];
+
+/** The `params.edge` vocabulary (§3.3). */
+export const FARM_EDGES = ["fence", "wall", "none"] as const;
+
+/** A parcel boundary treatment. */
+export type FarmEdge = (typeof FARM_EDGES)[number];
+
+/** Farmstead archetypes `farmstead: "auto"` draws from (§7.2). */
+export const FARMSTEAD_ARCHETYPES = [
+  "farmhouse",
+  "barn",
+  "granary",
+  "stable",
+  "chicken_coop",
+  "silo",
+  "windmill",
+  "dovecote",
+  "apiary",
+] as const;
+
+/** `precinct.farm@0` params, defaulted (`docs/FARM-PLAN-v0.md` §3.3). */
+export interface FarmParams {
+  readonly parcels?: number;
+  readonly parcelSize?: number;
+  readonly crops?: readonly string[];
+  readonly farmstead?: "auto" | "none" | readonly string[];
+  readonly edge?: FarmEdge;
+  readonly fallow?: number;
+}
+
+/** The param defaults §3.3 states, in one place so nothing re-derives them. */
+export const FARM_PARAM_DEFAULTS = Object.freeze({
+  parcels: 4,
+  parcelSize: 16,
+  edge: "fence" as FarmEdge,
+  fallow: 0,
+});
+
+/** The ranges §3.3 states; `LOAM-T226` names them back at an author. */
+export const FARM_PARAM_RANGES = Object.freeze({
+  parcels: Object.freeze({ min: 1, max: 24 }),
+  parcelSize: Object.freeze({ min: 10, max: 28 }),
+  fallow: Object.freeze({ min: 0, max: 1 }),
+});
+
 /** Fields every structure-ish node shares. */
 interface StructureBase {
   readonly id: string;
@@ -149,12 +245,37 @@ interface StructureBase {
   readonly note?: string;
 }
 
-/** A `building.grammar@0` / `road.network@0` node under the root. */
+/**
+ * A `building.grammar@0` / `road.network@0` / `precinct.*@0` node under the
+ * root.
+ *
+ * The envelope is a box for every generator but `precinct.farm@0`, whose
+ * envelope is a {@link FarmEnvelope} — a holding is ground, not a volume. Read
+ * it through {@link farmEnvelopeOf} rather than by casting.
+ */
 export interface StructureNode extends StructureBase {
   readonly kind: "generator";
   readonly generator: StructureGenerator;
   readonly params?: Readonly<Record<string, unknown>>;
-  readonly envelope?: BoxEnvelope;
+  readonly envelope?: BoxEnvelope | FarmEnvelope;
+}
+
+/** A node's envelope when it is a farm's region envelope, else `undefined`. */
+export function farmEnvelopeOf(node: {
+  readonly generator: string;
+  readonly envelope?: BoxEnvelope | FarmEnvelope;
+}): FarmEnvelope | undefined {
+  if (!isFarmGenerator(node.generator)) return undefined;
+  const envelope = node.envelope;
+  return envelope !== undefined && envelope.shape === "region" ? envelope : undefined;
+}
+
+/** A node's envelope when it is a box — every generator but the farm. */
+export function boxEnvelopeOf(node: {
+  readonly envelope?: BoxEnvelope | FarmEnvelope;
+}): BoxEnvelope | undefined {
+  const envelope = node.envelope;
+  return envelope !== undefined && envelope.shape === "box" ? envelope : undefined;
 }
 
 /**

@@ -247,6 +247,26 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   COURTYARD_NONE: "LOAM-T224",
 
+  // --- F17: the holding (`docs/FARM-PLAN-v0.md` §12) ------------------------
+  /**
+   * A `precinct.farm@0` envelope that is not a `region`, or is below the
+   * 40 × 40 floor — one yard plus one parcel plus the setbacks.
+   *
+   * Rejected at validate rather than at compile for the reason the precinct
+   * minima are: a holding that does not fit builds nothing, and an author would
+   * far rather be told the number to change.
+   */
+  FARM_TOO_SMALL: "LOAM-T225",
+  /** A `precinct.farm@0` param outside the range §3.3 states; names the range. */
+  FARM_PARAM: "LOAM-T226",
+  /**
+   * A `params.crops` entry outside §6.2's table.
+   *
+   * A warning, not an error: the holding keeps its seeded draw over the crops
+   * it *does* understand, so the fields are still fields.
+   */
+  FARM_CROP_UNKNOWN: "LOAM-W502",
+
   // --- Phase 0 contract 2: authored programs -------------------------------
   // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
   // quoted in the design doc and one printed by the compiler are the same
