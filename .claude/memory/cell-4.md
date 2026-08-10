@@ -53,13 +53,28 @@ shells, re-clad rule (substitute in family or remove — modern ruin is a
 frame), settleFixtures via lint's own support predicate, decline
 pockets via cluster field, ruinShare = decline² past onset 0.35.
 
-**IN FLIGHT (wave 3):** E497 site-plan fix (medium — ELEVATED: with
-districts placing properly, harbour-class compiles ABORT on "3 seam
-columns with no platform"; coin-toss had masked it; release-blocking);
-farm WP-1 (low); ruins WP-1 (low). Ledgered: DEFAULT_CANDIDATES=96
-thin for sixth-of-map footprints.
+**Waves 3–4 LANDED:** E497 fixed (ccff332 — the world was right, the
+classifier wrong: walkBack's street test now precedes a latched
+platform test; harbour compiles end to end, zero errors, no geometry
+moved). Farm WP-1 (f181065: node validates/seats/reports, padFor null
+— never level a farm), WP-2 (9dd62d6: parcel planner, rank-125 claims,
+crop-circle rule W501; still zero blocks). Ruins WP-1 (7b761ec: five
+relics = five profiles over decayShell, 60-case list-identity golden;
+bare ruin/ruins → ruined_cottage live), WP-2 (52c4976: engine takes
+ANY shell — re-clad rule, timber by removal, quench, settleFixtures
+fixpoint via stdlib support.ts now imported BY the lint; params.decay
+on building.grammar; 63-shell catalog sweep lint-zero). Plan errata
+recorded in RUINS-PLAN status block; FARM-PLAN example fixed
+(drape). Ledgered: DEFAULT_CANDIDATES=96 thin; T107 coastal spawn
+self-heals to land (benign).
 
-**Next after wave 3:** commit lanes; farm WP-2+ / ruins WP-2+; then
-F3 junction iteration, F5 WP-6, F6/F7 flora WP-C/D, F9, F10; first
-battery candidate generation once F17/F19 walk-ready. Open popups
-owed to Kai: none.
+**IN FLIGHT (wave 5):** farm WP-3 (blocks: rows/crops vs RESOLVED
+ground, persistence law, lint-zero bar) and ruins WP-3 (§6 band table
+replaces decayProfileFor body; per-lot roll via decay.ruinShare
+fan-out + cluster field channels 41–49; W510 refused-whole; W511
+watchtower/skyscraper fallback). Identity golden = hard gate.
+
+**Next:** commit wave 5; farm WP-4/5 (yard, kit) + ruins WP-4+ (ground
+/reclaim, kit); then F3 junctions, F5 WP-6, F6/F7 flora WP-C/D, F9,
+F10; first battery candidate once P2/P4 features walk-ready. Open
+popups owed to Kai: none.
