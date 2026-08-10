@@ -2442,6 +2442,25 @@ invasion). Underscaling the event is the most common way a strong prompt
 comes out timid: the town reads fine, and nothing appears to be happening
 to it.
 
+**And it needs STAGING, because mass alone is a museum.** A mothership at
+the map's edge is an exhibit; the same mothership is an invasion only when
+the composition says so. Three staging rules, all written with the
+constraints you already have:
+
+- **The centerpiece looms over the heart.** Constrain it to the settlement's
+  centre — `distance` to the plaza or hall, small — and if it flies, hover
+  it LOW: barely above the tallest roof, so a player in the square stands in
+  its shadow. High and far reads as weather; low and central reads as doom.
+- **The scatter advances; it does not sprinkle.** Give the plugin's area an
+  axis — a landing trail from the fields into the streets, a crash line
+  across the town — so the instances tell a direction of attack. Uniform
+  scatter reads as litter.
+- **Connect the sky to the ground.** The program under the hovering thing
+  should write the connection itself: a beam of light to the square beneath
+  it, scorch and cratering under its station, the ground trace directly
+  below the hull. An event whose layers never touch reads as two unrelated
+  worlds sharing a map.
+
 Do **not** ask for one for the fabric the kit already builds well — houses,
 towers, walls, bridges, roads, docks, trees, fountains, carts. A program
 costs a model call and a verification pass; a cottage costs neither. A padded
