@@ -1,79 +1,65 @@
-# Cell 4 — the last day (2026-08-08/09, fine detail)
+# Cell 4 — the last day (2026-08-09, fine detail)
 
-**Strategy ratified (08-08):** the nitpick loop is retired; **the end goal
-is shipping terrainist**. `docs/SHIP-PLAN-v0.md` (abdc901): termination
-device = **canonical prompt battery** (release := N named prompts + frozen
-seeds + acceptance walks written first; scope derived — a feature is in
-scope iff a battery walk fails without it); four rungs A–D; recommendation
-rung B + one pre-authorized ascent; **rung formally chosen day 3, after
-the S2 baselines**. Orchestrator's narrowing: ascent = the aqueduct alone;
-colossal flora = post-launch flagship #1. Kai: prefers a bigger push over
-minimal v1 but needs the concrete end condition; battery partially doubles
-as gallery. Tripo deprecated outright (d57ac05).
+**RUNG RATIFIED (SHIP-PLAN §8, commit 6d7d892):** rung B amended, **no
+ascent** (spent, does not carry). Release battery FROZEN at 7 breadth
+prompts, seeds 301–307: P1 pirate/unicorn war, P2 farm town + aliens,
+P3 Trojan horse in Troy, P4 high-tech hideout in overgrown metropolis
+ruins, P5 modern Hellenist city vs sea monsters, P6 old-growth, P7
+fungal-vale — assertions written first in §8.2; genre prompts moved to
+the reliability sample. Scope adds F17 minimal farm, F18 bespoke
+boldness, F19 district ruins, F20 ambient fidelity, F21→F4
+instrumentation, F22 constraint teaching. **Feature-stop backstop
+2026-08-28.** Kai's citadel verdict drives F18: bespoke gen is the wow.
 
-**Ship answers, all 13 (5ef97a8, §7 of SHIP-PLAN):** $5 → 3 variations of
-1 prompt, technical-failure-only refunds; 1024² single product; no
-loam/report ships (English description only, obscure internals); OpenAI's
-safety layer, gap-test before launch; friends beta ~1 week; React + Linux
-box + Stripe, NA; worlds for latest client (26.2) via auto-upgrade with a
-load-in gate; Kai walks post-launch; not targeting young kids; EULA stance:
-original-content zips are fine.
+**S2 battery: 5/5 installed** as `*_baseline` ($0.015–0.14/world). Kai
+walked all; light notes only (worlds stay installed for comparison).
+Spread-crash fixed (d4e7f47, 165k-block landmark vs V8 arg budget —
+test-first). mistwood_citadel provenance: compiled from first-run wired
+doc after Kai stopped the regen.
 
-**Walk-5 (worlds -9/-7/-3, 08-09):** steep-7 GOOD. In-town vegetation OK
-but Kai's design supersedes it: **one gradient** ambient→interiorShare
-(can be harsh, never thick→nothing), interior share weakly author-dialed
-(era/theme), don't overcomplicate — IN FLIGHT (medium). Vines partially
-fixed — residue = chain segments with inherited faces pointing at air /
-mixed faces per strand — IN FLIGHT (low). Buttress roots: bed ONE BLOCK
-deeper — same low agent. Cutover live: hill prompts now route to hillside.
+**Wave 1+2, ALL LANDED (08-09 evening):**
+- F11 render biome tint (e6ced86) — seams now visible in our renders;
+  follow-up idea: high-contrast biome-debug palette.
+- F21 instrumentation (4cb5ef1) — LOAM-T118 radius-units warning,
+  T119 zero-yield scatter (both in feedback set), +20 biome rows.
+- F8 snowLine + law-1 (08aa466) — snow line runs (stop-not-reroll,
+  post-claim so below-line placement identical); capWood exempts dead;
+  green sprig on dead limbs gone (visual delta pending Kai walk).
+- F18 bespoke boldness (4c6fd5e) — kit centerpiece rule ("only a
+  program makes THE castle"), 2–3 landmarks invited, spend stop $1.00.
+- **F20 fixed (e9f35d2) — headline: biome derivation was
+  SCALE-INVERTING** (relief normalized to world's own span; flatter →
+  rockier; plains_village 3%→81% plains). Luna exonerated. Bands now
+  need absolute rise (UPLAND_RISE 24 / HIGH_ROCK_RISE 48); soil caps at
+  windswept_hills; forested needs density ≥0.02. Block-identity proven
+  on all 4 S2 worlds (full-report diff; clamp + snow votes identical).
+  Kai signed off on the label repaint. Note: harbour's mountains now
+  read windswept_hills (only ~800 true cliff cols) — glance pending.
+- **F22 fixed (4a60a4b) — headline: district UNSATISFIABLE was the
+  ground veto at building scale** (one wet column vetoed 400×400; ZERO
+  feasible positions existed; kit blameless; E404 hint was deleting
+  prompt nouns). Districts now judge ground like cities (median water,
+  CITY_MAX_SLOPE); veto histogram surfaces in E406; hint reordered.
+  hillkeep byte-identical; harbour old_town relocates to better site.
 
-**OPM world done (seed 100, $0.088, installed):** first full product-path
-run; Luna authored + gated ONE bespoke landmark (hero_association_
-headquarters, 90×220×90). Its "ruins" archetype request (LOAM-W483) was
-the first product-path finding.
+**F17+F19 plans RATIFIED (e3e2ec6 + eacd849, opus-5-high design).**
+Kai's three rulings: land-use disposition 8 amended (farmParcels seam);
+**NO survivor cap — total desolation at decline 1.0** (overrode
+designer's 0.92); bare ruin/ruins → ruined_cottage (closes kit's oldest
+open question). FARM: precinct.farm@0, parcel = platform claim rank 125
+"ground nobody built on, tilled", persistence law (every farmland
+column cropped, moisture 0). RUINS: decay operators on arbitrary
+shells, re-clad rule (substitute in family or remove — modern ruin is a
+frame), settleFixtures via lint's own support predicate, decline
+pockets via cluster field, ruinShare = decline² past onset 0.35.
 
-**S2 baseline battery (08-09, COMPLETE — 5/5 installed as `*_baseline`):**
-hillkeep (201), harbour_city (202), mistwood_citadel (203), sleepy_farm_
-village (204), overgrown_city_ruins (205); 1024², product defaults,
-$0.015–0.14/world. **Kai walked the ruins world: a forest with 4
-buildings — the kit cannot say "ruined city"** (ruin vocabulary = 5 relic
-archetypes; decline never ruins district buildings), plus ScatterArea
-radius-units footgun (fraction read as blocks → 0-tree forest, silent)
-and dark_forest missing from the biome table. **Kai's triage: LEDGER
-EVERYTHING, no hotfixes.** Battery signatures ledgered: bespoke steering
-correct (4× zero programs rightly, citadel fired + wiring check's first
-production catch); main-district UNSATISFIABLE on both hillside worlds;
-ambient terrain ignores "open plains".
+**IN FLIGHT (wave 3):** E497 site-plan fix (medium — ELEVATED: with
+districts placing properly, harbour-class compiles ABORT on "3 seam
+columns with no platform"; coin-toss had masked it; release-blocking);
+farm WP-1 (low); ruins WP-1 (low). Ledgered: DEFAULT_CANDIDATES=96
+thin for sixth-of-map footprints.
 
-**The one fix past the ledger bar (d4e7f47):** citadel's 165,117-block
-program crashed compile — `push(...blocks)` past V8's ~125k arg budget.
-Product-path blocking → fixed test-first (196k-voxel regression, proven
-to die pre-fix). mistwood_citadel_baseline provenance: compiled from the
-first run's kept wired doc (regen was stopped mid-run — respected, not
-relaunched); 0 feedback rounds, but its only finding was an advisory
-W411, so the delta is likely nil.
-
-**RUNG RATIFIED (08-09, SHIP-PLAN §8):** Kai walked all baselines (light
-notes only — worlds stay installed for reference; **citadel verdict: Luna
-must do MORE bespoke gen**). Choice: **rung B amended, NO ascent.**
-Battery replaced — baseline five "too similar"; frozen at 7 breadth
-prompts, seeds 301–307: pirate/unicorn war, farm town + aliens, Trojan
-horse in Troy, high-tech hideout in overgrown metropolis ruins, modern
-Hellenist city vs sea monsters, + old-growth and fungal-vale. Assertions
-written first (§8.2). Scope adds: F17 minimal farm (generic fields, not
-F13), F18 bespoke boldness, F19 district ruins treatment, F20 ambient-
-terrain fidelity, F21→F4 instrumentation, F22 constraint teaching.
-**Feature-stop backstop 2026-08-28.** Genre prompts moved to the
-reliability sample.
-
-**Next:** execute rung B per §8 — wave 1 candidates: F8 (snowLine +
-law-1, machinery-never-runs debt), F11 (render biome tint), F18 (kit
-steering), F4+F21 (ledger squash + instrumentation).
-
-**Parked/open:** flight-pin unit mismatch (next street lever); junction
-flat-town ruling (after iterations; the orphan win lives in the same
-patches as the walked horror — on flat ground the pass does levels' job);
-WP-6 freeze (§13.3); snowLine + law-1 implementation; uphill masonry;
-biome-gradient dial; per-district palettes; WP-C/WP-D flora; dwellings-
-vs-nature gate; props pads dig too deep; setpieces hard-coded masonry;
-region-boundary district slicing.
+**Next after wave 3:** commit lanes; farm WP-2+ / ruins WP-2+; then
+F3 junction iteration, F5 WP-6, F6/F7 flora WP-C/D, F9, F10; first
+battery candidate generation once F17/F19 walk-ready. Open popups
+owed to Kai: none.
