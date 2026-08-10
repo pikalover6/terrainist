@@ -228,7 +228,9 @@ describe("the packing (§5.2)", () => {
     const { result } = run(flat, envelope, { parcels: 6, parcelSize: 18 });
     const row = result.farms[0];
     expect(row?.parcelsSeated).toBe(6);
-    expect(result.diagnostics).toEqual([]);
+    // Nothing was refused, so nothing is warned about. The one diagnostic a
+    // healthy holding does raise is §7.3's `LOAM-I504`, which names the anchor.
+    expect(result.diagnostics.map((d) => d.code)).toEqual(["LOAM-I504"]);
     for (const parcel of row?.parcels ?? []) {
       expect(parcel.rect.x0).toBeGreaterThanOrEqual(envelope.x0);
       expect(parcel.rect.x1).toBeLessThanOrEqual(envelope.x1);
@@ -250,7 +252,11 @@ describe("the packing (§5.2)", () => {
 
   it("declares one platform per parcel, class farm.parcel, transition step", () => {
     const { result, driver } = run(flat, envelope, { parcels: 4 });
-    const mine = driver.intents.filter((i) => i.sourceClass === "farm.parcel");
+    // Every `farm.parcel` intent: the yard's own claim (§7.1 — "the yard is a
+    // field the farmer paved with mud") first, then one per field.
+    const all = driver.intents.filter((i) => i.sourceClass === "farm.parcel");
+    expect(all[0]?.source).toBe("world.east_farm#yard");
+    const mine = all.slice(1);
     expect(mine).toHaveLength(result.farms[0]?.parcelsSeated ?? 0);
     for (const [i, intent] of mine.entries()) {
       expect(intent.kind).toBe("platform");

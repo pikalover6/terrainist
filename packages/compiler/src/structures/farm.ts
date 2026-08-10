@@ -9,29 +9,34 @@
  *
  * ## What is here, and what is not
  *
- * This is **WP-1 plus WP-2**: the node exists, the solver seats it, its params
- * are read and defaulted in one place, every holding gets a report row — and
- * now the holding is *planned*. The gentle-ground scan (§5.1), the packing loop
+ * This is the whole of the holding, WP-1 through WP-4: the node exists and the
+ * solver seats it (WP-1); the gentle-ground scan (§5.1), the packing loop
  * (§5.2), the `farm.parcel` claims at rank 125 (§5.3) and the three refusal
- * warnings (`W500`, `W501`, `W503`) are here.
+ * warnings plan it (WP-2); the rows, baulks, headlands, crops, edges, gates and
+ * props sow it (WP-3); and the yard, the farmstead and the four downstream
+ * seams finish it (WP-4).
  *
- * **Still no blocks.** Rows, baulks, headlands, crops, edges, gates and props
- * are WP-3; the farmstead buildings, the yard's own surface and claim, the
- * published port and the four downstream seams (§8, §9) are WP-4. A holding
- * therefore *claims* ground at WP-2 and lays nothing on it: the resolver decides
- * the fields' levels, the transitions at their edges exist, and the report says
- * how many columns each holding won. That is the whole of WP-2's visible effect
- * on a world, and it is the effect the plan asks for — the fields are level
- * before anything is sown on them.
+ * WP-4 finishes the holding. The yard stops being a rectangle and becomes a
+ * place: it claims its own level as `farm.parcel` (§7.1 — "the yard is a field
+ * the farmer paved with mud"), is surfaced as a working yard, and carries the
+ * farmstead §7.2 draws for a holding of its size. The buildings are **handed
+ * back**, not emitted — the shape is `PrecinctBuildingSpec`'s and the caller
+ * folds them into the building pass, so a barn gets a foundation, an interior,
+ * a theme and a doorstep exactly like a cottage does.
  *
- * The yard is the one place WP-2 reaches into WP-4's section, and it reaches
- * only as far as §5.2's first line makes it: `plan(holding)` seats the yard
- * *before* it packs anything, because the packing grid is anchored on the yard
- * and `LOAM-W503` — a WP-2 diagnostic — fires when no yard can be seated. So
- * WP-2 computes the yard **rectangle** and nothing else about it: it is not
- * levelled, not claimed, not surfaced, not reported, and no building stands on
- * it. All of that is WP-4, and the report row's `yard` field stays absent
- * exactly as WP-1 left it.
+ * The pass also publishes what the four downstream seams read: the parcel mask
+ * and the yard mask (§9.1's clearing suppression, §9.2's ground-treatment
+ * exclusion, §9.3's occupancy claim) and the parcel and yard rects (§8's
+ * `farmParcels`, the ratified amendment to disposition 8). None of them is
+ * keyed on the holding *envelope*: an envelope is mostly ground nobody touched,
+ * and treating it as claimed is the soft-mask failure disposition 8 refused.
+ *
+ * One ordering note, because it is the one thing about this pass that looks
+ * wrong and is not. A precinct hands its buildings to the *one* building pass,
+ * because a precinct runs before it. A holding cannot: §5.5 puts it after the
+ * roads, because a field yields to a lane, and the building pass is long gone
+ * by then. So the caller makes a second `buildBuildings` call with the
+ * farmstead's jobs. A world with no holding makes no second call at all.
  *
  * The reach law (§2) holds trivially here: with no farm node there are no jobs,
  * the caller does not build a result at all, and nothing downstream changes.
@@ -41,6 +46,8 @@ import {
   FARM_PARAM_DEFAULTS,
   FARM_PARAM_RANGES,
   FARM_CROPS,
+  FARMSTEAD_ARCHETYPES,
+  note,
   warning,
   type FarmEdge,
   type LoamDiagnostic,
@@ -135,6 +142,8 @@ const CHANNEL_FALLOW = 34;
 const CHANNEL_GATE = 35;
 /** Which parcel carries the scarecrow / hay / cart prop. */
 const CHANNEL_PROP = 36;
+/** §7.2's farmstead outbuilding draw. */
+const CHANNEL_FARMSTEAD = 37;
 /**
  * Pasture tuft density — §6.2's "`short_grass` at a lifted density".
  *
@@ -274,15 +283,58 @@ export interface FarmPropSpec {
   readonly params: Readonly<Record<string, unknown>>;
 }
 
+/**
+ * A farmstead building the holding wants built (§7.2).
+ *
+ * Handed back rather than emitted, exactly as `PrecinctBuildingSpec` is and for
+ * exactly the same reason: a barn should get the village theme, a foundation,
+ * an interior and a doorstep like a cottage does, and the one pass that knows
+ * how to give it those is the building pass. The shape is
+ * `PrecinctBuildingSpec`'s, deliberately — the caller folds both into the same
+ * job list.
+ */
+export interface FarmBuildingSpec {
+  readonly nodePath: string;
+  readonly placement: Placement;
+  /** The unrotated envelope — farmstead buildings are always placed at yaw 0. */
+  readonly size: readonly [number, number, number];
+  readonly archetype: string;
+  readonly tags: readonly string[];
+  readonly ports: Readonly<Record<string, PortDeclaration>>;
+}
+
 /** What {@link buildFarms} produced. */
 export interface FarmPassResult {
   /** WP-3's crops, fences, gates and hay — the things that stand above ground. */
   readonly blocks: readonly StructureBlock[];
   /** §6.5's props, for the caller to hand to `buildProps`. */
   readonly props: readonly FarmPropSpec[];
+  /** §7.2's farmstead, for the caller to hand to `buildBuildings`. */
+  readonly buildings: readonly FarmBuildingSpec[];
   readonly farms: readonly FarmReportRow[];
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: FarmStats;
+  /**
+   * 1 on every column a field **won** — §5.5's published parcel mask, and the
+   * one artefact the four downstream seams of §8 and §9 are keyed on.
+   *
+   * The yard is deliberately not in it: §9.2 makes the yard the one exception
+   * to the ground-treatment exclusion, so a mask that carried it would lock the
+   * farmhouse out of its own forecourt.
+   */
+  readonly parcelMask: Uint8Array;
+  /** 1 on every column of a seated yard. §9.1 clears it; §9.2 dresses it. */
+  readonly yardMask: Uint8Array;
+  /**
+   * Parcel and yard rectangles, for §8's `farmParcels` seam.
+   *
+   * **Never the holding envelope**: the envelope is mostly untouched ground,
+   * and clamping it is exactly the soft-mask failure ratified disposition 8
+   * refused.
+   */
+  readonly landUseRects: readonly Rect[];
+  /** Every holding's node path — what the caller withholds from hull and pads. */
+  readonly nodePaths: readonly string[];
 }
 
 /** Everything {@link buildFarms} reads. */
@@ -422,6 +474,21 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
       continue;
     }
 
+    // §7.1: the yard is the one part of a holding that is levelled, and it
+    // claims through the class a field claims through — "the yard is a field
+    // the farmer paved with mud". It is declared *first*, before any parcel,
+    // because it is seated first: two `farm.parcel` intents of equal rank are
+    // ordered by their `source` strings, and `#yard` sorting before `#parcel_0`
+    // is the same order the plan states.
+    const yardIntent = base + intents.length;
+    intents.push({
+      source: yardSource(job.nodePath),
+      sourceClass: "farm.parcel",
+      kind: "platform",
+      columns: rectClaims(yard.rect, scan.region, yard.level),
+      transition: "step",
+    });
+
     const packed = packParcels(job, settings, envelope, yard.rect, gate, scan);
     const mine: number[] = [];
     for (const parcel of packed.parcels) {
@@ -439,7 +506,16 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
       });
     }
     owned.push(mine);
-    sowable.push({ job, settings, yard: yard.rect, parcels: packed.parcels, intents: mine });
+    sowable.push({
+      job,
+      settings,
+      yard: yard.rect,
+      yardLevel: yard.level,
+      yardIntent,
+      gateSide: gate.side,
+      parcels: packed.parcels,
+      intents: mine,
+    });
     // No `preserve` (§5.3): losing columns to a lane, a doorstep or a wall is
     // normal, and it is exactly the behaviour we want.
     if (packed.parcels.length === 0) {
@@ -471,24 +547,103 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
   const states = resolved === undefined ? undefined : farmStates(input);
   const blocks: StructureBlock[] = [];
   const props: FarmPropSpec[] = [];
+  const farmsteads: FarmBuildingSpec[] = [];
+  const cells = input.plan.region.width * input.plan.region.depth;
+  const parcelMask = new Uint8Array(cells);
+  const yardMask = new Uint8Array(cells);
+  const landUseRects: Rect[] = [];
   const sown = settled.map((row, i) => {
-    const job = sowable[i];
-    if (states === undefined || resolved === undefined || job === undefined) return row;
-    const crops = sowHolding(job, states, input, resolved, blocks, props);
-    return { ...row, crops };
+    const sow = sowable[i];
+    if (resolved === undefined || sow === undefined) return row;
+    // §8's `farmParcels` seam and §9's masks, from the resolved ownership
+    // rather than from the plan: a column a lane took is a lane, and the clamp,
+    // the clearing and the ground treatment should all see it as one.
+    stamp(parcelMask, sow, resolved, input.plan.region);
+    stampOwned(yardMask, sow.yardIntent, sow.yard, resolved, input.plan.region);
+    for (const parcel of sow.parcels) landUseRects.push(parcel.rect);
+    landUseRects.push(sow.yard);
+
+    // §7.2, before the yard is surfaced: the buildings are chosen from the
+    // *seated* parcel count, and the yard surface is written around the rects
+    // they will stand on rather than under them.
+    const built = farmstead(sow, resolved, input.plan.region);
+    farmsteads.push(...built);
+    if (states !== undefined) {
+      surfaceYard(sow, built, states, input, resolved);
+    }
+    const crops =
+      states === undefined ? row.crops : sowHolding(sow, states, input, resolved, blocks, props);
+    // §7.3 / §12's `LOAM-I504`: the anchor is a node path, which is the one
+    // thing an author cannot guess.
+    diagnostics.push(farmTrack(sow.job.nodePath));
+    return {
+      ...row,
+      crops,
+      yard: { rect: sow.yard, level: sow.yardLevel },
+      farmstead: built.map((b) => b.archetype),
+    };
   });
 
   return {
     blocks,
     props,
+    buildings: farmsteads,
     farms: sown,
     diagnostics,
+    parcelMask,
+    yardMask,
+    landUseRects,
+    nodePaths: input.jobs.map((job) => job.nodePath),
     stats: {
       holdings: settled.length,
       farmParcels: settled.reduce((n, f) => n + f.parcelsSeated, 0),
       farmColumns: settled.reduce((n, f) => n + f.columnsClaimed, 0),
     },
   };
+}
+
+/** `#yard` — the yard's own claim source, in one place. */
+function yardSource(nodePath: string): string {
+  return `${nodePath}#yard`;
+}
+
+/** 1 on every column each of a holding's parcels actually won. */
+function stamp(
+  mask: Uint8Array,
+  sow: SowJob,
+  resolved: { readonly owner: Int32Array },
+  region: Region,
+): void {
+  for (const [i, parcel] of sow.parcels.entries()) {
+    stampOwned(mask, sow.intents[i] as number, parcel.rect, resolved, region);
+  }
+}
+
+/** 1 on every column of `rect` whose resolved owner is `mine`. */
+function stampOwned(
+  mask: Uint8Array,
+  mine: number,
+  rect: Rect,
+  resolved: { readonly owner: Int32Array },
+  region: Region,
+): void {
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      const idx = index(region, x, z);
+      if (resolved.owner[idx] === mine) mask[idx] = 1;
+    }
+  }
+}
+
+/** §12's `LOAM-I504`: the gate anchor, named. */
+function farmTrack(nodePath: string): LoamDiagnostic {
+  return note(
+    "FARM_TRACK",
+    nodePath,
+    `"${nodePath}" publishes a road_stub at its gate: a road.network@0 node anchored on "${nodePath}" runs the lane to it`,
+    `add "${nodePath.split(".").pop() ?? nodePath}" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it`,
+  );
 }
 
 /** `#parcel_i` — the source string §5.3 names, in one place. */
@@ -755,9 +910,15 @@ function gateOf(
  *
  * The side is scaled by the *envelope*, not by the parcel count, for the
  * ordering reason — the yard is seated before a single field is, so the parcel
- * count §7.2 scales the farmstead by does not exist yet. A quarter of the
+ * count §7.2 scales the farmstead by does not exist yet. A **third** of the
  * envelope's short side, clamped into §7.1's 16..24, puts a 40 × 40 croft on 16
- * and anything from 96 across on 24.
+ * and anything from 72 across on 24.
+ *
+ * The third is WP-4's number and it was measured rather than chosen: at a
+ * quarter, a 20-square yard holds a farmhouse and a barn and then refuses the
+ * outbuilding §7.2 drew for a six-field holding, because three sides of one
+ * yard share their corners. A 24-square yard holds all three with a lane
+ * between them, which is also what a yard looks like.
  *
  * The search is a 2-column lattice ordered outward from the gate-anchored ideal
  * position, first seatable wins. A retry ladder would make the answer depend on
@@ -770,15 +931,17 @@ function seatYard(
   scan: FarmScan,
 ): {
   readonly rect?: Rect;
+  /** The level the yard is cut to — §7.1's "unlike a parcel it **is** levelled". */
+  readonly level: number;
   readonly side: number;
   readonly bestRelief: number;
   readonly reason: FarmRefusal;
 } {
   const width = envelope.x1 - envelope.x0 + 1;
   const depth = envelope.z1 - envelope.z0 + 1;
-  const side = clamp(Math.floor(Math.min(width, depth) / 4), 16, 24);
+  const side = clamp(Math.floor(Math.min(width, depth) / 3), 16, 24);
   if (side > width || side > depth) {
-    return { side, bestRelief: 0, reason: "envelope" };
+    return { level: 0, side, bestRelief: 0, reason: "envelope" };
   }
   const maxX = envelope.x1 - side + 1;
   const maxZ = envelope.z1 - side + 1;
@@ -816,13 +979,16 @@ function seatYard(
       z1: candidate.z + side - 1,
     };
     const answer = seatRect(rect, scan);
-    if (isSeated(answer)) return { rect, side, bestRelief: answer.relief, reason: "relief" };
+    if (isSeated(answer)) {
+      return { rect, level: answer.level, side, bestRelief: answer.relief, reason: "relief" };
+    }
     counts.set(answer.refusal, (counts.get(answer.refusal) ?? 0) + 1);
     if (answer.refusal === "relief") {
       bestRelief = Math.min(bestRelief, reliefOf(rect, scan));
     }
   }
   return {
+    level: 0,
     side,
     bestRelief: Number.isFinite(bestRelief) ? bestRelief : 0,
     reason: dominant(counts),
@@ -1005,11 +1171,16 @@ function jitter(cell: Rect, seed: Seed256): Rect {
 
 /** Every column of a parcel, at its claimed level — §5.3's `columns`. */
 function claimsOf(parcel: FarmParcelPlan, region: Region): readonly GroundClaim[] {
+  return rectClaims(parcel.rect, region, parcel.level);
+}
+
+/** Every column of a rectangle, at one level. The yard claims this way too. */
+function rectClaims(rect: Rect, region: Region, level: number): readonly GroundClaim[] {
   const columns: GroundClaim[] = [];
-  for (let z = parcel.rect.z0; z <= parcel.rect.z1; z++) {
-    for (let x = parcel.rect.x0; x <= parcel.rect.x1; x++) {
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
       if (!inside(region, x, z)) continue;
-      columns.push({ idx: index(region, x, z), y: parcel.level });
+      columns.push({ idx: index(region, x, z), y: level });
     }
   }
   return columns;
@@ -1163,6 +1334,12 @@ interface SowJob {
   readonly job: FarmJob;
   readonly settings: FarmSettings;
   readonly yard: Rect;
+  /** The level §7.1 cut the yard to, and the level its buildings stand on. */
+  readonly yardLevel: number;
+  /** The driver-array index of the yard's own `farm.parcel` intent. */
+  readonly yardIntent: number;
+  /** The envelope side the gate stands on — the yard side §7.2 leaves open. */
+  readonly gateSide: FarmGate["side"];
   readonly parcels: readonly FarmParcelPlan[];
   /** The driver-array index of each parcel's intent, parallel to `parcels`. */
   readonly intents: readonly number[];
@@ -1819,4 +1996,239 @@ function columnOfKind(
 function propSpan(prop: "cart" | "scarecrow"): number {
   const size = propFootprint(prop, {}).size;
   return Math.max(size[0] as number, size[2] as number);
+}
+
+/* -------------------------------------------------------------------------- */
+/* §7 the farmstead — WP-4                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The footprint and height each farmstead archetype is built at.
+ *
+ * Stated here rather than derived, exactly as every `precinct.*@0` kit states
+ * the size of its terminal and its tower: a solver-placed building takes its box
+ * from the document's envelope, and a building a kit *produces* has no envelope
+ * to take one from. The numbers are the smallest box each archetype reads
+ * correctly at, so that a 16-square yard — the floor §7.1 scales down to — can
+ * still hold a farmhouse and a barn.
+ */
+const FARMSTEAD_SIZES: Readonly<Record<string, readonly [number, number, number]>> = Object.freeze({
+  farmhouse: [11, 8, 9],
+  barn: [11, 9, 9],
+  granary: [9, 9, 9],
+  stable: [9, 6, 7],
+  chicken_coop: [5, 5, 5],
+  silo: [7, 13, 7],
+  windmill: [9, 14, 9],
+  dovecote: [5, 9, 5],
+  apiary: [5, 4, 5],
+});
+
+/** §7.2's two draws, in the plan's own order. */
+const FARMSTEAD_MEDIUM: readonly string[] = ["granary", "stable", "chicken_coop"];
+const FARMSTEAD_LARGE: readonly string[] = ["silo", "windmill", "dovecote", "apiary"];
+
+/**
+ * §7.2's table: which buildings a holding of this size gets.
+ *
+ * `"auto"` draws by the *seated* parcel count, which is why this runs after the
+ * packing and not before it — a holding that asked for ten fields and got two is
+ * a two-field holding, and giving it a silo would be the compiler disagreeing
+ * with its own report. An explicit array is built in order, first entry taking
+ * the door; `"none"` is fields with no yard, and is how an author writes
+ * outfields belonging to a town that already has its farmhouse.
+ */
+function farmsteadList(settings: FarmSettings, parcels: number, seed: Seed256, yard: Rect): readonly string[] {
+  if (settings.farmstead === "none") return [];
+  if (Array.isArray(settings.farmstead)) {
+    return (settings.farmstead as readonly string[]).filter((a) => FARMSTEAD_SIZES[a] !== undefined);
+  }
+  const draw = (list: readonly string[]): string =>
+    list[positionInt(seed, yard.x0, CHANNEL_FARMSTEAD, yard.z0, 0, list.length - 1)] as string;
+  const out = ["farmhouse"];
+  if (parcels >= 3) out.push("barn");
+  if (parcels >= 6) out.push(draw(FARMSTEAD_MEDIUM));
+  if (parcels >= 10) out.push(draw(FARMSTEAD_LARGE));
+  return out;
+}
+
+/** Which way a building on this side of the yard faces: inwards, always. */
+const INWARD: Readonly<Record<Facing, Facing>> = Object.freeze({
+  north: "south",
+  south: "north",
+  west: "east",
+  east: "west",
+});
+
+/** The yard side the gate faces, and therefore the one §7.2 leaves open. */
+function openSideOf(side: FarmGate["side"]): Facing {
+  return side === "z0" ? "north" : side === "z1" ? "south" : side === "x0" ? "west" : "east";
+}
+
+/** The side opposite another. */
+const OPPOSITE: Readonly<Record<Facing, Facing>> = Object.freeze({
+  north: "south",
+  south: "north",
+  west: "east",
+  east: "west",
+});
+
+/**
+ * §7.2's arrangement: buildings on three sides of the yard, doors facing in,
+ * the gate-side left open.
+ *
+ * The order is fixed and total — the side opposite the gate first, so the
+ * farmhouse faces whoever comes up the track, then the two flanks in
+ * (north, south, west, east) order — and each side is packed from its low
+ * corner with a one-column gap between buildings. A building that does not fit
+ * on any of the three sides is simply not built: a farmstead is what the yard
+ * holds, and a barn overhanging a wheat field would be worse than no barn.
+ */
+function farmstead(
+  sow: SowJob,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+  region: Region,
+): readonly FarmBuildingSpec[] {
+  const wanted = farmsteadList(sow.settings, sow.parcels.length, sow.job.seed, sow.yard);
+  if (wanted.length === 0) return [];
+  const open = openSideOf(sow.gateSide);
+  const sides: readonly Facing[] = [
+    OPPOSITE[open],
+    ...(["north", "south", "west", "east"] as const).filter(
+      (s) => s !== open && s !== OPPOSITE[open],
+    ),
+  ];
+  // One column of yard is kept outside every building, so a farmstead never
+  // stands hard against the field beyond the yard's own boundary.
+  const interior: Rect = {
+    x0: sow.yard.x0 + 1,
+    z0: sow.yard.z0 + 1,
+    x1: sow.yard.x1 - 1,
+    z1: sow.yard.z1 - 1,
+  };
+  const cursor: Record<Facing, number> = { north: 0, south: 0, west: 0, east: 0 };
+  const placed: Rect[] = [];
+  const out: FarmBuildingSpec[] = [];
+  const names = new Set<string>();
+
+  for (const archetype of wanted) {
+    const size = FARMSTEAD_SIZES[archetype] as readonly [number, number, number];
+    const [w, h, d] = size;
+    for (const side of sides) {
+      const along = side === "north" || side === "south" ? w : d;
+      const across = side === "north" || side === "south" ? d : w;
+      const base = side === "north" || side === "south" ? interior.x0 : interior.z0;
+      const spanEnd = side === "north" || side === "south" ? interior.x1 : interior.z1;
+      // Packed from the low corner, and stepped past whatever a *neighbouring*
+      // side already put in the corner: three sides of one yard share their
+      // corners, and a barn refused because a farmhouse's gable ends in the
+      // same square is a barn that had somewhere perfectly good to stand.
+      let rect: Rect | undefined;
+      for (let start = base + cursor[side]; start + along - 1 <= spanEnd; start++) {
+        const candidate: Rect =
+          side === "north"
+            ? { x0: start, z0: interior.z0, x1: start + along - 1, z1: interior.z0 + across - 1 }
+            : side === "south"
+              ? { x0: start, z0: interior.z1 - across + 1, x1: start + along - 1, z1: interior.z1 }
+              : side === "west"
+                ? { x0: interior.x0, z0: start, x1: interior.x0 + across - 1, z1: start + along - 1 }
+                : { x0: interior.x1 - across + 1, z0: start, x1: interior.x1, z1: start + along - 1 };
+        if (candidate.x0 < interior.x0 || candidate.x1 > interior.x1) continue;
+        if (candidate.z0 < interior.z0 || candidate.z1 > interior.z1) continue;
+        if (placed.some((r) => overlaps(r, candidate))) continue;
+        rect = candidate;
+        cursor[side] = start - base + along + 1;
+        break;
+      }
+      if (rect === undefined) continue;
+      placed.push(rect);
+      let id = archetype;
+      for (let k = 2; names.has(id); k++) id = `${archetype}_${k}`;
+      names.add(id);
+      const nodePath = `${sow.job.nodePath}.${id}`;
+      const groundY = groundUnder(rect, region, resolved, sow.yardLevel);
+      out.push({
+        nodePath,
+        placement: {
+          nodePath,
+          id,
+          translation: [rect.x0, groundY, rect.z0],
+          yaw: 0,
+          mirror: false,
+          size: [rect.x1 - rect.x0 + 1, h, rect.z1 - rect.z0 + 1],
+          footprint: rect,
+          anchor: { x: (rect.x0 + rect.x1) >> 1, z: (rect.z0 + rect.z1) >> 1 },
+          foundationY: groundY,
+        },
+        size: [rect.x1 - rect.x0 + 1, h, rect.z1 - rect.z0 + 1],
+        archetype,
+        tags: [...sow.job.tags, "farmstead", archetype],
+        // Doors face in: §7.2's arrangement, and the reason the yard reads as a
+        // yard rather than as three buildings that happen to be near each other.
+        ports: { main_door: { type: "door", face: INWARD[side], at: "center" } },
+      });
+      break;
+    }
+  }
+  return out;
+}
+
+/** The resolved ground at a rectangle's centre column, or the yard's level. */
+function groundUnder(
+  rect: Rect,
+  region: Region,
+  resolved: { readonly ground: Int32Array },
+  fallback: number,
+): number {
+  const x = (rect.x0 + rect.x1) >> 1;
+  const z = (rect.z0 + rect.z1) >> 1;
+  if (!inside(region, x, z)) return fallback;
+  return resolved.ground[index(region, x, z)] as number;
+}
+
+/** How far in from the yard's edge the coarse ring runs, in columns (§7.1). */
+const YARD_RING = 2;
+
+/**
+ * §7.1's yard surface: `dirt_path` in the middle, `coarse_dirt` at the edges.
+ *
+ * **No grass** — a working yard that is grass reads as a lawn. Columns the yard
+ * claimed and lost are skipped for the same reason a row stops at a lane
+ * (§5.4), and so are the footprints of its own buildings: a building lays its
+ * own floor and its own foundation, and a `dirt_path` under a wall would revert
+ * to dirt on the first tick anyway.
+ */
+function surfaceYard(
+  sow: SowJob,
+  built: readonly FarmBuildingSpec[],
+  states: FarmStates,
+  input: FarmPassInput,
+  resolved: { readonly owner: Int32Array; readonly ground: Int32Array },
+): void {
+  const plan = input.plan;
+  const region = plan.region;
+  const rect = sow.yard;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      if (!inside(region, x, z)) continue;
+      const idx = index(region, x, z);
+      if (resolved.owner[idx] !== sow.yardIntent) continue;
+      if (built.some((b) => coversColumn(b.placement.footprint, x, z))) continue;
+      const edge =
+        x - rect.x0 < YARD_RING ||
+        rect.x1 - x < YARD_RING ||
+        z - rect.z0 < YARD_RING ||
+        rect.z1 - z < YARD_RING;
+      plan.surface[idx] = edge ? states.coarse : states.path;
+      // §8: snow over a working yard is a compile that disagreed with itself,
+      // and a snow layer on a `dirt_path` reverts the path underneath it.
+      plan.snow[idx] = 0;
+      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+    }
+  }
+}
+
+/** Whether a rectangle covers a column. */
+function coversColumn(rect: Rect, x: number, z: number): boolean {
+  return x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
 }

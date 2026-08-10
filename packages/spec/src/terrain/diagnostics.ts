@@ -277,6 +277,37 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DECAY_PARAM: "LOAM-T227",
   /**
+   * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
+   * interior cell was still unreachable from the door after the rubble that
+   * sealed it had been withdrawn, so the **intact** shell was built instead.
+   *
+   * Refused whole rather than shipped broken is the standing pattern (props,
+   * set pieces, programs). A refusal rate above a few percent on a walked world
+   * is a finding about the decay operators, not about the document — which is
+   * why the lot and the reason are both named.
+   */
+  RUIN_LOT_REFUSED: "LOAM-W510",
+  /**
+   * A shell could not take the `shell` decay mode and took `facade`, or took
+   * nothing: a footprint that is not a plain rect, or a wall of fewer than
+   * three courses (table 14: a crumble line drawn on a three-course wall has
+   * nothing to take away).
+   *
+   * A warning rather than a silence because the author's `params.decay` — or
+   * the district's roll — asked for a ruin and got a shell with the sweeping
+   * undone and nothing crumbled. The watchtower and the skyscraper are the two
+   * shapes that reach it.
+   */
+  DECAY_MODE_FALLBACK: "LOAM-W511",
+  /**
+   * Per district: `decline`, the ruin share, lots rolled / ruined / refused.
+   *
+   * **Not optional.** DESIGN's second failure mode is machinery that exists and
+   * never runs, and "the district ruined 0 of 84 lots because `decline` never
+   * reached the row" is a sentence that must appear somewhere a human looks.
+   */
+  DISTRICT_RUINS: "LOAM-I512",
+  /**
    * A holding seated its yard and **not one field**.
    *
    * Names the relief measured against `FIELD_MAX_RELIEF`, because the fix is
@@ -297,6 +328,15 @@ export const TERRAIN_DIAGNOSTICS = {
    * rather than a silence: the report row says so too.
    */
   FARM_REFUSED: "LOAM-W503",
+  /**
+   * The holding's gate anchor, named so an author can see what to route to.
+   *
+   * `docs/FARM-PLAN-v0.md` §7.3: a holding publishes a `road_stub` at its gate
+   * and an ordinary `road.network@0` node anchored on the holding's id runs the
+   * lane to it. The anchor is a node path, and a node path is exactly the thing
+   * an author cannot guess — so it is said rather than left to be inferred.
+   */
+  FARM_TRACK: "LOAM-I504",
 
   // --- Phase 0 contract 2: authored programs -------------------------------
   // The contract's own numbering (W330–W337), kept verbatim so a diagnostic

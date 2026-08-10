@@ -141,22 +141,37 @@ describe("the node", () => {
 });
 
 describe("the report row", () => {
-  it("reports the holding, with every WP-4 count at zero", () => {
+  it("reports the holding: fields, crops, yard and farmstead", () => {
     const farms = withFarm.report.farms;
     expect(farms).toHaveLength(1);
     const row = farms?.[0];
     expect(row?.nodePath).toBe("world.east_farm");
     expect(row?.id).toBe("east_farm");
     expect(row?.parcelsRequested).toBe(6);
-    // WP-2 packs the fields, WP-3 sows them; WP-4 builds the yard.
+    // WP-2 packs the fields, WP-3 sows them, WP-4 builds the yard.
     expect(row?.parcelsSeated).toBe(6);
     expect(row?.columnsClaimed).toBeGreaterThan(0);
     expect(row?.parcelWalls).toBe(0);
     // One crop per seated parcel, all of them from the list the author wrote.
     expect(row?.crops).toHaveLength(6);
     for (const crop of row?.crops ?? []) expect(["wheat", "potatoes"]).toContain(crop);
-    expect(row?.farmstead).toEqual([]);
-    expect(row?.yard).toBeUndefined();
+    // §7.2: six fields is the 6–9 bucket — farmhouse, barn, and one drawn
+    // outbuilding, in that order, the farmhouse always first.
+    expect(row?.farmstead[0]).toBe("farmhouse");
+    expect(row?.farmstead[1]).toBe("barn");
+    // §7.2 stops when the yard is full, so the third draw is built only if it
+    // fits: what the row names is what was built.
+    for (const a of row?.farmstead ?? []) {
+      expect(["farmhouse", "barn", "granary", "stable", "chicken_coop"]).toContain(a);
+    }
+    // §7.1: the yard is the one part of a holding that is levelled, and it is
+    // 16..24 on a side.
+    const yard = row?.yard;
+    expect(yard).toBeDefined();
+    const side = (yard?.rect.x1 ?? 0) - (yard?.rect.x0 ?? 0) + 1;
+    expect(side).toBeGreaterThanOrEqual(16);
+    expect(side).toBeLessThanOrEqual(24);
+    expect((yard?.rect.z1 ?? 0) - (yard?.rect.z0 ?? 0) + 1).toBe(side);
     expect(row?.portAnchor).toBe("world.east_farm");
   });
 

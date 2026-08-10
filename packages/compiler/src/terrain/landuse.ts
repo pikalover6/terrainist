@@ -602,20 +602,40 @@ export interface MaskRegion {
  * Everything that contributes a claimed footprint.
  *
  * **Ratified disposition 8** (docs/DESIGN.md §12 open question 8): the clamp
- * covers settlement footprints and **camp cores only — not farmland**. Farm
- * masks are much larger and much softer than a settlement footprint, and a
- * feather band over a floodplain reads worse than the seam it replaces, so
- * farmland is left to the climate-derived rule. `campCores` is the seam that
- * keeps that distinction explicit: a camp contributes the rect of its core and
- * nothing of its outfields.
+ * covers settlement footprints and camp cores — and, since it was **amended by
+ * Kai on 2026-08-09** (`docs/FARM-PLAN-v0.md` §8 and its Q3), the parcel and
+ * yard rectangles of a `precinct.farm@0` holding.
+ *
+ * The amendment is narrow and the original reasoning survives it intact. What
+ * disposition 8 excluded was *large, soft* farm masks — the floodplain case,
+ * where a feather band reads worse than the seam it replaces, and which is
+ * F13's `outfields`. A v0 holding is a handful of hard-edged rectangles inside
+ * a bounded envelope, dimensionally indistinguishable from a camp core; and the
+ * clamp is not cosmetic there, because a wheat field inside `windswept_hills`
+ * with that biome's snow decision applied to it is not a wheat field.
+ *
+ * So, in and out, explicitly:
+ *
+ * - **in**: parcel rects and yard rects (`farmParcels`), camp cores
+ *   (`campCores`), district and city cells, precinct envelopes, building pads,
+ *   road/street/plaza columns;
+ * - **still out**: a holding's *envelope* — mostly ground nobody touched — and
+ *   every soft mask F13 will bring with `farm.outfields`.
  */
 export interface LandUseSources {
   /** District and city cell bounds. */
   readonly cells?: readonly MaskRect[];
   /** Precinct envelopes and building pads. */
   readonly pads?: readonly MaskRect[];
-  /** Camp **cores** only. Never a camp's outfields, and never farmland. */
+  /** Camp **cores** only. Never a camp's outfields. */
   readonly campCores?: readonly MaskRect[];
+  /**
+   * Farm **parcel and yard** rects only (`docs/FARM-PLAN-v0.md` §8).
+   *
+   * Never the holding envelope, which is mostly untouched ground: clamping it
+   * is exactly the soft-mask failure disposition 8 refused.
+   */
+  readonly farmParcels?: readonly MaskRect[];
   /**
    * Column masks already row-major over the region — road/arterial/street
    * `claimed` masks and the plaza's paving.
@@ -627,7 +647,12 @@ export interface LandUseSources {
 export function buildLandUseMask(region: MaskRegion, sources: LandUseSources): Uint8Array {
   const { x0, z0, width, depth } = region;
   const mask = new Uint8Array(width * depth);
-  for (const rect of [...(sources.cells ?? []), ...(sources.pads ?? []), ...(sources.campCores ?? [])]) {
+  for (const rect of [
+    ...(sources.cells ?? []),
+    ...(sources.pads ?? []),
+    ...(sources.campCores ?? []),
+    ...(sources.farmParcels ?? []),
+  ]) {
     const i0 = Math.max(0, rect.x0 - x0);
     const i1 = Math.min(width - 1, rect.x1 - x0);
     const j0 = Math.max(0, rect.z0 - z0);

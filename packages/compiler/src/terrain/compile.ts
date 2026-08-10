@@ -111,7 +111,7 @@ import {
 import type { Provenance } from "../provenance.js";
 
 import { biomeForColumn, type ProfileBiome } from "./biomes.js";
-import { buildSettlementClearing } from "./clearing.js";
+import { buildSettlementClearing, type SettlementClearing } from "./clearing.js";
 import {
   buildLandUseMask,
   clampLandUse,
@@ -887,16 +887,37 @@ async function compileValidated(
   // Both are derived from what the structure pass actually built, and both are
   // consumed by the scatter that follows: the clearing decides where trees may
   // stand at all, the clip decides which of a standing tree's voxels survive.
-  const clearing =
-    layoutOutcome === undefined || layoutOutcome.placements.length === 0
+  // FARM-PLAN §9.1: a holding's envelope is deliberately **not** a hull
+  // contributor. The hull is convex over footprints, so a holding 40 blocks out
+  // would drag it into a wedge and fell the wood between — the exact failure
+  // `CLEARING_LINK_DISTANCE`'s clustering exists to avoid. The fields are
+  // written into the density field directly, below, which keeps the hull honest.
+  const clearingHolds = new Set(structures?.farms?.nodePaths ?? []);
+  const clearingRects =
+    layoutOutcome === undefined
+      ? []
+      : clearingHolds.size === 0
+        ? layoutOutcome.placements.map((p) => p.footprint)
+        : layoutOutcome.placements
+            .filter((p) => !clearingHolds.has(p.nodePath))
+            .map((p) => p.footprint);
+  const settlementClearing =
+    clearingRects.length === 0
       ? undefined
       : buildSettlementClearing(
           region,
-          layoutOutcome.placements.map((p) => p.footprint),
+          clearingRects,
           // Its own stream: the treeline's wobble must not move when an
           // unrelated pass draws from the root seed.
           seed32(nodeSeed(worldSeed, rootPath, "clearing")),
         );
+  // §9.1's suppression, written into the density field rather than into the
+  // hull: a field is cleared ground by definition, and so is the yard. A world
+  // with no holding keeps the settlement's own answer, by reference.
+  const clearing =
+    structures?.farms === undefined
+      ? settlementClearing
+      : suppressFarmClearing(region, settlementClearing, structures.farms);
   const clip =
     structures === undefined
       ? undefined
@@ -1026,6 +1047,16 @@ async function compileValidated(
       return climateIntent === undefined ? {} : { intent: climateIntent };
     })(),
   });
+  // FARM-PLAN §8, last clause: the parcel mask forces `snow = 0` on every
+  // parcel and yard column, as `grounds.ts` already does for worn columns. The
+  // clamp has just had its say about the biome; snow over a crop is not a
+  // season, it is a compile that disagreed with itself.
+  if (structures?.farms !== undefined) {
+    const { parcelMask, yardMask } = structures.farms;
+    for (let idx = 0; idx < plan.snow.length; idx++) {
+      if (parcelMask[idx] === 1 || yardMask[idx] === 1) plan.snow[idx] = 0;
+    }
+  }
   const biomeHistogram = painted.histogram;
   diagnostics.push(...painted.clamp.diagnostics);
   const biomesMs = now() - t4;
@@ -1263,12 +1294,88 @@ function landUseMaskOf(
   // Every placement the solver seated: precinct envelopes and building pads
   // alike. This is the same footprint list the clearing pass calls "the
   // settlement", which is exactly the coherence unit the clamp is about.
-  const pads: MaskRect[] = placements.map((p) => p.footprint);
+  //
+  // Minus the farm holdings, and that exclusion is FARM-PLAN §8 in one line: a
+  // holding's *envelope* is mostly ground nobody touched, and clamping it is
+  // the soft-mask failure ratified disposition 8 refused. What the holding does
+  // contribute is its parcel and yard rectangles, below.
+  const holdings = new Set(structures.farms?.nodePaths ?? []);
+  const pads: MaskRect[] =
+    holdings.size === 0
+      ? placements.map((p) => p.footprint)
+      : placements.filter((p) => !holdings.has(p.nodePath)).map((p) => p.footprint);
   const columns: Uint8Array[] = [];
   if (structures.roads !== undefined) columns.push(structures.roads.roadColumns);
   if (structures.streets !== undefined) columns.push(structures.streets.road);
   if (structures.plaza !== undefined) columns.push(structures.plaza.paved);
-  return buildLandUseMask(region, { cells, pads, columns });
+  return buildLandUseMask(region, {
+    cells,
+    pads,
+    columns,
+    // FARM-PLAN §8, ratified by Kai 2026-08-09: parcel and yard rects join the
+    // clamp exactly as a camp core does. A wheat field inside `windswept_hills`
+    // with that biome's snow decision applied to it is not a wheat field.
+    ...(structures.farms === undefined ? {} : { farmParcels: structures.farms.landUseRects }),
+  });
+}
+
+/**
+ * FARM-PLAN §9.1 — the clearing over a holding.
+ *
+ * > `clearing[idx] := 0` on every parcel and yard column, and on a 4-column
+ * > margin around the holding's parcel union.
+ *
+ * Deliberately **not** done by adding parcels to the settlement hull: the hull
+ * is convex over footprints, and a holding 40 blocks out would drag it into a
+ * wedge and fell the wood between. Writing the field directly keeps the hull
+ * honest — and it is also the only way a holding standing alone, with no
+ * settlement to make a hull out of, clears its own fields at all.
+ */
+function suppressFarmClearing(
+  region: Region,
+  settlement: SettlementClearing | undefined,
+  farms: { readonly parcelMask: Uint8Array; readonly yardMask: Uint8Array },
+): SettlementClearing {
+  const cells = region.width * region.depth;
+  const density =
+    settlement === undefined ? new Float32Array(cells).fill(1) : settlement.density;
+  const hulls = settlement?.hulls ?? [];
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (farms.yardMask[idx] === 1) {
+        density[idx] = 0;
+        continue;
+      }
+      if (farms.parcelMask[idx] === 1) {
+        density[idx] = 0;
+        continue;
+      }
+      // The margin, measured off the parcel union only: it is the band that
+      // stops a canopy leaning over a field, and a yard already has buildings
+      // whose own clip keeps the wood off them.
+      if (nearParcel(region, farms.parcelMask, i, j)) density[idx] = 0;
+    }
+  }
+  let cleared = 0;
+  for (let k = 0; k < density.length; k++) if (density[k] === 0) cleared++;
+  return { hulls, density, clearedColumns: cleared };
+}
+
+/** §9.1's 4-column margin around the parcel union, chebyshev. */
+const FARM_CLEARING_MARGIN = 4;
+
+function nearParcel(region: Region, mask: Uint8Array, i: number, j: number): boolean {
+  const i0 = Math.max(0, i - FARM_CLEARING_MARGIN);
+  const i1 = Math.min(region.width - 1, i + FARM_CLEARING_MARGIN);
+  const j0 = Math.max(0, j - FARM_CLEARING_MARGIN);
+  const j1 = Math.min(region.depth - 1, j + FARM_CLEARING_MARGIN);
+  for (let b = j0; b <= j1; b++) {
+    for (let a = i0; a <= i1; a++) {
+      if (mask[b * region.width + a] === 1) return true;
+    }
+  }
+  return false;
 }
 
 /**

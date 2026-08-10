@@ -1016,6 +1016,71 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   if (farms !== undefined) diagnostics.push(...farms.diagnostics);
   lay("farms", farms?.blocks ?? []);
 
+  // --- the farmstead (FARM-PLAN §7.2) --------------------------------------
+  // A second call into the building pass, and the position is forced: a
+  // farmstead stands on a yard, the yard is levelled by the farm pass, and the
+  // farm pass cannot run until the lanes have cut (§5.5). A precinct solves the
+  // same problem by running *before* the buildings and handing its specs into
+  // the one job list; a holding cannot, so its buildings are built here from
+  // the same `PrecinctBuildingSpec` shape, with their own material deal drawn
+  // off the holding's own seed. A world with no farm makes no second call and
+  // keeps `buildings.built` by reference, which is what the reach law needs.
+  const farmsteadJobs: (BuildingJob & { materials: BuildingMaterials; theme: MaterialTheme })[] = [];
+  const farmPorts: ResolvedPort[] = [];
+  for (const spec of farms?.buildings ?? []) {
+    const seed: Seed256 = nodeSeed(input.worldSeed, spec.nodePath, "");
+    buildingPaths.add(spec.nodePath);
+    farmsteadJobs.push({
+      nodePath: spec.nodePath,
+      placement: spec.placement,
+      size: spec.size,
+      params: { archetype: spec.archetype },
+      ports: spec.ports,
+      seed,
+      tags: spec.tags,
+      materials: assignMaterials(theme, 1, seed)[0] as BuildingMaterials,
+      theme,
+    });
+    farmPorts.push(...resolvePorts(spec.placement, spec.size, spec.ports));
+  }
+  const farmsteads =
+    farmsteadJobs.length === 0 ? undefined : buildBuildings(farmsteadJobs, input.plan, input.stack);
+  if (farmsteads !== undefined) {
+    diagnostics.push(...farmsteads.diagnostics);
+    lay("farmsteads", farmsteads.blocks);
+    for (const job of farmsteadJobs) jobTags.set(job.nodePath, job.tags);
+    if (input.occupancy !== undefined) {
+      for (const b of farmsteads.built) claimFootprint(input.occupancy, b);
+    }
+  }
+  /**
+   * Every building the world holds, the farmstead included.
+   *
+   * Identical to `buildings.built` **by reference** when there is no farmstead,
+   * so every pass below this line is handed the same array it was handed before
+   * this block existed.
+   */
+  const built: readonly BuiltBuilding[] =
+    farmsteads === undefined ? buildings.built : [...buildings.built, ...farmsteads.built];
+
+  // §9.3: the fields are claimed ground. The life pass and `prop.place@0` both
+  // read the occupancy grid, and neither should be planting a bus shelter in
+  // the wheat.
+  if (farms !== undefined && input.occupancy !== undefined) {
+    const tags = input.occupancy.byTag as Map<string, Uint8Array>;
+    let tag = tags.get("farm");
+    if (tag === undefined) {
+      tag = new Uint8Array(input.occupancy.mask.length);
+      tags.set("farm", tag);
+    }
+    for (let idx = 0; idx < tag.length; idx++) {
+      if (farms.parcelMask[idx] === 1 || farms.yardMask[idx] === 1) {
+        tag[idx] = 1;
+        input.occupancy.mask[idx] = 1;
+      }
+    }
+  }
+
   // --- props ---------------------------------------------------------------
   // After the roads, and that ordering is the point: a prop is placed against
   // the *finished* ground, and until the lanes have cut and their shoulders
@@ -1091,7 +1156,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           plan: input.plan,
           ground: input.ground,
           stack: input.stack,
-          reserved: buildings.built.map((b) => b.footprint),
+          reserved: built.map((b) => b.footprint),
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   diagnostics.push(...props.diagnostics);
@@ -1110,11 +1175,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // The apron, a second time: the roads have cut and the shoulders have
   // blended, so the ground a porch lamp stands in is only now the ground the
   // emitter will lay. Adds nothing on a world with no roads.
-  lay("aprons", underpinAprons(buildings.built, input.plan));
+  lay("aprons", underpinAprons(built, input.plan));
 
   const doorsteps = buildDoorsteps({
-    buildings: buildings.built,
-    ports: input.ports,
+    buildings: built,
+    // The farmstead's own doors, appended: a farmhouse whose door faces its own
+    // field gets a flush threshold rather than a step into the crop (§5.4).
+    ports: farmPorts.length === 0 ? input.ports : [...input.ports, ...farmPorts],
     plan: input.plan,
     ground: input.ground,
     palette: input.palette,
@@ -1195,7 +1262,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     plan: input.plan,
     palette: input.palette,
     stack: input.stack,
-    footprints: buildings.built.map((b) => b.footprint),
+    footprints: built.map((b) => b.footprint),
     // The wall masonry stays the wall's: a seam column is deepened, not
     // repainted in rock.
     seam: retaining.seam,
@@ -1207,7 +1274,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // declared the ground it owns — roads, plaza, doorsteps, footprints, props —
   // so this one can treat what is left without ever having to guess.
   const grounds = buildGrounds({
-    buildings: buildings.built,
+    buildings: built,
     plan: input.plan,
     palette: input.palette,
     stack: input.stack,
@@ -1226,6 +1293,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       today: 0,
     }),
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+    // §9.2: `grounds.ts` must not dress a parcel, and the wear sweep must not
+    // reach into one either — a worn path across a sown field is a defect, not
+    // decay. The **yard** is deliberately absent from this mask: it is the one
+    // exception, and it takes the existing `yard` treatment.
+    ...(farms === undefined ? {} : { farmColumns: farms.parcelMask }),
   });
   lay("grounds", grounds.blocks);
 
@@ -1261,7 +1333,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
             if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
             if (streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1) return true;
             if (plaza !== undefined && plaza.paved[at] === 1) return true;
-            return buildings.built.some(
+            return built.some(
               (b) =>
                 x >= b.footprint.x0 && x <= b.footprint.x1 && z >= b.footprint.z0 && z <= b.footprint.z1,
             );
@@ -1288,7 +1360,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // It also has to be after the roads and the streets, because a gate is not
   // sited — it is *found*, where a carriageway already crosses the derived
   // course, and until the surfacing has run there is no carriageway to find.
-  const wallJobs = wallJobsOf(input.doc, rootPath, buildings.built, (p) =>
+  const wallJobs = wallJobsOf(input.doc, rootPath, built, (p) =>
     placementByPath.get(p)?.footprint,
   );
   const wallPass =
@@ -1333,7 +1405,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     // outright, which is also the right read: an abandoned house has no awning
     // over its shopfront and no lamp lit in its front room. Absent on every
     // building in a world that never says `decline`, so nothing else moves.
-    buildings: buildings.built
+    buildings: built
       .filter((b) => b.meta.decay === undefined)
       .map((b) => lifeBuildingOf(b, jobTags.get(b.nodePath) ?? [])),
     districts: streetMasks,
@@ -1370,7 +1442,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     blocks,
     blockSpans,
     doorsteps,
-    buildings: buildings.built,
+    buildings: built,
     tunnels: tunnelPass.tunnels,
     walls: wallPass?.walls ?? [],
     props: props.placed,
@@ -1386,8 +1458,8 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     stats: {
       theme: theme.id,
       distinctMaterials: new Set(deal.map((m) => materialKey(m))).size,
-      buildingCount: buildings.built.length,
-      buildingBlocks: buildings.built.reduce((sum, b) => sum + b.blockCount, 0),
+      buildingCount: built.length,
+      buildingBlocks: built.reduce((sum, b) => sum + b.blockCount, 0),
       roadRoutes: roads?.routes.length ?? 0,
       roadColumns: roads?.surfacedColumns ?? 0,
       roadBridgeColumns: roads?.bridgeColumns ?? 0,
@@ -1397,7 +1469,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plazaWell: plaza?.well ?? false,
       doorstepsStepped: doorsteps.stepped,
       doorstepsDropped: doorsteps.dropped,
-      cellars: buildings.built.filter((b) => b.basementDepth > 0).length,
+      cellars: built.filter((b) => b.basementDepth > 0).length,
       tunnels: tunnelPass.tunnels.length,
       tunnelCarvedBlocks: tunnelPass.tunnels.reduce((sum, t) => sum + t.carvedBlocks, 0),
       tunnelLength: tunnelPass.tunnels.reduce((sum, t) => sum + t.path.length, 0),

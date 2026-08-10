@@ -213,6 +213,19 @@ export interface GroundPassInput {
   readonly keepClear?: Uint8Array;
   /** 1 on every column the doorstep pass rewrote. */
   readonly doorstepColumns?: Uint8Array;
+  /**
+   * 1 on every column a farm parcel won — `docs/FARM-PLAN-v0.md` §9.2.
+   *
+   * This pass must not dress a field: an apron, a garden, a forecourt or a
+   * `sacred` ring laid over sown rows would be the compiler undoing the crop it
+   * just wrote. The wear sweep is excluded by the same mask and for a stronger
+   * reason — a worn path across a sown field is a defect, not decay.
+   *
+   * The **yard** is not in the mask. §9.2 makes it the one exception: it takes
+   * the existing `yard` treatment, which is exactly what a farmstead's lot
+   * wants.
+   */
+  readonly farmColumns?: Uint8Array;
   /** Read for its `prop` / `building` / `road` / `plaza` tags; never written. */
   readonly occupancy?: OccupancyGrid;
   /**
@@ -455,6 +468,9 @@ function reservedMask(input: GroundPassInput, cells: number): Uint8Array {
   or(input.paved);
   or(input.keepClear);
   or(input.doorstepColumns);
+  // §9.2, and it lands in `reservedMask` rather than in each treatment because
+  // this one mask is what both `free()` and the wear sweep already read.
+  or(input.farmColumns);
   if (input.occupancy !== undefined && input.occupancy.mask.length === cells) {
     for (const tag of ["building", "interior", "road", "plaza", "prop"]) {
       or(input.occupancy.byTag.get(tag));
