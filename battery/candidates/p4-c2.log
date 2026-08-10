@@ -1,0 +1,348 @@
+prompt     A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.
+seed       304
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"far_future","decline":0.9,"character":{"label":"high-tech apocalyptic hideout","materialTheme":"modern_city"},"tokens":{"setting":"A technologically advanced hideout embedded in the massively overgrown ruins of a metropolis; the surrounding city is post-apocalyptic and heavily reclaimed by vegetation."}}
+           1 attempt(s), 3281 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.metro_canopy.params.area
+  tokens     63626 in + 31494 out = 95120  ($0.0268)
+programs   1 of 1 kept (budget 12 landmark / 6 plugin)
+  ok     high_tech_hideout [landmark]  2 attempt(s), 86003 tokens  ($0.0457)
+  tokens     11871 in + 74132 out = 86003  ($0.0457)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 5 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.metro_canopy.params.area: "area.radius" is 0.42, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.42 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.42 on a 1024-wide region, "radius": 215).
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_0: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_11: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_12: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-T119 SCATTER_EMPTY at world.metro_canopy: forest node "metro_canopy" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.42} covers 1 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.42 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+
+  revision 1 authored in 2 attempt(s)
+  tokens     143538 in + 10808 out = 154346  ($0.0091)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_0: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_11: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_12: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+  revision 2 authored in 2 attempt(s)
+  tokens     151650 in + 14570 out = 166220  ($0.0124)
+
+compiled "overgrown_hideout" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout
+  seed       304
+  region     1024x1024 at (-512, -512)
+  heights    60.4..75.7  sea 63  snow line 75.1
+  land       98.0% of columns above sea level
+  biomes     forest 92.7%, plains 5.3%, ocean 1.3%, taiga 0.4%, beach 0.3%, windswept_hills 0.0%
+  trees      11348 (metro_canopy=439, wild_reclaim=11943)
+  chunks     4096
+  blocks     145327558 (888197 vegetation)
+  markers    69
+  spawn      [0, 76, 341]
+  timings    validate 2ms  field 409ms  layout 9070ms  climate 123ms  columns 1459ms  caves 0ms  structures 21722ms  programs 35ms  scatter 4953ms  biomes 135ms  validators 5ms  emit 7402ms  total 45418ms
+  programs   world.the_hideout=high_tech_hideout×1 (4734 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.reclaimed_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_0: decline 0.90 gives a ruin share of 0.81: 78 of 98 infill lots roll into ruined shells (light 0, heavy 8, total 70)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_2: decline 0.90 gives a ruin share of 0.81: 6 of 7 infill lots roll into ruined shells (light 0, heavy 0, total 6)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_3: decline 0.90 gives a ruin share of 0.81: 42 of 59 infill lots roll into ruined shells (light 0, heavy 3, total 39)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_4: decline 0.90 gives a ruin share of 0.81: 1 of 3 infill lots roll into ruined shells (light 0, heavy 0, total 1)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_5: decline 0.90 gives a ruin share of 0.81: 2 of 3 infill lots roll into ruined shells (light 0, heavy 1, total 1)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_6: decline 0.90 gives a ruin share of 0.81: 5 of 7 infill lots roll into ruined shells (light 0, heavy 0, total 5)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_7: decline 0.90 gives a ruin share of 0.81: 9 of 9 infill lots roll into ruined shells (light 0, heavy 1, total 8)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_8: decline 0.90 gives a ruin share of 0.81: 8 of 10 infill lots roll into ruined shells (light 0, heavy 1, total 7)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_9: decline 0.90 gives a ruin share of 0.81: 1 of 2 infill lots roll into ruined shells (light 0, heavy 0, total 1)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_10: decline 0.90 gives a ruin share of 0.81: 8 of 12 infill lots roll into ruined shells (light 0, heavy 1, total 7)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_11: decline 0.90 gives a ruin share of 0.81: 36 of 48 infill lots roll into ruined shells (light 0, heavy 1, total 35)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis.cell_12: decline 0.90 gives a ruin share of 0.81: 85 of 111 infill lots roll into ruined shells (light 0, heavy 7, total 78)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-305_-354: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-132_-354: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-114_-354: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_185_-354: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_279_-354: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_309_-354: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-300_-339: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_65_-339: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_89_-339: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_236_-339: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-78_-319: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_106_-299: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_123_-299: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_279_-299: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-159_-277: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_17_-277: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_59_-277: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_123_-277: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_-5_-262: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_0.infill_141_-244: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_-69_-214: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_-17_-214: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_85_-214: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_186_-214: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_-153_-204: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_-75_-204: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_79_-204: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_202_-204: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_148_-133: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_3.infill_34_-26: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_6.infill_-346_-7: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_7.infill_209_3: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_8.infill_360_83: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_10.infill_32_43: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_10.infill_-82_53: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_10.infill_-63_55: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_84_78: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_-131_80: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_-143_97: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_-125_97: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_65_97: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_84_97: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_110_112: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_-143_136: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_-125_136: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_46_136: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_65_136: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_11.infill_65_158: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-9_218: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-257_233: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-82_234: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-259_255: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-99_255: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-58_255: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-16_255: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_178_255: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-58_270: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-209_288: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_90_288: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-165_306: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-37_306: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_47_306: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_161_306: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_236_306: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_352_306: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-346_330: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-117_330: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_12_330: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_334_330: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_-58_340: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.cell_12.infill_12_340: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_0: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_11: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+warning LOAM-E170 CANNOT_FIT at world.ruined_metropolis.cell_12: sidewalk band is 1 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 60860 ruined columns: 50640 climbing strands (14 glow lichen), 55 leaf plugs (267 of them substituted for glazing), 3351 moss carpets, 1302 pavement substitutions, 161 tufts, 428 street trunks and 49 shell trees elected (34192 spine columns, shortest sight-line run 23, nearest trunk to a junction 3), 61557 blocks
+  fix: informational
+
+warning LOAM-W513 GREEN_SKIN_WITHDRAWN at <document>: the street colonizer withdrew 14 of 442 elected trunks to keep every street band one walkable component (U2)
+  fix: no change needed unless the rate is sustained above a few percent — that is a finding about `STREET_TRUNK_SHARE`, not about the withdraw loop
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 519593 footprint columns (plus 64135 feathered over 40 columns) to minecraft:forest, named by climate intent; snow policy never resolved to "never" on a 0/519593 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 358814 in + 56872 out = 415686 tokens ($0.0483)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout
+installed "overgrown_hideout_c2"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p4-c2/overgrown_hideout
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/overgrown_hideout_c2
+  lastPlayed 1786403771829 (2026-08-10T23:16:11.829Z)

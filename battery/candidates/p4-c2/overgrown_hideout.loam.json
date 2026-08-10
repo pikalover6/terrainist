@@ -1,0 +1,434 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            1
+          ],
+          [
+            "minecraft:moss_block",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:deepslate",
+      "ground.cliff": "minecraft:deepslate",
+      "ground.peak": "minecraft:deepslate",
+      "road.surface": {
+        "mix": [
+          [
+            "minecraft:gray_concrete",
+            3
+          ],
+          [
+            "minecraft:cracked_stone_bricks",
+            2
+          ],
+          [
+            "minecraft:mossy_stone_bricks",
+            2
+          ]
+        ]
+      },
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:polished_deepslate",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:deepslate_tiles",
+      "plaza.border": "minecraft:oxidized_copper"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "decline": 0.9,
+    "formality": 0.75,
+    "climate": {
+      "biome": "minecraft:forest",
+      "temperature": 0.15,
+      "humidity": 0.85,
+      "snow": "never"
+    },
+    "character": {
+      "label": "high-tech apocalyptic hideout",
+      "materialTheme": "modern_city",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "banded",
+        "ornamentDensity": 0.25
+      },
+      "archetypes": {
+        "prefer": [
+          "bunker_complex",
+          "data_center",
+          "underground_silo"
+        ],
+        "forbid": [],
+        "weights": {
+          "bunker_complex": 4,
+          "data_center": 2,
+          "underground_silo": 2
+        }
+      },
+      "flora": {
+        "prefer": [
+          "oak_round",
+          "birch_slim"
+        ],
+        "forbid": []
+      },
+      "programs": [
+        {
+          "id": "high_tech_hideout",
+          "mode": "landmark",
+          "brief": "An enterable high-tech refuge hidden in the massively reclaimed ruins of a dead metropolis: a compact low brutalist bunker embedded into an abandoned city block, with dark concrete, polished metal, luminous cyan conduit bands, sealed blast doors, rooftop antenna masts and a defended entrance facing the city. Hollow it into a dry control room, sleeping quarters, power room and stores, and publish the main entrance as a door anchor.",
+          "envelope": [
+            31,
+            24,
+            31
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "setting": "A technologically advanced hideout embedded in the massively overgrown ruins of a metropolis; the surrounding city is post-apocalyptic and heavily reclaimed by vegetation."
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the reclaimed metropolitan dead zone",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle ground beneath the ruined city",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "metro_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shelf beneath the metropolitan ruins",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 380,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.15,
+          "blendRadius": 12
+        }
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "city",
+        "label": "the grid of a metropolis reclaimed by forest",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            720,
+            720
+          ]
+        },
+        "params": {
+          "size": "large",
+          "mix": [
+            "office",
+            "apartment_block",
+            "brutalist_block",
+            "data_center",
+            "shop_row",
+            "warehouse",
+            "parking_garage",
+            "subway_station"
+          ],
+          "diagonals": 2,
+          "ring": true,
+          "blockSize": 52,
+          "setPieces": {
+            "max": 2,
+            "kinds": [
+              "square"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "intent": {
+          "decline": 0.9,
+          "formality": 0.8,
+          "character": {
+            "label": "massively overgrown ruins of a metropolis",
+            "materialTheme": "modern_city",
+            "archetypes": {
+              "prefer": [
+                "brutalist_block",
+                "office",
+                "apartment_block",
+                "data_center",
+                "subway_station"
+              ],
+              "forbid": [
+                "bunker_complex"
+              ],
+              "weights": {
+                "brutalist_block": 3,
+                "data_center": 3,
+                "office": 2
+              }
+            },
+            "flora": {
+              "prefer": [
+                "oak_round",
+                "birch_slim"
+              ],
+              "forbid": [
+                "spruce_tall"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "blocky",
+              "windowRhythm": "banded",
+              "ornamentDensity": 0.1
+            },
+            "urbanForm": "grid"
+          }
+        },
+        "tags": [
+          "metropolis",
+          "urban",
+          "ruins"
+        ]
+      },
+      {
+        "id": "the_hideout",
+        "kind": "generator",
+        "generator": "authored:high_tech_hideout",
+        "label": "the intact high-tech refuge beneath the reclaimed city",
+        "params": {
+          "seat": "embed",
+          "embedDepth": 6
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "ruined_metropolis",
+            "min": 24,
+            "max": 440
+          },
+          {
+            "facing": "ruined_metropolis"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 6,
+            "maxSlope": 26
+          }
+        ],
+        "tags": [
+          "landmark",
+          "hideout",
+          "house"
+        ]
+      },
+      {
+        "id": "reclaimed_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "broken grid lanes leading to the refuge",
+        "params": {
+          "anchors": [
+            "ruined_metropolis",
+            "the_hideout",
+            "#tag:house"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": false,
+          "curvature": 0.15,
+          "maxGrade": 3,
+          "junctionStyle": "plain"
+        }
+      },
+      {
+        "id": "metro_canopy",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense canopy swallowing the city blocks",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 215
+          },
+          "density": 0.28,
+          "spacing": 3,
+          "clumping": 0.75,
+          "maxSlope": 38,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.9,
+            "flowers": 0.25,
+            "deadwood": 0.35
+          },
+          "species": [
+            {
+              "id": "reclaimed_oak",
+              "weight": 5,
+              "shape": "oak_round",
+              "minHeight": 8,
+              "maxHeight": 24
+            },
+            {
+              "id": "city_birch",
+              "weight": 3,
+              "shape": "birch_slim",
+              "minHeight": 7,
+              "maxHeight": 21
+            },
+            {
+              "id": "understory_spruce",
+              "weight": 1,
+              "shape": "spruce_squat",
+              "minHeight": 4,
+              "maxHeight": 12
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_reclaim",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "volunteer woodland beyond the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.06,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 40,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.7,
+            "flowers": 0.15,
+            "deadwood": 0.22
+          },
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 4,
+              "shape": "oak_round",
+              "minHeight": 6,
+              "maxHeight": 20
+            },
+            {
+              "id": "wild_birch",
+              "weight": 2,
+              "shape": "birch_slim",
+              "minHeight": 6,
+              "maxHeight": 18
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "high_tech_hideout": {
+      "mode": "landmark",
+      "envelope": [
+        31,
+        24,
+        31
+      ],
+      "sourceHash": "b3:982b145d62b43e094a7c054f8a97afc7a46f81cfac3b9783c368073fcb10b8ed",
+      "outputHash": "b3:48d4c3f7de1a1a0cc471cce773eb4516bcf96a3114b6e910b79b33ab83fe583c",
+      "source": "export const envelope = [31, 24, 31];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const DEEP = \"minecraft:polished_deepslate\";\n  const BLACK = \"minecraft:black_concrete\";\n  const GRAY = \"minecraft:gray_concrete\";\n  const LIGHT = \"minecraft:light_gray_concrete\";\n  const IRON = \"minecraft:iron_block\";\n  const CYAN = \"minecraft:cyan_concrete\";\n  const LAMP = \"minecraft:sea_lantern\";\n  const BARS = \"minecraft:iron_bars\";\n  const SMOOTH = \"minecraft:smooth_stone\";\n  const ROOM_FLOOR = \"minecraft:polished_andesite\";\n  const MOSSY = \"minecraft:mossy_stone_bricks\";\n  const MOSS = \"minecraft:moss_block\";\n\n  function put(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function box(x0, x1, y0, y1, z0, z1, block) {\n    for (let y = y0; y <= y1; y++) {\n      for (let x = x0; x <= x1; x++) {\n        for (let z = z0; z <= z1; z++) {\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  const ground = new Array(W);\n  for (let x = 0; x < W; x++) {\n    ground[x] = new Array(D);\n    for (let z = 0; z < D; z++) {\n      const h = api.heightAt(x, z);\n      ground[x][z] = Number.isFinite(h) ? h : 0;\n    }\n  }\n\n  const xMin = 2;\n  const xMax = 28;\n  const zMin = 2;\n  const zMax = 28;\n  const seatCourse = 3;\n\n  for (let x = xMin; x <= xMax; x++) {\n    for (let z = zMin; z <= zMax; z++) {\n      const h = ground[x][z];\n      const first = Math.max(\n        0,\n        Math.min(seatCourse - 1, Math.ceil(seatCourse + h))\n      );\n\n      for (let y = first; y < seatCourse; y++) {\n        const block = y === seatCourse - 1\n          ? DEEP\n          : (h < -1 ? DEEP : BLACK);\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  box(13, 17, 0, 0, 0, 0, SMOOTH);\n  box(13, 17, 0, 1, 1, 1, SMOOTH);\n  box(13, 17, 0, 2, 2, 2, SMOOTH);\n\n  box(7, 10, 0, 2, 1, 2, DEEP);\n  box(20, 23, 0, 2, 1, 2, DEEP);\n  box(7, 10, 3, 4, 1, 2, BLACK);\n  box(20, 23, 3, 4, 1, 2, BLACK);\n  put(8, 3, 1, CYAN);\n  put(22, 3, 1, CYAN);\n  put(8, 4, 1, LAMP);\n  put(22, 4, 1, LAMP);\n\n  box(xMin, xMax, seatCourse, seatCourse, zMin, zMax, DEEP);\n  box(14, 16, 3, 3, 4, 26, IRON);\n  box(5, 12, 3, 3, 4, 14, ROOM_FLOOR);\n  box(18, 25, 3, 3, 4, 14, ROOM_FLOOR);\n  box(5, 12, 3, 3, 16, 26, ROOM_FLOOR);\n  box(18, 25, 3, 3, 16, 26, ROOM_FLOOR);\n\n  for (let y = 4; y <= 9; y++) {\n    for (let x = xMin; x <= xMax; x++) {\n      for (let z = zMin; z <= zMax; z++) {\n        const boundary =\n          x === xMin ||\n          x === xMin + 1 ||\n          x === xMax - 1 ||\n          x === xMax ||\n          z === zMin ||\n          z === zMin + 1 ||\n          z === zMax - 1 ||\n          z === zMax;\n\n        if (!boundary) {\n          continue;\n        }\n\n        const opening =\n          (z === zMin || z === zMin + 1) &&\n          x >= 14 &&\n          x <= 16 &&\n          y <= 7;\n\n        if (!opening) {\n          const block = y === 4 || y === 9\n            ? DEEP\n            : (y === 8 ? LIGHT : BLACK);\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  for (let y = 4; y <= 8; y++) {\n    const wall = y === 4 ? DEEP : (y === 8 ? LIGHT : BLACK);\n\n    for (let z = 4; z <= 26; z++) {\n      put(4, y, z, wall);\n      put(26, y, z, wall);\n\n      const opening =\n        (z === 9 || z === 10 || z === 20 || z === 21) &&\n        y <= 7;\n\n      if (!opening) {\n        put(13, y, z, wall);\n        put(17, y, z, wall);\n      }\n    }\n\n    for (let x = 4; x <= 13; x++) {\n      put(x, y, 15, wall);\n    }\n    for (let x = 17; x <= 26; x++) {\n      put(x, y, 15, wall);\n    }\n  }\n\n  const doorSouthLower =\n    \"minecraft:iron_door[facing=south,half=lower,hinge=left,open=true,powered=false]\";\n  const doorSouthUpper =\n    \"minecraft:iron_door[facing=south,half=upper,hinge=left,open=true,powered=false]\";\n  const doorEastLower =\n    \"minecraft:iron_door[facing=east,half=lower,hinge=left,open=true,powered=false]\";\n  const doorEastUpper =\n    \"minecraft:iron_door[facing=east,half=upper,hinge=left,open=true,powered=false]\";\n  const doorWestLower =\n    \"minecraft:iron_door[facing=west,half=lower,hinge=right,open=true,powered=false]\";\n  const doorWestUpper =\n    \"minecraft:iron_door[facing=west,half=upper,hinge=right,open=true,powered=false]\";\n\n  put(15, 4, 2, doorSouthLower);\n  put(15, 5, 2, doorSouthUpper);\n\n  const roomDoorZ = [9, 20];\n  for (let i = 0; i < roomDoorZ.length; i++) {\n    const z = roomDoorZ[i];\n    put(13, 4, z, doorEastLower);\n    put(13, 5, z, doorEastUpper);\n    put(17, 4, z, doorWestLower);\n    put(17, 5, z, doorWestUpper);\n  }\n\n  box(xMin, xMax, 9, 9, zMin, zMax, DEEP);\n  box(xMin + 1, xMax - 1, 10, 10, zMin + 1, zMax - 1, BLACK);\n\n  for (let x = 3; x <= 27; x++) {\n    put(x, 11, 3, DEEP);\n    put(x, 11, 27, DEEP);\n  }\n  for (let z = 4; z <= 26; z++) {\n    put(3, 11, z, DEEP);\n    put(27, 11, z, DEEP);\n  }\n\n  put(3, 12, 3, IRON);\n  put(27, 12, 3, IRON);\n  put(3, 12, 27, IRON);\n  put(27, 12, 27, IRON);\n\n  box(11, 19, 11, 11, 11, 19, DEEP);\n  box(12, 18, 12, 13, 12, 18, BLACK);\n  box(13, 17, 13, 13, 13, 17, IRON);\n\n  for (let x = 13; x <= 17; x++) {\n    put(x, 12, 12, CYAN);\n    put(x, 12, 18, CYAN);\n  }\n  for (let z = 13; z <= 17; z++) {\n    put(12, 12, z, CYAN);\n    put(18, 12, z, CYAN);\n  }\n\n  const moduleLights = [\n    [15, 12, 12],\n    [15, 12, 18],\n    [12, 12, 15],\n    [18, 12, 15]\n  ];\n  for (let i = 0; i < moduleLights.length; i++) {\n    const p = moduleLights[i];\n    put(p[0], p[1], p[2], LAMP);\n  }\n\n  for (let x = 4; x <= 12; x++) {\n    put(x, 6, 2, CYAN);\n  }\n  for (let x = 18; x <= 26; x++) {\n    put(x, 6, 2, CYAN);\n  }\n  for (let x = 4; x <= 26; x++) {\n    put(x, 6, 28, CYAN);\n  }\n  for (let z = 5; z <= 25; z++) {\n    put(2, 6, z, CYAN);\n    put(28, 6, z, CYAN);\n  }\n\n  const wallLights = [\n    [6, 6, 2],\n    [10, 6, 2],\n    [20, 6, 2],\n    [24, 6, 2],\n    [2, 6, 8],\n    [2, 6, 20],\n    [28, 6, 8],\n    [28, 6, 20],\n    [8, 6, 28],\n    [22, 6, 28]\n  ];\n  for (let i = 0; i < wallLights.length; i++) {\n    const p = wallLights[i];\n    put(p[0], p[1], p[2], LAMP);\n  }\n\n  for (let y = 5; y <= 7; y++) {\n    put(13, y, 2, CYAN);\n    put(17, y, 2, CYAN);\n  }\n  for (let x = 13; x <= 17; x++) {\n    put(x, 8, 2, IRON);\n    put(x, 8, 3, IRON);\n  }\n\n  for (let x = 5; x <= 25; x += 2) {\n    put(x, 10, 4, CYAN);\n    put(x, 10, 26, CYAN);\n  }\n  for (let z = 6; z <= 24; z += 2) {\n    put(4, 10, z, CYAN);\n    put(26, 10, z, CYAN);\n  }\n\n  const roofLights = [\n    [7, 10, 4],\n    [23, 10, 4],\n    [7, 10, 26],\n    [23, 10, 26],\n    [4, 10, 8],\n    [4, 10, 22],\n    [26, 10, 8],\n    [26, 10, 22]\n  ];\n  for (let i = 0; i < roofLights.length; i++) {\n    const p = roofLights[i];\n    put(p[0], p[1], p[2], LAMP);\n  }\n\n  const mossPatches = [\n    [4, 4, 2],\n    [5, 4, 2],\n    [6, 4, 2],\n    [24, 4, 2],\n    [25, 4, 2],\n    [26, 4, 2],\n    [2, 4, 7],\n    [2, 4, 8],\n    [2, 4, 9],\n    [28, 4, 18],\n    [28, 4, 19],\n    [28, 4, 20],\n    [3, 5, 27],\n    [4, 5, 27],\n    [5, 5, 27]\n  ];\n  for (let i = 0; i < mossPatches.length; i++) {\n    const p = mossPatches[i];\n    put(p[0], p[1], p[2], MOSSY);\n  }\n\n  const roofMoss = [\n    [4, 11, 3],\n    [26, 11, 27],\n    [3, 11, 24],\n    [27, 11, 6]\n  ];\n  for (let i = 0; i < roofMoss.length; i++) {\n    const p = roofMoss[i];\n    put(p[0], p[1], p[2], MOSS);\n  }\n\n  function addMast(x, z, top, alongX) {\n    put(x, 11, z, IRON);\n    put(x, 12, z, LAMP);\n\n    for (let y = 13; y < top; y++) {\n      put(x, y, z, BARS);\n    }\n    put(x, top, z, CYAN);\n\n    if (alongX) {\n      for (let d = -2; d <= 2; d++) {\n        put(x + d, 16, z, BARS);\n      }\n    } else {\n      for (let d = -2; d <= 2; d++) {\n        put(x, 16, z + d, BARS);\n      }\n    }\n  }\n\n  addMast(7, 7, 20, true);\n  addMast(23, 7, 20, false);\n  addMast(23, 23, 20, true);\n\n  put(15, 14, 15, IRON);\n  for (let y = 15; y < 23; y++) {\n    put(15, y, 15, BARS);\n  }\n  put(15, 23, 15, CYAN);\n\n  for (let x = 11; x <= 19; x++) {\n    put(x, 17, 15, BARS);\n  }\n  for (let z = 11; z <= 19; z++) {\n    put(15, 20, z, BARS);\n  }\n\n  return {\n    name: \"High-Tech Apocalyptic Hideout\",\n    seatY: 3,\n    anchors: {\n      door: [15, 4, 2]\n    },\n    interiors: [\n      {\n        min: [5, 4, 4],\n        max: [12, 8, 14],\n        kind: \"control\"\n      },\n      {\n        min: [18, 4, 4],\n        max: [25, 8, 14],\n        kind: \"quarters\"\n      },\n      {\n        min: [5, 4, 16],\n        max: [12, 8, 26],\n        kind: \"power\"\n      },\n      {\n        min: [18, 4, 16],\n        max: [25, 8, 26],\n        kind: \"stores\"\n      },\n      {\n        min: [14, 4, 4],\n        max: [16, 8, 26],\n        kind: \"hall\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}
