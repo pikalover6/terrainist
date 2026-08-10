@@ -90,6 +90,7 @@ import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./ground
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
 import { buildRuinField, type RuinField } from "./ruin-field.js";
 import { growGreenSkin, type GreenSkinResult } from "./green-skin.js";
+import { resolveReclaimSpecies } from "./reclaim-species.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
@@ -131,6 +132,7 @@ import {
 } from "./walls.js";
 
 export * from "./buildings.js";
+export * from "./reclaim-species.js";
 export * from "./canals.js";
 export * from "./retaining.js";
 export * from "./courtyards.js";
@@ -1569,6 +1571,16 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           ruinField,
           laid: blocks,
           districts,
+          buildings: built,
+          doorstepColumns: doorsteps.touched,
+          // §4.6, THE GREEN RULE: the species the place already grows, resolved
+          // once per settlement and only when there is a field to write on — a
+          // world that ruins nothing must not even emit `LOAM-W514`.
+          flora: (() => {
+            const resolved = resolveReclaimSpecies(input.doc, input.plan.region);
+            diagnostics.push(...resolved.diagnostics);
+            return resolved.species;
+          })(),
           ...(grounds.ruinYardColumns === undefined
             ? {}
             : { ruinYardColumns: grounds.ruinYardColumns }),

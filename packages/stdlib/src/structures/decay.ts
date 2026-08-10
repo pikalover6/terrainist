@@ -281,17 +281,58 @@ export const WEATHERED_VARIANTS: Readonly<Record<string, readonly string[]>> = O
   nether_bricks: ["cracked_nether_bricks", "cracked_nether_bricks"],
 });
 
+/** True for a family member that is the *mossy* one, **by name** (WP6 §4.2). */
+function isMossyVariant(name: string): boolean {
+  return name.startsWith("mossy_");
+}
+
 /**
  * A block's weathered variant, or `null` when its family has none.
  *
  * `k` is the cell's own hash, so a wall comes up mixed rather than uniformly
  * cracked — the same positional variation the five relics get from their own
  * `cellHash` calls, and no draw and no seed, because a fit-out has neither.
+ *
+ * ## The mossy re-clad, lifted (RUINS-PLAN-v0-WP6 §4.2)
+ *
+ * `mossy` is the weight of the family's **mossy** member, and the member is
+ * identified **by name** (`mossy_*`), never by index, because the shipped table
+ * is not index-consistent: `stone_bricks` is `[cracked, mossy]` and
+ * `mossy_cobblestone` is `[mossy, cobblestone]`. A family with no `mossy_*`
+ * member — deepslate, blackstone, nether brick — is unaffected and the lift is
+ * inert there, which is correct: a blackstone ruin cracks, it does not go
+ * green, and forcing moss onto it would be the re-clad rule violated from the
+ * inside.
+ *
+ * **The draw is the existing `k`** — no new salt, no re-roll — decomposed so
+ * that two things hold at once:
+ *
+ * - at the default weight of `0.5` the pick is **exactly** `family[k % len]`,
+ *   which is what every world compiled before WP-6 got;
+ * - the mossy set is **monotone** in `mossy`: raising the weight only ever
+ *   turns more cells green and never moves one that was already mossy. That is
+ *   MONOTONE GREEN bought for one parameter — a light quarter's mossy courses
+ *   are a subset of a total quarter's.
+ *
+ * The decomposition: `k`'s low bit already decides today's pick, so it is kept
+ * as the half of the unit interval the cell lands in, and the rest of `k`
+ * spreads the cell uniformly inside that half. A cell that is mossy today sits
+ * in `[0, 0.5)`; one that is not sits in `[0.5, 1)`; the test is `u < mossy`.
  */
-export function weatheredOf(block: string, k: number): string | null {
+export function weatheredOf(block: string, k: number, mossy = 0.5): string | null {
   const family = WEATHERED_VARIANTS[block];
   if (family === undefined) return null;
-  return family[k % family.length] as string;
+  const here = k % family.length;
+  const mossyIndex = family.findIndex(isMossyVariant);
+  // No mossy member, or the family is uniform: the weight has nothing to move.
+  if (mossyIndex < 0 || family.every((m) => m === family[0])) return family[here] as string;
+  const other = family.findIndex((m) => !isMossyVariant(m));
+  if (other < 0) return family[mossyIndex] as string;
+  // `[0, 1)`, uniform, and on the mossy side of 0.5 exactly when today's pick
+  // is the mossy one.
+  const spread = (k >>> 1) / 2147483648;
+  const u = here === mossyIndex ? spread * 0.5 : 0.5 + spread * 0.5;
+  return family[u < mossy ? mossyIndex : other] as string;
 }
 
 /**
@@ -1041,20 +1082,20 @@ export function collapseForShell(
  * added by `green` and by the heap carpet — not here — because moss is not the
  * building's material, it is what is growing on it.
  */
-export function derivedMaterials(ctx: FitOutContext): DecayMaterials {
+export function derivedMaterials(ctx: FitOutContext, mossy = 0.5): DecayMaterials {
   const salt = saltOf(ctx.archetype);
   const wall = (ctx.style["wall.primary"] ?? "cobblestone") as string;
   /** The weathered form of whatever stands at a cell, or of the wall block. */
   const weatherAt = (x: number, y: number, z: number, k: number): string | null => {
     const standing = ctx.blockAt(x, y, z);
     const block = standing === undefined ? wall : standing.block;
-    return weatheredOf(block, k);
+    return weatheredOf(block, k, mossy);
   };
   const rubbleBlock = (x: number, z: number): string => {
     // A heap is made of what fell: the wall's own weathered form where it has
     // one, and the wall block itself where it has not — a timber ruin heaps
     // timber, which is both honest and the only answer the rule allows.
-    return weatheredOf(wall, cellHash(salt + 71, x, z)) ?? wall;
+    return weatheredOf(wall, cellHash(salt + 71, x, z), mossy) ?? wall;
   };
   return {
     clad: (x, y, z) => weatherAt(x, y, z, cellHash(salt + 61, x + y, z)),
@@ -1107,6 +1148,21 @@ export interface DecayBandRow {
   readonly collapseSpread: number;
   readonly rubble: number;
   readonly overgrowth: number;
+  /**
+   * **The green skin's one dial** (RUINS-PLAN-v0-WP6 §7).
+   *
+   * WP-6 adds exactly one field to this row and derives every share it needs
+   * from it by the fixed ratio table in {@link greenSkinShares}, which is what
+   * keeps §6's *"the only place these numbers appear"* literally true one
+   * storey up.
+   *
+   * | band | the read |
+   * |---|---|
+   * | `light` (0.25) | moss in the joints, ivy on a north wall. *Neglected.* |
+   * | `heavy` (0.55) | walls half green, windows stuffed. *Overgrown.* |
+   * | `total` (0.85) | every face green to the head course. *Buried.* |
+   */
+  readonly skin: number;
   /** `total` stands the corners: a stump at each quoin is what is left. */
   readonly cornersStand: boolean;
   /** The crumble floor, which `light` states relative to the eave plate. */
@@ -1141,6 +1197,7 @@ export const DECAY_BANDS: Readonly<Record<DecayBand, DecayBandRow>> = Object.fre
     collapseSpread: 2,
     rubble: 0.15,
     overgrowth: 0.25,
+    skin: 0.25,
     cornersStand: false,
     // `wallTop − 2`: the wall is up, the head is ragged, the plate is mostly
     // there. Floored at 1 for a three-course shell, which is the shortest
@@ -1152,6 +1209,7 @@ export const DECAY_BANDS: Readonly<Record<DecayBand, DecayBandRow>> = Object.fre
     collapseSpread: 3,
     rubble: 0.28,
     overgrowth: 0.45,
+    skin: 0.55,
     cornersStand: false,
     collapseFloor: () => 3,
   },
@@ -1160,6 +1218,7 @@ export const DECAY_BANDS: Readonly<Record<DecayBand, DecayBandRow>> = Object.fre
     collapseSpread: 3,
     rubble: 0.4,
     overgrowth: 0.7,
+    skin: 0.85,
     cornersStand: true,
     collapseFloor: () => 1,
   },
@@ -1199,6 +1258,76 @@ export function bandForIntensity(intensity: number): DecayBand {
   return "total";
 }
 
+/* -------------------------------------------------------------------------- */
+/* WP-6 §7: one dial, one table                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Every share the green skin draws against, derived from one dial.
+ *
+ * RUINS-PLAN-v0-WP6 §7: *"it adds one field to `DecayBandRow` and derives
+ * everything else from it by a fixed ratio table stated once."* This is that
+ * table, and these ratios are the whole of the tuning surface — a walk re-tunes
+ * {@link DecayBandRow.skin}, not the twelve numbers below.
+ */
+export interface GreenSkinShares {
+  /** The band's own dial, 0..1. */
+  readonly skin: number;
+  /** Share of eligible exterior face cells that found a climbing strand. */
+  readonly wallFace: number;
+  /** Share of the face height below a strand's head that it covers. */
+  readonly climbReach: number;
+  /** Weight of the mossy member in the re-clad (§4.2). */
+  readonly mossyPick: number;
+  /** Share of climbers, undersides only, substituted to glow lichen. */
+  readonly lichen: number;
+  /** Share of openings that take a leaf plug. `light` plugs nothing. */
+  readonly openingPlug: number;
+  /** Carpet on rubble tops, wall heads and parapets (WP-6c). */
+  readonly carpet: number;
+  /** Surviving pavement and ruin yards (WP-6c). */
+  readonly pavement: number;
+  /** Sidewalk shrubs and tufts (WP-6d). */
+  readonly streetSidewalk: number;
+  /** Carriageway shrubs and tufts (WP-6d). */
+  readonly streetCarriageway: number;
+  /** Share of eligible street columns electing a trunk (WP-6d). */
+  readonly streetTrunk: number;
+  /** Chebyshev spacing between elected trunks (WP-6d). */
+  readonly streetTrunkSpacing: number;
+  /** Width of the continuous open lane down every street (WP-6d). */
+  readonly spineWidth: number;
+}
+
+/**
+ * §7's table, from a band.
+ *
+ * Three things it says on purpose: **`light` plugs no openings** (a neglected
+ * building with leaves growing out of its windows is not neglected, it is
+ * abandoned, and the band boundary is where that changes); **`total` narrows
+ * the spine** to one column, which is the "buried" read; and **the trunk share
+ * is small and the spacing does the work**, because spacing 5 turns a scatter
+ * of points into a canopy.
+ */
+export function greenSkinShares(band: DecayBand): GreenSkinShares {
+  const skin = DECAY_BANDS[band].skin;
+  return {
+    skin,
+    wallFace: skin,
+    climbReach: 0.4 + 0.6 * skin,
+    mossyPick: skin,
+    lichen: 0.15 * skin,
+    openingPlug: Math.max(0, 1.2 * (skin - 0.35)),
+    carpet: 0.8 * skin,
+    pavement: 0.7 * skin,
+    streetSidewalk: skin,
+    streetCarriageway: 0.6 * skin,
+    streetTrunk: 0.12 * skin,
+    streetTrunkSpacing: Math.round(4 + 8 * (1 - skin)),
+    spineWidth: skin >= 0.7 ? 1 : 2,
+  };
+}
+
 /**
  * **A decay profile for any shell**, from one 0..1 dial.
  *
@@ -1229,7 +1358,10 @@ export function decayProfileFor(ctx: FitOutContext, intensity: number): DecayPro
     rubble: band.rubble,
     quench: true,
     timberByRemoval: true,
-    materials: derivedMaterials(ctx),
+    // §4.2, the mossy re-clad lifted: the band's own `skin` dial is the weight
+    // of the family's mossy member. Same draw, no new salt — so a light
+    // quarter's mossy courses are a subset of a total quarter's.
+    materials: derivedMaterials(ctx, band.skin),
   };
 }
 

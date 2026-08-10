@@ -308,6 +308,24 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DISTRICT_RUINS: "LOAM-I512",
   /**
+   * Per settlement: what the green skin wrote (RUINS-PLAN-v0-WP6 §9).
+   *
+   * **Not optional**, for {@link DISTRICT_RUINS}'s reason one storey up: *"the
+   * skin wrote 0 blocks because the field was empty"* is the same sentence
+   * about the same failure mode, and DESIGN's second failure mode is machinery
+   * that exists and never runs.
+   */
+  GREEN_SKIN: "LOAM-I514",
+  /**
+   * The green rule fell through to the climate fallback (WP-6 §4.6, Q2).
+   *
+   * No `scatter.forest@0` node covers this settlement, so the skin cannot grow
+   * the wood the city stands in and takes the climate table instead. Visible
+   * rather than silent, because the eye compares the leaves in a window hole
+   * against the surrounding landscape.
+   */
+  GREEN_SKIN_NO_SPECIES: "LOAM-W514",
+  /**
    * A holding seated its yard and **not one field**.
    *
    * Names the relief measured against `FIELD_MAX_RELIEF`, because the fix is

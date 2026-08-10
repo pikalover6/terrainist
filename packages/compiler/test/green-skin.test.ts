@@ -58,6 +58,12 @@ import {
   type FloraVariation,
 } from "../src/terrain/vegetation.js";
 import { hangingFaces } from "../src/terrain/flora/parts.js";
+import { Palette } from "../src/terrain/palette.js";
+
+/** A palette with no symbol resolved: the skin then writes no vine and no leaf. */
+function emptyPalette(): Palette {
+  return new Palette(new Map(), new Uint32Array(8) as never);
+}
 
 let stack: PrismarineStack;
 const scratch: string[] = [];
@@ -251,16 +257,19 @@ describe("the pass (§3.1, §3.4)", () => {
     expect([...out.colonized].some((v) => v === 1)).toBe(false);
   });
 
-  it("with a field it indexes — and still writes no blocks (WP-6a)", () => {
+  it("with a field it indexes — and a lone block has no eligible surface", () => {
     const out = growGreenSkin({
       plan: plan(),
-      palette: undefined as never,
+      palette: emptyPalette(),
       stack,
       seed: 7,
       ruinField: halfField(),
       laid: [{ x: 2, y: GROUND + 1, z: 2, stateId: stateOf("stone_bricks") }],
       districts: [],
     });
+    // One course of masonry standing on the ground offers no face cell above
+    // the two body courses and no opening at all, so the skin writes nothing —
+    // which is the eligibility discipline, not the reach law.
     expect(out.blocks).toEqual([]);
     expect(out.counts.indexedColumns).toBe(1);
     expect(out.counts.indexedBlocks).toBe(1);

@@ -8,13 +8,15 @@
  * > parapet, step — is a candidate, and the field decides how much of it is
  * > green.
  *
- * **WP-6a's scope is this file's index and nothing else.** The pass is wired in
- * as the last structure pass and it **writes no blocks**: `growGreenSkin`
- * returns an empty block list under every input it can be given today, which is
- * exactly what makes WP-6a's acceptance bar — every control world and every
- * `examples/` world byte-identical — a statement rather than a hope. WP-6b
- * (the vertical skin), WP-6c (the horizontal skin) and WP-6d (the street
- * colonizer) are the waves that put blocks in it.
+ * **WP-6a** built the surface index and wrote nothing. **WP-6b is the vertical
+ * skin** and is what this file writes today: climbing strands up the exterior
+ * faces (§4.1), leaf plugs in the openings (§4.3), glow lichen on the
+ * undersides (§4.4), all under the silhouette law (§4.5) and the green rule
+ * (§4.6). The mossy re-clad lift (§4.2) is the one part of the wave that lives
+ * elsewhere — in `stdlib`'s `decay.ts`, because it is the fit-out's own
+ * cladding given a weight. WP-6c (the horizontal skin) and WP-6d (the street
+ * colonizer) are still to come, and the `carpets` / `pavement` / `streetTrunks`
+ * / `shrubs` counters and the `colonized` mask are theirs.
  *
  * ## Where it runs, and why there is no other slot (§3.1)
  *
@@ -42,8 +44,8 @@
  *
  * ## Determinism, and the channel reservation (§3.3)
  *
- * Every draw a later wave makes is `hash2(seed, x, z, channel)` on the column —
- * no counters, no traversal order, no wall clock. Channels 41–49 are exhausted
+ * Every draw is `hash3(seed, x, y, z, channel)` on the cell — no counters, no
+ * traversal order, no wall clock. Channels 41–49 are exhausted
  * by the shipped feature (41/42/43 the district roll, 44–49 the ground pass's
  * ruin work), so:
  *
@@ -67,17 +69,30 @@
  * channel finds it taken in code rather than only in a document.
  */
 
-import { canSupport, bodyFits } from "@terrainist/stdlib";
+import {
+  bandForIntensity,
+  bodyFits,
+  canSupport,
+  chooseGrowthFace,
+  greenSkinShares,
+  growthFaces,
+  ownGrowthFaces,
+} from "@terrainist/stdlib";
 
-import type { LoamDiagnostic } from "@terrainist/spec";
+import { note, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import type { Palette } from "../terrain/palette.js";
+import { hash3, hashPick } from "../terrain/detail.js";
+import { GLOW_LICHEN_SYMBOL, type Palette } from "../terrain/palette.js";
 import type { DistrictProduct } from "../layout/district.js";
 
-import type { StructureBlock } from "./buildings.js";
+import type { BuiltBuilding, StructureBlock } from "./buildings.js";
+import type { ReclaimSpecies } from "./reclaim-species.js";
 import { sampleField, type RuinField } from "./ruin-field.js";
+
+/** The palette symbol every climbing strand is written from. */
+export const VINE_SYMBOL = "foliage.vine";
 
 /* -------------------------------------------------------------------------- */
 /* the channel reservation (§3.3)                                              */
@@ -176,6 +191,23 @@ export interface SurfaceIndex {
   walkedAt(x: number, y: number, z: number): boolean;
   /** The lowest and highest `y` the index holds for a column, or `undefined`. */
   spanAt(x: number, z: number): { readonly y0: number; readonly y1: number } | undefined;
+  /**
+   * Every indexed column, in **ascending column-key order** (`z` then `x`).
+   *
+   * The skin's whole working set, and the one traversal order any pass over it
+   * may use: fixed, positional, and independent of the order the blocks were
+   * laid in, which is what makes a pass that sweeps it a pure function of the
+   * seed rather than of the emission order.
+   */
+  readonly indexed: readonly IndexedColumn[];
+}
+
+/** One column of the surface index, with the vertical extent it holds. */
+export interface IndexedColumn {
+  readonly x: number;
+  readonly z: number;
+  readonly y0: number;
+  readonly y1: number;
 }
 
 /** What building the index cost — measured, per §12.5's risk. */
@@ -313,6 +345,17 @@ export function buildSurfaceIndex(
       if (slab === undefined) return undefined;
       return { y0: slab.y0, y1: slab.y1 };
     },
+    indexed: [...slabs.keys()]
+      .sort((a, b) => a - b)
+      .map((key) => {
+        const slab = slabs.get(key) as { y0: number; y1: number };
+        return {
+          x: region.x0 + (key % region.width),
+          z: region.z0 + Math.floor(key / region.width),
+          y0: slab.y0,
+          y1: slab.y1,
+        };
+      }),
   };
 
   return {
@@ -339,6 +382,32 @@ export interface GreenSkinInput {
   readonly districts: readonly DistrictProduct[];
   /** `grounds.ts`'s `ruin_yard` columns, newly published (§6.1). */
   readonly ruinYardColumns?: Uint8Array;
+  /**
+   * The species the place already grows (§4.6).
+   *
+   * Absent means the skin writes no leaves — the plug is the one thing in the
+   * vertical skin that needs a species, and the green rule forbids inventing
+   * one. Climbers and lichen are unaffected: a vine is a vine everywhere and
+   * moss is universal, which is the rule's own exception.
+   */
+  readonly flora?: ReclaimSpecies;
+  /**
+   * The buildings this settlement stood, for the one question the surface
+   * index cannot answer: **is this column inside a shell**.
+   *
+   * §4.1's eligibility is "outside the shell (or on any non-shell surface)",
+   * and §13.9's exclusion is that the fit-out owns the inside — *"two surfaces,
+   * two owners, one law each"*. `interiorCells` is the true enclosed set across
+   * both rects of an L or a T, which is the set that answers it.
+   */
+  readonly buildings?: readonly BuiltBuilding[];
+  /**
+   * Columns the doorstep pass rewrote or built on — a door's **approach**.
+   *
+   * The base plan's first guarantee, now also a growth rule: no plug, no
+   * strand and no carpet in a door column, its lintel or its approach.
+   */
+  readonly doorstepColumns?: Uint8Array;
 }
 
 /** The skin's counters, for `LOAM-I514` (§9). */
@@ -398,13 +467,18 @@ export interface GreenSkinResult {
 /**
  * Write the green skin over a settlement's ruined fabric.
  *
- * **WP-6a: this returns no blocks.** It builds the index the later waves read,
- * proves the reach law structurally (`ruinField === undefined` returns on the
- * first line), and hands back an empty `colonized` mask so that the closure
- * stays exactly as closed as it was.
+ * **WP-6b: the vertical skin.** The sweep is one pass over the index's own
+ * column order (`z` then `x`), and every draw inside it is keyed on the cell, so
+ * the result is a pure function of (index, field, seed) and running it twice
+ * writes the same blocks in the same order.
+ *
+ * The `colonized` mask it hands back is still empty — WP-6d elects it — which is
+ * what keeps the closure exactly as closed as it was.
  */
 export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
-  const cells = input.plan.region.width * input.plan.region.depth;
+  const { plan, palette, stack, seed } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
   // §3.4, the reach law, structural and on the first line.
   if (input.ruinField === undefined) {
     return {
@@ -415,25 +489,367 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
     };
   }
 
-  const { index, cost } = buildSurfaceIndex(
-    input.plan,
-    input.ruinField,
-    input.laid,
-    input.stack,
+  const field = input.ruinField;
+  const { index, cost } = buildSurfaceIndex(plan, field, input.laid, stack);
+
+  const colIndex = (x: number, z: number): number => {
+    const i = x - region.x0;
+    const j = z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return -1;
+    return j * region.width + i;
+  };
+  const groundAt = (x: number, z: number): number => {
+    const k = colIndex(x, z);
+    return k < 0 ? Number.POSITIVE_INFINITY : (plan.ground[k] as number);
+  };
+  const solid = (x: number, y: number, z: number): boolean => index.solidAt(x, y, z);
+
+  /**
+   * **A cell a standing body occupies** — §4.3's `bodyFits` rule, made a
+   * predicate over the index rather than a magic height.
+   *
+   * A leaf is a full cube by name, so a plug in either of a body's two courses
+   * is a plug that blocks the walk. Which courses those are is *not* a function
+   * of the terrain ground: a shell stands on a pad, and its upper storeys have
+   * floors of their own four and eight courses higher. So the question is asked
+   * where it actually lives — is there a floor under this cell with the
+   * headroom a body needs (the feet course), or under the cell below it (the
+   * head course).
+   *
+   * Since `reachOrRefuse`'s flood runs over exactly those courses, keeping out
+   * of them is what makes WP-2's proof still valid without re-running it.
+   */
+  const bodyCourse = (x: number, y: number, z: number): boolean => {
+    const open = (cy: number): boolean => index.openAt(x, cy, z);
+    /**
+     * A **floor**, as opposed to a sill.
+     *
+     * The discriminator is extent, and it has to be, because the two look
+     * identical one cell at a time: the block under a window hole is masonry
+     * and so is the block under a doorway. A floor is solid *and continues in
+     * all four directions*; a window sill is one course of a wall plane with
+     * air on the two faces the wall does not run along. Without this the rule
+     * eats §4.3's own picture — *"a window plugs from its head down and leaves
+     * its sill open"* — because a two-course window is exactly two courses
+     * above its own sill.
+     */
+    const floorAt = (cy: number): boolean =>
+      solid(x, cy, z) &&
+      solid(x - 1, cy, z) &&
+      solid(x + 1, cy, z) &&
+      solid(x, cy, z - 1) &&
+      solid(x, cy, z + 1);
+    // Feet on a floor, head in the clear.
+    if (floorAt(y - 1) && open(y) && open(y + 1)) return true;
+    // The head course of a body standing one lower.
+    if (floorAt(y - 2) && open(y - 1) && open(y)) return true;
+    return false;
+  };
+
+  /* ---------------------------------------------------------------------- */
+  /* what the skin may not touch                                            */
+  /* ---------------------------------------------------------------------- */
+
+  // §13.9 / §4.1: the fit-out owns the inside of a shell, and the skin owns the
+  // outside. Two surfaces, two owners, one law each.
+  const interior = new Set<string>();
+  for (const b of input.buildings ?? []) {
+    for (const key of b.interiorCells) interior.add(key);
+  }
+
+  // The base plan's first guarantee, extended to growth: no door column, no
+  // lintel, no approach. Doors are found by name in the laid list — the same
+  // evidence the physics lint reads — and the four columns a body steps
+  // through to reach one go with them.
+  const doorCells = new Set<string>();
+  for (const b of input.laid) {
+    const name = stack.blockNameByStateId(b.stateId);
+    if (name === undefined || !name.endsWith("_door")) continue;
+    for (const [dx, dz] of [
+      [0, 0],
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      for (let y = b.y - 1; y <= b.y + 3; y++) doorCells.add(`${b.x + dx},${y},${b.z + dz}`);
+    }
+  }
+  const doorstep = input.doorstepColumns;
+  const nearDoor = (x: number, y: number, z: number): boolean => {
+    if (doorCells.has(`${x},${y},${z}`)) return true;
+    if (doorstep === undefined) return false;
+    const k = colIndex(x, z);
+    if (k < 0 || doorstep[k] !== 1) return false;
+    // A doorstep column is an approach at body height and nothing higher: a
+    // vine four courses over a landing is not in anybody's way.
+    return y <= groundAt(x, z) + 3;
+  };
+
+  /* ---------------------------------------------------------------------- */
+  /* the blocks the skin writes with                                        */
+  /* ---------------------------------------------------------------------- */
+
+  const vineBase = palette.has(VINE_SYMBOL) ? palette.state(VINE_SYMBOL) : undefined;
+  const lichenBase = palette.has(GLOW_LICHEN_SYMBOL) ? palette.state(GLOW_LICHEN_SYMBOL) : undefined;
+  const leafSymbols = (input.flora?.leafSymbols ?? []).filter((s) => palette.has(s));
+
+  /** Re-encode a state with overridden properties the block actually declares. */
+  const propCache = new Map<string, number>();
+  const withProps = (stateId: number, overrides: Readonly<Record<string, string>>): number => {
+    const key = `${stateId}|${Object.entries(overrides)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(",")}`;
+    const cached = propCache.get(key);
+    if (cached !== undefined) return cached;
+    const decoded = stack.blockStateProps(stateId);
+    let out = stateId;
+    if (decoded !== undefined) {
+      const props: Record<string, string> = { ...decoded.props };
+      let touched = false;
+      for (const [name, value] of Object.entries(overrides)) {
+        if (!Object.hasOwn(props, name)) continue;
+        if (props[name] !== value) touched = true;
+        props[name] = value;
+      }
+      if (touched) out = stack.blockStateOf(decoded.name, props) ?? stateId;
+    }
+    propCache.set(key, out);
+    return out;
+  };
+
+  /* ---------------------------------------------------------------------- */
+  /* the sweep                                                              */
+  /* ---------------------------------------------------------------------- */
+
+  const blocks: StructureBlock[] = [];
+  /** First writer wins: the skin never writes a cell twice. */
+  const taken = new Set<string>();
+  const put = (x: number, y: number, z: number, stateId: number): boolean => {
+    const key = `${x},${y},${z}`;
+    if (taken.has(key)) return false;
+    taken.add(key);
+    blocks.push({ x, y, z, stateId });
+    return true;
+  };
+
+  let climbers = 0;
+  let lichen = 0;
+  let plugs = 0;
+
+  // §4.3 runs before §4.1 so that a window hole that drew both reads as a
+  // stuffed window rather than as a curtain across it — the leaves are the
+  // opaque mass and the strand is what runs over the masonry beside them.
+  // Neither counter depends on the other: both are elected from their own
+  // channel before any block is written, which is what makes MONOTONE GREEN a
+  // property of the counters and not only of the picture.
+  /**
+   * How high a column's sweep must look.
+   *
+   * **The one subtlety in the whole sweep.** A face cell is *air beside
+   * masonry*, and the air column beside a wall holds no block above its own
+   * ground — so its own indexed extent stops at the pavement and a sweep bounded
+   * by `y1` would never visit a single wall face in the city. The surface a
+   * strand hangs on belongs to the **neighbour**, so the ceiling does too: the
+   * highest block laid on this column or on any of its four horizontal
+   * neighbours. Cheap, positional, and exact for both readers — a face cell and
+   * an opening are each defined by a horizontal neighbour.
+   */
+  const ceilingAt = (x: number, z: number): number => {
+    let top = index.spanAt(x, z)?.y1 ?? Number.NEGATIVE_INFINITY;
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const span = index.spanAt(x + dx, z + dz);
+      if (span !== undefined && span.y1 > top) top = span.y1;
+    }
+    return top;
+  };
+
+  for (const column of index.indexed) {
+    const { x, z, y0 } = column;
+    const y1 = ceilingAt(x, z);
+    const intensity = sampleField(region, field.field, x, z);
+    if (intensity <= 0) continue;
+    const shares = greenSkinShares(bandForIntensity(intensity));
+    const ground = groundAt(x, z);
+    if (!Number.isFinite(ground)) continue;
+    const inside = interior.has(`${x},${z}`);
+
+    // --- §4.3, growth entering openings ------------------------------------
+    if (leafSymbols.length > 0 && shares.openingPlug > 0 && !inside) {
+      for (let y = Math.max(y0, ground + 3); y <= y1; y++) {
+        if (!index.openAt(x, y, z)) continue;
+        // A genuine hole *through* a wall: solid on two opposite sides. Not the
+        // absence of a wall — a gap over a wall head has air on both sides of
+        // it, not masonry.
+        const alongX = solid(x - 1, y, z) && solid(x + 1, y, z);
+        const alongZ = solid(x, y, z - 1) && solid(x, y, z + 1);
+        if (!alongX && !alongZ) continue;
+        // **THE SILHOUETTE LAW** (§4.5): the top course of every surviving wall,
+        // and the ragged head the crumble drew, take climbers only — never a
+        // leaf mass. So a plug goes only where this column still carries
+        // masonry *above* it, which is the definition of "not the head".
+        // The test is on the **wall plane**, not on the hole's own column: a
+        // hole whose two flanking columns still carry masonry one course higher
+        // is a window or an arrow slit in a standing wall, and it is
+        // emphatically not the ragged head. A direct-lintel test would be the
+        // stricter reading and it plugs *exactly nothing* at `total`, because
+        // the crumble has taken every lintel in the quarter — machinery that
+        // exists and never runs is DESIGN's second failure mode.
+        const capped = alongX
+          ? solid(x - 1, y + 1, z) && solid(x + 1, y + 1, z)
+          : solid(x, y + 1, z - 1) && solid(x, y + 1, z + 1);
+        if (!capped && !solid(x, y + 1, z)) continue;
+        if (nearDoor(x, y, z)) continue;
+        if (bodyCourse(x, y, z)) continue;
+        if (hash3(seed, x, y, z, GREEN_SKIN_CHANNELS.plug) >= shares.openingPlug) continue;
+        plugs++;
+        const symbol = hashPick(seed, x, z, GREEN_SKIN_CHANNELS.plug, leafSymbols);
+        const leaf = leafState(withProps, palette.stateAt(symbol, x, z));
+        put(x, y, z, leaf);
+        // The bulge — **one** cell each way, never two. A two-deep bulge inward
+        // is a sealed room, and the base plan spent §5.7 proving rooms are not
+        // sealed. Each side is drawn at half the plug share on its own cell.
+        const sides: readonly (readonly [number, number])[] = alongX
+          ? [
+              [0, -1],
+              [0, 1],
+            ]
+          : [
+              [-1, 0],
+              [1, 0],
+            ];
+        for (const [dx, dz] of sides) {
+          const bx = x + dx;
+          const bz = z + dz;
+          if (!index.openAt(bx, y, bz)) continue;
+          if (y <= groundAt(bx, bz) + 2) continue;
+          if (nearDoor(bx, y, bz)) continue;
+          if (bodyCourse(bx, y, bz)) continue;
+          // Inward is the shell's own air, which is exactly where a bulge
+          // belongs — the only guard it needs is that a standing body still
+          // fits, which the `ground + 2` test above is.
+          if (
+            hash3(seed, bx, y, bz, GREEN_SKIN_CHANNELS.plug) >= shares.openingPlug / 2
+          ) {
+            continue;
+          }
+          put(bx, y, bz, leaf);
+        }
+      }
+    }
+
+    // --- §4.1, climbing growth ---------------------------------------------
+    if (vineBase === undefined || inside) continue;
+    for (let y = y1; y >= Math.max(y0, ground + 2); y--) {
+      if (!index.openAt(x, y, z)) continue;
+      const own = ownGrowthFaces({ x, y, z }, solid);
+      if (own.length === 0) continue;
+      if (nearDoor(x, y, z)) continue;
+      if (hash3(seed, x, y, z, GREEN_SKIN_CHANNELS.faceCell) >= shares.wallFace) continue;
+      climbers++;
+      const carried = chooseGrowthFace(own, { x, y, z });
+      // The strand's length: a share of the face height below its head, drawn
+      // on channel 51 and scaled by `CLIMB_REACH`. Monotone in the dial, so a
+      // light quarter's strands are prefixes of a total quarter's.
+      const height = Math.max(1, y - (ground + 1));
+      const reach = hash3(seed, x, y, z, GREEN_SKIN_CHANNELS.strandLength);
+      const length = 1 + Math.floor(reach * shares.climbReach * height);
+      const offset = CLIMB_FACE_OFFSET[carried] as readonly [number, number];
+      for (let k = 0; k < length; k++) {
+        const cy = y - k;
+        // The ground, less one: a vine reaching the surface is the ground-cover
+        // pass's column, not the skin's.
+        if (cy < ground + 2) break;
+        if (!index.openAt(x, cy, z)) break;
+        // **A climbing strand may not extend past the last course of its
+        // support.** A vine below the end of the wall it clings to is a vine
+        // whose every true face points at air; vanilla pops it on the first
+        // block update, and until then it renders as a flat plate in space.
+        if (!solid(x + offset[0], cy, z + offset[1])) break;
+        if (nearDoor(x, cy, z)) break;
+        const props = growthFaces({ x, y: cy, z }, solid, carried);
+        if (props === null) break;
+        // §4.4: glow lichen is a substitution **within the climbers already
+        // placed**, on undersides only — where `up = true` is legal — because a
+        // lichen's read is a stain on a ceiling and a vine's is a curtain on a
+        // wall. Theme-gated: a palette that does not resolve the symbol grows
+        // no lichen, because the substitution has nothing to write.
+        const underside = props["up"] === "true";
+        const asLichen =
+          underside &&
+          lichenBase !== undefined &&
+          hash3(seed, x, cy, z, GREEN_SKIN_CHANNELS.lichen) < shares.lichen;
+        const base = asLichen ? (lichenBase as number) : vineBase;
+        // Every multi-face block the skin writes carries `waterlogged = false`
+        // (§8's `fluid.*` row). `quench` goes the other way, by law.
+        const written = put(x, cy, z, withProps(base, { ...props, waterlogged: "false" }));
+        if (written && asLichen) lichen++;
+      }
+    }
+  }
+
+  const diagnostics: LoamDiagnostic[] = [];
+  diagnostics.push(
+    note(
+      "GREEN_SKIN",
+      "",
+      `the green skin covered ${index.columns} ruined columns: ${climbers} climbing strands (${lichen} glow lichen), ${plugs} leaf plugs, ${blocks.length} blocks`,
+      climbers + plugs === 0
+        ? "no surface in the ruin field met the skin's eligibility — raise `decline`, or check that the district actually ruined any lots"
+        : "informational",
+    ),
   );
 
   return {
-    // WP-6b/c/d fill these. WP-6a writes nothing, on purpose: it is the wave
-    // whose acceptance is that every world is byte-identical.
-    blocks: [],
+    blocks,
+    // WP-6d elects this. An empty mask opens nothing, which is what keeps the
+    // closure exactly as closed as it was.
     colonized: new Uint8Array(cells),
     counts: {
       ...NO_COUNTS,
       indexedColumns: index.columns,
       indexedCells: index.cells,
       indexedBlocks: cost.stored,
+      climbers,
+      lichen,
+      plugs,
     },
     cost,
-    diagnostics: [],
+    diagnostics,
   };
+}
+
+/**
+ * The unit offset of a strand's carried horizontal face.
+ *
+ * A `north` face means "attached to the block to the north", so the support to
+ * check for the last-course rule lies one column that way.
+ */
+const CLIMB_FACE_OFFSET: Readonly<Record<string, readonly [number, number]>> = Object.freeze({
+  north: [0, -1],
+  south: [0, 1],
+  west: [-1, 0],
+  east: [1, 0],
+});
+
+/**
+ * A leaf state the skin may write — **`persistent = true`, always**.
+ *
+ * This is not a detail; it is the difference between a feature and a feature
+ * that disappears. `LEAF_STATE_POLICY` is `"computed"`, and a computed leaf
+ * carries a `distance` from a BFS over **its own plant's wood**. The skin's
+ * leaves have no wood within 6 in any direction, so vanilla would decay every
+ * one of them on the first random tick — Kai would walk a green city, leave,
+ * come back and find it bare.
+ */
+function leafState(
+  withProps: (stateId: number, overrides: Readonly<Record<string, string>>) => number,
+  base: number,
+): number {
+  return withProps(base, { persistent: "true", waterlogged: "false" });
 }
