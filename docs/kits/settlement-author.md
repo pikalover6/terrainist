@@ -558,6 +558,7 @@ footprint and the total height, walls *and* roof. The hard-won numbers:
 | `windowRhythm` | `regular`, `dense`, `sparse`, `paired`, `none` | `sparse` for a smithy or a granary, `dense` for an inn |
 | `wing` | `{"size": [w, d], "side": …, "offset": n}` | an L- or T-shaped plan — see below |
 | `basement` | `true`, `3..5`, or `{"depth": 3..5}` | a cellar; see §10's tunnels |
+| `decay` | 0..1 | ruin **this one building**: the ordinary shell is built and furnished, then decayed over. 0.35 derelict, 0.6 ruined, 0.85 archaeology. For a whole quarter write `intent.decline` on the district instead — see *A ruined city is a district with a high `decline`* |
 
 #### `wing` — L- and T-shaped footprints
 
@@ -1123,8 +1124,9 @@ and an overgrown *anything* is a plausible request.
 >
 > **This is not how you ask for a ruined city.** One tag is one building, and
 > a `mix` full of `ruined_cottage` is five buildings repeated rather than a
-> ruined city. Ruin at district scale is not something the language can say
-> yet — it is `docs/RUINS-PLAN-v0.md`, and this line changes when it ships.
+> ruined city. **Ruin at district scale is `intent.decline`** — see *A ruined
+> city is a district with a high `decline`* under `district`, and
+> `"params": { "decay": 0.8 }` for one named building anywhere.
 
 **The monuments of the same wave are PROPS, not archetypes** — `standing_stones`,
 `henge`, `monolith`, `burial_mound`, `dig_site`, `fossil_dig` and
@@ -1489,6 +1491,87 @@ monastery on a hill.
 | `params.walls` | object | optional: ring the finished quarter with a wall. See **Walls** below |
 | `constraints` | as any other node | say **where the district is**, not what is in it |
 | `children` | `building.grammar@0` nodes | the landmarks — everything else is infilled |
+
+### A ruined city is a district with a high `decline`
+
+**A ruined city is a district with a high `decline` — not a list of ruins.**
+
+Write the quarter you would have written if the city were alive: the ordinary
+`fabric`, the ordinary `density`, the ordinary `mix` of `townhouse`, `shop_row`,
+`warehouse`, `inn`. Then set `intent.decline` on the district — 0.5 for a
+quarter going under, 0.8 for abandoned, 0.95 for a dead city — and the
+compiler rolls that share of its lots into **the same buildings, decayed**:
+walls down to head height, roofs gone, rubble on the floors, vines on the
+survivors, the yards gone over and the street broken up under the green coming
+back through it.
+
+```json
+{
+  "id": "lower_quarter",
+  "kind": "district",
+  "label": "the lower quarter, abandoned a generation ago",
+  "envelope": { "shape": "region", "size": [140, 120] },
+  "intent": { "decline": 0.85 },
+  "params": {
+    "fabric": "organic",
+    "density": "medium",
+    "mix": ["townhouse", "shop_row", "warehouse", "inn"]
+  },
+  "constraints": [{ "zone": "south" }],
+  "tags": ["quarter", "abandoned"]
+}
+```
+
+**The dial's own curve.** Below **0.35** nothing is ruined at all — decline
+below the onset is wear, worn paint and volunteer growth, and no shell is
+touched. At and above it the share is `decline²`, with **no cap**: 0.35 fells
+one lot in eight, 0.5 one in four, 0.7 half the street, 0.95 a dead city with a
+few shells standing, and **1.0 leaves nothing intact**. The lots that fall are
+drawn positionally and **in clusters** — whole blocks gone with pockets still
+standing, rather than salt and pepper — so adding or moving a landmark
+elsewhere in the quarter leaves the same lots ruined and the same lots standing.
+`decline` also decides **how far gone** each one is: derelict around 0.4 (roof
+holed, walls up), ruined around 0.7 (roofless, walls at head height, floors
+heaped), archaeology above 0.8 (one to three courses, corner stumps, dense
+green), with roughly one lot in six a band off its neighbours so a street is
+never uniform. The compile prints `LOAM-I512` per district naming the decline,
+the share, the lots rolled and ruined and the band histogram — read it, because
+"0 of 84 lots" is how you find out the decline never reached the onset.
+
+**The ground goes with the buildings.** A ruined lot's yard is dressed as a
+ruin yard instead of a garden — worn coarse dirt and gravel, rubble of the
+shell's own material, a broken fence with gaps in it and no gate — the street
+wear is worst where the ruins cluster, and above `decline` **0.8** a share of
+the carriageway goes past worn to **broken**: paving back to soil, with grass
+and flowers coming up through it. That is what turns a grid of clean roads
+between ruins into street-grid remnants.
+
+**Do not fill a district's `mix` with `ruined_cottage`.** The five ruined
+archetypes are *relics* — a single ruined keep on a moor, an overgrown villa in
+a wood — and a whole quarter of them is five buildings repeated, not a ruined
+city. `decline` is the way to say it at scale.
+
+**Landmarks you declare as children are not ruined automatically**, because a
+building you named is a building you wanted. Ruin one on purpose with
+`"params": { "decay": 0.8 }` — a 0..1 dial that works on any
+`building.grammar@0` node anywhere, district or not, and reads the same bands.
+It is also the only way to ruin a *single* building: a fallen-in manor on a
+ridge is one node with a `decay`, not a district.
+
+Three shapes the roll does not reach, so do not build a ruin story on them:
+**terrace runs** (a district's terraces are placed before the roll and their
+bays never ruin — use a `mix` of free-standing archetypes if you want the
+quarter to fall in), **high-rise frames** like `skyscraper`, and anything built
+by its own generator rather than the shell grammar, such as `watchtower`. Asking one of
+those for a `decay` gets `LOAM-W511` saying so out loud. A shell whose walls are
+under three courses is swept and heaped but never crumbled, for the same reason
+table 14 gives: there is nothing to take away.
+
+Keep `avoidTags: ["structure", "road", "plaza"]` on your `scatter.forest@0`
+nodes as always. The reclaim at high decline is **ground green** — grass, tufts
+and flowers over the ruin yards and the broken paving; trees still stop at the
+settlement's edge, so an overgrown quarter is scrub through the fabric, not a
+forest with a city buried under it.
 
 ### The urban forms
 
@@ -2139,7 +2222,7 @@ warning. Per-building overrides are what `params` are for.
 |---|---|---|
 | `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `early_modern` / `industrial` / `modern` / `far_future`. Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
 | `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
-| `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim; it also sends fields fallow, so a declining farm town's holdings rest their ground without you writing `fallow`. **Orthogonal to wealth: a rich ruin exists.** |
+| `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim, **and, at 0.35 and above, the share of a district's own buildings built as ruins** — see *A ruined city is a district with a high `decline`* under `district`; it also sends fields fallow, so a declining farm town's holdings rest their ground without you writing `fallow`. **Orthogonal to wealth: a rich ruin exists.** |
 | `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength. Outranked by `character.urbanForm` |
 | `event` | `{ "kind": "flood"\|"fire"\|"siege"\|"boom", "severity": 0..1, "recency": 0..1 }` | dressing for a one-off event. `recency` 0 = happening now, 1 = a lifetime ago |
 | `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town" |
@@ -3415,3 +3498,7 @@ far shore"*.
 - If the prompt names farming — a farm, a croft, an agricultural village, a
   place that feeds a town — write at least one `precinct.farm@0` holding with a
   region envelope on gentle ground. Nothing else in the language tills a field.
+- If the prompt says ruins, ruined, abandoned, derelict, forgotten,
+  post-apocalyptic or "once-great", write an ordinary `district` with an
+  ordinary `mix` and put `intent.decline` of 0.8–0.95 on it. A `mix` of
+  `ruined_cottage` is not a ruined city.

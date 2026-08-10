@@ -202,6 +202,64 @@ describe("settlement-author kit", () => {
     );
   });
 
+  it("teaches a ruined quarter an author can copy — and it validates in a document", () => {
+    // RUINS-PLAN WP-5. The teaching sentence is "a ruined city = a district +
+    // high decline", and the example that carries it is a district fragment
+    // with an `intent` on it — the one place an author writes intent below the
+    // root. So it is checked the way the holding is: dropped into the kit's own
+    // complete document and validated.
+    const quarter = settlementBlocks.find((b) => b.source.includes('"lower_quarter"'));
+    expect(quarter, "the kit teaches no ruined quarter").toBeDefined();
+    const node = JSON.parse((quarter as { source: string }).source) as unknown;
+
+    const host = completeDocuments(settlementBlocks).at(-1);
+    expect(host, "the kit embeds no complete settlement to host the quarter").toBeDefined();
+    const doc = JSON.parse(JSON.stringify((host as { value: unknown }).value)) as {
+      root: { children: unknown[] };
+    };
+    doc.root.children.push(node);
+
+    const result = validateSettlementDocument(doc);
+    const errors = result.diagnostics
+      .filter((d) => d.severity === "error")
+      .map(formatDiagnostic)
+      .join("\n");
+    expect(errors).toBe("");
+  });
+
+  it("teaches ruin at district scale, and only what is built", () => {
+    const ruins = settlementSource.slice(
+      settlementSource.indexOf("### A ruined city is a district with a high `decline`"),
+      settlementSource.indexOf("### The urban forms"),
+    );
+    expect(ruins, "the kit has no ruined-city section").not.toBe("");
+    // The load-bearing sentence, the onset, the uncapped top, and the dial.
+    expect(ruins).toContain(
+      "**A ruined city is a district with a high `decline` — not a list of ruins.**",
+    );
+    expect(ruins).toMatch(/Below \*\*0\.35\*\* nothing is ruined at all/);
+    expect(ruins).toMatch(/\*\*1\.0 leaves nothing intact\*\*/);
+    expect(ruins).toContain('"params": { "decay": 0.8 }');
+    expect(ruins).toContain("LOAM-I512");
+    // The two things an author gets wrong: a mix of relics, and assuming a
+    // named landmark ruins itself.
+    expect(ruins).toContain("**Do not fill a district's `mix` with `ruined_cottage`.**");
+    expect(ruins).toContain("**Landmarks you declare as children are not ruined automatically**");
+    // Only what WP-1..4 built: terraces, high-rise frames and own-generator
+    // shells do not roll, and the reclaim is ground green, not trees.
+    expect(ruins).toMatch(/terrace runs/);
+    expect(ruins).toContain("LOAM-W511");
+    expect(ruins).toMatch(/trees still stop at the\s+settlement's edge/);
+    expect(ruins).toContain('avoidTags: ["structure", "road", "plaza"]');
+    // The dial row and the building param must both point here.
+    const dial = settlementSource.slice(settlementSource.indexOf("| `decline` |"));
+    expect(dial.slice(0, 600)).toMatch(/at 0\.35 and above, the share of a district's own buildings/);
+    expect(settlementSource).toMatch(/\| `decay` \| 0\.\.1 \|/);
+    // And table 14's long-standing open question must no longer say the
+    // language cannot express ruin at scale.
+    expect(settlementSource).not.toContain("Ruin at district scale is not something the language can say");
+  });
+
   it("teaches the settlement profile, not the terrain one", () => {
     for (const doc of completeDocuments(settlementBlocks)) {
       expect((doc.value as { profile: string }).profile, `kit line ${doc.line}`).toBe("settlement");
