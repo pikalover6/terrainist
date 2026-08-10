@@ -1041,6 +1041,30 @@ shipped green. The planner's guarantee is checkable, so it is checked.
 > document can cause it. Both fixtures report zero and the assertion is in
 > `site-plan-transitions.test.ts` as well as in `site-plan-hillside.test.ts`.
 
+> **Amended 2026-08-09 — `offPlatform` was over-reported, and E497 caught the
+> over-report rather than a planner bug.** `walkBack` ended its walk at the
+> platform's edge as well as at `RETAIN_FACE_SETBACK`, and answered
+> `offPlatform` when it did. But the walk only ever reaches the platform's edge
+> from *inside street* — the first free column it meets is returned, so a walk
+> that is still going is a walk still on the carriageway — and a wall cannot
+> stand on a carriageway whether that carriageway is on the platform or off it.
+> The test therefore answered a question it had not asked: on a terrace
+> shallower than the setback, a street **crossing** the terrace runs off its far
+> edge before the setback expires, and the crossing this walk exists to
+> recognise was reported as the pinch this section exists to forbid. Measured on
+> `harbour_city` (seed 202, `world.old_town`): one nine-column crossing of a
+> 56-column seam, whose six inner columns were refused `street` and whose three
+> outer ones raised `LOAM-E497` — the same street, the same crossing, and no
+> wall built either way. The platform test is now asked of **free ground only**,
+> and is latched, so a walk that has left the platform may confirm that the
+> street goes on but may never come back and stand a wall on the far side of a
+> road. What survives is exactly the guarantee this section is about: the first
+> free column behind the road is not on the platform, i.e. *the terrace is
+> narrower than the road plus its standing room*. No geometry moved — both
+> answers refuse the wall — so the fix changes which sentence the compiler says,
+> and E497 now says a true one. Pinned in `retaining-crossing.test.ts`, which
+> carries the crossing and the pinch one predicate apart.
+
 ---
 
 ## 6. Composition budgets as gates

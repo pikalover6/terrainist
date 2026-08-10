@@ -1837,6 +1837,16 @@ function edgeContextOf(
  * A building and water are **stops**, not obstacles to walk past: what is
  * behind a building is the building's ground and its own foundation skirt is
  * the wall (§3.4).
+ *
+ * **The platform's edge is not a stop while the walk is still on street**
+ * (2026-08-09). "Across, the walk is street for its whole length" was written
+ * assuming the length that ends the walk is {@link RETAIN_FACE_SETBACK}; on a
+ * terrace shallower than the setback the crossing runs off the *far* edge
+ * first, and the walk answered `offPlatform` — §5.5's compiler-bug error — for
+ * a street it had correctly refused to wall a few columns to either side. The
+ * platform test is therefore asked of free ground only, and is latched so that
+ * a walk which has left the platform can never come back and claim a column on
+ * the other side of a road. See the loop for the measurement.
  */
 function walkBack(
   region: Region,
@@ -1850,17 +1860,35 @@ function walkBack(
   occupied: Uint8Array,
   plan: ColumnPlan,
 ): { readonly column: number; readonly why: UnfacedReason } {
+  let left = false;
   for (let step = 0; step < RETAIN_FACE_SETBACK; step++) {
     const x = x0 + dx * step;
     const z = z0 + dz * step;
     if (!inside(region, x, z)) break;
+    const k = index(region, x, z);
+    if (levels.at(x, z) !== above) left = true;
+    // **The street's ground is the street's, on the platform or off it.** A
+    // wall may not stand on a carriageway either way, so while the walk is
+    // still inside street the platform question has no answer to give, and
+    // asking it early is what conflated two different things: a terrace
+    // *narrower than the road running along it* — §3.4 rule 2's guarantee, and
+    // a planner bug — with a road *running off the far side of the terrace*,
+    // which is the ordinary crossing this walk exists to recognise. Measured on
+    // `harbour_city` (seed 202, `world.old_town`): one nine-column street
+    // crossing a 56-column seam, whose six inner columns were refused `street`
+    // and whose three outer ones were refused `offPlatform` and raised §5.5's
+    // error. Same street, same crossing, same (correct) absence of a wall — the
+    // only difference was that the terrace's far edge stood nine columns back
+    // there rather than past the setback.
+    if (street[k] === 1) continue;
     // Out of platform before out of street: the upper bench is narrower than
     // the road that runs on it, and there is no ground of its own to stand on.
-    if (levels.at(x, z) !== above) return { column: -1, why: "offPlatform" };
-    const k = index(region, x, z);
+    // Latched, and answered only here — past the platform's edge the walk may
+    // confirm that the street goes on, but it may never come back and stand a
+    // wall on ground the seam it faces no longer touches.
+    if (left) return { column: -1, why: "offPlatform" };
     if (occupied[k] === 1) return { column: -1, why: "building" };
     if (plan.fluidKind[k] !== FluidKind.NONE) return { column: -1, why: "water" };
-    if (street[k] === 1) continue;
     return { column: k, why: "street" };
   }
   return { column: -1, why: "street" };
