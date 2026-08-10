@@ -1292,6 +1292,7 @@ function paintBiomes(
       surfaceClass: classification.classes[idx] as number,
       groundY: plan.ground[idx] as number,
       relief: classification.relief[idx] as number,
+      seaLevel: plan.seaLevel,
       temperature: climate.temperature[idx] as number,
       forested: coverage[idx] === 1,
       lake: plan.lakeMask[idx] === 1,

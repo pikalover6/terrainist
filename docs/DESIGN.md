@@ -1060,9 +1060,26 @@ repair* is locked to manual.
   (placed least-violating) on both hillside-form worlds even after a
   feedback round, behind a spray of `terrain_conform` / `adjacent_to`
   demotions — uniform enough to implicate how the kit teaches constraints
-  at 1024². (c) **Ambient terrain ignores the prompt's landscape**: "open
+  at 1024². (c) ~~**Ambient terrain ignores the prompt's landscape**: "open
   plains" produced 3.2% plains / 57% stony_peaks + windswept_hills outside
-  the clamped village footprint.
+  the clamped village footprint.~~ — **fixed 2026-08-09.** The terrain was
+  authored roughly right and then mislabelled twice over. `relief` is
+  normalized to the world's own span, so the land bands were scale-*inverting*
+  — the flatter the world, the rockier it read (a 22-block world came out 74%
+  "high rock"). The bands now require an absolute rise above sea level as well
+  (`UPLAND_RISE` 24, `HIGH_ROCK_RISE` 48), and soil caps at `windswept_hills`:
+  only a genuine `CLIFF` column can be bare rock. Second, `forested` keyed on
+  scatter *eligibility*, so a `{all:true}` node at density 0.012 painted a
+  whole map `forest`; nodes below `FOREST_COVERAGE_DENSITY` (0.02) no longer
+  contribute coverage. plains_village goes 3.2% → 81.3% plains, overgrown_ruins
+  42.5% → 0% stony_peaks, while hill_town and harbour_city keep their high
+  ground as `windswept_hills` + peaks. **Blocks are untouched** — `paintBiomes`
+  runs after the column plan, and all four worlds' compile reports are
+  identical outside `biomeHistogram`, land-use clamp and snow votes included.
+  The kits gained a flat end to the amplitude scale, a `baseHeight` rule for
+  plains, and a warning that a trace-density all-region scatter is wilderness,
+  not woods. The remaining half — an intent `landform` dial that steers the
+  heightfield from the prompt — is deliberately still open.
 - ~~**A large program's block list crashed the whole compile**~~ — **fixed
   2026-08-09 (`d4e7f47`), found by battery world 5/5.** The citadel's
   165,117 blocks passed through `blocks.push(...lowered.blocks)`, past

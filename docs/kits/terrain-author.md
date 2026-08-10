@@ -102,6 +102,11 @@ features (a caldera and the forest ringing it), `zone` when you only mean
 
 Exactly one node. All params optional; the defaults make gentle rolling hills.
 
+When the prompt names a landscape (open plains, moor, steppe, coast, marsh),
+this node must read as that landscape across the whole region: the
+settlement's own ground is clamped separately, so the ambient heightfield is
+the only thing the prompt's landscape can reach.
+
 ```json
 {
   "id": "terrain",
@@ -131,8 +136,8 @@ Exactly one node. All params optional; the defaults make gentle rolling hills.
 | param | default | range | what it does |
 |---|---|---|---|
 | `seaLevel` | 63 | −64..319, int | water surface. Keep 63 unless you have a reason. |
-| `baseHeight` | 70 | −64..319 | mean land height before noise. Below `seaLevel` ⇒ mostly ocean. |
-| `amplitude` | 40 | 0..320 | vertical relief. 20 = rolling, 50 = hilly, 90 = alpine. |
+| `baseHeight` | 70 | −64..319 | mean land height before noise. Below `seaLevel` ⇒ mostly ocean. For open plains keep it within ~6 blocks of `seaLevel`; a large `baseHeight` with a small `amplitude` is a raised, featureless shelf, not a plain. |
+| `amplitude` | 40 | 0..320 | vertical relief. 6 = open plains, 20 = rolling, 50 = hilly, 90 = alpine. |
 | `octaves` | 5 | 1..10, int | detail layers. 5–6 is right; more is slower, not better. |
 | `frequency` | 0.0035 | 0..1 | terrain scale. 0.001 = huge landforms, 0.008 = busy and small. |
 | `lacunarity` | 2.0 | 1..8 | frequency step per octave. |
@@ -281,6 +286,13 @@ in `style.palettes`; they name palette symbols, not block ids.
 Use two forest nodes as a default pattern: one deliberate forest over the zone
 or radius the prompt calls for, and one sparse `{"all": true}` wilderness fill
 at low density so the rest of the world is not bald.
+
+**A wilderness fill is not woods.** `area: {"all": true}` covers the whole
+region, and below `density` 0.02 it plants scattered trees over open country —
+which is what it is for, but it will not read as forest and no longer paints
+the `forest` biome. If the prompt wants a wooded world, say so with density
+(0.15+) or with a bounded forest node; do not expect a trace-density all-region
+node to make the map green.
 
 ---
 

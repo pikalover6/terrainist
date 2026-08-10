@@ -9,13 +9,14 @@
  * | beach zone            | `beach`                      |
  * | lowland               | `plains`, or `forest`/`taiga` under a forest node |
  * | upland                | `windswept_hills`            |
- * | high rock             | `stony_peaks`                |
+ * | high rock (bare)      | `stony_peaks`                |
  * | snow                  | `snowy_slopes`               |
  *
  * "under a forest node" is resolved from the forest coverage mask built by the
  * scatter pass's eligibility rules — a column that a forest node could plant
  * in counts as forested even where the Poisson sampler happened not to place a
- * tree, so biomes do not speckle.
+ * tree, so biomes do not speckle. Nodes below `FOREST_COVERAGE_DENSITY` are
+ * excluded from that mask: scattered trees over open country are not a wood.
  */
 
 import { SurfaceClass } from "@terrainist/stdlib";
@@ -98,6 +99,21 @@ export const HIGH_ROCK_RELIEF = 0.6;
 export const UPLAND_RELIEF = 0.45;
 
 /**
+ * Absolute floors, in blocks above sea level, under the two rock bands.
+ *
+ * `relief` is normalized to the world's own vertical span, so on its own it is
+ * not merely scale-free but scale-*inverting*: the flatter the world, the
+ * larger the share of columns that clear 0.6 of a short span. A world whose
+ * whole land sat within 22 blocks of the sea came out 74% "high rock"
+ * (F20, 2026-08-09). The normalized threshold still decides *which* columns are
+ * the high ones within a world; these floors decide whether the world has any
+ * high ground at all.
+ */
+export const UPLAND_RISE = 24;
+/** Blocks above sea level below which land is never "high rock". */
+export const HIGH_ROCK_RISE = 48;
+
+/**
  * Snowy / non-snowy sibling pairs, keyed snowy → temperate.
  *
  * The land-use clamp derives its biome from the **ambient majority** around a
@@ -170,6 +186,8 @@ export interface BiomeInput {
   readonly groundY: number;
   /** Normalized relief in `[0, 1]`. */
   readonly relief: number;
+  /** The world's sea level, for the absolute floors under the rock bands. */
+  readonly seaLevel: number;
   readonly temperature: number;
   /** Whether any forest node considers this column plantable. */
   readonly forested: boolean;
@@ -205,10 +223,16 @@ export function biomeForColumn(c: BiomeInput): ProfileBiome {
     case SurfaceClass.SNOW:
       return "minecraft:snowy_slopes";
     case SurfaceClass.CLIFF:
-      return c.relief >= HIGH_ROCK_RELIEF ? "minecraft:stony_peaks" : "minecraft:windswept_hills";
+      return c.relief >= HIGH_ROCK_RELIEF && c.groundY - c.seaLevel >= HIGH_ROCK_RISE
+        ? "minecraft:stony_peaks"
+        : "minecraft:windswept_hills";
     default: {
-      if (c.relief >= HIGH_ROCK_RELIEF) return "minecraft:stony_peaks";
-      if (c.relief >= UPLAND_RELIEF) return "minecraft:windswept_hills";
+      // Soil caps at `windswept_hills`: grass over four blocks of dirt is not
+      // bare rock, whatever its height. Only the `CLIFF` branch reaches
+      // `stony_peaks`.
+      if (c.relief >= UPLAND_RELIEF && c.groundY - c.seaLevel >= UPLAND_RISE) {
+        return "minecraft:windswept_hills";
+      }
       if (!c.forested) return "minecraft:plains";
       return c.temperature < TAIGA_TEMPERATURE ? "minecraft:taiga" : "minecraft:forest";
     }

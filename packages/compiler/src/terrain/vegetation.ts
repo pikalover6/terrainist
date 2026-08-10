@@ -63,6 +63,26 @@ import { FluidKind } from "./columns.js";
 import { chebyshevDistance, featherWeight } from "./landuse.js";
 import type { Palette } from "./palette.js";
 
+/**
+ * Density at or above which a forest node's area counts as *woods* for the
+ * biome rule.
+ *
+ * Coverage is an eligibility mask, deliberately — biomes must not speckle at
+ * the Poisson sampler's gaps. But eligibility alone says nothing about whether
+ * a wood is there: a `{ area: { all: true }, density: 0.012 }` node — one tree
+ * per ~80 columns, i.e. scattered trees over open country — painted an entire
+ * 1024² map `forest` (F20, 2026-08-09).
+ *
+ * The gate is the node's authored `density`, not a realized per-window tree
+ * count, because *density is the thing that says what kind of wood this is*.
+ * A window count would also be suppressed by the settlement clearing and by
+ * slope refusals, so a genuine wood with a village in it would lose its label
+ * for reasons that have nothing to do with how wooded the countryside is; the
+ * authored density is stable, cheap and honest about intent. Calibration:
+ * `0.025` is a real edge wood, `0.012` over the whole region is not.
+ */
+export const FOREST_COVERAGE_DENSITY = 0.02;
+
 /** §7 defaults for `scatter.forest@0`. */
 export const FOREST_DEFAULTS = Object.freeze({
   density: 0.15,
@@ -660,8 +680,13 @@ export function scatterForests(
           );
     // Coverage feeds the biome rule, so a fully cleared column must not report
     // as forested — a village green painted `forest` is exactly the wrong colour.
-    for (let k = 0; k < coverage.length; k++) {
-      if (mask[k] === 1 && (clearing === undefined || (clearing[k] as number) > 0)) coverage[k] = 1;
+    // A node thinner than {@link FOREST_COVERAGE_DENSITY} is scatter, not a
+    // wood: it still plants its trees, it just does not claim the ground as
+    // forest.
+    if (params.density >= FOREST_COVERAGE_DENSITY) {
+      for (let k = 0; k < coverage.length; k++) {
+        if (mask[k] === 1 && (clearing === undefined || (clearing[k] as number) > 0)) coverage[k] = 1;
+      }
     }
     const before = trees.length;
     const strata = resolveStrata(node.params.strata);
