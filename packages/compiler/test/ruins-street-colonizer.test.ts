@@ -204,6 +204,16 @@ beforeAll(async () => {
 
   physics = await lintWorldPhysics(dir, stack, {
     buildings: structures.buildings as never,
+    // Kai's 6e ruling: the elected shell trunks travel to the lint as plan
+    // context, exactly as `terrainTop` does. Rule 17 exempts what the compiler
+    // can prove it chose; every traversal rule below still runs over them.
+    shellTrunks: {
+      x0: plan.region.x0,
+      z0: plan.region.z0,
+      width: plan.region.width,
+      depth: plan.region.depth,
+      mask: skin(structures).shellTrunks,
+    },
     roads: (structures.roads?.routes ?? []) as never,
     tunnels: structures.tunnels.map((t) => ({
       id: t.id,
@@ -436,5 +446,173 @@ describe("U2 — growth never seals a route (§6.3, Q6)", () => {
     expect(on.components.length).toBeLessThanOrEqual(without.components.length);
     expect(on.orphanColumns).toBeLessThanOrEqual(without.orphanColumns);
     expect(on.entranceReachableShare).toBeGreaterThanOrEqual(without.entranceReachableShare);
+  }, 1_800_000);
+});
+
+/* -------------------------------------------------------------------------- */
+/* WP-6e — Kai's two rulings, and the ruined fixture's own goldens             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **Shell trees, shipped ON** — Kai's Q5 ruling as WP-6e lands it.
+ *
+ * WP-6d built the whole election and shipped it off, because rule 17 fired on
+ * the trunk itself and *"shipping the image is a ruling on a shared guarantee,
+ * not a flag flip"*. Kai made the ruling (2026-08-10): a deliberately elected
+ * shell trunk, **verifiable from the plan**, is not an accidental obstruction;
+ * interior reachability stays fully enforced.
+ *
+ * So there are three things to check and they are different things: that the
+ * image is actually there, that the exemption is doing work rather than being
+ * vacuous, and that it is narrow — it moves `interior.blocked_column` and
+ * nothing else, least of all a traversal rule.
+ */
+describe("shell trees — Kai's Q5 ruling, ON (6e)", () => {
+  it("elected trunks in roofless shells, at heavy and total", () => {
+    expect(skin(structures).counts.shellTrees).toBeGreaterThan(0);
+    const i514 = structures.diagnostics.filter((d) => d.code === "LOAM-I514");
+    expect(i514[0]?.message).toMatch(/shell trees elected/);
+  });
+
+  it("stood real wood in them — the image, not the possibility", () => {
+    const mask = skin(structures).shellTrunks;
+    let standing = 0;
+    for (let k = 0; k < mask.length; k++) {
+      if (mask[k] !== 1) continue;
+      const i = k % plan.region.width;
+      const x = plan.region.x0 + i;
+      const z = plan.region.z0 + (k - i) / plan.region.width;
+      if (woodColumns.has(`${x},${z}`)) standing++;
+    }
+    expect(standing).toBeGreaterThan(0);
+  });
+
+  it("crosses `building`/`interior` **only** through its own mask", () => {
+    // The street election stays exactly as closed as WP-6d left it: the
+    // crossing is legible at the seam rather than hidden inside a shared bit.
+    const { colonized, shellTrunks } = skin(structures);
+    for (let k = 0; k < colonized.length; k++) {
+      if (colonized[k] === 1) expect(shellTrunks[k]).not.toBe(1);
+    }
+  });
+
+  it("is exempt from rule 17 only with the plan's own evidence", async () => {
+    // Not vacuous: with the mask withheld, rule 17 reports the trunks — which
+    // is exactly what WP-6d measured and exactly why the flag shipped off.
+    const blind = await lintWorldPhysics(dir, stack, {
+      buildings: structures.buildings as never,
+    });
+    const blocked = blind.findings.filter((f) => f.rule === "interior.blocked_column");
+    expect(blocked.length).toBeGreaterThan(0);
+    for (const f of blocked) expect(f.block).toMatch(/_log|_wood/);
+    // …and with it, zero — while the traversal rules, which are **never**
+    // exempted, are zero in both runs.
+    expect(physics.counts["interior.blocked_column"]).toBe(0);
+    expect(physics.counts["traversal.unreachable"]).toBe(0);
+    expect(blind.counts["traversal.unreachable"]).toBe(0);
+  }, 600_000);
+});
+
+/**
+ * **The skin may substitute a pane with leaves** — Kai's other 6e ruling.
+ *
+ * The crumble keeps its glazing; the *skin* eats it. The number is the reason
+ * the ruling was needed at all: WP-6b measured **187 pane cells above body
+ * height on this fixture against 14 leaf plugs**, because the crumble takes a
+ * lintel long before it takes a window, so nearly every genuine opening in the
+ * quarter was glazed and therefore not `openAt`. The plug could not see the
+ * holes it was written for.
+ */
+describe("pane substitution (6e)", () => {
+  it("plugged glazed openings, and counts them apart from the crumble's", () => {
+    const { plugs, panePlugs } = skin(structures).counts as unknown as {
+      plugs: number;
+      panePlugs: number;
+    };
+    expect(panePlugs).toBeGreaterThan(0);
+    // The substitution is the majority of the plugs on this fixture, which is
+    // the WP-6b measurement turned the right way up.
+    expect(panePlugs).toBeGreaterThan(plugs);
+    const i514 = structures.diagnostics.filter((d) => d.code === "LOAM-I514");
+    expect(i514[0]?.message).toMatch(/substituted for glazing/);
+  });
+});
+
+/**
+ * **The ruined fixture's own walkability goldens** — Q6, as Kai ruled it.
+ *
+ * > give ruined fixtures their own golden set, with the colonizer-off compile
+ * > as their baseline
+ *
+ * and with his calibration attached, because it is what stops these numbers
+ * being read as the town's:
+ *
+ * > walkability is **less important for ruin scenes** — the spine and
+ * > sight-line laws serve legibility first, and U2-style strictness must not
+ * > over-constrain the aesthetic; rough walking is in character.
+ *
+ * So this set is deliberately **not** the hillside set's shape. `walkability.
+ * test.ts`'s goldens are defect measurements that must go **down**; these are
+ * a *scene* measurement that must stay **explained**. Two rules govern them
+ * and they are different rules:
+ *
+ * 1. the differential above — the colonizer's contribution to `components`,
+ *    `orphanColumns` and `entranceReachableShare` is exactly zero. That one is
+ *    a law and it does not move;
+ * 2. these absolute numbers, which move whenever the ruin does, and whose only
+ *    job is to make a move **visible in a diff** rather than to forbid it. A
+ *    change here is a scene change to look at on a walk, not a regression —
+ *    which is precisely the confusion sharing one golden set would have
+ *    created, since *"the ruin got more overgrown"* and *"the town got worse"*
+ *    read identically in a shared number.
+ */
+const RUINED_GOLDENS = {
+  /** Laid columns that resolved to a cell a player can stand in. */
+  columns: 9053,
+  /**
+   * …and those with masonry, rubble or growth standing on them.
+   *
+   * **Eight, on a quarter of 9,053 paved columns at `decline: 0.95`** — which
+   * is the headline of this set and the answer to risk 3. The colonizer stands
+   * eighty trunks in these streets and the horizontal skin mosses the pavement
+   * under all of them, and the audit still finds eight buried columns, because
+   * the level law substitutes cube for cube and the spine keeps its lane.
+   */
+  buried: 8,
+  /**
+   * Pieces of the declared paving network. **One**, with the trees standing.
+   *
+   * This is the number Kai's calibration says not to over-read in either
+   * direction: it is here because a ruined quarter that fell into pieces would
+   * be a compiler defect rather than a scene, not because a ruin owes anybody
+   * a tidy network.
+   */
+  components: 1,
+  /** Columns outside the largest piece. */
+  orphans: 0,
+  /**
+   * What a traveller who walks in can reach, and its share.
+   *
+   * **Zero, and not a defect**: this fixture is one quarter with no road into
+   * it, so the audit finds no entrance column to start from. The number is
+   * recorded rather than skipped so that a document change that *does* give
+   * the ruin an approach shows up here instead of passing unnoticed.
+   */
+  entranceReachable: 0,
+  entranceReachableShare: 0,
+};
+
+describe("the ruined fixture's own goldens (Q6)", () => {
+  it("measures the scene, apart from the town's goldens", async () => {
+    const context = walkabilityContextOf(plan, structures, {
+      ...(structures.districts[0] === undefined ? {} : { town: structures.districts[0].bounds }),
+    });
+    const audit = await auditWalkability(dir, stack, context);
+    expect(audit.columns).toBe(RUINED_GOLDENS.columns);
+    expect(audit.buried).toBe(RUINED_GOLDENS.buried);
+    expect(audit.components.length).toBe(RUINED_GOLDENS.components);
+    expect(audit.orphanColumns).toBe(RUINED_GOLDENS.orphans);
+    expect(audit.entranceReachable).toBe(RUINED_GOLDENS.entranceReachable);
+    expect(audit.entranceReachableShare).toBeCloseTo(RUINED_GOLDENS.entranceReachableShare, 3);
   }, 1_800_000);
 });

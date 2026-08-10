@@ -210,6 +210,16 @@ beforeAll(async () => {
 
   physics = await lintWorldPhysics(dir, stack, {
     buildings: structures.buildings as never,
+    // Kai's 6e ruling: the shell trunks the skin elected travel to the lint as
+    // plan context, exactly as `terrainTop` does. Rule 17 exempts a column the
+    // compiler can prove it chose; every traversal rule still runs over it.
+    shellTrunks: {
+      x0: plan.region.x0,
+      z0: plan.region.z0,
+      width: plan.region.width,
+      depth: plan.region.depth,
+      mask: (structures.greenSkin as unknown as { shellTrunks: Uint8Array }).shellTrunks,
+    },
     roads: (structures.roads?.routes ?? []) as never,
     tunnels: structures.tunnels.map((t) => ({
       id: t.id,

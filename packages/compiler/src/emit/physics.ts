@@ -164,6 +164,37 @@ export interface PhysicsContext {
     readonly ground: Int32Array;
     readonly entrances: Uint8Array;
   };
+  /**
+   * Interior columns the green skin **elected** to stand a shell trunk on —
+   * RUINS-PLAN-v0-WP6, Kai's 6e ruling (2026-08-10).
+   *
+   * > a deliberately elected shell trunk, verifiable from the plan, is not an
+   * > accidental obstruction; interior reachability stays enforced.
+   *
+   * This is `growGreenSkin`'s own `shellTrunks` mask, in the same
+   * region-plus-`Uint8Array` shape `terrainTop` uses, and it is the *only*
+   * thing that exempts a column from `interior.blocked_column`. That shape is
+   * the point: the lint still runs against the world on disk, and what the
+   * plan supplies is not permission to skip a check but the fact that this
+   * particular column was chosen by a pass whose siting rule is itself
+   * checked. A trunk somebody put there by accident is in no mask and still
+   * fires.
+   *
+   * **`traversal.unreachable` and `traversal.no_start` are not exempted, here
+   * or anywhere.** The obstruction is the image; a room cut off from its door
+   * is a defect. `electShellTrees` keeps the room one component *before* it
+   * elects, so the two rules never disagree about the same trunk.
+   *
+   * Absent — every world that grows no shell trunk — leaves rule 17 exactly as
+   * it was.
+   */
+  readonly shellTrunks?: {
+    readonly x0: number;
+    readonly z0: number;
+    readonly width: number;
+    readonly depth: number;
+    readonly mask: Uint8Array;
+  };
   /** Y range to read back. Defaults to a generous band around the surface. */
   readonly minY?: number;
   readonly maxY?: number;
@@ -672,6 +703,12 @@ export async function lintWorldPhysics(
         // watchtower supplies its own pilaster inside the shaft precisely so
         // the rungs have something to hold on to.
         if (blockedAll && ladderBacking(x, band.lo, band.hi, z)) continue;
+        // A column the green skin **elected** for a shell trunk is the image,
+        // not the defect — Kai's 6e ruling. Reachability is not exempted with
+        // it: the walking agent below still has to reach every standable cell
+        // of this room, and a trunk that cut the room in two would be reported
+        // there, by the rule that means it.
+        if (blockedAll && electedShellTrunk(x, z)) continue;
         if (blockedAll) {
           add(
             "interior.blocked_column",
@@ -1154,6 +1191,24 @@ export async function lintWorldPhysics(
       if (standable(at.x + dx, at.y, at.z + dz)) return { x: at.x + dx, y: at.y, z: at.z + dz };
     }
     return null;
+  }
+
+  /**
+   * True when the plan says the green skin **elected** this column for a shell
+   * trunk — Kai's 6e ruling, and the one exemption rule 17 has beyond the
+   * ladder's pilaster.
+   *
+   * Verifiable rather than trusted: the mask is a plan artefact keyed by world
+   * column, so a reader can name the pass, the column and the ruling that put
+   * the bit there. Without the mask nothing is exempt.
+   */
+  function electedShellTrunk(x: number, z: number): boolean {
+    const trunks = context.shellTrunks;
+    if (trunks === undefined) return false;
+    const i = x - trunks.x0;
+    const j = z - trunks.z0;
+    if (i < 0 || j < 0 || i >= trunks.width || j >= trunks.depth) return false;
+    return trunks.mask[j * trunks.width + i] === 1;
   }
 
   /** True when a ladder anywhere in this column's band is fixed to it. */

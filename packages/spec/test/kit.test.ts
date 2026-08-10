@@ -249,7 +249,17 @@ describe("settlement-author kit", () => {
     // shells do not roll, and the reclaim is ground green, not trees.
     expect(ruins).toMatch(/terrace runs/);
     expect(ruins).toContain("LOAM-W511");
-    expect(ruins).toMatch(/never\s+inside a shell, never on a street or its sidewalk band/);
+    // §10 of the WP-6 addendum: the `avoidTags` paragraph used to promise more
+    // than the compiler now delivers — *"never inside a shell, never on a
+    // street or its sidewalk band"* — and the green skin's street colonizer
+    // and shell trees are exactly the exception. The kit says so, and says
+    // where the dial is, because there is no separate one.
+    expect(ruins).not.toMatch(/never\s+inside a shell, never on a street or its sidewalk band/);
+    expect(ruins).toContain("**The green goes on the city, not only between its buildings.**");
+    expect(ruins).toMatch(/trees standing in the carriageway itself/);
+    expect(ruins).toMatch(/every street stays\s+walkable end to end; that\s+is a compiler guarantee/);
+    expect(ruins).toMatch(/\*\*except inside a ruined quarter at high `decline`\*\*/);
+    expect(ruins).toMatch(/lower `decline`\s+below 0\.8; there is no separate dial/);
     expect(ruins).toContain('avoidTags: ["structure", "road", "plaza"]');
     // The dial row and the building param must both point here.
     const dial = settlementSource.slice(settlementSource.indexOf("| `decline` |"));

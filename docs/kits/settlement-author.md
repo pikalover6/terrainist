@@ -1567,14 +1567,27 @@ those for a `decay` gets `LOAM-W511` saying so out loud. A shell whose walls are
 under three courses is swept and heaped but never crumbled, for the same reason
 table 14 gives: there is nothing to take away.
 
+**The green goes on the city, not only between its buildings.** At high
+`decline` the compiler writes the overgrowth **onto** the fabric: ivy up the
+standing walls, moss across the surviving pavement and over the rubble heaps,
+leaves stuffed into the window holes — glazed ones included, the growth takes
+the glass out — and, from about 0.8, trees standing in the carriageway itself.
+The street grid stays readable and every street stays walkable end to end; that
+is a compiler guarantee, not something you tune. From roughly 0.55 a roofless
+shell may also stand one tree of its own, bursting up through the floor plate
+and out over the broken wall head.
+
 Keep `avoidTags: ["structure", "road", "plaza"]` on your `scatter.forest@0`
-nodes as always — over ruined ground the compiler opens that gate for you.
-The reclaim at high decline is ground green **and canopy**: grass, tufts and
-flowers over the ruin yards and the broken paving, and the surrounding
-forest's own trees coming back through the quarter's open ground — never
-inside a shell, never on a street or its sidewalk band. How thick the wood
-returns follows the forest node you scattered around the town: a ruined city
-in deep forest is buried in it, one on open plains gets volunteers.
+nodes. It is what keeps trees out of your buildings and off your streets —
+**except inside a ruined quarter at high `decline`**, where the compiler
+deliberately lets a share of the street, and one column of each roofless shell,
+back to the wood. If you want a ruined city with clean streets, lower `decline`
+below 0.8; there is no separate dial and there will not be one. The reclaim at
+high decline is ground green **and canopy**: grass, tufts and flowers over the
+ruin yards and the broken paving, and the surrounding forest's own trees coming
+back through the quarter. How thick the wood returns follows the forest node
+you scattered around the town: a ruined city in deep forest is buried in it,
+one on open plains gets volunteers.
 
 ### The urban forms
 

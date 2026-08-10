@@ -190,6 +190,16 @@ beforeAll(async () => {
 
   physics = await lintWorldPhysics(dir, stack, {
     buildings: structures.buildings as never,
+    // Kai's 6e ruling: the shell trunks the skin elected travel to the lint as
+    // plan context, exactly as `terrainTop` does. Rule 17 exempts a column the
+    // compiler can prove it chose; every traversal rule still runs over it.
+    shellTrunks: {
+      x0: plan.region.x0,
+      z0: plan.region.z0,
+      width: plan.region.width,
+      depth: plan.region.depth,
+      mask: (structures.greenSkin as unknown as { shellTrunks: Uint8Array }).shellTrunks,
+    },
     roads: (structures.roads?.routes ?? []) as never,
     tunnels: structures.tunnels.map((t) => ({
       id: t.id,
@@ -456,10 +466,31 @@ describe("the reclaim (§7.4)", () => {
     // after it stood 67 of 111 reclaim trunks in the middle of the pavement.
     const footprints = structures.buildings.map((b) => b.footprint);
     const road = structures.streets?.road;
-    const colonized = (structures.greenSkin as { colonized: Uint8Array } | undefined)?.colonized;
+    const skin = structures.greenSkin as
+      | { colonized: Uint8Array; shellTrunks: Uint8Array }
+      | undefined;
+    const colonized = skin?.colonized;
+    /**
+     * The shell's own elected trunk — Kai's Q5 ruling, shipped ON at WP-6e.
+     *
+     * *"A tree bursting out of a roofless nave is arguably the single
+     * strongest overgrown image available."* It is the one crossing of the
+     * `building` / `interior` line in the whole feature, it is a mask of its
+     * own so the crossing is legible at the seam, and it is why the
+     * footprint assertion below is now *"except where the skin elected"*
+     * rather than *"never"*. Everything not in that mask is the closure
+     * exactly as WP-4 wrote it.
+     */
+    const shellTrunk = (x: number, z: number): boolean =>
+      skin?.shellTrunks[idx(x, z)] === 1;
     const elected = (x: number, z: number): boolean => colonized?.[idx(x, z)] === 1;
     let onElected = 0;
+    let inShells = 0;
     for (const t of trees) {
+      if (shellTrunk(t.x, t.z)) {
+        inShells++;
+        continue;
+      }
       expect(footprints.some((r) => within(r, t.x, t.z))).toBe(false);
       if (elected(t.x, t.z)) {
         onElected++;
@@ -477,6 +508,9 @@ describe("the reclaim (§7.4)", () => {
     // …and the exception is not vacuous: this fixture ruins enough that the
     // street law actually elected something.
     expect(onElected).toBeGreaterThan(0);
+    // The shell trees are an image, not a possibility: an election no tree
+    // ever reaches is the countable-proxy trap with a new hat on.
+    expect(inShells).toBeGreaterThan(0);
   });
 
   it("greens the survivors — vines over ruined ground", () => {

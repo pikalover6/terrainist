@@ -17,6 +17,12 @@
 > substitute a pane with leaves directly** (plug openings become real via
 > substitution, not breakage).
 >
+> **6e implementation note, normative:** a stair column takes no plug and no
+> bulge — the floor/sill discriminator structurally cannot see a flight (a
+> tread's underside reads as sill), and one leaf block on a tread measured
+> 146 unreachable findings. The whole column is refused; a stairwell carries
+> no window worth plugging.
+>
 > **NORMATIVE ADDENDUM to `docs/RUINS-PLAN-v0.md`, drafted 2026-08-10.**
 > It adds a work package; it does not edit the ratified base plan, and every
 > ruling in that plan — the reach law (§2), the ruin law (§3), the roll (§4),

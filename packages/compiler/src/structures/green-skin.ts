@@ -113,6 +113,17 @@ import { sampleField, type RuinField } from "./ruin-field.js";
 /** The palette symbol every climbing strand is written from. */
 export const VINE_SYMBOL = "foliage.vine";
 
+/**
+ * Glazing the leaf plug may substitute — Kai's 6e ruling.
+ *
+ * By **name**, and only the pane family: a pane is the thin sheet a window
+ * hole is filled with, and a leaf cube standing in its cell is the same window
+ * read as stuffed. Full `glass` blocks are not in it, because a solid glass
+ * cube is a *wall* material in this palette's vocabulary and eating it is a
+ * hole the crumble did not draw.
+ */
+export const GLAZING = /glass_pane$/;
+
 /* -------------------------------------------------------------------------- */
 /* the channel reservation (§3.3)                                              */
 /* -------------------------------------------------------------------------- */
@@ -431,23 +442,27 @@ export interface GreenSkinInput {
    * Stand **one trunk per roofless shell** — Kai's Q5 ruling (2026-08-10:
    * `heavy` **and** `total`, bolder than the draft's total-only).
    *
-   * **Off by default, and the default is a finding rather than a decision.**
-   * The election, the roofless test, the siting and the interior-flood check
-   * are all built and reachable through this flag; what stops it shipping on
-   * is the physics lint. A trunk standing in a room is,
-   * by rule 17's own definition, *"an interior column solid from y lo to y
-   * hi"* — measured on the WP-6d fixture: 5 shell trunks produce 7
-   * `interior.blocked_column` and 2 `traversal.unreachable` findings against a
-   * bar of zero, and no siting rule can avoid it because the rule fires on the
-   * obstruction, not on the unreachability. Q5's *"sited in a cell
-   * `reachOrRefuse`'s flood does not need"* is satisfied (the room stays one
-   * component) and the rule fires anyway.
+   * **ON by default since WP-6e** — Kai made the ruling WP-6d could not make
+   * on its own (2026-08-10).
    *
-   * Shipping the image therefore needs one thing this wave may not decide on
-   * its own: rule 17 has to learn that a trunk the compiler deliberately stood
-   * in a ruin is not an obstruction. That is a change to a shared guarantee —
-   * the base plan's first — and it is Kai's to make. Flipping this flag is the
-   * whole of the work once he does.
+   * WP-6d shipped this flag off because the physics lint refused the image: a
+   * trunk standing in a room is, by rule 17's own definition, *"an interior
+   * column solid from y lo to y hi"*, and no siting rule can dodge a rule that
+   * fires on the obstruction rather than on the consequence. Kai's ruling
+   * refined the rule instead of weakening the guarantee: **a deliberately
+   * elected shell trunk, verifiable from the plan, is not an accidental
+   * obstruction, and interior reachability stays fully enforced.** The
+   * exemption is `PhysicsContext.shellTrunks`, which is this pass's own
+   * `shellTrunks` mask handed to the lint the way `terrainTop` is — the lint
+   * exempts a column the compiler can *prove* it elected, and nothing else.
+   *
+   * `traversal.unreachable` is **not** exempted and never will be: a trunk that
+   * cuts a room off from its door is a defect whoever put it there. That is
+   * what `staysWhole` in `electShellTrees` is for, and it is why the siting is
+   * a check rather than an argument.
+   *
+   * Set `false` to compile the same world without the image — which is what the
+   * differential tests do.
    */
   readonly shellTrees?: boolean;
 }
@@ -464,8 +479,17 @@ export interface GreenSkinCounts {
   readonly climbers: number;
   /** Glow lichen substitutions (WP-6b). */
   readonly lichen: number;
-  /** Leaf plugs written into openings (WP-6b). */
+  /** Leaf plugs written into openings the crumble left as air (WP-6b). */
   readonly plugs: number;
+  /**
+   * Leaf plugs that **substituted a pane** — Kai's 6e ruling (WP-6e).
+   *
+   * Counted apart from `plugs` on purpose: the two are the same treatment
+   * through the same draws, but one of them says *the crumble opened this
+   * window* and the other says *the skin took the glass out of it*, and a
+   * single number could not tell a walk which had happened.
+   */
+  readonly panePlugs: number;
   /** Moss carpets on horizontal survivors — wall heads, parapets, rubble, pavement (WP-6c). */
   readonly carpets: number;
   /** Pavement substitutions (WP-6c). */
@@ -491,6 +515,7 @@ const NO_COUNTS: GreenSkinCounts = Object.freeze({
   climbers: 0,
   lichen: 0,
   plugs: 0,
+  panePlugs: 0,
   carpets: 0,
   pavement: 0,
   streetTrunks: 0,
@@ -645,6 +670,33 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
     for (const key of b.interiorCells) interior.add(key);
   }
 
+  /**
+   * **The stairwell** — a route the skin may not write into, at any height.
+   *
+   * The door's approach was WP-6b's guarantee because a door is how you get
+   * *in*; a flight is how you get *up*, and the two are the same promise on
+   * different axes. `bodyCourse` cannot make this one on its own and the
+   * reason is structural rather than a missed case: its floor test asks for a
+   * solid cell with solid cells on all four sides, which is exactly what a
+   * tread is **not** — a flight's underside is stepped, so every cell of it
+   * reads as sill rather than floor and the guard waves the growth through.
+   *
+   * Measured, on the WP-6e fixture the moment the skin was allowed to eat
+   * glazing (Kai's 6e ruling): a single inward bulge at `6,77,81` landed on
+   * one tread of one flight and took the **whole upper storey** of that shell
+   * with it — 146 `traversal.unreachable` findings from one leaf block. The
+   * exemption Kai granted covers rule 17 and stops there; reachability is
+   * enforced, so the pass has to keep out of the flight by construction.
+   *
+   * Columns rather than cells, and the whole building's height: a stairwell
+   * column carries no window worth plugging at any level, so nothing of value
+   * is given up by refusing the column outright.
+   */
+  const stairColumns = new Set<string>();
+  for (const b of input.buildings ?? []) {
+    for (const key of b.stairCells ?? []) stairColumns.add(key);
+  }
+
   // The base plan's first guarantee, extended to growth: no door column, no
   // lintel, no approach. Doors are found by name in the laid list — the same
   // evidence the physics lint reads — and the four columns a body steps
@@ -763,6 +815,7 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
   let climbers = 0;
   let lichen = 0;
   let plugs = 0;
+  let panePlugs = 0;
 
   // §4.3 runs before §4.1 so that a window hole that drew both reads as a
   // stuffed window rather than as a curtain across it — the leaves are the
@@ -809,7 +862,33 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
     // --- §4.3, growth entering openings ------------------------------------
     if (leafSymbols.length > 0 && shares.openingPlug > 0 && !inside) {
       for (let y = Math.max(y0, ground + 3); y <= y1; y++) {
-        if (!index.openAt(x, y, z)) continue;
+        /**
+         * **The skin may eat the glass** — Kai's 6e ruling, 2026-08-10.
+         *
+         * The crumble keeps its glazing (that is the base plan's, and it is
+         * not reopened here); the *skin* is allowed to substitute a pane cell
+         * with the plug's own persistent leaves directly. So an opening is
+         * either air the crumble left or a pane the builder glazed, and both
+         * go through the same eligibility, the same shared leaf vocabulary and
+         * the same channel-53 share draw — one predicate, two kinds of hole.
+         *
+         * Why it matters as a number rather than as a nicety: the WP-6b report
+         * measured **187 pane cells above body height on the 0.95 fixture
+         * against 14 plugs**, because the crumble takes a wall's lintel long
+         * before it takes its windows, so nearly every genuine window hole in
+         * the quarter was still glazed and therefore not `openAt`. The
+         * openings the plug was written for were the ones it could not see.
+         *
+         * A pane is neither `openAt` nor `solidAt` — `canSupport` refuses it by
+         * name, which is the conservative direction and stays conservative
+         * here: the substitution never makes a strand's support out of glass,
+         * it only replaces the pane's own cell. Traversal is untouched in both
+         * directions, because a pane already blocks a body exactly as a leaf
+         * cube does, and the `bodyCourse` guard below still runs regardless.
+         */
+        const open = index.openAt(x, y, z);
+        const pane = !open && GLAZING.test(index.nameAt(x, y, z) ?? "");
+        if (!open && !pane) continue;
         // A genuine hole *through* a wall: solid on two opposite sides. Not the
         // absence of a wall — a gap over a wall head has air on both sides of
         // it, not masonry.
@@ -832,9 +911,11 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
           : solid(x, y + 1, z - 1) && solid(x, y + 1, z + 1);
         if (!capped && !solid(x, y + 1, z)) continue;
         if (nearDoor(x, y, z)) continue;
+        if (stairColumns.has(`${x},${z}`)) continue;
         if (bodyCourse(x, y, z)) continue;
         if (hash3(seed, x, y, z, GREEN_SKIN_CHANNELS.plug) >= shares.openingPlug) continue;
-        plugs++;
+        if (pane) panePlugs++;
+        else plugs++;
         const symbol = hashPick(seed, x, z, GREEN_SKIN_CHANNELS.plug, leafSymbols);
         const leaf = leafState(withProps, palette.stateAt(symbol, x, z));
         put(x, y, z, leaf);
@@ -856,6 +937,9 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
           if (!index.openAt(bx, y, bz)) continue;
           if (y <= groundAt(bx, bz) + 2) continue;
           if (nearDoor(bx, y, bz)) continue;
+          // The flight, on the bulge's side too — this is the cell that cost
+          // an upper storey, so it is guarded where it happened.
+          if (stairColumns.has(`${bx},${bz}`)) continue;
           if (bodyCourse(bx, y, bz)) continue;
           // Inward is the shell's own air, which is exactly where a bulge
           // belongs — the only guard it needs is that a standing body still
@@ -1083,13 +1167,13 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
     note(
       "GREEN_SKIN",
       "",
-      `the green skin covered ${index.columns} ruined columns: ${climbers} climbing strands (${lichen} glow lichen), ${plugs} leaf plugs, ${carpets} moss carpets, ${pavement} pavement substitutions, ${shrubs} tufts, ` +
+      `the green skin covered ${index.columns} ruined columns: ${climbers} climbing strands (${lichen} glow lichen), ${plugs} leaf plugs (${panePlugs} of them substituted for glazing), ${carpets} moss carpets, ${pavement} pavement substitutions, ${shrubs} tufts, ` +
         `${street.streetTrunks} street trunks and ${street.shellTrees} shell trees elected (${street.spineColumns} spine columns, shortest sight-line run ${
           Number.isFinite(street.shortestSightRun) ? street.shortestSightRun : "n/a"
         }, nearest trunk to a junction ${
           Number.isFinite(street.nearestJunction) ? street.nearestJunction : "n/a"
         }), ${blocks.length} blocks`,
-      climbers + plugs + carpets + pavement === 0
+      climbers + plugs + panePlugs + carpets + pavement === 0
         ? "no surface in the ruin field met the skin's eligibility — raise `decline`, or check that the district actually ruined any lots"
         : "informational",
     ),
@@ -1126,6 +1210,7 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
       climbers,
       lichen,
       plugs,
+      panePlugs,
       carpets,
       pavement,
       streetTrunks: street.streetTrunks,
@@ -1688,7 +1773,9 @@ function electStreetTrunks(ctx: ColonizeInput): ColonizeResult {
 
   /* --- 6. shell trees — Kai's Q5 ruling, at heavy AND total --------------- */
 
-  const shellTrees = input.shellTrees === true
+  // Kai's 6e ruling: ON unless a caller explicitly asks for the world without
+  // the image. `!== false` rather than `=== true` is the whole flip.
+  const shellTrees = input.shellTrees !== false
     ? electShellTrees({
         input,
         index,
@@ -1865,19 +1952,48 @@ function electShellTrees(args: {
     for (const cell of room) if (solidAbove(cell.x, cell.z, roofline)) covered++;
     if (covered / room.length > SHELL_ROOFLESS_MAX) continue;
 
-    // The room's standable cells — the flood U2 borrows from `reachOrRefuse`.
-    const open = new Set<string>();
-    for (const cell of room) {
-      if (!index.openAt(cell.x, building.floorY + 1, cell.z)) continue;
-      if (!index.openAt(cell.x, building.floorY + 2, cell.z)) continue;
-      open.add(cell.key);
-    }
+    /**
+     * The standable cells of **one storey** — the flood U2 borrows from
+     * `reachOrRefuse`, asked at that storey's own floor plane.
+     */
+    const openAtLevel = (level: number, cells: readonly { x: number; z: number; key: string }[]) => {
+      const feet = building.floorY + level + 1;
+      const set = new Set<string>();
+      for (const cell of cells) {
+        if (!index.openAt(cell.x, feet, cell.z)) continue;
+        if (!index.openAt(cell.x, feet + 1, cell.z)) continue;
+        set.add(cell.key);
+      }
+      return set;
+    };
+    const open = openAtLevel(0, room);
     if (open.size < 4) continue;
+    /**
+     * **Every storey, not only the ground floor** — WP-6e's tightening.
+     *
+     * A trunk *bursts* through the plate, so it stands in the upper rooms as
+     * well as the lower one, and the ground floor's answer is not the
+     * building's answer. Measured on the WP-6e fixture: two trunks each sited
+     * on a perfectly whole ground floor cut one **corner cell of the second
+     * storey** off from the flight, for two `traversal.unreachable` findings.
+     * Kai's 6e exemption covers rule 17 and stops there — reachability stays
+     * enforced — so the siting is what has to give, and it gives here.
+     */
+    const storeys: readonly { level: number; open: Set<string> }[] = (
+      building.meta.floorLevels ?? [0]
+    ).map((level, i) => {
+      const cellsAt = building.interiorCellsByLevel?.[i];
+      const cells =
+        cellsAt === undefined
+          ? room
+          : room.filter((cell) => cellsAt.has(cell.key));
+      return { level, open: openAtLevel(level, cells) };
+    });
     const stairs = building.stairCells ?? new Set<string>();
     const doorSide = room.filter((cell) => nearDoor(cell.x, building.floorY + 1, cell.z));
 
-    /** The room stays one component with this cell taken out of it. */
-    const staysWhole = (without: string): boolean => {
+    /** One storey's room stays one component with this cell taken out of it. */
+    const levelWhole = (open: Set<string>, without: string): boolean => {
       const start = [...open].find((key) => key !== without);
       if (start === undefined) return false;
       const seen = new Set<string>([start]);
@@ -1899,6 +2015,9 @@ function electShellTrees(args: {
       }
       return seen.size === open.size - (open.has(without) ? 1 : 0);
     };
+    /** …on **every** storey the trunk passes through. */
+    const staysWhole = (without: string): boolean =>
+      storeys.every(({ open: level }) => level.size < 2 || levelWhole(level, without));
 
     // Furthest from the door, then furthest from the room's edge: a trunk in
     // the middle of a nave, not one wedged into the doorway.
