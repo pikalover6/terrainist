@@ -28,7 +28,21 @@ export const STRUCTURE_ROWS = {
   kerbsideKit: "streetscape.kerbsideKit",
   decayCoverage: "decay.coverage",
   vegetationReclaim: "decay.vegetationReclaim",
+  streetBreak: "decay.streetBreak",
 } as const;
+
+/**
+ * The `decline` at which a street stops being worn and starts breaking up
+ * (RUINS-PLAN-v0 §7.3).
+ *
+ * Well above `RUIN_ONSET`: a quarter with a quarter of its houses fallen in
+ * still has a street you can drive a cart down, and paving that has gone back
+ * to soil is a much later stage of the same story than paving that is patched.
+ */
+export const STREET_BREAK_ONSET = 0.8;
+
+/** Share of carriageway columns broken back to soil at `decline = 1`. */
+export const STREET_BREAK_MAX = 0.35;
 
 /**
  * Material themes an era class reaches for, most preferred first.
@@ -260,6 +274,23 @@ export function registerStructureFanOut(): void {
       const decline = intent.intent.decline;
       if (decline === undefined) return ctx.today;
       return clamp01(Math.max(ctx.today, decline * 0.6));
+    },
+  });
+
+  /* --- decline → the street break-up -------------------------------------- */
+  registerFanOut<number>({
+    id: STRUCTURE_ROWS.streetBreak,
+    reads: ["decline"],
+    status: "today",
+    drives: "share of carriageway columns broken back to soil (roads.ts, §7.3)",
+    resolve(intent, ctx) {
+      const decline = intent.intent.decline;
+      if (decline === undefined) return ctx.today;
+      // Total, like every row, and exactly zero below the onset: `today` is 0,
+      // so a document that never reaches 0.8 surfaces the street it always did.
+      if (decline < STREET_BREAK_ONSET) return ctx.today;
+      const past = (decline - STREET_BREAK_ONSET) / (1 - STREET_BREAK_ONSET);
+      return clamp01(Math.max(ctx.today, STREET_BREAK_MAX * past));
     },
   });
 

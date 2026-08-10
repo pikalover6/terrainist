@@ -101,6 +101,46 @@ export const WEAR_NEAR = 0.42;
 /** Probability a column at {@link WEAR_REACH} is worn — deliberately faint. */
 export const WEAR_FAR = 0.03;
 
+/* --- the ruin yard (RUINS-PLAN-v0 §7.2) ----------------------------------- */
+
+/**
+ * Share of a ruin yard's ground worn off at `intensity = 0`, and the share it
+ * reaches at `intensity = 1`.
+ *
+ * A ruined shell standing on a mown lawn undoes itself; a ruined shell standing
+ * on bare dirt reads as a building site. The window between them is the whole
+ * treatment, and it is deliberately not 1 at the top: the green comes back
+ * through a ruin, so some of that ground has to still be green.
+ */
+export const RUIN_YARD_WEAR_MIN = 0.3;
+/** @see RUIN_YARD_WEAR_MIN */
+export const RUIN_YARD_WEAR_MAX = 0.85;
+
+/** Share of a ruin yard's interior columns that take a block of rubble. */
+export const RUIN_YARD_RUBBLE_DENSITY = 0.08;
+
+/** Share of a ruin yard's fence run that has fallen away, at `intensity = 1`. */
+export const RUIN_YARD_FENCE_GAP = 0.55;
+
+/**
+ * How much the ruin field lifts the volunteer growth in a ruin yard, and the
+ * wear sweep on the ground around it.
+ *
+ * §7.2's last bullet and §7.3's first: the *global* `decay.vegetationReclaim`
+ * and `decay.coverage` rows keep doing exactly what they do, and the field
+ * lifts them **where the buildings actually fell**. That is the interleave the
+ * F19 row asks for, and it is one line of arithmetic in each of two places.
+ */
+export const RUIN_RECLAIM_LIFT = 0.6;
+/** @see RUIN_RECLAIM_LIFT */
+export const RUIN_WEAR_LIFT = 0.6;
+
+/** Share of a broken street column that grows a tuft of volunteer green. */
+export const BROKEN_STREET_GRASS = 0.3;
+
+/** Share of a broken street column that grows a volunteer flower. */
+export const BROKEN_STREET_FLOWER = 0.06;
+
 /** How far past the cleared hull the transition band reaches, in columns. */
 export const TRANSITION_BAND = 14;
 
@@ -138,7 +178,7 @@ export const GROUND_CLIP_MARGIN = 24;
 /* -------------------------------------------------------------------------- */
 
 /** What a lot's leftover ground is made of. */
-export type GroundTreatment = "apron" | "garden" | "yard" | "sacred" | "none";
+export type GroundTreatment = "apron" | "garden" | "yard" | "sacred" | "ruin_yard" | "none";
 
 /**
  * The treatment each catalog category asks for.
@@ -245,6 +285,25 @@ export interface GroundPassInput {
    * so its garden grows *more*, not less. Omitted means "today".
    */
   readonly vegetationReclaim?: number;
+  /**
+   * The per-column ruin field (`structures/ruin-field.ts`, RUINS-PLAN §7.1).
+   *
+   * Two things read it: a lot whose field is non-zero takes the `ruin_yard`
+   * treatment **ahead of the category table**, and the wear sweep's chance is
+   * lifted locally by it, so a ruin cluster has the worst ground and an intact
+   * pocket keeps its lawn. Absent when no shell ruined — which is every
+   * document that declares no `decline` — so the pass is unmoved by it.
+   */
+  readonly ruinField?: Float32Array;
+  /**
+   * 1 on every carriageway column the street surfacer broke back to soil
+   * (§7.3), row-major over the plan's region.
+   *
+   * The break-up is a *surface* change and the surfacer owns it; what is left
+   * over is the volunteer growth on top, which belongs here beside every other
+   * blade of grass this pass plants. Absent when nothing broke.
+   */
+  readonly brokenStreet?: Uint8Array;
 }
 
 /** One dressed lot, for the report and for tests. */
@@ -265,6 +324,10 @@ export interface GroundPassResult {
   readonly dressedColumns: number;
   /** Columns rewritten by worn paint. */
   readonly wornColumns: number;
+  /** Lots that took the `ruin_yard` treatment (§7.2). */
+  readonly ruinYards: number;
+  /** Volunteer plants grown on broken street columns (§7.3). */
+  readonly streetReclaim: number;
 }
 
 /**
@@ -385,7 +448,7 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
   const lots: DressedLot[] = [];
 
   if (input.buildings.length === 0) {
-    return { blocks, lots, dressedColumns: 0, wornColumns: 0 };
+    return { blocks, lots, dressedColumns: 0, wornColumns: 0, ruinYards: 0, streetReclaim: 0 };
   }
 
   const states = resolveStates(input.palette, input.stack);
@@ -405,17 +468,26 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
   };
 
   let dressedColumns = 0;
+  let ruinYards = 0;
   for (const built of input.buildings) {
-    const treatment = treatmentOf(built.meta.params.archetype as unknown as string);
+    // §7.2: the ruin field is asked **first**, ahead of the category table. A
+    // ruined shell's ground is ruined ground whatever the archetype's category
+    // would have laid there — a fallen-in chapel does not keep its churchyard.
+    const ruin = ruinAt(input, built);
+    const treatment: GroundTreatment =
+      ruin > 0 ? "ruin_yard" : treatmentOf(built.meta.params.archetype as unknown as string);
     if (treatment === "none") {
       lots.push({ nodePath: built.nodePath, treatment, columns: 0, blocks: 0 });
       continue;
     }
     const before = blocks.length;
     const columns =
-      treatment === "garden"
-        ? dressGarden(input, states, built, free, taken, blocks)
-        : dressRing(input, states, built, treatment, free, taken, blocks);
+      treatment === "ruin_yard"
+        ? dressRuinYard(input, states, built, ruin, free, taken, blocks)
+        : treatment === "garden"
+          ? dressGarden(input, states, built, free, taken, blocks)
+          : dressRing(input, states, built, treatment, free, taken, blocks);
+    if (treatment === "ruin_yard") ruinYards++;
     dressedColumns += columns;
     lots.push({
       nodePath: built.nodePath,
@@ -426,6 +498,11 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
   }
 
   const wornColumns = wearGround(input, states, reserved, taken, clip);
+  // §7.3, the second half: the surfacer broke a share of the carriageway back
+  // to soil, and soil at high decline grows things. The columns stay `road` in
+  // the occupancy grid, so the scatter still refuses to plant a tree in one —
+  // a road reclaimed by scrub, not a forest with a buried road under it.
+  const streetReclaim = reclaimBrokenStreets(input, states, blocks);
 
   // Treated ground is spoken for. The two passes still to come — the scatter
   // and the ground-cover decoration — both read the occupancy grid, and
@@ -445,7 +522,20 @@ export function buildGrounds(input: GroundPassInput): GroundPassResult {
     }
   }
 
-  return { blocks, lots, dressedColumns, wornColumns };
+  return { blocks, lots, dressedColumns, wornColumns, ruinYards, streetReclaim };
+}
+
+/** How ruined the ground under one building is, 0 when the field is absent. */
+function ruinAt(input: GroundPassInput, built: BuiltBuilding): number {
+  const field = input.ruinField;
+  const { region } = input.plan;
+  if (field === undefined || field.length !== region.width * region.depth) return 0;
+  // The centre of the footprint: inside a ruined lot's own rect the field is
+  // flat at the band's intensity, so any interior column answers the same.
+  const x = (built.footprint.x0 + built.footprint.x1) >> 1;
+  const z = (built.footprint.z0 + built.footprint.z1) >> 1;
+  if (!inside(region, x, z)) return 0;
+  return field[index(region, x, z)] as number;
 }
 
 /**
@@ -743,6 +833,179 @@ function quietSide(
 }
 
 /* -------------------------------------------------------------------------- */
+/* treatment 4: the ruin yard (RUINS-PLAN-v0 §7.2)                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The ground beside a shell that fell in.
+ *
+ * It is the cottage garden's own geometry — the plot on the quiet side, the
+ * fence on its three outer edges — with everything about it gone over: the
+ * surface worn to coarse dirt and grit at a density the band's `intensity`
+ * sets, a scatter of full blocks of the shell's **own** survivor material (the
+ * apron spill extended outward, not a second mechanism), the fence run with
+ * gaps in it and **no gate**, and the volunteer growth lifted where the
+ * building actually fell.
+ *
+ * Reusing the garden's plot rather than inventing a ruin-shaped rect is the
+ * ruin law again: a ruined lot is the ordinary lot decayed, not a second
+ * grammar. It also means the yard inherits, for free, every rule that keeps the
+ * garden out of trouble — the relief clamp, the fence never touching masonry,
+ * the reservation the whole pass reads.
+ */
+function dressRuinYard(
+  input: GroundPassInput,
+  states: GroundStates,
+  built: BuiltBuilding,
+  intensity: number,
+  free: (x: number, z: number) => number,
+  taken: Uint8Array,
+  blocks: StructureBlock[],
+): number {
+  const { plan, seed } = input;
+  const rect = built.footprint;
+  const side = quietSide(input, rect);
+  const dial = clampUnit(intensity);
+  const plot: Rect =
+    side === "north"
+      ? { x0: rect.x0, x1: rect.x1, z0: rect.z0 - GARDEN_DEPTH, z1: rect.z0 - 1 }
+      : side === "south"
+        ? { x0: rect.x0, x1: rect.x1, z0: rect.z1 + 1, z1: rect.z1 + GARDEN_DEPTH }
+        : side === "west"
+          ? { x0: rect.x0 - GARDEN_DEPTH, x1: rect.x0 - 1, z0: rect.z0, z1: rect.z1 }
+          : { x0: rect.x1 + 1, x1: rect.x1 + GARDEN_DEPTH, z0: rect.z0, z1: rect.z1 };
+
+  // The shell's own survivor material, taken from the plinth course it stands
+  // on: a ruin's rubble is the building, and cobblestone beside a concrete
+  // frame is the re-clad rule's mistake made outdoors (§5.2).
+  const rubbleState = survivorMaterial(built) ?? states.paveB;
+  const wear = RUIN_YARD_WEAR_MIN + (RUIN_YARD_WEAR_MAX - RUIN_YARD_WEAR_MIN) * dial;
+  const reclaim = clampUnit(
+    (input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim)) +
+      RUIN_RECLAIM_LIFT * dial,
+  );
+  const flowerDensity = GARDEN_FLOWER_DENSITY + (1 - GARDEN_FLOWER_DENSITY) * reclaim * 0.5;
+  const grassDensity = GARDEN_GRASS_DENSITY + (1 - GARDEN_GRASS_DENSITY) * reclaim * 0.7;
+
+  let count = 0;
+  for (let z = plot.z0; z <= plot.z1; z++) {
+    for (let x = plot.x0; x <= plot.x1; x++) {
+      const idx = free(x, z);
+      if (idx < 0) continue;
+      const g = plan.ground[idx] as number;
+      if (Math.abs(g - built.floorY) > LOT_MAX_RELIEF) continue;
+      taken[idx] = 1;
+      count++;
+
+      const edge = x === plot.x0 || x === plot.x1 || z === plot.z0 || z === plot.z1;
+      const againstWall =
+        (side === "north" && z === plot.z1) ||
+        (side === "south" && z === plot.z0) ||
+        (side === "west" && x === plot.x1) ||
+        (side === "east" && x === plot.x0);
+      if (edge && !againstWall) {
+        // The broken fence: the same run, with gaps. No gate — nobody has
+        // walked through this one on purpose in a long time.
+        if (hash2(seed, x, z, 44) < RUIN_YARD_FENCE_GAP * dial) continue;
+        blocks.push({ x, y: g + 1, z, stateId: states.fence });
+        continue;
+      }
+      if (edge) continue;
+
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      // The surface first: worn through in patches, and never snowed on — a
+      // yard nobody clears is bare where it is bare and green where it is not.
+      if (hash2(seed, x, z, 45) < wear) {
+        const r = hash2(seed, x, z, 46);
+        plan.surface[idx] = r < 0.5 ? states.coarse : r < 0.82 ? states.path : states.gravel;
+        plan.snow[idx] = 0;
+        if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+        continue;
+      }
+      // Then what stands on the ground that is left: rubble, or the green
+      // coming back through it.
+      if (hash2(seed, x, z, 47) < RUIN_YARD_RUBBLE_DENSITY * dial) {
+        blocks.push({ x, y: g + 1, z, stateId: rubbleState });
+        continue;
+      }
+      const r = hash2(seed, x, z, 11);
+      if (r < flowerDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 12, states.flowers) });
+      } else if (r < flowerDensity + grassDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+      }
+    }
+  }
+  return count;
+}
+
+/**
+ * The shell's own material, read off the plinth course it stands on.
+ *
+ * The lowest-keyed skirt column, in sorted key order, so the answer is a pure
+ * function of the building rather than of map iteration order.
+ */
+function survivorMaterial(built: BuiltBuilding): number | undefined {
+  const skirt = built.apron?.skirt;
+  if (skirt === undefined || skirt.size === 0) return undefined;
+  let bestKey: string | undefined;
+  for (const key of skirt.keys()) {
+    if (bestKey === undefined || key < bestKey) bestKey = key;
+  }
+  return bestKey === undefined ? undefined : skirt.get(bestKey);
+}
+
+/* -------------------------------------------------------------------------- */
+/* the broken street's volunteer growth (RUINS-PLAN-v0 §7.3)                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Grow grass and flowers on the carriageway columns the surfacer broke to soil.
+ *
+ * Deliberately plants only, never a solid: `dirt`, `grass_block` and
+ * `coarse_dirt` are all in the walkability audit's `SOLID_TOP` set and a tuft
+ * of short grass is passable, so a broken street stays a walkable street. That
+ * is §7.3's caveat, and it is the reason the break-up is allowed at all.
+ */
+function reclaimBrokenStreets(
+  input: GroundPassInput,
+  states: GroundStates,
+  blocks: StructureBlock[],
+): number {
+  const broken = input.brokenStreet;
+  const { plan, seed } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+  if (broken === undefined || broken.length !== cells) return 0;
+  const reclaim = input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim);
+  const grassDensity = BROKEN_STREET_GRASS * (0.5 + 0.5 * reclaim);
+  const flowerDensity = BROKEN_STREET_FLOWER * (0.5 + 0.5 * reclaim);
+  let grown = 0;
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (broken[idx] !== 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      // The surfacer decided the column; this only ever agrees with it, so a
+      // column something else repainted afterwards grows nothing.
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      const x = region.x0 + i;
+      const g = plan.ground[idx] as number;
+      const r = hash2(seed, x, z, 48);
+      if (r < flowerDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 49, states.flowers) });
+        grown++;
+      } else if (r < flowerDensity + grassDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+        grown++;
+      }
+    }
+  }
+  return grown;
+}
+
+/* -------------------------------------------------------------------------- */
 /* treatment 3: worn ground paint                                              */
 /* -------------------------------------------------------------------------- */
 
@@ -822,7 +1085,17 @@ function wearGround(
       // falloff toward total wear, so 0 is today's speckle and 1 is bare
       // ground everywhere the sweep reached.
       const base = WEAR_NEAR + (WEAR_FAR - WEAR_NEAR) * t;
-      const lift = input.decayCoverage === undefined ? 0 : clampUnit(input.decayCoverage);
+      // §7.3: the row's coverage is the settlement's answer; the ruin field is
+      // the local one. Ruin clusters get the worst ground and an intact pocket
+      // keeps a passable street, which is coherence for one line of arithmetic.
+      const ruin =
+        input.ruinField === undefined || input.ruinField.length !== cells
+          ? 0
+          : (input.ruinField[idx] as number);
+      const lift = clampUnit(
+        (input.decayCoverage === undefined ? 0 : clampUnit(input.decayCoverage)) +
+          RUIN_WEAR_LIFT * ruin,
+      );
       const chance = base + (1 - base) * lift;
       if (hash2(seed, x, z, 23) >= chance) continue;
       plan.surface[idx] = hash2(seed, x, z, 24) < 0.65 ? states.path : states.coarse;

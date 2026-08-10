@@ -41,6 +41,7 @@ import {
   warning,
 } from "@terrainist/spec";
 import type {
+  FarmEdge,
   LoamDiagnostic,
   PortDeclaration,
   SettlementDocument,
@@ -49,6 +50,7 @@ import type {
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { ensureFanOutRows, fanOut, intentFor, resolveIntents } from "../intent/index.js";
+import { FARM_ROWS, FARM_TODAY } from "./farm-intent.js";
 import { STRUCTURE_ROWS } from "./themes-intent.js";
 import { checkIntentVocabulary } from "./vocabulary.js";
 import { resolvePorts } from "../layout/ports.js";
@@ -81,6 +83,7 @@ import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./grounds.js";
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
+import { buildRuinField, type RuinField } from "./ruin-field.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
@@ -273,6 +276,14 @@ export interface StructureStats {
   readonly dressedColumns: number;
   /** Columns speckled with worn path paint (F2). */
   readonly wornColumns: number;
+  /** Lots dressed as a ruin yard (F19, RUINS-PLAN §7.2). */
+  readonly ruinYards: number;
+  /** Columns the ruin field reaches at all (§7.1). */
+  readonly ruinFieldColumns: number;
+  /** Carriageway columns broken back to soil (§7.3). */
+  readonly brokenStreetColumns: number;
+  /** Volunteer plants grown on those broken columns (§7.3). */
+  readonly streetReclaimBlocks: number;
   /** Precinct compounds laid out, by kit. */
   readonly airports: number;
   readonly harbours: number;
@@ -364,8 +375,25 @@ export interface StructurePassResult {
   readonly precincts?: PrecinctPassResult;
   /** F17's holdings; absent for a document with no `precinct.farm@0` node. */
   readonly farms?: FarmPassResult;
+  /**
+   * F19's per-column ruin field (RUINS-PLAN §7.1), absent when no shell ruined.
+   *
+   * Carried out of the pass because the **clearing** reads it: §7.4 lifts the
+   * tree-density multiplier over ruined ground so the wood comes back through
+   * the fabric, and the clearing is built after the structures precisely
+   * because it is derived from what they actually put on the ground.
+   */
+  readonly ruinField?: RuinField;
   readonly diagnostics: readonly LoamDiagnostic[];
   readonly stats: StructureStats;
+}
+
+/** How many columns a mask claims; 0 when there is no mask. */
+function countMask(mask: Uint8Array | undefined): number {
+  if (mask === undefined) return 0;
+  let count = 0;
+  for (let k = 0; k < mask.length; k++) if (mask[k] === 1) count++;
+  return count;
 }
 
 /** The set bits of a column mask, as indices. */
@@ -658,6 +686,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
 
   const buildings = buildBuildings(themed, input.plan, input.stack);
   diagnostics.push(...buildings.diagnostics);
+  // --- the ruin field (RUINS-PLAN-v0 §7.1) ---------------------------------
+  // Built here because here is the first moment it can be: WP-3 rolled the
+  // lots, the grammar has just told us which shells came back decayed, and the
+  // three passes that read it — the street surfacer, the ground treatment, and
+  // the clearing lift out in `terrain/compile.ts` — all run after this line.
+  // `undefined` when nothing ruined, which is the reach law made structural.
+  const ruinField = buildRuinField(
+    input.plan.region,
+    buildings.built,
+    new Map(
+      themed.map(
+        (job) =>
+          [job.nodePath, typeof job.params.decay === "number" ? job.params.decay : 0] as const,
+      ),
+    ),
+  );
   const blocks: StructureBlock[] = [];
   /** See {@link BlockSpan}. A return value only; nothing downstream reads it. */
   const blockSpans: BlockSpan[] = [];
@@ -838,6 +882,19 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       // document written before this phase.
       ...(retaining.wallColumns === 0 ? {} : { seam: retaining.seam }),
       ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+      // `decay.streetBreak` (§7.3): above `decline 0.8` a share of the
+      // carriageway goes past worn to broken. Handed over only when there is
+      // both a ruin field to cluster it on and a row asking for it, so every
+      // document below the onset surfaces exactly the street it always did.
+      ...(ruinField === undefined
+        ? {}
+        : (() => {
+            const chance = fanOut<number>(STRUCTURE_ROWS.streetBreak, rootIntent, {
+              nodePath: rootPath,
+              today: 0,
+            });
+            return chance <= 0 ? {} : { breakUp: { chance, ruinField: ruinField.field } };
+          })()),
     });
     lay("streets", streets.blocks);
     // §3.8b: one entry per surfaced segment, keyed by the surfacer's own source
@@ -981,6 +1038,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   for (const placement of placements) {
     const node = byId.get(placement.nodePath);
     if (node?.generator === undefined || !isFarmGenerator(node.generator)) continue;
+    // FARM-PLAN §10: the three fan-out rows, asked once per holding at the
+    // holding's own scope, because `intent` is not legal on a leaf and a
+    // holding's character is its region's. Each row's `today` is the value
+    // §3.3 defaults to, so a document with no intent hands `farmSettings`
+    // exactly the defaults it would have taken on its own.
+    const scoped = intentFor(intents, placement.nodePath);
+    const ctx = { nodePath: placement.nodePath };
     farmJobs.push({
       nodePath: placement.nodePath,
       placement,
@@ -988,6 +1052,14 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       seed: node.seed,
       tags: node.tags,
       ports: node.ports as Readonly<Record<string, PortDeclaration>>,
+      defaults: {
+        edge: fanOut<FarmEdge>(FARM_ROWS.edgeKit, scoped, { ...ctx, today: FARM_TODAY.edge }),
+        fallow: fanOut<number>(FARM_ROWS.fallowShare, scoped, { ...ctx, today: FARM_TODAY.fallow }),
+        crops: fanOut<readonly string[]>(FARM_ROWS.cropList, scoped, {
+          ...ctx,
+          today: FARM_TODAY.crops,
+        }),
+      },
     });
   }
   const farms: FarmPassResult | undefined =
@@ -1298,6 +1370,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     // decay. The **yard** is deliberately absent from this mask: it is the one
     // exception, and it takes the existing `yard` treatment.
     ...(farms === undefined ? {} : { farmColumns: farms.parcelMask }),
+    // §7.2 and §7.3: the ruin field chooses `ruin_yard` and lifts the wear
+    // sweep locally; the broken mask is where the volunteer green goes.
+    ...(ruinField === undefined ? {} : { ruinField: ruinField.field }),
+    ...(streets?.broken === undefined ? {} : { brokenStreet: streets.broken }),
   });
   lay("grounds", grounds.blocks);
 
@@ -1450,6 +1526,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ...(courtyardPass.courtyards.length === 0 ? {} : { courtyards: courtyardPass }),
     ...(precincts === undefined ? {} : { precincts }),
     ...(farms === undefined ? {} : { farms }),
+    ...(ruinField === undefined ? {} : { ruinField }),
     districts,
     ...(plaza === undefined ? {} : { plaza }),
     ...(roads === undefined ? {} : { roads }),
@@ -1489,6 +1566,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       streetFurniture,
       dressedColumns: grounds.dressedColumns,
       wornColumns: grounds.wornColumns,
+      ruinYards: grounds.ruinYards,
+      ruinFieldColumns: ruinField?.columns ?? 0,
+      brokenStreetColumns: countMask(streets?.broken),
+      streetReclaimBlocks: grounds.streetReclaim,
       airports: precincts?.stats.airports ?? 0,
       harbours: precincts?.stats.harbours ?? 0,
       holdings: farms?.stats.holdings ?? 0,

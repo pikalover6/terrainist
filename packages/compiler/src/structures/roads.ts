@@ -762,7 +762,45 @@ export interface StreetSurfaceInput {
    * written before Phase 4.2, so the pass is unmoved by its presence.
    */
   readonly seam?: Uint8Array;
+  /**
+   * The street break-up (RUINS-PLAN-v0 §7.3), or absent when nothing broke.
+   *
+   * Above `decline ≥ 0.8` a share of carriageway columns goes past *worn* to
+   * **broken**: the paving is replaced by soil, and the ground pass grows the
+   * volunteer green on top of it. This is what turns a grid of clean roads
+   * between ruins into P4's street-grid remnants.
+   *
+   * It stays a **surface** change, by law (§13.3): no linework client learns a
+   * collapse mode, the levels are untouched, and every broken column is still
+   * a road the walkability audit can walk down.
+   */
+  readonly breakUp?: StreetBreakUp;
 }
+
+/** §7.3's break-up, as the surfacer takes it. */
+export interface StreetBreakUp {
+  /**
+   * Share of carriageway columns broken back to soil at the hottest part of
+   * the ruin field, 0..1 — the `decay.streetBreak` row's landing place.
+   */
+  readonly chance: number;
+  /** The per-column ruin field; the break clusters where the buildings fell. */
+  readonly ruinField: Float32Array;
+}
+
+/**
+ * How much of the break-up happens away from a ruined lot.
+ *
+ * Not zero: a dead city's streets are broken everywhere, not only outside the
+ * shells that happen to have fallen. Not one either — the field is what makes
+ * the worst ground line up with the worst buildings, which is the difference
+ * between a ruined quarter and a uniformly scruffy one.
+ */
+export const STREET_BREAK_FLOOR = 0.5;
+
+/** Hash salts for the break draw and the soil it picks — positional only. */
+const STREET_BREAK_SALT = 0x6b;
+const STREET_BREAK_MIX_SALT = 0x6c;
 
 /** What the street surfacing wrote. */
 export interface StreetSurfaceResult {
@@ -774,6 +812,13 @@ export interface StreetSurfaceResult {
   readonly bridgeColumns: number;
   /** Arterial carriageway columns, of the total. */
   readonly arterialColumns: number;
+  /**
+   * 1 on every carriageway column §7.3's break-up took back to soil.
+   *
+   * Absent when the document asked for no break-up, which is every document
+   * below `decline 0.8` and every document with no `decline` at all.
+   */
+  readonly broken?: Uint8Array;
   /**
    * What this pass would declare under the ground contract
    * (`docs/GROUND-CONTRACT-v0.md` §3.6b, and §3.7b's flights folded into it),
@@ -895,6 +940,10 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const bridged = new Uint8Array(cells);
   const paved = new Uint8Array(cells);
   const rural = resolveRoadStates(input.palette, input.stack);
+  // §7.3's mask, allocated only when a document asked for a break-up: the
+  // surfacer hands it out, and the ground pass grows the green on it.
+  const broken =
+    input.breakUp === undefined || input.breakUp.chance <= 0 ? undefined : new Uint8Array(cells);
   const urban = resolveStreetStates(
     input.palette,
     input.stack,
@@ -902,6 +951,9 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     input.theme,
     input.seed,
     input.wearChance,
+    broken === undefined || input.breakUp === undefined
+      ? undefined
+      : { spec: input.breakUp, mark: broken, region },
   );
   const blocks: StructureBlock[] = [];
   /** §3.6b, recorded as the pass runs. Never read here. */
@@ -1373,6 +1425,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     if (road[k] === 1) surfacedColumns++;
     if (bridged[k] === 1) bridgeColumns++;
     if (arterialMask[k] === 1) arterialColumns++;
+    // The state resolver is asked about columns it does not end up painting
+    // (a claim that lost, a run that was refused), so a break is only real
+    // where the pass actually surfaced the ground — and never on a deck.
+    if (broken !== undefined && broken[k] === 1 && (road[k] !== 1 || bridged[k] === 1)) {
+      broken[k] = 0;
+    }
   }
   return {
     blocks,
@@ -1380,6 +1438,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     road,
     bridgeColumns,
     arterialColumns,
+    ...(broken === undefined ? {} : { broken }),
     declaration: { segments: declaredSegments, shoulders: declaredShoulders },
   };
 }
@@ -2279,6 +2338,7 @@ function resolveStreetStates(
   theme: string | undefined,
   seed: Seed256 | undefined,
   wearChance: number | undefined,
+  breakUp: { spec: StreetBreakUp; mark: Uint8Array; region: Region } | undefined,
 ): StreetStateSet {
   const materials = streetMaterials(theme);
   const named = (name: string, fallback: number): number =>
@@ -2301,8 +2361,29 @@ function resolveStreetStates(
   // forever, whatever order the segments were walked in.
   const wearSeed = seed === undefined ? 0x5157_2ea1 : detailSeed(seed, "street.wear");
   const wear = wearChance === undefined ? STREET_WEAR_CHANCE : clamp01(wearChance);
-  const carriageway = (x: number, z: number): number =>
+  const painted = (x: number, z: number): number =>
     hash2(wearSeed, x, z, STREET_WEAR_SALT) < wear ? worn(x, z) : body(x, z);
+  // §7.3: past worn is broken. The draw is the column's own hash on its own
+  // salt, so turning the break-up on never moves the wear pattern under it —
+  // a broken column is a column that *would* have been worn or clean, decided
+  // independently, which is what keeps `decline 0.79` and `0.8` comparable.
+  const soilA = named("coarse_dirt", painted(0, 0));
+  const soilB = named("grass_block", soilA);
+  const carriageway =
+    breakUp === undefined
+      ? painted
+      : (x: number, z: number): number => {
+          const { spec, mark, region } = breakUp;
+          const i = x - region.x0;
+          const j = z - region.z0;
+          if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return painted(x, z);
+          const idx = j * region.width + i;
+          const ruin = spec.ruinField[idx] as number;
+          const local = spec.chance * (STREET_BREAK_FLOOR + (1 - STREET_BREAK_FLOOR) * ruin);
+          if (hash2(wearSeed, x, z, STREET_BREAK_SALT) >= local) return painted(x, z);
+          mark[idx] = 1;
+          return hash2(wearSeed, x, z, STREET_BREAK_MIX_SALT) < 0.55 ? soilA : soilB;
+        };
 
   const paved: RoadStates = { ...rural, surface: carriageway, shoulder: carriageway };
   return {

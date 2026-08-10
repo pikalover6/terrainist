@@ -914,10 +914,21 @@ async function compileValidated(
   // §9.1's suppression, written into the density field rather than into the
   // hull: a field is cleared ground by definition, and so is the yard. A world
   // with no holding keeps the settlement's own answer, by reference.
-  const clearing =
+  const farmed =
     structures?.farms === undefined
       ? settlementClearing
       : suppressFarmClearing(region, settlementClearing, structures.farms);
+  // RUINS-PLAN §7.4, the reclaim: the clearing is 0 inside the settlement hull,
+  // which is precisely why no tree has ever grown in a town. Over ruined ground
+  // it is lifted back up, so the wood comes back **through** the fabric rather
+  // than stopping at its edge. The kit's standing
+  // `avoidTags: ["structure", "road", "plaza"]` is what keeps those trees out
+  // of the shells and off the streets — this changes no occupancy claim, only
+  // a density, which is the whole difference between the two.
+  const clearing =
+    structures?.ruinField === undefined
+      ? farmed
+      : liftRuinClearing(region, farmed, structures.ruinField.field);
   const clip =
     structures === undefined
       ? undefined
@@ -1360,6 +1371,42 @@ function suppressFarmClearing(
   let cleared = 0;
   for (let k = 0; k < density.length; k++) if (density[k] === 0) cleared++;
   return { hulls, density, clearedColumns: cleared };
+}
+
+/**
+ * How much canopy the ruin field lets back inside the clearing (§7.4).
+ *
+ * Not 1: a ruined quarter is overgrown, not a forest that ate a town — the
+ * streets and the standing shells still have to read from the air. 0.8 is
+ * dense enough that "overgrowth dominates" is true of a walk through it.
+ */
+export const RECLAIM_CANOPY_GAIN = 0.8;
+
+/**
+ * §7.4's lift: `clearing := max(clearing, ruin · RECLAIM_CANOPY_GAIN)`.
+ *
+ * Exported for the WP-4 test, which measures the arithmetic directly: the
+ * clearing is one of two gates on a tree inside a settlement, and the other one
+ * (`forestEligibility`'s unconditional occupancy exclusion) is not this
+ * module's to open.
+ */
+export function liftRuinClearing(
+  region: Region,
+  clearing: SettlementClearing | undefined,
+  ruin: Float32Array,
+): SettlementClearing {
+  const cells = region.width * region.depth;
+  const density = clearing === undefined ? new Float32Array(cells).fill(1) : clearing.density;
+  if (ruin.length !== cells) {
+    return clearing ?? { hulls: [], density, clearedColumns: 0 };
+  }
+  for (let k = 0; k < cells; k++) {
+    const lifted = (ruin[k] as number) * RECLAIM_CANOPY_GAIN;
+    if (lifted > (density[k] as number)) density[k] = lifted;
+  }
+  let cleared = 0;
+  for (let k = 0; k < density.length; k++) if (density[k] === 0) cleared++;
+  return { hulls: clearing?.hulls ?? [], density, clearedColumns: cleared };
 }
 
 /** §9.1's 4-column margin around the parcel union, chebyshev. */
