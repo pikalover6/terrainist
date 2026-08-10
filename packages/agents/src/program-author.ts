@@ -67,11 +67,15 @@ export const MAX_PROGRAM_SOURCE_BYTES = 64 * 1024;
 /**
  * Per-world authoring spend stop, checked *before* each call.
  *
- * Not a tight bound at today's ~$0.03 per artifact. It exists so a world
+ * Not a tight bound at today's ~$0.03–0.07 per artifact. It exists so a world
  * degrades to stdlib rather than overrunning, and so it is never discovered to
- * be missing.
+ * be missing. Raised 0.50 → 1.00 with the centerpiece-first steering
+ * (SHIP-PLAN F18): two or three landmarks with repair rounds must fit under
+ * the stop, or the boldness the kit now asks for is silently truncated on a
+ * bad day. Unit economics hold: the stop is a ceiling, not a typical spend,
+ * and $5 buys three variations.
  */
-export const DEFAULT_BESPOKE_BUDGET_USD = 0.5;
+export const DEFAULT_BESPOKE_BUDGET_USD = 1.0;
 
 /** The area the budget rule is written against: one 512×512 region. */
 const BUDGET_UNIT_AREA = 512 * 512;

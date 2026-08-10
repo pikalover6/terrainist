@@ -421,10 +421,16 @@ prompt
   → zip + persisted <name>.loam.json and <name>.report.json
 ```
 
-Cost control: stdlib bias, per-program budgets and a spend stop, and a revision
-conversation that carries the kit, the prompt, the *current* document and the
-current diagnostics — nothing else (superseded rounds collapse to one marker
-line, which cut round cost by roughly an order of magnitude).
+Cost control: per-program budgets and a spend stop ($1.00/world default,
+raised from $0.50 with F18), and a revision conversation that carries the
+kit, the prompt, the *current* document and the current diagnostics — nothing
+else (superseded rounds collapse to one marker line, which cut round cost by
+roughly an order of magnitude). The stdlib bias was **recalibrated 2026-08-09
+(F18, Kai's citadel verdict)**: stdlib still builds the fabric, but the kit
+now steers the prompt's *centerpiece* — the one image the player remembers
+the world by — to a bespoke landmark even when an archetype could approximate
+it, and invites two or three landmarks on strong prompts. "Requesting nothing"
+is right only for prompts with no centerpiece.
 
 Kits are the system prompts, and they live in `docs/kits/*.md` so that a human
 editing guidance and the test validating its examples read the same bytes.

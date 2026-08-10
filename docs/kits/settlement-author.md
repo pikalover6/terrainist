@@ -2295,19 +2295,33 @@ structure and hands back a shape the compiler places like any other node.
 
 ### When to reach for one
 
-Ask for a program when **either** is true:
+**Find the prompt's centerpiece first.** Most prompts carry one image the
+player will remember the world by — the citadel over the mist, the horse
+inside the gates, the mothership in the dunes. That centerpiece should be a
+bespoke landmark **even when an archetype could approximate it**: the
+archetype version is a stock part wearing the right label; the program
+version is the prompt's own. A `castle` archetype makes *a* castle — only a
+program makes **the** castle the prompt described. When in doubt, ask.
+
+Beyond the centerpiece, ask for a program when **either** is true:
 
 - the prompt names a specific structure the archetype list does not have, and
   the world would be missing its point without it; or
 - one custom element **repeats** across the world and should look different
   every time (twelve crashed pods, thirty alien mushroom towers).
 
-Do **not** ask for one for anything the kit already builds — houses, towers,
-walls, bridges, roads, docks, trees, fountains, carts. A program costs a model
-call and a verification pass; a cottage costs neither. **Requesting nothing is
-a perfectly good answer** for a world whose prompt asks for nothing bespoke,
-and a padded list is worse than an empty one, because each extra request eats
-the world's budget before the ones that matter.
+A strong prompt often deserves **two or three landmarks** — the centerpiece
+and its supporting cast (the citadel and its shattered gatehouse; the wreck
+and the beachhead command post). Spend them like shots in a film: one wide,
+one close — not twelve of everything.
+
+Do **not** ask for one for the fabric the kit already builds well — houses,
+towers, walls, bridges, roads, docks, trees, fountains, carts. A program
+costs a model call and a verification pass; a cottage costs neither. A padded
+list is worse than a sharp one, because each extra request eats the world's
+budget before the ones that matter. But **requesting nothing is the right
+answer only for a prompt with no centerpiece** — a plain village, an empty
+moor. If you can name the image the prompt wants remembered, request it.
 
 ### How to write the request
 

@@ -133,7 +133,7 @@ generate options:
   --no-intent       Skip the classify-the-prompt intent pre-pass.
   --no-programs     Skip bespoke program authoring.
   --bespoke-budget <usd>
-                    Per-world spend stop for bespoke programs (default 0.50).
+                    Per-world spend stop for bespoke programs (default 1.00).
   --intent <json>   Use this intent object instead of classifying the prompt.
                     Validated before the run starts.
   --keep-doc        Keep the authored .loam.json after a successful compile.
