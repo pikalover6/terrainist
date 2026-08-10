@@ -1,0 +1,862 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "farmtown_invasion",
+    "worldSeed": "302",
+    "prompt": "A small farm town being invaded by aliens.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:dirt_path",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cobblestone"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "character": {
+      "label": "small farm town",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "barn"
+        ],
+        "forbid": []
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head"
+        ],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [
+          "oak_round"
+        ],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.1
+      },
+      "programs": [
+        {
+          "id": "alien_mothership",
+          "mode": "landmark",
+          "brief": "A huge alien mothership hangs low over the town, with a damaged saucer-like hull, peeled-back plates, a luminous invasion bay and landing beams aimed toward the surrounding fields; it must read as an alien flagship rather than a medieval building.",
+          "envelope": [
+            64,
+            48,
+            64
+          ]
+        },
+        {
+          "id": "alien_drop_pod",
+          "mode": "plugin",
+          "brief": "A small alien drop pod has crashed into farmland at a steep angle, surrounded by a scorched crater ring with a blown hatch and strange luminous machinery.",
+          "envelope": [
+            9,
+            8,
+            9
+          ],
+          "count": 18
+        }
+      ]
+    },
+    "tokens": {
+      "invasion": "Aliens are invading the ordinary medieval farm town; the settlement itself is not futuristic."
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the farm town beneath an alien invasion",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle rolling farmland around the town",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 69,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the shallow shelf beneath the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.15,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "oak_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "an oak grove along the northern edge of the farmland",
+        "params": {
+          "area": {
+            "zone": "northwest"
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.42,
+            "flowers": 0.05,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "oak_round",
+              "weight": 3,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 14
+            },
+            {
+              "id": "young_oak",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 3,
+              "maxHeight": 8
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scattered oaks across the open country",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "town_green",
+        "kind": "primitive",
+        "label": "the small green at the heart of town",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage on the western side of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              32
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage on the eastern side of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              32
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the cottage facing south toward the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              32
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_lane",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage set back along the farm lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 128
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 42
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the modest inn on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              32
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smithy kept just beyond the houses",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 160
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 42
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "barn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the shared barn at the edge of town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            9,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 16,
+            "max": 220
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8,
+            "max": 220
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barn"
+        ]
+      },
+      {
+        "id": "east_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the eastern holding with wheat, roots and pasture",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 5,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "carrots",
+            "pasture"
+          ],
+          "farmstead": "auto",
+          "edge": "fence",
+          "fallow": 0.05
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              16,
+              180
+            ]
+          },
+          {
+            "distance": "town_green",
+            "min": 20,
+            "max": 300
+          },
+          {
+            "terrain_conform": "drape",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 42
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "west_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the western holding under the oak edge",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 4,
+          "parcelSize": 17,
+          "crops": [
+            "wheat",
+            "potatoes",
+            "berries"
+          ],
+          "farmstead": "auto",
+          "edge": "fence",
+          "fallow": 0.05
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              8,
+              180
+            ]
+          },
+          {
+            "distance": "town_green",
+            "min": 20,
+            "max": 300
+          },
+          {
+            "terrain_conform": "drape",
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "village_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the roofed well beside the green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.15
+        },
+        "tags": [
+          "public",
+          "water"
+        ]
+      },
+      {
+        "id": "farm_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a farm cart left near the town lanes",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.25
+        },
+        "tags": [
+          "farm",
+          "working"
+        ]
+      },
+      {
+        "id": "mothership",
+        "kind": "generator",
+        "generator": "authored:alien_mothership",
+        "label": "the alien mothership hanging over the town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            64,
+            48,
+            64
+          ]
+        },
+        "params": {
+          "hover": 36
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "alien",
+          "invasion",
+          "landmark"
+        ]
+      },
+      {
+        "id": "crashed_pods",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "eighteen crashed alien pods across the town's fields",
+        "params": {
+          "program": "alien_drop_pod",
+          "count": 18,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.28
+          },
+          "spacing": 24,
+          "maxSlope": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "seat": "embed",
+          "embedDepth": 4
+        },
+        "tags": [
+          "alien",
+          "invasion"
+        ]
+      },
+      {
+        "id": "farm_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "dirt lanes linking the green, homes, farms and working buildings",
+        "params": {
+          "anchors": [
+            "town_green",
+            "#tag:house",
+            "smithy",
+            "barn",
+            "east_holding",
+            "west_holding"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "alien_mothership": {
+      "mode": "landmark",
+      "envelope": [
+        64,
+        48,
+        64
+      ],
+      "sourceHash": "b3:67afef9ac28b35f3e1ec6e159b960dd5f40631f9cc6c813cdd6bfd07388b6ebf",
+      "outputHash": "b3:6c9fbe5e71baba00bb47b0689825c7a79071b2cee9eeebcb1d6174d244265ffb",
+      "source": "export const envelope = [64, 48, 64];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const cx = Math.floor(W / 2);\n  const cz = Math.floor(D / 2);\n\n  const metal = \"minecraft:obsidian\";\n  const shell = \"minecraft:deepslate_tiles\";\n  const violet = \"minecraft:purpur_block\";\n  const scar = \"minecraft:crying_obsidian\";\n  const crystal = \"minecraft:amethyst_block\";\n  const pale = \"minecraft:end_stone_bricks\";\n  const foot = \"minecraft:polished_blackstone\";\n  const glow = \"minecraft:glowstone\";\n\n  function isEmptyInterior(x, y, z) {\n    if (y < 15 || y > 20) {\n      return false;\n    }\n\n    const bay =\n      x >= 25 && x <= 39 &&\n      z >= 25 && z <= 39;\n\n    const passage =\n      x >= 27 && x <= 37 &&\n      z >= 40 && z <= 62;\n\n    return bay || passage;\n  }\n\n  function put(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) {\n      return;\n    }\n\n    if (isEmptyInterior(x, y, z)) {\n      return;\n    }\n\n    api.set(x, y, z, block);\n  }\n\n  function stamp(x, y, z, block, radius) {\n    for (let dx = -radius; dx <= radius; dx++) {\n      for (let dz = -radius; dz <= radius; dz++) {\n        put(x + dx, y, z + dz, block);\n      }\n    }\n  }\n\n  function disc(y, radius, block) {\n    for (let dx = -radius; dx <= radius; dx++) {\n      for (let dz = -radius; dz <= radius; dz++) {\n        if (dx * dx + dz * dz <= radius * radius) {\n          put(cx + dx, y, cz + dz, block);\n        }\n      }\n    }\n  }\n\n  function terrainBase(x, z) {\n    const h = api.heightAt(x, z);\n\n    if (!(h >= 0)) {\n      return 0;\n    }\n\n    let b = Math.floor(h);\n\n    if (b < 0) {\n      b = 0;\n    }\n\n    if (b > 11) {\n      b = 11;\n    }\n\n    return b;\n  }\n\n  function makeLandingBeam(px, pz, style) {\n    let minBase = 11;\n\n    for (let dx = -2; dx <= 2; dx++) {\n      for (let dz = -2; dz <= 2; dz++) {\n        const b = terrainBase(px + dx, pz + dz);\n        if (b < minBase) {\n          minBase = b;\n        }\n      }\n    }\n\n    if (minBase < 0) {\n      minBase = 0;\n    }\n\n    if (minBase > 11) {\n      minBase = 11;\n    }\n\n    for (let y = minBase; y <= Math.min(12, minBase + 1); y++) {\n      for (let dx = -2; dx <= 2; dx++) {\n        for (let dz = -2; dz <= 2; dz++) {\n          const block =\n            ((dx * 3 + dz * 5 + y + style) % 4 === 0)\n              ? pale\n              : foot;\n          put(px + dx, y, pz + dz, block);\n        }\n      }\n    }\n\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        const localBase = terrainBase(px + dx, pz + dz);\n\n        for (let y = localBase; y <= 12; y++) {\n          const block =\n            ((dx + dz + y + style) % 5 === 0)\n              ? violet\n              : metal;\n          put(px + dx, y, pz + dz, block);\n        }\n\n        for (let y = minBase; y <= Math.min(localBase, 12); y++) {\n          put(px + dx, y, pz + dz, metal);\n        }\n      }\n    }\n\n    for (let y = minBase + 1; y <= 12; y++) {\n      if ((y + style) % 4 === 0) {\n        put(px, y, pz, glow);\n      }\n    }\n\n    for (let dx = -2; dx <= 2; dx++) {\n      for (let dz = -2; dz <= 2; dz++) {\n        put(\n          px + dx,\n          12,\n          pz + dz,\n          ((dx + dz + style) % 3 === 0) ? scar : metal\n        );\n      }\n    }\n\n    put(px, 12, pz, glow);\n  }\n\n  const profile = [\n    0.48,\n    0.72,\n    0.98,\n    1.10,\n    1.18,\n    1.24,\n    1.28,\n    1.31,\n    1.32,\n    1.29,\n    1.23,\n    1.12,\n    0.98,\n    0.82,\n    0.64,\n    0.46,\n    0.30,\n    0.17\n  ];\n\n  function hullBlock(x, y, z, q) {\n    const n = Math.abs(x * 17 + y * 11 + z * 23) % 12;\n\n    if (y <= 12) {\n      return n % 4 === 0 ? scar : metal;\n    }\n\n    if (q > 0.88) {\n      return n % 3 === 0 ? shell : metal;\n    }\n\n    if (y >= 21 && q < 0.36) {\n      return n % 3 === 0 ? crystal : violet;\n    }\n\n    if (n % 7 === 0) {\n      return scar;\n    }\n\n    return n % 2 === 0 ? violet : crystal;\n  }\n\n  for (let y = 10; y <= 27; y++) {\n    const maxQ = profile[y - 10];\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const q =\n          (dx * dx) / (28 * 28) +\n          (dz * dz) / (26 * 26);\n\n        if (q <= maxQ) {\n          put(x, y, z, hullBlock(x, y, z, q));\n        }\n      }\n    }\n  }\n\n  for (let x = 25; x <= 39; x++) {\n    for (let z = 25; z <= 39; z++) {\n      put(x, 14, z, ((x + z) % 5 === 0) ? scar : violet);\n\n      if ((x * 3 + z * 5) % 7 === 0) {\n        put(x, 14, z, glow);\n      }\n    }\n  }\n\n  for (let z = 40; z <= 62; z++) {\n    for (let x = 27; x <= 37; x++) {\n      put(x, 14, z, ((x + z) % 5 === 0) ? scar : violet);\n    }\n\n    if (z === 42 || z === 48 || z === 54) {\n      put(32, 14, z, glow);\n    }\n  }\n\n  for (let y = 15; y <= 20; y++) {\n    for (let z = 25; z <= 39; z++) {\n      put(24, y, z, ((y + z) % 5 === 0) ? crystal : metal);\n      put(40, y, z, ((y + z + 2) % 5 === 0) ? crystal : metal);\n    }\n\n    for (let x = 25; x <= 39; x++) {\n      put(x, y, 24, ((x + y) % 4 === 0) ? scar : shell);\n    }\n\n    for (let x = 25; x <= 26; x++) {\n      put(x, y, 40, ((x + y) % 3 === 0) ? crystal : metal);\n    }\n\n    for (let x = 38; x <= 39; x++) {\n      put(x, y, 40, ((x + y + 1) % 3 === 0) ? crystal : metal);\n    }\n\n    for (let z = 40; z <= 60; z++) {\n      put(26, y, z, ((y + z) % 6 === 0) ? glow : metal);\n      put(38, y, z, ((y + z + 2) % 6 === 0) ? glow : metal);\n    }\n  }\n\n  for (let z = 40; z <= 60; z++) {\n    for (let x = 26; x <= 38; x++) {\n      put(x, 21, z, ((x + z) % 6 === 0) ? scar : shell);\n    }\n  }\n\n  for (let y = 16; y <= 19; y++) {\n    for (let z = 27; z <= 37; z += 5) {\n      put(24, y, z, glow);\n      put(40, y, z, glow);\n    }\n\n    for (let x = 28; x <= 36; x += 4) {\n      put(x, y, 24, glow);\n    }\n  }\n\n  put(32, 14, 32, glow);\n  put(32, 14, 36, glow);\n  put(32, 14, 40, glow);\n\n  function radialStamp(angle, y, start, end, block, radius) {\n    for (let t = start; t <= end; t++) {\n      const x = Math.round(cx + Math.cos(angle) * t);\n      const z = Math.round(cz + Math.sin(angle) * t);\n      stamp(x, y, z, block, radius);\n    }\n  }\n\n  const crackAngles = [0.32, 1.68, 3.04, 4.22];\n\n  for (let i = 0; i < crackAngles.length; i++) {\n    radialStamp(crackAngles[i], 22, 13, 26, scar, 1);\n  }\n\n  for (let i = 0; i < 36; i++) {\n    const angle = (Math.PI * 2 * i) / 36;\n    const x = Math.round(cx + Math.cos(angle) * 17);\n    const z = Math.round(cz + Math.sin(angle) * 17);\n    put(x, 18, z, i % 3 === 0 ? glow : crystal);\n  }\n\n  for (let i = 0; i < 32; i++) {\n    const angle = (Math.PI * 2 * i) / 32;\n    const x = Math.round(cx + Math.cos(angle) * 22);\n    const z = Math.round(cz + Math.sin(angle) * 22);\n    put(x, 22, z, i % 4 === 0 ? glow : scar);\n  }\n\n  function peeledPlate(angle, block, width, end) {\n    for (let t = 12; t <= end; t++) {\n      const level = 23 + Math.floor((t - 12) / 4);\n      const x = Math.round(cx + Math.cos(angle) * t);\n      const z = Math.round(cz + Math.sin(angle) * t);\n\n      stamp(x, level - 1, z, block, width);\n      stamp(x, level, z, block, width);\n\n      if ((t - 12) % 5 === 0) {\n        stamp(\n          x,\n          level + 1,\n          z,\n          block,\n          Math.max(0, width - 1)\n        );\n      }\n    }\n  }\n\n  peeledPlate(0.28, violet, 2, 30);\n  peeledPlate(1.30, metal, 1, 28);\n  peeledPlate(2.38, crystal, 2, 29);\n  peeledPlate(3.32, shell, 2, 27);\n  peeledPlate(4.42, scar, 1, 30);\n  peeledPlate(5.35, pale, 2, 29);\n\n  const towerRadii = [7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2];\n\n  for (let i = 0; i < towerRadii.length; i++) {\n    const y = 26 + i;\n    const radius = towerRadii[i];\n    const block =\n      i % 4 === 0 ? crystal :\n      (i % 4 === 1 ? violet : metal);\n\n    disc(y, radius, block);\n\n    if (i % 3 === 0) {\n      put(cx, y, cz, glow);\n    }\n  }\n\n  disc(38, 2, scar);\n  disc(39, 2, violet);\n  disc(40, 1, crystal);\n  disc(41, 1, metal);\n  put(cx, 40, cz, glow);\n  put(cx, 41, cz, glow);\n  put(cx, 42, cz, crystal);\n  put(cx, 43, cz, glow);\n\n  const directions = [\n    [1, 0],\n    [-1, 0],\n    [0, 1],\n    [0, -1],\n    [1, 1],\n    [1, -1],\n    [-1, 1],\n    [-1, -1]\n  ];\n\n  for (let i = 0; i < directions.length; i++) {\n    const dx = directions[i][0];\n    const dz = directions[i][1];\n\n    for (let t = 2; t <= 10; t++) {\n      const x = cx + dx * t;\n      const z = cz + dz * t;\n      const block =\n        t % 4 === 0 ? crystal :\n        (i % 2 === 0 ? violet : shell);\n\n      stamp(x, 35, z, block, 1);\n    }\n  }\n\n  const beamPoints = [\n    [32, 10],\n    [54, 32],\n    [32, 54],\n    [10, 32],\n    [17, 17],\n    [47, 17],\n    [47, 47],\n    [17, 47]\n  ];\n\n  for (let i = 0; i < beamPoints.length; i++) {\n    makeLandingBeam(\n      beamPoints[i][0],\n      beamPoints[i][1],\n      i\n    );\n  }\n\n  return {\n    name: \"Alien Mothership\",\n    seatY: 0,\n    anchors: {\n      door: [32, 15, 40],\n      invasion_bay: [32, 16, 32],\n      boarding_ramp: [32, 14, 54],\n      north_landing_beam: [32, 12, 10],\n      command_spire: [32, 43, 32]\n    },\n    interiors: [\n      {\n        min: [25, 15, 25],\n        max: [39, 20, 39],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    },
+    "alien_drop_pod": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        8,
+        9
+      ],
+      "sourceHash": "b3:caa4debc4bead4a2949c3acf772eeb3ffaa5c2cf309e945dbddbaa67647bc63c",
+      "outputHash": "b3:893b06cfca967b24cd52d5d1059a54a30a54147b033c0c4abc3aa671ca51d766",
+      "source": "export const envelope = [9, 8, 9];\n\nexport default function build(api) {\n  const W = 9;\n  const H = 8;\n  const D = 9;\n\n  const index = api.instance.index;\n  const instanceCount = api.instance.count;\n\n  const r0 = api.random();\n  const r1 = api.random();\n  const r2 = api.random();\n  const r3 = api.random();\n  const r4 = api.random();\n  const r5 = api.random();\n  const r6 = api.random();\n  const r7 = api.random();\n\n  function mod(n, m) {\n    const r = n % m;\n    return r < 0 ? r + m : r;\n  }\n\n  function clampInt(value, low, high) {\n    return Math.max(low, Math.min(high, Math.round(value)));\n  }\n\n  const grid = new Array(W * H * D);\n  for (let i = 0; i < grid.length; i += 1) {\n    grid[i] = null;\n  }\n\n  let solid = 0;\n\n  function keyOf(x, y, z) {\n    return (y * D + z) * W + x;\n  }\n\n  function paint(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) {\n      return;\n    }\n    const key = keyOf(x, y, z);\n    if (grid[key] === null) {\n      solid += 1;\n    }\n    grid[key] = block;\n  }\n\n  function erase(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) {\n      return;\n    }\n    const key = keyOf(x, y, z);\n    if (grid[key] !== null) {\n      solid -= 1;\n      grid[key] = null;\n    }\n  }\n\n  function occupied(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) {\n      return false;\n    }\n    return grid[keyOf(x, y, z)] !== null;\n  }\n\n  const directions = [\n    [1, 0],\n    [1, 1],\n    [0, 1],\n    [-1, 1],\n    [-1, 0],\n    [-1, -1],\n    [0, -1],\n    [1, -1]\n  ];\n\n  const dirChoice = mod(\n    index * 3 + Math.floor(r0 * directions.length) + instanceCount,\n    directions.length\n  );\n  const direction = directions[dirChoice];\n  const directionLength = Math.sqrt(\n    direction[0] * direction[0] + direction[1] * direction[1]\n  );\n  const unitX = direction[0] / directionLength;\n  const unitZ = direction[1] / directionLength;\n  const perpendicularX = -unitZ;\n  const perpendicularZ = unitX;\n\n  const style = mod(\n    index + Math.floor(r1 * 6) + instanceCount,\n    6\n  );\n\n  const bedPalette = [\n    \"minecraft:blackstone\",\n    \"minecraft:basalt\",\n    \"minecraft:netherrack\",\n    \"minecraft:coarse_dirt\",\n    \"minecraft:coal_block\",\n    \"minecraft:deepslate\"\n  ];\n\n  const lowerPalette = [\n    \"minecraft:magma_block\",\n    \"minecraft:obsidian\",\n    \"minecraft:crying_obsidian\",\n    \"minecraft:polished_blackstone\",\n    \"minecraft:stone_bricks\",\n    \"minecraft:basalt\"\n  ];\n\n  const ringPalette = [\n    \"minecraft:magma_block\",\n    \"minecraft:blackstone\",\n    \"minecraft:basalt\",\n    \"minecraft:netherrack\",\n    \"minecraft:obsidian\",\n    \"minecraft:coal_block\"\n  ];\n\n  const shellOuterPalette = [\n    \"minecraft:iron_block\",\n    \"minecraft:copper_block\",\n    \"minecraft:oxidized_copper\",\n    \"minecraft:purpur_block\",\n    \"minecraft:prismarine\",\n    \"minecraft:quartz_block\"\n  ];\n\n  const shellInnerPalette = [\n    \"minecraft:deepslate\",\n    \"minecraft:dark_prismarine\",\n    \"minecraft:amethyst_block\",\n    \"minecraft:iron_block\",\n    \"minecraft:gold_block\",\n    \"minecraft:prismarine\"\n  ];\n\n  const machinePalette = [\n    \"minecraft:amethyst_block\",\n    \"minecraft:redstone_block\",\n    \"minecraft:lapis_block\",\n    \"minecraft:gold_block\",\n    \"minecraft:emerald_block\",\n    \"minecraft:sea_lantern\"\n  ];\n\n  const lightPalette = [\n    \"minecraft:sea_lantern\",\n    \"minecraft:glowstone\",\n    \"minecraft:shroomlight\",\n    \"minecraft:amethyst_block\"\n  ];\n\n  const shellOuter = shellOuterPalette[style];\n  const shellInner = shellInnerPalette[style];\n  const seamBlock = machinePalette[mod(style + index + 1, machinePalette.length)];\n  const machineBlock = machinePalette[mod(style * 2 + index + 2, machinePalette.length)];\n  const lightBlock = lightPalette[mod(index + Math.floor(r7 * 4), lightPalette.length)];\n  const ringBase = ringPalette[\n    mod(style + Math.floor(r3 * 6) + index, ringPalette.length)\n  ];\n  const ringHot = ringPalette[\n    mod(style + Math.floor(r7 * 5) + index + 2, ringPalette.length)\n  ];\n  const damageBlock = \"minecraft:cracked_stone_bricks\";\n  const finBlock = [\n    \"minecraft:polished_blackstone\",\n    \"minecraft:obsidian\",\n    \"minecraft:crying_obsidian\",\n    \"minecraft:copper_block\"\n  ][mod(index + Math.floor(r6 * 4), 4)];\n\n  const phase = Math.floor(r4 * 997);\n\n  const terrain = new Array(W * D);\n  for (let z = 0; z < D; z += 1) {\n    for (let x = 0; x < W; x += 1) {\n      terrain[x + W * z] = api.heightAt(x, z);\n    }\n  }\n\n  let maxTerrain = terrain[0];\n  for (let i = 1; i < terrain.length; i += 1) {\n    if (terrain[i] > maxTerrain) {\n      maxTerrain = terrain[i];\n    }\n  }\n\n  const terrainLift = Math.max(\n    0,\n    Math.min(2, Math.floor(maxTerrain + 0.75))\n  );\n  const roomY = 2 + terrainLift;\n\n  for (let z = 0; z < D; z += 1) {\n    for (let x = 0; x < W; x += 1) {\n      const terrainHeight = terrain[x + W * z];\n      let foundationTop = Math.floor(2 + terrainHeight + 0.5);\n      if (foundationTop < 2) {\n        foundationTop = 2;\n      }\n      if (foundationTop > 4) {\n        foundationTop = 4;\n      }\n\n      const basePick = mod(\n        x * 11 +\n          z * 7 +\n          index * 5 +\n          Math.floor(terrainHeight * 4),\n        bedPalette.length\n      );\n\n      for (let y = 0; y <= foundationTop; y += 1) {\n        if (y === 0) {\n          paint(\n            x,\n            y,\n            z,\n            bedPalette[mod(basePick + phase + y * 3, bedPalette.length)]\n          );\n        } else {\n          paint(\n            x,\n            y,\n            z,\n            lowerPalette[mod(basePick + phase + y * 5, lowerPalette.length)]\n          );\n        }\n      }\n    }\n  }\n\n  for (let z = 0; z < D; z += 1) {\n    for (let x = 0; x < W; x += 1) {\n      const dx = x - 4;\n      const dz = z - 4;\n      const distanceSquared = dx * dx + dz * dz;\n      const ringSeed = x * 17 + z * 31 + phase + index * 11;\n\n      if (distanceSquared >= 10) {\n        paint(\n          x,\n          3,\n          z,\n          ringPalette[mod(ringSeed, ringPalette.length)]\n        );\n      }\n\n      if (\n        distanceSquared >= 12 &&\n        mod(ringSeed + instanceCount, 7) !== 0\n      ) {\n        paint(\n          x,\n          4,\n          z,\n          ringPalette[mod(ringSeed + 2, ringPalette.length)]\n        );\n      }\n\n      if (\n        distanceSquared >= 14 &&\n        mod(ringSeed + instanceCount, 5) < 3 &&\n        occupied(x, 4, z)\n      ) {\n        paint(\n          x,\n          5,\n          z,\n          mod(ringSeed, 3) === 0 ? ringHot : ringBase\n        );\n      }\n\n      if (\n        distanceSquared >= 16 &&\n        occupied(x, 5, z) &&\n        mod(ringSeed + 3, 6) < 2\n      ) {\n        paint(\n          x,\n          6,\n          z,\n          ringPalette[mod(ringSeed + 4, ringPalette.length)]\n        );\n      }\n    }\n  }\n\n  const noseY = 1 + mod(\n    index + Math.floor(r2 * 4) + instanceCount,\n    2\n  );\n  const verticalSpan = 7 - noseY;\n  const lean = 0.72 + 0.1 * mod(index, 6) + 0.24 * r3;\n  const radiusX0 = 3.0 + 0.17 * r4 + 0.04 * mod(index, 4);\n  const radiusZ0 = 2.98 + 0.18 * r5 + 0.04 * mod(index + 1, 4);\n  const endScale = 0.9 + 0.025 * mod(index, 3);\n  const peakScale = 1.02 + 0.03 * r4;\n  const damageLevel = 1 + mod(index + Math.floor(r5 * 10), 4);\n\n  for (let y = noseY; y <= 7; y += 1) {\n    const t = (y - noseY) / verticalSpan;\n    const centerX = 4 + unitX * lean * t;\n    const centerZ = 4 + unitZ * lean * t;\n    const scale =\n      endScale + (peakScale - endScale) * Math.sin(Math.PI * t);\n    const radiusX = radiusX0 * scale;\n    const radiusZ = radiusZ0 * scale;\n\n    for (let z = 0; z < D; z += 1) {\n      for (let x = 0; x < W; x += 1) {\n        const dx = x - centerX;\n        const dz = z - centerZ;\n        const q =\n          (dx * dx) / (radiusX * radiusX) +\n          (dz * dz) / (radiusZ * radiusZ);\n\n        if (q <= 1) {\n          const lateral = dx * perpendicularX + dz * perpendicularZ;\n          const hash = mod(\n            x * 37 + z * 19 + y * 23 + phase + index * 11,\n            31\n          );\n\n          let block = shellOuter;\n\n          if (q < 0.23) {\n            block = shellInner;\n          }\n\n          if (\n            Math.abs(lateral) < 0.5 &&\n            mod(y + phase + index, 3) === 0\n          ) {\n            block = seamBlock;\n          }\n\n          if (q > 0.68 && hash < damageLevel) {\n            block = damageBlock;\n          }\n\n          paint(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  for (let y = 1; y < H; y += 1) {\n    paint(4, y, 4, seamBlock);\n  }\n\n  for (let y = noseY; y <= 7; y += 1) {\n    const t = (y - noseY) / verticalSpan;\n    const centerX = 4 + unitX * lean * t;\n    const centerZ = 4 + unitZ * lean * t;\n    paint(\n      clampInt(centerX, 0, W - 1),\n      y,\n      clampInt(centerZ, 0, D - 1),\n      shellInner\n    );\n  }\n\n  const primarySide = index % 2 === 0 ? 1 : -1;\n  const finStart = Math.max(2, noseY + 1);\n  const finLength = 2 + mod(index + Math.floor(r6 * 4), 3);\n  const finEnd = Math.min(6, finStart + finLength - 1);\n  const finSides =\n    1 +\n    (mod(index + Math.floor(r6 * 7) + instanceCount, 3) === 0 ? 1 : 0);\n\n  for (let f = 0; f < finSides; f += 1) {\n    const side = f === 0 ? primarySide : -primarySide;\n\n    for (let y = finStart; y <= finEnd; y += 1) {\n      const t = (y - noseY) / verticalSpan;\n      const centerX = 4 + unitX * lean * t;\n      const centerZ = 4 + unitZ * lean * t;\n      const outwardX = perpendicularX * side;\n      const outwardZ = perpendicularZ * side;\n\n      const finX = clampInt(\n        centerX + outwardX * 2.75,\n        0,\n        W - 1\n      );\n      const finZ = clampInt(\n        centerZ + outwardZ * 2.75,\n        0,\n        D - 1\n      );\n\n      const stepX = outwardX > 0.2 ? 1 : outwardX < -0.2 ? -1 : 0;\n      const stepZ = outwardZ > 0.2 ? 1 : outwardZ < -0.2 ? -1 : 0;\n\n      paint(finX, y, finZ, finBlock);\n      paint(\n        clampInt(finX + stepX, 0, W - 1),\n        y,\n        finZ,\n        finBlock\n      );\n      paint(\n        finX,\n        y,\n        clampInt(finZ + stepZ, 0, D - 1),\n        finBlock\n      );\n      paint(\n        clampInt(finX + stepX, 0, W - 1),\n        y,\n        clampInt(finZ + stepZ, 0, D - 1),\n        finBlock\n      );\n    }\n  }\n\n  const nodeStart = Math.max(2, noseY + 1);\n  for (let y = nodeStart; y <= 6; y += 1) {\n    const t = (y - noseY) / verticalSpan;\n    const centerX = 4 + unitX * lean * t;\n    const centerZ = 4 + unitZ * lean * t;\n    const nodeSides =\n      1 +\n      (mod(index + y + instanceCount, 4) === 0 ? 1 : 0);\n\n    for (let n = 0; n < nodeSides; n += 1) {\n      const side = n === 0 ? primarySide : -primarySide;\n      const nodeX = clampInt(\n        centerX + perpendicularX * side * 2.9,\n        0,\n        W - 1\n      );\n      const nodeZ = clampInt(\n        centerZ + perpendicularZ * side * 2.9,\n        0,\n        D - 1\n      );\n      const conduitX = clampInt(\n        centerX + perpendicularX * side * 2.15,\n        0,\n        W - 1\n      );\n      const conduitZ = clampInt(\n        centerZ + perpendicularZ * side * 2.15,\n        0,\n        D - 1\n      );\n\n      paint(nodeX, y, nodeZ, lightBlock);\n      paint(conduitX, y, conduitZ, machineBlock);\n    }\n  }\n\n  const impactOffsets = [\n    [0, 0],\n    [1, 0],\n    [-1, 0],\n    [0, 1],\n    [0, -1],\n    [1, 1],\n    [-1, 1]\n  ];\n  const turnCount = dirChoice % 4;\n\n  for (let k = 0; k < impactOffsets.length; k += 1) {\n    let ox = impactOffsets[k][0];\n    let oz = impactOffsets[k][1];\n\n    for (let turn = 0; turn < turnCount; turn += 1) {\n      const oldX = ox;\n      ox = -oz;\n      oz = oldX;\n    }\n\n    paint(\n      clampInt(4 + ox, 0, W - 1),\n      2 + mod(k + index, 2),\n      clampInt(4 + oz, 0, D - 1),\n      k % 3 === 0 ? lightBlock : machineBlock\n    );\n  }\n\n  const beaconX = clampInt(4 + unitX * lean, 0, W - 1);\n  const beaconZ = clampInt(4 + unitZ * lean, 0, D - 1);\n  paint(beaconX, 7, beaconZ, lightBlock);\n\n  const salvage = [\n    shellOuter,\n    shellInner,\n    ringBase,\n    damageBlock,\n    ringHot\n  ];\n  const targetSolid = 540;\n\n  for (let y = 2; y < H && solid < targetSolid; y += 1) {\n    for (let z = 0; z < D && solid < targetSolid; z += 1) {\n      for (let x = 0; x < W && solid < targetSolid; x += 1) {\n        if (!occupied(x, y, z)) {\n          paint(\n            x,\n            y,\n            z,\n            salvage[\n              mod(x * 7 + z * 11 + y * 13 + index + phase, salvage.length)\n            ]\n          );\n        }\n      }\n    }\n  }\n\n  const roomFloor = lowerPalette[\n    mod(style + index + 3, lowerPalette.length)\n  ];\n\n  for (let z = 3; z <= 5; z += 1) {\n    for (let x = 3; x <= 5; x += 1) {\n      paint(x, roomY - 1, z, roomFloor);\n      paint(x, roomY + 3, z, shellOuter);\n    }\n  }\n\n  for (let y = roomY - 1; y <= roomY + 2; y += 1) {\n    for (let a = 3; a <= 5; a += 1) {\n      paint(2, y, a, shellOuter);\n      paint(6, y, a, shellOuter);\n      paint(a, y, 2, shellOuter);\n      paint(a, y, 6, shellOuter);\n    }\n  }\n\n  for (let y = roomY; y <= roomY + 2; y += 1) {\n    for (let z = 3; z <= 5; z += 1) {\n      for (let x = 3; x <= 5; x += 1) {\n        erase(x, y, z);\n      }\n    }\n  }\n\n  const doorDirections = [\n    [0, -1],\n    [1, 0],\n    [0, 1],\n    [-1, 0]\n  ];\n  const doorSide = mod(\n    index + Math.floor(r7 * 4) + instanceCount,\n    doorDirections.length\n  );\n  const doorVector = doorDirections[doorSide];\n  const doorPerpendicular = [-doorVector[1], doorVector[0]];\n\n  for (let distance = 1; distance <= 4; distance += 1) {\n    const tunnelX = 4 + doorVector[0] * distance;\n    const tunnelZ = 4 + doorVector[1] * distance;\n\n    for (let y = roomY; y <= roomY + 1; y += 1) {\n      erase(tunnelX, y, tunnelZ);\n    }\n  }\n\n  for (let side = -1; side <= 1; side += 2) {\n    for (let y = roomY; y <= roomY + 1; y += 1) {\n      paint(\n        clampInt(\n          4 +\n            doorVector[0] * 2 +\n            doorPerpendicular[0] * side,\n          0,\n          W - 1\n        ),\n        y,\n        clampInt(\n          4 +\n            doorVector[1] * 2 +\n            doorPerpendicular[1] * side,\n          0,\n          D - 1\n        ),\n        shellOuter\n      );\n    }\n  }\n\n  const frameX = clampInt(\n    4 + doorVector[0] * 2,\n    0,\n    W - 1\n  );\n  const frameZ = clampInt(\n    4 + doorVector[1] * 2,\n    0,\n    D - 1\n  );\n\n  paint(frameX, roomY - 1, frameZ, ringHot);\n  paint(frameX, roomY + 2, frameZ, ringHot);\n\n  paint(\n    clampInt(\n      4 +\n        doorVector[0] * 3 +\n        doorPerpendicular[0] * primarySide,\n      0,\n      W - 1\n    ),\n    roomY + 1,\n    clampInt(\n      4 +\n        doorVector[1] * 3 +\n        doorPerpendicular[1] * primarySide,\n      0,\n      D - 1\n    ),\n    lightBlock\n  );\n\n  const doorX = clampInt(4 + doorVector[0] * 4, 0, W - 1);\n  const doorZ = clampInt(4 + doorVector[1] * 4, 0, D - 1);\n\n  const signatureBlocks = [\n    \"minecraft:iron_block\",\n    \"minecraft:copper_block\",\n    \"minecraft:oxidized_copper\",\n    \"minecraft:purpur_block\",\n    \"minecraft:amethyst_block\",\n    \"minecraft:prismarine\",\n    \"minecraft:dark_prismarine\",\n    \"minecraft:quartz_block\",\n    \"minecraft:gold_block\",\n    \"minecraft:redstone_block\",\n    \"minecraft:lapis_block\",\n    \"minecraft:emerald_block\",\n    \"minecraft:sea_lantern\",\n    \"minecraft:glowstone\",\n    \"minecraft:obsidian\",\n    \"minecraft:crying_obsidian\",\n    \"minecraft:netherite_block\",\n    \"minecraft:magma_block\"\n  ];\n\n  const signatureIndex = mod(index, signatureBlocks.length);\n  paint(\n    signatureIndex % 9,\n    0,\n    Math.floor(signatureIndex / 9),\n    signatureBlocks[signatureIndex]\n  );\n\n  for (let y = 0; y < H; y += 1) {\n    for (let z = 0; z < D; z += 1) {\n      for (let x = 0; x < W; x += 1) {\n        const block = grid[keyOf(x, y, z)];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Alien Drop Pod\",\n    seatY: 2,\n    anchors: {\n      door: [doorX, roomY, doorZ],\n      hatch: [doorX, roomY, doorZ],\n      core: [4, roomY, 4]\n    },\n    interiors: [\n      {\n        min: [3, roomY, 3],\n        max: [5, roomY + 2, 5],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}
