@@ -79,10 +79,22 @@ NO-CAP ruling enforced past the plan's own pseudocode via
 refusal, W511, I512; lint-zero at 0.9 and 1.0). Hygiene wart: 8dcb8ff
 alone doesn't build (shared diagnostics rode with ef4fc49).
 
-**IN FLIGHT (wave 6):** ruins WP-4 (ground/reclaim: ruin_yard, wear
-lift, street breaking ≥0.8, trees through fabric) + farm WP-5 (kit
-teaching + total fan-out rows; kit docs owned by farm this wave; ruins
-WP-5 kit queued after).
+**Wave 6 LANDED:** farm WP-5 (43130f6 — F17 CODE-COMPLETE: kit section
+teaches built truth, three total fan-out rows by-reference, example's
+THIRD syntax fix now kit-test-validated; Luna e2e farm demo left for
+orchestrator = folds into battery candidates). Ruins WP-4 (4a923ed:
+ruin field, ruin_yard, street breaking ≥0.8 plants-only, reclaim lift)
+— but TWO findings: forestEligibility's unconditional occupancy
+exclusion keeps ALL trees out of the quarter (P4's overgrowth inert;
+ruling: open for ruin-field>0 columns, keep building/interior/road/
+plaza/prop excluded), and pre-existing traversal.unreachable on potted
+plants in decayed shells (seeds 304-306; breaks lint-zero gate).
+
+**IN FLIGHT (wave 7):** ruins-closure medium (both findings — the P4
+gate) + ruins WP-5 kit (low). After: F19 code-complete → first battery
+candidates P2+P4 (also serves as farm demo). Kai's ruling batch still
+queued (terrace bays / collapse promotion / light-band retune /
+STREET_BREAK_FLOOR / intact-lot-ruined-yard nuance).
 
 **Rulings owed to Kai (batch, next active):** terrace bays don't roll
 yet (separate emitter — pristine rows amid total ruin, visible in P4);
