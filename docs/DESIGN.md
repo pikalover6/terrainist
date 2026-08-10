@@ -1091,6 +1091,17 @@ repair* is locked to manual.
   hid: program output is the one array whose length a *model* chooses —
   audit any future spread-append against that class.
 
+- **`LOAM-E497 SITE_PLAN_FAILED` now blocks harbour-class compiles —
+  ELEVATED 2026-08-09, next in queue.** With F22's fix placing districts
+  properly, harbour_city's old_town lands on real shoreline ground where
+  the retaining pass finds 3 seam columns with no platform to stand a
+  wall on, and the compile aborts. Pre-existing site-planner bug the
+  coin-toss placement had masked; it now gates any coastal district
+  prompt end to end.
+- **`DEFAULT_CANDIDATES = 96` is thin for a footprint a sixth of the
+  map** (F22 side finding) — candidate enumeration wants to scale with
+  footprint/region ratio.
+
 ## Keys and infrastructure
 
 `OPENROUTER_API_KEY` and `TRIPO_API_KEY` live in the repo-root `.env` (gitignored)
