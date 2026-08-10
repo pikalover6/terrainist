@@ -88,6 +88,23 @@ export const TERRAIN_DIAGNOSTICS = {
    * however large the world is made. Inert rather than wrong, hence a warning.
    */
   SCALE_REFERENCE_INERT: "LOAM-T117",
+  /**
+   * F21 — a scatter `area.at` radius small enough to be a units mistake.
+   *
+   * A terrain verb's `area.radius` is in **blocks** while `at` is fractional,
+   * and a model that has just written `[0.5, 0.5]` reaches for the same units
+   * for the radius beside it. `radius: 0.55` is legal (it means "half a
+   * block"), draws no tree, and says nothing — so this warns and the document
+   * still compiles. Never an error: a sub-block radius is legal Loam.
+   */
+  SCATTER_RADIUS_UNITS: "LOAM-T118",
+  /**
+   * F21 — a `scatter.forest@0` node that planted **zero** trees while asking
+   * for a non-degenerate region. Author-actionable, and in the compile
+   * feedback set: a wood nobody can see is the silent decline DESIGN.md's
+   * first failure mode is about.
+   */
+  SCATTER_EMPTY: "LOAM-T119",
 
   // --- LOAM-T2xx: settlement-profile structure -----------------------------
   // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec

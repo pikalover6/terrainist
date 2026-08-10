@@ -426,6 +426,38 @@ describe("G2.5b materials and lushness params", () => {
     return doc;
   }
 
+  // --- F21: the blocks/fraction radius trap ------------------------------
+  it("LOAM-T118 warns — never errors — when a scatter radius reads as a fraction", () => {
+    const { diagnostics, document } = validateTerrainDocument(
+      withForest({ area: { at: [0.5, 0.5], radius: 0.55 } }),
+    );
+    const found = diagnostics.find((d) => d.name === "SCATTER_RADIUS_UNITS");
+    expect(found, codesOf(diagnostics).join(", ")).toBeDefined();
+    expect(found?.code).toBe("LOAM-T118");
+    expect(found?.severity).toBe("warning");
+    expect(found?.message).toContain("BLOCKS");
+    expect(found?.message).toContain("fractional");
+    expect(found?.fix).toContain("blocks");
+    // HARD RULE: the document still compiles. A warning is not an error.
+    expect(diagnostics.some((d) => d.severity === "error")).toBe(false);
+    expect(document).toBeDefined();
+  });
+
+  it("a radius in real blocks draws nothing at all", () => {
+    for (const radius of [2, 40, 120, 512]) {
+      const { diagnostics, document } = validateTerrainDocument(
+        withForest({ area: { at: [0.5, 0.5], radius } }),
+      );
+      expect(codesOf(diagnostics), `radius ${radius}`).toEqual([]);
+      expect(document).toBeDefined();
+    }
+  });
+
+  it("a zero or negative radius is still the pre-existing error, not the warning", () => {
+    const bad = expectDiagnostic(withForest({ area: { at: [0.5, 0.5], radius: 0 } }), "MISSING_KEY");
+    expect(bad.severity).toBe("error");
+  });
+
   it("accepts lavaFlows on a volcano", () => {
     for (const flows of [0, 1, 4]) {
       const { diagnostics, document } = validateTerrainDocument(

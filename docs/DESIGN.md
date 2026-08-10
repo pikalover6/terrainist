@@ -1013,17 +1013,38 @@ repair* is locked to manual.
   district lots roll deterministically into ruined shells at high decline,
   per the existing ruin law ("the ordinary shell fit-out decayed, not a
   second grammar").
-- **`ScatterArea` mixes units and swallows the mistake** — `at` is
+- ~~**`ScatterArea` mixes units and swallows the mistake**~~ — **instrumented
+  2026-08-09 (F21).** Both guards now exist and both are in the compile
+  feedback set: `LOAM-T118 SCATTER_RADIUS_UNITS` warns at validate time on any
+  `area.radius` under 2 blocks ("radius is in BLOCKS, `at` is fractional",
+  with the f × extent / 2 conversion in the fix hint), and
+  `LOAM-T119 SCATTER_EMPTY` fires from the vegetation pass on a forest node
+  that planted zero trees, naming the node and distinguishing four causes
+  (area covers no columns / no plantable ground / all of it inside the
+  settlement clearing / density-and-spacing drew nothing). T118 is a
+  **warning** by design — a sub-block radius is legal Loam and the document
+  still compiles. Original entry: `at` is
   fractional, `radius` is blocks; Luna wrote `radius: 0.55` (meaning 55% of
   the region) and the central "ruin canopy" forest placed **zero trees**,
   silently: no validator floor on radius, and a scatter node with zero yield
   draws no author-actionable finding, so the compile-feedback loop (0 rounds
   on that world) never heard about it. Either guard would have let the
   feedback round fix the run. Ledgered by Kai's call, 2026-08-09.
-- **The emitter's biome-intent table is narrower than Luna's vocabulary** —
-  the ruins world asked for `minecraft:dark_forest` (the right biome) and
-  drew LOAM-W472, falling back to a stony_peaks clamp. Audit which vanilla
-  biomes are worth carrying rows for. Ledgered 2026-08-09.
+- ~~**The emitter's biome-intent table is narrower than Luna's vocabulary**~~
+  — **widened 2026-08-09 (F21).** `PROFILE_BIOMES` gained 20 intent-only rows
+  (`dark_forest`, `birch_forest`, `old_growth_birch_forest`, `flower_forest`,
+  `windswept_forest`, `pale_garden`, `cherry_grove`, `sunflower_plains`,
+  `meadow`, `grove`, `savanna`, `windswept_savanna`, `jungle`,
+  `sparse_jungle`, `swamp`, `snowy_taiga`, `old_growth_spruce_taiga`,
+  `old_growth_pine_taiga`, `jagged_peaks`, `frozen_peaks`) — every one of them
+  a biome whose whole signature is tint, fog and spawns, which is all the
+  clamp can honestly deliver. Deliberately **not** carried, because their
+  signature is ground material the terrain pass never lays: `desert`,
+  `badlands`, `mangrove_swamp`, `mushroom_fields`, `ice_spikes`,
+  `bamboo_jungle` — and the W472 fix hint now says so. `biomeForColumn`
+  derives none of the new rows and they are appended after the derived ones
+  (which `ambientVote`'s tie-break walks in source order), so no existing
+  world moves a byte unless a document names one.
 - **S2 battery signatures (2026-08-09, all five worlds; for the rung
   consult).** (a) **Bespoke steering read as correct, not timid**: four
   worlds authored zero programs and the one prompt that demanded a

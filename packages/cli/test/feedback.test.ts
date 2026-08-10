@@ -194,3 +194,24 @@ describe("renderDiagnosticFeedback", () => {
     expect(renderDiagnosticFeedback([T110])).toBeUndefined();
   });
 });
+
+// --- F21: the two scatter findings reach the authoring model ----------------
+describe("the scatter findings (F21)", () => {
+  const T118 = diag("LOAM-T118", "SCATTER_RADIUS_UNITS");
+  const T119 = diag("LOAM-T119", "SCATTER_EMPTY");
+
+  it("sends both back even though they are warnings, not errors", () => {
+    const out = feedbackDiagnostics([T118, T119]);
+    expect(out.map((d) => d.code)).toEqual(["LOAM-T118", "LOAM-T119"]);
+  });
+
+  it("renders them into the feedback turn, fix hint and all", () => {
+    const text = renderCompileFeedback(report([T119])) ?? "";
+    expect(text).toContain("LOAM-T119");
+    expect(text).toContain("fix SCATTER_EMPTY");
+  });
+
+  it("neither is a physics-lint failure, so neither aborts the run", () => {
+    expect(physicsLintFailures([T118, T119])).toEqual([]);
+  });
+});

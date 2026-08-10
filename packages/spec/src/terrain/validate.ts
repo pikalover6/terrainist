@@ -108,6 +108,14 @@ const FOREST_NUMS: Readonly<Record<string, NumSpec>> = {
   snowLine: { min: -64, max: 319, int: true },
 };
 
+/**
+ * Below this `area.radius`, in blocks, a scatter area is almost certainly a
+ * units mistake rather than an intent (F21). Two blocks is smaller than one
+ * tree's canopy, so nothing below it can plant a wood; the check is a warning
+ * because writing it is still legal.
+ */
+export const SCATTER_RADIUS_UNITS_FLOOR = 2;
+
 /** `scatter.forest@0.undergrowth` — every entry is a per-column probability. */
 const UNDERGROWTH_NUMS: Readonly<Record<string, NumSpec>> = {
   grass: { min: 0, max: 1 },
@@ -841,13 +849,15 @@ function checkSpeciesEntry(out: LoamDiagnostic[], at: string, entry: unknown): v
     out.push(error("BAD_TYPE", at, `each species must be an object, got ${describe(entry)}`, 'write { "id": "spruce", "weight": 1, "shape": "spruce_tall" }'));
     return;
   }
-  unknownKeys(out, entry, at, ["id", "weight", "shape", "minHeight", "maxHeight", "trunkPalette", "leafPalette"], "species entry");
+  unknownKeys(out, entry, at, ["id", "weight", "shape", "minHeight", "maxHeight", "trunkPalette", "leafPalette", "snowLine"], "species entry");
   checkId(out, at, entry["id"], "species id");
   const shape = entry["shape"];
   if (typeof shape !== "string" || !(FLORA_SPECIES_IDS as readonly string[]).includes(shape as FloraSpeciesId)) {
     out.push(error("BAD_ENUM", at, `"shape" must be a tree shape this profile implements, got ${describe(shape)}`, `set "shape" to one of: ${FLORA_SPECIES_IDS.join(", ")}`));
   }
-  checkNumbers(out, at, entry, { weight: { min: 0 }, minHeight: { min: 2, max: 64, int: true }, maxHeight: { min: 2, max: 64, int: true } });
+  // `snowLine` takes the node-level key's range, because it is the same key
+  // moved onto the species entry (FLORA-GRAMMAR-v0 §9.6).
+  checkNumbers(out, at, entry, { weight: { min: 0 }, minHeight: { min: 2, max: 64, int: true }, maxHeight: { min: 2, max: 64, int: true }, snowLine: { min: -64, max: 319, int: true } });
   const lo = entry["minHeight"];
   const hi = entry["maxHeight"];
   if (typeof lo === "number" && typeof hi === "number" && lo > hi) {
@@ -1014,6 +1024,18 @@ export function validateForestNode(out: LoamDiagnostic[], path: string, node: Ob
     const radius = area["radius"];
     if (typeof radius !== "number" || !(radius > 0)) {
       out.push(error("MISSING_KEY", `${path}.params.area`, `"area.at" needs a positive "radius" in blocks, got ${describe(radius)}`, 'add "radius": 120 next to "at"'));
+    } else if (radius < SCATTER_RADIUS_UNITS_FLOOR) {
+      // A warning, never an error: a sub-block radius is legal Loam. But `at`
+      // is fractional and `radius` is blocks, and a model that has just
+      // written [0.5, 0.5] writes 0.55 next to it meaning "55% of the region".
+      out.push(
+        warning(
+          "SCATTER_RADIUS_UNITS",
+          `${path}.params.area`,
+          `"area.radius" is ${radius}, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If ${radius} was meant as a fraction of the region, this node will place nothing.`,
+          `write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=${radius} on a 1024-wide region, "radius": ${Math.round((radius * 1024) / 2)}).`,
+        ),
+      );
     }
   }
 }

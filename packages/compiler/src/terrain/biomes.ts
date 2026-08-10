@@ -38,6 +38,45 @@ export const PROFILE_BIOMES = [
   "minecraft:snowy_slopes",
   "minecraft:river",
   "minecraft:basalt_deltas",
+
+  // --- intent-only rows (F21, 2026-08-09) ----------------------------------
+  // `biomeForColumn` never derives any of these: they exist so that
+  // `intent.climate.biome` can *name* them without drawing LOAM-W472. The
+  // ledger's bar is "the emitter can honestly place it at DataVersion 4671",
+  // which here means two things at once — the id is in the 1.21.11 registry,
+  // and the biome's whole signature is grass tint, foliage tint, sky/fog and
+  // mob spawns, none of which the terrain pass has to write blocks for.
+  //
+  // Deliberately NOT carried, because their signature is *ground material* the
+  // terrain pass never lays and the world would read as a lie: `desert` and
+  // `badlands` (sand / terracotta), `mangrove_swamp` (mud and water),
+  // `mushroom_fields` (mycelium), `ice_spikes` (packed ice),
+  // `bamboo_jungle` (bamboo). Ask for those with terrain, not with a tint.
+  //
+  // Appended in a block at the end on purpose: `ambientVote`'s tie-break walks
+  // this array in source order, so anything inserted higher up would move
+  // existing worlds. Nothing here can win that vote anyway — the vote reads
+  // pre-clamp columns, which only `biomeForColumn` writes.
+  "minecraft:dark_forest",
+  "minecraft:birch_forest",
+  "minecraft:old_growth_birch_forest",
+  "minecraft:flower_forest",
+  "minecraft:windswept_forest",
+  "minecraft:pale_garden",
+  "minecraft:cherry_grove",
+  "minecraft:sunflower_plains",
+  "minecraft:meadow",
+  "minecraft:grove",
+  "minecraft:savanna",
+  "minecraft:windswept_savanna",
+  "minecraft:jungle",
+  "minecraft:sparse_jungle",
+  "minecraft:swamp",
+  "minecraft:snowy_taiga",
+  "minecraft:old_growth_spruce_taiga",
+  "minecraft:old_growth_pine_taiga",
+  "minecraft:jagged_peaks",
+  "minecraft:frozen_peaks",
 ] as const;
 
 /** A biome name this profile can paint. */
@@ -76,6 +115,12 @@ const SNOWY_TO_TEMPERATE: ReadonlyMap<string, ProfileBiome> = new Map<string, Pr
   ["minecraft:snowy_beach", "minecraft:beach"],
   ["minecraft:snowy_slopes", "minecraft:windswept_hills"],
   ["minecraft:taiga", "minecraft:forest"],
+  // Intent-only rows (F21). Every key here is a biome `biomeForColumn` never
+  // derives, so these entries can only fire on a document that *names* the
+  // biome — no existing world moves a byte.
+  ["minecraft:snowy_taiga", "minecraft:taiga"],
+  ["minecraft:grove", "minecraft:meadow"],
+  ["minecraft:frozen_peaks", "minecraft:jagged_peaks"],
 ]);
 
 const TEMPERATE_TO_SNOWY: ReadonlyMap<string, ProfileBiome> = new Map<string, ProfileBiome>([
@@ -83,6 +128,12 @@ const TEMPERATE_TO_SNOWY: ReadonlyMap<string, ProfileBiome> = new Map<string, Pr
   ["minecraft:beach", "minecraft:snowy_beach"],
   ["minecraft:windswept_hills", "minecraft:snowy_slopes"],
   ["minecraft:forest", "minecraft:taiga"],
+  // Intent-only keys, for the same reason as above: `meadow` and
+  // `jagged_peaks` are never derived, so adding their snowy siblings changes
+  // nothing a document did not ask for. `taiga → snowy_taiga` is deliberately
+  // absent: `taiga` IS derived, and adding it would repaint shipped worlds.
+  ["minecraft:meadow", "minecraft:grove"],
+  ["minecraft:jagged_peaks", "minecraft:frozen_peaks"],
 ]);
 
 /**

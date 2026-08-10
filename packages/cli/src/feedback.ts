@@ -29,6 +29,8 @@ export const FEEDBACK_CODES: readonly string[] = [
   "LOAM-T105", // BASIN_RIM_NOT_CLOSED
   "LOAM-T112", // RIVER_PONDED
   "LOAM-T113", // CARVE_DRY
+  "LOAM-T118", // SCATTER_RADIUS_UNITS  — the blocks/fraction trap
+  "LOAM-T119", // SCATTER_EMPTY         — a wood with no trees in it
   "LOAM-T209", // ROAD_UNROUTABLE
   "LOAM-E170", // CANNOT_FIT
   "LOAM-E165", // COARSE_DOMAIN_EMPTY

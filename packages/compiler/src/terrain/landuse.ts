@@ -292,7 +292,12 @@ export function clampLandUse(input: LandUseClampInput): LandUseClampResult {
           "BIOME_INTENT_UNKNOWN",
           input.nodePath,
           `climate intent names the biome "${intent.biome}", which this emitter's table does not carry; falling back to the land-use clamp's derived biome`,
-          `name one of: ${PROFILE_BIOMES.join(", ")}`,
+          // The whole table, in one line, because the model's next move is to
+          // pick the nearest neighbour and it can only do that if it can see
+          // the neighbours. Sand-, mud- and ice-floored biomes (desert,
+          // badlands, mangrove_swamp, mushroom_fields, ice_spikes) are absent
+          // on purpose: this emitter paints tint and fog, not ground material.
+          `name one of the ${PROFILE_BIOMES.length} biomes this emitter paints: ${PROFILE_BIOMES.join(", ")}. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.`,
         ),
       );
     }

@@ -39,7 +39,7 @@ import {
   maskPerimeter,
   type LandUseClampInput,
 } from "../src/terrain/landuse.js";
-import { snowConsistentBiome } from "../src/terrain/biomes.js";
+import { PROFILE_BIOMES, snowConsistentBiome } from "../src/terrain/biomes.js";
 
 /* -------------------------------------------------------------------------- */
 /* Unit: the clamp                                                            */
@@ -569,4 +569,91 @@ describe("frost_hollow — a city that straddles the snow line", () => {
     }
     expect(seen.size).toBe(1);
   }, 300_000);
+});
+
+// --- F21: the biome-intent table, widened -----------------------------------
+describe("the intent-only biome rows (F21)", () => {
+  it("carries minecraft:dark_forest, the biome the ruins world asked for", () => {
+    const out = clampLandUse(scenario({ intent: { biome: "minecraft:dark_forest" } }));
+    expect(out.diagnostics.map((d) => d.code)).not.toContain("LOAM-W472");
+    expect(out.clampedBiome).toBe("minecraft:dark_forest");
+  });
+
+  it("carries the Luna-plausible near neighbours", () => {
+    for (const biome of [
+      "minecraft:birch_forest",
+      "minecraft:flower_forest",
+      "minecraft:pale_garden",
+      "minecraft:cherry_grove",
+      "minecraft:jungle",
+      "minecraft:swamp",
+      "minecraft:savanna",
+      "minecraft:meadow",
+      "minecraft:snowy_taiga",
+      "minecraft:jagged_peaks",
+    ] as const) {
+      const out = clampLandUse(scenario({ intent: { biome } }));
+      expect(out.diagnostics.map((d) => d.code), biome).not.toContain("LOAM-W472");
+      expect(out.clampedBiome, biome).toBe(biome);
+    }
+  });
+
+  it("still refuses biomes whose signature is ground material the emitter never lays", () => {
+    for (const biome of [
+      "minecraft:desert",
+      "minecraft:badlands",
+      "minecraft:mushroom_fields",
+      "minecraft:ice_spikes",
+      "minecraft:mangrove_swamp",
+    ]) {
+      const out = clampLandUse(scenario({ intent: { biome } }));
+      expect(out.diagnostics.map((d) => d.code), biome).toContain("LOAM-W472");
+    }
+  });
+
+  it("the W472 fix hint lists the widened table and names the exclusions", () => {
+    const out = clampLandUse(scenario({ intent: { biome: "minecraft:mushroom_fields" } }));
+    const d = out.diagnostics.find((x) => x.code === "LOAM-W472");
+    expect(d?.fix).toContain("minecraft:dark_forest");
+    expect(d?.fix).toContain("desert");
+  });
+
+  it("every row names a biome the pinned emitter version can actually place", async () => {
+    const stack = await loadPrismarine(EMIT_MINECRAFT_VERSION);
+    for (const biome of PROFILE_BIOMES) {
+      expect(stack.biomeIdByName(biome), biome).toBeTypeOf("number");
+    }
+  });
+
+  it("the table has no duplicate rows, and the derived rows keep their source order", () => {
+    expect(new Set(PROFILE_BIOMES).size).toBe(PROFILE_BIOMES.length);
+    // The tie-break in `ambientVote` walks this array; the derived biomes must
+    // stay at the front, in the order shipped worlds were painted with.
+    expect(PROFILE_BIOMES.slice(0, 15)).toEqual([
+      "minecraft:ocean",
+      "minecraft:deep_ocean",
+      "minecraft:cold_ocean",
+      "minecraft:deep_cold_ocean",
+      "minecraft:beach",
+      "minecraft:snowy_beach",
+      "minecraft:plains",
+      "minecraft:snowy_plains",
+      "minecraft:forest",
+      "minecraft:taiga",
+      "minecraft:windswept_hills",
+      "minecraft:stony_peaks",
+      "minecraft:snowy_slopes",
+      "minecraft:river",
+      "minecraft:basalt_deltas",
+    ]);
+  });
+
+  it("adding rows moves no derived world: taiga still has no snowy sibling", () => {
+    // `taiga` IS derived by `biomeForColumn`, so giving it a snowy sibling
+    // would repaint shipped worlds. `snowy_taiga` (intent-only) maps back.
+    expect(snowConsistentBiome("minecraft:taiga", "always")).toBe("minecraft:taiga");
+    expect(snowConsistentBiome("minecraft:snowy_taiga", "never")).toBe("minecraft:taiga");
+    expect(snowConsistentBiome("minecraft:meadow", "always")).toBe("minecraft:grove");
+    expect(snowConsistentBiome("minecraft:grove", "never")).toBe("minecraft:meadow");
+  });
 });

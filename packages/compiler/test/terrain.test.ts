@@ -21,6 +21,7 @@ import {
   resolveHeightfieldParams,
   type FeatureFootprint,
 } from "@terrainist/stdlib";
+import type { LoamDiagnostic } from "@terrainist/spec";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { loadPrismarine } from "../src/emit/prismarine.js";
@@ -872,5 +873,64 @@ describe("the palette resolver and the theme key", () => {
     }
     expect(streetMaterials(undefined)).toBe(MODERN_STREET_MATERIALS);
     expect(streetMaterials("no_such_theme")).toBe(MODERN_STREET_MATERIALS);
+  });
+});
+
+// --- F21: a wood with no trees in it says so --------------------------------
+describe("LOAM-T119: a zero-yield forest node is author-actionable", () => {
+  const size = 96;
+  const world = flatWorld(size, 80);
+
+  function scatterWith(params: Partial<ForestNodeInput["params"]>) {
+    const node: ForestNodeInput = {
+      ...denseForestNode(nodeSeed(7n, "world.woods")),
+      params: { ...denseForestNode(nodeSeed(7n, "world.woods")).params, ...params },
+    };
+    return scatterForests([node], world.plan, world.classification, world.palette);
+  }
+
+  it("stays silent when the wood has trees in it", () => {
+    const out = scatterWith({ area: { all: true } });
+    expect(out.trees.length).toBeGreaterThan(0);
+    expect(out.diagnostics).toEqual([]);
+  });
+
+  it("names the units trap when the radius reads as a fraction", () => {
+    const out = scatterWith({ area: { at: [0.5, 0.5], radius: 0.15 }, spacing: 32 });
+    expect(out.trees.length).toBe(0);
+    expect(out.diagnostics.length).toBe(1);
+    const d = out.diagnostics[0] as LoamDiagnostic;
+    expect(d.code).toBe("LOAM-T119");
+    expect(d.name).toBe("SCATTER_EMPTY");
+    expect(d.severity).toBe("warning");
+    // The node is named, and so is the cause.
+    expect(d.nodePath).toBe("world.woods");
+    expect(d.message).toContain("woods");
+    expect(d.message).toContain("0 trees");
+    expect(d.fix).toContain("BLOCKS");
+  });
+
+  it("blames the eligibility filters when the area is real but unplantable", () => {
+    const out = scatterWith({ area: { all: true }, elevation: [900, 1000] });
+    expect(out.trees.length).toBe(0);
+    const d = out.diagnostics[0] as LoamDiagnostic;
+    expect(d.code).toBe("LOAM-T119");
+    expect(d.message).toContain("plantable");
+    expect(d.fix).toContain("elevation");
+  });
+
+  it("blames density when the ground was plantable and nothing was drawn", () => {
+    const out = scatterWith({ area: { all: true }, density: 0 });
+    expect(out.trees.length).toBe(0);
+    const d = out.diagnostics[0] as LoamDiagnostic;
+    expect(d.code).toBe("LOAM-T119");
+    expect(d.message).toContain("density");
+    expect(d.fix).toContain("density");
+  });
+
+  it("is deterministic: two runs produce the identical finding", () => {
+    const a = scatterWith({ area: { at: [0.5, 0.5], radius: 0.15 }, spacing: 32 });
+    const b = scatterWith({ area: { at: [0.5, 0.5], radius: 0.15 }, spacing: 32 });
+    expect(a.diagnostics).toEqual(b.diagnostics);
   });
 });
