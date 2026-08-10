@@ -654,3 +654,101 @@ Recorded verbatim in substance; each supersedes its open question.
 One product consequence worth naming now: **$5 → 3 generations** sets the
 unit economics at three authoring runs + three compiles per sale, so the
 cost model in §3/S2 measures per-variation cost × 3 against $5.
+
+## 8. The rung decision (2026-08-09) — ratified at the baseline gate
+
+Chosen with the S2 baseline walked, exactly as §1.5 and the day-3 row of §4
+prescribe. Recorded by the orchestrator from Kai's live answers.
+
+**Rung B, amended. No ascent** — the one-ascent option was declined and is
+spent (§1.5 rule 3: it does not carry past freeze).
+
+### 8.1 The battery is replaced
+
+Kai's ruling on the S2 evidence: the baseline five are too similar — five
+temperate-settlement genres that test the pipeline five times and the
+*promise* once. The product's promise is prompt breadth, and the walked
+citadel set the bar: **the bespoke tier is the wow, and the battery should
+demand it everywhere**. Three of the new prompts are resurrected internal
+benchmarks with known failure modes and history to compare against.
+
+Conventional genre prompts (hill town, harbour city, plains village) move to
+the **reliability sample**, which draws from both battery and bread-and-butter
+prompt space — the median customer is still measured, just not walk-asserted.
+
+### 8.2 The frozen battery (P1–P7, prompts verbatim, seeds fixed)
+
+Universal assertions U1–U3 (§1.4) apply to all seven. Pre-conditions (§1.4)
+apply to all seven — note that "no `UNSATISFIABLE` … on a node the prompt
+names" is now doing real work: both S2 hillside worlds would fail it today.
+
+| P | Prompt (verbatim) | Seed | Heritage |
+|---|---|---|---|
+| P1 | "A pirate island and a unicorn island, at war." | 301 | intent pre-pass worked example |
+| P2 | "A small farm town being invaded by aliens." | 302 | the invasion world (crop-circle rule, hover) |
+| P3 | "The Trojan horse in Troy, right before the soldiers emerge." | 303 | new |
+| P4 | "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis." | 304 | new; carries the S2 ruins finding |
+| P5 | "A modern Hellenist city being invaded by sea monsters." | 305 | new |
+| P6 | "An ancient forest of colossal redwoods with a small logging camp at its edge." | 306 | rung B P6, unchanged |
+| P7 | "A glowing mushroom vale where a strange village has grown between the caps." | 307 | rung B P7, unchanged |
+
+**Prompt-specific assertions.**
+
+- **P1** — the two islands read as opposed worlds (theme, palette and flora
+  contrast legible from one vantage); the war is *in* the world: each island
+  bears at least two aggression setpieces oriented at the other (wrecks,
+  siege pieces, scorch, fortifications facing the strait); each island
+  carries a small settlement of its own character.
+- **P2** — the town is legibly a *farm* town: cultivated field parcels with
+  farmsteads, readable as agriculture at eye level (F17's hook); the
+  invasion is legible in three or more distinct places, at least one
+  airborne and one ground trace; requested instance counts are delivered or
+  diagnosed — never silently rounded (the crop-circle rule).
+- **P3** — the horse is *the* landmark: a bespoke wooden colossus in a
+  plaza/street context, approachable, dominating its surroundings; Troy is
+  a walled ancient city — a circuit wall with at least one gate the horse
+  plausibly entered; the moment is pre-emergence: the city inside the walls
+  stands intact, no battle damage.
+- **P4** — the ruins read as a once-metropolis: street-grid remnants and
+  ruined district fabric at city scale, not scattered relics (F19's hook);
+  overgrowth dominates — reclaim vegetation over and through the fabric;
+  the hideout is present, high-tech against the ruin palette, and legibly a
+  hideout — concealed or fortified — found along a nominated approach.
+- **P5** — the city is modern *and* Hellenist at once: classical motifs on
+  modern massing, era and style visibly orthogonal; the city addresses the
+  sea; the invasion is legible from a walkable waterfront — sea monsters at
+  or in the water line at three or more sites.
+- **P6, P7** — as written in §2.4.
+
+Dropped with the old battery: P1-old's snow-line-gradient assertion and
+P2-old's two-districts-underfoot assertion. F8/F9/F10 stay in scope on spec
+confidence and P7's biome-edge assertion; their walk coverage now rides
+feature walks rather than battery assertions.
+
+### 8.3 Scope, re-derived (the amendments)
+
+Rung B's list stands: F3, F5, F6, F7, F8, F9, F10, F11 (+ F1, F2, F4 from A,
+of which F1 and F2's diagnosis are already done). The new battery and the S2
+findings add:
+
+| # | Item | Waves | Confidence | Hook |
+|---|---|---|---|---|
+| F17 | **Minimal farm** — one generic field-parcel generator (tilled parcels, crop rows, fence/hedge edge) + farmstead siting near fields; the land-use clamp learns "farmland". Deliberately not F13: no camps, no orchard/waystation taxonomy. | 4–6 | medium | P2, Kai's rung amendment |
+| F18 | **Bespoke boldness** — kit steering reaches for a landmark program on any prompt with a nameable centerpiece; strong prompts may carry 2–3 landmarks; budget defaults reviewed. Prompt text and budgets, not machinery. | 2–3 | high | Kai's citadel verdict; every P1–P5 |
+| F19 | **District ruins treatment** — at high `decline`, a district's lots roll deterministically into their ruined-variant shells (the ruin law: the ordinary shell fit-out decayed), with rubble/overgrowth interleave; the kit teaches "ruined city = district + decline". | 4–6 | medium | P4; S2 ruins walk |
+| F20 | **Ambient-terrain prompt fidelity** — diagnose why "open plains" authored 57% stony peaks; fix at intent→heightfield/biome steering. | 2–3 | medium | S2 plains world |
+| F21 | *(folds into F4)* Scatter radius-units validator, zero-yield scatter author-actionable finding, biome-intent table widening. | 2 | high | S2 ruins run |
+| F22 | **District-constraint teaching** — diagnose the uniform main-district `UNSATISFIABLE` signature at 1024²; fix at kit constraint guidance or solver cost model. | 2–4 | medium | §1.4 pre-conditions |
+
+### 8.4 Estimate and the date backstop
+
+50–68 waves ≈ 10–14 feature-days; 18–24 walk-worlds across two candidate
+rounds ≈ 8–10 walk-days. **Calendar: 14–18 days.** Per §1.7 the backstop is
+set from the estimate plus its stated slack:
+
+> **Feature-stop date: 2026-08-28.** After it, only battery FAILs and S1–S7
+> launch machinery may be worked. Slipping it is a decision Kai records here
+> with a reason.
+
+Friends beta (~1 week, §7 Q5) follows the battery PASS, inside or after the
+S-work tail as S1/S4/S6 allow.

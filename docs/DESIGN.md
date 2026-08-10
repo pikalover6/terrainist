@@ -781,6 +781,15 @@ regressions; minor bugs go to this ledger and get squashed opportunistically
 4. **SHIP-PLAN doc** from the baseline evidence: sandbox isolation (the
    named launch blocker), authoring robustness, delivery wrapper, demo
    assets, pricing posture. **The end goal is shipping terrainist.**
+5. **DONE 2026-08-09 — the rung is chosen: rung B amended, no ascent**
+   (SHIP-PLAN §8). The release battery is frozen at seven prompts —
+   Kai's five breadth prompts (pirate/unicorn war, farm town + aliens,
+   the Trojan horse, hideout in metropolis ruins, Hellenist city + sea
+   monsters) plus old-growth and fungal-vale — with assertions written
+   first. Scope adds F17 minimal farm, F18 bespoke boldness, F19
+   district ruins treatment, F20 ambient-terrain fidelity, F22
+   constraint teaching. **Feature-stop backstop: 2026-08-28.** All
+   remaining feature work executes against §8.
 
 **Smaller, high-leverage.**
 - Per-district street palettes (streets still take the settlement root theme).

@@ -53,9 +53,22 @@ first run's kept wired doc (regen was stopped mid-run — respected, not
 relaunched); 0 feedback rounds, but its only finding was an advisory
 W411, so the delta is likely nil.
 
-**Next:** Kai walks five baselines + hero_metropolis → **rung consult
-AFTER the walks** (doc recommends B + one ascent; orchestrator narrows
-ascent to the aqueduct; ruins treatment is prime rung-B scope evidence).
+**RUNG RATIFIED (08-09, SHIP-PLAN §8):** Kai walked all baselines (light
+notes only — worlds stay installed for reference; **citadel verdict: Luna
+must do MORE bespoke gen**). Choice: **rung B amended, NO ascent.**
+Battery replaced — baseline five "too similar"; frozen at 7 breadth
+prompts, seeds 301–307: pirate/unicorn war, farm town + aliens, Trojan
+horse in Troy, high-tech hideout in overgrown metropolis ruins, modern
+Hellenist city vs sea monsters, + old-growth and fungal-vale. Assertions
+written first (§8.2). Scope adds: F17 minimal farm (generic fields, not
+F13), F18 bespoke boldness, F19 district ruins treatment, F20 ambient-
+terrain fidelity, F21→F4 instrumentation, F22 constraint teaching.
+**Feature-stop backstop 2026-08-28.** Genre prompts moved to the
+reliability sample.
+
+**Next:** execute rung B per §8 — wave 1 candidates: F8 (snowLine +
+law-1, machinery-never-runs debt), F11 (render biome tint), F18 (kit
+steering), F4+F21 (ledger squash + instrumentation).
 
 **Parked/open:** flight-pin unit mismatch (next street lever); junction
 flat-town ruling (after iterations; the orphan win lives in the same
