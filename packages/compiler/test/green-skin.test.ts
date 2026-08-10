@@ -257,7 +257,7 @@ describe("the pass (§3.1, §3.4)", () => {
     expect([...out.colonized].some((v) => v === 1)).toBe(false);
   });
 
-  it("with a field it indexes — and a lone block has no eligible surface", () => {
+  it("with a field it indexes — and a lone block has no eligible vertical surface", () => {
     const out = growGreenSkin({
       plan: plan(),
       palette: emptyPalette(),
@@ -268,9 +268,20 @@ describe("the pass (§3.1, §3.4)", () => {
       districts: [],
     });
     // One course of masonry standing on the ground offers no face cell above
-    // the two body courses and no opening at all, so the skin writes nothing —
-    // which is the eligibility discipline, not the reach law.
-    expect(out.blocks).toEqual([]);
+    // the two body courses and no opening at all, so the *vertical* skin writes
+    // nothing — which is the eligibility discipline, not the reach law.
+    expect(out.counts.climbers).toBe(0);
+    expect(out.counts.plugs).toBe(0);
+    // WP-6c's horizontal skin does see it: a full cube with sky over it, one
+    // course off the ground, is surviving pavement, and it takes moss and a
+    // cover on the moss — the level unmoved, which is what the level law is.
+    expect(out.counts.pavement).toBe(1);
+    expect(out.counts.carpets + out.counts.shrubs).toBe(1);
+    expect(out.blocks.map((b) => b.y)).toEqual([GROUND + 1, GROUND + 2]);
+    expect(out.blocks.map((b) => stack.blockNameByStateId(b.stateId))).toEqual([
+      "moss_block",
+      expect.stringMatching(/^(moss_carpet|short_grass|fern)$/) as unknown as string,
+    ]);
     expect(out.counts.indexedColumns).toBe(1);
     expect(out.counts.indexedBlocks).toBe(1);
     // The closure stays exactly as closed as it was: an empty mask opens nothing.

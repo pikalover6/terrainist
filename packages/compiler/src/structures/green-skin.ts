@@ -9,14 +9,33 @@
  * > green.
  *
  * **WP-6a** built the surface index and wrote nothing. **WP-6b is the vertical
- * skin** and is what this file writes today: climbing strands up the exterior
- * faces (§4.1), leaf plugs in the openings (§4.3), glow lichen on the
- * undersides (§4.4), all under the silhouette law (§4.5) and the green rule
- * (§4.6). The mossy re-clad lift (§4.2) is the one part of the wave that lives
- * elsewhere — in `stdlib`'s `decay.ts`, because it is the fit-out's own
- * cladding given a weight. WP-6c (the horizontal skin) and WP-6d (the street
- * colonizer) are still to come, and the `carpets` / `pavement` / `streetTrunks`
- * / `shrubs` counters and the `colonized` mask are theirs.
+ * skin**: climbing strands up the exterior faces (§4.1), leaf plugs in the
+ * openings (§4.3), glow lichen on the undersides (§4.4), all under the
+ * silhouette law (§4.5) and the green rule (§4.6). The mossy re-clad lift
+ * (§4.2) is the one part of that wave that lives elsewhere — in `stdlib`'s
+ * `decay.ts`, because it is the fit-out's own cladding given a weight.
+ * **WP-6c is the horizontal skin** (§5): moss carpets on the wall heads, the
+ * parapets and the rubble tops, moss across the surviving pavement and the
+ * ruin yards, and the tufts that grow on what the skin has itself turned to
+ * moss. WP-6d (the street colonizer) is still to come, and the `streetTrunks`
+ * counter and the `colonized` mask are its.
+ *
+ * ## The level law (§5)
+ *
+ * > **The skin never changes a level.** It substitutes a **full cube for a full
+ * > cube**, or it adds growth into a cell that was air. It never touches a
+ * > slab, a stair, a wall or a kerb cap, and it never puts a carpet on anything
+ * > that is not a full cube — a `moss_carpet` on a slab is an
+ * > `unsupported.chain` finding, and the ground contract arbitrates levels, not
+ * > this pass.
+ *
+ * Enforced by construction and in the direction that removes: the horizontal
+ * sweep touches a column only when its exposed top block is a full cube by
+ * **both** readers — `support.ts`'s {@link canSupport} by name and the block
+ * registry's `isFullCube` by state — which is the union of the op-list
+ * vocabulary and the lint's own. `moss_block` is in the walkability audit's
+ * soil set and `moss_carpet` is in its `SOLID_TOP`, so every column the sweep
+ * touches stays standable at exactly the level it was.
  *
  * ## Where it runs, and why there is no other slot (§3.1)
  *
@@ -424,13 +443,13 @@ export interface GreenSkinCounts {
   readonly lichen: number;
   /** Leaf plugs written into openings (WP-6b). */
   readonly plugs: number;
-  /** Moss carpets on horizontal survivors (WP-6c). */
+  /** Moss carpets on horizontal survivors — wall heads, parapets, rubble, pavement (WP-6c). */
   readonly carpets: number;
   /** Pavement substitutions (WP-6c). */
   readonly pavement: number;
   /** Street/yard columns elected for a trunk (WP-6d). */
   readonly streetTrunks: number;
-  /** Shrubs and tufts the skin planted (WP-6d). */
+  /** Shrubs and tufts the skin planted (WP-6c's covers, WP-6d's streets). */
   readonly shrubs: number;
 }
 
@@ -793,13 +812,152 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
     }
   }
 
+  /* ---------------------------------------------------------------------- */
+  /* §5, the horizontal skin (WP-6c)                                        */
+  /* ---------------------------------------------------------------------- */
+
+  /**
+   * A **second sweep**, deliberately, rather than more work inside the first.
+   *
+   * The vertical skin's blocks are written first and `put`'s first-writer-wins
+   * rule therefore keeps them exactly as WP-6b wrote them: a carpet and a
+   * strand that want the same cell of air resolve to the strand, and the
+   * vertical wave's output is a prefix of this one's. Two sweeps over the same
+   * fixed column order cost one more walk of the index and buy the property
+   * that landing WP-6c cannot have moved a single vine.
+   */
+  let carpets = 0;
+  let pavement = 0;
+  let shrubs = 0;
+  {
+    const mossBlock = stack.blockByName("minecraft:moss_block")?.stateId;
+    /**
+     * What grows on the moss the skin has just made.
+     *
+     * §5's pavement row offers `moss_carpet`, `short_grass` or `fern`; the
+     * shipped set is the **last two**, and the missing one is the level law
+     * enforcing itself. The walkability audit's `SOLID_TOP` holds `_carpet`,
+     * so a `moss_carpet` on a carriageway makes the cell *above* it standable
+     * and the street's walking level rises by one — which is precisely *"the
+     * skin never changes a level"*, read on the surface a player actually
+     * walks. A tuft and a fern are invisible to `supportAt` and to
+     * `passableAt` alike, so they are inert to every metric the audit reports.
+     * The carpet keeps the surfaces the audit does not walk: the wall heads,
+     * the parapets and the rubble tops, where it is the whole point.
+     */
+    const cover = ([
+      ["foliage.short_grass", "minecraft:short_grass"],
+      ["foliage.fern", "minecraft:fern"],
+    ] as const).map(([symbol, fallback]) => ({
+      symbol,
+      carpet: false,
+      state: palette.has(symbol) ? undefined : stack.blockByName(fallback)?.stateId,
+    }));
+    const carpetSlot = {
+      symbol: "foliage.moss_carpet",
+      carpet: true,
+      state: palette.has("foliage.moss_carpet")
+        ? undefined
+        : stack.blockByName("minecraft:moss_carpet")?.stateId,
+    };
+    const coverState = (
+      slot: { readonly symbol: string; readonly state: number | undefined },
+      x: number,
+      z: number,
+    ): number | undefined =>
+      slot.state ?? (palette.has(slot.symbol) ? palette.stateAt(slot.symbol, x, z) : undefined);
+    const yards = input.ruinYardColumns;
+
+    if (mossBlock !== undefined) {
+      for (const column of index.indexed) {
+        const { x, z, y0, y1 } = column;
+        const intensity = sampleField(region, field.field, x, z);
+        if (intensity <= 0) continue;
+        const shares = greenSkinShares(bandForIntensity(intensity));
+        const ground = groundAt(x, z);
+        if (!Number.isFinite(ground)) continue;
+        // §13.9: the fit-out owns the inside of a shell and the skin owns the
+        // outside. Two surfaces, two owners, one law each — so the interior
+        // heaps keep `decay.ts`'s own one-in-three carpet and take none of
+        // this.
+        if (interior.has(`${x},${z}`)) continue;
+
+        // The **exposed horizontal survivor**: the first cell from the top of
+        // the column that is not open. A fence, a lamp post's own column, a
+        // slab cap or a kerb stops the search here rather than being stepped
+        // over, which is the level law enforced by not looking underneath
+        // furniture — no carpet appears beneath a bench.
+        let top = Number.NEGATIVE_INFINITY;
+        for (let y = y1; y >= y0; y--) {
+          if (index.openAt(x, y, z)) continue;
+          top = y;
+          break;
+        }
+        if (!Number.isFinite(top)) continue;
+        if (!index.openAt(x, top + 1, z)) continue;
+        const name = index.nameAt(x, top, z);
+        if (name === undefined) continue;
+        // Full cube by **both** readers: the name-side vocabulary the op list
+        // shares with the fit-out, and the registry answer the lint will use
+        // when it reads this world back off disk. A pane of glass passes the
+        // first and fails the second, and a carpet on glass is a finding.
+        if (!canSupport(name) || !stack.isFullCube(index.stateAt(x, top, z))) continue;
+        if (nearDoor(x, top, z) || nearDoor(x, top + 1, z)) continue;
+
+        if (top - ground <= 1) {
+          // --- surviving pavement, and the ruin yards ----------------------
+          // Everything the ground plane still owns: carriageway, sidewalk,
+          // plaza, forecourt, dressed lot, the yard's worn mix, and the
+          // grounded spill apron that heaped onto it. The substitution is cube
+          // for cube, so the level is the level it was.
+          if (name === "moss_block") continue;
+          if (hash3(seed, x, top, z, GREEN_SKIN_CHANNELS.pavement) >= shares.pavement) continue;
+          if (!put(x, top, z, mossBlock)) continue;
+          pavement++;
+          // > **The skin plants only on ground it has itself turned to soil or
+          // > moss.** The substitution runs first, the planting second, in one
+          // > pass. A tuft of grass on a paving slab is the `flower_pot` lesson
+          // > in a third costume.
+          //
+          // A `ruin_yard` column takes the field's own local value instead of
+          // the carpet share — §5's fourth row, *"its volunteer growth rises to
+          // the field's local value"* — which is the one thing the yard mask
+          // exists to say that the pavement rule cannot.
+          const k = colIndex(x, z);
+          const inYard = yards !== undefined && k >= 0 && yards[k] === 1;
+          const share = inYard ? shares.skin : shares.carpet;
+          if (hash3(seed, x, top, z, GREEN_SKIN_CHANNELS.pavementVariant) >= share) continue;
+          const slot = hashPick(seed, x, z, GREEN_SKIN_CHANNELS.pavementVariant, cover);
+          const state = coverState(slot, x, z);
+          if (state === undefined) continue;
+          if (!put(x, top + 1, z, state)) continue;
+          // §6.4's division of labour, one storey down: a moss carpet is the
+          // horizontal skin's carpet, and a tuft of grass or a fern is one of
+          // the under-two-block growths the skin owns outright.
+          if (slot.carpet) carpets++;
+          else shrubs++;
+        } else {
+          // --- wall heads, parapets and rubble tops -------------------------
+          // The most-seen surface in a ruin field, because you look down on it
+          // from everywhere, and the one the silhouette law explicitly leaves
+          // open to a carpet: *"the top course of every surviving wall takes
+          // climbers and carpet only, never a leaf mass"*.
+          if (hash3(seed, x, top, z, GREEN_SKIN_CHANNELS.carpet) >= shares.carpet) continue;
+          const state = coverState(carpetSlot, x, z);
+          if (state === undefined) continue;
+          if (put(x, top + 1, z, state)) carpets++;
+        }
+      }
+    }
+  }
+
   const diagnostics: LoamDiagnostic[] = [];
   diagnostics.push(
     note(
       "GREEN_SKIN",
       "",
-      `the green skin covered ${index.columns} ruined columns: ${climbers} climbing strands (${lichen} glow lichen), ${plugs} leaf plugs, ${blocks.length} blocks`,
-      climbers + plugs === 0
+      `the green skin covered ${index.columns} ruined columns: ${climbers} climbing strands (${lichen} glow lichen), ${plugs} leaf plugs, ${carpets} moss carpets, ${pavement} pavement substitutions, ${shrubs} tufts, ${blocks.length} blocks`,
+      climbers + plugs + carpets + pavement === 0
         ? "no surface in the ruin field met the skin's eligibility — raise `decline`, or check that the district actually ruined any lots"
         : "informational",
     ),
@@ -818,6 +976,9 @@ export function growGreenSkin(input: GreenSkinInput): GreenSkinResult {
       climbers,
       lichen,
       plugs,
+      carpets,
+      pavement,
+      shrubs,
     },
     cost,
     diagnostics,

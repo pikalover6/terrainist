@@ -26,7 +26,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -36,6 +36,7 @@ import { DECAY_BANDS, greenSkinShares, weatheredOf } from "@terrainist/stdlib";
 
 import { PHYSICS_RULES, lintWorldPhysics, type PhysicsReport } from "../src/emit/physics.js";
 import { loadPrismarine, listChunks, type PrismarineStack } from "../src/emit/prismarine.js";
+import { auditWalkability, walkabilityContextOf } from "../src/emit/walkability.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
@@ -494,17 +495,26 @@ describe("the wave's identity bars (§11)", () => {
     // functions of the draw rather than of what won a cell.
     let climbers = -1;
     let plugs = -1;
+    let carpets = -1;
+    let pavement = -1;
     for (const decline of [0.4, 0.65, 0.95]) {
       const swept = await compileInto(`sweep-${decline}`, doc({ decline }));
       const counts = (
         (swept.report.layout?.structures as StructurePassResult).greenSkin as {
-          counts: { climbers: number; plugs: number };
+          counts: { climbers: number; plugs: number; carpets: number; pavement: number };
         }
       ).counts;
       expect(counts.climbers, `climbers @ ${decline}`).toBeGreaterThanOrEqual(climbers);
       expect(counts.plugs, `plugs @ ${decline}`).toBeGreaterThanOrEqual(plugs);
+      // WP-6c's own counters obey the same law, and for the same reason: the
+      // carpet and the pavement draws are fixed and positional, compared
+      // against a threshold that only rises with the band.
+      expect(counts.carpets, `carpets @ ${decline}`).toBeGreaterThanOrEqual(carpets);
+      expect(counts.pavement, `pavement @ ${decline}`).toBeGreaterThanOrEqual(pavement);
       climbers = counts.climbers;
       plugs = counts.plugs;
+      carpets = counts.carpets;
+      pavement = counts.pavement;
     }
   }, 1_800_000);
 });
@@ -645,4 +655,165 @@ describe("the plug and strand rules, on a shell small enough to reason about", (
       expect(spot.x).toBe(11);
     }
   });
+});
+
+/* -------------------------------------------------------------------------- */
+/* §5 — the horizontal skin (WP-6c)                                            */
+/* -------------------------------------------------------------------------- */
+
+/** The four blocks WP-6c is allowed to write, and nothing else (§13.6). */
+const HORIZONTAL_NAMES = new Set(["moss_block", "moss_carpet", "short_grass", "fern"]);
+
+interface HorizontalBlock {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly stateId: number;
+  readonly name: string;
+  /** The state that stood at this cell before the skin, or 0 for air. */
+  readonly before: number;
+}
+
+/** The horizontal skin's blocks, each with what it replaced. */
+function horizontalBlocks(): readonly HorizontalBlock[] {
+  const span = structures.blockSpans.find((s) => s.emitter === "green-skin");
+  expect(span).toBeDefined();
+  const { from, to } = span as { from: number; to: number };
+  // What stood at each cell **before** the skin ran: the last writer among all
+  // the passes that laid a block there, which is exactly what the emitter
+  // resolves a doubly-written cell to.
+  const before = new Map<string, number>();
+  for (let i = 0; i < from; i++) {
+    const b = structures.blocks[i] as { x: number; y: number; z: number; stateId: number };
+    before.set(`${b.x},${b.y},${b.z}`, b.stateId);
+  }
+  const out: HorizontalBlock[] = [];
+  for (let i = from; i < to; i++) {
+    const b = structures.blocks[i] as { x: number; y: number; z: number; stateId: number };
+    const name = stack.blockNameByStateId(b.stateId) ?? "air";
+    if (!HORIZONTAL_NAMES.has(name)) continue;
+    out.push({ ...b, name, before: before.get(`${b.x},${b.y},${b.z}`) ?? 0 });
+  }
+  return out;
+}
+
+describe("the horizontal skin (§5)", () => {
+  it("greened the ground it stands on, and says so in `LOAM-I514`", () => {
+    const counts = (structures.greenSkin as { counts: Record<string, number> }).counts;
+    expect(counts.pavement).toBeGreaterThan(0);
+    expect(counts.carpets).toBeGreaterThan(0);
+    const i514 = structures.diagnostics.filter((d) => d.code === "LOAM-I514");
+    expect(i514[0]?.message).toMatch(/moss carpets/);
+    expect(i514[0]?.message).toMatch(/pavement substitutions/);
+  });
+
+  it("writes only the four blocks §13.6 allows it", () => {
+    const span = structures.blockSpans.find((s) => s.emitter === "green-skin") as {
+      from: number;
+      to: number;
+    };
+    const names = new Set<string>();
+    for (let i = span.from; i < span.to; i++) {
+      const b = structures.blocks[i] as { stateId: number };
+      names.add(stack.blockNameByStateId(b.stateId) ?? "air");
+    }
+    for (const name of names) {
+      expect(
+        HORIZONTAL_NAMES.has(name) ||
+          name === "vine" ||
+          name === "glow_lichen" ||
+          name.endsWith("_leaves"),
+        `unexpected block "${name}"`,
+      ).toBe(true);
+    }
+  });
+
+  it("**NEVER CHANGES A LEVEL** — cube for cube, or into air, and nothing else", () => {
+    // §5's substitution rule, machine-checked on the pass's own output against
+    // what stood there before it: a substitution replaces a full cube with a
+    // full cube (so the surface is where it was), and everything else went into
+    // a cell that held nothing (so no surface moved at all).
+    const horizontal = horizontalBlocks();
+    expect(horizontal.length).toBeGreaterThan(0);
+    let substitutions = 0;
+    for (const b of horizontal) {
+      if (b.name === "moss_block") {
+        substitutions++;
+        expect(b.before, `moss_block into air at ${b.x},${b.y},${b.z}`).not.toBe(0);
+        expect(stack.isFullCube(b.before), `replaced a partial at ${b.x},${b.y},${b.z}`).toBe(true);
+        expect(stack.isFullCube(b.stateId)).toBe(true);
+      } else {
+        expect(b.before, `${b.name} over a block at ${b.x},${b.y},${b.z}`).toBe(0);
+        expect(stack.isFullCube(b.stateId)).toBe(false);
+      }
+    }
+    expect(substitutions).toBeGreaterThan(0);
+  });
+
+  it("puts no carpet on anything that is not a full cube", () => {
+    // The `unsupported.chain` row of §8, checked on the world **as composed**
+    // rather than on the pass's inputs: a `moss_carpet` on a slab, a kerb cap
+    // or a fence is a finding, and the whole rule is that the skin never asks.
+    const carpets = horizontalBlocks().filter((b) => b.name === "moss_carpet");
+    expect(carpets.length).toBeGreaterThan(0);
+    for (const b of carpets) {
+      const below = world.get(`${b.x},${b.y - 1},${b.z}`);
+      expect(below, `carpet on nothing at ${b.x},${b.y},${b.z}`).toBeDefined();
+      const state = stack.blockStateOf((below as Sample).name, (below as Sample).props);
+      expect(
+        state !== undefined && stack.isFullCube(state),
+        `carpet on "${(below as Sample).name}" at ${b.x},${b.y},${b.z}`,
+      ).toBe(true);
+    }
+  });
+
+  it("plants only on the moss it made itself (§6.4)", () => {
+    const tufts = horizontalBlocks().filter((b) => b.name === "short_grass" || b.name === "fern");
+    expect(tufts.length).toBeGreaterThan(0);
+    for (const b of tufts) {
+      const below = world.get(`${b.x},${b.y - 1},${b.z}`);
+      expect((below as Sample | undefined)?.name, `tuft at ${b.x},${b.y},${b.z}`).toBe("moss_block");
+    }
+  });
+
+  it("costs the walkability audit nothing — the differential bar", async () => {
+    // §11's WP-6c check, as a **differential**: the same world with the
+    // horizontal skin off, built by putting every cell the skin touched back to
+    // what stood there before it. A golden number could not say whether a move
+    // was this pass's doing; this can.
+    const off = path.join(root, "horizontal-off");
+    await cp(dir, off, { recursive: true });
+    const horizontal = horizontalBlocks();
+    const byChunk = new Map<string, HorizontalBlock[]>();
+    for (const b of horizontal) {
+      const key = `${b.x >> 4},${b.z >> 4}`;
+      const list = byChunk.get(key);
+      if (list === undefined) byChunk.set(key, [b]);
+      else list.push(b);
+    }
+    const regionDir = path.join(off, "region");
+    const anvil = stack.openAnvil(regionDir);
+    try {
+      for (const [key, list] of byChunk) {
+        const [cx, cz] = key.split(",").map(Number) as [number, number];
+        const chunk = await anvil.load(cx, cz);
+        if (chunk === null) continue;
+        for (const b of list) {
+          chunk.setStateId(b.x - cx * 16, b.y, b.z - cz * 16, b.before);
+        }
+        await anvil.save(cx, cz, chunk);
+      }
+    } finally {
+      await anvil.close();
+    }
+
+    const context = walkabilityContextOf(plan, structures, {
+      ...(structures.districts[0] === undefined ? {} : { town: structures.districts[0].bounds }),
+    });
+    const on = await auditWalkability(dir, stack, context);
+    const without = await auditWalkability(off, stack, context);
+    expect(on.components.length).toBe(without.components.length);
+    expect(on.orphanColumns).toBe(without.orphanColumns);
+    expect(on.entranceReachableShare).toBe(without.entranceReachableShare);
+  }, 1_800_000);
 });
