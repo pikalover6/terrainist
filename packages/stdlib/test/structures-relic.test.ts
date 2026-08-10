@@ -147,19 +147,40 @@ describe("wave-6E relic archetypes", () => {
   });
 
   /**
-   * **Bare `ruin` and `ruins` are unclaimed, on purpose.**
+   * **Bare `ruin` and `ruins` mean `ruined_cottage`** — RUINS-PLAN-v0 Q3,
+   * ratified by Kai 2026-08-09, reversing this wave's original refusal.
    *
-   * An author who writes only "ruins" has not said *what* is ruined, and this
-   * table refuses to decide for them; both keep falling through to the
-   * extended table's cottage default. The open authoring question is recorded
-   * in `docs/kits/settlement-author.md` for Kai.
+   * The refusal's reasoning was that an author who writes only "ruins" has not
+   * said *what* is ruined. The ruling's answer is that the **scale** half of
+   * that ambiguity now belongs to `decline` — a ruined quarter is a district,
+   * not a tag — so what is left for a bare tag to mean is one ruined building,
+   * and the gentlest of the five is the honest reading.
+   *
+   * The other adjectives stay unclaimed: `ruined`, `derelict`, `overgrown` and
+   * `abandoned` describe a state, not a building, and an overgrown *anything*
+   * is a plausible request.
    */
-  it("leaves bare `ruin` and `ruins` unclaimed", () => {
-    for (const tag of ["ruin", "ruins", "ruined", "derelict", "overgrown", "abandoned"]) {
+  it("resolves bare `ruin` and `ruins` to the ruined cottage", () => {
+    expect(archetypeOfTags(["ruin"])).toBe("ruined_cottage");
+    expect(archetypeOfTags(["ruins"])).toBe("ruined_cottage");
+    for (const tag of ["ruined", "derelict", "overgrown", "abandoned"]) {
       expect(RELIC_BUILDING_ARCHETYPES as readonly string[], tag).not.toContain(
         archetypeOfTags([tag]),
       );
     }
+  });
+
+  /**
+   * The bare tags are claimed **last of all**, after every other table, so an
+   * adjective never outranks a noun. This is the guard on the one behaviour
+   * change WP-1 makes: `["ruins", "keep"]` must still be the garrison's keep.
+   */
+  it("never lets a bare ruin tag outrank a noun", () => {
+    expect(archetypeOfTags(["ruins", "keep"])).not.toBe("ruined_cottage");
+    expect(archetypeOfTags(["ruins", "abbey"])).not.toBe("ruined_cottage");
+    expect(archetypeOfTags(["ruins", "tower"])).not.toBe("ruined_cottage");
+    expect(archetypeOfTags(["ruins", "villa"])).not.toBe("ruined_cottage");
+    expect(archetypeOfTags(["ruins", "ruined_keep"])).toBe("ruined_keep");
   });
 
   /**

@@ -3,6 +3,20 @@
 > **STATUS: RATIFIED 2026-08-09, with one amendment** — the survivor cap is
 > removed (total desolation at `decline = 1.0`; §4.1 and Q2 record the
 > ruling) and bare `ruin`/`ruins` tags resolve to `ruined_cottage` (Q3).
+>
+> **WP-1 errata (measured against the shipped relics, whose op lists are
+> the identity bar):** §3.1's operator order is wrong — removals run
+> before additions, so `rubble` is last (`spill → green → floorPaint →
+> rubble`); §5's collapse column is wrong for `ruined_church` and
+> `overgrown_villa` (both build `structured`, not `even` — consistent
+> with §5.1's own category table); §5's rubble/overgrowth figures are off
+> for the same two (code: church 0.22/0.40, villa 0.20/0.55). Structural
+> note for WP-2/3: a profile of §3.1's five scalars alone cannot express
+> the relics list-identically — WP-1's `DecayProfile` also carries
+> `collapseFloor`/`collapseSpread`, an explicit `materials` record, and
+> `clearInteriorFrom` (the tower's "stump, not a treehouse" rule,
+> generalised); `intensity`/`mode` are carried, test-pinned to §5, and
+> read by nothing until WP-3's band table.
 > Written to be built from cold. Nothing here changes any existing world — see
 > §2, the reach law.
 >

@@ -172,6 +172,7 @@ import {
   RELIC_BUILDING_ARCHETYPES,
   furnishRelic,
   relicArchetypeOfTags,
+  relicBareRuinArchetype,
 } from "./archetypes-relic.js";
 
 export * from "./archetypes-relic.js";
@@ -400,8 +401,8 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // Wave 6E, the relics: five ruined buildings. It sits after the commerce and
   // arcana tables and well before the extended one for the reason every later
   // wave sits here — the tables below are greedy — and it claims **compounds
-  // only**: bare `ruin` and `ruins` are deliberately left unclaimed (an author
-  // who says only "ruins" has not said what is ruined), bare `abbey` stays
+  // only**: bare `ruin` and `ruins` are claimed far below, after the extended
+  // table, so that an adjective never outranks a noun; bare `abbey` stays
   // wave 4B's, bare `keep`, `castle` and `tower` stay the garrison's and the
   // watchtower's, bare `villa` the Mediterranean villa's, and bare `house`
   // still falls through to a cottage.
@@ -444,6 +445,13 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // swallow `market` and `storehouse` before either reached its own building.
   const extended = extendedArchetypeOfTags(tags);
   if (extended !== null) return extended;
+  // The bare `ruin` / `ruins` tags, last of all (RUINS-PLAN-v0 Q3, ratified
+  // 2026-08-09). Down here rather than up beside the relic compounds because
+  // an adjective must never outrank a noun: `["ruins", "keep"]` is still the
+  // garrison's keep, and only a tag list that has run out of nouns falls to a
+  // ruined cottage instead of to the plain one.
+  const bareRuin = relicBareRuinArchetype(tags);
+  if (bareRuin !== null) return bareRuin;
   if (has("hall")) return "hall";
   if (has("trade") || has("inn")) return "inn";
   if (has("craft") || has("smithy")) return "smithy";

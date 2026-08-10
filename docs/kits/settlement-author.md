@@ -1103,7 +1103,8 @@ other.
 | collapsed_tower | `collapsed_tower`, `broken_tower`, `tower_ruin` | the one **leaning** collapse: the surviving wall height falls off linearly along one axis, so the wall head slopes from a standing stub to nothing, with a heavy grounded spill in the apron | `[9, 17, 9]`, 1–2 floors; **tall** |
 | overgrown_villa | `overgrown_villa`, `villa_ruin`, `ruined_villa` | the gentlest crumble and the greenest: moss-block survivors, vines on every second inside face, moss carpet on the rubble, a floor half gone to grass, and a run of fallen column drums down a wall row | `[15, 13, 15]`, 1–2 floors |
 
-Wave 6E claims **compounds only**, and the exclusions are the review. Bare
+Wave 6E claims **compounds**, plus the two bare tags resolved below, and the
+exclusions are the review. Bare
 **`abbey` is wave 4B's abbey** and bare `church` and `chapel` are the church's,
 so the ruined church answers to `ruined_abbey` and `abbey_ruin`; bare **`keep`,
 `castle` and `tower`** stay the garrison keep's and the watchtower's; bare
@@ -1111,15 +1112,19 @@ so the ruined church answers to `ruined_abbey` and `abbey_ruin`; bare **`keep`,
 cottage; and bare **`overgrown` is not claimed at all** — it is an adjective,
 and an overgrown *anything* is a plausible request.
 
-> **OPEN AUTHORING QUESTION (for Kai).** Bare **`ruin` and `ruins` are
-> deliberately UNCLAIMED** and currently fall through to the extended table's
-> `cottage` default. An author who writes only `"ruins"` has not said what is
-> ruined, and any answer this table gave would be a choice made on their
-> behalf: a ruined cottage and a shattered obelisk are both honest readings.
-> The three options are (a) leave it, and require the author to be specific;
-> (b) point both at `ruined_cottage`, the gentlest and most generic of the
-> five; (c) point both at a *seeded pick* among the five, which is the most
-> fun and the least predictable. Nothing changes until Kai chooses.
+> **RESOLVED (Kai, 2026-08-09).** Bare **`ruin` and `ruins` both mean
+> `ruined_cottage`** — the gentlest and most generic of the five. They are the
+> one pair of bare tags this wave claims, and they are claimed **last of all**,
+> after every other table, so an adjective never outranks a noun:
+> `["ruins", "keep"]` is still the garrison keep, and only a tag list with
+> nothing more specific to say falls to a ruined cottage. A *seeded pick* among
+> the five was considered and rejected — unpredictable is the wrong property
+> for a word an author wrote on purpose.
+>
+> **This is not how you ask for a ruined city.** One tag is one building, and
+> a `mix` full of `ruined_cottage` is five buildings repeated rather than a
+> ruined city. Ruin at district scale is not something the language can say
+> yet — it is `docs/RUINS-PLAN-v0.md`, and this line changes when it ships.
 
 **The monuments of the same wave are PROPS, not archetypes** — `standing_stones`,
 `henge`, `monolith`, `burial_mound`, `dig_site`, `fossil_dig` and
