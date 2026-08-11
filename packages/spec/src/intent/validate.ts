@@ -347,6 +347,25 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
   checkBias(out, value["archetypes"], `${path}.archetypes`, true);
   checkBias(out, value["props"], `${path}.props`, false);
   checkBias(out, value["flora"], `${path}.flora`, false);
+  // `formPacks` is a *list of words*, so only its type is an error here; an
+  // unknown pack name is grounded in the compiler as `LOAM-W516`, exactly as
+  // every other intent vocabulary is. A classifier typo must never cost the
+  // whole intent.
+  const packs = value["formPacks"];
+  if (
+    packs !== undefined &&
+    (!Array.isArray(packs) || packs.some((e) => typeof e !== "string" || e.trim() === ""))
+  ) {
+    out.push(
+      error(
+        "BAD_TYPE",
+        `${path}.formPacks`,
+        `"formPacks" must be an array of non-empty strings, got ${describe(packs)}`,
+        'write "formPacks": ["classical_mediterranean"] — pack names, not objects; the list replaces the parent scope\'s, it never accumulates',
+      ),
+    );
+  }
+
   checkMotifs(out, value["motifs"], `${path}.motifs`);
   checkPrograms(out, value["programs"], `${path}.programs`);
 }

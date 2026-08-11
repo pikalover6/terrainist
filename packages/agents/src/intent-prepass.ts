@@ -149,6 +149,67 @@ export const EXAMPLE_PROP_IDS = [
   "notice_board",
 ] as const;
 
+/**
+ * The nine form packs, `id -> thesis`, exactly as the classifier is shown them.
+ *
+ * Hand-listed for the same reason {@link MATERIAL_THEME_IDS} is: the registry
+ * lives in `@terrainist/stdlib`, which the agents package deliberately does not
+ * depend on. `packages/cli/test/intent-form-packs-vocabulary.test.ts` sits
+ * downstream of both and pins this table against `FORM_PACKS`, so a pack added
+ * to the registry and not taught here is a failing test rather than a
+ * vocabulary the classifier can never reach — and reachability is the whole
+ * point of a pack (`docs/CATALOG-EXPANSION-v0.md` §4.3: the classifier's prompt
+ * is the first of the two reachability paths).
+ *
+ * Each line is a *thesis* — what a prompt in that space cannot say without the
+ * pack — because the model is choosing between nine of them at once and a list
+ * of contents would not separate them.
+ */
+export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
+  [
+    "classical_mediterranean",
+    "colonnades, stoas, peristyle courts, temples, a citadel megaron — antiquity as FORMS. Troy, Athens, a Roman forum, a Hellenist waterfront.",
+  ],
+  [
+    "nautical_pirate",
+    "the SHORE rather than the fleet: jolly roger, gallows on the point, careened hulls, shore batteries, a chain across the harbour mouth.",
+  ],
+  [
+    "arcane_magical",
+    "a magical PLACE: rune circles in the ground, ley markers along the paths, a mage academy, stabling for winged mounts.",
+  ],
+  [
+    "alien_scifi",
+    "an invasion's fabric: crop circles, quarantine lines, field labs, barricades, hive mounds, blast doors.",
+  ],
+  [
+    "agrarian",
+    "the countryside BETWEEN the fields: hedgerows, dry stone walls, byres, dairies, hay barns, middens.",
+  ],
+  [
+    "wilds_camps",
+    "extraction in the wilderness: logging camps, flumes, sawpits, log booms, fire lookouts, cut-over ground.",
+  ],
+  [
+    "frontier_west",
+    "the wild west town the industrial era does not give you: false-front saloons, boardwalks, assay offices, livery stables, a mission church.",
+  ],
+  [
+    "nile_egypt",
+    "pyramids, hypostyle halls, pylon gates, mastabas, an avenue of sphinxes — the one silhouette everybody knows.",
+  ],
+  [
+    "east_asian",
+    "the PUBLIC forms around the houses: torii, moon gates, paifang arches, dry gardens, a tiered castle keep.",
+  ],
+] as const;
+
+/** One `id  <- thesis` line per pack, for the prompt. */
+function formPackLines(): string {
+  const width = Math.max(...FORM_PACK_THESES.map(([id]) => id.length));
+  return FORM_PACK_THESES.map(([id, thesis]) => `    ${id.padEnd(width)}  <- ${thesis}`).join("\n");
+}
+
 /** One `class: alias, alias, …` line per era class, built from `ERA_ALIASES`. */
 function eraVocabularyLines(): string {
   const byClass = new Map<EraClass, string[]>(ERA_CLASSES.map((c) => [c, []]));
@@ -292,6 +353,9 @@ a field means "the prompt does not say" — which is NOT the same as zero.
                        // city-state). Omit it for an open place — absent
                        // means no wall, and prose in the brief will NOT
                        // produce one: only this dial builds the circuit.
+    "formPacks": [pack ids],     // whole FORM vocabularies — see below. The
+                       // palette says what a town is made of; a form pack says
+                       // what its buildings ARE.
     "archetypes": { "prefer": [ids], "forbid": [ids] },
     "props":      { "prefer": [ids], "forbid": [ids] },
     "flora":      { "prefer": [tree shapes], "forbid": [tree shapes] },
@@ -398,6 +462,18 @@ one the climate would have chosen, which is always safe.
 archetypes: single-word building ids, e.g. ${list(EXAMPLE_ARCHETYPE_IDS)}.
 props: single-word object ids, e.g. ${list(EXAMPLE_PROP_IDS)}.
 
+formPacks: exactly these ${FORM_PACK_THESES.length} pack ids, and nothing else. A pack is a whole
+FORM vocabulary — the nouns a culture or genre builds — and it is a DIFFERENT
+axis from materialTheme, which is only the palette. sun_clay is the palette;
+classical_mediterranean is the FORMS; a prompt from antiquity wants BOTH,
+because a medieval townhouse in sandstone is still a medieval townhouse.
+${formPackLines()}
+  Write a pack whenever the prompt sits in its space — usually one, at most
+  two, and it is normal to write none. A pack is a DEFAULT vocabulary: any
+  archetypes you prefer or forbid still outrank it. Affinity is advice, so an
+  ancient pack in a modern city is legal and sometimes the whole point (a
+  modern Hellenist capital). Omitting formPacks changes nothing at all.
+
 urbanForm: exactly these ${DISTRICT_FABRICS.length} ids. This is the single field that decides whether
 two towns look like different places, so read the prompt for it deliberately —
 but write it ONLY when the prompt actually says something about the shape of the
@@ -465,7 +541,8 @@ dense, party-walled — "roofType": "flat", "massing": "dense" where the
 vocabulary allows); its fortification (history walled most ancient cities —
 write "walled"); and a "tokens" line listing the place's ICONS by name so the
 author delivers each one. Worked example — "The Trojan horse in Troy":
-  era ancient; materialTheme sun_clay; fortification "walled";
+  era ancient; materialTheme sun_clay; formPacks ["classical_mediterranean"];
+  fortification "walled";
   motifs roofType flat; climate "blend" as the coast wants;
   tokens: { "terrain": "a walled city on a rise above a sandy coast; the
   Aegean shore in view", "icons": "the wooden horse at the gates; the city

@@ -32,8 +32,34 @@
  *    *positional* draw (see `pickArchetype`), so position is weight; prepending
  *    is the whole mechanism. A preferred word that is not a fabric-eligible
  *    building archetype is skipped, never fatal — `LOAM-W483` already said so.
- * 3. **`weights`** multiply an id's occurrences, integer-rounded and capped.
- * 4. whatever remains of `ctx.today` follows.
+ * 3. **`character.formPacks`** expand behind the explicit preferences, in
+ *    registry order within each pack and in the order the packs were named.
+ * 4. **`weights`** multiply an id's occurrences, integer-rounded and capped.
+ * 5. whatever remains of `ctx.today` follows.
+ *
+ * That is the whole precedence, and this comment is the one place it is stated:
+ * **`archetypes.forbid` > explicit `archetypes.prefer` > `formPacks` expansion
+ * > `ctx.today`.** A pack is a *default vocabulary*, so an author who names a
+ * specific archetype always outranks the pack that also contains it, and a
+ * forbidden id never comes back through a pack.
+ *
+ * ## What a pack expands to
+ *
+ * Its **fabric-eligible** members and nothing else — {@link isFabricArchetype},
+ * the same test an explicit `prefer` word passes. Props and infrastructure do
+ * not enter a lot draw; they arrive through `character.props`, the
+ * street-furniture headliner rule and explicit nodes. The design also asks for
+ * a size-class filter ("members whose size class the quarter's lots can hold");
+ * size class is a curator's column in `docs/CATALOG-EXPANSION-v0.md` and not a
+ * field of `StructureEntry`, so **that half is not expressible today** and the
+ * filter is kind-and-status only. When a size class becomes a catalog field it
+ * tightens here, and no caller changes.
+ *
+ * A pack whose members are all `not_started` — which, the day this landed, was
+ * *every* pack — expands to nothing and contributes nothing. That is a
+ * first-class case, not a degenerate one: the pack still grounds without a
+ * warning, the mix is the mix it would have been, and members light up as their
+ * generators land with no further wiring.
  *
  * ## Determinism
  *
@@ -47,7 +73,7 @@ import {
   type ArchetypeBias,
   type LoamDiagnostic,
 } from "@terrainist/spec";
-import { structureById } from "@terrainist/stdlib";
+import { formPackMembers, structureById } from "@terrainist/stdlib";
 
 import { fanOut, registerFanOut, type FanOutContext } from "../intent/fanout.js";
 import type { ResolvedIntent } from "../intent/resolve.js";
@@ -86,6 +112,47 @@ export function isFabricArchetype(word: string): boolean {
   return entry !== undefined && entry.kind === "building" && entry.status === "implemented";
 }
 
+/**
+ * How the row finds a pack's members.
+ *
+ * A parameter rather than a hard import so the tests can prove the expansion
+ * with catalog ids that are *implemented today* — every shipped pack's members
+ * were `not_started` the day this landed, so a test bound to the real registry
+ * could only ever assert "nothing happened".
+ */
+export type PackMemberLookup = (pack: string) => readonly string[];
+
+/**
+ * The fabric-eligible members of the packs a scope named, in the order the
+ * packs were named and, within a pack, in registry order.
+ *
+ * Deduplicated: two packs may share a member, and a mix is positional, so a
+ * duplicate would be a silent weight.
+ */
+export function expandFormPacks(
+  packs: readonly string[] | undefined,
+  members: PackMemberLookup = formPackMembers,
+): readonly string[] {
+  if (packs === undefined || packs.length === 0) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const pack of packs) {
+    for (const id of members(pack)) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      if (!isFabricArchetype(id)) continue; // props, infrastructure, unbuilt.
+      out.push(id);
+    }
+  }
+  return out;
+}
+
+/** The pack half of a bias: what was named, and how to look its members up. */
+export interface PackExpansion {
+  readonly packs?: readonly string[];
+  readonly members?: PackMemberLookup;
+}
+
 /** Extras the caller hands the row. */
 export interface MixExtra {
   /**
@@ -107,6 +174,7 @@ export function applyArchetypeBias(
   bias: ArchetypeBias,
   nodePath: string,
   sink?: LoamDiagnostic[],
+  packs?: PackExpansion,
 ): readonly string[] {
   const forbidden = new Set(bias.forbid ?? []);
 
@@ -132,7 +200,20 @@ export function applyArchetypeBias(
     if (preferred.includes(word)) continue;
     preferred.push(word);
   }
-  const combined = preferred.length === 0 ? kept : [...preferred, ...kept];
+  // 2b. formPacks, behind the explicit preferences and ahead of `ctx.today`.
+  // A forbidden id never returns through a pack (rung 1 outranks this), and an
+  // id an explicit `prefer` already placed keeps the position the author gave
+  // it rather than gaining a second one.
+  const expanded: string[] = [];
+  for (const id of expandFormPacks(packs?.packs, packs?.members)) {
+    if (forbidden.has(id)) continue;
+    if (preferred.includes(id)) continue;
+    if (expanded.includes(id)) continue;
+    expanded.push(id);
+  }
+
+  const front = [...preferred, ...expanded];
+  const combined = front.length === 0 ? kept : [...front, ...kept];
 
   // 3. weights, multiplying occurrences of an id already in the mix.
   const weights = bias.weights;
@@ -163,14 +244,29 @@ export function registerMixFanOut(): void {
     drives: "the archetype mix `pickArchetype` draws a lot's building from",
     resolve(intent: ResolvedIntent, ctx: FanOutContext<readonly string[]>) {
       const bias = intent.intent.character?.archetypes;
+      const packs = intent.intent.character?.formPacks;
       // Totality, and it is checked before `ctx.today` is so much as read:
-      // the identity test hands the row a sentinel, not a list.
-      if (bias === undefined) return ctx.today;
-      if (bias.prefer === undefined && bias.forbid === undefined && bias.weights === undefined) {
+      // the identity test hands the row a sentinel, not a list. **A document
+      // that names no pack and no bias compiles byte-identically** — the reach
+      // law, and it is this line.
+      const named = packs !== undefined && packs.length > 0;
+      if (bias === undefined && !named) return ctx.today;
+      if (
+        !named &&
+        bias?.prefer === undefined &&
+        bias?.forbid === undefined &&
+        bias?.weights === undefined
+      ) {
         return ctx.today;
       }
       const extra = ctx.extra as unknown as MixExtra | undefined;
-      return applyArchetypeBias(ctx.today, bias, ctx.nodePath, extra?.sink);
+      return applyArchetypeBias(
+        ctx.today,
+        bias ?? {},
+        ctx.nodePath,
+        extra?.sink,
+        packs === undefined ? undefined : { packs },
+      );
     },
   });
 }

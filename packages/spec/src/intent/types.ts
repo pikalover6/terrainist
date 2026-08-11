@@ -254,6 +254,37 @@ export interface CharacterIntent {
   readonly archetypes?: ArchetypeBias;
   readonly props?: SelectionBias;
   readonly flora?: SelectionBias;
+  /**
+   * Form packs this scope draws its building vocabulary from
+   * (`docs/CATALOG-EXPANSION-v0.md` §4.2).
+   *
+   * The **fourth grounded list**, beside {@link archetypes}, {@link props} and
+   * {@link flora}, and deliberately a list rather than a new
+   * `architecturalStyle` dial: a style is not a scalar, it is *a set of nouns*,
+   * and a second scalar beside `era` would be a second place to say "Troy" and
+   * one place for the two to contradict each other.
+   *
+   * One word buys a whole form vocabulary — `"classical_mediterranean"` names
+   * the colonnade, the peristyle and the stoa the way `sun_clay` names the
+   * palette, and a prompt from antiquity wants both. A pack expands, at
+   * fan-out time, to its **fabric-eligible members** (the catalog's implemented
+   * *building* entries); props and infrastructure never enter a lot draw.
+   *
+   * Precedence, one order and stated once: `archetypes.forbid` > explicit
+   * `archetypes.prefer` > `formPacks` expansion > the mix the quarter was about
+   * to use. A pack is a *default vocabulary*, so an author who names a specific
+   * archetype always outranks the pack that also contains it.
+   *
+   * Inheritance is the array rule every other list keeps: a scope that writes
+   * `formPacks` **replaces** the inherited list whole, it does not add to it.
+   *
+   * Grounded against the stdlib `FORM_PACKS` registry: an unknown word is one
+   * aggregated `LOAM-W516`, never a fatal. A pack whose eras do not include the
+   * scope's resolved era class is `LOAM-W517` — advice, never a gate, because a
+   * modern Hellenist city is the legal case. **No pack is ever implied by an
+   * era**: a document that names none compiles byte-identically.
+   */
+  readonly formPacks?: readonly string[];
   readonly motifs?: Motifs;
   readonly programs?: ProgramRequest;
   /**
@@ -364,6 +395,7 @@ export const CHARACTER_KEYS = [
   "archetypes",
   "props",
   "flora",
+  "formPacks",
   "motifs",
   "programs",
   "urbanForm",

@@ -2,9 +2,9 @@
  * Grounding the intent layer's free strings against the real registries.
  *
  * `SemanticIntent` is written by a language model, so its string-valued fields
- * — `character.materialTheme`, and the `prefer` / `forbid` lists for
- * archetypes, props and flora — arrive as *words*, not as ids. Three things can
- * be true of such a word:
+ * — `character.materialTheme`, `character.formPacks`, and the `prefer` /
+ * `forbid` lists for archetypes, props and flora — arrive as *words*, not as
+ * ids. Three things can be true of such a word:
  *
  * 1. it **is** a registered id (`"cottage"`, `"fountain"`, `"oak_round"`);
  * 2. it is a near miss a small alias table can carry (`"quartz"`,
@@ -27,6 +27,8 @@ import {
   ALL_MATERIAL_THEMES,
   PROP_NAMES,
   STRUCTURE_CATALOG,
+  formPackById,
+  formPackIds,
   isPropName,
   structureById,
 } from "@terrainist/stdlib";
@@ -35,6 +37,7 @@ import {
   COURTYARD_SHARE_MIN,
   DISTRICT_FABRICS,
   DISTRICT_GROUND_POLICIES,
+  eraClassOf,
   warning,
   type DistrictFabric,
   type LoamDiagnostic,
@@ -224,7 +227,11 @@ export function closeMatches(word: string, vocabulary: readonly string[], limit 
 }
 
 function listWarning(
-  name: "INTENT_ARCHETYPE_UNKNOWN" | "INTENT_PROP_UNKNOWN" | "INTENT_FLORA_UNKNOWN",
+  name:
+    | "INTENT_ARCHETYPE_UNKNOWN"
+    | "INTENT_PROP_UNKNOWN"
+    | "INTENT_FLORA_UNKNOWN"
+    | "INTENT_FORM_PACK_UNKNOWN",
   nodePath: string,
   field: string,
   unknown: readonly string[],
@@ -386,6 +393,81 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
     );
   }
 
+  out.push(...checkFormPacks(character.formPacks, scope.intent.era, path));
+
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* form packs                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** True for a word the `FORM_PACKS` registry carries. */
+export function isFormPackId(word: string): boolean {
+  return formPackById(word) !== undefined;
+}
+
+/**
+ * Ground `character.formPacks`, and check each grounded pack's era affinity.
+ *
+ * Two diagnostics, and neither is ever fatal:
+ *
+ * - **`LOAM-W516`**, one aggregated warning per scope for the words no pack
+ *   carries, naming the legal packs and the near matches. A pack word is a
+ *   *wish*, and the failure mode this ends is the silent one — a document that
+ *   asked for antiquity and got a medieval town with nothing said about it.
+ * - **`LOAM-W517`**, affinity. A pack whose `eras` do not include the scope's
+ *   resolved era class is *reported*, naming both, and then built anyway. This
+ *   can never be an error: "a modern Hellenist city" is the legal case, and a
+ *   gate here would refuse the exact prompt the packs exist for. Aggregated
+ *   into one diagnostic per scope for the same reason W516 is.
+ *
+ * A pack every one of whose members is still `not_started` is **not** a
+ * finding. It grounds, it warns about nothing, and it contributes nothing to
+ * any mix until its generators land — which is the whole shape of a registry
+ * that ships ahead of its content.
+ */
+export function checkFormPacks(
+  packs: readonly string[] | undefined,
+  era: string | undefined,
+  path: string,
+): readonly LoamDiagnostic[] {
+  if (packs === undefined || packs.length === 0) return [];
+  const out: LoamDiagnostic[] = [];
+
+  const grounding = groundList(packs, isFormPackId);
+  if (grounding.unknown.length > 0) {
+    out.push(
+      listWarning(
+        "INTENT_FORM_PACK_UNKNOWN",
+        path,
+        "formPacks",
+        grounding.unknown,
+        formPackIds(),
+        `name a form pack: ${formPackIds().join(", ")} (see docs/kits/settlement-author.md §9d)`,
+      ),
+    );
+  }
+
+  // Affinity is advice. It is only checkable when the scope resolved an era at
+  // all — an absent or unrecognised era is a scope with no opinion about the
+  // period, and advice against no opinion is noise.
+  const eraClass = eraClassOf(era);
+  if (eraClass === undefined) return out;
+  const mismatched = grounding.known
+    .map((word) => formPackById(word))
+    .filter((pack): pack is NonNullable<typeof pack> => pack !== undefined)
+    .filter((pack) => !pack.eras.includes(eraClass));
+  if (mismatched.length > 0) {
+    out.push(
+      warning(
+        "INTENT_FORM_PACK_ERA",
+        path,
+        `intent.era resolves to "${eraClass}", which is outside the affinity of ${mismatched.length === 1 ? "the form pack" : "the form packs"} ${mismatched.map((p) => `"${p.id}" (${p.eras.join(", ")})`).join(", ")} — the pack is used as written`,
+        "affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant",
+      ),
+    );
+  }
   return out;
 }
 

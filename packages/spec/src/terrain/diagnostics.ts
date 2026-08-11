@@ -533,6 +533,21 @@ export const TERRAIN_DIAGNOSTICS = {
    * and an empty quarter is a worse answer to it than a stated one.
    */
   INTENT_ARCHETYPE_MIX_EMPTY: "LOAM-W515",
+  /**
+   * `character.formPacks` names a pack the `FORM_PACKS` registry does not
+   * carry. One aggregated warning per scope naming the legal packs and the near
+   * matches; the unknown words are ignored and never fatal.
+   */
+  INTENT_FORM_PACK_UNKNOWN: "LOAM-W516",
+  /**
+   * A scope names a form pack whose eras do not include the scope's resolved
+   * era class.
+   *
+   * **Advice, and it can never be an error.** A modern Hellenist city is
+   * exactly the legal case — era `modern` plus `classical_mediterranean` is the
+   * *point* of that prompt — so this names both and builds the pack anyway.
+   */
+  INTENT_FORM_PACK_ERA: "LOAM-W517",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.
