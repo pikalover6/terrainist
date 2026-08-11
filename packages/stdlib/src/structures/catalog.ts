@@ -754,11 +754,36 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["angular", "platform"],
     note: "Angular masonry re-clad with battered plinth courses, a flat gun-platform deck under a parapet, and a powder store of stacked barrels behind wall racks.",
   }),
-  mil("star_fort", "Star fort"),
-  mil("motte_and_bailey", "Motte and bailey"),
-  mil("palisade", "Palisade"),
-  mil("moat", "Moat", "not_started", { tags: ["water"] }),
-  mil("drawbridge", "Drawbridge"),
+  mil("star_fort", "Star fort", "implemented", {
+    wave: 7,
+    tags: ["angular", "earthwork"],
+    note:
+      "The bastion trace made legible: a battered masonry re-clad over a heavy plinth, a crenellated gun deck, and a star trace stepped up out of the apron — corners highest, a salient at the middle of each face — so the pointed outline reads from above and as an angular work from the ground. Tags `star_fort`/`bastion_trace` — bare `bastion` stays the garrison bastion's.",
+  }),
+  mil("motte_and_bailey", "Motte and bailey", "implemented", {
+    wave: 7,
+    tags: ["timber", "mound"],
+    note:
+      "Earth and trees in a season: a battered coarse-dirt motte skirt with a grass crown round the apron, a timber re-clad of the whole shell, and a plank fighting deck behind a fence stockade instead of merlons. Tags `motte`/`bailey` — `castle`/`keep` stay the breadth keep's.",
+  }),
+  mil("palisade", "Palisade", "implemented", {
+    wave: 7,
+    tags: ["timber", "enclosure"],
+    note:
+      "A stockade enclosure: the wall ring re-clad in whole-block timber with pointed tips on every other column one course over the plate, a slab fighting walkway down both wall rows, and a short outer stake row in the apron. Tags `palisade`/`stockade`/`timber_wall` — `wall`/`curtain_wall` stay the linework engine's.",
+  }),
+  mil("moat", "Moat", "implemented", {
+    wave: 7,
+    tags: ["water"],
+    note:
+      "The work is the water: the apron ring laid as water over a masonry bed, a battered stone plinth on the shell, and the doorstep with a shoulder either side left as a dry causeway — a moat across the way in is a building nobody can enter.",
+  }),
+  mil("drawbridge", "Drawbridge", "implemented", {
+    wave: 7,
+    tags: ["gate", "water"],
+    note:
+      "The moat plus the span: a plank deck over the causeway, timber winch cheeks either side of the door, and the leaf stood upright over the doorstep as a trapdoor panel from the third course up. Tags `drawbridge`/`bascule` — bare `bridge` stays the linework engine's.",
+  }),
   mil("barracks", "Barracks", "implemented"),
   mil("armory", "Armory", "implemented", {
     wave: 5,
@@ -770,8 +795,18 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["store", "powder"],
     note: "The armory scaled up: a barrel powder store shut off by an iron-barred partition, stacked shell racks up the other wall, and a loading bench with a seat at the door end.",
   }),
-  mil("drill_yard", "Drill yard"),
-  mil("siege_camp", "Siege camp"),
+  mil("drill_yard", "Drill yard", "implemented", {
+    wave: 7,
+    tags: ["yard", "training"],
+    note:
+      "A parade ground: the floor plane written as a two-tone marked-out surface of gravel and coarse dirt, pell posts with hay heads up one wall row, weapon racks up the other, a slab dais with the colours over it at the far end, and hay butts in the apron behind. Tags `drill_yard`/`parade_ground`.",
+  }),
+  mil("siege_camp", "Siege camp", "implemented", {
+    wave: 7,
+    tags: ["camp", "earthwork", "engine"],
+    note:
+      "Tents, earthworks and an engine, all facing away from the door: the roof rebuilt as a stepped wool tent on a log ridge pole, the walls re-clad as canvas between timber posts, a coarse-dirt bank with a stake row along the far apron, and a trebuchet read of two legs, a stair arm and a stone counterweight standing on it. Claims `camp`/`encampment`/`siege`.",
+  }),
   mil("bunker", "Bunker", "implemented", {
     wave: 5,
     tags: ["modern", "concrete"],
@@ -804,7 +839,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "The church idiom writ large: apron buttresses, a three-column centre aisle with side-aisle pew blocks, a crossing band and a steeple.",
   }),
-  rel("chapel", "Chapel"),
+  rel("chapel", "Chapel", "implemented", {
+    wave: 7,
+    tags: ["village", "bellcote"],
+    note: "The church at village scale, read by its bellcote: two piers and a lintel on the gable end with the bell hung under them, a short carpet aisle and two bays of pews.",
+  }),
   rel("monastery", "Monastery", "implemented", {
     wave: 4,
     note: "Refectory table run with benches, scriptorium desks along the far wall, fence cell partitions.",
@@ -842,16 +881,41 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "Two to three stepped terraces rebuilt over the shell, with a shrine cell on the crown.",
   }),
-  rel("temple", "Temple"),
-  rel("shrine", "Shrine"),
-  rel("altar_stone", "Altar stone"),
-  rel("wayside_cross", "Wayside cross"),
+  rel("temple", "Temple", "implemented", {
+    wave: 7,
+    tags: ["classical", "colonnade"],
+    note:
+      "The classical temple: a stylobate, a peristyle of columns in every other apron bay under a continuous entablature, and a roof rebuilt as a pediment mass that insets in x only. Inside is a blind cella with an inner colonnade and a cult figure. Tags `classical_temple`/`greek_temple`/`peristyle` \u2014 bare `temple` stays the church's.",
+  }),
+  rel("shrine", "Shrine", "implemented", {
+    wave: 7,
+    tags: ["niche", "canopy"],
+    note: "A niche under a stepped canopy: the roof rebuilt as a solid stepped cap with a standing lantern on it, and the cult figure at the head of the room. Tags `votive_shrine`/`roadside_shrine` \u2014 bare `shrine` stays the church's.",
+  }),
+  rel("altar_stone", "Altar stone", "implemented", {
+    wave: 7,
+    tags: ["megalith", "capstone"],
+    note: "A megalith: two solid courses of capstone over the chamber with an overhanging apron lip, four standing stones in the apron corners rising past it, and a three-cell dressed table inside laid off the lantern column.",
+  }),
+  rel("wayside_cross", "Wayside cross", "implemented", {
+    wave: 7,
+    tags: ["monument", "calvary"],
+    note: "A cross on a stepped calvary built over the shell: a lid, two shrinking steps, a shaft and a bar of arms under its head. Inside, a kneeler and candles.",
+  }),
   rel("bell_tower", "Bell tower", "implemented", {
     wave: 4,
     note: "Tall masonry shaft with a trapdoor louvre band and the bell hung under the ceiling plane at the head of it.",
   }),
-  rel("obelisk", "Obelisk"),
-  rel("colossus", "Colossus"),
+  rel("obelisk", "Obelisk", "implemented", {
+    wave: 7,
+    tags: ["monument", "monolith"],
+    note: "The tall shell dressed as one stone: banded ashlar with no openings, an apron plinth at the foot, and a pyramidion at the head closing on a cap with a spike.",
+  }),
+  rel("colossus", "Colossus", "implemented", {
+    wave: 7,
+    tags: ["monument", "statue"],
+    note: "A block-built figure at landmark scale standing on the shell as its pedestal: two legs, a torso bridging them, shoulders, a head, one arm hanging and one raised with a torch. Proportions derive from the room over the plate, so a short envelope gives a herm rather than a broken figure.",
+  }),
 
   /* --- memorial ---------------------------------------------------------- */
   mem("statue_plinth", "Statue plinth", "implemented", { tags: ["prop", "plaza"] }),
@@ -908,9 +972,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- leisure / sport --------------------------------------------------- */
   lei("gazebo", "Gazebo", "implemented", { tags: ["prop", "plaza"] }),
-  lei("stadium", "Stadium"),
-  lei("arena", "Arena"),
-  lei("amphitheater", "Amphitheatre"),
+  lei("stadium", "Stadium", "implemented", {
+    wave: 7,
+    tags: ["classical", "floodlights"],
+    note: "A rectangular pitch of green with a halfway line and goal lines on the rebuilt roof deck, a straight seat bank down each long side, and a floodlight mast with a lit head at each corner.",
+  }),
+  lei("arena", "Arena", "implemented", {
+    wave: 7,
+    tags: ["classical", "ring"],
+    note: "The amphitheatre closed into a full elliptical ring round a floor of sand, with velarium fence masts on the crown of the bank and cage partitions in the hypogeum below.",
+  }),
+  lei("amphitheater", "Amphitheatre", "implemented", {
+    wave: 7,
+    tags: ["classical", "cavea"],
+    note:
+      "A semicircular tiered bowl on a Roman podium: the walls dressed as the substructure, the roof rebuilt as a deck, and the cavea built on it as solid columns capped by stairs whose backrests face outward. The open half carries the stage.",
+  }),
   lei("theater", "Theatre", "implemented", {
     wave: 4,
     note: "A slab stage dais, banner wing curtains and flat seat rows facing it.",

@@ -63,7 +63,13 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "biomass_shed", "battery_shed", "coal_tipple", "castle",
   "barbican", "bastion", "armory", "arsenal",
   "bunker", "pillbox", "guard_post", "checkpoint",
-  "beacon_tower", "gravedigger_hut", "shepherds_bothy", "telescope_dome",
+  "beacon_tower", "gravedigger_hut", "shepherds_bothy",
+  // The siegeworks pack, in the order `BUILDING_ARCHETYPES` spreads it —
+  // straight after the garrison and before the science wave. This list is
+  // asserted to equal the grammar's list exactly, so its ORDER is load-bearing.
+  "star_fort", "motte_and_bailey", "palisade", "moat",
+  "drawbridge", "drill_yard", "siege_camp",
+  "telescope_dome",
   "planetarium", "alchemy_lab", "herbarium", "aviary",
   "botanical_garden", "seed_vault", "weather_station", "field_station",
   "penthouse", "atrium_block", "modern_villa", "alchemists_tower",
@@ -75,7 +81,12 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "aquarium", "hedge_maze", "cathedral", "monastery",
   "abbey", "cloister", "hermitage", "mosque",
   "synagogue", "stupa", "ziggurat", "bell_tower",
-  "minaret", "tomb", "hanok", "machiya",
+  "minaret", "tomb",
+  // The sanctum pack, in the order `BUILDING_ARCHETYPES` spreads it —
+  // straight after the faith wave. Order is load-bearing, same as siegeworks.
+  "temple", "chapel", "shrine", "altar_stone", "wayside_cross",
+  "obelisk", "colossus", "amphitheater", "arena", "stadium",
+  "hanok", "machiya",
   "riad", "cycladic_house", "adobe_pueblo", "stilt_house",
   "sod_house", "igloo", "thatched_roundhouse", "colonial_veranda_house",
   "hacienda", "fachwerk_barn", "skyscraper", "office",

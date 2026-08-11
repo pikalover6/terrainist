@@ -154,6 +154,14 @@ import {
 export * from "./archetypes-garrison.js";
 
 import {
+  SIEGEWORKS_BUILDING_ARCHETYPES,
+  furnishSiegeworks,
+  siegeworksArchetypeOfTags,
+} from "./archetypes-siegeworks.js";
+
+export * from "./archetypes-siegeworks.js";
+
+import {
   SCIENCE_BUILDING_ARCHETYPES,
   furnishScience,
   scienceArchetypeOfTags,
@@ -200,6 +208,14 @@ import {
 } from "./archetypes-faith.js";
 
 export * from "./archetypes-faith.js";
+
+import {
+  SANCTUM_BUILDING_ARCHETYPES,
+  furnishSanctum,
+  sanctumArchetypeOfTags,
+} from "./archetypes-sanctum.js";
+
+export * from "./archetypes-sanctum.js";
 
 import {
   DEPTHS_BUILDING_ARCHETYPES,
@@ -254,11 +270,13 @@ export const BUILDING_ARCHETYPES = [
   ...INDUSTRY_BUILDING_ARCHETYPES,
   ...UTILITY_BUILDING_ARCHETYPES,
   ...GARRISON_BUILDING_ARCHETYPES,
+  ...SIEGEWORKS_BUILDING_ARCHETYPES,
   ...SCIENCE_BUILDING_ARCHETYPES,
   ...ARCANA_BUILDING_ARCHETYPES,
   ...RELIC_BUILDING_ARCHETYPES,
   ...SPECTACLE_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
+  ...SANCTUM_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -384,6 +402,14 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // barracks, and bare `beacon`/`beacon_spire` are left for the fantasy track.
   const garrison = garrisonArchetypeOfTags(tags);
   if (garrison !== null) return garrison;
+  // The siegeworks pack, straight after the garrison it belongs beside: same
+  // corner of the vocabulary, and it claims nothing the garrison or an earlier
+  // table claims — `fortress`/`stronghold` stay the castle's, `bastion` the
+  // bastion's, `castle`/`keep` the breadth keep's, and `wall` and `bridge`
+  // stay the linework engine's. Its one greedy claim is `camp`, which no
+  // earlier table wanted.
+  const siegeworks = siegeworksArchetypeOfTags(tags);
+  if (siegeworks !== null) return siegeworks;
   // Wave 5D, science and modern living: after the dwellings and before the
   // extended table, for the reason every later wave sits here — the tables
   // below are greedy. It claims nothing an earlier one claims: `observatory`,
@@ -434,6 +460,16 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `burial_chamber` and `cist`.
   const faith = faithArchetypeOfTags(tags);
   if (faith !== null) return faith;
+  // The sanctum pack, immediately after wave 4B and for exactly its reason:
+  // this table must not sit behind the extended one, because `temple`,
+  // `shrine`, `chapel` and `worship` all mean church down there and stay the
+  // church's. It claims none of those four words — the classical temple
+  // answers to `classical_temple` and its kin, the chapel to `oratory`, the
+  // shrine to `votive_shrine` — and nothing else it claims is claimed above:
+  // bare `statue` is still the memorial track's, `circus` still the big top's
+  // and `pavilion` still the leisure wave's.
+  const sanctum = sanctumArchetypeOfTags(tags);
+  if (sanctum !== null) return sanctum;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -836,11 +872,13 @@ export function furnish(r: FurnishRequest): number {
   n += furnishIndustry(ctx);
   n += furnishUtility(ctx);
   n += furnishGarrison(ctx);
+  n += furnishSiegeworks(ctx);
   n += furnishScience(ctx);
   n += furnishArcana(ctx);
   n += furnishRelic(ctx);
   n += furnishSpectacle(ctx);
   n += furnishFaith(ctx);
+  n += furnishSanctum(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

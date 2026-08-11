@@ -49,10 +49,12 @@ import { utilityFacadeDefaults } from "./archetypes-utility.js";
 import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
+import { siegeworksFacadeDefaults } from "./archetypes-siegeworks.js";
 import { arcanaFacadeDefaults } from "./archetypes-arcana.js";
 import { relicFacadeDefaults } from "./archetypes-relic.js";
 import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
+import { sanctumFacadeDefaults } from "./archetypes-sanctum.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -180,6 +182,9 @@ export function archetypeFacadeDefaults(
       // Wave five A, the garrison — appended before the regional tail.
       const garrison = garrisonFacadeDefaults(archetype);
       if (Object.keys(garrison).length > 0) return garrison;
+      // The siegeworks pack, beside the garrison it belongs to.
+      const siegeworks = siegeworksFacadeDefaults(archetype);
+      if (Object.keys(siegeworks).length > 0) return siegeworks;
       // Wave 5D — science and modern living.
       const science = scienceFacadeDefaults(archetype);
       if (Object.keys(science).length > 0) return science;
@@ -189,6 +194,9 @@ export function archetypeFacadeDefaults(
       // Wave 4B, faith and memorial.
       const faith = faithFacadeDefaults(archetype);
       if (Object.keys(faith).length > 0) return faith;
+      // The sanctum pack, beside the faith wave it belongs to.
+      const sanctum = sanctumFacadeDefaults(archetype);
+      if (Object.keys(sanctum).length > 0) return sanctum;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

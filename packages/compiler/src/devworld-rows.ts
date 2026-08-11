@@ -42,11 +42,13 @@ import { RESIDENTIAL_EXHIBIT_ROWS } from "./exhibits/residential.js";
 import { SCIENCE_EXHIBIT_ROWS } from "./exhibits/science.js";
 import { SEED_EXHIBIT_ROWS } from "./exhibits/seeds.js";
 import { TERMINUS_EXHIBIT_ROWS } from "./exhibits/terminus.js";
+import { SIEGEWORKS_EXHIBIT_ROWS } from "./exhibits/siegeworks.js";
 import { TOWN_EXHIBIT_ROWS } from "./exhibits/town.js";
 import { TRADE_EXHIBIT_ROWS } from "./exhibits/trade.js";
 import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
+import { SANCTUM_EXHIBIT_ROWS } from "./exhibits/sanctum.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -115,6 +117,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...TRADE_EXHIBIT_ROWS,
   ...UNDERGROUND_EXHIBIT_ROWS,
   ...VERNACULAR_EXHIBIT_ROWS,
+  // The sanctum pack: ten buildings the icon law asks for by name.
+  ...SANCTUM_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
@@ -136,6 +140,7 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCANA_EXHIBIT_ROWS,
   // Wave six A, the transport buildings.
   ...TERMINUS_EXHIBIT_ROWS,
+  ...SIEGEWORKS_EXHIBIT_ROWS,
   ...RELIC_EXHIBIT_ROWS,
   ...SPECTACLE_EXHIBIT_ROWS,
   ...DEPTHS_EXHIBIT_ROWS,
@@ -247,6 +252,16 @@ export {
 } from "./exhibits/garrison.js";
 /** The wave-4B faith rows, for tests that assert on the gradient. */
 export { FAITH_EXHIBIT_ROWS, FAITH_ROW_LENGTH, faithSizeFor } from "./exhibits/faith.js";
+
+/** The siegeworks rows, for tests that assert on the gradient. */
+export {
+  SIEGEWORKS_EXHIBIT_ROWS,
+  SIEGEWORKS_ROW_LENGTH,
+  siegeworksSizeFor,
+} from "./exhibits/siegeworks.js";
+
+/** The sanctum-pack rows, for tests that assert on the gradient. */
+export { SANCTUM_EXHIBIT_ROWS, SANCTUM_ROW_LENGTH, sanctumSizeFor } from "./exhibits/sanctum.js";
 
 /** The wave-5E arcana rows, for tests that assert on the gradient. */
 export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";

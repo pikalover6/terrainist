@@ -65,6 +65,10 @@ import {
   DEPTHS_ROW_LENGTH,
   FAITH_EXHIBIT_ROWS,
   FAITH_ROW_LENGTH,
+  SANCTUM_EXHIBIT_ROWS,
+  SANCTUM_ROW_LENGTH,
+  SIEGEWORKS_EXHIBIT_ROWS,
+  SIEGEWORKS_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -185,6 +189,10 @@ describe("dev world grid", () => {
     const garrison = GARRISON_EXHIBIT_ROWS.length * GARRISON_ROW_LENGTH;
     // Wave 4B, faith and memorial: prefixed (`faith_stupa`) for the same reason.
     const faith = FAITH_EXHIBIT_ROWS.length * FAITH_ROW_LENGTH;
+    // The sanctum pack: prefixed (`sanc_temple`) for the same reason.
+    const sanctum = SANCTUM_EXHIBIT_ROWS.length * SANCTUM_ROW_LENGTH;
+    // The siegeworks pack: prefixed (`siege_star_fort`) for the same reason.
+    const siegeworks = SIEGEWORKS_EXHIBIT_ROWS.length * SIEGEWORKS_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -220,6 +228,8 @@ describe("dev world grid", () => {
         homestead +
         residential +
         faith +
+        sanctum +
+        siegeworks +
         commerce +
         garrison + science +
         arcana +
