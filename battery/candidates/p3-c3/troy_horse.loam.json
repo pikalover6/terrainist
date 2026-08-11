@@ -1,0 +1,498 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "troy_horse",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "ground.cliff": "minecraft:sandstone",
+      "ground.peak": "minecraft:sandstone",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:smooth_sandstone",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:sandstone",
+      "plaza.border": "minecraft:cut_sandstone"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0.05
+    },
+    "climate": {
+      "biome": "minecraft:beach",
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never",
+      "blend": "soft"
+    },
+    "character": {
+      "label": "Troy",
+      "materialTheme": "sun_clay",
+      "fortification": "walled",
+      "motifs": {
+        "roofType": "flat",
+        "windowRhythm": "dense",
+        "ornamentDensity": 0.4
+      },
+      "urbanForm": "grown",
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "An enormous wooden Trojan horse stands at the gate of an ancient walled city, built from timber planks with a towering head, legs, tail, ropes and a visible wooden entry ramp. Its walkable hollow belly hides soldiers poised to emerge; a partially opened side hatch with a short wooden ramp is the named door anchor, and shield rims and spear tips are just visible.",
+          "envelope": [
+            48,
+            36,
+            32
+          ]
+        },
+        {
+          "id": "hidden_greeks",
+          "mode": "plugin",
+          "brief": "Small groups of concealed Greek soldiers crouch in shadowed courtyards and behind the gatehouse along the horse's approach, with shields, spears and helmets hidden until the signal to emerge.",
+          "envelope": [
+            5,
+            7,
+            5
+          ],
+          "count": 18
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a walled ancient city on a rise above a sandy Aegean coast, with the sea and ships in view",
+      "icons": "the enormous wooden Trojan horse at the gates; city walls with towers; a citadel-palace above the flat-roofed town; concealed soldiers about to emerge",
+      "fortification": "walled"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy before the soldiers emerge",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the low rise over Troy's sandy coast",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0027,
+          "lacunarity": 2,
+          "gain": 0.48,
+          "ridged": false,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.0024
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0008,
+            "seaFraction": 0.42
+          },
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 8,
+          "snowLineFraction": 0.99
+        },
+        "children": [
+          {
+            "id": "troy_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad rise carrying the city",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 210,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "citadel_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the higher hill beneath the citadel",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.44
+              ],
+              "radius": 100,
+              "height": 18,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 16
+        }
+      },
+      {
+        "id": "coastal_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse Aegean scrub beyond the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.02,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            55
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.18,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "coastal_juniper",
+              "weight": 3,
+              "shape": "juniper_scrub"
+            },
+            {
+              "id": "dry_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "troy",
+        "kind": "city",
+        "label": "the walled ancient city of Troy",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            520,
+            440
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "blockSize": 40,
+          "mix": [
+            "courtyard_house",
+            "townhouse",
+            "shop_row",
+            "warehouse",
+            "inn"
+          ],
+          "courtyards": 0.45,
+          "setPieces": {
+            "max": 4,
+            "kinds": [
+              "landmark",
+              "square",
+              "promenade",
+              "stair"
+            ]
+          },
+          "walls": {
+            "style": "masonry",
+            "margin": 14,
+            "towerPitch": 48,
+            "height": 9,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 220
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "fortified"
+        ],
+        "children": [
+          {
+            "id": "citadel_palace",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the citadel-palace rising over the flat-roofed town",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                13
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "basement": {
+                "depth": 4,
+                "style": "vault"
+              },
+              "vista": true
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "keep",
+              "landmark",
+              "house"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "troy_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the ships below Troy's walls",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            192,
+            16,
+            144
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "troy",
+            "min": 24,
+            "max": 360
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour",
+          "waterfront"
+        ]
+      },
+      {
+        "id": "outer_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse facing the horse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "adjacent_to": "troy",
+            "gap": [
+              8,
+              24
+            ]
+          },
+          {
+            "facing": "troy"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "landmark"
+        ]
+      },
+      {
+        "id": "trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the enormous horse waiting at Troy's gate",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            48,
+            36,
+            32
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "adjacent_to": "outer_gatehouse",
+            "gap": [
+              2,
+              128
+            ]
+          },
+          {
+            "facing": "outer_gatehouse"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "siege"
+        ]
+      },
+      {
+        "id": "hidden_soldiers",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "concealed soldiers waiting along the gate approach",
+        "params": {
+          "program": "hidden_greeks",
+          "count": 18,
+          "area": {
+            "at": [
+              0.5,
+              0.34
+            ],
+            "radius": 0.45
+          },
+          "spacing": 4,
+          "maxSlope": 60,
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        },
+        "tags": [
+          "siege"
+        ]
+      },
+      {
+        "id": "troy_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the old lanes from Troy to the gate and harbour",
+        "params": {
+          "anchors": [
+            "troy",
+            "#tag:house",
+            "outer_gatehouse",
+            "trojan_horse",
+            "troy_harbour"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        48,
+        36,
+        32
+      ],
+      "sourceHash": "b3:a1081a7b75487ba460b61f23edae6278ce511640b758d41c31ec1971652c6a3c",
+      "outputHash": "b3:71df31529ddd779783458191921ccb6baebc498adb581065d296f9342df31ecf",
+      "source": "export const envelope = [48, 36, 32];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const OAK_PLANKS = \"minecraft:oak_planks\";\n  const DARK_PLANKS = \"minecraft:dark_oak_planks\";\n  const SPRUCE_PLANKS = \"minecraft:spruce_planks\";\n  const OAK_LOG_X = \"minecraft:oak_log[axis=x]\";\n  const OAK_LOG_Y = \"minecraft:oak_log[axis=y]\";\n  const OAK_LOG_Z = \"minecraft:oak_log[axis=z]\";\n  const DARK_LOG_X = \"minecraft:dark_oak_log[axis=x]\";\n  const DARK_LOG_Y = \"minecraft:dark_oak_log[axis=y]\";\n  const DARK_LOG_Z = \"minecraft:dark_oak_log[axis=z]\";\n  const ROPE_X = \"minecraft:dark_oak_planks\";\n  const ROPE_Y = \"minecraft:dark_oak_planks\";\n  const IRON = \"minecraft:iron_block\";\n  const COAL = \"minecraft:coal_block\";\n  const GOLD = \"minecraft:gold_block\";\n\n  function put(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function inBelly(x, y, z) {\n    return (\n      x >= 13 && x <= 29 &&\n      y >= 11 && y <= 19 &&\n      z >= 10 && z <= 20\n    );\n  }\n\n  function inDoorGap(x, y, z) {\n    return (\n      x >= 22 && x <= 27 &&\n      y >= 11 && y <= 20 &&\n      z >= 5 && z <= 10\n    );\n  }\n\n  function solidPut(x, y, z, block) {\n    if (!inBelly(x, y, z) && !inDoorGap(x, y, z)) {\n      put(x, y, z, block);\n    }\n  }\n\n  function fillBox(x0, y0, z0, x1, y1, z1, block) {\n    for (let x = x0; x <= x1; x += 1) {\n      for (let y = y0; y <= y1; y += 1) {\n        for (let z = z0; z <= z1; z += 1) {\n          solidPut(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function fillEllipsoid(cx, cy, cz, rx, ry, rz, block) {\n    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x += 1) {\n      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y += 1) {\n        for (let z = Math.floor(cz - rz); z <= Math.ceil(cz + rz); z += 1) {\n          const dx = (x - cx) / rx;\n          const dy = (y - cy) / ry;\n          const dz = (z - cz) / rz;\n          if (dx * dx + dy * dy + dz * dz <= 1.0001) {\n            solidPut(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  function bodyVoxel(x, y, z) {\n    const dx = (x - 21) / 16;\n    const dy = (y - 16) / 9;\n    const dz = (z - 15) / 10;\n    return (\n      dx * dx + dy * dy + dz * dz <= 1.0001 &&\n      !inBelly(x, y, z) &&\n      !inDoorGap(x, y, z)\n    );\n  }\n\n  for (let x = 4; x <= 38; x += 1) {\n    for (let y = 6; y <= 26; y += 1) {\n      for (let z = 4; z <= 26; z += 1) {\n        const dx = (x - 21) / 16;\n        const dy = (y - 16) / 9;\n        const dz = (z - 15) / 10;\n        if (dx * dx + dy * dy + dz * dz <= 1.0001) {\n          const wood = ((x * 7 + y * 3 + z * 5) % 23 === 0)\n            ? DARK_PLANKS\n            : OAK_PLANKS;\n          solidPut(x, y, z, wood);\n        }\n      }\n    }\n  }\n\n  for (let x = 12; x <= 30; x += 1) {\n    for (let z = 10; z <= 20; z += 1) {\n      put(x, 10, z, OAK_PLANKS);\n    }\n  }\n\n  for (let x = 12; x <= 30; x += 1) {\n    put(x, 10, 10, DARK_LOG_X);\n    put(x, 10, 20, DARK_LOG_X);\n  }\n\n  for (let z = 11; z <= 19; z += 1) {\n    put(12, 10, z, DARK_LOG_Z);\n    put(30, 10, z, DARK_LOG_Z);\n  }\n\n  for (let x = 7; x <= 35; x += 1) {\n    if (bodyVoxel(x, 16, 6)) {\n      put(x, 16, 6, OAK_LOG_X);\n    }\n    if (bodyVoxel(x, 16, 24)) {\n      put(x, 16, 24, OAK_LOG_X);\n    }\n    if (bodyVoxel(x, 9, 15)) {\n      put(x, 9, 15, OAK_LOG_X);\n    }\n    if (bodyVoxel(x, 22, 15)) {\n      put(x, 22, 15, OAK_LOG_X);\n    }\n  }\n\n  for (let z = 5; z <= 25; z += 1) {\n    if (bodyVoxel(12, 16, z)) {\n      put(12, 16, z, OAK_LOG_Z);\n    }\n    if (bodyVoxel(30, 16, z)) {\n      put(30, 16, z, OAK_LOG_Z);\n    }\n  }\n\n  function terrainY(x, z) {\n    let g = Math.floor(api.heightAt(x, z));\n    if (g < 0) {\n      g = 0;\n    }\n    if (g > 13) {\n      g = 13;\n    }\n    return g;\n  }\n\n  function buildLeg(x0, x1, z0, z1) {\n    for (let x = x0; x <= x1; x += 1) {\n      for (let z = z0; z <= z1; z += 1) {\n        const base = terrainY(x, z);\n        put(x, base, z, DARK_PLANKS);\n        for (let y = base + 1; y <= 13; y += 1) {\n          put(x, y, z, OAK_LOG_Y);\n        }\n      }\n    }\n  }\n\n  buildLeg(10, 13, 6, 9);\n  buildLeg(10, 13, 21, 24);\n  buildLeg(29, 32, 6, 9);\n  buildLeg(29, 32, 21, 24);\n\n  fillBox(5, 16, 13, 8, 19, 17, OAK_LOG_X);\n  fillBox(4, 18, 13, 6, 20, 17, OAK_LOG_X);\n  fillBox(2, 20, 11, 4, 22, 15, DARK_LOG_X);\n  fillBox(0, 22, 10, 2, 24, 14, OAK_LOG_X);\n  fillBox(0, 23, 10, 1, 25, 14, DARK_PLANKS);\n\n  fillEllipsoid(33, 21, 15, 7, 8, 7, OAK_PLANKS);\n  fillEllipsoid(36, 26, 15, 6, 7, 6, OAK_PLANKS);\n  fillEllipsoid(40, 29, 15, 6, 5, 6, OAK_PLANKS);\n  fillEllipsoid(43, 27, 15, 4, 3, 4, DARK_PLANKS);\n  fillBox(45, 25, 12, 47, 29, 18, DARK_PLANKS);\n\n  fillBox(37, 31, 11, 39, 35, 14, OAK_PLANKS);\n  fillBox(40, 31, 16, 42, 35, 19, OAK_PLANKS);\n  fillBox(37, 35, 11, 39, 35, 14, DARK_PLANKS);\n  fillBox(40, 35, 16, 42, 35, 19, DARK_PLANKS);\n\n  for (let x = 38; x <= 42; x += 1) {\n    put(x, 30, 9, OAK_LOG_X);\n  }\n\n  put(40, 29, 9, COAL);\n  put(46, 27, 11, COAL);\n  put(46, 27, 19, COAL);\n\n  for (let y = 19; y <= 31; y += 1) {\n    const x0 = 29 + Math.floor((y - 19) * 0.55);\n    for (let x = x0; x <= x0 + 1; x += 1) {\n      solidPut(x, y, 9, DARK_LOG_Y);\n      solidPut(x, y, 10, DARK_LOG_Y);\n      solidPut(x, y, 20, DARK_LOG_Y);\n      solidPut(x, y, 21, DARK_LOG_Y);\n    }\n  }\n\n  for (let z = 0; z <= 9; z += 1) {\n    for (let x = 22; x <= 27; x += 1) {\n      const g = terrainY(x, z);\n      let top = Math.max(z + 1, g);\n      if (top > 10) {\n        top = 10;\n      }\n\n      for (let y = 0; y <= top; y += 1) {\n        let block = OAK_LOG_Y;\n        if (y === top) {\n          block = ((x + z) % 3 === 0) ? SPRUCE_PLANKS : OAK_PLANKS;\n        } else if (y === g) {\n          block = DARK_PLANKS;\n        }\n        put(x, y, z, block);\n      }\n    }\n\n    for (let side = 0; side < 2; side += 1) {\n      const x = side === 0 ? 21 : 28;\n      const g = terrainY(x, z);\n      let top = Math.max(z + 2, g + 1);\n      if (top > 11) {\n        top = 11;\n      }\n\n      for (let y = 0; y <= top; y += 1) {\n        put(x, y, z, y === top ? DARK_LOG_Y : OAK_LOG_Y);\n      }\n    }\n  }\n\n  function shield(cx, cy, sideZ) {\n    for (let dx = -3; dx <= 3; dx += 1) {\n      for (let dy = -3; dy <= 3; dy += 1) {\n        const r2 = dx * dx + dy * dy;\n        if (r2 <= 10) {\n          let block = OAK_LOG_Z;\n          if (r2 <= 4) {\n            block = DARK_PLANKS;\n          }\n          if (r2 === 0) {\n            block = GOLD;\n          }\n          put(cx + dx, cy + dy, sideZ, block);\n        }\n      }\n    }\n    put(cx, cy, sideZ + 1, OAK_LOG_Z);\n  }\n\n  shield(16, 16, 6);\n  shield(31, 16, 8);\n\n  for (let x = 22; x <= 27; x += 1) {\n    for (let y = 13; y <= 19; y += 1) {\n      put(x, y, 4, SPRUCE_PLANKS);\n    }\n  }\n\n  for (let y = 13; y <= 19; y += 1) {\n    put(22, y, 4, DARK_LOG_Y);\n    put(27, y, 4, DARK_LOG_Y);\n  }\n\n  for (let z = 4; z <= 9; z += 1) {\n    put(22, 20, z, OAK_LOG_Z);\n    put(27, 20, z, OAK_LOG_Z);\n  }\n\n  for (let x = 22; x <= 27; x += 1) {\n    put(x, 20, 4, DARK_LOG_X);\n  }\n\n  put(22, 20, 4, GOLD);\n  put(27, 20, 4, GOLD);\n\n  for (let y = 9; y <= 12; y += 1) {\n    put(22, y, 4, ROPE_Y);\n    put(27, y, 4, ROPE_Y);\n  }\n\n  for (let y = 10; y <= 21; y += 1) {\n    put(21, y, 9, OAK_LOG_Y);\n    put(28, y, 9, OAK_LOG_Y);\n  }\n\n  for (let x = 21; x <= 28; x += 1) {\n    put(x, 10, 9, OAK_LOG_X);\n    put(x, 21, 9, OAK_LOG_X);\n  }\n\n  for (let sx = 23; sx <= 27; sx += 2) {\n    for (let y = 15; y <= 20; y += 1) {\n      put(sx, y, 8, OAK_LOG_Y);\n    }\n    put(sx, 21, 8, IRON);\n  }\n\n  for (let y = 24; y <= 28; y += 1) {\n    put(43, y, 9, ROPE_Y);\n  }\n\n  for (let x = 36; x <= 43; x += 1) {\n    put(x, 28, 9, ROPE_X);\n  }\n\n  return {\n    name: \"Trojan Horse of Troy\",\n    seatY: 0,\n    anchors: {\n      door: [24, 11, 9]\n    },\n    interiors: [\n      {\n        min: [13, 11, 10],\n        max: [29, 19, 20],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "hidden_greeks": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        14,
+        15
+      ],
+      "sourceHash": "b3:a590590d7d689a8013a2861edb1be3f7aba65c323a7f6d424462332a2505aa92",
+      "outputHash": "b3:c71f4a756c6323a0f9dd67dd59a54aaa690dfbaa0e4d0d2d4ef8650ff479b510",
+      "source": "export const envelope = [15, 14, 15];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n  const lastX = W - 1;\n  const lastZ = D - 1;\n  const index = api.instance.index;\n  const count = api.instance.count;\n\n  const palettes = [\n    {\n      base: \"minecraft:sandstone\",\n      foundation: \"minecraft:stone\",\n      trim: \"minecraft:cut_sandstone\",\n      mark: \"minecraft:chiseled_sandstone\",\n      roof: \"minecraft:smooth_sandstone\",\n      cracked: \"minecraft:cracked_stone_bricks\",\n      shadow: \"minecraft:coal_block\",\n      wood: \"minecraft:dark_oak_log\",\n      flag: \"minecraft:red_wool\"\n    },\n    {\n      base: \"minecraft:red_sandstone\",\n      foundation: \"minecraft:sandstone\",\n      trim: \"minecraft:cut_red_sandstone\",\n      mark: \"minecraft:chiseled_red_sandstone\",\n      roof: \"minecraft:smooth_red_sandstone\",\n      cracked: \"minecraft:orange_terracotta\",\n      shadow: \"minecraft:polished_blackstone\",\n      wood: \"minecraft:acacia_log\",\n      flag: \"minecraft:blue_wool\"\n    },\n    {\n      base: \"minecraft:stone_bricks\",\n      foundation: \"minecraft:stone\",\n      trim: \"minecraft:polished_andesite\",\n      mark: \"minecraft:mossy_stone_bricks\",\n      roof: \"minecraft:stone_bricks\",\n      cracked: \"minecraft:cracked_stone_bricks\",\n      shadow: \"minecraft:blackstone\",\n      wood: \"minecraft:spruce_log\",\n      flag: \"minecraft:yellow_wool\"\n    },\n    {\n      base: \"minecraft:terracotta\",\n      foundation: \"minecraft:brown_terracotta\",\n      trim: \"minecraft:orange_terracotta\",\n      mark: \"minecraft:chiseled_sandstone\",\n      roof: \"minecraft:brown_terracotta\",\n      cracked: \"minecraft:cracked_stone_bricks\",\n      shadow: \"minecraft:coal_block\",\n      wood: \"minecraft:dark_oak_log\",\n      flag: \"minecraft:red_wool\"\n    }\n  ];\n\n  const rFront = api.random();\n  const rStyle = api.random();\n  const damageSeed = Math.floor(api.random() * 100000);\n  const damageLevel = 1 + Math.floor(api.random() * 4);\n  const missingRoll = api.random();\n  const missingChoice = Math.floor(api.random() * 4);\n\n  const towerTops = [];\n  for (let t = 0; t < 4; t += 1) {\n    towerTops.push(\n      9 + ((Math.floor(api.random() * 3) + index + t) % 3)\n    );\n  }\n\n  const capSeed = Math.floor(api.random() * 100);\n  const crenelSeed = Math.floor(api.random() * 100);\n  const canopySeed = Math.floor(api.random() * 100);\n  const soldierRoll = api.random();\n  const handSeed = Math.floor(api.random() * 100);\n  const helmetSeed = Math.floor(api.random() * 100);\n  const shieldSeed = Math.floor(api.random() * 100);\n  const rearRoll = api.random();\n  const peekRoll = api.random();\n  const peekSeed = Math.floor(api.random() * 100);\n  const flagRowsRoll = api.random();\n  const flagSideRoll = api.random();\n  const flagColorRoll = api.random();\n\n  const direction =\n    (index + count + Math.floor(rFront * 4)) % 4;\n  const style =\n    (index + count + Math.floor(rStyle * palettes.length)) %\n    palettes.length;\n  const palette = palettes[style];\n  const markerCode = index & 1023;\n\n  const missingTower =\n    missingRoll < 0.18 + (index % 5 === 0 ? 0.07 : 0)\n      ? missingChoice\n      : -1;\n\n  const soldierCount =\n    2 + ((index + count + Math.floor(soldierRoll * 2)) % 2);\n  const rearCount =\n    (index + Math.floor(rearRoll * 3)) % 3;\n  const peekCount =\n    1 + ((index + Math.floor(peekRoll * 2)) % 2);\n  const flagRows = 1 + Math.floor(flagRowsRoll * 3);\n  const flagSide = flagSideRoll < 0.5 ? -1 : 1;\n\n  const flagChoices = [\n    \"minecraft:red_wool\",\n    \"minecraft:blue_wool\",\n    \"minecraft:yellow_wool\",\n    \"minecraft:white_wool\"\n  ];\n\n  const flagMaterial =\n    (index + count + Math.floor(flagColorRoll * 2)) % 2 === 0\n      ? palette.flag\n      : flagChoices[\n          (index + Math.floor(flagColorRoll * flagChoices.length)) %\n            flagChoices.length\n        ];\n\n  const tunics = [\n    \"minecraft:blue_wool\",\n    \"minecraft:green_wool\",\n    \"minecraft:gray_wool\",\n    \"minecraft:brown_wool\"\n  ];\n\n  const skins = [\n    \"minecraft:terracotta\",\n    \"minecraft:orange_terracotta\",\n    \"minecraft:yellow_terracotta\",\n    \"minecraft:brown_terracotta\"\n  ];\n\n  const shields = [\n    \"minecraft:iron_block\",\n    \"minecraft:blue_wool\",\n    \"minecraft:red_wool\",\n    \"minecraft:yellow_concrete\",\n    \"minecraft:green_wool\"\n  ];\n\n  const helmets = [\n    \"minecraft:gold_block\",\n    \"minecraft:iron_block\",\n    \"minecraft:yellow_terracotta\"\n  ];\n\n  const hairBlocks = [\n    \"minecraft:brown_wool\",\n    \"minecraft:black_wool\",\n    \"minecraft:gray_wool\"\n  ];\n\n  function toWorld(u, d) {\n    if (direction === 0) {\n      return [u, d];\n    }\n    if (direction === 1) {\n      return [lastX - d, u];\n    }\n    if (direction === 2) {\n      return [lastX - u, lastZ - d];\n    }\n    return [d, lastZ - u];\n  }\n\n  const occupied = new Set();\n\n  function put(x, y, z, block) {\n    if (\n      x < 0 || x >= W ||\n      y < 0 || y >= H ||\n      z < 0 || z >= D\n    ) {\n      return;\n    }\n\n    const key = x + \"|\" + y + \"|\" + z;\n    if (occupied.has(key)) {\n      return;\n    }\n\n    occupied.add(key);\n    api.set(x, y, z, block);\n  }\n\n  function putLocal(u, y, d, block) {\n    if (\n      u < 0 || u >= W ||\n      d < 0 || d >= D ||\n      y < 0 || y >= H\n    ) {\n      return;\n    }\n\n    if (\n      u >= 4 && u <= 10 &&\n      d >= 5 && d <= 9 &&\n      y >= 4 && y <= 8\n    ) {\n      return;\n    }\n\n    const point = toWorld(u, d);\n    put(point[0], y, point[1], block);\n  }\n\n  function isDoor(u, y, d) {\n    return (\n      (d === 3 || d === 4) &&\n      u >= 6 && u <= 8 &&\n      y >= 4 && y <= 6\n    );\n  }\n\n  function wallBlock(u, y, d, face) {\n    if (\n      face === \"front\" &&\n      d === 3 &&\n      u >= 5 && u <= 9 &&\n      y >= 7 && y <= 8\n    ) {\n      const bit = (y - 7) * 5 + (u - 5);\n      return (markerCode & (1 << bit)) !== 0\n        ? palette.mark\n        : palette.trim;\n    }\n\n    if (\n      face === \"back\" &&\n      d === 10 &&\n      (u === 5 || u === 7 || u === 9) &&\n      (y === 6 || y === 7)\n    ) {\n      return palette.shadow;\n    }\n\n    const scar =\n      (u * 19 + d * 11 + y * 7 + damageSeed + index * 3) % 29;\n\n    if (y >= 5 && scar < damageLevel) {\n      return palette.cracked;\n    }\n\n    if (\n      y === 8 ||\n      (u + d + y + style + index) % 6 === 0\n    ) {\n      return palette.trim;\n    }\n\n    return palette.base;\n  }\n\n  const terrain = [];\n  for (let u = 0; u < W; u += 1) {\n    terrain[u] = [];\n    for (let d = 0; d < D; d += 1) {\n      const point = toWorld(u, d);\n      terrain[u][d] = api.heightAt(point[0], point[1]);\n    }\n  }\n\n  // Buried foundation and a raised stone floor.\n  for (let u = 1; u <= W - 2; u += 1) {\n    for (let d = 1; d <= D - 2; d += 1) {\n      const h = terrain[u][d];\n      const lowerBlock =\n        h < -0.5 ||\n        (u * 3 + d + index + damageSeed) % 7 === 0\n          ? palette.foundation\n          : palette.base;\n\n      for (let y = 0; y <= 2; y += 1) {\n        putLocal(u, y, d, lowerBlock);\n      }\n\n      const topBlock =\n        (u + d + index + damageSeed) % 4 === 0\n          ? palette.trim\n          : palette.base;\n      putLocal(u, 3, d, topBlock);\n\n      const rise =\n        h > 0\n          ? Math.min(2, Math.max(0, Math.floor(h + 0.5)))\n          : 0;\n\n      const rim =\n        u === 1 ||\n        u === W - 2 ||\n        d === D - 2 ||\n        (d === 1 && (u <= 2 || u >= W - 3));\n\n      if (rim) {\n        for (let y = 4; y <= 3 + rise; y += 1) {\n          putLocal(u, y, d, palette.foundation);\n        }\n      }\n    }\n  }\n\n  // Short approach steps at the chosen gate face.\n  for (let u = 5; u <= 9; u += 1) {\n    const h = terrain[u][0];\n    const stepTop = h > 0.5 ? 3 : 2;\n\n    for (let d = 0; d <= 1; d += 1) {\n      const limit = d === 0 ? stepTop : 3;\n      for (let y = 0; y <= limit; y += 1) {\n        putLocal(u, y, d, palette.foundation);\n      }\n    }\n  }\n\n  // Gatehouse walls around the empty inner room.\n  for (let y = 4; y <= 8; y += 1) {\n    for (let u = 2; u <= 12; u += 1) {\n      for (let d = 3; d <= 4; d += 1) {\n        if (!isDoor(u, y, d)) {\n          putLocal(u, y, d, wallBlock(u, y, d, \"front\"));\n        }\n      }\n    }\n\n    for (let d = 5; d <= 9; d += 1) {\n      putLocal(2, y, d, wallBlock(2, y, d, \"side\"));\n      putLocal(3, y, d, wallBlock(3, y, d, \"side\"));\n      putLocal(11, y, d, wallBlock(11, y, d, \"side\"));\n      putLocal(12, y, d, wallBlock(12, y, d, \"side\"));\n    }\n\n    for (let u = 2; u <= 12; u += 1) {\n      putLocal(u, y, 10, wallBlock(u, y, 10, \"back\"));\n      putLocal(u, y, 11, wallBlock(u, y, 11, \"back\"));\n    }\n  }\n\n  // Four unequal corner towers.\n  const towerBoxes = [\n    [1, 4, 2, 5],\n    [10, 13, 2, 5],\n    [1, 4, 9, 12],\n    [10, 13, 9, 12]\n  ];\n\n  for (let t = 0; t < towerBoxes.length; t += 1) {\n    if (t === missingTower) {\n      continue;\n    }\n\n    const box = towerBoxes[t];\n    const u0 = box[0];\n    const u1 = box[1];\n    const d0 = box[2];\n    const d1 = box[3];\n    const top = towerTops[t];\n\n    for (let y = 4; y <= top; y += 1) {\n      for (let u = u0; u <= u1; u += 1) {\n        for (let d = d0; d <= d1; d += 1) {\n          const edge =\n            u === u0 || u === u1 ||\n            d === d0 || d === d1;\n\n          let block =\n            edge || y === top\n              ? palette.trim\n              : palette.base;\n\n          const towerScar =\n            (u * 7 + d * 5 + y * 3 + damageSeed + t * 11) % 31;\n\n          if (\n            !edge &&\n            y >= 6 &&\n            y < top &&\n            towerScar < damageLevel\n          ) {\n            block = palette.cracked;\n          }\n\n          putLocal(u, y, d, block);\n        }\n      }\n    }\n\n    if (top + 1 < H) {\n      for (let u = u0; u <= u1; u += 1) {\n        if ((u + t + index + capSeed) % 2 === 0) {\n          putLocal(u, top + 1, d0, palette.mark);\n          putLocal(u, top + 1, d1, palette.mark);\n        }\n      }\n\n      for (let d = d0 + 1; d < d1; d += 1) {\n        if ((d + t + index + capSeed) % 2 === 0) {\n          putLocal(u0, top + 1, d, palette.mark);\n          putLocal(u1, top + 1, d, palette.mark);\n        }\n      }\n    }\n  }\n\n  // Solid roof over the quarters.\n  for (let u = 2; u <= 12; u += 1) {\n    for (let d = 3; d <= 11; d += 1) {\n      putLocal(u, 9, d, palette.roof);\n    }\n  }\n\n  // Parapet and irregular crenellations.\n  for (let u = 2; u <= 12; u += 1) {\n    putLocal(u, 10, 3, palette.trim);\n    putLocal(u, 10, 11, palette.trim);\n  }\n\n  for (let d = 4; d <= 10; d += 1) {\n    putLocal(2, 10, d, palette.trim);\n    putLocal(12, 10, d, palette.trim);\n  }\n\n  for (let u = 2; u <= 12; u += 1) {\n    if ((u + index + crenelSeed) % 3 !== 1) {\n      putLocal(u, 11, 3, palette.mark);\n      putLocal(u, 11, 11, palette.mark);\n    }\n  }\n\n  for (let d = 4; d <= 10; d += 1) {\n    if ((d + index + crenelSeed) % 3 !== 1) {\n      putLocal(2, 11, d, palette.mark);\n      putLocal(12, 11, d, palette.mark);\n    }\n  }\n\n  // A signal mast and a small cloth pennant.\n  for (let y = 10; y <= 13; y += 1) {\n    putLocal(7, y, 7, palette.wood);\n  }\n\n  for (let y = 11; y < 11 + flagRows && y <= 13; y += 1) {\n    putLocal(7 + flagSide, y, 7, flagMaterial);\n  }\n\n  // A few helmeted figures peeking over the rear parapet.\n  for (let j = 0; j < peekCount; j += 1) {\n    const u = 5 + j * 4;\n    const d = 10;\n    putLocal(u, 10, d, palette.shadow);\n    putLocal(\n      u,\n      11,\n      d,\n      helmets[(index + j + helmetSeed) % helmets.length]\n    );\n\n    if ((index + j + peekSeed) % 2 === 0) {\n      putLocal(u, 12, d, palette.mark);\n    }\n  }\n\n  const spearBlock = \"minecraft:oak_fence\";\n\n  function makeSoldier(cx, depth, hand, ordinal, rear) {\n    const tunic =\n      tunics[(ordinal + index + style) % tunics.length];\n    const skin =\n      skins[(ordinal + index + helmetSeed) % skins.length];\n    const shield =\n      shields[(ordinal + index + shieldSeed) % shields.length];\n    const helmet =\n      helmets[(ordinal + index + helmetSeed) % helmets.length];\n    const hair =\n      hairBlocks[(ordinal + index + helmetSeed) % hairBlocks.length];\n    const arm =\n      (ordinal + index) % 2 === 0 ? skin : tunic;\n    const boots = palette.shadow;\n    const helmetOn =\n      (helmetSeed + ordinal + index) % 5 !== 0;\n\n    putLocal(cx - 1, 4, depth, boots);\n    putLocal(cx, 4, depth, boots);\n    putLocal(cx + hand, 5, depth, boots);\n    putLocal(cx, 5, depth, tunic);\n    putLocal(cx, 6, depth, tunic);\n    putLocal(cx + hand, 6, depth, arm);\n    putLocal(cx, 7, depth, skin);\n    putLocal(cx, 8, depth, helmetOn ? helmet : hair);\n\n    const shieldU = cx + hand;\n    const shieldDepth = rear ? depth + 1 : depth - 1;\n    const boss =\n      (ordinal + index + shieldSeed) % 2 === 0\n        ? \"minecraft:gold_block\"\n        : \"minecraft:iron_block\";\n\n    putLocal(shieldU, 6, shieldDepth, boss);\n    putLocal(shieldU, 5, shieldDepth, shield);\n    putLocal(shieldU, 7, shieldDepth, shield);\n    putLocal(shieldU + hand, 6, shieldDepth, shield);\n    putLocal(shieldU + hand, 7, shieldDepth, shield);\n\n    const spearU = cx - hand * 2;\n    for (let y = 4; y <= 8; y += 1) {\n      putLocal(spearU, y, depth, spearBlock);\n    }\n    putLocal(spearU, 9, depth, boss);\n  }\n\n  // Two guards crouch in the shadow of the gate towers.\n  makeSoldier(4, 1, 1, 0, false);\n  makeSoldier(10, 1, -1, 1, false);\n\n  // Some variants add another group behind the gatehouse.\n  if (soldierCount === 3) {\n    const hand = (index + handSeed) % 2 === 0 ? -1 : 1;\n    makeSoldier(7, 12, hand, 20, true);\n  }\n\n  const rearPositions = [5, 9];\n  for (let j = 0; j < rearCount; j += 1) {\n    const hand =\n      (handSeed + index + j) % 2 === 0 ? -1 : 1;\n    makeSoldier(rearPositions[j], 12, hand, 5 + j, true);\n  }\n\n  const roomCorners = [\n    toWorld(4, 5),\n    toWorld(10, 5),\n    toWorld(4, 9),\n    toWorld(10, 9)\n  ];\n\n  let minX = roomCorners[0][0];\n  let maxX = roomCorners[0][0];\n  let minZ = roomCorners[0][1];\n  let maxZ = roomCorners[0][1];\n\n  for (let i = 1; i < roomCorners.length; i += 1) {\n    minX = Math.min(minX, roomCorners[i][0]);\n    maxX = Math.max(maxX, roomCorners[i][0]);\n    minZ = Math.min(minZ, roomCorners[i][1]);\n    maxZ = Math.max(maxZ, roomCorners[i][1]);\n  }\n\n  const door = toWorld(7, 3);\n  const courtyard = toWorld(7, 7);\n\n  return {\n    name: \"Hidden Greeks behind the Gatehouse\",\n    seatY: 3,\n    anchors: {\n      door: [door[0], 4, door[1]],\n      courtyard: [courtyard[0], 4, courtyard[1]]\n    },\n    interiors: [\n      {\n        min: [minX, 4, minZ],\n        max: [maxX, 8, maxZ],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"ancient","event":{"kind":"siege","severity":0.8,"recency":0.05},"climate":{"biome":"minecraft:beach","temperature":0.6,"humidity":0.2,"snow":"never","blend":"soft"},"character":{"label":"Troy","materialTheme":"sun_clay","fortification":"walled","motifs":{"roofType":"flat","windowRhythm":"dense","ornamentDensity":0.4},"urbanForm":"grown"},"tokens":{"terrain":"a walled ancient city on a rise above a sandy Aegean coast, with the sea and ships in view","icons":"the enormous wooden Trojan horse at the gates; city walls with towers; a citadel-palace above the flat-roofed town; concealed soldiers about to emerge"}}
+           2 attempt(s), 9233 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     66815 in + 35591 out = 102406  ($0.0297)
+programs   2 of 2 kept (budget 12 landmark / 6 plugin)
+  ok     trojan_horse [landmark]  3 attempt(s), 141633 tokens  ($0.0708)
+  ok     hidden_greeks [plugin]  1 attempt(s), 87743 tokens  ($0.0515)
+  tokens     28651 in + 200725 out = 229376  ($0.1223)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The document failed to compile — 7 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [4] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "clearance" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E170 CANNOT_FIT at world.troy_harbour.ship_1: no site within 48 blocks fits the fishing_trawler
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+warning LOAM-E170 CANNOT_FIT at world.troy_harbour.ship_2: no site within 48 blocks fits the speedboat
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+warning LOAM-E170 CANNOT_FIT at world.troy_harbour.ship_3: no site within 48 blocks fits the fishing_trawler
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+error LOAM-E336 PROGRAM_GATE_FAILED at world.hidden_soldiers: no site would take "hidden_greeks"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope
+
+  revision 1 authored in 1 attempt(s)
+  tokens     78777 in + 27862 out = 106639  ($0.0266)
+
+
+compile feedback, round 2 of 2:
+
+The document failed to compile — 2 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+error LOAM-E336 PROGRAM_GATE_FAILED at world.hidden_soldiers: no site would take "hidden_greeks"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope
+
+  revision 2 authored in 1 attempt(s)
+  tokens     78288 in + 16995 out = 95283  ($0.0124)
+
+compiled "troy_horse" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse
+  seed       303
+  region     1024x1024 at (-512, -512)
+  heights    52.8..91.6  sea 63  snow line 91.3
+  land       60.4% of columns above sea level
+  biomes     ocean 37.5%, beach 31.3%, forest 20.6%, plains 10.6%, windswept_hills 0.1%
+  trees      2633 (coastal_scrub=2821)
+  chunks     4096
+  blocks     138812612 (135474 vegetation)
+  markers    109
+  spawn      [0, 80, 0]
+  timings    validate 2ms  field 569ms  layout 7495ms  climate 203ms  columns 97ms  caves 0ms  structures 9589ms  programs 370ms  scatter 922ms  biomes 162ms  validators 13ms  emit 9859ms  total 29412ms
+  programs   world.trojan_horse=trojan_horse×1 (7714 blocks), world.hidden_soldiers=hidden_greeks×18 (26200 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.trojan_horse: this node declares an envelope; program "trojan_horse" declares [48, 36, 32] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.troy_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 255564 footprint columns (plus 53275 feathered over 32 columns) to minecraft:beach, named by climate intent; snow policy never resolved to "never" on a 0/255564 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 223880 in + 80448 out = 304328 tokens ($0.0686)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse
+installed "troy_horse_c3"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c3/troy_horse
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/troy_horse_c3
+  lastPlayed 1786444666713 (2026-08-11T10:37:46.713Z)
