@@ -1,0 +1,59 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"modern","event":{"kind":"siege","severity":0.8,"recency":0},"character":{"label":"modern Hellenist city","materialTheme":"modern_city","urbanForm":"grid","motifs":{"roofType":"flat","massing":"blocky","windowRhythm":"regular","ornamentDensity":0.5},"archetypes":{"prefer":["temple"],"forbid":[]},"props":{"prefer":[],"forbid":[]},"flora":{"prefer":[],"forbid":[]}},"tokens":{"invasion":"sea monsters are invading the city"}}
+           2 attempt(s), 6779 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     63994 in + 35143 out = 99137  ($0.0218)
+programs   1 of 2 kept (budget 12 landmark / 6 plugin)
+  ok     leviathan_breaker [landmark]  2 attempt(s), 68573 tokens  ($0.0348)
+  drop   sea_monster [plugin]  3 attempt(s), 148185 tokens  ($0.0643)  — 3 gate problem(s) after 3 round(s); last: LOAM-E336 physics rule floating.isolated at (49, 78, 12) on calcite: a full block with air on all six faces
+  tokens     59634 in + 157124 out = 216758  ($0.0991)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege.loam.json
+
+compiled "hellenist_siege" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege
+  seed       305
+  region     1024x1024 at (-512, -512)
+  heights    53.6..79.2  sea 63  snow line 78.5
+  land       78.5% of columns above sea level
+  biomes     plains 73.9%, ocean 20.7%, forest 4.2%, beach 1.1%, windswept_hills 0.3%
+  trees      6387 (outskirts_grove=1848, wild_fill=4785)
+  chunks     4096
+  blocks     142050388 (459251 vegetation)
+  markers    72
+  spawn      [-8, 66, -8]
+  timings    validate 9ms  field 11488ms  layout 171583ms  climate 3012ms  columns 1421ms  caves 0ms  structures 63393ms  programs 7240ms  scatter 60646ms  biomes 1756ms  validators 288ms  emit 155277ms  total 476976ms
+  programs   world.leviathan_breaker=leviathan_breaker×1 (23720 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.leviathan_breaker: this node declares an envelope; program "leviathan_breaker" declares [64, 48, 64] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.city_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W337 PROGRAM_DROPPED at world.sea_monster_wave: this node scatters program "sea_monster", which the document does not carry — it was requested but never authored
+  fix: run the program-authoring phase, add the program to the document's "programs" map, or drop the node; the world compiles without it
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 272757 footprint columns (plus 47604 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 90% of 28385 ring columns); snow policy auto resolved to "never" on a 0/272757 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-8, -8)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  1 model run(s), 0 compile-feedback round(s), 63994 in + 35143 out = 99137 tokens ($0.0218)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege
+installed "hellenist_siege_c1"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c1/hellenist_siege
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/hellenist_siege_c1
+  lastPlayed 1786415319471 (2026-08-11T02:28:39.471Z)

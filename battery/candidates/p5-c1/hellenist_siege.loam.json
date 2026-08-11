@@ -1,0 +1,442 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenist_siege",
+    "worldSeed": "305",
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": "minecraft:calcite",
+      "ground.peak": "minecraft:calcite",
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "road.surface": "minecraft:gray_concrete",
+      "road.shoulder": "minecraft:stone",
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.gravel": "minecraft:light_gray_concrete",
+      "plaza.cobble": "minecraft:polished_diorite",
+      "plaza.border": "minecraft:quartz_block"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "character": {
+      "label": "modern Hellenist city",
+      "materialTheme": "modern_city",
+      "archetypes": {
+        "prefer": [
+          "temple"
+        ],
+        "forbid": []
+      },
+      "props": {
+        "prefer": [],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.5
+      },
+      "urbanForm": "grid",
+      "programs": [
+        {
+          "id": "leviathan_breaker",
+          "mode": "landmark",
+          "brief": "A colossal sea monster rises from the coastal inlet beside the modern Hellenist city, low enough for its head and tentacles to loom over the civic square; its wet armored body breaks paving and seawall into a grounded trace and publishes a pad contact anchor.",
+          "envelope": [
+            64,
+            48,
+            64
+          ]
+        },
+        {
+          "id": "sea_monster",
+          "mode": "plugin",
+          "brief": "Distinct sea monsters surge inland from the inlet in an advancing attack, with varied serpentine bodies, fins, tentacles, wet scales, brine trails and impact craters; each instance should face the city rather than read as uniform decoration.",
+          "envelope": [
+            15,
+            18,
+            15
+          ],
+          "count": 18
+        }
+      ]
+    },
+    "tokens": {
+      "invasion": "sea monsters are invading the city"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the modern Hellenist city under a sea-monster siege",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle coastal ground around the city",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 69,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0036,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.42
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 8,
+          "snowLineFraction": 0.96
+        },
+        "children": [
+          {
+            "id": "city_platform",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shallow platform beneath the city",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.52
+              ],
+              "radius": 300,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "sea_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flooded inlet carrying the invasion inland",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.52,
+                  0.55
+                ],
+                [
+                  0.51,
+                  0.42
+                ],
+                "coast"
+              ],
+              "width": 44,
+              "depth": 22,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.15,
+          "blendRadius": 12
+        }
+      },
+      {
+        "id": "outskirts_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "small groves beyond the urban edge",
+        "params": {
+          "area": {
+            "zone": "northwest"
+          },
+          "density": 0.08,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            72
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.32,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "plane_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "shore_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the country outside the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.018,
+          "spacing": 5,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.28,
+            "flowers": 0.03,
+            "deadwood": 0.015
+          },
+          "species": [
+            {
+              "id": "country_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "country_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "hellenist_city",
+        "kind": "city",
+        "label": "the modern Hellenist coastal city",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            560,
+            480
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "ring": true,
+          "blockSize": 44,
+          "mix": [
+            "office",
+            "apartment_block",
+            "shop_row",
+            "university_hall",
+            "church"
+          ],
+          "setPieces": {
+            "max": 5,
+            "kinds": [
+              "landmark",
+              "bridge",
+              "promenade",
+              "square"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 180,
+            "partial": 0.04
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "hellenist"
+        ],
+        "children": [
+          {
+            "id": "city_temple",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the Hellenist temple preserved among the modern blocks",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                21
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "floorHeight": 4,
+              "roof": "gable",
+              "windowRhythm": "regular",
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "temple",
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "leviathan_breaker",
+        "kind": "generator",
+        "generator": "authored:leviathan_breaker",
+        "label": "the colossal leviathan breaking into the waterfront",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            64,
+            48,
+            64
+          ]
+        },
+        "params": {
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 96,
+            "partial": 0.2
+          },
+          {
+            "beside": "sea_inlet",
+            "offset": [
+              4,
+              32
+            ]
+          },
+          {
+            "distance": "hellenist_city",
+            "max": 300
+          }
+        ],
+        "tags": [
+          "invasion",
+          "sea_monster",
+          "landmark"
+        ]
+      },
+      {
+        "id": "sea_monster_wave",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "the advancing wave of sea monsters",
+        "params": {
+          "program": "sea_monster",
+          "count": 18,
+          "area": {
+            "at": [
+              0.5,
+              0.44
+            ],
+            "radius": 0.23
+          },
+          "spacing": 24,
+          "maxSlope": 24,
+          "seat": "wade"
+        }
+      },
+      {
+        "id": "city_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the grid streets joining the city and its homes",
+        "params": {
+          "anchors": [
+            "hellenist_city",
+            "#tag:house"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "leviathan_breaker": {
+      "mode": "landmark",
+      "envelope": [
+        64,
+        48,
+        64
+      ],
+      "sourceHash": "b3:6023f86c0ef739c1c6573159bd822331838c065b85a8570f52334ff867305b04",
+      "outputHash": "b3:a6e5d9827fee68c5763d6d8b7249c482e79896f1becc5d9fac16c2c1cb69b56d",
+      "source": "export const envelope = [64, 48, 64];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n  const SEAT = 6;\n\n  const darkPrismarine = \"minecraft:dark_prismarine\";\n  const prismarine = \"minecraft:prismarine\";\n  const deepslate = \"minecraft:deepslate\";\n  const polishedDeepslate = \"minecraft:polished_deepslate\";\n  const oxidizedCopper = \"minecraft:oxidized_copper\";\n  const weatheredCopper = \"minecraft:weathered_copper\";\n  const lightGrayConcrete = \"minecraft:light_gray_concrete\";\n  const smoothQuartz = \"minecraft:smooth_quartz\";\n  const polishedAndesite = \"minecraft:polished_andesite\";\n  const stoneBricks = \"minecraft:stone_bricks\";\n  const crackedStoneBricks = \"minecraft:cracked_stone_bricks\";\n  const blackConcrete = \"minecraft:black_concrete\";\n  const redConcrete = \"minecraft:red_concrete\";\n  const orangeConcrete = \"minecraft:orange_concrete\";\n  const quartzBlock = \"minecraft:quartz_block\";\n  const cyanConcrete = \"minecraft:cyan_concrete\";\n  const glowstone = \"minecraft:glowstone\";\n\n  const cells = new Array(W * H * D);\n  const groundColumns = new Uint8Array(W * D);\n\n  function cellIndex(x, y, z) {\n    return (y * D + z) * W + x;\n  }\n\n  function put(x, y, z, block, grounded) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n\n    if (ix < 0 || ix >= W || iy < 0 || iy >= H || iz < 0 || iz >= D) {\n      return;\n    }\n\n    cells[cellIndex(ix, iy, iz)] = block;\n    if (grounded) {\n      groundColumns[iz * W + ix] = 1;\n    }\n  }\n\n  function box(x0, y0, z0, x1, y1, z1, block, grounded) {\n    const minX = Math.max(0, Math.ceil(Math.min(x0, x1)));\n    const maxX = Math.min(W - 1, Math.floor(Math.max(x0, x1)));\n    const minY = Math.max(0, Math.ceil(Math.min(y0, y1)));\n    const maxY = Math.min(H - 1, Math.floor(Math.max(y0, y1)));\n    const minZ = Math.max(0, Math.ceil(Math.min(z0, z1)));\n    const maxZ = Math.min(D - 1, Math.floor(Math.max(z0, z1)));\n\n    for (let x = minX; x <= maxX; x += 1) {\n      for (let y = minY; y <= maxY; y += 1) {\n        for (let z = minZ; z <= maxZ; z += 1) {\n          put(x, y, z, block, grounded);\n        }\n      }\n    }\n  }\n\n  function ellipsoid(cx, cy, cz, rx, ry, rz, block, grounded) {\n    const minX = Math.max(0, Math.ceil(cx - rx));\n    const maxX = Math.min(W - 1, Math.floor(cx + rx));\n    const minY = Math.max(0, Math.ceil(cy - ry));\n    const maxY = Math.min(H - 1, Math.floor(cy + ry));\n    const minZ = Math.max(0, Math.ceil(cz - rz));\n    const maxZ = Math.min(D - 1, Math.floor(cz + rz));\n\n    for (let x = minX; x <= maxX; x += 1) {\n      const dx = (x - cx) / rx;\n      const dx2 = dx * dx;\n      if (dx2 > 1.0001) {\n        continue;\n      }\n\n      for (let y = minY; y <= maxY; y += 1) {\n        const dy = (y - cy) / ry;\n        const partial = dx2 + dy * dy;\n        if (partial > 1.0001) {\n          continue;\n        }\n\n        for (let z = minZ; z <= maxZ; z += 1) {\n          const dz = (z - cz) / rz;\n          if (partial + dz * dz <= 1.0001) {\n            const material = typeof block === \"function\"\n              ? block(x, y, z)\n              : block;\n            put(x, y, z, material, grounded);\n          }\n        }\n      }\n    }\n  }\n\n  function tube(points, radii, block, grounded) {\n    for (let i = 0; i < points.length - 1; i += 1) {\n      const a = points[i];\n      const b = points[i + 1];\n      const dx = b[0] - a[0];\n      const dy = b[1] - a[1];\n      const dz = b[2] - a[2];\n      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);\n      const steps = Math.max(1, Math.ceil(distance * 2));\n\n      for (let s = 0; s <= steps; s += 1) {\n        const t = s / steps;\n        const cx = a[0] + dx * t;\n        const cy = a[1] + dy * t;\n        const cz = a[2] + dz * t;\n        const radius = radii[i] + (radii[i + 1] - radii[i]) * t;\n        const verticalRadius = Math.max(1.75, radius * 0.72);\n\n        ellipsoid(\n          cx,\n          cy,\n          cz,\n          radius,\n          verticalRadius,\n          radius,\n          block,\n          grounded\n        );\n      }\n    }\n  }\n\n  function skin(x, y, z) {\n    const n = (x * 37 + y * 17 + z * 23) % 41;\n    if (y <= SEAT + 2 && n % 9 === 0) {\n      return deepslate;\n    }\n    if (n === 1 || n === 8 || n === 27) {\n      return prismarine;\n    }\n    return darkPrismarine;\n  }\n\n  function tentacleSkin(x, y, z) {\n    const n = (x * 11 + y * 19 + z * 29) % 31;\n    if (y <= SEAT + 1 && n % 7 === 0) {\n      return deepslate;\n    }\n    if (n === 3 || n === 17) {\n      return prismarine;\n    }\n    return darkPrismarine;\n  }\n\n  box(6, 6, 55, 57, 8, 57, lightGrayConcrete, true);\n  box(7, 9, 55, 21, 10, 57, polishedAndesite, true);\n  box(42, 9, 55, 56, 10, 57, polishedAndesite, true);\n  box(24, 9, 55, 28, 11, 57, crackedStoneBricks, true);\n  box(36, 9, 55, 41, 12, 57, crackedStoneBricks, true);\n\n  box(19, 6, 3, 45, 6, 5, lightGrayConcrete, true);\n  box(19, 6, 18, 45, 6, 20, lightGrayConcrete, true);\n  box(19, 6, 5, 21, 6, 18, lightGrayConcrete, true);\n  box(43, 6, 5, 45, 6, 18, lightGrayConcrete, true);\n\n  box(27, 6, 4, 37, 7, 12, lightGrayConcrete, true);\n  box(27, 6, 12, 37, 7, 18, lightGrayConcrete, true);\n  box(29, 8, 6, 35, 8, 10, smoothQuartz, true);\n  box(31, 8, 6, 33, 8, 10, polishedDeepslate, true);\n  box(29, 8, 8, 35, 8, 8, polishedDeepslate, true);\n\n  ellipsoid(31, 8, 42, 10, 2, 11, tentacleSkin, true);\n  ellipsoid(31, 12, 42, 8, 6, 10, skin, true);\n  ellipsoid(31, 16, 38, 8, 7, 9, skin, false);\n  ellipsoid(32, 21, 33, 7, 7, 8, skin, false);\n  ellipsoid(34, 26, 28, 7, 7, 7, skin, false);\n  ellipsoid(35, 29, 21, 10, 8, 8, skin, false);\n\n  ellipsoid(31, 10, 52, 5, 4, 8, skin, true);\n  ellipsoid(31, 10, 59, 3, 3, 3, skin, true);\n  ellipsoid(31, 8, 53, 8, 2, 5, tentacleSkin, true);\n\n  tube(\n    [\n      [29, 11, 40],\n      [24, 10, 36],\n      [18, 9, 30],\n      [12, 8, 23],\n      [8, 8, 16],\n      [6, 8, 10]\n    ],\n    [4, 3.8, 3.2, 2.8, 2.3, 1.8],\n    tentacleSkin,\n    true\n  );\n\n  tube(\n    [\n      [36, 11, 40],\n      [42, 10, 36],\n      [48, 9, 30],\n      [54, 8, 23],\n      [58, 8, 16],\n      [60, 8, 10]\n    ],\n    [4, 3.8, 3.2, 2.8, 2.3, 1.8],\n    tentacleSkin,\n    true\n  );\n\n  tube(\n    [\n      [31, 10, 37],\n      [28, 9, 31],\n      [23, 8, 25],\n      [19, 8, 18],\n      [16, 8, 10]\n    ],\n    [4, 3.4, 2.8, 2.3, 1.8],\n    tentacleSkin,\n    true\n  );\n\n  tube(\n    [\n      [35, 10, 37],\n      [39, 9, 31],\n      [44, 8, 25],\n      [49, 8, 18],\n      [53, 8, 10]\n    ],\n    [4, 3.4, 2.8, 2.3, 1.8],\n    tentacleSkin,\n    true\n  );\n\n  ellipsoid(24, 17, 38, 5, 3, 6, oxidizedCopper, false);\n  ellipsoid(38, 17, 38, 5, 3, 6, oxidizedCopper, false);\n  ellipsoid(26, 23, 31, 3, 3, 5, prismarine, false);\n  ellipsoid(40, 23, 31, 3, 3, 5, prismarine, false);\n\n  box(28, 19, 44, 34, 23, 48, oxidizedCopper, false);\n  box(27, 23, 39, 35, 28, 43, weatheredCopper, false);\n  box(30, 28, 33, 36, 34, 37, oxidizedCopper, false);\n  box(32, 33, 27, 37, 39, 31, oxidizedCopper, false);\n\n  ellipsoid(35, 27, 14, 8, 4, 4, skin, false);\n  ellipsoid(35, 23, 15, 7, 3, 3, deepslate, false);\n\n  box(24, 22, 27, 27, 27, 30, cyanConcrete, false);\n  box(41, 22, 27, 46, 27, 30, cyanConcrete, false);\n\n  box(27, 31, 14, 33, 34, 17, oxidizedCopper, false);\n  box(37, 31, 14, 43, 34, 17, oxidizedCopper, false);\n\n  ellipsoid(27, 36, 20, 2, 4, 2, darkPrismarine, false);\n  ellipsoid(43, 36, 20, 2, 4, 2, darkPrismarine, false);\n  ellipsoid(35, 35, 24, 3, 3, 2, oxidizedCopper, false);\n\n  box(28, 25, 10, 42, 27, 12, blackConcrete, false);\n  box(30, 24, 9, 40, 24, 11, redConcrete, false);\n\n  const teeth = [\n    [30, 27, 9],\n    [34, 27, 9],\n    [38, 27, 9],\n    [32, 23, 9],\n    [36, 23, 9]\n  ];\n\n  for (let i = 0; i < teeth.length; i += 1) {\n    put(teeth[i][0], teeth[i][1], teeth[i][2], quartzBlock, false);\n  }\n\n  box(27, 30, 12, 32, 34, 15, blackConcrete, false);\n  box(38, 30, 12, 43, 34, 15, blackConcrete, false);\n\n  put(30, 32, 11, glowstone, false);\n  put(40, 32, 11, glowstone, false);\n  put(29, 32, 11, orangeConcrete, false);\n  put(31, 32, 11, orangeConcrete, false);\n  put(39, 32, 11, orangeConcrete, false);\n  put(41, 32, 11, orangeConcrete, false);\n\n  ellipsoid(6, 8, 10, 2, 2, 2, oxidizedCopper, true);\n  ellipsoid(60, 8, 10, 2, 2, 2, oxidizedCopper, true);\n  ellipsoid(16, 8, 10, 2, 2, 2, oxidizedCopper, true);\n  ellipsoid(53, 8, 10, 2, 2, 2, oxidizedCopper, true);\n\n  put(18, 7, 30, glowstone, true);\n  put(48, 7, 30, glowstone, true);\n  put(23, 7, 25, glowstone, true);\n  put(44, 7, 25, glowstone, true);\n\n  for (let x = 0; x < W; x += 1) {\n    for (let z = 0; z < D; z += 1) {\n      if (groundColumns[z * W + x] === 0) {\n        continue;\n      }\n\n      let terrainY = Math.floor(SEAT + api.heightAt(x, z));\n      if (!Number.isFinite(terrainY)) {\n        terrainY = SEAT;\n      }\n      if (terrainY < 0) {\n        terrainY = 0;\n      }\n      if (terrainY >= H) {\n        terrainY = H - 1;\n      }\n\n      let top = Math.max(SEAT - 1, terrainY - 1);\n      if (top >= H) {\n        top = H - 1;\n      }\n\n      for (let y = 0; y <= top; y += 1) {\n        const i = cellIndex(x, y, z);\n        if (cells[i] === undefined) {\n          const pattern = (x * 13 + z * 7 + y * 5) % 17;\n          if (y < SEAT - 1) {\n            cells[i] = pattern === 0 ? deepslate : polishedDeepslate;\n          } else {\n            cells[i] = pattern < 4 ? stoneBricks : polishedAndesite;\n          }\n        }\n      }\n    }\n  }\n\n  for (let y = 0; y < H; y += 1) {\n    for (let z = 0; z < D; z += 1) {\n      for (let x = 0; x < W; x += 1) {\n        const block = cells[cellIndex(x, y, z)];\n        if (block !== undefined) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Leviathan Breaker\",\n    seatY: SEAT,\n    anchors: {\n      pad: [32, 9, 8]\n    }\n  };\n}"
+    }
+  }
+}
