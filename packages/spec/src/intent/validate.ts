@@ -22,7 +22,9 @@ import { validatePaletteMap } from "../terrain/validate.js";
 import {
   CHARACTER_KEYS,
   ERA_CLASSES,
+  BLEND_WIDTHS,
   EVENT_KINDS,
+  FORTIFICATIONS,
   INTENT_KEY,
   INTENT_KEYS,
   INTENT_NODE_KINDS,
@@ -232,7 +234,7 @@ function checkClimate(out: LoamDiagnostic[], value: unknown, path: string): void
     );
     return;
   }
-  unknownKeys(out, value, path, ["biome", "temperature", "humidity", "snow"], "intent.climate");
+  unknownKeys(out, value, path, ["biome", "temperature", "humidity", "snow", "blend"], "intent.climate");
   const biome = value["biome"];
   if (biome !== undefined && (typeof biome !== "string" || biome.trim() === "")) {
     out.push(
@@ -254,6 +256,17 @@ function checkClimate(out: LoamDiagnostic[], value: unknown, path: string): void
         `${path}.snow`,
         `"snow" must be one of ${SNOW_POLICIES.join(", ")}, got ${describe(snow)}`,
         '"auto" lets the footprint vote, "never" and "always" are absolute',
+      ),
+    );
+  }
+  const blend = value["blend"];
+  if (blend !== undefined && (typeof blend !== "string" || !(BLEND_WIDTHS as readonly string[]).includes(blend))) {
+    out.push(
+      error(
+        "BAD_ENUM",
+        `${path}.blend`,
+        `"blend" must be one of ${BLEND_WIDTHS.join(", ")}, got ${describe(blend)}`,
+        '"sharp" is an abrupt edge, "soft" a walkable gradient, "wide" a long fade; omit it for the size-scaled default',
       ),
     );
   }
@@ -293,7 +306,7 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
     );
   }
 
-  for (const key of ["label", "materialTheme", "urbanForm", "ground"] as const) {
+  for (const key of ["label", "materialTheme", "urbanForm", "ground", "fortification"] as const) {
     const v = value[key];
     if (v !== undefined && (typeof v !== "string" || v.trim() === "")) {
       out.push(
@@ -305,9 +318,11 @@ function checkCharacter(out: LoamDiagnostic[], value: unknown, path: string): vo
             ? 'write what the place is, e.g. "pirate haven" — free text, it reaches prompts and never a switch'
             : key === "urbanForm"
               ? `name an urban form: ${DISTRICT_FABRICS.join(", ")}`
-              : key === "ground"
-                ? `name a ground policy: ${DISTRICT_GROUND_POLICIES.join(", ")}`
-                : 'name a stdlib material theme id, e.g. "stone_slate"',
+              : key === "fortification"
+                ? `name a fortification: ${FORTIFICATIONS.join(", ")} — "walled" rings the settlement with a gated curtain wall`
+                : key === "ground"
+                  ? `name a ground policy: ${DISTRICT_GROUND_POLICIES.join(", ")}`
+                  : 'name a stdlib material theme id, e.g. "stone_slate"',
         ),
       );
     }

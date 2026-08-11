@@ -148,6 +148,22 @@ export const SNOW_POLICIES = ["auto", "never", "always"] as const;
 export type SnowIntent = (typeof SNOW_POLICIES)[number];
 
 /**
+ * How wide the biome transition around a settlement's ground reads.
+ *
+ * A closed vocabulary rather than a column count, for the same reason
+ * `intent.climate.snow` is: an author saying "this desert town should fade
+ * into the dunes" is expressing a *look*, not a measurement, and a raw width
+ * invites numbers the dither cannot render (a band narrower than a stored
+ * biome cell is a hard seam whatever the author meant). Three names, mapped by
+ * the compiler to whole stored-cell counts. Omitted means today's behaviour:
+ * the band is scaled by the footprint's perimeter.
+ */
+export const BLEND_WIDTHS = ["sharp", "soft", "wide"] as const;
+
+/** One of {@link BLEND_WIDTHS}. */
+export type BlendWidth = (typeof BLEND_WIDTHS)[number];
+
+/**
  * Explicit author intent about the ground's climate.
  *
  * Precedence rung 1 of the biome contract (§4): an author who says "this island
@@ -161,6 +177,11 @@ export interface ClimateIntent {
   /** −1..1, likewise for humidity. */
   readonly humidity?: number;
   readonly snow?: SnowIntent;
+  /**
+   * How wide the settlement's biome transition band is. Omitted = today's
+   * perimeter-scaled width.
+   */
+  readonly blend?: BlendWidth;
 }
 
 /** The closed motif enums the building grammar switches on (§2.4 `motifs`). */
@@ -269,7 +290,42 @@ export interface CharacterIntent {
    * value is `LOAM-W488`.
    */
   readonly ground?: DistrictGroundPolicy;
+  /**
+   * Whether the settlement in scope is **fortified** — one of
+   * {@link FORTIFICATIONS}.
+   *
+   * The dial that exists because prose does not build walls. Two walked
+   * generations of "the Trojan horse in Troy" carried `era: "ancient"`,
+   * `event: { kind: "siege" }` and a kit checklist line asking for a city wall,
+   * and one of them came out unwalled: a wall is a *structure*, and a structure
+   * a model has to remember to author in `params` is a structure that goes
+   * missing. This is the compiler-side switch for it — `"walled"` and the
+   * settlement gets `infra.wall@0`'s circuit around its fabric, gates where the
+   * roads already cross the course, towers at the pitch and on every corner,
+   * whether or not any node wrote `params.walls`.
+   *
+   * Outranked by an explicit `params.walls` on a district or city, which is the
+   * same precedence every other character key keeps: the author's own
+   * parameters are the last word, and the dial only speaks where they are
+   * silent. `"open"` states the default out loud (no circuit) and never removes
+   * an authored one. An unknown value is `LOAM-W489`, a warning naming the
+   * legal values, never a silent drop.
+   */
+  readonly fortification?: Fortification;
 }
+
+/**
+ * The closed fortification vocabulary.
+ *
+ * Two words, and deliberately not more: what the compiler can act on today is
+ * "there is a circuit" versus "there is not". Ditches, star forts and citadel
+ * walls are shapes of the same pass and would be new values here, not a new
+ * key.
+ */
+export const FORTIFICATIONS = ["walled", "open"] as const;
+
+/** One of {@link FORTIFICATIONS}. */
+export type Fortification = (typeof FORTIFICATIONS)[number];
 
 /** The author-facing dials. Every field is optional; absent means no opinion. */
 export interface SemanticIntent {
@@ -313,6 +369,7 @@ export const CHARACTER_KEYS = [
   "urbanForm",
   "courtyards",
   "ground",
+  "fortification",
 ] as const;
 
 /** The key an intent object hangs off a node under. */

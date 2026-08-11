@@ -44,6 +44,7 @@ import type {
   FarmEdge,
   LoamDiagnostic,
   PortDeclaration,
+  SemanticIntent,
   SettlementDocument,
   StructureNode,
 } from "@terrainist/spec";
@@ -130,6 +131,7 @@ import {
   type BuiltWall,
   type WallJob,
 } from "./walls.js";
+import { fortificationJobs, type FabricNode } from "./walls-intent.js";
 
 export * from "./buildings.js";
 export * from "./reclaim-species.js";
@@ -148,6 +150,7 @@ export * from "./roads.js";
 export * from "./tunnels.js";
 export * from "./wall-course.js";
 export * from "./walls.js";
+export * from "./walls-intent.js";
 export * from "./vocabulary.js";
 
 /** Everything {@link buildStructures} reads. */
@@ -1485,9 +1488,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // It also has to be after the roads and the streets, because a gate is not
   // sited — it is *found*, where a carriageway already crosses the derived
   // course, and until the surfacing has run there is no carriageway to find.
-  const wallJobs = wallJobsOf(input.doc, rootPath, built, (p) =>
+  // Two sources, one job list. `params.walls` is the author speaking directly
+  // and is read exactly as it always was; `intent.character.fortification` is
+  // the dial, and it only speaks where the parameters are silent — see
+  // `structures/walls-intent.ts` for why the wall had to become a dial at all.
+  const authoredWallJobs = wallJobsOf(input.doc, rootPath, built, (p) =>
     placementByPath.get(p)?.footprint,
   );
+  const fortification = fortificationJobs({
+    rootPath,
+    intents,
+    theme,
+    authored: authoredWallJobs,
+    fabric: fabricNodesOf(input.doc, rootPath, built, (p) => placementByPath.get(p)?.footprint),
+  });
+  diagnostics.push(...fortification.diagnostics);
+  const wallJobs = fortification.jobs;
   const wallPass =
     wallJobs.length === 0
       ? undefined
@@ -1804,6 +1820,46 @@ export function wallJobsOf(
     });
   }
   return jobs;
+}
+
+/**
+ * The settlement's **fabric**: every `district` and `city` child of the root,
+ * with what it declared and what it got placed as.
+ *
+ * The document-reading half of `intent.character.fortification` — the dial's
+ * own file decides what to do with these, and deliberately does not walk a
+ * document to find them, because "which node is a quarter" is a fact this
+ * module already answers for `wallJobsOf` and two walkers would eventually
+ * disagree about it.
+ *
+ * `declared` is the node's **own** `intent`, not the resolved merge: the
+ * difference is what separates "the town is walled" (said once, at the root,
+ * and answered with one circuit round the whole fabric) from "this quarter is
+ * walled" (said on the quarter, and answered with a ring round it).
+ */
+export function fabricNodesOf(
+  doc: SettlementDocument,
+  rootPath: string,
+  built: readonly BuiltBuilding[],
+  rectOf: (nodePath: string) => { x0: number; z0: number; x1: number; z1: number } | undefined,
+): FabricNode[] {
+  const out: FabricNode[] = [];
+  for (const child of doc.root.children) {
+    if (child.kind !== "district" && child.kind !== "city") continue;
+    const nodePath = `${rootPath}.${child.id}`;
+    const prefix = `${nodePath}.`;
+    const rect = rectOf(nodePath);
+    const declared = (child as { intent?: SemanticIntent }).intent;
+    out.push({
+      nodePath,
+      ...(declared === undefined ? {} : { declared }),
+      ...(rect === undefined ? {} : { rect }),
+      buildings: built
+        .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
+        .map((b) => b.footprint),
+    });
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */

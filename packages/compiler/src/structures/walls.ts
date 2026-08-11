@@ -173,8 +173,12 @@ export const WALL_MATERIALS: Readonly<Record<string, WallMaterials>> = Object.fr
  * at every corner of the course, which is where a real curtain puts them: a
  * corner is the one place a wall cannot be flanked from along its own face.
  */
-export function wallProfile(style: string, towerPitch: number): SweptProfile {
-  const m = (WALL_MATERIALS[style] ?? WALL_MATERIALS["masonry"]) as WallMaterials;
+export function wallProfile(
+  style: string,
+  towerPitch: number,
+  materials?: WallMaterials,
+): SweptProfile {
+  const m = materials ?? ((WALL_MATERIALS[style] ?? WALL_MATERIALS["masonry"]) as WallMaterials);
   return {
     id: `infra.wall@0/${style}`,
     follow: "step",
@@ -209,6 +213,17 @@ export interface WallJob {
   readonly towerPitch: number;
   readonly height: number;
   readonly gates: boolean;
+  /**
+   * The blocks this wall is built from, overriding {@link WALL_MATERIALS}'s
+   * entry for {@link style}.
+   *
+   * Absent on every authored wall — `params.walls` names a style and a style is
+   * a table — and set by the `structures.fortification` fan-out row, which
+   * builds a curtain out of the settlement's *own* built-ground roles so a town
+   * in mud brick is not walled in grey stone. Absent means the style table,
+   * which is why a document that never touches the dial is byte-identical.
+   */
+  readonly materials?: WallMaterials;
   /**
    * The settlement's placed footprint, as columns.
    *
@@ -307,7 +322,9 @@ export function buildWalls(input: WallPassInput): WallPassResult {
       }
     }
 
-    const profile = wallProfile(job.style, job.towerPitch);
+    const materials =
+      job.materials ?? ((WALL_MATERIALS[job.style] ?? WALL_MATERIALS["masonry"]) as WallMaterials);
+    const profile = wallProfile(job.style, job.towerPitch, materials);
     const swept = sweepCourse({
       profile,
       path: course.path,
@@ -317,8 +334,6 @@ export function buildWalls(input: WallPassInput): WallPassResult {
       skip: (i) => openings.has(i),
       bends: course.cornerIndices,
     });
-
-    const materials = (WALL_MATERIALS[job.style] ?? WALL_MATERIALS["masonry"]) as WallMaterials;
 
     // --- towers, **before** the curtain ---------------------------------------
     // Ordering, not taste. A tower is centred on the course, so it shares

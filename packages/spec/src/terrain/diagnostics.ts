@@ -277,6 +277,16 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DECAY_PARAM: "LOAM-T227",
   /**
+   * `prop.place@0` — a water-borne or shore prop found no water within its
+   * search radius of the coarse target it was given, and sought the waterline.
+   *
+   * The recovery, not the failure: the pier or the ship is built, on the
+   * nearest column that can carry it, and the note says where. `CANNOT_FIT` is
+   * kept for the honest case — a pinned prop, or a world with no water at all.
+   * The same shape as `PRECINCT_RESEATED`, one scale down.
+   */
+  PROP_RESEATED: "LOAM-T228",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.
@@ -509,6 +519,12 @@ export const TERRAIN_DIAGNOSTICS = {
    * ground it would have had.
    */
   INTENT_GROUND_UNKNOWN: "LOAM-W488",
+  /**
+   * `character.fortification` names a word outside `FORTIFICATIONS`.
+   * Ignored, and the settlement keeps the walls it would have had — which,
+   * unless a node wrote `params.walls`, is none.
+   */
+  INTENT_FORTIFICATION_UNKNOWN: "LOAM-W489",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.
