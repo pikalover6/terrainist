@@ -1120,7 +1120,15 @@ repair* is locked to manual.
   against the composed world (rule 13's own predicate, single-sweep
   fixpoint proven), and decay's stranded-fitting clause learned full
   cubes. 12 → 0 on the P4 doc; seeds 300–310 sweep clean.
-- **Heavy decay strands the upper storey: 1,254 `traversal.unreachable`
+- **Something after decay seals the cellar-ladder alcove: 15 ground-storey
+  `traversal.unreachable` on the P4 doc (found 2026-08-10, blocks P4-class
+  lint-zero).** Three-cell L-pockets in ~5 heavily decayed shells, each
+  containing the cellar ladder, walled in by the shell's own material;
+  decay's own reachOrRefuse passed (withdrawn 0, refused false), so a
+  later pass — suspect: green-skin ground writes or the rubble/grounds
+  interplay — closes the alcove. Diagnostic scripts left in scratchpad
+  (lint-p4.mjs / diag.mjs; grep on physics.ts needs -a).
+- ~~**Heavy decay strands the upper storey: 1,254 `traversal.unreachable`
   on the recompiled P4 doc (found 2026-08-10, NEEDS KAI'S RULING —
   blocks P4-class regeneration lint-zero).** Every finding is a
   two-storey `decay.mode: "shell"` lot (subway_station, warehouse,
@@ -1133,7 +1141,9 @@ repair* is locked to manual.
   the rule learns that a decayed shell's upper storey may be legally
   unreachable (ground floor still guaranteed — consistent with Kai's
   walkability-deprioritized calibration); or the crumble takes the
-  orphaned floor plane with the stair.
+  orphaned floor plane with the stair.~~ **RULED AND FIXED
+  2026-08-10: legal lost storeys** — scope pinned in the physics tests;
+  1,254 → 15 (the 15 are the entry above).
 
 ## Keys and infrastructure
 
