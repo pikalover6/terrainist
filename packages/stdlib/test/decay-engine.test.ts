@@ -28,6 +28,7 @@ import {
   WEATHERED_VARIANTS,
   bodyBlocking,
   bodyFits,
+  canSupport,
   collapseForShell,
   generateBuilding,
   nodeSeed,
@@ -212,6 +213,36 @@ describe("settleFixtures — the fixpoint (§5.6)", () => {
       expect(door, archetype).not.toBeNull();
       const world = worldOf(ruined.ops);
       expect(world.get(`${door!.x},1,${door!.z}`), `${archetype}: the doorway went`).toBeDefined();
+    }
+  });
+
+  it("strands no full cube — rule 13 is the sweep's third family", () => {
+    // The finding this clause came back from (2026-08-10): a high-decline
+    // metropolis linted two `floating.isolated` light gray concrete blocks, both
+    // a parking garage's head-height trim course, left one block off nothing
+    // once the wall behind it crumbled and its own lower course went. The sweep
+    // policed slabs and stairs geometrically and full cubes not at all.
+    for (const archetype of ["parking_garage", "warehouse", "library", "workshop", "inn"]) {
+      for (const decay of [0.6, 0.85, 0.95]) {
+        const world = worldOf(build(archetype, decay));
+        for (const [key, op] of world) {
+          const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+          // The clause's own bounds: above the plinth, and full cubes only —
+          // below that the op list cannot see the ground a block stands on.
+          if (y < 2 || !canSupport(op.block)) continue;
+          const touching = [
+            [1, 0, 0],
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, -1, 0],
+            [0, 0, 1],
+            [0, 0, -1],
+          ].some(([dx, dy, dz]) =>
+            world.has(`${x + (dx as number)},${y + (dy as number)},${z + (dz as number)}`),
+          );
+          expect(touching, `${archetype}@${decay}: ${op.block} at ${key} floats alone`).toBe(true);
+        }
+      }
     }
   });
 });

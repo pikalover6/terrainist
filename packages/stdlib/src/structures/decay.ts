@@ -1560,11 +1560,22 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
             // crumbled. Those blocks have no `supportDirection`, so the clause
             // above never saw them.
             //
-            // Deliberately narrow: the two block families the lint polices
+            // **The third family, and the same rule** (2026-08-10): a *full
+            // cube* with air on all six faces is `floating.isolated`, rule 13,
+            // and the crumble strands those too. A high-decline metropolis
+            // linted two of them — a parking garage's head-height concrete trim
+            // whose wall crumbled away and whose own lower course went with the
+            // spill, left hanging one block off nothing. `canSupport` is
+            // exactly "a full cube by name" on the evidence a fit-out has
+            // (`support.ts`), so the sweep can ask rule 13's question without
+            // inventing a second solidity vocabulary.
+            //
+            // Still narrow: only the block families the lint polices
             // geometrically, above the plinth (`y >= 2`, so nothing standing on
             // ground the op list cannot see is ever swept), and only when *this
             // shell* holds nothing beside them.
-            if (!FLOATABLE.test(op.block) || y < 2) continue;
+            const floatable = FLOATABLE.test(op.block);
+            if ((!floatable && !canSupport(op.block)) || y < 2) continue;
             const braced = [
               [1, 0, 0],
               [-1, 0, 0],
@@ -1574,14 +1585,20 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
               [0, 1, 0],
             ].some(([dx, dy, dz]) => {
               const near = ctx.blockAt(x + (dx as number), y + (dy as number), z + (dz as number));
-              // A neighbour that is itself a slab or a stair does not count.
-              // A shop row's awning is two stairs side by side: each braces the
-              // other in the shell's own op list, and the world then drops one
-              // of them where it reaches into a neighbour's claim — leaving the
-              // survivor with air on all six sides, which is precisely the
-              // finding. Bracing has to come from something that is actually
-              // holding the fitting up.
-              return near !== undefined && near.block !== "air" && !FLOATABLE.test(near.block);
+              // For a slab or a stair, a neighbour that is itself a slab or a
+              // stair does not count. A shop row's awning is two stairs side by
+              // side: each braces the other in the shell's own op list, and the
+              // world then drops one of them where it reaches into a
+              // neighbour's claim — leaving the survivor with air on all six
+              // sides, which is precisely the finding. Bracing has to come from
+              // something that is actually holding the fitting up.
+              //
+              // A full cube is held to rule 13's own predicate instead, which
+              // asks only whether the face is **air**: a cube with a stair
+              // beside it is not an isolated block, and deleting it would be
+              // this sweep inventing a defect the lint does not have.
+              if (near === undefined || near.block === "air") return false;
+              return floatable ? !FLOATABLE.test(near.block) : true;
             });
             if (braced) continue;
             ctx.put(x, y, z, "air");

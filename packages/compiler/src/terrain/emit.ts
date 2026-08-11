@@ -13,6 +13,7 @@ import path from "node:path";
 
 import type { BlockEntity } from "../emit/block-entities.js";
 import { applyConnectionStates, type ConnectionStats } from "../emit/connections.js";
+import { settleFloraSupport, type FloraCell, type FloraSettleStats } from "../emit/flora-settle.js";
 import { applyGrowthFaces, type GrowthCell, type GrowthFixupStats } from "../emit/growth-fixup.js";
 import type { EmitChunk, PrismarineStack } from "../emit/prismarine.js";
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
@@ -33,6 +34,15 @@ import { emitFloraBlocks, treeBlocks, treeStates, type FloraStateCodec, type Tre
 
 /** Vertical resolution of the biome array: one value per 4×4×4 cell. */
 const BIOME_CELL = 4;
+
+/**
+ * The bound on the flora-settling / growth-fixup alternation.
+ *
+ * Each round only ever deletes blocks, so the alternation converges on its own;
+ * this exists so a bug can never spin. Deep enough that a real support chain —
+ * a strand on a leaf on a strand — is settled long before it is reached.
+ */
+const MAX_SETTLE_ROUNDS = 8;
 
 /** Input to {@link emitTerrain}. */
 export interface TerrainEmitInput {
@@ -113,6 +123,8 @@ export interface TerrainEmitSummary {
   readonly connections: ConnectionStats;
   /** What the multi-face growth fixup examined, rewrote and dropped. */
   readonly growth: GrowthFixupStats;
+  /** What the flora support settling examined and dropped. */
+  readonly flora: FloraSettleStats;
 }
 
 /** Materialize and write. */
@@ -122,6 +134,19 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
 
   const growthCells: GrowthCell[] = [];
   const treesByChunk = bucketTrees(input.trees, stack, input.clip, growthCells, input.clipExempt);
+  /**
+   * Every flora cell that survived the per-tree sweep, for the settling below.
+   *
+   * The bucketed lists *are* that set — a `PlacedBlock` is a {@link FloraCell}
+   * — so this is a re-iterable view over them rather than a second copy: a
+   * 512x512 wood is two million cells, and the settling reads them at most
+   * twice.
+   */
+  const floraCells: Iterable<FloraCell> = {
+    *[Symbol.iterator](): Iterator<FloraCell> {
+      for (const bucket of treesByChunk.values()) yield* bucket;
+    },
+  };
   const decorByChunk = bucketDecor(input.decor ?? []);
   const structureByChunk = bucketDecor(input.structures ?? []);
   // A face is a property of a **neighbourhood, not of which pass wrote the
@@ -167,13 +192,40 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     }
   }
 
+  // Flora support first, because the two passes settle the same neighbourhood
+  // and a strand's faces must be derived against the crown that *stays*: a leaf
+  // whose only support was a trunk block a later air write erased is removed
+  // here, before anything reads its faces. See `emit/flora-settle.ts`.
+  let flora = settleFloraSupport(chunks, floraCells, stack);
+
   // Vine faces, for the same reason and one pass earlier: a `vine`'s whole
   // state is the set of blocks it claims to be stuck to, and which blocks are
   // there is only knowable once every plant, every ground treatment and every
   // wall has been stamped. `hangingFaces` derived them from one plant's own
   // parts, so where two plants interleave — or a clip removes the support one
   // assumed — the claimed face pointed at air. See `emit/growth-fixup.ts`.
-  const growth = applyGrowthFaces(chunks, growthCells, stack);
+  let growth = applyGrowthFaces(chunks, growthCells, stack);
+
+  // The one way round the two passes can still disagree: a strand the fixup
+  // *drops* was the only thing a leaf touched, and that leaf is stranded the
+  // moment the vine goes. Settling flora again is the answer, and settling it
+  // can only strand another strand — so the two alternate until neither
+  // removes anything. Both passes only ever delete, so this terminates; the
+  // bound exists so a bug cannot spin, not as a tuning knob. A world where the
+  // fixup drops nothing — every world that compiled before this loop existed —
+  // takes exactly one pass of each and is byte-identical.
+  for (let round = 0; growth.dropped > 0 && round < MAX_SETTLE_ROUNDS; round++) {
+    const again = settleFloraSupport(chunks, floraCells, stack);
+    flora = { examined: flora.examined, dropped: flora.dropped + again.dropped };
+    if (again.dropped === 0) break;
+    const faces = applyGrowthFaces(chunks, growthCells, stack);
+    growth = {
+      examined: growth.examined,
+      rewritten: growth.rewritten + faces.rewritten,
+      dropped: growth.dropped + faces.dropped,
+    };
+    if (faces.dropped === 0) break;
+  }
 
   // Connections last, over the finished world. Fences, panes, walls and bars
   // store their neighbours in their own block state and Minecraft never
@@ -224,6 +276,7 @@ export async function emitTerrain(input: TerrainEmitInput): Promise<TerrainEmitS
     spawn: [input.spawn.x, input.spawn.y, input.spawn.z],
     connections,
     growth,
+    flora,
   };
 }
 
