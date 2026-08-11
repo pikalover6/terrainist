@@ -1,0 +1,83 @@
+prompt     An ancient forest of colossal redwoods with a small logging camp at its edge.
+seed       306
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.25,"formality":0.1,"character":{"label":"small logging camp at the edge of an ancient redwood forest","materialTheme":"temperate_timber","archetypes":{"prefer":["warehouse"],"forbid":[]},"props":{"prefer":["cart"],"forbid":[]},"flora":{"prefer":["old_growth","emergent","giant","conifer"],"forbid":[]},"motifs":{"roofType":"gable","massing":"sprawling","windowRhythm":"sparse","ornamentDensity":0.05},"courtyards":0,"ground":"pad"},"tokens":{"forest":"colossal redwoods; the redwood species is not represented in the closed flora catalog"}}
+           1 attempt(s), 3967 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.redwood_forest.params.area
+  tokens     65953 in + 43346 out = 109299  ($0.0267)
+programs   1 of 1 kept (budget 12 landmark / 6 plugin)
+  ok     colossal_redwood [plugin]  1 attempt(s), 86291 tokens  ($0.0508)
+  tokens     2502 in + 84567 out = 87069  ($0.0510)
+
+wiring     1 program(s) authored but never invoked: colossal_redwood [plugin]
+
+  wired in 1 attempt(s); 77693 in + 15447 out = 93140 tokens  ($0.0114)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.redwood_forest.params.area: "area.radius" is 0.7, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.7 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.7 on a 1024-wide region, "radius": 358).
+warning LOAM-E170 CANNOT_FIT at world.logging_camp: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+warning LOAM-T119 SCATTER_EMPTY at world.redwood_forest: forest node "redwood_forest" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.7} covers 2 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.7 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+
+  revision 1 authored in 2 attempt(s)
+  tokens     178251 in + 28797 out = 207048  ($0.0230)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E170 CANNOT_FIT at world.logging_camp: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+  revision 2 authored in 2 attempt(s)
+  tokens     177699 in + 24888 out = 202587  ($0.0207)
+
+compiled "redwood_camp" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp
+  seed       306
+  region     1024x1024 at (-512, -512)
+  heights    58.9..82.5  sea 63  snow line 81.7
+  land       96.2% of columns above sea level
+  biomes     forest 83.8%, plains 12.1%, taiga 3.2%, ocean 0.7%, beach 0.1%, windswept_hills 0.1%
+  trees      22376 (redwood_forest=6622, wilderness=15842)
+  chunks     4096
+  blocks     145385616 (3603923 vegetation)
+  markers    135
+  spawn      [341, 71, 0]
+  timings    validate 3ms  field 1825ms  layout 1072ms  climate 844ms  columns 375ms  caves 0ms  structures 1744ms  programs 3498ms  scatter 7178ms  biomes 132ms  validators 10ms  emit 19745ms  total 36570ms
+  programs   world.colossal_redwoods=colossal_redwood×24 (69700 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.camp_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E170 CANNOT_FIT at world.logging_camp: sidewalk band is 0 column wide, so a lamp post would stand in the walk lane
+  fix: give the district a sidewalk of 2 or more to get street lighting
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 7744 footprint columns (plus 5040 feathered over 24 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 69% of 5083 ring columns); snow policy auto resolved to "never" on a 0/7744 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 2 compile-feedback round(s), 499596 in + 112478 out = 612074 tokens ($0.0818)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp
+installed "redwood_camp_c1"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p6-c1/redwood_camp
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/redwood_camp_c1
+  lastPlayed 1786422218512 (2026-08-11T04:23:38.512Z)

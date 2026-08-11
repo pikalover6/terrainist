@@ -1,0 +1,475 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "redwood_camp",
+    "worldSeed": "306",
+    "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+    "spawn": {
+      "zone": "east"
+    }
+  },
+  "style": {
+    "palettes": {
+      "wood.spruce_log": "minecraft:dark_oak_log",
+      "wood.spruce_leaves": "minecraft:spruce_leaves",
+      "road.surface": "minecraft:dirt_path"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.25,
+    "formality": 0.1,
+    "character": {
+      "label": "small logging camp at the edge of an ancient redwood forest",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "warehouse"
+        ],
+        "forbid": []
+      },
+      "props": {
+        "prefer": [
+          "cart"
+        ],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [
+          "spruce_tall"
+        ],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.05
+      },
+      "courtyards": 0,
+      "ground": "pad"
+    },
+    "tokens": {
+      "forest": "colossal redwoods; the redwood species is not represented in the closed flora catalog"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the ancient redwood forest and its logging camp",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling forest country with a shelf for the camp",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.0028
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 5,
+          "beachWidth": 4,
+          "snowLineFraction": 0.96
+        },
+        "children": [
+          {
+            "id": "camp_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rounded working shelf at the forest edge",
+            "params": {
+              "verb": "plateau",
+              "zone": "east",
+              "radius": 92,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0018,
+          "latitudeGradient": -0.2,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "logging_camp",
+        "kind": "district",
+        "label": "the small logging camp on the eastern forest edge",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "fabric": "organic",
+          "density": "low",
+          "mix": [
+            "sawmill",
+            "warehouse",
+            "cottage"
+          ],
+          "blockSize": 32,
+          "plaza": true,
+          "courtyards": 0,
+          "ground": "pad"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "intent": {
+          "character": {
+            "label": "small logging camp at the forest edge",
+            "archetypes": {
+              "prefer": [
+                "sawmill",
+                "warehouse"
+              ],
+              "forbid": []
+            },
+            "props": {
+              "prefer": [
+                "cart",
+                "log_pile"
+              ],
+              "forbid": []
+            }
+          }
+        },
+        "tags": [
+          "structure",
+          "camp",
+          "logging_camp"
+        ],
+        "children": [
+          {
+            "id": "camp_sawmill",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the camp sawmill",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                17
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "structure",
+              "sawmill",
+              "work"
+            ]
+          },
+          {
+            "id": "camp_storehouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the timber storehouse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                10,
+                11
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "structure",
+              "warehouse",
+              "storage"
+            ]
+          },
+          {
+            "id": "camp_bunkhouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the workers bunkhouse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                9,
+                8,
+                9
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "windowRhythm": "regular"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "structure",
+              "house",
+              "workers"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "camp_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a handcart beside the logging yard",
+        "params": {
+          "prop": "cart",
+          "zone": "east",
+          "jitter": 0.1
+        },
+        "tags": [
+          "structure",
+          "camp_prop"
+        ]
+      },
+      {
+        "id": "stacked_logs",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a pile of freshly cut logs",
+        "params": {
+          "prop": "log_pile",
+          "zone": "east",
+          "jitter": 0.16
+        },
+        "tags": [
+          "structure",
+          "camp_prop"
+        ]
+      },
+      {
+        "id": "camp_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "rough lanes between the mill, yard and bunkhouse",
+        "params": {
+          "anchors": [
+            "logging_camp",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "redwood_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the ancient forest of colossal redwoods",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 358
+          },
+          "density": 0.18,
+          "spacing": 6,
+          "clumping": 0.7,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            105
+          ],
+          "edgeFalloff": 28,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.28,
+            "flowers": 0.02,
+            "deadwood": 0.22
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "redwood_emergent",
+                  "shape": "spruce_ancient",
+                  "minHeight": 30,
+                  "maxHeight": 33
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "old_growth_hazel",
+                  "shape": "hazel_shrub",
+                  "weight": 2
+                },
+                {
+                  "id": "forest_juniper",
+                  "shape": "juniper_scrub",
+                  "weight": 1
+                }
+              ],
+              "density": 0.11
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "redwood_giant",
+              "weight": 4,
+              "shape": "spruce_ancient",
+              "minHeight": 28,
+              "maxHeight": 33
+            },
+            {
+              "id": "redwood_young",
+              "weight": 1,
+              "shape": "spruce_tall",
+              "minHeight": 10,
+              "maxHeight": 13
+            }
+          ]
+        }
+      },
+      {
+        "id": "colossal_redwoods",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "the colossal redwoods rising above the ancient forest",
+        "params": {
+          "program": "colossal_redwood",
+          "count": 24,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.7
+          },
+          "spacing": 32,
+          "maxSlope": 26,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse cover everywhere else",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "colossal_redwood": {
+      "mode": "plugin",
+      "envelope": [
+        14,
+        110,
+        14
+      ],
+      "sourceHash": "b3:e30e369669029ff9079c1efc471da399c7ad6704655cbd181f10121a73efdff5",
+      "outputHash": "b3:1fe09406abd9b3eebaa17c74377fb102af1b0a4841963a7b21c80305c73bacfe",
+      "source": "export const envelope = [14, 110, 14];\n\nexport default function build(api) {\n  var W = api.size[0];\n  var H = api.size[1];\n  var D = api.size[2];\n  var TAU = 6.283185307179586;\n  var voxels = new Array(W * H * D);\n\n  var instanceIndex = api.instance.index;\n  var instanceCount = api.instance.count;\n  var random = function () {\n    return api.random();\n  };\n\n  var v0 = random();\n  var v1 = random();\n  var v2 = random();\n  var v3 = random();\n  var v4 = random();\n  var v5 = random();\n  var v6 = random();\n  var v7 = random();\n  var v8 = random();\n  var v9 = random();\n  var v10 = random();\n  var v11 = random();\n  var v12 = random();\n  var v13 = random();\n  var v14 = random();\n  var v15 = random();\n  var v16 = random();\n  var v17 = random();\n  var v18 = random();\n  var v19 = random();\n  var v20 = random();\n  var v21 = random();\n\n  var phase = v0 * TAU + instanceIndex * 0.271 + instanceCount * 0.017;\n  var flutePhase = v1 * TAU + instanceIndex * 0.49;\n  var trunkTop = 86 + ((Math.floor(v2 * 9) + instanceIndex * 2) % 9);\n  var topY = 101 + ((Math.floor(v3 * 7) + instanceIndex) % 7);\n\n  var leanX = (v4 - 0.5) * 1.15 + ((instanceIndex % 5) - 2) * 0.06;\n  var leanZ = (v5 - 0.5) * 1.15 + (((instanceIndex + 2) % 5) - 2) * 0.06;\n  var bendX = (v6 - 0.5) * 0.72;\n  var bendZ = (v7 - 0.5) * 0.72;\n  var kinkX = (v20 - 0.5) * 0.42;\n  var kinkZ = (v21 - 0.5) * 0.42;\n  var girth = 0.98 + v8 * 0.08;\n\n  var rootCount = 6 + ((Math.floor(v9 * 4) + instanceIndex) % 4);\n  var branchCount = 7 + ((Math.floor(v10 * 4) + instanceIndex * 3) % 4);\n  var crownMode = (Math.floor(v11 * 3) + instanceIndex) % 3;\n  var hollowWanted = v12 > 0.30 || instanceIndex % 5 === 0;\n  var hollowSide = (Math.floor(v13 * 4) + instanceIndex) % 4;\n  var hollowMinY = 3 + Math.floor(v14 * 2);\n  var hollowWidth = 3 + (v15 > 0.68 ? 1 : 0);\n  var crownScale = 0.86 + v18 * 0.42;\n\n  var terrain = new Array(W);\n  for (var tx = 0; tx < W; tx++) {\n    terrain[tx] = new Array(D);\n    for (var tz = 0; tz < D; tz++) {\n      terrain[tx][tz] = api.heightAt(tx, tz);\n    }\n  }\n\n  var cavity = null;\n  var opening = null;\n\n  if (hollowWanted) {\n    var minX;\n    var maxX;\n    var minZ;\n    var maxZ;\n\n    if (hollowSide === 0) {\n      minX = 8;\n      maxX = 10;\n      minZ = 5;\n      maxZ = minZ + hollowWidth - 1;\n      opening = { axis: \"x\", coord: 11, minL: minZ, maxL: maxZ };\n    } else if (hollowSide === 1) {\n      minX = 3;\n      maxX = 5;\n      minZ = 5;\n      maxZ = minZ + hollowWidth - 1;\n      opening = { axis: \"x\", coord: 2, minL: minZ, maxL: maxZ };\n    } else if (hollowSide === 2) {\n      minX = 5;\n      maxX = minX + hollowWidth - 1;\n      minZ = 8;\n      maxZ = 10;\n      opening = { axis: \"z\", coord: 11, minL: minX, maxL: maxX };\n    } else {\n      minX = 5;\n      maxX = minX + hollowWidth - 1;\n      minZ = 3;\n      maxZ = 5;\n      opening = { axis: \"z\", coord: 2, minL: minX, maxL: maxX };\n    }\n\n    cavity = {\n      minX: minX,\n      maxX: maxX,\n      minY: hollowMinY,\n      maxY: hollowMinY + 3,\n      minZ: minZ,\n      maxZ: maxZ\n    };\n\n    var groundOK = true;\n    for (var cx = cavity.minX; cx <= cavity.maxX; cx++) {\n      for (var cz = cavity.minZ; cz <= cavity.maxZ; cz++) {\n        if (Math.ceil(terrain[cx][cz]) > cavity.minY - 1) {\n          groundOK = false;\n        }\n      }\n    }\n\n    if (opening.axis === \"x\") {\n      for (var checkZ = opening.minL; checkZ <= opening.maxL; checkZ++) {\n        if (Math.ceil(terrain[opening.coord][checkZ]) > cavity.minY - 1) {\n          groundOK = false;\n        }\n      }\n    } else {\n      for (var checkX = opening.minL; checkX <= opening.maxL; checkX++) {\n        if (Math.ceil(terrain[checkX][opening.coord]) > cavity.minY - 1) {\n          groundOK = false;\n        }\n      }\n    }\n\n    if (!groundOK) {\n      cavity = null;\n      opening = null;\n    }\n  }\n\n  function voidCell(x, y, z) {\n    if (cavity === null) {\n      return false;\n    }\n\n    if (\n      x >= cavity.minX &&\n      x <= cavity.maxX &&\n      y >= cavity.minY &&\n      y <= cavity.maxY &&\n      z >= cavity.minZ &&\n      z <= cavity.maxZ\n    ) {\n      return true;\n    }\n\n    if (opening !== null && y >= cavity.minY && y <= cavity.maxY) {\n      if (\n        opening.axis === \"x\" &&\n        x === opening.coord &&\n        z >= opening.minL &&\n        z <= opening.maxL\n      ) {\n        return true;\n      }\n\n      if (\n        opening.axis === \"z\" &&\n        z === opening.coord &&\n        x >= opening.minL &&\n        x <= opening.maxL\n      ) {\n        return true;\n      }\n    }\n\n    return false;\n  }\n\n  function voxelIndex(x, y, z) {\n    return (y * D + z) * W + x;\n  }\n\n  function place(x, y, z, block) {\n    var xx = Math.round(x);\n    var yy = Math.round(y);\n    var zz = Math.round(z);\n\n    if (xx < 0 || xx >= W || yy < 0 || yy >= H || zz < 0 || zz >= D) {\n      return;\n    }\n\n    if (voidCell(xx, yy, zz)) {\n      return;\n    }\n\n    var id = voxelIndex(xx, yy, zz);\n    if (voxels[id] === undefined) {\n      voxels[id] = block;\n    }\n  }\n\n  function paint(x, y, z, block) {\n    var xx = Math.round(x);\n    var yy = Math.round(y);\n    var zz = Math.round(z);\n\n    if (xx < 0 || xx >= W || yy < 0 || yy >= H || zz < 0 || zz >= D) {\n      return;\n    }\n\n    if (voidCell(xx, yy, zz)) {\n      return;\n    }\n\n    var id = voxelIndex(xx, yy, zz);\n    if (\n      voxels[id] !== undefined &&\n      voxels[id].indexOf(\"leaves\") === -1\n    ) {\n      voxels[id] = block;\n    }\n  }\n\n  function groundBottom(x, z) {\n    var g = Math.ceil(terrain[x][z]);\n    if (!(g >= 0)) {\n      return 0;\n    }\n    if (g >= H) {\n      return H - 1;\n    }\n    return g;\n  }\n\n  var logX = \"minecraft:spruce_log[axis=x]\";\n  var logY = \"minecraft:spruce_log[axis=y]\";\n  var logZ = \"minecraft:spruce_log[axis=z]\";\n  var woodY = \"minecraft:spruce_wood[axis=y]\";\n  var scarLight = \"minecraft:stripped_spruce_log[axis=y]\";\n  var scarDark = \"minecraft:dark_oak_log[axis=y]\";\n  var leaves = \"minecraft:spruce_leaves[distance=7,persistent=true]\";\n\n  function centerX(y) {\n    var t = y / trunkTop;\n    if (t < 0) {\n      t = 0;\n    }\n    if (t > 1) {\n      t = 1;\n    }\n\n    return (\n      6.5 +\n      leanX * t +\n      bendX * Math.sin(phase + y * 0.081) * t +\n      kinkX * Math.sin(phase * 0.31 + TAU * t * 1.25) * t * t\n    );\n  }\n\n  function centerZ(y) {\n    var t = y / trunkTop;\n    if (t < 0) {\n      t = 0;\n    }\n    if (t > 1) {\n      t = 1;\n    }\n\n    return (\n      6.5 +\n      leanZ * t +\n      bendZ * Math.cos(phase + y * 0.076) * t +\n      kinkZ * Math.sin(phase * 0.27 + TAU * t * 1.18) * t * t\n    );\n  }\n\n  function trunkRadius(y) {\n    var wobble = 0.035 * Math.sin(flutePhase + y * 0.17);\n\n    if (y <= 14) {\n      return (4.6 - 0.08 * y + wobble) * girth;\n    }\n\n    var t = (y - 14) / (trunkTop - 14);\n    return (3.48 - 1.94 * t + wobble) * girth;\n  }\n\n  function clampInt(value, low, high) {\n    var n = Math.round(value);\n    if (n < low) {\n      return low;\n    }\n    if (n > high) {\n      return high;\n    }\n    return n;\n  }\n\n  function putAxis(x, y, z, axis) {\n    if (axis === \"x\") {\n      place(x, y, z, logX);\n    } else if (axis === \"z\") {\n      place(x, y, z, logZ);\n    } else {\n      place(x, y, z, logY);\n    }\n  }\n\n  function connectPoints(a, b, axis) {\n    var x = a.x;\n    var y = a.y;\n    var z = a.z;\n\n    while (x !== b.x || y !== b.y || z !== b.z) {\n      if (x !== b.x) {\n        x += x < b.x ? 1 : -1;\n      } else if (z !== b.z) {\n        z += z < b.z ? 1 : -1;\n      } else {\n        y += y < b.y ? 1 : -1;\n      }\n      putAxis(x, y, z, axis);\n    }\n  }\n\n  function drawLimb(sx, sy, sz, angle, length, rise, curve, thick, localPhase) {\n    var steps = Math.max(3, Math.ceil(length * 4));\n    var axis = Math.abs(Math.cos(angle)) >= Math.abs(Math.sin(angle)) ? \"x\" : \"z\";\n    var previous = null;\n\n    for (var i = 0; i <= steps; i++) {\n      var t = i / steps;\n      var sideOffset = curve * Math.sin(Math.PI * t);\n      var verticalWiggle =\n        0.18 *\n        Math.sin(Math.PI * t + localPhase) *\n        Math.sin(Math.PI * t);\n\n      var rawX =\n        sx +\n        Math.cos(angle) * length * t -\n        Math.sin(angle) * sideOffset;\n      var rawZ =\n        sz +\n        Math.sin(angle) * length * t +\n        Math.cos(angle) * sideOffset;\n      var rawY = sy + rise * length * t + verticalWiggle;\n\n      var current = {\n        x: clampInt(rawX, 1, W - 2),\n        y: clampInt(rawY, 1, H - 2),\n        z: clampInt(rawZ, 1, D - 2)\n      };\n\n      if (previous !== null) {\n        connectPoints(previous, current, axis);\n      }\n\n      putAxis(current.x, current.y, current.z, axis);\n\n      var tubeRadius =\n        thick > 0 && i <= steps * 0.30\n          ? Math.max(1, Math.round(thick))\n          : 0;\n\n      for (var dx = -tubeRadius; dx <= tubeRadius; dx++) {\n        for (var dz = -tubeRadius; dz <= tubeRadius; dz++) {\n          if (dx * dx + dz * dz <= tubeRadius * tubeRadius + 0.1) {\n            putAxis(current.x + dx, current.y, current.z + dz, axis);\n          }\n        }\n      }\n\n      previous = current;\n    }\n\n    return previous;\n  }\n\n  var clusters = [];\n\n  function addCluster(x, y, z, rx, ry, rz, wobble) {\n    clusters.push([x, y, z, rx, ry, rz, wobble]);\n  }\n\n  function leafBall(cx, cy, cz, rx, ry, rz, wobble) {\n    var minLX = Math.floor(cx - rx - 1);\n    var maxLX = Math.ceil(cx + rx + 1);\n    var minLY = Math.floor(cy - ry - 1);\n    var maxLY = Math.ceil(cy + ry + 1);\n    var minLZ = Math.floor(cz - rz - 1);\n    var maxLZ = Math.ceil(cz + rz + 1);\n\n    for (var ly = minLY; ly <= maxLY; ly++) {\n      var dy = (ly - cy) / Math.max(0.2, ry);\n\n      for (var lz = minLZ; lz <= maxLZ; lz++) {\n        var dz = (lz - cz) / Math.max(0.2, rz);\n\n        for (var lx = minLX; lx <= maxLX; lx++) {\n          var dx = (lx - cx) / Math.max(0.2, rx);\n          var edge =\n            0.07 *\n            Math.sin(wobble + lx * 1.7 + ly * 2.1 + lz * 1.3);\n\n          if (dx * dx + dy * dy + dz * dz <= 1 + edge) {\n            place(lx, ly, lz, leaves);\n          }\n        }\n      }\n    }\n  }\n\n  for (var y = 0; y <= trunkTop; y++) {\n    var cx0 = centerX(y);\n    var cz0 = centerZ(y);\n    var radius = trunkRadius(y);\n    var xmin = Math.max(0, Math.floor(cx0 - radius - 1));\n    var xmax = Math.min(W - 1, Math.ceil(cx0 + radius + 1));\n    var zmin = Math.max(0, Math.floor(cz0 - radius - 1));\n    var zmax = Math.min(D - 1, Math.ceil(cz0 + radius + 1));\n\n    for (var x = xmin; x <= xmax; x++) {\n      for (var z = zmin; z <= zmax; z++) {\n        var ddx = x - cx0;\n        var ddz = z - cz0;\n        var radial = Math.sqrt(ddx * ddx + ddz * ddz);\n        var angle = Math.atan2(ddz, ddx);\n        var groove = Math.cos(\n          angle * 6 +\n          flutePhase +\n          0.12 * Math.sin(y * 0.11)\n        );\n        var boundary =\n          radius +\n          0.38 * Math.max(0, groove) -\n          0.10 * Math.max(0, -groove);\n\n        if (radial <= boundary) {\n          var trunkBlock = logY;\n\n          if (radial > radius - 0.65 && groove > 0.45) {\n            trunkBlock = woodY;\n          } else if (radial > radius - 0.50 && groove < -0.65) {\n            trunkBlock = scarDark;\n          }\n\n          place(x, y, z, trunkBlock);\n        }\n      }\n    }\n  }\n\n  var baseCX = centerX(0);\n  var baseCZ = centerZ(0);\n\n  for (var fx = 1; fx < W - 1; fx++) {\n    for (var fz = 1; fz < D - 1; fz++) {\n      var fdx = fx - baseCX;\n      var fdz = fz - baseCZ;\n      var footRadial = Math.sqrt(fdx * fdx + fdz * fdz);\n      var footLimit =\n        4.45 +\n        0.24 * Math.max(0, Math.cos(Math.atan2(fdz, fdx) * 6 + flutePhase));\n\n      if (footRadial <= footLimit) {\n        var collarUpTo = groundBottom(fx, fz) + 1;\n        if (collarUpTo < 1) {\n          collarUpTo = 1;\n        }\n        if (collarUpTo >= H) {\n          collarUpTo = H - 1;\n        }\n\n        for (var fy = 0; fy <= collarUpTo; fy++) {\n          place(fx, fy, fz, woodY);\n        }\n      }\n    }\n  }\n\n  var rootPhase = phase + v1 * TAU * 0.37;\n  var damagedRoot =\n    (Math.floor(random() * rootCount) + instanceIndex) % rootCount;\n\n  for (var ri = 0; ri < rootCount; ri++) {\n    var rootAngle =\n      rootPhase +\n      (ri * TAU) / rootCount +\n      (random() - 0.5) * 0.22;\n    var rootLength = 4.25 + random() * 1.25;\n    var rootHeight = 7 + Math.floor(random() * 5);\n    var rootWidth = 1.0 + random() * 0.6;\n    var rootCurve = (random() - 0.5) * 0.8;\n\n    if (ri === damagedRoot) {\n      rootLength *= 0.62;\n      rootHeight = Math.max(4, Math.floor(rootHeight * 0.65));\n    }\n\n    var rootSteps = Math.max(4, Math.ceil(rootLength * 2));\n    var rootAxis =\n      Math.abs(Math.cos(rootAngle)) >= Math.abs(Math.sin(rootAngle))\n        ? \"x\"\n        : \"z\";\n\n    for (var rs = 0; rs <= rootSteps; rs++) {\n      var rt = rs / rootSteps;\n      var dist = rootLength * rt;\n      var sideways = rootCurve * Math.sin(Math.PI * rt);\n\n      var rootX =\n        baseCX +\n        Math.cos(rootAngle) * dist -\n        Math.sin(rootAngle) * sideways;\n      var rootZ =\n        baseCZ +\n        Math.sin(rootAngle) * dist +\n        Math.cos(rootAngle) * sideways;\n\n      var rootCenterX = Math.round(rootX);\n      var rootCenterZ = Math.round(rootZ);\n      var halfWidth = 0.38 + (1 - rt) * rootWidth;\n      var lateralLimit = Math.ceil(halfWidth);\n\n      var rootTop =\n        rootHeight * (1 - Math.pow(rt, 0.72)) +\n        1.0 +\n        1.2 * (1 - rt);\n      rootTop = Math.min(H - 1, Math.floor(rootTop));\n\n      for (var lateral = -lateralLimit; lateral <= lateralLimit; lateral++) {\n        if (Math.abs(lateral) <= halfWidth + 0.01) {\n          var rx = Math.round(\n            rootCenterX - Math.sin(rootAngle) * lateral\n          );\n          var rz = Math.round(\n            rootCenterZ + Math.cos(rootAngle) * lateral\n          );\n\n          if (rx < 0 || rx >= W || rz < 0 || rz >= D) {\n            continue;\n          }\n\n          var bottom = groundBottom(rx, rz);\n          for (var ry = bottom; ry <= rootTop; ry++) {\n            putAxis(rx, ry, rz, rootAxis);\n          }\n        }\n      }\n    }\n  }\n\n  var scarCount =\n    1 + ((Math.floor(random() * 3) + instanceIndex) % 3);\n  var scarStartRange = Math.max(10, trunkTop - 38);\n\n  for (var si = 0; si < scarCount; si++) {\n    var scarStart = 16 + Math.floor(random() * scarStartRange);\n    var scarEnd = Math.min(\n      trunkTop - 5,\n      scarStart + 5 + Math.floor(random() * 10)\n    );\n    if (scarEnd < scarStart) {\n      scarEnd = scarStart;\n    }\n\n    var scarAngle = phase + random() * TAU;\n    var scarWidth = 1 + Math.floor(random() * 2);\n    var scarBlock =\n      (si + instanceIndex) % 4 === 0 ? scarDark : scarLight;\n\n    for (var sy = scarStart; sy <= scarEnd; sy++) {\n      for (var slat = -scarWidth; slat <= scarWidth; slat++) {\n        var irregular =\n          Math.sin(sy * 1.17 + slat * 2.7 + scarAngle * 3.0);\n\n        if (irregular <= -0.72) {\n          continue;\n        }\n\n        var tangent =\n          (slat + 0.18 * Math.sin(sy * 0.6 + si)) * 0.55;\n\n        for (var depth = 0; depth < 5; depth++) {\n          var scarRadius = trunkRadius(sy) - 0.05 - depth * 0.52;\n          if (scarRadius < 0) {\n            continue;\n          }\n\n          var sx = Math.round(\n            centerX(sy) +\n            Math.cos(scarAngle) * scarRadius -\n            Math.sin(scarAngle) * tangent\n          );\n          var sz = Math.round(\n            centerZ(sy) +\n            Math.sin(scarAngle) * scarRadius +\n            Math.cos(scarAngle) * tangent\n          );\n\n          if (sx < 0 || sx >= W || sz < 0 || sz >= D) {\n            continue;\n          }\n\n          var scarId = voxelIndex(sx, sy, sz);\n          if (\n            voxels[scarId] !== undefined &&\n            voxels[scarId].indexOf(\"leaves\") === -1\n          ) {\n            paint(sx, sy, sz, scarBlock);\n            break;\n          }\n        }\n      }\n    }\n  }\n\n  var leaderStart = trunkTop - 1;\n  var leaderStartX = centerX(leaderStart);\n  var leaderStartZ = centerZ(leaderStart);\n  var leaderEndX = centerX(topY) + (v16 - 0.5) * 1.1;\n  var leaderEndZ = centerZ(topY) + (v17 - 0.5) * 1.1;\n\n  function leaderPoint(y) {\n    var denom = topY - leaderStart;\n    var t = denom === 0 ? 1 : (y - leaderStart) / denom;\n\n    return {\n      x: clampInt(\n        leaderStartX + (leaderEndX - leaderStartX) * t,\n        1,\n        W - 2\n      ),\n      y: Math.round(y),\n      z: clampInt(\n        leaderStartZ + (leaderEndZ - leaderStartZ) * t,\n        1,\n        D - 2\n      )\n    };\n  }\n\n  var previousLeader = null;\n\n  for (var ly = leaderStart; ly <= topY; ly++) {\n    var lp = leaderPoint(ly);\n\n    if (previousLeader !== null) {\n      connectPoints(previousLeader, lp, \"y\");\n    }\n\n    putAxis(lp.x, lp.y, lp.z, \"y\");\n\n    if (ly <= leaderStart + 2) {\n      for (var ldx = -1; ldx <= 1; ldx++) {\n        for (var ldz = -1; ldz <= 1; ldz++) {\n          if (ldx * ldx + ldz * ldz <= 1) {\n            putAxis(lp.x + ldx, lp.y, lp.z + ldz, \"y\");\n          }\n        }\n      }\n    }\n\n    previousLeader = lp;\n  }\n\n  var leaderEnd = previousLeader;\n  var bareBranch =\n    (Math.floor(random() * branchCount) + instanceIndex) % branchCount;\n  var branchPhase = phase + v1 * 0.73;\n  var branchSpan = Math.max(12, trunkTop - 64);\n\n  for (var bi = 0; bi < branchCount; bi++) {\n    var fraction = bi / (branchCount - 1);\n    var rawLevel =\n      59 +\n      Math.round(fraction * branchSpan) +\n      Math.floor((random() - 0.5) * 4);\n    var branchLevel = Math.max(\n      58,\n      Math.min(trunkTop - 4, rawLevel)\n    );\n\n    var branchAngle =\n      branchPhase +\n      (bi * TAU) / branchCount +\n      (random() - 0.5) * 0.55;\n    var branchLength =\n      3.15 +\n      random() * 1.65 +\n      (bi % 3 === 0 ? 0.3 : 0);\n    var branchRise = 0.16 + random() * 0.4;\n    var branchCurve = (random() - 0.5) * 1.5;\n    var branchStartX = centerX(branchLevel);\n    var branchStartZ = centerZ(branchLevel);\n\n    var branchEnd = drawLimb(\n      branchStartX,\n      branchLevel,\n      branchStartZ,\n      branchAngle,\n      branchLength,\n      branchRise,\n      branchCurve,\n      1,\n      branchPhase + bi * 0.37\n    );\n\n    var endpointRadius = 1.35 + random() * 0.75;\n    var endpointHeight = 1.2 + random() * 0.75;\n    var endpointDepth =\n      endpointRadius * (0.78 + random() * 0.22);\n\n    if (bi !== bareBranch) {\n      addCluster(\n        branchEnd.x,\n        branchEnd.y,\n        branchEnd.z,\n        endpointRadius,\n        endpointHeight,\n        endpointDepth,\n        phase + bi * 1.7\n      );\n    } else if ((bi + instanceIndex) % 3 === 0) {\n      addCluster(\n        branchEnd.x,\n        branchEnd.y,\n        branchEnd.z,\n        0.85,\n        0.85,\n        0.8,\n        phase + bi * 1.7\n      );\n    }\n\n    var midT = 0.54;\n    var midSide = branchCurve * Math.sin(Math.PI * midT);\n    var midpoint = {\n      x: clampInt(\n        branchStartX +\n          Math.cos(branchAngle) * branchLength * midT -\n          Math.sin(branchAngle) * midSide,\n        1,\n        W - 2\n      ),\n      y: clampInt(\n        branchLevel + branchRise * branchLength * midT,\n        1,\n        H - 2\n      ),\n      z: clampInt(\n        branchStartZ +\n          Math.sin(branchAngle) * branchLength * midT +\n          Math.cos(branchAngle) * midSide,\n        1,\n        D - 2\n      )\n    };\n\n    if ((bi + instanceIndex) % 2 === 0 || bi === bareBranch) {\n      var forkAngle =\n        branchAngle +\n        (bi % 2 === 0 ? 1 : -1) *\n          (0.55 + random() * 0.35);\n      var forkLength = 1.15 + random() * 1.3;\n      var forkRise = 0.2 + random() * 0.4;\n      var forkCurve = (random() - 0.5) * 0.8;\n\n      var forkEnd = drawLimb(\n        midpoint.x,\n        midpoint.y,\n        midpoint.z,\n        forkAngle,\n        forkLength,\n        forkRise,\n        forkCurve,\n        1,\n        phase + bi * 0.41\n      );\n\n      var forkRadius = 1.05 + random() * 0.5;\n      if (bi !== bareBranch || (bi + instanceIndex) % 3 !== 1) {\n        addCluster(\n          forkEnd.x,\n          forkEnd.y,\n          forkEnd.z,\n          forkRadius,\n          1.0 + random() * 0.55,\n          forkRadius * 0.9,\n          phase + bi * 2.1\n        );\n      }\n    }\n\n    var twigCount = 1 + Math.floor(random() * 2);\n    for (var ti = 0; ti < twigCount; ti++) {\n      var twigAngle =\n        branchAngle +\n        (ti === 0 ? -1 : 1) *\n          (0.45 + random() * 0.4) +\n        (random() - 0.5) * 0.2;\n      var twigLength = 1.15 + random() * 1.35;\n      var twigRise = 0.22 + random() * 0.42;\n      var twigCurve = (random() - 0.5) * 0.7;\n\n      var twigEnd = drawLimb(\n        branchEnd.x,\n        branchEnd.y,\n        branchEnd.z,\n        twigAngle,\n        twigLength,\n        twigRise,\n        twigCurve,\n        0,\n        phase + ti * 0.8 + bi\n      );\n\n      if (bi !== bareBranch || ti > 0) {\n        var twigRadius = 1.0 + random() * 0.4;\n        addCluster(\n          twigEnd.x,\n          twigEnd.y,\n          twigEnd.z,\n          twigRadius,\n          0.95 + random() * 0.5,\n          twigRadius * (0.8 + random() * 0.2),\n          phase + ti * 1.4 + bi\n        );\n      }\n    }\n  }\n\n  var crownMissing = Math.floor(random() * 4);\n\n  if (crownMode === 0) {\n    var coneBase = topY - 8;\n\n    for (var layer = 0; layer <= 8; layer++) {\n      var coneY = coneBase + layer;\n      var conePoint = leaderPoint(coneY);\n      var coneFraction = layer / 8;\n      var coneRadius =\n        3.05 * crownScale * (1 - coneFraction) + 0.72;\n      var coneDepth =\n        coneRadius *\n        (0.80 + 0.10 * Math.sin(phase + layer));\n\n      addCluster(\n        conePoint.x,\n        coneY,\n        conePoint.z,\n        coneRadius,\n        1.12,\n        coneDepth,\n        phase + layer * 0.9\n      );\n    }\n  } else if (crownMode === 1) {\n    var umbrellaY = topY - 4;\n    var umbrellaPoint = leaderPoint(umbrellaY);\n    var umbrellaRadius = 3.1 * crownScale;\n\n    addCluster(\n      umbrellaPoint.x,\n      umbrellaY,\n      umbrellaPoint.z,\n      umbrellaRadius,\n      1.45,\n      umbrellaRadius * 0.92,\n      phase + 4.2\n    );\n\n    for (var uq = 0; uq < 4; uq++) {\n      var umbrellaAngle =\n        phase +\n        uq * Math.PI * 0.5 +\n        (random() - 0.5) * 0.3;\n      var umbrellaLength = 2.0 + random() * 1.3;\n      var umbrellaRise = 0.12 + random() * 0.28;\n      var umbrellaCurve = (random() - 0.5) * 0.9;\n\n      var umbrellaEnd = drawLimb(\n        umbrellaPoint.x,\n        umbrellaPoint.y,\n        umbrellaPoint.z,\n        umbrellaAngle,\n        umbrellaLength,\n        umbrellaRise,\n        umbrellaCurve,\n        1,\n        phase + uq\n      );\n\n      if (uq !== crownMissing) {\n        var umbrellaLeafRadius = 1.35 + random() * 0.7;\n        addCluster(\n          umbrellaEnd.x,\n          umbrellaEnd.y,\n          umbrellaEnd.z,\n          umbrellaLeafRadius,\n          1.1 + random() * 0.65,\n          umbrellaLeafRadius * 0.9,\n          phase + uq * 2.3\n        );\n      }\n    }\n\n    addCluster(\n      leaderEnd.x,\n      leaderEnd.y,\n      leaderEnd.z,\n      1.35 + v19 * 0.2,\n      1.15,\n      1.3,\n      phase + 8.4\n    );\n  } else {\n    var forkY = topY - 5;\n    var forkPoint = leaderPoint(forkY);\n    var crownForkCount =\n      2 + ((instanceIndex + Math.floor(v19 * 2)) % 2);\n\n    for (var fq = 0; fq < crownForkCount; fq++) {\n      var crownForkAngle =\n        phase +\n        fq * (TAU / crownForkCount) +\n        (random() - 0.5) * 0.35;\n      var crownForkLength = 2.0 + random() * 1.25;\n      var crownForkRise = 0.45 + random() * 0.35;\n      var crownForkCurve = (random() - 0.5) * 0.75;\n\n      var crownForkEnd = drawLimb(\n        forkPoint.x,\n        forkPoint.y,\n        forkPoint.z,\n        crownForkAngle,\n        crownForkLength,\n        crownForkRise,\n        crownForkCurve,\n        1,\n        phase + fq * 0.7\n      );\n\n      if (fq !== crownMissing) {\n        var crownForkRadius = 1.3 + random() * 0.7;\n        addCluster(\n          crownForkEnd.x,\n          crownForkEnd.y,\n          crownForkEnd.z,\n          crownForkRadius,\n          1.1 + random() * 0.6,\n          crownForkRadius * 0.88,\n          phase + fq * 2.6\n        );\n      }\n    }\n\n    for (var coneLayer = 0; coneLayer <= 4; coneLayer++) {\n      var centralY = topY - 4 + coneLayer;\n      var centralPoint = leaderPoint(centralY);\n      var centralFraction = coneLayer / 4;\n      var centralRadius =\n        1.85 * crownScale * (1 - centralFraction) + 0.72;\n\n      addCluster(\n        centralPoint.x,\n        centralY,\n        centralPoint.z,\n        centralRadius,\n        1.12,\n        centralRadius * 0.9,\n        phase + 11 + coneLayer\n      );\n    }\n\n    addCluster(\n      leaderEnd.x,\n      leaderEnd.y,\n      leaderEnd.z,\n      1.3 + v19 * 0.2,\n      1.18,\n      1.28,\n      phase + 13.4\n    );\n  }\n\n  for (var ci = 0; ci < clusters.length; ci++) {\n    var cluster = clusters[ci];\n    leafBall(\n      cluster[0],\n      cluster[1],\n      cluster[2],\n      cluster[3],\n      cluster[4],\n      cluster[5],\n      cluster[6]\n    );\n  }\n\n  for (var outY = 0; outY < H; outY++) {\n    for (var outZ = 0; outZ < D; outZ++) {\n      for (var outX = 0; outX < W; outX++) {\n        var block = voxels[voxelIndex(outX, outY, outZ)];\n        if (block !== undefined) {\n          api.set(outX, outY, outZ, block);\n        }\n      }\n    }\n  }\n\n  var baseAnchorX = clampInt(centerX(0), 0, W - 1);\n  var baseAnchorZ = clampInt(centerZ(0), 0, D - 1);\n  var anchors = {\n    base: [baseAnchorX, 0, baseAnchorZ],\n    crown: [leaderEnd.x, leaderEnd.y, leaderEnd.z]\n  };\n\n  if (cavity !== null && opening !== null) {\n    var doorL = Math.floor((opening.minL + opening.maxL) * 0.5);\n\n    if (opening.axis === \"x\") {\n      anchors.door = [\n        opening.coord,\n        cavity.minY + 1,\n        doorL\n      ];\n    } else {\n      anchors.door = [\n        doorL,\n        cavity.minY + 1,\n        opening.coord\n      ];\n    }\n  }\n\n  var result = {\n    name: \"Colossal Redwood\",\n    seatY: 0,\n    anchors: anchors\n  };\n\n  if (cavity !== null) {\n    result.interiors = [\n      {\n        min: [cavity.minX, cavity.minY, cavity.minZ],\n        max: [cavity.maxX, cavity.maxY, cavity.maxZ],\n        kind: \"quarters\"\n      }\n    ];\n  }\n\n  return result;\n}"
+    }
+  }
+}
