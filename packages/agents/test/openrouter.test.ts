@@ -60,13 +60,13 @@ describe("chatComplete retry on empty content", () => {
     expect(calls).toHaveLength(2);
   });
 
-  it("gives up once all three attempts return empty content", async () => {
+  it("gives up once all six attempts return empty content", async () => {
     const { fetchImpl, calls } = stubFetch([{ body: EMPTY_BODY }]);
     const pending = chatComplete(callOptions(fetchImpl));
     pending.catch(() => {}); // assertion below re-awaits; avoid unhandled rejection
     await vi.runAllTimersAsync();
     await expect(pending).rejects.toThrow("no message content");
-    expect(calls).toHaveLength(3);
+    expect(calls).toHaveLength(6);
   });
 
   it("names the output limit when reasoning consumed the whole budget", async () => {
@@ -92,7 +92,7 @@ describe("chatComplete retry on empty content", () => {
     await expect(pending).rejects.toThrow(/output limit/);
     await expect(pending).rejects.toThrow(/65536 of its output tokens went to reasoning/);
     // Still retried — how long a model thinks varies, so the same call can land.
-    expect(calls).toHaveLength(3);
+    expect(calls).toHaveLength(6);
   });
 
   it("does not retry other narrowing failures", async () => {
