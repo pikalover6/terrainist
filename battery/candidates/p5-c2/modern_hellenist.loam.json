@@ -1,0 +1,594 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "modern_hellenist",
+    "worldSeed": "305",
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:gray_concrete",
+      "road.shoulder": "minecraft:andesite",
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.gravel": "minecraft:light_gray_concrete",
+      "plaza.cobble": "minecraft:stone_bricks",
+      "plaza.border": "minecraft:quartz_block"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.65,
+    "formality": 0.82,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "character": {
+      "label": "modern Hellenist city",
+      "materialTheme": "modern_city",
+      "archetypes": {
+        "prefer": [
+          "theater",
+          "museum",
+          "university_hall",
+          "courthouse",
+          "modern_villa",
+          "apartment_block"
+        ],
+        "forbid": [],
+        "weights": {
+          "theater": 3,
+          "museum": 2,
+          "university_hall": 2
+        }
+      },
+      "props": {
+        "prefer": [
+          "fountain",
+          "statue_plinth",
+          "flagpole",
+          "bench",
+          "lamp_post"
+        ],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [
+          "oak_round",
+          "birch_slim"
+        ],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "banded",
+        "ornamentDensity": 0.65
+      },
+      "programs": [
+        {
+          "id": "leviathan_breach",
+          "mode": "landmark",
+          "brief": "A colossal many-tentacled sea monster breaks through the harbor beside the modern Hellenist city, its wet scaled body and fins rising from real water while huge tentacles reach toward the waterfront streets and a shattered quay.",
+          "envelope": [
+            48,
+            36,
+            48
+          ]
+        },
+        {
+          "id": "sea_monster_wave",
+          "mode": "plugin",
+          "brief": "Distinct smaller sea monsters surface along a landing trail from the sea inlet toward the city: fins, tentacles, wet tracks, spray and broken quay debris make each one readable at street scale and show a clear direction of advance.",
+          "envelope": [
+            15,
+            18,
+            15
+          ],
+          "count": 18
+        }
+      ],
+      "palettes": {
+        "plaza.path": "minecraft:smooth_quartz",
+        "plaza.border": "minecraft:quartz_block"
+      }
+    },
+    "tokens": {
+      "invasion": "sea monsters are invading the city"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the modern Hellenist city under assault from the sea",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling coastal country with a broad inlet",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.48,
+          "warp": {
+            "amount": 16,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.36
+          },
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "civic_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a broad shelf for the city centre",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 260,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "sea_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flooded inlet through which the invasion advances",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.82
+                ],
+                [
+                  0.5,
+                  0.7
+                ],
+                "coast"
+              ],
+              "width": 44,
+              "depth": 16,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.1,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "polis",
+        "kind": "city",
+        "label": "the modern Hellenist city, formally planned around civic squares",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            640,
+            576
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "ring": true,
+          "blockSize": 44,
+          "mix": [
+            "office",
+            "apartment_block",
+            "shopping_mall",
+            "theater",
+            "museum",
+            "university_hall",
+            "modern_villa",
+            "townhouse",
+            "shop_row"
+          ],
+          "characters": {
+            "core": [
+              "office",
+              "apartment_block",
+              "theater",
+              "museum"
+            ],
+            "industrial": [
+              "warehouse",
+              "machine_shop",
+              "factory_hall"
+            ],
+            "waterfront": [
+              "shop_row",
+              "apartment_block",
+              "food_court",
+              "boathouse"
+            ],
+            "lanes": [
+              "townhouse",
+              "modern_villa",
+              "convenience_store"
+            ],
+            "civic": [
+              "theater",
+              "university_hall",
+              "museum",
+              "courthouse"
+            ],
+            "grid": [
+              "office",
+              "apartment_block",
+              "shop_row"
+            ],
+            "rowhouse": [
+              "townhouse",
+              "modern_villa",
+              "department_store"
+            ]
+          },
+          "forms": {
+            "core": "grid",
+            "industrial": "grid",
+            "waterfront": "organic",
+            "civic": "radial",
+            "lanes": "grown",
+            "grid": "grid",
+            "rowhouse": "grid"
+          },
+          "setPieces": {
+            "max": 5,
+            "kinds": [
+              "landmark",
+              "bridge",
+              "promenade",
+              "square",
+              "stair"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "beside": "sea_inlet",
+            "offset": [
+              24,
+              180
+            ]
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "modern",
+          "hellenist"
+        ],
+        "children": [
+          {
+            "id": "civic_theatre",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the modern civic theatre recalling a Hellenist theatre",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                19
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "dense"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "theater",
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "civic_gallery",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the white-stone civic gallery by the square",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                13,
+                15
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "flat",
+              "windowRhythm": "dense"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "museum",
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "civic_university",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the Hellenist university hall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                15,
+                19
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "regular"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "university_hall",
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "port",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the working harbour at the mouth of the invasion inlet",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            160,
+            16,
+            112
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "beside": "sea_inlet",
+            "offset": [
+              0,
+              64
+            ]
+          },
+          {
+            "distance": "polis",
+            "min": 0,
+            "max": 500
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour",
+          "waterfront"
+        ]
+      },
+      {
+        "id": "leviathan_breach",
+        "kind": "generator",
+        "generator": "authored:leviathan_breach",
+        "label": "the colossal leviathan breaking into the harbour",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            48,
+            36,
+            48
+          ]
+        },
+        "params": {
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 128,
+            "partial": 0.25
+          },
+          {
+            "distance": "port",
+            "min": 0,
+            "max": 220
+          },
+          {
+            "distance": "polis",
+            "min": 0,
+            "max": 420
+          }
+        ],
+        "tags": [
+          "landmark",
+          "sea_monster",
+          "invasion"
+        ]
+      },
+      {
+        "id": "sea_monster_invasion",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "eighteen smaller monsters advancing from the sea into the city",
+        "params": {
+          "program": "sea_monster_wave",
+          "count": 18,
+          "area": {
+            "at": [
+              0.5,
+              0.68
+            ],
+            "radius": 0.34
+          },
+          "spacing": 28,
+          "maxSlope": 28,
+          "seat": "wade",
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "sparse_outskirts",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse oak and birch cover beyond the urban footprint",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.02,
+          "spacing": 4,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            88
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.2,
+            "flowers": 0.02,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "city_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "city_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "city_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "planned roads joining the city to its harbour",
+        "params": {
+          "anchors": [
+            "polis",
+            "port"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "leviathan_breach": {
+      "mode": "landmark",
+      "envelope": [
+        48,
+        36,
+        48
+      ],
+      "sourceHash": "b3:677e1e55ba6e466889fccc10a79c08e485d7ff3a8fe8d3bdaaf5c6a0b9722c11",
+      "outputHash": "b3:d40b1df1256bb8452bb28f2a9de36efb3b806e7d215d6c14a109b3f431c66fe8",
+      "source": "export const envelope = [48, 36, 48];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  function put(x, y, z, block) {\n    const ix = Math.floor(x);\n    const iy = Math.floor(y);\n    const iz = Math.floor(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      api.set(ix, iy, iz, block);\n    }\n  }\n\n  const terrainTop = new Map();\n\n  function footing(x, z) {\n    const ix = Math.floor(x);\n    const iz = Math.floor(z);\n    if (ix < 0 || ix >= W || iz < 0 || iz >= D) {\n      return;\n    }\n\n    const key = ix + \":\" + iz;\n    let top = terrainTop.get(key);\n\n    if (top === undefined) {\n      let h = api.heightAt(ix, iz);\n      if (!Number.isFinite(h)) {\n        h = 0;\n      }\n      top = Math.max(0, Math.min(4, Math.ceil(h)));\n      terrainTop.set(key, top);\n    }\n\n    for (let y = 0; y <= top; y++) {\n      put(\n        ix,\n        y,\n        iz,\n        y === 0 ? \"minecraft:deepslate\" : \"minecraft:cobbled_deepslate\"\n      );\n    }\n  }\n\n  for (let x = 3; x <= 44; x++) {\n    for (let z = 5; z <= 43; z++) {\n      const dx = (x - 24) / 16;\n      const dz = (z - 28) / 15;\n      const centralShelf = dx * dx + dz * dz <= 1;\n      const quay = z >= 6 && z <= 14;\n      const streetApron = z === 5 && x >= 7 && x <= 41;\n\n      if (centralShelf || quay || streetApron) {\n        footing(x, z);\n\n        if (quay && (x * 13 + z * 7) % 9 < 4) {\n          put(\n            x,\n            0,\n            z,\n            (x + z) % 5 === 0\n              ? \"minecraft:cracked_stone_bricks\"\n              : \"minecraft:stone_bricks\"\n          );\n        }\n\n        if (centralShelf && (x * 5 + z * 11) % 17 === 0) {\n          put(x, 0, z, \"minecraft:prismarine\");\n        }\n      }\n    }\n  }\n\n  function ruinChunk(x0, x1, z0, z1, maxHeight, primary, alternate) {\n    for (let x = x0; x <= x1; x++) {\n      for (let z = z0; z <= z1; z++) {\n        const mark = (x * 31 + z * 17 + x0 * 7 + z0 * 11) % 19;\n        if (mark === 0 || (mark === 1 && (x + z) % 2 === 0)) {\n          continue;\n        }\n\n        const height =\n          1 + ((x * 7 + z * 11 + x0 * 3 + z0) % maxHeight);\n\n        for (let y = 1; y <= height; y++) {\n          let block = primary;\n          if ((x * 3 + z * 5 + y * 7) % 13 === 0) {\n            block = alternate;\n          }\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  ruinChunk(\n    4,\n    12,\n    8,\n    12,\n    3,\n    \"minecraft:stone_bricks\",\n    \"minecraft:cracked_stone_bricks\"\n  );\n  ruinChunk(\n    15,\n    21,\n    7,\n    11,\n    4,\n    \"minecraft:quartz_block\",\n    \"minecraft:calcite\"\n  );\n  ruinChunk(\n    25,\n    32,\n    8,\n    13,\n    3,\n    \"minecraft:polished_deepslate\",\n    \"minecraft:stone_bricks\"\n  );\n  ruinChunk(\n    36,\n    44,\n    7,\n    12,\n    4,\n    \"minecraft:stone_bricks\",\n    \"minecraft:cracked_stone_bricks\"\n  );\n\n  function brokenColumn(x, z, height, mainBlock) {\n    footing(x, z);\n    for (let dx = 0; dx < 2; dx++) {\n      for (let dz = 0; dz < 2; dz++) {\n        for (let y = 1; y <= height; y++) {\n          let block = mainBlock;\n          if ((x + z + dx + dz + y) % 6 === 0) {\n            block = \"minecraft:calcite\";\n          }\n          put(x + dx, y, z + dz, block);\n        }\n      }\n    }\n  }\n\n  brokenColumn(7, 9, 6, \"minecraft:quartz_block\");\n  brokenColumn(18, 8, 4, \"minecraft:calcite\");\n  brokenColumn(29, 10, 5, \"minecraft:iron_block\");\n  brokenColumn(40, 8, 7, \"minecraft:quartz_block\");\n  brokenColumn(12, 12, 3, \"minecraft:stone_bricks\");\n\n  function paintSkin(cx, cy, cz, rx, ry, rz, variant) {\n    const x0 = Math.floor(cx - rx);\n    const x1 = Math.ceil(cx + rx);\n    const y0 = Math.floor(cy - ry);\n    const y1 = Math.ceil(cy + ry);\n    const z0 = Math.floor(cz - rz);\n    const z1 = Math.ceil(cz + rz);\n\n    for (let x = x0; x <= x1; x++) {\n      for (let y = y0; y <= y1; y++) {\n        for (let z = z0; z <= z1; z++) {\n          const nx = (x - cx) / rx;\n          const ny = (y - cy) / ry;\n          const nz = (z - cz) / rz;\n          const q = nx * nx + ny * ny + nz * nz;\n\n          if (q <= 1.000001) {\n            const code =\n              (x * 7 + y * 11 + z * 13 + variant * 17) % 17;\n            let block = \"minecraft:dark_prismarine\";\n\n            if (q > 0.7 && code % 7 < 2) {\n              block = \"minecraft:prismarine_bricks\";\n            } else if (code % 13 === 0) {\n              block = \"minecraft:prismarine\";\n            } else if (variant === 3 && code % 11 === 0) {\n              block = \"minecraft:prismarine\";\n            }\n\n            put(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  paintSkin(24, 7, 28, 8, 6, 7, 3);\n  paintSkin(24, 17, 28, 11, 11, 9, 1);\n  paintSkin(24, 24, 27, 8, 9, 7, 2);\n  paintSkin(24, 19, 21, 7, 7, 4, 4);\n\n  function dorsalFin(\n    cx,\n    baseY,\n    topY,\n    baseZ,\n    maxWidth,\n    maxDepth,\n    block\n  ) {\n    const span = topY - baseY;\n\n    for (let y = baseY; y <= topY; y++) {\n      const t = span === 0 ? 1 : (y - baseY) / span;\n      const width = Math.max(1, Math.round(maxWidth * (1 - t)));\n      const depth = Math.max(1, Math.round(maxDepth * (1 - t)));\n\n      for (let x = Math.floor(cx - width); x <= Math.ceil(cx + width); x++) {\n        for (let z = baseZ; z <= baseZ + depth; z++) {\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  dorsalFin(\n    24,\n    17,\n    35,\n    33,\n    4,\n    2,\n    \"minecraft:oxidized_copper\"\n  );\n  dorsalFin(\n    17,\n    13,\n    30,\n    32,\n    2,\n    2,\n    \"minecraft:prismarine_bricks\"\n  );\n  dorsalFin(\n    31,\n    13,\n    30,\n    32,\n    2,\n    2,\n    \"minecraft:prismarine_bricks\"\n  );\n\n  for (let y = 20; y <= 34; y += 2) {\n    put(24, y, 33, \"minecraft:prismarine_bricks\");\n  }\n\n  function sideFin(sign) {\n    const inner = sign < 0 ? 16 : 32;\n    const steps = 11;\n\n    for (let i = 0; i <= steps; i++) {\n      const x = inner + sign * i;\n      const t = i / steps;\n      const centerY = Math.round(16 - 3 * t);\n      const halfY = Math.max(1, Math.round(4 - 3 * t));\n      const halfZ = Math.max(1, Math.round(3 - 2 * t));\n\n      for (let y = centerY - halfY; y <= centerY + halfY; y++) {\n        for (let z = 28 - halfZ; z <= 28 + halfZ; z++) {\n          const block =\n            i % 3 === 0\n              ? \"minecraft:oxidized_copper\"\n              : \"minecraft:dark_prismarine\";\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  sideFin(-1);\n  sideFin(1);\n\n  const plates = [\n    [20, 29, 32],\n    [24, 32, 27],\n    [28, 29, 32],\n    [17, 22, 24],\n    [31, 22, 24],\n    [13, 18, 28],\n    [35, 18, 28],\n    [19, 11, 29],\n    [29, 11, 29]\n  ];\n\n  for (let i = 0; i < plates.length; i++) {\n    const p = plates[i];\n    put(p[0], p[1], p[2], \"minecraft:prismarine_bricks\");\n  }\n\n  put(24, 33, 27, \"minecraft:sea_lantern\");\n  put(20, 29, 32, \"minecraft:sea_lantern\");\n  put(28, 29, 32, \"minecraft:sea_lantern\");\n  put(17, 22, 24, \"minecraft:sea_lantern\");\n\n  for (let y = 15; y <= 21; y += 2) {\n    put(17, y, 22, \"minecraft:cyan_concrete\");\n    put(31, y, 22, \"minecraft:cyan_concrete\");\n  }\n\n  function fillTube(cx, cy, cz, radius, block) {\n    const ry = Math.max(1.55, radius * 0.78);\n    const x0 = Math.floor(cx - radius);\n    const x1 = Math.ceil(cx + radius);\n    const y0 = Math.floor(cy - ry);\n    const y1 = Math.ceil(cy + ry);\n    const z0 = Math.floor(cz - radius);\n    const z1 = Math.ceil(cz + radius);\n\n    for (let x = x0; x <= x1; x++) {\n      for (let y = y0; y <= y1; y++) {\n        for (let z = z0; z <= z1; z++) {\n          const nx = (x - cx) / radius;\n          const ny = (y - cy) / ry;\n          const nz = (z - cz) / radius;\n          if (nx * nx + ny * ny + nz * nz <= 1.05) {\n            put(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  function drawTentacle(points, startRadius, endRadius, block, accents) {\n    const lengths = [];\n    let totalLength = 0;\n\n    for (let i = 0; i < points.length - 1; i++) {\n      const a = points[i];\n      const b = points[i + 1];\n      const dx = b[0] - a[0];\n      const dy = b[1] - a[1];\n      const dz = b[2] - a[2];\n      const length = Math.sqrt(dx * dx + dy * dy + dz * dz);\n      lengths.push(length);\n      totalLength += length;\n    }\n\n    let travelled = 0;\n    let serial = 0;\n\n    for (let i = 0; i < points.length - 1; i++) {\n      const a = points[i];\n      const b = points[i + 1];\n      const dx = b[0] - a[0];\n      const dy = b[1] - a[1];\n      const dz = b[2] - a[2];\n      const steps = Math.max(\n        1,\n        Math.ceil(Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)))\n      );\n\n      for (let s = 0; s <= steps; s++) {\n        if (i > 0 && s === 0) {\n          continue;\n        }\n\n        const localT = s / steps;\n        const distance = travelled + lengths[i] * localT;\n        const t = totalLength === 0 ? 0 : distance / totalLength;\n\n        const cx = Math.round(a[0] + dx * localT);\n        const cy = Math.round(a[1] + dy * localT);\n        const cz = Math.round(a[2] + dz * localT);\n        const radius =\n          startRadius + (endRadius - startRadius) * t;\n\n        if (cy <= 2) {\n          footing(cx, cz);\n        }\n\n        fillTube(cx, cy, cz, radius, block);\n\n        if (accents && serial % 4 === 2 && radius > 1.7) {\n          const ry = Math.max(1.55, radius * 0.78);\n          const accentY = cy + Math.max(1, Math.floor(ry * 0.8));\n          put(cx, accentY, cz, \"minecraft:sea_lantern\");\n        }\n\n        serial++;\n      }\n\n      travelled += lengths[i];\n    }\n  }\n\n  drawTentacle(\n    [\n      [18, 8, 25],\n      [15, 7, 22],\n      [13, 6, 18],\n      [10, 5, 14],\n      [7, 4, 10],\n      [5, 3, 7],\n      [7, 2, 5]\n    ],\n    3.4,\n    1.55,\n    \"minecraft:dark_prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [30, 8, 25],\n      [33, 7, 22],\n      [35, 6, 18],\n      [38, 5, 14],\n      [41, 4, 10],\n      [44, 3, 7],\n      [42, 2, 5]\n    ],\n    3.2,\n    1.55,\n    \"minecraft:prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [23, 7, 23],\n      [22, 6, 20],\n      [22, 5, 16],\n      [23, 4, 12],\n      [25, 3, 8],\n      [24, 2, 4],\n      [21, 2, 3]\n    ],\n    3.0,\n    1.55,\n    \"minecraft:dark_prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [27, 7, 23],\n      [28, 6, 20],\n      [29, 5, 16],\n      [31, 4, 12],\n      [33, 3, 8],\n      [32, 2, 4],\n      [35, 2, 3]\n    ],\n    2.9,\n    1.55,\n    \"minecraft:prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [17, 9, 28],\n      [13, 8, 27],\n      [9, 7, 24],\n      [6, 6, 22],\n      [4, 5, 19],\n      [4, 4, 16],\n      [6, 2, 14]\n    ],\n    3.0,\n    1.55,\n    \"minecraft:dark_prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [31, 9, 28],\n      [35, 8, 29],\n      [39, 7, 27],\n      [42, 6, 24],\n      [45, 5, 21],\n      [43, 4, 18],\n      [45, 2, 16]\n    ],\n    3.2,\n    1.55,\n    \"minecraft:prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [19, 8, 32],\n      [15, 7, 35],\n      [11, 6, 38],\n      [8, 5, 41],\n      [11, 4, 44],\n      [15, 2, 42]\n    ],\n    2.8,\n    1.55,\n    \"minecraft:dark_prismarine\",\n    true\n  );\n\n  drawTentacle(\n    [\n      [29, 8, 32],\n      [34, 7, 35],\n      [38, 6, 38],\n      [41, 5, 42],\n      [38, 4, 45],\n      [34, 2, 43]\n    ],\n    3.0,\n    1.55,\n    \"minecraft:prismarine\",\n    true\n  );\n\n  for (let x = 17; x <= 31; x++) {\n    for (let y = 12; y <= 26; y++) {\n      const ox = (x - 24) / 7;\n      const oy = (y - 19) / 7;\n      const outer = ox * ox + oy * oy;\n\n      if (outer <= 1) {\n        put(x, y, 24, \"minecraft:dark_prismarine\");\n\n        const ix = (x - 24) / 5.5;\n        const iy = (y - 19) / 5;\n        const inner = ix * ix + iy * iy;\n\n        if (inner <= 0.52) {\n          for (let z = 18; z <= 21; z++) {\n            put(x, y, z, \"minecraft:black_concrete\");\n          }\n        } else {\n          for (let z = 18; z <= 23; z++) {\n            put(x, y, z, \"minecraft:red_concrete\");\n          }\n        }\n      }\n    }\n  }\n\n  const teeth = [\n    [20, 16],\n    [24, 15],\n    [28, 16],\n    [20, 22],\n    [24, 23],\n    [28, 22]\n  ];\n\n  for (let i = 0; i < teeth.length; i++) {\n    const tooth = teeth[i];\n    put(tooth[0], tooth[1], 17, \"minecraft:calcite\");\n\n    if (i < 3) {\n      put(tooth[0], tooth[1] - 1, 17, \"minecraft:calcite\");\n    } else {\n      put(tooth[0], tooth[1] + 1, 17, \"minecraft:calcite\");\n    }\n  }\n\n  drawTentacle(\n    [\n      [18, 24, 23],\n      [15, 25, 21]\n    ],\n    1.9,\n    1.6,\n    \"minecraft:prismarine\",\n    false\n  );\n\n  drawTentacle(\n    [\n      [30, 24, 23],\n      [33, 25, 21]\n    ],\n    1.9,\n    1.6,\n    \"minecraft:prismarine\",\n    false\n  );\n\n  put(15, 25, 21, \"minecraft:black_concrete\");\n  put(14, 25, 21, \"minecraft:sea_lantern\");\n  put(14, 25, 20, \"minecraft:black_concrete\");\n\n  put(33, 25, 21, \"minecraft:black_concrete\");\n  put(34, 25, 21, \"minecraft:sea_lantern\");\n  put(34, 25, 20, \"minecraft:black_concrete\");\n\n  return {\n    name: \"Leviathan Breach\",\n    seatY: 0,\n    anchors: {\n      door: [24, 1, 6],\n      breach: [24, 19, 18],\n      quay: [8, 2, 8],\n      crown: [24, 35, 33]\n    }\n  };\n}"
+    },
+    "sea_monster_wave": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        18,
+        15
+      ],
+      "sourceHash": "b3:817e1d1fa83db49ac50986b1a5ace5c37023ed3ceac2b23403268fd75442c77d",
+      "outputHash": "b3:ab66f934b5044b16d4867bc043b9a180aad34b1c748b1af3c273889a4861ea70",
+      "source": "export const envelope = [15, 18, 15];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const index = api.instance.index;\n  const count = api.instance.count;\n\n  const randoms = new Array(24);\n  for (let i = 0; i < randoms.length; i += 1) {\n    randoms[i] = api.random();\n  }\n\n  const clamp = function (value, low, high) {\n    return Math.max(low, Math.min(high, value));\n  };\n\n  const put = function (x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  };\n\n  const centerX = 6 + ((index + Math.floor(randoms[0] * 7)) % 4);\n  const lateralLean = ((index + count + Math.floor(randoms[1] * 3)) % 3) - 1;\n  const headX = clamp(centerX + lateralLean, 2, W - 3);\n\n  const torsoZ = 4 + ((index + count + Math.floor(randoms[2] * 3)) % 3);\n  const headZ = torsoZ + 2;\n  const torsoRadius = 3 + ((index + Math.floor(randoms[3] * 2)) % 2);\n  const damage = (index + count + Math.floor(randoms[4] * 4)) % 4;\n\n  const palettes = [\n    [\n      \"minecraft:dark_prismarine\",\n      \"minecraft:deepslate_bricks\",\n      \"minecraft:prismarine\"\n    ],\n    [\n      \"minecraft:prismarine\",\n      \"minecraft:dark_prismarine\",\n      \"minecraft:prismarine_bricks\"\n    ],\n    [\n      \"minecraft:deepslate\",\n      \"minecraft:polished_blackstone\",\n      \"minecraft:dark_prismarine\"\n    ],\n    [\n      \"minecraft:cyan_concrete\",\n      \"minecraft:blue_concrete\",\n      \"minecraft:prismarine\"\n    ]\n  ];\n\n  const palette = palettes[\n    (index + count + Math.floor(randoms[6] * palettes.length)) % palettes.length\n  ];\n\n  const core = palette[0];\n  const shadow = palette[1];\n  const highlight = palette[2];\n\n  const foundation =\n    (index + count) % 2 === 0\n      ? \"minecraft:stone_bricks\"\n      : \"minecraft:deepslate_bricks\";\n\n  const lower =\n    (index + Math.floor(randoms[7] * 2)) % 2 === 0\n      ? \"minecraft:cobblestone\"\n      : \"minecraft:mossy_cobblestone\";\n\n  const rubbleTop = \"minecraft:mossy_cobblestone\";\n  const wet = \"minecraft:dark_prismarine\";\n  const wetLight = \"minecraft:prismarine\";\n\n  const foamA = \"minecraft:calcite\";\n  const foamB = \"minecraft:light_blue_concrete\";\n\n  const terrainHeight = new Array(D);\n  const terrainTop = new Array(D);\n\n  for (let z = 0; z < D; z += 1) {\n    terrainHeight[z] = new Array(W);\n    terrainTop[z] = new Array(W);\n\n    for (let x = 0; x < W; x += 1) {\n      let h = api.heightAt(x, z);\n      if (!Number.isFinite(h)) {\n        h = 0;\n      }\n\n      h = Math.floor(h);\n      terrainHeight[z][x] = h;\n\n      let top = h + 1;\n      if (top < 1) {\n        top = 1;\n      }\n      if (top >= H) {\n        top = H - 1;\n      }\n\n      terrainTop[z][x] = top;\n    }\n  }\n\n  let rise = terrainHeight[torsoZ][centerX];\n  if (rise < 0) {\n    rise = 0;\n  }\n  const lift = clamp(Math.floor(rise), 0, 2);\n\n  const bend =\n    ((index + count + Math.floor(randoms[5] * 7)) % 5) - 2;\n  const widthJitter = Math.floor(randoms[8] * 3);\n\n  const trailCenter = function (z) {\n    const offset = Math.round(((z - 7) * bend) / 9);\n    return clamp(centerX + offset, 2, W - 3);\n  };\n\n  const trailWidth = function (z) {\n    let width = z < 3 ? 6 : (z > 10 ? 6 : 5);\n    if ((z + index + widthJitter) % 4 === 0) {\n      width += 1;\n    }\n    return width;\n  };\n\n  const trailBounds = function (z) {\n    const center = trailCenter(z);\n    const width = trailWidth(z);\n    return [\n      Math.max(0, center - width),\n      Math.min(W - 1, center + width)\n    ];\n  };\n\n  for (let z = 0; z < D; z += 1) {\n    const center = trailCenter(z);\n    const bounds = trailBounds(z);\n\n    for (let x = bounds[0]; x <= bounds[1]; x += 1) {\n      const top = terrainTop[z][x];\n\n      for (let y = 0; y <= top; y += 1) {\n        let block = foundation;\n\n        if (y === 0) {\n          block = lower;\n        }\n\n        if (y === top) {\n          if (\n            Math.abs(x - center) <= 2 &&\n            (x + z + index) % 4 !== 0\n          ) {\n            block = wet;\n          } else if ((x + z * 2 + count) % 5 === 0) {\n            block = rubbleTop;\n          }\n        }\n\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  const laneOffsets = [-2, 0, 2];\n\n  for (let z = 1; z < D; z += 1) {\n    const center = trailCenter(z);\n\n    for (let lane = 0; lane < laneOffsets.length; lane += 1) {\n      let wobble = 0;\n\n      if (lane === 0 && (z + index) % 3 === 0) {\n        wobble = -1;\n      } else if (lane === 2 && (z + index + 1) % 3 === 0) {\n        wobble = 1;\n      }\n\n      const x = clamp(\n        center + laneOffsets[lane] + wobble,\n        0,\n        W - 1\n      );\n\n      let y = terrainTop[z][x];\n      if (\n        lane === 1 &&\n        (z + index + widthJitter) % 3 === 0\n      ) {\n        y += 1;\n      }\n\n      if (y >= H) {\n        y = H - 1;\n      }\n\n      put(\n        x,\n        y,\n        z,\n        lane === 1 || (z + lane + index) % 3 === 0\n          ? wetLight\n          : wet\n      );\n    }\n  }\n\n  const debrisSalt = Math.floor(randoms[9] * 7);\n\n  for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {\n    const side = sideIndex === 0 ? -1 : 1;\n\n    for (let k = 0; k < 6; k += 1) {\n      const z = (k * 2 + sideIndex + index + debrisSalt) % 5;\n      const bounds = trailBounds(z);\n      const edge = side < 0 ? bounds[0] : bounds[1];\n\n      const outward =\n        (k + sideIndex + index + damage) % 3 === 0 ? 1 : 0;\n\n      let x = edge + side * outward;\n      if (x < 0 || x >= W) {\n        x = edge;\n      }\n\n      const height =\n        1 + ((k + sideIndex + index + debrisSalt) % 3);\n\n      const brokenChunk =\n        (k + sideIndex + index + damage + debrisSalt) % 5 === 0;\n\n      if (!brokenChunk || outward === 0) {\n        for (let y = 0; y <= height; y += 1) {\n          put(\n            x,\n            y,\n            z,\n            y === height &&\n            (k + sideIndex + index) % 2 === 0\n              ? rubbleTop\n              : lower\n          );\n        }\n      }\n\n      if ((k + sideIndex + index) % 2 === 0) {\n        const inwardX = clamp(edge - side, 0, W - 1);\n        const inwardHeight =\n          1 + ((k + sideIndex + count) % 2);\n\n        for (let y = 1; y <= inwardHeight; y += 1) {\n          put(\n            inwardX,\n            y,\n            z,\n            (y + k + sideIndex + index) % 2 === 0\n              ? rubbleTop\n              : foundation\n          );\n        }\n      }\n    }\n  }\n\n  const waveSide =\n    (index + count + Math.floor(randoms[10] * 2)) % 2 === 0\n      ? -1\n      : 1;\n\n  const waveStartZ =\n    1 + ((index + Math.floor(randoms[11] * 2)) % 2);\n\n  const waveLength =\n    4 + ((index + count + Math.floor(randoms[12] * 3)) % 3);\n\n  for (let t = 0; t <= waveLength; t += 1) {\n    const z = waveStartZ + t;\n    const x = clamp(\n      trailCenter(z) +\n        waveSide * (4 - Math.floor(t / 2)),\n      1,\n      W - 2\n    );\n\n    const waveY = 1 + Math.floor((3 * t) / 4);\n\n    for (let dx = -1; dx <= 1; dx += 1) {\n      for (let y = waveY; y <= waveY + 1; y += 1) {\n        put(\n          x + dx,\n          y,\n          z,\n          (t + dx + index + count) % 5 === 0\n            ? wetLight\n            : wet\n        );\n      }\n    }\n\n    if (t === waveLength || (t + index) % 3 === 0) {\n      put(x, waveY + 2, z, foamA);\n\n      if (t === waveLength) {\n        put(\n          clamp(x + waveSide, 0, W - 1),\n          waveY + 2,\n          z,\n          foamB\n        );\n      }\n    }\n  }\n\n  const shellFor = function (x, y, z) {\n    const pattern =\n      (x * 7 + y * 11 + z * 13 + index * 17 + count * 3) % 31;\n\n    if (pattern === 0 || pattern === 1) {\n      return shadow;\n    }\n\n    if (pattern === 2 || pattern === 3 || pattern === 4) {\n      return highlight;\n    }\n\n    return core;\n  };\n\n  const fillEllipsoid = function (\n    cx,\n    cy,\n    cz,\n    rx,\n    ry,\n    rz,\n    selector,\n    allowScar\n  ) {\n    const minX = Math.max(0, cx - rx);\n    const maxX = Math.min(W - 1, cx + rx);\n    const minY = Math.max(0, cy - ry);\n    const maxY = Math.min(H - 1, cy + ry);\n    const minZ = Math.max(0, cz - rz);\n    const maxZ = Math.min(D - 1, cz + rz);\n    const scarMod = 9 + damage;\n\n    for (let y = minY; y <= maxY; y += 1) {\n      const dy = y - cy;\n\n      for (let z = minZ; z <= maxZ; z += 1) {\n        const dz = z - cz;\n\n        for (let x = minX; x <= maxX; x += 1) {\n          const dx = x - cx;\n          const norm =\n            (dx * dx) / (rx * rx) +\n            (dy * dy) / (ry * ry) +\n            (dz * dz) / (rz * rz);\n\n          if (norm <= 1) {\n            const scar =\n              allowScar &&\n              damage > 0 &&\n              y > cy - ry + 1 &&\n              norm > 0.84 &&\n              (x * 5 + y * 7 + z * 11 + index + damage) %\n                scarMod ===\n                0;\n\n            if (!scar) {\n              put(x, y, z, selector(x, y, z));\n            }\n          }\n        }\n      }\n    }\n  };\n\n  fillEllipsoid(\n    centerX,\n    5 + lift,\n    torsoZ,\n    torsoRadius,\n    3,\n    3,\n    shellFor,\n    true\n  );\n\n  fillEllipsoid(\n    headX,\n    7 + lift,\n    headZ,\n    3,\n    3,\n    3,\n    shellFor,\n    true\n  );\n\n  fillEllipsoid(\n    centerX,\n    4 + lift,\n    torsoZ + 1,\n    3,\n    2,\n    2,\n    function () {\n      return shadow;\n    },\n    false\n  );\n\n  const finHeight =\n    4 + ((index + count + Math.floor(randoms[13] * 3)) % 3);\n\n  const finLean =\n    ((index + Math.floor(randoms[14] * 3) + count) % 3) - 1;\n\n  const finBaseY = 8 + lift;\n\n  for (let t = 0; t <= finHeight; t += 1) {\n    const y = finBaseY + t;\n    const finX = clamp(\n      headX + finLean * Math.floor(t / 3),\n      1,\n      W - 2\n    );\n    const finZ = headZ - 1 - Math.floor(t / 2);\n\n    for (let dx = -1; dx <= 1; dx += 1) {\n      for (let z = finZ; z <= finZ + 1; z += 1) {\n        const chipped =\n          damage >= 2 &&\n          t === finHeight &&\n          (dx + z + index + count) % 5 === 0;\n\n        if (!chipped) {\n          put(\n            finX + dx,\n            y,\n            z,\n            (t + z + index) % 4 === 0\n              ? highlight\n              : core\n          );\n        }\n      }\n    }\n  }\n\n  const sideFinBase =\n    2 + ((index + count + Math.floor(randoms[15] * 3)) % 2);\n\n  for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {\n    const side = sideIndex === 0 ? -1 : 1;\n    const maxExtra =\n      side < 0\n        ? headX - 2\n        : W - 1 - headX - 2;\n\n    let length = Math.min(\n      sideFinBase +\n        ((sideIndex + index + count) % 2),\n      maxExtra\n    );\n\n    if (length < 1) {\n      length = 1;\n    }\n\n    for (let d = 0; d <= length; d += 1) {\n      const x = headX + side * (2 + d);\n      const y0 =\n        6 + lift - Math.floor(d / 2);\n      const z0 =\n        headZ - 1 + ((d + sideIndex + index) % 2);\n\n      for (let y = y0; y <= y0 + 1; y += 1) {\n        for (let z = z0; z <= z0 + 1; z += 1) {\n          const chipped =\n            damage === 3 &&\n            d === length &&\n            (y + z + sideIndex + index) % 4 === 0;\n\n          if (!chipped) {\n            put(\n              x,\n              y,\n              z,\n              (d + sideIndex + index) % 3 === 0\n                ? highlight\n                : core\n            );\n          }\n        }\n      }\n    }\n  }\n\n  const eyeY = 8 + lift;\n  const eyeZ = headZ + 2;\n\n  for (let side = -1; side <= 1; side += 2) {\n    const eyeBlock = \"minecraft:yellow_concrete\";\n\n    put(headX + side, eyeY, eyeZ, eyeBlock);\n    put(headX + side, eyeY, eyeZ + 1, eyeBlock);\n  }\n\n  const mouthY = 6 + lift;\n\n  for (let dx = -2; dx <= 2; dx += 1) {\n    put(\n      headX + dx,\n      mouthY,\n      headZ + 2,\n      \"minecraft:black_concrete\"\n    );\n\n    if ((dx + index + count) % 2 === 0) {\n      put(\n        headX + dx,\n        mouthY,\n        headZ + 3,\n        \"minecraft:black_concrete\"\n      );\n    }\n  }\n\n  for (let dx = -1; dx <= 1; dx += 1) {\n    if ((dx + index) % 3 !== 0) {\n      put(\n        headX + dx,\n        mouthY - 1,\n        headZ + 3,\n        \"minecraft:white_concrete\"\n      );\n    }\n  }\n\n  const gillBlock =\n    (index + count) % 2 === 0\n      ? \"minecraft:cyan_concrete\"\n      : highlight;\n\n  for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {\n    const side = sideIndex === 0 ? -1 : 1;\n\n    for (let g = 0; g < 3; g += 1) {\n      put(\n        headX + side * 3,\n        6 + lift + (g % 2),\n        headZ - 1 + g,\n        gillBlock\n      );\n    }\n  }\n\n  const drawTentacle = function (\n    startX,\n    startY,\n    startZ,\n    endZ,\n    drift,\n    drop,\n    material,\n    phase\n  ) {\n    const points = [];\n    const length = Math.max(1, endZ - startZ);\n\n    for (let z = startZ; z <= endZ; z += 1) {\n      const progress = (z - startZ) / length;\n      const x = clamp(\n        Math.round(startX + drift * progress),\n        1,\n        W - 2\n      );\n      const y = clamp(\n        Math.round(startY - drop * progress),\n        1,\n        H - 2\n      );\n\n      const radius = progress < 0.72 ? 1 : 0;\n\n      for (let dx = -radius; dx <= radius; dx += 1) {\n        for (let dy = -radius; dy <= radius; dy += 1) {\n          const roll =\n            (x * 3 + y * 5 + z * 7 + phase + index) % 11;\n\n          let block = material;\n          if (roll === 0) {\n            block = highlight;\n          } else if (roll === 1) {\n            block = shadow;\n          }\n\n          put(x + dx, y + dy, z, block);\n        }\n      }\n\n      points.push([x, y, z]);\n    }\n\n    return points;\n  };\n\n  const paths = [];\n\n  const centralDrift =\n    ((index + count + Math.floor(randoms[16] * 5)) % 3) - 1;\n\n  const leftDrift =\n    -1 -\n    ((index + count + Math.floor(randoms[17] * 2)) % 2);\n\n  const rightDrift =\n    1 +\n    ((index + Math.floor(randoms[18] * 2) + count) % 2);\n\n  const sideSign =\n    (index + count + Math.floor(randoms[19] * 2)) % 2 === 0\n      ? -1\n      : 1;\n\n  paths.push(\n    drawTentacle(\n      centerX,\n      3 + lift,\n      torsoZ + 1,\n      D - 1,\n      centralDrift,\n      2 + lift,\n      core,\n      0\n    )\n  );\n\n  paths.push(\n    drawTentacle(\n      centerX - 2,\n      3 + lift,\n      torsoZ + 1,\n      D - 1,\n      leftDrift,\n      2 + lift,\n      shadow,\n      1\n    )\n  );\n\n  paths.push(\n    drawTentacle(\n      centerX + 2,\n      3 + lift,\n      torsoZ + 1,\n      D - 1,\n      rightDrift,\n      2 + lift,\n      core,\n      2\n    )\n  );\n\n  const sideEnd =\n    11 +\n    ((index + count + Math.floor(randoms[20] * 2)) % 2);\n\n  paths.push(\n    drawTentacle(\n      centerX + sideSign * 2,\n      3 + lift,\n      torsoZ - 1,\n      sideEnd,\n      sideSign *\n        (1 + ((index + Math.floor(randoms[21] * 2)) % 2)),\n      2 + lift,\n      highlight,\n      3\n    )\n  );\n\n  for (let p = 0; p < paths.length; p += 1) {\n    const path = paths[p];\n\n    for (let q = 1; q < path.length - 1; q += 2) {\n      if ((q + p + index + damage) % 3 !== 0) {\n        const point = path[q];\n        let cupY = point[1] + 1;\n\n        if (cupY >= H) {\n          cupY = H - 1;\n        }\n\n        put(\n          point[0],\n          cupY,\n          point[2],\n          highlight\n        );\n      }\n    }\n  }\n\n  const drawPlume = function (\n    startX,\n    startY,\n    startZ,\n    length,\n    driftX,\n    driftZ,\n    phase\n  ) {\n    const points = [];\n    const denominator = length > 0 ? length : 1;\n    let previousX = 0;\n    let previousZ = 0;\n\n    for (let t = 0; t <= length; t += 1) {\n      const y = startY + t;\n      if (y < 0 || y >= H) {\n        break;\n      }\n\n      const x = clamp(\n        Math.round(startX + (driftX * t) / denominator),\n        0,\n        W - 1\n      );\n\n      const z = clamp(\n        Math.round(startZ + (driftZ * t) / denominator),\n        0,\n        D - 1\n      );\n\n      const block =\n        (t + phase + index) % 3 === 0\n          ? foamB\n          : foamA;\n\n      if (t === 0) {\n        put(x, y, z, block);\n      } else {\n        if (x !== previousX || z !== previousZ) {\n          put(previousX, y, previousZ, foamB);\n\n          if (x !== previousX && z !== previousZ) {\n            put(previousX, y, z, foamB);\n          }\n        }\n\n        put(x, y, z, block);\n      }\n\n      points.push([x, y, z]);\n      previousX = x;\n      previousZ = z;\n    }\n\n    if (points.length > 0) {\n      const last = points[points.length - 1];\n      const branchDirection = phase % 2 === 0 ? 1 : -1;\n\n      for (let k = 1; k <= 2; k += 1) {\n        const branchX = clamp(\n          last[0] + branchDirection * k,\n          0,\n          W - 1\n        );\n\n        put(\n          branchX,\n          last[1],\n          last[2],\n          k === 1 ? foamB : foamA\n        );\n\n        if (k === 1 && last[1] > 0) {\n          put(\n            branchX,\n            last[1] - 1,\n            last[2],\n            foamA\n          );\n        }\n      }\n\n      const branchZ = clamp(\n        last[2] + (phase % 2 === 0 ? 1 : -1),\n        0,\n        D - 1\n      );\n\n      if (branchZ !== last[2]) {\n        put(last[0], last[1], branchZ, foamB);\n      }\n    }\n  };\n\n  const mainLength =\n    4 + ((index + count + Math.floor(randoms[22] * 4)) % 3);\n\n  const mainLean =\n    ((index + count + Math.floor(randoms[23] * 5)) % 3) - 1;\n\n  drawPlume(\n    headX - 2,\n    9 + lift,\n    headZ - 1,\n    mainLength,\n    mainLean,\n    0,\n    1\n  );\n\n  const sidePlumeLength =\n    3 + ((index + count + Math.floor(randoms[12] * 4)) % 3);\n\n  const sidePlumeLean =\n    ((index + Math.floor(randoms[14] * 5) + count) % 3) - 1;\n\n  drawPlume(\n    headX + 2,\n    8 + lift,\n    headZ,\n    sidePlumeLength,\n    0,\n    sidePlumeLean,\n    2\n  );\n\n  if (\n    (index + count + Math.floor(randoms[15] * 4)) % 3 !==\n    1\n  ) {\n    const thirdLength =\n      2 + ((index + count + Math.floor(randoms[16] * 3)) % 2);\n\n    drawPlume(\n      centerX,\n      10 + lift,\n      headZ,\n      thirdLength,\n      sideSign,\n      0,\n      3\n    );\n  }\n\n  for (let bit = 0; bit < 5; bit += 1) {\n    const markerZ = 8 + bit;\n    const markerX = clamp(\n      trailCenter(markerZ) + (bit % 2 === 0 ? -2 : 2),\n      0,\n      W - 1\n    );\n\n    let markerY = terrainTop[markerZ][markerX] + 1;\n    if (markerY >= H) {\n      markerY = H - 1;\n    }\n\n    const marked =\n      ((index >> bit) & 1) === 1;\n\n    put(\n      markerX,\n      markerY,\n      markerZ,\n      marked\n        ? \"minecraft:light_blue_concrete\"\n        : \"minecraft:blue_concrete\"\n    );\n\n    if (marked && markerY + 1 < H) {\n      put(\n        markerX,\n        markerY + 1,\n        markerZ,\n        foamB\n      );\n    }\n  }\n\n  const titles = [\n    \"Aegean Maw\",\n    \"Quaybreaker\",\n    \"Blackfin Surge\",\n    \"Many-Armed Breaker\",\n    \"Brine Stalker\",\n    \"Foam-Crowned Horror\",\n    \"Tide Wretch\",\n    \"Suction-Cup Terror\"\n  ];\n\n  const titleIndex =\n    (index + count + Math.floor(randoms[5] * titles.length)) %\n    titles.length;\n\n  const seaX = trailCenter(0);\n  const cityX = trailCenter(D - 1);\n\n  return {\n    name: titles[titleIndex] + \" \" + (index + 1),\n    seatY: 0,\n    anchors: {\n      sea: [seaX, terrainTop[0][seaX], 0],\n      cityward: [\n        cityX,\n        terrainTop[D - 1][cityX],\n        D - 1\n      ],\n      monster: [headX, 7 + lift, headZ + 3]\n    }\n  };\n}"
+    }
+  }
+}

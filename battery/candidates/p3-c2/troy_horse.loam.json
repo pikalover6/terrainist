@@ -1,0 +1,375 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "troy_horse",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.border": "minecraft:stone_bricks"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "event": {
+      "kind": "siege",
+      "severity": 0.9,
+      "recency": 0
+    },
+    "character": {
+      "label": "Troy on the eve of the siege",
+      "motifs": {
+        "massing": "towered",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.35
+      },
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "An unmistakable colossal wooden Trojan horse stands on four grounded legs in Troy's civic square, with rough timber joinery, a long neck and head, a tail, and a silhouette that dominates the surrounding city. Make it hollow and enterable: a concealed belly chamber contains Greek soldiers waiting in darkness behind a closed, camouflaged hatch, with no soldier emerged yet; publish a grounded door anchor for the hidden entrance.",
+          "envelope": [
+            31,
+            30,
+            15
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "scene": "The Trojan horse stands inside Troy immediately before the hidden soldiers emerge."
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy before the soldiers emerge",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle country around the city",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.0025
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "troy_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad raised shelf beneath Troy",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 230,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "troy",
+        "kind": "district",
+        "label": "the walled ancient city of Troy",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            360,
+            320
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "high",
+          "mix": [
+            "cottage",
+            "hall",
+            "warehouse",
+            "barracks"
+          ],
+          "blockSize": 44,
+          "plaza": true,
+          "courtyards": 0.35,
+          "walls": {
+            "style": "masonry",
+            "margin": 14,
+            "towerPitch": 48,
+            "height": 8,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 10
+          }
+        ],
+        "tags": [
+          "city",
+          "troy",
+          "walled",
+          "settlement"
+        ]
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the civic square where the horse stands",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            44,
+            44
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the wooden horse concealing the Greek soldiers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            31,
+            30,
+            15
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 0,
+            "max": 256
+          },
+          {
+            "distance": "troy",
+            "min": 0,
+            "max": 384
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 12,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "siege",
+          "trojan_horse"
+        ]
+      },
+      {
+        "id": "east_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse beyond the eastern wall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "troy",
+            "min": 160,
+            "max": 360
+          },
+          {
+            "facing": "troy"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "civic"
+        ]
+      },
+      {
+        "id": "troy_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the radial lanes from the square to Troy's gates",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "trojan_horse",
+            "troy",
+            "east_gatehouse"
+          ],
+          "pattern": "radial",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "country_oaks",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse oak cover beyond the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.03,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "country_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "country_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        31,
+        30,
+        15
+      ],
+      "sourceHash": "b3:0f84635192f97752b4b7df23ff9753cccf4de10e43d39530e0b8f579a6326c23",
+      "outputHash": "b3:6c0c64f2ba5c723bb69658e7aa362ba171e0d254ba43114fc6e3ac066b745b22",
+      "source": "export const envelope = [31, 30, 15];\n\nexport default function build(api) {\n  const oakPlanks = \"minecraft:oak_planks\";\n  const sprucePlanks = \"minecraft:spruce_planks\";\n  const darkPlanks = \"minecraft:dark_oak_planks\";\n\n  const oakX = \"minecraft:oak_log[axis=x]\";\n  const oakZ = \"minecraft:oak_log[axis=z]\";\n  const spruceZ = \"minecraft:spruce_log[axis=z]\";\n  const darkX = \"minecraft:dark_oak_log[axis=x]\";\n  const darkY = \"minecraft:dark_oak_log[axis=y]\";\n\n  const blackWool = \"minecraft:black_wool\";\n  const coalBlock = \"minecraft:coal_block\";\n  const ladder = \"minecraft:ladder[facing=south]\";\n  const closedHatch =\n    \"minecraft:dark_oak_trapdoor[facing=south,half=top,open=false,powered=false,waterlogged=false]\";\n\n  function put(x, y, z, block) {\n    api.set(x, y, z, block);\n  }\n\n  function box(x0, x1, y0, y1, z0, z1, block) {\n    for (let y = y0; y <= y1; y++) {\n      for (let x = x0; x <= x1; x++) {\n        for (let z = z0; z <= z1; z++) {\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function groundY(x, z) {\n    let h = Math.floor(api.heightAt(x, z));\n    if (h < 0) {\n      h = 0;\n    }\n    return h;\n  }\n\n  const bodyLayers = [\n    [4, 9, 19, 4, 10],\n    [5, 7, 21, 3, 11],\n    [6, 6, 22, 2, 12],\n    [7, 6, 22, 2, 12],\n    [8, 6, 22, 2, 12],\n    [9, 6, 22, 2, 12],\n    [10, 6, 22, 2, 12],\n    [11, 6, 22, 2, 12],\n    [12, 6, 22, 2, 12],\n    [13, 6, 22, 2, 12],\n    [14, 7, 21, 3, 11],\n    [15, 9, 20, 4, 10]\n  ];\n\n  for (let i = 0; i < bodyLayers.length; i++) {\n    const layer = bodyLayers[i];\n    const y = layer[0];\n    const x0 = layer[1];\n    const x1 = layer[2];\n    const z0 = layer[3];\n    const z1 = layer[4];\n\n    for (let x = x0; x <= x1; x++) {\n      for (let z = z0; z <= z1; z++) {\n        if (\n          y >= 5 &&\n          y <= 10 &&\n          x >= 9 &&\n          x <= 19 &&\n          z >= 5 &&\n          z <= 9\n        ) {\n          continue;\n        }\n\n        let block =\n          (x * 3 + y * 5 + z * 7) % 11 === 0\n            ? sprucePlanks\n            : oakPlanks;\n\n        if (y === 4 || y === 11) {\n          block = (x + z) % 3 === 0 ? spruceZ : oakZ;\n        } else if (\n          (z === 3 || z === 11) &&\n          (y === 5 || y === 8 || y === 13)\n        ) {\n          block = darkX;\n        } else if (\n          (z === 2 || z === 12) &&\n          (y === 6 || y === 9 || y === 12)\n        ) {\n          block = oakX;\n        } else if (\n          (x === 7 || x === 21) &&\n          (z === 3 || z === 11) &&\n          y >= 5 &&\n          y <= 13\n        ) {\n          block = darkY;\n        }\n\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  const legs = [\n    [8, 9, 3, 4],\n    [8, 9, 10, 11],\n    [19, 20, 3, 4],\n    [19, 20, 10, 11]\n  ];\n\n  for (let i = 0; i < legs.length; i++) {\n    const leg = legs[i];\n\n    for (let x = leg[0]; x <= leg[1]; x++) {\n      for (let z = leg[2]; z <= leg[3]; z++) {\n        let start = groundY(x, z);\n\n        if (start > 5) {\n          start = 5;\n        }\n\n        for (let y = start; y <= 5; y++) {\n          put(x, y, z, y === start ? darkPlanks : darkY);\n        }\n      }\n    }\n  }\n\n  for (const y of [6, 9, 12]) {\n    for (let x = 6; x <= 22; x++) {\n      put(x, y, 2, oakX);\n      put(x, y, 12, oakX);\n    }\n  }\n\n  for (const y of [5, 8, 13]) {\n    for (let x = 7; x <= 21; x++) {\n      put(x, y, 3, darkX);\n      put(x, y, 11, darkX);\n    }\n  }\n\n  for (const x of [8, 20]) {\n    for (let y = 5; y <= 13; y++) {\n      put(x, y, 2, darkY);\n      put(x, y, 12, darkY);\n    }\n  }\n\n  for (const x of [7, 21]) {\n    for (let z = 2; z <= 12; z++) {\n      put(x, 11, z, oakZ);\n    }\n  }\n\n  const pegs = [\n    [8, 6, 3],\n    [20, 6, 11],\n    [8, 9, 3],\n    [20, 9, 11],\n    [7, 13, 3],\n    [21, 8, 11]\n  ];\n\n  for (let i = 0; i < pegs.length; i++) {\n    put(pegs[i][0], pegs[i][1], pegs[i][2], darkPlanks);\n  }\n\n  box(5, 8, 10, 13, 5, 9, darkPlanks);\n  box(3, 6, 8, 12, 5, 9, sprucePlanks);\n  box(1, 4, 6, 10, 4, 10, darkPlanks);\n  box(0, 2, 5, 8, 3, 11, darkPlanks);\n\n  for (let x = 5; x <= 7; x++) {\n    put(x, 12, 7, darkX);\n  }\n\n  for (let x = 3; x <= 5; x++) {\n    put(x, 10, 7, darkX);\n  }\n\n  for (let x = 1; x <= 3; x++) {\n    put(x, 8, 7, darkX);\n  }\n\n  for (let x = 0; x <= 1; x++) {\n    put(x, 6, 7, darkX);\n  }\n\n  box(20, 22, 11, 14, 3, 11, sprucePlanks);\n\n  for (let y = 11; y <= 14; y++) {\n    put(21, y, 3, darkY);\n    put(21, y, 11, darkY);\n  }\n\n  const neckLayers = [\n    [12, 19, 23, 4, 10],\n    [13, 19, 23, 4, 10],\n    [14, 20, 24, 4, 10],\n    [15, 20, 24, 5, 9],\n    [16, 21, 25, 5, 9],\n    [17, 21, 25, 5, 9],\n    [18, 22, 26, 5, 9],\n    [19, 22, 26, 5, 9],\n    [20, 23, 27, 5, 9],\n    [21, 23, 27, 5, 9],\n    [22, 24, 28, 5, 9],\n    [23, 24, 28, 5, 9]\n  ];\n\n  for (let i = 0; i < neckLayers.length; i++) {\n    const layer = neckLayers[i];\n    const y = layer[0];\n\n    for (let x = layer[1]; x <= layer[2]; x++) {\n      for (let z = layer[3]; z <= layer[4]; z++) {\n        let block =\n          (x + y * 2 + z) % 6 === 0 ? sprucePlanks : oakPlanks;\n\n        if (z === layer[3] && y % 2 === 0) {\n          block = darkPlanks;\n        }\n\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  for (let y = 14; y <= 23; y++) {\n    const west = neckLayers[y - 12][1];\n\n    put(west - 1, y, 4, darkY);\n    put(west - 1, y, 5, darkPlanks);\n\n    if (y >= 16 && y % 2 === 0) {\n      put(west - 2, y, 5, darkPlanks);\n      put(west - 2, y, 6, darkPlanks);\n    }\n  }\n\n  const headLayers = [\n    [21, 26, 30, 5, 9],\n    [22, 24, 30, 4, 10],\n    [23, 24, 29, 3, 10],\n    [24, 24, 29, 3, 10],\n    [25, 25, 28, 4, 9],\n    [26, 26, 28, 4, 9]\n  ];\n\n  for (let i = 0; i < headLayers.length; i++) {\n    const layer = headLayers[i];\n\n    box(\n      layer[1],\n      layer[2],\n      layer[0],\n      layer[0],\n      layer[3],\n      layer[4],\n      layer[0] <= 22 ? sprucePlanks : oakPlanks\n    );\n  }\n\n  box(27, 30, 20, 21, 5, 9, darkPlanks);\n  box(29, 30, 21, 23, 5, 9, darkPlanks);\n\n  put(30, 22, 6, coalBlock);\n  put(30, 22, 8, coalBlock);\n\n  put(27, 24, 2, blackWool);\n  put(27, 24, 11, blackWool);\n\n  box(25, 26, 26, 28, 4, 5, darkY);\n  box(25, 26, 26, 28, 9, 10, darkY);\n\n  put(26, 29, 5, darkPlanks);\n  put(26, 29, 9, darkPlanks);\n\n  const ladderBottom = Math.max(groundY(19, 4), groundY(19, 5));\n\n  for (let y = ladderBottom; y < 4; y++) {\n    put(19, y, 5, ladder);\n  }\n\n  put(19, 4, 5, closedHatch);\n  put(18, 4, 5, darkPlanks);\n  put(19, 4, 4, darkPlanks);\n  put(19, 4, 6, darkPlanks);\n\n  return {\n    name: \"The Trojan Horse of Troy\",\n    seatY: 0,\n    anchors: {\n      door: [19, 0, 6],\n      hatch: [19, 4, 5]\n    },\n    interiors: [\n      {\n        min: [9, 5, 5],\n        max: [19, 10, 9],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

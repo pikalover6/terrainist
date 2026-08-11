@@ -1,0 +1,33 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"modern","event":{"kind":"siege","severity":0.8,"recency":0},"character":{"label":"modern Hellenist city","materialTheme":"modern_city"},"tokens":{"invasion":"sea monsters are invading the city"}}
+           1 attempt(s), 3677 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     66438 in + 31460 out = 97898  ($0.0196)
+programs   2 of 2 kept (budget 12 landmark / 6 plugin)
+  ok     leviathan_breach [landmark]  1 attempt(s), 68423 tokens  ($0.0400)
+  ok     sea_monster_wave [plugin]  2 attempt(s), 96319 tokens  ($0.0495)
+  tokens     18416 in + 146326 out = 164742  ($0.0895)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c2/modern_hellenist.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The document failed to compile — 3 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.leviathan_breach: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.leviathan_breach: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+error LOAM-E336 PROGRAM_GATE_FAILED at world.sea_monster_invasion: no site would take "sea_monster_wave"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope
+
+terrainist: OpenRouter fetch failed: fetch failed

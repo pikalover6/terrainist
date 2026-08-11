@@ -1,0 +1,900 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirate_unicorn_war",
+    "worldSeed": "301",
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "zone": "west"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.gravel": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "event": {
+      "kind": "siege",
+      "severity": 1,
+      "recency": 0
+    },
+    "tokens": {
+      "region_pirate_island": "era renaissance; materialTheme temperate_timber; pirate island",
+      "region_unicorn_island": "materialTheme white_quartz; unicorn island"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "two enemy islands divided by a battle channel",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a broad ocean holding two raised island landmasses",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 58,
+          "amplitude": 10,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 24,
+            "frequency": 0.002
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.78
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 5,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "pirate_isle_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western pirate island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.31,
+                0.5
+              ],
+              "radius": 180,
+              "height": 32,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_isle_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the eastern unicorn island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.82,
+                0.5
+              ],
+              "radius": 230,
+              "height": 35,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "pirate_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the level ground behind the pirate shore",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.31,
+                0.5
+              ],
+              "radius": 170,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle upland beneath the unicorn settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.82,
+                0.5
+              ],
+              "radius": 170,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "pirate_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a pirate harbour inlet reaching the sea",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.31,
+                  0.5
+                ],
+                [
+                  0.28,
+                  0.47
+                ],
+                "coast"
+              ],
+              "width": 12,
+              "depth": 5,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "unicorn_stream",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a bright stream running from the unicorn upland",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.82,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.47
+                ],
+                "coast"
+              ],
+              "width": 9,
+              "depth": 4,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0011,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.1,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "pirate_island",
+        "kind": "district",
+        "label": "the western pirate island, walled and ready for siege",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            192,
+            192
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "shop_row",
+            "bastion",
+            "cottage"
+          ],
+          "blockSize": 40,
+          "plaza": true,
+          "courtyards": 0.35,
+          "ground": "pad",
+          "walls": {
+            "style": "palisade",
+            "margin": 12,
+            "towerPitch": 40,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.31,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 90
+          }
+        ],
+        "intent": {
+          "era": "renaissance",
+          "wealth": 0.35,
+          "formality": 0.2,
+          "character": {
+            "label": "pirate island at war",
+            "materialTheme": "temperate_timber",
+            "palettes": {
+              "ground.beach": "minecraft:black_concrete_powder",
+              "ground.cliff": "minecraft:basalt",
+              "road.surface": "minecraft:coarse_dirt",
+              "plaza.path": "minecraft:dark_oak_planks",
+              "plaza.border": "minecraft:dark_oak_log"
+            },
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "bastion",
+                "castle"
+              ],
+              "forbid": [
+                "church",
+                "crystal_shrine"
+              ],
+              "weights": {
+                "tavern": 3,
+                "warehouse": 3,
+                "bastion": 2
+              }
+            },
+            "props": {
+              "prefer": [
+                "galleon",
+                "longship",
+                "flagpole",
+                "curtain_wall"
+              ],
+              "forbid": [
+                "carousel",
+                "floating_platform"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "oak_round",
+                "spruce_tall"
+              ],
+              "forbid": [
+                "birch_slim"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "towered",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.2
+            },
+            "urbanForm": "grown",
+            "courtyards": 0.35,
+            "ground": "pad"
+          }
+        },
+        "tags": [
+          "structure",
+          "district",
+          "pirate",
+          "settlement",
+          "warfront"
+        ],
+        "children": [
+          {
+            "id": "pirate_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the pirate keep above the harbour",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                17
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "sparse",
+              "basement": {
+                "depth": 4,
+                "style": "vault"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "fortress",
+              "house",
+              "landmark",
+              "pirate"
+            ]
+          },
+          {
+            "id": "pirate_bastion",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the eastern-facing pirate bastion",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                13
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "sparse",
+              "basement": {
+                "depth": 3,
+                "style": "dungeon_room"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "bastion",
+              "house",
+              "warfront",
+              "pirate"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "unicorn_island",
+        "kind": "district",
+        "label": "the eastern unicorn island, luminous behind its walls",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            192,
+            192
+          ]
+        },
+        "params": {
+          "fabric": "organic",
+          "density": "medium",
+          "mix": [
+            "cottage",
+            "crystal_shrine",
+            "cloister",
+            "hermitage",
+            "stupa"
+          ],
+          "blockSize": 40,
+          "plaza": true,
+          "courtyards": 0.6,
+          "ground": "pad",
+          "walls": {
+            "style": "masonry",
+            "margin": 12,
+            "towerPitch": 44,
+            "height": 6,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.82,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 90
+          }
+        ],
+        "intent": {
+          "era": "fantasy",
+          "wealth": 0.7,
+          "formality": 0.55,
+          "character": {
+            "label": "unicorn island at war",
+            "materialTheme": "white_quartz",
+            "palettes": {
+              "ground.surface": "minecraft:moss_block",
+              "ground.beach": "minecraft:white_concrete_powder",
+              "ground.cliff": "minecraft:calcite",
+              "road.surface": "minecraft:packed_mud",
+              "plaza.path": "minecraft:quartz_block",
+              "plaza.border": "minecraft:calcite"
+            },
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "stupa",
+                "cloister",
+                "hermitage"
+              ],
+              "forbid": [
+                "warehouse",
+                "tavern",
+                "arsenal"
+              ],
+              "weights": {
+                "crystal_shrine": 3,
+                "cloister": 2,
+                "hermitage": 2
+              }
+            },
+            "props": {
+              "prefer": [
+                "standing_stones",
+                "monolith",
+                "floating_platform",
+                "gazebo"
+              ],
+              "forbid": [
+                "galleon",
+                "longship",
+                "curtain_wall"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "birch_slim",
+                "oak_round"
+              ],
+              "forbid": [
+                "spruce_squat"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "massing": "towered",
+              "windowRhythm": "dense",
+              "ornamentDensity": 0.9
+            },
+            "urbanForm": "organic",
+            "courtyards": 0.6,
+            "ground": "pad"
+          }
+        },
+        "tags": [
+          "structure",
+          "district",
+          "unicorn",
+          "settlement",
+          "warfront"
+        ],
+        "children": [
+          {
+            "id": "unicorn_crystal_shrine",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the crystal shrine at the heart of the unicorn island",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "hip",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "crystal_shrine",
+              "house",
+              "landmark",
+              "unicorn"
+            ]
+          },
+          {
+            "id": "unicorn_bastion",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the western-facing unicorn bastion",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                13
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "bastion",
+              "house",
+              "warfront",
+              "unicorn"
+            ]
+          },
+          {
+            "id": "unicorn_beacon_spire",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the luminous beacon spire over the unicorn walls",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                21,
+                7
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "flat",
+              "windowRhythm": "sparse"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "beacon_spire",
+              "house",
+              "landmark",
+              "unicorn"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pirate_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the pirate quay reaching into the inlet",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 18,
+          "width": 3,
+          "jitter": 0
+        },
+        "tags": [
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "pirate_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the pirate flagship moored beyond the quay",
+        "params": {
+          "prop": "galleon",
+          "at": "pier",
+          "on": "water"
+        },
+        "tags": [
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "channel_longship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the longship advancing toward the unicorn shore",
+        "params": {
+          "prop": "longship",
+          "zone": "center",
+          "on": "water",
+          "jitter": 0
+        },
+        "tags": [
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "channel_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the war galleon holding the channel",
+        "params": {
+          "prop": "galleon",
+          "zone": "center",
+          "on": "water",
+          "jitter": 0.1
+        },
+        "tags": [
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "pirate_flag",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the pirate colours above the western settlement",
+        "params": {
+          "prop": "flagpole",
+          "zone": "west",
+          "jitter": 0.1
+        },
+        "tags": [
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "unicorn_flag",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the unicorn colours above the eastern settlement",
+        "params": {
+          "prop": "flagpole",
+          "zone": "east",
+          "jitter": 0.1
+        },
+        "tags": [
+          "unicorn",
+          "warfront"
+        ]
+      },
+      {
+        "id": "unicorn_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the standing stone ring on the unicorn island",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "east",
+          "jitter": 0.12
+        },
+        "tags": [
+          "unicorn",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the leaning monolith watching the battle channel",
+        "params": {
+          "prop": "monolith",
+          "zone": "east",
+          "jitter": 0.2
+        },
+        "tags": [
+          "unicorn",
+          "landmark"
+        ]
+      },
+      {
+        "id": "pirate_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "weathered oak and spruce around the pirate island",
+        "params": {
+          "area": {
+            "at": [
+              0.31,
+              0.5
+            ],
+            "radius": 195
+          },
+          "density": 0.08,
+          "spacing": 3,
+          "clumping": 0.6,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.03,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "salt_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "mast_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the glowing crystal grove of the unicorn island",
+        "params": {
+          "area": {
+            "at": [
+              0.82,
+              0.5
+            ],
+            "radius": 195
+          },
+          "density": 0.14,
+          "spacing": 4,
+          "clumping": 0.7,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.18,
+            "flowers": 0.16,
+            "deadwood": 0.01
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "crystal_guardian",
+                  "weight": 2,
+                  "shape": "crystal_spire"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "fae_glowcap",
+                  "weight": 2,
+                  "shape": "glowcap"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "moon_birch",
+              "weight": 3,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "white_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the unclaimed shores",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            85
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

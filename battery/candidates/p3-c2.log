@@ -1,0 +1,134 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"ancient","event":{"kind":"siege","severity":0.9,"recency":0},"tokens":{"scene":"The Trojan horse stands inside Troy immediately before the hidden soldiers emerge."}}
+           1 attempt(s), 3611 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     66417 in + 24250 out = 90667  ($0.0153)
+programs   1 of 1 kept (budget 12 landmark / 6 plugin)
+  ok     trojan_horse [landmark]  2 attempt(s), 78281 tokens  ($0.0420)
+  tokens     9951 in + 68330 out = 78281  ($0.0420)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.trojan_horse: placed after constraint_demoted, constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.11)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     71599 in + 11980 out = 83579  ($0.0085)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.trojan_horse: placed after constraint_demoted, constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     71641 in + 15040 out = 86681  ($0.0103)
+
+compiled "troy_horse" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse
+  seed       303
+  region     1024x1024 at (-512, -512)
+  heights    62.9..81.1  sea 63  snow line 80.2
+  land       100.0% of columns above sea level
+  biomes     forest 80.9%, plains 18.9%, windswept_hills 0.1%, beach 0.0%, ocean 0.0%
+  trees      14482 (country_oaks=14721)
+  chunks     4096
+  blocks     146257504 (1026227 vegetation)
+  markers    62
+  spawn      [0, 80, 0]
+  timings    validate 3ms  field 634ms  layout 761ms  climate 205ms  columns 108ms  caves 0ms  structures 10128ms  programs 30ms  scatter 1446ms  biomes 138ms  validators 20ms  emit 11841ms  total 25409ms
+  programs   world.trojan_horse=trojan_horse×1 (2415 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.trojan_horse: this node declares an envelope; program "trojan_horse" declares [31, 30, 15] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.troy_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 8 blocks over 21 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 8 blocks over 28 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 4 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 5 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 7 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 4 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy: multi-level ground: 7 retaining wall(s) over 104 column(s) (0 parapeted), 0 kerb seam(s), 11 bank(s), and 1 seam(s) a building already stood on; 119 seam column(s) got no wall (2 building, 27 shortRun, 49 tallDrop, 41 builtSeam); 445 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy: built faces by finished drop (§13.8): 101 face column(s) along the seams a wall was built on — 24 at 1, 20 at 2, 10 at 3, 44 at 4, 1 at 5, 2 at 6
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy: every cut face finished: 506 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 119199 footprint columns (plus 52977 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 60% of 32312 ring columns); snow policy auto resolved to "never" on a 0/119199 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 209657 in + 51270 out = 260927 tokens ($0.0341)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse
+installed "troy_horse_c2"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c2/troy_horse
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/troy_horse_c2
+  lastPlayed 1786427441973 (2026-08-11T05:50:41.973Z)

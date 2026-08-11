@@ -1,0 +1,103 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"event":{"kind":"siege","recency":0},"tokens":{"region_pirate_island":"era renaissance; materialTheme temperate_timber; pirate island","region_unicorn_island":"materialTheme white_quartz; unicorn island"}}
+           1 attempt(s), 3847 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.pirate_woods.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.unicorn_woods.params.area
+  tokens     66421 in + 40739 out = 107160  ($0.0327)
+programs   none (budget 12 landmark / 6 plugin)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 9 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.pirate_woods.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.unicorn_woods.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_island: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.pirate_island: none of the 97 candidate footprints could stand on the ground — 25 sat below sea level, 72 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_island: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_island: none of the 97 candidate footprints could stand on the ground — 22 sat below sea level, 75 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E170 CANNOT_FIT at world.pirate_pier: no site within 48 blocks fits the pier
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+warning LOAM-T119 SCATTER_EMPTY at world.pirate_woods: forest node "pirate_woods" placed 0 trees: its area {"at":[0.18,0.5],"radius":0.38} covers 6 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+warning LOAM-T119 SCATTER_EMPTY at world.unicorn_woods: forest node "unicorn_woods" placed 0 trees: its area {"at":[0.82,0.5],"radius":0.38} covers 3 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+
+Layout solver report:
+
+  world.pirate_island: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+  world.unicorn_island: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     70747 in + 30670 out = 101417  ($0.0196)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 5 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_island: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.pirate_island: none of the 97 candidate footprints could stand on the ground — 22 sat below sea level, 75 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_island: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_island: none of the 97 candidate footprints could stand on the ground — 23 sat below sea level, 74 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E170 CANNOT_FIT at world.channel_longship: no site within 48 blocks fits the longship
+  fix: point it at open water — widen the lake, or give the node an "at" that is already on it
+
+Layout solver report:
+
+  world.pirate_island: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.18)
+  world.unicorn_island: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     70277 in + 24095 out = 94372  ($0.0156)
+
+compiled "pirate_unicorn_war" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war
+  seed       301
+  region     1024x1024 at (-512, -512)
+  heights    55.5..100.0  sea 63  snow line 99.3
+  land       18.3% of columns above sea level
+  biomes     ocean 81.7%, windswept_hills 17.3%, beach 0.4%, forest 0.3%, plains 0.3%
+  trees      2786 (pirate_woods=1645, unicorn_woods=1652, wild_cover=156)
+  chunks     4096
+  blocks     141456981 (373741 vegetation)
+  markers    82
+  spawn      [-341, 99, 0]
+  timings    validate 0ms  field 618ms  layout 417ms  climate 165ms  columns 81ms  caves 0ms  structures 1441ms  programs 0ms  scatter 4453ms  biomes 104ms  validators 13ms  emit 7051ms  total 14393ms
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war.report.json
+
+warning LOAM-T224 COURTYARD_NONE at world.unicorn_island: no block in "world.unicorn_island" can hold a courtyard: 16 of 30 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 73757 footprint columns (plus 33647 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 100% of 19920 ring columns); snow policy auto resolved to "never" on a 0/73757 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 207445 in + 95504 out = 302949 tokens ($0.0680)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war
+installed "pirate_unicorn_war_c2"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c2/pirate_unicorn_war
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/pirate_unicorn_war_c2
+  lastPlayed 1786426311054 (2026-08-11T05:31:51.054Z)
