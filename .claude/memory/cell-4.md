@@ -187,6 +187,28 @@ direction). IN FLIGHT: program-retry lane, scatter de-gridding lane,
 lost-storeys rule lane (Kai ruled: legal lost storeys, ground floor
 guaranteed). THEN: regen P1/P3/P5 as c2 = the icon-law measurement.
 
+**ICON-LAW MEASUREMENT (c2/c3 batch, 2026-08-11 early):** P1-c2
+installed — register moved Luna: flagpoles both islands, war fleet in
+the strait (galleon ×2, longship), unicorn stones+monolith, crystal
+shrine; zero bespoke though (catalog delivery); pier+longship drew
+CANNOT_FIT; walk question = does a flagpole read as jolly roger.
+P3-c2 installed — horse +72% (2,415 blocks) but STILL NO WALLS despite
+era ancient + event siege + checklist line — clearest steering gap;
+likely wants a pre-pass dial, not kit prose. P5: c2 died to network
+(2nd that night) → openrouter retry now 6 attempts exponential-to-30s
+(fce5b27+e3a0331 — note: pipe swallowed vitest exit, lesson recorded);
+**c3 SUCCEEDED as hellenist_sea_siege_c3: gate-failed plugin was
+RECOVERED LIVE by the new retry pass (first production firing), the
+feedback round fixed the siting, and the world carries harbor_leviathan
+(10,697 blocks) + 24 invading sea monsters ($0.111)**. Also fixed: the
+crawlspace flood (b050c04 — P4-class lint-zero end to end), legal lost
+storeys shipped, sealed-alcove ledger closed.
+
+**WALK QUEUE: pirate_unicorn_war_c2, troy_horse_c2,
+hellenist_sea_siege_c3.** Open steering gaps: Troy-walls (pre-pass
+dial?), P1 zero-bespoke (flagpole fidelity), E336 hint lacks a water
+clause. Remaining rung-B: F3 junctions, F5 ground WP-6, F9.
+
 **Ruling batch still open:** terrace bays / collapse promotion / light
 band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
 shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
