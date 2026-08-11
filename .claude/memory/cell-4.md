@@ -209,6 +209,25 @@ hellenist_sea_siege_c3.** Open steering gaps: Troy-walls (pre-pass
 dial?), P1 zero-bespoke (flagpole fidelity), E336 hint lacks a water
 clause. Remaining rung-B: F3 junctions, F5 ground WP-6, F9.
 
+**OVERNIGHT AUTONOMOUS PUSH (08-11, Kai asleep; no walk-gated
+iteration):** Troy verdict = "could not resemble Troy less" → three
+vocabulary holes filled: **fortification dial** (231643a:
+intent.character.fortification "walled" → compiler builds the circuit
+via existing infra.wall, gates FOUND at carriageway crossings,
+theme-derived materials, author outranks, absent=byte-identical);
+**sun_clay theme** (4e6f94e: sandstone ashlar + limewash-terracotta +
+mud brick, 19 classifier aliases, decay families, NOT in seeded draw;
+LEFT FOR KAI: THEME_BY_ERA.ancient still birchwood — adding sun_clay
+moves every era-ancient world); **F9 blend dial** (685f9ef:
+sharp/soft/wide, transect-proven); **classifier named-place rule**
+(a named place is a full identity — era/theme/terrain/fortification/
+icons, Trojan-horse worked example). **P3-c3 Troy REGENERATING with
+the full stack.** Prop-siting lane (pier/longship CANNOT_FIT on water)
+still in flight; tunnels.test failing on deltaport's CANNOT_FIT list —
+blame ambiguous between 231643a and the in-flight prop lane, resolve
+at its report. DELIBERATELY not touched: F3 junctions, F5 ground WP-6
+(blast radius), aesthetic tuning.
+
 **Ruling batch still open:** terrace bays / collapse promotion / light
 band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
 shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
