@@ -2630,6 +2630,54 @@ budget before the ones that matter. But **requesting nothing is the right
 answer only for a prompt with no centerpiece** — a plain village, an empty
 moor. If you can name the image the prompt wants remembered, request it.
 
+### Bespoke programs must belong to the world
+
+A walked Troy shipped twenty-four bespoke hideouts in sandstone, red
+sandstone, stone bricks and terracotta — four palettes the program invented
+— scattered through a city built in sun-fired clay. Nothing was broken; the
+huts simply came from somewhere else. Two rules stop that, and both belong
+in your brief.
+
+**1. A program is for ICONS, never for infrastructure.** Walls, roads,
+bridges, gates, stairs, docks and terraces already have dials, params and
+stdlib behind them, and every one of those is swept over real ground, gated,
+lint-clean and themed. A program that rebuilds one gets none of that. If the
+prompt wants a circuit wall, write `params.walls` or
+`character.fortification: "walled"` — never a `city_wall` program. Ask for a
+program for the thing the catalog cannot make: the wooden horse, the
+leviathan skeleton, the god's statue, the crashed hull.
+
+**2. Palettes come from the world's theme, not from the program's
+imagination.** A program is handed `api.theme` — the very roles the town
+around it is built from: `api.theme.ground` (`plinth`, `revetment`,
+`coping`, `pavement`, `kerb`, `tread`, `weep`, `rail`, `stairs`, `slab`,
+`bank`, `scree`), `api.theme.wood`, `api.theme.stone`, `api.theme.roof`, and
+`api.theme.wall` (`core`, `walk`, `parapet`, `merlon`, `tower`). Anything
+built out of those reads as part of the settlement:
+
+```js
+// before — four invented palettes, foreign in every world they land in
+const palettes = [["sandstone", "cut_sandstone"], ["stone_bricks", "chiseled_stone_bricks"]];
+const pal = palettes[api.instance.index % palettes.length];
+api.set(x, y, z, "minecraft:" + pal[0]);
+
+// after — the town's own stone, whatever town this turns out to be
+api.set(x, y, z, api.theme.stone.primary);
+api.set(x, y + 4, z, api.theme.roof.solid);
+```
+
+**Foreign colour is allowed only when the icon itself demands it.** A sea
+monster may be prismarine and a wizard's beacon may be amethyst, because
+that *is* the thing. A soldier's hideout, a granary, a barracks, a shrine to
+the local god may not be a random terracotta: those are buildings of the
+town, and the town has a palette. When your brief needs a specific material,
+say so and say why ("bleached bone, it is a skeleton") — one or two named
+materials against the theme, never a whole invented set.
+
+Both rules are things to write **in the `brief`**, because the brief is the
+only direction the program author gets: "built from the settlement's own
+palette (`api.theme`), except the hull plates, which are weathered copper".
+
 ### How to write the request
 
 Put the requests in `intent.character.programs`, at the scope the structures

@@ -65,18 +65,16 @@ import type { MaterialTheme } from "@terrainist/stdlib";
 
 import { fanOut, registerFanOut, type FanOutContext } from "../intent/fanout.js";
 import { intentFor, type IntentResolution, type ResolvedIntent } from "../intent/resolve.js";
-import { groundMaterials } from "../terrain/palette.js";
 
 import type { CoursePoint } from "./wall-course.js";
 import {
   WALL_DEFAULT_HEIGHT,
   WALL_DEFAULT_MARGIN,
   WALL_DEFAULT_TOWER_PITCH,
-  WALL_MATERIALS,
   extentOfRects,
+  wallMaterialsOfTheme,
   type ExtentRect,
   type WallJob,
-  type WallMaterials,
 } from "./walls.js";
 
 /** Row ids owned by the wall pass, so a caller never spells one as a string. */
@@ -106,38 +104,13 @@ export interface FortificationExtra {
 }
 
 /**
- * The wall materials a theme's built-ground roles give.
- *
- * The roles are the ones a mason would name, and they already exist: a
- * settlement's `revetment` is the masonry it holds earth with, its `coping` the
- * dressed course that caps it, its `pavement` the dressed flat it walks on.
- * A curtain wall is exactly those three jobs stood on end — body, crest, cap —
- * so it takes them rather than a fourth hand-kept table that would drift out of
- * step with the theme the rest of the built ground is in. That drift is the
- * "everything is the same grey stone" defect the ground roles were introduced
- * to end, and a wall in `stone_bricks` beside a town in mud brick is the same
- * defect wearing a different hat.
- *
- * Every entry is a full cube, which is the wall's own rule (a slab or a fence
- * in a curtain is either a physics finding or a hole a mob paths through). The
- * nine solid ground roles are all full blocks by the palette's own test, so the
- * five picked here are safe by construction.
- *
- * A theme whose roles are missing — there is no such theme, but the type says
- * `undefined` is possible — falls back to the pinned `masonry` table, which is
- * what an authored wall gets today.
+ * `wallMaterialsOfTheme` used to live here, when the dial was its only caller.
+ * It now lives beside the wall pass itself (`structures/walls.ts`) because the
+ * **authored** path derives from the theme too — one function, two callers —
+ * and is re-exported here so the dial's own readers still find it where the
+ * doctrine above discusses it.
  */
-export function wallMaterialsOfTheme(theme: MaterialTheme | undefined): WallMaterials {
-  if (theme === undefined) return WALL_MATERIALS["masonry"] as WallMaterials;
-  const g = groundMaterials(theme);
-  return {
-    core: g.revetment,
-    walk: g.pavement,
-    parapet: g.revetment,
-    merlon: g.coping,
-    tower: g.revetment,
-  };
-}
+export { wallMaterialsOfTheme };
 
 /**
  * The wall style a fortified settlement of this era builds in.

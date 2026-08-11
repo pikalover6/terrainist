@@ -830,7 +830,12 @@ async function compileValidated(
           baseline: groundBaseline,
           // §9a.5: the shim is fed `driver.intents` rather than `declareAll(…)`'s
           // result — the same set, arrived at from one place instead of two.
-          intents: groundDriver.intents,
+          //
+          // A **copy**, for the same reason `written` below is one: the driver's
+          // array is live, the authored-program pass that follows commits its
+          // instance pads into it, and the shim's question is about the eleven
+          // as they stood *here*.
+          intents: [...groundDriver.intents],
           resolved: resolveGround(groundBaseline, groundDriver.intents),
           // …and computed **by the shim itself**, not read off the driver, so
           // that comparing it against `finish()` proves the accumulating prefix
@@ -875,6 +880,10 @@ async function compileValidated(
         // The theme the village resolved to, for furnishing a landmark's
         // interiors. A shrine's inside has to agree with the houses outside it.
         ...(structures === undefined ? {} : { themeId: structures.stats.theme }),
+        // The pads, aprons and skirts a plugin's sites get are declared, not
+        // written: §3.12 excused this pass from the contract when it had no
+        // ground of its own to claim, and it has now.
+        ...(groundDriver === undefined ? {} : { ground: groundDriver }),
       });
       diagnostics.push(...programs.diagnostics);
       // What a program stands on is claimed ground: the scatter that follows

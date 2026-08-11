@@ -272,6 +272,23 @@ interface ProgramApi {
   heightAt(x: number, z: number): number;
   /** Diagnostics only; never affects output. */
   log(msg: string): void;
+  /** The WORLD'S OWN PALETTE — the blocks the settlement around you is built
+   *  from. Full block strings. Read it; do not invent a palette. */
+  readonly theme: {
+    readonly id: string;
+    /** The built-ground roles: pavement, kerb, tread, revetment, coping,
+     *  plinth, weep, rail, stairs, slab, bank, scree. */
+    readonly ground: Record<string, string>;
+    /** The timber family: planks, log, stripped, stairs, slab, fence, door,
+     *  trapdoor. */
+    readonly wood: Record<string, string>;
+    /** The masonry family: primary, accent, stairs, slab, wall. */
+    readonly stone: Record<string, string>;
+    /** The roofing family: stairs, slab, solid. */
+    readonly roof: Record<string, string>;
+    /** A curtain wall's five: core, walk, parapet, merlon, tower. */
+    readonly wall: Record<string, string>;
+  };
 }
 
 WHAT YOU RETURN
@@ -343,7 +360,14 @@ RULES — each of these is checked by a gate before your program is accepted.
    has. The compiler levels modestly under you and never cuts terrain; it does
    not flatten a hillside for you.
 7. FULL BLOCK STRINGS, states included. An unknown id or an invalid block state
-   is a gate failure, not a silent placement.
+   is a gate failure, not a silent placement. And DRAW THE PALETTE FROM
+   \`api.theme\`, not from your imagination: \`api.theme.stone.primary\`,
+   \`api.theme.ground.plinth\`, \`api.theme.wood.planks\`, \`api.theme.roof.solid\`.
+   A hard-coded set of palettes — sandstone here, terracotta there — is the one
+   sure way to build something foreign to the world it lands in. Name a block
+   literally ONLY where the thing itself demands it (prismarine because it is a
+   sea monster, bone because it is a skeleton, glowstone because it glows); for
+   walls, floors, roofs, plinths and trim, take the role.
 8. FUEL-BOUNDED. 20 million instruction steps and 200,000 block writes per
    instance. An instance that trips a limit is dropped whole. Prefer arithmetic
    over brute-force scans of the whole volume.

@@ -25,6 +25,7 @@ import {
   type SeatDecision,
 } from "@terrainist/spec";
 import { error, hoverOfParams, seatOfParams, warning } from "@terrainist/spec";
+import type { ProgramTheme } from "@terrainist/spec";
 import { nodeSeed, type Marker } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
@@ -34,7 +35,13 @@ import type { ColumnPlan } from "../terrain/columns.js";
 import { parseBlockString } from "../emit/blockstring.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { furnishRunInteriors } from "./interiors.js";
-import { levelPropPad } from "../structures/props.js";
+import type { GroundDriver } from "../layout/ground-driver.js";
+import { materialThemeById, programThemeOf } from "./theme.js";
+import {
+  siteIsWet,
+  treatProgramSite,
+  underpinProgramInstance,
+} from "./site-treatment.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
 import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.js";
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
@@ -99,6 +106,17 @@ export interface ProgramPassInput {
    */
   readonly themeId?: string;
   /**
+   * The pipeline's ground driver, for the pads a plugin's sites are given.
+   *
+   * §3.12 wrote the authored-program pass out of the contract's inventory
+   * because it had no pad worth arbitrating; it has three now (pad, apron,
+   * skirt), and a levelled plugin site that never declared would be exactly the
+   * invisible ground write the contract exists to abolish. Absent for the
+   * callers that are not the world pipeline — the gate, the terrarium, the
+   * exhibits — which have no driver to accumulate into.
+   */
+  readonly ground?: GroundDriver;
+  /**
    * Skip the `E334` re-execution. Only for a caller that has already verified
    * this document in this process — never for a compile from a file.
    */
@@ -139,6 +157,11 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
   const diagnostics: LoamDiagnostic[] = [];
   const claimed: Rect[] = [...(input.reserved ?? [])];
   let fuelUsed = 0;
+  // One theme for every instance of every job in this document — the same one
+  // the buildings around them were dealt from. Themeless callers (the gate, the
+  // terrarium) get the pinned verification theme, which is what `outputHash`
+  // was computed against.
+  const theme: ProgramTheme = programThemeOf(materialThemeById(input.themeId));
 
   for (const job of input.jobs) {
     const hashProblem = checkSourceHash(job.programId, job.program, job.nodePath);
@@ -195,14 +218,32 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       );
     }
 
-    // The pad goes down *before* the run, so `api.heightAt` shows the program
-    // the ground it will actually stand on rather than the ground that was
-    // there first. Fill-only, exactly as a prop's pad is: see `levelPropPad`.
+    // The pad and its apron go down *before* the run, so `api.heightAt` shows
+    // the program the ground it will actually stand on rather than the ground
+    // that was there first. Fill-only, exactly as a prop's pad is, and declared
+    // to the ground driver rather than written behind its back.
+    //
+    // `"pad"` only: a `wade` instance stands on the seabed, a `drape` one has
+    // already conformed itself through `api.heightAt`, an `embed` one is
+    // *supposed* to be in the hillside, and a hovering one claims no ground at
+    // all (`seatOf` returns `undefined` for it).
     if (seat?.policy === "pad") {
-      for (const site of sites) appendAll(blocks, levelPropPad(input.plan, site.footprint, site.baseY));
+      for (const site of sites) {
+        if (siteIsWet(input.plan, site.footprint)) continue;
+        appendAll(
+          blocks,
+          treatProgramSite({
+            plan: input.plan,
+            footprint: site.footprint,
+            baseY: site.baseY,
+            source: `${job.nodePath}#pad@${site.index}`,
+            ...(input.ground === undefined ? {} : { ground: input.ground }),
+          }),
+        );
+      }
     }
 
-    const runs = executeSites(job, input, sites, diagnostics);
+    const runs = executeSites(job, input, sites, diagnostics, theme);
     fuelUsed += runs.fuelUsed;
     if (!runs.ok) continue;
 
@@ -215,6 +256,23 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       // beneath stays buildable, so its footprint is never claimed.
       if (!isHovering(job)) claimed.push(site.footprint);
       appendAll(blocks, lowered.blocks);
+      // The foundation, after the run: only the finished instance knows which
+      // columns it actually stands in, and a leg over a dip is the daylight
+      // this fills. Skipped for the seats that are not standing on land.
+      if (seat?.policy === "pad" && !siteIsWet(input.plan, site.footprint)) {
+        appendAll(
+          blocks,
+          underpinProgramInstance({
+            plan: input.plan,
+            stack: input.stack,
+            blocks: lowered.blocks,
+            // The run's own seat course, in world Y: `seatedBaseY` put the
+            // program's `seatY` plane exactly on the site's ground plane.
+            seatPlane: site.baseY,
+            plinth: theme.ground.plinth,
+          }),
+        );
+      }
       // v2: the shell is the program's, the fit-out inside it is the grammar's.
       appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
       appendAll(markers, lowered.markers);
@@ -308,6 +366,7 @@ function executeSites(
   input: ProgramPassInput,
   sites: readonly ProgramSite[],
   diagnostics: LoamDiagnostic[],
+  theme: ProgramTheme,
 ): { ok: boolean; runs: readonly ProgramRun[]; fuelUsed: number } {
   const sampler = (index: number): HeightSampler =>
     nodeLocalHeight(input.plan, sites[index] as ProgramSite);
@@ -319,6 +378,7 @@ function executeSites(
       nodePath: job.nodePath,
       worldSeed: input.worldSeed,
       heightAt: sampler(0),
+      theme,
       ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }),
     });
     diagnostics.push(...run.diagnostics);
@@ -332,6 +392,7 @@ function executeSites(
     worldSeed: input.worldSeed,
     count: sites.length,
     heightAtFor: sampler,
+    theme,
     ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }),
   });
   diagnostics.push(...result.diagnostics);

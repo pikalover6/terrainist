@@ -150,22 +150,28 @@ describe("PROGRAM_AUTHOR_PROMPT", () => {
     expect(PROGRAM_AUTHOR_PROMPT).toContain("api.instance.index");
   });
 
-  it("teaches NO shape library and no style guide — the ratified rule", () => {
-    const banned = [
-      "api.box",
-      "api.cylinder",
-      "api.dome",
-      "api.arch",
-      "api.stairs",
-      "hollow",
-      "carve",
-      "palette",
-      "materialTheme",
-    ];
+  it("teaches NO shape library — the ratified rule", () => {
+    const banned = ["api.box", "api.cylinder", "api.dome", "api.arch", "api.stairs", "hollow", "carve"];
     for (const token of banned) expect(PROGRAM_AUTHOR_PROMPT).not.toContain(token);
     // And it says so out loud, so the next editor knows the omission is a
     // decision rather than an oversight.
     expect(PROGRAM_AUTHOR_PROMPT).toContain("no shape library");
+  });
+
+  it("hands the program the world's palette, and tells it to use it", () => {
+    // `"palette"` and `"materialTheme"` were on the banned list above until
+    // 2026-08-11, when a walk of Troy found twenty-four bespoke hideouts in
+    // four *invented* palettes standing in a sun-clay city. The ban was aimed
+    // at a **style guide** — telling the model what its thing should look like
+    // — and it swept up the one thing a program genuinely cannot compute: what
+    // the world around it is made of. `api.theme` is a read, not a style guide,
+    // and the prompt must teach it or `api.theme` reaches no program.
+    expect(PROGRAM_AUTHOR_PROMPT).toContain("api.theme");
+    expect(PROGRAM_AUTHOR_PROMPT).toContain("api.theme.stone.primary");
+    // …and it is still not a style guide: nothing here says what to build.
+    for (const token of ["api.box", "api.dome"]) {
+      expect(PROGRAM_AUTHOR_PROMPT).not.toContain(token);
+    }
   });
 });
 

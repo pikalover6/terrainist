@@ -51,8 +51,11 @@
 
 import { note, warning, type LoamDiagnostic } from "@terrainist/spec";
 
+import type { MaterialTheme } from "@terrainist/stdlib";
+
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { ColumnPlan } from "../terrain/columns.js";
+import { groundMaterials } from "../terrain/palette.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { Planter, buildLifeWorld, op, type LifeOp, type PlaceRule } from "./life.js";
@@ -158,6 +161,58 @@ export const WALL_MATERIALS: Readonly<Record<string, WallMaterials>> = Object.fr
     tower: "mud_bricks",
   },
 });
+
+/**
+ * The wall materials a theme's built-ground roles give.
+ *
+ * The roles are the ones a mason would name, and they already exist: a
+ * settlement's `revetment` is the masonry it holds earth with, its `coping` the
+ * dressed course that caps it, its `pavement` the dressed flat it walks on.
+ * A curtain wall is exactly those three jobs stood on end — body, crest, cap —
+ * so it takes them rather than a fourth hand-kept table that would drift out of
+ * step with the theme the rest of the built ground is in. That drift is the
+ * "everything is the same grey stone" defect the ground roles were introduced
+ * to end, and a wall in `stone_bricks` beside a town in mud brick is the same
+ * defect wearing a different hat.
+ *
+ * Every entry is a full cube, which is the wall's own rule (a slab or a fence
+ * in a curtain is either a physics finding or a hole a mob paths through). The
+ * nine solid ground roles are all full blocks by the palette's own test, so the
+ * five picked here are safe by construction.
+ *
+ * A theme whose roles are missing — there is no such theme, but the type says
+ * `undefined` is possible — falls back to the pinned `masonry` table.
+ *
+ * **One function, two callers.** It lives here rather than in `walls-intent.ts`
+ * because both wall paths need it: the `structures.fortification` dial that
+ * asked for it first, and {@link wallJobsOf}'s authored `params.walls`, which
+ * built a walked Troy's ancient circuit in default grey inside a sun-clay city
+ * for exactly as long as this derivation had only one caller.
+ */
+export function wallMaterialsOfTheme(theme: MaterialTheme | undefined): WallMaterials {
+  if (theme === undefined) return WALL_MATERIALS["masonry"] as WallMaterials;
+  const g = groundMaterials(theme);
+  return {
+    core: g.revetment,
+    walk: g.pavement,
+    parapet: g.revetment,
+    merlon: g.coping,
+    tower: g.revetment,
+  };
+}
+
+/**
+ * Styles whose materials are the **style**, not the theme.
+ *
+ * A palisade is timber and an earthwork is rammed mud: those are constructions
+ * an author picked by name, and re-materialising them from the settlement's
+ * stone would be answering a different question from the one that was asked.
+ * `masonry` is the one style that says only *how* rather than *what*, so it —
+ * and only it — takes the theme's own stone.
+ */
+export function wallStyleFixesMaterials(style: string): boolean {
+  return style !== "masonry";
+}
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */

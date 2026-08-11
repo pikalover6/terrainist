@@ -1185,7 +1185,14 @@ function validateWallsParam(out: LoamDiagnostic[], at: string, value: unknown): 
     );
     return;
   }
-  unknownKeys(out, value, path, ["style", "margin", "towerPitch", "height", "gates"], "walls");
+  unknownKeys(
+    out,
+    value,
+    path,
+    ["style", "margin", "towerPitch", "height", "gates", "materials"],
+    "walls",
+  );
+  validateWallMaterials(out, path, value["materials"]);
   const style = value["style"];
   if (style !== undefined && (typeof style !== "string" || !(WALL_STYLES as readonly string[]).includes(style))) {
     out.push(
@@ -1203,6 +1210,46 @@ function validateWallsParam(out: LoamDiagnostic[], at: string, value: unknown): 
     towerPitch: { min: WALL_MIN_TOWER_PITCH, max: WALL_MAX_TOWER_PITCH, int: true },
     height: { min: WALL_MIN_HEIGHT, max: WALL_MAX_HEIGHT, int: true },
   });
+}
+
+/**
+ * Validate `walls.materials` — the per-role override.
+ *
+ * Five optional roles, each a block name. The **default** is not a table here
+ * but the settlement's own material theme, so an author who writes nothing gets
+ * a wall in the town's stone; this key is for the wall that is deliberately not
+ * that. Block names are checked for shape only — whether the pinned registry
+ * knows one is the emit's answer, and the same one it gives `style.palettes`.
+ */
+function validateWallMaterials(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (value === undefined) return;
+  const path = `${at}.materials`;
+  if (!isObject(value)) {
+    out.push(
+      error(
+        "WALL_PARAM",
+        path,
+        `"materials" must be an object of role → block, got ${describe(value)}`,
+        'write "materials": { "core": "sandstone", "merlon": "chiseled_sandstone" } — or omit it entirely, which is the usual answer: the wall is then built from the settlement\'s own material theme',
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, value, path, ["core", "walk", "parapet", "merlon", "tower"], "walls.materials");
+  for (const role of ["core", "walk", "parapet", "merlon", "tower"]) {
+    const block = value[role];
+    if (block === undefined) continue;
+    if (typeof block !== "string" || block.trim().length === 0) {
+      out.push(
+        error(
+          "WALL_PARAM",
+          `${path}.${role}`,
+          `"${role}" must be a block name, got ${describe(block)}`,
+          'a full cube, named as the palette names one: "sandstone", "minecraft:mud_bricks". A slab or a fence in a curtain is a hole a mob walks through',
+        ),
+      );
+    }
+  }
 }
 
 /**

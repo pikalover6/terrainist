@@ -19,6 +19,7 @@ import {
   type InteriorVolume,
   type ProgramApi,
   type ProgramResult,
+  type ProgramTheme,
   type LoamDiagnostic,
 } from "@terrainist/spec";
 import { error, warning } from "@terrainist/spec";
@@ -27,6 +28,7 @@ import { Rng, nodeSeed, positionDigest, streamSeed, type Seed256 } from "@terrai
 import { BudgetExceeded, FUEL_COSTS, FuelExhausted, FuelMeter, instrumentFuel } from "./fuel.js";
 import { canonicalOpStream, opStreamHash, normalizeSource, sourceHashOf, type ProgramOp } from "./hash.js";
 import { getProgramExecutor, rewriteExports } from "./sandbox.js";
+import { VERIFICATION_THEME } from "./theme.js";
 
 /**
  * `instanceSeed = BLAKE3(worldSeed ‖ nodePath ‖ "program" ‖ index)`, spelt in
@@ -62,6 +64,14 @@ export interface ProgramRunInput {
   readonly fuelBudget?: number;
   /** Defaults to {@link PROGRAM_LIMITS.maxInstanceWrites}. */
   readonly writeBudget?: number;
+  /**
+   * The world's resolved material theme, as `api.theme`.
+   *
+   * Absent for every caller that has no world to speak of — the gate above all
+   * — and then {@link VERIFICATION_THEME}, which is pinned: `outputHash` is a
+   * property of the program, so the gate may not read a theme that varies.
+   */
+  readonly theme?: ProgramTheme;
 }
 
 /** What one instance run produced. */
@@ -183,6 +193,11 @@ export function runProgramInstance(input: ProgramRunInput): ProgramRun {
       if (logs.length >= 256) throw new BudgetExceeded("logs", 256);
       logs.push(String(msg).slice(0, 512));
     },
+    // Free, and frozen. Free because it is a read of a value dealt long before
+    // this run and charging for it would push programs back towards the
+    // invented palettes it exists to end; frozen (deeply, at construction) so
+    // one instance cannot hand the next a different world.
+    theme: input.theme ?? VERIFICATION_THEME,
   };
 
   let result: ProgramResult | undefined;

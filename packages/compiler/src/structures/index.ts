@@ -126,10 +126,14 @@ import {
   WALL_DEFAULT_HEIGHT,
   WALL_DEFAULT_MARGIN,
   WALL_DEFAULT_TOWER_PITCH,
+  WALL_MATERIALS,
   buildWalls,
   extentOfRects,
+  wallMaterialsOfTheme,
+  wallStyleFixesMaterials,
   type BuiltWall,
   type WallJob,
+  type WallMaterials,
 } from "./walls.js";
 import { fortificationJobs, type FabricNode } from "./walls-intent.js";
 
@@ -672,14 +676,18 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // group is dealt from its own theme — so a world where every job resolves to
   // the same theme (which is every world with no intent) takes exactly one
   // deal of exactly the length it always took, and is byte-identical.
-  const jobThemes = jobs.map((job) => {
-    const scoped = intentFor(intents, job.nodePath);
+  //
+  // One resolver, so a wall round a quarter and the houses inside it cannot
+  // disagree about which theme that quarter is in.
+  const themeForNode = (nodePath: string): MaterialTheme => {
+    const scoped = intentFor(intents, nodePath);
     const id = fanOut<string | undefined>(STRUCTURE_ROWS.materialTheme, scoped, {
-      nodePath: job.nodePath,
+      nodePath,
       today: declaredTheme,
     });
     return id === themeId || id === undefined ? theme : pickTheme(themeSeed, id);
-  });
+  };
+  const jobThemes = jobs.map((job) => themeForNode(job.nodePath));
   const groups = new Map<string, number[]>();
   for (const [i, t] of jobThemes.entries()) {
     const bucket = groups.get(t.id);
@@ -1492,8 +1500,16 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // and is read exactly as it always was; `intent.character.fortification` is
   // the dial, and it only speaks where the parameters are silent — see
   // `structures/walls-intent.ts` for why the wall had to become a dial at all.
-  const authoredWallJobs = wallJobsOf(input.doc, rootPath, built, (p) =>
-    placementByPath.get(p)?.footprint,
+  const authoredWallJobs = wallJobsOf(
+    input.doc,
+    rootPath,
+    built,
+    (p) => placementByPath.get(p)?.footprint,
+    // The quarter's own theme where it named one, the settlement's otherwise:
+    // an authored wall is built from the stone of the town it rings, exactly as
+    // the fortification dial's is. `themeForNode` is the same resolver the
+    // buildings inside that quarter were dealt from.
+    (p) => themeForNode(p),
   );
   const fortification = fortificationJobs({
     rootPath,
@@ -1790,6 +1806,7 @@ export function wallJobsOf(
   rootPath: string,
   built: readonly BuiltBuilding[],
   rectOf: (nodePath: string) => { x0: number; z0: number; x1: number; z1: number } | undefined,
+  themeOf?: (nodePath: string) => MaterialTheme | undefined,
 ): WallJob[] {
   const jobs: WallJob[] = [];
   for (const child of doc.root.children) {
@@ -1808,10 +1825,25 @@ export function wallJobsOf(
         .map((b) => b.footprint),
     ]);
     if (extent.length === 0) continue;
+    const style = typeof w["style"] === "string" ? (w["style"] as string) : "masonry";
+    // The theme, then the author. A `masonry` wall with nothing said about its
+    // materials is built from the settlement's *own* built-ground roles — the
+    // same derivation the `structures.fortification` dial uses, and the same
+    // function — because "the author asked for a wall" is not the same claim as
+    // "the author asked for grey stone bricks". A walked Troy in sun clay came
+    // out ringed in default masonry for exactly as long as this path had no
+    // theme to read. A style that *is* its material (palisade, earthwork) keeps
+    // its table, and any role the author named outranks both.
+    const derived =
+      themeOf === undefined || wallStyleFixesMaterials(style)
+        ? undefined
+        : wallMaterialsOfTheme(themeOf(nodePath));
+    const materials = withMaterialOverrides(derived, w["materials"], style);
     jobs.push({
       nodePath,
       extent,
-      style: typeof w["style"] === "string" ? (w["style"] as string) : "masonry",
+      style,
+      ...(materials === undefined ? {} : { materials }),
       margin: typeof w["margin"] === "number" ? (w["margin"] as number) : WALL_DEFAULT_MARGIN,
       towerPitch:
         typeof w["towerPitch"] === "number" ? (w["towerPitch"] as number) : WALL_DEFAULT_TOWER_PITCH,
@@ -1820,6 +1852,41 @@ export function wallJobsOf(
     });
   }
   return jobs;
+}
+
+/**
+ * The five wall roles the job is built from, or `undefined` for "the style's
+ * own table".
+ *
+ * Three sources, in precedence order: the author's `walls.materials`, then the
+ * theme-derived set, then nothing (the style table `buildWalls` falls back to).
+ * Partial overrides compose — naming `merlon` alone re-caps a wall that is
+ * otherwise the town's own stone — which is why the author's roles are merged
+ * over the derived set rather than replacing it whole.
+ *
+ * A style that fixes its own materials (palisade, earthwork) has no derived set
+ * to merge into, so an override there starts from that style's table.
+ */
+function withMaterialOverrides(
+  derived: WallMaterials | undefined,
+  raw: unknown,
+  style: string,
+): WallMaterials | undefined {
+  if (typeof raw !== "object" || raw === null) return derived;
+  const named = raw as Record<string, unknown>;
+  const base =
+    derived ??
+    ((WALL_MATERIALS[style] ?? WALL_MATERIALS["masonry"]) as WallMaterials);
+  const out: Record<string, string> = { ...base };
+  let touched = false;
+  for (const role of ["core", "walk", "parapet", "merlon", "tower"] as const) {
+    const block = named[role];
+    if (typeof block !== "string" || block.trim().length === 0) continue;
+    out[role] = block.trim();
+    touched = true;
+  }
+  if (!touched) return derived;
+  return out as unknown as WallMaterials;
 }
 
 /**

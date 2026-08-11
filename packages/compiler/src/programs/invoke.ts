@@ -19,6 +19,7 @@ import {
   PROGRAM_LIMITS,
   type AuthoredProgramRecord,
   type LoamDiagnostic,
+  type ProgramTheme,
 } from "@terrainist/spec";
 import { error, warning } from "@terrainist/spec";
 
@@ -32,6 +33,8 @@ export interface LandmarkInvocation {
   readonly worldSeed: bigint;
   readonly seedSalt?: string;
   readonly heightAt?: HeightSampler;
+  /** The world's theme, as `api.theme`. Pinned when absent — see `theme.ts`. */
+  readonly theme?: ProgramTheme;
 }
 
 /** Run a landmark program once. */
@@ -45,6 +48,7 @@ export function invokeLandmark(input: LandmarkInvocation): ProgramRun {
     count: 1,
     ...(input.seedSalt === undefined ? {} : { seedSalt: input.seedSalt }),
     ...(input.heightAt === undefined ? {} : { heightAt: input.heightAt }),
+    ...(input.theme === undefined ? {} : { theme: input.theme }),
   });
 }
 
@@ -61,6 +65,8 @@ export interface PluginInvocation {
   readonly heightAtFor?: (index: number) => HeightSampler;
   /** Fuel left for this node across all its instances. */
   readonly documentFuelRemaining?: number;
+  /** The world's theme, as `api.theme`. One theme for every instance. */
+  readonly theme?: ProgramTheme;
 }
 
 /** What a plugin invocation produced. */
@@ -94,6 +100,7 @@ export function invokePlugin(input: PluginInvocation): PluginInvocationResult {
       fuelBudget: perInstance,
       ...(input.seedSalt === undefined ? {} : { seedSalt: input.seedSalt }),
       ...(input.heightAtFor === undefined ? {} : { heightAt: input.heightAtFor(index) }),
+      ...(input.theme === undefined ? {} : { theme: input.theme }),
     });
     fuelUsed += run.fuelUsed;
     budget -= run.fuelUsed;

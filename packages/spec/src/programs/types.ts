@@ -118,6 +118,117 @@ export interface ProgramApi {
   heightAt(x: number, z: number): number;
   /** Diagnostics only; never affects output. */
   log(msg: string): void;
+  /**
+   * The world's resolved material theme, as blocks. Read-only and frozen.
+   *
+   * A program that invents its own palette builds a thing that is *in* the
+   * world without being *of* it — the walked defect this exists to end was a
+   * band of sandstone-and-wool hideouts scattered through a sun-clay city. So
+   * the roles the rest of the compiler already builds from (the ground roles
+   * the streets and the retaining walls take, the wood/stone/roof sets the
+   * building grammar deals, the curtain wall's five) are handed to the program
+   * verbatim, and a program that wants to belong takes them.
+   *
+   * Deterministic: the theme is dealt from `hash(worldSeed, rootPath)` long
+   * before any program runs, so this is a *read* and never a draw. In the
+   * authoring gate — which knows no world — it is the pinned verification
+   * theme, which is why a theme-reading program's `outputHash` still means
+   * something: the hash pins the program, never the world it lands in.
+   */
+  readonly theme: ProgramTheme;
+}
+
+/**
+ * The material theme a program sees.
+ *
+ * Every value is a full block string (`"minecraft:mud_bricks"`). The names are
+ * the compiler's own role vocabulary, not a parallel one invented for programs:
+ * `ground` is `GroundMaterials`, `wood`/`stone`/`roof` are the building
+ * grammar's `WoodSet`/`StoneSet`/`RoofSet`, and `wall` is the curtain wall's
+ * `WallMaterials`. A role that reads oddly for an icon is still the role the
+ * town beside it is built from, which is the point.
+ */
+export interface ProgramTheme {
+  /** The theme id — `"temperate_timber"`, `"sun_clay"`, … */
+  readonly id: string;
+  /** The built-ground roles: what a mason would name. */
+  readonly ground: ProgramGroundRoles;
+  /** The theme's lead timber family. */
+  readonly wood: ProgramWoodRoles;
+  /** The theme's lead masonry family. */
+  readonly stone: ProgramStoneRoles;
+  /** The theme's lead roofing family. */
+  readonly roof: ProgramRoofRoles;
+  /** What a curtain wall of this theme is built from. */
+  readonly wall: ProgramWallRoles;
+}
+
+/** `GroundMaterials`, as a program sees it. */
+export interface ProgramGroundRoles {
+  /** The walking band beside a carriageway. */
+  readonly pavement: string;
+  /** The edge course between carriageway and pavement. */
+  readonly kerb: string;
+  /** What a flight of steps is paved with. */
+  readonly tread: string;
+  /** The face of masonry that holds earth. */
+  readonly revetment: string;
+  /** The dressed course capping that masonry. */
+  readonly coping: string;
+  /** A base course, and the face of a platform something sits on. */
+  readonly plinth: string;
+  /** The aged, damp course a revetment weeps through. */
+  readonly weep: string;
+  /** The balustrade above a drop — a `_wall` block. */
+  readonly rail: string;
+  /** A tread's nosing — a `_stairs` block. */
+  readonly stairs: string;
+  /** A half course — a `_slab` block. */
+  readonly slab: string;
+  /** Earth a graded cut face is finished with. */
+  readonly bank: string;
+  /** The loose toe of that bank. */
+  readonly scree: string;
+}
+
+/** `WoodSet`, as a program sees it. */
+export interface ProgramWoodRoles {
+  readonly id: string;
+  readonly planks: string;
+  readonly log: string;
+  readonly stripped: string;
+  readonly stairs: string;
+  readonly slab: string;
+  readonly fence: string;
+  readonly door: string;
+  readonly trapdoor: string;
+}
+
+/** `StoneSet`, as a program sees it. */
+export interface ProgramStoneRoles {
+  readonly id: string;
+  readonly primary: string;
+  readonly accent: string;
+  readonly stairs: string;
+  readonly slab: string;
+  readonly wall: string;
+}
+
+/** `RoofSet`, as a program sees it. */
+export interface ProgramRoofRoles {
+  readonly id: string;
+  readonly stairs: string;
+  readonly slab: string;
+  readonly solid: string;
+}
+
+/** `WallMaterials`, as a program sees it. */
+export interface ProgramWallRoles {
+  readonly core: string;
+  readonly walk: string;
+  readonly parapet: string;
+  readonly merlon: string;
+  readonly tower: string;
 }
 
 /**

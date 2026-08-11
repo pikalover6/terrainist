@@ -650,4 +650,33 @@ describe("settlement profile — walls", () => {
   it("leaves a district with no walls key completely alone", () => {
     expect(codes(doc([walledDistrict(undefined)]))).toEqual([]);
   });
+
+  it("takes a per-role material override, whole or partial", () => {
+    expect(
+      codes(doc([walledDistrict({ materials: { merlon: "chiseled_sandstone" } })])),
+    ).toEqual([]);
+    expect(
+      codes(
+        doc([
+          walledDistrict({
+            materials: {
+              core: "sandstone",
+              walk: "smooth_sandstone",
+              parapet: "sandstone",
+              merlon: "chiseled_sandstone",
+              tower: "cut_sandstone",
+            },
+          }),
+        ]),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects a material override that is not blocks", () => {
+    expect(names(doc([walledDistrict({ materials: "sandstone" })]))).toEqual(["WALL_PARAM"]);
+    expect(names(doc([walledDistrict({ materials: { core: 7 } })]))).toEqual(["WALL_PARAM"]);
+    expect(names(doc([walledDistrict({ materials: { crenel: "sandstone" } })]))).toEqual([
+      "UNKNOWN_KEY",
+    ]);
+  });
 });

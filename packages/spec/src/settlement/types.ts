@@ -493,6 +493,40 @@ export interface WallOptions {
    * because a gate with nothing behind it is worse than no gate.
    */
   readonly gates?: boolean;
+  /**
+   * Blocks to build the curtain from, overriding what the settlement's own
+   * material theme gives.
+   *
+   * **Almost always leave this out.** A `masonry` wall with no `materials`
+   * takes the theme's built-ground roles — the same stone the retaining walls,
+   * the kerbs and the plinths of that town are cut from — which is what stops a
+   * grey circuit standing round a mud-brick city. This key exists for the one
+   * case the theme cannot say: a wall that is deliberately *not* the town's own
+   * stone (a conqueror's citadel, an older ruin the town grew around).
+   *
+   * Partial: a named role overrides, an omitted one keeps the derived block.
+   */
+  readonly materials?: WallMaterialOverrides;
+}
+
+/**
+ * Per-role block overrides for {@link WallOptions.materials}.
+ *
+ * The five roles the curtain is built from. Every one must be a **full cube**:
+ * a slab or a fence in a curtain is a hole a mob paths through, and the
+ * crenellation reads from the gap rather than from the block shape.
+ */
+export interface WallMaterialOverrides {
+  /** The body of the curtain, and its footing. */
+  readonly core?: string;
+  /** The wall-walk's top course — what a player stands on. */
+  readonly walk?: string;
+  /** The parapet band either side of the walk. */
+  readonly parapet?: string;
+  /** The merlon course on top of the parapet. */
+  readonly merlon?: string;
+  /** A tower's body. */
+  readonly tower?: string;
 }
 
 /** Params a `district` node carries. */
