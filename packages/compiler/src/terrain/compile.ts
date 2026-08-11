@@ -1113,6 +1113,14 @@ async function compileValidated(
       });
       return climateIntent === undefined ? {} : { intent: climateIntent };
     })(),
+    // `intent.climate.blend` — how wide the clamp's feather band reads.
+    ...(() => {
+      const feather = fanOut<number | undefined>(TERRAIN_ROWS.blend, intents.root, {
+        nodePath: rootPath,
+        today: undefined,
+      });
+      return feather === undefined ? {} : { feather };
+    })(),
   });
   // FARM-PLAN §8, last clause: the parcel mask forces `snow = 0` on every
   // parcel and yard column, as `grounds.ts` already does for worn columns. The
@@ -1530,6 +1538,8 @@ function paintBiomes(
     readonly nodePath: string;
     /** Precedence rung 1 — `intent.climate`, resolved by the intent layer. */
     readonly intent?: ClimateIntent;
+    /** `intent.climate.blend` in columns; undefined = the size-scaled default. */
+    readonly feather?: number;
   },
 ): { histogram: Record<string, number>; clamp: LandUseClampResult } {
   const ids = new Map<string, number>();
@@ -1562,6 +1572,7 @@ function paintBiomes(
     forested: coverage,
     nodePath: landUse.nodePath,
     ...(landUse.intent === undefined ? {} : { intent: landUse.intent }),
+    ...(landUse.feather === undefined ? {} : { feather: landUse.feather }),
   });
   if (clamp.snow !== plan.snow) plan.snow.set(clamp.snow);
 

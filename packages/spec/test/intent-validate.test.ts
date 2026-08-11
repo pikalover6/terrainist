@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BLEND_WIDTHS,
   DEFAULT_ERA_CLASS,
   eraClassOf,
   validateIntentValue,
@@ -23,7 +24,7 @@ const FULL = {
   decline: 0.2,
   formality: 0.9,
   event: { kind: "fire", severity: 0.5, recency: 0.4 },
-  climate: { biome: "minecraft:jungle", temperature: 0.3, humidity: -0.2, snow: "never" },
+  climate: { biome: "minecraft:jungle", temperature: 0.3, humidity: -0.2, snow: "never", blend: "soft" },
   character: {
     label: "pirate haven",
     materialTheme: "weathered_timber",
@@ -83,6 +84,21 @@ describe("intent schema", () => {
     expect(codes).toContain("UNKNOWN_KEY");
     expect(codes).toContain("BAD_ENUM");
     expect(codes).toContain("BAD_TYPE");
+  });
+
+  it("takes the three blend widths and refuses a fourth", () => {
+    for (const blend of BLEND_WIDTHS) {
+      const { diagnostics, intent } = validateIntentValue({ climate: { blend } });
+      expect(diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+      expect(intent?.climate?.blend).toBe(blend);
+    }
+    // Absent stays absent: "no opinion" is the size-scaled band the compiler
+    // already picks, not a value the validator invents.
+    expect(validateIntentValue({ climate: { snow: "never" } }).intent?.climate?.blend).toBeUndefined();
+    const bad = validateIntentValue({ climate: { blend: 40 } }).diagnostics;
+    const d = bad.find((x) => x.nodePath === "intent.climate.blend");
+    expect(d?.name).toBe("BAD_ENUM");
+    expect(d?.fix).toContain("sharp");
   });
 
   it("warns on an era outside the dispatch table but keeps the document", () => {

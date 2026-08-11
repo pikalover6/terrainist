@@ -11,6 +11,7 @@
 import type { EraClass } from "@terrainist/spec";
 
 import { registerFanOut } from "../intent/fanout.js";
+import { BIOME_CELL } from "./landuse.js";
 import type { ClimateIntent } from "./landuse.js";
 
 /** Row ids owned by the terrain passes. */
@@ -19,6 +20,8 @@ export const TERRAIN_ROWS = {
   landUse: "climate.landUse",
   /** Offsets applied to the climate field over a footprint. */
   offsets: "climate.offsets",
+  /** Width of the land-use clamp's feather band, in columns. */
+  blend: "climate.blend",
   /** How green a settlement's own unbuilt ground is, as a share of ambient. */
   settlementGreenery: "terrain.settlementGreenery",
 } as const;
@@ -62,6 +65,29 @@ const GREENERY_BY_ERA: Readonly<Record<EraClass, number>> = Object.freeze({
   industrial: SETTLEMENT_GREENERY.tended,
   modern: SETTLEMENT_GREENERY.sparse,
   far_future: SETTLEMENT_GREENERY.sparse,
+});
+
+/**
+ * `intent.climate.blend` in **columns** of feather band.
+ *
+ * Walk-4's verdict was that the biome gradient needs a dial: some transitions
+ * read as jarring and some want to be jarring (a walled city that stops dead at
+ * its ditch). The mechanism is already there — the clamp's per-cell smoothstep
+ * dither, whose width is a caller-supplied number of columns — so this only
+ * makes the width authored.
+ *
+ * Every value is a whole number of {@link BIOME_CELL}s, because that is the
+ * granularity the dither actually renders at: `sharp` is 4 cells, below today's
+ * floor of 6 but still wide enough that the band is a gradient rather than a
+ * ring; `soft` is 8 cells, the middle of today's size-scaled range; `wide` is
+ * 16 cells, past its ceiling — a fade you walk for four seconds. Absent, the
+ * clamp keeps scaling the band by the footprint's perimeter, so a document that
+ * does not write the field compiles byte-identically.
+ */
+export const BLEND_FEATHER = Object.freeze({
+  sharp: 4 * BIOME_CELL,
+  soft: 8 * BIOME_CELL,
+  wide: 16 * BIOME_CELL,
 });
 
 /** A temperature/humidity offset pair, in the climate field's own units. */
@@ -110,6 +136,20 @@ export function registerTerrainFanOut(): void {
         temperature: ctx.today.temperature + (temperature ?? 0),
         humidity: ctx.today.humidity + (humidity ?? 0),
       };
+    },
+  });
+
+  /* --- intent.climate.blend → the clamp's feather width -------------------- */
+  registerFanOut<number | undefined>({
+    id: TERRAIN_ROWS.blend,
+    reads: ["climate"],
+    status: "today",
+    drives: "width of the land-use clamp's biome feather band (terrain/landuse.ts)",
+    resolve(intent, ctx) {
+      // Law 2. `undefined` is today: the clamp scales the band by perimeter.
+      const blend = intent.intent.climate?.blend;
+      if (blend === undefined) return ctx.today;
+      return BLEND_FEATHER[blend];
     },
   });
 

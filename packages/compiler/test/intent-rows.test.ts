@@ -15,7 +15,8 @@ import { LAYOUT_ROWS } from "../src/layout/streets-intent.js";
 import { COLD_CROPS, FARM_ROWS, FARM_TODAY, WARM_CROPS } from "../src/structures/farm-intent.js";
 import { FARM_DEFAULT_CROPS, farmSettings } from "../src/structures/farm.js";
 import { STRUCTURE_ROWS } from "../src/structures/themes-intent.js";
-import { TERRAIN_ROWS, NO_CLIMATE_OFFSET } from "../src/terrain/climate-intent.js";
+import { BLEND_FEATHER, TERRAIN_ROWS, NO_CLIMATE_OFFSET } from "../src/terrain/climate-intent.js";
+import { BIOME_CELL } from "../src/terrain/landuse.js";
 import type { ClimateIntent } from "../src/terrain/landuse.js";
 
 beforeAll(() => {
@@ -288,6 +289,21 @@ describe("the climate hand-off", () => {
       }),
     ).toEqual({ temperature: 0.4, humidity: -0.2 });
     expect(fanOut(TERRAIN_ROWS.offsets, NOTHING, { nodePath: "w", today: NO_CLIMATE_OFFSET })).toBe(NO_CLIMATE_OFFSET);
+  });
+
+  it("turns climate.blend into a feather width and leaves it alone otherwise", () => {
+    const width = (intent: unknown) =>
+      fanOut<number | undefined>(TERRAIN_ROWS.blend, scope(intent), { nodePath: "w", today: undefined });
+    expect(width({ climate: { blend: "sharp" } })).toBe(BLEND_FEATHER.sharp);
+    expect(width({ climate: { blend: "soft" } })).toBe(BLEND_FEATHER.soft);
+    expect(width({ climate: { blend: "wide" } })).toBe(BLEND_FEATHER.wide);
+    // Law 2: no climate, or a climate with no blend, is today's size-scaling.
+    expect(width({ climate: { snow: "never" } })).toBeUndefined();
+    expect(fanOut(TERRAIN_ROWS.blend, NOTHING, { nodePath: "w", today: undefined })).toBeUndefined();
+    // Every width is a whole number of stored biome cells, widening in order.
+    expect(BLEND_FEATHER.sharp).toBeLessThan(BLEND_FEATHER.soft);
+    expect(BLEND_FEATHER.soft).toBeLessThan(BLEND_FEATHER.wide);
+    for (const w of Object.values(BLEND_FEATHER)) expect(w % BIOME_CELL).toBe(0);
   });
 });
 
