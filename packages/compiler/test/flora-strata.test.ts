@@ -30,8 +30,10 @@ import {
   resolveStrata,
   scatterForests,
   speciesFor,
+  treeBlocks,
   treeCanopyRadius,
   type ForestNodeInput,
+  type TreePlacement,
 } from "../src/terrain/vegetation.js";
 
 /** A flat, dry, fully plantable world: the cleanest possible scatter fixture. */
@@ -90,9 +92,67 @@ describe("flora: the reach law at the scatter level", () => {
     const b = scatterForests([node(LEGACY)], world.plan, world.classification, world.palette, undefined, temperate(world.plan.ground.length));
     expect(b.trees).toEqual(a.trees);
     expect(a.strata).toEqual([]);
-    // No strata means no program seed and no stratum tag — the placement is the
-    // same record it has always been.
-    expect(a.trees.every((t) => t.programSeed === undefined && t.stratum === undefined)).toBe(true);
+    // No strata means no stratum tag — the layer machinery did not run.
+    expect(a.trees.every((t) => t.stratum === undefined)).toBe(true);
+  });
+
+  /**
+   * **Amended by orchestrator ruling, WP-D.**
+   *
+   * This case used to read *"a no-strata placement carries no `programSeed`"*,
+   * and that assertion had a reason rather than a value: **the legacy shapes
+   * never draw**, so a seed on the plain path could only be dead weight. WP-C
+   * found what it also was — a landmine. A species whose program *does* draw
+   * (`broadleaf`, `giant`, `ancient`, `umbrella`, `weeping`, `fungal`,
+   * `columnar` with deco) crashed on the missing seed the moment it was named
+   * in a plain `species` list with no `strata`, which is exactly what a
+   * Luna-authored document writes once the kit teaches it a species name.
+   *
+   * So the plain path now carries the seed, and the reason survives as the
+   * narrower assertion it always was: the two legacy programs never call the
+   * RNG, so their blocks are byte-identical whether a seed is present or not.
+   * That is checked here directly, and by the world-level byte-identity gate.
+   */
+  it("the legacy shapes never draw, so a seed on the plain path moves nothing", () => {
+    const scatter = scatterForests([node(LEGACY)], world.plan, world.classification, world.palette);
+    expect(scatter.trees.length).toBeGreaterThan(0);
+    for (const tree of scatter.trees) {
+      expect(speciesFor(tree.shape).program === "conifer" || speciesFor(tree.shape).program === "blob").toBe(true);
+      // With the seed, and with it removed: element for element the same list.
+      const { programSeed, ...seedless } = tree;
+      expect(programSeed).toBeDefined();
+      expect(treeBlocks(seedless)).toEqual(treeBlocks(tree));
+    }
+  });
+
+  it("a plain species list may name a species whose program draws", () => {
+    // The regression WP-C reported and WP-D fixes: no `strata`, a species
+    // named outright, and it grows instead of throwing. Two species, because
+    // they fail differently — `oak_spreading` draws its limb count on the
+    // first block and threw *"broadleaf drew from the RNG with no program
+    // seed"* (measured against the pre-fix compiler on a 128² document), while
+    // `mushroom_shelf_brown` never draws and instead has to prove that a
+    // mushroom actually comes up: stem and cap, in a plain list.
+    const drawer = scatterForests(
+      [node({ ...LEGACY, species: [{ id: "spreading", weight: 1, shape: "oak_spreading" }] })],
+      world.plan,
+      world.classification,
+      world.palette,
+    );
+    expect(drawer.trees.length).toBeGreaterThan(0);
+    for (const tree of drawer.trees) expect(() => treeBlocks(tree)).not.toThrow();
+    expect(treeBlocks(drawer.trees[0] as TreePlacement).some((b) => b.part === "branch")).toBe(true);
+
+    const scatter = scatterForests(
+      [node({ ...LEGACY, species: [{ id: "shelf", weight: 1, shape: "mushroom_shelf_brown" }] })],
+      world.plan,
+      world.classification,
+      world.palette,
+    );
+    expect(scatter.trees.length).toBeGreaterThan(0);
+    const blocks = treeBlocks(scatter.trees[0] as TreePlacement);
+    expect(blocks.some((b) => b.part === "stem")).toBe(true);
+    expect(blocks.some((b) => b.part === "cap")).toBe(true);
   });
 });
 

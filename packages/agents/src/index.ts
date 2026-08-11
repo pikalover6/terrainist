@@ -118,6 +118,9 @@ export type {
 } from "./tripo.js";
 
 export {
+  FANTASY_FLORA_IDS,
+  FLORA_CHARACTER_WORDS,
+  FLORA_PROGRAM_WORDS,
   INTENT_CLASSIFIER_PROMPT,
   MAX_INTENT_ATTEMPTS,
   classifyPromptIntent,

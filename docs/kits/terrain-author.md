@@ -275,13 +275,133 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 | `snowLine` | — | absolute Y (int, -64..319) above which trees stop — a treeline. Node-level it applies to every species; write it on a species entry instead (or as well) to give one species its own ceiling: `{"id": "birch", "shape": "birch_slim", "snowLine": 92}`. |
 | `avoidTags` | — | array of strings. |
 
-`shape` is one of exactly four: `spruce_tall`, `spruce_squat`, `oak_round`,
-`birch_slim`. That is the whole tree vocabulary — no palms, no acacias, no
-custom trees. Pick the closest shape and let the species `id` carry the intent
+### The species catalog
+
+`shape` names a **species** — a shape, a size envelope and its own materials.
+There are twenty-one, and the description column is the one to read: **pick a
+species by what it looks like**, then let the entry `id` carry the flavour
 (`"id": "black_pine", "shape": "spruce_tall"`).
+
+| shape | layer | height | climates | what it looks like |
+|---|---|---|---|---|
+| `spruce_tall` | canopy | 8–13 | boreal, temperate | the dark northern conifer wall |
+| `spruce_squat` | canopy | 5–7 | boreal | the scrubby treeline |
+| `oak_round` | canopy | 5–7 | temperate | the ordinary tree |
+| `birch_slim` | canopy | 6–9 | temperate | the pale vertical stroke |
+| `oak_spreading` | canopy | 8–12 | temperate | a real oak: lumpy, asymmetric, sky between its masses. The single biggest upgrade to an ordinary wood |
+| `larch_columnar` | canopy | 10–16 | boreal, temperate | a pale-green exclamation mark; breaks a dark conifer wall into vertical rhythm |
+| `willow_weeping` | canopy | 7–10 | temperate, tropical | a curtain over water — reads "riverbank" in one glance |
+| `cherry_blossom` | canopy | 6–9 | temperate | pink, and the only pink there is |
+| `acacia_umbrella` | canopy | 6–9 | arid | the savannah plate on a bare trunk |
+| `jungle_broadleaf` | canopy | 9–14 | tropical | the bulk tropical canopy |
+| `hazel_shrub` | understory | 3–5 | temperate | the layer between grass and canopy — why an old wood feels deep |
+| `juniper_scrub` | understory | 3–4 | boreal, arid | knee-to-shoulder scrub; makes a floor look occupied instead of mown |
+| `tree_fern` | understory | 3–5 | tropical | a small plate at head height; makes the ground feel humid |
+| `beech_giant` | emergent | 26–34 | temperate | the cathedral column: buttressed roots you stand between, a crown you walk under |
+| `kapok_emergent` | emergent | 30–40 | tropical | *the* canopy giant — vines off every limb, a crown above everything else |
+| `spruce_ancient` | emergent | 25–33 | boreal | the leaning grandfather: half its limbs dead, shelf fungi up one side |
+| `desert_ironwood` | emergent | 17–23 | arid | a bent, mostly-dead hardwood holding one live limb; punctuation in an empty landscape |
+| `mushroom_giant_red` | emergent | 8–14 | *(name it)* | a red dome on a pale stalk, visible across a valley |
+| `mushroom_shelf_brown` | canopy | 5–8 | *(name it)* | flat brown plates at mid height — a fungal grove's *canopy* |
+| `glowcap` | emergent | 10–16 | **fantasy** | a lantern in the woods: warped stalk, shroomlight set into the cap |
+| `crystal_spire` | emergent | 14–22 | **fantasy** | an amethyst "tree" that reads as *not a tree* at sixty blocks |
+
+The **layer** column is what the species is for, not a restriction: any species
+may be named in any list. The **climates** column is only about what the
+compiler picks *for you* when you ask for a default layer (below) — the two
+mushrooms and the two fantasy species have no climate at all, which is exactly
+why nothing plants them unless you write their name.
 
 Leave `trunkPalette` / `leafPalette` alone unless you also define that symbol
 in `style.palettes`; they name palette symbols, not block ids.
+
+### `strata` — the layer above the wood and the layer below it
+
+**Your `species` list is the canopy; `strata` adds the layer above it and the
+layer below it.** Nothing you already wrote changes.
+
+The one-word form is the one to reach for first:
+
+```
+"strata": true
+```
+
+That switches on an **emergent** layer (a few giants, chosen for the node's
+climate) and an **understory** layer (shrubs under the canopy). The object form
+names the species yourself, and switches a layer off with `"none"`:
+
+```
+"strata": {
+  "emergent": { "species": [{ "id": "great_beech", "shape": "beech_giant" }] },
+  "understory": { "species": [{ "id": "hazel", "shape": "hazel_shrub" }], "density": 0.09 },
+  "floor": "default"
+}
+```
+
+- `emergent` / `understory` / `canopy`: `"default"`, `"none"`, or an object with
+  `species` (and `density` on the understory). `canopy` defaults to `"authored"`
+  — your own `species` list — and you rarely need to write it.
+- `floor`: `"default"`, `"fungal"` (mycelium, moss carpet and mushrooms) or
+  `"glow"` (glow lichen and firefly bushes — a **fantasy** floor).
+- Do **not** write `budget` or `exclusion` on the emergent layer. The compiler
+  scales the number of giants to the size of the wood; a hand-written budget
+  opts out of tuning that has been walked.
+
+**When to reach for a giant: sparingly.** Emergents are landmarks — one or two
+per wood is the point of them, and the compiler enforces that with a per-patch
+budget, so asking for more does not produce more. Put `strata` on the deliberate
+wood the prompt asked for and never on a `{"all": true}` wilderness fill: a
+wilderness with giants in it is not a wilderness.
+
+### Fantasy species require a fantasy prompt
+
+`glowcap` and `crystal_spire` are legal to name at any time and **will never
+appear unless you name them** — no climate, no keyword and no default reaches
+one. That is deliberate: a medieval fishing village must not sprout glow trees.
+Name them when the prompt is otherwise (a spore-lit cavern mouth, a fae wood, a
+crystal waste), and not for a fishing village. The same goes for
+`"floor": "glow"`.
+
+You never write flora palette symbols yourself, and this is why: the glowcap's
+hanging growth is the flora tier's own `glow.lichen` symbol, while
+`foliage.glow_lichen` is a *different* symbol belonging to the ruin skin's
+theme gate. Name the species; the compiler resolves its materials.
+
+### A fungal grove you can copy
+
+A grove is not "a forest with mushrooms in it": its **canopy layer is fungal**,
+its floor is mycelium and moss, and the one ordinary tree is a minority weight.
+
+```json
+{
+  "id": "grove",
+  "kind": "generator",
+  "generator": "scatter.forest@0",
+  "params": {
+    "area": { "at": [0.5, 0.5], "radius": 120 },
+    "density": 0.14,
+    "spacing": 4,
+    "clumping": 0.7,
+    "maxSlope": 28,
+    "edgeFalloff": 20,
+    "undergrowth": { "grass": 0.15, "flowers": 0, "deadwood": 0.12 },
+    "strata": {
+      "emergent": { "species": [{ "id": "red_giant", "shape": "mushroom_giant_red" }] },
+      "understory": "none",
+      "floor": "fungal"
+    },
+    "species": [
+      { "id": "brown_shelf", "shape": "mushroom_shelf_brown", "weight": 3 },
+      { "id": "damp_birch", "shape": "birch_slim", "weight": 1 }
+    ]
+  }
+}
+```
+
+Ring it with an ordinary wood (a second node, `{"all": true}`, low density) so
+the hollow reads as a place with an edge. Adding `glowcap` to the emergent
+species list is the one edit that turns the grove fantasy, and nothing else in
+the document has to change.
 
 Use two forest nodes as a default pattern: one deliberate forest over the zone
 or radius the prompt calls for, and one sparse `{"all": true}` wilderness fill
@@ -428,6 +548,98 @@ speckled rather than banded:
 ---
 
 ## 9. Worked patterns
+
+**A temperate old-growth wood** — the whole flora vocabulary in one document:
+a deliberate wood with an emergent layer of beech giants and a hazel
+understory, and a low-density wilderness fill for the rest of the world. Only
+the deliberate wood declares `strata`.
+
+```json
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": { "name": "oldgrowth_vale", "worldSeed": 20260807, "spawn": { "zone": "south" } },
+  "root": {
+    "id": "vale",
+    "kind": "composite",
+    "envelope": { "shape": "region", "size": [512, 512] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63, "baseHeight": 66, "amplitude": 38, "octaves": 5,
+          "frequency": 0.0032, "erosionPasses": 2, "soilDepth": 3
+        },
+        "children": [
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": { "verb": "ridge", "course": [[0.1, 0.2], [0.9, 0.3]], "width": 140, "height": 40 }
+          },
+          {
+            "id": "vale_floor",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": { "verb": "valley", "course": [[0.15, 0.75], [0.85, 0.6]], "width": 120, "depth": 14, "meander": 0.4 }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": { "forceTheme": "temperate" }
+      },
+      {
+        "id": "old_growth",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": { "at": [0.5, 0.62], "radius": 170 },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [2, 90],
+          "edgeFalloff": 18,
+          "undergrowth": { "grass": 0.5, "flowers": 0.04, "deadwood": 0.08 },
+          "strata": {
+            "emergent": {
+              "species": [{ "id": "great_beech", "shape": "beech_giant" }]
+            },
+            "understory": {
+              "species": [{ "id": "hazel", "shape": "hazel_shrub" }],
+              "density": 0.09
+            }
+          },
+          "species": [
+            { "id": "spreading_oak", "shape": "oak_spreading", "weight": 4 },
+            { "id": "vale_birch", "shape": "birch_slim", "weight": 2 },
+            { "id": "vale_willow", "shape": "willow_weeping", "weight": 1 }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": { "all": true },
+          "density": 0.04,
+          "clumping": 0.6,
+          "species": [
+            { "id": "scrub_birch", "shape": "birch_slim" },
+            { "id": "hill_oak", "shape": "oak_round" }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
 
 **Fjord inlets** — a `valley` course that starts well inland and runs *past*
 the coast into open water. The seaward end floods because it reaches the ocean;
@@ -593,6 +805,10 @@ Prompt: *"a small volcanic island ringed by black beaches"*.
 - Every shape param belongs to its verb.
 - Every fraction is inside `[0, 1]`; north is small `fz`.
 - Ids are lowercase, meaningful, unique among siblings.
+- If the prompt says anything about the *wood* — old, ancient, giant trees,
+  mushroom, glowing, deep undergrowth, sparse — say it with a species and with
+  `strata` on the deliberate forest node. A forest of four legacy shapes is the
+  world you get when nothing was asked for, not when something was.
 - The prompt's named features each map to a verb, a palette override, or a
   forest node — if you cannot express something, choose the closest available
   construct rather than inventing a key.

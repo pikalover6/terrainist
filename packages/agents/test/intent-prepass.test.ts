@@ -15,10 +15,14 @@ import {
   intentKitContext,
   INTENT_CLASSIFIER_PROMPT,
   MATERIAL_THEME_IDS,
+  FANTASY_FLORA_IDS,
+  FLORA_CHARACTER_WORDS,
+  FLORA_PROGRAM_WORDS,
 } from "../src/intent-prepass.js";
 import {
   ERA_ALIASES,
   ERA_CLASSES,
+  FLORA_SPECIES_IDS,
   MASSING_STYLES,
   ROOF_TYPES,
   TREE_SHAPES,
@@ -98,9 +102,22 @@ describe("classifyPromptIntent", () => {
       "modern_city",
       "white_quartz",
     ]);
+    // The flora vocabulary is three closed sets now, not four tree shapes
+    // (FLORA-GRAMMAR-v0 §6.1): a species named in a prefer list is the only
+    // thing that reaches a fantasy species, so every word the compiler grounds
+    // has to be a word the classifier is shown.
     for (const shape of TREE_SHAPES) {
       expect(INTENT_CLASSIFIER_PROMPT).toContain(shape);
     }
+    for (const word of [...FLORA_SPECIES_IDS, ...FLORA_PROGRAM_WORDS, ...FLORA_CHARACTER_WORDS]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(word);
+    }
+    // …and the gate is stated, not implied.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("FANTASY gate");
+    for (const id of FANTASY_FLORA_IDS) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(id);
+    }
+    expect(INTENT_CLASSIFIER_PROMPT).toMatch(/medieval fishing\s+village must never sprout glow trees/);
     for (const enumValue of [...ROOF_TYPES, ...MASSING_STYLES, ...WINDOW_RHYTHMS]) {
       expect(INTENT_CLASSIFIER_PROMPT).toContain(enumValue);
     }

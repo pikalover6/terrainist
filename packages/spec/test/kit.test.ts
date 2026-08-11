@@ -67,7 +67,8 @@ function extractJsonBlocks(
   return blocks;
 }
 
-const terrainBlocks = extractJsonBlocks(await readFile(path.join(DOCS, "terrain-author.md"), "utf8"));
+const terrainSource = await readFile(path.join(DOCS, "terrain-author.md"), "utf8");
+const terrainBlocks = extractJsonBlocks(terrainSource);
 const settlementSource = await readFile(path.join(DOCS, "settlement-author.md"), "utf8");
 const settlementBlocks = extractJsonBlocks(settlementSource);
 
@@ -93,6 +94,57 @@ describe("terrain-author kit", () => {
       expect(() => JSON.parse(block.source), `kit line ${block.line}`).not.toThrow();
     },
   );
+
+  it("teaches the flora species catalog, the strata form and the fantasy gate", () => {
+    // FLORA-GRAMMAR-v0 §7: the kit is the delivery mechanism for the whole
+    // feature — a demo shows new flora because the kit taught the vocabulary,
+    // never because a default moved. So the three things a model has to know
+    // are asserted rather than trusted: that the vocabulary is no longer four
+    // shapes, that `strata` adds layers around the list it already writes, and
+    // that the two fantasy species are opt-in by name.
+    expect(terrainSource).not.toContain("`shape` is one of exactly four");
+    for (const species of [
+      "oak_spreading",
+      "beech_giant",
+      "kapok_emergent",
+      "spruce_ancient",
+      "mushroom_giant_red",
+      "mushroom_shelf_brown",
+      "glowcap",
+      "crystal_spire",
+    ]) {
+      expect(terrainSource, species).toContain(species);
+    }
+    expect(terrainSource).toContain(
+      "**Your `species` list is the canopy; `strata` adds the layer above it and the\nlayer below it.**",
+    );
+    expect(terrainSource).toMatch(/\*\*When to reach for a giant: sparingly\.\*\*/);
+    expect(terrainSource).toContain(
+      "`glowcap` and `crystal_spire` are legal to name at any time and **will never\nappear unless you name them**",
+    );
+    // WP-C's spelling deviation, taught as built: the flora tier's lichen is
+    // `glow.lichen`; `foliage.glow_lichen` belongs to the ruin skin.
+    expect(terrainSource).toContain("`glow.lichen`");
+  });
+
+  it("teaches a fungal grove an author can copy — and it validates in a document", () => {
+    // The farm-holding pattern (below): the grove is a *fragment*, so the
+    // zero-diagnostics bar only parses it. This case does what an author does
+    // — drops the node into a real document and validates the result.
+    const grove = terrainBlocks.find((b) => b.source.includes('"floor": "fungal"'));
+    expect(grove, "the terrain kit teaches no fungal grove").toBeDefined();
+    const node = JSON.parse((grove as { source: string }).source) as unknown;
+
+    const host = completeDocuments(terrainBlocks).at(-1);
+    expect(host, "the kit embeds no complete document to host the grove").toBeDefined();
+    const doc = JSON.parse(JSON.stringify((host as { value: unknown }).value)) as {
+      root: { children: unknown[] };
+    };
+    doc.root.children.push(node);
+
+    const result = validateTerrainDocument(doc);
+    expect(result.diagnostics.map(formatDiagnostic).join("\n")).toBe("");
+  });
 
   it("every complete document validates with zero diagnostics", () => {
     const complete = completeDocuments(terrainBlocks);
@@ -268,6 +320,37 @@ describe("settlement-author kit", () => {
     // And table 14's long-standing open question must no longer say the
     // language cannot express ruin at scale.
     expect(settlementSource).not.toContain("Ruin at district scale is not something the language can say");
+  });
+
+  it("teaches the flora vocabulary and a fungal grove that validates in a settlement", () => {
+    // The settlement kit carries the terrain kit's §6 twin verbatim, because a
+    // settlement document scatters forests with the same node — and a model
+    // that only ever reads this kit would otherwise never learn that the tree
+    // vocabulary is more than four shapes.
+    expect(settlementSource).not.toContain("`shape` is one of exactly four");
+    for (const species of ["oak_spreading", "beech_giant", "mushroom_shelf_brown", "glowcap"]) {
+      expect(settlementSource, species).toContain(species);
+    }
+    const grove = settlementBlocks.find((b) => b.source.includes('"floor": "fungal"'));
+    expect(grove, "the settlement kit teaches no fungal grove").toBeDefined();
+    // …and it keeps the settlement's own rule: a forest in a town avoids what
+    // the town built.
+    expect((grove as { source: string }).source).toContain('"avoidTags": ["structure", "road", "plaza"]');
+    const node = JSON.parse((grove as { source: string }).source) as unknown;
+
+    const host = completeDocuments(settlementBlocks).at(-1);
+    expect(host, "the kit embeds no complete settlement to host the grove").toBeDefined();
+    const doc = JSON.parse(JSON.stringify((host as { value: unknown }).value)) as {
+      root: { children: unknown[] };
+    };
+    doc.root.children.push(node);
+
+    const result = validateSettlementDocument(doc);
+    const errors = result.diagnostics
+      .filter((d) => d.severity === "error")
+      .map(formatDiagnostic)
+      .join("\n");
+    expect(errors).toBe("");
   });
 
   it("teaches the settlement profile, not the terrain one", () => {

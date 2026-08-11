@@ -1400,6 +1400,18 @@ function scatterOne(
           height: mega ? height + 4 : height,
           radiusDelta,
           mega,
+          // **Every placement carries a program seed** (WP-D, by orchestrator
+          // ruling). WP-C found the landmine: a species whose program *draws* —
+          // `broadleaf`, `giant`, `ancient`, `umbrella`, `weeping`, `fungal`,
+          // `columnar` with deco — crashed here on a missing seed the moment it
+          // was named in a plain `species` list with no `strata`, which is
+          // exactly what a model writes when the kit teaches it a species name.
+          // Handing the seed to the plain path costs nothing and moves nothing:
+          // the draw is position-keyed (`positionDigest` of the node's own
+          // `flora.program` stream at this column, the same value the strata
+          // path computes), and the two legacy programs never call the RNG, so
+          // every document that names only legacy shapes is byte-identical.
+          programSeed: positionDigest(programStream, x, 0, z),
           trunkState: palette.state(chosen.trunkPalette ?? def.trunkSymbol),
           leafState: palette.state(chosen.leafPalette ?? def.leafSymbol),
           // Every other part state the species declares. Undefined for all four
@@ -2339,9 +2351,10 @@ export function treeVariation(tree: TreePlacement): FloraVariation {
  * One placement's blocks.
  *
  * The RNG is rebuilt from the placement's own `programSeed` on every call, so
- * `clipTrees`, the shade map and the emitter all see the identical plant — and
- * a placement with no seed (every document that declares no `strata`) reaches
- * only the two legacy programs, which never draw.
+ * `clipTrees`, the shade map and the emitter all see the identical plant. Every
+ * placement the scatter makes carries one (WP-D); the throwing fallback below
+ * is for a placement built by hand — a test fixture, or a caller that predates
+ * the field — and it fires only for a program that actually draws.
  */
 export function treeBlocks(tree: TreePlacement): FloraBlock[] {
   const def = speciesFor(tree.shape);

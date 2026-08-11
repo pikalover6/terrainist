@@ -39,7 +39,7 @@ import {
   MASSING_STYLES,
   ROOF_TYPES,
   SNOW_POLICIES,
-  TREE_SHAPES,
+  FLORA_SPECIES_IDS,
   validateIntentValue,
   WINDOW_RHYTHMS,
   type EraClass,
@@ -77,6 +77,51 @@ export const MATERIAL_THEME_IDS = [
   "birchwood_downs",
   "modern_city",
   "white_quartz",
+] as const;
+
+/**
+ * The nine `character.flora` keywords (FLORA-GRAMMAR-v0 §6.1).
+ *
+ * Hand-listed for the same reason {@link MATERIAL_THEME_IDS} is: the table
+ * itself lives in `@terrainist/compiler`, which the agents package deliberately
+ * does not depend on — a classifier talks to the *spec*, not to the scatterer.
+ * `packages/cli/test/intent-flora-vocabulary.test.ts` sits downstream of both
+ * and pins the two lists against each other, so drift is a failing test rather
+ * than a word the classifier can write and nothing grounds.
+ */
+export const FLORA_CHARACTER_WORDS = [
+  "old_growth",
+  "ancient",
+  "emergent",
+  "understory",
+  "deadwood",
+  "sparse",
+  "fungal",
+  "glow",
+  "crystal",
+] as const;
+
+/**
+ * The two species no prompt reaches by accident (FLORA-GRAMMAR-v0 §2).
+ *
+ * Naming them here is what lets the prompt *forbid* naming them: the gate is
+ * structural in the compiler, but a classifier that writes `glowcap` for a
+ * fishing village has still mis-read the prompt, and a wrong dial is exactly
+ * what the pre-pass exists to make visible.
+ */
+export const FANTASY_FLORA_IDS = ["glowcap", "crystal_spire"] as const;
+
+/** The shape programs a flora word may name — a whole family at once. */
+export const FLORA_PROGRAM_WORDS = [
+  "conifer",
+  "blob",
+  "broadleaf",
+  "giant",
+  "ancient",
+  "columnar",
+  "umbrella",
+  "fungal",
+  "weeping",
 ] as const;
 
 /** Representative archetype ids, shown so the model writes ids, not phrases. */
@@ -298,8 +343,32 @@ materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exi
   ordinary towns are a palette question the compiler already answers; a
   medieval hill town in white_quartz reads as a wedding cake.
 
-flora: exactly these ${TREE_SHAPES.length} tree shapes:
-    ${list(TREE_SHAPES)}
+flora: what the wilderness is made of. Three kinds of word ground here, and
+nothing else does. Write flora ONLY when the prompt says something about the
+trees, the wood or the ground cover; an omitted flora leaves every forest the
+one the climate would have chosen, which is always safe.
+
+  1. CHARACTER WORDS — the usual answer, because a prompt describes a wood
+     rather than a species list:
+    ${list(FLORA_CHARACTER_WORDS)}
+     old_growth  <- ancient forest, primeval, virgin wood, mossy old wood
+     ancient     <- gnarled, veteran trees, "trees older than the town"
+     emergent    <- "giant trees", "trees towering over the canopy"
+     understory  <- "dense undergrowth", "thick, deep wood"
+     deadwood    <- blighted, dying, "fallen trees everywhere"
+     sparse      <- thin wood, scattered trees, "a few trees"
+     fungal      <- mushroom forest, fungal, mycelial, "giant mushrooms"
+     glow        <- glowing, bioluminescent, luminous
+     crystal     <- crystalline, amethyst
+  2. SPECIES IDS — a precise dial, when the prompt names a kind of tree:
+    ${list(FLORA_SPECIES_IDS)}
+  3. SHAPE PROGRAMS — a whole family at once: ${list(FLORA_PROGRAM_WORDS)}
+
+  "glow" and "crystal", and the two species ${list(FANTASY_FLORA_IDS)}, are the
+  FANTASY gate. Nothing else can reach them, by design — a medieval fishing
+  village must never sprout glow trees. Write one only when the prompt is
+  itself fantastical (a fae wood, a spore-lit hollow, a crystal waste), never
+  because a place merely sounds magical.
 
 archetypes: single-word building ids, e.g. ${list(EXAMPLE_ARCHETYPE_IDS)}.
 props: single-word object ids, e.g. ${list(EXAMPLE_PROP_IDS)}.
