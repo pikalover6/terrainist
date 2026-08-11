@@ -228,6 +228,27 @@ blame ambiguous between 231643a and the in-flight prop lane, resolve
 at its report. DELIBERATELY not touched: F3 junctions, F5 ground WP-6
 (blast radius), aesthetic tuning.
 
+**TROY C3 LANDED (overnight finale, installed troy_horse_c3, ~$0.19):**
+the named-place rule produced the textbook intent — era ancient,
+sun_clay, fortification walled, beach + blend soft, flat-roof dense
+motifs, icon tokens (horse/walls/citadel/soldiers). Horse 7,714 blocks
+(5.5× c1); hidden_greeks ×18 placed after feedback fixed siting; Luna
+authored the wall ITSELF and W489's precedence line correctly stood
+the dial down. Top-down shows: coastal peninsula, ships at the shore,
+TWO nested circuits (city + citadel), sandy flat-roofed core, horse at
+the north gate. Honest walk questions for Kai: much empty green inside
+the outer circuit (fabric should pack to the walls), ambient is lush
+green not dry Aegean gold, circuits axis-aligned. Prop-reseat lane
+landed (db90d63: unpinned water props seek the coast, PROP_RESEATED;
+deltaport golden re-pinned BY DESIGN — resolves the tunnels mystery).
+All overnight lanes committed+pushed; suite whole at 3,539.
+
+**MORNING QUEUE FOR KAI:** walk troy_horse_c3 (the stranger test),
+pirate_unicorn_war_c2, hellenist_sea_siege_c3; ruling batch below;
+two saved decisions: THEME_BY_ERA.ancient += sun_clay (moves every
+era-ancient world) and F5 ground WP-6 (blast radius). Remaining
+rung-B features: F3 junctions (needs his walks), F5.
+
 **Ruling batch still open:** terrace bays / collapse promotion / light
 band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
 shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
