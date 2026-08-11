@@ -525,6 +525,14 @@ export const TERRAIN_DIAGNOSTICS = {
    * unless a node wrote `params.walls`, is none.
    */
   INTENT_FORTIFICATION_UNKNOWN: "LOAM-W489",
+  /**
+   * `character.archetypes.forbid` emptied a quarter's whole mix.
+   *
+   * The bias row falls back to the mix the quarter was about to use rather than
+   * to no buildings: a forbid list that names everything is an author mistake,
+   * and an empty quarter is a worse answer to it than a stated one.
+   */
+  INTENT_ARCHETYPE_MIX_EMPTY: "LOAM-W515",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.

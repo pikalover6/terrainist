@@ -103,6 +103,7 @@ import {
 } from "./levels.js";
 import { largestRect } from "./masks.js";
 import { derivePlatforms } from "./platforms.js";
+import { biasedMix } from "./mix-intent.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
 import {
@@ -827,12 +828,17 @@ export function layDistrict(
   diagnostics: LoamDiagnostic[],
   cell?: CellFabric,
 ): LaidDistrict | null {
-  const p = cell === undefined ? node.params : { ...node.params, density: cell.density };
-  // The intent layer's three urban rows, each handed the value this pass was
-  // about to use. With no intent anywhere on this node's path every one of
-  // them returns that value unchanged — see `intent/fanout.ts`, law 2.
+  const declaredParams = cell === undefined ? node.params : { ...node.params, density: cell.density };
+  // The intent layer's urban rows, each handed the value this pass was about
+  // to use. With no intent anywhere on this node's path every one of them
+  // returns that value unchanged — see `intent/fanout.ts`, law 2.
   ensureFanOutRows();
   const intent = intentFor(resolveIntents(input.doc), nodePath);
+  // `character.archetypes` → the mix every archetype draw in this quarter takes
+  // (`layout/mix-intent.ts`). This is the single point: both the terrace runs
+  // and the per-lot infill read `params.mix` from here.
+  const biased = biasedMix(intent, nodePath, declaredParams.mix, diagnostics);
+  const p = biased === declaredParams.mix ? declaredParams : { ...declaredParams, mix: biased };
   const density = fanOut<DistrictDensity>(LAYOUT_ROWS.density, intent, {
     nodePath,
     today: p.density,

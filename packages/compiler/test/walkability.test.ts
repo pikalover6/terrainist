@@ -153,7 +153,12 @@ const HILLSIDE: Goldens = {
   entranceReachableShare: 1,
   // The terrain control: 71% of the region's standable columns. The remainder
   // is the hill's own cliffs and the ground beyond them — nobody's to serve.
-  groundReachable: 185662,
+  //
+  // **185662 → 185695** with the archetype-bias wiring (2026-08-11): this
+  // fixture's `character.archetypes.prefer: ["cottage", "church"]` had never
+  // been read; now it prepends into the mix, different shells take the lots,
+  // and 33 more ground columns fall reachable. BY DESIGN.
+  groundReachable: 185695,
   groundReachableShare: 0.709,
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 3,
@@ -165,7 +170,11 @@ const HILLSIDE: Goldens = {
   // courses of ground that used to be part of the paving are not, and the same
   // clutter divides by a slightly smaller walkable count. The numerator did not
   // move. MUST GO DOWN.
-  junctionDensity: 0.176,
+  //
+  // **0.176 → 0.175** with the archetype-bias wiring (2026-08-11): the same
+  // mix shift as `groundReachable` above, dividing by a slightly larger
+  // walkable count. BY DESIGN.
+  junctionDensity: 0.175,
   soloDensity: 0.048,
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
@@ -211,7 +220,9 @@ const STEEP: Goldens = {
   // reachable. `components` below stays network-scoped by design.
   entranceReachable: 4215,
   entranceReachableShare: 1,
-  groundReachable: 136343,
+  // **136343 → 136349** with the archetype-bias wiring (2026-08-11), same
+  // cause as the hillside fixture. BY DESIGN.
+  groundReachable: 136349,
   groundReachableShare: 0.755,
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.

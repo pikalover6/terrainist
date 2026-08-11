@@ -11,6 +11,7 @@
  * and then have to put it back.
  */
 
+import { registerMixFanOut } from "../layout/mix-intent.js";
 import { registerLayoutFanOut } from "../layout/streets-intent.js";
 import { registerFarmFanOut } from "../structures/farm-intent.js";
 import { registerStructureFanOut } from "../structures/themes-intent.js";
@@ -23,6 +24,7 @@ let installed = false;
 /** Register every fan-out row the compiler ships with. */
 export function installFanOutRows(): void {
   registerLayoutFanOut();
+  registerMixFanOut();
   registerStructureFanOut();
   registerWallFanOut();
   registerFarmFanOut();
