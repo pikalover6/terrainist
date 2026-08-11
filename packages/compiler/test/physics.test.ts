@@ -191,7 +191,19 @@ describe("the walking agent", () => {
    * north wall, which is the geometry a player reported as "the stairs still
    * need a jump" and which every previous version of this lint passed.
    */
-  async function shell(stairFootZ: number): Promise<PhysicsReport> {
+  /**
+   * `options.decay` is the second experiment: the decay report the compile
+   * would have attached to this lot, handed to the lint as plan context.
+   * `options.partition` walls the ground storey in two, which is a defect no
+   * ruling forgives.
+   */
+  async function shell(
+    stairFootZ: number,
+    options: {
+      readonly decay?: { readonly mode: "shell" | "facade" | "none" };
+      readonly partition?: boolean;
+    } = {},
+  ): Promise<PhysicsReport> {
     const dir = path.join(await scratchDir("shell"), "shell");
     const chunk = stack.createChunk();
     const id = (name: string, props?: Record<string, string>): number =>
@@ -242,6 +254,15 @@ describe("the walking agent", () => {
       }));
     }
 
+    // A party wall across the ground storey, door to nowhere: the cells north
+    // of it are unreachable *on the ground floor*, which is the storey no
+    // ruling exempts.
+    if (options.partition === true) {
+      for (let x = x0; x <= x1; x++) {
+        for (let y = floorY + 1; y < floorY + storey; y++) chunk.setStateId(x, y, 7, stone);
+      }
+    }
+
     await writeWorldFiles({
       chunks: new Map([["0,0", chunk]]),
       worldDir: dir,
@@ -257,7 +278,13 @@ describe("the walking agent", () => {
           footprint: { x0: x0 - 1, z0: z0 - 1, x1: x1 + 1, z1: z1 + 1 },
           interior: { x0, z0, x1, z1 },
           floorY,
-          meta: { roofTop: storey * 2, foundationDepth: 1, wallTop: storey * 2, floorLevels: [0, storey] },
+          meta: {
+            roofTop: storey * 2,
+            foundationDepth: 1,
+            wallTop: storey * 2,
+            floorLevels: [0, storey],
+            ...(options.decay === undefined ? {} : { decay: options.decay }),
+          },
         },
       ],
     });
@@ -272,6 +299,43 @@ describe("the walking agent", () => {
     const report = await shell(3);
     expect(report.counts["traversal.unreachable"]).toBe(0);
   }, 60_000);
+
+  /**
+   * **Legal lost storeys** — Kai's ruling of 2026-08-10, at the granularity the
+   * rule actually decides at.
+   *
+   * The fixture is the *same* broken flight in all four cases, so the only
+   * thing that moves between them is the plan context. That is what makes the
+   * exemption non-vacuous rather than a rule that quietly stopped working:
+   * strip the decay report and the findings come straight back.
+   */
+  describe("a decayed shell's lost upper storey", () => {
+    it("still fails on an intact building — the exemption reaches no further", async () => {
+      const report = await shell(2);
+      expect(report.counts["traversal.unreachable"]).toBeGreaterThan(0);
+    }, 60_000);
+
+    it("is forgiven when the decay pass crumbled this lot's shell", async () => {
+      const report = await shell(2, { decay: { mode: "shell" } });
+      expect(report.counts["traversal.unreachable"]).toBe(0);
+      expect(report.counts["traversal.no_start"]).toBe(0);
+    }, 60_000);
+
+    it("is not forgiven for a lot the decay refused a crumble on", async () => {
+      for (const mode of ["none", "facade"] as const) {
+        const report = await shell(2, { decay: { mode } });
+        expect(report.counts["traversal.unreachable"], mode).toBeGreaterThan(0);
+      }
+    }, 120_000);
+
+    it("never forgives the ground floor, however hard the lot decayed", async () => {
+      const report = await shell(3, { decay: { mode: "shell" }, partition: true });
+      const unreachable = report.findings.filter((f) => f.rule === "traversal.unreachable");
+      expect(unreachable.length).toBeGreaterThan(0);
+      // Every one of them on the ground storey's own walking plane.
+      for (const f of unreachable) expect(f.y).toBe(65);
+    }, 60_000);
+  });
 });
 
 describe("palette.registry", () => {

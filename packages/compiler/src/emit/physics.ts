@@ -113,6 +113,16 @@ export interface PhysicsContext {
       readonly wallTop?: number;
       /** Node-local Y of each storey's floor plane. Enables the interior rules. */
       readonly floorLevels?: readonly number[];
+      /**
+       * What the decay pass did to this lot, when one ran — `BuildingMeta.decay`,
+       * carried through unchanged.
+       *
+       * Absent on every intact building, which is every building in a document
+       * that never says `decay`, so nothing here can loosen a rule for a world
+       * with no ruin in it. `mode` is the only field the lint reads, and it
+       * reads it for exactly one purpose: {@link lostStorey}.
+       */
+      readonly decay?: { readonly mode: "shell" | "facade" | "none" };
     };
   }[];
   /**
@@ -180,10 +190,13 @@ export interface PhysicsContext {
    * checked. A trunk somebody put there by accident is in no mask and still
    * fires.
    *
-   * **`traversal.unreachable` and `traversal.no_start` are not exempted, here
-   * or anywhere.** The obstruction is the image; a room cut off from its door
-   * is a defect. `electShellTrees` keeps the room one component *before* it
-   * elects, so the two rules never disagree about the same trunk.
+   * **Neither `traversal.unreachable` nor `traversal.no_start` is exempted by
+   * this mask.** The obstruction is the image; a room cut off from its door is
+   * a defect. `electShellTrees` keeps the room one component *before* it
+   * elects, so the two rules never disagree about the same trunk. (A decayed
+   * shell's *upper* storey is exempt from `traversal.unreachable` under a
+   * separate and later ruling — see `lostStorey` in the traversal rule — which
+   * reads `meta.decay`, not this mask.)
    *
    * Absent — every world that grows no shell trunk — leaves rule 17 exactly as
    * it was.
@@ -742,8 +755,49 @@ export async function lintWorldPhysics(
     }
     const start = starts[0] as { x: number; y: number; z: number };
 
+    // **Legal lost storeys** — Kai's ruling on the stranded upper storey
+    // (2026-08-10), and the one exemption `traversal.unreachable` has.
+    //
+    // > the traversal rule learns that a decayed shell's upper storey may be
+    // > unreachable, because collapse means some floors are lost; the ground
+    // > floor stays fully guaranteed.
+    //
+    // A shell whose walls were crumbled has, by construction, lost the stair
+    // head, the landing, or the floor plane the stair arrived on — that is what
+    // a crumble line *is*. Demanding a walking route to the second storey of a
+    // roofless ruin is demanding the building not be ruined, and it is the same
+    // calibration Kai already ratified for ruin scenes: walkability matters
+    // less where the fiction is collapse.
+    //
+    // The scope is deliberately narrow, and every clause is load-bearing:
+    //
+    // - **`meta.decay` must be present.** An intact building carries no decay
+    //   report at all, so no intact building can reach this branch. The lint
+    //   still runs against the world on disk; what the plan supplies is the
+    //   fact that a named pass ruined this lot.
+    // - **`mode` must be `"shell"`.** `"none"` is a lot the decay *refused* a
+    //   crumble on — it took floor paint and rubble and kept all its walls, so
+    //   nothing was lost and nothing is exempt. `"facade"` likewise keeps the
+    //   shell standing behind the front.
+    // - **The ground storey is never exempt.** `groundStorey` is the lowest
+    //   floor plane at or above the door's own plane; that storey, and every
+    //   cellar below it, is checked exactly as before, for every building in
+    //   every world.
+    //
+    // `traversal.no_start` is **not** exempted, here or anywhere: it says the
+    // way in is blocked, which is a ground-floor property, and the ground floor
+    // is the thing this ruling guarantees.
+    const lostStorey = b.meta.decay?.mode === "shell";
+    const groundStorey = levels.reduce(
+      (lowest, level) => (level >= 0 && level < lowest ? level : lowest),
+      Number.POSITIVE_INFINITY,
+    );
+
     const reached = walk(...starts);
     for (const level of levels) {
+      // A storey the collapse may legally have stranded. Never the ground
+      // floor, never a cellar, never an intact building.
+      if (lostStorey && level > groundStorey) continue;
       const feet = b.floorY + level + 1;
       for (const { x, z } of columnsAt(level)) {
         if (!standable(x, feet, z)) continue;
