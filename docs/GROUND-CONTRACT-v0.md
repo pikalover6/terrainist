@@ -619,7 +619,7 @@ it is pure block placement above a ground it does not move.
 underpinning fill, and `underpinAprons`' second-look fill (which writes no level
 today and does not need to — see §3.12).
 
-### 3.12 Two sites outside the eleven
+### 3.12 Three sites outside the eleven
 
 - **`buildings.ts` / the solver's pads.** A building's floor plane is levelled
   by `padFor` → `applyLevelPad` *into the master field*, before materialisation.
@@ -639,6 +639,19 @@ today and does not need to — see §3.12).
   either cover them under `prop.pad`/`precinct.ground`-equivalent classes or
   scope itself explicitly to the world pipeline. Not covering them and not
   saying so is how a freeze leaks.
+- **The authored-program pass** (`programs/site-treatment.ts`, added with the
+  bespoke integration contract, 2026-08-11). Plugin envelopes now get a pad and
+  apron declared **through the pipeline `GroundDriver`** — declare → resolve →
+  build, `platform`, class `prop.pad`: the pad at the seat plane, the apron
+  rings one block down per ring, fill-only, `transition: "ramp"`. The
+  foundation skirt mirrors buildings' `underpinApron` — blocks only, no level
+  write — so like §3.11's stepped outcome it stays behind as material. Hovering,
+  `wade`, `drape` and `embed` seats and wet footprints declare nothing. WP-6's
+  "no module outside the resolver writes it" test covers this site for free,
+  because its writes already go through the driver; the thing WP-6 must
+  remember is the converse — before 2026-08-11 this pass wrote no ground at
+  all, so pre-contract goldens of plugin-bearing worlds are not evidence about
+  it.
 
 ### 3.13 `sweep` is an engine, not a declarer
 
