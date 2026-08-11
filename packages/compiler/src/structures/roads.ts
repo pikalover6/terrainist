@@ -52,6 +52,8 @@ import { detailSeed, hash2 } from "../terrain/detail.js";
 import {
   STREET_CARRIAGEWAY_SYMBOL,
   STREET_CARRIAGEWAY_WORN_SYMBOL,
+  STREET_COURSE_SYMBOL,
+  STREET_KERB_SYMBOL,
   STREET_LANE_SYMBOL,
   STREET_MARKING_SYMBOL,
   streetMaterials,
@@ -568,7 +570,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     const steep = reliefOf(region, view.ground, spots);
     driver.commit(routeIntents(source, subRank, claimed));
     declaredRoutes.push({ source, columns: claimed.level, bridged: claimed.bridged });
-    surfaceRoute(region, plan, blocked, road, roadY, spots, levels, states, occupancy, paved, water, bridged, steep);
+    surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep);
     blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
 
     routes.push({
@@ -741,6 +743,24 @@ export interface StreetSurfaceInput {
    * when the document declares no `street.*` symbols of its own.
    */
   readonly theme?: string;
+  /**
+   * Per-district street theme ids, parallel to {@link StreetSurfaceInput.graphs}
+   * — **F10**.
+   *
+   * Streets used to take the settlement *root* theme everywhere, so a quarter
+   * that named its own `character.materialTheme` got its buildings in one family
+   * and its road in another's. A quarter listed here is surfaced from its own
+   * theme's street family instead.
+   *
+   * `undefined` at a position — and an omitted array — means "the root theme",
+   * which is every district of every single-theme world, so those worlds keep
+   * resolving through exactly the path they always did, `style.palettes`
+   * overrides included. A district whose entry *differs* from the root
+   * deliberately stops consulting the palette's `street.*` symbols: a root-level
+   * override would otherwise silently defeat the theme the district asked for,
+   * which is the same defect one level down.
+   */
+  readonly graphThemes?: readonly (string | undefined)[];
   /** Node seed the wear mix and the dash phase hang off. */
   readonly seed?: Seed256;
   /**
@@ -955,11 +975,42 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       ? undefined
       : { spec: input.breakUp, mark: broken, region },
   );
+  /**
+   * F10: one {@link StreetStateSet} per distinct district theme, memoized.
+   *
+   * The root theme's set is `urban` itself and is never rebuilt, so a
+   * single-theme world allocates exactly what it always allocated and resolves
+   * every symbol through exactly the path it always did.
+   */
+  const scopedStates = new Map<string, StreetStateSet>();
+  const statesFor = (themeId: string | undefined): StreetStateSet => {
+    if (themeId === undefined || themeId === input.theme) return urban;
+    const hit = scopedStates.get(themeId);
+    if (hit !== undefined) return hit;
+    const built = resolveStreetStates(
+      input.palette,
+      input.stack,
+      rural,
+      themeId,
+      input.seed,
+      input.wearChance,
+      broken === undefined || input.breakUp === undefined
+        ? undefined
+        : { spec: input.breakUp, mark: broken, region },
+      true,
+    );
+    scopedStates.set(themeId, built);
+    return built;
+  };
   const blocks: StructureBlock[] = [];
   /** §3.6b, recorded as the pass runs. Never read here. */
   const declaredSegments: StreetSegmentDeclaration[] = [];
   /** Avenue centre lines, kept until every segment has been surfaced. */
-  const avenues: { readonly cells: readonly { x: number; z: number }[] }[] = [];
+  const avenues: {
+    readonly cells: readonly { x: number; z: number }[];
+    readonly states: RoadStates;
+    readonly marking: number;
+  }[] = [];
 
   /* --- the segments, in traversal order ---------------------------------- */
 
@@ -977,6 +1028,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     /** Avenues collect a dashed centre line, against their own graph. */
     readonly graph?: StreetGraph;
     readonly marked: boolean;
+    /** The centre-line state of *this run's* street family (F10). */
+    readonly marking: number;
     /** Set by the claim phase. */
     spots?: readonly SweptColumn[];
     /** The run's arc frame — where its height lives. Set by the claim phase. */
@@ -1005,9 +1058,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       states: urban.avenue,
       decks: true,
       marked: false,
+      marking: urban.marking,
     });
   }
-  for (const graph of input.graphs) {
+  for (const [graphIndex, graph] of input.graphs.entries()) {
+    // F10: this quarter's own street family, or the root's when it named none.
+    const urbanHere = statesFor(input.graphThemes?.[graphIndex]);
     // Does this quarter carry water? Two things hang off the answer, and both
     // are gated on it so that a document naming no `canal` quarter grades and
     // surfaces exactly the columns it grades and surfaces today: a street that
@@ -1041,10 +1097,11 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         role: role === "steps" ? "steps" : role === "cart" ? "cart" : "carriageway",
         width: segment.width,
         path,
-        states: urban[segment.kind],
+        states: urbanHere[segment.kind],
         decks: hasChannel,
         graph,
         marked: segment.kind === "avenue",
+        marking: urbanHere.marking,
       });
     }
   }
@@ -1339,6 +1396,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       road,
       roadY,
       spots,
+      job.width,
       levels,
       job.states,
       occupancy,
@@ -1368,7 +1426,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       );
     }
     if (job.marked && job.graph !== undefined) {
-      avenues.push({ cells: markableCells(surfaced, job.graph, job.width) });
+      avenues.push({ cells: markableCells(surfaced, job.graph, job.width), states: job.states, marking: job.marking });
     }
   }
 
@@ -1382,7 +1440,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
 
   // After every segment: a street laid later crosses an earlier one, and a dash
   // painted before that crossing would simply be overwritten.
-  paintCentreLines(region, plan, road, paved, water, urban, avenues);
+  paintCentreLines(region, plan, road, paved, water, avenues);
 
   // The balustrade, at last. It stands *above* a column rather than being one,
   // which is why it could not be built until `plan.ground` was final — see the
@@ -2241,8 +2299,28 @@ export function gradeProfile(
 
 /** The block states the road pass writes. */
 interface RoadStates {
-  readonly surface: (x: number, z: number) => number;
-  readonly shoulder: (x: number, z: number) => number;
+  /**
+   * The carriageway body.
+   *
+   * `edge` is the column's distance, in columns, from the nearest carriageway
+   * edge, already clamped by {@link surfaceRoute} to the three values the
+   * texture distinguishes: `0` is the border course (never reaches this
+   * function — {@link RoadStates.shoulder} paints it), `1` is the gutter course
+   * and `2` is the body proper. A rural lane never passes it and every rural
+   * implementation ignores it, which is what keeps a countryside road
+   * byte-identical.
+   */
+  readonly surface: (x: number, z: number, edge?: number) => number;
+  readonly shoulder: (x: number, z: number, edge?: number) => number;
+  /**
+   * Is this an **urban street** surface class?
+   *
+   * The flag, rather than a duck test, is what lets one {@link surfaceRoute}
+   * serve both: a rural verge is chosen by `SweptColumn.outer` exactly as it
+   * always was, and only a street's cross-section is read as
+   * border / gutter / body.
+   */
+  readonly urban?: boolean;
   readonly step: number;
   readonly subsurface: number;
   readonly post: number;
@@ -2296,6 +2374,83 @@ function clamp01(value: number): number {
 
 /** Hash salt for the wear draw — positional only, never a sequential RNG. */
 const STREET_WEAR_SALT = 0x5f;
+/** Hash salt for the coarse wear-*patch* draw. @see STREET_PATCH_SPAN */
+const STREET_PATCH_SALT = 0x8d;
+/** Hash salt for the gutter course's dither. */
+const STREET_GUTTER_SALT = 0xc3;
+
+/**
+ * Edge of the coarse cell the wear draw is taken on, in columns.
+ *
+ * The walk's verdict on the old surface was "a gray blob with speckles", and
+ * *speckles* is the operative word: a per-column draw at 12% scatters single
+ * blocks, which at eye level is dithering noise rather than a patched road. The
+ * draw is now taken twice — once on a {@link STREET_PATCH_SPAN}-column cell,
+ * which decides *where* a patch is, and once per column, which decides how
+ * ragged its edge is. Same hash, same determinism, no new RNG; what changes is
+ * that worn columns arrive in clumps of two to four, which reads as repair.
+ */
+const STREET_PATCH_SPAN = 2;
+/**
+ * How much likelier a *patch* is than a column was, and how much of a patch
+ * survives the per-column draw.
+ *
+ * Their product is deliberately near 1 (1.4 × 0.72 ≈ 1.008), so the share of
+ * worn carriageway is the share {@link STREET_WEAR_CHANCE} and
+ * `roads.wearIntensity` have always meant — only its *shape* moves.
+ */
+const STREET_PATCH_SPREAD = 1.4;
+/** @see STREET_PATCH_SPREAD */
+const STREET_PATCH_KEEP = 0.72;
+
+/**
+ * Least carriageway width that takes a border course.
+ *
+ * Three: the border is one column each side, so at width 2 there would be no
+ * body left between the two and at width 1 the road *is* its own border. Every
+ * street class in the fabric — avenue, street, lane, cart road, arterial — is
+ * at or above it, which is the point: **the border is the rule, not the
+ * exception it used to be.**
+ */
+export const KERB_MIN_WIDTH = 3;
+
+/**
+ * Least carriageway width that also carries the gutter course.
+ *
+ * Seven, so the section reads border / gutter / body / gutter / border with at
+ * least three columns of body down the middle. Below it the second course would
+ * squeeze the road to a stripe, so a five-wide street takes the border alone.
+ */
+export const GUTTER_MIN_WIDTH = 7;
+
+/**
+ * Share of gutter columns that take the course tone rather than the body.
+ *
+ * Not 1: a solid line inboard of the kerb reads as paint, and this is meant to
+ * read as laid stone. Just under two thirds leaves the course dominant and
+ * still broken.
+ */
+export const GUTTER_DENSITY = 0.62;
+
+/**
+ * How the wear draw is scaled by a column's distance from the road edge.
+ *
+ * A real carriageway wears where it is driven — down the middle — and stays
+ * clean in the gutter. `min(1, EDGE_WEAR_FLOOR + EDGE_WEAR_RISE * edge)` is the
+ * whole of it, and it is what makes the texture read as a crown rather than as
+ * uniform grain.
+ */
+const EDGE_WEAR_FLOOR = 0.45;
+/** @see EDGE_WEAR_FLOOR */
+const EDGE_WEAR_RISE = 0.35;
+
+/** The body's `edge` value: everything two columns or more off the kerb. */
+const BODY_EDGE = 2;
+
+/** Floor-divide by {@link STREET_PATCH_SPAN}, correct for negative columns. */
+function patchCell(v: number): number {
+  return Math.floor(v / STREET_PATCH_SPAN);
+}
 
 /** Painted columns per dash. */
 export const MARKING_DASH = 2;
@@ -2339,6 +2494,13 @@ function resolveStreetStates(
   seed: Seed256 | undefined,
   wearChance: number | undefined,
   breakUp: { spec: StreetBreakUp; mark: Uint8Array; region: Region } | undefined,
+  /**
+   * True when `theme` is a *district's* theme rather than the settlement root's
+   * (F10). The palette's `street.*` symbols are then skipped: they were resolved
+   * against the root theme, and letting them win would defeat the very override
+   * that put this district in a different family.
+   */
+  scoped: boolean = false,
 ): StreetStateSet {
   const materials = streetMaterials(theme);
   const named = (name: string, fallback: number): number =>
@@ -2348,7 +2510,7 @@ function resolveStreetStates(
     name: string,
     fallback: number,
   ): ((x: number, z: number) => number) => {
-    if (palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
+    if (!scoped && palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
     const id = named(name, fallback);
     return () => id;
   };
@@ -2356,13 +2518,34 @@ function resolveStreetStates(
   const body = at(STREET_CARRIAGEWAY_SYMBOL, materials.carriageway, rural.surface(0, 0));
   const worn = at(STREET_CARRIAGEWAY_WORN_SYMBOL, materials.worn, body(0, 0));
   const lane = at(STREET_LANE_SYMBOL, materials.lane, body(0, 0));
+  // The border and the gutter: two more members of the same family, resolved by
+  // the same "symbol, else theme table" idiom as the body. `street.curb` is the
+  // sidewalk kerb's own symbol on purpose — where a sidewalk flanks the road the
+  // two courses are one continuous line of one material, and where none does the
+  // carriageway lays it alone, which is the coverage hole this closes.
+  const kerb = at(STREET_KERB_SYMBOL, materials.kerb, body(0, 0));
+  const course = at(STREET_COURSE_SYMBOL, materials.course, body(0, 0));
   // No wall clock, no `Math.random`, no transcendentals: the wear draw is the
   // column's own hash, so the same document and seed give the same patching
   // forever, whatever order the segments were walked in.
   const wearSeed = seed === undefined ? 0x5157_2ea1 : detailSeed(seed, "street.wear");
   const wear = wearChance === undefined ? STREET_WEAR_CHANCE : clamp01(wearChance);
-  const painted = (x: number, z: number): number =>
-    hash2(wearSeed, x, z, STREET_WEAR_SALT) < wear ? worn(x, z) : body(x, z);
+  // Two draws, one hash stream, no sequential RNG: the coarse one places the
+  // patch, the fine one frays its edge, and `edge` thins both towards the kerb
+  // so the road wears down its travelled crown. Their product keeps the overall
+  // worn share at `wear`, so `roads.wearIntensity` still means what it meant.
+  const painted = (x: number, z: number, edge: number = BODY_EDGE): number => {
+    const centrality = Math.min(1, EDGE_WEAR_FLOOR + EDGE_WEAR_RISE * edge);
+    const local = wear * centrality * STREET_PATCH_SPREAD;
+    if (hash2(wearSeed, patchCell(x), patchCell(z), STREET_PATCH_SALT) >= local) return body(x, z);
+    if (hash2(wearSeed, x, z, STREET_WEAR_SALT) >= STREET_PATCH_KEEP) return body(x, z);
+    return worn(x, z);
+  };
+  /** The body plus the dithered gutter course, keyed on the clamped `edge`. */
+  const textured = (x: number, z: number, edge: number = BODY_EDGE): number =>
+    edge === 1 && hash2(wearSeed, x, z, STREET_GUTTER_SALT) < GUTTER_DENSITY
+      ? course(x, z)
+      : painted(x, z, edge);
   // §7.3: past worn is broken. The draw is the column's own hash on its own
   // salt, so turning the break-up on never moves the wear pattern under it —
   // a broken column is a column that *would* have been worn or clean, decided
@@ -2371,26 +2554,44 @@ function resolveStreetStates(
   const soilB = named("grass_block", soilA);
   const carriageway =
     breakUp === undefined
-      ? painted
+      ? textured
+      : (x: number, z: number, edge: number = BODY_EDGE): number => {
+          const { spec, mark, region } = breakUp;
+          const i = x - region.x0;
+          const j = z - region.z0;
+          if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return textured(x, z, edge);
+          const idx = j * region.width + i;
+          const ruin = spec.ruinField[idx] as number;
+          const local = spec.chance * (STREET_BREAK_FLOOR + (1 - STREET_BREAK_FLOOR) * ruin);
+          if (hash2(wearSeed, x, z, STREET_BREAK_SALT) >= local) return textured(x, z, edge);
+          mark[idx] = 1;
+          return hash2(wearSeed, x, z, STREET_BREAK_MIX_SALT) < 0.55 ? soilA : soilB;
+        };
+  // A broken street loses its kerb where it loses its body: the border runs
+  // through the same break-up draw, so a ruined avenue does not keep a crisp
+  // dressed edge around a road that has gone back to soil.
+  const border =
+    breakUp === undefined
+      ? kerb
       : (x: number, z: number): number => {
           const { spec, mark, region } = breakUp;
           const i = x - region.x0;
           const j = z - region.z0;
-          if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return painted(x, z);
+          if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return kerb(x, z);
           const idx = j * region.width + i;
           const ruin = spec.ruinField[idx] as number;
           const local = spec.chance * (STREET_BREAK_FLOOR + (1 - STREET_BREAK_FLOOR) * ruin);
-          if (hash2(wearSeed, x, z, STREET_BREAK_SALT) >= local) return painted(x, z);
+          if (hash2(wearSeed, x, z, STREET_BREAK_SALT) >= local) return kerb(x, z);
           mark[idx] = 1;
           return hash2(wearSeed, x, z, STREET_BREAK_MIX_SALT) < 0.55 ? soilA : soilB;
         };
 
-  const paved: RoadStates = { ...rural, surface: carriageway, shoulder: carriageway };
+  const paved: RoadStates = { ...rural, surface: carriageway, shoulder: border, urban: true };
   return {
     avenue: paved,
     street: paved,
-    lane: { ...rural, surface: lane, shoulder: lane },
-    marking: palette.has(STREET_MARKING_SYMBOL)
+    lane: { ...rural, surface: lane, shoulder: border, urban: true },
+    marking: !scoped && palette.has(STREET_MARKING_SYMBOL)
       ? palette.state(STREET_MARKING_SYMBOL)
       : named(materials.marking, body(0, 0)),
   };
@@ -2442,8 +2643,17 @@ function paintCentreLines(
   road: Uint8Array,
   paved: Uint8Array,
   water: Uint8Array,
-  states: StreetStateSet,
-  avenues: readonly { readonly cells: readonly { x: number; z: number }[] }[],
+  /**
+   * Each avenue carries the state set it was *surfaced* from (F10), so a
+   * district in its own material theme gets that theme's centre line rather than
+   * the root's — and the exactness guard below compares against the very
+   * function that painted the column.
+   */
+  avenues: readonly {
+    readonly cells: readonly { x: number; z: number }[];
+    readonly states: RoadStates;
+    readonly marking: number;
+  }[],
 ): void {
   for (const avenue of avenues) {
     for (const cell of avenue.cells) {
@@ -2451,8 +2661,13 @@ function paintCentreLines(
       const idx = index(region, cell.x, cell.z);
       if (road[idx] !== 1 || paved[idx] === 1 || water[idx] === 1) continue;
       if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
-      if (plan.surface[idx] !== states.avenue.surface(cell.x, cell.z)) continue;
-      plan.surface[idx] = states.marking;
+      // The centre column of an avenue is always body (`BODY_EDGE`): an avenue is
+      // wide enough that its middle is never the border or the gutter, so this
+      // reproduces the exact state the dress phase wrote there. A column some
+      // narrower street later claimed as *its* kerb fails the test and keeps it,
+      // which is the guard doing its job.
+      if (plan.surface[idx] !== avenue.states.surface(cell.x, cell.z, BODY_EDGE)) continue;
+      plan.surface[idx] = avenue.marking;
     }
   }
 }
@@ -2720,6 +2935,8 @@ function surfaceRoute(
   road: Uint8Array,
   roadY: Int32Array,
   spots: readonly SweptColumn[],
+  /** The run's carriageway width — what the border and gutter courses key on. */
+  width: number,
   levels: ArcLevels,
   states: RoadStates,
   occupancy: OccupancyGrid | undefined,
@@ -2746,6 +2963,11 @@ function surfaceRoute(
     readonly landing?: ReadonlyMap<number, number>;
   },
 ): void {
+  // The same lattice `carriagewaySpans` walks, so `lane` and the edge distance
+  // below are measured in the coordinate the sweep produced them in.
+  const halfWidth = (width - 1) >> 1;
+  const laneLo = halfWidth === 0 ? 0 : -halfWidth;
+  const laneHi = width - 1 - halfWidth;
   for (const [n, spot] of spots.entries()) {
     const x = spot.x;
     const z = spot.z;
@@ -2786,6 +3008,17 @@ function surfaceRoute(
     }
 
     const outer = spot.outer;
+    // The urban cross-section, as three values (§F10). `edgeRaw` is the column's
+    // distance from the nearer carriageway edge; the clamp below is what turns a
+    // number into the border / gutter / body the texture distinguishes, and it is
+    // where both width floors live — a road too narrow for a border gets none,
+    // and one too narrow for a gutter gets body all the way in from the kerb.
+    const edgeRaw = Math.min(spot.lane - laneLo, laneHi - spot.lane);
+    let edge = BODY_EDGE;
+    if (states.urban === true) {
+      if (width >= KERB_MIN_WIDTH && edgeRaw <= 0) edge = 0;
+      else if (width >= GUTTER_MIN_WIDTH && edgeRaw === 1) edge = 1;
+    }
     // The surface mix is sampled at the *cluster* cell wherever the ground the
     // road is cut into is a face rather than a floor. A carriageway or shoulder
     // mix drawn per column is fine underfoot on the flat and reads as static on
@@ -2813,9 +3046,13 @@ function surfaceRoute(
     }
     plan.surface[idx] = isStep
       ? states.step
-      : outer
-        ? states.shoulder(s.x, s.z)
-        : states.surface(s.x, s.z);
+      : states.urban === true
+        ? edge === 0
+          ? states.shoulder(s.x, s.z)
+          : states.surface(s.x, s.z, edge)
+        : outer
+          ? states.shoulder(s.x, s.z)
+          : states.surface(s.x, s.z);
   }
 }
 

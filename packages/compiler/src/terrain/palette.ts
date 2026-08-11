@@ -149,6 +149,31 @@ export interface StreetMaterials {
   readonly worn: string;
   readonly marking: string;
   readonly lane: string;
+  /**
+   * The **border course**: the outermost carriageway column, every class.
+   *
+   * A road with no edge is the "gray blob with speckles" the walk reported.
+   * Until now an edge existed only where the streetscape happened to lay a
+   * sidewalk curb — which needs a sidewalk band *and* ground already flush with
+   * the road, so it vanished on every hillside street, every arterial, every
+   * back lane and every district with no sidewalk. The border is now the
+   * carriageway's own outer band, so it is laid by the surfacer, on every
+   * class, on any slope, whether or not anything flanks it.
+   *
+   * Kept in the paving family and deliberately *not* the sidewalk's paving:
+   * the eye needs three tones across the section — walk, edge, road.
+   */
+  readonly kerb: string;
+  /**
+   * The **gutter course**: a dithered second course just inboard of the border,
+   * laid only on carriageways wide enough to keep a body between the two.
+   *
+   * This is the coursing that turns a wide avenue from one flat tone into a
+   * read cross-section — border, gutter, body, gutter, border — without adding
+   * a single block of height. Dithered rather than solid so it reads as laid
+   * stone rather than as painted line.
+   */
+  readonly course: string;
 }
 
 /** Palette symbol names for {@link StreetMaterials}, in the same order. */
@@ -159,6 +184,17 @@ export const STREET_CARRIAGEWAY_WORN_SYMBOL = "street.carriageway.worn";
 export const STREET_MARKING_SYMBOL = "street.marking";
 /** @see STREET_CARRIAGEWAY_SYMBOL */
 export const STREET_LANE_SYMBOL = "street.lane.surface";
+/**
+ * The carriageway's border course.
+ *
+ * Deliberately the **same symbol** the streetscape's sidewalk kerb resolves
+ * from (`GROUND_ROLE_SYMBOLS.kerb`): where a sidewalk exists, its kerb line and
+ * the carriageway's border are one continuous course of one material, which is
+ * what a kerb is. Where no sidewalk exists the carriageway lays it alone.
+ */
+export const STREET_KERB_SYMBOL = "street.curb";
+/** @see STREET_CARRIAGEWAY_SYMBOL */
+export const STREET_COURSE_SYMBOL = "street.carriageway.course";
 
 /**
  * Concrete tarmac and painted lines — the modern default.
@@ -172,6 +208,8 @@ export const MODERN_STREET_MATERIALS: StreetMaterials = Object.freeze({
   worn: "minecraft:light_gray_concrete",
   marking: "minecraft:white_concrete",
   lane: "minecraft:cobblestone",
+  kerb: "minecraft:smooth_stone",
+  course: "minecraft:andesite",
 });
 
 /**
@@ -192,6 +230,8 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       worn: "minecraft:mossy_cobblestone",
       marking: "minecraft:stone_bricks",
       lane: "minecraft:gravel",
+      kerb: "minecraft:andesite",
+      course: "minecraft:stone",
     }),
     // Northern pine: the local rock is deepslate, so the street is too.
     boreal_pine: Object.freeze({
@@ -199,6 +239,8 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       worn: "minecraft:deepslate_bricks",
       marking: "minecraft:polished_diorite",
       lane: "minecraft:gravel",
+      kerb: "minecraft:polished_deepslate",
+      course: "minecraft:deepslate_tiles",
     }),
     // Chalk downs: pale, dry, andesite-and-smooth-stone.
     birchwood_downs: Object.freeze({
@@ -206,6 +248,8 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       worn: "minecraft:cobblestone",
       marking: "minecraft:smooth_stone",
       lane: "minecraft:coarse_dirt",
+      kerb: "minecraft:polished_andesite",
+      course: "minecraft:stone",
     }),
     modern_city: MODERN_STREET_MATERIALS,
     // Quartz and calcite: a pale, swept street to match the pale, swept
@@ -216,6 +260,8 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       worn: "minecraft:smooth_quartz",
       marking: "minecraft:quartz_block",
       lane: "minecraft:smooth_stone",
+      kerb: "minecraft:polished_diorite",
+      course: "minecraft:diorite",
     }),
   });
 

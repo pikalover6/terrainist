@@ -752,6 +752,86 @@ describe("district street materials", () => {
     expect(counts.get("gray_concrete") ?? 0).toBe(0);
   });
 
+  /* --- F10: borders, coursing, per-district palettes ---------------------- */
+
+  it("gives every street class a border course, on both sides", () => {
+    const { p, result } = surface("modern_city");
+    // `smooth_stone` is the modern theme's street kerb, and this palette declares
+    // no `street.curb`, so every column carrying it is a carriageway border.
+    const border = written(p, result.road).get("smooth_stone") ?? 0;
+    // Two columns per cell of the avenue *and* two per cell of the lane: the
+    // coverage hole this closes is that a back lane used to get none at all.
+    expect(border).toBeGreaterThan(2 * AVENUE_CELLS);
+    // Both sides of both runs, and nothing in between: the border columns are
+    // exactly the outermost lane of each carriageway.
+    const rows = new Set<number>();
+    for (let k = 0; k < p.surface.length; k++) {
+      if (nameOf(p.surface[k] as number) !== "smooth_stone") continue;
+      rows.add(p.region.z0 + Math.floor(k / p.region.width));
+    }
+    expect([...rows].sort((a, b) => a - b)).toEqual([-3, 3, 19, 21]);
+  });
+
+  it("courses the gutter of a seven-wide avenue and not of a three-wide lane", () => {
+    const { p, result } = surface("modern_city");
+    expect(written(p, result.road).get("andesite") ?? 0).toBeGreaterThan(0);
+    // The lane is three wide: border, body, border, with no room for a gutter.
+    for (let k = 0; k < p.surface.length; k++) {
+      if (nameOf(p.surface[k] as number) !== "andesite") continue;
+      const z = p.region.z0 + Math.floor(k / p.region.width);
+      expect(Math.abs(z)).toBe(2);
+    }
+  });
+
+  it("keeps the worn share the wear chance names, with the border excluded", () => {
+    const { p, result } = surface("modern_city");
+    const counts = written(p, result.road);
+    const body = counts.get("gray_concrete") as number;
+    const worn = counts.get("light_gray_concrete") as number;
+    // The border and the gutter are not body, so the share is measured over the
+    // body alone — and it is still the window {@link STREET_WEAR_CHANCE} sits in.
+    const share = worn / (body + worn);
+    expect(share).toBeGreaterThan(0.05);
+    expect(share).toBeLessThan(0.2);
+  });
+
+  it("surfaces a district in its own material theme (F10)", () => {
+    const p = plan(region());
+    const result = surfaceStreetGraph({
+      graphs: [graph()],
+      graphThemes: ["boreal_pine"],
+      plan: p,
+      palette: emptyPalette,
+      stack,
+      placements: [],
+      buildingPaths: new Set<string>(),
+      seed: nodeSeed(11n, "world.downtown"),
+      theme: "modern_city",
+    });
+    const counts = written(p, result.road);
+    expect(counts.get("cobbled_deepslate") ?? 0).toBeGreaterThan(0);
+    expect(counts.get("polished_deepslate") ?? 0).toBeGreaterThan(0);
+    expect(counts.get("gray_concrete") ?? 0).toBe(0);
+  });
+
+  it("leaves a district on the root theme when it names none", () => {
+    const p = plan(region());
+    const result = surfaceStreetGraph({
+      graphs: [graph()],
+      graphThemes: [undefined],
+      plan: p,
+      palette: emptyPalette,
+      stack,
+      placements: [],
+      buildingPaths: new Set<string>(),
+      seed: nodeSeed(11n, "world.downtown"),
+      theme: "modern_city",
+    });
+    const base = surface("modern_city");
+    expect(Array.from(p.surface)).toEqual(Array.from(base.p.surface));
+    void result;
+  });
+
   it("is deterministic: two runs write byte-identical surfaces", () => {
     const a = surface("modern_city");
     const b = surface("modern_city");

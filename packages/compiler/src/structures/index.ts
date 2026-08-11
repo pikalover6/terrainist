@@ -905,6 +905,20 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       placements,
       buildingPaths,
       theme: theme.id,
+      // F10: a quarter that named its own `character.materialTheme` gets that
+      // theme's street family. Resolved with the very same `themes.materialTheme`
+      // fan-out row the building jobs use, so a district's road and its buildings
+      // can no longer disagree about what the place is built of. Every entry is
+      // `undefined` when no quarter overrides — which is every single-theme
+      // world — and the surfacer then takes the root path unchanged.
+      graphThemes: districts.map((d) => {
+        const scoped = intentFor(intents, d.nodePath);
+        const id = fanOut<string | undefined>(STRUCTURE_ROWS.materialTheme, scoped, {
+          nodePath: d.nodePath,
+          today: declaredTheme,
+        });
+        return id === undefined || id === themeId || id === theme.id ? undefined : id;
+      }),
       seed: themeSeed,
       // `roads.wearIntensity`: how patched the carriageway reads.
       wearChance: fanOut<number>(STRUCTURE_ROWS.wearIntensity, rootIntent, {
