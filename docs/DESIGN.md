@@ -30,6 +30,19 @@ Two properties are the moat, and every design decision defends them:
    unreachable stairs, no unstable fluid, no unsupported furniture. Nothing that
    samples a learned model can promise this.
 
+**And one governing principle for what a world must say (ratified by Kai,
+2026-08-10): THE MEDIUM CANNOT WHISPER.** Blocks have no fine grain — no
+faces, no text, no motion — so a world communicates identity only through
+icons at saturation. A prompt is a collage of mental images (the jolly
+roger, the treasure chest, the walls of Troy, the statue with the torch),
+and a generated world must over-exaggerate and SCREAM them: "nyc" without a
+Statue of Liberty is a fail however nice the city. The acceptance bar is
+the **stranger test** — a stranger names the prompt from ten seconds at any
+street corner. Coherence is the floor; identity is the product. The
+bespoke tier is the icon-delivery mechanism: an icon is a cheap plugin
+program, and a themed world carries dozens of small repetitions, not one
+statement.
+
 ## Locked decisions
 
 | Decision | Choice | Notes |

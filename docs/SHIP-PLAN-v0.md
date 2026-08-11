@@ -678,7 +678,11 @@ prompt space — the median customer is still measured, just not walk-asserted.
 
 ### 8.2 The frozen battery (P1–P7, prompts verbatim, seeds fixed)
 
-Universal assertions U1–U3 (§1.4) apply to all seven. Pre-conditions (§1.4)
+Universal assertions U1–U3 (§1.4) apply to all seven. **U1 AMENDED by
+Kai's ratification, 2026-08-10 (the icon law): U1 is now the stranger
+test — a stranger names the prompt from ten seconds at any street corner.
+"Central image present" is necessary but no longer sufficient; the theme
+must be unmissable at saturation.** Pre-conditions (§1.4)
 apply to all seven — note that "no `UNSATISFIABLE` … on a node the prompt
 names" is now doing real work: both S2 hillside worlds would fail it today.
 
