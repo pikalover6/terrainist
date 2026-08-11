@@ -233,6 +233,93 @@ export const NATURALISTIC_FLORA_SPECIES = Object.freeze({
 } satisfies Readonly<Record<string, FloraSpeciesDef>>);
 
 /**
+ * The fungal and fantasy halves of the catalog (§4.1, WP-C).
+ *
+ * All four carry an **empty `climates` list**, and for two different reasons
+ * that land in the same place. The mushrooms are naturalistic — no `fantasy`
+ * flag, no glow, no impossible material — but they are not what a temperate
+ * wood is made of, so they never enter a default composition table and are
+ * reached the way a fantasy species is: by being named. `glowcap` and
+ * `crystal_spire` are `fantasy: true`, which is §2's promise made structural —
+ * no climate row, no program keyword and no near-miss alias can reach one, so a
+ * "medieval fishing village" prompt cannot sprout glow trees by accident.
+ */
+export const FUNGAL_FLORA_SPECIES = Object.freeze({
+  /** The landmark of a fungal grove: a red dome on a pale stalk, across a valley. */
+  mushroom_giant_red: {
+    id: "mushroom_giant_red",
+    program: "fungal",
+    stratum: "emergent",
+    height: [8, 14],
+    trunkSymbol: "fungal.stem",
+    leafSymbol: "fungal.red_cap",
+    stemSymbol: "fungal.stem",
+    capSymbol: "fungal.red_cap",
+    climates: [],
+    knobs: { stemSpan: 2, capRadius: 5, capRise: 0.65, capKind: "dome" },
+  },
+  /**
+   * Flat brown plates at mid height — the grove's *canopy*, without which it is
+   * two giants over bare mud.
+   */
+  mushroom_shelf_brown: {
+    id: "mushroom_shelf_brown",
+    program: "fungal",
+    stratum: "canopy",
+    height: [5, 8],
+    trunkSymbol: "fungal.stem",
+    leafSymbol: "fungal.brown_cap",
+    stemSymbol: "fungal.stem",
+    capSymbol: "fungal.brown_cap",
+    climates: [],
+    knobs: { stemSpan: 1, capRadius: 4, capKind: "shelf" },
+  },
+  /** A lantern in the woods: what makes a fungal grove legible at night. */
+  glowcap: {
+    id: "glowcap",
+    program: "fungal",
+    stratum: "emergent",
+    height: [10, 16],
+    trunkSymbol: "fungal.warped_stem",
+    leafSymbol: "fungal.warped_cap",
+    stemSymbol: "fungal.warped_stem",
+    capSymbol: "fungal.warped_cap",
+    // Light, set *into* the cap's underside — never a lamp hanging in air.
+    decoSymbol: "glow.shroomlight",
+    // The flora tier's own lichen symbol; see `palette.ts` for why it is not
+    // `foliage.glow_lichen`.
+    hangingSymbol: "glow.lichen",
+    climates: [],
+    fantasy: true,
+    knobs: {
+      stemSpan: 2,
+      capRadius: 5,
+      capRise: 0.7,
+      capKind: "dome",
+      decoShare: 0.12,
+      hangingShare: 0.45,
+    },
+  },
+  /**
+   * A mineral "tree" that reads as *not a tree* at 60 blocks, which is the whole
+   * point of a fantasy stratum. One symbol for trunk and crown, because a
+   * crystal has no bark — `columnar` does not care.
+   */
+  crystal_spire: {
+    id: "crystal_spire",
+    program: "columnar",
+    stratum: "emergent",
+    height: [14, 22],
+    trunkSymbol: "crystal.amethyst",
+    leafSymbol: "crystal.amethyst",
+    decoSymbol: "crystal.cluster",
+    climates: [],
+    fantasy: true,
+    knobs: { radius: 2, ratio: 0.5, decoShare: 0.2 },
+  },
+} satisfies Readonly<Record<string, FloraSpeciesDef>>);
+
+/**
  * The closed species registry: the legacy four, then the naturalistic catalog.
  *
  * `ForestSpecies.shape` indexes into this, and the four existing names resolve
@@ -244,6 +331,7 @@ export const FLORA_SPECIES: Readonly<Record<string, FloraSpeciesDef>> = Object.f
   oak_round: { ...LEGACY_FLORA_SPECIES.oak_round, stratum: "canopy", climates: ["temperate"] },
   birch_slim: { ...LEGACY_FLORA_SPECIES.birch_slim, stratum: "canopy", climates: ["temperate"] },
   ...NATURALISTIC_FLORA_SPECIES,
+  ...FUNGAL_FLORA_SPECIES,
 });
 
 /**

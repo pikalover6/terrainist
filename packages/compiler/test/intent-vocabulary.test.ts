@@ -11,6 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 import { emptyResolvedIntent } from "../src/intent/index.js";
+import { FLORA_KEYWORDS } from "../src/terrain/flora-intent.js";
 import {
   FLORA_KINDS,
   checkScopeVocabulary,
@@ -76,7 +77,14 @@ describe("prefer / forbid grounding", () => {
     // The grounded entries are never complained about.
     expect(diagnostics[0]?.message).not.toContain("cottage");
     expect(diagnostics[1]?.message).not.toContain("fountain");
-    for (const kind of FLORA_KINDS) expect(diagnostics[2]?.fix).toContain(kind);
+    // §6.2's hint line: the vocabulary is now three closed sets and naming all
+    // 21 species plus 9 programs in a fix line would be a wall of text, so the
+    // line names the *kinds* of word and enumerates the keywords. The full
+    // vocabulary still rides on the diagnostic's `values`.
+    for (const keyword of FLORA_KEYWORDS) expect(diagnostics[2]?.fix).toContain(keyword);
+    expect(diagnostics[2]?.fix).toContain("species ids");
+    expect(FLORA_KINDS).toContain("spruce_tall");
+    expect(FLORA_KINDS).toContain("mushroom_giant_red");
   });
 
   it("says nothing at all about an intent whose vocabulary is entirely real", () => {

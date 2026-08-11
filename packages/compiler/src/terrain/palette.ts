@@ -97,6 +97,34 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "wood.stripped_spruce_log": "minecraft:stripped_spruce_log",
   "foliage.vine": "minecraft:vine",
   "fungal.brown_cap": "minecraft:brown_mushroom_block",
+  // --- the fungal and fantasy tiers (FLORA-GRAMMAR-v0 §4.2, WP-C) ----------
+  // All against the pinned 1.21.11 table; `flora-fungal.test.ts` holds every
+  // one of them to a block the registry actually carries, because a block name
+  // that does not exist is a chunk the client refuses to parse.
+  "fungal.stem": "minecraft:mushroom_stem",
+  "fungal.red_cap": "minecraft:red_mushroom_block",
+  "fungal.warped_stem": "minecraft:warped_stem",
+  "fungal.warped_cap": "minecraft:warped_wart_block",
+  "glow.shroomlight": "minecraft:shroomlight",
+  "glow.glowstone": "minecraft:glowstone",
+  /**
+   * The flora tier's glow lichen.
+   *
+   * **Not** `foliage.glow_lichen`, which §4.2 names and which this palette
+   * deliberately does *not* carry: that symbol is the green skin's, and it is
+   * theme-gated (`GLOW_LICHEN_SYMBOL`, `defineGreenSkinSymbols`) precisely so a
+   * medieval ruin does not glow at night. Putting it in `DEFAULT_PALETTE` would
+   * make `palette.has` true everywhere and open that gate for every ruined
+   * world — a behaviour change to shipped worlds in exchange for a spelling. So
+   * the fantasy tier takes its own symbol in its own family, resolving to the
+   * same block.
+   */
+  "glow.lichen": "minecraft:glow_lichen",
+  "foliage.firefly_bush": "minecraft:firefly_bush",
+  "crystal.amethyst": "minecraft:amethyst_block",
+  "crystal.cluster": "minecraft:amethyst_cluster",
+  "ground.mycelium": "minecraft:mycelium",
+  "ground.moss_block": "minecraft:moss_block",
   // --- roads (G4b) ---------------------------------------------------------
   "road.surface": "minecraft:dirt_path",
   "road.shoulder": {

@@ -718,13 +718,34 @@ export const columnar: FloraProgram = {
   canopyRadius(v, def) {
     return Math.max(1, knob(def, "radius", 2) + v.radiusDelta);
   },
-  blocks(v, def) {
+  blocks(v, def, rng) {
     const b = build();
     const height = Math.max(4, v.height);
     column(b, 0, 0, 0, height - 1);
     const r = Math.max(1, Math.min(3, knob(def, "radius", 2) + v.radiusDelta));
     const ry = Math.max(2, Math.round(height * knob(def, "ratio", 0.45)));
     const cy = height - ry + 1;
+    // Studs on the bare shaft (WP-C). Gated on `decoSymbol`, which no
+    // naturalistic columnar species declares — so `larch_columnar` draws
+    // nothing here and its geometry is untouched — and placed *before* the
+    // crown so a stud always wins its cell over a leaf.
+    //
+    // §4.1 gives `crystal_spire` a `crystal.cluster` deco, and a declared
+    // symbol no program ever emits is a dial that reports success and changes
+    // nothing. The stud sits against the shaft rather than on the crown's
+    // surface because §3.2 derives a `facing` block's orientation from a *wood*
+    // 6-neighbour and drops it when there is none: a cluster out on the crown
+    // would be dropped, silently, every time.
+    if (def.decoSymbol !== undefined) {
+      const share = knob(def, "decoShare", 0.18);
+      for (let dy = 1; dy < Math.max(2, cy - ry); dy++) {
+        if (rng() >= share) continue;
+        const side = Math.floor(rng() * 4);
+        const ox = side === 0 ? 1 : side === 1 ? -1 : 0;
+        const oz = side === 2 ? 1 : side === 3 ? -1 : 0;
+        if (!has(b, ox, dy, oz)) put(b, { dx: ox, dy, dz: oz, part: "deco" });
+      }
+    }
     for (let dy = cy - ry; dy <= cy + ry; dy++) {
       for (let dz = -r; dz <= r; dz++) {
         for (let dx = -r; dx <= r; dx++) {

@@ -295,6 +295,15 @@ describe("flora grandeur: the emergent budget (§5.3)", () => {
   it("the catalog's emergents are all tall enough to be worth a budget slot", () => {
     for (const def of Object.values(FLORA_SPECIES)) {
       if (def.stratum !== "emergent") continue;
+      // §8's prominence bar is *climate-relative*: an emergent's job is to
+      // stand over the canopy of the wood it anchors, and 13 is the floor that
+      // buys that against the shipped naturalistic canopies. A species with an
+      // empty `climates` list has no default composition to stand over — the
+      // fungal and fantasy tier of §4.1, reached only by being named, whose
+      // heights the spec fixes at 8–14 (`mushroom_giant_red`) and 10–16
+      // (`glowcap`) against a 5–8 fungal canopy. They are held to their own
+      // bar, against the grove's own canopy, in `flora-fungal.test.ts` (WP-C).
+      if ((def.climates ?? []).length === 0) continue;
       expect(def.height[0], `${def.id} minimum height`).toBeGreaterThanOrEqual(13);
     }
   });

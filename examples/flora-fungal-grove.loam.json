@@ -1,0 +1,70 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": { "name": "spore_hollow", "worldSeed": 4471, "spawn": { "zone": "west" } },
+  "root": {
+    "id": "hollow",
+    "kind": "composite",
+    "envelope": { "shape": "region", "size": [384, 384] },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": { "seaLevel": 62, "baseHeight": 70, "amplitude": 30, "frequency": 0.004, "soilDepth": 4 },
+        "children": [
+          {
+            "id": "the_hollow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": { "verb": "basin", "at": [0.5, 0.5], "radius": 130, "depth": 22, "profile": "rounded", "irregularity": 0.3 }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": { "forceTheme": "temperate", "humidityFrequency": 0.0009 }
+      },
+      {
+        "id": "grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": { "at": [0.5, 0.5], "radius": 120 },
+          "density": 0.14,
+          "spacing": 4,
+          "clumping": 0.7,
+          "maxSlope": 28,
+          "edgeFalloff": 20,
+          "undergrowth": { "grass": 0.15, "flowers": 0, "deadwood": 0.12 },
+          "strata": {
+            "emergent": {
+              "species": [{ "id": "red_giant", "shape": "mushroom_giant_red" }],
+              "budget": 4,
+              "exclusion": 36
+            },
+            "understory": "none",
+            "floor": "fungal"
+          },
+          "species": [
+            { "id": "brown_shelf", "shape": "mushroom_shelf_brown", "weight": 3 },
+            { "id": "damp_birch", "shape": "birch_slim", "weight": 1 }
+          ]
+        }
+      },
+      {
+        "id": "rim_wood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": { "all": true },
+          "density": 0.06,
+          "elevation": [8, 200],
+          "species": [{ "id": "rim_spruce", "shape": "spruce_tall" }]
+        }
+      }
+    ]
+  }
+}

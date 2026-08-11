@@ -141,6 +141,7 @@ import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
 import { ensureFanOutRows, fanOut, resolveIntents, type IntentResolution } from "../intent/index.js";
 import { TERRAIN_ROWS } from "./climate-intent.js";
+import { FLORA_ROWS, NO_FLORA_BIAS, type FloraBias } from "./flora-intent.js";
 import {
   caveDiagnostics,
   tunnelDiagnostics,
@@ -991,6 +992,13 @@ async function compileValidated(
                 ruinShellTrunks: structures.greenSkin.shellTrunks,
               }),
         };
+  // §6: the `character.flora` row. Neutral for every document that says nothing
+  // about flora, which is what makes the whole row byte-identical (fan-out law
+  // 2, and the intent byte-identity suite is the proof).
+  const floraBias = fanOut<FloraBias>(FLORA_ROWS.composition, intents.root, {
+    nodePath: rootPath,
+    today: NO_FLORA_BIAS,
+  });
   const scatter = scatterForests(
     forestNodes,
     plan,
@@ -1026,6 +1034,7 @@ async function compileValidated(
     // (`wallRoom`). Absent for a terrain-profile compile, and read only where
     // the street law elected a trunk.
     clip?.columns,
+    floraBias,
   );
   // F21: a forest node that planted nothing is author-actionable, and in the
   // feedback set — the ruins world lost a whole canopy to silence.
@@ -1307,6 +1316,7 @@ function unwrittenEmit(
     spawn: [spawn.x, spawn.y, spawn.z],
     connections: { examined: 0, rewritten: 0 },
     growth: { examined: 0, rewritten: 0, dropped: 0 },
+    flora: { examined: 0, dropped: 0 },
   };
 }
 

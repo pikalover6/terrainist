@@ -35,13 +35,13 @@ import {
   COURTYARD_SHARE_MIN,
   DISTRICT_FABRICS,
   DISTRICT_GROUND_POLICIES,
-  TREE_SHAPES,
   warning,
   type DistrictFabric,
   type LoamDiagnostic,
 } from "@terrainist/spec";
 
 import type { IntentResolution, ResolvedIntent } from "../intent/index.js";
+import { FLORA_KEYWORDS, FLORA_KIND_WORDS, isFloraWord } from "../terrain/flora-intent.js";
 import { installUrbanForms, urbanForm, urbanForms } from "../layout/forms/index.js";
 
 /* -------------------------------------------------------------------------- */
@@ -140,8 +140,16 @@ export function resolveMaterialTheme(named: string, nodePath: string): ThemeReso
 /* prefer / forbid lists                                                       */
 /* -------------------------------------------------------------------------- */
 
-/** Legal flora words: the tree shapes the vegetation pass implements. */
-export const FLORA_KINDS: readonly string[] = Object.freeze([...TREE_SHAPES]);
+/**
+ * Legal flora words (FLORA-GRAMMAR-v0 §6.1).
+ *
+ * The union of three closed sets — every species id of the catalog, every shape
+ * program name, and the nine character keywords — owned by the flora grammar
+ * and re-exported here so the grounding pass has one vocabulary to check
+ * against. It used to be the four tree shapes; widening it is additive, so
+ * every word that grounded before still grounds.
+ */
+export const FLORA_KINDS: readonly string[] = FLORA_KIND_WORDS;
 
 /** Every archetype id the structure catalog implements. */
 export function archetypeIds(): readonly string[] {
@@ -338,7 +346,9 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
   }
 
   const flora = [...(character.flora?.prefer ?? []), ...(character.flora?.forbid ?? [])];
-  const badFlora = groundList(flora, (w) => FLORA_KINDS.includes(w)).unknown;
+  // Alias-aware: `mossy`, `mushroom` and `bioluminescent` are near misses the
+  // hand-written table carries, and a word the table resolves is grounded.
+  const badFlora = groundList(flora, isFloraWord).unknown;
   if (badFlora.length > 0) {
     out.push(
       listWarning(
@@ -347,7 +357,7 @@ export function checkScopeVocabulary(scope: ResolvedIntent): readonly LoamDiagno
         "flora",
         badFlora,
         FLORA_KINDS,
-        `flora words are tree shapes: ${FLORA_KINDS.join(", ")}`,
+        `flora words are species ids, shape programs, or one of: ${FLORA_KEYWORDS.join(", ")}`,
       ),
     );
   }

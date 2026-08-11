@@ -14,6 +14,7 @@
  * counting proxy.
  */
 
+import { fungal } from "./fungal.js";
 import { NATURALISTIC_PROGRAMS } from "./naturalistic.js";
 import {
   knob,
@@ -221,6 +222,7 @@ export const SHAPE_PROGRAMS = Object.freeze({
   conifer,
   blob,
   ...NATURALISTIC_PROGRAMS,
+  fungal,
 } satisfies Readonly<Record<string, FloraProgram>>);
 
 /** A program name the registry knows. */

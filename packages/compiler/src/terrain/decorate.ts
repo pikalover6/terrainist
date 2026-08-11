@@ -149,6 +149,18 @@ interface DecorStates {
   readonly podzol: number;
   readonly coarseDirt: number;
   readonly rootedDirt: number;
+  /** The floor variants of §5.6 (WP-C). Resolved always, used only when asked. */
+  readonly mycelium: number;
+  readonly mossBlock: number;
+  /**
+   * Glow lichen lying on the ground it grows out of.
+   *
+   * A multiface block with no support is a block that pops on the first update,
+   * so the state is written with `down = true` — attached to the top face of
+   * the column's own surface block, which is the only face a floor lichen has.
+   */
+  readonly glowLichen: number;
+  readonly fireflyBush: number;
 }
 
 function resolveStates(palette: Palette, stack: PrismarineStack): DecorStates {
@@ -187,6 +199,14 @@ function resolveStates(palette: Palette, stack: PrismarineStack): DecorStates {
     podzol: state("ground.podzol"),
     coarseDirt: state("ground.coarse_dirt"),
     rootedDirt: state("ground.rooted_dirt"),
+    mycelium: state("ground.mycelium"),
+    mossBlock: state("ground.moss_block"),
+    glowLichen: withProps(
+      "minecraft:glow_lichen",
+      { down: "true", up: "false", north: "false", south: "false", east: "false", west: "false" },
+      state("glow.lichen"),
+    ),
+    fireflyBush: state("foliage.firefly_bush"),
   };
 }
 
@@ -276,6 +296,18 @@ function decorateForest(
   const greenShare = input.greenShare ?? TOWN_GREEN_DENSITY;
   const cover = detailSeed(node.seed, "undergrowth");
   const { grass, flowers, deadwood } = node.params.undergrowth;
+  /**
+   * Which floor table this wood dresses from (§5.6).
+   *
+   * `default` is today's, unchanged and unconditional — the reach law: a node
+   * that declared no `strata` has no `floor`, so every existing world takes
+   * exactly the branches it always took. The two variants reuse this pass's
+   * structure (a soil conversion, then a per-column draw against the same
+   * `grass`/`flowers`/`deadwood` probabilities) and only swap the tables.
+   */
+  const floor = node.strata?.floor ?? "default";
+  const fungal = floor === "fungal";
+  const glow = floor === "glow";
 
   for (let j = 0; j < region.depth; j++) {
     const z = region.z0 + j;
@@ -318,6 +350,14 @@ function decorateForest(
         // dirt is a change to what was built, not to what grows on it. The
         // green adds plants and only plants.
         if (hash2(seeds.green, x, z, 0) >= greenShare) continue;
+      } else if (fungal && shade >= DENSE_SHADE) {
+        // Mycelium under the caps: the grove's ground is the reason it reads as
+        // a *place* rather than as a wood somebody put mushrooms in.
+        surface[idx] = states.mycelium;
+      } else if ((fungal || glow) && soilNoise > 0.42) {
+        // The variants take moss where the default takes coarse and rooted
+        // dirt: a damp hollow has no bare patches.
+        surface[idx] = states.mossBlock;
       } else if (cold && shade >= DENSE_SHADE && hash2(cover, x, z, 1) < 0.7) {
         surface[idx] = states.podzol;
       } else if (soilNoise > 0.42) {
@@ -391,6 +431,19 @@ function decorateForest(
       // --- shade cover ------------------------------------------------------
       if (shade >= DENSE_SHADE) {
         const r = hash2(cover, x, z, 6);
+        // §5.6: the fungal floor draws mushrooms at **4×** the default shade
+        // rate — the 0.16..0.19 band becomes 0.16..0.28 — and keeps the moss
+        // carpet it already had. Same draw, same salt, wider band.
+        if (fungal && r >= 0.16 && r < 0.28) {
+          blocks.push({
+            x,
+            y,
+            z,
+            stateId: hash2(cover, x, z, 7) < 0.5 ? states.brownMushroom : states.redMushroom,
+          });
+          counts["shade"] = (counts["shade"] ?? 0) + 1;
+          continue;
+        }
         if (r < 0.16) {
           blocks.push({ x, y, z, stateId: states.mossCarpet });
           counts["shade"] = (counts["shade"] ?? 0) + 1;
@@ -433,7 +486,27 @@ function decorateForest(
         lacunarity: 2,
         gain: 0.5,
       });
-      if (patch > 0.28 && shade < DENSE_SHADE) {
+      // §5.6, the glow floor: lichen on the surface column at the flower rate
+      // and a firefly bush at a fifth of it — the two blocks that make a hollow
+      // walkable and legible at night — with the default grass draw underneath
+      // them. Not gated on the flower *patch*: a light source that only occurs
+      // in meadows is a light source a player never meets under a canopy.
+      if (glow) {
+        const g0 = hash2(cover, x, z, 10);
+        if (g0 < Math.min(1, flowers * 6)) {
+          blocks.push({ x, y, z, stateId: states.glowLichen });
+          counts["flowers"] = (counts["flowers"] ?? 0) + 1;
+          continue;
+        }
+        if (g0 < Math.min(1, flowers * 7.2)) {
+          blocks.push({ x, y, z, stateId: states.fireflyBush });
+          counts["flowers"] = (counts["flowers"] ?? 0) + 1;
+          continue;
+        }
+      }
+      // The fungal floor has no flowers at all: a mycelium hollow with poppies
+      // in it is two biomes arguing.
+      if (patch > 0.28 && shade < DENSE_SHADE && !fungal && !glow) {
         if (hash2(cover, x, z, 10) < Math.min(1, flowers * 6)) {
           // Species is picked per *meadow*, not per column: a real flower field
           // is mostly one kind with a second mixed through it, and rolling five

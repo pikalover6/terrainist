@@ -92,6 +92,15 @@ export const FLORA_SPECIES_IDS = [
   "kapok_emergent",
   "jungle_broadleaf",
   "tree_fern",
+  // The fungal pair (FLORA-GRAMMAR-v0 §4.1, WP-C). Naturalistic — no `fantasy`
+  // flag — but with an *empty* climate list: they are not what a temperate wood
+  // is made of, so they are reached only by being named.
+  "mushroom_giant_red",
+  "mushroom_shelf_brown",
+  // The fantasy pair. Legal to name at any time; never reachable from a climate
+  // default (§2), which is the compiler's business rather than the validator's.
+  "glowcap",
+  "crystal_spire",
 ] as const;
 
 /** A flora species id — what a `species` entry's `shape` names. */

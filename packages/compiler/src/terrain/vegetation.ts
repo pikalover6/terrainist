@@ -46,6 +46,7 @@ import type {
 import { ZONE_TOKENS, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import {
+  FLORA_SPECIES,
   LEGACY_FLORA_SPECIES,
   SHAPE_PROGRAMS,
   CLIMATE_STRATA,
@@ -60,6 +61,7 @@ import {
 } from "./flora/index.js";
 import type { ColumnPlan } from "./columns.js";
 import { FluidKind } from "./columns.js";
+import { isNeutralFlora, type FloraBias } from "./flora-intent.js";
 import { chebyshevDistance, featherWeight } from "./landuse.js";
 import type { Palette } from "./palette.js";
 
@@ -955,6 +957,15 @@ export function scatterForests(
    * is the same set the crown will be tested against later.
    */
   solids?: Uint8Array,
+  /**
+   * The `character.flora` fan-out's answer (§6), or `undefined`.
+   *
+   * Read only through {@link isNeutralFlora}: a document that says nothing
+   * about flora — which is every document that validates today — takes exactly
+   * the branches it always took, and the bias is structurally absent rather
+   * than conditionally applied.
+   */
+  floraBias?: FloraBias,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -988,7 +999,7 @@ export function scatterForests(
     elected === undefined || solids === undefined ? undefined : wallRoom(solids, region.width, region.depth);
 
   for (const node of nodes) {
-    const params = resolveForestParams(node.params);
+    const params = biasParams(resolveForestParams(node.params), floraBias);
     const areaWobbleSeed = seed32(streamSeed(node.seed, "scatter.area-edge"));
     const mask = forestEligibility(
       plan,
@@ -1024,30 +1035,43 @@ export function scatterForests(
       }
     }
     const before = trees.length;
-    const strata = resolveStrata(node.params.strata);
+    const strata = biasStrata(resolveStrata(node.params.strata), floraBias);
     // Strata run in a fixed order — emergent, canopy, understory — on three
     // named streams. Order matters only through the shared occupancy mask,
     // which is already order-dependent (row-major) today; naming the order in
     // one place is what keeps it deterministic.
     if (strata === undefined) {
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false, undefined, elected, room);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false, undefined, elected, room, floraBias);
     } else {
       const theme = nodeClimateTheme(mask, climate);
       const emergentLive = stratumLive(strata.emergent);
       const emergentSpecies = emergentLive
-        ? stratumSpecies(strata.emergent, theme, "emergent", CLIMATE_STRATA)
+        ? biasSpecies(
+            stratumSpecies(strata.emergent, theme, "emergent", CLIMATE_STRATA),
+            "emergent",
+            floraBias,
+          )
         : [];
       const emergent = emergentLive
-        ? scatterEmergent(node, params, strata.emergent, emergentSpecies, plan, mask, occupancy, palette, trees, clearing)
+        ? scatterEmergent(node, params, strata.emergent, emergentSpecies, plan, mask, occupancy, palette, trees, clearing, floraBias)
         : { budget: 0, placed: 0, refused: 0 };
       // §5.5: with a live emergent stratum the mega-spruce draw is suppressed —
       // the budget has taken over the "rare and landmark-like" job, and a wood
       // with both would be the opposite of rare.
       const resolvedCanopy: ResolvedStrata =
         strata.canopy === "default"
-          ? { ...strata, canopy: { species: stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA) } }
+          ? {
+              ...strata,
+              canopy: {
+                species: biasSpecies(
+                  stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA),
+                  "canopy",
+                  floraBias,
+                ),
+              },
+            }
           : strata;
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy, elected, room);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy, elected, room, floraBias);
       let understory = 0;
       if (stratumLive(strata.understory)) {
         const shade = canopyCover(plan, trees.slice(before));
@@ -1055,7 +1079,11 @@ export function scatterForests(
           node,
           params,
           strata.understory,
-          stratumSpecies(strata.understory, theme, "understory", CLIMATE_STRATA),
+          biasSpecies(
+            stratumSpecies(strata.understory, theme, "understory", CLIMATE_STRATA),
+            "understory",
+            floraBias,
+          ),
           plan,
           mask,
           occupancy,
@@ -1063,6 +1091,7 @@ export function scatterForests(
           palette,
           trees,
           clearing,
+          floraBias,
         );
       }
       strataReports.push({
@@ -1215,6 +1244,8 @@ function scatterOne(
    * see {@link fitStreetTree}.
    */
   room?: Uint8Array,
+  /** The `character.flora` bias (§6); neutral for every document without one. */
+  bias?: FloraBias,
 ): void {
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
@@ -1226,12 +1257,15 @@ function scatterOne(
   // makes the whole feature additive: `strata` adds the layer above it and the
   // layer below it.
   const canopy = strata?.canopy ?? "authored";
-  const species =
+  const species = biasSpecies(
     canopy === "authored"
       ? node.params.species
       : typeof canopy === "string"
         ? node.params.species
-        : canopy.species;
+        : canopy.species,
+    "canopy",
+    bias,
+  );
   const weights = species.map((s) => s.weight ?? 1);
   // `density` is trees per eligible column, so one cell wants
   // `density · spacing²` of them. Below one that is a probability; at or above
@@ -1368,6 +1402,15 @@ function scatterOne(
           mega,
           trunkState: palette.state(chosen.trunkPalette ?? def.trunkSymbol),
           leafState: palette.state(chosen.leafPalette ?? def.leafSymbol),
+          // Every other part state the species declares. Undefined for all four
+          // legacy shapes — none of them names a root, stem, cap, hanging, dead
+          // or deco symbol — so this object is exactly the one it has always
+          // been for every document that validates today. It is not undefined
+          // for a species whose program emits a `stem` or a `cap`, and without
+          // it naming one in a plain `species` list (no `strata`) resolves no
+          // state for a part its program emits, which §3.2 calls a compiler bug
+          // and the emitter throws on.
+          ...partStates(def, palette),
         };
         out.push(
           strata === undefined
@@ -1386,11 +1429,107 @@ function scatterOne(
                 mega,
                 stratum: "canopy",
                 palette,
+                ...(bias === undefined || bias.ageShift === 0 ? {} : { ageShift: bias.ageShift }),
               }),
         );
       }
     }
   }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* The `character.flora` bias (FLORA-GRAMMAR-v0 §6)                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Apply the bias to a node's resolved params.
+ *
+ * Two numbers move and no more: the canopy's density (`sparse`) and the
+ * undergrowth's deadwood share (`deadwood`). Both are returned as a *new*
+ * object only when the bias is live, so a neutral bias hands back the very
+ * object it was given and the placement path is unchanged by identity as well
+ * as by value.
+ */
+function biasParams(
+  params: ReturnType<typeof resolveForestParams>,
+  bias: FloraBias | undefined,
+): ReturnType<typeof resolveForestParams> {
+  if (isNeutralFlora(bias) || bias === undefined) return params;
+  if (bias.canopyDensity === 1 && bias.deadwood === 1) return params;
+  return {
+    ...params,
+    density: clamp01(params.density * bias.canopyDensity),
+    undergrowth: {
+      ...params.undergrowth,
+      deadwood: clamp01(params.undergrowth.deadwood * bias.deadwood),
+    },
+  };
+}
+
+/**
+ * Apply the bias to a node's composition.
+ *
+ * The keywords that switch a stratum on have to be able to do so for a node
+ * that declared no `strata` at all — "an ancient mossy old-growth forest" is a
+ * prompt, not a document — so this may *create* a composition where
+ * {@link resolveStrata} returned `undefined`. It never switches one off, and it
+ * never overrides a floor the author wrote: an explicit `strata` outranks a
+ * word, which is the same precedence every other intent row has.
+ */
+function biasStrata(
+  strata: ResolvedStrata | undefined,
+  bias: FloraBias | undefined,
+): ResolvedStrata | undefined {
+  if (isNeutralFlora(bias) || bias === undefined) return strata;
+  const wants = bias.emergent || bias.understory > 0 || bias.floor !== undefined;
+  if (!wants && strata === undefined) return undefined;
+  const base: ResolvedStrata = strata ?? { canopy: "authored", floor: "default" };
+  const understory =
+    bias.understory > 0 && !stratumLive(base.understory)
+      ? ({ density: UNDERSTORY_SHARE * bias.understory } as StratumSpec)
+      : base.understory;
+  return {
+    ...base,
+    ...(bias.emergent && !stratumLive(base.emergent) ? { emergent: "default" as StratumSpec } : {}),
+    ...(understory === undefined ? {} : { understory }),
+    floor: base.floor === "default" ? (bias.floor ?? "default") : base.floor,
+  };
+}
+
+/**
+ * Apply the bias to one stratum's species list.
+ *
+ * Three moves, in the order §6.2 gives them: `forbid` removes, `weights`
+ * multiplies, and `admit` appends a species the table never named — but only
+ * into the stratum the *catalog* says it belongs to, so preferring a giant does
+ * not put one in the understory.
+ */
+function biasSpecies(
+  species: readonly ForestSpecies[],
+  stratum: "emergent" | "canopy" | "understory",
+  bias: FloraBias | undefined,
+): readonly ForestSpecies[] {
+  if (isNeutralFlora(bias) || bias === undefined) return species;
+  const out: ForestSpecies[] = [];
+  const present = new Set<string>();
+  for (const entry of species) {
+    if (bias.forbid.includes(entry.shape)) continue;
+    present.add(entry.shape);
+    const factor = bias.weights[entry.shape];
+    out.push(factor === undefined ? entry : { ...entry, weight: (entry.weight ?? 1) * factor });
+  }
+  for (const id of bias.admit) {
+    if (present.has(id)) continue;
+    const def = FLORA_SPECIES[id];
+    if (def === undefined || (def.stratum ?? "canopy") !== stratum) continue;
+    out.push({
+      id,
+      shape: id as FloraSpeciesId,
+      ...(bias.weights[id] === undefined ? {} : { weight: bias.weights[id] as number }),
+    });
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1581,6 +1720,43 @@ function stratumSpecies(
   return row.map((id) => ({ id, shape: id as FloraSpeciesId }));
 }
 
+
+/**
+ * The optional part states a species declares, resolved from the palette.
+ *
+ * Shared by the plain placement path and by {@link makePlacement}, because a
+ * species' parts are a property of the species and not of whether the node that
+ * planted it declared `strata`.
+ */
+function partStates(
+  def: FloraSpeciesDef,
+  palette: Palette,
+): {
+  rootState?: number;
+  deadState?: number;
+  hangingState?: number;
+  decoState?: number;
+  stemState?: number;
+  capState?: number;
+} {
+  const at = (symbol: string | undefined): number | undefined =>
+    symbol === undefined ? undefined : palette.state(symbol);
+  const root = at(def.rootSymbol);
+  const dead = at(def.deadSymbol);
+  const hanging = at(def.hangingSymbol);
+  const deco = at(def.decoSymbol);
+  const stem = at(def.stemSymbol);
+  const cap = at(def.capSymbol);
+  return {
+    ...(root === undefined ? {} : { rootState: root }),
+    ...(dead === undefined ? {} : { deadState: dead }),
+    ...(hanging === undefined ? {} : { hangingState: hanging }),
+    ...(deco === undefined ? {} : { decoState: deco }),
+    ...(stem === undefined ? {} : { stemState: stem }),
+    ...(cap === undefined ? {} : { capState: cap }),
+  };
+}
+
 /**
  * Fill in one placement's variation, program seed and part states.
  *
@@ -1602,6 +1778,8 @@ function makePlacement(args: {
   mega: boolean;
   stratum: "emergent" | "canopy" | "understory";
   palette: Palette;
+  /** §6's `ancient` / `deadwood` keywords: the `age` envelope shifted up. */
+  ageShift?: number;
 }): TreePlacement {
   const { entry, def, stream, programStream, x, z, palette } = args;
   const optional = (symbol: string | undefined): { state: number } | undefined =>
@@ -1615,7 +1793,12 @@ function makePlacement(args: {
   const age =
     def.age === undefined
       ? undefined
-      : def.age[0] + positionFloat(stream, x, 8, z) * (def.age[1] - def.age[0]);
+      : Math.min(
+          1,
+          def.age[0] +
+            positionFloat(stream, x, 8, z) * (def.age[1] - def.age[0]) +
+            (args.ageShift ?? 0),
+        );
   const theta = 2 * Math.PI * positionFloat(stream, x, 9, z);
   return {
     nodeId: args.node.id,
@@ -1669,6 +1852,7 @@ function scatterEmergent(
   palette: Palette,
   out: TreePlacement[],
   clearing: Float32Array | undefined,
+  bias?: FloraBias,
 ): { budget: number; placed: number; refused: number } {
   const { region, ground } = plan;
   let area = 0;
@@ -1769,6 +1953,7 @@ function scatterEmergent(
         mega: false,
         stratum: "emergent",
         palette,
+        ...(bias === undefined || bias.ageShift === 0 ? {} : { ageShift: bias.ageShift }),
       }),
     );
     placed += 1;
@@ -1854,6 +2039,7 @@ function scatterUnderstory(
   palette: Palette,
   out: TreePlacement[],
   clearing: Float32Array | undefined,
+  bias?: FloraBias,
 ): number {
   const { region, ground } = plan;
   const density = stratumNumber(spec, "density") ?? UNDERSTORY_SHARE * params.density;
@@ -1917,6 +2103,7 @@ function scatterUnderstory(
           mega: false,
           stratum: "understory",
           palette,
+          ...(bias === undefined || bias.ageShift === 0 ? {} : { ageShift: bias.ageShift }),
         }),
       );
       placed += 1;
@@ -2305,6 +2492,9 @@ export {
   FLORA_SPECIES,
   NATURALISTIC_FLORA_SPECIES,
   NATURALISTIC_PROGRAMS,
+  FUNGAL_FLORA_SPECIES,
+  MAX_CAP_RADIUS,
+  fungal,
   speciesFor,
   LEGACY_FLORA_SPECIES,
   LEAF_STATE_POLICY,
