@@ -108,9 +108,13 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
   // Three, not two: a max-effort program call runs for minutes and burns six
   // figures of reasoning tokens, which is exactly the shape of request a
   // provider drops, and two attempts was observed losing a landmark outright
-  // (2026-08-04). Backoff is linear in the attempt so a provider mid-wobble
-  // gets longer to settle than the first stumble allows.
-  const attempts = 3;
+  // (2026-08-04). Raised to six with exponential backoff after two unattended
+  // battery generations died the same night (2026-08-10/11) to connection
+  // blips that outlasted the old 2s+4s: a Wi-Fi renegotiation or DNS hiccup
+  // runs tens of seconds, and an unattended run must ride it out. Worst case
+  // this adds ~62s to a doomed call, which is nothing against losing a world.
+  const attempts = 6;
+  const backoff = (attempt: number): number => Math.min(2000 * 2 ** (attempt - 1), 30_000);
   let lastFailure: Error | undefined;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     let response: Awaited<ReturnType<FetchLike>>;
@@ -126,7 +130,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       });
     } catch (cause) {
       lastFailure = new Error(`OpenRouter fetch failed: ${(cause as Error).message}`);
-      if (attempt < attempts) await sleepMs(2000 * attempt);
+      if (attempt < attempts) await sleepMs(backoff(attempt));
       continue;
     }
 
@@ -135,7 +139,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       const failure = new Error(`OpenRouter ${response.status} ${response.statusText}: ${detail}`);
       if (response.status >= 500 && attempt < attempts) {
         lastFailure = failure;
-        await sleepMs(2000 * attempt);
+        await sleepMs(backoff(attempt));
         continue;
       }
       throw failure;
@@ -148,7 +152,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
       lastFailure = new Error(
         `OpenRouter response body unreadable (truncated?): ${(cause as Error).message}`,
       );
-      if (attempt < attempts) await sleepMs(2000 * attempt);
+      if (attempt < attempts) await sleepMs(backoff(attempt));
       continue;
     }
     try {
@@ -159,7 +163,7 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
         attempt < attempts
       ) {
         lastFailure = cause;
-        await sleepMs(2000 * attempt);
+        await sleepMs(backoff(attempt));
         continue;
       }
       throw cause;
