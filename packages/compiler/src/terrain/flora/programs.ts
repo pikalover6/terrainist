@@ -15,11 +15,66 @@
  */
 
 import { NATURALISTIC_PROGRAMS } from "./naturalistic.js";
-import { knob, type FloraBlock, type FloraProgram, type FloraSpeciesDef, type FloraVariation } from "./types.js";
+import {
+  knob,
+  overgrowth,
+  type FloraBlock,
+  type FloraProgram,
+  type FloraSpeciesDef,
+  type FloraVariation,
+} from "./types.js";
+
+/**
+ * Default allometry, for a species that names none (FLORA-GRAMMAR §3.13).
+ *
+ * `crownGrowth` / `spreadGrowth` are the exponent the crown's **radius** grows
+ * by against {@link overgrowth}: half-power, so doubling a tree's height widens
+ * its crown by ~40 percent rather than doubling it — a tall tree is taller than
+ * it is wide, which is the thing a pole with a puck on it failed to be in the
+ * other direction. `crownShare` is the crown's **half-depth** as a share of the
+ * trunk, and it is the clause that actually kills the mullet: at 0.30 the crown
+ * clothes the top ~60 percent of the trunk however tall the trunk is.
+ */
+export const CROWN_GROWTH = 0.5;
+/** @see CROWN_GROWTH */
+export const CROWN_SHARE = 0.3;
+
+/**
+ * The taxicab reach law 2 allows a canopy block from the nearest wood
+ * (FLORA-GRAMMAR §3.3, and the frozen exception list in `flora-programs.test.ts`).
+ */
+export const LAW2_REACH = 5;
+
+/**
+ * The crown radius of a `blob`, allometry included.
+ *
+ * Shared by `canopyRadius` and `blocks` because the clip's pre-rejection, the
+ * shade map and the emitted geometry must agree to the block about how far a
+ * crown reaches.
+ */
+function blobRadius(v: FloraVariation, def: FloraSpeciesDef): number {
+  const grown = overgrowth(v, def);
+  const radius = knob(def, "radius", 2);
+  return Math.max(1, Math.round(radius * grown ** knob(def, "crownGrowth", CROWN_GROWTH)) + v.radiusDelta);
+}
 
 function isTrunk(trunk: readonly (readonly [number, number])[], dx: number, dz: number): boolean {
   for (const [tx, tz] of trunk) if (tx === dx && tz === dz) return true;
   return false;
+}
+
+/**
+ * A conifer's whorl radius, allometry included.
+ *
+ * A conifer already lengthens its cone with the trunk — the canopy starts at
+ * `0.35 · height` — so only the width needs the law, and it wants less of it
+ * than a broadleaf does: a spruce twice its table height is a *spire*, not a
+ * ball. Hence the lower default exponent.
+ */
+function coniferSpread(v: FloraVariation, def: FloraSpeciesDef): number {
+  const grown = overgrowth(v, def);
+  const spread = knob(def, "spread", 2);
+  return Math.max(1, Math.round(spread * grown ** knob(def, "spreadGrowth", CROWN_GROWTH * 0.8)));
 }
 
 /**
@@ -33,10 +88,11 @@ function isTrunk(trunk: readonly (readonly [number, number])[], dx: number, dz: 
 export const conifer: FloraProgram = {
   id: "conifer",
   canopyRadius(v: FloraVariation, def: FloraSpeciesDef): number {
-    return Math.max(1, knob(def, "spread", 2) + v.radiusDelta + (v.mega ? 2 : 0));
+    return Math.max(1, coniferSpread(v, def) + v.radiusDelta + (v.mega ? 2 : 0));
   },
   blocks(v: FloraVariation, def: FloraSpeciesDef): FloraBlock[] {
-    const spread = knob(def, "spread", 2);
+    const grown = overgrowth(v, def);
+    const spread = coniferSpread(v, def);
     const { height, radiusDelta, mega } = v;
     const out: FloraBlock[] = [];
     const trunk: readonly (readonly [number, number])[] = mega
@@ -66,6 +122,12 @@ export const conifer: FloraProgram = {
           const qx = mega ? Math.min(Math.abs(dx), Math.abs(dx - 1)) : Math.abs(dx);
           const qz = mega ? Math.min(Math.abs(dz), Math.abs(dz - 1)) : Math.abs(dz);
           if (qx * qx + qz * qz > r * r + r) continue;
+          // Law 2 on a grown whorl, for the reason `blob` cuts its corners: a
+          // conifer's only wood is its axis, and past `r = 3` the whorl's own
+          // slack reaches taxicab 6. Guarded on `grown` so the four enumerated
+          // mega-spruce exceptions — which are inside the envelope and
+          // therefore byte-identical geometry — keep their blocks.
+          if (grown > 1 && qx + qz + Math.max(0, dy - (height - 1)) > LAW2_REACH) continue;
           out.push({ dx, dy, dz, part: "leaves" });
         }
       }
@@ -102,22 +164,34 @@ export const conifer: FloraProgram = {
 export const blob: FloraProgram = {
   id: "blob",
   canopyRadius(v: FloraVariation, def: FloraSpeciesDef): number {
-    return Math.max(1, knob(def, "radius", 2) + v.radiusDelta);
+    return blobRadius(v, def);
   },
   blocks(v: FloraVariation, def: FloraSpeciesDef): FloraBlock[] {
-    const radius = knob(def, "radius", 2);
     const squash = knob(def, "squash", 1);
     const crownMin = knob(def, "crownMin", 1);
     const crownDrop = knob(def, "crownDrop", 0);
     const bareShare = knob(def, "bareShare", 0);
-    const { height, radiusDelta } = v;
+    const { height } = v;
     const out: FloraBlock[] = [];
     for (let dy = 0; dy < height; dy++) out.push({ dx: 0, dy, dz: 0, part: "log" });
-    const r = Math.max(1, radius + radiusDelta);
-    const ry = Math.max(1, crownMin, Math.round(r * squash));
+    const grown = overgrowth(v, def);
+    const r = blobRadius(v, def);
+    // Allometry (2026-08-10). Inside the envelope `grown` is exactly 1 and both
+    // lines below are the arithmetic they have always been. Above it the crown
+    // takes a share of the *trunk* for its half-depth and is dropped as far as
+    // law 1 allows, so its top layer still sits one block above the last log
+    // (`cy + ry = height + 1`, the very clamp `crownDrop` is bounded by) and its
+    // bottom reaches down to `height + 1 - 2·ry` — the top ~60 percent of the
+    // trunk at the default share, whatever the trunk.
+    const ry = Math.max(
+      1,
+      crownMin,
+      Math.round(r * squash),
+      grown > 1 ? Math.round(height * knob(def, "crownShare", CROWN_SHARE)) : 0,
+    );
     // `ry - 2` is the law-1 clamp: it holds `cy + ry ≥ height + 1`, so the
     // crown's top layer always sits above the last log whatever the drop asks.
-    const cy = height - 1 - Math.max(0, Math.min(crownDrop, ry - 2));
+    const cy = grown > 1 ? height + 1 - ry : height - 1 - Math.max(0, Math.min(crownDrop, ry - 2));
     const floorY = Math.floor(bareShare * height);
     for (let dy = Math.max(cy - ry, floorY); dy <= cy + ry; dy++) {
       for (let dz = -r; dz <= r; dz++) {
@@ -125,6 +199,15 @@ export const blob: FloraProgram = {
           if (dx === 0 && dz === 0 && dy < height) continue;
           const vy = (dy - cy) / ry;
           if ((dx * dx + dz * dz) / (r * r) + vy * vy > 1.15) continue;
+          // Law 2, at the source. A `blob` carries no limbs — the only wood it
+          // has is the trunk column — so a leaf's distance from wood is just
+          // its own offset, and a grown crown is the first one wide enough to
+          // break the bound: at `r = 4` the ellipsoid's slack admits the
+          // `(±3, ±3)` corners at taxicab 6. Cutting the corners is both the
+          // law and the better silhouette (a rounded crown, not a faceted
+          // barrel); inside the envelope `r ≤ 3` and the test never fires,
+          // which is why the legacy geometry is untouched.
+          if (Math.abs(dx) + Math.abs(dz) + Math.max(0, dy - (height - 1)) > LAW2_REACH) continue;
           out.push({ dx, dy, dz, part: "leaves" });
         }
       }
@@ -165,7 +248,10 @@ export const LEGACY_FLORA_SPECIES = Object.freeze({
     height: [5, 7],
     trunkSymbol: "wood.spruce_log",
     leafSymbol: "wood.spruce_leaves",
-    knobs: { spread: 3 },
+    // `spreadGrowth` above the conifer default: a squat spruce asked to stand
+    // tall is the one legacy shape whose *job* is to be broad at the bottom, so
+    // it keeps its skirt as it grows rather than drawing itself out into a mast.
+    knobs: { spread: 3, spreadGrowth: 0.55 },
   },
   oak_round: {
     id: "oak_round",
@@ -173,7 +259,11 @@ export const LEGACY_FLORA_SPECIES = Object.freeze({
     height: [5, 7],
     trunkSymbol: "wood.oak_log",
     leafSymbol: "wood.oak_leaves",
-    knobs: { radius: 2, squash: 1 },
+    // The round one. Above its envelope it widens fastest of the four
+    // (`crownGrowth` over the 0.5 default) and carries a deep crown, so a tall
+    // oak reads as a dome on a bare bole — never the same outline as the birch
+    // standing beside it at the same height, which was the whole complaint.
+    knobs: { radius: 2, squash: 1, crownGrowth: 0.6, crownShare: 0.3 },
   },
   birch_slim: {
     id: "birch_slim",
@@ -188,6 +278,21 @@ export const LEGACY_FLORA_SPECIES = Object.freeze({
     // The crown now stands 6–8 layers tall and is dropped onto the upper half
     // of the trunk; `minSpacing` keeps two crowns from fusing (see
     // `vegetation.ts`, `speciesSpacing`).
-    knobs: { radius: 2, squash: 1.4, crownMin: 3, crownDrop: 1, bareShare: 0.4, minSpacing: 5 },
+    // `crownGrowth` *below* the default and `crownShare` above it: the birch
+    // stays the slim one at every size. A 12-block city birch gets a two-block-
+    // wide, nine-layer column of leaves where the oak beside it gets a
+    // three-block dome — same height, two silhouettes, which is §4.1's
+    // "distinguishable at 60 blocks" bar applied to a height the table never
+    // anticipated.
+    knobs: {
+      radius: 2,
+      squash: 1.4,
+      crownMin: 3,
+      crownDrop: 1,
+      bareShare: 0.4,
+      minSpacing: 5,
+      crownGrowth: 0.35,
+      crownShare: 0.36,
+    },
   },
 } satisfies Readonly<Record<string, FloraSpeciesDef>>);

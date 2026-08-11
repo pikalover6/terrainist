@@ -1022,6 +1022,10 @@ async function compileValidated(
           ),
         ),
     greenShare,
+    // The solids a crown would be cut against, for the street fit
+    // (`wallRoom`). Absent for a terrain-profile compile, and read only where
+    // the street law elected a trunk.
+    clip?.columns,
   );
   // F21: a forest node that planted nothing is author-actionable, and in the
   // feedback set — the ruins world lost a whole canopy to silence.

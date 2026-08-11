@@ -522,17 +522,25 @@ function bucketTrees(
     const clipped = strength === "whole" ? undefined : clip;
     const woodOnly = strength === "wood";
     /**
-     * A `"wood"` tree's surviving cells, for the orphan-leaf sweep below.
+     * A clipped tree's surviving cells, for the orphan-leaf sweep below.
      *
-     * Exempting the trunk and clipping the crown leaves a crown with holes in
-     * it, and a hole in a crown can strand a single outlying leaf with air on
-     * all six faces — `floating.isolated`, measured once on the WP-4 ground
-     * fixture. So the kept set is collected first and any leaf with no kept
-     * neighbour of its own tree is dropped, to a fixpoint. Dropping a leaf that
-     * happens to touch masonry instead costs nothing: it is one leaf, and the
-     * bar is zero findings.
+     * Clipping a crown leaves holes in it, and a hole in a crown can strand a
+     * single outlying leaf with air on all six faces — `floating.isolated`,
+     * measured first on the WP-4 ground fixture. So the kept set is collected
+     * first and any leaf with no kept neighbour of its own tree is dropped, to
+     * a fixpoint. Dropping a leaf that happens to touch masonry instead costs
+     * nothing: it is one leaf, and the bar is zero findings.
+     *
+     * **Every clipped tree, not only the `"wood"`-exempt ones** (2026-08-10).
+     * The sweep was written for the exempt trunks because they were the only
+     * trees known to strand anything; the metropolis fixture then linted 35
+     * orphaned leaves that all belonged to ordinary clipped trees — a crown
+     * pressed into a shell, cut, and one leaf left behind on the far side. The
+     * gate is `cut > 0`, so a tree no solid touched takes the unbuffered path
+     * it always took and no world without clipped crowns moves.
      */
-    const keptCells = woodOnly ? new Set<string>() : undefined;
+    let cut = 0;
+    let keptCells: Set<string> | undefined = woodOnly ? new Set<string>() : undefined;
     const pending: PlacedBlock[] = [];
     // The parts → blockstate mapping (§3.2). Under `LEAF_STATE_POLICY =
     // "legacy"` and for a plant that emits only `log` and `leaves` — which is
@@ -545,24 +553,32 @@ function bucketTrees(
       const y = tree.baseY + block.dy;
       const z = tree.z + block.dz;
       if (y < WORLD_MIN_Y || y > 319) continue;
-      if (clipped !== undefined && clipped.blocked(x, y, z) && !(woodOnly && !isLeaf(block.stateId))) {
-        continue;
+      if (clipped !== undefined && clipped.blocked(x, y, z)) {
+        cut += 1;
+        if (!(woodOnly && !isLeaf(block.stateId))) continue;
       }
-      const key = `${x >> 4},${z >> 4}`;
-      let bucket = out.get(key);
-      if (bucket === undefined) {
-        bucket = [];
-        out.set(key, bucket);
-      }
-      if (keptCells !== undefined) {
-        keptCells.add(`${x},${y},${z}`);
-        pending.push({ x, y, z, stateId: block.stateId });
-        continue;
-      }
-      bucket.push({ x, y, z, stateId: block.stateId });
-      if (isGrowth(block.stateId)) growth.push({ x, y, z });
+      keptCells?.add(`${x},${y},${z}`);
+      pending.push({ x, y, z, stateId: block.stateId });
     }
-    if (keptCells === undefined) continue;
+    // Nothing was cut: flush in order, which is the list this function has
+    // always written for a tree standing clear of the fabric.
+    if (keptCells === undefined && cut === 0) {
+      for (const b of pending) {
+        const key = `${b.x >> 4},${b.z >> 4}`;
+        let bucket = out.get(key);
+        if (bucket === undefined) {
+          bucket = [];
+          out.set(key, bucket);
+        }
+        bucket.push(b);
+        if (isGrowth(b.stateId)) growth.push({ x: b.x, y: b.y, z: b.z });
+      }
+      continue;
+    }
+    if (keptCells === undefined) {
+      keptCells = new Set<string>();
+      for (const b of pending) keptCells.add(`${b.x},${b.y},${b.z}`);
+    }
     for (let again = true; again; ) {
       again = false;
       for (const b of pending) {

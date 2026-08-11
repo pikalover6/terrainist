@@ -352,6 +352,12 @@ const RECLAIM_SOFT_TAGS: Readonly<Record<ReclaimGate, readonly string[]>> = Obje
  * `undefined` rather than an empty array on purpose: the scatter's candidate
  * loop takes a different shape when it is present, and a world that ruins
  * nothing must take the shape it took before WP-6d existed.
+ *
+ * The two are told apart in the value — {@link ElectedKind} — because the
+ * street fit below applies to one of them and must not apply to the other: a
+ * street trunk should *fit* its canyon, and a shell trunk's whole image is a
+ * tree bursting **out** of a roofless ruin, which is a tree that does not fit
+ * and is not supposed to.
  */
 function electedColumns(
   structures: StructureOccupancy | undefined,
@@ -361,11 +367,116 @@ function electedColumns(
   const shells = structures?.ruinShellTrunks;
   if (street === undefined && shells === undefined) return undefined;
   const out = new Uint8Array(cells);
-  if (street !== undefined) for (let k = 0; k < Math.min(cells, street.length); k++) out[k] = street[k] as number;
+  if (street !== undefined) {
+    for (let k = 0; k < Math.min(cells, street.length); k++) {
+      if (street[k] === 1) out[k] = ElectedKind.Street;
+    }
+  }
   if (shells !== undefined) {
-    for (let k = 0; k < Math.min(cells, shells.length); k++) if (shells[k] === 1) out[k] = 1;
+    for (let k = 0; k < Math.min(cells, shells.length); k++) if (shells[k] === 1) out[k] = ElectedKind.Shell;
   }
   return out;
+}
+
+/** What elected a column, in {@link electedColumns}' mask. */
+const enum ElectedKind {
+  None = 0,
+  /** §6.1: the street law, on a carriageway, a sidewalk or a yard. */
+  Street = 1,
+  /** §14 Q5: one interior column of a roofless shell. */
+  Shell = 2,
+}
+
+/**
+ * The furthest {@link wallRoom} bothers to measure, in blocks.
+ *
+ * The transform stops there because no legacy shape's crown reaches further
+ * than a few blocks even fully grown, so any distance past this answers every
+ * question the fit can ask — and an uncapped distance transform over open
+ * country is a field of large numbers nobody reads.
+ */
+export const STREET_ROOM_MAX = 8;
+
+/**
+ * Chebyshev distance from every column to the nearest **solid**, capped at
+ * {@link STREET_ROOM_MAX}.
+ *
+ * Two chamfer passes, forward then backward, which is the exact Chebyshev
+ * transform for a square neighbourhood and costs two sweeps of the region.
+ * `solid` is the clip's column mask — what a crown would actually be cut
+ * against — because the question a street tree has to answer is *how much room
+ * is there between the shells*, and the pavement it stands on is not an
+ * obstruction.
+ */
+export function wallRoom(solid: Uint8Array, width: number, depth: number): Uint8Array {
+  const out = new Uint8Array(width * depth).fill(STREET_ROOM_MAX);
+  for (let k = 0; k < out.length && k < solid.length; k++) if (solid[k] === 1) out[k] = 0;
+  const at = (i: number, j: number): number =>
+    i < 0 || j < 0 || i >= width || j >= depth ? STREET_ROOM_MAX : (out[j * width + i] as number);
+  const relax = (i: number, j: number, best: number): void => {
+    const k = j * width + i;
+    if (best < (out[k] as number)) out[k] = best;
+  };
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      relax(i, j, Math.min(at(i - 1, j), at(i, j - 1), at(i - 1, j - 1), at(i + 1, j - 1)) + 1);
+    }
+  }
+  for (let j = depth - 1; j >= 0; j--) {
+    for (let i = width - 1; i >= 0; i--) {
+      relax(i, j, Math.min(at(i + 1, j), at(i, j + 1), at(i + 1, j + 1), at(i - 1, j + 1)) + 1);
+    }
+  }
+  return out;
+}
+
+/**
+ * The tallest a street tree may grow before its crown starts eating masonry.
+ *
+ * **The mechanism this replaces (Kai's walk of `overgrown_hideout`, 2026-08-10).**
+ * A trunk the street law elected stands in a canyon, and its crown is clipped
+ * against every shell it touches. Measured on that world: the 308 elected trees
+ * lost **10,257 leaf blocks** to the shells — a hair over half of everything
+ * they grew — and what survived was the part that had climbed clear of the
+ * roofline. Left alone, allometry makes that worse, not better: a bigger crown
+ * in the same canyon is a bigger crown to cut away.
+ *
+ * So a street tree is grown to the largest size the open ground actually
+ * offers, rather than to the size the species table drew and then cut back with
+ * a knife. `room` is the Chebyshev distance to the nearest clipped column, so a
+ * crown of radius `room - 1` reaches no further than the column before it and
+ * touches nothing. Height comes down with it — the programs'
+ * allometry ties the two — which is what puts the crown at eye level in a
+ * narrow street instead of over the rooftops.
+ *
+ * Never below the species' own floor: the trunk was elected, the discipline
+ * upstream (the spine, the junctions, the sight lines) has already spent itself
+ * deciding this column carries a tree, and a fit that withdrew it would be the
+ * scatter overruling the street law.
+ *
+ * **And never when the fit cannot succeed**, which is the clause the first cut
+ * of this function was missing and the measurement caught. A trunk elected on a
+ * sidewalk column *against* a shell has `room = 0`: no legal crown exists there
+ * at any height, and shrinking the tree only moved its crown down out of the
+ * daylight and into the masonry — elected leaf blocks eaten went 4,454 → 8,981
+ * on `wild_oak` alone. Where there is genuinely no room, a tree taking its
+ * canopy up over the roofline is not fleeing the street, it is the only place a
+ * canopy can be, and allometry has by then made that canopy a crown rather than
+ * a mullet. So the fit applies where it works and abstains where it does not.
+ */
+export function fitStreetTree(
+  def: FloraSpeciesDef,
+  height: number,
+  floor: number,
+  radiusDelta: number,
+  mega: boolean,
+  room: number,
+): number {
+  const program = SHAPE_PROGRAMS[def.program as ShapeProgramId];
+  const fits = room - 1;
+  let h = height;
+  while (h > floor && program.canopyRadius({ height: h, radiusDelta, mega }, def) > fits) h -= 1;
+  return program.canopyRadius({ height: h, radiusDelta, mega }, def) > fits ? height : h;
 }
 
 /** A forest node flattened to what the scatter pass needs. */
@@ -832,6 +943,18 @@ export function scatterForests(
    * same number for the green itself.
    */
   greenShare: number = TOWN_GREEN_DENSITY,
+  /**
+   * The clip's own column mask — every column a structure solid covers,
+   * footprint plus its one-block apron. Read only by {@link wallRoom}, for the
+   * street fit, and so only on a world where the street law elected anything.
+   *
+   * The clip rather than the `building` occupancy tag, deliberately: the tag is
+   * the footprint *inflated by the node's clearance*, which on the metropolis
+   * fixture put a "wall" one column from 376 of 598 elected trunks and left the
+   * fit inert. The clip's columns are the blocks that are actually there, which
+   * is the same set the crown will be tested against later.
+   */
+  solids?: Uint8Array,
 ): ScatterResult {
   const { region } = plan;
   const coverage = new Uint8Array(region.width * region.depth);
@@ -859,6 +982,10 @@ export function scatterForests(
   // WP-6 §6.4: the street law's elected columns and Kai's Q5 shells, as one
   // set. Built only when the skin ran, which is only on a world with ruins.
   const elected = electedColumns(structures, region.width * region.depth);
+  // Built once per compile and only where the street law ran: the canyon a
+  // street tree has to fit is a property of the fabric, not of any one wood.
+  const room =
+    elected === undefined || solids === undefined ? undefined : wallRoom(solids, region.width, region.depth);
 
   for (const node of nodes) {
     const params = resolveForestParams(node.params);
@@ -903,7 +1030,7 @@ export function scatterForests(
     // which is already order-dependent (row-major) today; naming the order in
     // one place is what keeps it deterministic.
     if (strata === undefined) {
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false, undefined, elected);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, false, undefined, elected, room);
     } else {
       const theme = nodeClimateTheme(mask, climate);
       const emergentLive = stratumLive(strata.emergent);
@@ -920,7 +1047,7 @@ export function scatterForests(
         strata.canopy === "default"
           ? { ...strata, canopy: { species: stratumSpecies(undefined, theme, "canopy", CLIMATE_STRATA) } }
           : strata;
-      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy, elected);
+      scatterOne(node, params, plan, mask, occupancy, kinMasks, palette, trees, clearing, emergentLive, resolvedCanopy, elected, room);
       let understory = 0;
       if (stratumLive(strata.understory)) {
         const shade = canopyCover(plan, trees.slice(before));
@@ -1082,6 +1209,12 @@ function scatterOne(
    * it was before WP-6d existed.
    */
   elected?: Uint8Array,
+  /**
+   * Distance to the nearest wall per column — {@link wallRoom}. Present exactly
+   * when `elected` is, and read only for a column the **street law** elected;
+   * see {@link fitStreetTree}.
+   */
+  room?: Uint8Array,
 ): void {
   const { region, ground } = plan;
   const scatter = streamSeed(node.seed, "scatter");
@@ -1120,7 +1253,7 @@ function scatterOne(
   const forcedByCell = new Map<number, number[]>();
   if (elected !== undefined) {
     for (let k = 0; k < elected.length; k++) {
-      if (elected[k] !== 1 || mask[k] !== 1) continue;
+      if (elected[k] === ElectedKind.None || mask[k] !== 1) continue;
       const i = k % region.width;
       const j = (k - i) / region.width;
       const cell = Math.floor(j / spacing) * cellsX + Math.floor(i / spacing);
@@ -1175,7 +1308,7 @@ function scatterOne(
         const maxH = chosen.maxHeight ?? def.height[1];
         // Per-tree variety, all position-keyed: height inside the species range, a
         // canopy a block wider or narrower, and the occasional giant.
-        const height = positionInt(scatter, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
+        const drawn = positionInt(scatter, x, 5, z, Math.min(minH, maxH), Math.max(minH, maxH));
         const radiusDelta = positionInt(scatter, x, 6, z, -1, 1);
         // §5.5: `MEGA_SPRUCE_SHARE` is data now. Same draw, same salt, same
         // constant, same trees — and suppressed outright when an emergent
@@ -1184,6 +1317,14 @@ function scatterOne(
           !suppressMega &&
           def.megaShare !== undefined &&
           positionFloat(scatter, x, 7, z) < def.megaShare;
+        // The street fit, and only on the street: a shell trunk keeps the size
+        // it drew, because a tree bursting out of a roofless ruin is the image
+        // Q5 was ruled for. The draw itself is untouched — same stream, same
+        // salt, same number — so switching the fit off returns the old tree.
+        const height =
+          room === undefined || elected?.[idx] !== ElectedKind.Street
+            ? drawn
+            : fitStreetTree(def, drawn, Math.min(minH, maxH), radiusDelta, mega, room[idx] as number);
 
         // Only the trunk is exclusive; a mega spruce occupies 2×2, so it claims
         // one more block of clearance.

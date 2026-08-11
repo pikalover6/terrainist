@@ -131,6 +131,37 @@ export function knob(def: FloraSpeciesDef, name: string, fallback: number): numb
   return typeof value === "number" ? value : fallback;
 }
 
+/** The height a mega draw adds to a trunk (`vegetation.ts`, `scatterOne`). */
+export const MEGA_HEIGHT_BONUS = 4;
+
+/**
+ * How far a plant stands **above its own species' envelope**, as a ratio ≥ 1.
+ *
+ * A species' knobs — `radius`, `spread`, `squash` — describe a tree at the size
+ * the species table says it grows to. Nothing forced the two to agree: an
+ * author may write `minHeight`/`maxHeight` on a `species` entry, and the kit
+ * teaches exactly that, so a document can ask for an `oak_round` of 24 blocks
+ * against a table envelope of 5–7. Until 2026-08-10 the crown knobs were
+ * *absolute*, so the extra 17 blocks were all trunk: measured on
+ * `overgrown_hideout` (Kai's walk), the median oak stood **13 blocks with its
+ * lowest leaf at 11** — 80 percent bare pole under a four-layer, two-block-wide
+ * puck — and the birch beside it, at the same height with the same
+ * height-independent crown, was the *same silhouette*. Two authored species,
+ * one tree. Kai: *"the trees are almost entirely converged on some tall, skinny
+ * with a small mullet for leaves at the top design."*
+ *
+ * So a tree grown past its envelope grows its crown too, and this ratio is what
+ * the programs scale by. It is exactly 1 for every tree inside its own
+ * envelope — including the `mega` draw's `+4`, which is part of the envelope
+ * rather than an author's override — which is what makes the law inert for
+ * every document that never overrode a height. Every committed example is such
+ * a document; the geometry there is byte-identical.
+ */
+export function overgrowth(v: FloraVariation, def: FloraSpeciesDef): number {
+  const ceiling = def.height[1] + (v.mega ? MEGA_HEIGHT_BONUS : 0);
+  return ceiling > 0 && v.height > ceiling ? v.height / ceiling : 1;
+}
+
 /** The wood family, for law 1 and law 2: what a canopy may hang from. */
 export const WOOD_PARTS: ReadonlySet<FloraPart> = new Set<FloraPart>(["log", "branch", "stem"]);
 

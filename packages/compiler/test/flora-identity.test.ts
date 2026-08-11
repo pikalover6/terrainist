@@ -169,14 +169,36 @@ const PRE_REPROPORTION_BIRCH = legacyBlob(2, 0.75);
 /**
  * The envelope corners (§3.3), plus the `+4` a mega spruce's height carries in
  * `scatterOne` — the geometry a real world actually contains.
+ *
+ * **Every corner here is *inside* its species' envelope**, `mega` included: the
+ * `+4` is only ever paired with `mega: true`, because that is the only way a
+ * scatter produces it. That pairing is what the 2026-08-10 allometry law
+ * (`overgrowth`) turns on, and the identity below is now a statement about the
+ * envelope rather than about all heights — see
+ * {@link overgrownCorners} for the other side of the line.
  */
 function corners(def: FloraSpeciesDef): FloraVariation[] {
   const [lo, hi] = def.height;
   const out: FloraVariation[] = [];
   for (const mega of [false, true]) {
     for (const radiusDelta of [-1, 0, 1]) {
-      for (const height of [lo, hi, lo + 4, hi + 4]) out.push({ height, radiusDelta, mega });
+      for (const height of mega ? [lo, hi, lo + 4, hi + 4] : [lo, hi]) {
+        out.push({ height, radiusDelta, mega });
+      }
     }
+  }
+  return out;
+}
+
+/**
+ * The corners **above** the envelope — what an author's `minHeight`/`maxHeight`
+ * override produces, and the only place the geometry has moved.
+ */
+function overgrownCorners(def: FloraSpeciesDef): FloraVariation[] {
+  const hi = def.height[1];
+  const out: FloraVariation[] = [];
+  for (const radiusDelta of [-1, 0, 1]) {
+    for (const height of [hi + 4, hi + 8, hi * 3]) out.push({ height, radiusDelta, mega: false });
   }
   return out;
 }
@@ -220,12 +242,26 @@ describe("flora: the legacy re-expression", () => {
     }
     // Every corner but the ones the clamps neutralise actually moved.
     expect(moved).toBeGreaterThan(corners(birch).length / 2);
-    // The other three are byte-frozen: their closures are the untouched originals.
+    // The other three keep the knobs that decide their geometry *inside* the
+    // envelope. The allometry knobs added on 2026-08-10 are listed apart
+    // because they are provably inert there — `overgrowth` returns exactly 1 —
+    // and the identity test above is what proves it.
+    const shape: Readonly<Record<string, Record<string, number>>> = {
+      spruce_tall: { spread: 2 },
+      spruce_squat: { spread: 3 },
+      oak_round: { radius: 2, squash: 1 },
+    };
+    const allometry: Readonly<Record<string, Record<string, number>>> = {
+      spruce_tall: {},
+      spruce_squat: { spreadGrowth: 0.55 },
+      oak_round: { crownGrowth: 0.6, crownShare: 0.3 },
+    };
     for (const id of ["spruce_tall", "spruce_squat", "oak_round"]) {
       const def = LEGACY_FLORA_SPECIES[id as keyof typeof LEGACY_FLORA_SPECIES] as FloraSpeciesDef;
-      expect(def.knobs, `${id} knobs`).toEqual(
-        id === "oak_round" ? { radius: 2, squash: 1 } : { spread: id === "spruce_tall" ? 2 : 3 },
-      );
+      expect(def.knobs, `${id} knobs`).toEqual({
+        ...(shape[id] as Record<string, number>),
+        ...(allometry[id] as Record<string, number>),
+      });
     }
   });
 
