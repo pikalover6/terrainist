@@ -62,6 +62,26 @@ tone, E336 hint lacks water clause.
 Everything else code-complete. Suite whole at 3,539; all P-class
 worlds lint zero. Backstop 2026-08-28 (~13 days slack).
 
+**08-11 WALK + RATIFICATIONS (Kai, 4 popups):** Troy c3 = "very good
+progress." Wall diagnosed: gray circuit = Luna's own params.walls
+(style masonry, W489 outranked dial, authored path doesn't
+theme-derive); sandstone blobs = hidden_greeks' FOUR invented
+hardcoded palettes + zero site treatment; lawn = circuit traces intent
+envelope, fabric packs to its own hull. RATIFIED: (1) **catalog
+breadth push, BOTH tracks** — burn down the 98 not_started
+battery-aligned (opus-5-low waves) + opus-5-high taxonomy-expansion
+doc (culture/era form packs; Kai: "massively flesh it out, we've got
+the pipeline down"); (2) **bespoke FULL integration contract** —
+api.theme roles in plugin API, graded pad/foundation skirt/apron on
+plugin envelopes, kit doctrine (icons NOT infrastructure; theme
+palette unless icon demands foreign), theme-derived authored walls;
+(3) **wall hugs fabric** — circuit from built hull + margin, not
+envelope (wave 2, after walls.ts settles); (4) **content EXEMPT from
+8-28 backstop** — machinery freezes, content flows. DESIGN.md
+"curation over completion" line to be amended (icon-law reversal).
+Exhibit worlds = batch visual acceptance (one walk per pack). Walks
+still queued: pirate_unicorn_war_c2, hellenist_sea_siege_c3.
+
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
 orchestrator commits (agents never); shared-tree git discipline; probe
