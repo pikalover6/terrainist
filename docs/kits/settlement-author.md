@@ -2530,6 +2530,44 @@ elevator. For those you may **request a bespoke program**: a small generator,
 written from scratch for this world by a second model call, which computes the
 structure and hands back a shape the compiler places like any other node.
 
+### The icon register — what the world must scream
+
+**The medium cannot whisper.** A block world has no faces, no text, no
+motion — identity is carried entirely by **icons**: the concrete images a
+person already associates with the prompt. The bar is the **stranger
+test**: someone who never saw the prompt names it from ten seconds at any
+street corner. A beautiful city that fails the stranger test has failed
+the prompt — "nyc" without a statue holding a torch is just a city.
+
+So before you write a single node, **enumerate the prompt's icons** — five
+to ten concrete images, the more blatant the better — and deliver every
+one by a named mechanism: an archetype, a prop, a palette choice, a
+terrain verb, or (most often, because icons are exactly what the catalog
+does not carry) **a bespoke program**. Examples of the register:
+
+- *pirate*: a jolly roger on a mast over the harbour, treasure chests in
+  coves and cellars, a beached or moored galleon, cannon emplacements, a
+  gallows on the point.
+- *magical / unicorn*: glowing stone circles, a crystal-lined stream or
+  pool, blossoming white trees, arcane monoliths, shimmering ground.
+- *walled ancient city* (Troy, a fortress town): **the circuit wall IS the
+  icon** — an `infra.wall@0` ring with gates around the district, towers
+  at the corners. A "city" prompt from antiquity without its wall reads as
+  a village. Write the wall.
+- *two sides at war*: each faction's ground carries its OWN register
+  (theirs vs theirs), and the conflict carries a third — wrecks, siege
+  engines, scorch and palisades **facing the enemy**, so the aggression
+  has a direction.
+
+**An icon is a cheap plugin program.** A flag mast is two hundred blocks;
+a chest cluster fifty; a stone circle three hundred. Small envelopes,
+double-digit counts where the theme wants repetition — spend the plugin
+budget on identity. And identity is **saturation, not a statement**: the
+centerpiece anchors the postcard, but the stranger test is passed in the
+streets, by dozens of small repetitions — a banner on the quay, a chest
+behind the tavern, one more crystal by the path. If a street corner shows
+no icon, the theme is not there yet.
+
 ### When to reach for one
 
 **Find the prompt's centerpiece first.** Most prompts carry one image the
@@ -3669,6 +3707,13 @@ far shore"*.
 - If the prompt names farming — a farm, a croft, an agricultural village, a
   place that feeds a town — write at least one `precinct.farm@0` holding with a
   region envelope on gentle ground. Nothing else in the language tills a field.
+- **The stranger test, before you finish**: list the prompt's icons and find
+  each one in your document by node id. A stranger must name the prompt from
+  ten seconds at any street corner — if an icon has no node, the document is
+  not done, and if the theme lives only in one centerpiece, scatter its small
+  repetitions until it lives in the streets.
+- If the prompt names a walled or ancient city, a fortress, or a siege, the
+  district wears its `infra.wall@0` circuit with gates. The wall is the icon.
 - If the prompt says ruins, ruined, abandoned, derelict, forgotten,
   post-apocalyptic or "once-great", write an ordinary `district` with an
   ordinary `mix` and put `intent.decline` of 0.8–0.95 on it. A `mix` of
