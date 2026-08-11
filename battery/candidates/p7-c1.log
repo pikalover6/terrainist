@@ -1,0 +1,103 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"medieval","climate":{"biome":"minecraft:mushroom_fields"},"character":{"label":"strange glowing mushroom village","materialTheme":"temperate_timber","archetypes":{"prefer":["cottage"],"forbid":[]},"props":{"prefer":[],"forbid":[]},"flora":{"prefer":["fungal","glow"],"forbid":[]},"motifs":{"roofType":"gable","massing":"sprawling","windowRhythm":"sparse","ornamentDensity":0.2},"urbanForm":"grown","courtyards":0.2,"ground":"pad"}}
+           1 attempt(s), 3712 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.west_caps.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.east_caps.params.area
+  tokens     65906 in + 27758 out = 93664  ($0.0249)
+programs   none (budget 12 landmark / 6 plugin)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 16 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.west_caps.params.area: "area.radius" is 0.2, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.2 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.2 on a 1024-wide region, "radius": 102).
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.east_caps.params.area: "area.radius" is 0.2, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.2 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.2 on a 1024-wide region, "radius": 102).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.west_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.west_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.east_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.east_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.north_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.north_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.south_house: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.south_house: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.south_house: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.vale_house: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.vale_house: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.vale_house: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T119 SCATTER_EMPTY at world.west_caps: forest node "west_caps" placed 0 trees: its area {"at":[0.28,0.5],"radius":0.2} covers 1 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.2 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+warning LOAM-T119 SCATTER_EMPTY at world.east_caps: forest node "east_caps" placed 0 trees: its area {"at":[0.72,0.5],"radius":0.2} covers 0 of the region's 1024×1024 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.2 blocks is a patch smaller than one tree. For a fraction f of a 1024-wide region write radius = f × 1024 / 2 — e.g. "radius": 256.
+
+Layout solver report:
+
+  world.west_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.east_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+  world.north_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.19)
+  world.south_house: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.10)
+  world.vale_house: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.10)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     70535 in + 13273 out = 83808  ($0.0092)
+
+compiled "mushroom_vale" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale
+  seed       307
+  region     1024x1024 at (-512, -512)
+  heights    70.6..89.0  sea 63  snow line 89.0
+  land       100.0% of columns above sea level
+  biomes     forest 95.7%, taiga 3.4%, windswept_hills 0.7%, plains 0.3%
+  trees      17656 (west_caps=942, east_caps=920, sparse_caps=15933)
+  chunks     4096
+  blocks     153832614 (2116777 vegetation)
+  markers    7
+  spawn      [0, 86, 0]
+  timings    validate 0ms  field 1126ms  layout 313ms  climate 115ms  columns 36ms  caves 0ms  structures 930ms  programs 0ms  scatter 4090ms  biomes 50ms  validators 6ms  emit 10991ms  total 17684ms
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W472 BIOME_INTENT_UNKNOWN at world: climate intent names the biome "minecraft:mushroom_fields", which this emitter's table does not carry; falling back to the land-use clamp's derived biome
+  fix: name one of the 35 biomes this emitter paints: minecraft:ocean, minecraft:deep_ocean, minecraft:cold_ocean, minecraft:deep_cold_ocean, minecraft:beach, minecraft:snowy_beach, minecraft:plains, minecraft:snowy_plains, minecraft:forest, minecraft:taiga, minecraft:windswept_hills, minecraft:stony_peaks, minecraft:snowy_slopes, minecraft:river, minecraft:basalt_deltas, minecraft:dark_forest, minecraft:birch_forest, minecraft:old_growth_birch_forest, minecraft:flower_forest, minecraft:windswept_forest, minecraft:pale_garden, minecraft:cherry_grove, minecraft:sunflower_plains, minecraft:meadow, minecraft:grove, minecraft:savanna, minecraft:windswept_savanna, minecraft:jungle, minecraft:sparse_jungle, minecraft:swamp, minecraft:snowy_taiga, minecraft:old_growth_spruce_taiga, minecraft:old_growth_pine_taiga, minecraft:jagged_peaks, minecraft:frozen_peaks. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2478 footprint columns (plus 26242 feathered over 40 columns) to minecraft:forest, from the ambient majority (minecraft:forest, 54% of 15821 ring columns); snow policy never resolved to "never" on a 0/2478 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 136441 in + 41031 out = 177472 tokens ($0.0341)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale
+installed "mushroom_vale_c1"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p7-c1/mushroom_vale
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/mushroom_vale_c1
+  lastPlayed 1786421241005 (2026-08-11T04:07:21.005Z)

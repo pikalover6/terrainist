@@ -1,0 +1,695 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "mushroom_vale",
+    "worldSeed": "307",
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:mycelium",
+      "ground.subsurface": "minecraft:coarse_dirt",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": {
+        "mix": [
+          [
+            "minecraft:moss_block",
+            3
+          ],
+          [
+            "minecraft:shroomlight",
+            1
+          ]
+        ]
+      },
+      "plaza.border": "minecraft:shroomlight"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "biome": "minecraft:mushroom_fields",
+      "snow": "never"
+    },
+    "character": {
+      "label": "strange glowing mushroom village",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "cottage"
+        ],
+        "forbid": []
+      },
+      "props": {
+        "prefer": [],
+        "forbid": []
+      },
+      "flora": {
+        "prefer": [],
+        "forbid": [
+          "spruce_tall",
+          "spruce_squat",
+          "oak_round",
+          "birch_slim"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.2
+      },
+      "urbanForm": "grown",
+      "courtyards": 0.2,
+      "ground": "pad"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the vale and its strange village between the caps",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle country shaped around a broad dry vale",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 80,
+          "amplitude": 16,
+          "octaves": 5,
+          "frequency": 0.0028,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.003
+          },
+          "erosionPasses": 3,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a shallow shelf for the village floor",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.53
+              ],
+              "radius": 140,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "mushroom_vale",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad vale winding beneath the caps",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.08,
+                  0.54
+                ],
+                [
+                  0.32,
+                  0.5
+                ],
+                [
+                  0.68,
+                  0.5
+                ],
+                [
+                  0.92,
+                  0.56
+                ]
+              ],
+              "width": 144,
+              "depth": 10,
+              "profile": "rounded",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.15,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the glowing village green between the caps",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "west_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage beside the western caps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "east_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a two-storey cottage under the eastern glow",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "north_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a small cottage facing the cap grove",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "south_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage grown out toward the vale",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 44,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "vale_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a larger cottage following the old grown lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 56,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cap_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the strange mushroom house among the village cottages",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 14,
+            "max": 64
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5,
+            "maxSlope": 28
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "grown paths joining the cottages to the glowing green",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "west_caps",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "giant glowing caps west of the village",
+        "params": {
+          "area": {
+            "at": [
+              0.28,
+              0.5
+            ],
+            "radius": 102
+          },
+          "density": 0.16,
+          "spacing": 5,
+          "clumping": 0.7,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            72
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.02,
+            "deadwood": 0.06
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "west_red_giant",
+                  "shape": "mushroom_giant_red",
+                  "weight": 3
+                },
+                {
+                  "id": "west_glowcap",
+                  "shape": "glowcap",
+                  "weight": 1
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "west_brown_shelves",
+              "shape": "mushroom_shelf_brown",
+              "weight": 3
+            },
+            {
+              "id": "west_luminous_shelves",
+              "shape": "glowcap",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "east_caps",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "giant glowing caps east of the village",
+        "params": {
+          "area": {
+            "at": [
+              0.72,
+              0.5
+            ],
+            "radius": 102
+          },
+          "density": 0.16,
+          "spacing": 5,
+          "clumping": 0.7,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            72
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.02,
+            "deadwood": 0.06
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "east_red_giant",
+                  "shape": "mushroom_giant_red",
+                  "weight": 3
+                },
+                {
+                  "id": "east_glowcap",
+                  "shape": "glowcap",
+                  "weight": 1
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "east_brown_shelves",
+              "shape": "mushroom_shelf_brown",
+              "weight": 3
+            },
+            {
+              "id": "east_luminous_shelves",
+              "shape": "glowcap",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_caps",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scattered mushroom growth across the wider vale",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "spacing": 5,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 32,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.16,
+            "flowers": 0.01,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "vale_shelf",
+              "shape": "mushroom_shelf_brown",
+              "weight": 3
+            },
+            {
+              "id": "vale_glowcap",
+              "shape": "glowcap",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
