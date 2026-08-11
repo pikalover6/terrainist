@@ -471,7 +471,8 @@ export interface WallOptions {
   /** Default `"masonry"`. */
   readonly style?: WallStyle;
   /**
-   * Columns the course stands **outward** of the built extent.
+   * Columns the course stands **outward** of the built fabric — the hull of
+   * what was actually built, never the envelope the solver reserved.
    * {@link WALL_MIN_MARGIN}..{@link WALL_MAX_MARGIN}; default 10.
    */
   readonly margin?: number;

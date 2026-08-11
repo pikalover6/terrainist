@@ -17,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
 import { multiStationSpecs } from "../src/terrarium-stations.js";
+import type { StructurePassResult } from "../src/structures/index.js";
 
 import {
   COURSE_DIRECTIONS,
@@ -404,6 +405,45 @@ describe("infra.wall@0 on a compiled world", () => {
     // The station is built so a lane has to get past the quarter, which is what
     // makes a crossing exist at all. Two crossings, so two gates.
     expect(stats()["wallGates"]).toBeGreaterThanOrEqual(1);
+  });
+
+  /**
+   * BY DESIGN 2026-08-11 — the frame correction. The circuit used to be drawn
+   * round the quarter's *reservation* and stood a hundred columns off the
+   * fabric in Troy; it is now drawn round the fabric itself. On this station
+   * that moved the enclosed area from 4,397 columns to 3,459 and brought every
+   * course column within nine of built ground (median six, against a margin of
+   * ten). The bound below is that measurement plus room for the terrain to
+   * shift a column, not a target.
+   */
+  it("hugs the built fabric rather than the ground the solver reserved", () => {
+    const structures = (report as unknown as { layout: { structures: StructurePassResult } }).layout
+      .structures;
+    const region = report.stats.region;
+    const wall = structures.walls[0] as NonNullable<(typeof structures.walls)[0]>;
+    const fabric: { x: number; z: number }[] = [];
+    for (let z = region.z0; z < region.z0 + region.depth; z++) {
+      for (let x = region.x0; x < region.x0 + region.width; x++) {
+        const at = (z - region.z0) * region.width + (x - region.x0);
+        if (
+          structures.roads?.roadColumns[at] === 1 ||
+          structures.streets?.road[at] === 1 ||
+          structures.plaza?.paved[at] === 1
+        ) {
+          fabric.push({ x, z });
+        }
+      }
+    }
+    for (const b of structures.buildings) {
+      for (let z = b.footprint.z0; z <= b.footprint.z1; z++) {
+        for (let x = b.footprint.x0; x <= b.footprint.x1; x++) fabric.push({ x, z });
+      }
+    }
+    const lawn = wall.course.path
+      .map((p) => Math.min(...fabric.map((f) => Math.hypot(f.x - p.x, f.z - p.z))))
+      .sort((a, b) => a - b);
+    expect(lawn[lawn.length - 1] as number).toBeLessThanOrEqual(14);
+    expect(lawn[lawn.length >> 1] as number).toBeLessThanOrEqual(10);
   });
 
   it("builds nearly all of the course it derived", () => {

@@ -2042,8 +2042,9 @@ Rules worth knowing before you write one:
 Write `"walls": {}` on a `district` or a `city` and the compiler puts a wall
 round it. That is the entire authoring surface, and the omission is the point:
 **you do not write the course.** The line is derived after everything is built,
-from the footprint the settlement actually took — a hull round the buildings,
-pushed out by the margin, with every segment on a multiple of 15° — and then
+from the footprint the settlement actually took — a hull round the buildings
+and the streets and plaza that hug them, pushed out by the margin, with every
+segment on a multiple of 15° — and then
 swept over the real ground, so it steps down a hillside instead of hovering
 over it. There is no key that takes a coordinate, a vertex or a length, for the
 same reason a `city` has no key that names a quarter.
@@ -2066,7 +2067,7 @@ same reason a `city` has no key that names a quarter.
 | field | values | notes |
 |---|---|---|
 | `style` | `masonry`, `palisade`, `earthwork` | default `masonry`. Three constructions, not three palettes: a stone curtain, a timber palisade, a revetted rampart |
-| `margin` | 4..64 | default 10; columns the ring stands **outward** of the built ground. Raise it if the wall comes out mostly gaps |
+| `margin` | 4..64 | default 10; columns of ground between the **last houses and the wall**. It is measured from the city's own edge — the hull of what actually got built, streets and plaza included — never from the envelope you gave the quarter, so a district with room to spare is still ringed tightly. Raise it if the wall comes out mostly gaps |
 | `towerPitch` | 16..128 | default 40; columns of wall between towers. Towers also land on every corner of the course, always |
 | `height` | 4..14 | default 6; blocks from the ground to the wall-walk |
 | `gates` | bool | default `true`. `false` is a siege wall: the roads are cut |

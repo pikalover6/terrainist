@@ -122,6 +122,7 @@ import {
 } from "./roads.js";
 import type { FurnitureKit, StreetscapeResult } from "./streetscape.js";
 import { buildTunnels, resolveTunnelStyle, type BuiltTunnel, type TunnelLink } from "./tunnels.js";
+import { fabricExtent, type FabricField } from "./fabric-hull.js";
 import {
   WALL_DEFAULT_HEIGHT,
   WALL_DEFAULT_MARGIN,
@@ -1500,6 +1501,21 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // and is read exactly as it always was; `intent.character.fortification` is
   // the dial, and it only speaks where the parameters are silent — see
   // `structures/walls-intent.ts` for why the wall had to become a dial at all.
+  // The settlement's paved ground, as one predicate. Both wall paths read it to
+  // find the *fabric's* edge rather than the reservation's: a quarter's blocks
+  // pack to their own footprint inside the rectangle the solver gave them, and
+  // a circuit drawn round the rectangle is the lawn Kai walked in Troy.
+  const wallField: FabricField = {
+    region: input.plan.region,
+    paved: (x: number, z: number): boolean => {
+      const region = input.plan.region;
+      if (!inside(region, x, z)) return false;
+      const at = index(region, x, z);
+      if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
+      if (streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1) return true;
+      return plaza !== undefined && plaza.paved[at] === 1;
+    },
+  };
   const authoredWallJobs = wallJobsOf(
     input.doc,
     rootPath,
@@ -1510,6 +1526,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     // the fortification dial's is. `themeForNode` is the same resolver the
     // buildings inside that quarter were dealt from.
     (p) => themeForNode(p),
+    wallField,
   );
   const fortification = fortificationJobs({
     rootPath,
@@ -1517,6 +1534,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     theme,
     authored: authoredWallJobs,
     fabric: fabricNodesOf(input.doc, rootPath, built, (p) => placementByPath.get(p)?.footprint),
+    field: wallField,
   });
   diagnostics.push(...fortification.diagnostics);
   const wallJobs = fortification.jobs;
@@ -1807,6 +1825,7 @@ export function wallJobsOf(
   built: readonly BuiltBuilding[],
   rectOf: (nodePath: string) => { x0: number; z0: number; x1: number; z1: number } | undefined,
   themeOf?: (nodePath: string) => MaterialTheme | undefined,
+  field?: FabricField,
 ): WallJob[] {
   const jobs: WallJob[] = [];
   for (const child of doc.root.children) {
@@ -1818,12 +1837,19 @@ export function wallJobsOf(
     const nodePath = `${rootPath}.${child.id}`;
     const prefix = `${nodePath}.`;
     const own = rectOf(nodePath);
-    const extent = extentOfRects([
-      ...(own === undefined ? [] : [own]),
-      ...built
+    const margin = typeof w["margin"] === "number" ? (w["margin"] as number) : WALL_DEFAULT_MARGIN;
+    // The **fabric's** hull, not the reservation's: `margin` is measured from
+    // the city's edge — the ground the quarter actually built on — and the rect
+    // survives only as the window that says which fabric is this quarter's.
+    // See `structures/fabric-hull.ts` for the walk that forced the change.
+    const extent = fabricExtent({
+      clip: own === undefined ? [] : [own],
+      buildings: built
         .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
         .map((b) => b.footprint),
-    ]);
+      margin,
+      ...(field === undefined ? {} : { field }),
+    });
     if (extent.length === 0) continue;
     const style = typeof w["style"] === "string" ? (w["style"] as string) : "masonry";
     // The theme, then the author. A `masonry` wall with nothing said about its
@@ -1844,7 +1870,7 @@ export function wallJobsOf(
       extent,
       style,
       ...(materials === undefined ? {} : { materials }),
-      margin: typeof w["margin"] === "number" ? (w["margin"] as number) : WALL_DEFAULT_MARGIN,
+      margin,
       towerPitch:
         typeof w["towerPitch"] === "number" ? (w["towerPitch"] as number) : WALL_DEFAULT_TOWER_PITCH,
       height: typeof w["height"] === "number" ? (w["height"] as number) : WALL_DEFAULT_HEIGHT,

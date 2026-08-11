@@ -103,6 +103,29 @@ classical → alien/scifi → nautical+arcane TOGETHER (P1 needs both
 islands characterful) → wilds → agrarian → frontier → nile → east
 asian. Xeno materialTheme deferred until alien pack scheduled.
 
+**WAVE 1 LANDED (08-11 afternoon, commits bc5c989..51d782e, all
+green):** (1) bespoke contract — api.theme (pinned VERIFICATION_THEME
+keeps outputHash a property of the program, not the world);
+pad/skirt/apron through GroundDriver; theme-derived authored masonry
+walls + explicit walls.materials override; kit doctrine
+(icons-not-infrastructure); program-author "no style guide" test
+guard narrowed to teach api.theme — KAI CONFIRMED via popup.
+GROUND-CONTRACT §3.12 = three sites now. (2) sanctum 10 + siegeworks
+7 archetypes, catalog 360/441; orchestrator stitched sanctum ids →
+spec KNOWN list (order load-bearing) + siegeworks term → devworld
+count sum. (3) B0 grammar.mix row live: forbid > prefer > weights
+(cap len/2) > today; W515 empty-mix; walkability goldens re-pinned BY
+DESIGN (fixture's prefer list had never been read; reachability UP).
+Suites: spec 405, stdlib 1014, agents 154, targeted compiler green.
+**INSTALLED dev_world__sanctum_siege** — sanctum strip z 5375–5626,
+siegeworks strip z 11227–11409, spawn z 12363. (4) wall-hugs-fabric LANDED
+same day: fabric-hull.ts 24-direction support hull of built fabric
+(+paved columns inside dilated core; precinct rect = clip window
+only, which is what makes nesting work); margin re-based both paths;
+walled_quarter enclosed area −21%, wall-to-fabric median 6 vs >100;
+hamlet/degenerate falls back to envelope; compiler 1904/0. NEXT:
+formPacks impl, 145 catalog rows (sphinx excluded), classical pack.
+
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
 orchestrator commits (agents never); shared-tree git discipline; probe

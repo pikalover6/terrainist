@@ -66,12 +66,12 @@ import type { MaterialTheme } from "@terrainist/stdlib";
 import { fanOut, registerFanOut, type FanOutContext } from "../intent/fanout.js";
 import { intentFor, type IntentResolution, type ResolvedIntent } from "../intent/resolve.js";
 
+import { fabricExtent, type FabricField } from "./fabric-hull.js";
 import type { CoursePoint } from "./wall-course.js";
 import {
   WALL_DEFAULT_HEIGHT,
   WALL_DEFAULT_MARGIN,
   WALL_DEFAULT_TOWER_PITCH,
-  extentOfRects,
   wallMaterialsOfTheme,
   type ExtentRect,
   type WallJob,
@@ -185,6 +185,13 @@ export interface FortificationInput {
   readonly authored: readonly WallJob[];
   /** The settlement's fabric, in document order. */
   readonly fabric: readonly FabricNode[];
+  /**
+   * The settlement's paved ground, so a circuit can be drawn round the fabric
+   * that was **built** rather than round the ground that was reserved (see
+   * `structures/fabric-hull.ts`). Absent in a unit test that hands over rects
+   * and nothing else, which then falls back to those rects.
+   */
+  readonly field?: FabricField;
 }
 
 /** The jobs the wall pass should run, and what deciding them had to say. */
@@ -239,11 +246,19 @@ export function fortificationJobs(input: FortificationInput): FortificationResul
   // --- the settlement-scope circuit ---------------------------------------
   // Asked first, and it wins outright: a town says "walled" once and gets one
   // wall round the whole of itself, not one round each quarter.
+  // The extent is the **fabric's** hull, not the reservation's — the frame
+  // correction of 2026-08-11. The margin is passed in because it also sets the
+  // reach at which paved ground still counts as fabric, and it is known here:
+  // this branch is the settlement scope, so the row will answer with
+  // `FORTIFICATION_SETTLEMENT_MARGIN` (the quarter branch below, with
+  // `WALL_DEFAULT_MARGIN`). Two constants, one place each.
   const fabricRects = input.fabric.flatMap((n) => (n.rect === undefined ? [] : [n.rect]));
-  const settlementExtent = extentOfRects([
-    ...fabricRects,
-    ...input.fabric.flatMap((n) => [...n.buildings]),
-  ]);
+  const settlementExtent = fabricExtent({
+    clip: fabricRects,
+    buildings: input.fabric.flatMap((n) => [...n.buildings]),
+    margin: FORTIFICATION_SETTLEMENT_MARGIN,
+    ...(input.field === undefined ? {} : { field: input.field }),
+  });
   const settlement = askRow(rootIntent, input.rootPath, {
     scope: "settlement",
     extent: settlementExtent,
@@ -258,10 +273,12 @@ export function fortificationJobs(input: FortificationInput): FortificationResul
   const jobs: WallJob[] = [];
   for (const node of input.fabric) {
     if (node.declared?.character?.fortification === undefined) continue;
-    const extent = extentOfRects([
-      ...(node.rect === undefined ? [] : [node.rect]),
-      ...node.buildings,
-    ]);
+    const extent = fabricExtent({
+      clip: node.rect === undefined ? [] : [node.rect],
+      buildings: node.buildings,
+      margin: WALL_DEFAULT_MARGIN,
+      ...(input.field === undefined ? {} : { field: input.field }),
+    });
     const job = askRow(intentFor(input.intents, node.nodePath), node.nodePath, {
       scope: "quarter",
       extent,
