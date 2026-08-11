@@ -1,0 +1,89 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"modern","event":{"kind":"siege","severity":0.8,"recency":0},"character":{"label":"Hellenist city","materialTheme":"modern_city"},"tokens":{"invasion":"Sea monsters are invading the city."}}
+           1 attempt(s), 3604 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     66437 in + 34746 out = 101183  ($0.0292)
+programs   1 of 2 kept (budget 12 landmark / 6 plugin)
+  ok     leviathan [landmark]  2 attempt(s), 74332 tokens  ($0.0383)
+  drop   invading_sea_monster [plugin]  3 attempt(s), 155156 tokens  ($0.0621)  — 6 gate problem(s) after 3 round(s); last: LOAM-E336 physics rule floating.isolated at (5, 69, 1) on cyan_concrete: a full block with air on all six faces
+  tokens     72506 in + 156982 out = 229488  ($0.1004)
+
+recovery   1 program(s) referenced by the tree but missing from the document — one retry each: invading_sea_monster [plugin]
+  ok     invading_sea_monster  — recovered on retry
+  tokens     16977 in + 106919 out = 123896  ($0.0658)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The document failed to compile — 1 problem(s):
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.sea_monster_breach: no site would take "invading_sea_monster"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope
+
+  revision 1 authored in 1 attempt(s)
+  tokens     81162 in + 10382 out = 91544  ($0.0164)
+
+compiled "hellenist_sea_siege" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege
+  seed       305
+  region     1024x1024 at (-512, -512)
+  heights    50.8..79.2  sea 63  snow line 78.6
+  land       61.6% of columns above sea level
+  biomes     plains 51.9%, ocean 37.7%, forest 9.7%, beach 0.6%, windswept_hills 0.0%
+  trees      1638 (greenbelt=1761)
+  chunks     4096
+  blocks     139590963 (311456 vegetation)
+  markers    173
+  spawn      [16, 68, -16]
+  timings    validate 17ms  field 3564ms  layout 46811ms  climate 1095ms  columns 182ms  caves 0ms  structures 37955ms  programs 2134ms  scatter 1918ms  biomes 285ms  validators 26ms  emit 25199ms  total 119447ms
+  programs   world.harbor_leviathan=leviathan×1 (10697 blocks), world.sea_monster_wave=invading_sea_monster×12 (16269 blocks), world.sea_monster_breach=invading_sea_monster×12 (16241 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.city_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_6: no block in "world.hellenist_city.cell_6" can hold a courtyard: 14 of 18 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_7: no block in "world.hellenist_city.cell_7" can hold a courtyard: 3 of 3 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_8: no block in "world.hellenist_city.cell_8" can hold a courtyard: 10 of 16 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_9: no block in "world.hellenist_city.cell_9" can hold a courtyard: 8 of 9 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_10: no block in "world.hellenist_city.cell_10" can hold a courtyard: 15 of 15 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_11: no block in "world.hellenist_city.cell_11" can hold a courtyard: 6 of 6 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-T224 COURTYARD_NONE at world.hellenist_city.cell_12: no block in "world.hellenist_city.cell_12" can hold a courtyard: 9 of 15 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 477579 footprint columns (plus 21163 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 77% of 12667 ring columns); snow policy auto resolved to "never" on a 0/477579 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (16, -16)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  3 model run(s), 1 compile-feedback round(s), 164576 in + 152047 out = 316623 tokens ($0.1114)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege
+installed "hellenist_sea_siege_c3"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p5-c3/hellenist_sea_siege
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/hellenist_sea_siege_c3
+  lastPlayed 1786435767940 (2026-08-11T08:09:27.940Z)
