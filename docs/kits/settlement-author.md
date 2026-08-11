@@ -399,7 +399,7 @@ its floor is mycelium and moss, and the one ordinary tree is a minority weight.
   "kind": "generator",
   "generator": "scatter.forest@0",
   "params": {
-    "area": { "at": [0.5, 0.5], "radius": 0.35 },
+    "area": { "at": [0.5, 0.5], "radius": 180 },
     "density": 0.14,
     "spacing": 4,
     "clumping": 0.7,
