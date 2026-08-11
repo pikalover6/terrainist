@@ -947,24 +947,48 @@ export function reachOrRefuse(
   const start = insideDoor(ctx);
   if (start === null) return { withdrawn: 0, unreachable: 0, refused: false };
   const floor = new Set(ctx.floorCells.map((cell) => `${cell.x},${cell.z}`));
-  const open = (x: number, z: number): boolean => {
-    if (!floor.has(`${x},${z}`)) return false;
-    const op = ctx.blockAt(x, 1, z);
+  /**
+   * Can a body occupy this course? The lint's own vocabulary, not a second one.
+   *
+   * A cell holding a flower pot is a cell the physics lint calls *standable* —
+   * a pot is not a full cube and not an obstacle — so it is a cell the lint
+   * demands a walking route to. This flood used to call it sealed, so it never
+   * appeared in `stranded` and the heap that had walled it in was never
+   * withdrawn: a shipped `traversal.unreachable` on a potted plant in a decayed
+   * shell, on any seed whose rubble happened to land on the three cells around
+   * a pot.
+   *
+   * `bodyFits` is the op-list twin of the lint's `passableAt` (shared
+   * `BODY_BLOCKING`, `canSupport` standing in for the registry's
+   * `isFullCube`); {@link PASSABLE_IN_RUIN} stays as its floor, for the few
+   * names — a dead bush, snow, a light — a name-level cube test calls solid.
+   */
+  const clear = (x: number, y: number, z: number): boolean => {
+    const op = ctx.blockAt(x, y, z);
     if (op === undefined || op.block === "air") return true;
-    // The lint's own vocabulary, not a second one. A cell holding a flower pot
-    // is a cell the physics lint calls *standable* — a pot is not a full cube
-    // and not an obstacle — so it is a cell the lint demands a walking route
-    // to. This flood used to call it sealed, so it never appeared in `stranded`
-    // and the heap that had walled it in was never withdrawn: a shipped
-    // `traversal.unreachable` on a potted plant in a decayed shell, on any seed
-    // whose rubble happened to land on the three cells around a pot.
-    //
-    // `bodyFits` is the op-list twin of the lint's `passableAt` (shared
-    // `BODY_BLOCKING`, `canSupport` standing in for the registry's
-    // `isFullCube`); {@link PASSABLE_IN_RUIN} stays as its floor, for the few
-    // names — a dead bush, snow, a light — a name-level cube test calls solid.
     return PASSABLE_IN_RUIN.test(op.block) || bodyFits(op.block);
   };
+  /**
+   * **A body is two courses tall, and so is this flood.**
+   *
+   * The lint's `standable` asks `passableAt` at the feet course *and* at the
+   * head course; a cell with air at the feet and a soffit at the head is a
+   * crawlspace, which the walking agent may not enter. This flood asked the
+   * feet course alone, so it walked under the soffit, called the cells beyond
+   * it reached, and withdrew nothing — while the lint, arriving at the same
+   * room with a body, found them walled in.
+   *
+   * That is exactly the parking garage's L-pocket: the deck slab reaches down
+   * over one row of the ground storey, the ladder corner behind it is open
+   * floor, and two rubble heaps close the two remaining sides. The heaps are
+   * the decay's own additive move and the withdrawal is already written — the
+   * flood simply never saw the seal, because it was measuring a crawling body.
+   *
+   * Head-blocked cells drop out of `stranded` for the same reason: the lint
+   * never asks for a route to a cell no body can stand in.
+   */
+  const open = (x: number, z: number): boolean =>
+    floor.has(`${x},${z}`) && clear(x, 1, z) && clear(x, 2, z);
   const flood = (): Set<string> => {
     const seen = new Set<string>();
     if (!open(start.x, start.z)) return seen;

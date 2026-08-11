@@ -261,6 +261,95 @@ describe("reachOrRefuse — the guarantee, checked (§5.7)", () => {
       }
     }
   });
+
+  it("floods with a two-course body, so a crawlspace is not a way out", () => {
+    // The shipped defect, WP-4's P4 candidate: five `parking_garage` shells
+    // whose ground storey ends in an L-pocket of three cells round the ladder,
+    // walled by two of the decay's own rubble heaps. The flood asked the FEET
+    // course alone, so it walked out under the deck slab — a cell with air at
+    // the feet and concrete at the head — declared the pocket reached, and
+    // withdrew nothing. The lint, arriving with a body two courses tall, could
+    // not use that crawlspace and reported three `traversal.unreachable` in
+    // each shell: 15 findings on the ground storey the ruling guarantees.
+    //
+    // The property, stated the way the lint states it: every cell a body can
+    // stand in on the ground storey has a walking route from the door.
+    // The deck shell as the district builds it — one storey of it under a slab
+    // that comes down to head height — and an ordinary shell beside it, so the
+    // property is not stated only where it was broken.
+    const cases: readonly {
+      archetype: string;
+      size: [number, number, number];
+      floors: number;
+    }[] = [
+      { archetype: "parking_garage", size: [9, 14, 7], floors: 1 },
+      { archetype: "parking_garage", size: [9, 14, 7], floors: 2 },
+      { archetype: "parking_garage", size: [16, 14, 7], floors: 2 },
+      { archetype: "parking_garage", size: SIZE, floors: 1 },
+      { archetype: "cottage", size: SIZE, floors: 2 },
+      { archetype: "warehouse", size: SIZE, floors: 2 },
+    ];
+    for (const { archetype, size, floors } of cases) {
+      for (const decay of [0.4, 0.55, 0.7, 0.85, 1]) {
+        const { ops, meta } = generateBuilding({
+          size,
+          params: { archetype, floors, decay },
+          seed: SEED,
+          style: BUILDING_STYLE_DEFAULTS,
+        });
+        const world = worldOf(ops);
+        const at = (x: number, y: number, z: number): string =>
+          world.get(`${x},${y},${z}`)?.block ?? "air";
+        const floor = new Set(meta.floorCells.map((cell) => `${cell.x},${cell.z}`));
+        /** The lint's `passableAt`, in the op list's vocabulary. */
+        const clear = (x: number, y: number, z: number): boolean => {
+          const block = at(x, y, z);
+          return block === "air" || bodyFits(block);
+        };
+        /** The lint's `standable`: support under the feet, body above it. */
+        const standable = (x: number, z: number): boolean =>
+          floor.has(`${x},${z}`) &&
+          canSupport(at(x, 0, z)) &&
+          clear(x, 1, z) &&
+          clear(x, 2, z);
+        const door = meta.door;
+        if (door === null) continue;
+        const start = ([
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as const)
+          .map(([dx, dz]) => ({ x: door.x + dx, z: door.z + dz }))
+          .find((cell) => standable(cell.x, cell.z));
+        expect(start, `${archetype} ${size.join("x")}@${decay}: no cell inside the door`).toBeDefined();
+        const seen = new Set([`${(start as { x: number; z: number }).x},${(start as { x: number; z: number }).z}`]);
+        const queue = [start as { x: number; z: number }];
+        while (queue.length > 0) {
+          const cell = queue.pop() as { x: number; z: number };
+          for (const [dx, dz] of [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ] as const) {
+            const next = { x: cell.x + dx, z: cell.z + dz };
+            const key = `${next.x},${next.z}`;
+            if (seen.has(key) || !standable(next.x, next.z)) continue;
+            seen.add(key);
+            queue.push(next);
+          }
+        }
+        const stranded = meta.floorCells.filter(
+          (cell) => standable(cell.x, cell.z) && !seen.has(`${cell.x},${cell.z}`),
+        );
+        expect(
+          stranded.map((cell) => `${cell.x},${cell.z}`),
+          `${archetype} ${size.join("x")} floors=${floors}@${decay}`,
+        ).toEqual([]);
+      }
+    }
+  });
 });
 
 describe("the flood reads the lint's own vocabulary (§5.7, §8)", () => {
