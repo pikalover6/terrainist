@@ -22,6 +22,8 @@ import {
   authorPrograms,
   classifyPromptIntent,
   formatProgramRun,
+  formatProgramRecovery,
+  recoverMissingPrograms,
   DEFAULT_BESPOKE_BUDGET_USD,
   formatClassification,
   reviseForProgramWiring,
@@ -351,6 +353,38 @@ export async function authorAndWriteDocument(
       programs = authored.programs;
       doc = attachPrograms(doc, programs);
 
+      // --- one retry for a program the tree calls for and does not have ----
+      // Battery P5: `sea_monster` failed authoring, the scatter node went on
+      // naming it, the compile shipped legally with LOAM-W337 PROGRAM_DROPPED,
+      // and nothing retried — the prompt's central plural lost to one bad roll.
+      // Each referenced-but-absent program gets ONE fresh authoring run (its own
+      // gate and repair rounds); a program that fails twice stays dropped.
+      const attemptedRecovery = new Set<string>();
+      const verifyGate = gate;
+      const recover = async (): Promise<void> => {
+        const spent = sumCost(usages);
+        const recovery = await recoverMissingPrograms({
+          doc,
+          programs,
+          prompt: options.prompt,
+          worldSeed: options.seed,
+          size: options.size,
+          gate: verifyGate,
+          alreadyAttempted: attemptedRecovery,
+          model: options.model,
+          reasoningEffort: options.effort,
+          budgetUsd: Math.max(0, options.bespokeBudget - spent),
+          ...(intent === undefined ? {} : { context: JSON.stringify(intent) }),
+        });
+        for (const id of recovery.attemptedIds) attemptedRecovery.add(id);
+        if (recovery.attempted.length === 0) return;
+        console.log(`${formatProgramRecovery(recovery)}\n`);
+        usages.push(recovery.usage);
+        doc = recovery.doc as LoamDocument;
+        programs = recovery.programs;
+      };
+      await recover();
+
       // --- and make sure the tree actually invokes them --------------------
       // A program frozen into the map that no node names is a program that
       // cost two model calls and places zero blocks. One focused revision
@@ -384,6 +418,11 @@ export async function authorAndWriteDocument(
           console.warn(`${wiring.warning}\n`);
         }
       }
+
+      // A wiring revision rewrites the tree, and a rewritten tree can name a
+      // program the map still does not carry. Ids that already had their one
+      // retry are not retried again — `attemptedRecovery` carries across.
+      if (wiring.revised) await recover();
     }
   }
 
@@ -392,6 +431,17 @@ export async function authorAndWriteDocument(
   console.log(`  document   ${docPath}\n`);
 
   return { result, doc, programs, usages, docPath, worldDir: path.join(outDir, doc.meta.name) };
+}
+
+/**
+ * Dollars spent so far, for the recovery pass's share of the bespoke stop.
+ *
+ * Usages whose provider reported no cost count as zero: the alternative is
+ * refusing to retry because the spend is unknown, which is the failure this
+ * pass exists to fix.
+ */
+function sumCost(usages: readonly Usage[]): number {
+  return usages.reduce((total, u) => total + (u.cost ?? 0), 0);
 }
 
 /** Write an authored document next to its world folder; returns its path. */

@@ -180,6 +180,18 @@ export type {
   ProgramWiringResult,
 } from "./program-wiring.js";
 
+export {
+  findMissingPrograms,
+  formatProgramRecovery,
+  planProgramRecovery,
+  recoverMissingPrograms,
+} from "./program-recovery.js";
+export type {
+  MissingProgram,
+  ProgramRecoveryRequest,
+  ProgramRecoveryResult,
+} from "./program-recovery.js";
+
 export { stubProgramGate } from "./program-gate.js";
 export type {
   ProgramDocContext,
