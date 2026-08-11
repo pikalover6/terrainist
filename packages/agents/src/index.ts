@@ -122,6 +122,7 @@ export {
   FLORA_CHARACTER_WORDS,
   FLORA_PROGRAM_WORDS,
   INTENT_CLASSIFIER_PROMPT,
+  MATERIAL_THEME_IDS,
   MAX_INTENT_ATTEMPTS,
   classifyPromptIntent,
   formatClassification,

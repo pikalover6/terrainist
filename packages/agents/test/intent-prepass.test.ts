@@ -101,6 +101,7 @@ describe("classifyPromptIntent", () => {
       "birchwood_downs",
       "modern_city",
       "white_quartz",
+      "sun_clay",
     ]);
     // The flora vocabulary is three closed sets now, not four tree shapes
     // (FLORA-GRAMMAR-v0 §6.1): a species named in a prefer list is the only

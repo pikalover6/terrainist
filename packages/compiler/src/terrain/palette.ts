@@ -291,6 +291,19 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       kerb: "minecraft:polished_diorite",
       course: "minecraft:diorite",
     }),
+    // Sun-baked antiquity: a dusty terracotta carriageway patched with packed
+    // mud, a pale smooth-sandstone centre course, cut sandstone at the edge and
+    // a bare earth back lane. The road is deliberately the *darkest* thing on
+    // the street, because the whole read of the reference is pale walls
+    // standing over a dust-coloured ground.
+    sun_clay: Object.freeze({
+      carriageway: "minecraft:terracotta",
+      worn: "minecraft:packed_mud",
+      marking: "minecraft:smooth_sandstone",
+      lane: "minecraft:coarse_dirt",
+      kerb: "minecraft:cut_sandstone",
+      course: "minecraft:sandstone",
+    }),
   });
 
 /** The street materials for a theme id; the modern set when it is unknown. */
@@ -506,12 +519,32 @@ export const GROUND_MATERIALS_BY_THEME: Readonly<Record<string, GroundMaterials>
     bank: "minecraft:coarse_dirt",
     scree: "minecraft:gravel",
   }),
+  // Sun-baked antiquity. The paving is the dressed sandstone the town cuts for
+  // itself; the revetment is mud brick, because the terraces holding an ancient
+  // hillside up are older and poorer than the houses standing on them, and its
+  // weep course is the packed mud the brick was made from — the one damp thing
+  // in a dry palette. The plinth is fired brick, so a building's base reads as
+  // the building's rather than as more terrace.
+  sun_clay: Object.freeze({
+    pavement: "minecraft:smooth_sandstone",
+    kerb: "minecraft:cut_sandstone",
+    tread: "minecraft:sandstone",
+    revetment: "minecraft:mud_bricks",
+    coping: "minecraft:chiseled_sandstone",
+    plinth: "minecraft:bricks",
+    weep: "minecraft:packed_mud",
+    rail: "minecraft:mud_brick_wall",
+    stairs: "minecraft:mud_brick_stairs",
+    slab: "minecraft:mud_brick_slab",
+    bank: "minecraft:coarse_dirt",
+    scree: "minecraft:gravel",
+  }),
 });
 
 /**
  * Ground materials for a theme the table does not name, derived from its sets.
  *
- * The table above is hand-held for the five shipped themes because a walk is
+ * The table above is hand-held for the six shipped themes because a walk is
  * what decides whether a pavement reads; a theme nobody has walked still has to
  * come out legible rather than grey, and it can, because a `MaterialTheme`
  * already carries its own masonry families. Three of them are picked out by

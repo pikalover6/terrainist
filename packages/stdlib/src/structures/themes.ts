@@ -364,11 +364,163 @@ export const WHITE_QUARTZ_THEME: MaterialTheme = Object.freeze({
   roofs: [QUARTZ_ROOF, AMETHYST_ROOF],
 });
 
+/* -------------------------------------------------------------------------- */
+/* the sun-clay palette                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The joinery every sun-clay wall family shares.
+ *
+ * Acacia, and it is the one *wood* in the theme on purpose: a Mediterranean
+ * street is sandstone and plaster with **timber** shutters and doors in it, and
+ * acacia is the pinned set's driest, most orange plank family — spruce or dark
+ * oak beside sandstone reads as a northern cottage that lost its walls.
+ */
+const SUN_CLAY_DOOR = "acacia_door";
+const SUN_CLAY_TRAPDOOR = "acacia_trapdoor";
+
+/**
+ * Cut sandstone ashlar — the town's dressed wall.
+ *
+ * `WoodSet` is a shape, not a claim about trees (see {@link CONCRETE_LIGHT}):
+ * the grammar asks a wall family for a surface, a frame member, an accent, a
+ * stair, a slab, a railing, a door and a trapdoor, and the sandstone family
+ * answers every one of them from blocks the pinned 1.21.11 set carries.
+ */
+const SANDSTONE_ASHLAR: WoodSet = {
+  id: "sandstone_ashlar",
+  planks: "smooth_sandstone",
+  log: "cut_sandstone",
+  stripped: "sandstone",
+  stairs: "sandstone_stairs",
+  slab: "sandstone_slab",
+  fence: "sandstone_wall",
+  door: SUN_CLAY_DOOR,
+  trapdoor: SUN_CLAY_TRAPDOOR,
+};
+
+/**
+ * Lime-washed plaster over a sandstone frame — the white of the reference.
+ *
+ * `white_terracotta` rather than any of the whites the quartz theme uses: it is
+ * a *warm* off-white with a fired grain, which is what limewash on mud plaster
+ * looks like, where quartz and calcite are the cold, polished whites that made
+ * every Mediterranean prompt come out as a wedding cake.
+ */
+const PLASTER_WHITE: WoodSet = {
+  id: "plaster_white",
+  planks: "white_terracotta",
+  log: "chiseled_sandstone",
+  stripped: "smooth_sandstone",
+  stairs: "sandstone_stairs",
+  slab: "sandstone_slab",
+  fence: "sandstone_wall",
+  door: SUN_CLAY_DOOR,
+  trapdoor: SUN_CLAY_TRAPDOOR,
+};
+
+/** Mud brick over packed mud — the oldest and poorest wall on the street. */
+const MUD_BRICK_WALL: WoodSet = {
+  id: "mud_brick",
+  planks: "mud_bricks",
+  log: "packed_mud",
+  stripped: "smooth_sandstone",
+  stairs: "mud_brick_stairs",
+  slab: "mud_brick_slab",
+  fence: "mud_brick_wall",
+  door: SUN_CLAY_DOOR,
+  trapdoor: SUN_CLAY_TRAPDOOR,
+};
+
+const SANDSTONE_STONE: StoneSet = {
+  id: "sandstone",
+  primary: "sandstone",
+  accent: "cut_sandstone",
+  stairs: "sandstone_stairs",
+  slab: "sandstone_slab",
+  wall: "sandstone_wall",
+};
+
+const SMOOTH_SANDSTONE_STONE: StoneSet = {
+  id: "smooth_sandstone",
+  primary: "smooth_sandstone",
+  accent: "chiseled_sandstone",
+  stairs: "smooth_sandstone_stairs",
+  slab: "smooth_sandstone_slab",
+  wall: "sandstone_wall",
+};
+
+const MUD_BRICK_STONE: StoneSet = {
+  id: "mud_bricks",
+  primary: "mud_bricks",
+  accent: "packed_mud",
+  stairs: "mud_brick_stairs",
+  slab: "mud_brick_slab",
+  wall: "mud_brick_wall",
+};
+
+/** The pale flat roof — a terrace you could dry figs on. */
+const SANDSTONE_TERRACE_ROOF: RoofSet = {
+  id: "smooth_sandstone",
+  stairs: "smooth_sandstone_stairs",
+  slab: "smooth_sandstone_slab",
+  solid: "smooth_sandstone",
+};
+
+/** The white flat roof: limewash over the same terrace. */
+const PLASTER_TERRACE_ROOF: RoofSet = {
+  id: "white_plaster",
+  stairs: "sandstone_stairs",
+  slab: "sandstone_slab",
+  solid: "white_terracotta",
+};
+
+/** The mud-brick roof of the poorer quarter. */
+const MUD_BRICK_ROOF: RoofSet = {
+  id: "mud_brick",
+  stairs: "mud_brick_stairs",
+  slab: "mud_brick_slab",
+  solid: "mud_bricks",
+};
+
+/** The id a document (or an intent's `character.materialTheme`) names. */
+export const SUN_CLAY_THEME_ID = "sun_clay";
+
+/**
+ * Sun-baked stone and clay: sandstone, plaster and terracotta.
+ *
+ * **The gap this fills.** The five themes before it could say northern timber,
+ * northern pine, chalk downs, poured concrete and polished quartz — and nothing
+ * at all could say *sandstone-and-plaster antiquity*. Every Mediterranean,
+ * ancient or desert prompt (Troy, Athens, Jerusalem, an oasis trade town) came
+ * out modern-grey or wedding-cake white, which is the medium failing to whisper
+ * the one thing the prompt actually said.
+ *
+ * The read it aims at is the reference imagery: dense sandy-white fabric —
+ * sandstone ashlar and lime-washed plaster walls, pale flat roofs, terracotta
+ * and mud brick where the town is older or poorer, timber only in the doors.
+ * **Ordinary antiquity, not prestige**: unlike {@link WHITE_QUARTZ_THEME} this
+ * is the right answer for a plain hill town on the Aegean, not only for a
+ * temple.
+ *
+ * Like {@link MODERN_CITY_THEME} and {@link WHITE_QUARTZ_THEME} it is
+ * deliberately **not** in {@link MATERIAL_THEMES}: a member added to that pool
+ * rerolls every seeded theme draw ever taken and therefore every shipped world.
+ * It is reachable by name only.
+ */
+export const SUN_CLAY_THEME: MaterialTheme = Object.freeze({
+  id: SUN_CLAY_THEME_ID,
+  woods: [SANDSTONE_ASHLAR, PLASTER_WHITE, MUD_BRICK_WALL],
+  stones: [SANDSTONE_STONE, SMOOTH_SANDSTONE_STONE, MUD_BRICK_STONE],
+  roofs: [SANDSTONE_TERRACE_ROOF, PLASTER_TERRACE_ROOF, BRICK_ROOF, MUD_BRICK_ROOF],
+});
+
 /** Every theme that can be asked for **by name**, drawable or not. */
 export const ALL_MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
   ...MATERIAL_THEMES,
   MODERN_CITY_THEME,
   WHITE_QUARTZ_THEME,
+  SUN_CLAY_THEME,
 ]);
 
 /** The theme a world is built in, drawn from the settlement's node seed. */

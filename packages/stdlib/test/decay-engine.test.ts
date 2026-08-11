@@ -69,24 +69,47 @@ describe("THE RE-CLAD RULE (§5.2)", () => {
     }
   });
 
-  it("has NO variant for timber, brick, terracotta, concrete, quartz or sandstone", () => {
+  it("has NO variant for timber, brick, terracotta, concrete, quartz or glass", () => {
     // §5.2's second clause, and the clause that makes the rule good rather than
     // merely safe: these decay by removal, so the crumble line runs lower on
     // them and the shell's own block is left exactly as it is.
+    //
+    // **Sandstone left this list when the `sun_clay` theme arrived** — a theme
+    // whose every wall is sandstone would otherwise have had no weathering at
+    // all, only holes, which is the concrete-tower bug from the other side. See
+    // the sun-clay case below for what it decays *to*, and note that terracotta
+    // (the plaster) stays here on purpose: limewash falls off a ruin.
     for (const block of [
       "oak_planks",
       "spruce_planks",
       "oak_log",
       "bricks",
       "terracotta",
+      "white_terracotta",
       "white_concrete",
       "quartz_block",
-      "sandstone",
-      "smooth_sandstone",
       "glass",
     ]) {
       expect(weatheredOf(block, 0), block).toBeNull();
     }
+  });
+
+  it("weathers the sun-clay families down their own stages", () => {
+    // The `sun_clay` theme's walls, and the property that matters is that every
+    // answer is inside the block's own family: sandstone weathers to sandstone
+    // and mud brick to mud, never to the mossy cobblestone a Mediterranean
+    // ruin has never seen.
+    const sandstone = /^(sandstone|cut_sandstone|chiseled_sandstone|smooth_sandstone)$/;
+    for (const block of ["sandstone", "cut_sandstone", "chiseled_sandstone", "smooth_sandstone"]) {
+      for (const k of [0, 1, 2, 3]) {
+        expect(weatheredOf(block, k), `${block}@${k}`).toMatch(sandstone);
+      }
+      // …and the dressing goes: no weathered face is *more* finished than the
+      // block it replaces, which is the direction that reads as age.
+      expect(weatheredOf(block, 0), block).not.toBe("smooth_sandstone");
+    }
+    expect(weatheredOf("mud_bricks", 0)).toBe("packed_mud");
+    expect(weatheredOf("packed_mud", 1)).toBe("coarse_dirt");
   });
 
   it("weathers the stone families, and mixes by position", () => {

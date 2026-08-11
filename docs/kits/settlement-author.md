@@ -2362,7 +2362,7 @@ warning. Per-building overrides are what `params` are for.
 | `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim, **and, at 0.35 and above, the share of a district's own buildings built as ruins** — see *A ruined city is a district with a high `decline`* under `district`; it also sends fields fallow, so a declining farm town's holdings rest their ground without you writing `fallow`. **Orthogonal to wealth: a rich ruin exists.** |
 | `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength. Outranked by `character.urbanForm` |
 | `event` | `{ "kind": "flood"\|"fire"\|"siege"\|"boom", "severity": 0..1, "recency": 0..1 }` | dressing for a one-off event. `recency` 0 = happening now, 1 = a lifetime ago |
-| `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town" |
+| `climate` | `{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1, "snow": "auto"\|"never"\|"always", "blend": "sharp"\|"soft"\|"wide" }` | outranks the terrain's own climate over this scope. Fixes "snow on half the town". `blend` sets how wide the settlement's biome edge fades into the surrounding terrain — `sharp` (16 columns) for a town that stops dead at its wall or ditch, `soft` (32) for a walkable gradient, `wide` (64) for a long fade into desert or steppe. Omit it and the band is scaled by the settlement's own size, which is the right answer most of the time |
 | `character` | see below | everything that makes a *region* read as a different place |
 | `tokens` | flat bag of strings/numbers/booleans | anything else worth recording; nothing switches on it |
 
@@ -2410,7 +2410,7 @@ world hold two places that read differently**.
 | key | value |
 |---|---|
 | `label` | free text: `"pirate haven"`, `"unicorn glade"` |
-| `materialTheme` | one of exactly these ids — `temperate_timber`, `boreal_pine`, `birchwood_downs`, `modern_city`, `white_quartz` — when the prompt names a material world. No other value exists; an unknown id is ignored with a warning |
+| `materialTheme` | one of exactly these ids — `temperate_timber`, `boreal_pine`, `birchwood_downs`, `modern_city`, `white_quartz`, `sun_clay` — when the prompt names a material world. No other value exists; an unknown id is ignored with a warning. `sun_clay` is the ancient-Mediterranean and desert palette (sandstone, plaster, terracotta, mud brick, pale flat roofs): it is the right answer for Troy, an Aegean hill town, a holy city or an oasis trade town, and `white_quartz` stays the prestige exception |
 | `palettes` | palette symbol overrides, merged over `style.palettes` in this subtree |
 | `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }` |
 | `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` — ids, never phrases; see the vocabulary below |
@@ -2447,7 +2447,9 @@ and put ids in these lists.
 it: `"quartz"`, `"marble"`, `"crystal"` reach `white_quartz`; `"timber"`,
 `"half-timbered"` reach `temperate_timber`; `"weathered"`, `"driftwood"`,
 `"pine"` reach `boreal_pine`; `"birch"` reaches `birchwood_downs`;
-`"concrete"`, `"glass"`, `"steel"` reach `modern_city`. Anything else is a
+`"concrete"`, `"glass"`, `"steel"` reach `modern_city`; `"sandstone"`,
+`"adobe"`, `"terracotta"`, `"stucco"`, `"mediterranean"`, `"greek"`,
+`"roman"`, `"desert"` reach `sun_clay`. Anything else is a
 `LOAM-W484` warning and the settlement keeps its seeded draw.
 
 ### Inheritance

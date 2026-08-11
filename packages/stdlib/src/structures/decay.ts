@@ -251,8 +251,9 @@ function pct(share: number): number {
  * The table is small, explicit and over the **pinned 1.21.11 set** — every id
  * below was checked against `minecraft-data`, never assumed, exactly as the
  * vine block was. A family absent from the table has no weathered variant *on
- * purpose*: bricks, terracotta, concrete, quartz, sandstone, and every plank
- * and wood family. Those decay by removal, which is §5.2's second clause and
+ * purpose*: bricks, terracotta (plain and dyed — the plaster falls off a ruin,
+ * it does not weather), concrete, quartz, and every plank and wood family.
+ * Those decay by removal, which is §5.2's second clause and
  * the clause that makes the rule good rather than merely safe — a wooden house
  * that fell in leaves its plinth, its chimney and a few studs.
  */
@@ -279,6 +280,24 @@ export const WEATHERED_VARIANTS: Readonly<Record<string, readonly string[]>> = O
     "cracked_polished_blackstone_bricks",
   ],
   nether_bricks: ["cracked_nether_bricks", "cracked_nether_bricks"],
+  // --- the sun-clay families (the `sun_clay` theme) ------------------------
+  //
+  // The pinned set has no cracked or mossy sandstone and no cracked mud brick,
+  // so "weathered" here is what antiquity actually looks like in this material:
+  // the **dressing goes first**. Smooth and chiseled faces weather back to the
+  // raw block, cut ashlar loses its joint line, and a raw sandstone wall comes
+  // up mottled between the two grains rather than uniformly clean. Every one of
+  // these is inside its own family, which is the whole of §5.2 — a Troy re-clad
+  // in mossy cobblestone would be the concrete-tower bug in a toga.
+  smooth_sandstone: ["sandstone", "cut_sandstone"],
+  cut_sandstone: ["sandstone", "sandstone"],
+  chiseled_sandstone: ["sandstone", "cut_sandstone"],
+  sandstone: ["cut_sandstone", "sandstone"],
+  // Mud brick loses its facing and goes back to the mud it was made of; the
+  // packed mud under it goes back to earth. Nothing here invents a material:
+  // this is one family walking down its own three stages.
+  mud_bricks: ["packed_mud", "mud_bricks"],
+  packed_mud: ["packed_mud", "coarse_dirt"],
 });
 
 /** True for a family member that is the *mossy* one, **by name** (WP6 §4.2). */

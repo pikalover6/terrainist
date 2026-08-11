@@ -63,7 +63,7 @@ export const MAX_INTENT_ATTEMPTS = 2;
  * knows about documents starts writing them.
  */
 /**
- * The five material theme ids the structure grammar ships.
+ * The six material theme ids the structure grammar ships.
  *
  * Hand-listed because the theme table lives in `@terrainist/stdlib`, which the
  * agents package deliberately does not depend on (agents talk to the *spec*,
@@ -77,6 +77,7 @@ export const MATERIAL_THEME_IDS = [
   "birchwood_downs",
   "modern_city",
   "white_quartz",
+  "sun_clay",
 ] as const;
 
 /**
@@ -335,13 +336,27 @@ materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exi
   Pick by the place's own material logic, and default toward the modest end:
   villages, farms, ports, market towns -> temperate_timber; taiga, alpine,
   fjord -> boreal_pine; parkland, downs, spa towns -> birchwood_downs;
-  contemporary or futuristic cities -> modern_city. "white_quartz" is the
-  PRESTIGE exception and is almost always the wrong answer: write it only for
-  the sacred, the palatial or the otherworldly-refined (a temple city, a
-  wizard's citadel, an elven capital) — never for an ordinary town however
-  scenic, and never merely because the prompt says "stone". Stone-built
-  ordinary towns are a palette question the compiler already answers; a
-  medieval hill town in white_quartz reads as a wedding cake.
+  contemporary or futuristic cities -> modern_city.
+
+  sun_clay is THE ANCIENT MEDITERRANEAN AND THE DESERT — sun-baked stone and
+  clay: sandstone, plaster, terracotta, mud brick, pale flat roofs. Write it
+  for Troy, Greek and Roman antiquity, Carthage, holy cities (Jerusalem,
+  Babylon), Aegean island towns, oasis and desert trade towns, anything
+  described as adobe, whitewashed, sandstone or sun-baked. It is ORDINARY
+  antiquity, not a prestige palette: an ancient fishing village, a mud-brick
+  farming town and a marble-less hill town on a hot coast are all sun_clay.
+  Nothing else in this list can say antiquity — an ancient city written as
+  modern_city comes out grey, and written as white_quartz comes out a wedding
+  cake.
+
+  "white_quartz" is the PRESTIGE exception and is almost always the wrong
+  answer: write it only for the sacred, the palatial or the
+  otherworldly-refined (a temple city, a wizard's citadel, an elven capital) —
+  never for an ordinary town however scenic, and never merely because the
+  prompt says "stone" or "white". Stone-built ordinary towns are a palette
+  question the compiler already answers; a medieval hill town in white_quartz
+  reads as a wedding cake, and so does an ancient one, which is what sun_clay
+  is for.
 
 flora: what the wilderness is made of. Three kinds of word ground here, and
 nothing else does. Write flora ONLY when the prompt says something about the

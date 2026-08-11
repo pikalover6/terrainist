@@ -8,7 +8,7 @@
  *
  * 1. it **is** a registered id (`"cottage"`, `"fountain"`, `"oak_round"`);
  * 2. it is a near miss a small alias table can carry (`"quartz"`,
- *    `"white stone"` → the `white_quartz` theme);
+ *    `"white stone"` → the `white_quartz` theme, `"adobe"` → `sun_clay`);
  * 3. it is prose (`"rainbow-hued crystal formations"`).
  *
  * Case 3 used to be silent — the compiler dropped it and the world came out
@@ -92,6 +92,30 @@ export const THEME_ALIASES: Readonly<Record<string, string>> = Object.freeze({
   birch: "birchwood_downs",
   pale_timber: "birchwood_downs",
   downs: "birchwood_downs",
+  // The ancient Mediterranean and the desert. Words a model reaches for when
+  // it means sandstone-and-plaster antiquity — and note what is deliberately
+  // *not* here: "white" and "marble" still reach `white_quartz`, because a
+  // marble temple is the prestige palette and a sun-baked town is not.
+  sandstone: "sun_clay",
+  sand_stone: "sun_clay",
+  adobe: "sun_clay",
+  mud_brick: "sun_clay",
+  mudbrick: "sun_clay",
+  clay: "sun_clay",
+  terracotta: "sun_clay",
+  plaster: "sun_clay",
+  stucco: "sun_clay",
+  limewash: "sun_clay",
+  mediterranean: "sun_clay",
+  aegean: "sun_clay",
+  greek: "sun_clay",
+  roman: "sun_clay",
+  classical: "sun_clay",
+  antiquity: "sun_clay",
+  desert: "sun_clay",
+  oasis: "sun_clay",
+  sun_baked: "sun_clay",
+  sunbaked: "sun_clay",
 });
 
 /** Normalise a free word to the alias table's key shape. */
