@@ -816,8 +816,22 @@ regressions; minor bugs go to this ledger and get squashed opportunistically
   invisible in our own renders and had to be found in-game.
 - Plan-map SVG and a scripted flythrough along the vista axes: the demo problem,
   nearly free from data the compiler already produces.
-- Catalog curation over catalog completion — entry #441 is worth less than one
-  well-made monument.
+- **Catalog breadth in the prompt's own vocabulary.** Curation decides *which*
+  entries, never *how many*. The line this replaces — "entry #441 is worth
+  less than one well-made monument" — named a real failure (filling a taxonomy
+  for the taxonomy's sake) and drew the wrong conclusion, because the icon law
+  changed what an entry is for. A world screams its prompt only when the
+  ordinary fabric is built out of the prompt's own forms: Troy in `sun_clay`
+  reskinned medieval townhouse shells and read as a sandstone village, because
+  the palette was right and every form was borrowed. So the bar for a new
+  entry is not "does the taxonomy have a hole" but **"is there a sentence a
+  stranger would type that the catalog cannot say?"** — against which a stoa,
+  a jolly roger mast and a crop circle each earn their place and a fourth kind
+  of warehouse does not. Entries arrive in **form packs**, one culture, era or
+  genre at a time, each accepted in a single walk of its own exhibit world and
+  each reachable from ordinary prompt language before it ships — because an
+  unreachable entry is worth zero however well made, and that, not the count,
+  is what curation is for. See `docs/CATALOG-EXPANSION-v0.md`.
 
 ## Risks
 

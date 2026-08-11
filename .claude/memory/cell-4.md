@@ -79,8 +79,29 @@ palette unless icon demands foreign), theme-derived authored walls;
 envelope (wave 2, after walls.ts settles); (4) **content EXEMPT from
 8-28 backstop** — machinery freezes, content flows. DESIGN.md
 "curation over completion" line to be amended (icon-law reversal).
-Exhibit worlds = batch visual acceptance (one walk per pack). Walks
-still queued: pirate_unicorn_war_c2, hellenist_sea_siege_c3.
+Exhibit worlds = batch visual acceptance. Walks still queued:
+pirate_unicorn_war_c2, hellenist_sea_siege_c3.
+
+**Expansion doc ratifications (Kai, popup 2, 08-11):**
+docs/CATALOG-EXPANSION-v0.md = 9 packs / 145 new ids (441→586;
+classical_mediterranean 24, nautical_pirate 20, alien_scifi 19,
+arcane_magical 16, agrarian 16, wilds_camps 12, frontier_west 14,
+nile_egypt 12, east_asian 12). VERIFIED DEFECT (B0):
+character.archetypes.prefer/forbid was grounded (W483) but NO fan-out
+row consumed it — kit examples changed nothing; wiring fix = total
+grammar.mix row, forbid > prefer > weights(capped) > ctx.today.
+RATIFIED: (1) **formPacks YES** — 4th grounded list, precedence
+forbid > prefer > pack > default, reach law (no pack named =
+byte-identical), NO architecturalStyle dial (style is nouns not a
+scalar), affinity is advice never a gate (W490; modern-Hellenist is
+the legal era-contradicts-pack case); (2) **all 145 rows land
+not_started NOW** (sphinx excluded); (3) **one exhibit per pack**
+(nine walks — Kai wants them); (4) pyramid=catalog, sphinx=bespoke,
+generic+specific pairs allowed w/ cross-refs. DESIGN.md curation line
+replaced with ratified breadth doctrine. Pack priority: B0 →
+classical → alien/scifi → nautical+arcane TOGETHER (P1 needs both
+islands characterful) → wilds → agrarian → frontier → nile → east
+asian. Xeno materialTheme deferred until alien pack scheduled.
 
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
