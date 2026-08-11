@@ -78,13 +78,22 @@ export type StructureCategory = (typeof STRUCTURE_CATEGORIES)[number];
  * `infrastructure` is linear or networked: it follows a route or a grid rather
  * than sitting in an envelope.
  */
-export const STRUCTURE_KINDS = ["building", "prop", "underground", "infrastructure"] as const;
+export const STRUCTURE_KINDS = [
+  "building",
+  "prop",
+  "underground",
+  "infrastructure",
+] as const;
 
 /** How a structure is realised. */
 export type StructureKind = (typeof STRUCTURE_KINDS)[number];
 
 /** Build status. Only `implemented` is a claim; the other two are intent. */
-export const STRUCTURE_STATUSES = ["implemented", "in_progress", "not_started"] as const;
+export const STRUCTURE_STATUSES = [
+  "implemented",
+  "in_progress",
+  "not_started",
+] as const;
 
 /** A build status. */
 export type StructureStatus = (typeof STRUCTURE_STATUSES)[number];
@@ -301,15 +310,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   res("servants_quarters", "Servants' quarters", "implemented", {
     wave: 5,
     tags: ["lodging", "spare"],
-    note:
-      "Plain bunks up one wall row with barrel racks between the cot heads, a shared table on the far row in the storey's own idiom, a wash cauldron and a crafting table. Honest and spare.",
+    note: "Plain bunks up one wall row with barrel racks between the cot heads, a shared table on the far row in the storey's own idiom, a wash cauldron and a crafting table. Honest and spare.",
   }),
   res("houseboat", "Houseboat", "implemented", {
     wave: 6,
     kind: "prop",
     tags: ["water"],
-    note:
-      "Built on the W2 watercraft template rather than in the building grammar: a blunt barge hull that displaces water instead of boxing it in, a glazed cabin amidships under a slab roof with a chimney and roof planters, a fore-deck table, a railed after-deck and iron-bar moorings.",
+    note: "Built on the W2 watercraft template rather than in the building grammar: a blunt barge hull that displaces water instead of boxing it in, a glazed cabin amidships under a slab roof with a chimney and roof planters, a fore-deck table, a railed after-deck and iron-bar moorings.",
   }),
   res("boarding_house", "Boarding house", "implemented", {
     wave: 5,
@@ -501,7 +508,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- commercial -------------------------------------------------------- */
   com("market_stall", "Market stall", "implemented", { tags: ["village"] }),
   com("bakery", "Bakery", "implemented", { tags: ["village"] }),
-  com("warehouse", "Warehouse", "implemented", { tags: ["village", "storage"] }),
+  com("warehouse", "Warehouse", "implemented", {
+    tags: ["village", "storage"],
+  }),
   com("marketplace", "Marketplace", "not_started", { tags: ["open-air"] }),
   com("shop_row", "Shop row", "implemented", {
     wave: 5,
@@ -603,8 +612,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   ind("brickworks", "Brickworks", "implemented", {
     wave: 5,
-    note:
-      "A wave-two kiln core on the far wall with its fire in the mouth, brick drying stacks and trapdoor shelves, and clay pits read as mud-and-clay floor bays.",
+    note: "A wave-two kiln core on the far wall with its fire in the mouth, brick drying stacks and trapdoor shelves, and clay pits read as mud-and-clay floor bays.",
   }),
   ind("foundry", "Foundry", "implemented", {
     wave: 3,
@@ -613,8 +621,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   ind("blast_furnace_works", "Blast furnace works", "implemented", {
     wave: 5,
-    note:
-      "A blast-furnace bank set into a deepslate core with waxed-copper tuyeres standing on the masonry, slag barrels, and a slab charging deck where a body fits on it.",
+    note: "A blast-furnace bank set into a deepslate core with waxed-copper tuyeres standing on the masonry, slag barrels, and a slab charging deck where a body fits on it.",
   }),
   ind("tannery", "Tannery", "implemented", {
     wave: 2,
@@ -648,31 +655,28 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   ind("ropewalk", "Ropewalk", "implemented", {
     wave: 5,
-    note:
-      "Wool rope lines run at working height between fence posts down both walls, log-and-iron-bar winding drums at the far end, and coil stacks by the door.",
+    note: "Wool rope lines run at working height between fence posts down both walls, log-and-iron-bar winding drums at the far end, and coil stacks by the door.",
   }),
   ind("charcoal_burner", "Charcoal burner", "implemented", {
     wave: 5,
-    note:
-      "A coarse-dirt burn pile against the far wall closing on a solid turf cap, a podzol clearing in the floor plane, log stores and the collier's corner.",
+    note: "A coarse-dirt burn pile against the far wall closing on a solid turf cap, a podzol clearing in the floor plane, log stores and the collier's corner.",
   }),
   ind("salt_pans", "Salt pans"),
   ind("factory_hall", "Factory hall", "implemented", {
     wave: 5,
-    note:
-      "Smithing and fletching benches alternating up both walls, a fence drive shaft hung off the ceiling down the middle, and a clocking desk by the door.",
+    note: "Smithing and fletching benches alternating up both walls, a fence drive shaft hung off the ceiling down the middle, and a clocking desk by the door.",
   }),
   ind("machine_shop", "Machine shop", "implemented", {
     wave: 5,
-    note:
-      "Stonecutter lathes up one wall, trapdoor tool boards and swarf barrels up the other, wall-torch work lights, and a grindstone-and-anvil bench end.",
+    note: "Stonecutter lathes up one wall, trapdoor tool boards and swarf barrels up the other, wall-torch work lights, and a grindstone-and-anvil bench end.",
   }),
   ind("refinery", "Refinery", "implemented", {
     wave: 5,
-    note:
-      "Iron tank pedestals on both wall rows with waxed-copper pipe courses standing on them, catch cauldrons between, a lever control desk - and no flame at all.",
+    note: "Iron tank pedestals on both wall rows with waxed-copper pipe courses standing on them, catch cauldrons between, a lever control desk - and no flame at all.",
   }),
-  ind("container_yard", "Container yard", "not_started", { tags: ["modern", "port"] }),
+  ind("container_yard", "Container yard", "not_started", {
+    tags: ["modern", "port"],
+  }),
   ind("gantry_crane", "Gantry crane"),
   ind("scrapyard", "Scrapyard"),
 
@@ -682,14 +686,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   enr("wind_turbine", "Wind turbine", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "A continuous white-concrete mast with a hub on its head and a three-arm rotor drawn outward from it - every blade block touching the one inboard - over a stone pad, with an iron transformer cabinet behind the mast. Tags `wind_turbine`/`turbine`; `windpump` stays the waterworks prop's.",
+    note: "A continuous white-concrete mast with a hub on its head and a three-arm rotor drawn outward from it - every blade block touching the one inboard - over a stone pad, with an iron transformer cabinet behind the mast. Tags `wind_turbine`/`turbine`; `windpump` stays the waterworks prop's.",
   }),
   enr("solar_array", "Solar array", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "Rows of `daylight_detector` panels, each on its own plinth cube, laid two apart so every pair has a service lane; a full-block cable trench along the front and an inverter cabinet at the head of it.",
+    note: "Rows of `daylight_detector` panels, each on its own plinth cube, laid two apart so every pair has a service lane; a full-block cable trench along the front and an inverter cabinet at the head of it.",
   }),
   enr("hydro_station", "Hydroelectric station"),
   enr("cooling_tower", "Cooling tower"),
@@ -697,53 +699,56 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   enr("substation", "Substation", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A switchyard read inside the walls: transformer tanks with lightning rods standing on them, a fence run of insulators rather than an enclosure, yellow warning banners, and a gravel-and-andesite yard in the floor plane.",
+    note: "A switchyard read inside the walls: transformer tanks with lightning rods standing on them, a fence run of insulators rather than an enclosure, yellow warning banners, and a gravel-and-andesite yard in the floor plane.",
   }),
   enr("gasworks", "Gasworks", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "The gasholder read on the OUTSIDE - the wall field re-clad in stone with iron banding every third course - over a retort bench of unlit furnaces and tar cauldrons. Plain rect; an interior drum would be a blocked column.",
+    note: "The gasholder read on the OUTSIDE - the wall field re-clad in stone with iron banding every third course - over a retort bench of unlit furnaces and tar cauldrons. Plain rect; an interior drum would be a blocked column.",
   }),
   enr("coal_tipple", "Coal tipple", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A mine-side loader: grounded timber posts up the apron carrying a beam, an elevated bin on the beam closing on a solid cap, a chute of stairs on stepped grounded columns, and coal-block bays in the floor plane. Plain rect.",
+    note: "A mine-side loader: grounded timber posts up the apron carrying a beam, an elevated bin on the beam closing on a solid cap, a chute of stairs on stepped grounded columns, and coal-block bays in the floor plane. Plain rect.",
   }),
   enr("oil_derrick", "Oil derrick"),
   enr("steam_plant", "Steam plant", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A boiler bank of furnaces with an iron steam drum standing on each, a waxed-copper header, condenser cauldrons, and a turbine-hall shaft run of stripped log under the plate - never a fence line.",
+    note: "A boiler bank of furnaces with an iron steam drum standing on each, a waxed-copper header, condenser cauldrons, and a turbine-hall shaft run of stripped log under the plate - never a fence line.",
   }),
   enr("nuclear_dome", "Reactor dome"),
   enr("biomass_shed", "Biomass shed", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "The barn energetic: four full-block chip bays of coarse dirt, podzol and packed mud in the floor plane, a hopper-and-composter intake run, hay and barrel stores, and an unlit boiler corner.",
+    note: "The barn energetic: four full-block chip bays of coarse dirt, podzol and packed mud in the floor plane, a hopper-and-composter intake run, hay and barrel stores, and an unlit boiler corner.",
   }),
   enr("battery_shed", "Battery shed", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "Rack rows of iron-and-waxed-copper cells up both wall rows with a stripped-log bus bar laid ON the racks themselves, a painted plate grid floor, and a dial-wall monitoring desk.",
+    note: "Rack rows of iron-and-waxed-copper cells up both wall rows with a stripped-log bus bar laid ON the racks themselves, a painted plate grid floor, and a dial-wall monitoring desk.",
   }),
 
   /* --- military / fortification ----------------------------------------- */
-  mil("watchtower", "Watchtower", "implemented", { tags: ["village", "lookout"] }),
+  mil("watchtower", "Watchtower", "implemented", {
+    tags: ["village", "lookout"],
+  }),
   mil("castle", "Castle", "implemented", {
     wave: 5,
     tags: ["fortress", "hall"],
     note: "The keep grand: full masonry re-clad, a crenellated fighting deck with corner turrets proud of the merlons, a great-hall board, wall-banner heraldry and an armoury corner. Tags `fortress`/`stronghold` — `castle` and `citadel` remain the keep's.",
   }),
-  mil("keep", "Keep", "implemented", { note: "Masonry re-clad of the building shell, with a fighting deck and a crenellated parapet." }),
+  mil("keep", "Keep", "implemented", {
+    note: "Masonry re-clad of the building shell, with a fighting deck and a crenellated parapet.",
+  }),
   // Linear, not a shell: it follows a line the way a wall or an aqueduct does.
-  mil("curtain_wall", "Curtain wall", "implemented", { tags: ["linear"], kind: "infrastructure" }),
-  mil("gatehouse", "Gatehouse", "implemented", { note: "The keep's battlement plus a raised portcullis and a machicolation over the gate." }),
+  mil("curtain_wall", "Curtain wall", "implemented", {
+    tags: ["linear"],
+    kind: "infrastructure",
+  }),
+  mil("gatehouse", "Gatehouse", "implemented", {
+    note: "The keep's battlement plus a raised portcullis and a machicolation over the gate.",
+  }),
   mil("barbican", "Barbican", "implemented", {
     wave: 5,
     tags: ["gate", "outer_work"],
@@ -757,32 +762,27 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mil("star_fort", "Star fort", "implemented", {
     wave: 7,
     tags: ["angular", "earthwork"],
-    note:
-      "The bastion trace made legible: a battered masonry re-clad over a heavy plinth, a crenellated gun deck, and a star trace stepped up out of the apron — corners highest, a salient at the middle of each face — so the pointed outline reads from above and as an angular work from the ground. Tags `star_fort`/`bastion_trace` — bare `bastion` stays the garrison bastion's.",
+    note: "The bastion trace made legible: a battered masonry re-clad over a heavy plinth, a crenellated gun deck, and a star trace stepped up out of the apron — corners highest, a salient at the middle of each face — so the pointed outline reads from above and as an angular work from the ground. Tags `star_fort`/`bastion_trace` — bare `bastion` stays the garrison bastion's.",
   }),
   mil("motte_and_bailey", "Motte and bailey", "implemented", {
     wave: 7,
     tags: ["timber", "mound"],
-    note:
-      "Earth and trees in a season: a battered coarse-dirt motte skirt with a grass crown round the apron, a timber re-clad of the whole shell, and a plank fighting deck behind a fence stockade instead of merlons. Tags `motte`/`bailey` — `castle`/`keep` stay the breadth keep's.",
+    note: "Earth and trees in a season: a battered coarse-dirt motte skirt with a grass crown round the apron, a timber re-clad of the whole shell, and a plank fighting deck behind a fence stockade instead of merlons. Tags `motte`/`bailey` — `castle`/`keep` stay the breadth keep's.",
   }),
   mil("palisade", "Palisade", "implemented", {
     wave: 7,
     tags: ["timber", "enclosure"],
-    note:
-      "A stockade enclosure: the wall ring re-clad in whole-block timber with pointed tips on every other column one course over the plate, a slab fighting walkway down both wall rows, and a short outer stake row in the apron. Tags `palisade`/`stockade`/`timber_wall` — `wall`/`curtain_wall` stay the linework engine's.",
+    note: "A stockade enclosure: the wall ring re-clad in whole-block timber with pointed tips on every other column one course over the plate, a slab fighting walkway down both wall rows, and a short outer stake row in the apron. Tags `palisade`/`stockade`/`timber_wall` — `wall`/`curtain_wall` stay the linework engine's.",
   }),
   mil("moat", "Moat", "implemented", {
     wave: 7,
     tags: ["water"],
-    note:
-      "The work is the water: the apron ring laid as water over a masonry bed, a battered stone plinth on the shell, and the doorstep with a shoulder either side left as a dry causeway — a moat across the way in is a building nobody can enter.",
+    note: "The work is the water: the apron ring laid as water over a masonry bed, a battered stone plinth on the shell, and the doorstep with a shoulder either side left as a dry causeway — a moat across the way in is a building nobody can enter.",
   }),
   mil("drawbridge", "Drawbridge", "implemented", {
     wave: 7,
     tags: ["gate", "water"],
-    note:
-      "The moat plus the span: a plank deck over the causeway, timber winch cheeks either side of the door, and the leaf stood upright over the doorstep as a trapdoor panel from the third course up. Tags `drawbridge`/`bascule` — bare `bridge` stays the linework engine's.",
+    note: "The moat plus the span: a plank deck over the causeway, timber winch cheeks either side of the door, and the leaf stood upright over the doorstep as a trapdoor panel from the third course up. Tags `drawbridge`/`bascule` — bare `bridge` stays the linework engine's.",
   }),
   mil("barracks", "Barracks", "implemented"),
   mil("armory", "Armory", "implemented", {
@@ -798,14 +798,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mil("drill_yard", "Drill yard", "implemented", {
     wave: 7,
     tags: ["yard", "training"],
-    note:
-      "A parade ground: the floor plane written as a two-tone marked-out surface of gravel and coarse dirt, pell posts with hay heads up one wall row, weapon racks up the other, a slab dais with the colours over it at the far end, and hay butts in the apron behind. Tags `drill_yard`/`parade_ground`.",
+    note: "A parade ground: the floor plane written as a two-tone marked-out surface of gravel and coarse dirt, pell posts with hay heads up one wall row, weapon racks up the other, a slab dais with the colours over it at the far end, and hay butts in the apron behind. Tags `drill_yard`/`parade_ground`.",
   }),
   mil("siege_camp", "Siege camp", "implemented", {
     wave: 7,
     tags: ["camp", "earthwork", "engine"],
-    note:
-      "Tents, earthworks and an engine, all facing away from the door: the roof rebuilt as a stepped wool tent on a log ridge pole, the walls re-clad as canvas between timber posts, a coarse-dirt bank with a stake row along the far apron, and a trebuchet read of two legs, a stair arm and a stone counterweight standing on it. Claims `camp`/`encampment`/`siege`.",
+    note: "Tents, earthworks and an engine, all facing away from the door: the roof rebuilt as a stepped wool tent on a log ridge pole, the walls re-clad as canvas between timber posts, a coarse-dirt bank with a stake row along the far apron, and a trebuchet read of two legs, a stair arm and a stone counterweight standing on it. Claims `camp`/`encampment`/`siege`.",
   }),
   mil("bunker", "Bunker", "implemented", {
     wave: 5,
@@ -872,7 +870,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "Central bimah dais with a reading lectern, an ark cabinet with doors on the far wall, bench ranks turned to the bimah.",
   }),
-  rel("pagoda", "Pagoda", "implemented", { note: "Three to five stacked eave tiers replacing the shell roof." }),
+  rel("pagoda", "Pagoda", "implemented", {
+    note: "Three to five stacked eave tiers replacing the shell roof.",
+  }),
   rel("stupa", "Stupa", "implemented", {
     wave: 4,
     note: "Corbelled solid dome on a plinth ring, a solid core with a clear circumambulation lane round it, spire finial.",
@@ -884,8 +884,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   rel("temple", "Temple", "implemented", {
     wave: 7,
     tags: ["classical", "colonnade"],
-    note:
-      "The classical temple: a stylobate, a peristyle of columns in every other apron bay under a continuous entablature, and a roof rebuilt as a pediment mass that insets in x only. Inside is a blind cella with an inner colonnade and a cult figure. Tags `classical_temple`/`greek_temple`/`peristyle` \u2014 bare `temple` stays the church's.",
+    note: "The classical temple: a stylobate, a peristyle of columns in every other apron bay under a continuous entablature, and a roof rebuilt as a pediment mass that insets in x only. Inside is a blind cella with an inner colonnade and a cult figure. Tags `classical_temple`/`greek_temple`/`peristyle` \u2014 bare `temple` stays the church's.",
   }),
   rel("shrine", "Shrine", "implemented", {
     wave: 7,
@@ -918,7 +917,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
 
   /* --- memorial ---------------------------------------------------------- */
-  mem("statue_plinth", "Statue plinth", "implemented", { tags: ["prop", "plaza"] }),
+  mem("statue_plinth", "Statue plinth", "implemented", {
+    tags: ["prop", "plaza"],
+  }),
   mem("graveyard", "Graveyard", "implemented", {
     kind: "prop",
     note: "Compound prop: fenced yard, seeded headstone variety, corner mausoleum.",
@@ -931,20 +932,17 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mem("cenotaph", "Cenotaph", "implemented", {
     wave: 5,
     tags: ["monument", "empty tomb"],
-    note:
-      "A sealed masonry shell round a slab-lidded cist laid off the lantern column, a green-carpet wreath ring on the floor cells and a name wall of chiseled stone with wall banners.",
+    note: "A sealed masonry shell round a slab-lidded cist laid off the lantern column, a green-carpet wreath ring on the floor cells and a name wall of chiseled stone with wall banners.",
   }),
   mem("war_memorial", "War memorial", "implemented", {
     wave: 5,
     tags: ["monument", "plinth"],
-    note:
-      "A block-built figure on a chiseled plinth off the lantern column, flanking benches with their backrests to the walls, and red wall banners with unlit candles under them.",
+    note: "A block-built figure on a chiseled plinth off the lantern column, flanking benches with their backrests to the walls, and red wall banners with unlit candles under them.",
   }),
   mem("memorial_garden", "Memorial garden", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "Compound prop on the graveyard's precedent: a cross path, four planted beds hedged in persistent leaves, a slab-capped monument with a carpet wreath, two benches with their backrests turned away from it and a low wall along two edges.",
+    note: "Compound prop on the graveyard's precedent: a cross path, four planted beds hedged in persistent leaves, a slab-capped monument with a carpet wreath, two benches with their backrests turned away from it and a low wall along two edges.",
   }),
   mem("gravedigger_hut", "Gravedigger's hut", "implemented", {
     wave: 5,
@@ -954,20 +952,17 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mem("urn_wall", "Urn wall", "implemented", {
     wave: 5,
     tags: ["niches", "columbarium"],
-    note:
-      "Trapdoor-fronted niches from the second course to the plate up both interior wall rows, a clear aisle between them, unlit candles and a register lectern. Tags `urn_wall`/`urns` \u2014 `columbarium` is the dovecote's.",
+    note: "Trapdoor-fronted niches from the second course to the plate up both interior wall rows, a clear aisle between them, unlit candles and a register lectern. Tags `urn_wall`/`urns` \u2014 `columbarium` is the dovecote's.",
   }),
   mem("remembrance_arch", "Remembrance arch", "implemented", {
     wave: 5,
     tags: ["monument", "arch"],
-    note:
-      "A continuous full-block crown spanning wall to wall at the top interior course with piers under it, a names band, and a carpet processional runner. Refused outright under a four-course storey.",
+    note: "A continuous full-block crown spanning wall to wall at the top interior course with piers under it, a names band, and a carpet processional runner. Refused outright under a four-course storey.",
   }),
   mem("pyre_platform", "Funeral pyre platform", "implemented", {
     wave: 5,
     tags: ["monument", "unlit"],
-    note:
-      "A log-cribbed dais with slab tops off the lantern column carrying an UNLIT campfire, and mourners' benches back on the wall rows so the ring round it stays walkable.",
+    note: "A log-cribbed dais with slab tops off the lantern column carrying an UNLIT campfire, and mourners' benches back on the wall rows so the ring round it stays walkable.",
   }),
 
   /* --- leisure / sport --------------------------------------------------- */
@@ -985,8 +980,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   lei("amphitheater", "Amphitheatre", "implemented", {
     wave: 7,
     tags: ["classical", "cavea"],
-    note:
-      "A semicircular tiered bowl on a Roman podium: the walls dressed as the substructure, the roof rebuilt as a deck, and the cavea built on it as solid columns capped by stairs whose backrests face outward. The open half carries the stage.",
+    note: "A semicircular tiered bowl on a Roman podium: the walls dressed as the substructure, the roof rebuilt as a deck, and the cavea built on it as solid columns capped by stairs whose backrests face outward. The open half carries the stage.",
   }),
   lei("theater", "Theatre", "implemented", {
     wave: 4,
@@ -1004,18 +998,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "A striped sprung floor, a band dais with jukebox and note block, wall benches.",
   }),
-  lei("gym", "Gymnasium", "implemented", { note: "Wool mats, a glass mirror wall, anvils and a hanging bag." }),
+  lei("gym", "Gymnasium", "implemented", {
+    note: "Wool mats, a glass mirror wall, anvils and a hanging bag.",
+  }),
   lei("boxing_gym", "Boxing gym", "implemented", {
     wave: 4,
     note: "Wool mats, a slab ring with fence corner posts on it, hanging bags and a bench row.",
   }),
   // A basin sunk into the ground with no interior to walk: a prop, not a shell.
-  lei("swimming_pool", "Swimming pool", "implemented", { tags: ["water"], kind: "prop" }),
+  lei("swimming_pool", "Swimming pool", "implemented", {
+    tags: ["water"],
+    kind: "prop",
+  }),
   lei("bathing_pavilion", "Bathing pavilion", "implemented", {
     wave: 5,
     tags: ["water", "garden"],
-    note:
-      "The bathhouse's airier cousin on the bathhouse's exact pool argument: water in the floor plane inside a smooth-quartz coping, pedestals carved from the pool corners, a divider off the lantern row and benches only where a stander fits. Tags `bathing_pavilion`/`bath_pavilion` \u2014 bare `baths`/`sauna`/`hammam` are the bathhouse's.",
+    note: "The bathhouse's airier cousin on the bathhouse's exact pool argument: water in the floor plane inside a smooth-quartz coping, pedestals carved from the pool corners, a divider off the lantern row and benches only where a stander fits. Tags `bathing_pavilion`/`bath_pavilion` \u2014 bare `baths`/`sauna`/`hammam` are the bathhouse's.",
   }),
   lei("sauna", "Sauna", "implemented", {
     wave: 4,
@@ -1035,8 +1033,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   lei("bandstand", "Bandstand", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "Prop: a paved octagonal pad, eight log pillars with a fence rail between them and one arc left open as the way in, and a stepped conical roof closing on a solid finial with a flag standing on it.",
+    note: "Prop: a paved octagonal pad, eight log pillars with a fence rail between them and one arc left open as the way in, and a stepped conical roof closing on a solid finial with a flag standing on it.",
   }),
   lei("clubhouse", "Clubhouse", "implemented", {
     wave: 4,
@@ -1046,8 +1043,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   /* --- amusement --------------------------------------------------------- */
   amu("ferris_wheel", "Ferris wheel", "implemented", {
     wave: 6,
-    note:
-      "Two log A-frames carrying a log axle, a trapdoor-and-wool rim on four axis spokes in the frames' own plane, and four gondola boxes hung under the lower arc on iron-bar links. No centre post: at this diameter the rim's own bottom cell lands in that column.",
+    note: "Two log A-frames carrying a log axle, a trapdoor-and-wool rim on four axis spokes in the frames' own plane, and four gondola boxes hung under the lower arc on iron-bar links. No centre post: at this diameter the rim's own bottom cell lands in that column.",
   }),
   amu("carousel", "Carousel", "implemented"),
   amu("roller_coaster", "Roller coaster", "not_started", { tags: ["rail"] }),
@@ -1059,8 +1055,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   amu("big_top", "Big top", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "The shell re-roofed as a great striped wool cone closing on a SOLID cap with a banner finial, king poles inside the crown rather than through the room, a sand ring recoloured into the floor plane and tiered benches on both wall rows.",
+    note: "The shell re-roofed as a great striped wool cone closing on a SOLID cap with a banner finial, king poles inside the crown rather than through the room, a sand ring recoloured into the floor plane and tiered benches on both wall rows.",
   }),
   amu("fairground_stall", "Fairground stall", "implemented", { wave: 4 }),
   amu("shooting_gallery", "Shooting gallery", "implemented", {
@@ -1070,14 +1065,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   amu("hall_of_mirrors", "Hall of mirrors", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A checkerboard floor plane, a mirror band of glass panes written into the wall ring over white and light-grey backing courses, and a glass-pane comb maze whose fingers leave a corridor open at both ends.",
+    note: "A checkerboard floor plane, a mirror band of glass panes written into the wall ring over white and light-grey backing courses, and a glass-pane comb maze whose fingers leave a corridor open at both ends.",
   }),
   amu("funhouse", "Funhouse", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A tilted-floor read of bright bands and set-in top slabs written entirely into the floor plane, a spinning-tunnel of concentric wool rings on the far wall, and a deliberately mismatched trim round the doorway.",
+    note: "A tilted-floor read of bright bands and set-in top slabs written entirely into the floor plane, a spinning-tunnel of concentric wool rings on the far wall, and a deliberately mismatched trim round the doorway.",
   }),
   amu("ticket_booth", "Ticket booth", "implemented", { wave: 4 }),
   amu("midway_arch", "Midway arch", "implemented", {
@@ -1088,8 +1081,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   amu("dodgems_pavilion", "Dodgems pavilion", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "An open hall: a blackstone arena painted into the floor plane inside a full-block yellow kerb (never a raised rail across a one-wide walkway), a stripped-log power grid at the plate, and stair-and-trapdoor dodgem cars parked on the wall rows.",
+    note: "An open hall: a blackstone arena painted into the floor plane inside a full-block yellow kerb (never a raised rail across a one-wide walkway), a stripped-log power grid at the plate, and stair-and-trapdoor dodgem cars parked on the wall rows.",
   }),
 
   /* --- modern / high-rise ------------------------------------------------ */
@@ -1120,23 +1112,19 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   mod("brutalist_block", "Brutalist block", "implemented", {
     wave: 5,
-    note:
-      "Gray concrete over the whole wall field with polished fins every third column and bands at plinth and plate, small openings, an honest interior.",
+    note: "Gray concrete over the whole wall field with polished fins every third column and bands at plinth and plate, small openings, an honest interior.",
   }),
   mod("conference_center", "Conference centre", "implemented", {
     wave: 5,
-    note:
-      "A slab stage dais with banner flanks, flat seat rows turned away from the stage off a three-column aisle, breakout tables and a lobby.",
+    note: "A slab stage dais with banner flanks, flat seat rows turned away from the stage off a three-column aisle, breakout tables and a lobby.",
   }),
   mod("parking_garage", "Parking garage", "implemented", {
     wave: 5,
-    note:
-      "Gray-and-white bay stripes in the floor plane, a stair ramp run against one wall where the storey allows, a concrete trim course, and a barrier arm beside the door.",
+    note: "Gray-and-white bay stripes in the floor plane, a stair ramp run against one wall where the storey allows, a concrete trim course, and a barrier arm beside the door.",
   }),
   mod("gas_station", "Filling station", "implemented", {
     wave: 5,
-    note:
-      "A forecourt canopy in the apron on grounded posts over iron-and-lever pumps, a convenience-store shop corner, and a wall-banner price board.",
+    note: "A forecourt canopy in the apron on grounded posts over iron-and-lever pumps, a convenience-store shop corner, and a wall-banner price board.",
   }),
   mod("convenience_store", "Convenience store", "implemented", {
     wave: 4,
@@ -1144,8 +1132,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   mod("data_center", "Data centre", "implemented", {
     wave: 5,
-    note:
-      "Iron server racks on the bank aisle discipline with levers standing on them, a checkered raised-floor grid, cooling cauldrons and an ops desk.",
+    note: "Iron server racks on the bank aisle discipline with levers standing on them, a checkered raised-floor grid, cooling cauldrons and an ops desk.",
   }),
   mod("corporate_campus", "Corporate campus"),
   mod("modern_villa", "Modern villa", "implemented", {
@@ -1155,7 +1142,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   mod("billboard_tower", "Billboard tower"),
 
   /* --- science / education ---------------------------------------------- */
-  sci("observatory", "Observatory", "implemented", { note: "A stepped dome with an open slit, and an instrument under it." }),
+  sci("observatory", "Observatory", "implemented", {
+    note: "A stepped dome with an open slit, and an instrument under it.",
+  }),
   sci("telescope_dome", "Telescope dome", "implemented", {
     wave: 5,
     note: "The modern white dome: a smooth-quartz corbel with a two-cell shutter, a pier-mounted instrument and a control desk.",
@@ -1190,8 +1179,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   sci("aquarium", "Aquarium", "implemented", {
     wave: 6,
-    note:
-      "The bathhouse pool predicate verbatim - water in the floor plane, inset one cell, inside a dark-prismarine rim - plus wall tanks written into the wall ring as glass over blue concrete with dry coral specimens. The tanks are deliberately NOT fluid: a wall tank cannot be proved sealed on every envelope.",
+    note: "The bathhouse pool predicate verbatim - water in the floor plane, inset one cell, inside a dark-prismarine rim - plus wall tanks written into the wall ring as glass over blue concrete with dry coral specimens. The tanks are deliberately NOT fluid: a wall tank cannot be proved sealed on every envelope.",
   }),
   sci("weather_station", "Weather station", "implemented", {
     wave: 5,
@@ -1282,11 +1270,15 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
 
   /* --- transport: water -------------------------------------------------- */
   water("rowboat", "Rowboat", "implemented", { tags: ["prop", "small"] }),
-  water("fishing_sloop", "Fishing sloop", "implemented", { tags: ["prop", "sail"] }),
+  water("fishing_sloop", "Fishing sloop", "implemented", {
+    tags: ["prop", "sail"],
+  }),
   water("pier", "Pier", "implemented", { tags: ["prop", "shore"] }),
   water("cog", "Medieval cog", "implemented", { tags: ["prop", "sail"] }),
   water("caravel", "Caravel", "implemented", { tags: ["prop", "sail"] }),
-  water("galleon", "Galleon", "implemented", { tags: ["prop", "sail", "large"] }),
+  water("galleon", "Galleon", "implemented", {
+    tags: ["prop", "sail", "large"],
+  }),
   water("longship", "Longship", "implemented", { tags: ["prop", "sail"] }),
   water("junk", "Junk", "implemented", {
     wave: 6,
@@ -1312,7 +1304,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   water("yacht", "Yacht", "implemented", { tags: ["prop"] }),
   water("speedboat", "Speedboat", "implemented", { tags: ["prop", "small"] }),
   water("tugboat", "Tugboat", "implemented", { tags: ["prop"] }),
-  water("fishing_trawler", "Fishing trawler", "implemented", { tags: ["prop"] }),
+  water("fishing_trawler", "Fishing trawler", "implemented", {
+    tags: ["prop"],
+  }),
   water("lighthouse", "Lighthouse", "implemented", {
     wave: 6,
     tags: ["tower", "beacon"],
@@ -1349,7 +1343,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A hollow wool envelope in two gores held over a fence-and-trapdoor basket by a timber mast that reaches the ground - a moored balloon rather than a floating one - with a campfire burner on a full-cube pedestal.",
   }),
   air("biplane", "Biplane", "implemented", { tags: ["prop"] }),
-  air("light_plane", "Light aeroplane", "implemented", { tags: ["prop", "small"] }),
+  air("light_plane", "Light aeroplane", "implemented", {
+    tags: ["prop", "small"],
+  }),
   air("airliner", "Airliner", "implemented", { tags: ["prop", "large"] }),
   air("cargo_plane", "Cargo plane", "implemented", { tags: ["prop", "large"] }),
   air("seaplane", "Seaplane", "implemented", {
@@ -1387,26 +1383,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   infra("water_tower", "Water tower", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A rebuilt solid roof deck carrying an iron-banded tank that rises course on course from it and closes on a full-block cap, grounded corner legs, an apron ladder up the west face, and a valve house of cauldrons inside. Plain rect, and wants height over the plate.",
+    note: "A rebuilt solid roof deck carrying an iron-banded tank that rises course on course from it and closes on a full-block cap, grounded corner legs, an apron ladder up the west face, and a valve house of cauldrons inside. Plain rect, and wants height over the plate.",
   }),
   infra("cistern", "Cistern", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "The bathhouse pool predicate verbatim, as pure storage: water in the floor plane inset one cell from the interior, a smooth-stone rim, a slab divider nudged off the lantern row, measuring posts carved out of the pool's own corners - and an inspection walkway that carries nothing at all.",
+    note: "The bathhouse pool predicate verbatim, as pure storage: water in the floor plane inset one cell from the interior, a smooth-stone rim, a slab divider nudged off the lantern row, measuring posts carved out of the pool's own corners - and an inspection walkway that carries nothing at all.",
   }),
   infra("well", "Well", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "The street prop's building cousin: a covered well house with a cauldron draw hole, a dressed coping in the floor plane, two fence posts carrying a log windlass axle, an iron-bar rope on tall storeys, and a bucket bench. Tags `well`/`well_house`; `well_head` stays the prop's.",
+    note: "The street prop's building cousin: a covered well house with a cauldron draw hole, a dressed coping in the floor plane, two fence posts carrying a log windlass axle, an iron-bar rope on tall storeys, and a bucket bench. Tags `well`/`well_house`; `well_head` stays the prop's.",
   }),
   infra("pumping_station", "Pumping station", "implemented", {
     wave: 6,
     kind: "building",
-    note:
-      "A flywheel read as a hub on a solid post with trapdoor spokes on the wall beside it, iron pump-rod columns down the far wall, a gauge wall of buttons and levers on solid masonry, and an unlit boiler corner.",
+    note: "A flywheel read as a hub on a solid post with trapdoor spokes on the wall beside it, iron pump-rod columns down the far wall, a gauge wall of buttons and levers on solid masonry, and an unlit boiler corner.",
   }),
   infra("culvert", "Culvert"),
   infra("storm_drain", "Storm drain"),
@@ -1521,7 +1513,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   nom("caravan", "Caravan", "implemented"),
   nom("wagon_circle", "Wagon circle"),
-  nom("campsite", "Campsite", "implemented", { note: "Compound prop: two tents, a caravan, a fire and the seating round it." }),
+  nom("campsite", "Campsite", "implemented", {
+    note: "Compound prop: two tents, a caravan, a fire and the seating round it.",
+  }),
   nom("field_kitchen", "Field kitchen"),
   nom("lean_to", "Lean-to"),
   nom("hunters_blind", "Hunter's blind"),
@@ -1537,61 +1531,56 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   rur("farmstead", "Farmstead"),
   rur("silo", "Silo", "implemented", {
     wave: 4,
-    note:
-      "Banded stone-brick re-clad under a corbelled cap, hay grain columns behind inspection hatches and a filling head of trapdoors near the plate.",
+    note: "Banded stone-brick re-clad under a corbelled cap, hay grain columns behind inspection hatches and a filling head of trapdoors near the plate.",
   }),
-  rur("greenhouse", "Greenhouse", "implemented", { note: "Glazed walls and roof over farmland beds written into the floor plane." }),
+  rur("greenhouse", "Greenhouse", "implemented", {
+    note: "Glazed walls and roof over farmland beds written into the floor plane.",
+  }),
   rur("apiary", "Apiary", "implemented", {
     wave: 4,
-    note:
-      "Hay skeps on grounded fence pedestals and real beehives in the apron ring, honeycomb-flecked walls and a cauldron extraction bench inside.",
+    note: "Hay skeps on grounded fence pedestals and real beehives in the apron ring, honeycomb-flecked walls and a cauldron extraction bench inside.",
   }),
   rur("chicken_coop", "Chicken coop", "implemented", {
     wave: 4,
-    note:
-      "A low birch-and-oak house of trapdoor nesting cubbies over hay, floor-standing fence roosts, feed barrels and a hay nest in the apron.",
+    note: "A low birch-and-oak house of trapdoor nesting cubbies over hay, floor-standing fence roosts, feed barrels and a hay nest in the apron.",
   }),
   rur("pigsty", "Pigsty"),
   rur("sheepfold", "Sheepfold"),
   rur("cattle_pen", "Cattle pen"),
   rur("stable", "Stable", "implemented", {
     wave: 4,
-    note:
-      "Fence-and-gate stall partitions down one wall row off an off-centre corridor, hay-net trapdoors, a tack wall of chests and barrels and a cauldron trough in the apron.",
+    note: "Fence-and-gate stall partitions down one wall row off an off-centre corridor, hay-net trapdoors, a tack wall of chests and barrels and a cauldron trough in the apron.",
   }),
   rur("dovecote", "Dovecote", "implemented", {
     wave: 4,
-    note:
-      "A slim stone tower whose faces are a dense nesting-hole trapdoor grid, a corbelled cone with a perch finial and a ladder up the inside.",
+    note: "A slim stone tower whose faces are a dense nesting-hole trapdoor grid, a corbelled cone with a perch finial and a ladder up the inside.",
   }),
   rur("orchard", "Orchard"),
   rur("vineyard", "Vineyard"),
   rur("terraced_field", "Terraced field"),
   rur("hop_kiln", "Hop kiln", "implemented", {
     wave: 4,
-    note:
-      "The oast: a brick corbel cone on a solid cap under a white cowl, a slatted drying-floor band under the plate and a furnace at the base.",
+    note: "The oast: a brick corbel cone on a solid cap under a white cowl, a slatted drying-floor band under the plate and a furnace at the base.",
   }),
   rur("threshing_floor", "Threshing floor"),
   rur("hayrick", "Hayrick"),
   rur("cider_press", "Cider press", "implemented", {
     wave: 4,
-    note:
-      "A fence screw under a slab platen beside its catching cauldron, apple barrels along the far row and a bottle shelf of trapdoors.",
+    note: "A fence screw under a slab platen beside its catching cauldron, apple barrels along the far row and a bottle shelf of trapdoors.",
   }),
   rur("root_cellar_mound", "Root cellar mound", "implemented", {
     wave: 4,
-    note:
-      "Cobble-and-mud retaining walls under a shallow grass-surfaced corbel mound, shelved with barrels and crates under lidded hatches. It does not dig.",
+    note: "Cobble-and-mud retaining walls under a shallow grass-surfaced corbel mound, shelved with barrels and crates under lidded hatches. It does not dig.",
   }),
 
   /* --- fantasy / whimsy ---------------------------------------------------- */
-  fan("wizard_tower", "Wizard's tower", "implemented", { note: "Glowstone-set masonry under a steep cone." }),
+  fan("wizard_tower", "Wizard's tower", "implemented", {
+    note: "Glowstone-set masonry under a steep cone.",
+  }),
   fan("alchemists_tower", "Alchemist's tower", "implemented", {
     wave: 5,
     tags: ["tower", "lab"],
-    note:
-      "Copper-banded stone brick under a corbelled cone on a solid cap with a lightning-rod vent; a brewing stand, the still, specimen shelves behind hatch fronts and a reading press. Tags `alchemists_tower`/`alchemy_tower` \u2014 bare `alchemist` is the apothecary's.",
+    note: "Copper-banded stone brick under a corbelled cone on a solid cap with a lightning-rod vent; a brewing stand, the still, specimen shelves behind hatch fronts and a reading press. Tags `alchemists_tower`/`alchemy_tower` \u2014 bare `alchemist` is the apothecary's.",
   }),
   fan("treehouse", "Treehouse", "implemented", {
     kind: "prop",
@@ -1599,65 +1588,54 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   fan("hedge_maze", "Hedge maze", "implemented", {
     wave: 6,
-    note:
-      "Built as a BUILDING so the maze can be proved walkable: persistent oak-leaf hedges on coarse-dirt beds in a comb whose fingers leave a corridor open at both ends, every cell taken through the ground floor's own connectivity guard, in a mossy walled garden with grounded apron urns.",
+    note: "Built as a BUILDING so the maze can be proved walkable: persistent oak-leaf hedges on coarse-dirt beds in a comb whose fingers leave a corridor open at both ends, every cell taken through the ground floor's own connectivity guard, in a mossy walled garden with grounded apron urns.",
   }),
   fan("mushroom_house", "Mushroom house", "implemented", {
     wave: 4,
-    note:
-      "A corbelled red-mushroom cap closing on a solid cap block, over spotted mushroom-stem walls; a stool, a table and shroom stores inside.",
+    note: "A corbelled red-mushroom cap closing on a solid cap block, over spotted mushroom-stem walls; a stool, a table and shroom stores inside.",
   }),
   fan("witch_hut", "Witch's hut", "implemented", {
     wave: 4,
-    note:
-      "Swamp spruce over a dark under-course under a crooked saltbox ridge, with a corner cauldron, potion bookshelves and a carpet cushion.",
+    note: "Swamp spruce over a dark under-course under a crooked saltbox ridge, with a corner cauldron, potion bookshelves and a carpet cushion.",
   }),
   fan("hobbit_hole", "Hobbit hole", "implemented", {
     wave: 4,
-    note:
-      "A stripped-log ring trimming the doorway round, a turf corbel roof over mud walls, and a settle, a rug and a pantry inside.",
+    note: "A stripped-log ring trimming the doorway round, a turf corbel roof over mud walls, and a settle, a rug and a pantry inside.",
   }),
   fan("gingerbread_cottage", "Gingerbread cottage", "implemented", {
     wave: 4,
-    note:
-      "Brown biscuit walls with white icing courses and pink and lime candy dots, a quartz icing eave in the apron and a sweets counter with a cake.",
+    note: "Brown biscuit walls with white icing courses and pink and lime candy dots, a quartz icing eave in the apron and a sweets counter with a cake.",
   }),
   fan("dragon_roost", "Dragon roost", "implemented", {
     wave: 5,
     tags: ["hall", "charred"],
-    note:
-      "A great open hall in blackstone and basalt with a scorched floor recolour, an open-sided nest crescent of hay and bone laid off the lantern column, and a sparing hoard corner.",
+    note: "A great open hall in blackstone and basalt with a scorched floor recolour, an open-sided nest crescent of hay and bone laid off the lantern column, and a sparing hoard corner.",
   }),
   fan("floating_platform", "Floating island platform", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "Prop. The trick is a disguised stem: a one-column end-stone core veiled on all four sides with iron bars (never chain), carrying a disc that oversails it by three cells in every direction - the eye reads the overhang, not the thread under it.",
+    note: "Prop. The trick is a disguised stem: a one-column end-stone core veiled on all four sides with iron bars (never chain), carrying a disc that oversails it by three cells in every direction - the eye reads the overhang, not the thread under it.",
   }),
   fan("portal_frame", "Portal frame", "implemented", {
     wave: 6,
     kind: "prop",
-    note:
-      "Prop: an obsidian and crying-obsidian rectangle with a chiseled-deepslate keystone and a DELIBERATELY empty interior - no portal block anywhere - over four deepslate rune pedestals with amethyst clusters on them.",
+    note: "Prop: an obsidian and crying-obsidian rectangle with a chiseled-deepslate keystone and a DELIBERATELY empty interior - no portal block anywhere - over four deepslate rune pedestals with amethyst clusters on them.",
   }),
   fan("crystal_shrine", "Crystal shrine", "implemented", {
     wave: 5,
     tags: ["amethyst", "focus"],
-    note:
-      "An amethyst pedestal with a cluster on it, standing off the lantern column, in purpur-and-quartz trim, with kneeling benches whose backrests point away from the crystal.",
+    note: "An amethyst pedestal with a cluster on it, standing off the lantern column, in purpur-and-quartz trim, with kneeling benches whose backrests point away from the crystal.",
   }),
   fan("elven_bridge", "Elven bridge"),
   fan("dwarven_gate", "Dwarven gate", "implemented", {
     wave: 5,
     tags: ["gate", "forge"],
-    note:
-      "A deepslate megalith trim round the doorway with a chiseled rune band, grounded brazier pedestals in the apron, and a forge hall of anvil, smithing table and lit furnace inside.",
+    note: "A deepslate megalith trim round the doorway with a chiseled rune band, grounded brazier pedestals in the apron, and a forge hall of anvil, smithing table and lit furnace inside.",
   }),
   fan("beacon_spire", "Beacon spire", "implemented", {
     wave: 5,
     tags: ["tower", "light"],
-    note:
-      "A slim corbelled cone closing on a SOLID smooth-stone cap with a sea-lantern crown standing on it, and a keeper's room below. Tags `beacon_spire`/`spire` \u2014 bare `beacon` is left free.",
+    note: "A slim corbelled cone closing on a SOLID smooth-stone cap with a sea-lantern crown standing on it, and a keeper's room below. Tags `beacon_spire`/`spire` \u2014 bare `beacon` is left free.",
   }),
   fan("giant_chessboard", "Giant chessboard"),
   fan("fairy_ring", "Fairy ring"),
@@ -1718,7 +1696,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A roofless nave with tall survivors and a chiseled band at the third course, and a cold altar stump \u2014 one chiseled block with a slab on it \u2014 at the end furthest from the door.",
   }),
   ruin("ruined_bridge", "Ruined bridge", "not_started", { tags: ["ruin-of"] }),
-  ruin("ruined_aqueduct", "Ruined aqueduct", "not_started", { tags: ["ruin-of"] }),
+  ruin("ruined_aqueduct", "Ruined aqueduct", "not_started", {
+    tags: ["ruin-of"],
+  }),
   ruin("collapsed_tower", "Collapsed tower", "implemented", {
     wave: 6,
     tags: ["ruin-of"],
@@ -1729,7 +1709,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["ruin-of"],
     note: "The gentlest crumble and the greenest: moss-block survivors, vines on every second inside face, moss carpet on the rubble, and a run of fallen column drums down one wall row.",
   }),
-  ruin("sunken_ship", "Sunken ship", "not_started", { tags: ["ruin-of", "water"] }),
+  ruin("sunken_ship", "Sunken ship", "not_started", {
+    tags: ["ruin-of", "water"],
+  }),
   ruin("ancient_road", "Ancient road"),
   ruin("shattered_obelisk", "Shattered obelisk", "implemented", {
     wave: 6,
@@ -1830,6 +1812,681 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["village", "underground", "archetype"],
     note: "building.grammar@0 archetype: a hatch hut over a `silo`-style cellar - deepslate, a copper band and a shaft read. Tags: underground_silo/missile_silo; bare `silo` is the homestead\'s.",
   }),
+
+  /* ========================================================================
+   * The catalog-expansion form packs (docs/CATALOG-EXPANSION-v0.md §3).
+   *
+   * Nine packs, landed together as open territory. Every row here is
+   * `not_started` — no generator answers to any of them yet — and each pack is
+   * kept contiguous rather than filed by category, because a pack ships and is
+   * accepted as one thing. The `tags` carry the pack name and the doc's size
+   * class, which the schema has no field for. One entry the doc proposes is
+   * deliberately absent: `sphinx` goes to the bespoke tier.
+   * ====================================================================== */
+
+  /* --- the classical Mediterranean pack (docs/CATALOG-EXPANSION-v0.md §3.1) --- */
+  com("stoa", "Stoa", "not_started", {
+    tags: ["classical_mediterranean", "size_xl"],
+    note: "The agora's long side: a two-deep colonnade of the full run with a closed shop wall behind it, so the street face is columns and the back is trade.",
+  }),
+  res("peristyle_house", "Peristyle house", "not_started", {
+    tags: ["classical_mediterranean", "size_m"],
+    note: "The courtyard house with its court colonnaded — a post ring standing on a stylobate course one cell in from the wall, rooms opening only inward.",
+  }),
+  res("megaron", "Megaron", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "The palace hall: a deep porch of two columns in antis between projecting wall stubs, one long room behind it, a raised hearth ring off the lantern column.",
+  }),
+  civ("propylaea", "Propylaea", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "A gateway that is only a gateway — a columned front and back with a through-passage and no room at all, straddling the way into a sanctuary.",
+  }),
+  civ("bouleuterion", "Bouleuterion", "not_started", {
+    tags: ["classical_mediterranean", "size_m"],
+    note: "The council chamber's ancient parent: stepped seating in a half-ring turned to a speaker's floor, roofed, with the entry cut through the flat side.",
+  }),
+  rel("peripteral_temple", "Peripteral temple", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "The colonnade on all four sides, a solid cella inside it, a pediment gable over the short face. The generic `temple` (Track A) stays the cella-and-porch one.",
+  }),
+  rel("tholos", "Tholos", "not_started", {
+    tags: ["classical_mediterranean", "size_m"],
+    note: "The round one: a ring of columns on a stepped circular crepidoma under a shallow conical roof, a drum wall inside the ring.",
+  }),
+  rel("sanctuary_treasury", "Treasury", "not_started", {
+    tags: ["classical_mediterranean", "size_s"],
+    note: "A miniature temple with two columns and no room to speak of — the votive building a sanctuary carries a dozen of.",
+  }),
+  lei("palaestra", "Palaestra", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "A square sand court with a colonnade on all four sides and changing cells behind one range; the middle is deliberately empty.",
+  }),
+  lei("gymnasion", "Gymnasion", "not_started", {
+    tags: ["classical_mediterranean", "size_xl"],
+    note: "The palaestra plus a covered running track down one long flank — the longest colonnade in the pack.",
+  }),
+  lei("odeon", "Odeon", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "The roofed small theatre: stepped seating in a half-ring under a full roof, a low stage wall across the chord.",
+  }),
+  lei("hippodrome_spina", "Spina", "not_started", {
+    kind: "prop",
+    tags: ["classical_mediterranean", "size_xl"],
+    note: "The racecourse's central barrier — a long low plinth with turning posts at both ends and an obelisk or two standing on it.",
+  }),
+  infra("agora_colonnade", "Free-standing colonnade", "not_started", {
+    tags: ["classical_mediterranean", "size_lin"],
+    note: "A sweep client: columns at a fixed interval on a stylobate with a continuous entablature over them, following a street or a square's edge.",
+  }),
+  mem("triumphal_arch", "Triumphal arch", "not_started", {
+    kind: "infrastructure",
+    tags: ["classical_mediterranean", "size_l"],
+    note: "The arch that spans a road, not a room: piers either side of the carriageway, a continuous crown, an attic band of names over it.",
+  }),
+  civ("rostra", "Rostra", "not_started", {
+    kind: "prop",
+    tags: ["classical_mediterranean", "size_m"],
+    note: "The speaker's platform in a forum: a stepped masonry dais with a rail, facing the open ground.",
+  }),
+  street("herm_post", "Herm", "not_started", {
+    tags: ["classical_mediterranean", "size_xs"],
+    note: "A square shaft with a blocky head course on it, at corners and boundaries. The cheapest classical repeat in the pack, and the saturation piece.",
+  }),
+  mem("votive_column", "Votive column", "not_started", {
+    kind: "prop",
+    tags: ["classical_mediterranean", "size_m"],
+    note: "One column standing alone on a plinth with a figure, urn or tripod on its capital.",
+  }),
+  ruin("column_drums", "Fallen column drums", "not_started", {
+    kind: "prop",
+    tags: ["classical_mediterranean", "size_m"],
+    note: "A row of cylinder drums lying where the shaft fell, half in the grass, with the capital at the end of the run.",
+  }),
+  water("ship_shed", "Ship shed", "not_started", {
+    kind: "building",
+    tags: ["classical_mediterranean", "size_xl"],
+    note: "The neosoikos: a long open-fronted shed running down to the water on a slipway floor, one hull's width, in a row of its own kind.",
+  }),
+  water("trireme", "Trireme", "not_started", {
+    tags: ["classical_mediterranean", "size_l"],
+    note: "The oared warship: a low slim hull with a bronze ram at the stem, a single square sail, oar ports in two banks and an eye painted at the bow.",
+  }),
+  wat("nymphaeum", "Nymphaeum", "not_started", {
+    kind: "building",
+    tags: ["classical_mediterranean", "size_m"],
+    note: "The monumental fountain: a niched screen wall with basins under it, water in the floor plane on the bathhouse's pool predicate.",
+  }),
+  infra("acropolis_terrace", "Sanctuary terrace", "not_started", {
+    tags: ["classical_mediterranean", "size_lin"],
+    note: "Polygonal masonry retaining that raises a sanctuary above its town — the retaining pass's grandest client, with a stair cut into one face.",
+  }),
+  rur("olive_press", "Olive press", "not_started", {
+    tags: ["classical_mediterranean", "size_s"],
+    note: "A stone trough press with a beam and weight stone, jars ranked along the far wall.",
+  }),
+  com("pithos_store", "Pithos store", "not_started", {
+    kind: "prop",
+    tags: ["classical_mediterranean", "size_s"],
+    note: "Great storage jars sunk to the shoulder in a paved yard, lids beside them — the classical warehouse, outdoors.",
+  }),
+
+  /* --- the nautical & pirate pack (docs/CATALOG-EXPANSION-v0.md §3.2) --- */
+  mil("jolly_roger_mast", "Jolly roger mast", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_m"],
+    note: "A ship's mast standing on land over the harbour with a black banner at the head and a yard crossing it — the pirate icon, and it costs two hundred blocks.",
+  }),
+  civ("gallows", "Gallows", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_s"],
+    note: "Two posts, a beam, a noose of chain and a trap platform, on a paved point where the harbour can see it.",
+  }),
+  civ("gibbet_cage", "Gibbet cage", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_xs"],
+    note: "An iron-bar cage hung from a single arm at a crossroads. Repeats cheaply; three of them say more than one gallows.",
+  }),
+  water("careening_beach", "Careening beach", "not_started", {
+    kind: "infrastructure",
+    tags: ["nautical_pirate", "size_l"],
+    note: "A hull hove down on its side on the sand, tackle running from the mastheads to shore anchors, fires and pitch barrels under it.",
+  }),
+  ruin("beached_wreck", "Beached wreck", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_l"],
+    note: "A broken hull driven up the strand — ribs open to the sky, the stern half gone, cargo spilled up the tideline. Distinct from Track A's submerged `sunken_ship`.",
+  }),
+  mil("cannon_battery", "Shore battery", "not_started", {
+    kind: "infrastructure",
+    tags: ["nautical_pirate", "size_lin"],
+    note: "A sweep client: an earth-and-timber parapet with embrasures at intervals, guns on trucks behind them, shot piles and a ready magazine.",
+  }),
+  mil("powder_magazine", "Powder magazine", "not_started", {
+    tags: ["nautical_pirate", "size_s"],
+    note: "Set apart from everything: thick buttressed walls, a vaulted roof, one door, no windows, lanterns outside the wall only.",
+  }),
+  mil("martello_tower", "Sea tower", "not_started", {
+    tags: ["nautical_pirate", "size_m"],
+    note: "A squat round tower on a rock or a mole, battered walls, one gun platform on top, entered by a ladder at first-floor height.",
+  }),
+  com("chandlery", "Ship chandlery", "not_started", {
+    tags: ["nautical_pirate", "size_m"],
+    note: "The shop that sells a voyage: rope coils, blocks and lanterns hung from the ceiling plane, barrels of tar and salt beef, a counter under a hanging model.",
+  }),
+  ind("sail_loft", "Sail loft", "not_started", {
+    tags: ["nautical_pirate", "size_l"],
+    note: "One long clear upper floor with the cloth laid out on it, seam benches down the walls, a hoist door in the gable.",
+  }),
+  rur("fish_drying_rack", "Drying racks", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_m"],
+    note: "Split fish on horizontal poles between A-frames, in ranks. Repeats down a whole shoreline and reads at fifty blocks.",
+  }),
+  ind("salt_house", "Salt house", "not_started", {
+    tags: ["nautical_pirate", "size_s"],
+    note: "The store beside Track A's `salt_pans`: white heaps in bays, a raking floor, wide low doors.",
+  }),
+  ruin("treasure_cache", "Treasure cache", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_xs"],
+    note: "Chests half out of the sand under a lone palm, a spade standing in the spoil, one lid open. The most literal icon in the catalog and unapologetic about it.",
+  }),
+  water("smugglers_landing", "Smugglers' landing", "not_started", {
+    tags: ["nautical_pirate", "size_m"],
+    note: "A stair cut into a cove wall down to mooring rings, crates stacked above the tideline, a shuttered lantern on a hook.",
+  }),
+  street("capstan", "Quay capstan", "not_started", {
+    tags: ["nautical_pirate", "size_xs"],
+    note: "A drum with bar sockets on a paved quay, hawser coiled at its foot.",
+  }),
+  ind("treadwheel_crane", "Treadwheel crane", "not_started", {
+    tags: ["nautical_pirate", "size_l"],
+    note: "The harbour crane: a timber housing with the great wheel inside it and a jib swinging out over the water. A silhouette, not a shed.",
+  }),
+  street("anchor_stack", "Anchor stack", "not_started", {
+    tags: ["nautical_pirate", "size_s"],
+    note: "Old anchors leaned together with chain heaped round them at the head of a quay.",
+  }),
+  water("daymark", "Daymark", "not_started", {
+    tags: ["nautical_pirate", "size_m"],
+    note: "A whitewashed stone cone on a headland with no light in it — the lighthouse's mute cousin, and cheap enough to put on three headlands.",
+  }),
+  mil("harbour_chain_tower", "Chain tower", "not_started", {
+    kind: "infrastructure",
+    tags: ["nautical_pirate", "size_l"],
+    note: "The pair that closes a port: two towers on opposite moles with a chain slung between them across the water. Ships as a pair or not at all.",
+  }),
+  mem("whalebone_arch", "Whalebone arch", "not_started", {
+    kind: "prop",
+    tags: ["nautical_pirate", "size_m"],
+    note: "Two jaw bones meeting over a path at the top of the town. Niche, immediate, and it names a whaling port in one glance.",
+  }),
+
+  /* --- the arcane & magical pack (docs/CATALOG-EXPANSION-v0.md §3.3) --- */
+  fan("rune_circle", "Rune circle", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_m"],
+    note: "A ring inlaid into the floor plane — glowing symbol courses on polished stone, no vertical stone at all. The counterpart to `standing_stones`, which is all vertical.",
+  }),
+  fan("ley_marker", "Ley marker", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_xs"],
+    note: "A knee-high waystone with one glowing glyph face, set beside a path. Twenty of these along a road is what makes a valley read as enchanted.",
+  }),
+  fan("crystal_outcrop", "Crystal outcrop", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_m"],
+    note: "Amethyst and quartz spires erupting from the ground at an angle, budding smaller clusters at the base.",
+  }),
+  fan("arcane_academy", "Arcane academy", "not_started", {
+    tags: ["arcane", "size_xl"],
+    note: "The wizard's tower gone collegiate: a cloistered teaching hall with two unequal towers, orrery hall, and shelves where a chapel would put pews.",
+  }),
+  fan("summoning_hall", "Summoning hall", "not_started", {
+    tags: ["arcane", "size_l"],
+    note: "One tall room, a circle written into the floor plane, brazier pedestals at the cardinal points and a gallery rail high on the walls.",
+  }),
+  fan("arcane_library", "Arcane library", "not_started", {
+    tags: ["arcane", "size_l"],
+    note: "Shelf ranges to the ceiling plane with ladder rails, reading lecterns lit by hung lanterns, one shelf bay left as a gap that goes nowhere.",
+  }),
+  fan("scrying_pool", "Scrying pool", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_s"],
+    note: "A still rimmed basin on the pool predicate with glow under the water and a kneeling step on one side.",
+  }),
+  fan("blossom_shrine", "Blossom shrine", "not_started", {
+    tags: ["arcane", "size_s"],
+    note: "An open pavilion of pale timber under a cherry canopy, ribbons on the posts, a low altar with no figure on it.",
+  }),
+  fan("pegasus_stable", "Winged-mount stable", "not_started", {
+    tags: ["arcane", "size_l"],
+    note: "Stalls with no doors and an open loft above them — the mounts leave upward — with a landing ledge projecting from the gable.",
+  }),
+  fan("unicorn_paddock", "Paddock", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_l"],
+    note: "White fencing round grazed ground with a blossom tree, a trough and a gate; the icon is the enclosure, not an occupant.",
+  }),
+  fan("arcane_orrery", "Orrery", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_m"],
+    note: "Armillary rings on a plinth with a lit core, each ring a course of blocks in its own plane.",
+  }),
+  fan("floating_stair", "Floating stair", "not_started", {
+    kind: "infrastructure",
+    tags: ["arcane", "size_lin"],
+    note: "Detached treads climbing to a door, on `floating_platform`'s disguised-stem trick — a veiled thread carries each tread, and the eye reads the gap.",
+  }),
+  fan("warded_gate", "Warded gate", "not_started", {
+    kind: "infrastructure",
+    tags: ["arcane", "size_m"],
+    note: "An arch across a road with a rune band up both piers and a glowing keystone; nothing hangs in the opening.",
+  }),
+  fan("spirit_lantern_row", "Lantern row", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_lin"],
+    note: "A run of posts with paper lanterns at head height along a path, spaced by arc length. The pack's saturation piece.",
+  }),
+  fan("dragon_skeleton", "Dragon skeleton", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_xl"],
+    note: "A picked wyrm laid out where it fell: spine flush in the ground plane, ribs standing on it, the skull turned to one side.",
+  }),
+  fan("moon_dial", "Moon dial", "not_started", {
+    kind: "prop",
+    tags: ["arcane", "size_m"],
+    note: "A great disc set into a paved terrace with a leaning gnomon and glowing hour marks.",
+  }),
+
+  /* --- the alien & sci-fi pack (docs/CATALOG-EXPANSION-v0.md §3.4) --- */
+  rur("crop_circle", "Crop circle", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_xl"],
+    note: "Flattened geometry in a standing field — a floor-plane treatment only, no block above the crop. The cheapest strong icon proposed anywhere in this document.",
+  }),
+  mil("quarantine_fence", "Quarantine line", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_lin"],
+    note: "Chain-link on posts with warning banners at intervals, floodlight masts every fifth panel and a gate where a road crosses it. A sweep client.",
+  }),
+  sci("containment_tent", "Containment tent", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_m"],
+    note: "An inflated white dome with a ribbed skin, an airlock tube out one side and a generator humming at the back.",
+  }),
+  sci("field_lab_trailer", "Field lab trailer", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_s"],
+    note: "A boxed trailer up on jacks with a step, an aerial and a shuttered hatch; three in a row is a response, one is a rumour.",
+  }),
+  sci("sensor_mast", "Sensor mast", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_s"],
+    note: "A tripod carrying a small dish, a solar panel and a blinking head.",
+  }),
+  sci("dish_array", "Dish array", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_l"],
+    note: "Several big parabolic dishes on pedestals, all aimed the same way — the aim is the read.",
+  }),
+  fan("xeno_spire", "Xeno spire", "not_started", {
+    tags: ["alien_scifi", "size_xl"],
+    note: "Chitinous organic massing that tapers and twists, grown rather than built, with openings where the shell parted.",
+  }),
+  fan("hive_mound", "Hive mound", "not_started", {
+    tags: ["alien_scifi", "size_l"],
+    note: "A low resinous mound with three tunnel mouths at ground level and a vent crown; inside is chambered, not roomed.",
+  }),
+  fan("bio_pod_cluster", "Bio-pod cluster", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_s"],
+    note: "Glowing egg pods in a huddle, two split open, the ground under them stained. Built for double-digit counts.",
+  }),
+  ruin("crash_furrow", "Crash furrow", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_lin"],
+    note: "A scorched gouge dragged across the terrain with debris thrown out either side and the thing that made it at the end of the run. Gives a scatter its direction.",
+  }),
+  mil("barricade_line", "Street barricade", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_lin"],
+    note: "Improvised across a carriageway: wrecked vehicles, sandbags, concrete blocks and wire, with one deliberate gap.",
+  }),
+  mil("sandbag_emplacement", "Sandbag emplacement", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_s"],
+    note: "A horseshoe of bags at a corner with a firing step and an ammunition crate.",
+  }),
+  mil("mobile_command_post", "Command vehicle", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_m"],
+    note: "An armoured box body with an awning off one flank, map table under it and a mast of antennae.",
+  }),
+  und("blast_door", "Blast door", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_m"],
+    note: "The way into a hillside: a slab-faced door in a concrete surround with a hydraulic frame, sunk in a cut with a ramp down to it. The P4 hideout's front page.",
+  }),
+  sci("hydroponics_bay", "Hydroponics bay", "not_started", {
+    tags: ["alien_scifi", "size_l"],
+    note: "Racked trays under grow-lamp glow, pipe runs at the plate, a water plant at one end. What a hideout eats.",
+  }),
+  mil("sentry_turret", "Sentry turret", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_xs"],
+    note: "A short pedestal with a swivelling head and a lamp, at a gate or on a roof parapet.",
+  }),
+  mod("airlock_vestibule", "Airlock vestibule", "not_started", {
+    kind: "infrastructure",
+    tags: ["alien_scifi", "size_s"],
+    note: "A double-door chamber projecting from a wall with a step-through sill and a warning band round it.",
+  }),
+  infra("maglev_pylon", "Guideway pylon", "not_started", {
+    tags: ["alien_scifi", "size_lin"],
+    note: "A raised guideway on tapered piers at a fixed interval — the far-future viaduct, on the sweep engine.",
+  }),
+  ruin("derelict_mech", "Derelict walker", "not_started", {
+    kind: "prop",
+    tags: ["alien_scifi", "size_xl"],
+    note: "A fallen machine on its side, one leg still folded under it, hull plates open and the cockpit dark.",
+  }),
+
+  /* --- the agrarian pack (docs/CATALOG-EXPANSION-v0.md §3.5) --- */
+  rur("hedgerow", "Hedgerow", "not_started", {
+    kind: "infrastructure",
+    tags: ["agrarian", "size_lin"],
+    note: "The living boundary FARM-PLAN §14.2 named as missing: persistent leaves on a low bank, thickening at corners, with standard trees left in the line.",
+  }),
+  rur("dry_stone_wall", "Dry stone wall", "not_started", {
+    kind: "infrastructure",
+    tags: ["agrarian", "size_lin"],
+    note: "The upland field wall: a battered double course with through-stones and a coping of stood stones. A sweep client, and what a hill town's fields want.",
+  }),
+  rur("field_gate", "Field gate", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_xs"],
+    note: "A five-bar gate hung between a hanging post and a slapping post, with a stile stone beside it. Every wall and hedge run wants one.",
+  }),
+  rur("cart_track", "Cart track", "not_started", {
+    kind: "infrastructure",
+    tags: ["agrarian", "size_lin"],
+    note: "Two ruts with a grass baulk between them, unpaved, following the ground rather than cutting it — the road engine's humblest profile.",
+  }),
+  rur("cow_byre", "Byre", "not_started", {
+    tags: ["agrarian", "size_m"],
+    note: "Standings either side of a central dunging passage, a feed walk at the head, half-doors on the yard.",
+  }),
+  rur("duck_pond", "Duck pond", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_m"],
+    note: "A rimmed pond on the pool predicate with reeds at one edge, a plank ramp and a small house on stilts over the water.",
+  }),
+  rur("midden_heap", "Midden", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_s"],
+    note: "The muck heap by the yard: coarse dirt banked against three walls with a fork standing in it and steam where the season allows.",
+  }),
+  rur("dutch_barn", "Dutch barn", "not_started", {
+    tags: ["agrarian", "size_l"],
+    note: "Open on all four sides: piers, a curved roof, and nothing but stacked hay between them. The read is the absence of walls.",
+  }),
+  rur("smokehouse", "Smokehouse", "not_started", {
+    tags: ["agrarian", "size_s"],
+    note: "A small blind hut with a low fire pit and racks up in the roof; the only opening is the door.",
+  }),
+  rur("dairy", "Dairy", "not_started", {
+    tags: ["agrarian", "size_s"],
+    note: "Deliberately cold and north-facing: slate shelves round three walls, churns, a stone floor kept wet, small high windows.",
+  }),
+  rur("sheep_dip", "Sheep dip", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_s"],
+    note: "A narrow sunken trough with a race of hurdles funnelling into it and a draining pen the far side.",
+  }),
+  rur("wool_shed", "Shearing shed", "not_started", {
+    tags: ["agrarian", "size_l"],
+    note: "A raised board floor with catching pens under one end and the wool table down the middle.",
+  }),
+  rur("staddle_granary", "Staddle granary", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_s"],
+    note: "A grain box raised on mushroom-shaped stones so the rats cannot climb, reached by a ladder that does not touch it.",
+  }),
+  rur("hop_yard", "Hop yard", "not_started", {
+    kind: "infrastructure",
+    tags: ["agrarian", "size_xl"],
+    note: "Poles on a grid with wire runs between their heads; the plants are the flora grammar's problem and the frame is not.",
+  }),
+  rur("stock_pens", "Stock pens", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_l"],
+    note: "A grid of hurdle pens off a droving lane with a weigh crush and an auctioneer's step.",
+  }),
+  rur("well_sweep", "Well sweep", "not_started", {
+    kind: "prop",
+    tags: ["agrarian", "size_m"],
+    note: "The counterweighted lever over an open well — a raked beam on a forked post, bucket at one end and a stone at the other.",
+  }),
+
+  /* --- the wilds & camps pack (docs/CATALOG-EXPANSION-v0.md §3.6) --- */
+  nom("logging_camp", "Logging camp", "not_started", {
+    tags: ["wilds_camps", "size_xl"],
+    note: "A compound on `campsite`'s precedent: bunk shanty, cook shack, a saw trestle, the fire, and the ground churned to mud between them.",
+  }),
+  infra("log_flume", "Log flume", "not_started", {
+    tags: ["wilds_camps", "size_lin"],
+    note: "A V-trough on trestles running downhill with water in it — the sweep engine carrying a contained channel rather than a carriageway.",
+  }),
+  ind("log_landing", "Log landing", "not_started", {
+    kind: "prop",
+    tags: ["wilds_camps", "size_l"],
+    note: "The deck at the road head: whole trunks cross-stacked between anchor posts, ends squared to the track.",
+  }),
+  ind("sawpit", "Sawpit", "not_started", {
+    kind: "prop",
+    tags: ["wilds_camps", "size_s"],
+    note: "A trestle over an open pit with a two-man saw standing in the kerf and sawdust banked at one end.",
+  }),
+  wat("river_log_boom", "Log boom", "not_started", {
+    tags: ["wilds_camps", "size_lin"],
+    note: "Chained trunks strung across a river corralling a raft of loose logs behind them, anchored to a bank pier at each end.",
+  }),
+  civ("fire_lookout_tower", "Fire lookout", "not_started", {
+    tags: ["wilds_camps", "size_l"],
+    note: "A glazed cab on braced legs above the canopy, with a switchback stair and a map table you can see from below.",
+  }),
+  ruin("stump_field", "Cut-over", "not_started", {
+    kind: "infrastructure",
+    tags: ["wilds_camps", "size_xl"],
+    note: "The ground a camp leaves: stumps at plausible spacing, slash piles, and one great stump too big to have been worth taking.",
+  }),
+  infra("rope_bridge", "Rope bridge", "not_started", {
+    tags: ["wilds_camps", "size_lin"],
+    note: "Plank treads slung between two cable runs with hand lines, sagging to the middle and anchored to trees or posts.",
+  }),
+  rur("waystation", "Waystation", "not_started", {
+    tags: ["wilds_camps", "size_s"],
+    note: "A shelter on a long road: three walls, a hearth, a bench, a woodpile kept full, and no door.",
+  }),
+  lei("hunting_lodge", "Hunting lodge", "not_started", {
+    tags: ["wilds_camps", "size_l"],
+    note: "A trophy hall with a great hearth, antlers on the beam, a gun rack and boots by the door.",
+  }),
+  ind("spar_pole", "Spar pole", "not_started", {
+    kind: "prop",
+    tags: ["wilds_camps", "size_l"],
+    note: "A topped tree rigged with blocks and guy lines as a yarding mast — the tallest thing in a cut-over and visible from everywhere.",
+  }),
+  nom("hunters_cache", "Cache", "not_started", {
+    tags: ["wilds_camps", "size_xs"],
+    note: "A box on four peeled poles above bear height with the bark stripped off the legs.",
+  }),
+
+  /* --- the frontier West pack (docs/CATALOG-EXPANSION-v0.md §3.7) --- */
+  com("false_front_saloon", "Saloon", "not_started", {
+    tags: ["frontier_west", "size_m"],
+    note: "The false front is the entry: a flat parapet screen carried a storey above the real roof, swing doors, a long bar and a stair to the rooms.",
+  }),
+  infra("boardwalk", "Boardwalk", "not_started", {
+    tags: ["frontier_west", "size_lin"],
+    note: "A raised plank sidewalk on posts with a step down at each cross-street and a post-and-rail edge — the frontage's own sweep profile.",
+  }),
+  infra("water_tank_trestle", "Water tank", "not_started", {
+    kind: "prop",
+    tags: ["frontier_west", "size_l"],
+    note: "A banded timber tank on a braced trestle beside the track with a swing spout hanging off it.",
+  }),
+  com("assay_office", "Assay office", "not_started", {
+    tags: ["frontier_west", "size_s"],
+    note: "A barred counter, a small furnace and scales, a strongbox in the corner and a shingle over the door.",
+  }),
+  ind("stamp_mill", "Stamp mill", "not_started", {
+    tags: ["frontier_west", "size_xl"],
+    note: "Built down a slope in stages: ore bin at the top, the stamp battery under it, tables below that. The stepping is the read.",
+  }),
+  ind("sluice_box", "Sluice box", "not_started", {
+    kind: "infrastructure",
+    tags: ["frontier_west", "size_lin"],
+    note: "A riffled trough on trestles with water running through it, tailings fanned out at the low end.",
+  }),
+  ind("placer_claim", "Placer claim", "not_started", {
+    kind: "prop",
+    tags: ["frontier_west", "size_m"],
+    note: "A worked gravel bar: spoil ridges, a rocker cradle, a claim post with a board nailed to it.",
+  }),
+  civ("telegraph_office", "Telegraph office", "not_started", {
+    tags: ["frontier_west", "size_s"],
+    note: "One room, a key desk under the window, wire coming in through the gable to a pole outside.",
+  }),
+  rur("livery_stable", "Livery stable", "not_started", {
+    tags: ["frontier_west", "size_l"],
+    note: "Wide doors both ends, a straw floor, a loft with a hay door, and rigs parked in the aisle.",
+  }),
+  ind("wagon_shop", "Wagon shop", "not_started", {
+    tags: ["frontier_west", "size_m"],
+    note: "Wheels on the wall, a tyring platform outside the door, a forge in the corner and half a wagon on trestles.",
+  }),
+  rel("mission_church", "Mission church", "not_started", {
+    tags: ["frontier_west", "size_m"],
+    note: "Adobe massing with a stepped bell gable carrying two bells, buttressed side walls, a single deep door.",
+  }),
+  com("cantina", "Cantina", "not_started", {
+    tags: ["frontier_west", "size_s"],
+    note: "A shaded arcade off the street, a plain bar inside, terracotta and whitewash, shutters instead of glass.",
+  }),
+  mem("boot_hill_row", "Boot hill", "not_started", {
+    kind: "prop",
+    tags: ["frontier_west", "size_m"],
+    note: "A crooked line of timber grave markers on a bare rise outside town, fenced with wire, no two the same height.",
+  }),
+  ver("dugout_shanty", "Dugout", "not_started", {
+    tags: ["frontier_west", "size_s"],
+    note: "Cut back into a bank with a timber front wall and a turf roof at the level of the ground behind it.",
+  }),
+
+  /* --- the Nile & ancient Egypt pack (docs/CATALOG-EXPANSION-v0.md §3.8) --- */
+  rel("pyramid", "Pyramid", "not_started", {
+    tags: ["nile", "size_xl"],
+    note: "The true smooth-faced one on a square base, a cased apex, one small door low on the north face and a causeway running away from it. Tags `pyramid`/`great_pyramid` — note the roof-value alias in `core.ts` and claim deliberately.",
+  }),
+  mem("mastaba", "Mastaba", "not_started", {
+    tags: ["nile", "size_m"],
+    note: "The bench tomb: a battered rectangular block with a flat top, a false door on one face and a real one nowhere.",
+  }),
+  rel("hypostyle_hall", "Hypostyle hall", "not_started", {
+    tags: ["nile", "size_xl"],
+    note: "A forest of columns on a grid, the central aisle's columns taller than the rest so a clerestory band opens between them.",
+  }),
+  rel("mortuary_temple", "Mortuary temple", "not_started", {
+    tags: ["nile", "size_xl"],
+    note: "Terraced against a cliff: colonnaded storeys stepping back, a ramp on the axis climbing through all of them.",
+  }),
+  rel("pylon_gate", "Pylon gate", "not_started", {
+    kind: "infrastructure",
+    tags: ["nile", "size_xl"],
+    note: "Two battered trapezoid towers flanking a lower doorway, flagstaff grooves up the faces, banners standing in them.",
+  }),
+  mem("sphinx_avenue", "Avenue of sphinxes", "not_started", {
+    kind: "infrastructure",
+    tags: ["nile", "size_lin"],
+    note: "Paired recumbent figures at a fixed interval down both sides of a processional way. A sweep client whose feature is the interval.",
+  }),
+  wat("nilometer", "Nilometer", "not_started", {
+    kind: "building",
+    tags: ["nile", "size_m"],
+    note: "A stepped shaft down to river level with a graduated column in it and a covered head at the top.",
+  }),
+  wat("sacred_lake", "Sacred lake", "not_started", {
+    kind: "prop",
+    tags: ["nile", "size_l"],
+    note: "A rectangular stone-lined basin with steps down all four sides, on the pool predicate, inside a precinct wall.",
+  }),
+  rur("mudbrick_granary", "Beehive granary", "not_started", {
+    tags: ["nile", "size_s"],
+    note: "Corbelled mud domes in a row on a shared plinth, filled from a hatch at the crown and drawn from a hole at the foot.",
+  }),
+  water("felucca", "Felucca", "not_started", {
+    tags: ["nile", "size_m"],
+    note: "One raked mast with a long lateen yard, a shallow open hull and an awning aft.",
+  }),
+  rel("canopic_shrine", "Shrine chapel", "not_started", {
+    tags: ["nile", "size_s"],
+    note: "A small chapel with a cavetto cornice and a torus roll at every corner — the two mouldings that make a block read as Egyptian.",
+  }),
+
+  /* --- the East Asian pack (docs/CATALOG-EXPANSION-v0.md §3.9) --- */
+  rel("torii", "Torii", "not_started", {
+    kind: "prop",
+    tags: ["east_asian", "size_m"],
+    note: "Two posts, a curved upper lintel and a straight tie under it. Repeats down an approach in ranks and is the pack's saturation piece.",
+  }),
+  infra("moon_gate", "Moon gate", "not_started", {
+    tags: ["east_asian", "size_m"],
+    note: "A perfect circular opening in a garden wall, coped round, with the path passing through it.",
+  }),
+  infra("paifang", "Paifang", "not_started", {
+    tags: ["east_asian", "size_l"],
+    note: "A multi-bay ceremonial arch over a street with tiled eaves over each bay and a name board in the middle span.",
+  }),
+  lei("zen_garden", "Dry garden", "not_started", {
+    kind: "prop",
+    tags: ["east_asian", "size_m"],
+    note: "Raked gravel written into the floor plane with placed stones and moss, walled on three sides and viewed from a veranda on the fourth.",
+  }),
+  mil("tenshu_keep", "Castle keep", "not_started", {
+    tags: ["east_asian", "size_xl"],
+    note: "Stacked tiered storeys, each smaller than the one below, over a battered stone base with a curved cyclopean face; gables break every second eave.",
+  }),
+  mil("castle_base_wall", "Battered stone base", "not_started", {
+    kind: "infrastructure",
+    tags: ["east_asian", "size_lin"],
+    note: "The curved ōgi revetment the keep stands on — the retaining pass's most demanding client, and buildable as a swept course with a coping.",
+  }),
+  civ("drum_tower", "Drum tower", "not_started", {
+    tags: ["east_asian", "size_l"],
+    note: "A tiered gate tower on a masonry podium with an arch through it and a drum hung in the upper storey.",
+  }),
+  lei("shoji_teahouse", "Tea house pavilion", "not_started", {
+    tags: ["east_asian", "size_s"],
+    note: "The garden pavilion: a low crawl-in entry, a mat floor, a hearth recess and one alcove. Distinct from Track A's commercial `tea_house`.",
+  }),
+  infra("spirit_wall", "Spirit wall", "not_started", {
+    tags: ["east_asian", "size_s"],
+    note: "A free-standing screen wall set one pace inside a gate so the way in must turn.",
+  }),
+  street("stone_lantern", "Stone lantern", "not_started", {
+    tags: ["east_asian", "size_xs"],
+    note: "A pedestal, a fire box with cut faces and a capstone, at a path's turn or a pond's edge.",
+  }),
+  water("dragon_boat", "Dragon boat", "not_started", {
+    tags: ["east_asian", "size_l"],
+    note: "A long narrow hull with a carved head at the stem and a tail at the stern, oars ranked along both sides.",
+  }),
+  rel("bell_pavilion", "Bell pavilion", "not_started", {
+    tags: ["east_asian", "size_m"],
+    note: "An open pavilion on a raised podium with a great bell hung from the beam and a striking log slung beside it — the tiered-eave answer to `bell_tower`'s masonry shaft.",
+  }),
 ]);
 
 /* -------------------------------------------------------------------------- */
@@ -1842,12 +2499,16 @@ export function structureById(id: string): StructureEntry | undefined {
 }
 
 /** Every entry in one category, in catalog order. */
-export function structuresInCategory(category: StructureCategory): readonly StructureEntry[] {
+export function structuresInCategory(
+  category: StructureCategory,
+): readonly StructureEntry[] {
   return STRUCTURE_CATALOG.filter((entry) => entry.category === category);
 }
 
 /** Every entry with one status, in catalog order. */
-export function structuresWithStatus(status: StructureStatus): readonly StructureEntry[] {
+export function structuresWithStatus(
+  status: StructureStatus,
+): readonly StructureEntry[] {
   return STRUCTURE_CATALOG.filter((entry) => entry.status === status);
 }
 
