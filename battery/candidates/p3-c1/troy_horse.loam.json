@@ -1,0 +1,875 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "troy_horse",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:grass_block",
+      "ground.subsurface": "minecraft:dirt",
+      "ground.stone": "minecraft:stone",
+      "ground.cliff": "minecraft:sandstone",
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "ground.peak": "minecraft:stone",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:smooth_sandstone",
+      "plaza.gravel": "minecraft:sandstone",
+      "plaza.cobble": "minecraft:stone_bricks",
+      "plaza.border": "minecraft:cut_sandstone"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.35,
+      "humidity": -0.05,
+      "snow": "never"
+    },
+    "tokens": {
+      "scene": "The Trojan horse stands inside Troy just before the hidden soldiers emerge."
+    },
+    "character": {
+      "label": "ancient Troy before the hidden soldiers emerge",
+      "materialTheme": "white_quartz",
+      "archetypes": {
+        "prefer": [
+          "keep",
+          "gatehouse",
+          "barracks",
+          "townhouse",
+          "warehouse"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "modern_villa"
+        ],
+        "weights": {
+          "keep": 2,
+          "gatehouse": 2,
+          "barracks": 2,
+          "townhouse": 1,
+          "warehouse": 1
+        }
+      },
+      "props": {
+        "prefer": [
+          "well_head",
+          "market_barrow",
+          "cart",
+          "statue_plinth"
+        ],
+        "forbid": [
+          "airliner",
+          "phone_box",
+          "bus_shelter"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "oak_round",
+          "birch_slim"
+        ],
+        "forbid": [
+          "spruce_tall"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "blocky",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.35
+      },
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "The monumental wooden Trojan horse stands inside Troy's agora, large enough to conceal a squad of Greek soldiers: hollow it into an enterable belly with cramped bunks, a ladder, a concealed hatch and the soldiers waiting inside, with no one yet outside. Publish a primary door anchor at the flank facing the agora so the approach road reaches it.",
+          "envelope": [
+            31,
+            24,
+            13
+          ]
+        },
+        {
+          "id": "hidden_soldier_cache",
+          "mode": "plugin",
+          "brief": "A varied low-profile covert siege cache leaves evidence of the Greek infiltration before the horse opens: a covered wooden chest, bronze gear, rope and fresh sandaled tracks tucked beside a wall, with no soldier visible. Keep each cache grounded and walkable around.",
+          "envelope": [
+            9,
+            8,
+            9
+          ],
+          "count": 12
+        }
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy before the revelation",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle plains around the fortified city",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 69,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.48,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "troy_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad shelf beneath Troy",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.1,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "troy_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "an oak grove beyond the city",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            60
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.32,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "troy_oak",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 15
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the surrounding plain",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.02,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.03,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 4,
+              "maxHeight": 12
+            }
+          ]
+        }
+      },
+      {
+        "id": "troy_agora",
+        "kind": "primitive",
+        "label": "the agora where the horse waits",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            36,
+            36
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the sealed wooden horse with soldiers hidden inside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            31,
+            24,
+            13
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_agora",
+            "gap": [
+              1,
+              128
+            ]
+          },
+          {
+            "facing": "troy_agora"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 90
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "event"
+        ]
+      },
+      {
+        "id": "citadel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the citadel overlooking the agora",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "troy_agora",
+            "min": 42,
+            "max": 120
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "keep",
+          "landmark"
+        ]
+      },
+      {
+        "id": "gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse facing the silent square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "citadel",
+            "min": 18,
+            "max": 70
+          },
+          {
+            "facing": "troy_agora"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse"
+        ]
+      },
+      {
+        "id": "barracks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the barracks around the agora",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_agora",
+            "gap": [
+              1,
+              96
+            ]
+          },
+          {
+            "distance": "citadel",
+            "min": 2
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 90
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barracks",
+          "house"
+        ]
+      },
+      {
+        "id": "temple",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the temple beside the agora",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_agora",
+            "gap": [
+              2,
+              48
+            ]
+          },
+          {
+            "facing": "troy_agora"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "temple"
+        ]
+      },
+      {
+        "id": "merchant_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a merchant house on the public edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_agora",
+            "gap": [
+              1,
+              48
+            ]
+          },
+          {
+            "facing": "troy_agora"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "townhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "west_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a household near the western lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "troy_agora",
+            "min": 14,
+            "max": 80
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "east_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a household near the eastern road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "troy_agora",
+            "min": 16,
+            "max": 84
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stores near the gate",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "troy_agora",
+            "min": 20,
+            "max": 100
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse"
+        ]
+      },
+      {
+        "id": "market_stall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a closed market stall beside the horse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_agora",
+            "gap": [
+              2,
+              48
+            ]
+          },
+          {
+            "facing": "troy_agora"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "market_stall"
+        ]
+      },
+      {
+        "id": "covert_caches",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "silent signs of the soldiers' infiltration",
+        "params": {
+          "program": "hidden_soldier_cache",
+          "count": 12,
+          "area": {
+            "at": [
+              0.5,
+              0.58
+            ],
+            "radius": 0.22
+          },
+          "spacing": 18,
+          "maxSlope": 22,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "agora_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the public well",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "market_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a barrow left beside the market",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "city_statue",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a weathered civic statue",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center",
+          "jitter": 0.3
+        }
+      },
+      {
+        "id": "troy_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "ancient lanes converging on the agora",
+        "params": {
+          "anchors": [
+            "troy_agora",
+            "#tag:house",
+            "trojan_horse",
+            "citadel",
+            "gatehouse",
+            "temple",
+            "warehouse",
+            "market_stall"
+          ],
+          "pattern": "radial",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        31,
+        24,
+        13
+      ],
+      "sourceHash": "b3:8fb2b19dcea353b99f5f5526f5a300ea810b1d7fe35fd1824084e368dcf8f051",
+      "outputHash": "b3:e06d76a8ce68b94516a6da392d771e8b64f37fa265297346b5931890a0656b45",
+      "source": "export const envelope = [31, 24, 13];\n\nexport default function build(api) {\n  const seatY = 3;\n\n  const plank = \"minecraft:oak_planks\";\n  const darkPlank = \"minecraft:dark_oak_planks\";\n  const oakLogX = \"minecraft:oak_log[axis=x]\";\n  const oakLogY = \"minecraft:oak_log[axis=y]\";\n  const darkLogY = \"minecraft:dark_oak_log[axis=y]\";\n  const blackWool = \"minecraft:black_wool\";\n\n  function put(x, y, z, block) {\n    if (\n      x >= 0 && x < api.size[0] &&\n      y >= 0 && y < api.size[1] &&\n      z >= 0 && z < api.size[2]\n    ) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function groundAt(x, z) {\n    let g = seatY + Math.floor(api.heightAt(x, z));\n    if (g < 0) {\n      g = 0;\n    }\n    if (g > 7) {\n      g = 7;\n    }\n    return g;\n  }\n\n  const legs = [\n    [8, 3],\n    [8, 9],\n    [20, 3],\n    [20, 9]\n  ];\n\n  for (let i = 0; i < legs.length; i++) {\n    const cx = legs[i][0];\n    const cz = legs[i][1];\n\n    for (let x = cx - 1; x <= cx; x++) {\n      for (let z = cz - 1; z <= cz; z++) {\n        const g = groundAt(x, z);\n        for (let y = g; y <= 7; y++) {\n          put(x, y, z, y <= g + 1 ? darkPlank : oakLogY);\n        }\n      }\n    }\n  }\n\n  for (let z = 0; z <= 2; z++) {\n    for (let x = 13; x <= 15; x++) {\n      const g = groundAt(x, z);\n      const target = seatY + z + 1;\n      const first = Math.min(g, seatY);\n      const last = Math.max(g, target);\n\n      for (let y = first; y <= last; y++) {\n        put(x, y, z, y === last && z === 2 ? darkPlank : plank);\n      }\n    }\n  }\n\n  for (let y = 6; y <= 16; y++) {\n    let xmin = 6;\n    let xmax = 23;\n    let zmin = 2;\n    let zmax = 10;\n\n    if (y === 6 || y === 16) {\n      xmin = 7;\n      xmax = 22;\n      zmin = 3;\n      zmax = 9;\n    } else if (y === 7 || y === 15) {\n      xmin = 6;\n      xmax = 23;\n      zmin = 2;\n      zmax = 10;\n    }\n\n    for (let x = xmin; x <= xmax; x++) {\n      for (let z = zmin; z <= zmax; z++) {\n        if (\n          y >= 8 && y <= 14 &&\n          x >= 8 && x <= 21 &&\n          z >= 3 && z <= 9\n        ) {\n          continue;\n        }\n\n        if (\n          (y === 15 || y === 16) &&\n          x === 18 &&\n          z === 3\n        ) {\n          continue;\n        }\n\n        const bodyBlock =\n          (x + 2 * y + 3 * z) % 9 === 0 ? darkPlank : plank;\n        put(x, y, z, bodyBlock);\n      }\n    }\n  }\n\n  const ribs = [8, 12, 16, 20];\n  for (let i = 0; i < ribs.length; i++) {\n    const x = ribs[i];\n    for (let y = 8; y <= 15; y++) {\n      put(x, y, 2, darkLogY);\n      put(x, y, 10, darkLogY);\n    }\n  }\n\n  for (let x = 8; x <= 21; x++) {\n    put(x, 7, 2, oakLogX);\n    put(x, 7, 10, oakLogX);\n  }\n\n  for (let z = 5; z <= 7; z++) {\n    put(6, 12, z, oakLogX);\n    put(5, 12, z, oakLogX);\n    put(4, 12, z, oakLogX);\n  }\n\n  for (let z = 4; z <= 8; z++) {\n    put(4, 13, z, oakLogX);\n    put(3, 13, z, oakLogX);\n  }\n\n  for (let z = 5; z <= 7; z++) {\n    put(2, 13, z, oakLogX);\n    put(2, 14, z, oakLogX);\n  }\n\n  for (let y = 13; y <= 19; y++) {\n    const cx = 24 + Math.floor((y - 13) / 2);\n    const zmin = y <= 14 ? 3 : 4;\n    const zmax = y <= 14 ? 9 : 8;\n\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      for (let z = zmin; z <= zmax; z++) {\n        const neckBlock =\n          (x + y + z) % 6 === 0 ? darkPlank : plank;\n        put(x, y, z, neckBlock);\n      }\n    }\n  }\n\n  for (let y = 17; y <= 21; y++) {\n    let xmin = 25;\n    let xmax = 29;\n    let zmin = 3;\n    let zmax = 9;\n\n    if (y === 17) {\n      xmin = 24;\n    } else if (y === 21) {\n      xmin = 26;\n      zmin = 4;\n      zmax = 8;\n    }\n\n    for (let x = xmin; x <= xmax; x++) {\n      for (let z = zmin; z <= zmax; z++) {\n        put(x, y, z, (x + y + z) % 5 === 0 ? darkPlank : plank);\n      }\n    }\n  }\n\n  for (let y = 17; y <= 18; y++) {\n    for (let x = 28; x <= 30; x++) {\n      for (let z = 4; z <= 8; z++) {\n        put(x, y, z, darkPlank);\n      }\n    }\n  }\n\n  for (let y = 18; y <= 20; y++) {\n    for (let z = 4; z <= 8; z++) {\n      put(29, y, z, darkPlank);\n      put(30, y, z, darkPlank);\n    }\n  }\n\n  for (let y = 13; y <= 19; y++) {\n    const cx = 24 + Math.floor((y - 13) / 2);\n    const maneZ = y <= 14 ? 2 : 3;\n    put(cx, y, maneZ, darkLogY);\n  }\n\n  for (let x = 26; x <= 29; x++) {\n    put(x, 18, 2, darkPlank);\n    put(x, 18, 10, darkPlank);\n  }\n\n  put(28, 20, 2, blackWool);\n  put(28, 20, 10, blackWool);\n  put(30, 19, 3, blackWool);\n  put(30, 19, 9, blackWool);\n\n  put(26, 22, 4, plank);\n  put(26, 23, 4, darkPlank);\n  put(28, 22, 8, plank);\n  put(28, 23, 8, darkPlank);\n\n  for (let y = 8; y <= 11; y++) {\n    put(13, y, 2, darkLogY);\n    put(15, y, 2, darkLogY);\n  }\n\n  for (let x = 13; x <= 15; x++) {\n    put(x, 11, 2, oakLogX);\n  }\n\n  put(\n    14,\n    8,\n    2,\n    \"minecraft:oak_door[facing=north,half=lower,hinge=left,open=true,powered=false]\"\n  );\n  put(\n    14,\n    9,\n    2,\n    \"minecraft:oak_door[facing=north,half=upper,hinge=left,open=true,powered=false]\"\n  );\n\n  for (let y = 8; y <= 14; y++) {\n    put(\n      18,\n      y,\n      3,\n      \"minecraft:ladder[facing=south,waterlogged=false]\"\n    );\n  }\n\n  put(\n    18,\n    15,\n    3,\n    \"minecraft:oak_trapdoor[facing=south,half=top,open=false,powered=false,waterlogged=false]\"\n  );\n\n  return {\n    name: \"Trojan Horse\",\n    seatY: seatY,\n    anchors: {\n      door: [14, 8, 2],\n      hatch: [18, 15, 3]\n    },\n    interiors: [\n      {\n        min: [9, 8, 4],\n        max: [20, 14, 8],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "hidden_soldier_cache": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        10,
+        11
+      ],
+      "sourceHash": "b3:d5c65ddc7b5e546d527a6eb0c1e9295004890c00f392babae528afaab2077851",
+      "outputHash": "b3:04689b64cf337203f6ecde5588579df95c9ba65d13e6c24269bebb815c1b5015",
+      "source": "export const envelope = [13, 10, 11];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n  const index = api.instance.index;\n  const instanceCount = api.instance.count;\n\n  const noise = [];\n  for (let i = 0; i < 16; i += 1) {\n    noise.push(api.random());\n  }\n\n  function pick(list, n) {\n    const i = n % list.length;\n    return list[i < 0 ? i + list.length : i];\n  }\n\n  const stoneTypes = [\n    \"minecraft:stone_bricks\",\n    \"minecraft:mossy_stone_bricks\",\n    \"minecraft:cracked_stone_bricks\",\n    \"minecraft:cobblestone\"\n  ];\n\n  const plankTypes = [\n    \"minecraft:oak_planks\",\n    \"minecraft:spruce_planks\",\n    \"minecraft:dark_oak_planks\"\n  ];\n\n  const logTypes = [\n    \"minecraft:oak_log\",\n    \"minecraft:spruce_log\",\n    \"minecraft:dark_oak_log\"\n  ];\n\n  const metalTypes = [\n    \"minecraft:cut_copper\",\n    \"minecraft:exposed_cut_copper\",\n    \"minecraft:weathered_cut_copper\"\n  ];\n\n  const style = (\n    index * 5 +\n    instanceCount * 3 +\n    Math.floor(noise[0] * 17)\n  ) % 12;\n\n  const stoneShift = (style + Math.floor(noise[1] * 4)) % stoneTypes.length;\n  const woodIndex = (\n    style +\n    index +\n    Math.floor(noise[5] * plankTypes.length)\n  ) % plankTypes.length;\n\n  const wallTop = 7 + (\n    (style + index + Math.floor(noise[2] * 2)) % 2\n  );\n\n  const damageLevel = 1 + (\n    (style + index + Math.floor(noise[3] * 3)) % 3\n  );\n\n  const damageSalt =\n    Math.floor(noise[4] * 1000) +\n    index * 19 +\n    instanceCount;\n\n  const wallFront = D - 2;\n  const wallBack = D - 1;\n  const keystoneX = Math.floor(W / 2);\n\n  const ground = new Array(W);\n  for (let x = 0; x < W; x += 1) {\n    ground[x] = new Array(D);\n    for (let z = 0; z < D; z += 1) {\n      let h = api.heightAt(x, z);\n      if (!Number.isFinite(h)) {\n        h = 0;\n      }\n      if (h > 4) {\n        h = 4;\n      }\n      if (h < -4) {\n        h = -4;\n      }\n      ground[x][z] = h;\n    }\n  }\n\n  function damagedAt(x, y, z) {\n    return (\n      z === wallFront &&\n      y >= 4 &&\n      x !== keystoneX &&\n      ((x * 11 + y * 7 + z * 5 + damageSalt) % 17) < damageLevel\n    );\n  }\n\n  for (let x = 0; x < W; x += 1) {\n    for (let z = 1; z < D; z += 1) {\n      const band = Math.max(\n        -2,\n        Math.min(2, Math.floor(ground[x][z] + 0.5))\n      );\n\n      for (let y = 0; y <= 2; y += 1) {\n        api.set(\n          x,\n          y,\n          z,\n          pick(\n            stoneTypes,\n            stoneShift + x * 3 + z * 5 + y * 7 + band\n          )\n        );\n      }\n\n      if (\n        ground[x][z] > 0.5 &&\n        (x === 0 || x === W - 1 || z === wallBack)\n      ) {\n        let rise = Math.floor(ground[x][z]);\n        if (rise < 1) {\n          rise = 1;\n        }\n        if (rise > 2) {\n          rise = 2;\n        }\n\n        for (let y = 3; y < 3 + rise; y += 1) {\n          api.set(\n            x,\n            y,\n            z,\n            pick(stoneTypes, stoneShift + x + z + y)\n          );\n        }\n      }\n    }\n  }\n\n  for (let z = wallFront; z <= wallBack; z += 1) {\n    for (let x = 0; x < W; x += 1) {\n      for (let y = 0; y <= wallTop; y += 1) {\n        if (!damagedAt(x, y, z)) {\n          api.set(\n            x,\n            y,\n            z,\n            pick(\n              stoneTypes,\n              stoneShift +\n                x * 7 +\n                y * 3 +\n                z * 5 +\n                (ground[x][z] > 0.5 ? 1 : 0)\n            )\n          );\n        }\n      }\n    }\n  }\n\n  const capY = wallTop + 1;\n  for (let z = wallFront; z <= wallBack; z += 1) {\n    for (let x = 0; x < W; x += 1) {\n      const keepCap =\n        z === wallFront ||\n        ((x * 3 + z + style) % 4 !== 0);\n\n      if (\n        capY < H &&\n        keepCap &&\n        !damagedAt(x, wallTop, z)\n      ) {\n        const capBlock =\n          (x + z + style) % 5 === 0\n            ? \"minecraft:chiseled_stone_bricks\"\n            : pick(stoneTypes, stoneShift + x + z + 11);\n\n        api.set(x, capY, z, capBlock);\n      }\n    }\n  }\n\n  if (wallTop === 7) {\n    api.set(\n      keystoneX,\n      H - 1,\n      wallFront,\n      \"minecraft:chiseled_stone_bricks\"\n    );\n  }\n\n  for (let bit = 0; bit < 4; bit += 1) {\n    const marker =\n      ((index >> bit) & 1) === 1\n        ? \"minecraft:cracked_stone_bricks\"\n        : \"minecraft:mossy_stone_bricks\";\n    api.set(1 + bit, 6, wallFront, marker);\n  }\n\n  const orientation = (\n    index * 2 +\n    style +\n    Math.floor(noise[6] * 4)\n  ) % 4;\n\n  const chestX = 4 + (\n    (index + Math.floor(noise[7] * 5)) % 5\n  );\n\n  const chestZ = 4 + (\n    (style + Math.floor(noise[8] * 3)) % 2\n  );\n\n  const roofWidth = 3 + (\n    (style + Math.floor(noise[9] * 4)) % 3\n  );\n\n  const roofDepth = 3 + (\n    (index + Math.floor(noise[10] * 3)) % 2\n  );\n\n  const roofMinX = chestX - Math.floor(roofWidth / 2);\n  const roofMaxX = roofMinX + roofWidth - 1;\n  const roofMinZ = chestZ - 1;\n  const roofMaxZ = roofMinZ + roofDepth - 1;\n  const roofY = 5;\n\n  const gearX = chestX <= 6 ? 9 : 2;\n  const gearZ = 5 + (\n    (style + index + Math.floor(noise[11] * 2)) % 2\n  );\n\n  const gearTeeth = 6 + (\n    (style + Math.floor(noise[12] * 5)) % 3\n  );\n\n  const raisedGear = (\n    index + Math.floor(noise[13] * 3)\n  ) % 2 === 0;\n\n  const hasBarrel = index % 3 !== 1;\n  const hasCoil = index % 2 === 0;\n\n  const trackAxis = (\n    orientation +\n    index +\n    Math.floor(noise[14] * 2)\n  ) % 2;\n\n  const trackSteps = 3 + (\n    (style + Math.floor(noise[15] * 3)) % 2\n  );\n\n  const trackLane = 3 + (\n    (style + Math.floor(noise[1] * 4)) % 4\n  );\n\n  function placeTrack(x, z, step) {\n    if (\n      x < 0 ||\n      x >= W ||\n      z < 1 ||\n      z >= D ||\n      (x === chestX && z === chestZ)\n    ) {\n      return;\n    }\n\n    const block =\n      (step + style) % 4 === 0\n        ? \"minecraft:coarse_dirt\"\n        : \"minecraft:brown_carpet\";\n\n    api.set(x, 3, z, block);\n  }\n\n  if (trackAxis === 0) {\n    for (let i = 0; i < trackSteps; i += 1) {\n      const z = 1 + i;\n      const x = trackLane + ((i + index) % 2);\n      placeTrack(x, z, i);\n\n      if ((i + style) % 3 !== 1) {\n        placeTrack(x + 2, z, i + 1);\n      }\n    }\n  } else {\n    for (let i = 0; i < trackSteps; i += 1) {\n      const x = 2 + i;\n      const z = 2 + ((trackLane + index + i) % 2);\n      placeTrack(x, z, i);\n\n      if ((i + style) % 3 !== 1) {\n        placeTrack(x, z + 2, i + 1);\n      }\n    }\n  }\n\n  const gearOffsets = [\n    [0, -1],\n    [1, -1],\n    [1, 0],\n    [1, 1],\n    [0, 1],\n    [-1, 1],\n    [-1, 0],\n    [-1, -1]\n  ];\n\n  for (let i = 0; i < gearTeeth; i += 1) {\n    const offset = gearOffsets[i];\n    api.set(\n      gearX + offset[0],\n      3,\n      gearZ + offset[1],\n      pick(metalTypes, style + i + Math.floor(noise[2] * 3))\n    );\n  }\n\n  api.set(\n    gearX,\n    3,\n    gearZ,\n    pick(metalTypes, style + 2)\n  );\n\n  if (raisedGear) {\n    api.set(\n      gearX,\n      4,\n      gearZ,\n      pick(metalTypes, style + 1)\n    );\n  }\n\n  if (hasCoil) {\n    const coilX = gearX === 9 ? 11 : 1;\n    const coilZ = 2 + ((style + index) % 2);\n    api.set(\n      coilX,\n      3,\n      coilZ,\n      \"minecraft:hay_block[axis=y]\"\n    );\n  }\n\n  const postLog = logTypes[woodIndex] + \"[axis=y]\";\n  const beamLog = logTypes[woodIndex] + \"[axis=x]\";\n  const planks = plankTypes[woodIndex];\n\n  for (let sx = 0; sx < 2; sx += 1) {\n    const px = sx === 0 ? roofMinX : roofMaxX;\n\n    for (let sz = 0; sz < 2; sz += 1) {\n      const pz = sz === 0 ? roofMinZ : roofMaxZ;\n\n      for (let y = 3; y < roofY; y += 1) {\n        api.set(px, y, pz, postLog);\n      }\n    }\n  }\n\n  for (let x = roofMinX; x <= roofMaxX; x += 1) {\n    api.set(x, roofY - 1, roofMaxZ, beamLog);\n  }\n\n  for (let x = roofMinX; x <= roofMaxX; x += 1) {\n    for (let z = roofMinZ; z <= roofMaxZ; z += 1) {\n      api.set(x, roofY, z, planks);\n    }\n  }\n\n  const faces = [\"north\", \"east\", \"south\", \"west\"];\n  const chestBlock =\n    \"minecraft:chest[facing=\" +\n    faces[orientation] +\n    \",type=single,waterlogged=false]\";\n\n  api.set(chestX, 3, chestZ, chestBlock);\n\n  let barrelX = -1;\n  if (hasBarrel) {\n    barrelX = chestX <= 6 ? chestX + 1 : chestX - 1;\n    api.set(\n      barrelX,\n      3,\n      chestZ,\n      \"minecraft:barrel[facing=up,open=false]\"\n    );\n  }\n\n  let ropeX = roofMaxX;\n  const ropeZ = roofMinZ + 1;\n\n  if (\n    hasBarrel &&\n    ropeX === barrelX &&\n    ropeZ === chestZ\n  ) {\n    ropeX = roofMinX;\n  }\n\n  const ropeLength = 1 + (\n    (style + Math.floor(noise[3] * 4)) % 2\n  );\n\n  for (let k = 0; k < ropeLength; k += 1) {\n    api.set(\n      ropeX,\n      4 - k,\n      ropeZ,\n      \"minecraft:oak_fence\"\n    );\n  }\n\n  let approachX;\n  let approachZ;\n\n  if (trackAxis === 0) {\n    approachX = trackLane + (index % 2);\n    approachZ = 1;\n  } else {\n    approachX = 2;\n    approachZ = 2 + ((trackLane + index) % 2);\n  }\n\n  return {\n    name: \"Hidden Soldier Cache\",\n    seatY: 0,\n    anchors: {\n      cache: [chestX, 3, chestZ],\n      approach: [approachX, 3, approachZ],\n      wall: [keystoneX, 6, wallFront]\n    }\n  };\n}"
+    }
+  }
+}

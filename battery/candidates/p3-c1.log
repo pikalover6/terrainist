@@ -1,0 +1,133 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"ancient","event":{"kind":"siege","severity":0.8,"recency":0},"tokens":{"scene":"The Trojan horse stands inside Troy just before the hidden soldiers emerge."}}
+           1 attempt(s), 3219 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     63857 in + 30909 out = 94766  ($0.0192)
+programs   2 of 2 kept (budget 12 landmark / 6 plugin)
+  ok     trojan_horse [landmark]  2 attempt(s), 76650 tokens  ($0.0418)
+  ok     hidden_soldier_cache [plugin]  3 attempt(s), 144578 tokens  ($0.0737)
+  tokens     33236 in + 187992 out = 221228  ($0.1155)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 11 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.temple: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.temple: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.merchant_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.merchant_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.market_stall: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.market_stall: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.trojan_horse: placed after constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.13)
+  world.barracks: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.04)
+  world.temple: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.merchant_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.market_stall: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     74753 in + 14323 out = 89076  ($0.0106)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 5 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.barracks: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.trojan_horse: placed after constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.08)
+  world.barracks: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     73891 in + 12632 out = 86523  ($0.0095)
+
+compiled "troy_horse" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse
+  seed       303
+  region     1024x1024 at (-512, -512)
+  heights    59.6..78.2  sea 63  snow line 77.5
+  land       95.3% of columns above sea level
+  biomes     forest 84.1%, plains 11.1%, ocean 4.0%, beach 0.6%, windswept_hills 0.2%
+  trees      20821 (troy_grove=9447, wilderness=11475)
+  chunks     4096
+  blocks     143689485 (2398765 vegetation)
+  markers    95
+  spawn      [0, 77, 0]
+  timings    validate 5ms  field 922ms  layout 592ms  climate 417ms  columns 136ms  caves 0ms  structures 4592ms  programs 156ms  scatter 17985ms  biomes 292ms  validators 19ms  emit 44827ms  total 70093ms
+  programs   world.trojan_horse=trojan_horse×1 (1402 blocks), world.covert_caches=hidden_soldier_cache×8 (4679 blocks)
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.trojan_horse: this node declares an envelope; program "trojan_horse" declares [31, 24, 13] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.troy_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+warning LOAM-W337 PROGRAM_DROPPED at world.covert_caches: "hidden_soldier_cache" asked for 12 instances and only 8 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 17, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 4484 footprint columns (plus 29708 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 18720 ring columns); snow policy never resolved to "never" on a 0/4484 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 212501 in + 57864 out = 270365 tokens ($0.0394)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse
+installed "troy_horse_c1"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p3-c1/troy_horse
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/troy_horse_c1
+  lastPlayed 1786415678979 (2026-08-11T02:34:38.979Z)
