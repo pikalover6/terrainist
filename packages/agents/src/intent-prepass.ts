@@ -278,10 +278,20 @@ a field means "the prompt does not say" — which is NOT the same as zero.
   "event": { "kind": one of [${list(EVENT_KINDS)}],
              "severity": 0..1, "recency": 0..1 }   // 0 recency = happening now
   "climate": { "biome": "minecraft:<id>", "temperature": -1..1,
-               "humidity": -1..1, "snow": one of [${list(SNOW_POLICIES)}] }
+               "humidity": -1..1, "snow": one of [${list(SNOW_POLICIES)}],
+               "blend": one of ["sharp", "soft", "wide"] }  // how the named
+                       // biome fades into the ambient; omit for the default
   "character": {
     "label": string,             // free text, e.g. "pirate haven"
-    "materialTheme": one of the five ids below,
+    "materialTheme": one of the six ids below,
+    "fortification": "walled",   // a closed circuit wall with gates and
+                       // towers around the settlement. WRITE IT whenever the
+                       // prompt names a walled or fortified city, a fortress
+                       // town, a citadel, a siege, or a city of antiquity
+                       // that history walled (Troy, Babylon, a Greek
+                       // city-state). Omit it for an open place — absent
+                       // means no wall, and prose in the brief will NOT
+                       // produce one: only this dial builds the circuit.
     "archetypes": { "prefer": [ids], "forbid": [ids] },
     "props":      { "prefer": [ids], "forbid": [ids] },
     "flora":      { "prefer": [tree shapes], "forbid": [tree shapes] },
@@ -443,6 +453,26 @@ what makes every region come out looking the same. Instead, structurally:
 
 Only state what the prompt actually implies. Guessing every dial is worse than
 leaving one out.
+
+A NAMED PLACE IS A FULL IDENTITY — EXPAND IT.
+When the prompt names a real or legendary place (Troy, Venice, Babylon, New
+York, Atlantis), the name IS the brief, and a stranger walking the world must
+recognise the place in ten seconds. Write the place's WHOLE identity, not the
+one noun the prompt mentioned: its era; its materialTheme; its terrain (write
+a "tokens" sentence — Troy and Venice are COASTAL, the sea and the ships are
+half the postcard); its urbanForm and motifs (antiquity is flat-roofed,
+dense, party-walled — "roofType": "flat", "massing": "dense" where the
+vocabulary allows); its fortification (history walled most ancient cities —
+write "walled"); and a "tokens" line listing the place's ICONS by name so the
+author delivers each one. Worked example — "The Trojan horse in Troy":
+  era ancient; materialTheme sun_clay; fortification "walled";
+  motifs roofType flat; climate "blend" as the coast wants;
+  tokens: { "terrain": "a walled city on a rise above a sandy coast; the
+  Aegean shore in view", "icons": "the wooden horse at the gates; the city
+  wall with towers; beached war-ships along the shore; a citadel-palace
+  rising above the flat-roofed town" }
+A named place that comes out generic has failed the prompt however well it
+compiles.
 
 ${WORKED_EXAMPLE}
 
