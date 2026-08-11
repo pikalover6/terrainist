@@ -364,6 +364,8 @@ describe("the pass", () => {
   const stack = loadPrismarine("1.21.11");
   const region = centeredRegion(192, 192);
   const plan = devColumnPlan(region, stack);
+  /** Room for a scatter to be *sparse* in — see the lattice guard below. */
+  const wide = devColumnPlan(centeredRegion(512, 512), stack);
 
   function frozen(program: AuthoredProgramRecord, id: string): AuthoredProgramRecord {
     const gate = gateDoubleRun(id, program, 0n);
@@ -494,6 +496,58 @@ describe("the pass", () => {
     for (const site of sites) {
       expect(site.footprint.z1).toBeLessThan(region.z0 + region.depth / 3 + SAUCER.envelope[2]);
     }
+  });
+
+  it("spaces a scatter naturally rather than on a lattice", () => {
+    // Kai's walk of `redwood_camp` found 24 colossal redwoods "in a robotic
+    // pattern": the old walk's candidate stride *was* its exclusion distance,
+    // so every survivor stood on a lattice point (nearest-neighbour CV 0.20).
+    // The guard is the shape of the distribution, not any one coordinate: real
+    // scatter has close pairs and lonely outliers, and never an overlap.
+    const spacing = 20;
+    const sites = planProgramSites({
+      params: { program: "saucer", count: 6, spacing, area: { all: true } },
+      envelope: SAUCER.envelope,
+      plan: wide,
+      seed: programInstanceSeed(0n, "world.saucers", 0),
+    });
+    // Six over a 512-block region, whose exclusion capacity is about 150:
+    // loose enough that the spacing has room to vary. A *saturated* scatter is
+    // uniform by packing rather than by lattice, which is not this defect.
+    expect(sites).toHaveLength(6);
+
+    const centre = (s: (typeof sites)[number]) => [
+      (s.footprint.x0 + s.footprint.x1) / 2,
+      (s.footprint.z0 + s.footprint.z1) / 2,
+    ] as const;
+    const nn = sites.map((a, i) =>
+      Math.min(
+        ...sites
+          .filter((_, j) => j !== i)
+          .map((b) => Math.hypot(centre(a)[0] - centre(b)[0], centre(a)[1] - centre(b)[1])),
+      ),
+    );
+    const mean = nn.reduce((t, v) => t + v, 0) / nn.length;
+    const cv = Math.sqrt(nn.reduce((t, v) => t + (v - mean) ** 2, 0) / nn.length) / mean;
+    expect(cv).toBeGreaterThan(0.25);
+
+    // Varied, but never overlapping: the exclusion guarantee is what the
+    // jitter is allowed to play inside of, not something it may trade away.
+    for (const [i, a] of sites.entries()) {
+      for (const b of sites.slice(i + 1)) {
+        const gapX = Math.max(a.footprint.x0 - b.footprint.x1, b.footprint.x0 - a.footprint.x1);
+        const gapZ = Math.max(a.footprint.z0 - b.footprint.z1, b.footprint.z0 - a.footprint.z1);
+        expect(Math.max(gapX, gapZ)).toBeGreaterThan(spacing);
+      }
+    }
+
+    // Instance identity stays a property of the geometry: the list the caller
+    // sees is row-major, whatever order the placer served the candidates in.
+    const rowMajor = [...sites].sort(
+      (a, b) => a.footprint.z0 - b.footprint.z0 || a.footprint.x0 - b.footprint.x0,
+    );
+    expect(sites).toEqual(rowMajor);
+    expect(sites.map((s) => s.index)).toEqual(sites.map((_, i) => i));
   });
 });
 

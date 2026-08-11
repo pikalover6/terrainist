@@ -8,15 +8,18 @@
  * the point: **a program never learns where it is**, which is how the
  * no-absolute-coordinates law survives contact with model-written code.
  *
- * Candidates come from a jittered lattice walked in row-major order, so the
- * site list is a pure function of the seed, the params and the ground — never
- * of iteration or completion order. Instance `index` is the position in that
- * list, so a site's identity is a property of the geometry.
+ * Candidates come from a jittered sample *finer* than the exclusion distance,
+ * served in an order the seed decides and a coarse cluster field leans — so a
+ * scatter reads as a stand of trees rather than an orchard. Every draw is keyed
+ * on the candidate's own cell, so the site list is a pure function of the seed,
+ * the params and the ground — never of iteration or completion order. The list
+ * is handed back in row-major order, so instance `index` is still a property of
+ * the geometry rather than of who was served first.
  */
 
 import type { ProgramScatterParams } from "@terrainist/spec";
 import { hoverOfParams, seatOfParams } from "@terrainist/spec";
-import { positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
+import { positionFloat, positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
 import { streamSeed } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
@@ -153,7 +156,53 @@ export interface ProgramPlacementInput {
   readonly refusals?: SiteRefusals;
 }
 
-/** Resolve up to `params.count` sites, in placement order. */
+/**
+ * How many candidate sites the sample offers per exclusion step, on each axis.
+ *
+ * The old walk offered exactly one: a lattice whose stride *was* the exclusion
+ * distance, so every candidate that survived stood at a lattice point and the
+ * result read as a grid from the ground (Kai's walk of `redwood_camp`: 24
+ * colossal redwoods, nearest-neighbour CV 0.20, 58% of them axis-aligned).
+ * Subdividing gives the sample somewhere else to be; the exclusion test, not
+ * the stride, is what keeps them apart.
+ */
+const CANDIDATE_SUBDIVISION = 3;
+
+/** A ceiling on the candidate sample, so a huge area cannot cost unboundedly. */
+const CANDIDATE_BUDGET = 20000;
+
+/** §6.4 channels — the two draws that shape a candidate's *position*. */
+const CHANNEL_JITTER_X = 0;
+const CHANNEL_JITTER_Z = 1;
+/** The per-candidate order roll: which candidate gets first refusal. */
+const CHANNEL_ORDER = 2;
+/** The coarse field that makes a stand of redwoods a *stand*. */
+const CHANNEL_CLUSTER = 3;
+
+/**
+ * How far the cluster field may move a candidate's place in the queue.
+ *
+ * Same shape as the ruin roll's clustering (`RUIN_CLUSTER_AMPLITUDE`): one
+ * extra positional draw, keyed at a *coarse* cell so neighbours share it,
+ * leaning an otherwise uniform roll. Greedy hardcore acceptance turns that lean
+ * into geometry — a high-cluster patch is served first and packs down to the
+ * exclusion distance, and what is left over fills the thin ground later and
+ * further apart. It is a lean, never an override: every part of the area is
+ * still reachable, which is what keeps the requested count attainable.
+ */
+const CLUSTER_AMPLITUDE = 0.6;
+
+/** How many exclusion steps wide one cluster patch is. */
+const CLUSTER_PATCH_STEPS = 3;
+
+/** One position the sample offers, with the roll that orders it. */
+interface Candidate {
+  readonly x: number;
+  readonly z: number;
+  readonly rank: number;
+}
+
+/** Resolve up to `params.count` sites, in a deterministic row-major order. */
 export function planProgramSites(input: ProgramPlacementInput): readonly ProgramSite[] {
   const { params, plan } = input;
   const [w, , d] = input.envelope;
@@ -162,7 +211,6 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   const spacing = Math.max(params.spacing ?? 0, 1);
   const step = Math.max(w, d) + spacing;
   const stream = streamSeed(input.seed, "scatter");
-  const jitter = Math.max(0, Math.floor(spacing / 2));
   // A hovering scatter floats every instance, so the ground's *fitness* has no
   // say — no fluid test, no relief test — and it competes with nobody for the
   // dirt. What survives is the region, the author's `area` and `avoidTags`,
@@ -175,45 +223,85 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   const claimed: Rect[] = hover === undefined ? [...(input.taken ?? [])] : [];
   const sites: ProgramSite[] = [];
 
-  for (let cz = area.z0; cz + d - 1 <= area.z1 && sites.length < params.count; cz += step) {
-    for (let cx = area.x0; cx + w - 1 <= area.x1 && sites.length < params.count; cx += step) {
-      const ox = jitter === 0 ? 0 : positionInt(stream, cx, 0, cz, -jitter, jitter);
-      const oz = jitter === 0 ? 0 : positionInt(stream, cx, 1, cz, -jitter, jitter);
-      const rect: Rect = { x0: cx + ox, z0: cz + oz, x1: cx + ox + w - 1, z1: cz + oz + d - 1 };
-      if (!insideRect(rect, area)) continue;
-      if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
-      if (!areaAdmits(params.area, region, rect)) continue;
-      // `avoidTags` is honoured whether or not the instance floats: fluid and
-      // relief are statements about ground a thing stands on and a hovering
-      // instance is exempt from those, but `avoidTags` is a statement the
-      // *author* made, and a param the compiler accepts and quietly ignores is
-      // a document that lies. What a hovering instance does skip is the plain
-      // occupancy mask — see `occupied`.
-      if (
-        input.occupancy !== undefined &&
-        occupied(input.occupancy, rect, params.avoidTags, hover !== undefined)
-      ) {
-        continue;
-      }
-      let baseY: number | undefined;
-      if (hover !== undefined) {
-        const top = topGroundUnder(plan, rect);
-        if (top === undefined) continue;
-        baseY = top + hover;
-      } else {
-        baseY = programGroundPlane(plan, rect, input.refusals, wades);
-        if (baseY === undefined) continue;
-        if (!reliefOk(plan, rect, params, w, d)) continue;
-      }
-      if (params.elevation !== undefined) {
-        const [lo, hi] = params.elevation;
-        if (baseY < lo || baseY > hi) continue;
-      }
-      claimed.push(rect);
-      sites.push({ index: sites.length, footprint: rect, baseY });
+  for (const cand of sampleCandidates(area, step, stream)) {
+    if (sites.length >= params.count) break;
+    const { x: cx, z: cz } = cand;
+    const rect: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
+    if (!insideRect(rect, area)) continue;
+    if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
+    if (!areaAdmits(params.area, region, rect)) continue;
+    // `avoidTags` is honoured whether or not the instance floats: fluid and
+    // relief are statements about ground a thing stands on and a hovering
+    // instance is exempt from those, but `avoidTags` is a statement the
+    // *author* made, and a param the compiler accepts and quietly ignores is
+    // a document that lies. What a hovering instance does skip is the plain
+    // occupancy mask — see `occupied`.
+    if (
+      input.occupancy !== undefined &&
+      occupied(input.occupancy, rect, params.avoidTags, hover !== undefined)
+    ) {
+      continue;
+    }
+    let baseY: number | undefined;
+    if (hover !== undefined) {
+      const top = topGroundUnder(plan, rect);
+      if (top === undefined) continue;
+      baseY = top + hover;
+    } else {
+      baseY = programGroundPlane(plan, rect, input.refusals, wades);
+      if (baseY === undefined) continue;
+      if (!reliefOk(plan, rect, params, w, d)) continue;
+    }
+    if (params.elevation !== undefined) {
+      const [lo, hi] = params.elevation;
+      if (baseY < lo || baseY > hi) continue;
+    }
+    claimed.push(rect);
+    sites.push({ index: sites.length, footprint: rect, baseY });
+  }
+  // Acceptance order is a queue, not an identity. The list the caller sees is
+  // sorted back into row-major order, so instance `index` remains a property of
+  // the geometry — the promise this module opened with, and the reason a run's
+  // seed does not depend on which candidate happened to be served first.
+  const ordered = [...sites].sort((a, b) =>
+    a.footprint.z0 - b.footprint.z0 || a.footprint.x0 - b.footprint.x0,
+  );
+  return ordered.map((s, i) => ({ ...s, index: i }));
+}
+
+/**
+ * The positions the placer will consider, best-first.
+ *
+ * A jittered sample on a lattice finer than the exclusion distance
+ * ({@link CANDIDATE_SUBDIVISION}), each cell's point drawn inside its own cell
+ * so the sample is near-uniform rather than a grid with a wobble; then ordered
+ * by a per-candidate roll leaned by a coarse cluster field. Every draw is keyed
+ * on the candidate's own cell — no counter, no iteration order — so the queue
+ * is a pure function of the seed, the params and the area.
+ */
+function sampleCandidates(area: Rect, step: number, stream: Seed256): readonly Candidate[] {
+  let cell = Math.max(1, Math.round(step / CANDIDATE_SUBDIVISION));
+  const w = area.x1 - area.x0 + 1;
+  const d = area.z1 - area.z0 + 1;
+  // Keep the sample affordable on a very large area: coarsen until it fits.
+  while (Math.ceil(w / cell) * Math.ceil(d / cell) > CANDIDATE_BUDGET) cell += 1;
+  const patch = Math.max(1, step * CLUSTER_PATCH_STEPS);
+  const jitter = Math.max(0, cell - 1);
+
+  const out: Candidate[] = [];
+  for (let cz = area.z0; cz <= area.z1; cz += cell) {
+    for (let cx = area.x0; cx <= area.x1; cx += cell) {
+      const x = cx + (jitter === 0 ? 0 : positionInt(stream, cx, CHANNEL_JITTER_X, cz, 0, jitter));
+      const z = cz + (jitter === 0 ? 0 : positionInt(stream, cx, CHANNEL_JITTER_Z, cz, 0, jitter));
+      const px = Math.floor(cx / patch) * patch;
+      const pz = Math.floor(cz / patch) * patch;
+      const cluster = positionFloat(stream, px, CHANNEL_CLUSTER, pz);
+      const roll = positionFloat(stream, cx, CHANNEL_ORDER, cz);
+      out.push({ x, z, rank: roll - CLUSTER_AMPLITUDE * (cluster - 0.5) });
     }
   }
-  return sites;
+  out.sort((a, b) => a.rank - b.rank || a.z - b.z || a.x - b.x);
+  return out;
 }
 
 /** Everything {@link planLandmarkSite} reads. */
@@ -235,9 +323,9 @@ export interface LandmarkPlacementInput {
  * decided by the ground alone: the region's centre first — the one placement an
  * author can predict from the document — and, if the centre column will not
  * hold the footprint (fluid, or too rough), the ordinary scatter walk over the
- * whole region, which is the same deterministic row-major lattice a plugin
- * node uses. Returns `undefined` when nothing in the region fits, which the
- * caller reports as `PROGRAM_DROPPED` rather than silence.
+ * whole region, which is the same deterministic sample a plugin node uses.
+ * Returns `undefined` when nothing in the region fits, which the caller reports
+ * as `PROGRAM_DROPPED` rather than silence.
  */
 export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | undefined {
   const { plan } = input;
