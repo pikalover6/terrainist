@@ -1,256 +1,70 @@
-# Cell 4 — the last day (2026-08-09, fine detail)
+# Cell 4 — the last day (2026-08-10 late → 08-11 morning, fine detail)
 
-**RUNG RATIFIED (SHIP-PLAN §8, commit 6d7d892):** rung B amended, **no
-ascent** (spent, does not carry). Release battery FROZEN at 7 breadth
-prompts, seeds 301–307: P1 pirate/unicorn war, P2 farm town + aliens,
-P3 Trojan horse in Troy, P4 high-tech hideout in overgrown metropolis
-ruins, P5 modern Hellenist city vs sea monsters, P6 old-growth, P7
-fungal-vale — assertions written first in §8.2; genre prompts moved to
-the reliability sample. Scope adds F17 minimal farm, F18 bespoke
-boldness, F19 district ruins, F20 ambient fidelity, F21→F4
-instrumentation, F22 constraint teaching. **Feature-stop backstop
-2026-08-28.** Kai's citadel verdict drives F18: bespoke gen is the wow.
+**THE ICON LAW (Kai, ratified 2fa462c): "the medium cannot whisper."**
+Blocks have no fine grain, so worlds must SCREAM the prompt through
+icons at saturation — "nyc" without the Statue of Liberty is a fail.
+**U1 = the STRANGER TEST**: a stranger names the prompt from 10s at any
+street corner. Kit carries the icon register (ad20d7f: enumerate 5-10
+icons, deliver each by named mechanism, icons are cheap plugins,
+saturation not statement, war has direction) + event staging (7fbb66c:
+loom over the heart / advance don't sprinkle / connect sky to ground).
 
-**S2 battery: 5/5 installed** as `*_baseline` ($0.015–0.14/world). Kai
-walked all; light notes only (worlds stay installed for comparison).
-Spread-crash fixed (d4e7f47, 165k-block landmark vs V8 arg budget —
-test-first). mistwood_citadel provenance: compiled from first-run wired
-doc after Kai stopped the regen.
+**Icon-law measurements (c2/c3):** P1-c2 pirate_unicorn_war_c2 —
+register moved Luna to flagpoles/fleet/stones/monolith via CATALOG
+(zero bespoke; walk question: does a flagpole read jolly roger?).
+P5: c1 monsters died in authoring (unretried), c2 died to network,
+**c3 hellenist_sea_siege_c3 SUCCEEDED — recovery pass re-authored the
+gate-failed plugin LIVE, feedback fixed water siting: harbor_leviathan
+10,697 blocks + 24 monsters in two waves ($0.111)**.
 
-**Wave 1+2, ALL LANDED (08-09 evening):**
-- F11 render biome tint (e6ced86) — seams now visible in our renders;
-  follow-up idea: high-contrast biome-debug palette.
-- F21 instrumentation (4cb5ef1) — LOAM-T118 radius-units warning,
-  T119 zero-yield scatter (both in feedback set), +20 biome rows.
-- F8 snowLine + law-1 (08aa466) — snow line runs (stop-not-reroll,
-  post-claim so below-line placement identical); capWood exempts dead;
-  green sprig on dead limbs gone (visual delta pending Kai walk).
-- F18 bespoke boldness (4c6fd5e) — kit centerpiece rule ("only a
-  program makes THE castle"), 2–3 landmarks invited, spend stop $1.00.
-- **F20 fixed (e9f35d2) — headline: biome derivation was
-  SCALE-INVERTING** (relief normalized to world's own span; flatter →
-  rockier; plains_village 3%→81% plains). Luna exonerated. Bands now
-  need absolute rise (UPLAND_RISE 24 / HIGH_ROCK_RISE 48); soil caps at
-  windswept_hills; forested needs density ≥0.02. Block-identity proven
-  on all 4 S2 worlds (full-report diff; clamp + snow votes identical).
-  Kai signed off on the label repaint. Note: harbour's mountains now
-  read windswept_hills (only ~800 true cliff cols) — glance pending.
-- **F22 fixed (4a60a4b) — headline: district UNSATISFIABLE was the
-  ground veto at building scale** (one wet column vetoed 400×400; ZERO
-  feasible positions existed; kit blameless; E404 hint was deleting
-  prompt nouns). Districts now judge ground like cities (median water,
-  CITY_MAX_SLOPE); veto histogram surfaces in E406; hint reordered.
-  hillkeep byte-identical; harbour old_town relocates to better site.
+**TROY (Kai: "could not resemble Troy less" + reference images) → the
+overnight stack, all committed+pushed:**
+- **fortification dial** (231643a): intent.character.fortification
+  "walled" → compiler builds circuit via existing infra.wall; gates
+  FOUND at carriageway crossings; theme-derived materials; author
+  outranks (W489); absent = byte-identical.
+- **sun_clay theme** (4e6f94e): sandstone ashlar + limewash-as-white-
+  terracotta + mud brick + acacia; 19 classifier aliases (adobe…aegean);
+  decay families; NOT in seeded draw. **LEFT FOR KAI: THEME_BY_ERA.
+  ancient still birchwood — adding sun_clay moves every era-ancient
+  world.**
+- **F9 blend** (685f9ef) + **named-place classifier rule**: a named
+  place is a FULL identity (era/theme/terrain/fortification/icons;
+  Trojan-horse worked example in the prepass).
+- **water-prop reseat** (db90d63): unpinned water/shore props seek up
+  to 8 waterline seats (one per body of water), PROP_RESEATED; pinned
+  props fail in place; deltaport golden re-pinned BY DESIGN.
+- **openrouter retry 6× exponential** (fce5b27; pipe-swallowed-vitest
+  lesson recorded in e3a0331).
 
-**F17+F19 plans RATIFIED (e3e2ec6 + eacd849, opus-5-high design).**
-Kai's three rulings: land-use disposition 8 amended (farmParcels seam);
-**NO survivor cap — total desolation at decline 1.0** (overrode
-designer's 0.92); bare ruin/ruins → ruined_cottage (closes kit's oldest
-open question). FARM: precinct.farm@0, parcel = platform claim rank 125
-"ground nobody built on, tilled", persistence law (every farmland
-column cropped, moisture 0). RUINS: decay operators on arbitrary
-shells, re-clad rule (substitute in family or remove — modern ruin is a
-frame), settleFixtures via lint's own support predicate, decline
-pockets via cluster field, ruinShare = decline² past onset 0.35.
+**TROY C3 RESULT (troy_horse_c3 installed, ~$0.19):** textbook intent —
+era ancient, sun_clay, walled, beach+blend soft, flat/dense motifs,
+icon tokens. Horse 7,714 blocks (5.5× c1); hidden_greeks ×18; **Luna
+authored the wall ITSELF, dial stood down via W489 precedence**.
+Top-down: coastal peninsula, ships at shore, TWO nested circuits
+(city+citadel), sandy flat-roofed core, horse at north gate. Pre-walk
+honest reads: fabric doesn't pack to the outer wall (lawn inside
+circuit), ambient lush green not dry Aegean gold, circuits
+axis-aligned.
 
-**Waves 3–4 LANDED:** E497 fixed (ccff332 — the world was right, the
-classifier wrong: walkBack's street test now precedes a latched
-platform test; harbour compiles end to end, zero errors, no geometry
-moved). Farm WP-1 (f181065: node validates/seats/reports, padFor null
-— never level a farm), WP-2 (9dd62d6: parcel planner, rank-125 claims,
-crop-circle rule W501; still zero blocks). Ruins WP-1 (7b761ec: five
-relics = five profiles over decayShell, 60-case list-identity golden;
-bare ruin/ruins → ruined_cottage live), WP-2 (52c4976: engine takes
-ANY shell — re-clad rule, timber by removal, quench, settleFixtures
-fixpoint via stdlib support.ts now imported BY the lint; params.decay
-on building.grammar; 63-shell catalog sweep lint-zero). Plan errata
-recorded in RUINS-PLAN status block; FARM-PLAN example fixed
-(drape). Ledgered: DEFAULT_CANDIDATES=96 thin; T107 coastal spawn
-self-heals to land (benign).
+**MORNING WALK QUEUE:** troy_horse_c3 (headline), pirate_unicorn_war_c2,
+hellenist_sea_siege_c3 — all stranger-test administrations.
 
-**Wave 5 LANDED:** farm WP-3 (1c8e327: fields sown vs resolved ground,
-persistence law by construction, lint-zero; plan §3.1 example now fully
-valid Loam) + WP-4 (ef4fc49: yard levelled+claimed, farmstead packed on
-non-gate sides, farmParcels clamp seam live, clearing suppression,
-fields carry town biome; two archetype minima enlarged after
-traversal.no_start). Ruins WP-3 (8dcb8ff: band table, per-lot roll,
-NO-CAP ruling enforced past the plan's own pseudocode via
-4·share·(1−share) window — decline 1.0 fells 64/64; W510 enacted
-refusal, W511, I512; lint-zero at 0.9 and 1.0). Hygiene wart: 8dcb8ff
-alone doesn't build (shared diagnostics rode with ef4fc49).
+**KAI'S DECISION QUEUE:** (1) THEME_BY_ERA.ancient += sun_clay
+(world-moving); (2) F5 ground WP-6 timing (rung's largest blast
+radius); (3) ruling batch: terrace bays don't roll (pristine amid total
+ruin), collapse promotion needs 2nd param, light band roof fragments
+unreachable, STREET_BREAK_FLOOR=0.5, intact-lot-ruined-yard nuance,
+reclaim density read, shellTrees-off has no caller, boreal_pine kerb
+tone, E336 hint lacks water clause.
 
-**Wave 6 LANDED:** farm WP-5 (43130f6 — F17 CODE-COMPLETE: kit section
-teaches built truth, three total fan-out rows by-reference, example's
-THIRD syntax fix now kit-test-validated; Luna e2e farm demo left for
-orchestrator = folds into battery candidates). Ruins WP-4 (4a923ed:
-ruin field, ruin_yard, street breaking ≥0.8 plants-only, reclaim lift)
-— but TWO findings: forestEligibility's unconditional occupancy
-exclusion keeps ALL trees out of the quarter (P4's overgrowth inert;
-ruling: open for ruin-field>0 columns, keep building/interior/road/
-plaza/prop excluded), and pre-existing traversal.unreachable on potted
-plants in decayed shells (seeds 304-306; breaks lint-zero gate).
+**Remaining rung-B features:** F3 junctions (needs Kai's walks), F5.
+Everything else code-complete. Suite whole at 3,539; all P-class
+worlds lint zero. Backstop 2026-08-28 (~13 days slack).
 
-**Wave 7 LANDED — F17 AND F19 BOTH CODE-COMPLETE (2026-08-10 ~02:00).**
-Ruins WP-5 kit (210db8d: "A ruined city is a district with a high
-decline — not a list of ruins"; table-14's cannot-say-yet line gone,
-test-pinned). Closure (9af28e4): potted-plant lint defect was two
-vocabularies for one question — BODY_BLOCKING now shared via
-support.ts, flood widened monotonically; tree gate opens where ruin
-field>0 with per-column claims held, exposing+closing the untagged
-sidewalk band (ruinPaved mask); seeds 300-310 all lint zero, 47-68
-trees over ruined ground (was 0); kit's trees-stop sentence retired
-with its pin test. Physics.ts has an invalid UTF-8 byte (pre-existing,
-grep needs -a) — minor ledger item.
-
-**Candidates walked (Kai, 08-10 morning):** P2 alien_farm_town_c1 —
-invasion undershoot (spire+3 pods vs the mothership image; "4 smallish
-structures") + QUARTZ question (era far_future stamped the whole town).
-P4 overgrown_metropolis_c1 — "does not read as ruined+overgrown at
-all"; needs surfaces actively overtaken, not scattered foliage; Kai
-added: growth in unusual places (mid-road trees). Scratchpad wiped by
-OS → candidate docs lost → battery/ dir in repo is now the durable
-archive (docs+logs committed; worlds/reports ignored, re-derivable).
-
-**Fixes landed (08-10):** steering (73373d7: kit event-mass "three pods
-is a rumor, eighteen is an invasion"; pre-pass era-describes-the-
-settlement-never-the-event + white_quartz narrowed to sacred/palatial
-— also cures the quartz creep Kai noticed). **P2-c2 REGENERATED
-(5c5482c, installed farmtown_invasion_c2): mothership 38,049 blocks
-(7× c1) + 13 pods, era medieval temperate_timber, Luna's own token
-"the settlement itself is not futuristic" — steering measured working.**
-
-**GREEN SKIN (RUINS WP-6, ratified 1dcbe47):** addendum docs/RUINS-
-PLAN-v0-WP6.md — surface colonization (walls/openings/carpet/street
-trees via meandering open spine), Kai's rulings: shell trees HEAVY+
-TOTAL, lichen theme-gated (shipped modern_city — addendum's theme
-names didn't exist), separate ruin goldens + walkability deprioritized
-in ruin scenes. WP-6a landed (ae607b8): surface index (60ms/quarter),
-shared growthFaces (hangingFaces now CALLS it), LINT RULE 27
-unsupported.multiface — first sweep found 435 real mis-faced vines
-(4.7%) in flora-oldgrowth (Kai's #44/#47 machine-visible: per-plant
-face derivation blind to interleaved neighbours' support).
-
-**GREEN SKIN COMPLETE (waves 8-10, all committed):** vine-face fixup
-(ca5b688: faces vs the composed world, 435→0, state-only, Kai's
-#44/#47 dead); 6b vertical skin (e2835e7); 6c horizontal (344e9ff);
-6d street colonizer (73acae5: meandering spine, election+withdraw,
-52 street trunks, walkability identical on/off); 6e (e4ec465: rule 17
-learns elected shell trunks — Kai's ruling — traversal still enforced,
-every-storey siting; pane substitution — Kai chose skin-eats-glass
-over crumble-breaks — plugs 14→56; 15 shell trees standing; separate
-ruined goldens; stairwell guard normative after a 146-finding leaf).
-Kit teaches the green skin; never-inside-a-shell pinned ABSENT.
-
-**C2 WALK VERDICTS (Kai, 08-10 evening): overgrown_hideout_c2 =
-"actually so amazing! Maybe my favorite generate of terrainist so far.
-Feels undeniably like the prompt."** (green skin fired: 60,860 columns,
-50,640 strands, 428 street trunks, 49 shell trees, I514 reports it
-all). farmtown_invasion_c2 "much better." Three follow-ups, all in
-motion (wave 11): (1) urban trees converge on tall-bare-trunk+top-
-mullet — doc had real variety, so it's OUR mechanism (crowns forced
-above rooflines in street canyons); medium diagnosing+fixing (fit the
-corridor, don't flee it). (2) Roads read "gray blob with speckles" —
-Kai's OLD item resurfaced (was lost in compaction); low implementing
-borders-everywhere + carriageway texture + F10 per-district palettes;
-street-bearing worlds MAY move (that's the point). (3) Invasion
-"lacks spectacle... reads as a ufo and odd structures" — mass without
-composition; kit staging teaching committed (7fbb66c: loom over the
-heart / advance don't sprinkle / connect sky to ground); deeper event-
-staging mechanism ledgered.
-
-**Wave 11 LANDED:** streets (938331b — border machinery existed and
-was switched OFF; kerbs 0→14k columns on harbourtown, clustered wear
-at preserved share, gutter courses, F10 per-district palettes; rural
-byte-identical; boreal_pine kerb tone flagged for walk). Trees
-(30ff975 — hypothesis REFUTED: not the canyon; crown knobs were
-absolute vs Luna's height overrides → pole-and-puck; allometry now
-scales crowns per species, street fit abstains when no room, bare
-share 0.80→0.52; no shipped world moves). Staging kit committed
-(7fbb66c). LEDGERED: ~12 residual lint findings on recompiled P4-class
-worlds (decay-air-vs-orphan-sweep ordering + 2 concrete) — precedes
-release candidates.
-
-**THE ICON LAW RATIFIED (Kai, 2026-08-10 late — 2fa462c): "the medium
-cannot whisper"** — blocks have no fine grain, so worlds must SCREAM the
-prompt through icons at saturation; nyc without the Statue of Liberty
-is a fail. **U1 amended to the STRANGER TEST** (a stranger names the
-prompt from 10s at any street corner). Driven by walks of all 7
-candidates: flora prompts GOOD (mushroom vale great; redwoods good —
-Luna BESPOKE'D a colossal_redwood ×24 when the catalog had no redwood,
-but placed robotically); P1 pirate/unicorn = no war/ships/flags, not
-recognizable; P3 Troy = no walls, sparse; P5 = Luna DID request
-sea_monster plugin, it died in authoring, never retried (the vindication
-— the retry gap cost the prompt's soul). Kit icon register committed
-(ad20d7f: enumerate 5-10 icons, deliver each by named mechanism, icons
-are cheap plugins, saturation not statement, wall IS the icon, war has
-direction). IN FLIGHT: program-retry lane, scatter de-gridding lane,
-lost-storeys rule lane (Kai ruled: legal lost storeys, ground floor
-guaranteed). THEN: regen P1/P3/P5 as c2 = the icon-law measurement.
-
-**ICON-LAW MEASUREMENT (c2/c3 batch, 2026-08-11 early):** P1-c2
-installed — register moved Luna: flagpoles both islands, war fleet in
-the strait (galleon ×2, longship), unicorn stones+monolith, crystal
-shrine; zero bespoke though (catalog delivery); pier+longship drew
-CANNOT_FIT; walk question = does a flagpole read as jolly roger.
-P3-c2 installed — horse +72% (2,415 blocks) but STILL NO WALLS despite
-era ancient + event siege + checklist line — clearest steering gap;
-likely wants a pre-pass dial, not kit prose. P5: c2 died to network
-(2nd that night) → openrouter retry now 6 attempts exponential-to-30s
-(fce5b27+e3a0331 — note: pipe swallowed vitest exit, lesson recorded);
-**c3 SUCCEEDED as hellenist_sea_siege_c3: gate-failed plugin was
-RECOVERED LIVE by the new retry pass (first production firing), the
-feedback round fixed the siting, and the world carries harbor_leviathan
-(10,697 blocks) + 24 invading sea monsters ($0.111)**. Also fixed: the
-crawlspace flood (b050c04 — P4-class lint-zero end to end), legal lost
-storeys shipped, sealed-alcove ledger closed.
-
-**WALK QUEUE: pirate_unicorn_war_c2, troy_horse_c2,
-hellenist_sea_siege_c3.** Open steering gaps: Troy-walls (pre-pass
-dial?), P1 zero-bespoke (flagpole fidelity), E336 hint lacks a water
-clause. Remaining rung-B: F3 junctions, F5 ground WP-6, F9.
-
-**OVERNIGHT AUTONOMOUS PUSH (08-11, Kai asleep; no walk-gated
-iteration):** Troy verdict = "could not resemble Troy less" → three
-vocabulary holes filled: **fortification dial** (231643a:
-intent.character.fortification "walled" → compiler builds the circuit
-via existing infra.wall, gates FOUND at carriageway crossings,
-theme-derived materials, author outranks, absent=byte-identical);
-**sun_clay theme** (4e6f94e: sandstone ashlar + limewash-terracotta +
-mud brick, 19 classifier aliases, decay families, NOT in seeded draw;
-LEFT FOR KAI: THEME_BY_ERA.ancient still birchwood — adding sun_clay
-moves every era-ancient world); **F9 blend dial** (685f9ef:
-sharp/soft/wide, transect-proven); **classifier named-place rule**
-(a named place is a full identity — era/theme/terrain/fortification/
-icons, Trojan-horse worked example). **P3-c3 Troy REGENERATING with
-the full stack.** Prop-siting lane (pier/longship CANNOT_FIT on water)
-still in flight; tunnels.test failing on deltaport's CANNOT_FIT list —
-blame ambiguous between 231643a and the in-flight prop lane, resolve
-at its report. DELIBERATELY not touched: F3 junctions, F5 ground WP-6
-(blast radius), aesthetic tuning.
-
-**TROY C3 LANDED (overnight finale, installed troy_horse_c3, ~$0.19):**
-the named-place rule produced the textbook intent — era ancient,
-sun_clay, fortification walled, beach + blend soft, flat-roof dense
-motifs, icon tokens (horse/walls/citadel/soldiers). Horse 7,714 blocks
-(5.5× c1); hidden_greeks ×18 placed after feedback fixed siting; Luna
-authored the wall ITSELF and W489's precedence line correctly stood
-the dial down. Top-down shows: coastal peninsula, ships at the shore,
-TWO nested circuits (city + citadel), sandy flat-roofed core, horse at
-the north gate. Honest walk questions for Kai: much empty green inside
-the outer circuit (fabric should pack to the walls), ambient is lush
-green not dry Aegean gold, circuits axis-aligned. Prop-reseat lane
-landed (db90d63: unpinned water props seek the coast, PROP_RESEATED;
-deltaport golden re-pinned BY DESIGN — resolves the tunnels mystery).
-All overnight lanes committed+pushed; suite whole at 3,539.
-
-**MORNING QUEUE FOR KAI:** walk troy_horse_c3 (the stranger test),
-pirate_unicorn_war_c2, hellenist_sea_siege_c3; ruling batch below;
-two saved decisions: THEME_BY_ERA.ancient += sun_clay (moves every
-era-ancient world) and F5 ground WP-6 (blast radius). Remaining
-rung-B features: F3 junctions (needs his walks), F5.
-
-**Ruling batch still open:** terrace bays / collapse promotion / light
-band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
-shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
-wave 11: F3 junctions, F5 WP-6, F6/F7 flora WP-C/D, F9; P1/P3/P5/P6/P7
-first candidates.
+**Standing discipline reminders:** never --replace on install; battery/
+is the durable archive (docs+logs committed, worlds/reports ignored);
+orchestrator commits (agents never); shared-tree git discipline; probe
+pipes swallow exit codes — check counts not exit; TaskStop finished
+agents by the RIGHT id (one wrong-id incident, recovered via
+SendMessage resume).

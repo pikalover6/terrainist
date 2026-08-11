@@ -46,3 +46,51 @@
   goodbye-messages for finished agents; probe lesson ("a probe must be able
   to see the thing it rules out"); funnel memory + rendered log built
   (tools/session-log, protocol in CLAUDE.md); popups liberally.
+
+## 08-09 → 08-10: the rung, the battery, the features (compressed from cell 4)
+
+- **Rung B ratified, no ascent** (SHIP-PLAN §8, 6d7d892): 7-prompt battery
+  FROZEN, seeds 301–307 (pirate/unicorn war, farm+aliens, Trojan horse,
+  hideout in overgrown metropolis ruins, Hellenist city vs sea monsters,
+  old-growth, fungal vale), assertions-first, **backstop 2026-08-28**.
+  Genre prompts → reliability sample. battery/ in repo = durable archive
+  (docs+logs committed; worlds/reports re-derivable).
+- **F17 farm + F19 ruins: designed (opus-5-high), ratified, built WP-1..5
+  each in ~a day.** Kai's rulings: clamp disposition-8 amended
+  (farmParcels seam); NO survivor cap (decline 1.0 fells all); bare
+  ruin/ruins → ruined_cottage. Farm: precinct.farm@0, rank-125 parcel
+  claims, persistence law. Ruins: decayShell operators over ANY shell,
+  re-clad rule, per-lot roll (share = decline² past 0.35, cluster
+  channels 41-43), settleFixtures via the lint's OWN support predicate
+  (stdlib support.ts, imported by the lint).
+- **Green skin (RUINS WP-6a-e + closure), from Kai's walk "does not read
+  as ruined+overgrown"**: surface index, shared growthFaces (rule 27
+  unsupported.multiface — found 435 real mis-faced vines; world-fixup
+  ca5b688 killed Kai's twice-walked defect), climbers/moss/plugs
+  (skin-eats-glass ruling), street colonizer with legible spine,
+  shell trees at HEAVY+TOTAL (rule 17 learns elected trunks; traversal
+  enforced), lichen theme-gated, separate ruin goldens + walkability
+  deprioritized in ruin scenes (Kai). Legal lost storeys ruling: a
+  decayed shell's upper storey may be unreachable, ground floor
+  guaranteed. Crawlspace flood fix → P4-class lint-zero end to end.
+- **Compiler exonerations of Luna**: biome derivation was scale-inverting
+  (F20: absolute rise floors; plains 3%→81%); district UNSATISFIABLE was
+  the ground veto at building scale (F22: median water + CITY_MAX_SLOPE
+  for districts; veto histogram now in E406); E497 was a classifier
+  mislabeling street crossings (walkBack street-first, latched).
+- **Instrumentation that keeps paying**: T118 radius-units warning + T119
+  zero-yield scatter (both in feedback set — fixed the P4/P7 canopies
+  in-round); program recovery pass (invoked-but-not-carried gets one
+  re-author — saved P5's monsters live); openrouter retry 6× exponential
+  (two worlds died to network in one night); plugin scatter de-gridded
+  (lattice-stride bug + northern-third confinement).
+- **Walk-driven fixes**: streets got border/gutter/body section + F10
+  per-district palettes (border machinery existed, switched off); tree
+  allometry (crown knobs were absolute vs height overrides —
+  pole-and-puck dead; street trees fit their corridor); event staging +
+  icon register in kit; era-describes-the-settlement + white_quartz
+  narrowed (quartz creep dead); F9 blend dial sharp/soft/wide.
+- **c2 measurements**: farmtown_invasion_c2 mothership 38k blocks + 13
+  pods, medieval timber ("much better" — spectacle note: staging teaching
+  followed); overgrown_hideout_c2 = **"maybe my favorite generate of
+  terrainist so far"**.
