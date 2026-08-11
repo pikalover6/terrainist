@@ -1102,6 +1102,14 @@ repair* is locked to manual.
   map** (F22 side finding) — candidate enumeration wants to scale with
   footprint/region ratio.
 
+- **A recompiled high-decline metropolis carries ~12 residual lint
+  findings (2026-08-10)** — ~10 orphaned leaves where decay air erases a
+  crown block later in the pipeline than the orphan sweep runs, plus 2
+  pre-existing concrete orphans on the structure side. Small, bounded,
+  found while fixing tree allometry; the sweep-vs-decay ordering is the
+  suspect. Blocks the lint-zero gate for P4-class worlds at regeneration
+  time, so it precedes the release candidates.
+
 ## Keys and infrastructure
 
 `OPENROUTER_API_KEY` and `TRIPO_API_KEY` live in the repo-root `.env` (gitignored)

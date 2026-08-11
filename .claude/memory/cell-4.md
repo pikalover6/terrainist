@@ -158,6 +158,18 @@ composition; kit staging teaching committed (7fbb66c: loom over the
 heart / advance don't sprinkle / connect sky to ground); deeper event-
 staging mechanism ledgered.
 
+**Wave 11 LANDED:** streets (938331b — border machinery existed and
+was switched OFF; kerbs 0→14k columns on harbourtown, clustered wear
+at preserved share, gutter courses, F10 per-district palettes; rural
+byte-identical; boreal_pine kerb tone flagged for walk). Trees
+(30ff975 — hypothesis REFUTED: not the canyon; crown knobs were
+absolute vs Luna's height overrides → pole-and-puck; allometry now
+scales crowns per species, street fit abstains when no room, bare
+share 0.80→0.52; no shipped world moves). Staging kit committed
+(7fbb66c). LEDGERED: ~12 residual lint findings on recompiled P4-class
+worlds (decay-air-vs-orphan-sweep ordering + 2 concrete) — precedes
+release candidates.
+
 **Ruling batch still open:** terrace bays / collapse promotion / light
 band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
 shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
