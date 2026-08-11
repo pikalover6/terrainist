@@ -1102,13 +1102,25 @@ repair* is locked to manual.
   map** (F22 side finding) — candidate enumeration wants to scale with
   footprint/region ratio.
 
-- **A recompiled high-decline metropolis carries ~12 residual lint
-  findings (2026-08-10)** — ~10 orphaned leaves where decay air erases a
-  crown block later in the pipeline than the orphan sweep runs, plus 2
-  pre-existing concrete orphans on the structure side. Small, bounded,
-  found while fixing tree allometry; the sweep-vs-decay ordering is the
-  suspect. Blocks the lint-zero gate for P4-class worlds at regeneration
-  time, so it precedes the release candidates.
+- ~~**A recompiled high-decline metropolis carries ~12 residual lint
+  findings**~~ — **fixed 2026-08-10 (996ee58)**: flora now settles
+  against the composed world (rule 13's own predicate, single-sweep
+  fixpoint proven), and decay's stranded-fitting clause learned full
+  cubes. 12 → 0 on the P4 doc; seeds 300–310 sweep clean.
+- **Heavy decay strands the upper storey: 1,254 `traversal.unreachable`
+  on the recompiled P4 doc (found 2026-08-10, NEEDS KAI'S RULING —
+  blocks P4-class regeneration lint-zero).** Every finding is a
+  two-storey `decay.mode: "shell"` lot (subway_station, warehouse,
+  parking_garage, brutalist_block, data_center, shop_row): the crumble
+  takes the interior stair, `reachOrRefuse` guarantees only the ground
+  floor from the door, and no pass notices the second storey is cut
+  off. The same-decline fixture family (townhouse/shop_row/warehouse)
+  lints zero — it is this archetype set. Options: decay preserves or
+  rebuilds an inter-storey route (a rubble ramp where the stair fell);
+  the rule learns that a decayed shell's upper storey may be legally
+  unreachable (ground floor still guaranteed — consistent with Kai's
+  walkability-deprioritized calibration); or the crumble takes the
+  orphaned floor plane with the stair.
 
 ## Keys and infrastructure
 
