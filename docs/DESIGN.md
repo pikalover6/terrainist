@@ -1120,14 +1120,17 @@ repair* is locked to manual.
   against the composed world (rule 13's own predicate, single-sweep
   fixpoint proven), and decay's stranded-fitting clause learned full
   cubes. 12 → 0 on the P4 doc; seeds 300–310 sweep clean.
-- **Something after decay seals the cellar-ladder alcove: 15 ground-storey
+- ~~**Something after decay seals the cellar-ladder alcove: 15 ground-storey
   `traversal.unreachable` on the P4 doc (found 2026-08-10, blocks P4-class
   lint-zero).** Three-cell L-pockets in ~5 heavily decayed shells, each
   containing the cellar ladder, walled in by the shell's own material;
   decay's own reachOrRefuse passed (withdrawn 0, refused false), so a
   later pass — suspect: green-skin ground writes or the rubble/grounds
   interplay — closes the alcove. Diagnostic scripts left in scratchpad
-  (lint-p4.mjs / diag.mjs; grep on physics.ts needs -a).
+  (lint-p4.mjs / diag.mjs; grep on physics.ts needs -a).~~ **FIXED
+  2026-08-10**: it was decay's own rubble — the reachability flood tested
+  feet only and escaped through a crawlspace the lint's two-course body
+  cannot walk; the flood now floods with a body. P4 lint-zero on all 27.
 - ~~**Heavy decay strands the upper storey: 1,254 `traversal.unreachable`
   on the recompiled P4 doc (found 2026-08-10, NEEDS KAI'S RULING —
   blocks P4-class regeneration lint-zero).** Every finding is a
