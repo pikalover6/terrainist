@@ -170,6 +170,23 @@ share 0.80→0.52; no shipped world moves). Staging kit committed
 worlds (decay-air-vs-orphan-sweep ordering + 2 concrete) — precedes
 release candidates.
 
+**THE ICON LAW RATIFIED (Kai, 2026-08-10 late — 2fa462c): "the medium
+cannot whisper"** — blocks have no fine grain, so worlds must SCREAM the
+prompt through icons at saturation; nyc without the Statue of Liberty
+is a fail. **U1 amended to the STRANGER TEST** (a stranger names the
+prompt from 10s at any street corner). Driven by walks of all 7
+candidates: flora prompts GOOD (mushroom vale great; redwoods good —
+Luna BESPOKE'D a colossal_redwood ×24 when the catalog had no redwood,
+but placed robotically); P1 pirate/unicorn = no war/ships/flags, not
+recognizable; P3 Troy = no walls, sparse; P5 = Luna DID request
+sea_monster plugin, it died in authoring, never retried (the vindication
+— the retry gap cost the prompt's soul). Kit icon register committed
+(ad20d7f: enumerate 5-10 icons, deliver each by named mechanism, icons
+are cheap plugins, saturation not statement, wall IS the icon, war has
+direction). IN FLIGHT: program-retry lane, scatter de-gridding lane,
+lost-storeys rule lane (Kai ruled: legal lost storeys, ground floor
+guaranteed). THEN: regen P1/P3/P5 as c2 = the icon-law measurement.
+
 **Ruling batch still open:** terrace bays / collapse promotion / light
 band / STREET_BREAK_FLOOR / intact-lot yards / reclaim density /
 shellTrees-off no caller. Backstop 2026-08-28. Remaining rung-B after
