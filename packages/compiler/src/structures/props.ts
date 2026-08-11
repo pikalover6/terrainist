@@ -230,12 +230,22 @@ export function buildProps(input: PropPassInput): PropPassResult {
           "CANNOT_FIT",
           job.nodePath,
           `no site within ${PROP_SEARCH_RADIUS} blocks fits the ${job.prop}`,
-          propFootprint(job.prop, job.params).base === "water"
-            ? 'point it at open water — widen the lake, or give the node an "at" that is already on it'
-            : "flatten the ground near its target, or move the node with a coarse zone/at param",
+          propFootprint(job.prop, job.params).base === "ground"
+            ? "flatten the ground near its target, or move the node with a coarse zone/at param"
+            : 'this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself',
         ),
       );
       continue;
+    }
+    if (site.reseated !== undefined) {
+      diagnostics.push(
+        warning(
+          "PROP_RESEATED",
+          job.nodePath,
+          `no water within ${PROP_SEARCH_RADIUS} blocks of the ${job.prop}'s coarse target, so it sought the waterline and seated at [${site.footprint.x0}, ${site.footprint.z0}]`,
+          'nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving',
+        ),
+      );
     }
 
     // The pad, before the prop: a land prop stands on the plane `groundBase`
@@ -328,6 +338,17 @@ export interface PropSite {
   readonly footprint: Rect;
   readonly baseY: number;
   readonly yaw: StructureYaw;
+  /**
+   * Set when the site came from the waterline reseat rather than the node's
+   * own coarse target: the column the second search was centred on.
+   *
+   * A pier or a ship whose `zone` lands inland is not unbuildable — the water
+   * it belongs on is simply further than {@link PROP_SEARCH_RADIUS} away. The
+   * placer seeks the waterline and says so, exactly as `precinct.harbour@0`
+   * reseats itself on the best coastline in the world rather than reporting a
+   * world with an ocean in it as having nowhere to put a quay.
+   */
+  readonly reseated?: Point2;
 }
 
 /** Everything {@link planPropPlacement} reads. */
@@ -359,29 +380,122 @@ export interface PropPlacementInput {
 export function planPropPlacement(input: PropPlacementInput): PropSite | undefined {
   const { plan, prop, params } = input;
   const foot = propFootprint(prop, params);
-  const target = coarseTarget(input);
+  const { point: target, pinned } = coarseTarget(input);
   const yawParam = readYaw(params["yaw"]);
 
-  if (foot.base === "shore") {
-    return placeShore(input, foot, target, yawParam);
-  }
-
-  const yaws: readonly StructureYaw[] =
-    yawParam === undefined
-      ? [drawYaw(input.seed)]
-      : [yawParam];
-
-  for (const column of spiral(target, PROP_SEARCH_RADIUS)) {
-    for (const yaw of yaws) {
-      const [w, d] = rotatedExtents(foot.size, yaw);
-      const rect: Rect = { x0: column.x, z0: column.z, x1: column.x + w - 1, z1: column.z + d - 1 };
-      if (overlapsTaken(rect, input.taken)) continue;
-      const baseY = foot.base === "water" ? waterBase(plan, rect) : groundBase(plan, rect);
-      if (baseY === undefined) continue;
-      return { footprint: rect, baseY, yaw };
+  const search = (from: Point2): PropSite | undefined => {
+    if (foot.base === "shore") return placeShore(input, foot, from, yawParam);
+    const yaws: readonly StructureYaw[] = yawParam === undefined ? [drawYaw(input.seed)] : [yawParam];
+    for (const column of spiral(from, PROP_SEARCH_RADIUS)) {
+      for (const yaw of yaws) {
+        const [w, d] = rotatedExtents(foot.size, yaw);
+        const rect: Rect = {
+          x0: column.x,
+          z0: column.z,
+          x1: column.x + w - 1,
+          z1: column.z + d - 1,
+        };
+        if (overlapsTaken(rect, input.taken)) continue;
+        const baseY = foot.base === "water" ? waterBase(plan, rect) : groundBase(plan, rect);
+        if (baseY === undefined) continue;
+        return { footprint: rect, baseY, yaw };
+      }
     }
+    return undefined;
+  };
+
+  const local = search(target);
+  if (local !== undefined) return local;
+
+  // The waterline reseat. A land prop stays where it was asked for — dry ground
+  // is everywhere a settlement is, so "no flat site within 48 blocks" is a real
+  // fact about the target. A prop that belongs *in* or *on* water is different:
+  // its target is a zone, the water is wherever the coast happens to run, and
+  // an archipelago is exactly the world where the two do not coincide. So the
+  // search seeks the waterline once, from the nearest column that could carry
+  // this base, and the caller notes that it moved. A pin (an explicit `at`, or
+  // an `at: "pier"` that found its pier) is honoured: pinned means *here*, and
+  // a pinned prop fails in place rather than sailing off, which is the rule
+  // `precinct.harbour@0` already follows.
+  if (pinned || foot.base === "ground") return undefined;
+  for (const seed of waterSeats(plan, target, foot.base)) {
+    const reseated = search(seed);
+    if (reseated !== undefined) return { ...reseated, reseated: seed };
   }
   return undefined;
+}
+
+/** How many separate bodies of water a reseat will try before giving up. */
+export const PROP_RESEAT_SEATS = 8;
+
+/**
+ * Columns that could seat this base, nearest first, one per body of water.
+ *
+ * `water` wants a column deep enough to float a hull; `shore` wants dry land
+ * with water next door — the coastline, as `layout/products.ts` defines it. The
+ * order is the placer's order everywhere else (squared distance, then z, then
+ * x), so the seats are a pure function of the plan and the target.
+ *
+ * Seats are kept {@link PROP_SEARCH_RADIUS} apart because the search that
+ * follows one covers that radius: without the spacing, all
+ * {@link PROP_RESEAT_SEATS} tries would land in the same inland pond and a
+ * longship would be reported unbuildable on a world that is four fifths ocean.
+ */
+export function waterSeats(
+  plan: ColumnPlan,
+  target: Point2,
+  base: "water" | "shore",
+  limit: number = PROP_RESEAT_SEATS,
+): Point2[] {
+  const { x0, z0, width, depth } = plan.region;
+  const seats: Point2[] = [];
+  for (let round = 0; round < limit; round++) {
+    let best: Point2 | undefined;
+    let bestDist = Infinity;
+    for (let j = 0; j < depth; j++) {
+      for (let i = 0; i < width; i++) {
+        const idx = j * width + i;
+        if (base === "water") {
+          if (plan.fluidKind[idx] !== FluidKind.WATER) continue;
+          if ((plan.fluidTop[idx] as number) - (plan.ground[idx] as number) < 2) continue;
+        } else {
+          if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+          if (!hasWaterNeighbour(plan, i, j)) continue;
+        }
+        const x = x0 + i;
+        const z = z0 + j;
+        const dist = (x - target.x) ** 2 + (z - target.z) ** 2;
+        // Strictly-less keeps the scan order's own tiebreak, which is z then x.
+        if (dist >= bestDist) continue;
+        if (seats.some((s) => Math.abs(s.x - x) < PROP_SEARCH_RADIUS && Math.abs(s.z - z) < PROP_SEARCH_RADIUS)) {
+          continue;
+        }
+        bestDist = dist;
+        best = { x, z };
+      }
+    }
+    if (best === undefined) break;
+    seats.push(best);
+  }
+  return seats;
+}
+
+/** True when one of a column's four neighbours holds water. */
+function hasWaterNeighbour(plan: ColumnPlan, i: number, j: number): boolean {
+  const { width, depth } = plan.region;
+  const steps: readonly [number, number][] = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  for (const [di, dj] of steps) {
+    const ni = i + di;
+    const nj = j + dj;
+    if (ni < 0 || nj < 0 || ni >= width || nj >= depth) continue;
+    if (plan.fluidKind[nj * width + ni] === FluidKind.WATER) return true;
+  }
+  return false;
 }
 
 /**
@@ -390,7 +504,7 @@ export function planPropPlacement(input: PropPlacementInput): PropSite | undefin
  * Priority: an explicit `at`, then `at: "pier"`, then `zone`, then the middle
  * of the region.
  */
-function coarseTarget(input: PropPlacementInput): Point2 {
+function coarseTarget(input: PropPlacementInput): { point: Point2; pinned: boolean } {
   const { plan, params } = input;
   const frame: Frame = {
     x0: plan.region.x0,
@@ -407,7 +521,7 @@ function coarseTarget(input: PropPlacementInput): Point2 {
   if (typeof at === "object" && at !== null) {
     const point = at as { x?: unknown; z?: unknown };
     if (typeof point.x === "number" && typeof point.z === "number") {
-      return { x: Math.round(point.x), z: Math.round(point.z) };
+      return { point: { x: Math.round(point.x), z: Math.round(point.z) }, pinned: true };
     }
   }
   if (at === "pier") {
@@ -421,15 +535,18 @@ function coarseTarget(input: PropPlacementInput): Point2 {
           best = candidate;
         }
       }
-      return best.anchor as Point2;
+      return { point: best.anchor as Point2, pinned: true };
     }
   }
   const zone = params["zone"];
   if (typeof zone === "string" && isZoneToken(zone)) {
     const jitter = typeof params["jitter"] === "number" ? params["jitter"] : 0.15;
-    return jitteredZonePoint(frame, zone, jitter, streamSeed(input.seed, "coarse"), 0);
+    return {
+      point: jitteredZonePoint(frame, zone, jitter, streamSeed(input.seed, "coarse"), 0),
+      pinned: false,
+    };
   }
-  return centre;
+  return { point: centre, pinned: false };
 }
 
 /** Order two anchors by distance to a point, then by column, for stability. */

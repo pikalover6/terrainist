@@ -946,21 +946,25 @@ describe("the deltaport document, compiled", () => {
   });
 
   /**
-   * The warnings that remain are the document's, not the compiler's: four props
-   * asking for water or a flat quay that the terrain does not offer where they
-   * were pointed, and a gallery longer than the `maxLength` it declared. Those
-   * are authoring problems with actionable fixes, and the fixture keeps them so
-   * a regression that *silences* them is visible too.
+   * The warnings that remain are the document's, not the compiler's: two ships
+   * moored to a pier whose water will not float them, and a gallery longer than
+   * the `maxLength` it declared. Those are authoring problems with actionable
+   * fixes, and the fixture keeps them so a regression that *silences* them is
+   * visible too.
+   *
+   * The two **piers** used to be here as well, and are not any more: a prop
+   * whose base is water or shore and whose target is a coarse `zone` now seeks
+   * the waterline when no water is within `PROP_SEARCH_RADIUS` of that zone,
+   * and both jetties are built on real coastline with a `PROP_RESEATED` note.
+   * The ships stay: `at: "pier"` is a *pin* — mooring means "at that pier" —
+   * and a pinned prop fails in place rather than sailing off, exactly as
+   * `precinct.harbour@0` refuses to relocate a pinned quay.
    */
-  it("still reports the author's own four CANNOT_FIT props and the long gallery", () => {
+  it("still reports the author's moored ships and the long gallery, and builds the piers", () => {
     const byCode = (code: string): string[] =>
       report.diagnostics.filter((d) => d.code === code).map((d) => d.nodePath).sort();
-    expect(byCode("LOAM-E170")).toEqual([
-      "world.fishing_jetty",
-      "world.main_quay",
-      "world.the_cog",
-      "world.the_galleon",
-    ]);
+    expect(byCode("LOAM-E170")).toEqual(["world.the_cog", "world.the_galleon"]);
+    expect(byCode("LOAM-T228")).toEqual(["world.fishing_jetty", "world.main_quay"]);
     expect(byCode("LOAM-E180")).toEqual(["world.mine_head__the_keep"]);
   });
 });

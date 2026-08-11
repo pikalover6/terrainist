@@ -259,6 +259,76 @@ describe("piers", () => {
   });
 });
 
+describe("props that belong on the water seek the waterline", () => {
+  /** A dry region with one pond in the far southeast corner, nowhere near NW. */
+  function farPondPlan(): ColumnPlan {
+    return plainPlan({ x0: 76, z0: 76, x1: 95, z1: 95 });
+  }
+
+  it("seats a ship whose coarse zone landed inland, and notes that it moved", () => {
+    const plan = farPondPlan();
+    const jobs: PropJob[] = [
+      {
+        nodePath: "world.longship",
+        prop: "longship",
+        params: { zone: "northwest", jitter: 0 },
+        seed: seedOf("world.longship"),
+      },
+    ];
+    const pass = buildProps({ jobs, plan, stack });
+    expect(pass.placed).toHaveLength(1);
+    const placed = pass.placed[0] as { footprint: { x0: number; z0: number }; baseY: number };
+    expect(waterBase(plan, (pass.placed[0] as { footprint: never }).footprint)).toBe(placed.baseY);
+    const note = pass.diagnostics.find((d) => d.name === "PROP_RESEATED");
+    expect(note?.code).toBe("LOAM-T228");
+    expect(pass.diagnostics.some((d) => d.name === "CANNOT_FIT")).toBe(false);
+  });
+
+  it("seats a pier whose coarse zone landed inland, on real coastline", () => {
+    const plan = farPondPlan();
+    const site = planPropPlacement({
+      prop: "pier",
+      params: { zone: "northwest", jitter: 0, length: 8, width: 2 },
+      seed: seedOf("world.pier"),
+      plan,
+    });
+    expect(site).toBeDefined();
+    const rect = (site as { footprint: { x0: number; z0: number; x1: number; z1: number } }).footprint;
+    const wet = (x: number, z: number): boolean =>
+      plan.fluidKind[(z - REGION.z0) * REGION.width + (x - REGION.x0)] === FluidKind.WATER;
+    // Landward end dry, seaward end wet — the same contract the local search
+    // enforces, now met next to a pond 60 blocks from the node's target.
+    const dry = [rect.x0, rect.x1].some((x) => !wet(x, rect.z0) || !wet(x, rect.z1));
+    expect(dry).toBe(true);
+    expect((site as { reseated?: unknown }).reseated).toBeDefined();
+  });
+
+  it("holds a pinned prop in place rather than sailing it to the far pond", () => {
+    const plan = farPondPlan();
+    expect(
+      planPropPlacement({
+        prop: "longship",
+        params: { at: { x: 10, z: 10 } },
+        seed: seedOf("world.longship"),
+        plan,
+      }),
+    ).toBeUndefined();
+  });
+
+  it("leaves a land prop where it was asked for", () => {
+    const plan = plainPlan();
+    // A land prop never reseats: dry ground is where the target is, and the
+    // waterline is not a better answer for a cart.
+    const site = planPropPlacement({
+      prop: "cart",
+      params: { zone: "northwest", jitter: 0 },
+      seed: seedOf("world.cart"),
+      plan,
+    });
+    expect((site as { reseated?: unknown }).reseated).toBeUndefined();
+  });
+});
+
 describe("the prop pass", () => {
   it("emits blocks for every prop, and diagnoses one it does not know", () => {
     const plan = plainPlan({ x0: 40, z0: 40, x1: 80, z1: 80 });
