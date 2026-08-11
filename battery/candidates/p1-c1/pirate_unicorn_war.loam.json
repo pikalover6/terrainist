@@ -1,0 +1,611 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirate_unicorn_war",
+    "worldSeed": "301",
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "at": [
+        0.26,
+        0.5
+      ]
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "intent": {
+    "era": "renaissance",
+    "event": {
+      "kind": "siege",
+      "severity": 0.5,
+      "recency": 0
+    },
+    "tokens": {
+      "region_pirate_island": "era renaissance; materialTheme temperate_timber; pirate island",
+      "region_unicorn_island": "era medieval; materialTheme white_quartz; unicorn island"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "two rival islands under siege",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "open sea around two raised rival islands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 52,
+          "amplitude": 16,
+          "octaves": 5,
+          "frequency": 0.0025,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.0025
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0008,
+            "seaFraction": 0.78
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "pirate_island_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western pirate island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.26,
+                0.5
+              ],
+              "radius": 210,
+              "height": 48,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "unicorn_island_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the eastern unicorn island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.74,
+                0.5
+              ],
+              "radius": 210,
+              "height": 44,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "pirate_island",
+        "kind": "district",
+        "label": "the fortified pirate settlement on the western island",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            240,
+            220
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "shipyard",
+            "bastion",
+            "watchtower",
+            "cottage"
+          ],
+          "blockSize": 32,
+          "plaza": true,
+          "ground": "pad",
+          "walls": {
+            "style": "palisade",
+            "margin": 12,
+            "towerPitch": 42,
+            "height": 6,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.26,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "island",
+          "pirate",
+          "settlement",
+          "at_war"
+        ],
+        "intent": {
+          "era": "renaissance",
+          "wealth": 0.35,
+          "formality": 0.2,
+          "character": {
+            "label": "pirate island",
+            "materialTheme": "temperate_timber",
+            "palettes": {
+              "ground.surface": "minecraft:coarse_dirt",
+              "ground.subsurface": "minecraft:dirt",
+              "ground.beach": {
+                "mix": [
+                  [
+                    "minecraft:gravel",
+                    3
+                  ],
+                  [
+                    "minecraft:black_concrete_powder",
+                    2
+                  ],
+                  [
+                    "minecraft:basalt",
+                    1
+                  ]
+                ]
+              },
+              "ground.underwater": "minecraft:gravel",
+              "ground.cliff": "minecraft:deepslate",
+              "ground.peak": "minecraft:deepslate",
+              "road.surface": "minecraft:coarse_dirt",
+              "road.shoulder": "minecraft:gravel",
+              "plaza.path": "minecraft:dark_oak_planks",
+              "plaza.gravel": "minecraft:gravel",
+              "plaza.cobble": "minecraft:cobblestone",
+              "plaza.border": "minecraft:dark_oak_log"
+            },
+            "archetypes": {
+              "prefer": [
+                "shipyard",
+                "warehouse",
+                "tavern",
+                "bastion",
+                "watchtower",
+                "cottage"
+              ],
+              "forbid": [
+                "chapel",
+                "church",
+                "crystal_shrine",
+                "botanical_garden"
+              ],
+              "weights": {
+                "shipyard": 4,
+                "warehouse": 3,
+                "bastion": 3,
+                "watchtower": 2,
+                "tavern": 2
+              }
+            },
+            "props": {
+              "prefer": [
+                "rowboat",
+                "pier",
+                "galleon",
+                "caravel",
+                "junk"
+              ],
+              "forbid": [
+                "gazebo",
+                "fountain",
+                "standing_stones"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "spruce_tall",
+                "oak_round"
+              ],
+              "forbid": [
+                "birch_slim"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "sprawling",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.2
+            },
+            "urbanForm": "grown"
+          }
+        }
+      },
+      {
+        "id": "unicorn_island",
+        "kind": "district",
+        "label": "the bright defended settlement on the eastern island",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            240,
+            220
+          ]
+        },
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "cottage",
+            "hall",
+            "crystal_shrine",
+            "botanical_garden",
+            "bastion"
+          ],
+          "blockSize": 34,
+          "plaza": true,
+          "ground": "pad",
+          "walls": {
+            "style": "masonry",
+            "margin": 12,
+            "towerPitch": 44,
+            "height": 6,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.74,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "island",
+          "unicorn",
+          "settlement",
+          "at_war"
+        ],
+        "intent": {
+          "era": "medieval",
+          "wealth": 0.8,
+          "formality": 0.7,
+          "character": {
+            "label": "unicorn island",
+            "materialTheme": "white_quartz",
+            "palettes": {
+              "ground.surface": "minecraft:moss_block",
+              "ground.subsurface": "minecraft:dirt",
+              "ground.beach": {
+                "mix": [
+                  [
+                    "minecraft:quartz_block",
+                    3
+                  ],
+                  [
+                    "minecraft:calcite",
+                    2
+                  ],
+                  [
+                    "minecraft:gravel",
+                    1
+                  ]
+                ]
+              },
+              "ground.underwater": "minecraft:clay",
+              "ground.cliff": "minecraft:quartz_block",
+              "ground.peak": "minecraft:amethyst_block",
+              "road.surface": "minecraft:quartz_block",
+              "road.shoulder": "minecraft:calcite",
+              "plaza.path": "minecraft:quartz_block",
+              "plaza.gravel": "minecraft:calcite",
+              "plaza.cobble": "minecraft:polished_diorite",
+              "plaza.border": "minecraft:amethyst_block"
+            },
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "chapel",
+                "bastion",
+                "botanical_garden",
+                "cottage"
+              ],
+              "forbid": [
+                "warehouse",
+                "tavern"
+              ],
+              "weights": {
+                "crystal_shrine": 4,
+                "chapel": 2,
+                "bastion": 2,
+                "botanical_garden": 2
+              }
+            },
+            "props": {
+              "prefer": [
+                "standing_stones",
+                "fountain",
+                "gazebo",
+                "monolith",
+                "memorial_garden"
+              ],
+              "forbid": [
+                "galleon",
+                "junk",
+                "caravel",
+                "fishing_sloop"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "birch_slim",
+                "oak_round"
+              ],
+              "forbid": [
+                "spruce_tall"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "massing": "towered",
+              "windowRhythm": "dense",
+              "ornamentDensity": 0.9
+            },
+            "urbanForm": "radial"
+          }
+        }
+      },
+      {
+        "id": "pirate_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the pirate quay facing the western sea",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            16,
+            72
+          ]
+        },
+        "params": {
+          "piers": 3,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          },
+          {
+            "distance": "pirate_island",
+            "min": 32,
+            "max": 320
+          },
+          {
+            "zone": "west"
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour",
+          "pirate",
+          "settlement",
+          "at_war"
+        ]
+      },
+      {
+        "id": "pirate_woodland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "wind-bent woodland around the pirate island",
+        "params": {
+          "area": {
+            "at": [
+              0.26,
+              0.5
+            ],
+            "radius": 164
+          },
+          "density": 0.12,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            64
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.03,
+            "deadwood": 0.12
+          },
+          "species": [
+            {
+              "id": "salt_spruce",
+              "weight": 2,
+              "shape": "spruce_tall",
+              "minHeight": 7,
+              "maxHeight": 16
+            },
+            {
+              "id": "wind_oak",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 12
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "flower-rich birch groves around the unicorn island",
+        "params": {
+          "area": {
+            "at": [
+              0.74,
+              0.5
+            ],
+            "radius": 164
+          },
+          "density": 0.24,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            72
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.3,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "moon_birch",
+              "weight": 3,
+              "shape": "birch_slim",
+              "minHeight": 6,
+              "maxHeight": 15
+            },
+            {
+              "id": "star_oak",
+              "weight": 2,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 13
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse wild trees across the open sea country",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.05,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "wild_spruce",
+              "weight": 1,
+              "shape": "spruce_squat",
+              "minHeight": 4,
+              "maxHeight": 11
+            },
+            {
+              "id": "wild_oak",
+              "weight": 1,
+              "shape": "oak_round",
+              "minHeight": 5,
+              "maxHeight": 12
+            }
+          ]
+        }
+      },
+      {
+        "id": "island_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the lanes joining the pirate town to its quay",
+        "params": {
+          "anchors": [
+            "pirate_island",
+            "pirate_harbour"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

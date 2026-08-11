@@ -1,0 +1,79 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       1024x1024
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"event":{"kind":"siege","severity":0.5,"recency":0},"tokens":{"region_pirate_island":"era renaissance; materialTheme temperate_timber; pirate island","region_unicorn_island":"era medieval; materialTheme white_quartz; unicorn island"}}
+           1 attempt(s), 3283 tokens
+
+authored with openai/gpt-5.6-luna in 2 attempt(s)
+  attempt 1   3 problem(s): LOAM-T210 DISTRICT_PARAM@world.unicorn_island.params, LOAM-T118 SCATTER_RADIUS_UNITS@world.pirate_woodland.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.unicorn_grove.params.area
+  attempt 2   valid
+  tokens     135331 in + 51613 out = 186944  ($0.0405)
+programs   none (budget 12 landmark / 6 plugin)
+
+  document   /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_harbour: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.pirate_harbour: placed after constraint_demoted (388 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.13)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     66420 in + 9400 out = 75820  ($0.0066)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_harbour: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.pirate_harbour: placed after constraint_demoted (388 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.05)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     66420 in + 6429 out = 72849  ($0.0048)
+
+compiled "pirate_unicorn_war" — 1.21.11 (DataVersion 4671)
+  world      /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war
+  seed       301
+  region     1024x1024 at (-512, -512)
+  heights    53.4..89.1  sea 63  snow line 87.8
+  land       17.5% of columns above sea level
+  biomes     ocean 82.6%, plains 14.6%, forest 2.2%, beach 0.6%, windswept_hills 0.0%
+  trees      1529 (pirate_woodland=838, unicorn_grove=1134, wilderness=67)
+  chunks     4096
+  blocks     137862786 (166302 vegetation)
+  markers    72
+  spawn      [-246, 86, 0]
+  timings    validate 0ms  field 348ms  layout 553ms  climate 110ms  columns 121ms  caves 0ms  structures 1695ms  programs 0ms  scatter 10530ms  biomes 102ms  validators 16ms  emit 7267ms  total 20858ms
+  zip        /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war.zip
+  doc        /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war.loam.json
+  report     /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.island_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 106673 footprint columns (plus 37320 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 82% of 24825 ring columns); snow policy auto resolved to "never" on a 0/106673 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 268171 in + 67442 out = 335613 tokens ($0.0520)
+
+next: terrainist install /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war
+installed "pirate_unicorn_war_c1"
+  from       /Users/kaihoward/Dev/terrainist/battery/candidates/p1-c1/pirate_unicorn_war
+  to         /Users/kaihoward/Library/Application Support/minecraft/saves/pirate_unicorn_war_c1
+  lastPlayed 1786413776623 (2026-08-11T02:02:56.623Z)
