@@ -1,0 +1,34 @@
+  blocks     36181225 (67506 vegetation)
+  timings    validate 7ms  field 137ms  layout 742ms  climate 43ms  columns 643ms  caves 0ms  structures 13020ms  programs 60ms  scatter 300ms  biomes 44ms  validators 4ms  emit 2409ms  total 17707ms
+  programs   world.trojan_horse=trojan_horse×1 (3184 blocks), world.beached_warships=beached_warships×1 (1653 blocks)
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 8 blocks over 51 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 4 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 8 blocks over 34 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 8 blocks over 20 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 4 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+warning LOAM-W411 RETAINING_REFUSED at world.troy: a seam in "world.troy" drops 3 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+note LOAM-T230 WALL_COURSE_CLAMPED at world.troy: the settlement is built to the world-region edge, so the circuit flattens along the boundary there — closed, not clipped; buildings on the line become part of the wall

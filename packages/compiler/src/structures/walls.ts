@@ -49,7 +49,7 @@
  * here draws a random number at all, which is why there is no seed parameter.
  */
 
-import { note, warning, type LoamDiagnostic } from "@terrainist/spec";
+import { note, WALL_MIN_MARGIN, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { MaterialTheme } from "@terrainist/stdlib";
 
@@ -323,6 +323,29 @@ export interface WallPassResult {
 }
 
 /** Ring every settlement that asked for it. */
+/**
+ * The course, at the requested margin if it fits — stepped in two columns at a
+ * time (floor {@link WALL_MIN_MARGIN}) when it does not.
+ *
+ * Margin backoff (2026-08-11, the prop-reseat pattern): a settlement grown
+ * against the region edge asked for a wall and would silently get none — Troy
+ * c5, measured. The margin is advice; the circuit is the icon. `builtMargin`
+ * reports what actually fit, so the caller can say so (`LOAM-T229`).
+ */
+export function courseWithMarginBackoff(
+  extent: readonly { readonly x: number; readonly z: number }[],
+  margin: number,
+  bounds: { readonly x0: number; readonly z0: number; readonly width: number; readonly depth: number },
+): { course: ReturnType<typeof deriveWallCourse>; builtMargin: number } {
+  let course = deriveWallCourse({ extent, margin, bounds });
+  let builtMargin = margin;
+  for (let m = margin - 2; course === undefined && m >= WALL_MIN_MARGIN; m -= 2) {
+    course = deriveWallCourse({ extent, margin: m, bounds });
+    builtMargin = m;
+  }
+  return { course, builtMargin };
+}
+
 export function buildWalls(input: WallPassInput): WallPassResult {
   if (input.jobs.length === 0) {
     return { blocks: [], walls: [], diagnostics: [], stats: {} };
@@ -352,18 +375,45 @@ export function buildWalls(input: WallPassInput): WallPassResult {
   );
 
   for (const job of input.jobs) {
-    const course = deriveWallCourse({
-      extent: job.extent,
-      margin: job.margin,
-      bounds: { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth },
-    });
+    const bounds = { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth };
+    const { course, builtMargin } = courseWithMarginBackoff(job.extent, job.margin, bounds);
+    if (course !== undefined && course.clamped) {
+      diagnostics.push(
+        note(
+          "WALL_COURSE_CLAMPED",
+          job.nodePath,
+          "the settlement is built to the world-region edge, so the circuit flattens along the boundary there — closed, not clipped; buildings on the line become part of the wall",
+          "no change needed — or grow the settlement with wall room from the region edge if the flattened stretch reads wrong on a walk",
+        ),
+      );
+    }
+    if (course !== undefined && builtMargin !== job.margin) {
+      diagnostics.push(
+        note(
+          "WALL_MARGIN_REDUCED",
+          job.nodePath,
+          `the wall's margin of ${job.margin} pushed the ring outside the world region; it was stepped in to ${builtMargin} and the circuit built there`,
+          "no change needed — or give the settlement more room from the region edge if the tighter ring crowds the fabric",
+        ),
+      );
+    }
     if (course === undefined) {
+      // Name the numbers, not the guesses: which of the three refusals it was
+      // is computable right here, and "too small, too thin, or outside" sent
+      // a whole debugging session the wrong way (Troy c5, 2026-08-11).
+      const xs = job.extent.map((p) => p.x);
+      const zs = job.extent.map((p) => p.z);
+      const shape =
+        job.extent.length === 0
+          ? "an empty extent"
+          : `fabric x ${Math.min(...xs)}..${Math.max(...xs)}, z ${Math.min(...zs)}..${Math.max(...zs)}`;
       diagnostics.push(
         note(
           "WALL_COURSE_EMPTY",
           job.nodePath,
-          "no wall course could be derived: the settlement's built footprint is too small, too thin, or the offset ring would fall outside the world region",
-          `either drop "walls" from this node, lower "walls.margin" (it is ${job.margin}), or give the node a larger envelope with room outside the buildings for the ring to stand in`,
+          `no wall course could be derived even after stepping the margin down to ${WALL_MIN_MARGIN}: ` +
+            `${shape}, against region x ${bounds.x0}..${bounds.x0 + bounds.width}, z ${bounds.z0}..${bounds.z0 + bounds.depth}`,
+          `either drop "walls" from this node, or give the node a larger envelope with room outside the buildings for the ring to stand in`,
         ),
       );
       continue;

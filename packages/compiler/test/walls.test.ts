@@ -33,6 +33,7 @@ import { normalAt, stepDatum } from "../src/structures/wall-sweep-seam.js";
 import {
   WALL_MATERIALS,
   WALL_MAX_FILL,
+  courseWithMarginBackoff,
   extentOfRects,
   wallColumnOps,
   wallProfile,
@@ -157,14 +158,44 @@ describe("deriveWallCourse", () => {
     expect(JSON.stringify(one)).toBe(JSON.stringify(two));
   });
 
-  it("declines rather than clipping when the ring will not fit the region", () => {
-    expect(
-      deriveWallCourse({
-        extent: square(20, 20, 12),
-        margin: 40,
-        bounds: { x0: 0, z0: 0, width: 64, depth: 64 },
-      }),
-    ).toBeUndefined();
+  it("flattens along the region edge rather than refusing — closed, not clipped", () => {
+    // Ratified 2026-08-11 (Troy c5, a city grown flush to z −256): the bounds
+    // fold into the support fan, so the ring stays a closed circuit and
+    // presses flat against the boundary instead of vanishing whole.
+    const tight = { x0: 0, z0: 0, width: 64, depth: 64 };
+    const course = deriveWallCourse({ extent: square(20, 20, 12), margin: 40, bounds: tight });
+    const c = course as NonNullable<typeof course>;
+    expect(c.clamped).toBe(true);
+    expect(c.vertices.length).toBeGreaterThanOrEqual(3);
+    for (const p of c.path) {
+      expect(p.x).toBeGreaterThanOrEqual(2);
+      expect(p.x).toBeLessThanOrEqual(61);
+      expect(p.z).toBeGreaterThanOrEqual(2);
+      expect(p.z).toBeLessThanOrEqual(61);
+    }
+    // A ring that fits as asked is untouched — the clamp is a strict no-op.
+    const free = deriveWallCourse({ extent: square(200, 200, 50), margin: 10, bounds: BOUNDS });
+    expect((free as NonNullable<typeof free>).clamped).toBe(false);
+  });
+
+  it("steps the margin in, and past the floor the clamp still closes the ring", () => {
+    // Troy c5 (2026-08-11): a settlement grown to the region edge with
+    // `walls.margin: 12` silently got no wall at all. The margin is advice;
+    // the circuit is the icon.
+    const tight = { x0: 0, z0: 0, width: 64, depth: 64 };
+    const backed = courseWithMarginBackoff(square(32, 32, 26), 12, tight);
+    expect(backed.course).toBeDefined();
+    // A ring that fits at the asked margin is untouched — no silent shrink.
+    const roomy = courseWithMarginBackoff(square(200, 200, 50), 10, BOUNDS);
+    expect(roomy.builtMargin).toBe(10);
+    // Fabric flush to every edge: the clamp answers where backoff cannot.
+    const flush = courseWithMarginBackoff(square(32, 32, 30), 12, tight);
+    const c = flush.course as NonNullable<typeof flush.course>;
+    expect(c.clamped).toBe(true);
+    for (const p of c.path) {
+      expect(p.x).toBeGreaterThanOrEqual(2);
+      expect(p.x).toBeLessThanOrEqual(61);
+    }
   });
 
   it("declines an extent too small to be worth ringing, and an empty one", () => {

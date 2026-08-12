@@ -64,6 +64,12 @@ export const COURSE_DIRECTIONS = 360 / COURSE_QUANTUM_DEGREES;
 /** Smallest polygon, in columns across, worth calling a circumvallation. */
 export const WALL_MIN_SPAN = 24;
 
+/**
+ * Columns kept between a clamped ring and the region edge — room for the wall
+ * body and a tower's girth, so the flattened stretch still builds whole.
+ */
+export const WALL_EDGE_INSET = 2;
+
 /** One outward normal of the support hull. */
 interface Direction {
   readonly nx: number;
@@ -103,6 +109,8 @@ export interface WallCourse {
   readonly cornerIndices: readonly number[];
   /** Enclosed area, in columns — the sanity number the caller reports. */
   readonly area: number;
+  /** True when the region's bounds reduced the ring — it flattens there. */
+  readonly clamped: boolean;
 }
 
 /** Everything {@link deriveWallCourse} reads. */
@@ -123,11 +131,13 @@ export interface WallCourseInput {
 /**
  * Derive the ring, or `undefined` when there is nothing worth ringing.
  *
- * Fails — deliberately, and without a fallback — when the extent is empty, when
- * the hull is thinner than {@link WALL_MIN_SPAN} on either axis, or when the
- * offset course does not fit inside `bounds`. A wall clipped by the region edge
- * is not a circumvallation, it is a fence with two loose ends, and the honest
- * answer is a note rather than half a ring.
+ * Fails — deliberately, and without a fallback — when the extent is empty or
+ * the hull is thinner than {@link WALL_MIN_SPAN} on either axis. The region's
+ * bounds are NOT a failure any more (ratified 2026-08-11, Troy c5): they fold
+ * into the support fan as four more half-planes, so a ring the margin would
+ * push past the edge stays closed and flattens along the boundary instead. An
+ * open wall is a fence with two loose ends; a flattened one is still a
+ * circumvallation.
  */
 export function deriveWallCourse(input: WallCourseInput): WallCourse | undefined {
   if (input.extent.length === 0) return undefined;
@@ -144,6 +154,34 @@ export function deriveWallCourse(input: WallCourseInput): WallCourse | undefined
   }
   for (let k = 0; k < COURSE_DIRECTIONS; k++) {
     support[k] = (support[k] as number) + input.margin;
+  }
+
+  // --- step 2b: the region's own half-planes --------------------------------
+  // A settlement grown flush to the region edge used to lose its whole wall
+  // (Troy c5, 2026-08-11; ratified): the ring now stays CLOSED and flattens
+  // along the boundary instead — the bounds are four more support constraints,
+  // on the four axis normals the fan already carries. Buildings standing on
+  // the flattened stretch read as houses built into the wall, which is what a
+  // city that grew to its limit did anyway. `clamped` reports engagement so
+  // the caller can say so; a ring that fit as asked is byte-identical.
+  // Every direction clamps to the inset box's own support value — not only
+  // the four axes. The vertex walk below intersects CONSECUTIVE normals, and
+  // a box corner is an axis-meets-axis vertex it could never enumerate; with
+  // all 24 supports clamped to the box, each plane is tangent at that corner,
+  // so consecutive pairs meet there and the corner is found. The region is
+  // exactly (offset 24-gon ∩ inset box).
+  const bx0 = input.bounds.x0 + WALL_EDGE_INSET;
+  const bx1 = input.bounds.x0 + input.bounds.width - 1 - WALL_EDGE_INSET;
+  const bz0 = input.bounds.z0 + WALL_EDGE_INSET;
+  const bz1 = input.bounds.z0 + input.bounds.depth - 1 - WALL_EDGE_INSET;
+  let clamped = false;
+  for (let k = 0; k < COURSE_DIRECTIONS; k++) {
+    const n = COURSE_NORMALS[k] as Direction;
+    const hBox = Math.max(n.nx * bx0, n.nx * bx1) + Math.max(n.nz * bz0, n.nz * bz1);
+    if ((support[k] as number) > hBox) {
+      support[k] = hBox;
+      clamped = true;
+    }
   }
 
   // --- step 3: the vertices ------------------------------------------------
@@ -191,6 +229,8 @@ export function deriveWallCourse(input: WallCourseInput): WallCourse | undefined
     if (v.z > maxZ) maxZ = v.z;
   }
   if (maxX - minX < WALL_MIN_SPAN || maxZ - minZ < WALL_MIN_SPAN) return undefined;
+  // With the bounds folded into the support fan above, this can only fire on
+  // a rounding grain at a clamped corner — a safety net, not a doctrine.
   const { x0, z0, width, depth } = input.bounds;
   if (minX < x0 || minZ < z0 || maxX >= x0 + width || maxZ >= z0 + depth) return undefined;
 
@@ -211,7 +251,7 @@ export function deriveWallCourse(input: WallCourseInput): WallCourse | undefined
   }
   if (path.length < 8) return undefined;
 
-  return { vertices, path, cornerIndices, area: polygonArea(vertices) };
+  return { vertices, path, cornerIndices, area: polygonArea(vertices), clamped };
 }
 
 /** Drop repeated and collinear-duplicate corners, keeping declaration order. */

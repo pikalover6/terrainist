@@ -2085,10 +2085,14 @@ Rules worth knowing:
   footprint made of buildings and streets; a loose scatter of
   `building.grammar@0` nodes under the root does not, so `walls` lives on those
   two node kinds only.
-- **Leave the ring room.** The course is refused whole (`LOAM-T220`, a note)
-  when the offset ring would fall outside the world region — so a district
-  pressed against the edge of a small world gets no wall. Give the root a
-  bigger envelope or move the district inward.
+- **Leave the ring room.** A district pressed against the world-region edge
+  does not lose its wall — the circuit stays closed and **flattens along the
+  boundary** there (`LOAM-T230`, a note; buildings on the line become part of
+  the wall, and an over-large `margin` steps itself in, `LOAM-T229`). But a
+  flattened stretch is a wall with no ground outside it: no siege room, no
+  approach, nothing to stand on and look up. If the wall is part of the
+  image, site the settlement with `margin` columns of clear ground to the
+  region edge and let the ring breathe.
 - The wall-walk is **walkable end to end by construction**: the crest steps by
   at most one block per column, so there is no riser you have to jump.
 

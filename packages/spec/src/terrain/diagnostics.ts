@@ -287,6 +287,27 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   PROP_RESEATED: "LOAM-T228",
   /**
+   * A wall's requested `margin` pushed the offset ring outside the world
+   * region, and the ring was stepped in (two columns at a time, floor
+   * `WALL_MIN_MARGIN`) until it fit — the circuit built at the reduced margin.
+   *
+   * The same shape as `PROP_RESEATED`: the author's parameter is advice, the
+   * icon is the thing. A walled city with a slightly tighter ring beats an
+   * unwalled one every time a stranger looks at it (Troy c5, 2026-08-11, was
+   * the measured case: `params.walls` on a settlement grown to the region
+   * edge, and the old answer was silently no wall at all).
+   */
+  WALL_MARGIN_REDUCED: "LOAM-T229",
+  /**
+   * The wall's ring met the world-region edge and flattened along it (the
+   * bounds fold into the course's support fan as four more half-planes), so
+   * the circuit stayed CLOSED where the old answer was no wall at all.
+   * Buildings standing on the flattened stretch read as houses built into the
+   * wall. Ratified 2026-08-11; Troy c5 — a city grown flush to z −256 — was
+   * the measured case.
+   */
+  WALL_COURSE_CLAMPED: "LOAM-T230",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.

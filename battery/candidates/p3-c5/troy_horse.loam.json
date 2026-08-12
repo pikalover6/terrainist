@@ -1,0 +1,547 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "troy_horse",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:sand",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:dirt",
+      "ground.stone": "minecraft:sandstone",
+      "ground.cliff": "minecraft:sandstone",
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "ground.peak": "minecraft:cut_sandstone",
+      "liquid.water": "minecraft:water",
+      "road.surface": "minecraft:coarse_dirt",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:sandstone",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cut_sandstone",
+      "plaza.border": "minecraft:smooth_sandstone"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.6,
+    "formality": 0.7,
+    "event": {
+      "kind": "siege",
+      "severity": 0.9,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:beach",
+      "temperature": 0.7,
+      "humidity": 0.2,
+      "snow": "never",
+      "blend": "soft"
+    },
+    "character": {
+      "label": "Troy at the fall",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "motifs": {
+        "roofType": "flat",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.35
+      },
+      "urbanForm": "grown",
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "An unmistakable monumental Trojan horse made from the settlement's own ancient timber palette, using api.theme.wood.planks and api.theme.wood.log with sun-clay stone roles for its small plinth rather than an invented palette. Hollow the body into a concealed walkable chamber with a hidden hatch, room for crouching soldiers and their weapons, and publish a way-in anchor named door; it is the intact gift horse immediately before the soldiers emerge.",
+          "envelope": [
+            23,
+            18,
+            39
+          ]
+        },
+        {
+          "id": "beached_warships",
+          "mode": "landmark",
+          "brief": "A pair of weathered Aegean warship hulks pulled onto the sandy coast beyond Troy's walls, with broken masts, scattered oars, tilted timber hulls and scorched landing traces. Build the ships from api.theme.wood and use the settlement's own ground and stone roles for the wreckage, so the vessels belong to Troy rather than introducing a foreign palette.",
+          "envelope": [
+            56,
+            12,
+            22
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a walled ancient city on a rise above the sandy Aegean coast, with the sea and beached warships visible beyond the walls",
+      "icons": "the Trojan horse before the gates; towering city walls with gates and towers; a citadel-palace above the flat-roofed town; soldiers concealed inside the horse",
+      "fortification": "walled"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy at the fall",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the sandy Aegean coast and the rise of Troy",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.0034,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.34
+          },
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 8,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "city_rise",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad rise carrying the city",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.56
+              ],
+              "radius": 185,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "citadel_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high citadel hill above the town",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.4
+              ],
+              "radius": 54,
+              "height": 26,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 16
+        }
+      },
+      {
+        "id": "aegean_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse dry scrub beyond the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.022,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.18,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "dry_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "coastal_juniper",
+              "weight": 1,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "troy_square",
+        "kind": "primitive",
+        "label": "the central square where the horse waits",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            27,
+            27
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "ancient"
+        ]
+      },
+      {
+        "id": "troy",
+        "kind": "district",
+        "label": "the grown, walled city of Troy",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            320,
+            300
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "courtyard_house",
+            "townhouse",
+            "warehouse",
+            "hall"
+          ],
+          "blockSize": 42,
+          "courtyards": 0.45,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 12,
+            "towerPitch": 36,
+            "height": 9,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "city",
+          "walled",
+          "ancient",
+          "troy"
+        ]
+      },
+      {
+        "id": "main_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the northern-facing gatehouse before the city wall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "troy",
+            "min": 125,
+            "max": 215
+          },
+          {
+            "distance": "troy_square",
+            "min": 60,
+            "max": 145
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "landmark"
+        ]
+      },
+      {
+        "id": "citadel_palace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the citadel palace above the flat-roofed town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:peak",
+            "band": 192
+          },
+          {
+            "distance": "troy_square",
+            "min": 0,
+            "max": 360
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 10,
+            "maxSlope": 85
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "citadel",
+          "landmark"
+        ]
+      },
+      {
+        "id": "trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the Trojan horse waiting before the gates",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            23,
+            18,
+            39
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_gatehouse",
+            "gap": [
+              1,
+              40
+            ]
+          },
+          {
+            "facing": "main_gatehouse"
+          },
+          {
+            "distance": "troy_square",
+            "min": 0,
+            "max": 300
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "horse",
+          "siege"
+        ]
+      },
+      {
+        "id": "beached_warships",
+        "kind": "generator",
+        "generator": "authored:beached_warships",
+        "label": "beached warships beyond Troy's walls",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            56,
+            12,
+            22
+          ]
+        },
+        "params": {
+          "seat": "embed",
+          "embedDepth": 3
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 128,
+            "partial": 0.05,
+            "side": "any"
+          },
+          {
+            "distance": "troy",
+            "min": 0,
+            "max": 420
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 60
+          }
+        ],
+        "tags": [
+          "warship",
+          "beached",
+          "siege"
+        ]
+      },
+      {
+        "id": "troy_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the ancient lanes from the square to the gates and citadel",
+        "params": {
+          "anchors": [
+            "troy",
+            "troy_square",
+            "#tag:house",
+            "main_gatehouse",
+            "citadel_palace",
+            "trojan_horse"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 18,
+          "curvature": 0.55,
+          "maxGrade": 2,
+          "junctionStyle": "plaza"
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        23,
+        18,
+        39
+      ],
+      "sourceHash": "b3:7945654d606654cdb77b65e7223aabf148beee5288ea40fd9e3b94ec6f09bfda",
+      "outputHash": "b3:cd750b3bdac6e56dc62e35fa1fbc3405fbe8a4b0d9e768ccb66134d3c917045c",
+      "source": "export const envelope = [23, 18, 39];\n\nexport default function build(api) {\n  const planks = api.theme.wood.planks;\n  const logs = api.theme.wood.log;\n  const trapdoor = api.theme.wood.trapdoor;\n  const plinth = api.theme.ground.plinth;\n\n  function put(x, y, z, block) {\n    if (\n      x < 0 || y < 0 || z < 0 ||\n      x >= api.size[0] || y >= api.size[1] || z >= api.size[2]\n    ) {\n      return;\n    }\n    api.set(x, y, z, block);\n  }\n\n  function box(x0, y0, z0, x1, y1, z1, block) {\n    for (let x = x0; x <= x1; x++) {\n      for (let y = y0; y <= y1; y++) {\n        for (let z = z0; z <= z1; z++) {\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function profile(z) {\n    if (z === 9 || z === 29) {\n      return [8, 14, 5, 10];\n    }\n    if (z === 10 || z === 28) {\n      return [6, 16, 4, 11];\n    }\n    if (z === 11 || z === 27) {\n      return [5, 17, 3, 12];\n    }\n    return [4, 18, 3, 12];\n  }\n\n  function groundTop(x, z) {\n    let top = Math.floor(api.heightAt(x, z));\n    if (top < 0) {\n      top = 0;\n    }\n    if (top > 2) {\n      top = 2;\n    }\n    return top;\n  }\n\n  // A shaped clay-stone plinth follows the local terrain.\n  for (let z = 9; z <= 29; z++) {\n    const p = profile(z);\n    for (let x = p[0]; x <= p[1]; x++) {\n      const top = groundTop(x, z);\n      for (let y = 0; y <= top; y++) {\n        put(x, y, z, plinth);\n      }\n    }\n  }\n\n  // A short, solid stepped approach leads to the concealed side hatch.\n  for (let x = 0; x <= 3; x++) {\n    for (let z = 21; z <= 22; z++) {\n      const top = Math.max(x, groundTop(x, z));\n      for (let y = 0; y <= top; y++) {\n        put(x, y, z, x === 3 ? logs : planks);\n      }\n    }\n  }\n\n  // Rounded timber barrel, left hollow through its middle.\n  for (let z = 9; z <= 29; z++) {\n    const p = profile(z);\n    const xmin = p[0];\n    const xmax = p[1];\n    const ymin = p[2];\n    const ymax = p[3];\n\n    for (let x = xmin; x <= xmax; x++) {\n      for (let y = ymin; y <= ymax; y++) {\n        const inRoom =\n          x >= 7 && x <= 15 &&\n          y >= 4 && y <= 9 &&\n          z >= 13 && z <= 25;\n\n        const hatchGap =\n          x >= 4 && x <= 6 &&\n          y >= 4 && y <= 6 &&\n          z >= 20 && z <= 22;\n\n        if (inRoom || hatchGap) {\n          continue;\n        }\n\n        const structural =\n          x === xmin || x === xmax ||\n          y === ymin || y === ymax ||\n          z === 9 || z === 29;\n\n        put(x, y, z, structural ? logs : planks);\n      }\n    }\n  }\n\n  // Four stout legs, each resting on a terrain-aware foundation.\n  const legs = [\n    [4, 6, 13, 15],\n    [16, 18, 13, 15],\n    [4, 6, 24, 26],\n    [16, 18, 24, 26]\n  ];\n\n  for (let i = 0; i < legs.length; i++) {\n    const leg = legs[i];\n    for (let x = leg[0]; x <= leg[1]; x++) {\n      for (let z = leg[2]; z <= leg[3]; z++) {\n        const first = Math.max(1, groundTop(x, z) + 1);\n        for (let y = first; y <= 5; y++) {\n          put(x, y, z, y === first ? planks : logs);\n        }\n      }\n    }\n  }\n\n  // Timber framing around the concealed hatch.\n  for (let y = 4; y <= 7; y++) {\n    put(4, y, 19, logs);\n    put(4, y, 23, logs);\n  }\n  for (let z = 20; z <= 22; z++) {\n    put(4, 7, z, logs);\n  }\n\n  // A connected outer frame supports the hinged hatch cover.\n  for (let z = 20; z <= 23; z++) {\n    for (let y = 3; y <= 5; y++) {\n      put(2, y, z, logs);\n    }\n  }\n  put(3, 4, 21, trapdoor);\n  put(3, 4, 22, trapdoor);\n\n  // Sloping neck rising from the front of the barrel.\n  box(7, 9, 8, 15, 14, 12, planks);\n  box(7, 10, 6, 15, 15, 8, planks);\n  box(7, 11, 5, 15, 15, 6, planks);\n  box(6, 12, 4, 16, 16, 5, planks);\n\n  for (let z = 8; z <= 12; z++) {\n    put(7, 9, z, logs);\n    put(15, 9, z, logs);\n  }\n  for (let z = 5; z <= 8; z++) {\n    put(7, 12, z, logs);\n    put(15, 12, z, logs);\n  }\n\n  // A stepped mane runs up the rear edge of the neck.\n  for (let i = 0; i < 5; i++) {\n    const z = 12 - i;\n    const y = 10 + i;\n    put(6, y, z, logs);\n    put(6, y + 1, z, logs);\n  }\n\n  // Head, cheeks, muzzle, and nose facing toward z = 0.\n  box(7, 12, 8, 15, 15, 8, planks);\n  box(6, 12, 5, 16, 16, 7, planks);\n  box(7, 11, 3, 15, 15, 4, planks);\n  box(7, 11, 2, 15, 14, 2, planks);\n  box(8, 10, 0, 14, 13, 1, planks);\n\n  for (let y = 12; y <= 15; y++) {\n    put(6, y, 5, logs);\n    put(16, y, 5, logs);\n  }\n\n  // Ears and small timber details give the head its horse-like expression.\n  box(7, 16, 5, 9, 17, 6, logs);\n  box(13, 16, 5, 15, 17, 6, logs);\n  put(6, 14, 6, logs);\n  put(16, 14, 6, logs);\n  put(8, 11, 0, logs);\n  put(14, 11, 0, logs);\n\n  // A long, descending tail joined into the rear bulkhead.\n  box(9, 8, 29, 13, 10, 31, logs);\n  box(9, 7, 31, 13, 9, 33, planks);\n  box(8, 6, 33, 12, 8, 35, logs);\n  box(7, 5, 35, 11, 7, 37, planks);\n  box(7, 4, 37, 10, 6, 38, logs);\n\n  return {\n    name: \"Trojan Horse of Troy\",\n    seatY: 0,\n    anchors: {\n      door: [3, 4, 22]\n    },\n    interiors: [\n      {\n        min: [7, 4, 13],\n        max: [15, 9, 25],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "beached_warships": {
+      "mode": "landmark",
+      "envelope": [
+        56,
+        18,
+        22
+      ],
+      "sourceHash": "b3:dfff7c9c2f0d3c2b790208626c1388a354895b36733bd18bd6276600057eeeaa",
+      "outputHash": "b3:3936d594243834e5b5a5ba14bbb4545fcb9c7f1c161e1a39758ac108caff0ac6",
+      "source": "export const envelope = [56, 18, 22];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const seatY = 5;\n  const wood = api.theme.wood;\n  const ground = api.theme.ground;\n  const stone = api.theme.stone;\n\n  function inXZ(x, z) {\n    return x >= 0 && x < W && z >= 0 && z < D;\n  }\n\n  function put(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function terrainY(x, z) {\n    let y = Math.floor(seatY + api.heightAt(x, z));\n\n    if (y < 0) {\n      return 0;\n    }\n\n    if (y >= H) {\n      return H - 1;\n    }\n\n    return y;\n  }\n\n  function nominalBase(t) {\n    return seatY + Math.floor((3 * t) / 22);\n  }\n\n  function shipX(ship, t) {\n    return ship.x0 + ship.dir * t;\n  }\n\n  function radius(t) {\n    if (t === 0 || t === 22) {\n      return 0;\n    }\n\n    if (t === 1 || t === 21) {\n      return 1;\n    }\n\n    if (t === 2 || t === 20) {\n      return 2;\n    }\n\n    return 3;\n  }\n\n  function baseAt(t, x, z) {\n    let b = nominalBase(t);\n    const gy = terrainY(x, z);\n\n    if (gy > b) {\n      b = gy;\n    }\n\n    const cap = H - 7;\n\n    if (b > cap) {\n      b = cap;\n    }\n\n    if (b < 0) {\n      b = 0;\n    }\n\n    return b;\n  }\n\n  function footing(x, z, top) {\n    const gy = terrainY(x, z);\n\n    for (let y = gy; y < top; y++) {\n      put(x, y, z, ground.plinth);\n    }\n  }\n\n  function lowColumn(x, z, block) {\n    if (!inXZ(x, z)) {\n      return;\n    }\n\n    const gy = terrainY(x, z);\n    const lo = Math.min(gy, seatY);\n    const hi = Math.max(gy, seatY);\n\n    for (let y = lo; y < hi; y++) {\n      put(x, y, z, ground.plinth);\n    }\n\n    put(x, hi, z, block);\n  }\n\n  function rubbleJoin(x, z, joinY, topBlock) {\n    if (!inXZ(x, z)) {\n      return;\n    }\n\n    const gy = terrainY(x, z);\n    const lo = Math.min(gy, joinY);\n    const hi = Math.max(gy, joinY);\n\n    for (let y = lo; y < hi; y++) {\n      put(x, y, z, ground.revetment);\n    }\n\n    put(x, joinY, z, topBlock);\n  }\n\n  const west = {\n    x0: 3,\n    dir: 1,\n    cz: 6,\n    id: 0\n  };\n\n  const east = {\n    x0: 52,\n    dir: -1,\n    cz: 15,\n    id: 1\n  };\n\n  function buildShip(ship) {\n    for (let t = 0; t <= 22; t++) {\n      const x = shipX(ship, t);\n      const r = radius(t);\n      const centerBase = baseAt(t, x, ship.cz);\n\n      for (let y = seatY; y <= centerBase; y++) {\n        put(x, y, ship.cz, wood.log);\n      }\n\n      for (let dz = -r; dz <= r; dz++) {\n        const z = ship.cz + dz;\n        const b = baseAt(t, x, z);\n\n        footing(x, z, b);\n\n        for (let q = 0; q < 4; q++) {\n          const rr = q === 3 ? Math.max(0, r - 1) : r;\n\n          if (Math.abs(dz) > rr) {\n            continue;\n          }\n\n          const damage =\n            (t * 13 + (dz + 3) * 7 + q * 5 + ship.id * 17) % 37;\n\n          if (q === 3 && damage === 0) {\n            continue;\n          }\n\n          let block = wood.planks;\n\n          if (q === 0) {\n            block = wood.log;\n          } else if (\n            q === 1 &&\n            Math.abs(t * 2 + dz + ship.id) % 9 === 0\n          ) {\n            block = wood.log;\n          } else if (\n            q === 2 &&\n            Math.abs(t * 3 + dz + ship.id * 2) % 6 === 0\n          ) {\n            block = wood.stripped;\n          } else if (\n            q === 3 &&\n            Math.abs(t + dz + ship.id) % 7 === 0\n          ) {\n            block = wood.stripped;\n          }\n\n          if (\n            q === 0 &&\n            dz === 0 &&\n            (t + ship.id) % 6 === 2\n          ) {\n            block = stone.accent;\n          }\n\n          put(x, b + q, z, block);\n        }\n      }\n\n      if (r > 0) {\n        const leftZ = ship.cz - r;\n        const rightZ = ship.cz + r;\n        const leftBase = baseAt(t, x, leftZ);\n        const rightBase = baseAt(t, x, rightZ);\n\n        put(x, leftBase + 3, leftZ, wood.log);\n        put(x, rightBase + 3, rightZ, wood.log);\n\n        if ((t + ship.id) % 6 !== 2) {\n          put(x, leftBase + 4, leftZ, wood.log);\n          put(x, rightBase + 4, rightZ, wood.log);\n        }\n      }\n\n      if (r >= 2 && t % 4 === 0) {\n        for (let dz = -r; dz <= r; dz++) {\n          const z = ship.cz + dz;\n          const ribBase = baseAt(t, x, z);\n          put(x, ribBase + 2, z, wood.log);\n        }\n      }\n\n      if (r >= 2 && (t + ship.id) % 4 === 1) {\n        for (const side of [-1, 1]) {\n          const z = ship.cz + side * r;\n          const strakeBase = baseAt(t, x, z);\n          put(x, strakeBase + 1, z, wood.stripped);\n        }\n      }\n    }\n  }\n\n  buildShip(west);\n  buildShip(east);\n\n  function addProw(ship) {\n    const t = 22;\n    const x = shipX(ship, t);\n    const z = ship.cz;\n    const b = baseAt(t, x, z);\n\n    put(x, b + 3, z, wood.planks);\n\n    for (let k = 1; k <= 3; k++) {\n      put(x, b + 3 + k, z, wood.log);\n    }\n\n    put(x + ship.dir, b + 5, z, wood.log);\n    put(\n      x + ship.dir,\n      b + 5,\n      z + (ship.id === 0 ? 1 : -1),\n      wood.log\n    );\n    put(x + 2 * ship.dir, b + 5, z, wood.stripped);\n  }\n\n  function addMast(ship, t, tall) {\n    const x = shipX(ship, t);\n    const z = ship.cz;\n    const b = baseAt(t, x, z);\n    const deck = b + 3;\n\n    put(x, deck, z, wood.planks);\n\n    if (tall) {\n      for (let k = 1; k <= 5; k++) {\n        put(x, deck + k, z, wood.log);\n      }\n\n      for (let s = -3; s <= 3; s++) {\n        const sparBlock = Math.abs(s) === 3 ? wood.stripped : wood.log;\n        put(x, deck + 3, z + s, sparBlock);\n      }\n\n      for (let s = -2; s <= 0; s++) {\n        put(x, deck + 4, z + s, wood.stripped);\n      }\n\n      const brokenX = x + ship.dir;\n      put(brokenX, deck + 5, z, wood.log);\n      put(brokenX, deck + 6, z, wood.log);\n      put(brokenX, deck + 7, z, wood.stripped);\n      put(x + 2 * ship.dir, deck + 7, z, wood.log);\n    } else {\n      for (let k = 1; k <= 3; k++) {\n        put(x, deck + k, z, wood.log);\n      }\n\n      put(x + ship.dir, deck + 3, z, wood.log);\n      put(x + ship.dir, deck + 4, z, wood.stripped);\n    }\n  }\n\n  addProw(west);\n  addProw(east);\n\n  addMast(west, 8, true);\n  addMast(west, 16, false);\n  addMast(east, 12, true);\n  addMast(east, 6, false);\n\n  function addOar(ship, t, side, length, dx) {\n    const x0 = shipX(ship, t);\n    const z0 = ship.cz + side * radius(t);\n    const startBase = baseAt(t, x0, z0);\n\n    let tx = x0 + dx;\n    let tz = z0 + side * length;\n\n    if (tx < 0) {\n      tx = 0;\n    }\n\n    if (tx >= W) {\n      tx = W - 1;\n    }\n\n    if (tz < 0) {\n      tz = 0;\n    }\n\n    if (tz >= D) {\n      tz = D - 1;\n    }\n\n    const y0 = Math.min(H - 2, startBase + 3);\n    const gy = terrainY(tx, tz);\n    const ty = Math.max(1, Math.min(H - 2, gy + 1));\n\n    let x = x0;\n    let y = y0;\n    let z = z0;\n\n    put(x, y, z, wood.log);\n\n    let steps = 0;\n\n    while ((x !== tx || y !== ty || z !== tz) && steps < 100) {\n      steps++;\n      let moved = false;\n\n      if (y !== ty && steps % 3 === 0) {\n        y += y < ty ? 1 : -1;\n        moved = true;\n      } else if (z !== tz) {\n        z += z < tz ? 1 : -1;\n        moved = true;\n      } else if (x !== tx) {\n        x += x < tx ? 1 : -1;\n        moved = true;\n      } else if (y !== ty) {\n        y += y < ty ? 1 : -1;\n        moved = true;\n      }\n\n      if (moved) {\n        put(\n          x,\n          y,\n          z,\n          steps % 4 === 0 ? wood.stripped : wood.log\n        );\n      }\n    }\n\n    if (gy < ty) {\n      for (let yy = gy; yy < ty; yy++) {\n        put(tx, yy, tz, ground.revetment);\n      }\n    }\n\n    const bladeZ = tz + side;\n\n    if (inXZ(tx, bladeZ)) {\n      put(tx, ty, bladeZ, wood.planks);\n      const bladeGround = terrainY(tx, bladeZ);\n\n      if (bladeGround < ty) {\n        for (let yy = bladeGround; yy < ty; yy++) {\n          put(tx, yy, bladeZ, ground.revetment);\n        }\n      }\n    }\n  }\n\n  addOar(west, 5, -1, 3, -1);\n  addOar(west, 11, 1, 5, 1);\n  addOar(west, 17, -1, 3, 1);\n\n  addOar(east, 5, 1, 3, 1);\n  addOar(east, 11, -1, 5, -1);\n  addOar(east, 17, 1, 3, -1);\n\n  function scorchPatch(ship, t, side) {\n    const x = shipX(ship, t);\n    const z = ship.cz + side * radius(t);\n    const b = baseAt(t, x, z);\n\n    put(x, b + 1, z, stone.accent);\n\n    const nextX = x + ship.dir;\n\n    if (inXZ(nextX, z)) {\n      put(nextX, b + 1, z, stone.accent);\n    }\n  }\n\n  scorchPatch(west, 7, 1);\n  scorchPatch(west, 14, -1);\n  scorchPatch(east, 8, -1);\n  scorchPatch(east, 15, 1);\n\n  const traceSeen = new Set();\n  const traceCells = [];\n\n  function traceCell(x, z) {\n    if (!inXZ(x, z)) {\n      return;\n    }\n\n    const key = x + \":\" + z;\n\n    if (traceSeen.has(key)) {\n      return;\n    }\n\n    traceSeen.add(key);\n\n    const pattern = (x * 11 + z * 7) % 23;\n    let block = ground.pavement;\n\n    if (pattern === 0 || pattern === 1) {\n      block = ground.revetment;\n    } else if (pattern === 2) {\n      block = stone.accent;\n    } else if (pattern === 4) {\n      block = ground.scree;\n    }\n\n    lowColumn(x, z, block);\n    traceCells.push([x, z]);\n  }\n\n  function traceBand(x, z, width) {\n    for (let dz = -width; dz <= width; dz++) {\n      traceCell(x, z + dz);\n    }\n  }\n\n  function traceLine(x0, z0, x1, z1, width) {\n    let x = x0;\n    let z = z0;\n\n    traceBand(x, z, width);\n\n    while (x !== x1 || z !== z1) {\n      if (x !== x1) {\n        x += x < x1 ? 1 : -1;\n        traceBand(x, z, width);\n      }\n\n      if (z !== z1) {\n        z += z < z1 ? 1 : -1;\n        traceBand(x, z, width);\n      }\n    }\n  }\n\n  traceLine(25, 6, 30, 15, 1);\n  traceLine(3, 5, 0, 4, 1);\n  traceLine(3, 7, 0, 8, 1);\n  traceLine(52, 14, 55, 13, 1);\n  traceLine(52, 16, 55, 17, 1);\n\n  function addBallast(ship, t, side) {\n    const x = shipX(ship, t);\n    const bodyZ = ship.cz + side * radius(t);\n    const rubbleZ = bodyZ + side;\n    const joinY = baseAt(t, x, bodyZ);\n\n    if (!inXZ(x, rubbleZ)) {\n      return;\n    }\n\n    rubbleJoin(x, rubbleZ, joinY, stone.accent);\n\n    const secondZ = rubbleZ + side;\n\n    if (inXZ(x, secondZ)) {\n      rubbleJoin(x, secondZ, joinY, stone.primary);\n    }\n  }\n\n  addBallast(west, 4, -1);\n  addBallast(west, 10, 1);\n  addBallast(west, 16, -1);\n  addBallast(east, 4, 1);\n  addBallast(east, 10, -1);\n  addBallast(east, 16, 1);\n\n  for (let i = 3; i < traceCells.length; i += 4) {\n    const x = traceCells[i][0];\n    const z = traceCells[i][1];\n    const side = i % 2 === 0 ? 1 : -1;\n    const rubbleZ = z + side;\n\n    if (!inXZ(x, rubbleZ)) {\n      continue;\n    }\n\n    rubbleJoin(x, rubbleZ, seatY, stone.accent);\n\n    let secondX = x + (i % 3 === 0 ? 1 : -1);\n\n    if (!inXZ(secondX, rubbleZ)) {\n      secondX = x - (i % 3 === 0 ? 1 : -1);\n    }\n\n    if (inXZ(secondX, rubbleZ)) {\n      rubbleJoin(secondX, rubbleZ, seatY, stone.primary);\n    }\n  }\n\n  const westBowY = Math.min(\n    H - 1,\n    baseAt(22, shipX(west, 22), west.cz) + 3\n  );\n\n  const eastBowY = Math.min(\n    H - 1,\n    baseAt(22, shipX(east, 22), east.cz) + 3\n  );\n\n  return {\n    name: \"Beached Aegean Warships\",\n    seatY: seatY,\n    anchors: {\n      landing: [28, seatY, 9],\n      westBow: [25, westBowY, 6],\n      eastBow: [30, eastBowY, 15],\n      westShore: [0, seatY, 5],\n      eastShore: [55, seatY, 16]\n    }\n  };\n}"
+    }
+  }
+}
