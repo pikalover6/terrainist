@@ -123,8 +123,26 @@ same day: fabric-hull.ts 24-direction support hull of built fabric
 (+paved columns inside dilated core; precinct rect = clip window
 only, which is what makes nesting work); margin re-based both paths;
 walled_quarter enclosed area −21%, wall-to-fabric median 6 vs >100;
-hamlet/degenerate falls back to envelope; compiler 1904/0. NEXT:
-formPacks impl, 145 catalog rows (sphinx excluded), classical pack.
+hamlet/degenerate falls back to envelope; compiler 1904/0. THEN LANDED same
+day: 144 catalog rows (441→585, impl 360); formPacks end-to-end
+(W516/W517, expansion via grammar.mix, reach law by reference, all
+members not_started so packs light up as built). **TROY C4**: c4a
+died at E336 gate (cut_sandstone[axis=y]; no world; $0.07); c4b with
+--compile-rounds 4 SUCCEEDED ($0.11): prepass set fortification
+walled itself + Luna authored walls (W489, authored wins = now
+fabric-hugging + sun_clay-derived); programs trojan_horse +
+beached_warships; installed troy_horse__c4; archived
+battery/candidates/p3-c4 (log tail only — TEE GENERATES NEXT TIME).
+Top-down reads: wall hugs fabric (lawn dead), sandy circuit, dense
+diagonal-grid fabric, horse up the north road on a pad ~80 blocks
+from the gate (brief said "at the gate"), warships seated NEAR THE
+HORSE inland-ish not on the west shore (verify on walk), ambient
+still lush green not Aegean gold, no citadel circuit this time.
+CLASSICAL PACK: half B landed (11 impl + acropolis_terrace honest
+skip — retaining-pass shaped, unhostable; agora_colonnade/
+triumphal_arch kind→prop); half A in flight; orchestrator owes the
+single classical exhibit incl. 9 props in prop plan (trireme on
+water) — props.test exhibit-coverage red until then BY DESIGN.
 
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);

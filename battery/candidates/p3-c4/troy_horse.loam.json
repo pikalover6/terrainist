@@ -1,0 +1,522 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "troy_horse",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge from the horse.",
+    "spawn": {
+      "at": [
+        0.78,
+        0.5
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:gravel",
+      "ground.cliff": "minecraft:sandstone",
+      "ground.peak": "minecraft:sandstone",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:smooth_sandstone",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cut_sandstone",
+      "plaza.border": "minecraft:chiseled_sandstone"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "decline": 0,
+    "climate": {
+      "biome": "minecraft:beach",
+      "temperature": 0.5,
+      "humidity": 0.3,
+      "snow": "never",
+      "blend": "soft"
+    },
+    "character": {
+      "label": "Troy",
+      "materialTheme": "sun_clay",
+      "fortification": "walled",
+      "archetypes": {
+        "prefer": [
+          "watchtower"
+        ],
+        "forbid": []
+      },
+      "props": {
+        "prefer": [],
+        "forbid": []
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.4
+      },
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "A monumental wooden Trojan horse stands at the gate: full-bodied with four timber legs, a hollow belly, a concealed closed hatch and a small internal stair, poised for soldiers to emerge but showing no soldiers yet. Use the settlement's own api.theme wood, stone and ground roles so it belongs to Troy; only weathered timber and rope may be icon-specific, and publish a primary way-in anchor named door.",
+          "envelope": [
+            27,
+            18,
+            15
+          ]
+        },
+        {
+          "id": "beached_warships",
+          "mode": "landmark",
+          "brief": "A compact line of two or three ancient warships lies beached along the sandy Aegean shore, with tilted hulls, oars, raised and broken masts, ropes and dragged-up keels. Use the settlement's own api.theme for the shore works and structure, with weathered timber, rope and sail cloth as the icon-specific materials.",
+          "envelope": [
+            58,
+            16,
+            34
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a walled city on a rise above a sandy Aegean coast, with the sea and ships in view",
+      "icons": "the wooden Trojan horse at the gates; massive city walls with towers; beached warships along the shore; a citadel-palace above the flat-roofed town",
+      "timing": "the moment before the soldiers emerge from the horse"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy before the horse opens",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the rise and sandy coast around Troy",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 69,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": false,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.38
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 8,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "troy_rise",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad rise carrying the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.55
+              ],
+              "radius": 105,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "citadel_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the higher hill above the town",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.34
+              ],
+              "radius": 62,
+              "height": 30,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "warm dry Aegean coastal climate",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0011,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.1,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "troy",
+        "kind": "district",
+        "label": "the walled city of Troy, dense and stepped on its rise",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            220,
+            200
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "adobe_pueblo",
+            "riad",
+            "townhouse",
+            "watchtower"
+          ],
+          "blockSize": 36,
+          "plaza": true,
+          "courtyards": 0.35,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 12,
+            "towerPitch": 32,
+            "height": 9,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "city",
+          "troy",
+          "walled"
+        ]
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the east gate square where the horse waits",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            27,
+            27
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.78,
+              0.5
+            ]
+          },
+          {
+            "distance": "troy",
+            "min": 8,
+            "max": 220
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "gate"
+        ]
+      },
+      {
+        "id": "gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse facing the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              32
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "landmark"
+        ]
+      },
+      {
+        "id": "citadel_palace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the citadel-palace above the flat-roofed town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:peak",
+            "band": 38
+          },
+          {
+            "distance": "troy",
+            "min": 20,
+            "max": 180
+          },
+          {
+            "facing": "troy"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "keep",
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the closed wooden horse before the soldiers emerge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            27,
+            18,
+            15
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "gatehouse",
+            "gap": [
+              2,
+              32
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 0,
+            "max": 96
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "icon"
+        ]
+      },
+      {
+        "id": "beached_warships",
+        "kind": "generator",
+        "generator": "authored:beached_warships",
+        "label": "ancient warships hauled up along the sandy shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            58,
+            16,
+            34
+          ]
+        },
+        "params": {
+          "seat": "embed",
+          "embedDepth": 2
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 64,
+            "partial": 0.25
+          },
+          {
+            "distance": "troy",
+            "max": 400
+          }
+        ],
+        "tags": [
+          "landmark",
+          "warship",
+          "shore"
+        ]
+      },
+      {
+        "id": "troy_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the lanes from the gate square through Troy and up to the citadel",
+        "params": {
+          "anchors": [
+            "plaza",
+            "troy",
+            "#tag:house",
+            "gatehouse",
+            "citadel_palace",
+            "trojan_horse"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": false
+        }
+      },
+      {
+        "id": "coastal_wilds",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse Aegean oak and juniper beyond the city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.035,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            85
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.28,
+            "flowers": 0.03,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "coastal_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "aegean_juniper",
+              "weight": 1,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        18,
+        15
+      ],
+      "sourceHash": "b3:2f5218464bd2d752dc86c49d9083fa9b8e0906b67d5fd6c1fba5c37968a2edb8",
+      "outputHash": "b3:09edbc5c6366cd52220ddbbb56541cc9b5fc0366919c77a0d51f0dfc04187c03",
+      "source": "export const envelope = [27, 18, 15];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const voxels = [];\n  for (let y = 0; y < H; y++) {\n    const layer = [];\n    for (let z = 0; z < D; z++) {\n      layer.push(new Array(W).fill(null));\n    }\n    voxels.push(layer);\n  }\n\n  function put(x, y, z, block) {\n    if (\n      x >= 0 && x < W &&\n      y >= 0 && y < H &&\n      z >= 0 && z < D &&\n      block !== undefined &&\n      block !== null\n    ) {\n      voxels[y][z][x] = block;\n    }\n  }\n\n  function clearCell(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      voxels[y][z][x] = null;\n    }\n  }\n\n  function box(x0, y0, z0, x1, y1, z1, block) {\n    for (let x = x0; x <= x1; x++) {\n      for (let y = y0; y <= y1; y++) {\n        for (let z = z0; z <= z1; z++) {\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function rewriteStates(block, desired) {\n    const open = block.indexOf(\"[\");\n    if (open < 0) {\n      let result = block + \"[\";\n      for (let i = 0; i < desired.length; i++) {\n        if (i > 0) {\n          result += \",\";\n        }\n        result += desired[i][0] + \"=\" + desired[i][1];\n      }\n      return result + \"]\";\n    }\n\n    const close = block.lastIndexOf(\"]\");\n    const end = close > open ? close : block.length;\n    const id = block.slice(0, open);\n    const raw = block.slice(open + 1, end);\n    const names = [];\n    const values = [];\n\n    if (raw.length > 0) {\n      const parts = raw.split(\",\");\n      for (let i = 0; i < parts.length; i++) {\n        const eq = parts[i].indexOf(\"=\");\n        if (eq > 0) {\n          names.push(parts[i].slice(0, eq));\n          values.push(parts[i].slice(eq + 1));\n        }\n      }\n    }\n\n    for (let i = 0; i < desired.length; i++) {\n      const key = desired[i][0];\n      const value = desired[i][1];\n      let found = -1;\n\n      for (let j = 0; j < names.length; j++) {\n        if (names[j] === key) {\n          found = j;\n          break;\n        }\n      }\n\n      if (found >= 0) {\n        values[found] = value;\n      } else {\n        names.push(key);\n        values.push(value);\n      }\n    }\n\n    let result = id + \"[\";\n    for (let i = 0; i < names.length; i++) {\n      if (i > 0) {\n        result += \",\";\n      }\n      result += names[i] + \"=\" + values[i];\n    }\n    return result + \"]\";\n  }\n\n  const wood = api.theme.wood;\n  const stone = api.theme.stone;\n  const ground = api.theme.ground;\n\n  const planks = wood.planks;\n  const log = wood.log;\n  const stripped = wood.stripped;\n  const slab = wood.slab;\n  const fence = wood.fence;\n  const stonePrimary = stone.primary;\n  const stoneAccent = stone.accent;\n  const plinth = ground.plinth;\n  const coping = ground.coping;\n\n  const stairs = rewriteStates(wood.stairs, [\n    [\"facing\", \"east\"],\n    [\"half\", \"bottom\"],\n    [\"shape\", \"straight\"],\n    [\"waterlogged\", \"false\"]\n  ]);\n\n  const trapdoor = rewriteStates(wood.trapdoor, [\n    [\"facing\", \"north\"],\n    [\"half\", \"bottom\"],\n    [\"open\", \"false\"],\n    [\"powered\", \"false\"],\n    [\"waterlogged\", \"false\"]\n  ]);\n\n  const terrainLevels = Array.from(\n    { length: D },\n    function () {\n      return new Array(W).fill(null);\n    }\n  );\n\n  function terrainLevel(x, z) {\n    let level = terrainLevels[z][x];\n\n    if (level === null) {\n      let h = api.heightAt(x, z);\n\n      if (typeof h !== \"number\" || !Number.isFinite(h)) {\n        h = 0;\n      }\n\n      level = Math.ceil(h);\n\n      if (level < 0) {\n        level = 0;\n      }\n\n      if (level > 5) {\n        level = 5;\n      }\n\n      terrainLevels[z][x] = level;\n    }\n\n    return level;\n  }\n\n  for (let x = 5; x <= 19; x++) {\n    for (let y = 5; y <= 11; y++) {\n      for (let z = 3; z <= 11; z++) {\n        const hollow =\n          x >= 7 && x <= 17 &&\n          y >= 7 && y <= 10 &&\n          z >= 5 && z <= 9;\n\n        if (!hollow) {\n          put(x, y, z, planks);\n        }\n      }\n    }\n  }\n\n  for (let x = 5; x <= 19; x++) {\n    for (let z = 3; z <= 11; z++) {\n      put(x, 5, z, log);\n      put(x, 11, z, log);\n    }\n  }\n\n  for (let y = 6; y <= 10; y++) {\n    for (let z = 3; z <= 11; z++) {\n      put(5, y, z, log);\n      put(19, y, z, log);\n    }\n  }\n\n  box(4, 8, 4, 6, 10, 10, log);\n  box(18, 8, 4, 20, 11, 10, log);\n\n  for (let x = 7; x <= 17; x += 4) {\n    for (let y = 7; y <= 10; y++) {\n      put(x, y, 3, stripped);\n    }\n  }\n\n  for (let x = 6; x <= 18; x++) {\n    put(x, 12, 3, slab);\n    put(x, 12, 11, slab);\n  }\n\n  const legs = [\n    [6, 7, 4, 5],\n    [6, 7, 9, 10],\n    [17, 18, 4, 5],\n    [17, 18, 9, 10]\n  ];\n\n  for (let i = 0; i < legs.length; i++) {\n    const lx0 = legs[i][0];\n    const lx1 = legs[i][1];\n    const lz0 = legs[i][2];\n    const lz1 = legs[i][3];\n\n    for (let x = lx0 - 1; x <= lx1 + 1; x++) {\n      for (let z = lz0 - 1; z <= lz1 + 1; z++) {\n        const level = terrainLevel(x, z);\n\n        for (let y = 0; y <= level; y++) {\n          put(x, y, z, plinth);\n        }\n\n        const border =\n          x === lx0 - 1 || x === lx1 + 1 ||\n          z === lz0 - 1 || z === lz1 + 1;\n\n        if (border && level + 1 < H) {\n          put(x, level + 1, z, coping);\n        }\n      }\n    }\n\n    for (let x = lx0; x <= lx1; x++) {\n      for (let z = lz0; z <= lz1; z++) {\n        const level = terrainLevel(x, z);\n        put(x, level, z, stonePrimary);\n\n        for (let y = level + 1; y <= 6; y++) {\n          put(x, y, z, log);\n        }\n      }\n    }\n  }\n\n  box(18, 9, 4, 21, 12, 10, planks);\n  box(19, 11, 5, 22, 14, 9, planks);\n  box(21, 13, 4, 24, 15, 10, planks);\n  box(23, 13, 5, 26, 14, 9, planks);\n  box(24, 14, 5, 26, 15, 9, planks);\n\n  box(22, 16, 4, 23, 17, 5, log);\n  box(22, 16, 9, 23, 17, 10, log);\n\n  for (let z = 5; z <= 9; z++) {\n    put(26, 13, z, stripped);\n    put(26, 14, z, stripped);\n  }\n\n  put(23, 14, 3, stoneAccent);\n  put(23, 14, 11, stoneAccent);\n\n  for (let x = 18; x <= 21; x++) {\n    for (let y = 10; y <= 14; y++) {\n      put(x, y, 3, stripped);\n    }\n  }\n\n  box(4, 9, 6, 5, 10, 8, log);\n  box(3, 8, 6, 4, 9, 8, stripped);\n  box(2, 7, 6, 3, 8, 8, log);\n  box(1, 6, 7, 2, 7, 7, stripped);\n  put(1, 6, 7, fence);\n\n  for (let x = 11; x <= 14; x++) {\n    for (let z = 5; z <= 8; z++) {\n      const frame =\n        x === 11 || x === 14 ||\n        z === 5 || z === 8;\n\n      if (frame) {\n        put(x, 6, z, stripped);\n      }\n    }\n  }\n\n  for (let x = 12; x <= 13; x++) {\n    for (let z = 6; z <= 7; z++) {\n      clearCell(x, 5, z);\n      put(x, 6, z, trapdoor);\n    }\n  }\n\n  for (let i = 0; i < 3; i++) {\n    const x = 9 + i;\n    const y = 9 - i;\n    const z = 7;\n\n    for (let supportY = 7; supportY < y; supportY++) {\n      put(x, supportY, z, planks);\n    }\n\n    put(x, y, z, stairs);\n  }\n\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const block = voxels[y][z][x];\n\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Trojan Horse of Troy\",\n    seatY: 0,\n    anchors: {\n      door: [12, 6, 6]\n    },\n    interiors: [\n      {\n        min: [7, 7, 5],\n        max: [17, 10, 9],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    },
+    "beached_warships": {
+      "mode": "landmark",
+      "envelope": [
+        58,
+        16,
+        34
+      ],
+      "sourceHash": "b3:c3f973e19cc364a79d4e2fb54aaff70171d4875f793108e475636214693b0bd7",
+      "outputHash": "b3:58ae5c573366608f9678cdbdfe63a943cb14b08efed1e5a829041a9112a404b9",
+      "source": "export const envelope = [58, 16, 34];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const wood = api.theme.wood;\n  const ground = api.theme.ground;\n  const seat = 3;\n  const ropeBlock = wood.stripped;\n\n  const sailWhite = \"minecraft:white_wool\";\n  const sailWeathered = \"minecraft:light_gray_wool\";\n\n  const put = (x, y, z, block) => {\n    if (\n      Number.isInteger(x) &&\n      Number.isInteger(y) &&\n      Number.isInteger(z) &&\n      x >= 0 &&\n      x < W &&\n      y >= 0 &&\n      y < H &&\n      z >= 0 &&\n      z < D\n    ) {\n      api.set(x, y, z, block);\n    }\n  };\n\n  const terrain = new Array(W);\n  const upperTerrain = Math.max(0, H - 10);\n\n  for (let x = 0; x < W; x++) {\n    terrain[x] = new Array(D);\n\n    for (let z = 0; z < D; z++) {\n      let h = Math.floor(api.heightAt(x, z));\n\n      if (!Number.isFinite(h)) {\n        h = 0;\n      }\n\n      let gy = seat + h;\n\n      if (gy < 0) {\n        gy = 0;\n      }\n\n      if (gy > upperTerrain) {\n        gy = upperTerrain;\n      }\n\n      terrain[x][z] = gy;\n    }\n  }\n\n  const groundY = (x, z) => terrain[x][z];\n\n  for (let x = 1; x < W - 1; x++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      const z = 16 + dz;\n      const top = Math.min(H - 1, Math.max(seat - 1, groundY(x, z)));\n\n      for (let y = 0; y <= top; y++) {\n        put(x, y, z, y === top ? ground.coping : ground.plinth);\n      }\n    }\n\n    for (let edge = 0; edge < 2; edge++) {\n      const z = edge === 0 ? 14 : 18;\n      const top = Math.max(0, Math.min(seat - 1, groundY(x, z)));\n\n      for (let y = 0; y <= top; y++) {\n        put(x, y, z, ground.plinth);\n      }\n    }\n  }\n\n  const ships = [\n    {\n      x0: 2,\n      len: 17,\n      cz: 15,\n      beam: 4,\n      pitch: 2,\n      sheer: 2,\n      heel: 0,\n      mastHeight: 8,\n      sailDir: 1,\n      sailWidth: 6,\n      tattered: false,\n      damage: false,\n      broken: false,\n      oarLength: 4\n    },\n    {\n      x0: 20,\n      len: 17,\n      cz: 16,\n      beam: 3,\n      pitch: -2,\n      sheer: -2,\n      heel: 1,\n      mastHeight: 5,\n      sailDir: -1,\n      sailWidth: 3,\n      tattered: true,\n      damage: true,\n      broken: true,\n      oarLength: 3\n    },\n    {\n      x0: 39,\n      len: 17,\n      cz: 17,\n      beam: 4,\n      pitch: 1,\n      sheer: 2,\n      heel: 0,\n      mastHeight: 7,\n      sailDir: -1,\n      sailWidth: 5,\n      tattered: true,\n      damage: true,\n      broken: false,\n      oarLength: 4\n    }\n  ];\n\n  function centerAt(spec, u) {\n    const q = Math.max(0, Math.min(spec.len - 1, u));\n    const t = q / (spec.len - 1);\n    return spec.cz + Math.round(spec.sheer * (t - 0.5));\n  }\n\n  function baseNominal(spec, u) {\n    const q = Math.max(0, Math.min(spec.len - 1, u));\n    const t = q / (spec.len - 1);\n    return seat + Math.round(spec.pitch * (t - 0.5));\n  }\n\n  function hullHalf(spec, u, level) {\n    const q = Math.max(0, Math.min(spec.len - 1, u));\n    const t = q / (spec.len - 1);\n    const fullness = Math.sin(Math.PI * t);\n\n    let shape;\n\n    if (level === 0) {\n      shape = 1.2;\n    } else if (level === 1) {\n      shape = Math.max(1, spec.beam - 2);\n    } else if (level === 2) {\n      shape = Math.max(2, spec.beam - 1);\n    } else if (level === 3) {\n      shape = spec.beam;\n    } else {\n      shape = Math.max(1, spec.beam - 1);\n    }\n\n    let half = Math.round(shape * (0.2 + 0.8 * fullness));\n\n    if (level === 0) {\n      half = Math.round(1.2 * fullness);\n    }\n\n    if (q > 0 && q < spec.len - 1 && half < 1) {\n      half = 1;\n    }\n\n    return Math.max(0, Math.min(spec.beam, half));\n  }\n\n  function link(a, b, block) {\n    let x = a[0];\n    let y = a[1];\n    let z = a[2];\n\n    put(x, y, z, block);\n\n    while (x !== b[0]) {\n      x += x < b[0] ? 1 : -1;\n      put(x, y, z, block);\n    }\n\n    while (y !== b[1]) {\n      y += y < b[1] ? 1 : -1;\n      put(x, y, z, block);\n    }\n\n    while (z !== b[2]) {\n      z += z < b[2] ? 1 : -1;\n      put(x, y, z, block);\n    }\n  }\n\n  function ropePath(a, b) {\n    let x = a[0];\n    let y = a[1];\n    let z = a[2];\n\n    put(x, y, z, ropeBlock);\n\n    const count = Math.max(\n      Math.abs(b[0] - a[0]),\n      Math.abs(b[1] - a[1]),\n      Math.abs(b[2] - a[2])\n    );\n\n    for (let i = 1; i <= count; i++) {\n      const f = i / count;\n      const tx = Math.round(a[0] + (b[0] - a[0]) * f);\n      const ty = Math.round(a[1] + (b[1] - a[1]) * f);\n      const tz = Math.round(a[2] + (b[2] - a[2]) * f);\n\n      while (x !== tx) {\n        x += x < tx ? 1 : -1;\n        put(x, y, z, ropeBlock);\n      }\n\n      while (y !== ty) {\n        y += y < ty ? 1 : -1;\n        put(x, y, z, ropeBlock);\n      }\n\n      while (z !== tz) {\n        z += z < tz ? 1 : -1;\n        put(x, y, z, ropeBlock);\n      }\n    }\n  }\n\n  function addKeel(spec) {\n    let previous = null;\n\n    for (let u = -2; u <= spec.len + 1; u++) {\n      const x = spec.x0 + u;\n\n      if (x < 0 || x >= W) {\n        continue;\n      }\n\n      const q = Math.max(0, Math.min(spec.len - 1, u));\n      const z = centerAt(spec, q);\n      const gy = groundY(x, z);\n      const y = Math.max(gy, baseNominal(spec, q));\n\n      for (let yy = gy; yy < y; yy++) {\n        put(x, yy, z, ground.plinth);\n      }\n\n      const position = [x, y, z];\n\n      if (previous === null) {\n        put(x, y, z, wood.log);\n      } else {\n        link(previous, position, wood.log);\n      }\n\n      if (x >= 1 && x < W - 1) {\n        const nearest =\n          z < 15\n            ? 15\n            : z > 17\n              ? 17\n              : z;\n\n        const pathY = Math.max(seat - 1, groundY(x, nearest));\n        link(position, [x, pathY, nearest], wood.log);\n      }\n\n      previous = position;\n    }\n  }\n\n  function addHull(spec) {\n    for (let u = 0; u < spec.len; u++) {\n      const x = spec.x0 + u;\n      const center = centerAt(spec, u);\n      const maximumHalf = hullHalf(spec, u, 3);\n\n      for (let rel = -maximumHalf; rel <= maximumHalf; rel++) {\n        const z = center + rel;\n\n        if (z < 0 || z >= D) {\n          continue;\n        }\n\n        const gy = groundY(x, z);\n        const base = Math.max(gy, baseNominal(spec, u));\n\n        for (let yy = gy; yy < base; yy++) {\n          put(x, yy, z, ground.plinth);\n        }\n\n        for (let level = 0; level <= 4; level++) {\n          const half = hullHalf(spec, u, level);\n\n          if (Math.abs(rel) > half) {\n            continue;\n          }\n\n          const lift = spec.heel && rel > 0 ? 1 : 0;\n\n          const damagedEdge =\n            spec.damage &&\n            level === 3 &&\n            Math.abs(rel) === half &&\n            (\n              (u === 4 && rel < 0) ||\n              (u === 10 && rel > 0) ||\n              (u === 13 && rel < 0)\n            );\n\n          if (damagedEdge) {\n            continue;\n          }\n\n          let block = wood.planks;\n\n          if (level === 0) {\n            block = wood.log;\n          } else if (level === 1) {\n            block = wood.stripped;\n          } else if (level === 3 && Math.abs(rel) === half) {\n            block = wood.stripped;\n          }\n\n          put(x, base + level + lift, z, block);\n        }\n      }\n    }\n  }\n\n  function addProw(spec) {\n    const endU = spec.len - 1;\n    const endX = spec.x0 + endU;\n    const z = centerAt(spec, endU);\n    const base = Math.max(groundY(endX, z), baseNominal(spec, endU));\n\n    for (let i = 0; i <= 2; i++) {\n      const x = endX + i;\n\n      for (let rise = 0; rise <= i; rise++) {\n        put(x, base + 2 + rise, z, wood.log);\n      }\n    }\n\n    if (endX + 1 < W) {\n      put(endX + 1, base + 3, z - 1, wood.log);\n      put(endX + 1, base + 3, z + 1, wood.log);\n    }\n  }\n\n  function addOars(spec) {\n    const slots = [2, 5, 8, 11, 14];\n\n    for (let i = 0; i < slots.length; i++) {\n      const u = slots[i];\n\n      if (u >= spec.len - 1) {\n        continue;\n      }\n\n      const x = spec.x0 + u;\n      const center = centerAt(spec, u);\n      const half = hullHalf(spec, u, 3);\n\n      for (let side = -1; side <= 1; side += 2) {\n        if (spec.damage && u === 11 && side < 0) {\n          continue;\n        }\n\n        const edgeZ = center + side * half;\n        const edgeBase = Math.max(\n          groundY(x, edgeZ),\n          baseNominal(spec, u)\n        );\n        const oarY = edgeBase + 3 + (spec.heel && side > 0 ? 1 : 0);\n\n        for (let k = 0; k <= spec.oarLength; k++) {\n          const block = k === spec.oarLength\n            ? wood.planks\n            : wood.stripped;\n\n          put(x, oarY, edgeZ + side * k, block);\n        }\n      }\n    }\n  }\n\n  function addDeckRails(spec) {\n    for (let u = 1; u < spec.len - 1; u += 2) {\n      const x = spec.x0 + u;\n      const center = centerAt(spec, u);\n      const half = hullHalf(spec, u, 4);\n\n      for (let side = -1; side <= 1; side += 2) {\n        const z = center + side * half;\n        const base = Math.max(groundY(x, z), baseNominal(spec, u));\n        const y = base + 4 + (spec.heel && side > 0 ? 1 : 0);\n\n        put(x, y + 1, z, ropeBlock);\n      }\n    }\n  }\n\n  function mastInfo(spec) {\n    const u = Math.floor((spec.len - 1) / 2);\n    const x = spec.x0 + u;\n    const z = centerAt(spec, u);\n    const base = Math.max(groundY(x, z), baseNominal(spec, u));\n\n    return {\n      u,\n      x,\n      z,\n      base,\n      deck: base + 4\n    };\n  }\n\n  function makeSail(info, yardY, direction, width, tattered) {\n    const lower = info.deck + 2;\n\n    if (yardY <= lower) {\n      return;\n    }\n\n    const denominator = yardY - lower;\n    const boomY = lower - 1;\n\n    for (let k = 0; k <= width; k++) {\n      put(info.x + direction * k, boomY, info.z, wood.stripped);\n    }\n\n    for (let y = lower; y < yardY; y++) {\n      const span = Math.max(\n        1,\n        Math.round(width * (yardY - y) / denominator)\n      );\n\n      for (let k = 1; k <= span; k++) {\n        const missing =\n          tattered &&\n          k === span &&\n          ((y + k) % 4 === 0);\n\n        if (missing) {\n          continue;\n        }\n\n        const weathered =\n          tattered &&\n          ((y + k) % 3 === 0);\n\n        put(\n          info.x + direction * k,\n          y,\n          info.z,\n          weathered ? sailWeathered : sailWhite\n        );\n      }\n    }\n  }\n\n  function addRaisedMast(spec, info) {\n    const start = info.deck + 1;\n    const top = Math.min(\n      H - 2,\n      start + spec.mastHeight - 1\n    );\n\n    for (let y = start; y <= top; y++) {\n      put(info.x, y, info.z, wood.log);\n    }\n\n    let yard = Math.max(info.deck + 3, top - 1);\n\n    if (yard > top) {\n      yard = top;\n    }\n\n    for (let dx = -4; dx <= 4; dx++) {\n      put(info.x + dx, yard, info.z, wood.stripped);\n    }\n\n    const lowerY = Math.min(top, info.deck + 2);\n\n    for (let dx = -2; dx <= 2; dx++) {\n      put(info.x + dx, lowerY, info.z, wood.log);\n    }\n\n    makeSail(\n      info,\n      yard,\n      spec.sailDir,\n      spec.sailWidth,\n      spec.tattered\n    );\n\n    return [info.x, yard, info.z];\n  }\n\n  function addBrokenMast(spec, info) {\n    const lowerTop = Math.min(H - 4, info.deck + 4);\n\n    for (let y = info.deck + 1; y <= lowerTop; y++) {\n      put(info.x, y, info.z, wood.log);\n    }\n\n    const yard = Math.min(lowerTop, info.deck + 3);\n\n    for (let dx = -3; dx <= 3; dx++) {\n      put(info.x + dx, yard, info.z, wood.stripped);\n    }\n\n    makeSail(info, yard, -1, 3, true);\n\n    let px = info.x;\n    let py = lowerTop;\n\n    for (let step = 0; step < 5; step++) {\n      put(px, py, info.z, wood.log);\n\n      if (step < 4) {\n        px += 1;\n        put(px, py, info.z, wood.log);\n\n        if (step % 2 === 0) {\n          py += 1;\n          put(px, py, info.z, wood.log);\n        }\n      }\n    }\n\n    for (let dx = -2; dx <= 1; dx++) {\n      put(px + dx, py, info.z, wood.stripped);\n    }\n\n    return [px, py, info.z];\n  }\n\n  function rigTarget(spec, u) {\n    const x = spec.x0 + u;\n    const center = centerAt(spec, u);\n    const z = center - 1;\n    const base = Math.max(groundY(x, z), baseNominal(spec, u));\n\n    return [x, base + 3, z];\n  }\n\n  function addRigging(spec, info, upper) {\n    const bow = rigTarget(spec, spec.len - 1);\n    const stern = rigTarget(spec, 0);\n    const start = [upper[0], upper[1], upper[2] - 1];\n\n    ropePath(start, bow);\n    ropePath(start, stern);\n  }\n\n  function addGangway(spec) {\n    const u = 9;\n    const x = spec.x0 + u;\n    const center = centerAt(spec, u);\n    const half = hullHalf(spec, u, 3);\n    const edgeZ = center + half;\n    const startZ = edgeZ + 1;\n    const endZ = Math.min(D - 2, startZ + 6);\n\n    const edgeBase = Math.max(\n      groundY(x, edgeZ),\n      baseNominal(spec, u)\n    );\n\n    const startY = edgeBase + 4 + (spec.heel ? 1 : 0);\n    const endY = Math.min(\n      H - 2,\n      Math.max(seat - 1, groundY(x, endZ))\n    );\n\n    const length = endZ - startZ;\n    let previousY = startY;\n\n    for (let i = 0; i <= length; i++) {\n      const z = startZ + i;\n      const y = Math.round(\n        startY + (endY - startY) * (i / length)\n      );\n\n      const low = Math.min(previousY, y);\n      const high = Math.max(previousY, y);\n\n      for (let yy = low; yy <= high; yy++) {\n        put(x, yy, z, wood.planks);\n      }\n\n      previousY = y;\n    }\n\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        const xx = x + dx;\n        const zz = endZ + dz;\n        const top = Math.min(\n          H - 1,\n          Math.max(1, groundY(xx, zz))\n        );\n\n        for (let y = 0; y <= top; y++) {\n          put(\n            xx,\n            y,\n            zz,\n            y === top ? ground.coping : ground.plinth\n          );\n        }\n      }\n    }\n\n    put(x + 1, startY, startZ, ropeBlock);\n\n    ropePath(\n      [x + 1, startY, startZ],\n      [x + 1, endY + 1, endZ]\n    );\n\n    return {\n      x,\n      endY,\n      endZ\n    };\n  }\n\n  for (let i = 0; i < ships.length; i++) {\n    addKeel(ships[i]);\n  }\n\n  for (let i = 0; i < ships.length; i++) {\n    addHull(ships[i]);\n  }\n\n  for (let i = 0; i < ships.length; i++) {\n    addProw(ships[i]);\n    addOars(ships[i]);\n    addDeckRails(ships[i]);\n  }\n\n  const gangway = addGangway(ships[1]);\n\n  for (let i = 0; i < ships.length; i++) {\n    const spec = ships[i];\n    const info = mastInfo(spec);\n    const upper = spec.broken\n      ? addBrokenMast(spec, info)\n      : addRaisedMast(spec, info);\n\n    addRigging(spec, info, upper);\n  }\n\n  const shoreY = Math.max(\n    1,\n    Math.min(H - 1, groundY(gangway.x, gangway.endZ))\n  );\n\n  return {\n    name: \"Beached Warships\",\n    seatY: seat,\n    anchors: {\n      boarding: [gangway.x, gangway.endY, gangway.endZ],\n      shore: [gangway.x, shoreY, gangway.endZ]\n    }\n  };\n}"
+    }
+  }
+}
