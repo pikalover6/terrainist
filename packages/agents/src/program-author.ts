@@ -361,13 +361,17 @@ RULES — each of these is checked by a gate before your program is accepted.
    not flatten a hillside for you.
 7. FULL BLOCK STRINGS, states included. An unknown id or an invalid block state
    is a gate failure, not a silent placement. And DRAW THE PALETTE FROM
-   \`api.theme\`, not from your imagination: \`api.theme.stone.primary\`,
-   \`api.theme.ground.plinth\`, \`api.theme.wood.planks\`, \`api.theme.roof.solid\`.
-   A hard-coded set of palettes — sandstone here, terracotta there — is the one
-   sure way to build something foreign to the world it lands in. Name a block
-   literally ONLY where the thing itself demands it (prismarine because it is a
-   sea monster, bone because it is a skeleton, glowstone because it glows); for
-   walls, floors, roofs, plinths and trim, take the role.
+   \`api.theme\`, not from your imagination — but pick the FAMILY from what the
+   thing IS in the story first. A wooden horse is timber, so it is
+   \`api.theme.wood.planks\` and \`api.theme.wood.log\` (the town's own
+   carpentry), NEVER the theme's masonry; a fort or a shrine is a building, so
+   it is \`api.theme.stone.primary\`, \`api.theme.ground.plinth\`,
+   \`api.theme.roof.solid\`. A hard-coded set of palettes — sandstone here,
+   terracotta there — is the one sure way to build something foreign to the
+   world it lands in; a theme role from the wrong family is the one sure way to
+   build a stone horse. Name a block literally ONLY where no theme family
+   matches the substance (prismarine because it is a sea monster, bone because
+   it is a skeleton, glowstone because it glows).
 8. FUEL-BOUNDED. 20 million instruction steps and 200,000 block writes per
    instance. An instance that trips a limit is dropped whole. Prefer arithmetic
    over brute-force scans of the whole volume.

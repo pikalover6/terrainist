@@ -2668,13 +2668,20 @@ api.set(x, y, z, api.theme.stone.primary);
 api.set(x, y + 4, z, api.theme.roof.solid);
 ```
 
-**Foreign colour is allowed only when the icon itself demands it.** A sea
-monster may be prismarine and a wizard's beacon may be amethyst, because
-that *is* the thing. A soldier's hideout, a granary, a barracks, a shrine to
-the local god may not be a random terracotta: those are buildings of the
-town, and the town has a palette. When your brief needs a specific material,
-say so and say why ("bleached bone, it is a skeleton") — one or two named
-materials against the theme, never a whole invented set.
+**The thing's own substance comes first — then the theme supplies it.**
+Before reaching for any role, ask what the icon is made of *in the story*:
+a Trojan horse is timber, a sea monster is prismarine, a skeleton is bone.
+A walked Troy shipped a *sandstone* horse because "use the theme" was read
+as "use the theme's masonry" — the theme did not overrule the wood; the
+wrong family did. So: pick the substance from what the thing IS, then take
+the theme's version of that substance where one exists —
+`api.theme.wood.planks` builds a horse that is wooden AND carpentered like
+the town below it. Only where the theme has no family for the substance
+(prismarine, bone, glowstone) name the blocks literally, and say why in the
+brief. A soldier's hideout, a granary, a shrine to the local god are
+*buildings of the town* and take the town's masonry; a wooden horse is wood
+wherever it stands, one or two named materials against the theme, never a
+whole invented set.
 
 Both rules are things to write **in the `brief`**, because the brief is the
 only direction the program author gets: "built from the settlement's own
