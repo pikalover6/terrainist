@@ -138,11 +138,38 @@ diagonal-grid fabric, horse up the north road on a pad ~80 blocks
 from the gate (brief said "at the gate"), warships seated NEAR THE
 HORSE inland-ish not on the west shore (verify on walk), ambient
 still lush green not Aegean gold, no citadel circuit this time.
-CLASSICAL PACK: half B landed (11 impl + acropolis_terrace honest
-skip — retaining-pass shaped, unhostable; agora_colonnade/
-triumphal_arch kind→prop); half A in flight; orchestrator owes the
-single classical exhibit incl. 9 props in prop plan (trireme on
-water) — props.test exhibit-coverage red until then BY DESIGN.
+**C4 WALK (Kai): "meaningful progress" + two reads, both fixed same
+day:** (1) horse was SANDSTONE — my api.theme doctrine over-corrected;
+rewrote kit + program-author to SUBSTANCE-FIRST (a wooden horse is
+api.theme.wood — wooden AND carpentered like the town; literal blocks
+only where no family matches) (a9a0b9a). (2) interior lawn — Kai
+ratified BOTH: urban floor (pass 6c: still-grass inside a circuit →
+theme-derived packed earth; plants keep soil+halo, tufts convert;
+Troy c4 measured 15,198 converted / 2,537 gardens kept) + aridAmbient
+on sun_clay (derived plains→savanna at derivation; Luna's named
+beach footprint stands; gate yields only to DECLARED cold/wet)
+(3426396). PLANT_HALO/TREE_HALO are the walk dials.
+
+**CLASSICAL PACK COMPLETE (9a14492): 23 implemented, catalog
+383/585.** Half A: stoa/peristyle_house/megaron/propylaea/
+bouleuterion/peripteral_temple/tholos/sanctuary_treasury/palaestra/
+gymnasion/odeon + hippodrome_spina. Half B: ship_shed/nymphaeum/
+olive_press + 8 props (colonnade/arch/rostra/herm/votive/drums/
+trireme/pithos); acropolis_terrace HONEST SKIP (retaining-pass
+shaped, no registry hosts it — future F-item). Half B shipped 4
+physics defects (ship_shed deleted its own door via openFront on the
+door face; floating apron cornices copied from sanctum's entablature;
+nymphaeum screen filled the storey band; basin/stair traversal) —
+caught by half A's worktree bisect + terrarium, fixed via RESUME.
+formPacks now bites live (classical = first built pack;
+nile_egypt = the all-unbuilt test witness). Orchestrator seams:
+exhibits/classical.ts (both halves' envelopes = the gradient),
+devworld count, prop court + classical_harbour rows, terrarium
+waterRows now derived from plan flags (name literal beached the
+trireme), props.test plan sized FROM THE GRID (fixed literal strands
+new rows off the south edge). Full tree 3,709 tests / 0 failures.
+IN FLIGHT: devworld-0812 reinstall + TROY C5 (classical forms +
+timber horse + urban floor + gold hills; log TEED this time).
 
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
