@@ -94,3 +94,26 @@
   pods, medieval timber ("much better" — spectacle note: staging teaching
   followed); overgrown_hideout_c2 = **"maybe my favorite generate of
   terrainist so far"**.
+
+## 08-10 late → 08-11 morning: the icon law and the Troy turn (from cell 4)
+
+- **THE ICON LAW ratified (2fa462c): "the medium cannot whisper"** — worlds
+  SCREAM the prompt via icons at saturation; "nyc" without the Statue of
+  Liberty is a fail. **U1 = the STRANGER TEST** (names the prompt from 10s
+  at any street corner). Kit carries: icon register (enumerate 5–10 icons,
+  each by named mechanism), event staging (loom over the heart / advance
+  don't sprinkle / connect sky to ground), **a named place is a FULL
+  identity** (era/theme/terrain/fortification/icons; Trojan worked example).
+- **Overnight Troy stack** (all landed): fortification dial (231643a,
+  intent walled → infra.wall circuit, gates at carriageway crossings, W489
+  author-params-outrank); sun_clay theme (4e6f94e, sandstone/limewash/mud
+  brick/acacia, 19 aliases, deliberately NOT in the seeded draw;
+  THEME_BY_ERA.ancient still birchwood — Kai's open call); F9 blend dial;
+  water-prop reseat (db90d63, unpinned water props seek 8 waterline seats);
+  openrouter retry 6× exponential (fce5b27).
+- **Measurements:** P5-c3 delivered 24 sea monsters + 10.7k-block leviathan
+  via the recovery pass ($0.111, two prior candidates lost to authoring +
+  network); P1-c2 delivered war via pure catalog. TROY c3: textbook intent,
+  7.7k-block horse (5.5× c1), Luna authored the wall itself — but gray
+  masonry on a sun_clay city, envelope-margin lawn, lush ambient: the three
+  reads that drove 08-11's fixes (cell 4).
