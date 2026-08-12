@@ -110,7 +110,13 @@ import {
 } from "../emit/walkability.js";
 import type { Provenance } from "../provenance.js";
 
-import { biomeForColumn, type ProfileBiome } from "./biomes.js";
+import {
+  aridAmbientBiome,
+  biomeForColumn,
+  climateOutranksArid,
+  type AridBiasInput,
+  type ProfileBiome,
+} from "./biomes.js";
 import { buildSettlementClearing, type SettlementClearing } from "./clearing.js";
 import {
   buildLandUseMask,
@@ -139,8 +145,10 @@ import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js
 import { decorate, type DecorBlock } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { resolvePalette } from "./palette.js";
+import { layUrbanFloor, type UrbanFloorResult } from "./urban-floor.js";
+import { materialThemeById } from "../programs/theme.js";
 import { ensureFanOutRows, fanOut, resolveIntents, type IntentResolution } from "../intent/index.js";
-import { TERRAIN_ROWS } from "./climate-intent.js";
+import { NO_CLIMATE_OFFSET, TERRAIN_ROWS, type ClimateOffsets } from "./climate-intent.js";
 import { FLORA_ROWS, NO_FLORA_BIAS, type FloraBias } from "./flora-intent.js";
 import {
   caveDiagnostics,
@@ -376,6 +384,8 @@ export interface CompileStats {
   readonly clippedTreeBlocks: number;
   /** Ponds formed by demoting a sealess river, per river edit. */
   readonly pondChains: Readonly<Record<string, number>>;
+  /** The urban floor's tally; absent unless a wall circuit was built. */
+  readonly urbanFloor?: UrbanFloorResult;
   /** What the structure pass built; absent for a terrain-profile compile. */
   readonly structures?: StructureStats;
   /** What each authored-program node put in the world; absent when none did. */
@@ -1105,6 +1115,42 @@ async function compileValidated(
   const caveDecor = decorateCaves(plan, palette, stack, rootSeed);
   const scatterMs = now() - t3;
 
+  // --- pass 6c: the urban floor (2026-08-11) -------------------------------
+  // The ground between the buildings of a *walled* town, packed to earth. Here
+  // and nowhere else in the pipeline: the pass must not convert a column
+  // anything grows on, and until the scatter and the decoration pass have run
+  // there is nothing growing to protect. It writes `plan.surface` only — the
+  // material half of the ground contract — so it cannot argue with the
+  // `GroundDriver` about where the ground is.
+  //
+  // The gate is the wall circuit. `structures.walls` is empty for every world
+  // that never rings itself, and an empty circuit list is an early return, so
+  // an unwalled world is byte-identical.
+  const settlementTheme = materialThemeById(structures?.stats.theme);
+  const urbanFloor: UrbanFloorResult | undefined =
+    structures === undefined || structures.walls.length === 0
+      ? undefined
+      : layUrbanFloor({
+          plan,
+          palette,
+          stack,
+          seed: seed32(nodeSeed(worldSeed, rootPath, "urban-floor")),
+          circuits: structures.walls.map((w) => w.course.vertices),
+          ...(settlementTheme === undefined ? {} : { theme: settlementTheme }),
+          trees,
+          // Everything growing and everything built, from every pass that has
+          // run: a plant this pass cannot see is a plant it would repaint the
+          // soil out from under.
+          decor:
+            transition === undefined
+              ? decoration.blocks
+              : [...decoration.blocks, ...transition.blocks],
+          laid:
+            programs === undefined
+              ? structures.blocks
+              : [...structures.blocks, ...programs.blocks],
+        });
+
   // --- pass 4b: biomes -----------------------------------------------------
   const t4 = now();
   // The land-use clamp's mask is a pure function of the *finished* placement,
@@ -1129,6 +1175,31 @@ async function compileValidated(
         today: undefined,
       });
       return feather === undefined ? {} : { feather };
+    })(),
+    // The arid ambient bias: the settlement theme's own declaration, and the
+    // one thing that outranks it — an author who declared the *country* cold or
+    // wet. An authored `climate.biome` is not that declaration and is not read
+    // here: it names the settlement's own ground and the clamp already honours
+    // it at rung 1, which is why Troy's footprint stays `beach` while the
+    // country round it goes gold.
+    ...(() => {
+      const arid = settlementTheme?.aridAmbient === true;
+      if (!arid) return {};
+      const climateIntent = fanOut<ClimateIntent | undefined>(TERRAIN_ROWS.landUse, intents.root, {
+        nodePath: rootPath,
+        today: undefined,
+      });
+      const offsets = fanOut<ClimateOffsets>(TERRAIN_ROWS.offsets, intents.root, {
+        nodePath: rootPath,
+        today: NO_CLIMATE_OFFSET,
+      });
+      const authored = climateOutranksArid({
+        ...(climateIntent?.biome === undefined ? {} : { biome: climateIntent.biome }),
+        ...(climateIntent?.snow === undefined ? {} : { snow: climateIntent.snow }),
+        temperature: offsets.temperature,
+        humidity: offsets.humidity,
+      });
+      return { arid: { arid, authored } };
     })(),
   });
   // FARM-PLAN §8, last clause: the parcel mask forces `snow = 0` on every
@@ -1270,6 +1341,7 @@ async function compileValidated(
       transitionStumps: transition?.stumps ?? 0,
       transitionLogs: transition?.logs ?? 0,
       clippedTreeBlocks: clipped?.clippedBlocks ?? 0,
+      ...(urbanFloor === undefined ? {} : { urbanFloor }),
       pondChains: Object.fromEntries(
         terrain.ponds.map((p) => [p.editId, p.ponds] as const).sort(([a], [b]) => (a < b ? -1 : 1)),
       ),
@@ -1549,6 +1621,13 @@ function paintBiomes(
     readonly intent?: ClimateIntent;
     /** `intent.climate.blend` in columns; undefined = the size-scaled default. */
     readonly feather?: number;
+    /**
+     * The arid ambient bias (2026-08-11): whether the settlement's theme calls
+     * itself dry, and whether the author named a climate that outranks it.
+     * Absent — every world with no settlement theme — is "not arid", which is
+     * an identity.
+     */
+    readonly arid?: Omit<AridBiasInput, "temperature">;
   },
 ): { histogram: Record<string, number>; clamp: LandUseClampResult } {
   const ids = new Map<string, number>();
@@ -1566,6 +1645,25 @@ function paintBiomes(
       lake: plan.lakeMask[idx] === 1,
       volcanicUpper: plan.volcanicUpper[idx] === 1,
     });
+  }
+
+  // The arid ambient bias, applied to the **derived** layer, which is what
+  // "at derivation" means: the grassland family of a dry-themed world reads as
+  // savanna gold rather than as temperate green. Identity for every world whose
+  // theme does not declare itself arid, and switched off entirely by an
+  // authored climate — see `aridAmbientBiome`.
+  //
+  // The clamp runs next and reads this layer, so a settlement's own ground
+  // follows the country it stands in exactly as it always has: the clamp's
+  // ambient-majority vote is untouched machinery, handed drier ground.
+  if (landUse.arid?.arid === true && landUse.arid.authored !== true) {
+    for (let idx = 0; idx < base.length; idx++) {
+      base[idx] = aridAmbientBiome(base[idx] as ProfileBiome, {
+        arid: true,
+        authored: false,
+        temperature: climate.temperature[idx] as number,
+      });
+    }
   }
 
   const clamp = clampLandUse({

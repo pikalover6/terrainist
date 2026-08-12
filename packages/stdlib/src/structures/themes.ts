@@ -73,6 +73,33 @@ export interface MaterialTheme {
   readonly woods: readonly WoodSet[];
   readonly stones: readonly StoneSet[];
   readonly roofs: readonly RoofSet[];
+  /**
+   * This palette belongs to a **dry country**.
+   *
+   * Kai, walking Troy (2026-08-11): the sandstone town was right and its
+   * surroundings read *lush Ireland, not Aegean gold*. The cause is that a
+   * material theme says everything about what a town is built from and nothing
+   * about the land it stands in, so a sun-baked city gets the same green
+   * grassland tint a Cotswold village does.
+   *
+   * The flag lives on the **theme**, deliberately, rather than in a list of
+   * theme ids kept somewhere downstream: a future desert or steppe palette
+   * joins the look by declaring one thing about itself, in the same file where
+   * its blocks are chosen, and nothing has to be taught its name.
+   *
+   * Two things read it, both gated so that no theme without it moves a byte:
+   *
+   * - `terrain/biomes.ts` biases the **derived ambient** grassland biomes
+   *   toward the savanna family, so the grass tint outside town reads dry gold.
+   *   Author intent still wins: an explicit `intent.climate.biome`, or a cold
+   *   or wet climate intent, turns the bias off.
+   * - `terrain/urban-floor.ts` picks the pale half of its packed-earth mix,
+   *   because a dry town's courtyards are dust and stone where a wet one's are
+   *   trodden mud.
+   *
+   * Absent means temperate, which is every theme but {@link SUN_CLAY_THEME}.
+   */
+  readonly aridAmbient?: boolean;
 }
 
 function wood(id: string, door = `${id}_door`): WoodSet {
@@ -510,6 +537,8 @@ export const SUN_CLAY_THEME_ID = "sun_clay";
  */
 export const SUN_CLAY_THEME: MaterialTheme = Object.freeze({
   id: SUN_CLAY_THEME_ID,
+  // The one dry palette in the tree (2026-08-11) — see `aridAmbient`.
+  aridAmbient: true,
   woods: [SANDSTONE_ASHLAR, PLASTER_WHITE, MUD_BRICK_WALL],
   stones: [SANDSTONE_STONE, SMOOTH_SANDSTONE_STONE, MUD_BRICK_STONE],
   roofs: [SANDSTONE_TERRACE_ROOF, PLASTER_TERRACE_ROOF, BRICK_ROOF, MUD_BRICK_ROOF],

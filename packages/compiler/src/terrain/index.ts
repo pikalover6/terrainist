@@ -21,5 +21,6 @@ export * from "./emit.js";
 export * from "./flora-intent.js";
 export * from "./landuse.js";
 export * from "./palette.js";
+export * from "./urban-floor.js";
 export * from "./validate.js";
 export * from "./vegetation.js";

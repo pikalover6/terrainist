@@ -56,8 +56,14 @@ export const PROFILE_BIOMES = [
   //
   // Appended in a block at the end on purpose: `ambientVote`'s tie-break walks
   // this array in source order, so anything inserted higher up would move
-  // existing worlds. Nothing here can win that vote anyway — the vote reads
-  // pre-clamp columns, which only `biomeForColumn` writes.
+  // existing worlds.
+  //
+  // Two of them CAN now win that vote: `savanna` and `windswept_savanna`, in a
+  // world whose settlement theme declares itself arid (see
+  // {@link aridAmbientBiome}, 2026-08-11). The bias writes into the pre-clamp
+  // layer, so an arid world's settlement ground follows its dry country exactly
+  // as it has always followed its wet one. No other world is affected: the bias
+  // is identity without the flag.
   "minecraft:dark_forest",
   "minecraft:birch_forest",
   "minecraft:old_growth_birch_forest",
@@ -176,6 +182,108 @@ export function isTintedLandBiome(biome: ProfileBiome): boolean {
     biome !== "minecraft:river" &&
     biome !== "minecraft:basalt_deltas"
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* the arid ambient bias (2026-08-11)                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The dry sibling of each **derived** grassland biome.
+ *
+ * Kai, walking Troy: the sandstone city was right and the country around it
+ * read *lush Ireland, not Aegean gold*. Nothing was wrong with the terrain —
+ * the grass tint was simply the temperate one, because the biome rule above
+ * knows about height, water and trees and nothing at all about what the town
+ * is built from.
+ *
+ * Two entries, and only two, because the bias is about **grass tint** and the
+ * rule only derives two biomes whose whole read is grass:
+ * `plains` and the grassy hills above it. `forest` and `taiga` are woodland —
+ * their read is the trees standing in them, and a savanna tint under a closed
+ * oak canopy is a different lie from the one being fixed. Bare rock, beach,
+ * snow and water carry no grass tint at all.
+ *
+ * @see MaterialTheme.aridAmbient — the flag that turns this on.
+ */
+const ARID_GRASSLAND: ReadonlyMap<string, ProfileBiome> = new Map<string, ProfileBiome>([
+  ["minecraft:plains", "minecraft:savanna"],
+  ["minecraft:windswept_hills", "minecraft:windswept_savanna"],
+]);
+
+/**
+ * Offsets past which an authored climate counts as a *declaration* of cold or
+ * wet rather than a nudge, and outranks a theme's dryness.
+ *
+ * Half the range, deliberately high. The number that set it is Troy's own
+ * document, which asks for a "warm dry Aegean coastal climate" and writes
+ * `temperature: 0.5, humidity: 0.3` — a *positive* humidity on the driest
+ * prompt in the battery. Authoring models nudge humidity for reasons that have
+ * nothing to do with rain, and a bar at zero would switch this feature off for
+ * the very world it was built for. Half the axis is a model saying "rainforest".
+ */
+export const ARID_COLD_OFFSET = -0.5;
+/** @see ARID_COLD_OFFSET */
+export const ARID_WET_OFFSET = 0.5;
+
+/**
+ * Biome names an author may write that mean cold or wet outright, by prefix or
+ * by name — the *other* half of "explicitly cold/snowy/wet".
+ *
+ * Naming one of these over a sun-clay town is an author saying the place is not
+ * dry, whatever it is built of, and it wins.
+ */
+const NOT_DRY_BIOME =
+  /^minecraft:(snowy_|frozen_|.*taiga|grove|swamp|jungle|sparse_jungle|bamboo_jungle|river|ocean|deep_)/;
+
+/** The climate an author wrote, as much of it as reaches the biome pass. */
+export interface AuthoredClimate {
+  readonly biome?: string;
+  readonly snow?: string;
+  readonly temperature?: number;
+  readonly humidity?: number;
+}
+
+/**
+ * True when an authored climate outranks a theme's `aridAmbient` declaration.
+ *
+ * **Not** simply "the author named a biome": `intent.climate.biome` names the
+ * ground the *settlement* stands on and the land-use clamp already honours it
+ * at precedence rung 1 — Troy says `beach`, and its footprint stays beach with
+ * or without this bias. What outranks the theme is the author declaring the
+ * *country* cold or wet: a snowy or rainy biome by name, a snow policy of
+ * `always`, or an offset past {@link ARID_COLD_OFFSET} / {@link ARID_WET_OFFSET}.
+ */
+export function climateOutranksArid(climate: AuthoredClimate): boolean {
+  if (climate.snow === "always") return true;
+  if (climate.biome !== undefined && NOT_DRY_BIOME.test(climate.biome)) return true;
+  if ((climate.temperature ?? 0) <= ARID_COLD_OFFSET) return true;
+  return (climate.humidity ?? 0) >= ARID_WET_OFFSET;
+}
+
+/** Everything {@link aridAmbientBiome} needs to know about a column. */
+export interface AridBiasInput {
+  /** The settlement theme's `aridAmbient` declaration. */
+  readonly arid: boolean;
+  /**
+   * True when the author declared a climate that outranks the theme — see
+   * {@link climateOutranksArid}. Author intent always wins.
+   */
+  readonly authored: boolean;
+  /** The column's temperature; a cold column keeps its temperate tint. */
+  readonly temperature: number;
+}
+
+/**
+ * The dry sibling of a derived ambient biome, or the biome unchanged.
+ *
+ * Applied to the **derived** layer only, before the land-use clamp: the clamped
+ * footprint is whatever the clamp decided, and this never touches it.
+ */
+export function aridAmbientBiome(biome: ProfileBiome, c: AridBiasInput): ProfileBiome {
+  if (!c.arid || c.authored) return biome;
+  if (c.temperature < TAIGA_TEMPERATURE) return biome;
+  return ARID_GRASSLAND.get(biome) ?? biome;
 }
 
 /** Everything the biome rule reads for one column. */
