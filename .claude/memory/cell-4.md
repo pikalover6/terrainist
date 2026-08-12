@@ -121,8 +121,28 @@ devworld count, prop court + classical_harbour rows, terrarium
 waterRows now derived from plan flags (name literal beached the
 trireme), props.test plan sized FROM THE GRID (fixed literal strands
 new rows off the south edge). Full tree 3,709 tests / 0 failures.
-IN FLIGHT: devworld-0812 reinstall + TROY C5 (classical forms +
-timber horse + urban floor + gold hills; log TEED this time).
+**INSTALLED dev_world__classical** (classical strip z 5959–6370 +
+classical_court/classical_harbour prop rows). **TROY C5
+(troy_horse__c5, archived p3-c5, $0.055 + deterministic recompiles):**
+classifier wrote formPacks classical_mediterranean UNPROMPTED; horse
+in api.theme.wood (substance-first worked); no fortification dial but
+Luna authored params.walls — which exposed THE EDGE CASE: fabric
+flush to z −256, ring refused at every margin (old T220 = silent
+note, no wall, and no urban floor since it gates on the circuit).
+RATIFIED (popup): **clamp + teach** — bounds fold into the course
+support fan as half-planes on ALL 24 directions (a box corner is
+axis-meets-axis; consecutive-pair walk needs every plane tangent),
+ring stays CLOSED and flattens along the boundary (T230 note;
+buildings on the line = houses in the wall); margin backoff first
+(T229, prop-reseat pattern, floor WALL_MIN_MARGIN, 2-col steps);
+T220 now prints fabric bbox vs region (the three-guess message cost
+a debugging session); kit teaches edge room. WALL_EDGE_INSET=2;
+clamped=false is a strict no-op (fitting rings byte-identical).
+c5 recompiled + installed: circuit clamped at north, savanna gold
+countryside, packed-earth interior — d4353bb, compiler 1962/0.
+WALK QUEUE: troy_horse__c5 (headline), dev_world__classical,
+dev_world__sanctum_siege; still pirate_unicorn_war_c2 +
+hellenist_sea_siege_c3.
 
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
