@@ -3006,9 +3006,24 @@ export const SETTLEMENT_PROP_NAMES = [
   "memorial_garden",
   "portal_frame",
   "floating_platform",
+  // The classical Mediterranean pack's one prop in this half: the racecourse
+  // barrier. Order matches `PROP_NAMES` in the stdlib.
+  "hippodrome_spina",
   // Wave 6C: the two energy objects that are props rather than buildings.
   "wind_turbine",
   "solar_array",
+  // The classical Mediterranean pack (CATALOG-EXPANSION §3.1), second half:
+  // the eight entries of that pack that are props. Order matches `PROP_NAMES`
+  // in the stdlib, which `compiler/test/props.test.ts` asserts element by
+  // element.
+  "agora_colonnade",
+  "triumphal_arch",
+  "rostra",
+  "herm_post",
+  "votive_column",
+  "column_drums",
+  "trireme",
+  "pithos_store",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

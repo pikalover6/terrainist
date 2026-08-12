@@ -49,6 +49,7 @@ import type { DevExhibitRow } from "./exhibits/types.js";
 import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
 import { SANCTUM_EXHIBIT_ROWS } from "./exhibits/sanctum.js";
+import { CLASSICAL_EXHIBIT_ROWS } from "./exhibits/classical.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -119,6 +120,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...VERNACULAR_EXHIBIT_ROWS,
   // The sanctum pack: ten buildings the icon law asks for by name.
   ...SANCTUM_EXHIBIT_ROWS,
+  // The classical Mediterranean pack: the forms Troy was missing.
+  ...CLASSICAL_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
@@ -262,6 +265,13 @@ export {
 
 /** The sanctum-pack rows, for tests that assert on the gradient. */
 export { SANCTUM_EXHIBIT_ROWS, SANCTUM_ROW_LENGTH, sanctumSizeFor } from "./exhibits/sanctum.js";
+
+/** The classical Mediterranean rows, for tests that assert on the gradient. */
+export {
+  CLASSICAL_EXHIBIT_ROWS,
+  CLASSICAL_ROW_LENGTH,
+  classicalSizeFor,
+} from "./exhibits/classical.js";
 
 /** The wave-5E arcana rows, for tests that assert on the gradient. */
 export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";

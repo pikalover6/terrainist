@@ -69,6 +69,10 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // asserted to equal the grammar's list exactly, so its ORDER is load-bearing.
   "star_fort", "motte_and_bailey", "palisade", "moat",
   "drawbridge", "drill_yard", "siege_camp",
+  // The classical Mediterranean pack's buildings, in the order
+  // `BUILDING_ARCHETYPES` spreads them — immediately after the siegeworks.
+  // Order is load-bearing here, same as every other pack block.
+  "ship_shed", "nymphaeum", "olive_press",
   "telescope_dome",
   "planetarium", "alchemy_lab", "herbarium", "aviary",
   "botanical_garden", "seed_vault", "weather_station", "field_station",
@@ -86,6 +90,12 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // straight after the faith wave. Order is load-bearing, same as siegeworks.
   "temple", "chapel", "shrine", "altar_stone", "wayside_cross",
   "obelisk", "colossus", "amphitheater", "arena", "stadium",
+  // The classical Mediterranean pack, in the order `BUILDING_ARCHETYPES`
+  // spreads it — straight after the sanctum. Order is load-bearing, same as
+  // siegeworks.
+  "stoa", "peristyle_house", "megaron", "propylaea", "bouleuterion",
+  "peripteral_temple", "tholos", "sanctuary_treasury", "palaestra",
+  "gymnasion", "odeon",
   "hanok", "machiya",
   "riad", "cycladic_house", "adobe_pueblo", "stilt_house",
   "sod_house", "igloo", "thatched_roundhouse", "colonial_veranda_house",

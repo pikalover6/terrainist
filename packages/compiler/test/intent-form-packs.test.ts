@@ -49,7 +49,6 @@ const TODAY = ["cottage", "smithy", "warehouse"] as const;
 const TEST_MEMBERS: Readonly<Record<string, readonly string[]>> = {
   test_pack: ["church", "cart", "unicorn_stable", "inn"],
   other_pack: ["inn", "chapel"],
-  unbuilt_pack: ["stoa", "megaron", "peristyle_house"],
 };
 const members = (pack: string): readonly string[] => TEST_MEMBERS[pack] ?? formPackMembers(pack);
 
@@ -104,17 +103,26 @@ describe("expansion", () => {
     });
     const inherited = intentFor(resolution, "world.town");
     expect(inherited.intent.character?.formPacks).toEqual(["classical_mediterranean"]);
-    // The real pack is entirely unbuilt, so the mix is the mix — see below.
-    expect(biasedMix(inherited, "world.town", TODAY)).toEqual([...TODAY]);
+    // The classical pack is the first with built members (2026-08-11), so the
+    // expansion is its implemented buildings, in member order, ahead of the
+    // mix the quarter was about to use. Derived live so the assertion tightens
+    // itself as more of the pack lights up.
+    const lit = formPackMembers("classical_mediterranean").filter(isFabricArchetype);
+    expect(lit.length).toBeGreaterThan(0);
+    expect(biasedMix(inherited, "world.town", TODAY)).toEqual([...lit, ...TODAY]);
   });
 });
 
 describe("an all-unbuilt pack", () => {
   it("contributes nothing, and is not an error of any kind", () => {
-    expect(expandFormPacks(["unbuilt_pack"], members)).toEqual([]);
+    // The classical pack graduated to built (2026-08-11); nile_egypt is the
+    // shipped registry's all-unbuilt witness now. When it lights up too, move
+    // to whichever pack is still pending; once every pack is built, an
+    // injected all-prop member map is the way to keep this case covered.
+    expect(formPackMembers("nile_egypt").filter(isFabricArchetype)).toEqual([]);
     const sink: LoamDiagnostic[] = [];
     const answer = biasedMix(
-      scope({ character: { formPacks: ["classical_mediterranean"] } }),
+      scope({ character: { formPacks: ["nile_egypt"] } }),
       "world.d",
       TODAY,
       sink,

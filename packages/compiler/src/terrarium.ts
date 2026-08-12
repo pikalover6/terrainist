@@ -111,7 +111,12 @@ import {
   type StructureBlock,
 } from "./structures/buildings.js";
 import { buildProps, type PlacedProp, type PropJob } from "./structures/props.js";
-import { digPropPond, planPropExhibits, type PropExhibit } from "./exhibits/props.js";
+import {
+  digPropPond,
+  planPropExhibits,
+  PROP_EXHIBIT_PLAN,
+  type PropExhibit,
+} from "./exhibits/props.js";
 import { devColumnPlan, exhibitParams, planDevGrid, type DevExhibit } from "./devworld.js";
 import {
   TERRARIUM_GROUND_Y,
@@ -1322,7 +1327,9 @@ export async function buildTerrarium(
   // against the finished plan, so every basin is dug first. The basin is the
   // station's structure rect grown by the margin, which keeps it clear of the
   // platform edge and so of the machinery.
-  const waterRows = new Set(["harbour"]);
+  // Derived from the plan's own water flags — a name literal here silently
+  // beaches every water prop a later row adds (measured: the trireme, dry).
+  const waterRows = new Set(PROP_EXHIBIT_PLAN.filter((r) => r.water).map((r) => r.row));
   let pondColumns = 0;
   for (const station of plan.stations) {
     if (station.kind !== "prop" || !waterRows.has(station.provenance.row)) continue;

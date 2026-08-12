@@ -156,12 +156,29 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   memorial_garden: [{}],
   portal_frame: [{}],
   floating_platform: [{}],
+  // The classical Mediterranean pack's racecourse barrier (§3.1). It takes no
+  // params — its run is a constant — and its own properties are held in
+  // structures-classical.test.ts.
+  hippodrome_spina: [{}],
   houseboat: [{}],
   helipad: [{}],
   // Wave 6C: the two energy objects with no inside. Their own properties are
   // held in structures-utility.test.ts; here they walk the catalog-wide checks.
   wind_turbine: [{}, { height: 7 }, { height: 21 }],
   solar_array: [{}, { rows: 1 }, { rows: 8 }],
+  // The classical Mediterranean pack's props (CATALOG-EXPANSION §3.1). Only
+  // the colonnade reads a param — its `length` — and it is walked at both
+  // clamps as well as at its default, because a run whose declared box and
+  // built run disagree is the one bug a length param can have. Their own
+  // properties are held in props-classical-b.test.ts.
+  agora_colonnade: [{}, { length: 3 }, { length: 9 }, { length: 64 }],
+  triumphal_arch: [{}],
+  rostra: [{}],
+  herm_post: [{}],
+  votive_column: [{}],
+  column_drums: [{}],
+  trireme: [{}],
+  pithos_store: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

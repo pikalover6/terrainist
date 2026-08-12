@@ -44,6 +44,9 @@ import { STREET_PROP_EXHIBIT_PLAN } from "./street-props.js";
 import { RELIC_PROP_EXHIBIT_PLAN } from "./relic-props.js";
 import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
 import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
+// The classical pack's props ship with their stdlib halves; the `_A_` infix
+// exists because two star-exported plans of one name would be ambiguous.
+import { CLASSICAL_A_PROP_EXHIBIT_PLAN } from "@terrainist/stdlib";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -159,6 +162,31 @@ export const PROP_EXHIBIT_PLAN: readonly {
   // shows in the **vehicle** grid with the rest of the fleet — that grid is
   // where the water is.
   ...SPECTACLE_PROP_EXHIBIT_PLAN,
+  ...CLASSICAL_A_PROP_EXHIBIT_PLAN,
+  // The classical pack's other half ships no plan of its own; the rows live
+  // here. The colonnade shows its length dial; the herm repeats because
+  // saturation is its whole job.
+  {
+    row: "classical_court",
+    water: false,
+    cells: [
+      { prop: "agora_colonnade", params: {} },
+      { prop: "agora_colonnade", params: { length: 23 } },
+      { prop: "triumphal_arch", params: {} },
+      { prop: "rostra", params: {} },
+      { prop: "herm_post", params: {} },
+      { prop: "herm_post", params: {} },
+      { prop: "votive_column", params: {} },
+      { prop: "column_drums", params: {} },
+      { prop: "pithos_store", params: {} },
+    ],
+  },
+  // The trireme is `base: "water"`; the basin row is what seats it.
+  {
+    row: "classical_harbour",
+    water: true,
+    cells: [{ prop: "trireme", params: {} }],
+  },
 ]);
 
 /**

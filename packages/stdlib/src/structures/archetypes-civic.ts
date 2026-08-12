@@ -50,11 +50,13 @@ import { scienceFacadeDefaults } from "./archetypes-science.js";
 import { residentialFacadeDefaults } from "./archetypes-residential.js";
 import { garrisonFacadeDefaults } from "./archetypes-garrison.js";
 import { siegeworksFacadeDefaults } from "./archetypes-siegeworks.js";
+import { classicalBFacadeDefaults } from "./archetypes-classical-b.js";
 import { arcanaFacadeDefaults } from "./archetypes-arcana.js";
 import { relicFacadeDefaults } from "./archetypes-relic.js";
 import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { sanctumFacadeDefaults } from "./archetypes-sanctum.js";
+import { classicalFacadeDefaults } from "./archetypes-classical.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -185,6 +187,10 @@ export function archetypeFacadeDefaults(
       // The siegeworks pack, beside the garrison it belongs to.
       const siegeworks = siegeworksFacadeDefaults(archetype);
       if (Object.keys(siegeworks).length > 0) return siegeworks;
+      // The classical Mediterranean pack's buildings, beside the siegeworks
+      // it was wired in after.
+      const classicalB = classicalBFacadeDefaults(archetype);
+      if (Object.keys(classicalB).length > 0) return classicalB;
       // Wave 5D — science and modern living.
       const science = scienceFacadeDefaults(archetype);
       if (Object.keys(science).length > 0) return science;
@@ -197,6 +203,11 @@ export function archetypeFacadeDefaults(
       // The sanctum pack, beside the faith wave it belongs to.
       const sanctum = sanctumFacadeDefaults(archetype);
       if (Object.keys(sanctum).length > 0) return sanctum;
+      // The classical Mediterranean pack, beside the sanctum it was written
+      // against: a pediment wants the gable it is a gable-end move on, and a
+      // compluvium wants the hip whose height it is about to take over.
+      const classical = classicalFacadeDefaults(archetype);
+      if (Object.keys(classical).length > 0) return classical;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

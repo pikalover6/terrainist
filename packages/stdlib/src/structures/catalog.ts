@@ -1825,93 +1825,103 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
    * ====================================================================== */
 
   /* --- the classical Mediterranean pack (docs/CATALOG-EXPANSION-v0.md §3.1) --- */
-  com("stoa", "Stoa", "not_started", {
+  com("stoa", "Stoa", "implemented", {
     tags: ["classical_mediterranean", "size_xl"],
     note: "The agora's long side: a two-deep colonnade of the full run with a closed shop wall behind it, so the street face is columns and the back is trade.",
   }),
-  res("peristyle_house", "Peristyle house", "not_started", {
+  res("peristyle_house", "Peristyle house", "implemented", {
     tags: ["classical_mediterranean", "size_m"],
     note: "The courtyard house with its court colonnaded — a post ring standing on a stylobate course one cell in from the wall, rooms opening only inward.",
   }),
-  res("megaron", "Megaron", "not_started", {
+  res("megaron", "Megaron", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "The palace hall: a deep porch of two columns in antis between projecting wall stubs, one long room behind it, a raised hearth ring off the lantern column.",
   }),
-  civ("propylaea", "Propylaea", "not_started", {
+  civ("propylaea", "Propylaea", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "A gateway that is only a gateway — a columned front and back with a through-passage and no room at all, straddling the way into a sanctuary.",
   }),
-  civ("bouleuterion", "Bouleuterion", "not_started", {
+  civ("bouleuterion", "Bouleuterion", "implemented", {
     tags: ["classical_mediterranean", "size_m"],
     note: "The council chamber's ancient parent: stepped seating in a half-ring turned to a speaker's floor, roofed, with the entry cut through the flat side.",
   }),
-  rel("peripteral_temple", "Peripteral temple", "not_started", {
+  rel("peripteral_temple", "Peripteral temple", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "The colonnade on all four sides, a solid cella inside it, a pediment gable over the short face. The generic `temple` (Track A) stays the cella-and-porch one.",
   }),
-  rel("tholos", "Tholos", "not_started", {
+  rel("tholos", "Tholos", "implemented", {
     tags: ["classical_mediterranean", "size_m"],
     note: "The round one: a ring of columns on a stepped circular crepidoma under a shallow conical roof, a drum wall inside the ring.",
   }),
-  rel("sanctuary_treasury", "Treasury", "not_started", {
+  rel("sanctuary_treasury", "Treasury", "implemented", {
     tags: ["classical_mediterranean", "size_s"],
     note: "A miniature temple with two columns and no room to speak of — the votive building a sanctuary carries a dozen of.",
   }),
-  lei("palaestra", "Palaestra", "not_started", {
+  lei("palaestra", "Palaestra", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "A square sand court with a colonnade on all four sides and changing cells behind one range; the middle is deliberately empty.",
   }),
-  lei("gymnasion", "Gymnasion", "not_started", {
+  lei("gymnasion", "Gymnasion", "implemented", {
     tags: ["classical_mediterranean", "size_xl"],
     note: "The palaestra plus a covered running track down one long flank — the longest colonnade in the pack.",
   }),
-  lei("odeon", "Odeon", "not_started", {
+  lei("odeon", "Odeon", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "The roofed small theatre: stepped seating in a half-ring under a full roof, a low stage wall across the chord.",
   }),
-  lei("hippodrome_spina", "Spina", "not_started", {
+  lei("hippodrome_spina", "Spina", "implemented", {
     kind: "prop",
     tags: ["classical_mediterranean", "size_xl"],
     note: "The racecourse's central barrier — a long low plinth with turning posts at both ends and an obelisk or two standing on it.",
   }),
-  infra("agora_colonnade", "Free-standing colonnade", "not_started", {
+  // The three infrastructure-kind rows of this pack carry a **`kind`
+  // override**, because the honest answer to "how is it realised" changed when
+  // it was built: a colonnade and an arch are placed objects with a declared
+  // box, which is what a prop is, and the registry that answers to them is
+  // `PROP_GENERATORS`. The override is the only way the exception stays
+  // visible where it is made. `acropolis_terrace` keeps `infrastructure` and
+  // keeps `not_started`: it is the retaining pass's client, and neither the
+  // building grammar nor the prop registry can host a wall that retains ground
+  // it did not make.
+  infra("agora_colonnade", "Free-standing colonnade", "implemented", {
+    kind: "prop",
     tags: ["classical_mediterranean", "size_lin"],
     note: "A sweep client: columns at a fixed interval on a stylobate with a continuous entablature over them, following a street or a square's edge.",
   }),
-  mem("triumphal_arch", "Triumphal arch", "not_started", {
-    kind: "infrastructure",
+  mem("triumphal_arch", "Triumphal arch", "implemented", {
+    kind: "prop",
     tags: ["classical_mediterranean", "size_l"],
     note: "The arch that spans a road, not a room: piers either side of the carriageway, a continuous crown, an attic band of names over it.",
   }),
-  civ("rostra", "Rostra", "not_started", {
+  civ("rostra", "Rostra", "implemented", {
     kind: "prop",
     tags: ["classical_mediterranean", "size_m"],
     note: "The speaker's platform in a forum: a stepped masonry dais with a rail, facing the open ground.",
   }),
-  street("herm_post", "Herm", "not_started", {
+  street("herm_post", "Herm", "implemented", {
     tags: ["classical_mediterranean", "size_xs"],
     note: "A square shaft with a blocky head course on it, at corners and boundaries. The cheapest classical repeat in the pack, and the saturation piece.",
   }),
-  mem("votive_column", "Votive column", "not_started", {
+  mem("votive_column", "Votive column", "implemented", {
     kind: "prop",
     tags: ["classical_mediterranean", "size_m"],
     note: "One column standing alone on a plinth with a figure, urn or tripod on its capital.",
   }),
-  ruin("column_drums", "Fallen column drums", "not_started", {
+  ruin("column_drums", "Fallen column drums", "implemented", {
     kind: "prop",
     tags: ["classical_mediterranean", "size_m"],
     note: "A row of cylinder drums lying where the shaft fell, half in the grass, with the capital at the end of the run.",
   }),
-  water("ship_shed", "Ship shed", "not_started", {
+  water("ship_shed", "Ship shed", "implemented", {
     kind: "building",
     tags: ["classical_mediterranean", "size_xl"],
     note: "The neosoikos: a long open-fronted shed running down to the water on a slipway floor, one hull's width, in a row of its own kind.",
   }),
-  water("trireme", "Trireme", "not_started", {
+  water("trireme", "Trireme", "implemented", {
     tags: ["classical_mediterranean", "size_l"],
     note: "The oared warship: a low slim hull with a bronze ram at the stem, a single square sail, oar ports in two banks and an eye painted at the bow.",
   }),
-  wat("nymphaeum", "Nymphaeum", "not_started", {
+  wat("nymphaeum", "Nymphaeum", "implemented", {
     kind: "building",
     tags: ["classical_mediterranean", "size_m"],
     note: "The monumental fountain: a niched screen wall with basins under it, water in the floor plane on the bathhouse's pool predicate.",
@@ -1920,11 +1930,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["classical_mediterranean", "size_lin"],
     note: "Polygonal masonry retaining that raises a sanctuary above its town — the retaining pass's grandest client, with a stair cut into one face.",
   }),
-  rur("olive_press", "Olive press", "not_started", {
+  rur("olive_press", "Olive press", "implemented", {
     tags: ["classical_mediterranean", "size_s"],
     note: "A stone trough press with a beam and weight stone, jars ranked along the far wall.",
   }),
-  com("pithos_store", "Pithos store", "not_started", {
+  com("pithos_store", "Pithos store", "implemented", {
     kind: "prop",
     tags: ["classical_mediterranean", "size_s"],
     note: "Great storage jars sunk to the shoulder in a paved yard, lids beside them — the classical warehouse, outdoors.",

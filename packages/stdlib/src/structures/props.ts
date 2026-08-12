@@ -60,6 +60,14 @@ import {
   energyPropFootprint,
   isEnergyProp,
 } from "./props-energy.js";
+// The classical Mediterranean pack's second half — the eight entries of §3.1
+// that are things you walk past rather than into.
+import {
+  CLASSICAL_B_PROP_GENERATORS,
+  CLASSICAL_B_PROP_NAMES,
+  classicalBPropFootprint,
+  isClassicalBProp,
+} from "./props-classical-b.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -78,6 +86,12 @@ import {
   isSpectacleProp,
   spectaclePropFootprint,
 } from "./props-spectacle.js";
+import {
+  CLASSICAL_PROP_GENERATORS,
+  CLASSICAL_PROP_NAMES,
+  classicalPropFootprint,
+  isClassicalProp,
+} from "./props-classical.js";
 import {
   WAYSIDE_PROP_GENERATORS,
   WAYSIDE_PROP_NAMES,
@@ -132,7 +146,9 @@ export const PROP_NAMES = [
   ...WAYSIDE_PROP_NAMES,
   ...RELIC_PROP_NAMES,
   ...SPECTACLE_PROP_NAMES,
+  ...CLASSICAL_PROP_NAMES,
   ...ENERGY_PROP_NAMES,
+  ...CLASSICAL_B_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -456,7 +472,9 @@ export function propFootprint(
   if (isWaysideProp(prop)) return waysidePropFootprint(prop);
   if (isRelicProp(prop)) return relicPropFootprint(prop);
   if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
+  if (isClassicalProp(prop)) return classicalPropFootprint(prop);
   if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
+  if (isClassicalBProp(prop)) return classicalBPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -994,7 +1012,9 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...WAYSIDE_PROP_GENERATORS,
   ...RELIC_PROP_GENERATORS,
   ...SPECTACLE_PROP_GENERATORS,
+  ...CLASSICAL_PROP_GENERATORS,
   ...ENERGY_PROP_GENERATORS,
+  ...CLASSICAL_B_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

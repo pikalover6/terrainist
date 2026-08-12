@@ -40,6 +40,19 @@ import {
   type PropJob,
 } from "../src/structures/props.js";
 import { buildPropExhibits, planPropExhibits } from "../src/exhibits/props.js";
+
+// Sized from the grid itself, the way `devworld.ts` sizes the real field — a
+// fixed literal here silently strands new rows off the plan's south edge, and
+// a stranded prop seeks back inside and squeezes into whatever gap is left
+// (or CANNOT_FITs, if it is wide or wants water). +64 covers the 48-block
+// seek radius with margin.
+const PROP_TEST_GRID = planPropExhibits(0, 0);
+const PROP_TEST_RECT = {
+  x0: -16,
+  z0: -16,
+  width: Math.max(256, PROP_TEST_GRID.width + 64),
+  depth: PROP_TEST_GRID.depth + 64,
+};
 import { planVehicleExhibits } from "../src/exhibits/vehicles.js";
 import type { Region } from "@terrainist/stdlib";
 
@@ -601,7 +614,7 @@ describe("the prop exhibits", () => {
   });
 
   it("digs a stable pond for the harbour row and places every boat in it", () => {
-    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack);
+    const plan = devColumnPlan(PROP_TEST_RECT, stack);
     const result = buildPropExhibits(plan, stack, 20260728n, 0, 0);
     expect(result.pondColumns).toBeGreaterThan(0);
     expect(checkFluidStability(plan).unstable).toBe(0);
@@ -617,7 +630,7 @@ describe("the prop exhibits", () => {
   it("places every exhibit, with no diagnostics, deterministically", () => {
     const build = (): ReturnType<typeof buildPropExhibits> =>
       buildPropExhibits(
-        devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack),
+        devColumnPlan(PROP_TEST_RECT, stack),
         stack,
         20260728n,
         0,
@@ -630,7 +643,7 @@ describe("the prop exhibits", () => {
   });
 
   it("gives the rail exhibits shapes the pass can resolve in a real chunk map", () => {
-    const plan = devColumnPlan({ x0: -16, z0: -16, width: 256, depth: 384 }, stack);
+    const plan = devColumnPlan(PROP_TEST_RECT, stack);
     const result = buildPropExhibits(plan, stack, 20260728n, 0, 0);
     const map = new Map<string, EmitChunk>();
     const chunkAt = (x: number, z: number): EmitChunk => {
