@@ -384,6 +384,25 @@ export interface TerraceRequest {
  * so a later stage overwriting an earlier one is explicit rather than dependent
  * on emit order.
  */
+/**
+ * How far apart the upper-storey windows of a bay stand.
+ *
+ * `regular` — which is what an undeclared facade resolves to — hands back the
+ * positionally drawn pitch the run always used, so a document that names no
+ * rhythm is byte-identical. Only a named rhythm overrides it, and then the
+ * whole run speaks with one voice: that is the point of asking for one.
+ */
+function rhythmPeriod(rhythm: string | undefined, drawn: number): number {
+  switch (rhythm) {
+    case "sparse":
+      return 4;
+    case "dense":
+      return 2;
+    default:
+      return drawn;
+  }
+}
+
 export function emitTerrace(r: TerraceRequest): BuildingResult {
   const { put, cells, style, grammar, choice, sx, sy, sz } = r;
   const h = r.plan.storeyHeight;
@@ -484,7 +503,7 @@ export function emitTerrace(r: TerraceRequest): BuildingResult {
     if (bay.x1 < bay.x0) continue;
     const s = bayStyle[i] as Record<string, string>;
     const wall = s["wall.primary"] as string;
-    const period = positionInt(grammar, bay.wall0, 3, 0, 2, 3);
+    const period = rhythmPeriod(r.params.windowRhythm, positionInt(grammar, bay.wall0, 3, 0, 2, 3));
     const offset = positionInt(grammar, bay.wall0, 4, 0, 0, period - 1);
 
     for (let f = 0; f < bay.floors; f++) {

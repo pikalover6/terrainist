@@ -18,6 +18,8 @@
  */
 
 import {
+  archetypeFacadeDefaults,
+  resolveArchetype,
   DEFAULT_BASEMENT_DEPTH,
   DEFAULT_ORNAMENT_DENSITY,
   archetypeOfTags,
@@ -718,12 +720,33 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       nodePath: job.nodePath,
       today: DEFAULT_ORNAMENT_DENSITY,
     });
+    // `grammar.windowRhythm`: how windows march across a facade. `today` is
+    // what this building would have built anyway — the node's own param if it
+    // named one, else its archetype's intrinsic facade — so a document that
+    // declares no motif is byte-identical, and the row only ever speaks where
+    // *nothing else did*. That last clause is deliberate and is where this row
+    // differs from `grammar.roofForm`: a warehouse with `windowRhythm: "none"`
+    // and a church with its bay lights are archetype identity, and a settlement
+    // motif that punches a regular grid into every blank wall in town is the
+    // "one long shed" failure one level up.
+    const declared =
+      typeof job.params.windowRhythm === "string"
+        ? job.params.windowRhythm
+        : archetypeFacadeDefaults(resolveArchetype(job.params.archetype)).windowRhythm;
+    const rhythm = fanOut<string | undefined>(STRUCTURE_ROWS.windowRhythm, scoped, {
+      nodePath: job.nodePath,
+      today: declared,
+    });
+    const withRhythm =
+      declared !== undefined || rhythm === undefined
+        ? job.params
+        : { ...job.params, windowRhythm: rhythm };
     return {
       ...job,
       params:
         ornament === DEFAULT_ORNAMENT_DENSITY
-          ? job.params
-          : { ...job.params, ornamentDensity: ornament },
+          ? withRhythm
+          : { ...withRhythm, ornamentDensity: ornament },
       materials: deal[i] as BuildingMaterials,
       theme: jobThemes[i] as MaterialTheme,
     };

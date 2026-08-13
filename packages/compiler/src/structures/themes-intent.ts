@@ -22,6 +22,7 @@ export const STRUCTURE_ROWS = {
   materialTheme: "themes.materialTheme",
   roofForm: "grammar.roofForm",
   ornamentDensity: "grammar.ornamentDensity",
+  windowRhythm: "grammar.windowRhythm",
   wearIntensity: "roads.wearIntensity",
   propFamily: "props.family",
   modernFittings: "life.modernFittings",
@@ -164,6 +165,24 @@ export function registerStructureFanOut(): void {
       if (motif !== undefined) return motif;
       if (!intent.eraDeclared) return ctx.today;
       return ROOF_BY_ERA[intent.eraClass];
+    },
+  });
+
+  /* --- motifs → window rhythm -------------------------------------------- */
+  registerFanOut<string | undefined>({
+    id: STRUCTURE_ROWS.windowRhythm,
+    reads: ["character"],
+    status: "today",
+    drives: "motifs.windowRhythm → the window grid of a facade and of a terrace bay",
+    resolve(intent, ctx) {
+      // Same shape as `grammar.roofForm`: the motif is a closed enum the spec
+      // already validated, so it is taken as written. Silence is `ctx.today` —
+      // whatever the node's own `params.windowRhythm` said, which is how a
+      // document without intent stays byte-identical, and how an author who
+      // named a rhythm on one building keeps it.
+      const motif = intent.intent.character?.motifs?.windowRhythm;
+      if (motif !== undefined) return motif;
+      return ctx.today;
     },
   });
 
