@@ -171,3 +171,13 @@ This is the *development* workflow. The *production* worldgen pipeline
   hand-authored worlds** — every demo/acceptance world going forward is
   generated via `terrainist generate`, so demos measure the real product
   path (hand-authored docs remain fine as test fixtures and exhibits).
+- **Standing rule (2026-08-13, Kai): NEVER WAIT ON KAI.** If *anything*
+  remains to do, do it — finish the current work, then start the next
+  discussed/ratified feature without asking. Pause ONLY when fully hard
+  blocked: a crucial change that cannot be verified without a human walk,
+  where building on top of it being wrong would compound the damage, *and*
+  nothing else is unblocked. Kai reviews whenever he can; queue popups and
+  decisions for him but never idle on them — pick the reversible default,
+  note it, and keep moving. This does not override the manual
+  critique→repair law: visual *taste* iteration still lands only on his walk
+  verdicts — but building the next ratified thing never waits for one.
