@@ -144,6 +144,34 @@ WALK QUEUE: troy_horse__c5 (headline), dev_world__classical,
 dev_world__sanctum_siege; still pirate_unicorn_war_c2 +
 hellenist_sea_siege_c3.
 
+**C5 WALK ROUND 2 (Kai, 08-12, partial — more feedback coming): four
+reads, all fixed + one bonus, installed troy_horse__c5b (08-13):**
+(1) horse STILL sandstone — program obeyed api.theme.wood but
+sun_clay's wood families are masonry-in-disguise (deliberate for
+cladding); FIX: programThemeOf rebuilds a non-timber wood family from
+the door's joinery species (acacia) — histogram 1779 smooth_sandstone
+→ 1779 acacia_planks, same shape. (2) brick wall = Loam's derivation
+(plinth=bricks); themes gained optional `curtain`; sun_clay = all
+sandstone; others byte-identical. (3) countryside sand checker was
+AUTHORED — Luna put coarse_dirt+sand 3:1 in ground.surface; FIX
+RATIFIED keep+teach: mixed soil+shore ambient palettes drop shore
+members INLAND (29,251 outside sand → 134, all on the y=63 beach;
+all-sand deserts honored); kit teaches ground.surface = inland soil.
+(4) "modern towers" = the TERRACE pass drawing floors from
+INFILL_FLOORS[density] — no era/prominence input; 10 terraces at f4
+were the whole skyline, every lot building was f2; FIX:
+layout.storeyCeiling row, table = {ancient: 3} ONLY. BONUS DEFECT:
+motifs.windowRhythm was the SECOND grounded-never-consumed key;
+wired (grammar.windowRhythm; injected only where building AND
+archetype silent — unconditional glazed 32 blank walls; terraces
+sparse=4/dense=2/silent=drawn); Troy's declared sparse now reaches
+all 17 terraces. Walkability drift during the wave = half-written
+terrace.ts, settled green, nothing re-pinned. KAI TASTE QUEUE (new):
+ancient ceiling 3 vs 2 (terraces still ~22 blocks with roofs);
+townhouse/warehouse era-hygiene in authoring vocabulary (build fine
+as 2-storey boxes, anachronistic words only). Commits 31b76a3 →
+b5c3c13.
+
 **Standing discipline reminders:** never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
 orchestrator commits (agents never); shared-tree git discipline; probe
