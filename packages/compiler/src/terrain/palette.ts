@@ -626,6 +626,60 @@ export function groundMaterials(theme: MaterialTheme | undefined): GroundMateria
   return GROUND_MATERIALS_BY_THEME[theme.id] ?? deriveGroundMaterials(theme);
 }
 
+/* -------------------------------------------------------------------------- */
+/* shoreline material in an ambient soil mix                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Blocks that are **shoreline material**: what a coast is made of, not what a
+ * countryside is made of.
+ *
+ * Kai, walking Troy c5 (2026-08-12): *"the city's floor is appropriate, but the
+ * sandstone mixed with dirt OUTSIDE the city is ugly and unnecessary."* The
+ * cause was not a pass — it was the document. Luna, asked for "a walled ancient
+ * city on a rise above the sandy Aegean coast", wrote
+ *
+ * ```json
+ * "ground.surface": { "mix": [["minecraft:coarse_dirt", 3], ["minecraft:sand", 1]] }
+ * ```
+ *
+ * which is a sandy coast expressed as the **ambient soil of the whole world**.
+ * A mix is drawn per column, so what a model writes as "a bit sandy" comes out
+ * as a 25% checkerboard of pale single columns over every field, ridge and
+ * hollow for the width of the region — 46,051 sand columns across Troy's 512².
+ *
+ * The compiler already has a shore: `SurfaceClass.BEACH` paints `ground.beach`
+ * along the classified coast, and that is where the document's sand belongs.
+ * So a *mixed* ambient surface keeps its soil members inland and lends its
+ * shoreline members to the shore that already asks for them — see
+ * {@link Palette.inlandStateAt}.
+ *
+ * Gravel is deliberately absent: a gravelly moor is a real place, and `scree`
+ * is a role the ground materials table hands out on purpose.
+ */
+const SHORE_SURFACE_BLOCKS: ReadonlySet<string> = new Set([
+  "minecraft:sand",
+  "minecraft:red_sand",
+  "minecraft:suspicious_sand",
+  "minecraft:sandstone",
+  "minecraft:smooth_sandstone",
+  "minecraft:cut_sandstone",
+  "minecraft:chiseled_sandstone",
+  "minecraft:red_sandstone",
+  "minecraft:smooth_red_sandstone",
+  "minecraft:cut_red_sandstone",
+  "minecraft:chiseled_red_sandstone",
+]);
+
+/**
+ * Symbols whose mix is filtered for inland ground.
+ *
+ * One entry, and deliberately: `ground.surface` is the only symbol laid over a
+ * whole world's open country. `ground.beach`, `ground.sand` and the rock
+ * symbols are asked for by name by a pass that means them.
+ */
+const INLAND_FILTERED_SYMBOLS: ReadonlySet<string> = new Set(["ground.surface"]);
+
 /** A palette symbol resolved down to block state ids. */
 export type ResolvedSymbol =
   | { readonly kind: "single"; readonly stateId: number }
@@ -648,14 +702,27 @@ export class Palette {
    */
   private readonly authored: ReadonlySet<string>;
 
+  /**
+   * Inland variants of the symbols in {@link INLAND_FILTERED_SYMBOLS} — the
+   * same mix with its shoreline members dropped.
+   *
+   * Present only for a mix that carries **both** shoreline and soil members, so
+   * the map is empty for every single-block symbol, for a mix of soils, and for
+   * an outright sandy palette (a document that wants a desert gets one). That
+   * emptiness is the gate: {@link inlandStateAt} is then {@link stateAt}.
+   */
+  private readonly inland: ReadonlyMap<string, ResolvedSymbol>;
+
   constructor(
     symbols: Map<string, ResolvedSymbol>,
     stream: Seed256,
     authored: ReadonlySet<string> = new Set<string>(),
+    inland: ReadonlyMap<string, ResolvedSymbol> = new Map<string, ResolvedSymbol>(),
   ) {
     this.symbols = symbols;
     this.stream = stream;
     this.authored = authored;
+    this.inland = inland;
   }
 
   /** True when the symbol is defined. */
@@ -694,7 +761,28 @@ export class Palette {
    * ignore the position; mixes hash it.
    */
   stateAt(symbol: string, x: number, z: number): number {
-    const entry = this.entry(symbol);
+    return this.drawAt(this.entry(symbol), x, z);
+  }
+
+  /**
+   * The block state for `symbol` on **inland** ground at column `(x, z)`.
+   *
+   * Identical to {@link stateAt} for every symbol and every document except
+   * one shape: an ambient surface mix that names shoreline material alongside
+   * soil (`coarse_dirt` and `sand` together, say), where the shoreline members
+   * are dropped and the soil members keep their relative weights. The shore
+   * itself is unaffected — it is painted from `ground.beach` by the beach
+   * surface class, which is the symbol that means a coast.
+   *
+   * @see SHORE_SURFACE_BLOCKS for the walk that asked for this.
+   */
+  inlandStateAt(symbol: string, x: number, z: number): number {
+    const entry = this.inland.get(symbol) ?? this.entry(symbol);
+    return this.drawAt(entry, x, z);
+  }
+
+  /** The position-keyed draw both accessors make. */
+  private drawAt(entry: ResolvedSymbol, x: number, z: number): number {
     if (entry.kind === "single") return entry.stateId;
     const pick = positionWeighted(this.stream, x, 0, z, entry.weights);
     return entry.stateIds[pick] as number;
@@ -759,6 +847,8 @@ export function resolvePalette(
   // What the *document* said, kept apart from what the profile defaults said,
   // so a theme-derived role can replace a profile default and never an author.
   const authored = new Set<string>(Object.keys(style?.palettes ?? {}));
+  // Inland variants of an ambient surface mix — see `SHORE_SURFACE_BLOCKS`.
+  const inland = new Map<string, ResolvedSymbol>();
 
   for (const symbol of Object.keys(merged).sort()) {
     if (NON_SYMBOL_PALETTE_KEYS.has(symbol)) continue;
@@ -774,6 +864,8 @@ export function resolvePalette(
     }
     const stateIds: number[] = [];
     const weights: number[] = [];
+    const soilIds: number[] = [];
+    const soilWeights: number[] = [];
     for (const [name, weight] of value.mix) {
       const block = stack.blockByName(name);
       if (block === undefined) {
@@ -782,6 +874,10 @@ export function resolvePalette(
       }
       stateIds.push(block.stateId);
       weights.push(weight);
+      if (!SHORE_SURFACE_BLOCKS.has(name)) {
+        soilIds.push(block.stateId);
+        soilWeights.push(weight);
+      }
     }
     if (stateIds.length === 0) continue;
     symbols.set(
@@ -790,10 +886,25 @@ export function resolvePalette(
         ? { kind: "single", stateId: stateIds[0] as number }
         : { kind: "mix", stateIds: Int32Array.from(stateIds), weights },
     );
+    // The inland variant, for the one mix that is laid over open country. Built
+    // only when the mix is genuinely *mixed* — some shore and some soil — so a
+    // sandy palette stays sandy and a soil palette is untouched.
+    if (
+      INLAND_FILTERED_SYMBOLS.has(symbol) &&
+      soilIds.length > 0 &&
+      soilIds.length < stateIds.length
+    ) {
+      inland.set(
+        symbol,
+        soilIds.length === 1
+          ? { kind: "single", stateId: soilIds[0] as number }
+          : { kind: "mix", stateIds: Int32Array.from(soilIds), weights: soilWeights },
+      );
+    }
   }
 
   return {
-    palette: new Palette(symbols, streamSeed(nodeSeedValue, "palette"), authored),
+    palette: new Palette(symbols, streamSeed(nodeSeedValue, "palette"), authored, inland),
     unknownBlocks,
   };
 }

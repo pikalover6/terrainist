@@ -236,7 +236,11 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
           }
           break;
         default:
-          surface[idx] = palette.stateAt("ground.surface", x, z);
+          // Inland ground: a mixed ambient surface leaves its shoreline members
+          // to the shore, which is painted from `ground.beach` two cases up.
+          // Identity for every palette that does not mix sand into its soil —
+          // see `SHORE_SURFACE_BLOCKS` in `palette.ts`.
+          surface[idx] = palette.inlandStateAt("ground.surface", x, z);
           subsurface[idx] = palette.stateAt("ground.subsurface", x, z);
           soil[idx] = Math.min(255, soilDepth);
           break;
