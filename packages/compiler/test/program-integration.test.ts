@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { centeredRegion } from "@terrainist/stdlib";
-import { MATERIAL_THEMES, type MaterialTheme } from "@terrainist/stdlib";
+import { ALL_MATERIAL_THEMES, MATERIAL_THEMES, type MaterialTheme } from "@terrainist/stdlib";
 import type { AuthoredProgramRecord } from "@terrainist/spec";
 
 import {
@@ -36,6 +36,7 @@ import { devColumnPlan } from "../src/devworld.js";
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { driverForPlan } from "../src/layout/ground-driver.js";
 import { wallJobsOf, wallMaterialsOfTheme } from "../src/structures/index.js";
+import { groundMaterials } from "../src/terrain/palette.js";
 import { FluidKind } from "../src/terrain/columns.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
 
@@ -107,6 +108,70 @@ describe("api.theme", () => {
     expect(theme.wood.planks).toContain("planks");
     expect(theme.stone.primary.length).toBeGreaterThan(0);
     expect(theme.roof.solid.length).toBeGreaterThan(0);
+  });
+
+  it("hands a masonry theme's program real timber, taken from its joinery", () => {
+    // Kai, walking Troy (2026-08-12): the Trojan horse asked for
+    // `api.theme.wood.planks` by the book and came out sandstone, because sun
+    // clay's "wood" families are wall cladding. A wooden icon gets wood.
+    const sunClay = materialThemeById("sun_clay") as MaterialTheme;
+    expect(sunClay).toBeDefined();
+    expect((sunClay.woods[0] as { planks: string }).planks).toBe("smooth_sandstone");
+    const theme = programThemeOf(sunClay);
+    expect(theme.wood).toEqual({
+      id: "acacia",
+      planks: "minecraft:acacia_planks",
+      log: "minecraft:acacia_log",
+      stripped: "minecraft:stripped_acacia_log",
+      stairs: "minecraft:acacia_stairs",
+      slab: "minecraft:acacia_slab",
+      fence: "minecraft:acacia_fence",
+      door: "minecraft:acacia_door",
+      trapdoor: "minecraft:acacia_trapdoor",
+    });
+    // The rest of the theme is untouched: only the wood family is rebuilt.
+    expect(theme.ground).toEqual(programThemeOf(sunClay).ground);
+    expect(theme.stone.primary).toContain("sandstone");
+  });
+
+  it("leaves a genuinely timber theme's wood byte-identical", () => {
+    for (const t of MATERIAL_THEMES) {
+      const lead = (t as MaterialTheme).woods[0] as {
+        id: string;
+        planks: string;
+        log: string;
+        stripped: string;
+        stairs: string;
+        slab: string;
+        fence: string;
+        door: string;
+        trapdoor: string;
+      };
+      const wood = programThemeOf(t as MaterialTheme).wood;
+      expect(wood.id).toBe(lead.id);
+      for (const role of [
+        "planks",
+        "log",
+        "stripped",
+        "stairs",
+        "slab",
+        "fence",
+        "door",
+        "trapdoor",
+      ] as const) {
+        expect(wood[role], `${lead.id}.${role}`).toBe(`minecraft:${lead[role]}`);
+      }
+    }
+  });
+
+  it("projects the same wood every time, for every theme", () => {
+    const sunClay = materialThemeById("sun_clay") as MaterialTheme;
+    expect(programThemeOf(sunClay).wood).toEqual(programThemeOf(sunClay).wood);
+    expect(Object.isFrozen(programThemeOf(sunClay).wood)).toBe(true);
+    // And the pinned gate theme is untouched by the timber rule — its lead
+    // family is oak already, so every verified `outputHash` still means what
+    // it meant.
+    expect(VERIFICATION_THEME.wood.planks).toBe("minecraft:oak_planks");
   });
 
   it("is frozen — one instance cannot hand the next a different world", () => {
@@ -401,5 +466,54 @@ describe("an authored `params.walls`", () => {
     const [job] = wallJobsOf(walledDoc({}), "world", [], rectOf);
     expect(job?.materials).toBeUndefined();
     expect(job?.style).toBe("masonry");
+  });
+
+  // BY DESIGN 2026-08-12 (Kai, walking Troy): sun clay declares its own
+  // `curtain`, so its circuit is all sandstone rather than the ground roles'
+  // brick. Every theme that declares none derives exactly as before.
+  it("builds a sun-clay circuit out of sandstone, not the ground's brick", () => {
+    const sunClay = materialThemeById("sun_clay") as MaterialTheme;
+    const [job] = wallJobsOf(walledDoc({}), "world", [], rectOf, () => sunClay);
+    expect(job?.materials).toEqual({
+      core: "minecraft:sandstone",
+      walk: "minecraft:smooth_sandstone",
+      parapet: "minecraft:cut_sandstone",
+      merlon: "minecraft:chiseled_sandstone",
+      tower: "minecraft:smooth_sandstone",
+    });
+    for (const block of Object.values(job?.materials ?? {})) {
+      expect(block).toContain("sandstone");
+    }
+  });
+
+  it("derives every curtain-less theme exactly as the ground roles say", () => {
+    for (const t of ALL_MATERIAL_THEMES) {
+      if (t.curtain !== undefined) continue;
+      const g = groundMaterials(t);
+      expect(wallMaterialsOfTheme(t), t.id).toEqual({
+        core: g.revetment,
+        walk: g.pavement,
+        parapet: g.revetment,
+        merlon: g.coping,
+        tower: g.revetment,
+      });
+    }
+    // Only sun clay opts out today.
+    expect(ALL_MATERIAL_THEMES.filter((t) => t.curtain !== undefined).map((t) => t.id)).toEqual([
+      "sun_clay",
+    ]);
+  });
+
+  it("still lets an author's own materials outrank a theme's curtain", () => {
+    const sunClay = materialThemeById("sun_clay") as MaterialTheme;
+    const [job] = wallJobsOf(
+      walledDoc({ materials: { core: "minecraft:mud_bricks" } }),
+      "world",
+      [],
+      rectOf,
+      () => sunClay,
+    );
+    expect(job?.materials?.core).toBe("minecraft:mud_bricks");
+    expect(job?.materials?.merlon).toBe("minecraft:chiseled_sandstone");
   });
 });

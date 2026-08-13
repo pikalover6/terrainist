@@ -191,6 +191,12 @@ export const WALL_MATERIALS: Readonly<Record<string, WallMaterials>> = Object.fr
  */
 export function wallMaterialsOfTheme(theme: MaterialTheme | undefined): WallMaterials {
   if (theme === undefined) return WALL_MATERIALS["masonry"] as WallMaterials;
+  // A theme may name its curtain outright — see `MaterialTheme.curtain`. The
+  // derivation below is what a silent theme still gets, unchanged.
+  if (theme.curtain !== undefined) {
+    const c = theme.curtain;
+    return { core: c.core, walk: c.walk, parapet: c.parapet, merlon: c.merlon, tower: c.tower };
+  }
   const g = groundMaterials(theme);
   return {
     core: g.revetment,

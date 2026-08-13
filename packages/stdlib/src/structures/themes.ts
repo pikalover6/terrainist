@@ -67,12 +67,44 @@ export interface BuildingMaterials {
   readonly roof: RoofSet;
 }
 
+/**
+ * One curtain-wall vocabulary: the five roles a city wall is built from.
+ *
+ * Mirrors the compiler's `WallMaterials` exactly, and for the same reason every
+ * entry there is a **full cube**: a slab or a fence in a curtain is either a
+ * physics finding waiting to happen or a hole a mob paths through.
+ */
+export interface CurtainWallSet {
+  /** The body of the curtain, and its footing. */
+  readonly core: string;
+  /** The wall-walk's top course — what a player stands on. */
+  readonly walk: string;
+  /** The parapet band either side of the walk. */
+  readonly parapet: string;
+  /** The merlon course on top of the parapet. */
+  readonly merlon: string;
+  /** A tower's body. */
+  readonly tower: string;
+}
+
 /** A village-wide palette: the sets every building in it draws from. */
 export interface MaterialTheme {
   readonly id: string;
   readonly woods: readonly WoodSet[];
   readonly stones: readonly StoneSet[];
   readonly roofs: readonly RoofSet[];
+  /**
+   * The city wall's own materials — when absent, derived from the ground roles
+   * as before (`revetment` body, `pavement` walk, `coping` merlon).
+   *
+   * Kai, walking Troy (2026-08-12): the sun-clay circuit took its body from the
+   * ground's brick roles and read as "weird brick foundation" under sandstone
+   * crenellations. A curtain wall is one object seen from outside the town, so
+   * a theme may say what it is made of directly instead of inheriting the
+   * terrace masonry. Declared per theme; every theme that stays silent keeps
+   * the derivation byte for byte.
+   */
+  readonly curtain?: CurtainWallSet;
   /**
    * This palette belongs to a **dry country**.
    *
@@ -539,6 +571,19 @@ export const SUN_CLAY_THEME: MaterialTheme = Object.freeze({
   id: SUN_CLAY_THEME_ID,
   // The one dry palette in the tree (2026-08-11) — see `aridAmbient`.
   aridAmbient: true,
+  // All sandstone, by design (Kai, walking Troy 2026-08-12): the derived wall
+  // took its body from the ground roles, which are mud brick and fired brick
+  // here, and a brick curtain under sandstone merlons read as a mistake. The
+  // circuit is the one thing seen from outside the town, so it is cut from the
+  // town's own dressed stone: sandstone body, smooth sandstone walk and towers,
+  // cut sandstone parapet, chiseled merlons for the crenellation to read.
+  curtain: {
+    core: "minecraft:sandstone",
+    walk: "minecraft:smooth_sandstone",
+    parapet: "minecraft:cut_sandstone",
+    merlon: "minecraft:chiseled_sandstone",
+    tower: "minecraft:smooth_sandstone",
+  },
   woods: [SANDSTONE_ASHLAR, PLASTER_WHITE, MUD_BRICK_WALL],
   stones: [SANDSTONE_STONE, SMOOTH_SANDSTONE_STONE, MUD_BRICK_STONE],
   roofs: [SANDSTONE_TERRACE_ROOF, PLASTER_TERRACE_ROOF, BRICK_ROOF, MUD_BRICK_ROOF],

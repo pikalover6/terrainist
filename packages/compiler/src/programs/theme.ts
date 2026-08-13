@@ -88,6 +88,86 @@ function groundRoles(theme: MaterialTheme): ProgramGroundRoles {
   });
 }
 
+/**
+ * Every vanilla wood species of the pinned 1.21.11 set, in one place.
+ *
+ * The list is fixed and enumerated rather than pattern-matched: `smooth_sandstone`
+ * and `mud_bricks` are perfectly good *plank fields* (a `WoodSet` is a shape, not
+ * a claim about trees), and no regex over arbitrary block names can tell a plank
+ * from a wall without knowing the species. Add a species here when Mojang ships
+ * one, and nothing else needs to change.
+ */
+const WOOD_SPECIES: readonly string[] = Object.freeze([
+  "oak",
+  "spruce",
+  "birch",
+  "jungle",
+  "acacia",
+  "dark_oak",
+  "mangrove",
+  "cherry",
+  "crimson",
+  "warped",
+  "bamboo",
+  "pale_oak",
+]);
+
+/** The species whose planks this block is, or `undefined` when it is not a plank. */
+function plankSpecies(planks: string): string | undefined {
+  const bare = planks.includes(":") ? (planks.split(":").pop() as string) : planks;
+  return WOOD_SPECIES.find((s) => bare === `${s}_planks`);
+}
+
+/** The species this door belongs to, or `undefined` when it is not a wood door. */
+function doorSpecies(door: string): string | undefined {
+  const bare = door.includes(":") ? (door.split(":").pop() as string) : door;
+  return WOOD_SPECIES.find((s) => bare === `${s}_door`);
+}
+
+/**
+ * A real timber `WoodSet` for one species — the full family, log form included.
+ *
+ * The nether "woods" and bamboo do not have logs: crimson and warped grow stems,
+ * and bamboo is only ever a block of packed culms. Both still answer every role.
+ */
+function timberSet(species: string): WoodSet {
+  const log =
+    species === "crimson" || species === "warped"
+      ? `${species}_stem`
+      : species === "bamboo"
+        ? "bamboo_block"
+        : `${species}_log`;
+  return {
+    id: species,
+    planks: `${species}_planks`,
+    log,
+    stripped: `stripped_${log}`,
+    stairs: `${species}_stairs`,
+    slab: `${species}_slab`,
+    fence: `${species}_fence`,
+    door: `${species}_door`,
+    trapdoor: `${species}_trapdoor`,
+  };
+}
+
+/**
+ * The wood family a program is handed — **real timber, always**.
+ *
+ * A theme's `woods` are the grammar's *wall cladding* families, and in a masonry
+ * theme they are honestly masonry: sun clay's lead "wood" is smooth sandstone
+ * over cut sandstone, which is right for an Aegean house and a lie for a wooden
+ * icon. A bespoke program asking for `api.theme.wood.planks` is asking for the
+ * town's carpentry, so when the projected family's planks are not a plank we
+ * rebuild the family from the theme's **joinery species** — the `door` field is
+ * the one honest wood every theme keeps (sun clay: `acacia_door`). Themes whose
+ * families are already timber project through untouched, byte for byte.
+ */
+function realTimber(wood: WoodSet): WoodSet {
+  if (plankSpecies(wood.planks) !== undefined) return wood;
+  const species = doorSpecies(wood.door) ?? "oak";
+  return timberSet(species);
+}
+
 function woodRoles(wood: WoodSet): ProgramWoodRoles {
   return Object.freeze({
     id: wood.id,
@@ -146,7 +226,7 @@ export function programThemeOf(theme: MaterialTheme | undefined): ProgramTheme {
   return Object.freeze({
     id: t.id,
     ground: groundRoles(t),
-    wood: woodRoles(t.woods[0] as WoodSet),
+    wood: woodRoles(realTimber(t.woods[0] as WoodSet)),
     stone: stoneRoles(t.stones[0] as StoneSet),
     roof: roofRoles(t.roofs[0] as RoofSet),
     wall: wallRoles(t),
