@@ -144,6 +144,21 @@ export interface ProminenceInput {
    * own cap still wins. Absent (or 1) is exactly today's field.
    */
   readonly storeyMultiplier?: number;
+  /**
+   * A hard ceiling on storeys — the `layout.storeyCeiling` fan-out row's
+   * landing place, and the era's veto over everything above.
+   *
+   * Applied **after** the character ceiling, the multiplier and the archetype
+   * cap, because it is not a preference: a document that says its world is
+   * ancient is saying no lot in it builds a tower, whatever the field, the
+   * wealth or the character asked for. The density's floor still wins over it —
+   * a ceiling below `lo` clamps to one storey rather than to zero, and a lot
+   * that cannot hold a building is the infill pass's decision, not this one's.
+   *
+   * Absent is exactly today's field, which is what makes every document with no
+   * `era` — and every era class the table has no opinion about — byte-identical.
+   */
+  readonly storeyCeiling?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -322,7 +337,13 @@ export function buildProminenceField(input: ProminenceInput): ProminenceField {
     // law needs.
     const multiplier = input.storeyMultiplier ?? 1;
     const lifted = multiplier === 1 ? byCharacter : Math.max(lo, Math.round(byCharacter * multiplier));
-    const cap = Math.min(lifted, archetypeCeiling(ctx.archetype));
+    // The era's veto, last and lowest: see `ProminenceInput.storeyCeiling`.
+    const era = input.storeyCeiling;
+    const cap = Math.min(
+      lifted,
+      archetypeCeiling(ctx.archetype),
+      era === undefined ? Number.POSITIVE_INFINITY : era,
+    );
     if (cap <= lo) return Math.max(1, cap);
     const shaped = shapeProminence(at(x, z));
     return clamp(lo + Math.round(shaped * (cap - lo)), lo, cap);

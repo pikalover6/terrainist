@@ -1138,9 +1138,17 @@ export function layDistrict(
   // landmarks and every infill lot reads it. Keyed on the district's bounds,
   // its seed, the terrain and the *authored* children — never on the lots, so
   // one more infill building cannot move the height of any other.
+  // `layout.storeyCeiling`: what the era says nothing in this quarter may build
+  // past. `undefined` is "no opinion", which every document without an `era`
+  // gets and which leaves the field and the street wall exactly as they were.
+  const storeyCeiling = fanOut<number | undefined>(LAYOUT_ROWS.storeyCeiling, intent, {
+    nodePath,
+    today: undefined,
+  });
   const prominence = buildProminenceField({
     bounds,
     seed,
+    ...(storeyCeiling === undefined ? {} : { storeyCeiling }),
     // `layout.storeyMultiplier`: a wealthy quarter builds taller on the same
     // lots. 1 is "today", so a district with no intent is unmoved.
     storeyMultiplier: fanOut<number>(LAYOUT_ROWS.storeyMultiplier, intent, {
@@ -1178,6 +1186,7 @@ export function layDistrict(
     seed,
     preferAt,
     courtyardPassages,
+    storeyCeiling,
   );
   let terraceBays = 0;
   let terraceLots = 0;
@@ -2800,6 +2809,17 @@ function terraceRuns(
   preferAt: ReadonlyMap<string, number>,
   /** Filled with the passages actually cut. */
   passages: CourtyardPassage[],
+  /**
+   * `layout.storeyCeiling` — how tall the era lets a street wall build, or
+   * `undefined` for "no opinion", which is every document that declares no
+   * `era` and every era class the table stays quiet about.
+   *
+   * The terrace run draws its storeys from `INFILL_FLOORS[density]` and has
+   * never asked the prominence field, so the ceiling has to arrive here
+   * separately: capping the field alone would leave the street wall — the
+   * tallest thing in an ordinary quarter — exactly as tall as it was.
+   */
+  storeyCeiling: number | undefined,
 ): Terrace[] {
   const density = params.density;
   const maxFrontage = TERRACE_MAX_FRONTAGE[density];
@@ -2964,7 +2984,13 @@ function terraceRuns(
     // skyline of teeth. The generator's cornice snap then merges the neighbours
     // that came out within one of each other, so what survives is a few long
     // cornice lines with deliberate steps between them.
-    const [lo, hi] = INFILL_FLOORS[density];
+    const [rangeLo, rangeHi] = INFILL_FLOORS[density];
+    // The era's ceiling clips the top of the range, and the bottom follows it
+    // down rather than crossing it: a two-storey minimum under a one-storey
+    // ceiling would draw `lo > hi` and the `min`/`max` pair below would return
+    // the ceiling anyway. Stating it here keeps the draw a range.
+    const hi = storeyCeiling === undefined ? rangeHi : Math.max(1, Math.min(rangeHi, storeyCeiling));
+    const lo = Math.min(rangeLo, hi);
     const startCol = along ? rect.x0 : rect.z0;
     const otherCol = along ? rect.z0 : rect.x0;
     const base = positionInt(stream, startCol, 3, otherCol, lo, hi);

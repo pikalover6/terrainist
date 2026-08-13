@@ -14,6 +14,7 @@ import {
   type DistrictDensity,
   type DistrictFabric,
   type DistrictGroundPolicy,
+  type EraClass,
 } from "@terrainist/spec";
 import { ruinShare } from "@terrainist/stdlib";
 
@@ -27,6 +28,7 @@ export const LAYOUT_ROWS = {
   density: "layout.density",
   fabric: "layout.fabric",
   storeyMultiplier: "layout.storeyMultiplier",
+  storeyCeiling: "layout.storeyCeiling",
   courtyardShare: "layout.courtyardShare",
   groundPolicy: "layout.groundPolicy",
   ruinShare: "decay.ruinShare",
@@ -44,6 +46,37 @@ export const LAYOUT_ROWS = {
  * asserts the id is registered under this exact spelling.
  */
 export const GROUND_POLICY_ROW_ID = "layout.groundPolicy";
+
+/**
+ * How tall ordinary fabric may build, by era class — the `layout.storeyCeiling`
+ * row's whole opinion.
+ *
+ * ## Why this exists
+ *
+ * Kai walked Troy (P3 c5, 2026-08-12) and reported "modern building types
+ * alongside the appropriate ones": four-storey flat-fronted street walls with a
+ * regular window grid standing among two-storey flat-roofed Aegean houses. The
+ * archetypes were right — the bays were `megaron` and `peristyle_house` out of
+ * the `classical_mediterranean` pack — and the *height* was what read modern.
+ * A sixteen-block wall of evenly spaced windows is an apartment block whatever
+ * blocks it is made of.
+ *
+ * The terrace run drew its storeys from `INFILL_FLOORS[density]` (medium is
+ * `[2, 4]`) with nothing between it and the eye but density, so an ancient
+ * quarter at medium density built the same street wall a modern one would.
+ *
+ * ## Why only these classes
+ *
+ * A ceiling is a claim about what a period actually built, and we only make the
+ * claim where it is safe: pre-classical and classical fabric is two to three
+ * storeys and the exceptions (Rome's insulae) are not what a walk reads. Every
+ * other class is **absent, not high** — the row returns `ctx.today` for it and
+ * those worlds are byte-identical. Raising a hand for `medieval` is a taste
+ * call for Kai, not a fact this table gets to assert on its own.
+ */
+export const ERA_STOREY_CEILING: Readonly<Partial<Record<EraClass, number>>> = Object.freeze({
+  ancient: 3,
+});
 
 /** Register every layout-owned row. */
 export function registerLayoutFanOut(): void {
@@ -137,6 +170,26 @@ export function registerLayoutFanOut(): void {
       const wealth = intent.intent.wealth;
       if (wealth === undefined) return ctx.today;
       return ctx.today * (1 + (wealth - 0.5) * 0.4);
+    },
+  });
+
+  /* --- era → the storey ceiling ------------------------------------------- */
+  registerFanOut<number | undefined>({
+    id: LAYOUT_ROWS.storeyCeiling,
+    reads: ["era"],
+    status: "today",
+    drives:
+      "hard ceiling on how many storeys ordinary fabric builds — the prominence field and the terrace run (layout/prominence.ts, layout/district.ts)",
+    resolve(intent, ctx) {
+      // Law 2, and the whole of the gate: no `era`, no ceiling, and an era
+      // whose class is not in the table keeps whatever ceiling it had. Only the
+      // classes {@link ERA_STOREY_CEILING} names can move a world.
+      if (!intent.eraDeclared) return ctx.today;
+      const ceiling = ERA_STOREY_CEILING[intent.eraClass];
+      if (ceiling === undefined) return ctx.today;
+      // The lower of the two, never the higher: an author or a later row that
+      // already asked for something shorter keeps it.
+      return ctx.today === undefined ? ceiling : Math.min(ctx.today, ceiling);
     },
   });
 
