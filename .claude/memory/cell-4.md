@@ -172,7 +172,12 @@ townhouse/warehouse era-hygiene in authoring vocabulary (build fine
 as 2-storey boxes, anachronistic words only). Commits 31b76a3 →
 b5c3c13.
 
-**Standing discipline reminders:** never --replace on install; battery/
+**Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
+08-13): `--saves "/Users/kaihoward/Library/Application Support/
+PrismLauncher/instances/Fabulously Optimized/minecraft/saves"` on
+every install from now on (vanilla launcher path retired;
+troy_horse__c5b + both exhibit devworlds already reinstalled there);
+never --replace on install; battery/
 is the durable archive (docs+logs committed, worlds/reports ignored);
 orchestrator commits (agents never); shared-tree git discipline; probe
 pipes swallow exit codes — check counts not exit; TaskStop finished
