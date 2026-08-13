@@ -509,6 +509,15 @@ speckled rather than banded:
 }
 ```
 
+**`ground.surface` is the INLAND soil — say "sandy coast" with `ground.beach`,
+never by mixing sand into the world's soil.** A Troy shipped with
+`coarse_dirt`+`sand` in `ground.surface` and every field for five hundred
+blocks came out a 25% sand checker; the compiler now drops shore blocks
+(sand, sandstone families) from a mixed soil palette away from the water, so
+the mix would not even do what it was written to do. The shoreline draws from
+`ground.beach` and keeps whatever you put there; an all-sand `ground.surface`
+is still honoured whole, because a desert is a desert.
+
 Building materials (wall, trim, roof) are chosen automatically: one village
 theme is drawn from the world seed and each building gets its own triple from
 it, so no two houses look alike. Do not try to set them per building.
