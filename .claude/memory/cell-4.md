@@ -108,13 +108,22 @@ sluice_box refused twice-over (no fall-following form + moving water
 is post-freeze fluid.channel). Kit §9c "peacetime fabric" + prepass
 clause. Run exhibit (test_fence: straight/diagonal/corner/climb +
 found gate) authored at exhibits/infra.ts + wired into devworld
-south of the context section. IN FLIGHT: family-D (blast_door +
-airlock_vestibule as host params; survived one API-drop resume;
-entrance-fittings module mid-write). THEN: build+verify, wave
-commit, P4–P7 battery refresh (frozen prompts 304–307) → Prism,
-devworld reinstall, funnel+artifact = GOAL COMPLETE. Hard-blocked
-remainder (F3 walk iteration, post-freeze machinery tail) excluded
-by definition. IN FLIGHT AT WRAP: devworld-0814b emit (all nine strips → Prism
+south of the context section. **GOAL COMPLETE (08-14 evening, 790d819 + battery commit):**
+family-D landed (params.entrance.treatment: blast_door refuses to be
+a second digger — face-in-the-cut only, doorstep pass keeps the dig;
+airlock chamber INSIDE the envelope, porch in the apron;
+NON_NODE_IMPLEMENTED doctrine extended precinct→host-param). Full
+tree 4,234/0. Battery FULLY REFRESHED on the complete vocabulary:
+overgrown_hideout__c3, hellenist_sea_siege__c4, redwood_camp__c2,
+glowcap_vale__c2 all → Prism + archived ($0.18 total, zero errors);
+dev_world__complete installed (incl. the test_fence RUN exhibit:
+straight/diagonal/corner/8-block climb/found gate, south of context).
+EVERY battery prompt now has a current candidate. Catalog ~491/585;
+remaining not_started = post-freeze machinery tail only (flumes/
+water-movers/bridges/`between`/tier-A, maglev_pylon) by design.
+HARD-BLOCKED remainder: F3 junction iteration (Kai's walks);
+survivor-yards ruling (Kai skipped, status quo held). WALK QUEUE:
+seven fresh candidates + dev_world__complete. IN FLIGHT AT WRAP: devworld-0814b emit (all nine strips → Prism
 install as _all_packs) + P1 pirate/unicorn c3 generate (seed 301,
 teed — install _c3 to Prism + render + archive battery/candidates/
 p1-c3 on landing). MORNING QUEUE: P1 walk (the arc's thesis test),

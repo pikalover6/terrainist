@@ -1,0 +1,607 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowcap_vale",
+    "worldSeed": "307",
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:mycelium",
+      "plaza.path": "minecraft:glowstone",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:mossy_cobblestone",
+      "plaza.border": "minecraft:amethyst_block",
+      "road.surface": "minecraft:dirt_path"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.45,
+    "formality": 0.2,
+    "character": {
+      "label": "glowing mushroom village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "arcane_magical"
+      ],
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "witch_hut",
+          "crystal_shrine",
+          "tavern",
+          "smithy",
+          "cottage"
+        ]
+      },
+      "motifs": {
+        "roofType": "dome",
+        "massing": "sprawling",
+        "windowRhythm": "banded",
+        "ornamentDensity": 0.8
+      }
+    },
+    "tokens": {
+      "terrain": "a secluded vale where a strange village has grown between enormous glowing mushroom caps"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle secluded country enclosing the mushroom vale",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 16,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 58,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a broad raised floor for the village between the caps",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.52
+              ],
+              "radius": 96,
+              "height": 6,
+              "rim": 4,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "vale_cut",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the shallow dry vale winding beneath the mushroom canopy",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.58
+                ],
+                [
+                  0.3,
+                  0.54
+                ],
+                [
+                  0.5,
+                  0.52
+                ],
+                [
+                  0.7,
+                  0.48
+                ],
+                [
+                  0.88,
+                  0.54
+                ]
+              ],
+              "width": 84,
+              "depth": 8,
+              "profile": "rounded",
+              "meander": 0.6,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 12
+        }
+      },
+      {
+        "id": "glowing_caps",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the fungal grove of enormous glowing caps around the village",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 128
+          },
+          "density": 0.14,
+          "spacing": 4,
+          "clumping": 0.72,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            64
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "enormous_red_cap",
+                  "shape": "mushroom_giant_red",
+                  "weight": 3,
+                  "minHeight": 12,
+                  "maxHeight": 14
+                },
+                {
+                  "id": "lantern_cap",
+                  "shape": "glowcap",
+                  "weight": 2,
+                  "minHeight": 14,
+                  "maxHeight": 16
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "fungal"
+          },
+          "species": [
+            {
+              "id": "brown_shelf_caps",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "vale_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "outer_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse temperate trees beyond the fungal hollow",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "outer_birch",
+              "shape": "birch_slim",
+              "weight": 2
+            },
+            {
+              "id": "outer_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the glow-lit village green between the caps",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "cap_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a strange dwelling beneath a mushroom cap",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              64
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 90
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house",
+          "strange"
+        ]
+      },
+      {
+        "id": "glow_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage lit by the fungal glow",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              10
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "witches_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the crooked hut at the edge of the caps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 256
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "witch_hut",
+          "house",
+          "strange"
+        ]
+      },
+      {
+        "id": "spore_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tavern where the village gathers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "crystal_shrine",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the crystal shrine facing the village",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 18,
+            "max": 70
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "crystal_shrine",
+          "landmark"
+        ]
+      },
+      {
+        "id": "village_smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the little smithy kept apart from the cottages",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 64
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "max": 256
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 60
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "smithy",
+          "craft"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "glow-lit lanes joining every dwelling to the green",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "crystal_shrine",
+            "village_smithy"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  }
+}

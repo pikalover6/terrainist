@@ -1,0 +1,118 @@
+prompt     An ancient forest of colossal redwoods with a small logging camp at its edge.
+seed       306
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.3,"decline":0.2,"formality":0.1,"climate":{"temperature":0.2,"humidity":0.7,"snow":"auto","blend":"soft"},"character":{"label":"small redwood logging camp","materialTheme":"temperate_timber","formPacks":["wilds_camps"],"archetypes":{"prefer":["logging_camp","sawmill","watchtower"]},"flora":{"prefer":["ancient","emergent","old_growth","beech_giant"]},"urbanForm":"linear","ground":"pad"},"tokens":{"terrain":"an ancient forest of colossal redwoods with a small logging camp at its edge","infra":"logging tracks and log booms between the camp and the forest"}}
+           1 attempt(s), 5594 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.redwood_forest.params.area
+  tokens     70927 in + 24929 out = 95856  ($0.0157)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.redwood_forest.params.area: "area.radius" is 0.68, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.68 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.68 on a 1024-wide region, "radius": 348).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T119 SCATTER_EMPTY at world.redwood_forest: forest node "redwood_forest" placed 0 trees: its area {"at":[0.48,0.5],"radius":0.68} covers 2 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.68 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.camp_cottage: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     73536 in + 5466 out = 79002  ($0.0043)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.camp_cottage: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     73306 in + 6047 out = 79353  ($0.0046)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.camp_cottage: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     73306 in + 3907 out = 77213  ($0.0034)
+
+
+compile feedback, round 4 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_cottage: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.camp_cottage: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 4 authored in 1 attempt(s)
+  tokens     73306 in + 5421 out = 78727  ($0.0043)
+
+compiled "redwood_camp" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp
+  seed       306
+  region     512x512 at (-256, -256)
+  heights    65.9..89.0  sea 63  snow line 87.2
+  land       100.0% of columns above sea level
+  biomes     plains 59.5%, forest 30.1%, windswept_hills 10.4%
+  trees      4025 (redwood_forest=2606, forest_edge_fill=1534)
+  chunks     1024
+  blocks     38160813 (1033974 vegetation)
+  markers    5
+  spawn      [170, 89, 0]
+  timings    validate 0ms  field 49ms  layout 35ms  climate 43ms  columns 6ms  caves 0ms  structures 167ms  programs 0ms  scatter 813ms  biomes 13ms  validators 1ms  emit 2904ms  total 4052ms
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.logging_tracks: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 1328 footprint columns (plus 10496 feathered over 32 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 95% of 7738 ring columns); snow policy auto resolved to "never" on a 0/1328 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  5 model run(s), 4 compile-feedback round(s), 364381 in + 45770 out = 410151 tokens ($0.0323)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6-c2/redwood_camp

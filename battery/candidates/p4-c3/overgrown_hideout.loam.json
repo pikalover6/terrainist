@@ -1,0 +1,581 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.73
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": "minecraft:deepslate",
+      "road.surface": "minecraft:gray_concrete",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:polished_deepslate",
+      "plaza.gravel": "minecraft:gravel",
+      "plaza.cobble": "minecraft:deepslate_tiles",
+      "plaza.border": "minecraft:iron_block"
+    }
+  },
+  "intent": {
+    "era": "near_future",
+    "wealth": 0.7,
+    "decline": 0.95,
+    "formality": 0.55,
+    "character": {
+      "label": "high-tech apocalyptic hideout",
+      "materialTheme": "modern_city",
+      "archetypes": {
+        "prefer": [
+          "bunker_complex",
+          "laboratory",
+          "hydroponics_bay"
+        ],
+        "forbid": []
+      },
+      "motifs": {
+        "massing": "blocky",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.1
+      }
+    },
+    "tokens": {
+      "terrain": "a sealed high-tech refuge embedded in the massively overgrown ruins of a metropolis; vegetation has reclaimed streets, towers, and transit corridors",
+      "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory and hydroponics_bay"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the overgrown metropolitan ruins and their sealed refuge",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "low rolling ground beneath the ruined city",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0038,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "urban_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad settled shelf under the dead metropolis",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.4
+              ],
+              "radius": 210,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "refuge_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the level ground around the hidden refuge",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.73
+              ],
+              "radius": 72,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.1,
+          "blendRadius": 16
+        }
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "district",
+        "label": "the high-rise grid swallowed by trees",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            336,
+            336
+          ]
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "office",
+            "apartment_block",
+            "brutalist_block",
+            "data_center",
+            "warehouse",
+            "train_station"
+          ],
+          "blockSize": 40,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.33
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "intent": {
+          "decline": 0.95,
+          "character": {
+            "label": "massively overgrown metropolitan ruins",
+            "urbanForm": "grid",
+            "motifs": {
+              "massing": "blocky",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.04
+            }
+          }
+        },
+        "tags": [
+          "metropolis",
+          "ruins",
+          "urban"
+        ],
+        "children": []
+      },
+      {
+        "id": "refuge_yard",
+        "kind": "primitive",
+        "label": "the concealed service yard outside the refuge",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.73
+            ]
+          },
+          {
+            "distance": "ruined_metropolis",
+            "min": 0,
+            "max": 400
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 10,
+            "maxSlope": 34
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "hideout"
+        ]
+      },
+      {
+        "id": "refuge_bunker",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the sealed bunker entrance",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "decay": 0,
+          "entrance": {
+            "treatment": "blast_door"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "refuge_yard",
+            "gap": [
+              1,
+              48
+            ]
+          },
+          {
+            "facing": "refuge_yard"
+          },
+          {
+            "distance": "ruined_metropolis",
+            "min": 0,
+            "max": 640
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 45
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bunker_complex",
+          "house",
+          "hideout"
+        ]
+      },
+      {
+        "id": "research_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the airlocked research room",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "decay": 0,
+          "basement": {
+            "depth": 4,
+            "style": "plain"
+          },
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "refuge_bunker",
+            "gap": [
+              1,
+              48
+            ]
+          },
+          {
+            "facing": "refuge_yard"
+          },
+          {
+            "distance": "ruined_metropolis",
+            "min": 0,
+            "max": 640
+          },
+          {
+            "connected": "refuge_bunker",
+            "via": "tunnel",
+            "style": "dressed"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 8,
+            "maxSlope": 45
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "laboratory",
+          "house",
+          "research"
+        ]
+      },
+      {
+        "id": "hydroponics_bay",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the protected hydroponic grow bay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "decay": 0,
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "refuge_yard",
+            "min": 8,
+            "max": 128
+          },
+          {
+            "distance": "refuge_bunker",
+            "min": 8,
+            "max": 128
+          },
+          {
+            "facing": "refuge_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 45
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hydroponics_bay",
+          "house",
+          "food"
+        ]
+      },
+      {
+        "id": "solar_array",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the refuge solar field",
+        "params": {
+          "prop": "solar_array",
+          "zone": "south",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "wind_turbine",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the refuge wind turbine",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "southeast",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the reclaimed streets leading to the refuge",
+        "params": {
+          "anchors": [
+            "refuge_yard",
+            "#tag:house",
+            "ruined_metropolis"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "urban_overgrowth",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "trees swallowing the streets and towers",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.42
+            ],
+            "radius": 230
+          },
+          "density": 0.28,
+          "spacing": 3,
+          "clumping": 0.72,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.8,
+            "flowers": 0.12,
+            "deadwood": 0.18
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ruin_beech",
+                  "weight": 2,
+                  "shape": "beech_giant"
+                },
+                {
+                  "id": "old_spruce",
+                  "weight": 1,
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "reclaim_hazel",
+                  "weight": 3,
+                  "shape": "hazel_shrub"
+                },
+                {
+                  "id": "street_juniper",
+                  "weight": 1,
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.16
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "ruin_oak",
+              "weight": 4,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "volunteer_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "street_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "volunteer woodland beyond the ruins",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.04,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.08,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "field_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

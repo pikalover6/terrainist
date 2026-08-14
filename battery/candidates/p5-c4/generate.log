@@ -1,0 +1,74 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"modern","event":{"kind":"siege","severity":0.7,"recency":0},"character":{"label":"modern Hellenist coastal city","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"motifs":{"roofType":"flat","massing":"blocky","windowRhythm":"regular","ornamentDensity":0.4},"urbanForm":"grid"},"tokens":{"terrain":"a coastal city with a harbor and waterfront exposed to the sea monsters","infra":"barricade_line across roads into the city; emergency defenses along the waterfront","invasion":"sea monsters attacking the modern city"}}
+           1 attempt(s), 5987 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   valid
+  tokens     70866 in + 39455 out = 110321  ($0.0244)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     sea_leviathan [landmark]  1 attempt(s), 79668 tokens  ($0.0466)
+  ok     sea_monster_breachers [plugin]  3 attempt(s), 159372 tokens  ($0.0724)
+  tokens     46627 in + 192413 out = 239040  ($0.1191)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.eastern_bastion: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.eastern_bastion: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.eastern_bastion: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied zone constraint [0] (declared soft, now soft, weight 2, cost 0.70)
+    unsatisfied distance constraint [2] (declared hard, now soft, weight 1, cost 0.10)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     86102 in + 10869 out = 96971  ($0.0173)
+
+compiled "hellenist_sea_siege" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege
+  seed       305
+  region     512x512 at (-256, -256)
+  heights    57.0..75.6  sea 63  snow line 75.4
+  land       76.2% of columns above sea level
+  biomes     plains 65.9%, ocean 21.8%, forest 11.6%, beach 0.6%, windswept_hills 0.1%
+  trees      437 (urban_hinterland=497)
+  chunks     1024
+  blocks     35828156 (30492 vegetation)
+  markers    79
+  spawn      [0, 75, 0]
+  timings    validate 6ms  field 114ms  layout 1191ms  climate 40ms  columns 43ms  caves 0ms  structures 1655ms  programs 269ms  scatter 160ms  biomes 29ms  validators 3ms  emit 1746ms  total 5296ms
+  programs   world.the_leviathan=sea_leviathan×1 (15501 blocks), world.monster_breachers=sea_monster_breachers×1 (766 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.the_leviathan: this node declares an envelope; program "sea_leviathan" declares [48, 32, 40] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.city_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+warning LOAM-W337 PROGRAM_DROPPED at world.monster_breachers: "sea_monster_breachers" asked for 18 instances and only 1 site would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 23, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 117497 footprint columns (plus 31484 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 86% of 21295 ring columns); snow policy auto resolved to "never" on a 0/117497 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 156968 in + 50324 out = 207292 tokens ($0.0417)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5-c4/hellenist_sea_siege

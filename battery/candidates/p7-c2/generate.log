@@ -1,0 +1,119 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      openai/gpt-5.6-luna
+effort     max
+kit        settlement
+
+intent     {"era":"medieval","character":{"label":"glowing mushroom village","materialTheme":"temperate_timber","formPacks":["arcane_magical"],"flora":{"prefer":["fungal","glow"]}},"tokens":{"terrain":"a secluded vale where a strange village has grown between enormous glowing mushroom caps"}}
+           1 attempt(s), 5642 tokens
+
+authored with openai/gpt-5.6-luna in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.glowing_caps.params.area
+  tokens     70774 in + 27647 out = 98421  ($0.0173)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 8 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.glowing_caps.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.witches_hut: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.witches_hut: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.village_smithy: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.village_smithy: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T119 SCATTER_EMPTY at world.glowing_caps: forest node "glowing_caps" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.38} covers 1 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.cap_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.witches_hut: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.16)
+  world.village_smithy: placed after constraint_demoted, constraint_demoted (388 candidates considered)
+    unsatisfied zone constraint [0] (declared soft, now soft, weight 2, cost 0.19)
+    unsatisfied distance constraint [2] (declared hard, now soft, weight 1, cost 0.25)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     74055 in + 12693 out = 86748  ($0.0087)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.village_smithy: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.village_smithy: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.cap_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.village_smithy: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.31)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     73509 in + 13356 out = 86865  ($0.0091)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.cap_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.cap_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     73186 in + 6391 out = 79577  ($0.0048)
+
+compiled "glowcap_vale" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale
+  seed       307
+  region     512x512 at (-256, -256)
+  heights    63.3..77.5  sea 63  snow line 76.8
+  land       100.0% of columns above sea level
+  biomes     forest 98.1%, plains 1.7%, windswept_hills 0.2%
+  trees      4518 (glowing_caps=1839, outer_woods=2944)
+  chunks     1024
+  blocks     36264635 (370077 vegetation)
+  markers    7
+  spawn      [0, 75, 0]
+  timings    validate 1ms  field 160ms  layout 68ms  climate 74ms  columns 13ms  caves 0ms  structures 427ms  programs 0ms  scatter 890ms  biomes 15ms  validators 1ms  emit 1925ms  total 3592ms
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2556 footprint columns (plus 21764 feathered over 40 columns) to minecraft:forest, from the ambient majority (minecraft:forest, 52% of 13447 ring columns); snow policy auto resolved to "never" on a 0/2556 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 3 compile-feedback round(s), 291524 in + 60087 out = 351611 tokens ($0.0400)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p7-c2/glowcap_vale
