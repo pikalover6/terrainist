@@ -55,6 +55,9 @@ import { AGRARIAN_EXHIBIT_ROWS } from "./exhibits/agrarian.js";
 import { NAUTICAL_EXHIBIT_ROWS } from "./exhibits/nautical.js";
 import { ARCANE_PACK_EXHIBIT_ROWS } from "./exhibits/arcane.js";
 import { WILDS_EXHIBIT_ROWS } from "./exhibits/wilds.js";
+import { FRONTIER_EXHIBIT_ROWS } from "./exhibits/frontier.js";
+import { NILE_EXHIBIT_ROWS } from "./exhibits/nile.js";
+import { EASTERN_EXHIBIT_ROWS } from "./exhibits/eastern.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -137,6 +140,12 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ARCANE_PACK_EXHIBIT_ROWS,
   // The wilds pack: the old-growth's camps.
   ...WILDS_EXHIBIT_ROWS,
+  // The frontier pack: the wild west's main street.
+  ...FRONTIER_EXHIBIT_ROWS,
+  // The Nile pack: the necropolis and the river works.
+  ...NILE_EXHIBIT_ROWS,
+  // The east-asian pack: the public forms around the houses.
+  ...EASTERN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
@@ -314,6 +323,23 @@ export {
 
 /** The wilds rows, for tests that assert on the gradient. */
 export { WILDS_EXHIBIT_ROWS, WILDS_ROW_LENGTH, wildsSizeFor } from "./exhibits/wilds.js";
+
+/** The frontier rows, for tests that assert on the gradient. */
+export {
+  FRONTIER_EXHIBIT_ROWS,
+  FRONTIER_ROW_LENGTH,
+  frontierSizeFor,
+} from "./exhibits/frontier.js";
+
+/** The Nile rows, for tests that assert on the gradient. */
+export { NILE_EXHIBIT_ROWS, NILE_ROW_LENGTH, nileSizeFor } from "./exhibits/nile.js";
+
+/** The east-asian rows, for tests that assert on the gradient. */
+export {
+  EASTERN_EXHIBIT_ROWS,
+  EASTERN_ROW_LENGTH,
+  easternSizeFor,
+} from "./exhibits/eastern.js";
 
 /** The wave-5E arcana rows, for tests that assert on the gradient. */
 export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";

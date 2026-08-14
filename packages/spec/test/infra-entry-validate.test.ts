@@ -112,9 +112,40 @@ describe("infra.entry@0 — the entry id (LOAM-T231)", () => {
   });
 
   it("names every legal value in the hint, always", () => {
-    const bad = doc([entry({ entry: "quarantine_fence", route: { ring: "holding" } })]);
+    // An entry from a wave that has not landed: `hedgerow` is W3's, and until
+    // it is a row the honest answer is the list of the ones that are.
+    const bad = doc([entry({ entry: "hedgerow", route: { ring: "holding" } })]);
     expect(names(bad)).toContain("INFRA_ENTRY_PARAM");
     for (const id of KNOWN_INFRA_ENTRIES) expect(hints(bad).join(" ")).toContain(id);
+  });
+
+  it("refuses a crash furrow that names nothing to run into — the Q5 refusal", () => {
+    // The furrow accepts `into` and no other form, which *is* the refusal: a
+    // scar with no cause is set dressing, so pointing one along a road or round
+    // a holding is `LOAM-T231` rather than a furrow with no end.
+    for (const form of ["ring", "along", "across", "over"]) {
+      const bad = doc([entry({ entry: "crash_furrow", route: { [form]: "wreck" } })]);
+      expect(names(bad), form).toContain("INFRA_ENTRY_PARAM");
+      expect(hints(bad).join(" "), form).toContain("into");
+    }
+    expect(
+      validateSettlementDocument(
+        doc([entry({ entry: "crash_furrow", route: { into: "saucer", run: 48 } })]),
+      ).diagnostics,
+    ).toEqual([]);
+  });
+
+  it("accepts P2's postcard whole — four entries, four route forms, one document", () => {
+    const result = validateSettlementDocument(
+      doc([
+        entry({ entry: "quarantine_fence", route: { ring: "north_holding", margin: 10 } }),
+        entry({ entry: "crop_circle", route: { over: "north_holding" } }, { id: "figure" }),
+        entry({ entry: "barricade_line", route: { across: "high_road" } }, { id: "barricade" }),
+        entry({ entry: "crash_furrow", route: { into: "saucer", run: 56 } }, { id: "furrow" }),
+      ]),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.document).toBeDefined();
   });
 
   it("rejects a route form the named entry does not accept", () => {

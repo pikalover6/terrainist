@@ -39,9 +39,12 @@ export * from "./props-relics.js";
 export * from "./props-spectacle.js";
 // The arcane & magical pack (CATALOG-EXPANSION §3.3), prop half.
 export * from "./props-arcane.js";
+// The East Asian pack (CATALOG-EXPANSION §3.9), prop half.
+export * from "./props-eastern.js";
 export * from "./props-classical.js";
 export * from "./props-xeno.js";
 export * from "./props-corsair.js";
+export * from "./props-nile.js";
 export * from "./archetypes-town.js";
 export * from "./archetypes-trade.js";
 export * from "./archetypes-vernacular.js";
@@ -62,6 +65,7 @@ export * from "./props-response.js";
 export * from "./props-brine.js";
 export * from "./props-wilds.js";
 export * from "./props-hedgerow.js";
+export * from "./props-frontier.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

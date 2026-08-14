@@ -2163,12 +2163,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
 
   /* --- the alien & sci-fi pack (docs/CATALOG-EXPANSION-v0.md §3.4) --- */
-  rur("crop_circle", "Crop circle", "not_started", {
+  rur("crop_circle", "Crop circle", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_xl"],
-    note: "Flattened geometry in a standing field — a floor-plane treatment only, no block above the crop. The cheapest strong icon proposed anywhere in this document.",
+    note: "Rings and spokes pressed into a standing field: the disc levels its own footprint through the ground contract and lays the crop down. `infra.entry@0`, `over` a farm holding's parcel mask.",
   }),
-  mil("quarantine_fence", "Quarantine line", "not_started", {
+  mil("quarantine_fence", "Quarantine line", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_lin"],
     note: "Chain-link on posts with warning banners at intervals, floodlight masts every fifth panel and a gate where a road crosses it. A sweep client.",
@@ -2206,12 +2206,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_s"],
     note: "Glowing egg pods in a huddle, two split open, the ground under them stained. Built for double-digit counts.",
   }),
-  ruin("crash_furrow", "Crash furrow", "not_started", {
+  ruin("crash_furrow", "Crash furrow", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_lin"],
     note: "A scorched gouge dragged across the terrain with debris thrown out either side and the thing that made it at the end of the run. Gives a scatter its direction.",
   }),
-  mil("barricade_line", "Street barricade", "not_started", {
+  mil("barricade_line", "Street barricade", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_lin"],
     note: "Improvised across a carriageway: wrecked vehicles, sandbags, concrete blocks and wire, with one deliberate gap.",
@@ -2387,7 +2387,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
 
   /* --- the frontier West pack (docs/CATALOG-EXPANSION-v0.md §3.7) --- */
-  com("false_front_saloon", "Saloon", "not_started", {
+  com("false_front_saloon", "Saloon", "implemented", {
     tags: ["frontier_west", "size_m"],
     note: "The false front is the entry: a flat parapet screen carried a storey above the real roof, swing doors, a long bar and a stair to the rooms.",
   }),
@@ -2395,16 +2395,16 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["frontier_west", "size_lin"],
     note: "A raised plank sidewalk on posts with a step down at each cross-street and a post-and-rail edge — the frontage's own sweep profile.",
   }),
-  infra("water_tank_trestle", "Water tank", "not_started", {
+  infra("water_tank_trestle", "Water tank", "implemented", {
     kind: "prop",
     tags: ["frontier_west", "size_l"],
     note: "A banded timber tank on a braced trestle beside the track with a swing spout hanging off it.",
   }),
-  com("assay_office", "Assay office", "not_started", {
+  com("assay_office", "Assay office", "implemented", {
     tags: ["frontier_west", "size_s"],
     note: "A barred counter, a small furnace and scales, a strongbox in the corner and a shingle over the door.",
   }),
-  ind("stamp_mill", "Stamp mill", "not_started", {
+  ind("stamp_mill", "Stamp mill", "implemented", {
     tags: ["frontier_west", "size_xl"],
     note: "Built down a slope in stages: ore bin at the top, the stamp battery under it, tables below that. The stepping is the read.",
   }),
@@ -2413,93 +2413,94 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["frontier_west", "size_lin"],
     note: "A riffled trough on trestles with water running through it, tailings fanned out at the low end.",
   }),
-  ind("placer_claim", "Placer claim", "not_started", {
+  ind("placer_claim", "Placer claim", "implemented", {
     kind: "prop",
     tags: ["frontier_west", "size_m"],
     note: "A worked gravel bar: spoil ridges, a rocker cradle, a claim post with a board nailed to it.",
   }),
-  civ("telegraph_office", "Telegraph office", "not_started", {
+  civ("telegraph_office", "Telegraph office", "implemented", {
     tags: ["frontier_west", "size_s"],
     note: "One room, a key desk under the window, wire coming in through the gable to a pole outside.",
   }),
-  rur("livery_stable", "Livery stable", "not_started", {
+  rur("livery_stable", "Livery stable", "implemented", {
     tags: ["frontier_west", "size_l"],
     note: "Wide doors both ends, a straw floor, a loft with a hay door, and rigs parked in the aisle.",
   }),
-  ind("wagon_shop", "Wagon shop", "not_started", {
+  ind("wagon_shop", "Wagon shop", "implemented", {
     tags: ["frontier_west", "size_m"],
     note: "Wheels on the wall, a tyring platform outside the door, a forge in the corner and half a wagon on trestles.",
   }),
-  rel("mission_church", "Mission church", "not_started", {
+  rel("mission_church", "Mission church", "implemented", {
     tags: ["frontier_west", "size_m"],
     note: "Adobe massing with a stepped bell gable carrying two bells, buttressed side walls, a single deep door.",
   }),
-  com("cantina", "Cantina", "not_started", {
+  com("cantina", "Cantina", "implemented", {
     tags: ["frontier_west", "size_s"],
     note: "A shaded arcade off the street, a plain bar inside, terracotta and whitewash, shutters instead of glass.",
   }),
-  mem("boot_hill_row", "Boot hill", "not_started", {
+  mem("boot_hill_row", "Boot hill", "implemented", {
     kind: "prop",
     tags: ["frontier_west", "size_m"],
     note: "A crooked line of timber grave markers on a bare rise outside town, fenced with wire, no two the same height.",
   }),
-  ver("dugout_shanty", "Dugout", "not_started", {
+  ver("dugout_shanty", "Dugout", "implemented", {
     tags: ["frontier_west", "size_s"],
     note: "Cut back into a bank with a timber front wall and a turf roof at the level of the ground behind it.",
   }),
 
   /* --- the Nile & ancient Egypt pack (docs/CATALOG-EXPANSION-v0.md §3.8) --- */
-  rel("pyramid", "Pyramid", "not_started", {
+  rel("pyramid", "Pyramid", "implemented", {
+    kind: "prop",
     tags: ["nile", "size_xl"],
-    note: "The true smooth-faced one on a square base, a cased apex, one small door low on the north face and a causeway running away from it. Tags `pyramid`/`great_pyramid` — note the roof-value alias in `core.ts` and claim deliberately.",
+    note: "prop.place@0: a 33-block battered mass on a square base, cased, closing on a pyramidion, with a walkable passage low on the north face into a chamber. A PROP, not an archetype - a building\'s roof rebuild has six courses and a sealed storey is `interior.blocked_column`. `pyramid`/`great_pyramid` are deliberately NOT claimed as archetype tags: they name this prop, and `pyramid` is a roof-value alias in `core.ts`.",
   }),
-  mem("mastaba", "Mastaba", "not_started", {
+  mem("mastaba", "Mastaba", "implemented", {
     tags: ["nile", "size_m"],
     note: "The bench tomb: a battered rectangular block with a flat top, a false door on one face and a real one nowhere.",
   }),
-  rel("hypostyle_hall", "Hypostyle hall", "not_started", {
+  rel("hypostyle_hall", "Hypostyle hall", "implemented", {
     tags: ["nile", "size_xl"],
     note: "A forest of columns on a grid, the central aisle's columns taller than the rest so a clerestory band opens between them.",
   }),
-  rel("mortuary_temple", "Mortuary temple", "not_started", {
+  rel("mortuary_temple", "Mortuary temple", "implemented", {
     tags: ["nile", "size_xl"],
     note: "Terraced against a cliff: colonnaded storeys stepping back, a ramp on the axis climbing through all of them.",
   }),
-  rel("pylon_gate", "Pylon gate", "not_started", {
+  rel("pylon_gate", "Pylon gate", "implemented", {
     kind: "infrastructure",
     tags: ["nile", "size_xl"],
-    note: "Two battered trapezoid towers flanking a lower doorway, flagstaff grooves up the faces, banners standing in them.",
+    note: "building.grammar@0 archetype: two battered trapezoid towers rebuilt over the roof either side of a lower doorway, flagstaff grooves up the faces, banners standing on the tower tops. Tags: pylon_gate/pylon/temple_pylon/pylon_gateway; bare `gate` stays the gatehouse\'s. The `infrastructure` kind is the curator\'s and is left as written - the realisation is a building, the `careening_beach` precedent.",
   }),
   mem("sphinx_avenue", "Avenue of sphinxes", "not_started", {
     kind: "infrastructure",
     tags: ["nile", "size_lin"],
     note: "Paired recumbent figures at a fixed interval down both sides of a processional way. A sweep client whose feature is the interval.",
   }),
-  wat("nilometer", "Nilometer", "not_started", {
+  wat("nilometer", "Nilometer", "implemented", {
     kind: "building",
     tags: ["nile", "size_m"],
     note: "A stepped shaft down to river level with a graduated column in it and a covered head at the top.",
   }),
-  wat("sacred_lake", "Sacred lake", "not_started", {
+  wat("sacred_lake", "Sacred lake", "implemented", {
     kind: "prop",
     tags: ["nile", "size_l"],
     note: "A rectangular stone-lined basin with steps down all four sides, on the pool predicate, inside a precinct wall.",
   }),
-  rur("mudbrick_granary", "Beehive granary", "not_started", {
+  rur("mudbrick_granary", "Beehive granary", "implemented", {
     tags: ["nile", "size_s"],
     note: "Corbelled mud domes in a row on a shared plinth, filled from a hatch at the crown and drawn from a hole at the foot.",
   }),
-  water("felucca", "Felucca", "not_started", {
+  water("felucca", "Felucca", "implemented", {
     tags: ["nile", "size_m"],
     note: "One raked mast with a long lateen yard, a shallow open hull and an awning aft.",
   }),
-  rel("canopic_shrine", "Shrine chapel", "not_started", {
+  rel("canopic_shrine", "Shrine chapel", "implemented", {
     tags: ["nile", "size_s"],
     note: "A small chapel with a cavetto cornice and a torus roll at every corner — the two mouldings that make a block read as Egyptian.",
   }),
 
   /* --- the East Asian pack (docs/CATALOG-EXPANSION-v0.md §3.9) --- */
-  rel("torii", "Torii", "not_started", {
+  rel("torii", "Torii", "implemented", {
     kind: "prop",
     tags: ["east_asian", "size_m"],
     note: "Two posts, a curved upper lintel and a straight tie under it. Repeats down an approach in ranks and is the pack's saturation piece.",
@@ -2512,12 +2513,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["east_asian", "size_l"],
     note: "A multi-bay ceremonial arch over a street with tiled eaves over each bay and a name board in the middle span.",
   }),
-  lei("zen_garden", "Dry garden", "not_started", {
+  lei("zen_garden", "Dry garden", "implemented", {
     kind: "prop",
     tags: ["east_asian", "size_m"],
     note: "Raked gravel written into the floor plane with placed stones and moss, walled on three sides and viewed from a veranda on the fourth.",
   }),
-  mil("tenshu_keep", "Castle keep", "not_started", {
+  mil("tenshu_keep", "Castle keep", "implemented", {
     tags: ["east_asian", "size_xl"],
     note: "Stacked tiered storeys, each smaller than the one below, over a battered stone base with a curved cyclopean face; gables break every second eave.",
   }),
@@ -2526,11 +2527,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["east_asian", "size_lin"],
     note: "The curved ōgi revetment the keep stands on — the retaining pass's most demanding client, and buildable as a swept course with a coping.",
   }),
-  civ("drum_tower", "Drum tower", "not_started", {
+  civ("drum_tower", "Drum tower", "implemented", {
     tags: ["east_asian", "size_l"],
     note: "A tiered gate tower on a masonry podium with an arch through it and a drum hung in the upper storey.",
   }),
-  lei("shoji_teahouse", "Tea house pavilion", "not_started", {
+  lei("shoji_teahouse", "Tea house pavilion", "implemented", {
     tags: ["east_asian", "size_s"],
     note: "The garden pavilion: a low crawl-in entry, a mat floor, a hearth recess and one alcove. Distinct from Track A's commercial `tea_house`.",
   }),
@@ -2538,15 +2539,15 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["east_asian", "size_s"],
     note: "A free-standing screen wall set one pace inside a gate so the way in must turn.",
   }),
-  street("stone_lantern", "Stone lantern", "not_started", {
+  street("stone_lantern", "Stone lantern", "implemented", {
     tags: ["east_asian", "size_xs"],
     note: "A pedestal, a fire box with cut faces and a capstone, at a path's turn or a pond's edge.",
   }),
-  water("dragon_boat", "Dragon boat", "not_started", {
+  water("dragon_boat", "Dragon boat", "implemented", {
     tags: ["east_asian", "size_l"],
     note: "A long narrow hull with a carved head at the stem and a tail at the stern, oars ranked along both sides.",
   }),
-  rel("bell_pavilion", "Bell pavilion", "not_started", {
+  rel("bell_pavilion", "Bell pavilion", "implemented", {
     tags: ["east_asian", "size_m"],
     note: "An open pavilion on a raised podium with a great bell hung from the beam and a striking log slung beside it — the tiered-eave answer to `bell_tower`'s masonry shaft.",
   }),

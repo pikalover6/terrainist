@@ -115,20 +115,35 @@ describe("expansion", () => {
 
 describe("an all-unbuilt pack", () => {
   it("contributes nothing, and is not an error of any kind", () => {
-    // The classical pack graduated to built (2026-08-11); nile_egypt is the
-    // shipped registry's all-unbuilt witness now. When it lights up too, move
-    // to whichever pack is still pending; once every pack is built, an
-    // injected all-prop member map is the way to keep this case covered.
-    expect(formPackMembers("nile_egypt").filter(isFabricArchetype)).toEqual([]);
+    // **Every shipped pack now has built members** (2026-08-14: the Nile pack
+    // was the last all-unbuilt witness in the registry and it lit up), so this
+    // case is carried by the injected member map the comment here has always
+    // pointed at. That is the stronger form anyway: a witness bound to the
+    // shipped registry is a witness that expires, and this one cannot.
+    const PENDING: Readonly<Record<string, readonly string[]>> = {
+      pending_pack: ["cart", "fountain", "sphinx_avenue", "unicorn_stable"],
+    };
+    const pending = (pack: string): readonly string[] =>
+      PENDING[pack] ?? formPackMembers(pack);
+    // Props, an infrastructure row and a word that names nothing: not one of
+    // them is fabric-eligible, which is what "all unbuilt" means to the mix.
+    expect(expandFormPacks(["pending_pack"], pending)).toEqual([]);
     const sink: LoamDiagnostic[] = [];
-    const answer = biasedMix(
-      scope({ character: { formPacks: ["nile_egypt"] } }),
-      "world.d",
-      TODAY,
-      sink,
-    );
+    const answer = applyArchetypeBias([...TODAY], {}, "world.d", sink, {
+      packs: ["pending_pack"],
+      members: pending,
+    });
     expect(answer).toEqual([...TODAY]);
     expect(sink).toEqual([]);
+    // …and the shipped registry is still walked, from the other side: a pack
+    // that IS built contributes its built members and nothing else.
+    for (const pack of FORM_PACKS) {
+      const lit = formPackMembers(pack.id).filter(isFabricArchetype);
+      expect(
+        biasedMix(scope({ character: { formPacks: [pack.id] } }), "world.d", TODAY),
+        pack.id,
+      ).toEqual([...lit, ...TODAY]);
+    }
   });
 
   it("still grounds without a warning — the pack is legal, its members are pending", () => {

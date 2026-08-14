@@ -38,6 +38,7 @@ import { agrarianFacadeDefaults } from "./archetypes-agrarian.js";
 import { brineFacadeDefaults } from "./archetypes-brine.js";
 import { wildsFacadeDefaults } from "./archetypes-wilds.js";
 import { hedgerowFacadeDefaults } from "./archetypes-hedgerow.js";
+import { frontierFacadeDefaults } from "./archetypes-frontier.js";
 import { regionalFacadeDefaults } from "./archetypes-regional.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
@@ -61,9 +62,11 @@ import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { sanctumFacadeDefaults } from "./archetypes-sanctum.js";
 import { arcaneFacadeDefaults } from "./archetypes-arcane.js";
+import { easternFacadeDefaults } from "./archetypes-eastern.js";
 import { classicalFacadeDefaults } from "./archetypes-classical.js";
 import { xenoFacadeDefaults } from "./archetypes-xeno.js";
 import { corsairFacadeDefaults } from "./archetypes-corsair.js";
+import { nileFacadeDefaults } from "./archetypes-nile.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -201,6 +204,10 @@ export function archetypeFacadeDefaults(
       // were wired in after.
       const hedgerow = hedgerowFacadeDefaults(archetype);
       if (Object.keys(hedgerow).length > 0) return hedgerow;
+      // The frontier West pack's buildings, beside the agrarian expansion
+      // table they were wired in after.
+      const frontier = frontierFacadeDefaults(archetype);
+      if (Object.keys(frontier).length > 0) return frontier;
       // Wave four A, the dwellings.
       const residential = residentialFacadeDefaults(archetype);
       if (Object.keys(residential).length > 0) return residential;
@@ -232,6 +239,12 @@ export function archetypeFacadeDefaults(
       // pavilion", and the stable the gable its landing ledge swings out of.
       const arcane = arcaneFacadeDefaults(archetype);
       if (Object.keys(arcane).length > 0) return arcane;
+      // The East Asian pack, immediately after the arcane pack it was wired in
+      // after: all four of its buildings want the hip, because the hip leaves
+      // the deepest gap between the eave plate and the allowance and the gap
+      // is where the tiered roofs are built.
+      const eastern = easternFacadeDefaults(archetype);
+      if (Object.keys(eastern).length > 0) return eastern;
       // The classical Mediterranean pack, beside the sanctum it was written
       // against: a pediment wants the gable it is a gable-end move on, and a
       // compluvium wants the hip whose height it is about to take over.
@@ -249,6 +262,13 @@ export function archetypeFacadeDefaults(
       // platform is built on, and the loft the gable its hoist swings out of.
       const corsair = corsairFacadeDefaults(archetype);
       if (Object.keys(corsair).length > 0) return corsair;
+      // The Nile & ancient Egypt pack, beside the nautical pack it was wired
+      // in after: six of its seven want no window rhythm at all, because
+      // Egyptian monumental architecture has a door and a clerestory and no
+      // windows, and every one of them wants the hip roof whose headroom the
+      // towers, domes, terraces and kiosk are built in.
+      const nile = nileFacadeDefaults(archetype);
+      if (Object.keys(nile).length > 0) return nile;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

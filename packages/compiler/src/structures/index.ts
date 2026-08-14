@@ -1623,6 +1623,12 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           stack: input.stack,
           jobs: infraJobs,
           existing: blocks,
+          // W1: the pipeline's one driver, for the two entries whose levels are
+          // the entry (`crash_furrow` cuts below the ground, `crop_circle`
+          // flattens it). Every other entry declares nothing and never reaches
+          // it — handing it over costs a document with no such entry exactly
+          // nothing, because the pass is not constructed at all.
+          ground: input.ground,
           view: {
             bounds: {
               x0: input.plan.region.x0,
@@ -1637,11 +1643,26 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
               const nodePath = `${rootPath}.${id}`;
               const own = placementByPath.get(nodePath)?.footprint;
               const prefix = `${nodePath}.`;
+              // W1: **a holding's fabric is its fields.** A farm's buildings
+              // are a farmstead in one corner of it, so a cordon hulled off
+              // them alone would ring the barn and leave the crop outside —
+              // which is the opposite of the ratified read (the fence and
+              // whatever is in the fields belong in one frame). The parcel
+              // mask F17 publishes is the holding's real extent, and it is
+              // core fabric here rather than a clipping window for the same
+              // reason a building is.
+              const fields =
+                farms !== undefined && farms.nodePaths.includes(nodePath)
+                  ? maskRect(farms.parcelMask, input.plan.region)
+                  : undefined;
               const extent = fabricExtent({
                 clip: own === undefined ? [] : [own],
-                buildings: built
-                  .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
-                  .map((b) => b.footprint),
+                buildings: [
+                  ...built
+                    .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
+                    .map((b) => b.footprint),
+                  ...(fields === undefined ? [] : [fields]),
+                ],
                 margin: 0,
                 field: wallField,
               });
@@ -1655,9 +1676,35 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
               const route = (roads as RoadNetworkResult | undefined)?.routes.find(
                 (r) => r.from === id || r.to === id,
               );
-              return route === undefined
-                ? undefined
-                : route.path.map((p) => ({ x: p.x, z: p.z }));
+              if (route !== undefined) return route.path.map((p) => ({ x: p.x, z: p.z }));
+              // W1: **a settlement's own high street is a corridor too.**
+              // `road.network@0`'s `routes` are the lanes that arrive from
+              // outside, and a great many worlds have none — a city's own
+              // streets are routed by the connective pass, which is exactly
+              // what `LOAM-T208` says. Binding `across`/`along` to the arriving
+              // lanes alone left `barricade_line` unreachable in every world
+              // whose roads are internal, so a named district or city also
+              // resolves to **its widest street**: the road a stranger would
+              // call the high street, chosen by a stated total order (greatest
+              // width, then the lowest segment id) so two compiles barricade
+              // the same one.
+              const nodePath = `${rootPath}.${id}`;
+              const prefix = `${nodePath}.`;
+              let best: { width: number; segId: string; path: readonly { x: number; z: number }[] } | undefined;
+              for (const district of districts) {
+                if (district.nodePath !== nodePath && !district.nodePath.startsWith(prefix)) continue;
+                for (const segment of district.streets.segments) {
+                  if (segment.path.length < 2) continue;
+                  if (
+                    best === undefined ||
+                    segment.width > best.width ||
+                    (segment.width === best.width && segment.id < best.segId)
+                  ) {
+                    best = { width: segment.width, segId: segment.id, path: segment.path };
+                  }
+                }
+              }
+              return best === undefined ? undefined : best.path.map((p) => ({ x: p.x, z: p.z }));
             },
             // F17's published parcel mask, per §3.2's `over`. A holding names
             // its own mask; nothing else publishes one yet.
@@ -1982,6 +2029,38 @@ export function infraEntryJobsOf(
     });
   }
   return jobs;
+}
+
+/**
+ * The bounding rectangle of a published column mask, or `undefined` when it
+ * claims nothing.
+ *
+ * A rectangle rather than the mask's own outline, because what consumes it is
+ * `fabricExtent`, which takes a 24-normal support hull: the hull of a set of
+ * columns and the hull of their bounding box differ only where the set is
+ * concave, and a cordon that followed a field's concavities would be a fence
+ * nobody could walk beside.
+ */
+function maskRect(
+  mask: Uint8Array,
+  region: { x0: number; z0: number; width: number; depth: number },
+): { x0: number; z0: number; x1: number; z1: number } | undefined {
+  let x0 = Infinity;
+  let x1 = -Infinity;
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  for (let j = 0; j < region.depth; j++) {
+    for (let i = 0; i < region.width; i++) {
+      if (mask[j * region.width + i] !== 1) continue;
+      const x = region.x0 + i;
+      const z = region.z0 + j;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (z < z0) z0 = z;
+      if (z > z1) z1 = z;
+    }
+  }
+  return x1 < x0 ? undefined : { x0, z0, x1, z1 };
 }
 
 /** The one route form a validated `route` object names, with its distances. */

@@ -2347,6 +2347,157 @@ the pier first.
 
 ---
 
+## 9c. `infra.entry@0` — lines, chords and treatments
+
+`prop.place@0` puts an object at a place. Some things are not an object at a
+place: a cordon is a **line** round something, a barricade is a **chord**
+across a street, a furrow is a **run** into something, a crop circle is a
+**treatment** of a field somebody else grew. Those are `infra.entry@0` nodes —
+a sibling of `prop.place@0`, a child of the root, and a leaf.
+
+```json
+{
+  "id": "cordon",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "label": "the quarantine line around the holding",
+  "params": {
+    "entry": "quarantine_fence",
+    "route": { "ring": "north_holding", "margin": 12 }
+  }
+}
+```
+
+Two params matter. `entry` names one of the catalog rows this host builds, and
+`route` names **one** form and the thing it is measured against.
+
+### The law: you never write the line
+
+The same rule the wall has, and for the same reason. **A route is derived after
+everything is built**, from what the compiler actually placed — the hull of a
+holding's fields, a road's own polyline, the perpendicular chord over the
+narrowest crossing of a street. So a route always names *a node id*, and the
+only numbers it takes are distances: `margin`, `offset`, `run`. A vertex, a
+bearing in degrees, an `[x, z]` — none of them exists, and a `route` carrying
+one is `LOAM-T231`.
+
+The corollary is worth saying out loud: **name something that got built.**
+Pointing `along` at a building buys you nothing (a building has no line), and
+pointing `ring` at a node the layout never placed gets you `LOAM-T233`.
+
+### The five route forms
+
+| form | written as | what it derives |
+|---|---|---|
+| `ring` | `{"ring": "<node id>", "margin": n}` | a closed line round what that node built, `margin` columns outside it, on multiples of 15° like the wall's own course. Ringing a farm holding rings **its fields**, not its farmyard |
+| `along` | `{"along": "<road id>", "offset": n, "side": "left"\|"right"}` | that corridor's own polyline, pushed `offset` columns to one hand |
+| `across` | `{"across": "<road id\|settlement id>"}` | the perpendicular chord over the target's **narrowest** crossing, flanked a little either side. Naming a district or a city takes **its widest street** — the high street — which is what to write when the roads are the settlement's own |
+| `into` | `{"into": "<node id>", "run": n}` | a run of `n` columns **ending** at that node, coming down the steepest bearing out of it |
+| `over` | `{"over": "<node id>"}` | every column of that node's published area — a farm holding's parcels — for the treatments, which are not lines at all |
+
+Each entry accepts the forms it is *about* and no others, so the vocabulary
+does the teaching: a cordon rings, a barricade goes across, a furrow runs into
+something. Asking for a form an entry does not accept names the legal ones in
+the diagnostic.
+
+### Where the road goes through
+
+**A gate is found, never placed** — the wall's rule, one scale down. Where a
+carriageway crosses the derived line, the entry does one of three things, and
+which one is a property of the entry rather than something you write:
+
+- **opens** (`quarantine_fence`): the road keeps its surface, the fence stops
+  either side of it, and the crossing is a gate. Run a road to the holding and
+  the cordon has a gate; run none and it has none.
+- **blocks** (`crash_furrow`): the run goes through regardless. A gouge does
+  not open for a cart track.
+- **gaps** (`barricade_line`): the crossing is blocked *except* for one
+  deliberate opening in it, wide enough to walk and cart through. That opening
+  is the whole point of a barricade and you get exactly one.
+
+`"gates": false` closes an opening entry: a cordon with no way in.
+
+### The entries, and one worked example each
+
+Together these four are P2's postcard — *a small farm town being invaded by
+aliens*: the cordon rings the holding, the figure is pressed into its fields,
+the barricade is thrown across the road into town, and the furrow ends at the
+thing that made it.
+
+**`quarantine_fence`** — `ring` something. Chain-link on a low kerb, warning
+markers along it, a floodlight mast every fifth panel, and a gate wherever a
+road crosses. Ring the **holding**, not the town, when the story is
+contamination: it puts the fence and whatever is in the fields in one frame.
+
+```json
+{
+  "id": "cordon",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "quarantine_fence", "route": { "ring": "north_holding", "margin": 12 } }
+}
+```
+
+**`crop_circle`** — `over` a farm holding. Rings and spokes pressed into the
+standing crop: the disc levels its own footprint and lays the crop down, so it
+reads from the ground and not only from the air. It needs a `precinct.farm@0`
+to lie in — that is the node whose parcels it is measured against.
+
+```json
+{
+  "id": "figure",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "crop_circle", "route": { "over": "north_holding" } }
+}
+```
+
+**`barricade_line`** — `across` a road. Sandbags, boards, rubble and wire,
+heaped out one hand and not the other, with one way through. Point it at the
+road that reaches the settlement; the chord lands where that road is narrowest.
+
+```json
+{
+  "id": "high_street_barricade",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "barricade_line", "route": { "across": "town" } }
+}
+```
+
+Name the **settlement** when the road you mean is one of its own streets (you
+get its widest one, which is the road anybody would call the high street), and
+name a `road.network@0` node when you mean a lane arriving from outside.
+
+**`crash_furrow`** — `into` the thing that made it. A scorched trench cut into
+the ground with spoil thrown either side, coming down the hill and ending at
+its cause. **It refuses to build without one**: a scar with nothing at the end
+of it is set dressing, so give the furrow a `character.programs` landmark, a
+prop or a district to end at and name it.
+
+```json
+{
+  "id": "impact_scar",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "crash_furrow", "route": { "into": "saucer", "run": 56 } }
+}
+```
+
+### Rules worth knowing
+
+- **One entry is one node.** Two barricades are two nodes with two ids, each
+  naming its own road.
+- **Everything already built wins.** An entry that meets a building, a wall or
+  a street loses those columns and reads as a worn line — which is right. If
+  most of the run is lost you get `LOAM-T234` telling you so; move the route
+  out with a bigger `margin` or `offset`.
+- **Short routes are refused, not shrunk** (`LOAM-T232`). A cordon needs
+  something holding-sized to ring.
+- **These are fabric, not centrepieces.** The thing at the end of the furrow is
+  a `character.programs` landmark; the furrow is the line pointing at it.
+---
+
 ## 9d. `intent` — saying what kind of place this is
 
 Everything above says *what to build*. `intent` says **what kind of place it

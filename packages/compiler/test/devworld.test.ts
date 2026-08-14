@@ -81,6 +81,12 @@ import {
   ARCANE_PACK_ROW_LENGTH,
   WILDS_EXHIBIT_ROWS,
   WILDS_ROW_LENGTH,
+  FRONTIER_EXHIBIT_ROWS,
+  FRONTIER_ROW_LENGTH,
+  NILE_EXHIBIT_ROWS,
+  NILE_ROW_LENGTH,
+  EASTERN_EXHIBIT_ROWS,
+  EASTERN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -217,6 +223,12 @@ describe("dev world grid", () => {
     const arcanePack = ARCANE_PACK_EXHIBIT_ROWS.length * ARCANE_PACK_ROW_LENGTH;
     // The wilds pack: prefixed (`wild_fire_lookout_tower`) likewise.
     const wilds = WILDS_EXHIBIT_ROWS.length * WILDS_ROW_LENGTH;
+    // The frontier pack: prefixed (`fron_false_front_saloon`) likewise.
+    const frontier = FRONTIER_EXHIBIT_ROWS.length * FRONTIER_ROW_LENGTH;
+    // The Nile pack: prefixed (`nile_mastaba`) likewise.
+    const nile = NILE_EXHIBIT_ROWS.length * NILE_ROW_LENGTH;
+    // The east-asian pack: prefixed (`east_tenshu_keep`) likewise.
+    const eastern = EASTERN_EXHIBIT_ROWS.length * EASTERN_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -260,6 +272,9 @@ describe("dev world grid", () => {
         nautical +
         arcanePack +
         wilds +
+        frontier +
+        nile +
+        eastern +
         commerce +
         garrison + science +
         arcana +

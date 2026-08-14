@@ -175,6 +175,13 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   gibbet_cage: [{}],
   careening_beach: [{}],
   beached_wreck: [{}],
+  // The Nile & ancient Egypt pack's props (CATALOG-EXPANSION §3.8). None of
+  // them reads a param — there is exactly one pyramid and its slope is not a
+  // setting — so one empty case each. Their own properties are held in
+  // props-nile.test.ts.
+  pyramid: [{}],
+  sacred_lake: [{}],
+  felucca: [{}],
   houseboat: [{}],
   helipad: [{}],
   // Wave 6C: the two energy objects with no inside. Their own properties are
@@ -208,6 +215,15 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   spirit_lantern_row: [{}, { length: 3 }, { length: 9 }, { length: 64 }],
   dragon_skeleton: [{}],
   moon_dial: [{}],
+  // The East Asian pack's props (CATALOG-EXPANSION §3.9). None of them reads a
+  // param — every one is a fixed object, and the torii's repetition is a
+  // matter of placing several rather than of a `length` — so each walks the
+  // catalog-wide checks once. Their own properties are held in
+  // props-eastern.test.ts.
+  torii: [{}],
+  zen_garden: [{}],
+  stone_lantern: [{}],
+  dragon_boat: [{}],
   // The alien & sci-fi pack's human response (CATALOG-EXPANSION §3.4). None of
   // them reads a param — every one is a fixed object — so each walks the
   // catalog-wide checks once. Their own properties are held in
@@ -251,6 +267,12 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   hop_yard: [{}, { length: 3 }, { length: 19 }, { length: 64 }],
   stock_pens: [{}, { length: 3 }, { length: 19 }, { length: 64 }],
   well_sweep: [{}],
+  // The frontier West pack's ground pieces (CATALOG-EXPANSION §3.7). None of
+  // them reads a size param. Their own properties are held in
+  // props-frontier.test.ts.
+  water_tank_trestle: [{}],
+  placer_claim: [{}],
+  boot_hill_row: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

@@ -144,6 +144,17 @@ import {
 
 export * from "./archetypes-hedgerow.js";
 
+// The frontier West pack's buildings — the nine entries of §3.7 that have an
+// inside: the saloon, the assay office, the stamp mill, the telegraph office,
+// the livery, the wagon shop, the mission, the cantina and the dugout.
+import {
+  FRONTIER_BUILDING_ARCHETYPES,
+  frontierArchetypeOfTags,
+  furnishFrontier,
+} from "./archetypes-frontier.js";
+
+export * from "./archetypes-frontier.js";
+
 import {
   RESIDENTIAL_BUILDING_ARCHETYPES,
   furnishResidential,
@@ -275,6 +286,17 @@ import {
 
 export * from "./archetypes-arcane.js";
 
+// The East Asian pack's built half (CATALOG-EXPANSION §3.9) — the keep, the
+// gate tower, the garden pavilion and the bell pavilion. Wired in immediately
+// after the arcane pack, which is the seam every later pack takes.
+import {
+  EASTERN_BUILDING_ARCHETYPES,
+  easternArchetypeOfTags,
+  furnishEastern,
+} from "./archetypes-eastern.js";
+
+export * from "./archetypes-eastern.js";
+
 import {
   CLASSICAL_BUILDING_ARCHETYPES,
   classicalArchetypeOfTags,
@@ -300,6 +322,18 @@ import {
 } from "./archetypes-corsair.js";
 
 export * from "./archetypes-corsair.js";
+
+// The Nile & ancient Egypt pack's buildings — the seven entries of §3.8 that
+// have an inside. §3.8's pyramid is a PROP (`props-nile.ts`): a six-course
+// roof rebuild cannot close a thirty-three block base, and filling a storey
+// solid is `interior.blocked_column` for every column of it.
+import {
+  NILE_BUILDING_ARCHETYPES,
+  furnishNile,
+  nileArchetypeOfTags,
+} from "./archetypes-nile.js";
+
+export * from "./archetypes-nile.js";
 
 import {
   DEPTHS_BUILDING_ARCHETYPES,
@@ -349,6 +383,7 @@ export const BUILDING_ARCHETYPES = [
   ...BRINE_BUILDING_ARCHETYPES,
   ...WILDS_BUILDING_ARCHETYPES,
   ...HEDGEROW_BUILDING_ARCHETYPES,
+  ...FRONTIER_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
@@ -367,9 +402,11 @@ export const BUILDING_ARCHETYPES = [
   ...FAITH_BUILDING_ARCHETYPES,
   ...SANCTUM_BUILDING_ARCHETYPES,
   ...ARCANE_BUILDING_ARCHETYPES,
+  ...EASTERN_BUILDING_ARCHETYPES,
   ...CLASSICAL_BUILDING_ARCHETYPES,
   ...XENO_BUILDING_ARCHETYPES,
   ...CORSAIR_BUILDING_ARCHETYPES,
+  ...NILE_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -583,6 +620,16 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // roost.
   const arcane = arcaneArchetypeOfTags(tags);
   if (arcane !== null) return arcane;
+  // The East Asian pack, immediately after the arcane pack and high for the
+  // same reason: the tables below are greedy. It claims nothing an earlier
+  // table claims — `pagoda`, `tea_house`, `hanok` and `machiya` are still the
+  // shipped houses', `keep`/`castle`/`donjon` still the garrison keep's,
+  // `bell`/`bell_tower`/`belfry`/`campanile` still the faith wave's masonry
+  // shaft's, `tower`/`gate`/`gatehouse` still the garrison and town waves',
+  // and `shrine`/`temple` still the church's. Bare `pavilion` is left
+  // unclaimed here as everywhere else.
+  const eastern = easternArchetypeOfTags(tags);
+  if (eastern !== null) return eastern;
   // The classical Mediterranean pack, immediately after the sanctum it was
   // written beside and for the same reason both sit high: neither may fall
   // behind the extended table, whose `temple`/`shrine`/`chapel` claims are
@@ -612,6 +659,17 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // was never a case for taking either word back.
   const corsair = corsairArchetypeOfTags(tags);
   if (corsair !== null) return corsair;
+  // The Nile & ancient Egypt pack's buildings, immediately after the nautical
+  // pack and high for the reason every later wave is: the tables below are
+  // greedy. It claims nothing an earlier table claims — bare `temple` is still
+  // the church's, bare `tomb` the faith wave's, bare `shrine` and bare
+  // `chapel` where they were, bare `granary` the homestead's, bare `hall` the
+  // guildhall's and bare `gate` the gatehouse's. `pyramid`, `great_pyramid`,
+  // `sacred_lake` and `felucca` are claimed by NOBODY on purpose: they name
+  // this pack's props, which are reached by name, and `pyramid` is a roof
+  // value in `core.ts` besides.
+  const nile = nileArchetypeOfTags(tags);
+  if (nile !== null) return nile;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -652,6 +710,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // pack's own ids or a word no table had.
   const hedgerow = hedgerowArchetypeOfTags(tags);
   if (hedgerow !== null) return hedgerow;
+  // The frontier West pack's buildings, beside the agrarian table they were
+  // wired in after. It claims nothing an earlier table claims — bare `bar`,
+  // `tavern`, `inn`, `church`, `chapel`, `adobe`, `stable`, `mill`, `sawmill`,
+  // `forge`, `smithy`, `jail`, `bank`, `post_office`, `general_store`,
+  // `sod_house`, `hut` and `cabin` are all left exactly where they were, and
+  // every claim here is a compound of this pack's own ids or a word no table
+  // had.
+  const frontier = frontierArchetypeOfTags(tags);
+  if (frontier !== null) return frontier;
   const regionalWave = regionalArchetypeOfTags(tags);
   if (regionalWave !== null) return regionalWave;
   // The extended table is consulted before the original one, not after: the
@@ -1040,6 +1107,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishBrine(ctx);
   n += furnishWilds(ctx);
   n += furnishHedgerow(ctx);
+  n += furnishFrontier(ctx);
   n += furnishResidential(ctx);
   n += furnishCommerce(ctx);
   n += furnishTerminus(ctx);
@@ -1055,9 +1123,11 @@ export function furnish(r: FurnishRequest): number {
   n += furnishFaith(ctx);
   n += furnishSanctum(ctx);
   n += furnishArcane(ctx);
+  n += furnishEastern(ctx);
   n += furnishClassical(ctx);
   n += furnishXeno(ctx);
   n += furnishCorsair(ctx);
+  n += furnishNile(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

@@ -100,6 +100,14 @@ import {
   hedgerowPropFootprint,
   isHedgerowProp,
 } from "./props-hedgerow.js";
+// The frontier West pack's ground pieces — the three entries of §3.7 that
+// stand on the ground rather than roofing a room or running along a route.
+import {
+  FRONTIER_PROP_GENERATORS,
+  FRONTIER_PROP_NAMES,
+  frontierPropFootprint,
+  isFrontierProp,
+} from "./props-frontier.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -127,6 +135,15 @@ import {
   arcanePropFootprint,
   isArcaneProp,
 } from "./props-arcane.js";
+// The East Asian pack's props — the four entries of §3.9 that are things you
+// walk past, under or along: the gate, the dry garden, the light at the turn
+// of a path, and the boat.
+import {
+  EASTERN_PROP_GENERATORS,
+  EASTERN_PROP_NAMES,
+  easternPropFootprint,
+  isEasternProp,
+} from "./props-eastern.js";
 import {
   CLASSICAL_PROP_GENERATORS,
   CLASSICAL_PROP_NAMES,
@@ -148,6 +165,15 @@ import {
   corsairPropFootprint,
   isCorsairProp,
 } from "./props-corsair.js";
+// The Nile & ancient Egypt pack's props — the pyramid, the sacred lake and
+// the felucca (§3.8). The pyramid is here rather than in the archetypes for
+// the height-budget reason `props-nile.ts` states in full.
+import {
+  NILE_PROP_GENERATORS,
+  NILE_PROP_NAMES,
+  isNileProp,
+  nilePropFootprint,
+} from "./props-nile.js";
 import {
   WAYSIDE_PROP_GENERATORS,
   WAYSIDE_PROP_NAMES,
@@ -205,13 +231,16 @@ export const PROP_NAMES = [
   ...CLASSICAL_PROP_NAMES,
   ...XENO_PROP_NAMES,
   ...CORSAIR_PROP_NAMES,
+  ...NILE_PROP_NAMES,
   ...ENERGY_PROP_NAMES,
   ...CLASSICAL_B_PROP_NAMES,
   ...ARCANE_PROP_NAMES,
+  ...EASTERN_PROP_NAMES,
   ...RESPONSE_PROP_NAMES,
   ...BRINE_PROP_NAMES,
   ...WILDS_PROP_NAMES,
   ...HEDGEROW_PROP_NAMES,
+  ...FRONTIER_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -538,13 +567,16 @@ export function propFootprint(
   if (isClassicalProp(prop)) return classicalPropFootprint(prop);
   if (isXenoProp(prop)) return xenoPropFootprint(prop);
   if (isCorsairProp(prop)) return corsairPropFootprint(prop);
+  if (isNileProp(prop)) return nilePropFootprint(prop);
   if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
   if (isClassicalBProp(prop)) return classicalBPropFootprint(prop, params);
   if (isArcaneProp(prop)) return arcanePropFootprint(prop, params);
+  if (isEasternProp(prop)) return easternPropFootprint(prop);
   if (isResponseProp(prop)) return responsePropFootprint(prop);
   if (isBrineProp(prop)) return brinePropFootprint(prop, params);
   if (isWildsProp(prop)) return wildsPropFootprint(prop, params);
   if (isHedgerowProp(prop)) return hedgerowPropFootprint(prop, params);
+  if (isFrontierProp(prop)) return frontierPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1085,13 +1117,16 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...CLASSICAL_PROP_GENERATORS,
   ...XENO_PROP_GENERATORS,
   ...CORSAIR_PROP_GENERATORS,
+  ...NILE_PROP_GENERATORS,
   ...ENERGY_PROP_GENERATORS,
   ...CLASSICAL_B_PROP_GENERATORS,
   ...ARCANE_PROP_GENERATORS,
+  ...EASTERN_PROP_GENERATORS,
   ...RESPONSE_PROP_GENERATORS,
   ...BRINE_PROP_GENERATORS,
   ...WILDS_PROP_GENERATORS,
   ...HEDGEROW_PROP_GENERATORS,
+  ...FRONTIER_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

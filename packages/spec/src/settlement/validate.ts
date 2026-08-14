@@ -3049,6 +3049,14 @@ export const SETTLEMENT_PROP_NAMES = [
   "gibbet_cage",
   "careening_beach",
   "beached_wreck",
+  // The Nile & ancient Egypt pack's props (CATALOG-EXPANSION §3.8), in the
+  // order `PROP_NAMES` spreads them — straight after the nautical pack's
+  // shore props. `compiler/test/props.test.ts` asserts this list element by
+  // element. The pyramid is a prop for the height-budget reason
+  // `props-nile.ts` gives: a building cannot host a thirty-three block mass.
+  "pyramid",
+  "sacred_lake",
+  "felucca",
   // Wave 6C: the two energy objects that are props rather than buildings.
   "wind_turbine",
   "solar_array",
@@ -3077,6 +3085,14 @@ export const SETTLEMENT_PROP_NAMES = [
   "spirit_lantern_row",
   "dragon_skeleton",
   "moon_dial",
+  // The East Asian pack (CATALOG-EXPANSION §3.9), prop half: the four entries
+  // of that pack that are things you walk past, under or along. Order matches
+  // `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts` asserts
+  // element by element.
+  "torii",
+  "zen_garden",
+  "stone_lantern",
+  "dragon_boat",
   // The alien & sci-fi pack (CATALOG-EXPANSION §3.4), human-response half:
   // the seven entries of that pack that are props. Order matches `PROP_NAMES`
   // in the stdlib, which `compiler/test/props.test.ts` asserts element by
@@ -3121,6 +3137,13 @@ export const SETTLEMENT_PROP_NAMES = [
   "hop_yard",
   "stock_pens",
   "well_sweep",
+  // The frontier West pack (CATALOG-EXPANSION §3.7), ground half: the three
+  // entries of that pack that stand on the ground rather than roofing a room
+  // or running along a route. Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "water_tank_trestle",
+  "placer_claim",
+  "boot_hill_row",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

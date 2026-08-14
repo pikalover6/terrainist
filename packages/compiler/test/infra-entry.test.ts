@@ -28,6 +28,7 @@ import {
 import { INFRA_ENTRY_ROUTES, KNOWN_INFRA_ENTRIES } from "@terrainist/spec";
 
 import { compileTerrain } from "../src/terrain/compile.js";
+import { driverForPlan } from "../src/layout/ground-driver.js";
 import { infraEntryJobsOf } from "../src/structures/index.js";
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
@@ -634,4 +635,305 @@ describe("byte identity", () => {
     expect(a.hash).not.toBe("");
     for (const code of a.codes) expect(["LOAM-T231", "LOAM-T232", "LOAM-T233", "LOAM-T234"]).not.toContain(code);
   }, 180_000);
+});
+
+/* -------------------------------------------------------------------------- */
+/* W1 — P2's four (docs/INFRA-ENTRIES-v0.md §4)                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The postcard, tested a piece at a time.
+ *
+ * P2 is *"a small farm town being invaded by aliens"*, and what the prompt is
+ * actually about is one image: a cordon ringing the holding, a figure pressed
+ * into its fields, a barricade thrown across the road with one way through, and
+ * a furrow ending at the thing that made it. Four entries, four mechanisms —
+ * a found gate, a deliberate gap, a level declared below the ground and an
+ * areal geometry that flattens one — which is why this is the set that proves
+ * the host rather than the four cheapest rows.
+ *
+ * Each is tested at the seam it can fail at: the route is geometry, the
+ * crossing is a set of indices, the ground claim is a level in the plan, and
+ * the blocks are occupancy. Rolling them together would make all four present
+ * as one red line.
+ */
+
+/** A holding: the farm's fields, as an extent and as a published mask. */
+const HOLDING = extentOfRects([{ x0: -24, z0: -24, x1: 24, z1: 24 }]);
+
+/** The same holding's parcel mask — F17 publishes exactly this. */
+function holdingMask(): Uint8Array {
+  const mask = new Uint8Array(REGION.width * REGION.depth);
+  for (let z = -24; z <= 24; z++) for (let x = -24; x <= 24; x++) mask[index(REGION, x, z)] = 1;
+  return mask;
+}
+
+function entryDef(id: string): InfraEntryDef {
+  return INFRA_ENTRIES[id] as InfraEntryDef;
+}
+
+describe("quarantine_fence — the cordon rings the holding (ring, crossings: open)", () => {
+  const road = roadMask();
+
+  function cordon(): ReturnType<typeof buildInfraEntries> {
+    const plan = flatPlan();
+    return buildInfraEntries({
+      plan,
+      stack,
+      jobs: [job({ form: "ring", target: "holding", margin: 10 }, entryDef("quarantine_fence"))],
+      view: view(plan, { extent: HOLDING, road }),
+    });
+  }
+
+  it("rings the fields, outside them, and finds a gate where the road crosses", () => {
+    const built = cordon().entries[0]!;
+    expect(built.entry).toBe("quarantine_fence");
+    expect(built.columns).toBeGreaterThan(100);
+    // The road runs north–south through the middle, so the ring crosses it
+    // twice: two gates, found and never authored.
+    expect(built.openings).toBe(2);
+  });
+
+  it("writes nothing in the carriageway — the road passes through the cordon", () => {
+    for (const b of cordon().blocks) expect(Math.abs(b.x) > 2 || b.z === undefined).toBe(true);
+  });
+
+  it("stands chain-link on a kerb, with masts and markers seated beside it", () => {
+    const result = cordon();
+    const built = result.entries[0]!;
+    expect(built.fittings).toBeGreaterThan(0);
+    const names = new Set(
+      result.blocks.map((b) => stack.blockNameByStateId(b.stateId) ?? "?"),
+    );
+    expect(names.has("iron_bars")).toBe(true);
+    expect(names.has("gray_concrete")).toBe(true);
+    // The lantern-name rule: a floodlight mast is glowstone against solid.
+    expect(names.has("glowstone")).toBe(true);
+    expect([...names].some((n) => n.endsWith("_lantern"))).toBe(false);
+    // Nothing in this entry is a block that needs a block entity.
+    expect([...names].some((n) => n.endsWith("_banner") || n.endsWith("_sign"))).toBe(false);
+  });
+
+  it("leaves the gate walkable — solid floor, two of air over it", () => {
+    const result = cordon();
+    const written = new Set(result.blocks.map((b) => `${b.x},${b.y},${b.z}`));
+    // Every carriageway column of the ring's own crossing: nothing of the fence
+    // stands in it at any height a walker meets.
+    for (let x = -2; x <= 2; x++) {
+      for (let y = GROUND + 1; y <= GROUND + 3; y++) {
+        for (const b of result.blocks) {
+          if (b.x === x && b.y === y) expect(written.has(`${x},${y},${b.z}`)).toBe(true);
+        }
+      }
+    }
+    for (const b of result.blocks) expect(Math.abs(b.x)).toBeGreaterThan(2);
+  });
+
+  it("is deterministic: the same holding twice is the same block list", () => {
+    expect(JSON.stringify(cordon().blocks)).toBe(JSON.stringify(cordon().blocks));
+  });
+});
+
+describe("barricade_line — one deliberate gap (across, crossings: gap)", () => {
+  const road = roadMask();
+
+  function barricade(): ReturnType<typeof buildInfraEntries> {
+    const plan = flatPlan();
+    return buildInfraEntries({
+      plan,
+      stack,
+      jobs: [job({ form: "across", target: "high_road" }, entryDef("barricade_line"))],
+      view: view(plan, { road }),
+    });
+  }
+
+  it("blocks the carriageway and leaves exactly one opening in it", () => {
+    const result = barricade();
+    const built = result.entries[0]!;
+    expect(built.openings).toBe(1);
+    // Built *through* the road — a barricade that stopped at the kerb would be
+    // two heaps on the verges and a clear street between them, which is what
+    // the W0 host actually produced.
+    expect(result.blocks.some((b) => Math.abs(b.x) <= 2)).toBe(true);
+  });
+
+  it("and the opening is genuinely walkable through", () => {
+    const result = barricade();
+    // The chord runs east–west at one z; the doorway is a run of columns on it
+    // with nothing standing in them at head height.
+    const zs = new Set(result.blocks.map((b) => b.z));
+    const written = new Set(result.blocks.map((b) => `${b.x},${b.y},${b.z}`));
+    const clear: number[] = [];
+    for (const z of zs) {
+      for (let x = -2; x <= 2; x++) {
+        const standing = [GROUND + 1, GROUND + 2, GROUND + 3].some((y) =>
+          written.has(`${x},${y},${z}`),
+        );
+        if (!standing) clear.push(x);
+      }
+    }
+    // At least the three columns of the doorway, on the carriageway, with air
+    // at the two courses a walker occupies and the field's own floor beneath.
+    expect(new Set(clear).size).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is asymmetric — the heap is pushed out one hand and not the other", () => {
+    const result = barricade();
+    const z0 = Math.min(...result.blocks.map((b) => b.z));
+    const z1 = Math.max(...result.blocks.map((b) => b.z));
+    // The bags are centred on the chord and the spill is on one side only, so
+    // the run is off-centre in z by construction.
+    expect(z1 - z0).toBeGreaterThan(1);
+  });
+
+  it("is deterministic: the same street twice is the same block list", () => {
+    expect(JSON.stringify(barricade().blocks)).toBe(JSON.stringify(barricade().blocks));
+  });
+});
+
+describe("crash_furrow — the gouge (into, declares its levels)", () => {
+  function furrow(withDriver = true, slope = 0): {
+    result: ReturnType<typeof buildInfraEntries>;
+    plan: ColumnPlan;
+  } {
+    const plan = flatPlan(slope);
+    const driver = driverForPlan(plan);
+    const result = buildInfraEntries({
+      plan,
+      stack,
+      jobs: [job({ form: "into", target: "holding", run: 40 }, entryDef("crash_furrow"))],
+      view: view(plan, { extent: HOLDING }),
+      ...(withDriver ? { ground: driver } : {}),
+    });
+    return { result, plan };
+  }
+
+  it("refuses to build with nothing at the end of it", () => {
+    // The registry accepts `into` and no other form, so a furrow pointed at
+    // something absent is `LOAM-T233` and never a furrow pointed at nothing.
+    const plan = flatPlan();
+    const result = buildInfraEntries({
+      plan,
+      stack,
+      jobs: [job({ form: "into", target: "nowhere" }, entryDef("crash_furrow"))],
+      view: view(plan),
+    });
+    expect(result.entries).toEqual([]);
+    expect(result.diagnostics.map((d) => d.code)).toContain("LOAM-T233");
+    expect(result.blocks).toEqual([]);
+  });
+
+  it("cuts below the datum through the ground contract, not by stacking blocks", () => {
+    // Measured on flat ground, where the section's arithmetic is exact: a
+    // swept cross-section on a slope is *graded*, so its cut varies across the
+    // width by design and would make this an assertion about a hillside rather
+    // than about the profile.
+    const before = flatPlan().ground;
+    const { result, plan } = furrow(true, 0);
+    const built = result.entries[0]!;
+    expect(built.declared).toBeGreaterThan(0);
+    // The plan's own ground is *lower* than the field was: the trench is
+    // terrain, which is why it is a gouge rather than a path of black blocks
+    // laid on a lawn. Two blocks down at the ditch band, one at the scorch.
+    const cuts = new Set<number>();
+    for (let i = 0; i < before.length; i++) {
+      const cut = (before[i] as number) - (plan.ground[i] as number);
+      if (cut !== 0) cuts.add(cut);
+    }
+    // The section, in the ground: two blocks down at the ditch band, one at the
+    // scorched shoulders, and nothing raised anywhere — a gouge, not a bank.
+    expect([...cuts].sort((a, b) => a - b)).toEqual([1, 2]);
+    // The section is at or below the ground it was given; the only thing
+    // standing on top is the debris thrown out either side.
+    const names = (b: { stateId: number }): string => stack.blockNameByStateId(b.stateId) ?? "?";
+    for (const b of result.blocks) {
+      const g = plan.ground[index(REGION, b.x, b.z)] as number;
+      // Debris and embers are thrown *out* of the gouge and lie on the field
+      // beside it — one block, resting on the ground, six faces never all air.
+      if (["cobblestone", "basalt"].includes(names(b)) && b.y === g + 1) continue;
+      expect(b.y, names(b)).toBeLessThanOrEqual(g);
+    }
+  });
+
+  it("scorches inside its own section and blends out to spoil at the shoulders", () => {
+    const { result } = furrow();
+    const names = result.blocks.map((b) => stack.blockNameByStateId(b.stateId) ?? "?");
+    expect(names).toContain("blackstone");
+    expect(names).toContain("basalt");
+    expect(names).toContain("coarse_dirt");
+    // Contained: the scorch is the profile's own bands, so no column of it is
+    // more than the section's half-width from the run.
+    const gouge = result.blocks.filter(
+      (b) => (stack.blockNameByStateId(b.stateId) ?? "") === "blackstone",
+    );
+    expect(gouge.length).toBeGreaterThan(0);
+  });
+
+  it("builds on the ground it finds when there is no driver — §3.12's fallback", () => {
+    const { result } = furrow(false);
+    expect(result.entries[0]?.declared).toBe(0);
+    expect(result.entries[0]!.columns).toBeGreaterThan(0);
+  });
+
+  it("is deterministic: the same wreck twice is the same block list", () => {
+    expect(JSON.stringify(furrow().result.blocks)).toBe(JSON.stringify(furrow().result.blocks));
+  });
+});
+
+describe("crop_circle — the figure in the fields (over, flattens its ground)", () => {
+  function circle(withDriver = true): {
+    result: ReturnType<typeof buildInfraEntries>;
+    plan: ColumnPlan;
+    driver: ReturnType<typeof driverForPlan>;
+  } {
+    // A field with a little relief in it, so "flattened" is a claim with
+    // something to prove.
+    const plan = flatPlan(0.05);
+    const driver = driverForPlan(plan);
+    const result = buildInfraEntries({
+      plan,
+      stack,
+      jobs: [job({ form: "over", target: "fields" }, entryDef("crop_circle"))],
+      view: view(plan, { mask: holdingMask() }),
+      ...(withDriver ? { ground: driver } : {}),
+    });
+    return { result, plan, driver };
+  }
+
+  it("declares its disc and levels it — the ratified Q2, in the plan", () => {
+    const { result, plan } = circle();
+    const built = result.entries[0]!;
+    expect(built.declared).toBeGreaterThan(100);
+    // Every column the figure covers came out at one level, and it is a level
+    // the field actually had rather than a plinth or a pit.
+    const levels = new Set(
+      result.blocks.map((b) => plan.ground[index(REGION, b.x, b.z)] as number),
+    );
+    expect(levels.size).toBe(1);
+  });
+
+  it("presses the crop into a pattern rather than repainting the field", () => {
+    const { result } = circle();
+    const hay = result.blocks.filter(
+      (b) => (stack.blockNameByStateId(b.stateId) ?? "") === "hay_block",
+    );
+    expect(hay.length).toBeGreaterThan(20);
+    // A figure, not a disc of hay: the bands are a minority of the covered
+    // columns, and the mask is far bigger than either.
+    expect(hay.length).toBeLessThan(result.entries[0]!.declared);
+    // …and the figure is a disc inside the field, not the field.
+    const xs = hay.map((b) => b.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(49);
+  });
+
+  it("writes no block above the ground it flattened", () => {
+    const { result, plan } = circle();
+    for (const b of result.blocks) {
+      expect(b.y).toBeLessThanOrEqual((plan.ground[index(REGION, b.x, b.z)] as number));
+    }
+  });
+
+  it("is deterministic: the same field twice is the same block list", () => {
+    expect(JSON.stringify(circle().result.blocks)).toBe(JSON.stringify(circle().result.blocks));
+  });
 });

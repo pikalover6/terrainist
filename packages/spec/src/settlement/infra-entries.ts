@@ -8,10 +8,10 @@
  * `packages/compiler/test/infra-entry.test.ts` is the first place that can see
  * both registries, and it pins them to each other element by element.
  *
- * The list is small on purpose. W0 ships the host and no content, so the only
- * name an author may write today is the host's own fixture; a document naming
- * `crop_circle` gets `LOAM-T231` with the legal values and the near-misses
- * attached, which is the honest answer until W1 lands the row.
+ * The list is small on purpose. W0 shipped the host and no content; W1 adds
+ * P2's four and nothing else. A document naming an entry no wave has landed
+ * gets `LOAM-T231` with the legal values and the near-misses attached, which is
+ * the honest answer until the row exists.
  */
 
 import { editDistance } from "./archetypes.js";
@@ -26,10 +26,18 @@ export const INFRA_ENTRY_GENERATOR = "infra.entry@0";
  * ties on it so the same typo always suggests the same names.
  */
 export const KNOWN_INFRA_ENTRIES = [
-  // W0's internal fixture — the host's own client, and the only entry that
-  // exists before W1. It is a real, buildable entry rather than a stub, which
-  // is what makes the exhibit and the driver tests worth anything.
+  // W0's internal fixture — the host's own client. It is a real, buildable
+  // entry rather than a stub, which is what makes the exhibit and the driver
+  // tests worth anything.
   "test_fence",
+  // W1 — P2's four. One prompt's world ("a small farm town being invaded by
+  // aliens") and four different mechanisms: a ring with found gates, a chord
+  // with one deliberate gap, a run that cuts below the ground, and an areal
+  // figure that flattens one.
+  "quarantine_fence",
+  "barricade_line",
+  "crash_furrow",
+  "crop_circle",
 ] as const;
 
 /** An entry id. */
@@ -47,6 +55,15 @@ export type InfraEntryId = (typeof KNOWN_INFRA_ENTRIES)[number];
  */
 export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   test_fence: Object.freeze(["ring", "along", "across", "into"]),
+  // One form each, and the narrowness is the teaching: a cordon rings, a
+  // barricade goes across, a furrow runs into the thing that made it, and a
+  // crop circle lies over a field. `crash_furrow`'s single form is also the
+  // ratified refusal — a scar with no cause is set dressing, so a furrow that
+  // names nothing gets `LOAM-T231` rather than a shorter furrow.
+  quarantine_fence: Object.freeze(["ring"]),
+  barricade_line: Object.freeze(["across"]),
+  crash_furrow: Object.freeze(["into"]),
+  crop_circle: Object.freeze(["over"]),
 });
 
 /** True for an entry the registry knows. */

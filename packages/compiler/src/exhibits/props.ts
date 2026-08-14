@@ -49,6 +49,7 @@ import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 import {
   CLASSICAL_A_PROP_EXHIBIT_PLAN,
   CORSAIR_PROP_EXHIBIT_PLAN,
+  NILE_PROP_EXHIBIT_PLAN,
   XENO_PROP_EXHIBIT_PLAN,
 } from "@terrainist/stdlib";
 
@@ -252,6 +253,41 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "dragon_skeleton", params: {} },
       { prop: "dragon_skeleton", params: { yaw: 90 } },
     ],
+  },
+  // The Nile pack ships its own plan (pyramid on its own row, felucca on
+  // water).
+  ...NILE_PROP_EXHIBIT_PLAN,
+  // The frontier's roadside pieces: the graveyard and the claim are
+  // position-hash varied, so two cells never read identical.
+  {
+    row: "frontier_trail",
+    water: false,
+    cells: [
+      { prop: "water_tank_trestle", params: {} },
+      { prop: "placer_claim", params: {} },
+      { prop: "placer_claim", params: { yaw: 90 } },
+      { prop: "boot_hill_row", params: {} },
+      { prop: "boot_hill_row", params: { yaw: 90 } },
+    ],
+  },
+  // The east-asian approach: torii ranked, lanterns in numbers — saturation
+  // is both pieces' whole job. The dragon boat is base: "water".
+  {
+    row: "eastern_approach",
+    water: false,
+    cells: [
+      { prop: "torii", params: {} },
+      { prop: "torii", params: { yaw: 90 } },
+      { prop: "zen_garden", params: {} },
+      { prop: "stone_lantern", params: {} },
+      { prop: "stone_lantern", params: { yaw: 90 } },
+      { prop: "stone_lantern", params: { yaw: 180 } },
+    ],
+  },
+  {
+    row: "eastern_river",
+    water: true,
+    cells: [{ prop: "dragon_boat", params: {} }],
   },
   // The hedgerow expansion's yard pieces. The pond and the dip bring their own
   // contained water and want DRY ground, not the basin rows; the gate is P2's

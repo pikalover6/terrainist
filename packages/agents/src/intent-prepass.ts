@@ -531,6 +531,24 @@ an id is dropped with a warning. So "unicorn island", "pirate cove",
 list. If you cannot name a legal id, write the idea as a sentence in "tokens" —
 prose is what that field is for, and it reaches the author intact.
 
+AN EMERGENCY HAS FABRIC, AND IT IS NOT A PROP.
+When the prompt is an invasion, an outbreak, a quarantine, a crash, a siege or
+an evacuation, the thing that reads on a walk is the LINEWORK the emergency put
+across the ordinary place — a cordon round the fields, a barricade across the
+street, a gouge in the ground ending at whatever made it, a figure pressed into
+a crop. The compiler builds those as infrastructure entries and NOT as props or
+buildings, so they cannot arrive through a prefer list. Name them in "tokens"
+and the author writes the nodes:
+  "infra": "quarantine_fence ringing the north holding; crop_circle over its
+  fields; barricade_line across the road into town; crash_furrow into the
+  wreck"
+Write only the ones the prompt actually implies, each against a place: a fence
+rings SOMETHING, a barricade crosses SOME road, a furrow ends at SOME thing.
+A furrow with nothing at the end of it is refused outright, so if you write one,
+also say what it ends at (a bespoke landmark, usually).
+Keep the town's own era and palette while you do it — see the era note above:
+the horror is modern things standing over ordinary ones.
+
 ONE PLACE PER TOKEN — DO NOT MERGE PLACES.
 If the prompt names SEVERAL distinct places (two islands, a city and a ruin),
 you must NOT write one "character" block covering both: an averaged intent is

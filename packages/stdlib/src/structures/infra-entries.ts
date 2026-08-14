@@ -27,14 +27,14 @@
  * `SweptProfile` through one typed adapter, so a drift between the two is a
  * **compile error** in the package that can see both, not a runtime surprise.
  *
- * ## What ships in W0
+ * ## What is here
  *
- * Nothing real. The registry is deliberately empty of catalog entries — W1's
- * four (`crop_circle`, `quarantine_fence`, `barricade_line`, `crash_furrow`)
- * are content and land in their own wave — and carries exactly one internal
- * row, {@link INFRA_TEST_ENTRY}, which exists so the host has a client to be
- * proven against. An internal row is **not** a catalog id and is excluded from
- * {@link INFRA_ENTRY_IDS}, which is the set the catalog guard checks both ways.
+ * W0's internal fixture, {@link INFRA_TEST_ENTRY}, which exists so the host has
+ * a client that does not wait on content — an internal row is **not** a catalog
+ * id and is excluded from {@link INFRA_ENTRY_IDS}, the set the catalog guard
+ * checks both ways — and W1's four: `quarantine_fence`, `barricade_line`,
+ * `crash_furrow` and `crop_circle`, which are one prompt's world (P2, *"a small
+ * farm town being invaded by aliens"*) and four different mechanisms.
  *
  * ## Determinism
  *
@@ -44,7 +44,7 @@
  * `hash(worldSeed, nodePath)` like everything else in this compiler.
  */
 
-import type { Seed256 } from "../determinism/index.js";
+import { Rng, streamSeed, type Seed256 } from "../determinism/index.js";
 
 import type { MaterialTheme } from "./themes.js";
 
@@ -157,16 +157,50 @@ export type InfraSourceClass = "sweep.run" | "retaining.seam" | "structure.linew
  */
 export type InfraCrossing = "open" | "block" | "gap";
 
+/**
+ * What one column of an areal treatment becomes.
+ *
+ * `undefined` from {@link InfraAreaStamp.cell} means the column is **outside
+ * the treatment** and is left exactly as the resolver decided it — which is
+ * most of a field, because a crop circle is a geometry *in* a crop rather than
+ * a repaint of one.
+ */
+export interface InfraAreaCell {
+  /** The block this column's top course becomes; omitted leaves the material. */
+  readonly surface?: string;
+  /**
+   * Courses of standing growth above the surface the treatment presses flat.
+   *
+   * A crop circle is not paint: what makes it read from the ground is that the
+   * wheat that stood here is *down*. Clearing is the only way to say that, and
+   * it is the one thing in this registry that removes a block somebody else
+   * wrote — see {@link InfraEntryDef.declaresLevels} for the disposition that
+   * makes it legal.
+   */
+  readonly clear?: number;
+}
+
 /** An areal treatment's stamp — the top course of ground it does not own. */
 export interface InfraAreaStamp {
   readonly id: string;
-  /** The block the treated column's top course becomes. */
+  /** The block the treated column's top course becomes, when {@link cell} is absent. */
   readonly surface: string;
   /**
    * Courses below the surface this treatment also re-materialises. `0` (the
    * default) rewrites the top course alone, which is what a treatment *is*.
    */
   readonly depth?: number;
+  /**
+   * The treatment's own geometry, in columns **relative to the area's centre**.
+   *
+   * Absent means "every column of the mask, uniformly" — which is what W0's
+   * host did and what a `stump_field` still wants. Present, it is the whole
+   * difference between a treatment and a repaint: the mask says *where the
+   * pass may write*, and this says *what the pattern is*. Coordinates are
+   * relative because the registry may never see a world coordinate (§5), and
+   * they are the only geometry an entry gets to compute for itself.
+   */
+  readonly cell?: (dx: number, dz: number) => InfraAreaCell | undefined;
 }
 
 /** What a profile or stamp function is handed. Mirrors `PropContext`'s shape. */
@@ -177,6 +211,30 @@ export interface InfraContext {
   readonly params: Readonly<Record<string, unknown>>;
   /** `hash(worldSeed, nodePath)` — for decoration that varies, not geometry. */
   readonly seed: Seed256;
+  /**
+   * The bounding span of the area an `over` route resolved to, in columns.
+   *
+   * Set for an area job and for nothing else. A disc has to know how big the
+   * field is to size itself, and the alternative — a radius in the node's
+   * params — is an author guessing at a number the compiler already knows.
+   */
+  readonly extent?: { readonly width: number; readonly depth: number };
+}
+
+/**
+ * A fitting seated at an interval feature: one column of blocks, bottom-up,
+ * standing on its own ground.
+ *
+ * The design's §3.3 hands `IntervalFeature.generator` a stdlib prop id and
+ * lets `buildProps` seat it. That seam is real and unexercised, and it is also
+ * the *expensive* half: a prop is a box, a yaw, a pad and a placement
+ * negotiation. A mast is a column of five blocks. This is the cheap half, and
+ * the two are not in competition — an entry that wants a whole trailer beside
+ * its fence still names a generator.
+ */
+export interface InfraFitting {
+  /** Blocks from the ground up. Every one a full cube unless it stands last. */
+  readonly stack: readonly string[];
 }
 
 /** One row of the registry (§3.3). */
@@ -194,6 +252,34 @@ export interface InfraEntryDef {
   /** Refuse a resolved route shorter than this — the `LOAM-T232` threshold. */
   readonly minRun: number;
   readonly features?: readonly InfraIntervalFeature[];
+  /**
+   * What each of the profile's interval features is made of, by feature id.
+   *
+   * A feature with no fitting and no `generator` is a position and nothing
+   * else, which is what W0 shipped: the sweep seated them and the driver had
+   * nowhere to send them.
+   */
+  readonly fittings?: Readonly<Record<string, InfraFitting>>;
+  /**
+   * This entry's levels go through the **ground contract** rather than being
+   * built on top of what it finds (`docs/GROUND-CONTRACT-v0.md` §3.13, §9).
+   *
+   * Two entries need it and they need it for the same reason: a crash furrow
+   * cuts *below* the ground and a crop circle flattens it, and neither can be
+   * said by stacking blocks on a surface. Declare → resolve → build: the run's
+   * levels are committed as an intent at {@link sourceClass}, the resolver
+   * arbitrates them against every other claim on those columns, and the
+   * materials are then laid on the ground the resolver actually gave — never
+   * on the level the entry asked for, which is the mistake §9a.1 rule 2 exists
+   * to forbid.
+   *
+   * It also changes the entry's occupancy disposition, and deliberately: a
+   * treatment that flattens presses whatever stood in the columns it won,
+   * because that is what "flattened" means. Columns carrying something taller
+   * than the treatment's own clearance are skipped whole, so a crop circle
+   * takes the wheat and never the barn.
+   */
+  readonly declaresLevels?: true;
   /**
    * Blocks of datum above the ground the sweep aims for, when the node says
    * nothing. A fence is low; a wall is not.
@@ -257,12 +343,267 @@ function testFenceProfile(): InfraSweptProfile {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* W1 — P2's four (docs/INFRA-ENTRIES-v0.md §4)                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The four rows below are one prompt's worth of world — *"a small farm town
+ * being invaded by aliens"* — and four different mechanisms, which is why they
+ * are the set that proves the host: a ring with gates, a chord with a gap, a
+ * run that cuts below the ground, and an areal geometry that flattens one.
+ *
+ * ## Materials are fixed, not themed
+ *
+ * A quarantine fence is put up in a week by people who did not consult the
+ * town's stonemason, and a barricade is made of whatever was in the street. A
+ * theme-derived cordon would be the settlement agreeing with itself about an
+ * emergency, which is the opposite of the read. The one place a theme would
+ * earn its keep — a hedgerow, a dry stone wall — is W3's, and those rows will
+ * take `ctx.theme` when they land.
+ *
+ * ## No banner, no sign, no chain
+ *
+ * `props-response.ts`'s rules 4 and 5, obeyed here for the same reasons: a
+ * banner and a sign are block entities this op stream cannot carry, so a
+ * warning marker is *coloured* (wool over a post) rather than written, and
+ * `chain` is not in the pinned 1.21.11 table, so wire is `iron_bars`.
+ */
+
+/** Columns between posts of a chain-link panel — a fence's own module. */
+const PANEL = 4;
+
+/**
+ * `quarantine_fence` — the cordon that went up around the holding.
+ *
+ * A low concrete kerb carrying two courses of chain-link, a warning marker
+ * every couple of panels, and a floodlight mast every fifth panel. Iron bars
+ * are the one connective block in W1 and they are legal here for the reason
+ * §3.7 states: every block this pass writes goes through the emitter's
+ * `applyConnectionStates`, so a run of bars comes out joined rather than as a
+ * line of default-state posts.
+ *
+ * The gate is not in this function and could not be: a gate is *found*, where
+ * a carriageway crosses the derived line, and `crossings: "open"` is the whole
+ * of the entry's opinion about it.
+ */
+function quarantineFenceProfile(): InfraSweptProfile {
+  return {
+    id: "infra.entry@0/quarantine_fence",
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "line",
+        role: "core",
+        width: 1,
+        centred: true,
+        surface: "gray_concrete",
+        fill: "cobblestone",
+        cap: { height: 2, block: "iron_bars", rail: true },
+      },
+    ],
+    features: [
+      // Off the line on the *outside* hand, so the mast lights the approach
+      // and the marker faces whoever is being kept out.
+      { id: "marker", pitch: PANEL * 2 + 1, at: "interval", offset: 1 },
+      { id: "mast", pitch: PANEL * 5, at: "both", offset: -1 },
+    ],
+  };
+}
+
+/**
+ * `barricade_line` — thrown across the carriageway, with one way through.
+ *
+ * Asymmetric by construction and not by decoration: the heaped side carries a
+ * rubble spill with wire strung over it and the other side is clear, because a
+ * barricade is built *from* one side by people standing on it. A symmetric
+ * cross-section here would be a wall with a story attached.
+ *
+ * The gap is `crossings: "gap"` and nothing in this function — the host finds
+ * the crossing and leaves a doorway in it. Every band is skipped across those
+ * columns, so what is left is the carriageway as it was: walkable, which is
+ * the only property of a gap that matters.
+ */
+function barricadeLineProfile(): InfraSweptProfile {
+  return {
+    id: "infra.entry@0/barricade_line",
+    follow: "step",
+    maxGrade: 2,
+    crossing: "stop",
+    asymmetric: true,
+    bands: [
+      // Sandbags, boarded over. Sand is a gravity block and stands on the fill
+      // beneath it in every column — the `Planter` writes a column whole or not
+      // at all, so there is no arrangement in which one is left hanging.
+      {
+        id: "bags",
+        role: "core",
+        width: 1,
+        centred: true,
+        surface: "sand",
+        fill: "coarse_dirt",
+        cap: { height: 1, block: "oak_planks" },
+      },
+      // The spill: rubble pushed out one hand, wire over it.
+      {
+        id: "spill",
+        role: "verge",
+        width: 2,
+        surface: "gravel",
+        fill: "cobblestone",
+        cap: { height: 1, block: "iron_bars", rail: true },
+      },
+    ],
+    features: [
+      { id: "crate", pitch: 5, at: "interval", offset: -2 },
+      { id: "wreck", pitch: 11, at: "interval", phase: 3, offset: -3 },
+    ],
+  };
+}
+
+/**
+ * `crash_furrow` — the gouge, and the only W1 entry that edits terrain.
+ *
+ * A shallow trench claimed through the ground contract: a ditch band two
+ * blocks under the datum, scorched shoulders a block under it, and spoil
+ * thrown out either side at grade. Nothing here stands *on* anything, which is
+ * why the row declares levels — the furrow says what the ground is, the
+ * resolver arbitrates it against everything else that has an opinion about
+ * those columns, and the blackstone is painted on the answer.
+ *
+ * `routes: ["into"]` alone is the refusal Q5 ratified: a scar with no cause is
+ * set dressing, so a furrow that names nothing at the end of it is not a
+ * shorter furrow, it is an `LOAM-T231`.
+ */
+function crashFurrowProfile(): InfraSweptProfile {
+  return {
+    id: "infra.entry@0/crash_furrow",
+    follow: "grade",
+    maxGrade: 2,
+    crossing: "stop",
+    bands: [
+      { id: "gouge", role: "ditch", width: 3, centred: true, level: -2, surface: "blackstone", fill: "blackstone" },
+      { id: "scorch", role: "verge", width: 2, level: -1, surface: "basalt", fill: "basalt" },
+      { id: "spoil", role: "verge", width: 2, level: 0, surface: "coarse_dirt", fill: "coarse_dirt" },
+    ],
+    features: [
+      { id: "debris", pitch: 7, at: "interval", offset: 5 },
+      { id: "ember", pitch: 9, at: "interval", phase: 4, offset: -5 },
+    ],
+  };
+}
+
+/**
+ * Twelve bearings, as **integer** direction vectors.
+ *
+ * §6.5 rule 6: `Math.cos`, `Math.atan2` and friends are not IEEE-specified, so
+ * a stdlib that reached for one would make worlds disagree between machines —
+ * silently, and only for some users. A spoke does not need an angle: it needs a
+ * direction, and a direction is a pair of small integers. These are the twelve
+ * around the circle at roughly thirty degrees; the ones that are not exactly
+ * thirty are a rational approximation and are none the worse for it, because
+ * what a spoke has to be is *evenly spread and the same everywhere*.
+ */
+const SPOKE_DIRS: readonly (readonly [number, number])[] = Object.freeze([
+  [2, 0],
+  [2, 1],
+  [1, 1],
+  [1, 2],
+  [0, 2],
+  [-1, 2],
+  [-1, 1],
+  [-2, 1],
+  [-2, 0],
+  [-2, -1],
+  [-1, -1],
+  [-1, -2],
+]);
+
+/** Spoke counts a figure may have — the divisors of the bearing table. */
+const SPOKE_COUNTS: readonly number[] = Object.freeze([4, 6]);
+
+/** Radius of a crop circle, as a share of the field's shorter span. */
+const CIRCLE_SHARE = 0.35;
+/** Smallest and largest disc worth pressing, in columns of radius. */
+const CIRCLE_MIN_R = 6;
+const CIRCLE_MAX_R = 28;
+/** Courses of standing crop a pressed column loses. */
+const CIRCLE_CLEAR = 3;
+
+/**
+ * `crop_circle` — rings and spokes pressed into a standing field.
+ *
+ * The cheapest strong icon in the expansion document, and the one row here
+ * with no line at all: `over` hands it every column of the farm's published
+ * `parcelMask` and the geometry decides which of them are *in* the figure.
+ * Ratified stronger than the design proposed (Q2): the disc **flattens** —
+ * it declares one level for its whole footprint through the ground contract
+ * and presses the crop that stood there — because a circle that only repaints
+ * the soil reads as paint from the air and as nothing at all from the ground.
+ *
+ * The pattern is rings and spokes, seeded: how many of each is the only thing
+ * about this entry that varies between worlds, and both come from
+ * `hash(worldSeed, nodePath)` like every other varying number in this
+ * compiler. The bands are `hay_block` — flattened wheat is what a hay block
+ * *is*, so the material is the crop's own top course laid down rather than a
+ * foreign block dropped in a field.
+ */
+function cropCircleStamp(ctx: InfraContext): InfraAreaStamp {
+  const span = Math.min(ctx.extent?.width ?? 0, ctx.extent?.depth ?? 0);
+  const radius = Math.max(
+    CIRCLE_MIN_R,
+    Math.min(CIRCLE_MAX_R, Math.round(span * CIRCLE_SHARE)),
+  );
+  const rng = new Rng(streamSeed(ctx.seed, "crop_circle.figure"));
+  const rings = rng.int(2, 3);
+  const spokes = SPOKE_COUNTS[rng.int(0, SPOKE_COUNTS.length - 1)] as number;
+  // Ring radii, evenly spaced inside the disc and computed once: a per-column
+  // recomputation would be the same numbers and a great many more of them.
+  const ringAt: number[] = [];
+  for (let k = 1; k <= rings; k++) ringAt.push((radius * k) / (rings + 1));
+  // The figure's own spokes, taken every `step` bearings so they are evenly
+  // spread whichever count came up.
+  const step = SPOKE_DIRS.length / spokes;
+  const arms: { nx: number; nz: number }[] = [];
+  for (let k = 0; k < spokes; k++) {
+    const [ax, az] = SPOKE_DIRS[k * step] as readonly [number, number];
+    const len = Math.sqrt(ax * ax + az * az);
+    arms.push({ nx: ax / len, nz: az / len });
+  }
+
+  return {
+    id: "infra.entry@0/crop_circle",
+    surface: "hay_block",
+    cell: (dx, dz) => {
+      const r = Math.sqrt(dx * dx + dz * dz);
+      if (r > radius) return undefined;
+      // Inside the disc every column is flattened; only the figure's own bands
+      // are re-materialised. That is the difference between a circle and a
+      // disc of hay, and it is what makes the rings read.
+      const onRim = r >= radius - 1;
+      const onRing = ringAt.some((rr) => Math.abs(r - rr) <= 0.6);
+      // A spoke is a *perpendicular distance* to an arm's line, taken only on
+      // the arm's own side of the centre: one column wide the whole way out,
+      // rather than the wedge an angular tolerance would give.
+      const onSpoke = arms.some(
+        (a) => dx * a.nx + dz * a.nz > 0 && Math.abs(dx * a.nz - dz * a.nx) <= 0.7,
+      );
+      return onRim || onRing || onSpoke
+        ? { surface: "hay_block", clear: CIRCLE_CLEAR }
+        : { clear: CIRCLE_CLEAR };
+    },
+  };
+}
+
 /**
  * Every infrastructure entry, by id.
  *
- * **Empty of catalog entries in W0.** The host is machinery and had a date; the
- * entries it carries are content and are exempt. W1 adds four rows here and
- * nothing else — no pass, no node kind, no compiler edit outside this file.
+ * W0 shipped the host with one internal fixture; W1 adds P2's four and
+ * **nothing else moves in this package**. Adding an entry is a row and a
+ * function, which is the design's own acceptance test, and the four host
+ * changes W1 did need are named in `compiler/src/structures/infra-entry.ts`.
  */
 export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.freeze({
   [INFRA_TEST_ENTRY]: {
@@ -275,6 +616,71 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     minRun: 8,
     rise: 2,
     internal: true,
+  } satisfies InfraEntryDef,
+
+  quarantine_fence: {
+    id: "quarantine_fence",
+    // A cordon rings something. `along` a road would be a fence beside a road,
+    // which is a different entry (W3's `hedgerow`) wearing this one's name.
+    routes: ["ring"],
+    geometry: { kind: "route", profile: quarantineFenceProfile },
+    sourceClass: "sweep.run",
+    crossings: "open",
+    // Below two dozen columns a "cordon" is a garden fence: the ring around a
+    // holding is a hundred and up, and anything short of this is an author who
+    // pointed at the wrong node.
+    minRun: 24,
+    rise: 1,
+    fittings: {
+      marker: { stack: ["gray_concrete", "gray_concrete", "yellow_wool"] },
+      mast: {
+        stack: ["gray_concrete", "gray_concrete", "gray_concrete", "gray_concrete", "glowstone"],
+      },
+    },
+  } satisfies InfraEntryDef,
+
+  barricade_line: {
+    id: "barricade_line",
+    routes: ["across"],
+    geometry: { kind: "route", profile: barricadeLineProfile },
+    sourceClass: "sweep.run",
+    crossings: "gap",
+    minRun: 6,
+    rise: 1,
+    fittings: {
+      crate: { stack: ["barrel"] },
+      wreck: { stack: ["polished_blackstone", "gray_concrete", "gray_concrete"] },
+    },
+  } satisfies InfraEntryDef,
+
+  crash_furrow: {
+    id: "crash_furrow",
+    // One form, and that is the refusal: no target, no furrow (Q5).
+    routes: ["into"],
+    geometry: { kind: "route", profile: crashFurrowProfile },
+    sourceClass: "sweep.run",
+    // A furrow does not open for a cart track; it went through it.
+    crossings: "block",
+    minRun: 12,
+    // The datum *is* the ground: every band of this profile is at or below it.
+    rise: 0,
+    declaresLevels: true,
+    fittings: {
+      debris: { stack: ["cobblestone"] },
+      ember: { stack: ["basalt"] },
+    },
+  } satisfies InfraEntryDef,
+
+  crop_circle: {
+    id: "crop_circle",
+    routes: ["over"],
+    geometry: { kind: "area", stamp: cropCircleStamp },
+    sourceClass: "sweep.run",
+    // Areal: there is no line for a carriageway to cross.
+    crossings: "block",
+    minRun: 1,
+    rise: 0,
+    declaresLevels: true,
   } satisfies InfraEntryDef,
 });
 

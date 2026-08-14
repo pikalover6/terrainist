@@ -51,6 +51,12 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // order `BUILDING_ARCHETYPES` spreads them — immediately after the wilds
   // pack.
   "cow_byre", "dutch_barn", "smokehouse", "dairy", "wool_shed",
+  // The frontier West pack's buildings (CATALOG-EXPANSION §3.7), in the order
+  // `BUILDING_ARCHETYPES` spreads them — immediately after the agrarian
+  // expansion pack.
+  "false_front_saloon", "assay_office", "stamp_mill", "telegraph_office",
+  "livery_stable", "wagon_shop", "mission_church", "cantina",
+  "dugout_shanty",
   "brewery", "distillery",
   "butchery",
   "tea_house", "trading_post", "pawnshop", "cooperage",
@@ -110,6 +116,10 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // load-bearing here, same as every other pack block.
   "arcane_academy", "summoning_hall", "arcane_library", "blossom_shrine",
   "pegasus_stable",
+  // The East Asian pack (CATALOG-EXPANSION §3.9), in the order
+  // `BUILDING_ARCHETYPES` spreads it — straight after the arcane pack. Order
+  // is load-bearing here, same as every other pack block.
+  "tenshu_keep", "drum_tower", "shoji_teahouse", "bell_pavilion",
   // The classical Mediterranean pack, in the order `BUILDING_ARCHETYPES`
   // spreads it — straight after the sanctum. Order is load-bearing, same as
   // siegeworks.
@@ -124,6 +134,12 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // order `BUILDING_ARCHETYPES` spreads it — straight after the alien pack.
   // Order is load-bearing here, same as every other pack block.
   "powder_magazine", "martello_tower", "chandlery", "sail_loft",
+  // The Nile & ancient Egypt pack (CATALOG-EXPANSION §3.8), in the order
+  // `BUILDING_ARCHETYPES` spreads it — straight after the nautical pack.
+  // Order is load-bearing here, same as every other pack block. §3.8's
+  // `pyramid` is deliberately absent: it is a PROP, not an archetype.
+  "mastaba", "hypostyle_hall", "mortuary_temple", "pylon_gate",
+  "nilometer", "mudbrick_granary", "canopic_shrine",
   "hanok", "machiya",
   "riad", "cycladic_house", "adobe_pueblo", "stilt_house",
   "sod_house", "igloo", "thatched_roundhouse", "colonial_veranda_house",

@@ -24,6 +24,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ARRAY_DISHES,
+  INFRA_ENTRY_IDS,
   PROP_NAMES,
   RESPONSE_PROP_NAMES,
   STRUCTURE_CATALOG,
@@ -85,8 +86,17 @@ describe("the response pack's props", () => {
     }
   });
 
-  /** The infrastructure half of §3.4 is nobody's yet, and must stay that way. */
-  it("leaves the pack's infrastructure entries alone", () => {
+  /**
+   * The infrastructure half of §3.4 is not this file's, and must stay that way.
+   *
+   * Four of the seven are built now — W1 of `docs/INFRA-ENTRIES-v0.md` landed
+   * them as `infra.entry@0` registry rows — and the thing this test actually
+   * guards is unchanged by that: an entry is *a line, a chord or a treatment*
+   * and is never a prop, so none of the seven may appear in `PROP_NAMES` and
+   * none of them is this pack's to build. The three that remain unbuilt are
+   * post-freeze work (family D's fittings and the `between` route form).
+   */
+  it("leaves the pack's infrastructure entries to the infrastructure host", () => {
     for (const id of [
       "crop_circle",
       "quarantine_fence",
@@ -96,8 +106,15 @@ describe("the response pack's props", () => {
       "airlock_vestibule",
       "maglev_pylon",
     ]) {
-      expect(structureById(id)?.status, id).toBe("not_started");
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
+      expect(structureById(id)?.kind, id).toBe("infrastructure");
+    }
+    for (const id of ["blast_door", "airlock_vestibule", "maglev_pylon"]) {
+      expect(structureById(id)?.status, id).toBe("not_started");
+    }
+    for (const id of ["crop_circle", "quarantine_fence", "crash_furrow", "barricade_line"]) {
+      expect(structureById(id)?.status, id).toBe("implemented");
+      expect(INFRA_ENTRY_IDS as readonly string[], id).toContain(id);
     }
   });
 
