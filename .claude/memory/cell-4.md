@@ -27,14 +27,23 @@ and pushed:
 deleted; ALL history trails stripped — current info only; Prism path +
 never-replace moved into Ground rules; status numbers refreshed.
 
-**IN FLIGHT (background, scratchpad/head-to-head.sh):** (1) p4-c3b —
-archived overgrown doc recompiled unchanged on the fixed compiler =
-minimal-diff leaf-fix walk; (2) the P1 HEAD-TO-HEAD, seed 301, same
-prompt, post-fix kit both sides: Luna (default, effort max) vs
-**google/gemini-3.7-flash at explicit --effort high** (Kai wants
-gemini evaluated as a possible cheap bespoke-gen model; id verified
-live on OpenRouter). Install all three to Prism alongside (--channel
-luna-hh / gem37-hh / c3b), never --replace.
+**P1 HEAD-TO-HEAD DONE (seed 301, post-fix kit both sides), installed
+to Prism:** overgrown_hideout_c3b (leaf-fix minimal diff),
+twin_isles_war_luna-hh, isles_of_war_gem37-hh. RESULT: Luna ≈ $0.079
+total, 1 revision, everything shipped, clean. Gemini 3.7 Flash
+(--effort high) ≈ $0.59-0.75, 6 model runs, all 4 feedback rounds,
+**2 of 3 bespoke programs DROPPED** (corsair_dreadnought died on the
+minecraft:chain trap; ward_crystal under the 500-solid nonsense
+guard), pirate flagship missing from the shipped world, two forests
+empty (T118 radius misuse never fixed). Verdict: per-call token
+efficiency real (doc in 1 tight attempt, dollar-wash vs Luna despite
+3.5x unit price) but RELIABILITY dominates pipeline economics —
+retry loops swamped it. Both models declared `front` anchors
+(gemini's statue literally comments "toward north (-Z)"); neither
+wrote a doc-level `face` this prompt. Reasoning-token split now a
+captured line item (1e9cd44); parallel batch runner committed
+(tools/battery/generate-batch.sh, 32f2230); CLAUDE.md rewritten
+current-info-only (d82cc04).
 
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the head-to-head + p4-c3b when installed; judge remaining
