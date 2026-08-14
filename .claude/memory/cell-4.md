@@ -209,7 +209,19 @@ drop pods (18 asked, 6 sited — W337 honest). IN FLIGHT: nautical
 pack halves (corsair/brine) + INFRA-ENTRIES-v0 design (opus-5-high;
 the sweep-client host that unlocks 7 alien infra entries + waterworks
 family; MACHINERY — must land pre-8-28 or wait). Ruling batch (9
-small) still open.
+small) still open. **INFRA HOST RATIFIED (popup, 08-14,
+docs/INFRA-ENTRIES-v0.md + c61703e):** infra.entry@0, five
+coordinate-free route forms (ring/along/across/into/over),
+INFRA_ENTRIES data+profile registry (adding an entry = no compiler
+code — the design's own acceptance test); W0 (seam, MACHINERY,
+pre-8-28) + W1 (P2 four: crop_circle/quarantine_fence/
+barricade_line/crash_furrow) COMMITTED, W2 cannon_battery stretch;
+cordon rings THE HOLDING; crop_circle FLATTENS ground (Kai chose the
+stronger option); precinct-built = implemented (harbour_wall/quay
+flip via NON_NODE_IMPLEMENTED once catalog.ts frees); crash_furrow
+refuses without a target; family-E energy rows are mis-kinded by
+their group builder (fix with the same catalog commit). W0 DISPATCH
+WAITS on a medium slot (nautical×2 + arcane in flight).
 
 **Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
 08-13): `--saves "/Users/kaihoward/Library/Application Support/
