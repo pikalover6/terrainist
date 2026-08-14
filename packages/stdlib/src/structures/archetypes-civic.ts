@@ -34,6 +34,7 @@ import { blitzFacadeDefaults } from "./archetypes-blitz.js";
 import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
 import { homesteadFacadeDefaults } from "./archetypes-homestead.js";
+import { agrarianFacadeDefaults } from "./archetypes-agrarian.js";
 import { regionalFacadeDefaults } from "./archetypes-regional.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
@@ -57,6 +58,7 @@ import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { sanctumFacadeDefaults } from "./archetypes-sanctum.js";
 import { classicalFacadeDefaults } from "./archetypes-classical.js";
+import { xenoFacadeDefaults } from "./archetypes-xeno.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -178,6 +180,10 @@ export function archetypeFacadeDefaults(
       // the tail of the chain.
       const homestead = homesteadFacadeDefaults(archetype);
       if (Object.keys(homestead).length > 0) return homestead;
+      // The agrarian pack, beside the homestead: the yards, the planting and
+      // the market square.
+      const agrarian = agrarianFacadeDefaults(archetype);
+      if (Object.keys(agrarian).length > 0) return agrarian;
       // Wave four A, the dwellings.
       const residential = residentialFacadeDefaults(archetype);
       if (Object.keys(residential).length > 0) return residential;
@@ -208,6 +214,12 @@ export function archetypeFacadeDefaults(
       // compluvium wants the hip whose height it is about to take over.
       const classical = classicalFacadeDefaults(archetype);
       if (Object.keys(classical).length > 0) return classical;
+      // The alien pack's organic half, beside the classical pack it was wired
+      // in after: a hive wants no window rhythm at all (it has seams, which it
+      // cuts itself) and the hip roof whose headroom its stalk and its dome
+      // are both built in.
+      const xeno = xenoFacadeDefaults(archetype);
+      if (Object.keys(xeno).length > 0) return xeno;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

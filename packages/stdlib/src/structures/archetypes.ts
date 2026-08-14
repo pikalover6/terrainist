@@ -106,6 +106,14 @@ import {
 export * from "./archetypes-homestead.js";
 
 import {
+  AGRARIAN_BUILDING_ARCHETYPES,
+  agrarianArchetypeOfTags,
+  furnishAgrarian,
+} from "./archetypes-agrarian.js";
+
+export * from "./archetypes-agrarian.js";
+
+import {
   RESIDENTIAL_BUILDING_ARCHETYPES,
   furnishResidential,
   residentialArchetypeOfTags,
@@ -234,6 +242,14 @@ import {
 export * from "./archetypes-classical.js";
 
 import {
+  XENO_BUILDING_ARCHETYPES,
+  furnishXeno,
+  xenoArchetypeOfTags,
+} from "./archetypes-xeno.js";
+
+export * from "./archetypes-xeno.js";
+
+import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
   furnishDepths,
@@ -277,6 +293,7 @@ export const BUILDING_ARCHETYPES = [
   ...VERNACULAR_BUILDING_ARCHETYPES,
   ...WAVE2_BUILDING_ARCHETYPES,
   ...HOMESTEAD_BUILDING_ARCHETYPES,
+  ...AGRARIAN_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
@@ -295,6 +312,7 @@ export const BUILDING_ARCHETYPES = [
   ...FAITH_BUILDING_ARCHETYPES,
   ...SANCTUM_BUILDING_ARCHETYPES,
   ...CLASSICAL_BUILDING_ARCHETYPES,
+  ...XENO_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -504,6 +522,15 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // 4A's courtyard house's, and `treasury` is left unclaimed on purpose.
   const classical = classicalArchetypeOfTags(tags);
   if (classical !== null) return classical;
+  // The alien & sci-fi pack's organic half, immediately after the classical
+  // pack and high for the same reason every later wave is: the tables below
+  // are greedy. It claims nothing an earlier table claims — bare `spire` is
+  // still the garrison beacon's, `greenhouse` still the blitz wave's,
+  // `farm`/`garden` still where they were — and bare `alien` is deliberately
+  // left unclaimed, because an adjective belongs to the palette (the
+  // compiler's `THEME_ALIASES`) and not to one building.
+  const xeno = xenoArchetypeOfTags(tags);
+  if (xeno !== null) return xeno;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -516,6 +543,12 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // track's own, and `house` still falls through to a cottage.
   const homestead = homesteadArchetypeOfTags(tags);
   if (homestead !== null) return homestead;
+  // The agrarian pack, beside the homestead it belongs to: the yards, the
+  // planting and the market square. It claims no word an earlier table owns —
+  // bare `farm`, `market`, `sty`, `fold` and `terrace` all still go where they
+  // went.
+  const agrarian = agrarianArchetypeOfTags(tags);
+  if (agrarian !== null) return agrarian;
   const regionalWave = regionalArchetypeOfTags(tags);
   if (regionalWave !== null) return regionalWave;
   // The extended table is consulted before the original one, not after: the
@@ -900,6 +933,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishInstitution(ctx);
   n += furnishLeisure(ctx);
   n += furnishHomestead(ctx);
+  n += furnishAgrarian(ctx);
   n += furnishResidential(ctx);
   n += furnishCommerce(ctx);
   n += furnishTerminus(ctx);
@@ -915,6 +949,7 @@ export function furnish(r: FurnishRequest): number {
   n += furnishFaith(ctx);
   n += furnishSanctum(ctx);
   n += furnishClassical(ctx);
+  n += furnishXeno(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

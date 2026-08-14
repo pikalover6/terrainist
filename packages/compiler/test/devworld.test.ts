@@ -71,6 +71,10 @@ import {
   SIEGEWORKS_ROW_LENGTH,
   CLASSICAL_EXHIBIT_ROWS,
   CLASSICAL_ROW_LENGTH,
+  XENO_EXHIBIT_ROWS,
+  XENO_ROW_LENGTH,
+  AGRARIAN_EXHIBIT_ROWS,
+  AGRARIAN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -197,6 +201,10 @@ describe("dev world grid", () => {
     const siegeworks = SIEGEWORKS_EXHIBIT_ROWS.length * SIEGEWORKS_ROW_LENGTH;
     // The classical Mediterranean pack: prefixed (`clas_stoa`) likewise.
     const classical = CLASSICAL_EXHIBIT_ROWS.length * CLASSICAL_ROW_LENGTH;
+    // The alien pack's buildings: prefixed (`xeno_hive_mound`) likewise.
+    const xeno = XENO_EXHIBIT_ROWS.length * XENO_ROW_LENGTH;
+    // The agrarian burn-down: prefixed (`agr_farmstead`) likewise.
+    const agrarian = AGRARIAN_EXHIBIT_ROWS.length * AGRARIAN_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -235,6 +243,8 @@ describe("dev world grid", () => {
         sanctum +
         siegeworks +
         classical +
+        xeno +
+        agrarian +
         commerce +
         garrison + science +
         arcana +

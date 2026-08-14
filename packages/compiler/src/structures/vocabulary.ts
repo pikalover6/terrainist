@@ -119,6 +119,31 @@ export const THEME_ALIASES: Readonly<Record<string, string>> = Object.freeze({
   oasis: "sun_clay",
   sun_baked: "sun_clay",
   sunbaked: "sun_clay",
+  // The hive. Words a model reaches for when it means a palette that was
+  // *grown* rather than quarried — and note what is deliberately *not* here:
+  // "futuristic", "steel" and "sci_fi"-adjacent words still reach
+  // `modern_city`, because the human half of an invasion prompt (the
+  // barricades, the field lab, the hideout) is concrete and glass. This table
+  // is only for the half that came out of the ground.
+  xeno: "xeno_resin",
+  alien: "xeno_resin",
+  hive: "xeno_resin",
+  hive_flesh: "xeno_resin",
+  chitin: "xeno_resin",
+  chitinous: "xeno_resin",
+  carapace: "xeno_resin",
+  resin: "xeno_resin",
+  resinous: "xeno_resin",
+  organic: "xeno_resin",
+  biological: "xeno_resin",
+  biomechanical: "xeno_resin",
+  fleshy: "xeno_resin",
+  insectoid: "xeno_resin",
+  infested: "xeno_resin",
+  sculk: "xeno_resin",
+  spore: "xeno_resin",
+  fungal: "xeno_resin",
+  nether_growth: "xeno_resin",
 });
 
 /** Normalise a free word to the alias table's key shape. */

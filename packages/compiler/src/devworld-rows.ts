@@ -50,6 +50,8 @@ import { UNDERGROUND_EXHIBIT_ROWS } from "./exhibits/underground.js";
 import { VERNACULAR_EXHIBIT_ROWS } from "./exhibits/vernacular.js";
 import { SANCTUM_EXHIBIT_ROWS } from "./exhibits/sanctum.js";
 import { CLASSICAL_EXHIBIT_ROWS } from "./exhibits/classical.js";
+import { XENO_EXHIBIT_ROWS } from "./exhibits/xeno.js";
+import { AGRARIAN_EXHIBIT_ROWS } from "./exhibits/agrarian.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -122,6 +124,10 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...SANCTUM_EXHIBIT_ROWS,
   // The classical Mediterranean pack: the forms Troy was missing.
   ...CLASSICAL_EXHIBIT_ROWS,
+  // The alien pack's grown things: the invasion's own architecture.
+  ...XENO_EXHIBIT_ROWS,
+  // The agrarian burn-down: the farm town's working fabric.
+  ...AGRARIAN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
@@ -272,6 +278,16 @@ export {
   CLASSICAL_ROW_LENGTH,
   classicalSizeFor,
 } from "./exhibits/classical.js";
+
+/** The xeno rows, for tests that assert on the gradient. */
+export { XENO_EXHIBIT_ROWS, XENO_ROW_LENGTH, xenoSizeFor } from "./exhibits/xeno.js";
+
+/** The agrarian rows, for tests that assert on the gradient. */
+export {
+  AGRARIAN_EXHIBIT_ROWS,
+  AGRARIAN_ROW_LENGTH,
+  agrarianSizeFor,
+} from "./exhibits/agrarian.js";
 
 /** The wave-5E arcana rows, for tests that assert on the gradient. */
 export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";

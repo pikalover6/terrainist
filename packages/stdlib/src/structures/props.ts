@@ -68,6 +68,14 @@ import {
   classicalBPropFootprint,
   isClassicalBProp,
 } from "./props-classical-b.js";
+// The alien & sci-fi pack's human response — the seven entries of §3.4 that
+// are the invasion's human side: the cordon, the science and the soldiers.
+import {
+  RESPONSE_PROP_GENERATORS,
+  RESPONSE_PROP_NAMES,
+  isResponseProp,
+  responsePropFootprint,
+} from "./props-response.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -92,6 +100,13 @@ import {
   classicalPropFootprint,
   isClassicalProp,
 } from "./props-classical.js";
+// The alien & sci-fi pack's organic props — the huddle and the wreck (§3.4).
+import {
+  XENO_PROP_GENERATORS,
+  XENO_PROP_NAMES,
+  isXenoProp,
+  xenoPropFootprint,
+} from "./props-xeno.js";
 import {
   WAYSIDE_PROP_GENERATORS,
   WAYSIDE_PROP_NAMES,
@@ -147,8 +162,10 @@ export const PROP_NAMES = [
   ...RELIC_PROP_NAMES,
   ...SPECTACLE_PROP_NAMES,
   ...CLASSICAL_PROP_NAMES,
+  ...XENO_PROP_NAMES,
   ...ENERGY_PROP_NAMES,
   ...CLASSICAL_B_PROP_NAMES,
+  ...RESPONSE_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -473,8 +490,10 @@ export function propFootprint(
   if (isRelicProp(prop)) return relicPropFootprint(prop);
   if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
   if (isClassicalProp(prop)) return classicalPropFootprint(prop);
+  if (isXenoProp(prop)) return xenoPropFootprint(prop);
   if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
   if (isClassicalBProp(prop)) return classicalBPropFootprint(prop, params);
+  if (isResponseProp(prop)) return responsePropFootprint(prop);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1013,8 +1032,10 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...RELIC_PROP_GENERATORS,
   ...SPECTACLE_PROP_GENERATORS,
   ...CLASSICAL_PROP_GENERATORS,
+  ...XENO_PROP_GENERATORS,
   ...ENERGY_PROP_GENERATORS,
   ...CLASSICAL_B_PROP_GENERATORS,
+  ...RESPONSE_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

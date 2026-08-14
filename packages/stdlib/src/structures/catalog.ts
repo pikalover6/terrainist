@@ -511,7 +511,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   com("warehouse", "Warehouse", "implemented", {
     tags: ["village", "storage"],
   }),
-  com("marketplace", "Marketplace", "not_started", { tags: ["open-air"] }),
+  com("marketplace", "Marketplace", "implemented", {
+    wave: 7,
+    tags: ["open-air"],
+    note: "The square as a market hall: masonry piers every fourth bay with a fenced arcade between them above head height and below the plate, over counter-and-crate bays on both wall rows.",
+  }),
   com("shop_row", "Shop row", "implemented", {
     wave: 5,
     tags: ["parade"],
@@ -1528,7 +1532,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   rur("barn", "Barn", "implemented", { tags: ["village", "farm"] }),
   rur("granary", "Granary", "implemented", { tags: ["village", "store"] }),
   rur("windmill", "Windmill", "implemented", { tags: ["village", "mill"] }),
-  rur("farmstead", "Farmstead"),
+  rur("farmstead", "Farmstead", "implemented", {
+    wave: 7,
+    tags: ["village", "farm"],
+    note: "A timber-framed farmhouse on a cobble plinth: table and hearth-side cauldron inside, composter and stores at the far wall, a trough and bales out in the yard.",
+  }),
   rur("silo", "Silo", "implemented", {
     wave: 4,
     note: "Banded stone-brick re-clad under a corbelled cap, hay grain columns behind inspection hatches and a filling head of trapdoors near the plate.",
@@ -1544,9 +1552,21 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "A low birch-and-oak house of trapdoor nesting cubbies over hay, floor-standing fence roosts, feed barrels and a hay nest in the apron.",
   }),
-  rur("pigsty", "Pigsty"),
-  rur("sheepfold", "Sheepfold"),
-  rur("cattle_pen", "Cattle pen"),
+  rur("pigsty", "Pigsty", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "A packed-mud hut with a mud wallow written into its floor plane, standing inside a two-course fence pen whose gate is at the far side and whose entrance is the doorstep.",
+  }),
+  rur("sheepfold", "Sheepfold", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "The shepherd's stone hut inside a single-course dry-stone fold, fleeces on the wall row and a dip by the far wall.",
+  }),
+  rur("cattle_pen", "Cattle pen", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "A boarded byre in a post-and-rail corral with solid log corner posts, hay and hay-net trapdoors down one wall row and a trough down the other.",
+  }),
   rur("stable", "Stable", "implemented", {
     wave: 4,
     note: "Fence-and-gate stall partitions down one wall row off an off-centre corridor, hay-net trapdoors, a tack wall of chests and barrels and a cauldron trough in the apron.",
@@ -1555,14 +1575,30 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     wave: 4,
     note: "A slim stone tower whose faces are a dense nesting-hole trapdoor grid, a corbelled cone with a perch finial and a ladder up the inside.",
   }),
-  rur("orchard", "Orchard"),
-  rur("vineyard", "Vineyard"),
-  rur("terraced_field", "Terraced field"),
+  rur("orchard", "Orchard", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "The fruit store standing in its trees: single-column oak trunks under two courses of crown every third apron cell, barrels and a picking ladder inside.",
+  }),
+  rur("vineyard", "Vineyard", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "The vintner's stone shed between trellis rows — fence posts under a leaf canopy with sweet-berry fruit between them — over barrels and a cauldron vat.",
+  }),
+  rur("terraced_field", "Terraced field", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "The field house on the lip of its terrace: dry-stone banded walls, and an apron of farmland under mature wheat in the farm precinct's own crop vocabulary.",
+  }),
   rur("hop_kiln", "Hop kiln", "implemented", {
     wave: 4,
     note: "The oast: a brick corbel cone on a solid cap under a white cowl, a slatted drying-floor band under the plate and a furnace at the base.",
   }),
-  rur("threshing_floor", "Threshing floor"),
+  rur("threshing_floor", "Threshing floor", "implemented", {
+    wave: 7,
+    tags: ["farm"],
+    note: "A swept smooth-stone floor plane under a boarded shed, sheaves down one wall row and winnowing baskets and the grain store down the other.",
+  }),
   rur("hayrick", "Hayrick"),
   rur("cider_press", "Cider press", "implemented", {
     wave: 4,
@@ -2120,35 +2156,35 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_lin"],
     note: "Chain-link on posts with warning banners at intervals, floodlight masts every fifth panel and a gate where a road crosses it. A sweep client.",
   }),
-  sci("containment_tent", "Containment tent", "not_started", {
+  sci("containment_tent", "Containment tent", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_m"],
     note: "An inflated white dome with a ribbed skin, an airlock tube out one side and a generator humming at the back.",
   }),
-  sci("field_lab_trailer", "Field lab trailer", "not_started", {
+  sci("field_lab_trailer", "Field lab trailer", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_s"],
     note: "A boxed trailer up on jacks with a step, an aerial and a shuttered hatch; three in a row is a response, one is a rumour.",
   }),
-  sci("sensor_mast", "Sensor mast", "not_started", {
+  sci("sensor_mast", "Sensor mast", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_s"],
     note: "A tripod carrying a small dish, a solar panel and a blinking head.",
   }),
-  sci("dish_array", "Dish array", "not_started", {
+  sci("dish_array", "Dish array", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_l"],
     note: "Several big parabolic dishes on pedestals, all aimed the same way — the aim is the read.",
   }),
-  fan("xeno_spire", "Xeno spire", "not_started", {
+  fan("xeno_spire", "Xeno spire", "implemented", {
     tags: ["alien_scifi", "size_xl"],
     note: "Chitinous organic massing that tapers and twists, grown rather than built, with openings where the shell parted.",
   }),
-  fan("hive_mound", "Hive mound", "not_started", {
+  fan("hive_mound", "Hive mound", "implemented", {
     tags: ["alien_scifi", "size_l"],
     note: "A low resinous mound with three tunnel mouths at ground level and a vent crown; inside is chambered, not roomed.",
   }),
-  fan("bio_pod_cluster", "Bio-pod cluster", "not_started", {
+  fan("bio_pod_cluster", "Bio-pod cluster", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_s"],
     note: "Glowing egg pods in a huddle, two split open, the ground under them stained. Built for double-digit counts.",
@@ -2163,12 +2199,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_lin"],
     note: "Improvised across a carriageway: wrecked vehicles, sandbags, concrete blocks and wire, with one deliberate gap.",
   }),
-  mil("sandbag_emplacement", "Sandbag emplacement", "not_started", {
+  mil("sandbag_emplacement", "Sandbag emplacement", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_s"],
     note: "A horseshoe of bags at a corner with a firing step and an ammunition crate.",
   }),
-  mil("mobile_command_post", "Command vehicle", "not_started", {
+  mil("mobile_command_post", "Command vehicle", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_m"],
     note: "An armoured box body with an awning off one flank, map table under it and a mast of antennae.",
@@ -2178,11 +2214,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_m"],
     note: "The way into a hillside: a slab-faced door in a concrete surround with a hydraulic frame, sunk in a cut with a ramp down to it. The P4 hideout's front page.",
   }),
-  sci("hydroponics_bay", "Hydroponics bay", "not_started", {
+  sci("hydroponics_bay", "Hydroponics bay", "implemented", {
     tags: ["alien_scifi", "size_l"],
     note: "Racked trays under grow-lamp glow, pipe runs at the plate, a water plant at one end. What a hideout eats.",
   }),
-  mil("sentry_turret", "Sentry turret", "not_started", {
+  mil("sentry_turret", "Sentry turret", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_xs"],
     note: "A short pedestal with a swivelling head and a lamp, at a gate or on a roof parapet.",
@@ -2196,7 +2232,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_lin"],
     note: "A raised guideway on tapered piers at a fixed interval — the far-future viaduct, on the sweep engine.",
   }),
-  ruin("derelict_mech", "Derelict walker", "not_started", {
+  ruin("derelict_mech", "Derelict walker", "implemented", {
     kind: "prop",
     tags: ["alien_scifi", "size_xl"],
     note: "A fallen machine on its side, one leg still folded under it, hull plates open and the cockpit dark.",

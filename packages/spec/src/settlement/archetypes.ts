@@ -37,7 +37,10 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "tannery", "stable", "silo", "dovecote",
   "chicken_coop", "apiary", "hop_kiln", "cider_press",
   "root_cellar_mound", "witch_hut", "mushroom_house", "hobbit_hole",
-  "gingerbread_cottage", "brewery", "distillery", "butchery",
+  "gingerbread_cottage", "farmstead", "pigsty", "sheepfold",
+  "cattle_pen", "orchard", "vineyard", "terraced_field",
+  "threshing_floor", "marketplace", "brewery", "distillery",
+  "butchery",
   "tea_house", "trading_post", "pawnshop", "cooperage",
   "glassworks", "papermill", "textile_mill", "cannery",
   "foundry", "museum", "guildhall", "prison",
@@ -96,6 +99,10 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "stoa", "peristyle_house", "megaron", "propylaea", "bouleuterion",
   "peripteral_temple", "tholos", "sanctuary_treasury", "palaestra",
   "gymnasion", "odeon",
+  // The alien & sci-fi pack's organic half (CATALOG-EXPANSION §3.4), in the
+  // order `BUILDING_ARCHETYPES` spreads it — straight after the classical
+  // pack. Order is load-bearing here, same as every other pack block.
+  "xeno_spire", "hive_mound", "hydroponics_bay",
   "hanok", "machiya",
   "riad", "cycladic_house", "adobe_pueblo", "stilt_house",
   "sod_house", "igloo", "thatched_roundhouse", "colonial_veranda_house",

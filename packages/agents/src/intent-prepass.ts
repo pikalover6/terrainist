@@ -78,6 +78,7 @@ export const MATERIAL_THEME_IDS = [
   "modern_city",
   "white_quartz",
   "sun_clay",
+  "xeno_resin",
 ] as const;
 
 /**
@@ -422,6 +423,14 @@ materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exi
   Nothing else in this list can say antiquity — an ancient city written as
   modern_city comes out grey, and written as white_quartz comes out a wedding
   cake.
+
+  xeno_resin is THE ALIEN ORGANIC — chitin, resin and carapace: wart blocks,
+  fungal stems, purpur, blackstone. Write it ONLY for a settlement that IS
+  alien (a hive city, an infested quarter, a xeno colony) — never for the
+  human side of an invasion prompt, whose towns keep their own palette while
+  the alien things arrive as formPacks buildings and bespoke programs. A
+  farm town being invaded is temperate_timber with alien icons, not
+  xeno_resin.
 
   "white_quartz" is the PRESTIGE exception and is almost always the wrong
   answer: write it only for the sacred, the palatial or the

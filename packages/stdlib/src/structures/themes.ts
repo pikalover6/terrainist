@@ -589,12 +589,196 @@ export const SUN_CLAY_THEME: MaterialTheme = Object.freeze({
   roofs: [SANDSTONE_TERRACE_ROOF, PLASTER_TERRACE_ROOF, BRICK_ROOF, MUD_BRICK_ROOF],
 });
 
+/* -------------------------------------------------------------------------- */
+/* the xeno-resin palette                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The joinery every xeno-resin wall family shares.
+ *
+ * Crimson, and it is the one *wood* family in the theme on purpose: a hive has
+ * no joinery, so where the grammar insists on a door and a trapdoor it gets
+ * the reddest, most fibrous pair the pinned set carries. Beside nether wart
+ * and warped wart they read as membrane rather than as carpentry, which is the
+ * whole trick — an oak door in a chitin wall is a shed with a paint job.
+ */
+const XENO_DOOR = "crimson_door";
+const XENO_TRAPDOOR = "crimson_trapdoor";
+
+/**
+ * Chitin — the deep red shell, and the theme's default surface.
+ *
+ * `WoodSet` is a shape, not a claim about trees (see {@link CONCRETE_LIGHT}):
+ * the grammar asks a wall family for a surface, a frame member, an accent, a
+ * stair, a slab, a railing, a door and a trapdoor, and the crimson family
+ * answers every one of them.
+ *
+ * The **id is deliberately not a real plank family**. `wood()` above builds a
+ * whole set by suffixing an id, and the theme sweep demands the complete
+ * derived family (`<id>_log`, `stripped_<id>_log`, `<id>_fence_gate`, …)
+ * whenever `<id>_planks` exists. The nether woods are stems, not logs, so an
+ * id of `crimson` would demand a `crimson_log` that has never existed. Same
+ * trap the concrete sets document, one wave later.
+ */
+const CHITIN_CRIMSON: WoodSet = {
+  id: "chitin_crimson",
+  planks: "nether_wart_block",
+  log: "crimson_stem",
+  stripped: "stripped_crimson_stem",
+  stairs: "crimson_stairs",
+  slab: "crimson_slab",
+  fence: "crimson_fence",
+  door: XENO_DOOR,
+  trapdoor: XENO_TRAPDOOR,
+};
+
+/** Resin — the teal, veined half of the hive: the same shell, gone over. */
+const RESIN_WARPED: WoodSet = {
+  id: "resin_warped",
+  planks: "warped_wart_block",
+  log: "warped_stem",
+  stripped: "stripped_warped_stem",
+  stairs: "warped_stairs",
+  slab: "warped_slab",
+  fence: "warped_fence",
+  door: XENO_DOOR,
+  trapdoor: XENO_TRAPDOOR,
+};
+
+/**
+ * Carapace — the hard, pale plate the older growth sets into.
+ *
+ * The railing is a **wall**, not `iron_bars`, for {@link CONCRETE_LIGHT}'s
+ * measured reason: the grammar treats the `fence` role as a post you can stand
+ * something on, and bars carry no support chain. Purpur has no fence of its
+ * own, so the role goes to blackstone, which is the theme's dark stone anyway.
+ */
+const CARAPACE_PURPUR: WoodSet = {
+  id: "carapace_purpur",
+  planks: "purpur_block",
+  log: "purpur_pillar",
+  stripped: "end_stone_bricks",
+  stairs: "purpur_stairs",
+  slab: "purpur_slab",
+  fence: "blackstone_wall",
+  door: XENO_DOOR,
+  trapdoor: XENO_TRAPDOOR,
+};
+
+/** The resin foundation: fired, bloody, and the warmest stone in the set. */
+const RESIN_STONE: StoneSet = {
+  id: "red_nether_bricks",
+  primary: "red_nether_bricks",
+  accent: "nether_bricks",
+  stairs: "red_nether_brick_stairs",
+  slab: "red_nether_brick_slab",
+  wall: "red_nether_brick_wall",
+};
+
+/** The chitin foundation: black plate with a gold fleck where it is worn. */
+const CHITIN_STONE: StoneSet = {
+  id: "blackstone",
+  primary: "blackstone",
+  accent: "gilded_blackstone",
+  stairs: "blackstone_stairs",
+  slab: "blackstone_slab",
+  wall: "blackstone_wall",
+};
+
+/** The dressed version of the same plate — where the growth is oldest. */
+const SPORE_STONE: StoneSet = {
+  id: "polished_blackstone_bricks",
+  primary: "polished_blackstone_bricks",
+  accent: "chiseled_polished_blackstone",
+  stairs: "polished_blackstone_brick_stairs",
+  slab: "polished_blackstone_brick_slab",
+  wall: "polished_blackstone_brick_wall",
+};
+
+/** The crimson shell, closed over: the roof a hive grows rather than lays. */
+const CRIMSON_SHELL_ROOF: RoofSet = {
+  id: "crimson_shell",
+  stairs: "crimson_stairs",
+  slab: "crimson_slab",
+  solid: "nether_wart_block",
+};
+
+/** The same shell in the teal strain. */
+const WARPED_SHELL_ROOF: RoofSet = {
+  id: "warped_shell",
+  stairs: "warped_stairs",
+  slab: "warped_slab",
+  solid: "warped_wart_block",
+};
+
+/** The hard black cap of an older mound. */
+const CHITIN_PLATE_ROOF: RoofSet = {
+  id: "chitin_plate",
+  stairs: "blackstone_stairs",
+  slab: "blackstone_slab",
+  solid: "blackstone",
+};
+
+/** The pale carapace roof — purpur, and used sparingly by construction. */
+const CARAPACE_ROOF: RoofSet = {
+  id: "carapace_purpur",
+  stairs: "purpur_stairs",
+  slab: "purpur_slab",
+  solid: "purpur_block",
+};
+
+/** The id a document (or an intent's `character.materialTheme`) names. */
+export const XENO_RESIN_THEME_ID = "xeno_resin";
+
+/**
+ * Resin, chitin and carapace — the palette a hive builds itself out of.
+ *
+ * **The gap this fills.** `docs/CATALOG-EXPANSION-v0.md` §4.4 names it as the
+ * one honest palette gap in the whole expansion, and §8 Q3 put it to Kai: the
+ * alien pack's `xeno_spire` and `hive_mound` are *forms*, and a form in
+ * `modern_city` is a concrete sculpture. Six themes could say northern timber,
+ * northern pine, chalk downs, poured concrete, polished quartz and sun-baked
+ * clay, and every one of them is a palette a human quarried or felled. Nothing
+ * could say **grown**.
+ *
+ * The read it aims at is the reference: a dark red fibrous shell (nether wart
+ * over crimson stems) with a teal strain through it (warped wart), hardening
+ * into black plate at the ground and pale carapace where the growth is oldest.
+ * Nothing in it is a block a mason would recognise — that is the point, and it
+ * is what makes a spire in this palette impossible to mistake for a chimney.
+ *
+ * **Deliberately not arid.** {@link SUN_CLAY_THEME} declares `aridAmbient`
+ * because a sandstone town in green grass is a lie about its country; a hive
+ * has no country of its own. It lands on a farm town (battery P2) or in
+ * overgrown ruins (P4), and both of those are wet-green places the invasion
+ * arrived in. The flag stays off, and the surroundings stay whatever the
+ * terrain intent says they are.
+ *
+ * **No `curtain` either.** A theme declares one when its town is walled and
+ * the derived circuit reads wrong — the Troy lesson. A hive does not build a
+ * city wall, and a document that puts one round a hive district is asking for
+ * the *human* wall it already derives. Silence here keeps that derivation byte
+ * for byte.
+ *
+ * Like {@link MODERN_CITY_THEME}, {@link WHITE_QUARTZ_THEME} and
+ * {@link SUN_CLAY_THEME} it is deliberately **not** in {@link MATERIAL_THEMES}:
+ * a member added to that pool rerolls every seeded theme draw ever taken and
+ * therefore every shipped world. It is reachable by name only.
+ */
+export const XENO_RESIN_THEME: MaterialTheme = Object.freeze({
+  id: XENO_RESIN_THEME_ID,
+  woods: [CHITIN_CRIMSON, RESIN_WARPED, CARAPACE_PURPUR],
+  stones: [RESIN_STONE, CHITIN_STONE, SPORE_STONE],
+  roofs: [CRIMSON_SHELL_ROOF, WARPED_SHELL_ROOF, CHITIN_PLATE_ROOF, CARAPACE_ROOF],
+});
+
 /** Every theme that can be asked for **by name**, drawable or not. */
 export const ALL_MATERIAL_THEMES: readonly MaterialTheme[] = Object.freeze([
   ...MATERIAL_THEMES,
   MODERN_CITY_THEME,
   WHITE_QUARTZ_THEME,
   SUN_CLAY_THEME,
+  XENO_RESIN_THEME,
 ]);
 
 /** The theme a world is built in, drawn from the settlement's node seed. */

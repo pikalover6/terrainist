@@ -160,6 +160,12 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   // params — its run is a constant — and its own properties are held in
   // structures-classical.test.ts.
   hippodrome_spina: [{}],
+  // The alien & sci-fi pack's organic props (CATALOG-EXPANSION §3.4). Neither
+  // reads a param — a huddle's size is the huddle and a wreck's is the wreck,
+  // and both draw their variation from the node seed instead — so one empty
+  // case each. Their own properties are held in structures-xeno.test.ts.
+  bio_pod_cluster: [{}],
+  derelict_mech: [{}],
   houseboat: [{}],
   helipad: [{}],
   // Wave 6C: the two energy objects with no inside. Their own properties are
@@ -179,6 +185,17 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   column_drums: [{}],
   trireme: [{}],
   pithos_store: [{}],
+  // The alien & sci-fi pack's human response (CATALOG-EXPANSION §3.4). None of
+  // them reads a param — every one is a fixed object — so each walks the
+  // catalog-wide checks once. Their own properties are held in
+  // props-response.test.ts.
+  containment_tent: [{}],
+  field_lab_trailer: [{}],
+  sensor_mast: [{}],
+  dish_array: [{}],
+  sandbag_emplacement: [{}],
+  mobile_command_post: [{}],
+  sentry_turret: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

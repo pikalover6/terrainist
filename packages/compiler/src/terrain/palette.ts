@@ -304,6 +304,16 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       kerb: "minecraft:cut_sandstone",
       course: "minecraft:sandstone",
     }),
+    // The hive's floor is the hive: resin trails over blackstone, with the
+    // "marking" a vein of glowing growth rather than paint.
+    xeno_resin: Object.freeze({
+      carriageway: "minecraft:blackstone",
+      worn: "minecraft:crimson_nylium",
+      marking: "minecraft:shroomlight",
+      lane: "minecraft:crimson_nylium",
+      kerb: "minecraft:polished_blackstone",
+      course: "minecraft:polished_blackstone_bricks",
+    }),
   });
 
 /** The street materials for a theme id; the modern set when it is unknown. */
@@ -538,6 +548,23 @@ export const GROUND_MATERIALS_BY_THEME: Readonly<Record<string, GroundMaterials>
     slab: "minecraft:mud_brick_slab",
     bank: "minecraft:coarse_dirt",
     scree: "minecraft:gravel",
+  }),
+  // The hive's built ground: blackstone masonry under resin and growth. The
+  // plinth is red nether brick so a grown thing's base still reads as a base;
+  // the bank and scree keep the organic families so a cut face heals chitin.
+  xeno_resin: Object.freeze({
+    pavement: "minecraft:polished_blackstone_bricks",
+    kerb: "minecraft:polished_blackstone",
+    tread: "minecraft:smooth_basalt",
+    revetment: "minecraft:polished_basalt",
+    coping: "minecraft:chiseled_polished_blackstone",
+    plinth: "minecraft:red_nether_bricks",
+    weep: "minecraft:cracked_polished_blackstone_bricks",
+    rail: "minecraft:blackstone_wall",
+    stairs: "minecraft:polished_blackstone_brick_stairs",
+    slab: "minecraft:polished_blackstone_brick_slab",
+    bank: "minecraft:crimson_nylium",
+    scree: "minecraft:basalt",
   }),
 });
 

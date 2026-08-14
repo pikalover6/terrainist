@@ -46,7 +46,7 @@ import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
 import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 // The classical pack's props ship with their stdlib halves; the `_A_` infix
 // exists because two star-exported plans of one name would be ambiguous.
-import { CLASSICAL_A_PROP_EXHIBIT_PLAN } from "@terrainist/stdlib";
+import { CLASSICAL_A_PROP_EXHIBIT_PLAN, XENO_PROP_EXHIBIT_PLAN } from "@terrainist/stdlib";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -181,6 +181,28 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "pithos_store", params: {} },
     ],
   },
+  // The alien & sci-fi pack's human-response props (CATALOG-EXPANSION §3.4).
+  // The trailer repeats three times because the entry's note is a placement
+  // instruction as much as a description: three in a row is a response, one is
+  // a rumour.
+  {
+    row: "response_compound",
+    water: false,
+    cells: [
+      { prop: "containment_tent", params: {} },
+      { prop: "field_lab_trailer", params: {} },
+      { prop: "field_lab_trailer", params: {} },
+      { prop: "field_lab_trailer", params: {} },
+      { prop: "sensor_mast", params: {} },
+      { prop: "dish_array", params: {} },
+      { prop: "sandbag_emplacement", params: {} },
+      { prop: "mobile_command_post", params: {} },
+      { prop: "sentry_turret", params: {} },
+    ],
+  },
+  // The alien pack's organic props ship a plan of their own (the classical-A
+  // precedent): pods in numbers, the wreck at two yaws.
+  ...XENO_PROP_EXHIBIT_PLAN,
   // The trireme is `base: "water"`; the basin row is what seats it.
   {
     row: "classical_harbour",

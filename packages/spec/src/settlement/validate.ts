@@ -3009,6 +3009,12 @@ export const SETTLEMENT_PROP_NAMES = [
   // The classical Mediterranean pack's one prop in this half: the racecourse
   // barrier. Order matches `PROP_NAMES` in the stdlib.
   "hippodrome_spina",
+  // The alien & sci-fi pack's organic props (CATALOG-EXPANSION §3.4): the
+  // saturation huddle and the one-per-street wreck. Order matches `PROP_NAMES`
+  // in the stdlib, which `compiler/test/props.test.ts` asserts element by
+  // element.
+  "bio_pod_cluster",
+  "derelict_mech",
   // Wave 6C: the two energy objects that are props rather than buildings.
   "wind_turbine",
   "solar_array",
@@ -3024,6 +3030,17 @@ export const SETTLEMENT_PROP_NAMES = [
   "column_drums",
   "trireme",
   "pithos_store",
+  // The alien & sci-fi pack (CATALOG-EXPANSION §3.4), human-response half:
+  // the seven entries of that pack that are props. Order matches `PROP_NAMES`
+  // in the stdlib, which `compiler/test/props.test.ts` asserts element by
+  // element.
+  "containment_tent",
+  "field_lab_trailer",
+  "sensor_mast",
+  "dish_array",
+  "sandbag_emplacement",
+  "mobile_command_post",
+  "sentry_turret",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
