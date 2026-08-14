@@ -45,6 +45,20 @@ captured line item (1e9cd44); parallel batch runner committed
 (tools/battery/generate-batch.sh, 32f2230); CLAUDE.md rewritten
 current-info-only (d82cc04).
 
+**BESPOKE GAUNTLET (bespoke_gauntlet_401 in Prism):** 4 identical
+briefs × {Luna max, Gemini 3.7 high} through the real gate on a flat
+plain, seed 401. **Luna 4/4 ok, $0.14; Gemini 1/4 ok, $0.49, never
+passed round 1** (3× floating sea_lantern habit it never repaired; 1×
+the chain trap). Reasoning split (first captured run): Luna spends
+~90% of out on reasoning, Gemini ~50%. Grid: west=Luna, east=Gemini,
+rows N→S leviathan/astronomer/belltower/elephant; only the elephant
+row is a walkable A/B pair. CONFIRMED MACHINERY GAP: minecraft:chain
+is absent from the pinned 1.21.11 prismarine registry (real vanilla
+block; registry data gap) and the E336 message reads like a model
+hallucination — improving that diagnostic to say "use iron_bars" is a
+cheap candidate fix, not yet done. war_elephant_gem took a quarter
+turn from its front anchor — facing machinery observed working live.
+
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the head-to-head + p4-c3b when installed; judge remaining
   "more subjective" battery polish he deferred; survivor-yards ruling
