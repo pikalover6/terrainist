@@ -85,7 +85,13 @@ import {
 } from "./archetypes-civic.js";
 import { STRUCTURE_CATALOG } from "./catalog.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
-import { bodyFits, canSupport, supportDirection } from "./support.js";
+import {
+  anchorNeedsFullCube,
+  bodyFits,
+  canSupport,
+  substantial,
+  supportDirection,
+} from "./support.js";
 
 /* -------------------------------------------------------------------------- */
 /* the profile                                                                 */
@@ -1570,6 +1576,15 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
     if (op === undefined) return false;
     return canSupport(op.block);
   };
+  /**
+   * The same question for a fixture that hangs on *anything* rather than on a
+   * full cube — the shutter, and only the shutter (`anchorNeedsFullCube`).
+   */
+  const present = (x: number, y: number, z: number): boolean => {
+    const op = ctx.blockAt(x, y, z);
+    if (op === undefined) return false;
+    return substantial(op.block);
+  };
   let removed = 0;
   // The fixpoint. Bounded by the op count in the shell — every pass either
   // deletes something or is the last one — because a removal can unsupport the
@@ -1648,16 +1663,18 @@ export function settleDecayedFixtures(ctx: FitOutContext): number {
             deleted++;
             continue;
           }
+          // A shutter hangs on anything, everything else on a full cube.
+          const anchored = anchorNeedsFullCube(op.block) ? solid : present;
           let held: boolean;
-          if (dir === "below") held = y === 1 ? true : solid(x, y - 1, z);
-          else if (dir === "above") held = solid(x, y + 1, z);
+          if (dir === "below") held = y === 1 ? true : anchored(x, y - 1, z);
+          else if (dir === "above") held = anchored(x, y + 1, z);
           else {
             // Bracketed: `facing` points at the viewer, away from the block the
             // fixture hangs on, so the backing cell is one step the other way.
             const facing = op.props?.["facing"];
             if (facing === undefined) continue;
             const [dx, dz] = cardinalStep(facing as Cardinal);
-            held = solid(x - dx, y, z - dz);
+            held = anchored(x - dx, y, z - dz);
           }
           if (held) continue;
           ctx.put(x, y, z, "air");

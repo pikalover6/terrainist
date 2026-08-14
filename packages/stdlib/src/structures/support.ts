@@ -78,6 +78,44 @@ export function supportDirection(
   if (name.endsWith("_wall_sign") || name.endsWith("_wall_hanging_sign")) return "behind";
   if (name.endsWith("_wall_banner")) return "behind";
   if (name === "painting" || name === "item_frame" || name === "glow_item_frame") return "behind";
+  // **The shutter** (2026-08-13, Kai's walk: "a lot of the ruined/destroyed
+  // buildings often have floating trapdoors"). An *open* trapdoor is hinged to
+  // the block its `facing` points away from — the wall of the window it
+  // shutters — exactly as a wall sign is, and the crumble takes that wall away
+  // under it. Vanilla never pops a trapdoor, so no support rule ever asked
+  // about it and the fixpoint stepped straight over the single most visible
+  // ruin defect there is: **6,568** of them, counted over all 258 building
+  // archetypes at two decay bands plus the five relics that decay from their
+  // own profiles.
+  //
+  // A *closed* trapdoor is not a shutter at all: it is a horizontal panel —
+  // a table top, an awning, a cart wheel, a ship's batten, a boat's gunwale —
+  // held up by nothing in vanilla and by nothing here either, so it stays
+  // outside this vocabulary. Measured, not assumed: the closed ones survive a
+  // decay at exactly the count they survive an intact build, which is the
+  // shape of "the decay is not stranding these".
+  //
+  // **The lint has no matching rule, on purpose** (2026-08-13). A trapdoor is
+  // the repo's general-purpose flat plate: a boat's oar and a junk's sail
+  // batten (`props.ts`, `ships-wave6.ts`) are open trapdoors hinged to nothing
+  // *by design*, and two intact archetypes hang shutters proud of the facade.
+  // A world-level `unsupported.trapdoor` would redden all of them, so this
+  // clause is read by the decay's sweep — which only ever runs inside a shell
+  // the author asked to ruin — and the regression bar is
+  // `test/decay-orphans.test.ts` over the whole catalog rather than a 28th
+  // rule. Revisit if those placements are ever given real anchors.
+  if (name.endsWith("_trapdoor")) return props?.["open"] === "true" ? "behind" : null;
+  // A button and a lever are mounted on whichever face `face` names, and the
+  // wall case is the one the crumble strands — 35 buttons and 16 levers over
+  // the same sweep, a control panel's worth of switches left pressed into thin
+  // air. `facing` on the wall case points away from the block, as everything
+  // else `behind` does.
+  if (name.endsWith("_button") || name === "lever") {
+    const face = props?.["face"];
+    if (face === "floor") return "below";
+    if (face === "ceiling") return "above";
+    return "behind";
+  }
   if (name.endsWith("lantern")) return props?.["hanging"] === "true" ? "above" : "below";
   if (name === "chain") return props?.["axis"] === "y" || props === undefined ? "above" : null;
   if (name.endsWith("_hanging_sign")) return "above";
@@ -121,6 +159,35 @@ export function canSupport(name: string): boolean {
   }
   if (name.startsWith("potted_")) return false;
   return true;
+}
+
+/**
+ * Whether a fixture's anchor has to be a **full cube**, or merely *something*.
+ *
+ * Every other bracketed fixture in this vocabulary needs a solid face: a ladder
+ * on a glass pane is not a thing vanilla will place. A **shutter is**. Window
+ * shutters are hung on the pane's own cell all over the catalog — 464 of them
+ * on intact buildings, and 197 that survive a decay with the pane still in
+ * front of them — and holding a trapdoor to {@link canSupport}, which is "full
+ * cube by name", would have made the sweep strip the shutters off every ruined
+ * window whose glass outlived its wall. That is not the defect; the defect is a
+ * shutter hinged to **air**.
+ *
+ * So the trapdoor gets the *lenient* anchor test — not air, not water, not a
+ * vine — and everything else keeps the strict one. Split here rather than at
+ * the call site so the lint can ask the same question the sweep does.
+ */
+export function anchorNeedsFullCube(name: string): boolean {
+  return !name.endsWith("_trapdoor");
+}
+
+/**
+ * Whether a block name is *something* rather than nothing — the lenient anchor
+ * test {@link anchorNeedsFullCube} selects for. The complement of
+ * {@link INSUBSTANTIAL}, named so callers read it as a question about support.
+ */
+export function substantial(name: string): boolean {
+  return !INSUBSTANTIAL.test(name);
 }
 
 /**
