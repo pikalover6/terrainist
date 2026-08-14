@@ -46,7 +46,11 @@ import { SPECTACLE_PROP_EXHIBIT_PLAN } from "./spectacle-props.js";
 import { WAYSIDE_PROP_EXHIBIT_PLAN } from "./wayside-props.js";
 // The classical pack's props ship with their stdlib halves; the `_A_` infix
 // exists because two star-exported plans of one name would be ambiguous.
-import { CLASSICAL_A_PROP_EXHIBIT_PLAN, XENO_PROP_EXHIBIT_PLAN } from "@terrainist/stdlib";
+import {
+  CLASSICAL_A_PROP_EXHIBIT_PLAN,
+  CORSAIR_PROP_EXHIBIT_PLAN,
+  XENO_PROP_EXHIBIT_PLAN,
+} from "@terrainist/stdlib";
 
 /** Blocks of clear ground between two prop exhibits, in both axes. */
 export const PROP_EXHIBIT_GAP = 8;
@@ -203,6 +207,93 @@ export const PROP_EXHIBIT_PLAN: readonly {
   // The alien pack's organic props ship a plan of their own (the classical-A
   // precedent): pods in numbers, the wreck at two yaws.
   ...XENO_PROP_EXHIBIT_PLAN,
+  // The pirate haven and its strand, from the corsair half's own plan.
+  ...CORSAIR_PROP_EXHIBIT_PLAN,
+  // The brine half ships no plan; its rows live here. The rack shows its
+  // length dial, the daymark both statures. Nothing here wants water.
+  {
+    row: "brine_shore",
+    water: false,
+    cells: [
+      { prop: "fish_drying_rack", params: {} },
+      { prop: "fish_drying_rack", params: { length: 21 } },
+      { prop: "treasure_cache", params: {} },
+      { prop: "smugglers_landing", params: {} },
+      { prop: "capstan", params: {} },
+      { prop: "anchor_stack", params: {} },
+      { prop: "daymark", params: {} },
+      { prop: "daymark", params: { height: 13 } },
+      { prop: "whalebone_arch", params: {} },
+    ],
+  },
+  // The arcane pack's props: the ley marker repeats because saturation is its
+  // job; the lantern row shows its length dial; the skeleton is one-per-world
+  // and shows at both yaws because the spine curve is its silhouette.
+  {
+    row: "arcane_glade",
+    water: false,
+    cells: [
+      { prop: "rune_circle", params: {} },
+      { prop: "ley_marker", params: {} },
+      { prop: "ley_marker", params: { yaw: 90 } },
+      { prop: "crystal_outcrop", params: {} },
+      { prop: "scrying_pool", params: {} },
+      { prop: "unicorn_paddock", params: {} },
+      { prop: "arcane_orrery", params: {} },
+      { prop: "moon_dial", params: {} },
+    ],
+  },
+  {
+    row: "arcane_procession",
+    water: false,
+    cells: [
+      { prop: "spirit_lantern_row", params: {} },
+      { prop: "spirit_lantern_row", params: { length: 27 } },
+      { prop: "dragon_skeleton", params: {} },
+      { prop: "dragon_skeleton", params: { yaw: 90 } },
+    ],
+  },
+  // The hedgerow expansion's yard pieces. The pond and the dip bring their own
+  // contained water and want DRY ground, not the basin rows; the gate is P2's
+  // boundary-scatter piece and shows both yaws.
+  {
+    row: "hedgerow_yard",
+    water: false,
+    cells: [
+      { prop: "field_gate", params: {} },
+      { prop: "field_gate", params: { yaw: 90 } },
+      { prop: "duck_pond", params: {} },
+      { prop: "midden_heap", params: {} },
+      { prop: "sheep_dip", params: {} },
+      { prop: "staddle_granary", params: {} },
+      { prop: "well_sweep", params: {} },
+    ],
+  },
+  {
+    row: "hedgerow_fields",
+    water: false,
+    cells: [
+      { prop: "hop_yard", params: {} },
+      { prop: "hop_yard", params: { length: 31 } },
+      { prop: "stock_pens", params: {} },
+      { prop: "stock_pens", params: { length: 25 } },
+    ],
+  },
+  // The wilds' working clearings: the camp and the field show their lengths,
+  // the cache repeats because it hides in numbers.
+  {
+    row: "wilds_cutover",
+    water: false,
+    cells: [
+      { prop: "logging_camp", params: {} },
+      { prop: "stump_field", params: {} },
+      { prop: "spar_pole", params: {} },
+      { prop: "log_landing", params: {} },
+      { prop: "sawpit", params: {} },
+      { prop: "hunters_cache", params: {} },
+      { prop: "hunters_cache", params: { yaw: 90 } },
+    ],
+  },
   // The trireme is `base: "water"`; the basin row is what seats it.
   {
     row: "classical_harbour",

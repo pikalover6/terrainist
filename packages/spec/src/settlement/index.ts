@@ -10,5 +10,6 @@
 
 export * from "./archetypes.js";
 export * from "./constraints.js";
+export * from "./infra-entries.js";
 export * from "./types.js";
 export * from "./validate.js";

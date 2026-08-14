@@ -166,6 +166,15 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   // case each. Their own properties are held in structures-xeno.test.ts.
   bio_pod_cluster: [{}],
   derelict_mech: [{}],
+  // The nautical & pirate pack's shore props (CATALOG-EXPANSION §3.2). None of
+  // them reads a param — a mast's height is the mast and a wreck's length is
+  // the wreck, and the dressing is drawn from the node seed instead — so one
+  // empty case each. Their own properties are held in props-corsair.test.ts.
+  jolly_roger_mast: [{}],
+  gallows: [{}],
+  gibbet_cage: [{}],
+  careening_beach: [{}],
+  beached_wreck: [{}],
   houseboat: [{}],
   helipad: [{}],
   // Wave 6C: the two energy objects with no inside. Their own properties are
@@ -185,6 +194,20 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   column_drums: [{}],
   trireme: [{}],
   pithos_store: [{}],
+  // The arcane & magical pack's props (CATALOG-EXPANSION §3.3). Only the
+  // lantern row reads a param — its `length` — and it is walked at both clamps
+  // as well as at its default, because a run whose declared box and built run
+  // disagree is the one bug a length param can have. Their own properties are
+  // held in props-arcane.test.ts.
+  rune_circle: [{}],
+  ley_marker: [{}],
+  crystal_outcrop: [{}],
+  scrying_pool: [{}],
+  unicorn_paddock: [{}],
+  arcane_orrery: [{}],
+  spirit_lantern_row: [{}, { length: 3 }, { length: 9 }, { length: 64 }],
+  dragon_skeleton: [{}],
+  moon_dial: [{}],
   // The alien & sci-fi pack's human response (CATALOG-EXPANSION §3.4). None of
   // them reads a param — every one is a fixed object — so each walks the
   // catalog-wide checks once. Their own properties are held in
@@ -196,6 +219,38 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   sandbag_emplacement: [{}],
   mobile_command_post: [{}],
   sentry_turret: [{}],
+  // The nautical & pirate pack's shore props (CATALOG-EXPANSION §3.2). Two of
+  // them read a param and both are walked at their clamps as well as their
+  // default, because a run whose declared box and built run disagree is the
+  // one bug a size param can have. Their own properties are held in
+  // props-brine.test.ts.
+  fish_drying_rack: [{}, { length: 3 }, { length: 9 }, { length: 64 }],
+  treasure_cache: [{}],
+  smugglers_landing: [{}],
+  capstan: [{}],
+  anchor_stack: [{}],
+  daymark: [{}, { height: 3 }, { height: 11 }, { height: 64 }],
+  whalebone_arch: [{}],
+  // The wilds & camps pack's ground pieces (CATALOG-EXPANSION §3.6). Three of
+  // them read a size param and every one of those is walked at both clamps as
+  // well as its default. Their own properties are held in props-wilds.test.ts.
+  logging_camp: [{}, { length: 3 }, { length: 19 }, { length: 64 }],
+  log_landing: [{}],
+  sawpit: [{}],
+  stump_field: [{}, { length: 3 }, { length: 17 }, { length: 64 }],
+  spar_pole: [{}, { height: 3 }, { height: 15 }, { height: 64 }],
+  hunters_cache: [{}],
+  // The agrarian expansion pack's ground pieces (CATALOG-EXPANSION §3.5). Two
+  // of them read a size param and both are walked at their clamps as well as
+  // their default. Their own properties are held in props-hedgerow.test.ts.
+  field_gate: [{}],
+  duck_pond: [{}],
+  midden_heap: [{}],
+  sheep_dip: [{}],
+  staddle_granary: [{}],
+  hop_yard: [{}, { length: 3 }, { length: 19 }, { length: 64 }],
+  stock_pens: [{}, { length: 3 }, { length: 19 }, { length: 64 }],
+  well_sweep: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

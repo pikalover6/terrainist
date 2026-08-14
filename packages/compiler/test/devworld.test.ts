@@ -75,6 +75,12 @@ import {
   XENO_ROW_LENGTH,
   AGRARIAN_EXHIBIT_ROWS,
   AGRARIAN_ROW_LENGTH,
+  NAUTICAL_EXHIBIT_ROWS,
+  NAUTICAL_ROW_LENGTH,
+  ARCANE_PACK_EXHIBIT_ROWS,
+  ARCANE_PACK_ROW_LENGTH,
+  WILDS_EXHIBIT_ROWS,
+  WILDS_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -205,6 +211,12 @@ describe("dev world grid", () => {
     const xeno = XENO_EXHIBIT_ROWS.length * XENO_ROW_LENGTH;
     // The agrarian burn-down: prefixed (`agr_farmstead`) likewise.
     const agrarian = AGRARIAN_EXHIBIT_ROWS.length * AGRARIAN_ROW_LENGTH;
+    // The nautical pack: prefixed (`naut_martello_tower`) likewise.
+    const nautical = NAUTICAL_EXHIBIT_ROWS.length * NAUTICAL_ROW_LENGTH;
+    // The arcane pack: prefixed (`arcp_arcane_academy`) likewise.
+    const arcanePack = ARCANE_PACK_EXHIBIT_ROWS.length * ARCANE_PACK_ROW_LENGTH;
+    // The wilds pack: prefixed (`wild_fire_lookout_tower`) likewise.
+    const wilds = WILDS_EXHIBIT_ROWS.length * WILDS_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -245,6 +257,9 @@ describe("dev world grid", () => {
         classical +
         xeno +
         agrarian +
+        nautical +
+        arcanePack +
+        wilds +
         commerce +
         garrison + science +
         arcana +

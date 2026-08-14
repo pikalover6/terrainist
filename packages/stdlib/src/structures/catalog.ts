@@ -157,6 +157,11 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   "smugglers_cove",
   "hermit_grotto",
   "sewer_network",
+  // Precinct-built (docs/INFRA-ENTRIES-v0.md family "already answered",
+  // ratified 2026-08-14): `precinct.harbour@0` raises both. The catalog's
+  // standard is "a generator exists and can build it today", and it does.
+  "harbour_wall",
+  "quay",
 ]);
 
 /**
@@ -697,9 +702,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     kind: "prop",
     note: "Rows of `daylight_detector` panels, each on its own plinth cube, laid two apart so every pair has a service lane; a full-block cable trench along the front and an inverter cabinet at the head of it.",
   }),
-  enr("hydro_station", "Hydroelectric station"),
-  enr("cooling_tower", "Cooling tower"),
-  enr("transformer_yard", "Transformer yard"),
+  // The five below carried the group's `infrastructure` kind by accident of
+  // the builder (docs/INFRA-ENTRIES-v0.md family E, 2026-08-14): each is
+  // honestly a building or a prop, and the kind override says which, so the
+  // wave that implements them hosts them right.
+  enr("hydro_station", "Hydroelectric station", "not_started", { kind: "building" }),
+  enr("cooling_tower", "Cooling tower", "not_started", { kind: "building" }),
+  enr("transformer_yard", "Transformer yard", "not_started", { kind: "prop" }),
   enr("substation", "Substation", "implemented", {
     wave: 6,
     kind: "building",
@@ -715,13 +724,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     kind: "building",
     note: "A mine-side loader: grounded timber posts up the apron carrying a beam, an elevated bin on the beam closing on a solid cap, a chute of stairs on stepped grounded columns, and coal-block bays in the floor plane. Plain rect.",
   }),
-  enr("oil_derrick", "Oil derrick"),
+  enr("oil_derrick", "Oil derrick", "not_started", { kind: "prop" }),
   enr("steam_plant", "Steam plant", "implemented", {
     wave: 6,
     kind: "building",
     note: "A boiler bank of furnaces with an iron steam drum standing on each, a waxed-copper header, condenser cauldrons, and a turbine-hall shaft run of stripped log under the plate - never a fence line.",
   }),
-  enr("nuclear_dome", "Reactor dome"),
+  enr("nuclear_dome", "Reactor dome", "not_started", { kind: "building" }),
   enr("biomass_shed", "Biomass shed", "implemented", {
     wave: 6,
     kind: "building",
@@ -1322,8 +1331,16 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["prop", "large"],
     note: "The modern giant at the galleon's extents: coloured container stacks on hatch covers over a coamed hold, a bulbous stem and a bridge castle with wings and a funnel aft.",
   }),
-  water("harbour_wall", "Harbour wall"),
-  water("quay", "Quay"),
+  // Built today by `precinct.harbour@0` — the precinct-credit doctrine
+  // (docs/INFRA-ENTRIES-v0.md, ratified 2026-08-14): a structure a precinct
+  // builds IS implemented; the ids live in NON_NODE_IMPLEMENTED because no
+  // node names them directly.
+  water("harbour_wall", "Harbour wall", "implemented", {
+    note: "The mole the harbour precinct raises around its basin — ask for a harbour and the wall comes with it.",
+  }),
+  water("quay", "Quay", "implemented", {
+    note: "The harbour precinct's dressed working edge, cranes and bollards included.",
+  }),
   water("slipway", "Slipway"),
   water("marina", "Marina"),
   water("boathouse", "Boathouse", "implemented", {
@@ -1977,27 +1994,27 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
 
   /* --- the nautical & pirate pack (docs/CATALOG-EXPANSION-v0.md §3.2) --- */
-  mil("jolly_roger_mast", "Jolly roger mast", "not_started", {
+  mil("jolly_roger_mast", "Jolly roger mast", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_m"],
     note: "A ship's mast standing on land over the harbour with a black banner at the head and a yard crossing it — the pirate icon, and it costs two hundred blocks.",
   }),
-  civ("gallows", "Gallows", "not_started", {
+  civ("gallows", "Gallows", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_s"],
     note: "Two posts, a beam, a noose of chain and a trap platform, on a paved point where the harbour can see it.",
   }),
-  civ("gibbet_cage", "Gibbet cage", "not_started", {
+  civ("gibbet_cage", "Gibbet cage", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_xs"],
     note: "An iron-bar cage hung from a single arm at a crossroads. Repeats cheaply; three of them say more than one gallows.",
   }),
-  water("careening_beach", "Careening beach", "not_started", {
+  water("careening_beach", "Careening beach", "implemented", {
     kind: "infrastructure",
     tags: ["nautical_pirate", "size_l"],
-    note: "A hull hove down on its side on the sand, tackle running from the mastheads to shore anchors, fires and pitch barrels under it.",
+    note: "A hull hove down on its side on the sand, tackle running from the mastheads to shore anchors, fires and pitch barrels under it. Realised as a PROP: it sits in one envelope and follows no route, so the prop registry is its honest host — the `curtain_wall` precedent for an infrastructure entry with no network in it.",
   }),
-  ruin("beached_wreck", "Beached wreck", "not_started", {
+  ruin("beached_wreck", "Beached wreck", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_l"],
     note: "A broken hull driven up the strand — ribs open to the sky, the stern half gone, cargo spilled up the tideline. Distinct from Track A's submerged `sunken_ship`.",
@@ -2007,53 +2024,53 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nautical_pirate", "size_lin"],
     note: "A sweep client: an earth-and-timber parapet with embrasures at intervals, guns on trucks behind them, shot piles and a ready magazine.",
   }),
-  mil("powder_magazine", "Powder magazine", "not_started", {
+  mil("powder_magazine", "Powder magazine", "implemented", {
     tags: ["nautical_pirate", "size_s"],
     note: "Set apart from everything: thick buttressed walls, a vaulted roof, one door, no windows, lanterns outside the wall only.",
   }),
-  mil("martello_tower", "Sea tower", "not_started", {
+  mil("martello_tower", "Sea tower", "implemented", {
     tags: ["nautical_pirate", "size_m"],
     note: "A squat round tower on a rock or a mole, battered walls, one gun platform on top, entered by a ladder at first-floor height.",
   }),
-  com("chandlery", "Ship chandlery", "not_started", {
+  com("chandlery", "Ship chandlery", "implemented", {
     tags: ["nautical_pirate", "size_m"],
     note: "The shop that sells a voyage: rope coils, blocks and lanterns hung from the ceiling plane, barrels of tar and salt beef, a counter under a hanging model.",
   }),
-  ind("sail_loft", "Sail loft", "not_started", {
+  ind("sail_loft", "Sail loft", "implemented", {
     tags: ["nautical_pirate", "size_l"],
     note: "One long clear upper floor with the cloth laid out on it, seam benches down the walls, a hoist door in the gable.",
   }),
-  rur("fish_drying_rack", "Drying racks", "not_started", {
+  rur("fish_drying_rack", "Drying racks", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_m"],
     note: "Split fish on horizontal poles between A-frames, in ranks. Repeats down a whole shoreline and reads at fifty blocks.",
   }),
-  ind("salt_house", "Salt house", "not_started", {
+  ind("salt_house", "Salt house", "implemented", {
     tags: ["nautical_pirate", "size_s"],
     note: "The store beside Track A's `salt_pans`: white heaps in bays, a raking floor, wide low doors.",
   }),
-  ruin("treasure_cache", "Treasure cache", "not_started", {
+  ruin("treasure_cache", "Treasure cache", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_xs"],
     note: "Chests half out of the sand under a lone palm, a spade standing in the spoil, one lid open. The most literal icon in the catalog and unapologetic about it.",
   }),
-  water("smugglers_landing", "Smugglers' landing", "not_started", {
+  water("smugglers_landing", "Smugglers' landing", "implemented", {
     tags: ["nautical_pirate", "size_m"],
     note: "A stair cut into a cove wall down to mooring rings, crates stacked above the tideline, a shuttered lantern on a hook.",
   }),
-  street("capstan", "Quay capstan", "not_started", {
+  street("capstan", "Quay capstan", "implemented", {
     tags: ["nautical_pirate", "size_xs"],
     note: "A drum with bar sockets on a paved quay, hawser coiled at its foot.",
   }),
-  ind("treadwheel_crane", "Treadwheel crane", "not_started", {
+  ind("treadwheel_crane", "Treadwheel crane", "implemented", {
     tags: ["nautical_pirate", "size_l"],
     note: "The harbour crane: a timber housing with the great wheel inside it and a jib swinging out over the water. A silhouette, not a shed.",
   }),
-  street("anchor_stack", "Anchor stack", "not_started", {
+  street("anchor_stack", "Anchor stack", "implemented", {
     tags: ["nautical_pirate", "size_s"],
     note: "Old anchors leaned together with chain heaped round them at the head of a quay.",
   }),
-  water("daymark", "Daymark", "not_started", {
+  water("daymark", "Daymark", "implemented", {
     tags: ["nautical_pirate", "size_m"],
     note: "A whitewashed stone cone on a headland with no light in it — the lighthouse's mute cousin, and cheap enough to put on three headlands.",
   }),
@@ -2062,59 +2079,59 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nautical_pirate", "size_l"],
     note: "The pair that closes a port: two towers on opposite moles with a chain slung between them across the water. Ships as a pair or not at all.",
   }),
-  mem("whalebone_arch", "Whalebone arch", "not_started", {
+  mem("whalebone_arch", "Whalebone arch", "implemented", {
     kind: "prop",
     tags: ["nautical_pirate", "size_m"],
     note: "Two jaw bones meeting over a path at the top of the town. Niche, immediate, and it names a whaling port in one glance.",
   }),
 
   /* --- the arcane & magical pack (docs/CATALOG-EXPANSION-v0.md §3.3) --- */
-  fan("rune_circle", "Rune circle", "not_started", {
+  fan("rune_circle", "Rune circle", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_m"],
     note: "A ring inlaid into the floor plane — glowing symbol courses on polished stone, no vertical stone at all. The counterpart to `standing_stones`, which is all vertical.",
   }),
-  fan("ley_marker", "Ley marker", "not_started", {
+  fan("ley_marker", "Ley marker", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_xs"],
     note: "A knee-high waystone with one glowing glyph face, set beside a path. Twenty of these along a road is what makes a valley read as enchanted.",
   }),
-  fan("crystal_outcrop", "Crystal outcrop", "not_started", {
+  fan("crystal_outcrop", "Crystal outcrop", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_m"],
     note: "Amethyst and quartz spires erupting from the ground at an angle, budding smaller clusters at the base.",
   }),
-  fan("arcane_academy", "Arcane academy", "not_started", {
+  fan("arcane_academy", "Arcane academy", "implemented", {
     tags: ["arcane", "size_xl"],
     note: "The wizard's tower gone collegiate: a cloistered teaching hall with two unequal towers, orrery hall, and shelves where a chapel would put pews.",
   }),
-  fan("summoning_hall", "Summoning hall", "not_started", {
+  fan("summoning_hall", "Summoning hall", "implemented", {
     tags: ["arcane", "size_l"],
     note: "One tall room, a circle written into the floor plane, brazier pedestals at the cardinal points and a gallery rail high on the walls.",
   }),
-  fan("arcane_library", "Arcane library", "not_started", {
+  fan("arcane_library", "Arcane library", "implemented", {
     tags: ["arcane", "size_l"],
     note: "Shelf ranges to the ceiling plane with ladder rails, reading lecterns lit by hung lanterns, one shelf bay left as a gap that goes nowhere.",
   }),
-  fan("scrying_pool", "Scrying pool", "not_started", {
+  fan("scrying_pool", "Scrying pool", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_s"],
     note: "A still rimmed basin on the pool predicate with glow under the water and a kneeling step on one side.",
   }),
-  fan("blossom_shrine", "Blossom shrine", "not_started", {
+  fan("blossom_shrine", "Blossom shrine", "implemented", {
     tags: ["arcane", "size_s"],
     note: "An open pavilion of pale timber under a cherry canopy, ribbons on the posts, a low altar with no figure on it.",
   }),
-  fan("pegasus_stable", "Winged-mount stable", "not_started", {
+  fan("pegasus_stable", "Winged-mount stable", "implemented", {
     tags: ["arcane", "size_l"],
     note: "Stalls with no doors and an open loft above them — the mounts leave upward — with a landing ledge projecting from the gable.",
   }),
-  fan("unicorn_paddock", "Paddock", "not_started", {
+  fan("unicorn_paddock", "Paddock", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_l"],
     note: "White fencing round grazed ground with a blossom tree, a trough and a gate; the icon is the enclosure, not an occupant.",
   }),
-  fan("arcane_orrery", "Orrery", "not_started", {
+  fan("arcane_orrery", "Orrery", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_m"],
     note: "Armillary rings on a plinth with a lit core, each ring a course of blocks in its own plane.",
@@ -2129,17 +2146,17 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["arcane", "size_m"],
     note: "An arch across a road with a rune band up both piers and a glowing keystone; nothing hangs in the opening.",
   }),
-  fan("spirit_lantern_row", "Lantern row", "not_started", {
+  fan("spirit_lantern_row", "Lantern row", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_lin"],
     note: "A run of posts with paper lanterns at head height along a path, spaced by arc length. The pack's saturation piece.",
   }),
-  fan("dragon_skeleton", "Dragon skeleton", "not_started", {
+  fan("dragon_skeleton", "Dragon skeleton", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_xl"],
     note: "A picked wyrm laid out where it fell: spine flush in the ground plane, ribs standing on it, the skull turned to one side.",
   }),
-  fan("moon_dial", "Moon dial", "not_started", {
+  fan("moon_dial", "Moon dial", "implemented", {
     kind: "prop",
     tags: ["arcane", "size_m"],
     note: "A great disc set into a paved terrace with a leaning gnomon and glowing hour marks.",
@@ -2249,7 +2266,7 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["agrarian", "size_lin"],
     note: "The upland field wall: a battered double course with through-stones and a coping of stood stones. A sweep client, and what a hill town's fields want.",
   }),
-  rur("field_gate", "Field gate", "not_started", {
+  rur("field_gate", "Field gate", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_xs"],
     note: "A five-bar gate hung between a hanging post and a slapping post, with a stile stone beside it. Every wall and hedge run wants one.",
@@ -2259,64 +2276,64 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["agrarian", "size_lin"],
     note: "Two ruts with a grass baulk between them, unpaved, following the ground rather than cutting it — the road engine's humblest profile.",
   }),
-  rur("cow_byre", "Byre", "not_started", {
+  rur("cow_byre", "Byre", "implemented", {
     tags: ["agrarian", "size_m"],
     note: "Standings either side of a central dunging passage, a feed walk at the head, half-doors on the yard.",
   }),
-  rur("duck_pond", "Duck pond", "not_started", {
+  rur("duck_pond", "Duck pond", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_m"],
     note: "A rimmed pond on the pool predicate with reeds at one edge, a plank ramp and a small house on stilts over the water.",
   }),
-  rur("midden_heap", "Midden", "not_started", {
+  rur("midden_heap", "Midden", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_s"],
     note: "The muck heap by the yard: coarse dirt banked against three walls with a fork standing in it and steam where the season allows.",
   }),
-  rur("dutch_barn", "Dutch barn", "not_started", {
+  rur("dutch_barn", "Dutch barn", "implemented", {
     tags: ["agrarian", "size_l"],
     note: "Open on all four sides: piers, a curved roof, and nothing but stacked hay between them. The read is the absence of walls.",
   }),
-  rur("smokehouse", "Smokehouse", "not_started", {
+  rur("smokehouse", "Smokehouse", "implemented", {
     tags: ["agrarian", "size_s"],
     note: "A small blind hut with a low fire pit and racks up in the roof; the only opening is the door.",
   }),
-  rur("dairy", "Dairy", "not_started", {
+  rur("dairy", "Dairy", "implemented", {
     tags: ["agrarian", "size_s"],
     note: "Deliberately cold and north-facing: slate shelves round three walls, churns, a stone floor kept wet, small high windows.",
   }),
-  rur("sheep_dip", "Sheep dip", "not_started", {
+  rur("sheep_dip", "Sheep dip", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_s"],
     note: "A narrow sunken trough with a race of hurdles funnelling into it and a draining pen the far side.",
   }),
-  rur("wool_shed", "Shearing shed", "not_started", {
+  rur("wool_shed", "Shearing shed", "implemented", {
     tags: ["agrarian", "size_l"],
     note: "A raised board floor with catching pens under one end and the wool table down the middle.",
   }),
-  rur("staddle_granary", "Staddle granary", "not_started", {
+  rur("staddle_granary", "Staddle granary", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_s"],
     note: "A grain box raised on mushroom-shaped stones so the rats cannot climb, reached by a ladder that does not touch it.",
   }),
-  rur("hop_yard", "Hop yard", "not_started", {
+  rur("hop_yard", "Hop yard", "implemented", {
     kind: "infrastructure",
     tags: ["agrarian", "size_xl"],
     note: "Poles on a grid with wire runs between their heads; the plants are the flora grammar's problem and the frame is not.",
   }),
-  rur("stock_pens", "Stock pens", "not_started", {
+  rur("stock_pens", "Stock pens", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_l"],
     note: "A grid of hurdle pens off a droving lane with a weigh crush and an auctioneer's step.",
   }),
-  rur("well_sweep", "Well sweep", "not_started", {
+  rur("well_sweep", "Well sweep", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_m"],
     note: "The counterweighted lever over an open well — a raked beam on a forked post, bucket at one end and a stone at the other.",
   }),
 
   /* --- the wilds & camps pack (docs/CATALOG-EXPANSION-v0.md §3.6) --- */
-  nom("logging_camp", "Logging camp", "not_started", {
+  nom("logging_camp", "Logging camp", "implemented", {
     tags: ["wilds_camps", "size_xl"],
     note: "A compound on `campsite`'s precedent: bunk shanty, cook shack, a saw trestle, the fire, and the ground churned to mud between them.",
   }),
@@ -2324,12 +2341,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["wilds_camps", "size_lin"],
     note: "A V-trough on trestles running downhill with water in it — the sweep engine carrying a contained channel rather than a carriageway.",
   }),
-  ind("log_landing", "Log landing", "not_started", {
+  ind("log_landing", "Log landing", "implemented", {
     kind: "prop",
     tags: ["wilds_camps", "size_l"],
     note: "The deck at the road head: whole trunks cross-stacked between anchor posts, ends squared to the track.",
   }),
-  ind("sawpit", "Sawpit", "not_started", {
+  ind("sawpit", "Sawpit", "implemented", {
     kind: "prop",
     tags: ["wilds_camps", "size_s"],
     note: "A trestle over an open pit with a two-man saw standing in the kerf and sawdust banked at one end.",
@@ -2338,11 +2355,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["wilds_camps", "size_lin"],
     note: "Chained trunks strung across a river corralling a raft of loose logs behind them, anchored to a bank pier at each end.",
   }),
-  civ("fire_lookout_tower", "Fire lookout", "not_started", {
+  civ("fire_lookout_tower", "Fire lookout", "implemented", {
     tags: ["wilds_camps", "size_l"],
     note: "A glazed cab on braced legs above the canopy, with a switchback stair and a map table you can see from below.",
   }),
-  ruin("stump_field", "Cut-over", "not_started", {
+  ruin("stump_field", "Cut-over", "implemented", {
     kind: "infrastructure",
     tags: ["wilds_camps", "size_xl"],
     note: "The ground a camp leaves: stumps at plausible spacing, slash piles, and one great stump too big to have been worth taking.",
@@ -2351,20 +2368,20 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["wilds_camps", "size_lin"],
     note: "Plank treads slung between two cable runs with hand lines, sagging to the middle and anchored to trees or posts.",
   }),
-  rur("waystation", "Waystation", "not_started", {
+  rur("waystation", "Waystation", "implemented", {
     tags: ["wilds_camps", "size_s"],
     note: "A shelter on a long road: three walls, a hearth, a bench, a woodpile kept full, and no door.",
   }),
-  lei("hunting_lodge", "Hunting lodge", "not_started", {
+  lei("hunting_lodge", "Hunting lodge", "implemented", {
     tags: ["wilds_camps", "size_l"],
     note: "A trophy hall with a great hearth, antlers on the beam, a gun rack and boots by the door.",
   }),
-  ind("spar_pole", "Spar pole", "not_started", {
+  ind("spar_pole", "Spar pole", "implemented", {
     kind: "prop",
     tags: ["wilds_camps", "size_l"],
     note: "A topped tree rigged with blocks and guy lines as a yarding mast — the tallest thing in a cut-over and visible from everywhere.",
   }),
-  nom("hunters_cache", "Cache", "not_started", {
+  nom("hunters_cache", "Cache", "implemented", {
     tags: ["wilds_camps", "size_xs"],
     note: "A box on four peeled poles above bear height with the bark stripped off the legs.",
   }),

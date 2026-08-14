@@ -307,6 +307,48 @@ export const TERRAIN_DIAGNOSTICS = {
    * the measured case.
    */
   WALL_COURSE_CLAMPED: "LOAM-T230",
+
+  // --- the infrastructure host (`docs/INFRA-ENTRIES-v0.md` §3.7) -----------
+  // Four codes, continuing from LOAM-T230. Per §13.6's precedent none of them
+  // enters `FEEDBACK_CODES` initially: `BIOME_CLAMPED`'s history is that a code
+  // firing on every world costs money in the authoring loop and buys an
+  // invented change.
+  /**
+   * `infra.entry@0` — the node's params do not name a buildable entry: an
+   * unknown `entry`, a `route` that is not one of the closed forms, or a form
+   * the named entry does not accept.
+   *
+   * An error rather than a clamp, and it names the legal values *and* the
+   * near-misses: an entry id is a closed vocabulary, and "unknown entry" with
+   * no list is the diagnostic an author can do least with.
+   */
+  INFRA_ENTRY_PARAM: "LOAM-T231",
+  /**
+   * `infra.entry@0` — the route resolved shorter than the entry's `minRun`.
+   *
+   * The `WALL_COURSE_EMPTY` analogue, one scale down: the anchor was found and
+   * the derivation ran, and what came back is too short to be the thing the
+   * author asked for. A fence of six columns is not a cordon.
+   */
+  INFRA_ROUTE_EMPTY: "LOAM-T232",
+  /**
+   * `infra.entry@0` — the named anchor is absent, unplaced, or not linear.
+   *
+   * The loud version of the mistake the linework kit already warns about
+   * ("pointing `along` at a building buys you nothing"): a route is named
+   * relative to something the compiler placed, so a name that resolves to
+   * nothing is a route that cannot exist.
+   */
+  INFRA_ROUTE_UNANCHORED: "LOAM-T233",
+  /**
+   * `infra.entry@0` — the run built, and lost more than a stated fraction of
+   * its columns to collision or unbuildable ground.
+   *
+   * So an author *reads* "a fence full of holes" rather than walking into one.
+   * A note, not a warning: the entry is built, and the honest recovery is
+   * reported the way `WALL_MARGIN_REDUCED` reports its own.
+   */
+  INFRA_RUN_REFUSED: "LOAM-T234",
   /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that

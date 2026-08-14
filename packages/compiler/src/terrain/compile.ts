@@ -46,6 +46,7 @@ import {
   CLIMATE_THEMES,
   PROFILE_GENERATORS,
   PROGRAM_SCATTER_GENERATOR,
+  INFRA_ENTRY_GENERATOR,
   PROP_GENERATOR,
   STRUCTURE_GENERATORS,
   authoredProgramId,
@@ -2182,6 +2183,9 @@ export function generatorCoverageNotes(
     ...PROFILE_GENERATORS,
     ...STRUCTURE_GENERATORS,
     PROP_GENERATOR,
+    // The infrastructure host: handled in the wall's slot of the structure pass
+    // (`structures/infra-entry.ts`), so it is not a silent node.
+    INFRA_ENTRY_GENERATOR,
     PROGRAM_SCATTER_GENERATOR,
   ]);
   const out: LoamDiagnostic[] = [];

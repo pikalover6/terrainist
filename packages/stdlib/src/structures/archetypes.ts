@@ -113,6 +113,37 @@ import {
 
 export * from "./archetypes-agrarian.js";
 
+// The nautical & pirate pack's buildings — the two entries of §3.2 that have
+// an inside: the salt store beside the pans and the harbour's treadwheel crane.
+import {
+  BRINE_BUILDING_ARCHETYPES,
+  brineArchetypeOfTags,
+  furnishBrine,
+} from "./archetypes-brine.js";
+
+export * from "./archetypes-brine.js";
+
+// The wilds & camps pack's buildings — the three entries of §3.6 that have an
+// inside: the fire lookout's cab, the road's waystation and the trophy hall.
+import {
+  WILDS_BUILDING_ARCHETYPES,
+  furnishWilds,
+  wildsArchetypeOfTags,
+} from "./archetypes-wilds.js";
+
+export * from "./archetypes-wilds.js";
+
+// The agrarian expansion pack's buildings — the five entries of §3.5 that have
+// an inside: the byre, the dutch barn, the smokehouse, the dairy and the
+// shearing shed.
+import {
+  HEDGEROW_BUILDING_ARCHETYPES,
+  furnishHedgerow,
+  hedgerowArchetypeOfTags,
+} from "./archetypes-hedgerow.js";
+
+export * from "./archetypes-hedgerow.js";
+
 import {
   RESIDENTIAL_BUILDING_ARCHETYPES,
   furnishResidential,
@@ -233,6 +264,17 @@ import {
 
 export * from "./archetypes-sanctum.js";
 
+// The arcane & magical pack's built half (CATALOG-EXPANSION §3.3) — the
+// college, the shrine and the winged-mount stable. Wired in immediately after
+// the sanctum, which is the seam every later pack takes.
+import {
+  ARCANE_BUILDING_ARCHETYPES,
+  arcaneArchetypeOfTags,
+  furnishArcane,
+} from "./archetypes-arcane.js";
+
+export * from "./archetypes-arcane.js";
+
 import {
   CLASSICAL_BUILDING_ARCHETYPES,
   classicalArchetypeOfTags,
@@ -248,6 +290,16 @@ import {
 } from "./archetypes-xeno.js";
 
 export * from "./archetypes-xeno.js";
+
+// The nautical & pirate pack's buildings — the four shore buildings of §3.2
+// that have an inside: the magazine, the sea tower, the chandlery, the loft.
+import {
+  CORSAIR_BUILDING_ARCHETYPES,
+  corsairArchetypeOfTags,
+  furnishCorsair,
+} from "./archetypes-corsair.js";
+
+export * from "./archetypes-corsair.js";
 
 import {
   DEPTHS_BUILDING_ARCHETYPES,
@@ -294,6 +346,9 @@ export const BUILDING_ARCHETYPES = [
   ...WAVE2_BUILDING_ARCHETYPES,
   ...HOMESTEAD_BUILDING_ARCHETYPES,
   ...AGRARIAN_BUILDING_ARCHETYPES,
+  ...BRINE_BUILDING_ARCHETYPES,
+  ...WILDS_BUILDING_ARCHETYPES,
+  ...HEDGEROW_BUILDING_ARCHETYPES,
   ...WORKS_BUILDING_ARCHETYPES,
   ...INSTITUTION_BUILDING_ARCHETYPES,
   ...LEISURE_BUILDING_ARCHETYPES,
@@ -311,8 +366,10 @@ export const BUILDING_ARCHETYPES = [
   ...SPECTACLE_BUILDING_ARCHETYPES,
   ...FAITH_BUILDING_ARCHETYPES,
   ...SANCTUM_BUILDING_ARCHETYPES,
+  ...ARCANE_BUILDING_ARCHETYPES,
   ...CLASSICAL_BUILDING_ARCHETYPES,
   ...XENO_BUILDING_ARCHETYPES,
+  ...CORSAIR_BUILDING_ARCHETYPES,
   ...REGIONAL_BUILDING_ARCHETYPES,
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
@@ -513,6 +570,19 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // and `pavilion` still the leisure wave's.
   const sanctum = sanctumArchetypeOfTags(tags);
   if (sanctum !== null) return sanctum;
+  // The arcane & magical pack, immediately after the sanctum and high for the
+  // reason every later pack is high: the tables below are greedy. It claims
+  // nothing an earlier table claims — bare `arcane`, `wizard` and `sorcerer`
+  // are still the blitz wizard tower's, `library`/`study`/`scriptorium` still
+  // the civic library's, `school`/`academy` still the town school's,
+  // `college`/`university` still the university hall's, `stable`/`barn` still
+  // wave 4A's barn's, and `shrine`/`temple`/`chapel` still the church's. Its
+  // own two most fantastical nouns, `crystal` and `dragon`, are left where
+  // wave 4B put them: this pack's crystal outcrop and dragon skeleton are
+  // props reached by name, and a node tagged `dragon` must keep building the
+  // roost.
+  const arcane = arcaneArchetypeOfTags(tags);
+  if (arcane !== null) return arcane;
   // The classical Mediterranean pack, immediately after the sanctum it was
   // written beside and for the same reason both sit high: neither may fall
   // behind the extended table, whose `temple`/`shrine`/`chapel` claims are
@@ -531,6 +601,17 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // compiler's `THEME_ALIASES`) and not to one building.
   const xeno = xenoArchetypeOfTags(tags);
   if (xeno !== null) return xeno;
+  // The nautical & pirate pack's buildings, immediately after the alien pack
+  // and high for the same reason every later wave is: the tables below are
+  // greedy. It claims nothing an earlier table claims — bare `tower` is still
+  // the watchtower's, `lighthouse` and `pier` are still Track A's, `ropewalk`
+  // still the industry wave's, and bare `store`, `shop` and `depot` still
+  // reach the granary, the general store and the warehouse. Bare `arsenal`
+  // and bare `battery` stay the garrison arsenal's and the battery shed's;
+  // §3.2's own shore battery is a sweep client rather than a node, so there
+  // was never a case for taking either word back.
+  const corsair = corsairArchetypeOfTags(tags);
+  if (corsair !== null) return corsair;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -549,6 +630,28 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // went.
   const agrarian = agrarianArchetypeOfTags(tags);
   if (agrarian !== null) return agrarian;
+  // The nautical & pirate pack's buildings, straight after the agrarian table
+  // and well before the extended one, for the reason every later wave sits
+  // here: the tables below are greedy. It claims nothing an earlier table
+  // claims — bare `crane`, bare `salt`, `warehouse`, `store`, `shipyard`,
+  // `boathouse`, `dock` and `harbour` are all left exactly where they were,
+  // and every claim here is a compound of this pack's own ids.
+  const brine = brineArchetypeOfTags(tags);
+  if (brine !== null) return brine;
+  // The wilds & camps pack's buildings, beside the nautical table they were
+  // wired in after. It claims nothing an earlier table claims — bare `tower`,
+  // `watchtower`, `lookout`, `lodge`, `shelter`, `hut`, `cabin`, `camp` and
+  // `sawmill` are all left exactly where they were, and every claim here is a
+  // compound of this pack's own ids.
+  const wilds = wildsArchetypeOfTags(tags);
+  if (wilds !== null) return wilds;
+  // The agrarian expansion pack's buildings, beside the wilds table they were
+  // wired in after. It claims nothing an earlier table claims — bare `byre`,
+  // `barn`, `stable`, `shed`, `cattle`, `farm`, `field` and `granary` are all
+  // left exactly where they were, and every claim here is a compound of this
+  // pack's own ids or a word no table had.
+  const hedgerow = hedgerowArchetypeOfTags(tags);
+  if (hedgerow !== null) return hedgerow;
   const regionalWave = regionalArchetypeOfTags(tags);
   if (regionalWave !== null) return regionalWave;
   // The extended table is consulted before the original one, not after: the
@@ -934,6 +1037,9 @@ export function furnish(r: FurnishRequest): number {
   n += furnishLeisure(ctx);
   n += furnishHomestead(ctx);
   n += furnishAgrarian(ctx);
+  n += furnishBrine(ctx);
+  n += furnishWilds(ctx);
+  n += furnishHedgerow(ctx);
   n += furnishResidential(ctx);
   n += furnishCommerce(ctx);
   n += furnishTerminus(ctx);
@@ -948,8 +1054,10 @@ export function furnish(r: FurnishRequest): number {
   n += furnishSpectacle(ctx);
   n += furnishFaith(ctx);
   n += furnishSanctum(ctx);
+  n += furnishArcane(ctx);
   n += furnishClassical(ctx);
   n += furnishXeno(ctx);
+  n += furnishCorsair(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

@@ -59,6 +59,24 @@ import {
 } from "./constraints.js";
 import { isKnownArchetype, nearestArchetypes } from "./archetypes.js";
 import {
+  INFRA_ENTRY_GENERATOR,
+  INFRA_ENTRY_PARAM_KEYS,
+  INFRA_ENTRY_ROUTES,
+  INFRA_MARGIN_MAX,
+  INFRA_MARGIN_MIN,
+  INFRA_OFFSET_MAX,
+  INFRA_OFFSET_MIN,
+  INFRA_ROUTE_KEYS,
+  INFRA_ROUTE_KEYS_IMPLEMENTED,
+  INFRA_ROUTE_PARAM_KEYS,
+  INFRA_ROUTE_SIDES,
+  INFRA_RUN_MAX,
+  INFRA_RUN_MIN,
+  KNOWN_INFRA_ENTRIES,
+  isKnownInfraEntry,
+  nearestInfraEntries,
+} from "./infra-entries.js";
+import {
   CITY_MAX_DIAGONALS,
   CITY_SIZES,
   DISTRICT_CHARACTERS,
@@ -338,6 +356,14 @@ function validateRoot(
       validatePropNode(out, childPath, raw, connections);
       continue;
     }
+    // The infrastructure host (`docs/INFRA-ENTRIES-v0.md` §3.1). Beside the
+    // prop rather than inside `STRUCTURE_GENERATORS` for the same reason the
+    // prop is: it takes no part in the layout solve, so `isPlaceableNode` must
+    // keep saying no about it.
+    if (generator === INFRA_ENTRY_GENERATOR) {
+      validateInfraEntryNode(out, childPath, raw, connections);
+      continue;
+    }
     if (
       typeof generator !== "string" ||
       !(PROFILE_GENERATORS as readonly string[]).includes(generator) ||
@@ -348,7 +374,7 @@ function validateRoot(
           "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
           childPath,
           `generator ${describe(generator)} is not allowed by the settlement profile`,
-          `use one of: ${[...PROFILE_GENERATORS.filter((g) => !(SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(g)), ...STRUCTURE_GENERATORS, PROP_GENERATOR].join(", ")}`,
+          `use one of: ${[...PROFILE_GENERATORS.filter((g) => !(SETTLEMENT_EXCLUDED_GENERATORS as readonly string[]).includes(g)), ...STRUCTURE_GENERATORS, PROP_GENERATOR, INFRA_ENTRY_GENERATOR].join(", ")}`,
         ),
       );
       continue;
@@ -3015,6 +3041,14 @@ export const SETTLEMENT_PROP_NAMES = [
   // element.
   "bio_pod_cluster",
   "derelict_mech",
+  // The nautical & pirate pack's shore props (CATALOG-EXPANSION §3.2), in the
+  // order `PROP_NAMES` spreads them — straight after the alien pack's organic
+  // pair. `compiler/test/props.test.ts` asserts this list element by element.
+  "jolly_roger_mast",
+  "gallows",
+  "gibbet_cage",
+  "careening_beach",
+  "beached_wreck",
   // Wave 6C: the two energy objects that are props rather than buildings.
   "wind_turbine",
   "solar_array",
@@ -3030,6 +3064,19 @@ export const SETTLEMENT_PROP_NAMES = [
   "column_drums",
   "trireme",
   "pithos_store",
+  // The arcane & magical pack (CATALOG-EXPANSION §3.3), prop half: the nine
+  // entries of that pack that are things you walk past rather than into. Order
+  // matches `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts`
+  // asserts element by element.
+  "rune_circle",
+  "ley_marker",
+  "crystal_outcrop",
+  "scrying_pool",
+  "unicorn_paddock",
+  "arcane_orrery",
+  "spirit_lantern_row",
+  "dragon_skeleton",
+  "moon_dial",
   // The alien & sci-fi pack (CATALOG-EXPANSION §3.4), human-response half:
   // the seven entries of that pack that are props. Order matches `PROP_NAMES`
   // in the stdlib, which `compiler/test/props.test.ts` asserts element by
@@ -3041,6 +3088,39 @@ export const SETTLEMENT_PROP_NAMES = [
   "sandbag_emplacement",
   "mobile_command_post",
   "sentry_turret",
+  // The nautical & pirate pack (CATALOG-EXPANSION §3.2), shore half: the seven
+  // entries of that pack that are props on the quay, the strand and the
+  // headland. Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "fish_drying_rack",
+  "treasure_cache",
+  "smugglers_landing",
+  "capstan",
+  "anchor_stack",
+  "daymark",
+  "whalebone_arch",
+  // The wilds & camps pack (CATALOG-EXPANSION §3.6), ground half: the six
+  // entries of that pack that stand in a cut-over rather than roofing a room.
+  // Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "logging_camp",
+  "log_landing",
+  "sawpit",
+  "stump_field",
+  "spar_pole",
+  "hunters_cache",
+  // The agrarian expansion pack (CATALOG-EXPANSION §3.5), ground half: the
+  // eight entries of that pack that stand in a yard rather than roofing a
+  // room. Order matches `PROP_NAMES` in the stdlib, which
+  // `compiler/test/props.test.ts` asserts element by element.
+  "field_gate",
+  "duck_pond",
+  "midden_heap",
+  "sheep_dip",
+  "staddle_granary",
+  "hop_yard",
+  "stock_pens",
+  "well_sweep",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */
@@ -3180,6 +3260,226 @@ function validatePropParams(out: LoamDiagnostic[], at: string, params: Obj): voi
         at,
         `"on" must be "water" or "ground", got ${describe(on)}`,
         'write "on": "water" to put the prop on the nearest suitable water columns — boats declare it by default',
+      ),
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* infra.entry@0                                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An `infra.entry@0` node (`docs/INFRA-ENTRIES-v0.md` §3.1).
+ *
+ * Routed the way {@link validatePropNode} is and for the same reason: an entry
+ * has no road params and no building params, and takes no part in the layout
+ * solve, so the only checks it shares with a structure node are the node-shape
+ * ones. What it adds is the two params carrying all the meaning — `entry` and
+ * `route` — and a fix hint naming every legal value.
+ *
+ * **No coordinates, checked structurally.** `margin`, `offset` and `run` are
+ * distances and are legal; the form keys take a *name*, never a vertex, a
+ * bearing or an `[x, z]`. A route key whose value is not a string (or, for
+ * `between`, a pair of strings) is rejected outright rather than coerced —
+ * which is the closed-vocabulary half of §5's "no absolute coordinates, ever".
+ */
+function validateInfraEntryNode(
+  out: LoamDiagnostic[],
+  path: string,
+  node: Obj,
+  connections: ConnectedRef[],
+): void {
+  unknownKeys(out, node, path, STRUCTURE_KEYS, "structure node");
+  checkBooleans(out, path, node, ["optional"]);
+  checkTags(out, path, node["tags"]);
+  checkSeedSalt(out, path, node["seedSalt"]);
+
+  if (node["children"] !== undefined) {
+    out.push(
+      error(
+        "STRUCTURE_NODE_SHAPE",
+        path,
+        "infra.entry@0 nodes have no children",
+        'remove "children" — an entry is a leaf; declare another infra.entry@0 sibling under the root instead',
+      ),
+    );
+  }
+
+  const params = node["params"];
+  if (params !== undefined && !isObject(params)) {
+    out.push(
+      error(
+        "BAD_TYPE",
+        path,
+        `"params" must be an object, got ${describe(params)}`,
+        'write "params": { "entry": "test_fence", "route": { "ring": "the_holding", "margin": 12 } } — infra.entry@0 has to be told what to build and where it runs',
+      ),
+    );
+  } else {
+    validateInfraEntryParams(out, `${path}.params`, isObject(params) ? params : {});
+  }
+
+  validateBoxEnvelope(out, path, node["envelope"]);
+  validateConstraints(out, path, node["constraints"], node["id"], connections);
+  validatePorts(out, path, node["ports"]);
+}
+
+function validateInfraEntryParams(out: LoamDiagnostic[], at: string, params: Obj): void {
+  unknownKeys(out, params, at, INFRA_ENTRY_PARAM_KEYS, "infra.entry@0 params");
+
+  const list = KNOWN_INFRA_ENTRIES.join(", ");
+  const entry = params["entry"];
+  let def: string | undefined;
+  if (entry === undefined) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        at,
+        'infra.entry@0 needs an "entry" — the thing to build',
+        `set "entry" to one of: ${list}`,
+      ),
+    );
+  } else if (typeof entry !== "string" || !isKnownInfraEntry(entry)) {
+    const near = typeof entry === "string" ? nearestInfraEntries(entry) : [];
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        at,
+        `infra.entry@0 does not build ${describe(entry)}`,
+        near.length > 0
+          ? `did you mean ${near.map((n) => `"${n}"`).join(", ")}? "entry" must be one of: ${list}`
+          : `set "entry" to one of: ${list}`,
+      ),
+    );
+  } else {
+    def = entry;
+  }
+
+  checkBooleans(out, at, params, ["gates"]);
+  checkNumbers(out, at, params, { height: { min: 1, max: 16, int: true } });
+  validateInfraRoute(out, at, params["route"], def);
+}
+
+/**
+ * The `route` param: exactly one form key, and the distances that form takes.
+ *
+ * "Exactly one" is checked rather than assumed. A route naming two anchors in
+ * two different forms is not a route the compiler could resolve into one line,
+ * and silently taking the first key would make the document's meaning depend on
+ * JSON key order.
+ */
+function validateInfraRoute(
+  out: LoamDiagnostic[],
+  at: string,
+  route: unknown,
+  entry: string | undefined,
+): void {
+  const where = `${at}.route`;
+  const forms = INFRA_ROUTE_KEYS.join(", ");
+  if (route === undefined) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        at,
+        'infra.entry@0 needs a "route" — where the entry runs',
+        `write "route": { "ring": "<node id>", "margin": 12 }; the forms are: ${forms}`,
+      ),
+    );
+    return;
+  }
+  if (!isObject(route)) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        `"route" must be an object naming one form, got ${describe(route)}`,
+        `write "route": { "along": "<road id>", "offset": 3 }; the forms are: ${forms}`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, route, where, INFRA_ROUTE_PARAM_KEYS, "an infra.entry@0 route");
+
+  const named = INFRA_ROUTE_KEYS.filter((k) => route[k] !== undefined);
+  if (named.length === 0) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        "a route names no form",
+        `write exactly one of: ${forms} — e.g. "route": { "ring": "north_holding", "margin": 12 }`,
+      ),
+    );
+    return;
+  }
+  if (named.length > 1) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        `a route names ${named.length} forms (${named.join(", ")}) and a route is one line`,
+        `keep exactly one of: ${forms} — declare a second infra.entry@0 node for the second line`,
+      ),
+    );
+    return;
+  }
+
+  const form = named[0] as (typeof INFRA_ROUTE_KEYS)[number];
+  const value = route[form];
+  // The anchor. A name, never a coordinate — see the module note on §5.
+  if (form === "between") {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        '"between" is in the route vocabulary and is not implemented yet — it needs the road router and a tier-A ground declaration (docs/INFRA-ENTRIES-v0.md §5)',
+        `use one of: ${INFRA_ROUTE_KEYS_IMPLEMENTED.join(", ")} — an aqueduct or a pylon line is post-freeze work`,
+      ),
+    );
+    return;
+  }
+  if (typeof value !== "string" || value.length === 0) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        `"${form}" must name a placed node, got ${describe(value)}`,
+        `write "${form}": "<node id>" — a route is named relative to something the compiler placed, never written as coordinates`,
+      ),
+    );
+    return;
+  }
+
+  checkNumbers(out, where, route, {
+    margin: { min: INFRA_MARGIN_MIN, max: INFRA_MARGIN_MAX, int: true },
+    offset: { min: INFRA_OFFSET_MIN, max: INFRA_OFFSET_MAX, int: true },
+    run: { min: INFRA_RUN_MIN, max: INFRA_RUN_MAX, int: true },
+  });
+  const side = route["side"];
+  if (side !== undefined && !(INFRA_ROUTE_SIDES as readonly unknown[]).includes(side)) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        `"side" must be one of ${INFRA_ROUTE_SIDES.join(", ")}, got ${describe(side)}`,
+        'write "side": "left" — which hand of the corridor the run stands on, measured along its own direction',
+      ),
+    );
+  }
+
+  // …and which forms this particular entry accepts (§3.7's second half). An
+  // entry naming a form it has no geometry for would compile to a world
+  // silently missing the thing the document asked for.
+  if (entry === undefined) return;
+  const accepted = INFRA_ENTRY_ROUTES[entry];
+  if (accepted !== undefined && !accepted.includes(form)) {
+    out.push(
+      error(
+        "INFRA_ENTRY_PARAM",
+        where,
+        `"${entry}" does not accept the "${form}" route form`,
+        `"${entry}" accepts: ${accepted.join(", ")} — or name an entry whose geometry suits the line you want`,
       ),
     );
   }

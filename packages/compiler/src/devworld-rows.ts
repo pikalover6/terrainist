@@ -52,6 +52,9 @@ import { SANCTUM_EXHIBIT_ROWS } from "./exhibits/sanctum.js";
 import { CLASSICAL_EXHIBIT_ROWS } from "./exhibits/classical.js";
 import { XENO_EXHIBIT_ROWS } from "./exhibits/xeno.js";
 import { AGRARIAN_EXHIBIT_ROWS } from "./exhibits/agrarian.js";
+import { NAUTICAL_EXHIBIT_ROWS } from "./exhibits/nautical.js";
+import { ARCANE_PACK_EXHIBIT_ROWS } from "./exhibits/arcane.js";
+import { WILDS_EXHIBIT_ROWS } from "./exhibits/wilds.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -128,6 +131,12 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...XENO_EXHIBIT_ROWS,
   // The agrarian burn-down: the farm town's working fabric.
   ...AGRARIAN_EXHIBIT_ROWS,
+  // The nautical pack: the pirate island's working shore.
+  ...NAUTICAL_EXHIBIT_ROWS,
+  // The arcane pack: the unicorn island's magic.
+  ...ARCANE_PACK_EXHIBIT_ROWS,
+  // The wilds pack: the old-growth's camps.
+  ...WILDS_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
@@ -288,6 +297,23 @@ export {
   AGRARIAN_ROW_LENGTH,
   agrarianSizeFor,
 } from "./exhibits/agrarian.js";
+
+/** The nautical rows, for tests that assert on the gradient. */
+export {
+  NAUTICAL_EXHIBIT_ROWS,
+  NAUTICAL_ROW_LENGTH,
+  nauticalSizeFor,
+} from "./exhibits/nautical.js";
+
+/** The arcane pack rows, for tests that assert on the gradient. */
+export {
+  ARCANE_PACK_EXHIBIT_ROWS,
+  ARCANE_PACK_ROW_LENGTH,
+  arcanePackSizeFor,
+} from "./exhibits/arcane.js";
+
+/** The wilds rows, for tests that assert on the gradient. */
+export { WILDS_EXHIBIT_ROWS, WILDS_ROW_LENGTH, wildsSizeFor } from "./exhibits/wilds.js";
 
 /** The wave-5E arcana rows, for tests that assert on the gradient. */
 export { ARCANA_EXHIBIT_ROWS, ARCANA_ROW_LENGTH, arcanaSizeFor } from "./exhibits/arcana.js";

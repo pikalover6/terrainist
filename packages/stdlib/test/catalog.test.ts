@@ -12,6 +12,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   BUILDING_ARCHETYPES,
+  INFRA_ENTRIES,
+  INFRA_ENTRY_IDS,
   NON_NODE_IMPLEMENTED,
   PROP_GENERATORS,
   PROP_NAMES,
@@ -73,11 +75,42 @@ describe("the structure catalog", () => {
       ...BUILDING_ARCHETYPES,
       ...PROP_NAMES,
       ...NON_NODE_IMPLEMENTED,
+      // The infrastructure host (`docs/INFRA-ENTRIES-v0.md` §3.7): an
+      // `infrastructure` row that names a row of `INFRA_ENTRIES` is built by
+      // `infra.entry@0`, exactly as a `prop` row that names a `PROP_GENERATORS`
+      // key is built by `prop.place@0`. Flipping an entry on later is therefore
+      // **data** — a registry row — and not an edit to this test.
+      ...INFRA_ENTRY_IDS,
     ]);
     const claimed = structuresWithStatus("implemented").map((e) => e.id);
     const unbacked = claimed.filter((id) => !real.has(id));
     expect(unbacked, "catalog claims these are implemented, but no generator answers to them").toEqual([]);
     expect(claimed.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * The same guard from the other side (§3.7).
+   *
+   * A registry row whose id names no catalog row is a generator nobody can ask
+   * for — the `agent-defs.test.ts` tradition of making a silent failure loud.
+   * An *internal* row (the host's own fixture) is excluded by construction:
+   * `INFRA_ENTRY_IDS` carries the catalog-backed ids only, which is what keeps
+   * this check exact rather than weakened to one direction.
+   */
+  it("backs every infrastructure entry with a catalog row of that kind", () => {
+    for (const id of INFRA_ENTRY_IDS) {
+      const row = structureById(id);
+      expect(row, `INFRA_ENTRIES has "${id}" and the catalog does not`).toBeDefined();
+      expect(row?.kind, id).toBe("infrastructure");
+      expect(row?.status, id).toBe("implemented");
+    }
+    // …and every internal row really is absent from the catalog, which is what
+    // "internal" means. A registry row that quietly became a catalog id would
+    // otherwise pass both directions while claiming to be a fixture.
+    for (const def of Object.values(INFRA_ENTRIES)) {
+      if (def.internal !== true) continue;
+      expect(structureById(def.id), `"${def.id}" is internal and is in the catalog`).toBeUndefined();
+    }
   });
 
   it("lists every archetype and every prop the code actually has", () => {

@@ -15,17 +15,36 @@
  * file only *exports*. Registering it is one import and one spread.
  */
 
-import { AGRARIAN_BUILDING_ARCHETYPES, agrarianFacadeDefaults } from "@terrainist/stdlib";
+import {
+  AGRARIAN_BUILDING_ARCHETYPES,
+  HEDGEROW_BUILDING_ARCHETYPES,
+  agrarianFacadeDefaults,
+  hedgerowFacadeDefaults,
+} from "@terrainist/stdlib";
 
 import { DEV_THEMES, type DevExhibitCell, type DevExhibitRow } from "./types.js";
 
 /** Cells per agrarian row. */
 export const AGRARIAN_ROW_LENGTH = 4;
 
+/** The burn-down originals plus the expansion's working sheds, one walk. */
+const AGRARIAN_PACK_BUILDINGS = [
+  ...AGRARIAN_BUILDING_ARCHETYPES,
+  ...HEDGEROW_BUILDING_ARCHETYPES,
+] as const;
+
 /** Footprint for an agrarian archetype at gradient position `column`. */
 export function agrarianSizeFor(archetype: string, column: number): [number, number, number] {
   const grow = column;
   switch (archetype) {
+    // The expansion's working sheds: the barn and wool shed want their length.
+    case "dutch_barn":
+    case "wool_shed":
+      return [15 + (grow % 2), 16, 17 + grow];
+    case "cow_byre":
+    case "smokehouse":
+    case "dairy":
+      return [9 + grow, 11 + (grow % 2), 9 + grow];
     case "farmstead":
       return [13 + (grow % 2), 18, 15 + grow];
     case "pigsty":
@@ -54,11 +73,13 @@ function agrarianFloors(archetype: string, column: number): number {
 }
 
 /** The building rows: one per agrarian archetype, four cells each. */
-export const AGRARIAN_EXHIBIT_ROWS: readonly DevExhibitRow[] = AGRARIAN_BUILDING_ARCHETYPES.map(
+export const AGRARIAN_EXHIBIT_ROWS: readonly DevExhibitRow[] = AGRARIAN_PACK_BUILDINGS.map(
   (archetype) => ({
     row: `agr_${archetype}`,
     cells: Array.from({ length: AGRARIAN_ROW_LENGTH }, (_, column): DevExhibitCell => {
-      const facade = agrarianFacadeDefaults(archetype);
+      const facade = (AGRARIAN_BUILDING_ARCHETYPES as readonly string[]).includes(archetype)
+        ? agrarianFacadeDefaults(archetype)
+        : hedgerowFacadeDefaults(archetype);
       const floors = agrarianFloors(archetype, column);
       return {
         id: `${archetype}_agr${column}`,

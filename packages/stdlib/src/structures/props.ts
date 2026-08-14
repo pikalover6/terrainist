@@ -76,6 +76,30 @@ import {
   isResponseProp,
   responsePropFootprint,
 } from "./props-response.js";
+// The nautical & pirate pack's shore props — the seven entries of §3.2 that
+// stand on the quay, the strand and the headland rather than in the water.
+import {
+  BRINE_PROP_GENERATORS,
+  BRINE_PROP_NAMES,
+  brinePropFootprint,
+  isBrineProp,
+} from "./props-brine.js";
+// The wilds & camps pack's ground pieces — the six entries of §3.6 that stand
+// in a cut-over rather than roofing a room.
+import {
+  WILDS_PROP_GENERATORS,
+  WILDS_PROP_NAMES,
+  isWildsProp,
+  wildsPropFootprint,
+} from "./props-wilds.js";
+// The agrarian expansion pack's ground pieces — the eight entries of §3.5 that
+// stand in a yard or a field rather than roofing a room.
+import {
+  HEDGEROW_PROP_GENERATORS,
+  HEDGEROW_PROP_NAMES,
+  hedgerowPropFootprint,
+  isHedgerowProp,
+} from "./props-hedgerow.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -94,6 +118,15 @@ import {
   isSpectacleProp,
   spectaclePropFootprint,
 } from "./props-spectacle.js";
+// The arcane & magical pack's props — the nine entries of §3.3 that are things
+// you walk past rather than into: the inlaid ring, the waystone, the outcrop,
+// the pool, the paddock, the orrery, the lantern run, the wyrm and the dial.
+import {
+  ARCANE_PROP_GENERATORS,
+  ARCANE_PROP_NAMES,
+  arcanePropFootprint,
+  isArcaneProp,
+} from "./props-arcane.js";
 import {
   CLASSICAL_PROP_GENERATORS,
   CLASSICAL_PROP_NAMES,
@@ -107,6 +140,14 @@ import {
   isXenoProp,
   xenoPropFootprint,
 } from "./props-xeno.js";
+// The nautical & pirate pack's shore props — the flag, the law and the two
+// hulls that are not afloat (§3.2).
+import {
+  CORSAIR_PROP_GENERATORS,
+  CORSAIR_PROP_NAMES,
+  corsairPropFootprint,
+  isCorsairProp,
+} from "./props-corsair.js";
 import {
   WAYSIDE_PROP_GENERATORS,
   WAYSIDE_PROP_NAMES,
@@ -163,9 +204,14 @@ export const PROP_NAMES = [
   ...SPECTACLE_PROP_NAMES,
   ...CLASSICAL_PROP_NAMES,
   ...XENO_PROP_NAMES,
+  ...CORSAIR_PROP_NAMES,
   ...ENERGY_PROP_NAMES,
   ...CLASSICAL_B_PROP_NAMES,
+  ...ARCANE_PROP_NAMES,
   ...RESPONSE_PROP_NAMES,
+  ...BRINE_PROP_NAMES,
+  ...WILDS_PROP_NAMES,
+  ...HEDGEROW_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -491,9 +537,14 @@ export function propFootprint(
   if (isSpectacleProp(prop)) return spectaclePropFootprint(prop);
   if (isClassicalProp(prop)) return classicalPropFootprint(prop);
   if (isXenoProp(prop)) return xenoPropFootprint(prop);
+  if (isCorsairProp(prop)) return corsairPropFootprint(prop);
   if (isEnergyProp(prop)) return energyPropFootprint(prop, params);
   if (isClassicalBProp(prop)) return classicalBPropFootprint(prop, params);
+  if (isArcaneProp(prop)) return arcanePropFootprint(prop, params);
   if (isResponseProp(prop)) return responsePropFootprint(prop);
+  if (isBrineProp(prop)) return brinePropFootprint(prop, params);
+  if (isWildsProp(prop)) return wildsPropFootprint(prop, params);
+  if (isHedgerowProp(prop)) return hedgerowPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1033,9 +1084,14 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...SPECTACLE_PROP_GENERATORS,
   ...CLASSICAL_PROP_GENERATORS,
   ...XENO_PROP_GENERATORS,
+  ...CORSAIR_PROP_GENERATORS,
   ...ENERGY_PROP_GENERATORS,
   ...CLASSICAL_B_PROP_GENERATORS,
+  ...ARCANE_PROP_GENERATORS,
   ...RESPONSE_PROP_GENERATORS,
+  ...BRINE_PROP_GENERATORS,
+  ...WILDS_PROP_GENERATORS,
+  ...HEDGEROW_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

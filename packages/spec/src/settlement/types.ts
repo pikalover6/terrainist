@@ -761,6 +761,37 @@ export function isCityNode(node: SettlementChildNode): node is CityNode {
   return node.kind === "city";
 }
 
+/* -------------------------------------------------------------------------- */
+/* infrastructure entries (`infra.entry@0`)                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An `infra.entry@0` node — the infrastructure host
+ * (`docs/INFRA-ENTRIES-v0.md` §3.1).
+ *
+ * A sibling of {@link PropNode} in every structural respect, and for the same
+ * reason: it takes no part in the layout solve. What it declares is **an entry
+ * and a route**, and the route is named relative to something the compiler
+ * placed — a ring round a holding, a line along a shore, a chord across a
+ * street — so the geometry is derived after placement exactly as a wall course
+ * is. There is no `children`: an entry is a leaf.
+ *
+ * The one param that carries the meaning is `entry`, a registry id, validated
+ * with near-misses attached. `route` is one of the forms in
+ * `settlement/infra-entries.ts`, and everything else the entry needs it gets
+ * from its registry row and the resolved theme.
+ */
+export interface InfraEntryNode extends StructureBase {
+  readonly kind: "generator";
+  readonly generator: "infra.entry@0";
+  readonly params?: Readonly<Record<string, unknown>>;
+}
+
+/** True for an `infra.entry@0` node. */
+export function isInfraEntryNode(node: SettlementChildNode): node is InfraEntryNode {
+  return node.kind === "generator" && node.generator === "infra.entry@0";
+}
+
 /** Any node the settlement profile allows below the root. */
 export type SettlementChildNode =
   | HeightfieldNode
@@ -768,6 +799,7 @@ export type SettlementChildNode =
   | ForestNode
   | StructureNode
   | PropNode
+  | InfraEntryNode
   | PlazaNode
   | DistrictNode
   | CityNode;

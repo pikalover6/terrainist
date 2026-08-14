@@ -37,8 +37,11 @@ export * from "./props-amusement.js";
 export * from "./props-wayside.js";
 export * from "./props-relics.js";
 export * from "./props-spectacle.js";
+// The arcane & magical pack (CATALOG-EXPANSION §3.3), prop half.
+export * from "./props-arcane.js";
 export * from "./props-classical.js";
 export * from "./props-xeno.js";
+export * from "./props-corsair.js";
 export * from "./archetypes-town.js";
 export * from "./archetypes-trade.js";
 export * from "./archetypes-vernacular.js";
@@ -56,6 +59,9 @@ export * from "./archetypes-siegeworks.js";
 export * from "./archetypes-classical-b.js";
 export * from "./props-classical-b.js";
 export * from "./props-response.js";
+export * from "./props-brine.js";
+export * from "./props-wilds.js";
+export * from "./props-hedgerow.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";
@@ -68,3 +74,5 @@ export * from "./decay.js";
 export * from "./support.js";
 export * from "./greenery.js";
 export * from "./archetypes-spectacle.js";
+// The infrastructure-entry registry (`docs/INFRA-ENTRIES-v0.md` §3.3).
+export * from "./infra-entries.js";

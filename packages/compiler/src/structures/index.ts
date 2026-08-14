@@ -24,6 +24,7 @@ import {
   DEFAULT_ORNAMENT_DENSITY,
   archetypeOfTags,
   assignMaterials,
+  INFRA_ENTRIES,
   materialKey,
   nodeSeed,
   pickTheme,
@@ -34,10 +35,12 @@ import {
   type MaterialTheme,
   type Seed256,
 } from "@terrainist/stdlib";
+import { INFRA_ROUTE_KEYS } from "@terrainist/spec";
 import {
   canonicalize,
   isFarmGenerator,
   isImplementedVia,
+  isInfraEntryNode,
   isPropNode,
   resolveTypeKey,
   warning,
@@ -82,6 +85,11 @@ import {
   type StructureBlock,
 } from "./buildings.js";
 import { digCanals, type CanalPassResult } from "./canals.js";
+import {
+  buildInfraEntries,
+  type InfraEntryJob,
+  type InfraRouteSpec,
+} from "./infra-entry.js";
 import {
   buildRetainingWalls,
   finishCutFaces,
@@ -1582,6 +1590,92 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     lay("walls", wallPass.blocks);
   }
 
+  // --- the infrastructure entries (`infra.entry@0`) ------------------------
+  // In the wall's slot, and beside it rather than inside it
+  // (`docs/INFRA-ENTRIES-v0.md` §3.8). The position is not a convenience: it is
+  // the only point at which the carriageway a crossing is found against is
+  // finished, and it is where the one shipped entry already runs. Area
+  // treatments run here too, after everything that could move the ground under
+  // them. Family B's entries do NOT run here — they run inside
+  // `buildRetainingWalls`, where they always did.
+  //
+  // The wall runs first of the two so an entry meets a finished circuit: a
+  // cordon that would cross a curtain wall loses those columns to the wall's,
+  // which is the right answer — the wall is the fence there.
+  const infraOnRoad = (x: number, z: number): boolean => {
+    const region = input.plan.region;
+    if (!inside(region, x, z)) return false;
+    const at = index(region, x, z);
+    if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
+    return streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1;
+  };
+  const infraJobs = infraEntryJobsOf(
+    input.doc,
+    rootPath,
+    input.worldSeed,
+    (p) => themeForNode(p),
+  );
+  const infraPass =
+    infraJobs.length === 0
+      ? undefined
+      : buildInfraEntries({
+          plan: input.plan,
+          stack: input.stack,
+          jobs: infraJobs,
+          existing: blocks,
+          view: {
+            bounds: {
+              x0: input.plan.region.x0,
+              z0: input.plan.region.z0,
+              width: input.plan.region.width,
+              depth: input.plan.region.depth,
+            },
+            // The **fabric's** hull, exactly as the wall's own course reads it:
+            // a ring round a holding is drawn outside what the holding built,
+            // not outside the rectangle the solver reserved for it.
+            extentOf: (id: string) => {
+              const nodePath = `${rootPath}.${id}`;
+              const own = placementByPath.get(nodePath)?.footprint;
+              const prefix = `${nodePath}.`;
+              const extent = fabricExtent({
+                clip: own === undefined ? [] : [own],
+                buildings: built
+                  .filter((b) => b.nodePath === nodePath || b.nodePath.startsWith(prefix))
+                  .map((b) => b.footprint),
+                margin: 0,
+                field: wallField,
+              });
+              return extent.length === 0 ? undefined : extent;
+            },
+            // A corridor is a *road route* — the only linework the compiler
+            // publishes as a polyline with a name on it. A street segment has
+            // no author-visible id, which is the honest reason `along` binds to
+            // roads first: an author can only name what they wrote.
+            corridorOf: (id: string) => {
+              const route = (roads as RoadNetworkResult | undefined)?.routes.find(
+                (r) => r.from === id || r.to === id,
+              );
+              return route === undefined
+                ? undefined
+                : route.path.map((p) => ({ x: p.x, z: p.z }));
+            },
+            // F17's published parcel mask, per §3.2's `over`. A holding names
+            // its own mask; nothing else publishes one yet.
+            maskOf: (id: string) => {
+              const nodePath = `${rootPath}.${id}`;
+              if (farms === undefined) return undefined;
+              return farms.nodePaths.includes(nodePath) ? farms.parcelMask : undefined;
+            },
+            ground: (x: number, z: number) =>
+              inside(input.plan.region, x, z) ? input.plan.ground[index(input.plan.region, x, z)] : undefined,
+            onRoad: infraOnRoad,
+          },
+        });
+  if (infraPass !== undefined) {
+    diagnostics.push(...infraPass.diagnostics);
+    lay("infra_entries", infraPass.blocks);
+  }
+
   // --- the life pass (C3) --------------------------------------------------
   // After *everything*, including the ground treatment, and that is the whole
   // contract: this stage adds eye-level incident into columns nobody else
@@ -1747,6 +1841,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       shipsMoored: precincts?.stats.ships ?? 0,
       ...(setPieces?.stats ?? {}),
       ...(wallPass?.stats ?? {}),
+      ...(infraPass?.stats ?? {}),
       ...life.stats,
     },
   };
@@ -1842,6 +1937,74 @@ function ignoredPropConstraints(constraints: unknown): string[] {
  *   path is the only thing that says which quarter a building belongs to: a
  *   district's auto-infill has no line of JSON behind it at all.
  */
+/**
+ * The `infra.entry@0` nodes of a document, as jobs.
+ *
+ * Root children only, exactly like `prop.place@0`'s walk above it: an entry
+ * takes no part in the layout solve, so there is no nesting for it to inherit
+ * anything from, and a line round a holding is a sibling of the holding rather
+ * than a child of it.
+ *
+ * Everything here is a *read* of what the validator already grounded — the
+ * entry id is in the registry, the route names exactly one form, the distances
+ * are in range. What this function adds is the registry row itself, looked up
+ * once so the driver never has to know the registry exists, and the node's
+ * seed, which is `hash(worldSeed, nodePath)` like every other node's.
+ */
+export function infraEntryJobsOf(
+  doc: SettlementDocument,
+  rootPath: string,
+  worldSeed: bigint,
+  themeOf?: (nodePath: string) => MaterialTheme | undefined,
+): InfraEntryJob[] {
+  const jobs: InfraEntryJob[] = [];
+  for (const child of doc.root.children) {
+    if (!isInfraEntryNode(child)) continue;
+    const nodePath = `${rootPath}.${child.id}`;
+    const params = (child.params ?? {}) as Record<string, unknown>;
+    const id = typeof params["entry"] === "string" ? (params["entry"] as string) : "";
+    const def = INFRA_ENTRIES[id];
+    const route = routeSpecOf(params["route"]);
+    // A node the validator would have rejected. Skipped in silence *here* and
+    // reported there: two voices on one mistake is the defect `LOAM-T208`'s
+    // coverage sweep exists to avoid, not to duplicate.
+    if (def === undefined || route === undefined || !def.routes.includes(route.form)) continue;
+    const theme = themeOf?.(nodePath);
+    jobs.push({
+      nodePath,
+      def,
+      route,
+      params,
+      seed: nodeSeed(worldSeed, nodePath, child.seedSalt ?? ""),
+      ...(theme === undefined ? {} : { theme }),
+      gates: params["gates"] !== false,
+      ...(typeof params["height"] === "number" ? { height: params["height"] as number } : {}),
+    });
+  }
+  return jobs;
+}
+
+/** The one route form a validated `route` object names, with its distances. */
+function routeSpecOf(raw: unknown): InfraRouteSpec | undefined {
+  if (raw === null || typeof raw !== "object") return undefined;
+  const route = raw as Record<string, unknown>;
+  for (const form of INFRA_ROUTE_KEYS) {
+    const target = route[form];
+    if (typeof target !== "string" || target.length === 0) continue;
+    return {
+      form: form as InfraRouteSpec["form"],
+      target,
+      ...(typeof route["margin"] === "number" ? { margin: route["margin"] as number } : {}),
+      ...(typeof route["offset"] === "number" ? { offset: route["offset"] as number } : {}),
+      ...(route["side"] === "left" || route["side"] === "right"
+        ? { side: route["side"] as "left" | "right" }
+        : {}),
+      ...(typeof route["run"] === "number" ? { run: route["run"] as number } : {}),
+    };
+  }
+  return undefined;
+}
+
 export function wallJobsOf(
   doc: SettlementDocument,
   rootPath: string,

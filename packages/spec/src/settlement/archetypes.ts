@@ -39,7 +39,19 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "root_cellar_mound", "witch_hut", "mushroom_house", "hobbit_hole",
   "gingerbread_cottage", "farmstead", "pigsty", "sheepfold",
   "cattle_pen", "orchard", "vineyard", "terraced_field",
-  "threshing_floor", "marketplace", "brewery", "distillery",
+  "threshing_floor", "marketplace",
+  // The nautical & pirate pack's buildings, in the order `BUILDING_ARCHETYPES`
+  // spreads them — immediately after the agrarian pack. Order is load-bearing
+  // here, same as every other pack block.
+  "salt_house", "treadwheel_crane",
+  // The wilds & camps pack's buildings (CATALOG-EXPANSION §3.6), in the order
+  // `BUILDING_ARCHETYPES` spreads them — immediately after the nautical pack.
+  "fire_lookout_tower", "waystation", "hunting_lodge",
+  // The agrarian expansion pack's buildings (CATALOG-EXPANSION §3.5), in the
+  // order `BUILDING_ARCHETYPES` spreads them — immediately after the wilds
+  // pack.
+  "cow_byre", "dutch_barn", "smokehouse", "dairy", "wool_shed",
+  "brewery", "distillery",
   "butchery",
   "tea_house", "trading_post", "pawnshop", "cooperage",
   "glassworks", "papermill", "textile_mill", "cannery",
@@ -93,6 +105,11 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // straight after the faith wave. Order is load-bearing, same as siegeworks.
   "temple", "chapel", "shrine", "altar_stone", "wayside_cross",
   "obelisk", "colossus", "amphitheater", "arena", "stadium",
+  // The arcane & magical pack (CATALOG-EXPANSION §3.3), in the order
+  // `BUILDING_ARCHETYPES` spreads it — straight after the sanctum. Order is
+  // load-bearing here, same as every other pack block.
+  "arcane_academy", "summoning_hall", "arcane_library", "blossom_shrine",
+  "pegasus_stable",
   // The classical Mediterranean pack, in the order `BUILDING_ARCHETYPES`
   // spreads it — straight after the sanctum. Order is load-bearing, same as
   // siegeworks.
@@ -103,6 +120,10 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   // order `BUILDING_ARCHETYPES` spreads it — straight after the classical
   // pack. Order is load-bearing here, same as every other pack block.
   "xeno_spire", "hive_mound", "hydroponics_bay",
+  // The nautical & pirate pack's buildings (CATALOG-EXPANSION §3.2), in the
+  // order `BUILDING_ARCHETYPES` spreads it — straight after the alien pack.
+  // Order is load-bearing here, same as every other pack block.
+  "powder_magazine", "martello_tower", "chandlery", "sail_loft",
   "hanok", "machiya",
   "riad", "cycladic_house", "adobe_pueblo", "stilt_house",
   "sod_house", "igloo", "thatched_roundhouse", "colonial_veranda_house",

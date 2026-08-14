@@ -35,6 +35,9 @@ import { townFacadeDefaults } from "./archetypes-town.js";
 import { tradeFacadeDefaults } from "./archetypes-trade.js";
 import { homesteadFacadeDefaults } from "./archetypes-homestead.js";
 import { agrarianFacadeDefaults } from "./archetypes-agrarian.js";
+import { brineFacadeDefaults } from "./archetypes-brine.js";
+import { wildsFacadeDefaults } from "./archetypes-wilds.js";
+import { hedgerowFacadeDefaults } from "./archetypes-hedgerow.js";
 import { regionalFacadeDefaults } from "./archetypes-regional.js";
 import { vernacularFacadeDefaults } from "./archetypes-vernacular.js";
 import { wave2FacadeDefaults } from "./archetypes-wave2.js";
@@ -57,8 +60,10 @@ import { relicFacadeDefaults } from "./archetypes-relic.js";
 import { spectacleFacadeDefaults } from "./archetypes-spectacle.js";
 import { faithFacadeDefaults } from "./archetypes-faith.js";
 import { sanctumFacadeDefaults } from "./archetypes-sanctum.js";
+import { arcaneFacadeDefaults } from "./archetypes-arcane.js";
 import { classicalFacadeDefaults } from "./archetypes-classical.js";
 import { xenoFacadeDefaults } from "./archetypes-xeno.js";
+import { corsairFacadeDefaults } from "./archetypes-corsair.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -184,6 +189,18 @@ export function archetypeFacadeDefaults(
       // the market square.
       const agrarian = agrarianFacadeDefaults(archetype);
       if (Object.keys(agrarian).length > 0) return agrarian;
+      // The nautical & pirate pack's buildings, beside the agrarian table they
+      // were wired in after.
+      const brine = brineFacadeDefaults(archetype);
+      if (Object.keys(brine).length > 0) return brine;
+      // The wilds & camps pack's buildings, beside the nautical table they
+      // were wired in after.
+      const wilds = wildsFacadeDefaults(archetype);
+      if (Object.keys(wilds).length > 0) return wilds;
+      // The agrarian expansion pack's buildings, beside the wilds table they
+      // were wired in after.
+      const hedgerow = hedgerowFacadeDefaults(archetype);
+      if (Object.keys(hedgerow).length > 0) return hedgerow;
       // Wave four A, the dwellings.
       const residential = residentialFacadeDefaults(archetype);
       if (Object.keys(residential).length > 0) return residential;
@@ -209,6 +226,12 @@ export function archetypeFacadeDefaults(
       // The sanctum pack, beside the faith wave it belongs to.
       const sanctum = sanctumFacadeDefaults(archetype);
       if (Object.keys(sanctum).length > 0) return sanctum;
+      // The arcane & magical pack, beside the sanctum it was wired in after:
+      // the college wants the hip roof whose headroom its two unequal towers
+      // are built in, the shrine the openest wall a shell can give an "open
+      // pavilion", and the stable the gable its landing ledge swings out of.
+      const arcane = arcaneFacadeDefaults(archetype);
+      if (Object.keys(arcane).length > 0) return arcane;
       // The classical Mediterranean pack, beside the sanctum it was written
       // against: a pediment wants the gable it is a gable-end move on, and a
       // compluvium wants the hip whose height it is about to take over.
@@ -220,6 +243,12 @@ export function archetypeFacadeDefaults(
       // are both built in.
       const xeno = xenoFacadeDefaults(archetype);
       if (Object.keys(xeno).length > 0) return xeno;
+      // The nautical & pirate pack's buildings, beside the alien pack it was
+      // wired in after: a powder magazine wants no window rhythm at all (the
+      // note's "no windows" is the building), a sea tower the flat top its gun
+      // platform is built on, and the loft the gable its hoist swings out of.
+      const corsair = corsairFacadeDefaults(archetype);
+      if (Object.keys(corsair).length > 0) return corsair;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);
