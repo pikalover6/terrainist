@@ -223,6 +223,31 @@ refuses without a target; family-E energy rows are mis-kinded by
 their group builder (fix with the same catalog commit). W0 DISPATCH
 WAITS on a medium slot (nautical×2 + arcane in flight).
 
+**THE BIG WAVE LANDED + LAPTOP-OFF WRAP (08-14, 9bfed69, pushed):**
+five packs in one commit — NAUTICAL 18/20 (jolly_roger_mast fixed
+wool field, martello chamfer, careening_beach; cannon_battery→W2,
+harbour_chain_tower→`between`), ARCANE 14/16 (dragon_skeleton
+headline, ley_marker saturation; floating_stair/warded_gate→tail),
+WILDS 9/12 (flume/boom/rope_bridge→tail), HEDGEROW 13/16
+(hedgerow/dry_stone_wall/cart_track→tail; duck_pond own water),
+plus **W0 INFRA HOST BUILT** (infra.entry@0, INFRA_ENTRIES registry,
+5 route forms ring/along/across/into/over, crossings open/block/gap,
+T231–T234, test_fence proof; structure.linework refused = tier-A
+stays post-freeze; catalog guard = flipping entries later is data).
+Precinct credit flipped harbour_wall+quay; energy rows re-kinded.
+All pack exhibits + prop rows registered (nautical/arcane/wilds
+files + agrarian extended + 6 prop grid rows). Catalog ≈449/585.
+**OUTSTANDING VERIFICATION: full compiler suite not run whole**
+(targeted green: walls 30/fort 21/fabric 36/terrarium 26/infra 31 +
+stdlib+spec 1753 + coverage 115) — RUN FULL SUITE FIRST THING NEXT
+SESSION before any further commit. THEN: devworld emit+install to
+Prism (all new strips), P1 pirate/unicorn regenerate (both island
+vocabularies now live), W1 infra entries (crop_circle/quarantine_
+fence/barricade_line/crash_furrow — cordon rings THE HOLDING,
+crop_circle FLATTENS), remaining packs frontier/nile/east-asian,
+family-E re-kind tail, exhibit run-not-cell for test_fence. Ruling
+batch (9 small) still Kai's only open decision stack.
+
 **Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
 08-13): `--saves "/Users/kaihoward/Library/Application Support/
 PrismLauncher/instances/Fabulously Optimized/minecraft/saves"` on
