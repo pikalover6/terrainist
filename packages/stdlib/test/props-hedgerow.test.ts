@@ -121,14 +121,14 @@ describe("the agrarian expansion pack's props", () => {
   });
 
   /**
-   * The pack's three route-following entries are nobody's yet, and must stay
-   * that way: a hedgerow, a dry stone wall and a cart track are all runs
-   * between two points on the terrain, which is the linework engine's job and
-   * not something either registry can host.
+   * The pack's three route-following entries are the linework engine's job and
+   * never this registry's: a hedgerow, a dry stone wall and a cart track are
+   * all runs over ground nobody owns, and W3 gave all three to
+   * `infra.entry@0`. Implemented, and still not props.
    */
   it("leaves the pack's route-following entries alone", () => {
     for (const id of ["hedgerow", "dry_stone_wall", "cart_track"]) {
-      expect(structureById(id)?.status, id).toBe("not_started");
+      expect(structureById(id)?.status, id).toBe("implemented");
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
     }
   });

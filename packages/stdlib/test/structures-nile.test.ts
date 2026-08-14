@@ -290,10 +290,11 @@ describe("the Nile pack's registry", () => {
     // The pylon gate is §3.8's `infrastructure` row realised as a BUILDING,
     // and the row is left saying so — the `careening_beach` precedent.
     expect(structureById("pylon_gate")?.kind).toBe("infrastructure");
-    // The avenue of sphinxes is the pack's route follower and stays open: a
-    // paired rank at a fixed interval down a processional way is a sweep
-    // client, which neither registry can host.
-    expect(structureById("sphinx_avenue")?.status).toBe("not_started");
+    // The avenue of sphinxes is the pack's route follower, and W3 gave it the
+    // host it always wanted: a paired rank at a fixed bay down a processional
+    // way is `infra.entry@0`'s, which is why it is `implemented` here and still
+    // absent from both of this pack's registries.
+    expect(structureById("sphinx_avenue")?.status).toBe("implemented");
     expect(BUILDING_ARCHETYPES as readonly string[]).not.toContain("sphinx_avenue");
     // The pyramid is this pack's prop, not its archetype.
     expect(structureById("pyramid")?.kind).toBe("prop");

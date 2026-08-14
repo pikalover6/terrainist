@@ -373,6 +373,20 @@ export interface BuildingParams {
   /** True when the terrace's low-x / high-x end stands at an intersection. */
   readonly cornerStart?: boolean;
   readonly cornerEnd?: boolean;
+  /**
+   * `params.entrance` — how the way in is fitted out.
+   *
+   * `treatment` names a **catalog id** from the family-D set
+   * (`docs/INFRA-ENTRIES-v0.md` §2 D): `"blast_door"` or
+   * `"airlock_vestibule"`. Family D's doctrine is that a fitting is never a
+   * node — a blast door is what the way in is *made of*, and the way in is a
+   * column the port solver placed and the doorstep pass graded — so the only
+   * authoring surface for one is here, on the building that owns the door.
+   *
+   * Anything else is ignored by the grammar (the validator is what tells the
+   * author, with near-misses), and an absent `entrance` changes nothing at all.
+   */
+  readonly entrance?: { readonly treatment?: string };
 }
 
 /** Shutter probability per window when nothing says otherwise. */
@@ -1573,6 +1587,12 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
         // silently strand.
         floorCells: shell.interiorCells,
         blockAt: (x, y, z) => cells.get(`${x},${y},${z}`),
+        // `params.entrance.treatment` — the family-D fitting on the way in. Read
+        // through untouched: the fitting itself is what refuses a value it does
+        // not build, and the validator is what tells the author about one.
+        ...(typeof params.entrance?.treatment === "string"
+          ? { entranceTreatment: params.entrance.treatment }
+          : {}),
         // `params.decay`: the fit-out runs, and then the decay engine writes
         // over what it built. Clamped here rather than trusted — the grammar
         // never fails a document, and the validator is where an author hears

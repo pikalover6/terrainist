@@ -342,6 +342,16 @@ export interface FitOutContext {
   /** What earlier stages wrote at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
   /**
+   * `params.entrance.treatment` — the catalog's family-D fitting on the way in
+   * (`docs/INFRA-ENTRIES-v0.md` §2 D: an opening dressed, never a node).
+   *
+   * Read by `entrance-fittings.ts` alone, after every `furnish*` call, because
+   * it writes **over** the shell's own entrance. Absent, and not one cell
+   * changes — which is what keeps every document that asks for nothing
+   * byte-identical.
+   */
+  readonly entranceTreatment?: string;
+  /**
    * `params.decay` — 0..1, how far gone this building is (RUINS-PLAN §4.3).
    *
    * Read by the general decay pass `furnish` runs **after** every `furnish*`

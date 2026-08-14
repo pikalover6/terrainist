@@ -91,7 +91,30 @@ guardHangers closure-by-construction. All nine pack exhibits +
 prop rows registered (frontier/nile/eastern exhibit files authored by
 orchestrator from agents' envelope tables). Catalog **~483/585**;
 remaining not_started ≈ infra tail + family-D/E + water-movers.
-IN FLIGHT AT WRAP: devworld-0814b emit (all nine strips → Prism
+**GOAL RUN (Kai: "demo worlds are good"; /goal = finish all
+non-hard-blocked work, 08-14):** RULING BATCH CLOSED — Kai ratified
+status quo on terraces-stay-pristine / one collapse param /
+decline-drives-reclaim (zero code); survivor-yards SKIPPED by Kai →
+status quo held, noted open; five code-side rulings applied with
+documented defaults (STREET_BREAK_FLOOR already 0.5; shellTrees
+honestly documented; boreal_pine kerb → smooth_stone; E336 hint +
+water clause; light-band roof fragments join the legal-lost set).
+FAMILY-E re-kind tail done (8 rows; marina/careening/pylon verified
+already-correct). **INFRA TAIL LIVE (6 entries, ZERO host changes —
+first wave to pass the design's own acceptance test):**
+cannon_battery, hedgerow, dry_stone_wall, cart_track (declaresLevels
+— worn in, not laid on), boardwalk, sphinx_avenue; log_flume/
+sluice_box refused twice-over (no fall-following form + moving water
+is post-freeze fluid.channel). Kit §9c "peacetime fabric" + prepass
+clause. Run exhibit (test_fence: straight/diagonal/corner/climb +
+found gate) authored at exhibits/infra.ts + wired into devworld
+south of the context section. IN FLIGHT: family-D (blast_door +
+airlock_vestibule as host params; survived one API-drop resume;
+entrance-fittings module mid-write). THEN: build+verify, wave
+commit, P4–P7 battery refresh (frozen prompts 304–307) → Prism,
+devworld reinstall, funnel+artifact = GOAL COMPLETE. Hard-blocked
+remainder (F3 walk iteration, post-freeze machinery tail) excluded
+by definition. IN FLIGHT AT WRAP: devworld-0814b emit (all nine strips → Prism
 install as _all_packs) + P1 pirate/unicorn c3 generate (seed 301,
 teed — install _c3 to Prism + render + archive battery/candidates/
 p1-c3 on landing). MORNING QUEUE: P1 walk (the arc's thesis test),

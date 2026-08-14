@@ -25,6 +25,7 @@ import { describe, expect, it } from "vitest";
 import {
   ARRAY_DISHES,
   INFRA_ENTRY_IDS,
+  NON_NODE_IMPLEMENTED,
   PROP_NAMES,
   RESPONSE_PROP_NAMES,
   STRUCTURE_CATALOG,
@@ -93,8 +94,10 @@ describe("the response pack's props", () => {
    * them as `infra.entry@0` registry rows — and the thing this test actually
    * guards is unchanged by that: an entry is *a line, a chord or a treatment*
    * and is never a prop, so none of the seven may appear in `PROP_NAMES` and
-   * none of them is this pack's to build. The three that remain unbuilt are
-   * post-freeze work (family D's fittings and the `between` route form).
+   * none of them is this pack's to build. Family D's two fittings are built as
+   * well now, and by neither host: a fitting *in* a structure is a param on
+   * that structure. The one still waiting is `maglev_pylon`, which needs the
+   * `between` route form and a tier-A ground declaration.
    */
   it("leaves the pack's infrastructure entries to the infrastructure host", () => {
     for (const id of [
@@ -109,9 +112,17 @@ describe("the response pack's props", () => {
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
       expect(structureById(id)?.kind, id).toBe("infrastructure");
     }
-    for (const id of ["blast_door", "airlock_vestibule", "maglev_pylon"]) {
-      expect(structureById(id)?.status, id).toBe("not_started");
+    // Family D's two fittings are built now, and *not* by an entry: a fitting
+    // in another structure is a param on that structure
+    // (docs/INFRA-ENTRIES-v0.md §2 D), so both are credited through
+    // `NON_NODE_IMPLEMENTED` and neither is an `infra.entry@0` row. The
+    // `between` route form's pylon is the one still waiting.
+    for (const id of ["blast_door", "airlock_vestibule"]) {
+      expect(structureById(id)?.status, id).toBe("implemented");
+      expect(NON_NODE_IMPLEMENTED as readonly string[], id).toContain(id);
+      expect(INFRA_ENTRY_IDS as readonly string[], id).not.toContain(id);
     }
+    expect(structureById("maglev_pylon")?.status).toBe("not_started");
     for (const id of ["crop_circle", "quarantine_fence", "crash_furrow", "barricade_line"]) {
       expect(structureById(id)?.status, id).toBe("implemented");
       expect(INFRA_ENTRY_IDS as readonly string[], id).toContain(id);

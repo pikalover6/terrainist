@@ -689,6 +689,8 @@ footprint and the total height, walls *and* roof. The hard-won numbers:
 | `wing` | `{"size": [w, d], "side": …, "offset": n}` | an L- or T-shaped plan — see below |
 | `basement` | `true`, `3..5`, or `{"depth": 3..5}` | a cellar; see §10's tunnels |
 | `decay` | 0..1 | ruin **this one building**: the ordinary shell is built and furnished, then decayed over. 0.35 derelict, 0.6 ruined, 0.85 archaeology. For a whole quarter write `intent.decline` on the district instead — see *A ruined city is a district with a high `decline`* |
+| `entrance` | `{"treatment": "blast_door"}` | the **blast door**: iron leaves in a hydraulic frame, a concrete surround and a yellow-and-black band across the head, with a lever each side so it opens. Meant for `bunker_complex`, `underground_silo`, `bunker`, `pillbox`. It dresses the face only — the cut and the ramp down to it are the doorstep's, which grades every door already |
+| `entrance` | `{"treatment": "airlock_vestibule"}` | the **airlock**: a copper step-through sill, a second iron door one cell inside the first, and a lit porch projecting from the wall with a warning band round it. Meant for `hydroponics_bay`, `laboratory`, `field_station`, `bunker_complex`. Wants a room at least three cells deep behind the door |
 
 #### `wing` — L- and T-shaped footprints
 
@@ -2483,6 +2485,38 @@ prop or a district to end at and name it.
   "params": { "entry": "crash_furrow", "route": { "into": "saucer", "run": 56 } }
 }
 ```
+
+### The peacetime fabric
+
+The four above are an emergency. The six below are the ordinary lines a place
+already has — the boundary round a field, the wall along a lane, the walk in
+front of the shops — and they read on a walk for exactly the same reason: they
+are what a settlement has *between* its buildings. All six take their materials
+from the settlement's own theme unless the icon is the material, all six accept
+the forms in the table and no others, and all six **open** where a carriageway
+crosses, so a road never loses its surface to one.
+
+| entry | route | what it builds |
+|---|---|---|
+| `cannon_battery` | `along` a shore, or `ring` a headland | a firing platform with a parapet two courses proud on the seaward hand, a gun on its truck at every bay in front of it and the powder well back behind |
+| `hedgerow` | `along` a way, or `ring` a holding | leaves over a log heart on a bank of coarse dirt, three courses tall, seasonal flowers along it, and a gap wherever a track crosses — that gap **is** the field gate |
+| `dry_stone_wall` | `along` a way, or `ring` a holding | the upland field wall: one course wide, two tall, coped in the theme's accent stone, with a paired stile at intervals so it can be got over |
+| `cart_track` | `along` a way | two ruts of worn path with a grass baulk between them and nothing else at all — no kerb, no verge. It wears itself *into* the field rather than standing on it |
+| `boardwalk` | `along` a street | a plank sidewalk on posts, one course proud of grade, stepping aside at every cross-street — the frontier frontage's own walk |
+| `sphinx_avenue` | `along` a way | a paved processional way with a kerb each hand and a rank of small plinth-figures at a fixed bay, both sides, in step. The rhythm is the read; the sphinx itself is a `character.programs` landmark |
+
+```json
+{
+  "id": "field_boundary",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "hedgerow", "route": { "ring": "north_holding", "margin": 4 } }
+}
+```
+
+Two entries the catalog names are **not** here: `log_flume` and `sluice_box`.
+Both are a trough that follows a fall, and no route form expresses one — asking
+for either is `LOAM-T231` with the legal list attached.
 
 ### Rules worth knowing
 

@@ -196,7 +196,11 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
           "PROGRAM_GATE_FAILED",
           job.nodePath,
           `no site would take ${JSON.stringify(job.programId)}`,
-          "loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope",
+          // The water clause is the P5 sea-monster lesson: a water- or
+          // shore-seated program needs water in reach, and no amount of
+          // loosening on land will seat one inland. Default chosen under the
+          // never-wait rule, 2026-08-14; revisit on walk evidence.
+          "loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it",
         ),
       );
       continue;

@@ -162,6 +162,14 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   // standard is "a generator exists and can build it today", and it does.
   "harbour_wall",
   "quay",
+  // Family D — a fitting *in* another structure (docs/INFRA-ENTRIES-v0.md §2 D).
+  // Neither is a node and neither ever will be: a blast door is what the way in
+  // is made of, and the way in is a column the port solver placed. Both are
+  // reached by `"entrance": { "treatment": <this id> }` on the host building,
+  // which is the same footing the cellar styles above are on — a stage of the
+  // building grammar, named here because an author needs to know they can ask.
+  "blast_door",
+  "airlock_vestibule",
 ]);
 
 /**
@@ -1425,7 +1433,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   infra("storm_drain", "Storm drain"),
   infra("retaining_wall", "Retaining wall"),
   infra("power_pylon", "Power pylon"),
-  infra("radio_mast", "Radio mast"),
+  // A mast is a declared box and a yaw, not a line over ground nobody owns
+  // (docs/INFRA-ENTRIES-v0.md family E, 2026-08-14).
+  infra("radio_mast", "Radio mast", "not_started", { kind: "prop" }),
   infra("telegraph_line", "Telegraph line"),
   infra("street_lamp_run", "Street lighting run"),
   infra("city_gate", "City gate"),
@@ -1437,15 +1447,20 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   wat("canal_lock", "Canal lock"),
   wat("canal_basin", "Canal basin"),
   wat("sluice_gate", "Sluice gate"),
-  wat("watermill", "Watermill"),
+  // Family E again (docs/INFRA-ENTRIES-v0.md, 2026-08-14): the waterworks
+  // group's `infrastructure` kind is the builder's default, and a mill is a
+  // shell with an interior — a building.
+  wat("watermill", "Watermill", "not_started", { kind: "building" }),
   // A standing machine, not a network: it pumps where it stands.
   wat("windpump", "Windpump", "implemented", { kind: "prop" }),
   wat("millpond", "Millpond"),
   wat("reservoir", "Reservoir"),
   wat("drydock", "Dry dock", "implemented", { tags: ["prop"] }),
-  wat("floating_dock", "Floating dock"),
+  // Family E: a pontoon in one envelope, no network in it — a prop.
+  wat("floating_dock", "Floating dock", "not_started", { kind: "prop" }),
   wat("fish_ladder", "Fish ladder"),
-  wat("fishing_hut", "Fishing hut"),
+  // Family E: a hut is a shell with an interior — a building.
+  wat("fishing_hut", "Fishing hut", "not_started", { kind: "building" }),
   wat("irrigation_channel", "Irrigation channel"),
   wat("stepping_stones", "Stepping stones"),
 
@@ -2019,10 +2034,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nautical_pirate", "size_l"],
     note: "A broken hull driven up the strand — ribs open to the sky, the stern half gone, cargo spilled up the tideline. Distinct from Track A's submerged `sunken_ship`.",
   }),
-  mil("cannon_battery", "Shore battery", "not_started", {
+  mil("cannon_battery", "Shore battery", "implemented", {
     kind: "infrastructure",
     tags: ["nautical_pirate", "size_lin"],
-    note: "A sweep client: an earth-and-timber parapet with embrasures at intervals, guns on trucks behind them, shot piles and a ready magazine.",
+    note: "A firing platform with a parapet two courses proud on the seaward hand, a gun on its truck at every bay in front of it and the powder behind. `infra.entry@0`, `along` a shore or `ring` a headland; the gun is `martello_tower`'s dark cube stood on its truck.",
   }),
   mil("powder_magazine", "Powder magazine", "implemented", {
     tags: ["nautical_pirate", "size_s"],
@@ -2075,7 +2090,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A whitewashed stone cone on a headland with no light in it — the lighthouse's mute cousin, and cheap enough to put on three headlands.",
   }),
   mil("harbour_chain_tower", "Chain tower", "not_started", {
-    kind: "infrastructure",
+    // Family E (docs/INFRA-ENTRIES-v0.md, 2026-08-14): two props and a
+    // catenary — ship the pair as props; the chain hangs rather than sweeps
+    // and is refused until it is worth a program.
+    kind: "prop",
     tags: ["nautical_pirate", "size_l"],
     note: "The pair that closes a port: two towers on opposite moles with a chain slung between them across the water. Ships as a pair or not at all.",
   }),
@@ -2142,7 +2160,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "Detached treads climbing to a door, on `floating_platform`'s disguised-stem trick — a veiled thread carries each tread, and the eye reads the gap.",
   }),
   fan("warded_gate", "Warded gate", "not_started", {
-    kind: "infrastructure",
+    // Family E: `triumphal_arch` with different mouldings, and the shipped
+    // arch proves an arch over a road is a prop with a declared box
+    // (docs/INFRA-ENTRIES-v0.md, 2026-08-14).
+    kind: "prop",
     tags: ["arcane", "size_m"],
     note: "An arch across a road with a rune band up both piers and a glowing keystone; nothing hangs in the opening.",
   }),
@@ -2226,10 +2247,14 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_m"],
     note: "An armoured box body with an awning off one flank, map table under it and a mast of antennae.",
   }),
-  und("blast_door", "Blast door", "not_started", {
+  // Family D (docs/INFRA-ENTRIES-v0.md §2 D): a fitting *in* something else is
+  // never a node, so this is a param on the building that owns the door —
+  // `"entrance": { "treatment": "blast_door" }` — and it lives in
+  // NON_NODE_IMPLEMENTED for the same reason `cellar` does.
+  und("blast_door", "Blast door", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_m"],
-    note: "The way into a hillside: a slab-faced door in a concrete surround with a hydraulic frame, sunk in a cut with a ramp down to it. The P4 hideout's front page.",
+    note: 'The way into a hillside: iron leaves in a hydraulic frame, a concrete surround and a warning band across the head. Reached as a param on the host building — "entrance": { "treatment": "blast_door" } — on a bunker_complex, underground_silo, bunker or pillbox; the cut and the ramp down to it are the doorstep pass\'s, not a second digger\'s.',
   }),
   sci("hydroponics_bay", "Hydroponics bay", "implemented", {
     tags: ["alien_scifi", "size_l"],
@@ -2240,10 +2265,11 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_xs"],
     note: "A short pedestal with a swivelling head and a lamp, at a gate or on a roof parapet.",
   }),
-  mod("airlock_vestibule", "Airlock vestibule", "not_started", {
+  // Family D again, same doctrine and the same param.
+  mod("airlock_vestibule", "Airlock vestibule", "implemented", {
     kind: "infrastructure",
     tags: ["alien_scifi", "size_s"],
-    note: "A double-door chamber projecting from a wall with a step-through sill and a warning band round it.",
+    note: 'A double-door chamber at the way in: a copper step-through sill, a second iron plane one cell inside, and a lit porch projecting into the apron with a warning band round it. Reached as a param on the host building — "entrance": { "treatment": "airlock_vestibule" } — on a hydroponics_bay, laboratory, field_station or bunker_complex.',
   }),
   infra("maglev_pylon", "Guideway pylon", "not_started", {
     tags: ["alien_scifi", "size_lin"],
@@ -2256,25 +2282,25 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
 
   /* --- the agrarian pack (docs/CATALOG-EXPANSION-v0.md §3.5) --- */
-  rur("hedgerow", "Hedgerow", "not_started", {
+  rur("hedgerow", "Hedgerow", "implemented", {
     kind: "infrastructure",
     tags: ["agrarian", "size_lin"],
-    note: "The living boundary FARM-PLAN §14.2 named as missing: persistent leaves on a low bank, thickening at corners, with standard trees left in the line.",
+    note: "The living boundary FARM-PLAN §14.2 named as missing: leaves over a log heart on a bank of coarse dirt, seasonal flowers along it, and a gap wherever a track crosses — the field gate, found and never placed. `infra.entry@0`, `along` a way or `ring` a holding.",
   }),
-  rur("dry_stone_wall", "Dry stone wall", "not_started", {
+  rur("dry_stone_wall", "Dry stone wall", "implemented", {
     kind: "infrastructure",
     tags: ["agrarian", "size_lin"],
-    note: "The upland field wall: a battered double course with through-stones and a coping of stood stones. A sweep client, and what a hill town's fields want.",
+    note: "The upland field wall: one course wide, two tall, coped in the theme's accent stone, with a paired stile at intervals so it can be got over. `infra.entry@0`, `along` or `ring`.",
   }),
   rur("field_gate", "Field gate", "implemented", {
     kind: "prop",
     tags: ["agrarian", "size_xs"],
     note: "A five-bar gate hung between a hanging post and a slapping post, with a stile stone beside it. Every wall and hedge run wants one.",
   }),
-  rur("cart_track", "Cart track", "not_started", {
+  rur("cart_track", "Cart track", "implemented", {
     kind: "infrastructure",
     tags: ["agrarian", "size_lin"],
-    note: "Two ruts with a grass baulk between them, unpaved, following the ground rather than cutting it — the road engine's humblest profile.",
+    note: "Two ruts with a grass baulk between them, unpaved, following the ground rather than cutting it — the road engine's humblest profile. `infra.entry@0`, `along`; it declares the ground it found so the ruts are worn into the field rather than laid on it.",
   }),
   rur("cow_byre", "Byre", "implemented", {
     tags: ["agrarian", "size_m"],
@@ -2391,9 +2417,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["frontier_west", "size_m"],
     note: "The false front is the entry: a flat parapet screen carried a storey above the real roof, swing doors, a long bar and a stair to the rooms.",
   }),
-  infra("boardwalk", "Boardwalk", "not_started", {
+  infra("boardwalk", "Boardwalk", "implemented", {
     tags: ["frontier_west", "size_lin"],
-    note: "A raised plank sidewalk on posts with a step down at each cross-street and a post-and-rail edge — the frontage's own sweep profile.",
+    note: "A plank sidewalk on posts standing one course proud of grade, with a step down at each cross-street — the frontage's own sweep profile. `infra.entry@0`, `along` a street.",
   }),
   infra("water_tank_trestle", "Water tank", "implemented", {
     kind: "prop",
@@ -2471,10 +2497,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nile", "size_xl"],
     note: "building.grammar@0 archetype: two battered trapezoid towers rebuilt over the roof either side of a lower doorway, flagstaff grooves up the faces, banners standing on the tower tops. Tags: pylon_gate/pylon/temple_pylon/pylon_gateway; bare `gate` stays the gatehouse\'s. The `infrastructure` kind is the curator\'s and is left as written - the realisation is a building, the `careening_beach` precedent.",
   }),
-  mem("sphinx_avenue", "Avenue of sphinxes", "not_started", {
+  mem("sphinx_avenue", "Avenue of sphinxes", "implemented", {
     kind: "infrastructure",
     tags: ["nile", "size_lin"],
-    note: "Paired recumbent figures at a fixed interval down both sides of a processional way. A sweep client whose feature is the interval.",
+    note: "Paired plinth-figures at a fixed bay down both sides of a paved processional way — small chiselled-sandstone masses, NOT the bespoke-tier sphinx: the read is the rank and its rhythm. `infra.entry@0`, `along` a way.",
   }),
   wat("nilometer", "Nilometer", "implemented", {
     kind: "building",
@@ -2510,6 +2536,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "A perfect circular opening in a garden wall, coped round, with the path passing through it.",
   }),
   infra("paifang", "Paifang", "not_started", {
+    // Family E: `triumphal_arch` with different mouldings — a prop with a
+    // declared box (docs/INFRA-ENTRIES-v0.md, 2026-08-14).
+    kind: "prop",
     tags: ["east_asian", "size_l"],
     note: "A multi-bay ceremonial arch over a street with tiled eaves over each bay and a name board in the middle span.",
   }),
@@ -2536,6 +2565,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "The garden pavilion: a low crawl-in entry, a mat floor, a hearth recess and one alcove. Distinct from Track A's commercial `tea_house`.",
   }),
   infra("spirit_wall", "Spirit wall", "not_started", {
+    // Family E: a free-standing screen of fixed extent set inside one gate —
+    // a declared box and a yaw, not a route (docs/INFRA-ENTRIES-v0.md,
+    // 2026-08-14).
+    kind: "prop",
     tags: ["east_asian", "size_s"],
     note: "A free-standing screen wall set one pace inside a gate so the way in must turn.",
   }),

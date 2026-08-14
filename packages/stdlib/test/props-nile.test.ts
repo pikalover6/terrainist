@@ -107,12 +107,12 @@ describe("the Nile pack's props", () => {
   });
 
   /**
-   * §3.8's route follower is nobody's yet, and must stay that way: paired
-   * recumbent figures at a fixed interval down both sides of a processional
-   * way is a sweep client, and neither registry can host one.
+   * §3.8's route follower is a sweep client and neither registry can host one:
+   * W3 gave it to `infra.entry@0`, so it is implemented and still absent from
+   * `PROP_NAMES`.
    */
   it("leaves the pack's route-following entry alone", () => {
-    expect(structureById("sphinx_avenue")?.status).toBe("not_started");
+    expect(structureById("sphinx_avenue")?.status).toBe("implemented");
     expect(PROP_NAMES as readonly string[]).not.toContain("sphinx_avenue");
     // And the sphinx itself was ratified out to the bespoke tier: there is no
     // row at all, and adding one here would be a decision this pack cannot

@@ -98,15 +98,23 @@ describe("the East Asian pack's props", () => {
   });
 
   /**
-   * The pack's four infrastructure entries are nobody's yet, and must stay
-   * that way: neither registry can host a `kind: "infrastructure"` entry, and
+   * The pack's four unbuilt entries are nobody's yet, and must stay that way:
    * a status flipped without a generator is exactly what `catalog.test.ts`
    * exists to catch.
+   *
+   * `paifang` and `spirit_wall` were re-kinded to `prop` on 2026-08-14
+   * (docs/INFRA-ENTRIES-v0.md family E: a declared box and a yaw, not a route).
+   * The kind says who will host them; the status still says nobody has.
    */
-  it("leaves the pack's infrastructure entries alone", () => {
-    for (const id of ["moon_gate", "paifang", "castle_base_wall", "spirit_wall"]) {
+  it("leaves the pack's unbuilt entries alone", () => {
+    for (const [id, kind] of [
+      ["moon_gate", "infrastructure"],
+      ["paifang", "prop"],
+      ["castle_base_wall", "infrastructure"],
+      ["spirit_wall", "prop"],
+    ] as const) {
       expect(structureById(id)?.status, id).toBe("not_started");
-      expect(structureById(id)?.kind, id).toBe("infrastructure");
+      expect(structureById(id)?.kind, id).toBe(kind);
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
     }
   });

@@ -35,6 +35,8 @@
 
 import path from "node:path";
 
+import { buildInfraRunExhibit, INFRA_RUN_DEPTH, INFRA_RUN_WIDTH } from "./exhibits/infra.js";
+
 import {
   assignMaterials,
   nodeSeed,
@@ -156,6 +158,8 @@ export interface DevGrid {
   readonly propOrigin: { readonly x: number; readonly z: number };
   /** North-west corner of the context section, south of the prop grid. */
   readonly contextOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the infra run exhibit's band. */
+  readonly infraOrigin: { readonly x: number; readonly z: number };
   /** The context section's plan — strips of shaped ground and what stands on them. */
   readonly context: ContextSection;
 }
@@ -304,7 +308,13 @@ export function planDevGrid(): DevGrid {
   const contextOrigin = { x: 0, z };
   const context = planContextSection(contextOrigin.x, contextOrigin.z);
   maxX = Math.max(maxX, context.width);
-  const depthTotal = z + context.depth;
+  z += context.depth + DEV_GAP;
+
+  // The infra run, south of everything: it shapes its own slope band, and a
+  // run is reviewed as a run, not a cell (INFRA-ENTRIES §3.7).
+  const infraOrigin = { x: 0, z };
+  maxX = Math.max(maxX, INFRA_RUN_WIDTH);
+  const depthTotal = z + INFRA_RUN_DEPTH;
 
   const region: Region = {
     x0: -DEV_MARGIN,
@@ -321,6 +331,7 @@ export function planDevGrid(): DevGrid {
     rules,
     propOrigin,
     contextOrigin,
+    infraOrigin,
     context,
   };
 }
@@ -482,7 +493,19 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     z0: grid.contextOrigin.z,
   });
 
-  const structures = [...built.blocks, ...props.blocks, ...context.blocks];
+  // The infra run, after the context section: it grades its own band and
+  // sweeps one test_fence along a course with a straight, a diagonal, a
+  // corner, a climb, and a found gate at its carriageway.
+  const infraRun = buildInfraRunExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.infraOrigin.x,
+    grid.infraOrigin.z,
+    DEV_GROUND_Y,
+  );
+
+  const structures = [...built.blocks, ...props.blocks, ...context.blocks, ...infraRun.blocks];
 
   const emit = await emitTerrain({
     plan,

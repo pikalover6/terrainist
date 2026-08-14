@@ -463,6 +463,12 @@ export interface GreenSkinInput {
    *
    * Set `false` to compile the same world without the image — which is what the
    * differential tests do.
+   *
+   * **State, honestly:** the off-switch is read (`electShellTrees` is skipped
+   * when it is `false`) but nothing outside the differential tests ever sets
+   * it — there is no Loam-level param behind it. The parameter is kept as the
+   * TS-API surface that makes the with/without comparison possible: default
+   * chosen under the never-wait rule, 2026-08-14; revisit on walk evidence.
    */
   readonly shellTrees?: boolean;
 }

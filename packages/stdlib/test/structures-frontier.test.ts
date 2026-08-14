@@ -233,16 +233,18 @@ describe("the frontier West pack's building registry", () => {
   });
 
   /**
-   * The pack's two route-following entries are nobody's yet, and must stay
-   * that way: a boardwalk and a sluice box are both runs between two points on
-   * the terrain, which is the linework engine's job and not something the
-   * building registry can host.
+   * The pack's two route-following entries are the linework engine's, not this
+   * registry's, and both stay out of `BUILDING_ARCHETYPES` whatever their
+   * status: the boardwalk is `infra.entry@0`'s as of W3, and the sluice box is
+   * still open — a fall-following trough is a route form the host does not
+   * have (`docs/INFRA-ENTRIES-v0.md` §4, and the note over the W2/W3 rows).
    */
   it("leaves the pack's route-following entries alone", () => {
     for (const id of ["boardwalk", "sluice_box"]) {
-      expect(structureById(id)?.status, id).toBe("not_started");
       expect(BUILDING_ARCHETYPES as readonly string[], id).not.toContain(id);
     }
+    expect(structureById("boardwalk")?.status).toBe("implemented");
+    expect(structureById("sluice_box")?.status).toBe("not_started");
   });
 });
 

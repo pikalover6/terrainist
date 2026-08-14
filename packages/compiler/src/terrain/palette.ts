@@ -267,7 +267,12 @@ export const STREET_MATERIALS_BY_THEME: Readonly<Record<string, StreetMaterials>
       worn: "minecraft:deepslate_bricks",
       marking: "minecraft:polished_diorite",
       lane: "minecraft:gravel",
-      kerb: "minecraft:polished_deepslate",
+      // The kerb was polished deepslate — the same dark stone as the
+      // carriageway, so the edge of the road disappeared into the road. Pale
+      // smooth stone reads as an edge at a glance and stays inside the boreal
+      // palette. Default chosen under the never-wait rule, 2026-08-14;
+      // revisit on walk evidence.
+      kerb: "minecraft:smooth_stone",
       course: "minecraft:deepslate_tiles",
     }),
     // Chalk downs: pale, dry, andesite-and-smooth-stone.
@@ -482,7 +487,9 @@ export const GROUND_MATERIALS_BY_THEME: Readonly<Record<string, GroundMaterials>
   // against it and the walls are the older cobble the town was built from.
   boreal_pine: Object.freeze({
     pavement: "minecraft:andesite",
-    kerb: "minecraft:polished_deepslate",
+    // Same ruling as the street table's kerb: pale against the deepslate
+    // carriageway instead of a second tone of it (2026-08-14).
+    kerb: "minecraft:smooth_stone",
     tread: "minecraft:polished_andesite",
     revetment: "minecraft:cobblestone",
     coping: "minecraft:stone_bricks",

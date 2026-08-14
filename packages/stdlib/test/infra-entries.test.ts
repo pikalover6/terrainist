@@ -33,6 +33,16 @@ const AREA_CONTEXT: InfraContext = { ...CONTEXT, extent: { width: 60, depth: 60 
 /** W1's four, in registry order — P2's world (`docs/INFRA-ENTRIES-v0.md` §4). */
 const W1 = ["quarantine_fence", "barricade_line", "crash_furrow", "crop_circle"] as const;
 
+/** W2's one and W3's five — the peacetime tail, in registry order. */
+const TAIL = [
+  "cannon_battery",
+  "hedgerow",
+  "dry_stone_wall",
+  "cart_track",
+  "boardwalk",
+  "sphinx_avenue",
+] as const;
+
 describe("the registry's shape", () => {
   it("keys every row by its own id", () => {
     for (const [key, def] of Object.entries(INFRA_ENTRIES)) expect(def.id).toBe(key);
@@ -72,17 +82,11 @@ describe("the registry's shape", () => {
   });
 });
 
-describe("W0's host, W1's four", () => {
-  it("carries the fixture and P2's four, and only the fixture is internal", () => {
-    expect(Object.keys(INFRA_ENTRIES)).toEqual([
-      INFRA_TEST_ENTRY,
-      "quarantine_fence",
-      "barricade_line",
-      "crash_furrow",
-      "crop_circle",
-    ]);
+describe("W0's host, W1's four, and the W2/W3 tail", () => {
+  it("carries the fixture, P2's four and the tail — and only the fixture is internal", () => {
+    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL]);
     expect(infraEntry(INFRA_TEST_ENTRY)?.internal).toBe(true);
-    for (const id of W1) expect(infraEntry(id)?.internal, id).toBeUndefined();
+    for (const id of [...W1, ...TAIL]) expect(infraEntry(id)?.internal, id).toBeUndefined();
   });
 
   it("keeps internal rows out of the catalog-backed id set", () => {
@@ -90,7 +94,7 @@ describe("W0's host, W1's four", () => {
     // other in both directions; an internal row would fail the reverse
     // direction, and excluding it here is what makes the guard exact rather
     // than weakened to a one-way check.
-    expect(INFRA_ENTRY_IDS).toEqual([...W1]);
+    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL]);
     expect(INFRA_ENTRY_IDS).not.toContain(INFRA_TEST_ENTRY);
   });
 

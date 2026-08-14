@@ -810,7 +810,9 @@ describe("district street materials", () => {
     });
     const counts = written(p, result.road);
     expect(counts.get("cobbled_deepslate") ?? 0).toBeGreaterThan(0);
-    expect(counts.get("polished_deepslate") ?? 0).toBeGreaterThan(0);
+    // The boreal kerb became pale smooth stone on 2026-08-14 — polished
+    // deepslate was the carriageway's own tone, so the edge vanished.
+    expect(counts.get("smooth_stone") ?? 0).toBeGreaterThan(0);
     expect(counts.get("gray_concrete") ?? 0).toBe(0);
   });
 

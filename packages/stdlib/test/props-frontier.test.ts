@@ -104,17 +104,17 @@ describe("the frontier West pack's props", () => {
   });
 
   /**
-   * The pack's two route-following entries are nobody's yet, and must stay
-   * that way: a boardwalk and a sluice box are both runs between two points on
-   * the terrain — a frontage-following sweep profile and a fall-following
-   * flume — which is the linework engine's job and not something either
-   * registry can host.
+   * The pack's two route-following entries are the linework engine's, not this
+   * registry's, and neither is ever a prop: the boardwalk is `infra.entry@0`'s
+   * as of W3, and the sluice box stays open because a fall-following trough is
+   * a route form the host does not have.
    */
   it("leaves the pack's route-following entries alone", () => {
     for (const id of ["boardwalk", "sluice_box"]) {
-      expect(structureById(id)?.status, id).toBe("not_started");
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
     }
+    expect(structureById("boardwalk")?.status).toBe("implemented");
+    expect(structureById("sluice_box")?.status).toBe("not_started");
   });
 
   it("declares the box it builds in, and builds inside it", () => {

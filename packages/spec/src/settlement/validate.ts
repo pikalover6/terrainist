@@ -2407,6 +2407,37 @@ function validateBuildingParams(
       out.push(error("STRUCTURE_PARAM", at, `"${key}" must be an object, got ${describe(v)}`, key === "entrance" ? 'write "entrance": { "port": "door", "porch": false, "steps": true }' : 'write "tower": { "count": 2, "height": 12, "placement": "corner" }'));
     }
   }
+  validateEntranceTreatment(out, at, params["entrance"]);
+}
+
+/**
+ * The entrance fittings — the catalog's **family D**
+ * (`docs/INFRA-ENTRIES-v0.md` §2 D).
+ *
+ * A fitting *in* another structure is never a node: a blast door is what the
+ * way in is made of, and the way in is a column the port solver placed. So the
+ * one authoring surface is `"entrance": { "treatment": "blast_door" }` on the
+ * building that owns the door, and the vocabulary is closed for the reason
+ * every closed vocabulary in this compiler is closed — a near miss should be a
+ * sentence, not a silently unfitted door.
+ */
+const ENTRANCE_TREATMENTS = ["blast_door", "airlock_vestibule"] as const;
+
+function validateEntranceTreatment(out: LoamDiagnostic[], at: string, value: unknown): void {
+  if (!isObject(value)) return;
+  const treatment = (value as Obj)["treatment"];
+  if (treatment === undefined) return;
+  if (typeof treatment === "string" && (ENTRANCE_TREATMENTS as readonly string[]).includes(treatment)) {
+    return;
+  }
+  out.push(
+    error(
+      "STRUCTURE_PARAM",
+      at,
+      `"entrance.treatment" = ${describe(treatment)} is not a fitting this grammar builds`,
+      `use one of: ${ENTRANCE_TREATMENTS.join(", ")} — a blast door suits a bunker_complex, underground_silo, bunker or pillbox; an airlock vestibule a hydroponics_bay, laboratory, field_station or bunker_complex`,
+    ),
+  );
 }
 
 /**

@@ -307,9 +307,11 @@ describe("the nautical pack's registry", () => {
     }
     // The careening beach is §3.2's one `infrastructure` row realised as a
     // prop, and the row is left saying so — the `curtain_wall` precedent. The
-    // shore battery, the other one, is a sweep client and stays open.
+    // shore battery, the other one, is a sweep client and is now `INFRA_ENTRIES`'
+    // own (W2): it belongs to `infra.entry@0` and to neither registry here.
     expect(structureById("careening_beach")?.kind).toBe("infrastructure");
-    expect(structureById("cannon_battery")?.status).toBe("not_started");
+    expect(structureById("cannon_battery")?.status).toBe("implemented");
+    expect(BUILDING_ARCHETYPES as readonly string[]).not.toContain("cannon_battery");
   });
 });
 

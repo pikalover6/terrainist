@@ -112,9 +112,10 @@ describe("infra.entry@0 — the entry id (LOAM-T231)", () => {
   });
 
   it("names every legal value in the hint, always", () => {
-    // An entry from a wave that has not landed: `hedgerow` is W3's, and until
+    // An entry from a wave that has not landed: `sluice_box` is W3's other
+    // trough and is refused for want of a fall-following route form, and until
     // it is a row the honest answer is the list of the ones that are.
-    const bad = doc([entry({ entry: "hedgerow", route: { ring: "holding" } })]);
+    const bad = doc([entry({ entry: "sluice_box", route: { along: "creek" } })]);
     expect(names(bad)).toContain("INFRA_ENTRY_PARAM");
     for (const id of KNOWN_INFRA_ENTRIES) expect(hints(bad).join(" ")).toContain(id);
   });

@@ -343,6 +343,10 @@ import {
 
 export * from "./archetypes-depths.js";
 
+import { fitEntranceTreatment } from "./entrance-fittings.js";
+
+export * from "./entrance-fittings.js";
+
 import { HIGHRISE_ARCHETYPES, highriseArchetypeOfTags } from "./highrise.js";
 // Not re-exported here: `structures/index.ts` exports the terrace directly, and
 // exporting it twice through the same barrel is an ambiguity TypeScript
@@ -797,6 +801,8 @@ interface FurnishRequest {
   readonly floorCells: readonly { readonly x: number; readonly z: number }[];
   /** What the earlier stages have already written at a cell, if anything. */
   readonly blockAt: (x: number, y: number, z: number) => LocalVoxelOp | undefined;
+  /** `params.entrance.treatment` — family D's fitting. See {@link FitOutContext}. */
+  readonly entranceTreatment?: string;
   /**
    * `params.decay` — how far gone this one building is, 0..1 (RUINS-PLAN §4.3).
    *
@@ -1090,6 +1096,7 @@ export function furnish(r: FurnishRequest): number {
     roofTop: r.roofTop,
     floorCells: r.floorCells,
     blockAt: r.blockAt,
+    ...(r.entranceTreatment === undefined ? {} : { entranceTreatment: r.entranceTreatment }),
     ...(r.decay === undefined ? {} : { decay: r.decay }),
     ...(r.decayReport === undefined ? {} : { decayReport: r.decayReport }),
   };
@@ -1133,6 +1140,11 @@ export function furnish(r: FurnishRequest): number {
   n += furnishDepths(ctx);
   n += furnishWing(ctx);
   n += furnishUpperFloors(ctx);
+  // The family-D entrance fitting, last of the fit-outs and before the decay:
+  // it writes over the shell's own leaf, frame and awning, so it has to be the
+  // last hand on the door — and a ruined building's blast door is the ordinary
+  // one decayed, which is the ruin law and why it is not after the decay pass.
+  n += fitEntranceTreatment(ctx);
   // --- the decay (RUINS-PLAN-v0 WP-2) --------------------------------------
   // **Last, and after every `furnish*` pass**, because THE RUIN LAW says a
   // ruined building is the ordinary shell fit-out DECAYED: the same shell is

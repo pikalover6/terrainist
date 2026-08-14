@@ -308,6 +308,14 @@ describe("the walking agent", () => {
    * thing that moves between them is the plan context. That is what makes the
    * exemption non-vacuous rather than a rule that quietly stopped working:
    * strip the decay report and the findings come straight back.
+   *
+   * **Scope, extended 2026-08-14:** the legal set is a decayed *upper storey*
+   * AND the **light-band roof fragments** a ruined shell leaves standing — a
+   * surviving scrap of roof with no stair left to it is the same fact as a
+   * lost storey, one course higher, and making it reachable would mean
+   * rebuilding the stair the decay deliberately took. The ground floor is
+   * still guaranteed and is never forgiven (the last case below). Default
+   * chosen under the never-wait rule, 2026-08-14; revisit on walk evidence.
    */
   describe("a decayed shell's lost upper storey", () => {
     it("still fails on an intact building — the exemption reaches no further", async () => {

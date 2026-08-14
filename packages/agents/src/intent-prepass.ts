@@ -549,6 +549,23 @@ also say what it ends at (a bespoke landmark, usually).
 Keep the town's own era and palette while you do it — see the era note above:
 the horror is modern things standing over ordinary ones.
 
+PEACETIME HAS FABRIC TOO, AND IT IS THE SAME FIELD.
+An ordinary place's lines go in the same "infra" token and are just as much of
+the walk: hedgerow / dry_stone_wall round a holding or along a lane, cart_track
+between them, boardwalk along a frontier street, sphinx_avenue up to a temple,
+cannon_battery along a defended shore — each one against a place it borders.
+
+A FITTING IS NOT A THING — IT IS HOW A DOOR IS MADE.
+blast_door and airlock_vestibule are not props, not buildings and not entries:
+each is the WAY IN to a building, written on that building. Name them in
+"tokens" against the building they belong to and the author writes the param:
+  "fittings": "blast_door on the hillside bunker_complex; airlock_vestibule on
+  the hydroponics_bay"
+A blast door suits a bunker_complex, underground_silo, bunker or pillbox; an
+airlock a hydroponics_bay, laboratory, field_station or bunker_complex. Write
+one only when the prompt implies a way in that is sealed — a hideout, a shelter,
+a clean room, a quarantine.
+
 ONE PLACE PER TOKEN — DO NOT MERGE PLACES.
 If the prompt names SEVERAL distinct places (two islands, a city and a ruin),
 you must NOT write one "character" block covering both: an averaged intent is

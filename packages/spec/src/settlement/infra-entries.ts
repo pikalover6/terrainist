@@ -38,6 +38,16 @@ export const KNOWN_INFRA_ENTRIES = [
   "barricade_line",
   "crash_furrow",
   "crop_circle",
+  // W2 — P1's shore battery, the one row that prompt actually gains (the
+  // harbour wall and the quay are `precinct.harbour@0`'s and always were).
+  "cannon_battery",
+  // W3 — the cheap tail: peacetime fabric, every one of it a line beside or
+  // around something the compiler already placed.
+  "hedgerow",
+  "dry_stone_wall",
+  "cart_track",
+  "boardwalk",
+  "sphinx_avenue",
 ] as const;
 
 /** An entry id. */
@@ -64,6 +74,17 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   barricade_line: Object.freeze(["across"]),
   crash_furrow: Object.freeze(["into"]),
   crop_circle: Object.freeze(["over"]),
+  // W2/W3. The same narrowness, and the same teaching: a battery lines a shore
+  // or rings a headland, a hedge and a field wall bound something or run beside
+  // a way, and a track, a boardwalk and a processional avenue are all a line
+  // *along* a way somebody else drew. None of them goes `across` anything —
+  // that form belongs to the entries whose point is stopping a street.
+  cannon_battery: Object.freeze(["along", "ring"]),
+  hedgerow: Object.freeze(["along", "ring"]),
+  dry_stone_wall: Object.freeze(["along", "ring"]),
+  cart_track: Object.freeze(["along"]),
+  boardwalk: Object.freeze(["along"]),
+  sphinx_avenue: Object.freeze(["along"]),
 });
 
 /** True for an entry the registry knows. */

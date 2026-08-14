@@ -816,6 +816,8 @@ export interface StreetBreakUp {
  * the worst ground line up with the worst buildings, which is the difference
  * between a ruined quarter and a uniformly scruffy one.
  */
+/* 0.5 is the ratified value: default chosen under the never-wait rule,
+ * 2026-08-14; revisit on walk evidence. */
 export const STREET_BREAK_FLOOR = 0.5;
 
 /** Hash salts for the break draw and the soil it picks — positional only. */

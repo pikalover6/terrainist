@@ -110,15 +110,22 @@ describe("the arcane pack's props", () => {
   });
 
   /**
-   * The pack's two infrastructure entries are nobody's yet, and must stay that
-   * way: neither registry can host a `kind: "infrastructure"` entry, and a
+   * The pack's two unbuilt entries are nobody's yet, and must stay that way: a
    * status flipped without a generator is exactly what `catalog.test.ts`
    * exists to catch.
+   *
+   * `warded_gate` was re-kinded to `prop` on 2026-08-14
+   * (docs/INFRA-ENTRIES-v0.md family E: `triumphal_arch` with different
+   * mouldings). The kind says who will host it; the status still says nobody
+   * has, which is what this test is really for.
    */
-  it("leaves the pack's infrastructure entries alone", () => {
-    for (const id of ["floating_stair", "warded_gate"]) {
+  it("leaves the pack's unbuilt entries alone", () => {
+    for (const [id, kind] of [
+      ["floating_stair", "infrastructure"],
+      ["warded_gate", "prop"],
+    ] as const) {
       expect(structureById(id)?.status, id).toBe("not_started");
-      expect(structureById(id)?.kind, id).toBe("infrastructure");
+      expect(structureById(id)?.kind, id).toBe(kind);
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
     }
   });

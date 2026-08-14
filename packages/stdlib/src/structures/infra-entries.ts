@@ -597,13 +597,362 @@ function cropCircleStamp(ctx: InfraContext): InfraAreaStamp {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* W2 + W3 — the content tail (docs/INFRA-ENTRIES-v0.md §4)                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The rows below are the design's W2 and W3: `cannon_battery` (P1's shore
+ * battery), and the cheap tail — `hedgerow`, `dry_stone_wall`, `cart_track`,
+ * `boardwalk`, `sphinx_avenue`. Every one of them is a row and a function, and
+ * **not one line of `structures/` code moved to land them**, which is the
+ * acceptance test §3.3 states for itself and the first wave that gets to pass
+ * it whole.
+ *
+ * ## Where the materials come from
+ *
+ * W1's four are an emergency and their materials are fixed, for the reason
+ * stated above them: a theme-derived cordon would be the settlement agreeing
+ * with itself about a catastrophe. **These are peacetime fabric and the rule
+ * inverts.** A hedgerow, a dry stone wall, a cart track and a boardwalk are
+ * built by the same people, out of the same valley, as the houses they run
+ * between, so they take the theme's own wood and stone
+ * ({@link hedgeWood}, {@link entryStone}). The two whose *icon* is the
+ * material — a shore battery's dark guns, an avenue of sandstone figures —
+ * stay fixed, because a sphinx avenue in cobblestone is not a sphinx avenue.
+ *
+ * ## What is not here, and why
+ *
+ * `log_flume` and `sluice_box` are W3's other two and are **deliberately
+ * absent**. Both are a trough that follows a *fall*, and the host has no route
+ * form that expresses one: `along` needs a corridor somebody else drew, and
+ * `into` gives a straight bearing and a length — the bearing is chosen by the
+ * steepest rise out of the anchor, which makes the run *start* high, but
+ * nothing anywhere makes it *stay* falling. Over a saddle a flume is buried at
+ * one end and hanging at the other, and a column needing more footing than
+ * `INFRA_MAX_FILL` is dropped whole, so what a walker would find is a trestle
+ * full of holes and an `LOAM-T234` explaining it. The water in the trough is
+ * the second refusal and the design already made it: moving water is a
+ * `fluid.channel` declaration and §4 puts it post-freeze with `dam` and `weir`.
+ * A fall-following route form is honest work; forcing one of these two through
+ * `into` is not.
+ */
+
+/** Woods that have a leaf block. A palette's `log` role may be concrete. */
+const LEAFY_WOODS: readonly string[] = Object.freeze([
+  "oak",
+  "spruce",
+  "birch",
+  "dark_oak",
+  "jungle",
+  "acacia",
+  "cherry",
+  "mangrove",
+  "pale_oak",
+]);
+
+/** The hedge's own timber: the theme's first wood that is actually a tree. */
+function hedgeWood(theme: MaterialTheme | undefined): { log: string; leaves: string } {
+  const set = theme?.woods.find((w) => LEAFY_WOODS.includes(w.id));
+  const id = set?.id ?? "oak";
+  return { log: `${id}_log`, leaves: `${id}_leaves` };
+}
+
+/** The theme's first masonry, or the cobble every fallback in this repo uses. */
+function entryStone(theme: MaterialTheme | undefined): { primary: string; accent: string } {
+  const set = theme?.stones[0];
+  return {
+    primary: set?.primary ?? "cobblestone",
+    accent: set?.accent ?? "stone_bricks",
+  };
+}
+
+/** Columns between one gun and the next — the battery's own bay. */
+const EMBRASURE = 7;
+
+/**
+ * `cannon_battery` — the shore battery (W2, P1's one new row).
+ *
+ * Asymmetric, because a battery has a sea side and a land side and the whole
+ * read is that it faces one way: a firing platform straddling the line, a
+ * parapet standing two courses proud on the seaward hand, guns at every bay in
+ * front of it and the powder behind, well back from them.
+ *
+ * **The embrasures are the gun bays, not a notch in the parapet.** A swept
+ * cross-section has one cap for the whole run — there is no per-index
+ * crenellation in the vocabulary, and inventing one for a single row would be
+ * exactly the eighth band role §5 refuses. So the gun stands *outside* the
+ * parapet band, at the platform's own course, with the parapet crest above and
+ * behind it: from the water you read a wall with dark muzzles set in it at a
+ * regular bay, which is what an embrasured battery looks like from the only
+ * place anybody looks at one.
+ *
+ * The gun is the `martello_tower`'s, one axis short. That tower draws a
+ * horizontal barrel with hinged trapdoor trucks because it may write block
+ * states; a fitting is a column of default states, so this is the same gun
+ * stood on its truck: a wooden bed on the ground and a `polished_blackstone`
+ * breech on it — the pack's dark cube, which is what a gun has to be in a
+ * medium with no dark metal.
+ */
+function cannonBatteryProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/cannon_battery",
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    asymmetric: true,
+    bands: [
+      {
+        id: "platform",
+        role: "deck",
+        width: 3,
+        centred: true,
+        surface: stone.primary,
+        fill: stone.accent,
+      },
+      {
+        id: "parapet",
+        role: "parapet",
+        width: 2,
+        surface: stone.primary,
+        fill: stone.accent,
+        cap: { height: 2, block: stone.primary },
+      },
+    ],
+    features: [
+      // Seaward of the parapet, at the platform's own course: the muzzle in
+      // the embrasure. Landward and half a bay out of step with it, the powder,
+      // which is never stacked beside the gun that would set it off.
+      { id: "gun", pitch: EMBRASURE, at: "interval", offset: 4 },
+      { id: "powder", pitch: EMBRASURE, phase: 3, at: "interval", offset: -3 },
+    ],
+  };
+}
+
+/**
+ * `hedgerow` — the living boundary (W3, agrarian).
+ *
+ * Three columns wide and three courses tall on grade: a log heart with two
+ * courses of leaf over it, and a lower leaf shoulder either side on a bank of
+ * coarse dirt. The leaves stand directly on and beside the log at every
+ * column, so a hedge is never more than two blocks from its own timber and
+ * nothing in it decays when the game first ticks it.
+ *
+ * `crossings: "open"` is the field gate: where a cart track crosses the line
+ * the hedge stops either side of it and the gap *is* the gateway — found, never
+ * placed, exactly as the cordon's gate is. That is also why the row takes
+ * `along` and `ring` and nothing else: a hedge is a boundary of something or a
+ * line beside a way, and a hedge thrown across a road is a mistake with a
+ * diagnostic already written for it.
+ */
+function hedgerowProfile(ctx: InfraContext): InfraSweptProfile {
+  const wood = hedgeWood(ctx.theme);
+  return {
+    id: "infra.entry@0/hedgerow",
+    // A hedge is planted on the ground it grows out of: it follows the grade
+    // and never steps, which is the whole difference between a hedge and a
+    // wall on the same line.
+    follow: "grade",
+    maxGrade: 2,
+    crossing: "stop",
+    bands: [
+      {
+        id: "heart",
+        role: "core",
+        width: 1,
+        centred: true,
+        surface: wood.log,
+        fill: "coarse_dirt",
+        cap: { height: 2, block: wood.leaves },
+      },
+      {
+        id: "shoulder",
+        role: "verge",
+        width: 1,
+        surface: "coarse_dirt",
+        fill: "coarse_dirt",
+        cap: { height: 1, block: wood.leaves },
+      },
+    ],
+    // Sparse, off the hedge on both hands, and out of step with each other so
+    // the two never come up in the same column of the run.
+    features: [
+      { id: "may", pitch: 9, at: "interval", offset: 3 },
+      { id: "campion", pitch: 11, phase: 5, at: "interval", offset: -3 },
+    ],
+  };
+}
+
+/**
+ * `dry_stone_wall` — the upland field wall (W3, agrarian).
+ *
+ * One course wide, two courses tall, with a coping of the theme's accent stone
+ * stood on top of its own body — the read that separates a field wall from a
+ * garden wall at fifty blocks. Full cubes throughout and no `*_wall` block: a
+ * connective block in a swept cap is `connection.stale` waiting to happen, and
+ * the registry default the design asks for is the curtain wall's
+ * every-entry-a-full-cube rule.
+ *
+ * The stiles are a fitting each hand at the same pitch and phase, so they are
+ * a *pair* — one step up on the field side and one down on the lane side,
+ * which is what a stile is. A single block either side of a two-course wall is
+ * climbable in both directions, and a wall a walker cannot get over is a wall
+ * the walkability audit has an opinion about.
+ */
+function dryStoneWallProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/dry_stone_wall",
+    // Stepped, not graded: a dry wall is laid in level courses and takes a
+    // slope as a series of drops, which is exactly what `step` means here.
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "course",
+        role: "core",
+        width: 1,
+        centred: true,
+        surface: stone.primary,
+        fill: stone.primary,
+        cap: { height: 1, block: stone.accent },
+      },
+    ],
+    features: [
+      { id: "stile_field", pitch: 17, at: "interval", offset: 2 },
+      { id: "stile_lane", pitch: 17, at: "interval", offset: -2 },
+    ],
+  };
+}
+
+/**
+ * `cart_track` — the road engine's humblest profile (W3, agrarian).
+ *
+ * Two ruts of `dirt_path` at one column either hand and a baulk of grass
+ * between them, and **nothing else at all**: no kerb, no verge, no camber, no
+ * furniture. What makes it a track rather than a path of blocks laid on a lawn
+ * is that it declares its levels: the run commits the ground it *found* through
+ * the ground contract at `sweep.run`, and the materials go on the resolver's
+ * answer as the top course of the column, so the ruts are worn *into* the field
+ * rather than standing one proud of it. That is the same machinery
+ * `crash_furrow` uses to cut below the ground, asking it for nothing at all.
+ *
+ * `crossings: "open"` is the honest value even though a track blocks nothing:
+ * where a real carriageway crosses, the road's own surface is what a walker
+ * should meet, and a track that repainted a street's top course would be
+ * `road.proud`'s inverse — a lane of dirt through a paved junction.
+ *
+ * The baulk reads the theme's one statement about its country: a dry palette
+ * gets coarse dirt between the ruts, because a green baulk in a sun-baked
+ * valley is the same mistake `aridAmbient` was added to fix.
+ */
+function cartTrackProfile(ctx: InfraContext): InfraSweptProfile {
+  const baulk = ctx.theme?.aridAmbient === true ? "coarse_dirt" : "grass_block";
+  return {
+    id: "infra.entry@0/cart_track",
+    // Following the ground rather than cutting it is the catalog note's own
+    // words, and `grade` is that sentence in the vocabulary.
+    follow: "grade",
+    maxGrade: 3,
+    crossing: "stop",
+    bands: [
+      { id: "baulk", role: "verge", width: 1, centred: true, surface: baulk, fill: "dirt" },
+      { id: "rut", role: "carriageway", width: 1, surface: "dirt_path", fill: "coarse_dirt" },
+    ],
+  };
+}
+
+/**
+ * `boardwalk` — the frontier street's edge (W3, frontier West).
+ *
+ * Planks on posts, one course proud of grade: the deck straddles the line
+ * three columns wide, its fill is the theme's own log so the walk stands on
+ * timber rather than floating over a gap, and its surface is the planks a
+ * walker's feet are actually on. One course proud is the entry's whole
+ * geometry — a boardwalk flush with the street is a pavement, and two courses
+ * proud is a verandah nobody can step onto.
+ *
+ * `crossings: "open"` is the step down at each cross-street, and it costs
+ * nothing: where the carriageway claims the line the deck stops, the road keeps
+ * its surface, and what is left is exactly the gap a frontage has at every
+ * corner.
+ */
+function boardwalkProfile(ctx: InfraContext): InfraSweptProfile {
+  // The theme's own first timber, both roles from the same set: a deck of one
+  // wood on posts of another is a palette accident, not a choice.
+  const set = ctx.theme?.woods[0];
+  const planks = set?.planks ?? "oak_planks";
+  const posts = set?.log ?? "oak_log";
+  return {
+    id: "infra.entry@0/boardwalk",
+    // Level courses with a step at each grade change: a plank deck is built
+    // flat and the frontier answer to a slope is another step, not a ramp.
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      { id: "deck", role: "walkway", width: 3, centred: true, surface: planks, fill: posts },
+    ],
+  };
+}
+
+/** Columns between one pair of figures and the next, down the whole avenue. */
+const SPHINX_BAY = 9;
+
+/**
+ * `sphinx_avenue` — the processional way (W3, nile).
+ *
+ * A paved way five columns wide with a kerb either hand, and a figure standing
+ * off each kerb at a fixed bay, both sides, in step — which is the entry's
+ * whole read: not the figures, the *rank* of them, the same distance apart all
+ * the way to the thing at the end.
+ *
+ * The figures are **plinth-figures and deliberately small** — a cut-sandstone
+ * plinth carrying two courses of chiselled mass. The real sphinx was ratified
+ * out to the bespoke tier and is not this: a fitting is a column of blocks, an
+ * icon with a face is a program, and a row that tried to draw a sphinx out of
+ * three cubes would be a worse sphinx *and* a worse avenue. What a rank of
+ * small dark masses at a fixed interval buys is the one thing a processional
+ * way needs, which is rhythm.
+ *
+ * Fixed sandstone, not the theme's stone, and that is the icon rule §3.3 leaves
+ * to the row: an avenue of cobblestone figures is not an avenue of sphinxes.
+ */
+function sphinxAvenueProfile(): InfraSweptProfile {
+  return {
+    id: "infra.entry@0/sphinx_avenue",
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "way",
+        role: "walkway",
+        width: 5,
+        centred: true,
+        surface: "smooth_sandstone",
+        fill: "sandstone",
+      },
+      { id: "kerb", role: "kerb", width: 1, surface: "cut_sandstone", fill: "sandstone" },
+    ],
+    // The pair: one pitch, one phase, one on each hand, clear of the kerb.
+    features: [
+      { id: "figure_east", pitch: SPHINX_BAY, at: "interval", offset: 5 },
+      { id: "figure_west", pitch: SPHINX_BAY, at: "interval", offset: -5 },
+    ],
+  };
+}
+
 /**
  * Every infrastructure entry, by id.
  *
- * W0 shipped the host with one internal fixture; W1 adds P2's four and
- * **nothing else moves in this package**. Adding an entry is a row and a
- * function, which is the design's own acceptance test, and the four host
- * changes W1 did need are named in `compiler/src/structures/infra-entry.ts`.
+ * W0 shipped the host with one internal fixture; W1 added P2's four; W2 and W3
+ * add the shore battery and the cheap tail, and **nothing else moves in this
+ * package**. Adding an entry is a row and a function, which is the design's own
+ * acceptance test, and the four host changes W1 did need are named in
+ * `compiler/src/structures/infra-entry.ts`.
  */
 export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.freeze({
   [INFRA_TEST_ENTRY]: {
@@ -681,6 +1030,107 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     minRun: 1,
     rise: 0,
     declaresLevels: true,
+  } satisfies InfraEntryDef,
+
+  /* --- W2: P1's shore battery --- */
+
+  cannon_battery: {
+    id: "cannon_battery",
+    // A battery lines a shore or rings a headland. It never goes `across`
+    // anything: a gun line thrown over a street is a barricade.
+    routes: ["along", "ring"],
+    geometry: { kind: "route", profile: cannonBatteryProfile },
+    sourceClass: "sweep.run",
+    // A road reaching the water passes through the battery, as it must: the
+    // powder and the shot arrive by cart.
+    crossings: "open",
+    // Under two bays there is no rhythm and what stands there is one gun on a
+    // wall, which is a prop somebody else already ships.
+    minRun: EMBRASURE * 2 + 2,
+    rise: 1,
+    fittings: {
+      gun: { stack: ["dark_oak_trapdoor", "polished_blackstone"] },
+      powder: { stack: ["barrel"] },
+    },
+  } satisfies InfraEntryDef,
+
+  /* --- W3: the cheap tail --- */
+
+  hedgerow: {
+    id: "hedgerow",
+    routes: ["along", "ring"],
+    geometry: { kind: "route", profile: hedgerowProfile },
+    sourceClass: "sweep.run",
+    // The field gate, found: where a track crosses, the hedge stops.
+    crossings: "open",
+    minRun: 16,
+    // Planted on the grade, not raised on a datum above it.
+    rise: 0,
+    fittings: {
+      // A flower on the bare ground is a flower somebody else's biome may not
+      // support, so each one stands on its own moss — two blocks, grounded, and
+      // the seasonal read stays.
+      may: { stack: ["moss_block", "oxeye_daisy"] },
+      campion: { stack: ["moss_block", "poppy"] },
+    },
+  } satisfies InfraEntryDef,
+
+  dry_stone_wall: {
+    id: "dry_stone_wall",
+    routes: ["along", "ring"],
+    geometry: { kind: "route", profile: dryStoneWallProfile },
+    sourceClass: "sweep.run",
+    crossings: "open",
+    minRun: 16,
+    rise: 0,
+    fittings: {
+      stile_field: { stack: ["cobblestone"] },
+      stile_lane: { stack: ["cobblestone"] },
+    },
+  } satisfies InfraEntryDef,
+
+  cart_track: {
+    id: "cart_track",
+    // A track runs beside or between things somebody else placed; it is not a
+    // boundary, so it never rings one.
+    routes: ["along"],
+    geometry: { kind: "route", profile: cartTrackProfile },
+    sourceClass: "sweep.run",
+    // It *is* a path: nothing blocks, and where a real carriageway crosses, the
+    // carriageway's own surface is what a walker should meet.
+    crossings: "open",
+    minRun: 12,
+    // The datum is the ground: this run declares what it found and paints the
+    // top course of it.
+    rise: 0,
+    declaresLevels: true,
+  } satisfies InfraEntryDef,
+
+  boardwalk: {
+    id: "boardwalk",
+    routes: ["along"],
+    geometry: { kind: "route", profile: boardwalkProfile },
+    sourceClass: "sweep.run",
+    // The step down at each cross-street, which is the frontage's own rhythm.
+    crossings: "open",
+    minRun: 12,
+    // One course proud of grade — the entry's whole geometry.
+    rise: 1,
+  } satisfies InfraEntryDef,
+
+  sphinx_avenue: {
+    id: "sphinx_avenue",
+    routes: ["along"],
+    geometry: { kind: "route", profile: sphinxAvenueProfile },
+    sourceClass: "sweep.run",
+    crossings: "open",
+    // Three bays of figures, or it is a gate with statues rather than an avenue.
+    minRun: SPHINX_BAY * 3,
+    rise: 1,
+    fittings: {
+      figure_east: { stack: ["cut_sandstone", "chiseled_sandstone", "chiseled_sandstone"] },
+      figure_west: { stack: ["cut_sandstone", "chiseled_sandstone", "chiseled_sandstone"] },
+    },
   } satisfies InfraEntryDef,
 });
 

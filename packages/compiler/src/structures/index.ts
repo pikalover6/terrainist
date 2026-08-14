@@ -581,6 +581,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         // named building. Read straight through: the grammar clamps it, and
         // `LOAM-T227` is what tells an author who wrote 1.5.
         ...(typeof params["decay"] === "number" ? { decay: params["decay"] } : {}),
+        // `params.entrance` — the family-D fitting on the way in
+        // (docs/INFRA-ENTRIES-v0.md §2 D: `blast_door`, `airlock_vestibule`).
+        // Only the treatment travels: the rest of the `entrance` object is the
+        // port/porch/steps vocabulary the shell has always drawn for itself.
+        ...(entranceTreatmentOf(params["entrance"]) === undefined
+          ? {}
+          : { entrance: { treatment: entranceTreatmentOf(params["entrance"]) as string } }),
         ...(params["cornerStart"] === true ? { cornerStart: true } : {}),
         ...(params["cornerEnd"] === true ? { cornerEnd: true } : {}),
         archetype:
@@ -2273,6 +2280,22 @@ export function tunnelLinksOf(doc: SettlementDocument, rootPath: string): Tunnel
 
 function portNameOf(ref: string): string {
   return ref.includes("#") ? (ref.split("#")[1] as string) : ref;
+}
+
+/**
+ * The `entrance.treatment` a building asked for, or `undefined`.
+ *
+ * Family D's whole authoring surface (docs/INFRA-ENTRIES-v0.md §2 D): a fitting
+ * *in* another structure is a param on that structure, never a node. Read
+ * defensively and read narrowly — a malformed `entrance` is dropped here rather
+ * than thrown, because the compiler never fails a document on a param the
+ * validator has already spoken about (`STRUCTURE_PARAM`), and the grammar
+ * itself refuses a treatment id it does not build.
+ */
+export function entranceTreatmentOf(value: unknown): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const treatment = (value as { treatment?: unknown }).treatment;
+  return typeof treatment === "string" ? treatment : undefined;
 }
 
 /**
