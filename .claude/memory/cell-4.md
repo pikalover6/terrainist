@@ -172,6 +172,33 @@ townhouse/warehouse era-hygiene in authoring vocabulary (build fine
 as 2-storey boxes, anachronistic words only). Commits 31b76a3 →
 b5c3c13.
 
+**NEVER-WAIT RULE (Kai, 08-13, in CLAUDE.md):** if anything remains,
+do it; pause only fully hard-blocked; taste iteration still lands on
+walks; decisions get popups but never idle. Kai: "feeling really
+great." **THE AUTONOMOUS WAVE (08-13/14, commits 6abbea4→2df9eca,
+tree 3,825/0):** (1) trapdoor finding (Kai) → 6,568 orphaned shutters
++ buttons/levers, ONE root cause (support predicate had no
+open-trapdoor clause); fixed with lenient anchors (pane-hung shutters
+survive); NO lint rule by choice (boat oars hinge to air by design);
+262 intact archetypes byte-identical. (2) weather_station typo'd
+`+0`: dials were replacing wall blocks. (3) ALIEN PACK: 12 impl
+(xeno_spire/hive_mound/hydroponics_bay/bio_pod/derelict_mech + 7
+response props), **xeno_resin theme** (chitin/resin/carapace; ground
+roles + street table + 19 aliases + ONLY-for-the-alien-side prepass
+teaching — a farm town invaded stays temperate_timber with alien
+icons); 7 infra-kind entries honestly not_started → **DESIGN ITEM:
+sweep-client infra host** (crop_circle/quarantine_fence/crash_furrow/
+barricade_line/blast_door/airlock_vestibule/maglev_pylon all want the
+linework engine). (4) AGRARIAN: 9 impl (farmstead→marketplace).
+Cross-agent defect round-trips all via RESUME: pigsty mud wallow
+(mud = 15/16 block, NOT standable; floor patches never paint the
+door column), spire brood glow + seam shutters + stair wall
+(cuttable()/lit() guards), response sea_lanterns → glowstone (the
+lantern-name rule). Catalog **404/585**. Exhibits xeno_ + agr_
+registered. IN FLIGHT: devworld-0814 → Prism; P2 farm-invasion c3
+generate (seed 302, teed). Kai taste queue unchanged + NEW: ancient
+3v2, era vocab hygiene; DESIGN queue: sweep-client infra host.
+
 **Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
 08-13): `--saves "/Users/kaihoward/Library/Application Support/
 PrismLauncher/instances/Fabulously Optimized/minecraft/saves"` on
