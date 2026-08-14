@@ -117,3 +117,35 @@
   7.7k-block horse (5.5× c1), Luna authored the wall itself — but gray
   masonry on a sun_clay city, envelope-margin lawn, lush ambient: the three
   reads that drove 08-11's fixes (cell 4).
+
+## 08-11 → 08-12: breadth ratified, Troy converges (from cell 4)
+
+- **Breadth push ratified** after Troy c3's walk ("wall gray, blobs foreign,
+  lawn"): BOTH tracks — burn down the 98 + CATALOG-EXPANSION-v0.md (9 packs /
+  145 ids, landed as not_started, sphinx→bespoke); **formPacks** 4th grounded
+  list (forbid > prefer > pack > default; reach law; NO style dial); B0 fix —
+  archetypes.prefer/forbid was NEVER CONSUMED → grammar.mix row (W515);
+  windowRhythm was the 2nd unread key → grammar.windowRhythm (injected only
+  where building AND archetype silent). One exhibit per pack (Kai wants the
+  walks). Content EXEMPT from the 8-28 backstop; machinery freezes.
+- **Bespoke integration contract**: api.theme (VERIFICATION_THEME pins
+  outputHash to the program), pad/skirt/apron via GroundDriver
+  (GROUND-CONTRACT §3.12 = three sites), theme-derived authored walls +
+  walls.materials override, kit doctrine icons-NOT-infrastructure +
+  SUBSTANCE-FIRST (a wooden horse is api.theme.wood — sun_clay's "wood"
+  families are masonry cladding, so programThemeOf rebuilds real timber from
+  the door species). Sanctum 10 + siegeworks 7 packs; wall-hugs-fabric
+  (24-dir support hull of BUILT fabric, precinct rect = clip window).
+- **Troy c4→c5 fixes, all walked-in**: urban floor (pass 6c: circuit-gated
+  packed earth, plants keep soil+halo) + aridAmbient savanna gold (gate
+  yields only to DECLARED cold/wet); wall clamp at region edge (bounds fold
+  into ALL 24 support directions — a box corner is axis-meets-axis; ring
+  flattens, closed not clipped; T229 margin backoff, T230 clamp note; T220
+  prints the bbox); sun_clay explicit all-sandstone `curtain`; inland
+  surface rule (Luna's dirt+sand ambient mix → shore members drop inland,
+  216 beach columns keep sand; keep+teach ratified); ancient storeyCeiling=3
+  (the "modern towers" were the TERRACE pass's density table, reachable by
+  no intent); decay orphan cull (6,568 floating shutters — support predicate
+  had no open-trapdoor clause; lenient anchors keep pane-hung survivors; NO
+  lint rule, boat oars hinge to air by design). Candidates archived
+  p3-c4/p3-c5; c5b = five-fixes recompile, installed.
