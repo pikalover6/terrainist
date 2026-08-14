@@ -1,51 +1,4 @@
-# Cell 3 — this week (2026-08-04 → 2026-08-08)
-
-- **The ground contract** (08-05/06, WP-1→WP-5): eleven passes fought over
-  `plan.ground` by write order; now declare → resolve → build through the
-  `GroundDriver` (17-class `INTENT_RANK`), equivalence-shim-proven. WP-6
-  freeze still pending (§13.3). `docs/GROUND-CONTRACT-v0.md`.
-- **The SITE-PLAN pivot** (08-06): "the town generates the terraces it
-  needs" — frontage-scored contour streets, replan ladder, carriage spine,
-  contextual transitions, recessed stairways. Kai's ratified principle:
-  **never cap terrace rises; earn drop with run** (~2 col/block,
-  MAX_TREAD_CUT 4). Milestone walked+accepted 08-07.
-- **Instruments** (08-07): walkability audit (reciprocal moves; ground-graph
-  reachability after the paving-only domain lied — Kai's 100% walk vs 0.150
-  fixed the instrument), dressing audit (four detectors + more). Fourth
-  failure mode named: proxy-verified fixes; counter = instrument-first.
-  **But (Kai): detectors never VERIFY a fix — only a walk does.**
-- **The 08-07/08 iteration waves** (~25 commits, f55cafa→985623d): causeway
-  revelation (they *paid for the plan* via streetFraction — refusing them
-  shipped a 4–5-street steep quarter; "one level is one platform"); junction
-  reconciliation (three cutoff mechanisms; later iterated to steps-only +
-  walls-not-surfaces + patch refusal after Kai walked its kerb-stair and
-  cascade inventions); composite-cliff fix (median-summary + unprotected
-  foot; per-column facesOf + `/foot` claims; clause-9 walls stay — Kai:
-  walkable + non-mangled is the bar); Option A terminus landings (street
-  yields drop−1 columns onto its flight, in roads phase 2a); flight relief
-  ("fall" treads — every flight descends, so ascending-only stair dressing
-  had produced ONE stair town-wide); flat-town truths (bus-shelter panes,
-  props whole-or-not, kerbside era gate, street−spine gate); vegetation
-  feather + town-green (74% of occupancy union was natural ground being
-  sterilized); flight-pin unit mismatch found (stand vs solid-top; 8/8
-  flights solve unpinned, ride one proud — OPEN, the next street lever).
-- **Flora grammar** (spec f55cafa → WP-A 58b7e27 → WP-B 5978b3c → grandeur
-  000588b): shape programs, six laws, strata, reach law; giants iterated to
-  prominence ≥8 over the canopy sea ×5 with buttress roots + drapes after
-  failing Kai's skyline bar; leaf flip (decay was real; 100% state-only
-  movement); vine faces derived; birch reproportioned + species-private
-  spacing (7fa0a88). Understory + oak_round measured fine. snowLine
-  per-species + law-1 suspension queued. Colossal tier = post-launch.
-- **The hillside cutover** (5084a02, 08-08): `terraced` deleted, alias at
-  `urbanForm()`, classifier/kit teach hillside; WP-5's mover list was stale
-  (no example ever named terraced) — 12/12 worlds hash-identical.
-- **Process doctrine hardened**: byte-identity's two traps (zlib framing →
-  compare decompressed NBT; worktree-CLI resolves to main tree → direct
-  source-path compile, prove harness sensitivity first); shared-tree git
-  discipline (no tree-wide rewinds — three clobber incidents); TaskStop not
-  goodbye-messages for finished agents; probe lesson ("a probe must be able
-  to see the thing it rules out"); funnel memory + rendered log built
-  (tools/session-log, protocol in CLAUDE.md); popups liberally.
+# Cell 3 — recent days (2026-08-09 → 2026-08-14)
 
 ## 08-09 → 08-10: the rung, the battery, the features (compressed from cell 4)
 
@@ -149,3 +102,47 @@
   had no open-trapdoor clause; lenient anchors keep pane-hung survivors; NO
   lint rule, boat oars hinge to air by design). Candidates archived
   p3-c4/p3-c5; c5b = five-fixes recompile, installed.
+
+## 08-13 → 08-14: the never-wait rule and the nine-pack sweep (from cell 4)
+
+- **NEVER-WAIT RULE ratified (Kai, in CLAUDE.md):** if anything remains, do
+  it; pause only when fully hard-blocked; taste iteration still lands on
+  walks; decisions get popups but never idle.
+- **All nine expansion packs implemented** in ~36 hours of agent waves
+  (alien+xeno_resin theme, agrarian, nautical, arcane, wilds, hedgerow,
+  frontier, nile — the 33×17×33 walkable-passage pyramid as a PROP —
+  east-asian), plus the sanctum/siegeworks/classical Track-A packs before
+  them. Catalog 343 → **~491/585**. Standing pack discipline that made it
+  work: distinct committed anchor lineages per agent, the spec KNOWN-list
+  order seam, PARAM_CASES exhaustiveness, no exhibits from pack agents
+  (orchestrator authors them from the agents' envelope tables), skip-with-
+  reason for unhostable infra kinds, and defect round-trips by RESUME to the
+  agent that owns the context (mud-wallow standability, stranded shutters,
+  the bell that overwrote the shell lantern's column, lantern-name-rule
+  heads, a 21,000-build innocence proof).
+- **The infra host (infra.entry@0) designed, ratified, built and filled:**
+  INFRA_ENTRIES data+profile registry; five coordinate-free route forms
+  (ring/along/across/into/over); crossings open/block/gap; T231–T234; six
+  honest host amendments documented where the design's "no compiler code"
+  claim failed; W1 = quarantine_fence (rings THE HOLDING), barricade_line
+  (one gap doorway), crash_furrow (refuses without a target, cuts terrain),
+  crop_circle (FLATTENS via ground contract); tail = cannon_battery,
+  hedgerow, dry_stone_wall, cart_track (declaresLevels — worn in),
+  boardwalk, sphinx_avenue; flumes refused twice over (no fall-following
+  form; moving water is post-freeze fluid.channel). Family D =
+  params.entrance.treatment (blast_door face-in-the-cut, airlock chamber
+  inside the envelope); NON_NODE_IMPLEMENTED doctrine extended precinct →
+  host-param (harbour_wall/quay credited). Family-E re-kinds done. The
+  test_fence RUN exhibit (straight/diagonal/corner/8-block climb/found
+  gate) discharged §3.7.
+- **Decisions closed:** ancient ceiling stays 3; sun_clay joined
+  THEME_BY_ERA.ancient; era hygiene = light teach; F5 WP-6 freeze deferred
+  to next rung BY KAI (rung-B machinery list empty but F3); ruling batch
+  closed (3 status-quo ratifications, 5 documented defaults, survivor-yards
+  skipped by Kai — status quo held).
+- **The battery went whole:** all seven frozen prompts have candidates on
+  the complete vocabulary — P1 two-island war (per-region packs+themes
+  written by the classifier UNPROMPTED), P2 farm invasion, P3 troy c5b,
+  P4 hideout, P5 sea siege, P6 redwoods, P7 glowcap vale — installed to
+  Prism + archived. Goal "/goal complete all outstanding work" MET
+  2026-08-14 evening; tree 4,234/0.

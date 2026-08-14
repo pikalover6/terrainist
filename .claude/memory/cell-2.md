@@ -28,3 +28,18 @@
   valid requests; (2) machinery that exists and never runs — grep for the
   *definition*, not just uses; (3) tests that pin defects (written from the
   implementation, not the intent).
+
+- **2026-08-04 → 08-08, the ground week:** the **ground contract**
+  (declare → resolve → build through one GroundDriver, 17-class INTENT_RANK
+  — eleven passes had fought over plan.ground by write order); the
+  **SITE-PLAN pivot** ("the town generates the terraces it needs"; never cap
+  terrace rises — earn drop with run); walkability + dressing **instruments**
+  (with the standing law: detectors never VERIFY a fix, only a walk does);
+  ~25 iteration-wave commits (causeway revelation, junction reconciliation,
+  flight relief, vegetation feather + town-green after 74% of natural ground
+  was being sterilized); the **flora grammar** (shape programs, six laws,
+  giants earning the skyline); `terraced` → `hillside` cutover, 12/12 worlds
+  hash-identical. Process doctrine hardened: byte-identity's two traps
+  (compare decompressed NBT; worktree-CLI resolves to the main tree),
+  shared-tree git discipline after three clobber incidents, funnel memory +
+  rendered log built.
