@@ -69,17 +69,36 @@ stays post-freeze; catalog guard = flipping entries later is data).
 Precinct credit flipped harbour_wall+quay; energy rows re-kinded.
 All pack exhibits + prop rows registered (nautical/arcane/wilds
 files + agrarian extended + 6 prop grid rows). Catalog ≈449/585.
-**VERIFICATION CLEARED (08-14 night): full compiler suite 2,032
-passed / 0 failed.** NIGHT SHIFT RUNNING: W1 infra entries (medium)
-+ frontier/nile/east-asian packs (3 low) — the last of the nine.
-AFTER THE NIGHT WAVE LANDS (dist carries in-flight agent code —
-never emit worlds mid-flight): devworld emit+install to
-Prism (all new strips), P1 pirate/unicorn regenerate (both island
-vocabularies now live), W1 infra entries (crop_circle/quarantine_
-fence/barricade_line/crash_furrow — cordon rings THE HOLDING,
-crop_circle FLATTENS), remaining packs frontier/nile/east-asian,
-family-E re-kind tail, exhibit run-not-cell for test_fence. Ruling
-batch (9 small) still Kai's only open decision stack.
+**NIGHT SHIFT COMPLETE (08-14, commit 99a7428, tree 4,185/0):**
+ALL NINE PACKS DONE + W1 LIVE. Frontier 12/14 (boardwalk/sluice_box→
+tail), Nile 10/11 (PYRAMID = 33×17×33 PROP with walkable north
+passage — an archetype cannot close that base; sphinx_avenue→tail),
+East Asian 8/12 (torii/zen_garden/stone_lantern/dragon_boat + tenshu/
+drum_tower/shoji_teahouse/bell_pavilion; moon_gate/paifang/
+castle_base_wall/spirit_wall→tail). **W1 INFRA ENTRIES LIVE:**
+quarantine_fence (ring, holding), barricade_line (across, ONE gap
+doorway), crash_furrow (into, refuses w/o target, cuts real terrain),
+crop_circle (over, FLATTENS via ground contract, hay_block bands);
+SIX honest host amendments documented in infra-entry.ts header
+(fittings, gap width, below-datum declare path, area cell(), holding
+mask as core fabric, across binds to widest street — routes[] was
+empty everywhere); postcard test = 4 entries/1288 cols/85 fittings/
+0 findings; kit §9c + prepass "an emergency has fabric" teach.
+TWO stranded-hanger hunts: nile proved INNOCENT by 21,000-build probe
+→ real culprit bell_pavilion (bell overwrote the shell lantern's
+ceiling column; bell now steps aside); BOTH packs adopted
+guardHangers closure-by-construction. All nine pack exhibits +
+prop rows registered (frontier/nile/eastern exhibit files authored by
+orchestrator from agents' envelope tables). Catalog **~483/585**;
+remaining not_started ≈ infra tail + family-D/E + water-movers.
+IN FLIGHT AT WRAP: devworld-0814b emit (all nine strips → Prism
+install as _all_packs) + P1 pirate/unicorn c3 generate (seed 301,
+teed — install _c3 to Prism + render + archive battery/candidates/
+p1-c3 on landing). MORNING QUEUE: P1 walk (the arc's thesis test),
+infra run-not-cell exhibit for test_fence (§3.7 obligation),
+family-D embedded params (blast_door/airlock), W2 cannon_battery,
+water-movers, F3 junctions (walk-gated). Ruling batch (9 small)
+still Kai's only open decision stack.
 
 **Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
 08-13): `--saves "/Users/kaihoward/Library/Application Support/
