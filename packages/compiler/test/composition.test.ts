@@ -30,6 +30,7 @@ import {
   MAX_CLIP_FRACTION,
   clipTrees,
   makeStructureClip,
+  roadCorridorBoxes,
   structureBoxes,
   type StructureBox,
 } from "../src/terrain/clip.js";
@@ -302,7 +303,8 @@ describe("structure clip", () => {
       floorY: 71,
     };
     // One block wider than the footprint on every side: the eave course and the
-    // rest of the facade detail live in that apron ring.
+    // rest of the facade detail live in that apron ring — for wood. Leaves are
+    // let back into the ring by `leafInset`.
     expect(structureBoxes([built])[0]).toEqual({
       x0: hall.x0 - 1,
       z0: hall.z0 - 1,
@@ -310,7 +312,108 @@ describe("structure clip", () => {
       z1: hall.z1 + 1,
       y0: 68,
       y1: 81,
+      leafInset: 1,
     });
+  });
+});
+
+/**
+ * The eave ring, part by part (Kai's ruling, 2026-08-14).
+ *
+ * Withholding *leaves* from the ring cut every canopy that came near a house off
+ * flat with one block of air behind it. Leaves may now touch the wall face; wood
+ * may not; the road corridor's headroom rule is untouched and still eats both.
+ */
+describe("leaf contact against a wall", () => {
+  const r = region();
+  const hall: Rect = { x0: 0, z0: 0, x1: 10, z1: 10 };
+  const built: BuiltBuilding = {
+    nodePath: "world.hall",
+    footprint: hall,
+    interior: { x0: 1, z0: 1, x1: 9, z1: 9 },
+    meta: { foundationDepth: 3, roofTop: 9 } as BuiltBuilding["meta"],
+    blockCount: 100,
+    floorY: 71,
+  };
+  const clip = makeStructureClip(r, structureBoxes([built]));
+
+  it("lets a leaf stand in the ring and still withholds a log there", () => {
+    // x = 11 is the ring column immediately outside the east wall.
+    expect(clip.blocked(11, 75, 5, "leaves")).toBe(false);
+    expect(clip.blocked(11, 75, 5, "wood")).toBe(true);
+    // The default is the strict answer, so no unaware caller loosens anything.
+    expect(clip.blocked(11, 75, 5)).toBe(true);
+    // Corners of the ring behave the same way.
+    expect(clip.blocked(-1, 75, -1, "leaves")).toBe(false);
+    expect(clip.blocked(-1, 75, -1, "wood")).toBe(true);
+  });
+
+  it("still keeps every part out of the footprint itself", () => {
+    expect(clip.blocked(5, 75, 5, "leaves")).toBe(true);
+    expect(clip.blocked(0, 75, 0, "leaves")).toBe(true);
+    expect(clip.blocked(10, 75, 10, "leaves")).toBe(true);
+    // And the vertical extent is unchanged for leaves: skirt bottom to roof + 1.
+    expect(clip.blocked(5, 68, 5, "leaves")).toBe(true);
+    expect(clip.blocked(5, 81, 5, "leaves")).toBe(true);
+    expect(clip.blocked(5, 82, 5, "leaves")).toBe(false);
+  });
+
+  it("plants a tree beside the wall and keeps the leaves that reach it", () => {
+    // A tree whose canopy reaches the ring column but whose trunk stands clear.
+    const beside = tree("oak_round", 13, 5);
+    const result = clipTrees([beside], clip);
+    expect(result.trees).toEqual([beside]);
+    expect(result.dropped).toBe(0);
+    // The clip's own reader agrees with the emit-side reader: every leaf the
+    // tree puts in the ring survives, so nothing is counted as clipped.
+    const blocks = TREE_TEMPLATES["oak_round"].blocks({
+      height: TREE_TEMPLATES["oak_round"].minHeight,
+      radiusDelta: 0,
+      mega: false,
+    });
+    const inRing = blocks.filter(
+      (b) =>
+        b.part === "leaves" &&
+        beside.x + b.dx === 11 &&
+        clip.blocked(beside.x + b.dx, beside.baseY + b.dy, beside.z + b.dz, "wood"),
+    );
+    expect(inRing.length).toBeGreaterThan(0);
+    for (const b of inRing) {
+      expect(
+        clip.blocked(beside.x + b.dx, beside.baseY + b.dy, beside.z + b.dz, "leaves"),
+      ).toBe(false);
+    }
+    expect(result.clippedBlocks).toBe(0);
+  });
+
+  it("keeps clipping leaves out of a road corridor", () => {
+    const road = makeStructureClip(
+      r,
+      roadCorridorBoxes([{ path: [{ x: 30, z: 30, y: 70 }] }], 5),
+    );
+    // Lane headroom is a different law: no `leafInset`, so both parts are cut.
+    expect(road.blocked(30, 72, 30, "leaves")).toBe(true);
+    expect(road.blocked(30, 72, 30, "wood")).toBe(true);
+    expect(road.blocked(33, 72, 30, "leaves")).toBe(true);
+    // Above the clearance the crown is scenery again, for both parts.
+    expect(road.blocked(30, 75, 30, "leaves")).toBe(false);
+  });
+
+  it("changes nothing at all in a world that built nothing", () => {
+    // The leaf rule rides on building boxes. A clip made of road corridors —
+    // the only other producer — answers identically for both parts everywhere,
+    // so a world with no buildings emits exactly the blocks it emitted before.
+    const road = makeStructureClip(
+      r,
+      roadCorridorBoxes([{ path: [{ x: 0, z: 0, y: 70 }, { x: 1, z: 0, y: 70 }] }], 5),
+    );
+    for (let z = -6; z <= 6; z++) {
+      for (let x = -6; x <= 8; x++) {
+        for (let y = 68; y <= 76; y++) {
+          expect(road.blocked(x, y, z, "leaves")).toBe(road.blocked(x, y, z, "wood"));
+        }
+      }
+    }
   });
 });
 

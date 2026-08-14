@@ -12,7 +12,8 @@
  * 1. **No vegetation voxel may occupy a structure's box.** The box is the placed
  *    footprint extended vertically from the bottom of the foundation skirt to
  *    one block above the roof — the "+1" so a canopy cannot sit flush on the
- *    ridge either.
+ *    ridge either — and, *for wood only*, one block wider on every side. Leaves
+ *    are free to touch the wall face; see {@link StructureBox.leafInset}.
  * 2. **A tree that would lose more than {@link MAX_CLIP_FRACTION} of its volume
  *    is not planted at all.** Clipping alone would leave half-eaten trees
  *    pressed against walls, which looks worse than the overlap did; past that
@@ -58,6 +59,14 @@ export interface RouteLike {
   readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
 }
 
+/**
+ * Which part of a plant is being tested against the clip.
+ *
+ * The two answers differ, and only for buildings: see
+ * {@link StructureBox.leafInset}.
+ */
+export type ClipPart = "leaves" | "wood";
+
 /** The world-space box one structure occupies, inclusive on every axis. */
 export interface StructureBox {
   readonly x0: number;
@@ -66,6 +75,20 @@ export interface StructureBox {
   readonly z1: number;
   readonly y0: number;
   readonly y1: number;
+  /**
+   * How many blocks to pull each horizontal side in before testing a **leaf**
+   * voxel. Absent — the road corridor's answer — means leaves are clipped
+   * against exactly the same box as wood.
+   *
+   * A building's box is one block wider than its footprint (see
+   * {@link structureBoxes}), and withholding leaves from that ring cut every
+   * canopy near a wall off flat with a one-block gap of air behind it — the
+   * defect Kai photographed on 2026-08-14. Leaf contact against a wall face is
+   * *correct*, so a building sets `leafInset: 1` and a leaf may stand right up
+   * to the masonry; a trunk pressed on a wall still looks wrong, so wood keeps
+   * the ring.
+   */
+  readonly leafInset?: number;
 }
 
 /**
@@ -78,8 +101,19 @@ export interface StructureClip {
   readonly boxes: readonly StructureBox[];
   /** 1 on every column any box covers. */
   readonly columns: Uint8Array;
-  /** True when `(x, y, z)` falls inside a structure. */
-  blocked(x: number, y: number, z: number): boolean;
+  /**
+   * True when `(x, y, z)` falls inside a structure, for a voxel of `part`.
+   *
+   * `part` defaults to `"wood"`, which is the strictest answer and the one
+   * every caller gave before leaves were let up to the wall.
+   *
+   * **Both readers must pass the same part.** The clip is asked twice — once
+   * per tree in {@link clipTrees}, which decides whether the tree is planted at
+   * all, and once per voxel at emit, which decides what survives — and a reader
+   * that forgot the part would drop trees for hits the other reader no longer
+   * makes. Either both take the exemption or neither does.
+   */
+  blocked(x: number, y: number, z: number, part?: ClipPart): boolean;
   /** True when the column `(x, z)` is under or over a structure. */
   blockedColumn(x: number, z: number): boolean;
   /**
@@ -94,7 +128,15 @@ export interface StructureClip {
  *
  * One block wider than the footprint on every side, because the grammar's
  * facade details — the eave course above all — live in that apron ring, and a
- * canopy pressed into an eave looks exactly as wrong as one pressed into a roof.
+ * trunk pressed into an eave looks exactly as wrong as one pressed into a roof.
+ *
+ * **Leaves do not take the ring** (`leafInset: 1`, Kai 2026-08-14). Withholding
+ * them from it sheared every canopy that came near a house off flat, one block
+ * of air short of the wall — the tell of a compiler, not of a wood. Leaf contact
+ * with a facade is what a tree beside a house actually looks like, and the eave
+ * the ring was protecting protects itself: structures stamp *after* trees in the
+ * per-chunk order (`emit.ts`), so a facade block simply overwrites any leaf that
+ * reached its position.
  */
 export function structureBoxes(buildings: readonly BuiltBuilding[]): StructureBox[] {
   return buildings.map((b) => ({
@@ -105,6 +147,8 @@ export function structureBoxes(buildings: readonly BuiltBuilding[]): StructureBo
     // Local y = 0 is the floor; the skirt runs below it and the roof above.
     y0: b.floorY - b.meta.foundationDepth,
     y1: b.floorY + b.meta.roofTop + 1,
+    // Leaves are clipped against the exact footprint; wood against the ring.
+    leafInset: 1,
   }));
 }
 
@@ -120,6 +164,10 @@ export function structureBoxes(buildings: readonly BuiltBuilding[]): StructureBo
  * reaching {@link ROAD_CANOPY_CLEARANCE} above the graded surface. That is the
  * headroom a rider needs, and no more: a crown that arches *high* over the road
  * is scenery and is left alone.
+ *
+ * These boxes take **no** {@link StructureBox.leafInset}: lane headroom is a
+ * different law from wall contact, and a lane roofed in leaves is still a
+ * tunnel. Every part of a plant is clipped here, leaves included.
  */
 export function roadCorridorBoxes(
   routes: readonly RouteLike[],
@@ -225,10 +273,14 @@ export function makeStructureClip(
       if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
       return apron[j * region.width + i] === 1;
     },
-    blocked(x: number, y: number, z: number): boolean {
+    blocked(x: number, y: number, z: number, part: ClipPart = "wood"): boolean {
+      // The column mask is built from the *full* boxes, so it stays a superset
+      // of the leaf test and remains a valid cheap rejection for both parts.
       if (!blockedColumn(x, z)) return false;
       for (const box of boxes) {
-        if (x < box.x0 || x > box.x1 || z < box.z0 || z > box.z1) continue;
+        const inset = part === "leaves" ? (box.leafInset ?? 0) : 0;
+        if (x < box.x0 + inset || x > box.x1 - inset) continue;
+        if (z < box.z0 + inset || z > box.z1 - inset) continue;
         if (y >= box.y0 && y <= box.y1) return true;
       }
       return false;
@@ -296,7 +348,15 @@ export function clipTrees(
     let leavesHit = 0;
     let logHit = 0;
     for (const block of blocks) {
-      const cut = clip.blocked(tree.x + block.dx, tree.baseY + block.dy, tree.z + block.dz);
+      // The part goes in, because the per-voxel reader at emit passes it too:
+      // a leaf that will survive against a wall must not be counted here as a
+      // reason to drop the tree. See {@link StructureClip.blocked}.
+      const cut = clip.blocked(
+        tree.x + block.dx,
+        tree.baseY + block.dy,
+        tree.z + block.dz,
+        block.part === "leaves" ? "leaves" : "wood",
+      );
       if (block.part === "leaves") leaves++;
       if (!cut) continue;
       hit++;

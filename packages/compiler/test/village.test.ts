@@ -349,9 +349,12 @@ describe("hillside village example", () => {
     expect(boxes.length).toBeGreaterThan(0);
     const clip = makeStructureClip(report.stats.region, boxes);
     const offenders: string[] = [];
+    // Asked as a leaf: since 2026-08-14 a leaf may stand in the one-block eave
+    // ring, right against the wall face — what it may never do is enter the
+    // footprint itself. Wood still keeps the ring (`StructureBox.leafInset`).
     for (const key of await leafColumns()) {
       const [x, y, z] = key.split(",").map(Number) as [number, number, number];
-      if (clip.blocked(x, y, z)) offenders.push(key);
+      if (clip.blocked(x, y, z, "leaves")) offenders.push(key);
     }
     expect(offenders).toEqual([]);
   }, 120_000);

@@ -70,6 +70,9 @@ export interface TerrainEmitInput {
    * Structure boxes vegetation may not enter. Trees whose crowns overlap a
    * building have already been dropped or accepted upstream (`clip.ts`); this
    * is where the survivors' individual leaf and log voxels are withheld.
+   *
+   * The test is asked per part, because a building's box is not the same box
+   * for a leaf as for a log (`StructureBox.leafInset`).
    */
   readonly clip?: StructureClip;
   /**
@@ -606,9 +609,14 @@ function bucketTrees(
       const y = tree.baseY + block.dy;
       const z = tree.z + block.dz;
       if (y < WORLD_MIN_Y || y > 319) continue;
-      if (clipped !== undefined && clipped.blocked(x, y, z)) {
+      // Part-aware, and it has to be the *same* answer `clipTrees` gave when it
+      // decided this tree could stand at all: a building's box withholds wood
+      // from its one-block eave ring but lets leaves up to the wall face. See
+      // `StructureBox.leafInset`.
+      const leafy = isLeaf(block.stateId);
+      if (clipped !== undefined && clipped.blocked(x, y, z, leafy ? "leaves" : "wood")) {
         cut += 1;
-        if (!(woodOnly && !isLeaf(block.stateId))) continue;
+        if (!(woodOnly && !leafy)) continue;
       }
       keptCells?.add(`${x},${y},${z}`);
       pending.push({ x, y, z, stateId: block.stateId });
