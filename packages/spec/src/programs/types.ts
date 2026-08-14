@@ -289,6 +289,7 @@ export const PROGRAM_SCATTER_KEYS = [
   "hover",
   "seat",
   "embedDepth",
+  "face",
 ] as const;
 
 /**
@@ -324,6 +325,8 @@ export interface ProgramScatterParams {
   readonly seat?: SeatPolicy;
   /** `seat: "embed"` only — blocks the instance sinks below the ground plane. */
   readonly embedDepth?: number;
+  /** Which way the program's declared front points; see {@link ProgramFace}. */
+  readonly face?: ProgramFace;
 }
 
 /** Coarse area for a program scatter — the terrain profile's `ScatterArea`. */
@@ -363,7 +366,7 @@ export function allowsPlugin(mode: ProgramMode): boolean {
 /* -------------------------------------------------------------------------- */
 
 /** Keys an `authored:<id>` landmark node may carry in `params`. */
-export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth"] as const;
+export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth", "face"] as const;
 
 /**
  * How a ground-seated program meets the terrain.
@@ -465,4 +468,81 @@ export function seatOfParams(params: unknown): SeatDecision {
       ? raw
       : DEFAULT_EMBED_DEPTH;
   return { policy: seat as SeatPolicy, embedDepth: depth };
+}
+
+/* -------------------------------------------------------------------------- */
+/* which way the thing faces                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The anchor a program publishes to say **it has a front**.
+ *
+ * A program is authored in its own envelope and knows nothing about where the
+ * world will put it, so a subject with a meaningful front — a face, a prow, a
+ * door, a direction of travel — builds that front toward local **−Z (north)**
+ * and publishes this anchor on it. Publishing it is the whole declaration: the
+ * compiler rotates the finished instance so the front points where the document
+ * asked, and a program that publishes no `front` is **never rotated**, which is
+ * why every world authored before this existed still compiles to the same
+ * blocks.
+ *
+ * The point itself is not wasted: after rotation it is the road-approach point
+ * as well, so a landmark named in `road.network@0`'s `anchors` is reached at
+ * its front rather than at whichever edge happened to be nearest.
+ */
+export const FRONT_ANCHOR = "front";
+
+/** The two senses a `face` relation can be written in. */
+export const FACE_SENSES = ["toward", "away_from"] as const;
+
+/** One of {@link FACE_SENSES}. */
+export type FaceSense = (typeof FACE_SENSES)[number];
+
+/**
+ * A bespoke invocation's `face` relation, as a document writes it.
+ *
+ * Coordinate-free by construction, like every other placement statement in
+ * Loam: it names *another node*, never a direction and never an angle, and the
+ * compiler resolves it against where that node actually landed. `"toward"` for
+ * invaders coming out of the sea at a city; `"away_from"` for a carriage
+ * leaving one.
+ */
+export type ProgramFace =
+  | { readonly toward: string }
+  | { readonly away_from: string };
+
+/** A resolved `face` relation — what {@link faceOf} hands the compiler. */
+export interface FaceRelation {
+  readonly sense: FaceSense;
+  /** A §4.2 selector naming the node or region the front is measured against. */
+  readonly target: string;
+}
+
+/**
+ * The `face` relation a node declares, or `undefined`.
+ *
+ * The blessed reader, exactly as {@link hoverOf} is: compiler code never pokes
+ * at `params.face` itself. Anything the validator would have rejected — a
+ * relation naming both senses, an empty selector — reads as `undefined` here
+ * rather than as half a relation, so a document that slipped past validation
+ * falls back to the default rule instead of facing nowhere.
+ */
+export function faceOf(node: unknown): FaceRelation | undefined {
+  if (typeof node !== "object" || node === null) return undefined;
+  return faceOfParams((node as { params?: unknown }).params);
+}
+
+/** {@link faceOf} for a params object — `scatter.program@0`'s spelling. */
+export function faceOfParams(params: unknown): FaceRelation | undefined {
+  if (typeof params !== "object" || params === null) return undefined;
+  const face = (params as { face?: unknown }).face;
+  if (typeof face !== "object" || face === null) return undefined;
+  const written = FACE_SENSES.filter(
+    (sense) => (face as Record<string, unknown>)[sense] !== undefined,
+  );
+  if (written.length !== 1) return undefined;
+  const sense = written[0] as FaceSense;
+  const target = (face as Record<string, unknown>)[sense];
+  if (typeof target !== "string" || target.trim().length === 0) return undefined;
+  return { sense, target: target.trim() };
 }

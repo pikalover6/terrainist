@@ -26,6 +26,7 @@ import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { FluidKind } from "../terrain/columns.js";
+import { rotatedFootprint, type ProgramRotation } from "./rotate.js";
 
 /**
  * Roughness a program site tolerates before it is refused outright.
@@ -130,8 +131,17 @@ export function topGroundUnder(plan: ColumnPlan, rect: Rect): number | undefined
 export interface ProgramSite {
   /** Instance index — the position in this list, and the seed's `index`. */
   readonly index: number;
-  /** World footprint, inclusive, the size of the program's `[w, d]`. */
+  /** World footprint, inclusive, the size of the program's `[w, d]` **after rotation**. */
   readonly footprint: Rect;
+  /**
+   * The quarter turn this instance stands at, when it declared a front.
+   *
+   * Decided here rather than at build time because it is the thing that swaps
+   * the footprint's edges: a site is chosen for the box the instance will
+   * actually occupy, and the pass reads the answer back off the site rather
+   * than deciding it a second time.
+   */
+  readonly rotation?: ProgramRotation;
   /**
    * World Y of the plane the instance seats on.
    *
@@ -154,6 +164,18 @@ export interface ProgramPlacementInput {
   readonly occupancy?: OccupancyGrid;
   /** Filled in with the candidates a cliff refused, for the caller to report. */
   readonly refusals?: SiteRefusals;
+  /**
+   * The quarter turn an instance centred at `(x, z)` takes, when this node's
+   * program declared a front.
+   *
+   * Asked **before** the candidate is measured, because a 90° or 270° turn
+   * swaps the footprint's edges and the whole point of a candidate test is the
+   * footprint. The point handed in is the candidate's *unrotated* centre — a
+   * position that does not depend on the answer, which is what keeps this from
+   * chasing its own tail — and the difference that makes is at most half an
+   * envelope, which snapping to a cardinal absorbs.
+   */
+  readonly rotationAt?: (x: number, z: number) => ProgramRotation;
 }
 
 /**
@@ -226,7 +248,10 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   for (const cand of sampleCandidates(area, step, stream)) {
     if (sites.length >= params.count) break;
     const { x: cx, z: cz } = cand;
-    const rect: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
+    const rotation =
+      input.rotationAt?.(cx + Math.floor((w - 1) / 2), cz + Math.floor((d - 1) / 2)) ?? 0;
+    const [fw, fd] = rotatedFootprint(w, d, rotation);
+    const rect: Rect = { x0: cx, z0: cz, x1: cx + fw - 1, z1: cz + fd - 1 };
     if (!insideRect(rect, area)) continue;
     if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
     if (!areaAdmits(params.area, region, rect)) continue;
@@ -250,14 +275,19 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
     } else {
       baseY = programGroundPlane(plan, rect, input.refusals, wades);
       if (baseY === undefined) continue;
-      if (!reliefOk(plan, rect, params, w, d)) continue;
+      if (!reliefOk(plan, rect, params, fw, fd)) continue;
     }
     if (params.elevation !== undefined) {
       const [lo, hi] = params.elevation;
       if (baseY < lo || baseY > hi) continue;
     }
     claimed.push(rect);
-    sites.push({ index: sites.length, footprint: rect, baseY });
+    sites.push({
+      index: sites.length,
+      footprint: rect,
+      baseY,
+      ...(rotation === 0 ? {} : { rotation }),
+    });
   }
   // Acceptance order is a queue, not an identity. The list the caller sees is
   // sorted back into row-major order, so instance `index` remains a property of
@@ -314,6 +344,8 @@ export interface LandmarkPlacementInput {
   readonly refusals?: SiteRefusals;
   /** `seat: "wade"`: the site may (and wants to) contain water. */
   readonly wades?: boolean;
+  /** The quarter turn this landmark takes, already decided. */
+  readonly rotation?: ProgramRotation;
 }
 
 /**
@@ -329,7 +361,11 @@ export interface LandmarkPlacementInput {
  */
 export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | undefined {
   const { plan } = input;
-  const [w, , d] = input.envelope;
+  const rotation = input.rotation ?? 0;
+  const turned = rotation === 0 ? {} : { rotation };
+  // The box the landmark will actually stand in: a quarter turn swaps its
+  // edges, and a site chosen for the unturned box would be the wrong hole.
+  const [w, d] = rotatedFootprint(input.envelope[0], input.envelope[2], rotation);
   const region = plan.region;
   const whole = areaRect(region, undefined);
 
@@ -339,7 +375,7 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   const taken = input.taken ?? [];
   if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
     const baseY = programGroundPlane(plan, centred, input.refusals, input.wades === true);
-    if (baseY !== undefined) return { index: 0, footprint: centred, baseY };
+    if (baseY !== undefined) return { index: 0, footprint: centred, baseY, ...turned };
   }
 
   const [fallback] = planProgramSites({
@@ -353,6 +389,7 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
     seed: input.seed,
     taken,
     ...(input.refusals === undefined ? {} : { refusals: input.refusals }),
+    ...(rotation === 0 ? {} : { rotationAt: (): ProgramRotation => rotation }),
   });
   return fallback;
 }
@@ -366,6 +403,8 @@ export interface HoverPlacementInput {
   readonly hover: number;
   /** The `zone` constraint's zone, if the node wrote one. */
   readonly zone?: string;
+  /** The quarter turn this landmark takes, already decided. */
+  readonly rotation?: ProgramRotation;
 }
 
 /**
@@ -381,7 +420,8 @@ export interface HoverPlacementInput {
  */
 export function planHoverSite(input: HoverPlacementInput): ProgramSite {
   const { plan, hover } = input;
-  const [w, , d] = input.envelope;
+  const rotation = input.rotation ?? 0;
+  const [w, d] = rotatedFootprint(input.envelope[0], input.envelope[2], rotation);
   const region = plan.region;
   const whole = areaRect(region, undefined);
   const area = areaRect(region, input.zone === undefined ? undefined : { zone: input.zone });
@@ -408,7 +448,7 @@ export function planHoverSite(input: HoverPlacementInput): ProgramSite {
   /* c8 ignore next — an empty footprint cannot reach here; the region has area. */
   if (!Number.isFinite(top)) top = 0;
 
-  return { index: 0, footprint, baseY: top + hover };
+  return { index: 0, footprint, baseY: top + hover, ...(rotation === 0 ? {} : { rotation }) };
 }
 
 function clamp(v: number, lo: number, hi: number): number {

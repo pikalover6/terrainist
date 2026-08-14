@@ -5,7 +5,8 @@
  * palette into `api.theme`, `site-treatment.ts` gives an instance the pad,
  * apron and foundation a building gets, `run.ts` implements the API
  * and the budgets, `invoke.ts` is the landmark and plugin paths, `place.ts`
- * resolves plugin sites, `verify.ts` is the five-step gate, and `pass.ts`
+ * resolves plugin sites, `facing.ts` decides which way each instance points and
+ * `rotate.ts` turns it there, `verify.ts` is the five-step gate, and `pass.ts`
  * lowers finished runs into blocks and markers the rest of the compiler
  * already understands.
  */
@@ -18,6 +19,8 @@ export * from "./site-treatment.js";
 export * from "./run.js";
 export * from "./invoke.js";
 export * from "./place.js";
+export * from "./rotate.js";
+export * from "./facing.js";
 export * from "./verify.js";
 export * from "./interiors.js";
 export * from "./pass.js";

@@ -22,6 +22,7 @@ import {
   PROGRAM_LIMITS,
   PROGRAM_MODES,
   EMBED_DEPTH_RANGE,
+  FACE_SENSES,
   HOVER_RANGE,
   LANDMARK_PARAM_KEYS,
   SEAT_POLICIES,
@@ -416,6 +417,7 @@ export function validateProgramScatterParams(
   // its own footprint — so the same two checks, and the same exclusion.
   const hovering = checkHover(out, params, path, "instance");
   checkSeat(out, params, path, hovering);
+  checkFace(out, params, path);
 
   if (out.length !== before || (program === undefined && pendingMode === undefined)) return undefined;
   return params as unknown as ProgramScatterParams;
@@ -536,6 +538,7 @@ export function validateLandmarkParams(
   unknownKeys(out, params, path, [...LANDMARK_PARAM_KEYS], "an authored: landmark node");
   const hovering = checkHover(out, params, path, "landmark");
   checkSeat(out, params, path, hovering);
+  checkFace(out, params, path);
 }
 
 /**
@@ -628,6 +631,59 @@ function checkSeat(
         `${path}.embedDepth`,
         `"embedDepth" only means something with "seat": "embed", and this node's seat is ${describe(seat)}`,
         'write "seat": "embed" beside it, or drop "embedDepth"',
+      ),
+    );
+  }
+}
+
+/**
+ * `face` — which way the program's declared front points.
+ *
+ * Shape only. Whether the selector names anything is a question about the rest
+ * of the document, and the compiler answers it where the placements are known:
+ * an unresolvable target is `LOAM-W518`, a warning, and the default facing rule
+ * applies — a facing hint must never be the reason a world fails to build.
+ */
+function checkFace(out: LoamDiagnostic[], params: Obj, path: string): void {
+  const face = params["face"];
+  if (face === undefined) return;
+  const at = `${path}.face`;
+  const example = '"face": { "toward": "old_town" } — or { "away_from": "harbour" }';
+  if (!isObject(face)) {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        at,
+        `"face" is ${describe(face)}`,
+        `write ${example}; the relation names another node, never a direction and never an angle`,
+      ),
+    );
+    return;
+  }
+  unknownKeys(out, face, at, [...FACE_SENSES], 'a "face" relation');
+  const written = FACE_SENSES.filter((sense) => face[sense] !== undefined);
+  if (written.length !== 1) {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        at,
+        written.length === 0
+          ? '"face" names neither "toward" nor "away_from"'
+          : '"face" names both "toward" and "away_from", which cannot both be true',
+        `write exactly one of them: ${example}`,
+      ),
+    );
+    return;
+  }
+  const sense = written[0] as string;
+  const target = face[sense];
+  if (typeof target !== "string" || target.trim().length === 0) {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        `${at}.${sense}`,
+        `"${sense}" must be a selector naming another node, got ${describe(target)}`,
+        `write a sibling id ("old_town"), a tag set ("#tag:civic") or a region id — ${example}`,
       ),
     );
   }

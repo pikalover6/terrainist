@@ -2953,9 +2953,9 @@ A **plugin** program is invoked by a `scatter.program@0` node instead, whose
               "spacing": 24, "maxSlope": 20, "avoidTags": ["road", "building"] } }
 ```
 
-The four subsections that follow are the knobs on those two nodes: how a lane
-reaches a landmark, whether you can go inside it, and how it meets the ground —
-by floating over it or by sitting in it.
+The five subsections that follow are the knobs on those two nodes: how a lane
+reaches a landmark, which way it looks, whether you can go inside it, and how it
+meets the ground — by floating over it or by sitting in it.
 
 ### Routing a road to a landmark
 
@@ -2995,6 +2995,53 @@ Two things follow:
 - **A landmark you do not name is not a destination.** It is still built, its
   markers are still published, and no lane goes to it. That is the right answer
   for a monument on a ridge nobody walks to.
+
+### Facing: which way it looks
+
+A program is written in its own little world, with no idea where yours will put
+it — so anything with a **front** (a face, a prow, a doorway, a direction of
+travel) builds that front toward local north and publishes a `front` anchor, and
+you say what it should be looking at. That is `"face"`, and it names another
+node — never a direction, never an angle:
+
+```json
+{ "id": "the_horde", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "sea_monster", "count": 24, "area": { "zone": "north" },
+              "spacing": 30, "seat": "wade",
+              "face": { "toward": "old_town" } } }
+```
+
+Two senses, and they are the whole vocabulary:
+
+- **`{ "toward": "<node>" }`** — invaders coming out of the sea look at the city
+  they are invading; a statue of a saint looks down the avenue at the cathedral;
+  a battery of guns points at the fort.
+- **`{ "away_from": "<node>" }`** — a carriage leaving town has its horses
+  pointing out of it; refugees on the road walk away from the burning quarter.
+- **Both at once, on two nodes** — write `"face": { "toward": … }` on each of
+  two figures naming the other and they confront each other, however the solver
+  ends up placing them.
+
+The target is a selector, exactly as `adjacent_to` takes one: a sibling id, a
+`#tag:` set (the middle of it is what gets faced), or `"root"` for the
+settlement as a whole. It works identically on an `authored:` landmark node and
+on a `scatter.program@0` node — and on the scatter every instance resolves the
+relation **for itself**, so a ring of statues around a square all look at the
+square rather than all pointing the same way.
+
+Three things worth knowing:
+
+- **It only does anything if the program declared a front.** The `front` anchor
+  is the declaration; a program without one is never turned, however the `face`
+  reads. If the prompt turns on something looking somewhere, say so in the
+  `brief` — "the prow, with the figurehead, is the front" — and the program
+  author will publish it.
+- **You can leave `face` out.** A thing with a front and no relation faces the
+  road that reaches it, or failing that the middle of the settlement, which is
+  the right answer for a shrine or a statue in a town.
+- **A target that names nothing is a warning, never a failure** (`LOAM-W518`):
+  the world still builds and the default applies. Name a sibling node that
+  actually exists.
 
 ### Interiors: a landmark you can go inside
 

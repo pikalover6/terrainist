@@ -297,7 +297,9 @@ interface ProgramResult {
   readonly name: string;                  // human name for the thing you built
   readonly seatY: number;                 // node-local Y of the plane that meets
                                           // the ground; usually 0
-  readonly anchors?: Record<string, [number, number, number]>;  // named points
+  readonly anchors?: Record<string, [number, number, number]>;  // named points;
+                                          // \`front\` declares which face looks
+                                          // out — see rule 12
   readonly interiors?: {                  // rooms you left empty, for the compiler
     min: [number, number, number];        // to furnish; node-local, inclusive
     max: [number, number, number];        // min.y is the LOWEST STANDABLE cell —
@@ -384,6 +386,18 @@ RULES — each of these is checked by a gate before your program is accepted.
 11. ANCHORS ARE NAMED POINTS the rest of the world can reach — a "door" anchor
     is where a road will be routed to. They name a point; they promise no
     geometry. Publish the ones that matter.
+12. IF YOUR SUBJECT HAS A FRONT, BUILD IT NORTH AND SAY SO. A face, a prow, a
+    doorway, a direction of travel — anything that means the thing is looking
+    somewhere. Build that front toward LOCAL NORTH, which is −Z, the z = 0 face
+    of your envelope, and publish an anchor named \`front\` on it:
+    \`anchors: { front: [x, y, 0] }\`. That one anchor is the whole declaration.
+    The compiler then turns the finished instance so the front points where the
+    document asked — at the city it is invading, away from the town it is
+    leaving — and the same anchor doubles as the point a road arrives at. You
+    never learn which way that is and you must never try: build it facing north
+    and let the placement decide. A program that publishes no \`front\` is never
+    turned, which is exactly right for a thing with no front (a tower, a well, a
+    boulder) and exactly wrong for a thing with one.
 
 INVOCATION MODES
 

@@ -612,6 +612,19 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   INTENT_FORM_PACK_ERA: "LOAM-W517",
 
+  // --- the bespoke tier's facing (spec v0.2 amendment 2026-08-14) -----------
+  /**
+   * A bespoke invocation's `face` relation names a target nothing in the
+   * document places — an id no node carries, a tag no node wears, or a node the
+   * solver dropped.
+   *
+   * **Never fatal.** A facing hint is the one thing in a document that can be
+   * wrong without anything being missing: the instance still stands, the
+   * default rule (the road it connects to, else the settlement centre) still
+   * points it somewhere sensible, and the author is told which way it went.
+   */
+  PROGRAM_FACE_UNRESOLVED: "LOAM-W518",
+
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.
   // Precedence resolving a disagreement is normal and silent; these are the

@@ -19,10 +19,17 @@
  * ```
  *
  * Which anchor: the **door-ish** one — an anchor whose name reads as a way in
- * (`door`, `entrance`, `gate`, `porch`, …). A program that published anchors
- * but no door-ish one gets a `ROAD_UNROUTABLE` warning naming the anchors it
- * *did* publish, and the lane falls back to the footprint edge facing the rest
- * of the settlement, so the landmark is still reachable.
+ * (`door`, `entrance`, `gate`, `porch`, …), and failing that the `front` a
+ * program publishes to declare which side of it is its face. The two are the
+ * same statement made for two reasons — "arrive here" and "this side points at
+ * the world" — so a program that declares a front is routable without also
+ * declaring a door. A program with neither gets a `ROAD_UNROUTABLE` warning
+ * naming the anchors it *did* publish, and the lane falls back to the footprint
+ * edge facing the rest of the settlement, so the landmark is still reachable.
+ *
+ * Anchors are read in the program's local frame and turned into the world frame
+ * by the same quarter turn the pass builds the instance with (`facing.ts`), so
+ * the approach follows the face round.
  *
  * Ordering caveat: the programs pass runs *after* the structure pass, so the
  * anchors cannot be read off its output — the program is invoked here, once,
@@ -33,6 +40,7 @@
  */
 
 import {
+  FRONT_ANCHOR,
   authoredProgramId,
   isAuthoredGenerator,
   warning,
@@ -46,6 +54,7 @@ import type { Placement, ResolvedPort } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { invokeLandmark } from "./invoke.js";
 import { nodeLocalHeight } from "./pass.js";
+import { rotateLocalPoint, type ProgramRotation } from "./rotate.js";
 
 /** An anchor name that reads as a way in. */
 const DOOR_WORDS = [
@@ -79,6 +88,14 @@ export interface LandmarkAnchorInput {
   readonly roadNodePath: string;
   /** The road node's `params.anchors` selectors, verbatim. */
   readonly selectors: readonly string[];
+  /**
+   * The quarter turn each landmark stands at, by node path (`facing.ts`).
+   *
+   * The same map the pass builds with — an anchor read in the local frame and
+   * placed in the world without it would put the lane at whichever side of the
+   * instance used to be the front.
+   */
+  readonly rotations?: ReadonlyMap<string, ProgramRotation>;
 }
 
 /** What {@link landmarkRoadAnchors} produced. */
@@ -135,12 +152,14 @@ export function landmarkRoadAnchors(input: LandmarkAnchorInput): LandmarkAnchorR
     });
     const anchors = run.ok ? (run.result?.anchors ?? {}) : {};
     const names = Object.keys(anchors).sort();
-    const door = names.find((n) => isDoorAnchor(n));
+    const door = names.find((n) => isDoorAnchor(n)) ?? names.find((n) => n === FRONT_ANCHOR);
 
     let approach: { x: number; z: number };
     if (door !== undefined) {
       const [ax, , az] = anchors[door] as readonly [number, number, number];
-      approach = { x: placement.footprint.x0 + ax, z: placement.footprint.z0 + az };
+      const [w, , d] = program.envelope;
+      const [rx, rz] = rotateLocalPoint(ax, az, input.rotations?.get(nodePath) ?? 0, w, d);
+      approach = { x: placement.footprint.x0 + rx, z: placement.footprint.z0 + rz };
     } else {
       diagnostics.push(
         warning(
@@ -151,7 +170,7 @@ export function landmarkRoadAnchors(input: LandmarkAnchorInput): LandmarkAnchorR
               ? " — it published no anchors at all"
               : `; it published ${names.map((n) => JSON.stringify(n)).join(", ")}`
           }. The lane arrives at the footprint edge facing the settlement instead.`,
-          `have the program return an anchor named "door" (or "entrance", "gate", "porch") at the way in, and the lane will arrive there`,
+          `have the program return an anchor named "door" (or "entrance", "gate", "porch") at the way in — or the "front" anchor that declares which side of it faces the world — and the lane will arrive there`,
         ),
       );
       approach = towardsCentre(placement.footprint, centreOfOthers(input.placements, nodePath, placement));

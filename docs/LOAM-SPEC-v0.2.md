@@ -60,6 +60,7 @@
 - [§12 Open questions](#12-open-questions)
 - [§13 Appendix B — diagnostic codes](#13-appendix-b--diagnostic-codes)
 - [§14 Spec kits](#14-spec-kits)
+- [§15 Amendments after ratification](#15-amendments-after-ratification)
 
 ---
 
@@ -5388,6 +5389,92 @@ A kit id is `loam-kit/<role>@<loamVersion>-<buildHash8>`, e.g.
 - The kit ids that produced a document are recorded in `meta.generatedBy.kits`
   (§1.2), so a world can always report what taught the agents that wrote it —
   without which a quality regression traced to a kit edit is unfalsifiable.
+
+---
+
+## §15 Amendments after ratification
+
+Ratified changes to this document made **after** 2026-07-28, newest last. Each
+is normative from its date and applies in place: where an amendment and an
+earlier section disagree, the amendment wins. The v0.1 → v0.2 amendments are not
+here — they were applied in place before ratification and their rationale lives
+in git history.
+
+### 15.1 `face` — bespoke program facing (2026-08-14)
+
+A bespoke program is authored inside its own envelope, in a frame that knows
+nothing of the world, so a subject with a front — a face, a prow, a doorway, a
+direction of travel — points wherever the program's local axes point, in every
+instance. This amendment gives a program a way to *declare* that it has a front,
+and a document a coordinate-free way to say what that front should be looking
+at. `[C:high]`
+
+**The canonical front is local −Z.** A program with a meaningful front builds it
+toward local north and declares it by publishing an anchor named **`front`** at
+a point on that face. Publishing the anchor is the entire declaration; a program
+that publishes none is **never rotated**, which is what keeps every document
+written before this amendment compiling to identical output. The same anchor is
+the program's road-approach point once it has been turned (§7.6's anchor
+routing): a landmark named in `road.network@0`'s `anchors` is reached at its
+`front` when it publishes no door-ish anchor.
+
+**The relation.** A bespoke invocation — an `authored:<id>` node, or a
+`scatter.program@0` node — may carry one optional `params.face`:
+
+```json
+{ "id": "the_horde", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "sea_monster", "count": 24, "area": { "zone": "north" },
+              "face": { "toward": "old_town" } } }
+```
+
+```
+face := { "toward": <selector> } | { "away_from": <selector> }
+```
+
+Exactly one of the two senses; the value is a §4.2 selector — a sibling id, a
+dotted path whose leaf is one, a `#tag:` set, or `root` for the region as a
+whole. It names a node, never a direction and never an angle: **no document ever
+writes a bearing**, exactly as no document writes a coordinate (§4.9). A
+malformed relation is `LOAM-E338 PROGRAM_SCHEMA`; a well-formed relation whose
+selector names nothing the document places is **`LOAM-W518
+PROGRAM_FACE_UNRESOLVED`** — a warning, never fatal, after which the default
+rule below applies.
+
+**Resolution**, per placed instance, so a scattered node's instances each
+resolve independently:
+
+1. The target point is the placed centroid of the named node, or the mean of a
+   tag set's centroids, or the region's centroid for a region target.
+2. The direction is site → target for `toward`, reversed for `away_from`, and is
+   snapped to the nearest cardinal (ties resolve to the X axis, as §4.4's
+   `facing` constraint already resolves them). A zero bearing is not a
+   direction: the instance is left as authored.
+3. The rotation is the 90°-multiple taking local −Z to that cardinal: north 0°,
+   east 90°, south 180°, west 270°, clockwise seen from above and identical to
+   Minecraft's own `CLOCKWISE_90`.
+
+**Defaults.** A program that declares a front and carries no relation faces the
+road that connects to it — the network a `road.network@0` node was told to reach
+it through — and failing that the centre of the settlement.
+
+**Binding estimates.** The rotation is resolved *before* the placement fit,
+because a 90° or 270° turn swaps the envelope's width and depth and the fit is
+what reserves that footprint. It is measured against the best estimate available
+at that moment — the target's placed site if it has one, else the coarse hint its
+own constraints carry (`zone`, `at`), else the region's centre — and that answer
+is then **binding**: nothing later re-measures it. This is what makes the
+relation total rather than circular: two programs each declared `toward` the
+other resolve, deterministically, to a pair that faces off.
+
+**Where the rotation is applied.** At placement and materialization, outside the
+verified sandbox: a program is executed and hashed in its own local frame, so
+`outputHash` remains a property of the program and not of the world it lands in.
+The turn moves the instance's voxels, the directional properties of its block
+states (`facing`, `axis`, `rotation`, rail `shape`, the multi-face flags), its
+published anchors and its declared interiors. Properties that are already
+relative to a block's own facing — a stair's `shape`, a door's `hinge`, a chest's
+`type`, a bed's `part` — are invariant, and the connection states of fences,
+walls and panes are left to the emitter's connection pass.
 
 ---
 

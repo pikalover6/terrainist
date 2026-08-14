@@ -405,6 +405,15 @@ ${eraVocabularyLines()}
   ordinary ones. Write far_future only when the PLACE ITSELF is far-future — a
   cyberpunk city, a space colony, an arcology.
 
+  AN EVENT WITH A DIRECTION KEEPS ITS DIRECTION. When the prompt has something
+  coming at the place, leaving it, or squaring up to something else — "invaded
+  from the sea", "the caravan sets out for the desert", "two giants facing off
+  across the valley" — write that in a token, in the prompt's own words:
+  "event_direction": "the sea monsters come out of the northern water AT the old
+  town". The world author turns it into a facing relation on the bespoke node,
+  and it is the whole difference between an invasion and twenty-four monsters
+  standing with their backs to the city.
+
 materialTheme: exactly these ${MATERIAL_THEME_IDS.length} ids, and no others exist:
     ${list(MATERIAL_THEME_IDS)}
 

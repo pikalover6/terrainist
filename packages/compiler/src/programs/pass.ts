@@ -43,7 +43,9 @@ import {
   underpinProgramInstance,
 } from "./site-treatment.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
+import { facingRotationAt, type ProgramFacing } from "./facing.js";
 import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.js";
+import { rotateRun, rotatedHeightAt, type ProgramRotation } from "./rotate.js";
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
 import { verifyOutputHash } from "./verify.js";
 
@@ -71,6 +73,14 @@ export interface ProgramPlacement {
   readonly hovering?: boolean;
   /** How a non-hovering landmark meets the ground. Defaults to `"pad"`. */
   readonly seat?: SeatDecision;
+  /**
+   * The quarter turn this landmark stands at (`facing.ts`), or absent for the
+   * programs that declared no front and are therefore never turned.
+   *
+   * Already spent: the `footprint` above is the *turned* box, because the turn
+   * had to be known before anything reserved a site for it.
+   */
+  readonly rotation?: ProgramRotation;
 }
 
 /** One authored-program node the compiler is asked to build. */
@@ -85,6 +95,12 @@ export interface ProgramJob {
   readonly params?: ProgramScatterParams;
   /** Plugin mode: how each instance meets the ground. Defaults to `"pad"`. */
   readonly seat?: SeatDecision;
+  /**
+   * Plugin mode: the relation every instance turns by, one target and one
+   * sense for the node, resolved per instance against where that instance
+   * actually stands (`facing.ts`). Absent for a program with no front.
+   */
+  readonly facing?: ProgramFacing;
   readonly seedSalt?: string;
 }
 
@@ -251,8 +267,13 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
     fuelUsed += runs.fuelUsed;
     if (!runs.ok) continue;
 
-    for (const [i, run] of runs.runs.entries()) {
+    for (const [i, executed] of runs.runs.entries()) {
       const site = sites[i] as ProgramSite;
+      // Out of the sandbox and into the world frame. Everything below — the
+      // blocks, the anchors, the interiors the fit-out furnishes — is the
+      // turned instance; the hashes on `run` are deliberately left in the frame
+      // the program was verified in (see `rotate.ts`).
+      const run = rotateRun(executed, site.rotation ?? 0, job.program.envelope);
       const baseY = seatedBaseY(site, run, seat);
       const lowered = lowerRun(run, site, baseY, input.stack, job, diagnostics);
       if (lowered === undefined) continue;
@@ -351,9 +372,18 @@ function resolveSites(
 ): readonly ProgramSite[] {
   if (job.mode === "landmark") {
     if (job.placement === undefined) return [];
-    return [{ index: 0, footprint: job.placement.footprint, baseY: job.placement.baseY }];
+    const rotation = job.placement.rotation;
+    return [
+      {
+        index: 0,
+        footprint: job.placement.footprint,
+        baseY: job.placement.baseY,
+        ...(rotation === undefined || rotation === 0 ? {} : { rotation }),
+      },
+    ];
   }
   if (job.params === undefined) return [];
+  const facing = job.facing;
   return planProgramSites({
     params: job.params,
     envelope: job.program.envelope,
@@ -362,6 +392,9 @@ function resolveSites(
     taken: claimed,
     refusals,
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+    ...(facing === undefined
+      ? {}
+      : { rotationAt: (x: number, z: number): ProgramRotation => facingRotationAt(facing, { x, z }) }),
   });
 }
 
@@ -372,8 +405,16 @@ function executeSites(
   diagnostics: LoamDiagnostic[],
   theme: ProgramTheme,
 ): { ok: boolean; runs: readonly ProgramRun[]; fuelUsed: number } {
-  const sampler = (index: number): HeightSampler =>
-    nodeLocalHeight(input.plan, sites[index] as ProgramSite);
+  // The ground, in the frame the program asks about it: an instance that has
+  // been turned still calls `api.heightAt` in its own unturned axes.
+  const sampler = (index: number): HeightSampler => {
+    const site = sites[index] as ProgramSite;
+    return rotatedHeightAt(
+      nodeLocalHeight(input.plan, site),
+      site.rotation ?? 0,
+      job.program.envelope,
+    );
+  };
 
   if (job.mode === "landmark") {
     const run = invokeLandmark({

@@ -32,6 +32,7 @@ import {
   type Yaw,
 } from "@terrainist/spec";
 
+import { rotatedFootprint, type ProgramRotation } from "../programs/rotate.js";
 import { districtGroundElectable, districtGroundPolicy } from "./district.js";
 import type { LayoutNodeInput } from "./types.js";
 
@@ -53,8 +54,20 @@ export interface LayoutExtraction {
   readonly diagnostics: readonly LoamDiagnostic[];
 }
 
-/** Build the solver's node list from a validated settlement document. */
-export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): LayoutExtraction {
+/**
+ * Build the solver's node list from a validated settlement document.
+ *
+ * `programRotations` is the bespoke tier's facing, already decided (see
+ * `programs/facing.ts`): a landmark that turns a quarter of a circle needs its
+ * *turned* box reserved, because reserving the unturned one would hand the
+ * instance a hole of the wrong shape. Omitting the map is the same as every
+ * rotation being zero, which is every document that declares no front.
+ */
+export function layoutNodesFrom(
+  doc: SettlementDocument,
+  worldSeed: bigint,
+  programRotations?: ReadonlyMap<string, ProgramRotation>,
+): LayoutExtraction {
   const rootPath = doc.root.id;
   const nodes: LayoutNodeInput[] = [];
   const diagnostics: LoamDiagnostic[] = [];
@@ -76,6 +89,7 @@ export function layoutNodesFrom(doc: SettlementDocument, worldSeed: bigint): Lay
           program,
           nodePath,
           nodeSeed(worldSeed, nodePath, child.seedSalt ?? ""),
+          programRotations?.get(nodePath) ?? 0,
         ),
       );
       continue;
@@ -186,8 +200,12 @@ export function programOf(
 /**
  * A landmark program, as the solver sees it: **the program's own box.**
  *
- * One rotation only. The pass lowers a run's node-local voxels straight into
- * the world, so a yaw the solver chose would be a yaw nothing ever applied.
+ * One rotation only, and it is not the solver's to pick. The pass lowers a
+ * run's node-local voxels straight into the world, so a yaw chosen here would
+ * be a yaw nothing ever applied; what a landmark *can* be turned by is its
+ * declared front (`programs/facing.ts`), which is decided before this and
+ * arrives already spent — the box below is the turned one, and `rotations`
+ * stays `[0]` because there is nothing further to choose.
  *
  * `seat: "wade"` is the one param that reaches the solver at all, and it has
  * to: the freeboard veto — no footprint may reach below sea level — is a rule
@@ -203,8 +221,10 @@ function programInput(
   program: AuthoredProgramRecord,
   nodePath: string,
   seed: Seed256,
+  rotation: ProgramRotation,
 ): LayoutNodeInput {
-  const [w, h, d] = program.envelope;
+  const [, h] = program.envelope;
+  const [w, d] = rotatedFootprint(program.envelope[0], program.envelope[2], rotation);
   const wades = seatPolicyOf(node)?.policy === "wade";
   return {
     ...(wades ? { amphibious: true, wantsWater: true } : {}),

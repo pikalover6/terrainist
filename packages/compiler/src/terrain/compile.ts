@@ -66,10 +66,13 @@ import {
   buildPrograms,
   planLandmarkSite,
   planHoverSite,
+  planProgramFacings,
   type PlacedProgram,
+  type ProgramFacing,
   type ProgramJob,
   type ProgramPlacement,
   type ProgramPassResult,
+  type ProgramRotation,
 } from "../programs/index.js";
 
 import {
@@ -612,9 +615,25 @@ async function compileValidated(
   let products: TerrainProductIndex | undefined;
   /** `building.grammar@0` params for the fabric pass's own buildings. */
   let districtParams: ReadonlyMap<string, Readonly<Record<string, unknown>>> | undefined;
+  // Which way each landmark program faces, decided **here**, before anything
+  // reserves a box for one: a quarter turn swaps the envelope's width and
+  // depth, so the solver has to be told the turned box or it reserves the wrong
+  // hole. The answer is binding from this point on — see `programs/facing.ts`
+  // for why a binding estimate is what lets two programs face each other.
+  const landmarkFacings = planProgramFacings({
+    doc,
+    rootPath,
+    region,
+    worldSeed,
+    scope: "landmark",
+  });
+  diagnostics.push(...landmarkFacings.diagnostics);
+  const landmarkRotations = new Map(
+    [...landmarkFacings.facings].map(([path, facing]) => [path, facing.rotation ?? 0] as const),
+  );
   const tLayout = now();
   if (isSettlement(doc)) {
-    const extraction = layoutNodesFrom(doc, worldSeed);
+    const extraction = layoutNodesFrom(doc, worldSeed, landmarkRotations);
     layoutNodes = extraction.nodes;
     diagnostics.push(...extraction.diagnostics);
 
@@ -811,6 +830,7 @@ async function compileValidated(
       palette,
       stack,
       ...(occupancy === undefined ? {} : { occupancy }),
+      ...(landmarkRotations.size === 0 ? {} : { programRotations: landmarkRotations }),
       ...(layoutOutcome.districts === undefined ? {} : { districts: layoutOutcome.districts }),
       ...(layoutOutcome.cities === undefined ? {} : { cities: layoutOutcome.cities }),
       ...(districtParams === undefined ? {} : { paramsByPath: districtParams }),
@@ -874,10 +894,25 @@ async function compileValidated(
     // The bespoke tier is legal in both profiles. A settlement landmark takes
     // the site the solver reserved; a terrain-profile one has no solver, so its
     // site comes from the ground (see `planLandmarkSite`).
+    // The scattered half of the facing question, and it is asked *here* rather
+    // than beside the landmarks': a scatter's instances are placed inside this
+    // pass, after the solve, so the nodes it faces have real sites to be
+    // measured against by then.
+    const scatterFacings = planProgramFacings({
+      doc,
+      rootPath,
+      region,
+      worldSeed,
+      scope: "plugin",
+      placements: layoutOutcome?.placements ?? [],
+    });
+    diagnostics.push(...scatterFacings.diagnostics);
     const jobs = programJobsFrom(doc, rootPath, layoutOutcome?.placements ?? [], diagnostics, {
       plan,
       worldSeed,
       solved: isSettlement(doc),
+      rotations: landmarkRotations,
+      facings: scatterFacings.facings,
     });
     programJobs = jobs;
     if (jobs.length > 0) {
@@ -1966,7 +2001,15 @@ function programJobsFrom(
   rootPath: string,
   placements: readonly Placement[],
   diagnostics: LoamDiagnostic[],
-  ground: { plan: ColumnPlan; worldSeed: bigint; solved: boolean },
+  ground: {
+    plan: ColumnPlan;
+    worldSeed: bigint;
+    solved: boolean;
+    /** Landmark turns, decided before the solve and binding (`facing.ts`). */
+    rotations?: ReadonlyMap<string, ProgramRotation>;
+    /** Scatter relations, resolved per instance by the placer. */
+    facings?: ReadonlyMap<string, ProgramFacing>;
+  },
 ): readonly ProgramJob[] {
   const map = doc.programs ?? {};
   const jobs: ProgramJob[] = [];
@@ -2003,6 +2046,11 @@ function programJobsFrom(
       // floats. Only a `zone` constraint is honoured (see `planHoverSite`).
       const hover = hoverOf(node);
       const solved = placements.find((p) => p.nodePath === nodePath);
+      // Already decided, and already spent: `layoutNodesFrom` reserved the
+      // turned box with this same number, so every site below is the box the
+      // turned instance occupies.
+      const rotation = ground.rotations?.get(nodePath) ?? 0;
+      const turned = rotation === 0 ? {} : { rotation };
       let site: ProgramPlacement | undefined;
       if (hover !== undefined) {
         const zone = zoneOf(node);
@@ -2011,13 +2059,14 @@ function programJobsFrom(
           plan: ground.plan,
           hover,
           ...(zone === undefined ? {} : { zone }),
+          ...turned,
         });
-        site = { footprint: hovered.footprint, baseY: hovered.baseY, hovering: true };
+        site = { footprint: hovered.footprint, baseY: hovered.baseY, hovering: true, ...turned };
       } else if (solved !== undefined) {
         // Settlement: the solver's site. Its `foundationY` is the ground plane;
         // the pass derives node-local y = 0 from it, the run's `seatY` and the
         // node's seat policy.
-        site = { footprint: solved.footprint, baseY: solved.foundationY, ...seatOn(node) };
+        site = { footprint: solved.footprint, baseY: solved.foundationY, ...seatOn(node), ...turned };
       } else if (!ground.solved) {
         // Terrain: no solver, so the ground picks.
         const found = planLandmarkSite({
@@ -2028,11 +2077,12 @@ function programJobsFrom(
           // No solver here, so the seat policy is the only thing that can tell
           // the ground search that water is the point rather than a refusal.
           wades: seatPolicyOf(node)?.policy === "wade",
+          ...turned,
         });
         site =
           found === undefined
             ? undefined
-            : { footprint: found.footprint, baseY: found.baseY, ...seatOn(node) };
+            : { footprint: found.footprint, baseY: found.baseY, ...seatOn(node), ...turned };
       }
       if (site === undefined) {
         diagnostics.push(
@@ -2073,12 +2123,14 @@ function programJobsFrom(
       );
       continue;
     }
+    const facing = ground.facings?.get(nodePath);
     jobs.push({
       nodePath,
       programId: params.program,
       program,
       mode: "plugin",
       params,
+      ...(facing === undefined ? {} : { facing }),
       // A hovering scatter has no seating decision to make — the pass reads
       // the same `hover` out of the params and skips the pad entirely.
       ...(hoverOfParams(params) === undefined ? { seat: seatOfParams(params) } : {}),

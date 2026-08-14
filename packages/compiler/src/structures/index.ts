@@ -61,6 +61,7 @@ import { STRUCTURE_ROWS } from "./themes-intent.js";
 import { checkIntentVocabulary } from "./vocabulary.js";
 import { resolvePorts } from "../layout/ports.js";
 import { landmarkRoadAnchors } from "../programs/road-anchors.js";
+import type { ProgramRotation } from "../programs/rotate.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
 import { dressStreets, type SegmentArc } from "./streetscape.js";
@@ -233,6 +234,14 @@ export interface StructurePassInput {
    * document itself does not carry, so an authored node always wins.
    */
   readonly paramsByPath?: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+  /**
+   * The quarter turn each landmark program stands at (`programs/facing.ts`).
+   *
+   * Read by one thing here: the road approach a landmark publishes, which is an
+   * anchor in the program's local frame and has to be turned with the rest of
+   * the instance before a lane is routed to it.
+   */
+  readonly programRotations?: ReadonlyMap<string, ProgramRotation>;
 }
 
 /** Aggregate numbers about what the structure pass built. */
@@ -1085,6 +1094,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       placements,
       roadNodePath: nodePath,
       selectors: anchorSelectorsOf(roadNode.params),
+      ...(input.programRotations === undefined ? {} : { rotations: input.programRotations }),
     });
     diagnostics.push(...landmarks.diagnostics);
     // Destinations *and* obstacles: a lane that cut through the shrine to reach
