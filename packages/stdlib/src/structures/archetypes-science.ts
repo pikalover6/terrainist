@@ -1262,7 +1262,12 @@ function fitWeatherStation(ctx: FitOutContext, c: PropCounter): void {
     const behind = ctx.blockAt(x, 2, wallZ);
     if (behind === undefined || /glass|_pane$|_door$/.test(behind.block)) continue;
     const dial = (x + wallZ) % 3 === 0 ? "lever" : "stone_button";
-    ctx.put(x, 2, wallZ === it.z0 - 1 ? wallZ + 0 : wallZ, dial, {
+    // In the interior cell BESIDE the wall, hanging on it — not in the wall
+    // plane itself. The old `wallZ + 0` was a typo'd `+ 1`: it wrote the dial
+    // into the wall's own cell, deleting a wall block and leaving the button
+    // backed by exterior air (would pop in vanilla; found 2026-08-13 by the
+    // decay-orphan census, in intact builds).
+    ctx.put(x, 2, wallZ === it.z0 - 1 ? wallZ + 1 : wallZ - 1, dial, {
       face: "wall",
       facing: face,
       powered: "false",
