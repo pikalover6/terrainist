@@ -69,10 +69,11 @@ stays post-freeze; catalog guard = flipping entries later is data).
 Precinct credit flipped harbour_wall+quay; energy rows re-kinded.
 All pack exhibits + prop rows registered (nautical/arcane/wilds
 files + agrarian extended + 6 prop grid rows). Catalog ≈449/585.
-**OUTSTANDING VERIFICATION: full compiler suite not run whole**
-(targeted green: walls 30/fort 21/fabric 36/terrarium 26/infra 31 +
-stdlib+spec 1753 + coverage 115) — RUN FULL SUITE FIRST THING NEXT
-SESSION before any further commit. THEN: devworld emit+install to
+**VERIFICATION CLEARED (08-14 night): full compiler suite 2,032
+passed / 0 failed.** NIGHT SHIFT RUNNING: W1 infra entries (medium)
++ frontier/nile/east-asian packs (3 low) — the last of the nine.
+AFTER THE NIGHT WAVE LANDS (dist carries in-flight agent code —
+never emit worlds mid-flight): devworld emit+install to
 Prism (all new strips), P1 pirate/unicorn regenerate (both island
 vocabularies now live), W1 infra entries (crop_circle/quarantine_
 fence/barricade_line/crash_furrow — cordon rings THE HOLDING,
