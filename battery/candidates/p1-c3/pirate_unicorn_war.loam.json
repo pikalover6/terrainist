@@ -1,0 +1,1419 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirate_unicorn_war",
+    "worldSeed": "301",
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "zone": "west"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:dirt_path",
+      "plaza.gravel": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "tokens": {
+      "region_pirate_island": "era renaissance, materialTheme temperate_timber, formality 0.2; formPacks nautical_pirate; a rough pirate island with ramshackle shore buildings, careened ships, a defended harbor, and pirate vessels; at war with the unicorn island",
+      "region_unicorn_island": "era medieval, materialTheme white_quartz, formality 0.7; formPacks arcane_magical; a refined magical island of white stone with a sacred unicorn sanctuary, elegant towers, shrine terraces, and defensive walls; at war with the pirate island"
+    },
+    "character": {
+      "label": "two rival islands in an active war",
+      "programs": [
+        {
+          "id": "battle_scar",
+          "mode": "plugin",
+          "brief": "Small, repeated traces of the active siege: a shallow scorched crater with broken palisade stakes, scattered wreckage and one torn faction banner, clearly a battlefield mark rather than a road or building. Use the local settlement's api.theme for timber, stone and banners, and keep the trace grounded and walkable around.",
+          "envelope": [
+            9,
+            5,
+            9
+          ],
+          "count": 10
+        }
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the divided archipelago",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a stormy ocean with two raised islands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 55,
+          "amplitude": 12,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.82
+          },
+          "cliffThreshold": 54,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "pirate_isle_landform",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rough pirate island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.22,
+                0.35
+              ],
+              "radius": 145,
+              "height": 34,
+              "profile": "rounded",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "unicorn_isle_landform",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the white unicorn island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.78,
+                0.65
+              ],
+              "radius": 145,
+              "height": 38,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "pirate_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the low shelf behind the pirate harbor",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.22,
+                0.35
+              ],
+              "radius": 72,
+              "height": 8,
+              "profile": "rounded",
+              "irregularity": 0.12
+            }
+          },
+          {
+            "id": "unicorn_sanctuary_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high ground for the sanctuary",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.78,
+                0.65
+              ],
+              "radius": 58,
+              "height": 7,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.15,
+          "blendRadius": 12
+        }
+      },
+      {
+        "id": "pirate_island",
+        "kind": "district",
+        "label": "the ramshackle pirate settlement inside its palisade",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            128,
+            112
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "cottage",
+            "tavern",
+            "warehouse",
+            "market_stall"
+          ],
+          "blockSize": 24,
+          "plaza": true,
+          "courtyards": 0.15,
+          "walls": {
+            "style": "palisade",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 6,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.22,
+              0.35
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 7
+          }
+        ],
+        "tags": [
+          "pirate_island",
+          "settlement",
+          "warfront"
+        ],
+        "intent": {
+          "wealth": 0.55,
+          "decline": 0.2,
+          "formality": 0.2,
+          "character": {
+            "label": "rough pirate island",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "nautical_pirate"
+            ],
+            "palettes": {
+              "ground.surface": "minecraft:coarse_dirt",
+              "ground.subsurface": "minecraft:coarse_dirt",
+              "ground.cliff": "minecraft:deepslate",
+              "ground.beach": {
+                "mix": [
+                  [
+                    "minecraft:gravel",
+                    3
+                  ],
+                  [
+                    "minecraft:black_concrete_powder",
+                    1
+                  ]
+                ]
+              },
+              "road.surface": "minecraft:coarse_dirt",
+              "road.shoulder": "minecraft:gravel",
+              "plaza.path": "minecraft:coarse_dirt",
+              "plaza.gravel": "minecraft:gravel"
+            },
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "cottage",
+                "gatehouse",
+                "bastion"
+              ],
+              "forbid": [
+                "chapel",
+                "church",
+                "crystal_shrine",
+                "wizard_tower"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "flagpole",
+                "cairn",
+                "bench",
+                "galleon",
+                "caravel"
+              ],
+              "forbid": [
+                "fountain",
+                "gazebo"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "oak_round",
+                "spruce_tall"
+              ],
+              "forbid": [
+                "birch_slim"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "sprawling",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.15
+            },
+            "urbanForm": "grown",
+            "courtyards": 0.15,
+            "programs": [
+              {
+                "id": "careened_pirate_ship",
+                "mode": "plugin",
+                "brief": "A small pirate vessel hauled onto its side for careening on timber shores, with exposed keel, mast and rigging and a rough service cradle; it must read as a grounded working pirate ship, not a generic boat. Use api.theme.wood for its timber and the local settlement palette for the cradle.",
+                "envelope": [
+                  17,
+                  10,
+                  9
+                ],
+                "count": 4
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "unicorn_island",
+        "kind": "district",
+        "label": "the refined sanctuary town on the unicorn island",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            144,
+            128
+          ]
+        },
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "chapel",
+            "crystal_shrine",
+            "cottage",
+            "wizard_tower"
+          ],
+          "blockSize": 20,
+          "plaza": true,
+          "courtyards": 0.5,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.78,
+              0.65
+            ]
+          }
+        ],
+        "tags": [
+          "unicorn_island",
+          "settlement",
+          "warfront"
+        ],
+        "intent": {
+          "wealth": 0.85,
+          "decline": 0.05,
+          "formality": 0.7,
+          "character": {
+            "label": "refined magical unicorn island",
+            "materialTheme": "white_quartz",
+            "formPacks": [
+              "arcane_magical"
+            ],
+            "palettes": {
+              "ground.cliff": "minecraft:quartz_block",
+              "ground.beach": "minecraft:calcite",
+              "road.surface": "minecraft:smooth_quartz",
+              "road.shoulder": "minecraft:calcite",
+              "plaza.path": "minecraft:smooth_quartz",
+              "plaza.gravel": "minecraft:calcite",
+              "plaza.border": "minecraft:quartz_block"
+            },
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "chapel",
+                "wizard_tower",
+                "observatory",
+                "ziggurat"
+              ],
+              "forbid": [
+                "warehouse",
+                "tavern",
+                "market_stall"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "fountain",
+                "standing_stones",
+                "gazebo",
+                "monolith"
+              ],
+              "forbid": [
+                "cart",
+                "covered_wagon",
+                "cairn"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "birch_slim",
+                "oak_round"
+              ],
+              "forbid": [
+                "spruce_squat"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "massing": "towered",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.9
+            },
+            "urbanForm": "radial",
+            "courtyards": 0.5,
+            "ground": "stepped",
+            "programs": [
+              {
+                "id": "unicorn_sanctuary_program",
+                "mode": "landmark",
+                "brief": "A walkable sacred unicorn sanctuary: a white-stone shrine terrace and clear entrance around a recognizable rearing unicorn figure, with restrained crystal accents and a small devotional court. Build the architecture and unicorn from the local white-quartz api.theme, publish a door or entrance anchor, and leave the court traversable.",
+                "envelope": [
+                  25,
+                  18,
+                  25
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "pirate_harbor",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the defended pirate harbor with careening water and ships",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            72,
+            16,
+            48
+          ]
+        },
+        "params": {
+          "piers": 3,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.22,
+              0.6
+            ]
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour",
+          "pirate",
+          "warfront"
+        ]
+      },
+      {
+        "id": "pirate_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a ramshackle tavern on the pirate shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 28,
+            "partial": 0.4
+          },
+          {
+            "distance": "pirate_harbor",
+            "min": 42,
+            "max": 88,
+            "strength": "soft"
+          },
+          {
+            "facing": "pirate_harbor"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "pirate_house"
+        ]
+      },
+      {
+        "id": "pirate_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a rough warehouse above the pirate quay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 30,
+            "partial": 0.4
+          },
+          {
+            "distance": "pirate_harbor",
+            "min": 44,
+            "max": 96,
+            "strength": "soft"
+          },
+          {
+            "facing": "pirate_harbor"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "pirate_house"
+        ]
+      },
+      {
+        "id": "pirate_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse defending the pirate harbor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "pirate_harbor",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "pirate_harbor"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "gatehouse",
+          "defense"
+        ]
+      },
+      {
+        "id": "pirate_bastion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a shore bastion covering the pirate harbor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 36
+          },
+          {
+            "distance": "pirate_harbor",
+            "min": 44,
+            "max": 110,
+            "strength": "soft"
+          },
+          {
+            "facing": "pirate_harbor"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bastion",
+          "defense"
+        ]
+      },
+      {
+        "id": "pirate_watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the optional lookout above the pirate shore",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "pirate_harbor",
+            "min": 70,
+            "max": 140
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "defense"
+        ]
+      },
+      {
+        "id": "unicorn_sanctuary",
+        "kind": "generator",
+        "generator": "authored:unicorn_sanctuary_program",
+        "label": "the sacred unicorn sanctuary beyond the white town",
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_island",
+            "min": 86,
+            "max": 140,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "sanctuary",
+          "unicorn"
+        ]
+      },
+      {
+        "id": "unicorn_crystal_shrine",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a crystal shrine facing the sanctuary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 16,
+            "max": 56,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "crystal_shrine",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_spire_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the first elegant spire over the sanctuary terraces",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            20,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 18,
+            "max": 58
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "wizard_tower",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_spire_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the second elegant spire guarding the sanctuary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            20,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 18,
+            "max": 58,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "clearance": 3,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "wizard_tower",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_terrace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stepped shrine terrace",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            16,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 24,
+            "max": 76,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "ziggurat",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_observatory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the observatory watching the war horizon",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            15,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 35,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "observatory",
+          "landmark"
+        ]
+      },
+      {
+        "id": "unicorn_bastion",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the white bastion facing the pirate island",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 30
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 45,
+            "max": 120,
+            "strength": "soft"
+          },
+          {
+            "facing": "unicorn_sanctuary"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bastion",
+          "defense"
+        ]
+      },
+      {
+        "id": "pirate_battle_scars",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "fresh siege scars on the pirate-facing shore",
+        "params": {
+          "program": "battle_scar",
+          "count": 5,
+          "area": {
+            "at": [
+              0.3,
+              0.45
+            ],
+            "radius": 0.5
+          },
+          "spacing": 8,
+          "maxSlope": 45,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "unicorn_battle_scars",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "fresh siege scars on the unicorn-facing shore",
+        "params": {
+          "program": "battle_scar",
+          "count": 5,
+          "area": {
+            "at": [
+              0.78,
+              0.58
+            ],
+            "radius": 0.375
+          },
+          "spacing": 16,
+          "maxSlope": 35,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "careened_ships",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "pirate vessels hauled onto the shore for careening",
+        "params": {
+          "program": "careened_pirate_ship",
+          "count": 4,
+          "area": {
+            "at": [
+              0.28,
+              0.48
+            ],
+            "radius": 0.5
+          },
+          "spacing": 8,
+          "maxSlope": 45,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "pirate_flagpole",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a pirate flag over the shore settlement",
+        "params": {
+          "prop": "flagpole",
+          "zone": "west",
+          "jitter": 0.12,
+          "on": "ground"
+        }
+      },
+      {
+        "id": "unicorn_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "standing stones around the sacred island",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "southeast",
+          "jitter": 0.18,
+          "on": "ground"
+        }
+      },
+      {
+        "id": "unicorn_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a white fountain in the sanctuary quarter",
+        "params": {
+          "prop": "fountain",
+          "zone": "east",
+          "jitter": 0.16,
+          "on": "ground"
+        }
+      },
+      {
+        "id": "pirate_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "wind-bent timber on the pirate island",
+        "params": {
+          "area": {
+            "at": [
+              0.39,
+              0.35
+            ],
+            "radius": 36
+          },
+          "density": 0.11,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            68
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.32,
+            "flowers": 0.03,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "old_island_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "wind_hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.07
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "pirate_spruce",
+              "weight": 2,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "pirate_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the glowing grove around the unicorn sanctuary",
+        "params": {
+          "area": {
+            "at": [
+              0.96,
+              0.65
+            ],
+            "radius": 36
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            82
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.18,
+            "deadwood": 0.01
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "crystal_sentinels",
+                  "shape": "crystal_spire"
+                },
+                {
+                  "id": "sanctuary_glowcaps",
+                  "shape": "glowcap"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "enchanted_hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "moon_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "blossom_tree",
+              "weight": 2,
+              "shape": "cherry_blossom"
+            },
+            {
+              "id": "white_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the unclaimed island ground",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_scrub",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "battle_scar": {
+      "mode": "plugin",
+      "envelope": [
+        17,
+        12,
+        17
+      ],
+      "sourceHash": "b3:121808ca4ae7a61bf8b7d45f39d02dcb9d347138e1f70ddeaa0b24cccf90b2fb",
+      "outputHash": "b3:c3f9a9d87d3a61458e7ff3e1174be403ba5f991dfab5e91aa4c979790447ecbb",
+      "source": "export const envelope = [17, 12, 17];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const index = api.instance.index;\n  const count = api.instance.count;\n  const nextInt = (n) => Math.floor(api.random() * n);\n\n  const ground = api.theme.ground;\n  const wood = api.theme.wood;\n  const stone = api.theme.stone;\n\n  const foundationBlock = stone.primary;\n  const scorchBlock = stone.accent;\n  const timberLog = wood.log;\n  const timberStripped = wood.stripped;\n  const timberPlanks = wood.planks;\n\n  const seat = 3;\n  const fieldX = Math.floor((W - 1) / 2);\n  const fieldZ = Math.floor((D - 1) / 2);\n  const fieldRadius = Math.floor(Math.min(W, D) / 2);\n\n  const rotation = (index + count + nextInt(4)) % 4;\n  const centerX = fieldX + ((index + nextInt(3)) % 3) - 1;\n  const centerZ = fieldZ + ((index * 2 + nextInt(3)) % 3) - 1;\n  const craterRadius = 2 + ((index + nextInt(2)) % 2);\n  const palisadeRadius = 5 + ((index + nextInt(2)) % 2);\n\n  const heightSeed = nextInt(10000);\n  const gapShift = (index + count + nextInt(8)) % 8;\n  const debrisRoll = nextInt(10000);\n  const markerRoll = nextInt(10000);\n  const bannerRoll = nextInt(10000);\n  const scorchSeed = nextInt(1000000);\n\n  const put = (x, y, z, block) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  };\n\n  const insideFootprint = (x, z) => {\n    const dx = x - fieldX;\n    const dz = z - fieldZ;\n    return dx * dx + dz * dz <= fieldRadius * fieldRadius;\n  };\n\n  const isCraterCell = (x, z) => {\n    const dx = x - centerX;\n    const dz = z - centerZ;\n    return dx * dx + dz * dz <= craterRadius * craterRadius;\n  };\n\n  const baseHeights = Array.from(\n    { length: W },\n    () => Array(D).fill(-1)\n  );\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (!insideFootprint(x, z)) {\n        continue;\n      }\n\n      let terrainOffset = Math.floor(api.heightAt(x, z));\n      if (terrainOffset < -2) {\n        terrainOffset = -2;\n      }\n      if (terrainOffset > 2) {\n        terrainOffset = 2;\n      }\n\n      baseHeights[x][z] = Math.max(3, seat + terrainOffset);\n    }\n  }\n\n  const surfaceY = (x, z) => {\n    const base = baseHeights[x][z];\n    return base + (isCraterCell(x, z) ? 0 : 1);\n  };\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (!insideFootprint(x, z)) {\n        continue;\n      }\n\n      const base = baseHeights[x][z];\n\n      for (let y = 0; y < base; y++) {\n        put(x, y, z, foundationBlock);\n      }\n\n      const dx = x - centerX;\n      const dz = z - centerZ;\n      const distanceSquared = dx * dx + dz * dz;\n\n      if (distanceSquared <= craterRadius * craterRadius) {\n        const scorchMark =\n          (x * 37 + z * 61 + scorchSeed + index * 19) % 13;\n\n        const floorMaterial =\n          scorchMark < 4 || distanceSquared === 0\n            ? scorchBlock\n            : ground.scree;\n\n        put(x, base, z, floorMaterial);\n      } else {\n        put(x, base, z, ground.revetment);\n\n        const isRim =\n          distanceSquared <= (craterRadius + 1) * (craterRadius + 1);\n\n        const roughMark =\n          (x * 19 + z * 23 + scorchSeed + index * 7) % 11;\n\n        const outerMaterial =\n          roughMark < 3 ? ground.scree : ground.pavement;\n\n        put(\n          x,\n          base + 1,\n          z,\n          isRim ? ground.coping : outerMaterial\n        );\n      }\n    }\n  }\n\n  const rotateOffset = (dx, dz) => {\n    let rx = dx;\n    let rz = dz;\n\n    if (rotation === 1) {\n      rx = -dz;\n      rz = dx;\n    } else if (rotation === 2) {\n      rx = -dx;\n      rz = -dz;\n    } else if (rotation === 3) {\n      rx = dz;\n      rz = -dx;\n    }\n\n    return [centerX + rx, centerZ + rz];\n  };\n\n  const ringOffsets = [\n    [-palisadeRadius, -2],\n    [-palisadeRadius, 2],\n    [-2, -palisadeRadius],\n    [2, -palisadeRadius],\n    [palisadeRadius, -2],\n    [palisadeRadius, 2],\n    [-2, palisadeRadius],\n    [2, palisadeRadius]\n  ];\n\n  const bannerSlot =\n    (index + bannerRoll + rotation) % ringOffsets.length;\n\n  for (let t = 0; t < ringOffsets.length; t++) {\n    if (\n      t === bannerSlot ||\n      (t + gapShift) % 5 === 0\n    ) {\n      continue;\n    }\n\n    const point = rotateOffset(\n      ringOffsets[t][0],\n      ringOffsets[t][1]\n    );\n    const sx = point[0];\n    const sz = point[1];\n\n    if (!insideFootprint(sx, sz)) {\n      continue;\n    }\n\n    const stakeBase = surfaceY(sx, sz);\n    let stakeHeight =\n      2 + ((heightSeed + index + t * 3) % 4);\n\n    if ((t + index + gapShift) % 7 === 0) {\n      stakeHeight = 2;\n    }\n\n    for (\n      let y = stakeBase + 1;\n      y <= stakeBase + stakeHeight;\n      y++\n    ) {\n      const stakeMaterial =\n        y === stakeBase + stakeHeight &&\n        (t + index + heightSeed) % 3 === 0\n          ? timberStripped\n          : timberLog;\n\n      put(sx, y, sz, stakeMaterial);\n    }\n  }\n\n  const debrisShapes = [\n    [\n      [-4, -2],\n      [-3, -2],\n      [-2, -2],\n      [-2, -1]\n    ],\n    [\n      [3, -4],\n      [3, -3],\n      [4, -3],\n      [5, -3]\n    ],\n    [\n      [4, 1],\n      [4, 2],\n      [3, 2]\n    ],\n    [\n      [-2, 4],\n      [-1, 4],\n      [0, 4],\n      [0, 5]\n    ]\n  ];\n\n  const debrisCount =\n    2 + ((index + count + debrisRoll) % 3);\n\n  for (let c = 0; c < debrisCount; c++) {\n    const shape =\n      debrisShapes[\n        (c + index + debrisRoll) % debrisShapes.length\n      ];\n\n    for (let j = 0; j < shape.length; j++) {\n      if (\n        j > 0 &&\n        (j + c + index + gapShift + debrisRoll) % 7 === 0\n      ) {\n        continue;\n      }\n\n      const point = rotateOffset(shape[j][0], shape[j][1]);\n      const x = point[0];\n      const z = point[1];\n\n      if (!insideFootprint(x, z)) {\n        continue;\n      }\n\n      const debrisY = surfaceY(x, z) + 1;\n      const materialChoice =\n        (j + c + index + debrisRoll) % 3;\n\n      const debrisBlock =\n        materialChoice === 0\n          ? timberLog\n          : materialChoice === 1\n            ? timberStripped\n            : timberPlanks;\n\n      put(x, debrisY, z, debrisBlock);\n\n      if ((j + c + heightSeed) % 4 === 0) {\n        put(x, debrisY + 1, z, timberPlanks);\n      }\n    }\n  }\n\n  const markerLength = 1 + (index % 10);\n  const markerSide =\n    (rotation + index + count + markerRoll) % 4;\n  const markerRadius = 4;\n\n  for (let i = 0; i < markerLength; i++) {\n    const along = -4 + i;\n    let mx = centerX;\n    let mz = centerZ;\n\n    if (markerSide === 0) {\n      mx = centerX + along;\n      mz = centerZ - markerRadius;\n    } else if (markerSide === 1) {\n      mx = centerX + markerRadius;\n      mz = centerZ + along;\n    } else if (markerSide === 2) {\n      mx = centerX + along;\n      mz = centerZ + markerRadius;\n    } else {\n      mx = centerX - markerRadius;\n      mz = centerZ + along;\n    }\n\n    if (!insideFootprint(mx, mz)) {\n      continue;\n    }\n\n    const markerBase = surfaceY(mx, mz);\n    const markerBlock =\n      (i + index + markerRoll) % 4 === 0\n        ? timberLog\n        : timberPlanks;\n\n    put(mx, markerBase + 1, mz, markerBlock);\n\n    if ((i + index + markerRoll) % 5 === 0) {\n      put(mx, markerBase + 2, mz, timberStripped);\n    }\n  }\n\n  const bannerOffset = ringOffsets[bannerSlot];\n  const bannerPoint = rotateOffset(\n    bannerOffset[0],\n    bannerOffset[1]\n  );\n  const bx = bannerPoint[0];\n  const bz = bannerPoint[1];\n  const bannerBase = surfaceY(bx, bz);\n\n  const themeId = api.theme.id.toLowerCase();\n  const localIsWhite =\n    themeId.indexOf(\"quartz\") >= 0 ||\n    themeId.indexOf(\"unicorn\") >= 0 ||\n    themeId.indexOf(\"white\") >= 0;\n\n  const opposingBanner =\n    (index + count + bannerRoll) % 4 === 0;\n  const bannerIsWhite = opposingBanner\n    ? !localIsWhite\n    : localIsWhite;\n\n  const bannerBlock =\n    \"minecraft:\" +\n    (bannerIsWhite ? \"white\" : \"black\") +\n    \"_banner[rotation=\" +\n    ((rotation * 4 + index + bannerRoll) % 16) +\n    \"]\";\n\n  const poleHeight =\n    4 + ((index + bannerRoll) % 2);\n  const bannerY = bannerBase + poleHeight;\n\n  for (let y = bannerBase + 1; y < bannerY; y++) {\n    put(bx, y, bz, timberLog);\n  }\n\n  put(bx, bannerY, bz, bannerBlock);\n\n  const craterFloorY = surfaceY(centerX, centerZ);\n\n  return {\n    name: \"Scorched Siege Scar\",\n    seatY: seat,\n    anchors: {\n      crater: [centerX, craterFloorY + 1, centerZ],\n      banner: [bx, bannerBase + 1, bz]\n    }\n  };\n}"
+    },
+    "careened_pirate_ship": {
+      "mode": "plugin",
+      "envelope": [
+        17,
+        10,
+        9
+      ],
+      "sourceHash": "b3:8117ebd7ef1d6316e29a04272ea4c90675c567b176fc4c1651fd48d15ddf8a9f",
+      "outputHash": "b3:13316f0c4e1dbb808fe098f53dcafc4d4ab9916d111fce351a76dc3d4cff0799",
+      "source": "export const envelope = [17, 10, 9];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const wood = api.theme.wood;\n  const ground = api.theme.ground;\n  const rigBlock = wood.log;\n\n  const batch = Math.max(1, Math.floor(api.instance.count));\n  const index = Math.floor(api.instance.index);\n  const variant = ((index + batch) % 4 + 4) % 4;\n\n  const r0 = api.random();\n  const r1 = api.random();\n  const r2 = api.random();\n  const r3 = api.random();\n  const r4 = api.random();\n  const r5 = api.random();\n  const r6 = api.random();\n  const r7 = api.random();\n  const r8 = api.random();\n  const r9 = api.random();\n\n  const side = (variant === 0 || variant === 2) ? 1 : -1;\n  const zOffsets = [0.0, 0.16, -0.18, 0.22];\n\n  const angle = 0.42 + r0 * 0.10 + (variant % 2) * 0.015;\n  const sinA = Math.sin(angle);\n  const cosA = Math.cos(angle);\n\n  const yc = 4.25 + (r1 - 0.5) * 0.12;\n  const zc = 4.5 + zOffsets[variant] + (r2 - 0.5) * 0.10;\n\n  const uBase = 4.05 + r3 * 0.20;\n  const vBase = 2.10 + r4 * 0.15;\n  const taperU = 0.82 + r5 * 0.25;\n  const taperV = 0.28 + r6 * 0.14;\n\n  const damageCuts = 1 + Math.floor(r7 * 3) + (variant === 3 ? 1 : 0);\n  const texturePhase = variant + Math.floor(r9 * 11);\n\n  const restZ = side > 0 ? 1 : D - 2;\n  const innerZ = restZ + side;\n  const outerZ = restZ - side;\n\n  const keelIn = side > 0 ? D - 3 : 2;\n  const keelBody = side > 0 ? D - 2 : 1;\n  const keelTip = side > 0 ? D - 1 : 0;\n\n  const midX = (W - 1) / 2;\n  const deckCenter = clampInt(zc + side * 0.45, 1, D - 2);\n\n  const voxels = [];\n  const locations = new Map();\n\n  function clampInt(value, lo, hi) {\n    return Math.max(lo, Math.min(hi, Math.round(value)));\n  }\n\n  function put(x, y, z, block) {\n    if (\n      x < 0 || x >= W ||\n      y < 0 || y >= H ||\n      z < 0 || z >= D ||\n      block === undefined ||\n      block === null\n    ) {\n      return;\n    }\n\n    const key = x + \":\" + y + \":\" + z;\n    const found = locations.get(key);\n\n    if (found === undefined) {\n      locations.set(key, voxels.length);\n      voxels.push([x, y, z, block]);\n    } else {\n      voxels[found][3] = block;\n    }\n  }\n\n  function stairLine(a, b, block) {\n    let x = a[0];\n    let y = a[1];\n    let z = a[2];\n\n    const ax = Math.abs(b[0] - a[0]);\n    const ay = Math.abs(b[1] - a[1]);\n    const az = Math.abs(b[2] - a[2]);\n\n    put(x, y, z, block);\n\n    while (x !== b[0] || y !== b[1] || z !== b[2]) {\n      let axis = -1;\n      let best = -1;\n\n      if (ax > 0) {\n        const score = Math.abs(b[0] - x) / ax;\n        if (score > best) {\n          best = score;\n          axis = 0;\n        }\n      }\n\n      if (ay > 0) {\n        const score = Math.abs(b[1] - y) / ay;\n        if (score > best) {\n          best = score;\n          axis = 1;\n        }\n      }\n\n      if (az > 0) {\n        const score = Math.abs(b[2] - z) / az;\n        if (score > best) {\n          best = score;\n          axis = 2;\n        }\n      }\n\n      if (axis === 0) {\n        x += x < b[0] ? 1 : -1;\n      } else if (axis === 1) {\n        y += y < b[1] ? 1 : -1;\n      } else if (axis === 2) {\n        z += z < b[2] ? 1 : -1;\n      } else {\n        break;\n      }\n\n      put(x, y, z, block);\n    }\n  }\n\n  function hullPoint(x, u, v) {\n    const y = yc + sinA * u + cosA * v;\n    const z = zc + side * (cosA * u - sinA * v);\n\n    return [\n      x,\n      clampInt(y, 0, H - 1),\n      clampInt(z, 0, D - 1)\n    ];\n  }\n\n  function rigTo(from, to) {\n    stairLine(from, to, rigBlock);\n    stairLine(to, hullPoint(to[0], 0, 0), rigBlock);\n  }\n\n  const bedZs = [outerZ, restZ, innerZ];\n\n  for (let x = 0; x < W; x += 1) {\n    for (let q = 0; q < bedZs.length; q += 1) {\n      const bz = bedZs[q];\n      const terrain = api.heightAt(x, bz);\n      const top = Math.max(0, Math.min(2, Math.floor(terrain)));\n\n      for (let y = 0; y <= top; y += 1) {\n        put(\n          x,\n          y,\n          bz,\n          y === top ? ground.plinth : ground.pavement\n        );\n      }\n\n      if (bz === outerZ && (x + variant) % 3 === 0) {\n        put(x, 0, bz, ground.kerb);\n      }\n    }\n\n    if ((x + variant * 2) % 4 === 0) {\n      put(x, 0, restZ, ground.coping);\n    }\n\n    if ((x === 0 || x === W - 1) && variant % 2 === 1) {\n      put(x, 0, innerZ, ground.revetment);\n    }\n  }\n\n  for (let x = 0; x < W; x += 1) {\n    const edge = Math.abs(x - midX) / midX;\n    const uLimit = uBase - taperU * edge;\n    const vLimit = vBase - taperV * edge;\n\n    for (let y = 0; y < H; y += 1) {\n      const dy = y - yc;\n\n      for (let z = 0; z < D; z += 1) {\n        const dz = z - zc;\n        const u = sinA * dy + side * cosA * dz;\n        const v = cosA * dy - side * sinA * dz;\n\n        if (Math.abs(u) > uLimit || Math.abs(v) > vLimit) {\n          continue;\n        }\n\n        const skin =\n          uLimit - Math.abs(u) < 0.65 ||\n          vLimit - Math.abs(v) < 0.55;\n\n        const pattern = (x * 19 + y * 11 + z * 7 + variant * 13) % 37;\n        const damaged =\n          skin &&\n          x > 1 &&\n          x < W - 2 &&\n          pattern < damageCuts &&\n          (x + y + z + variant) % 4 !== 0;\n\n        if (damaged) {\n          continue;\n        }\n\n        let block = wood.planks;\n\n        if (\n          skin &&\n          (x * 5 + y * 3 + z * 7 + texturePhase) % 13 === 0\n        ) {\n          block = wood.stripped;\n        }\n\n        put(x, y, z, block);\n      }\n    }\n  }\n\n  for (let x = 0; x < W; x += 1) {\n    put(x, 1, restZ, wood.log);\n\n    if ((x + variant) % 3 !== 1) {\n      put(x, 2, restZ, wood.stripped);\n    }\n  }\n\n  const bandRadius =\n    variant === 2 || r8 > 0.82 ? 2 : 1;\n\n  for (let x = 1; x < W - 1; x += 1) {\n    for (let y = 6; y <= 7; y += 1) {\n      for (let d = -bandRadius; d <= bandRadius; d += 1) {\n        put(\n          x,\n          y,\n          deckCenter + d,\n          y === 7 ? wood.stripped : wood.planks\n        );\n      }\n    }\n  }\n\n  const railCount = Math.min(\n    4,\n    2 + (variant === 2 ? 1 : 0) + (r9 > 0.55 ? 1 : 0)\n  );\n\n  for (let j = 0; j < railCount; j += 1) {\n    const railV =\n      railCount === 1\n        ? 0\n        : -1.05 + (2.1 * j) / (railCount - 1);\n\n    for (let x = 2; x <= W - 3; x += 1) {\n      const p = hullPoint(x, 3.0, railV);\n      const gap =\n        (x * 7 + j * 11 + variant * 3) % 19 === 0 &&\n        r7 > 0.25;\n\n      if (!gap) {\n        put(p[0], p[1], p[2], wood.stripped);\n      }\n    }\n  }\n\n  if (variant !== 3 || r8 < 0.4) {\n    for (let x = 2; x <= W - 3; x += 1) {\n      if ((x + variant + Math.floor(r7 * 4)) % 17 === 0) {\n        continue;\n      }\n\n      const p = hullPoint(x, -2.75, 0);\n      put(p[0], p[1], p[2], wood.stripped);\n    }\n  }\n\n  const ribXs = [2, 5, 8, 11, 14];\n\n  for (let i = 0; i < ribXs.length; i += 1) {\n    const skipRib =\n      (i + variant + (r7 > 0.5 ? 1 : 0)) % 5 === 2;\n\n    if (skipRib) {\n      continue;\n    }\n\n    const x = ribXs[i];\n    const core = hullPoint(x, 0, 0);\n    const a = hullPoint(x, 2.9, -1.0);\n    const b = hullPoint(x, 2.9, 1.0);\n\n    stairLine(core, a, wood.stripped);\n    stairLine(core, b, wood.stripped);\n  }\n\n  const keelRibXs = [1, 4, 7, 10, 13, 15];\n\n  for (let i = 0; i < keelRibXs.length; i += 1) {\n    const x = keelRibXs[i];\n\n    stairLine(\n      hullPoint(x, 1.8, 0),\n      [x, 6, keelIn],\n      wood.stripped\n    );\n  }\n\n  for (let x = 0; x < W; x += 1) {\n    put(x, 6, keelIn, wood.stripped);\n    put(x, 6, keelBody, wood.log);\n    put(x, 6, keelTip, wood.log);\n\n    const keelFace =\n      (x + variant + Math.floor(r9 * 4)) % 6 === 2\n        ? wood.stripped\n        : wood.log;\n\n    put(x, 5, keelTip, keelFace);\n\n    if (\n      x > 0 &&\n      x < W - 1 &&\n      (x + variant + Math.floor(r8 * 3)) % 5 !== 1\n    ) {\n      put(x, 7, keelTip, wood.log);\n    }\n  }\n\n  const shoreSlots = [2, 5, 8, 11, 14];\n  const shoreCount =\n    3 + ((variant + Math.floor(r6 * 3)) % 3);\n  const shoreStart =\n    (variant + Math.floor(r8 * shoreSlots.length)) %\n    shoreSlots.length;\n\n  for (let i = 0; i < shoreCount; i += 1) {\n    const x = shoreSlots[(shoreStart + i) % shoreSlots.length];\n\n    put(x, 0, innerZ, ground.coping);\n    put(x, 1, innerZ, ground.kerb);\n\n    const target = hullPoint(\n      x,\n      i % 2 === 0 ? 0.35 : -0.35,\n      0\n    );\n\n    stairLine(\n      [x, 0, restZ],\n      target,\n      wood.log\n    );\n\n    if ((i + variant + Math.floor(r7 * 2)) % 2 === 0) {\n      stairLine(\n        [x, 0, outerZ],\n        [x, 2, restZ],\n        wood.stripped\n      );\n    }\n  }\n\n  const sternTop =\n    6 + ((variant + Math.floor(r4 * 2)) % 2);\n  const sternRailY = Math.min(H - 1, sternTop + 1);\n\n  for (let x = 12; x <= 15 && x < W; x += 1) {\n    for (let y = 6; y <= sternTop; y += 1) {\n      for (let d = -1; d <= 1; d += 1) {\n        put(\n          x,\n          y,\n          deckCenter + d,\n          y === sternTop ? wood.stripped : wood.planks\n        );\n      }\n    }\n  }\n\n  for (let x = 12; x <= 15 && x < W; x += 1) {\n    put(x, sternRailY, deckCenter - 1, rigBlock);\n\n    if ((x + variant) % 3 !== 0) {\n      put(x, sternRailY, deckCenter + 1, rigBlock);\n    }\n  }\n\n  stairLine(\n    [W - 2, 5, deckCenter],\n    [W - 1, sternRailY, deckCenter],\n    wood.log\n  );\n\n  if (variant === 0 || variant === 2) {\n    const flagY = Math.min(H - 1, sternRailY + 1);\n\n    if (flagY > sternRailY) {\n      stairLine(\n        [W - 1, sternRailY, deckCenter],\n        [W - 1, flagY, deckCenter],\n        wood.log\n      );\n    }\n  }\n\n  const bowCore = hullPoint(0, 0, 0);\n  const bowHigh = [\n    1,\n    6,\n    clampInt(bowCore[2] + side, 1, D - 2)\n  ];\n\n  stairLine(bowCore, bowHigh, wood.log);\n\n  stairLine(\n    [0, 5, bowCore[2]],\n    [2, 6, bowCore[2]],\n    rigBlock\n  );\n\n  const mastX =\n    5 + ((variant * 2 + Math.floor(r8 * 5)) % 7);\n  const mastBase = hullPoint(mastX, 0, 0);\n\n  const mastTopY =\n    8 + ((variant + (r9 > 0.52 ? 1 : 0)) % 2);\n  const mastLean = [-1, 0, 1, -1][variant];\n  const mastRake = [0, 1, -1, 0][variant];\n\n  const mastTop = [\n    clampInt(mastX + mastLean, 1, W - 2),\n    mastTopY,\n    clampInt(mastBase[2] + mastRake, 1, D - 2)\n  ];\n\n  stairLine(mastBase, mastTop, wood.log);\n\n  const yardY = Math.max(6, mastTopY - 2);\n  const yardHalf =\n    3 + ((variant + Math.floor(r8 * 2)) % 2);\n  const yardX0 = Math.max(1, mastTop[0] - yardHalf);\n  const yardX1 = Math.min(W - 2, mastTop[0] + yardHalf);\n\n  stairLine(\n    [mastTop[0], yardY, mastTop[2]],\n    mastTop,\n    wood.log\n  );\n\n  stairLine(\n    [yardX0, yardY, mastTop[2]],\n    [yardX1, yardY, mastTop[2]],\n    wood.log\n  );\n\n  const hasMizzen =\n    variant !== 1 || r9 > 0.7;\n\n  let mizzenTopY = 0;\n  let mizzenTopZ = 0;\n\n  if (hasMizzen) {\n    const mizzenBase = hullPoint(13, 0.15, 0);\n    mizzenTopY = 7 + (variant === 3 ? 1 : 0);\n    mizzenTopZ = clampInt(\n      mizzenBase[2] - side,\n      1,\n      D - 2\n    );\n\n    const mizzenTop = [13, mizzenTopY, mizzenTopZ];\n\n    stairLine(mizzenBase, mizzenTop, wood.log);\n\n    const mizzenY = Math.max(6, mizzenTopY - 2);\n\n    stairLine(\n      [13, mizzenY, mizzenTopZ],\n      mizzenTop,\n      wood.log\n    );\n\n    stairLine(\n      [11, mizzenY, mizzenTopZ],\n      [15, mizzenY, mizzenTopZ],\n      wood.stripped\n    );\n  }\n\n  const topRig = [\n    mastTop[0],\n    Math.max(5, mastTopY - 1),\n    mastTop[2]\n  ];\n\n  const yardRig = [\n    mastTop[0],\n    yardY,\n    mastTop[2]\n  ];\n\n  rigTo(topRig, hullPoint(1, -2.2, 0));\n  rigTo(topRig, hullPoint(15, -2.2, 0));\n  rigTo(yardRig, hullPoint(1, 2.2, 0));\n\n  if (variant !== 3 || r9 > 0.25) {\n    rigTo(yardRig, hullPoint(15, 2.2, 0));\n  }\n\n  if (hasMizzen) {\n    rigTo(\n      [13, Math.max(5, mizzenTopY - 1), mizzenTopZ],\n      hullPoint(12, -1.8, 0)\n    );\n  }\n\n  for (let i = 0; i < voxels.length; i += 1) {\n    const voxel = voxels[i];\n    api.set(voxel[0], voxel[1], voxel[2], voxel[3]);\n  }\n\n  const centerX = Math.floor(midX);\n\n  return {\n    name: \"Careened Pirate Ship\",\n    seatY: 0,\n    anchors: {\n      bow: [bowCore[0], bowCore[1], bowCore[2]],\n      keel: [centerX, 6, keelTip],\n      mast: [mastBase[0], mastBase[1], mastBase[2]],\n      workside: [centerX, 0, restZ]\n    }\n  };\n}"
+    },
+    "unicorn_sanctuary_program": {
+      "mode": "landmark",
+      "envelope": [
+        25,
+        18,
+        25
+      ],
+      "sourceHash": "b3:7bea57e33052ed2f26606bb4dae038020e7fc3d8a369b0c20c081e0336f63149",
+      "outputHash": "b3:af43e5895c095950d28b01f3072355415275f74f52e740f31856bceb02b33389",
+      "source": "export const envelope = [25, 18, 25];\n\nexport default function build(api) {\n  const ground = api.theme.ground;\n  const stone = api.theme.stone;\n  const wall = api.theme.wall;\n  const roof = api.theme.roof;\n\n  const pavement = ground.pavement;\n  const plinth = ground.plinth;\n  const revetment = ground.revetment;\n  const coping = ground.coping;\n\n  const stonePrimary = stone.primary;\n  const stoneAccent = stone.accent;\n\n  const wallCore = wall.core;\n  const wallWalk = wall.walk;\n  const wallParapet = wall.parapet;\n  const wallMerlon = wall.merlon;\n  const wallTower = wall.tower;\n\n  const roofSolid = roof.solid;\n  const crystal = \"minecraft:amethyst_block\";\n\n  function box(x0, x1, y0, y1, z0, z1, block) {\n    for (let y = y0; y <= y1; y += 1) {\n      for (let z = z0; z <= z1; z += 1) {\n        for (let x = x0; x <= x1; x += 1) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function ellipsoid(cx, cy, cz, rx, ry, rz, block) {\n    const x0 = Math.floor(cx - rx);\n    const x1 = Math.ceil(cx + rx);\n    const y0 = Math.floor(cy - ry);\n    const y1 = Math.ceil(cy + ry);\n    const z0 = Math.floor(cz - rz);\n    const z1 = Math.ceil(cz + rz);\n\n    for (let y = y0; y <= y1; y += 1) {\n      for (let z = z0; z <= z1; z += 1) {\n        for (let x = x0; x <= x1; x += 1) {\n          const dx = (x - cx) / rx;\n          const dy = (y - cy) / ry;\n          const dz = (z - cz) / rz;\n          if (dx * dx + dy * dy + dz * dz <= 1.0) {\n            api.set(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  function ringLayer(y, block) {\n    for (let x = 2; x <= 22; x += 1) {\n      if (x < 10 || x > 14) {\n        api.set(x, y, 2, block);\n      }\n      api.set(x, y, 22, block);\n    }\n\n    for (let z = 3; z <= 21; z += 1) {\n      api.set(2, y, z, block);\n      api.set(22, y, z, block);\n    }\n  }\n\n  const seat = 3;\n\n  // A shallow sunk foundation follows the sampled terrain. The open stair\n  // run at the south side is kept continuous through the foundation.\n  for (let x = 1; x <= 23; x += 1) {\n    for (let z = 1; z <= 23; z += 1) {\n      const terrain = api.heightAt(x, z);\n      const entryColumn = z <= 2 && x >= 10 && x <= 14;\n      const top = z === 1 && entryColumn ? 1 : 2;\n      const groundY = Math.floor(seat + terrain);\n      const start = entryColumn\n        ? 0\n        : Math.max(0, Math.min(top, groundY));\n\n      for (let y = start; y <= top; y += 1) {\n        const block =\n          y === 0\n            ? (terrain < -0.5 ? revetment : plinth)\n            : stonePrimary;\n        api.set(x, y, z, block);\n      }\n    }\n  }\n\n  // Landing stones outside the entrance make a climbable one-block stair.\n  for (let x = 10; x <= 14; x += 1) {\n    const terrain = api.heightAt(x, 0);\n    api.set(x, 0, 0, terrain < -0.5 ? revetment : plinth);\n  }\n\n  // Court floor and a restrained cross-shaped devotional path.\n  box(3, 21, 3, 3, 3, 21, pavement);\n\n  for (let z = 3; z <= 8; z += 1) {\n    api.set(12, 3, z, coping);\n  }\n  for (let x = 5; x <= 19; x += 1) {\n    api.set(x, 3, 8, coping);\n  }\n\n  // Three-course curtain wall, open at the south gate.\n  ringLayer(3, wallCore);\n  ringLayer(4, wallWalk);\n  ringLayer(5, wallParapet);\n\n  for (let x = 3; x <= 21; x += 4) {\n    if (x < 10 || x > 14) {\n      api.set(x, 6, 2, wallMerlon);\n    }\n    api.set(x, 6, 22, wallMerlon);\n  }\n\n  for (let z = 4; z <= 20; z += 4) {\n    api.set(2, 6, z, wallMerlon);\n    api.set(22, 6, z, wallMerlon);\n  }\n\n  // Clear arched entrance.\n  box(7, 8, 3, 6, 2, 3, wallTower);\n  box(16, 17, 3, 6, 2, 3, wallTower);\n  box(7, 17, 7, 7, 2, 3, roofSolid);\n\n  // Four small corner towers with crystal finials.\n  const cornerPositions = [\n    [3, 3],\n    [21, 3],\n    [3, 21],\n    [21, 21]\n  ];\n\n  for (let i = 0; i < cornerPositions.length; i += 1) {\n    const cx = cornerPositions[i][0];\n    const cz = cornerPositions[i][1];\n\n    box(cx - 1, cx, 4, 8, cz - 1, cz, wallTower);\n    box(cx - 1, cx, 9, 9, cz - 1, cz, coping);\n    api.set(cx, 10, cz, crystal);\n  }\n\n  // Four low devotional lantern plinths leave the court open and traversable.\n  const markerPositions = [\n    [5, 6],\n    [19, 6],\n    [5, 16],\n    [19, 16]\n  ];\n\n  for (let i = 0; i < markerPositions.length; i += 1) {\n    const px = markerPositions[i][0];\n    const pz = markerPositions[i][1];\n\n    box(px - 1, px + 1, 4, 5, pz - 1, pz + 1, stonePrimary);\n    api.set(px, 6, pz, crystal);\n  }\n\n  // Rear open-air shrine terrace and solid icon wall.\n  box(6, 18, 4, 4, 17, 21, plinth);\n  box(7, 17, 5, 5, 18, 21, stonePrimary);\n  box(7, 17, 6, 6, 19, 21, stonePrimary);\n\n  box(10, 14, 6, 6, 18, 19, stoneAccent);\n  box(11, 13, 7, 7, 18, 19, stonePrimary);\n  api.set(12, 8, 18, crystal);\n\n  box(8, 16, 7, 10, 20, 21, wallCore);\n  box(7, 8, 7, 10, 19, 21, wallTower);\n  box(16, 17, 7, 10, 19, 21, wallTower);\n\n  // A simple sacred emblem on the front of the icon wall.\n  box(10, 14, 8, 8, 19, 19, stoneAccent);\n  box(11, 13, 9, 9, 19, 19, stoneAccent);\n  api.set(12, 10, 19, crystal);\n\n  // Stepped gable and a single crystal finial.\n  box(7, 17, 11, 11, 20, 21, roofSolid);\n  box(8, 16, 12, 12, 20, 21, roofSolid);\n  box(9, 15, 13, 13, 20, 21, roofSolid);\n  box(10, 14, 14, 14, 20, 21, roofSolid);\n  box(11, 13, 15, 15, 20, 21, roofSolid);\n  api.set(12, 16, 20, crystal);\n\n  // Tiered statue plinth.\n  box(7, 12, 4, 4, 9, 14, plinth);\n  box(8, 11, 5, 5, 10, 14, stonePrimary);\n  box(9, 11, 6, 6, 10, 14, coping);\n\n  // Rounded horizontal torso.\n  ellipsoid(11.5, 9.5, 12, 4.0, 2.3, 2.6, stonePrimary);\n  box(9, 12, 7, 8, 11, 13, stonePrimary);\n  box(8, 13, 8, 10, 10, 14, stonePrimary);\n  box(9, 14, 9, 11, 11, 13, stonePrimary);\n\n  // Two grounded hind legs and hooves.\n  box(8, 9, 6, 8, 10, 11, stonePrimary);\n  box(10, 11, 6, 8, 13, 14, stonePrimary);\n  box(8, 9, 6, 6, 10, 11, stoneAccent);\n  box(10, 11, 6, 6, 13, 14, stoneAccent);\n\n  // Rising curved neck, head, and muzzle facing east.\n  box(13, 15, 10, 12, 10, 14, stonePrimary);\n  box(13, 14, 11, 13, 11, 13, stonePrimary);\n  box(14, 15, 12, 14, 10, 13, stonePrimary);\n  box(15, 16, 13, 15, 10, 12, stonePrimary);\n\n  box(15, 17, 14, 15, 10, 13, stonePrimary);\n  box(17, 18, 13, 14, 10, 12, stonePrimary);\n  api.set(18, 13, 11, stoneAccent);\n\n  // Raised forelegs, bent forward in a rearing pose.\n  box(14, 15, 10, 12, 10, 11, stonePrimary);\n  box(15, 17, 10, 11, 10, 11, stonePrimary);\n  box(17, 18, 9, 10, 10, 11, stoneAccent);\n\n  box(14, 15, 11, 13, 13, 14, stonePrimary);\n  box(15, 17, 11, 12, 13, 14, stonePrimary);\n  box(17, 18, 10, 11, 13, 14, stoneAccent);\n\n  // Mane, eye, nostril, and pointed ears on the visible side.\n  box(13, 14, 11, 13, 9, 9, stoneAccent);\n  box(14, 15, 13, 15, 9, 9, stoneAccent);\n  api.set(15, 15, 9, stoneAccent);\n\n  api.set(16, 14, 9, crystal);\n  api.set(17, 13, 9, stoneAccent);\n\n  api.set(15, 16, 10, stoneAccent);\n  api.set(16, 16, 12, stoneAccent);\n\n  // Angled crystal horn.\n  api.set(17, 16, 11, stoneAccent);\n  api.set(18, 16, 11, stoneAccent);\n  api.set(18, 17, 11, crystal);\n  api.set(19, 17, 11, crystal);\n\n  // Flowing tail sweeping back toward the west.\n  box(7, 9, 8, 10, 11, 13, stoneAccent);\n  box(6, 8, 9, 11, 11, 13, stoneAccent);\n  box(5, 7, 10, 11, 11, 13, stoneAccent);\n  box(4, 6, 11, 12, 11, 13, stoneAccent);\n\n  return {\n    name: \"Unicorn Sanctuary\",\n    seatY: 3,\n    anchors: {\n      door: [12, 3, 2]\n    }\n  };\n}"
+    }
+  }
+}
