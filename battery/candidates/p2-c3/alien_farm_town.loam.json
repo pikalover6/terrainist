@@ -1,0 +1,712 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "alien_farm_town",
+    "worldSeed": "302",
+    "prompt": "A small farm town being invaded by aliens.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:dirt_path"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "event": {
+      "kind": "siege",
+      "severity": 0.95,
+      "recency": 0
+    },
+    "character": {
+      "label": "small farm town under alien invasion",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "programs": [
+        {
+          "id": "alien_command_vessel",
+          "mode": "landmark",
+          "brief": "A low, unmistakable alien command vessel hangs over the town green, large enough to dominate the roofs and cast a shadow over the ordinary farm town. Its hull is alien resin and chitin with restrained cyan light; use api.theme for any human-facing ground trace and make a narrow luminous beam connect its underside to the green so the invasion feels present rather than distant.",
+          "envelope": [
+            32,
+            20,
+            32
+          ]
+        },
+        {
+          "id": "alien_drop_pod",
+          "mode": "plugin",
+          "brief": "Each instance is a crashed alien drop pod punched into a field, with a broken hatch, glowing seams, a scorched impact ring and a short furrow pointing west toward the town. The pod is alien resin and chitin with cyan light; use api.theme for soil, timber debris and any human-facing footing, and vary the damage and attitude between instances.",
+          "envelope": [
+            9,
+            8,
+            9
+          ],
+          "count": 18
+        }
+      ]
+    },
+    "tokens": {
+      "invasion": "alien forces are actively invading the human farm town; the town itself remains ordinary and agrarian"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "a small ordinary farm town under an alien attack",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle farmland around the town",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 69,
+          "amplitude": 14,
+          "octaves": 4,
+          "frequency": 0.0038,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad gentle shelf for the town and its fields",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.55
+              ],
+              "radius": 240,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.3,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "north_tree_belt",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "a small woodland edge beyond the fields",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.05,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "far_birch",
+              "weight": 3,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the open countryside",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.025,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "country_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "town_green",
+        "kind": "primitive",
+        "label": "the village green at the heart of town",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "north_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage on the north side of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              1,
+              64
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 70
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "south_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a taller cottage facing the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              2,
+              16
+            ]
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 34
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the inn facing the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 8,
+            "max": 50
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smithy kept a little apart from the cottages",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 10,
+            "max": 55
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the small chapel beside the farm town green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "town_green",
+            "min": 10,
+            "max": 60
+          },
+          {
+            "facing": "town_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 30
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "chapel"
+        ]
+      },
+      {
+        "id": "east_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the eastern holding where the alien landing trail begins",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            80,
+            72
+          ]
+        },
+        "params": {
+          "parcels": 5,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "carrots",
+            "pasture"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              8,
+              128
+            ]
+          },
+          {
+            "distance": "town_green",
+            "min": 20,
+            "max": 240
+          },
+          {
+            "terrain_conform": "drape"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "west_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the western fields around the town",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            80,
+            72
+          ]
+        },
+        "params": {
+          "parcels": 4,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "potatoes",
+            "berries"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "adjacent_to": "town_green",
+            "gap": [
+              8,
+              128
+            ]
+          },
+          {
+            "distance": "town_green",
+            "min": 20,
+            "max": 240
+          },
+          {
+            "terrain_conform": "drape"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "alien_command_vessel",
+        "kind": "generator",
+        "generator": "authored:alien_command_vessel",
+        "label": "the alien command vessel looming over the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            32,
+            20,
+            32
+          ]
+        },
+        "params": {
+          "hover": 16
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "alien",
+          "invasion"
+        ]
+      },
+      {
+        "id": "alien_landing_trail",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "the line of crashed alien drop pods advancing from the eastern fields",
+        "params": {
+          "program": "alien_drop_pod",
+          "count": 18,
+          "area": {
+            "at": [
+              0.66,
+              0.52
+            ],
+            "radius": 0.24
+          },
+          "spacing": 18,
+          "maxSlope": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "seat": "embed",
+          "embedDepth": 4
+        },
+        "tags": [
+          "alien",
+          "invasion"
+        ]
+      },
+      {
+        "id": "town_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the roofed well on the green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "green_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a bench beside the town well",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "organic dirt lanes joining the green, homes and fields",
+        "params": {
+          "anchors": [
+            "town_green",
+            "#tag:house",
+            "smithy",
+            "chapel",
+            "east_holding",
+            "west_holding"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "alien_command_vessel": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        20,
+        32
+      ],
+      "sourceHash": "b3:8424a67a2ee520f39a3c6f7d2e52bc3e3be405164ab9827e6ea48f6ebf79cfa8",
+      "outputHash": "b3:0fea37e88103c0740c71f4f15262713ab0fc172f9b05f48e247709b0f3676755",
+      "source": "export const envelope = [32, 20, 32];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n\n  const cx = (W - 1) / 2;\n  const cz = (D - 1) / 2;\n\n  const pavement = api.theme.ground.pavement;\n  const kerb = api.theme.ground.kerb;\n  const coping = api.theme.ground.coping;\n\n  const resin = \"minecraft:purpur_block\";\n  const chitin = \"minecraft:bone_block\";\n  const cyanLight = \"minecraft:sea_lantern\";\n\n  function put(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  const terrain = new Array(W * D);\n  const traceCells = [];\n  const padRadius = 7;\n  const padRadiusSquared = padRadius * padRadius;\n  let minHeight = Infinity;\n\n  for (let x = 0; x < W; x += 1) {\n    for (let z = 0; z < D; z += 1) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r2 = dx * dx + dz * dz;\n\n      if (r2 <= padRadiusSquared) {\n        const h = Math.floor(api.heightAt(x, z));\n        terrain[x * D + z] = h;\n        traceCells.push([x, z, h, r2]);\n        if (h < minHeight) {\n          minHeight = h;\n        }\n      }\n    }\n  }\n\n  const seatY = Math.max(0, Math.min(H - 1, -minHeight));\n\n  function localGround(x, z) {\n    let y = seatY + terrain[x * D + z];\n    if (y < 0) {\n      y = 0;\n    }\n    if (y >= H) {\n      y = H - 1;\n    }\n    return y;\n  }\n\n  for (let i = 0; i < traceCells.length; i += 1) {\n    const cell = traceCells[i];\n    const x = cell[0];\n    const z = cell[1];\n    const r2 = cell[3];\n    const groundY = localGround(x, z);\n\n    for (let y = 0; y <= groundY; y += 1) {\n      put(x, y, z, pavement);\n    }\n\n    let top = pavement;\n    if (r2 > 36) {\n      top = kerb;\n    } else if (r2 > 16) {\n      top = coping;\n    }\n    put(x, groundY, z, top);\n  }\n\n  const profiles = [\n    [7, 4, 3],\n    [8, 8, 6],\n    [9, 12, 9],\n    [10, 15, 11],\n    [11, 15, 12],\n    [12, 15, 12],\n    [13, 15, 12],\n    [14, 14, 11],\n    [15, 12, 9],\n    [16, 9, 7],\n    [17, 6, 5],\n    [18, 3, 3]\n  ];\n\n  for (let p = 0; p < profiles.length; p += 1) {\n    const y = profiles[p][0];\n    const rx = profiles[p][1];\n    const rz = profiles[p][2];\n\n    const minX = Math.max(0, Math.ceil(cx - rx));\n    const maxX = Math.min(W - 1, Math.floor(cx + rx));\n    const minZ = Math.max(0, Math.ceil(cz - rz));\n    const maxZ = Math.min(D - 1, Math.floor(cz + rz));\n\n    for (let x = minX; x <= maxX; x += 1) {\n      for (let z = minZ; z <= maxZ; z += 1) {\n        const dx = (x - cx) / rx;\n        const dz = (z - cz) / rz;\n        const q = dx * dx + dz * dz;\n\n        if (q <= 1) {\n          let block = resin;\n\n          if (y <= 8 || y === 11 || y === 14 || y >= 16 || q > 0.86) {\n            block = chitin;\n          }\n\n          if (q > 0.82 && ((x * 7 + z * 11 + y) % 5 === 0)) {\n            block = resin;\n          }\n\n          if (y === 12 && q > 0.78 && ((x * 5 + z * 3) % 9 === 0)) {\n            block = cyanLight;\n          }\n\n          if (\n            y === 18 &&\n            Math.abs(x - cx) <= 1 &&\n            Math.abs(z - cz) <= 1\n          ) {\n            block = cyanLight;\n          }\n\n          put(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  const beamX0 = Math.floor(cx);\n  const beamZ0 = Math.floor(cz);\n  const undersideY = 7;\n\n  for (let x = beamX0; x <= beamX0 + 1; x += 1) {\n    for (let z = beamZ0; z <= beamZ0 + 1; z += 1) {\n      const groundY = localGround(x, z);\n      const startY = Math.min(groundY, undersideY);\n      const endY = Math.max(groundY, undersideY);\n\n      for (let y = startY; y <= endY; y += 1) {\n        put(x, y, z, cyanLight);\n      }\n    }\n  }\n\n  const landingX = beamX0 - 6;\n  const landingY = localGround(landingX, beamZ0);\n\n  return {\n    name: \"Alien Command Vessel\",\n    seatY: seatY,\n    anchors: {\n      landing: [landingX, landingY, beamZ0],\n      beam: [beamX0, undersideY, beamZ0]\n    }\n  };\n}"
+    },
+    "alien_drop_pod": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        10,
+        9
+      ],
+      "sourceHash": "b3:d5f95b95ab18b7bdb10d0dd8000b6781378136f6f3ee60795f097b3785909e32",
+      "outputHash": "b3:187b07f029832af42fd264f637649e509b115edff0591d906474bac267788445",
+      "source": "export const envelope = [11, 10, 9];\n\nexport default function build(api) {\n  const W = 11;\n  const H = 10;\n  const D = 9;\n  const seatY = 2;\n\n  const index = api.instance.index;\n  const count = api.instance.count;\n\n  const rLeanX = api.random();\n  const rLeanZ = api.random();\n  const rCap = api.random();\n  const rDamage = api.random();\n  const rPhase = api.random();\n  const rMarker = api.random();\n  const rDebris = api.random();\n  const rScorch = api.random();\n\n  function mod(value, modulus) {\n    const remainder = value % modulus;\n    if (remainder < 0) {\n      return remainder + modulus;\n    }\n    return remainder;\n  }\n\n  const resin = \"minecraft:purpur_block\";\n  const chitin = \"minecraft:bone_block\";\n  const light = \"minecraft:sea_lantern\";\n  const cyanPanel = \"minecraft:cyan_concrete\";\n  const scorch = mod(index + Math.floor(rScorch * 2), 2) === 0\n    ? \"minecraft:obsidian\"\n    : \"minecraft:crying_obsidian\";\n\n  const foundation = api.theme.ground.plinth;\n  const pavement = api.theme.ground.pavement;\n  const scar = api.theme.ground.scree;\n  const timberLog = api.theme.wood.log;\n  const timberPlanks = api.theme.wood.planks;\n\n  const tiltX = mod(index + Math.floor(rLeanX * 3), 3) - 1;\n  const tiltZ = mod(index * 2 + Math.floor(rLeanZ * 3), 3) - 1;\n  const capMode = mod(index + Math.floor(rCap * 3), 3);\n  const phase = index * 47 + count * 13 + Math.floor(rPhase * 997);\n\n  const serialSlot = mod(index, 18);\n  const serialX = 10;\n  const serialY = serialSlot < 9 ? 2 : 6;\n  const serialZ = serialSlot % 9;\n\n  const collarX0 = 4 + tiltX;\n  const collarX1 = 9 + tiltX;\n  const collarZ0 = 1 + tiltZ;\n  const collarZ1 = 7 + tiltZ;\n\n  let capX0;\n  let capX1;\n  let capZ0;\n  let capZ1;\n\n  if (capMode === 0) {\n    capX0 = collarX0 + 1;\n    capX1 = collarX1 - 1;\n    capZ0 = collarZ0 + 1;\n    capZ1 = collarZ1 - 1;\n  } else if (capMode === 1) {\n    capX0 = collarX0 + 1;\n    capX1 = collarX1 - 1;\n    capZ0 = collarZ0 + 2;\n    capZ1 = collarZ1 - 2;\n  } else {\n    capX0 = collarX0 + 2;\n    capX1 = collarX1 - 1;\n    capZ0 = collarZ0 + 1;\n    capZ1 = collarZ1 - 1;\n  }\n\n  const capWidth = capX1 - capX0 + 1;\n  const markerCount = 1 + mod(index + Math.floor(rMarker * 5), 5);\n\n  const terrain = new Array(W);\n  const floorLevel = new Array(W);\n\n  for (let x = 0; x < W; x += 1) {\n    terrain[x] = new Array(D);\n    floorLevel[x] = new Array(D);\n\n    for (let z = 0; z < D; z += 1) {\n      const value = api.heightAt(x, z);\n      terrain[x][z] = value;\n\n      let groundY = seatY + Math.floor(value);\n      if (groundY < 0) {\n        groundY = 0;\n      }\n      if (groundY > seatY) {\n        groundY = seatY;\n      }\n      floorLevel[x][z] = groundY;\n    }\n  }\n\n  function voidCell(x, y, z) {\n    if (y < 3 || y > 5) {\n      return false;\n    }\n\n    const room = x >= 6 && x <= 8 && z >= 3 && z <= 5;\n    const hatchTunnel = x >= 3 && x <= 5 && z === 4;\n\n    return room || hatchTunnel;\n  }\n\n  function insideHull(x, y, z) {\n    if (y >= 0 && y <= 2) {\n      return x >= 2 && x <= 10 && z >= 0 && z <= 8;\n    }\n\n    if (y >= 3 && y <= 5) {\n      return x >= 3 && x <= 10 && z >= 0 && z <= 8 &&\n        !voidCell(x, y, z);\n    }\n\n    if (y === 6 || y === 7) {\n      return x >= 3 && x <= 10 && z >= 0 && z <= 8;\n    }\n\n    if (y === 8) {\n      return x >= collarX0 && x <= collarX1 &&\n        z >= collarZ0 && z <= collarZ1;\n    }\n\n    if (y === 9) {\n      return x >= capX0 && x <= capX1 &&\n        z >= capZ0 && z <= capZ1;\n    }\n\n    return false;\n  }\n\n  function coordKey(x, y, z) {\n    return x + \"|\" + y + \"|\" + z;\n  }\n\n  function hullTexture(x, y, z) {\n    const terrainTerm = Math.floor(terrain[x][z]);\n    const pattern = mod(\n      x * 17 + y * 11 + z * 13 + phase + terrainTerm * 7,\n      9\n    );\n\n    if (pattern < 3) {\n      return chitin;\n    }\n    return resin;\n  }\n\n  function seamCell(x, y, z) {\n    const terrainTerm = Math.floor(terrain[x][z]);\n\n    if (\n      y === 3 &&\n      (z === 0 || z === 8) &&\n      mod(x + y + phase + terrainTerm, 5) === 0\n    ) {\n      return true;\n    }\n\n    if (\n      y === 3 &&\n      x === 10 &&\n      mod(z * 2 + y + phase + terrainTerm, 4) === 0\n    ) {\n      return true;\n    }\n\n    if (\n      y === 8 &&\n      (x === collarX0 || x === collarX1 ||\n        z === collarZ0 || z === collarZ1) &&\n      mod(x * 3 + z * 5 + phase + terrainTerm, 4) === 0\n    ) {\n      return true;\n    }\n\n    if (\n      y === 9 &&\n      mod(\n        (x - capX0) * 3 +\n        (z - capZ0) * 5 +\n        phase,\n        4\n      ) === 0\n    ) {\n      return true;\n    }\n\n    if (\n      y === 3 &&\n      x === 3 &&\n      (z === 3 || z === 5) &&\n      mod(y + z + phase, 2) === 0\n    ) {\n      return true;\n    }\n\n    return false;\n  }\n\n  function bodyMaterial(x, y, z) {\n    const edge = x === 2 || x === 10 || z === 0 || z === 8;\n\n    if (y < seatY) {\n      if (edge) {\n        if (y < floorLevel[x][z]) {\n          return foundation;\n        }\n        return pavement;\n      }\n      return hullTexture(x, y, z);\n    }\n\n    if (x === serialX && y === serialY && z === serialZ) {\n      return cyanPanel;\n    }\n\n    if (y === seatY && edge) {\n      const ringPattern = mod(x * 3 + z * 5 + phase, 7);\n      if (ringPattern < 2) {\n        return scorch;\n      }\n      return scar;\n    }\n\n    if (\n      y === 3 &&\n      x === 3 &&\n      (z === 3 || z === 5)\n    ) {\n      if (mod(y + z + phase, 3) === 0) {\n        return light;\n      }\n      return chitin;\n    }\n\n    if (y === 9) {\n      const localIndex =\n        (x - capX0) + (z - capZ0) * capWidth;\n\n      if (localIndex < markerCount) {\n        return cyanPanel;\n      }\n    }\n\n    if (seamCell(x, y, z)) {\n      return light;\n    }\n\n    return hullTexture(x, y, z);\n  }\n\n  const damageBudget =\n    4 + mod(index, 4) + Math.floor(rDamage * 3);\n\n  const damageCandidates = [];\n\n  for (let y = 3; y <= 5; y += 1) {\n    for (let x = 3; x <= 10; x += 1) {\n      for (let z = 0; z <= 8; z += 1) {\n        const outerFace =\n          x === 3 || x === 10 || z === 0 || z === 8;\n\n        if (outerFace && insideHull(x, y, z)) {\n          damageCandidates.push([x, y, z]);\n        }\n      }\n    }\n  }\n\n  const damaged = new Set();\n\n  if (damageCandidates.length > 0) {\n    const damageSpan = Math.max(\n      1,\n      damageCandidates.length - damageBudget + 1\n    );\n    const damageStart = mod(\n      Math.floor(rDamage * 100000) + index * 17,\n      damageSpan\n    );\n\n    for (let i = 0; i < damageBudget; i += 1) {\n      const candidateIndex = mod(\n        damageStart + i * 13,\n        damageCandidates.length\n      );\n      const candidate = damageCandidates[candidateIndex];\n      damaged.add(coordKey(candidate[0], candidate[1], candidate[2]));\n    }\n  }\n\n  const placed = new Set();\n\n  function put(x, y, z, block) {\n    if (\n      x < 0 || x >= W ||\n      y < 0 || y >= H ||\n      z < 0 || z >= D\n    ) {\n      return;\n    }\n\n    const key = coordKey(x, y, z);\n    if (placed.has(key)) {\n      return;\n    }\n\n    placed.add(key);\n    api.set(x, y, z, block);\n  }\n\n  for (let y = 0; y < H; y += 1) {\n    for (let x = 0; x < W; x += 1) {\n      for (let z = 0; z < D; z += 1) {\n        if (!insideHull(x, y, z)) {\n          continue;\n        }\n\n        if (damaged.has(coordKey(x, y, z))) {\n          continue;\n        }\n\n        put(x, y, z, bodyMaterial(x, y, z));\n      }\n    }\n  }\n\n  function supportColumn(x, z, topBlock) {\n    for (let y = 0; y <= seatY; y += 1) {\n      let block = topBlock;\n\n      if (y !== seatY) {\n        if (y < floorLevel[x][z]) {\n          block = foundation;\n        } else {\n          block = pavement;\n        }\n      }\n\n      put(x, y, z, block);\n    }\n  }\n\n  for (let x = 0; x <= 2; x += 1) {\n    let pathBlock = scar;\n\n    if (x === 2) {\n      pathBlock = scar;\n    } else if (mod(x + phase, 4) === 0) {\n      pathBlock = scorch;\n    }\n\n    supportColumn(x, 4, pathBlock);\n\n    if (x < 2) {\n      let sideZ = 3;\n\n      if (\n        mod(\n          x + index + Math.floor(rLeanX * 3),\n          2\n        ) !== 0\n      ) {\n        sideZ = 5;\n      }\n\n      let sideBlock = scar;\n      if (mod(x + phase, 3) === 0) {\n        sideBlock = scorch;\n      }\n\n      supportColumn(x, sideZ, sideBlock);\n    }\n  }\n\n  const debrisSpots = [\n    [1, 3],\n    [0, 4],\n    [1, 5],\n    [0, 3],\n    [0, 5]\n  ];\n\n  const debrisCount =\n    3 + mod(index + Math.floor(rDebris * 3), 3);\n\n  for (let i = 0; i < debrisCount; i += 1) {\n    const spot = debrisSpots[i];\n    const x = spot[0];\n    const z = spot[1];\n\n    let mark = scar;\n    if (mod(i + phase, 4) === 0) {\n      mark = scorch;\n    }\n\n    supportColumn(x, z, mark);\n\n    let lowerDebris = timberLog;\n    if (i % 2 !== 0) {\n      lowerDebris = timberPlanks;\n    }\n\n    put(x, seatY + 1, z, lowerDebris);\n\n    if (mod(i + index + Math.floor(rDebris * 7), 3) === 0) {\n      let upperDebris = timberPlanks;\n      if (i % 2 !== 0) {\n        upperDebris = timberLog;\n      }\n\n      put(x, seatY + 2, z, upperDebris);\n    }\n  }\n\n  function frameBlock(y, z) {\n    const pattern = mod(y + z + phase, 3);\n\n    if (pattern === 0 && y === 3) {\n      return light;\n    }\n\n    if (pattern === 1) {\n      return scorch;\n    }\n\n    return chitin;\n  }\n\n  const hatchBreak = mod(\n    index + Math.floor(rScorch * 5),\n    5\n  );\n\n  put(2, 3, 3, frameBlock(3, 3));\n  put(2, 3, 5, frameBlock(3, 5));\n\n  for (let y = 4; y <= 6; y += 1) {\n    if (mod(y + hatchBreak + phase, 4) !== 0) {\n      put(2, y, 3, frameBlock(y, 3));\n    }\n\n    if (mod(y + hatchBreak + phase + 1, 4) !== 0) {\n      put(2, y, 5, frameBlock(y, 5));\n    }\n  }\n\n  return {\n    name: \"Crashed Alien Drop Pod\",\n    seatY: seatY,\n    anchors: {\n      door: [2, 3, 4],\n      furrowWest: [0, 2, 4],\n      impact: [6, 2, 4],\n      crown: [capX0, 9, capZ0]\n    },\n    interiors: [\n      {\n        min: [6, 3, 3],\n        max: [8, 5, 5],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

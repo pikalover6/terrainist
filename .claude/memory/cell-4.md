@@ -196,8 +196,20 @@ door column), spire brood glow + seam shutters + stair wall
 (cuttable()/lit() guards), response sea_lanterns → glowstone (the
 lantern-name rule). Catalog **404/585**. Exhibits xeno_ + agr_
 registered. IN FLIGHT: devworld-0814 → Prism; P2 farm-invasion c3
-generate (seed 302, teed). Kai taste queue unchanged + NEW: ancient
-3v2, era vocab hygiene; DESIGN queue: sweep-client infra host.
+generate (seed 302, teed). **TASTE QUEUE ANSWERED (Kai popup, 08-14): ancient ceiling KEEPS 3
+(judge on next walk); THEME_BY_ERA.ancient += sun_clay JOINS the draw
+(birchwood stays; landed); era hygiene = LIGHT TEACH (style rule not
+gate; landed in kit+prepass); F5 WP-6 SKIPPED THIS RUNG (freeze moves
+to next rung — rung-B machinery list now EMPTY except F3
+junction iteration, which needs walks).** P2 FARM-INVASION c3
+(alien_farm_town__c3 → Prism, archived p2-c3, $0.068): classifier
+wrote formPacks [agrarian, alien_scifi] UNPROMPTED, kept the town
+temperate_timber per the xeno teaching; programs command vessel +
+drop pods (18 asked, 6 sited — W337 honest). IN FLIGHT: nautical
+pack halves (corsair/brine) + INFRA-ENTRIES-v0 design (opus-5-high;
+the sweep-client host that unlocks 7 alien infra entries + waterworks
+family; MACHINERY — must land pre-8-28 or wait). Ruling batch (9
+small) still open.
 
 **Standing discipline reminders:** INSTALLS GO TO PRISM (Kai,
 08-13): `--saves "/Users/kaihoward/Library/Application Support/

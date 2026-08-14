@@ -483,6 +483,13 @@ ${formPackLines()}
   ancient pack in a modern city is legal and sometimes the whole point (a
   modern Hellenist capital). Omitting formPacks changes nothing at all.
 
+  In a STRONGLY-DATED world (a named ancient city, a medieval siege, a
+  frontier town), keep the era's own words in any mix or prefer list you
+  write: pack members and era-plausible vernacular (courtyard_house, hall,
+  granary) over anachronisms (townhouse, warehouse, office read as modern
+  words even where the compiler builds them plainly). This is a style rule,
+  not a gate — nothing is forbidden by it.
+
 urbanForm: exactly these ${DISTRICT_FABRICS.length} ids. This is the single field that decides whether
 two towns look like different places, so read the prompt for it deliberately —
 but write it ONLY when the prompt actually says something about the shape of the

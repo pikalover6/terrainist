@@ -55,7 +55,9 @@ export const STREET_BREAK_MAX = 0.35;
  */
 const THEME_BY_ERA: Readonly<Record<EraClass, readonly string[]>> = Object.freeze({
   primitive: ["temperate_timber"],
-  ancient: ["birchwood_downs"],
+  // sun_clay joined the draw 2026-08-14 (Kai, after the Troy walks validated
+  // the palette): antiquity without a named theme can now come out sun-baked.
+  ancient: ["birchwood_downs", "sun_clay"],
   medieval: ["temperate_timber"],
   renaissance: ["temperate_timber"],
   industrial: ["birchwood_downs"],
