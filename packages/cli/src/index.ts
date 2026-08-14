@@ -834,6 +834,7 @@ function printRunUsage(usages: readonly Usage[], rounds: number): void {
   console.log(
     `  authoring  ${usages.length} model run(s), ${rounds} compile-feedback round(s), ` +
       `${total.promptTokens} in + ${total.completionTokens} out = ${total.totalTokens} tokens` +
+      `${total.reasoningTokens === undefined ? "" : ` (${total.reasoningTokens} of the out reasoning)`}` +
       `${total.cost === undefined ? "" : ` ($${total.cost.toFixed(4)})`}`,
   );
 }

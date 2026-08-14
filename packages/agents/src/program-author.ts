@@ -925,7 +925,7 @@ export function formatProgramRun(result: AuthorProgramsResult): string {
   for (const skip of result.skipped) lines.push(`  skip   ${skip.id}  — ${skip.reason}`);
   const { usage } = result;
   lines.push(
-    `  tokens     ${usage.promptTokens} in + ${usage.completionTokens} out = ${usage.totalTokens}${usage.cost === undefined ? "" : `  ($${usage.cost.toFixed(4)})`}`,
+    `  tokens     ${usage.promptTokens} in + ${usage.completionTokens} out = ${usage.totalTokens}${usage.reasoningTokens === undefined ? "" : `  (${usage.reasoningTokens} of the out reasoning)`}${usage.cost === undefined ? "" : `  ($${usage.cost.toFixed(4)})`}`,
   );
   return lines.join("\n");
 }

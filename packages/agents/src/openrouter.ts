@@ -26,6 +26,17 @@ export interface Usage {
   readonly totalTokens: number;
   /** Credits charged, when OpenRouter reports them. */
   readonly cost?: number;
+  /**
+   * Tokens the model spent thinking, when the provider reports them.
+   *
+   * Providers that report this include the count *inside*
+   * `completionTokens` (it bills at the completion rate), so this is a
+   * breakdown of the output, never an addition to it. The 2026-08-14
+   * Luna/Gemini head-to-head is why it is recorded: two models can match
+   * on price while one spends 5× the output tokens, and without this
+   * split "token efficiency" can't be told apart from "unit price".
+   */
+  readonly reasoningTokens?: number;
 }
 
 /** What one completion produced. */
@@ -60,6 +71,8 @@ const ZERO_USAGE: Usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0
 export function sumUsage(parts: readonly Usage[]): Usage {
   let cost = 0;
   let sawCost = false;
+  let reasoning = 0;
+  let sawReasoning = false;
   let prompt = 0;
   let completion = 0;
   let total = 0;
@@ -71,12 +84,17 @@ export function sumUsage(parts: readonly Usage[]): Usage {
       cost += p.cost;
       sawCost = true;
     }
+    if (p.reasoningTokens !== undefined) {
+      reasoning += p.reasoningTokens;
+      sawReasoning = true;
+    }
   }
   return {
     promptTokens: prompt,
     completionTokens: completion,
     totalTokens: total,
     ...(sawCost ? { cost } : {}),
+    ...(sawReasoning ? { reasoningTokens: reasoning } : {}),
   };
 }
 
@@ -289,11 +307,13 @@ function narrowCompletion(payload: unknown, requestedModel: string): CompletionR
     throw new EmptyContentError("OpenRouter response had no message content");
   }
 
+  const reasoningTokens = num(p.usage?.completion_tokens_details?.reasoning_tokens);
   const usage: Usage = {
     promptTokens: num(p.usage?.prompt_tokens),
     completionTokens: num(p.usage?.completion_tokens),
     totalTokens: num(p.usage?.total_tokens),
     ...(typeof p.usage?.cost === "number" ? { cost: p.usage.cost } : {}),
+    ...(reasoningTokens > 0 ? { reasoningTokens } : {}),
   };
 
   return {
