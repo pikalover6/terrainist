@@ -167,22 +167,25 @@ function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, Em
 }
 
 /**
- * Real vanilla blocks that the pinned prismarine registry simply does not
- * carry — a dependency data gap, not a model hallucination. Without a hint the
- * E336 text reads as "you invented a block", which sends the authoring repair
- * loop hunting for a spelling mistake that isn't there and burns rounds.
+ * Block names every model knows that the pinned registry spells differently —
+ * renames, not hallucinations. Without a hint the E336 text reads as "you
+ * invented a block", which sends the authoring repair loop hunting for a
+ * spelling mistake that isn't there and burns rounds.
  *
- * Keyed by bare name (no `minecraft:`, no `[...]` state). Verified absent by
- * diffing the pinned 1.21.11 block list against 1.21.4: `chain` is the only
- * real block the pin lost. Only add entries you have confirmed absent AND can
- * name a sensible substitute for.
+ * Keyed by bare name (no `minecraft:`, no `[...]` state). `chain` is the only
+ * entry because it is the only such name: diffing the pinned 1.21.11 block
+ * list against 1.21.4 shows exactly one departure, and it is the copper-age
+ * rename `chain` → `iron_chain` (the pin also carries the eight
+ * `*_copper_chain` variants that arrived with it). The block itself never
+ * left; `iron_chain` keeps the same `axis` state, so the old string maps over
+ * with its state intact.
  */
 const REGISTRY_ABSENCE_HINTS: Readonly<Record<string, string>> = {
   chain:
-    "minecraft:chain is a real vanilla block but is missing from the pinned " +
-    "1.21.11 block registry, so it cannot be emitted. " +
-    "fix: use minecraft:iron_bars for a hanging vertical run (visually closest), " +
-    "or attach the lantern directly to a solid block above it.",
+    "minecraft:chain was RENAMED minecraft:iron_chain in the pinned 1.21.11 " +
+    "registry (the copper-age rename; copper_chain variants exist too). " +
+    "fix: write minecraft:iron_chain with the same states — " +
+    '"minecraft:chain[axis=y]" becomes "minecraft:iron_chain[axis=y]".',
 };
 
 /** The hint clause appended to an unknown-block error, or `""` when we have none. */

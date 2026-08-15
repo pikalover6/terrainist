@@ -60,14 +60,15 @@ describe("emitWorld palette blockstates", () => {
     );
   });
 
-  // `minecraft:chain` is a real vanilla block that the pinned 1.21.11 registry
-  // lost (confirmed by diffing against 1.21.4). Bare E336 read as "you made
-  // that block up" and cost two authoring runs; the hint names the substitute.
-  it("hints at the substitute for a real block the pinned registry lacks", async () => {
+  // `minecraft:chain` is the copper-age rename: the pinned 1.21.11 registry
+  // spells it `iron_chain` (same block, same `axis` state). Bare E336 read as
+  // "you made that block up" and cost two authoring runs; the hint gives the
+  // rename with the state preserved.
+  it("hints at the rename for a block the pinned registry respells", async () => {
     const dir = await scratchDir("absentchain");
     const doc = parseSpikeDocument(docWith({ g: "minecraft:chain[axis=y]" }));
     await expect(emitWorld(doc, path.join(dir, "world"))).rejects.toThrow(
-      /unknown block or state "minecraft:chain\[axis=y\]".*missing from the pinned.*iron_bars/s,
+      /unknown block or state "minecraft:chain\[axis=y\]".*RENAMED minecraft:iron_chain.*iron_chain\[axis=y\]/s,
     );
   });
 
