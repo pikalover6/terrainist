@@ -98,6 +98,7 @@ import type {
   InfraContext,
   InfraEntryDef,
   InfraRouteForm,
+  InfraSpanDef,
   InfraSweptProfile,
   MaterialTheme,
   Seed256,
@@ -110,7 +111,7 @@ import type { ColumnPlan } from "../terrain/columns.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { Planter, buildLifeWorld, op, type LifeOp, type LifeWorld, type PlaceRule } from "./life.js";
-import { index, inside } from "./roads.js";
+import { index, inside, routeTo } from "./roads.js";
 import type { SweptProfile } from "./sweep.js";
 import {
   deriveWallCourse,
@@ -231,8 +232,16 @@ export const INFRA_GAP_WIDTH = 3;
 /** A route, as the node wrote it and the validator accepted it. */
 export interface InfraRouteSpec {
   readonly form: InfraRouteForm;
-  /** The node id the form names. Never a coordinate — §5. */
+  /**
+   * The node id the form names. Never a coordinate — §5.
+   *
+   * For `between`, which names two, this carries the *pair* as `"a → b"` so
+   * every diagnostic in this file can go on saying "the route names …" without
+   * a second code path; {@link targets} is what the resolver reads.
+   */
   readonly target: string;
+  /** The two anchors a `between` route is strung between, in the node's order. */
+  readonly targets?: readonly [string, string];
   readonly margin?: number;
   readonly offset?: number;
   readonly side?: "left" | "right";
@@ -337,10 +346,26 @@ export function rasterize(vertices: readonly CoursePoint[]): CoursePoint[] {
   return out;
 }
 
+/** What a route form may be told about the entry asking for it. */
+export interface InfraRouteOptions {
+  /**
+   * Blocks of rise or fall a `between` corridor may take in one step — the
+   * entry's own grade cap (§3.2).
+   *
+   * The only thing any route form has ever needed to know about its client, and
+   * it is optional so every other form's call site is unchanged.
+   */
+  readonly gradeCap?: number;
+}
+
+/** The grade cap a `between` route uses when the entry states none. */
+export const INFRA_DEFAULT_GRADE_CAP = 2;
+
 /** Resolve one route against the finished placement. */
 export function resolveInfraRoute(
   spec: InfraRouteSpec,
   view: InfraPlacementView,
+  options: InfraRouteOptions = {},
 ): InfraResolution {
   switch (spec.form) {
     case "ring":
@@ -349,18 +374,193 @@ export function resolveInfraRoute(
       return resolveAlong(spec, view);
     case "across":
       return resolveAcross(spec, view);
+    case "between":
+      return resolveBetween(spec, view, options.gradeCap ?? INFRA_DEFAULT_GRADE_CAP);
     case "into":
       return resolveInto(spec, view);
     case "over":
       return resolveOver(spec, view);
     default:
-      // `between` — in the vocabulary, refused by the validator, and named here
-      // so the refusal is a stated answer rather than a fall-through.
+      // No form left. Kept as a stated answer rather than a fall-through, for
+      // the next form the design names before the host resolves it.
       return {
         kind: "unanchored",
-        detail: `the "${spec.form}" route form is post-freeze work (docs/INFRA-ENTRIES-v0.md §5)`,
+        detail: `the "${String(spec.form)}" route form is not one this host resolves`,
       };
   }
+}
+
+/**
+ * `between` — the road router's own cost field, between two placed anchors,
+ * at the entry's grade cap (§3.2, landed 2026-08-15).
+ *
+ * The other five forms derive a line from *one* thing's geometry. This one
+ * cannot: what two anchors have between them is not a shape, it is a question
+ * — *is there a way from here to there that this entry could stand on?* — and
+ * the compiler already has the machine that answers it. `routeTo` is the road
+ * network's A\*, and the whole of the threading is that it is called with a
+ * **one-cell road mask**: the seed set it relaxes from is anchor A alone, and
+ * its goal is anchor B. It then returns the cheapest corridor under the road
+ * network's own costs — base, diagonal, slope, turn — which is what makes an
+ * aqueduct or a pole line follow the same valleys the lanes do instead of a
+ * ruled line through a hill.
+ *
+ * The **grade cap is a veto inside that search**, not a post-filter: a corridor
+ * that is only cheap because it climbs a cliff once is not a cheap corridor
+ * with one bad step in it, it is not a corridor. `roads.ts`'s `maxDrop` option
+ * is that veto and was added here for this.
+ *
+ * ## What it does not do
+ *
+ * No water mask is passed, so water is neither charged nor forbidden. That is
+ * the right disposition for the two clients that exist — a chain across a
+ * harbour mouth *wants* the water, and the span's blocks are in the air — and
+ * it is the thing to revisit when `aqueduct` lands, because an aqueduct that
+ * routed straight over a channel would be asking for piers nobody built.
+ *
+ * ## Orientation
+ *
+ * The returned path runs from the **first** anchor the node named to the
+ * second. `routeTo` reconstructs backwards from its goal, so the reversal here
+ * is not cosmetic: an interval feature's phase is locked to the path's start,
+ * and a run whose start depended on which end A\* happened to pop would seat
+ * its pylons differently on two compiles of the same document.
+ */
+function resolveBetween(
+  spec: InfraRouteSpec,
+  view: InfraPlacementView,
+  gradeCap: number,
+): InfraResolution {
+  const targets = spec.targets;
+  if (targets === undefined) {
+    return {
+      kind: "unanchored",
+      detail: 'a "between" route names two anchors and this one carries none',
+    };
+  }
+  const [nameA, nameB] = targets;
+  const a = anchorOf(nameA, view);
+  const b = anchorOf(nameB, view);
+  if (a === undefined || b === undefined) {
+    const missing = a === undefined ? nameA : nameB;
+    return {
+      kind: "unanchored",
+      detail: `"${missing}" named nothing the compiler placed, so there is no anchor at that end of the run`,
+    };
+  }
+  if (a.x === b.x && a.z === b.z) {
+    return {
+      kind: "empty",
+      detail: `"${nameA}" and "${nameB}" resolved to the same column, so there is nothing between them`,
+    };
+  }
+  // Both ends must be somewhere a thing could stand: an anchor over water or
+  // off the region is an end the run could never be fixed to, and reporting
+  // that is better than routing to a column and then refusing every block.
+  for (const [name, c] of [
+    [nameA, a],
+    [nameB, b],
+  ] as const) {
+    if (!withinBounds(view.bounds, c.x, c.z)) {
+      return { kind: "empty", detail: `"${name}" sits outside the world region` };
+    }
+    if (view.ground(c.x, c.z) === undefined) {
+      return {
+        kind: "empty",
+        detail: `"${name}" resolved to a column nothing may be built on, so the run has no end to stand on`,
+      };
+    }
+  }
+
+  const path = betweenCorridor(a, b, view, gradeCap);
+  if (path === undefined) {
+    return {
+      kind: "empty",
+      detail: `no corridor joins "${nameA}" to "${nameB}" at a grade cap of ${gradeCap} block(s) per step`,
+    };
+  }
+  const clamped = clampToBounds(path, view.bounds);
+  if (clamped.length === 0) {
+    return { kind: "empty", detail: `the corridor between "${nameA}" and "${nameB}" fell outside the world region` };
+  }
+  return { kind: "route", course: { path: clamped, closed: false, bends: bendsOf(clamped) } };
+}
+
+/**
+ * The column a named node is anchored at.
+ *
+ * An extent's centroid, or a corridor's midpoint for a node whose only geometry
+ * is a line. Both are *the compiler's* answer about where the thing is, which
+ * is the whole of §5: the author named it and never said where it was.
+ */
+function anchorOf(id: string, view: InfraPlacementView): CoursePoint | undefined {
+  const extent = view.extentOf(id);
+  if (extent !== undefined && extent.length > 0) return centroid(extent);
+  const corridor = view.corridorOf(id);
+  if (corridor !== undefined && corridor.length > 0) {
+    return corridor[corridor.length >> 1] as CoursePoint;
+  }
+  return undefined;
+}
+
+/**
+ * Run the road router's cost field between two columns at a grade cap.
+ *
+ * The arrays are built here from the resolver's own narrow view rather than
+ * borrowed from the road pass, and deliberately: the view is four questions, it
+ * is what makes every form unit-testable without a compile, and a `between`
+ * that could only be exercised inside a full road network would be the one
+ * route form with no test of its own. `blocked` is "nothing may be built here",
+ * which is exactly what `ground` returning `undefined` means.
+ */
+function betweenCorridor(
+  a: CoursePoint,
+  b: CoursePoint,
+  view: InfraPlacementView,
+  gradeCap: number,
+): readonly CoursePoint[] | undefined {
+  const { x0, z0, width, depth } = view.bounds;
+  const region = { x0, z0, width, depth };
+  const cells = width * depth;
+  const blocked = new Uint8Array(cells);
+  const ground = new Int32Array(cells);
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      const g = view.ground(x0 + i, z0 + j);
+      const idx = j * width + i;
+      if (g === undefined) {
+        blocked[idx] = 1;
+        continue;
+      }
+      ground[idx] = g;
+    }
+  }
+  // The one-cell seed set: A is the whole of the router's "road", so the field
+  // it relaxes is the cost of getting anywhere *from A*, and B is the goal.
+  const road = new Uint8Array(cells);
+  road[(a.z - z0) * width + (a.x - x0)] = 1;
+  blocked[(a.z - z0) * width + (a.x - x0)] = 0;
+  blocked[(b.z - z0) * width + (b.x - x0)] = 0;
+
+  const found = routeTo(region, blocked, road, { ground }, { x: b.x, z: b.z }, {
+    maxDrop: Math.max(0, Math.round(gradeCap)),
+  });
+  if (found === null || found.length < 2) return undefined;
+  // `routeTo` reconstructs from its goal backwards to the seed, so this comes
+  // back B → A. Reversed, because the node named A first.
+  return rasterize([...found].reverse().map((c) => ({ x: c.x, z: c.z })));
+}
+
+/** The indices at which a rasterized path changes direction — `at: "bend"`. */
+export function bendsOf(path: readonly CoursePoint[]): number[] {
+  const out: number[] = [];
+  for (let i = 1; i + 1 < path.length; i++) {
+    const p = path[i - 1] as CoursePoint;
+    const c = path[i] as CoursePoint;
+    const n = path[i + 1] as CoursePoint;
+    if (c.x - p.x !== n.x - c.x || c.z - p.z !== n.z - c.z) out.push(i);
+  }
+  return out;
 }
 
 /**
@@ -766,7 +966,7 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
       continue;
     }
 
-    const resolved = resolveInfraRoute(job.route, view);
+    const resolved = resolveInfraRoute(job.route, view, { gradeCap: gradeCapOf(job) });
     if (resolved.kind === "unanchored") {
       diagnostics.push(
         warning(
@@ -804,6 +1004,25 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
           "point the route at something larger, or widen its margin so the derived line is long enough to read as what it is",
         ),
       );
+      continue;
+    }
+
+    // A span is not a sweep and never was: its geometry is a chord between two
+    // heads rather than a cross-section carried along a datum, so it forks
+    // before the sweep is ever constructed.
+    if (job.def.geometry.kind === "span") {
+      entries.push(buildSpan(planter, world, view, job, course));
+      const built = entries[entries.length - 1] as BuiltInfraEntry;
+      if (built.columns === 0) {
+        diagnostics.push(
+          warning(
+            "INFRA_ROUTE_EMPTY",
+            job.nodePath,
+            `a corridor was found for "${job.def.id}" (${course.path.length} columns) and neither end could be built on`,
+            "something else already owns both anchors — usually a road, a quay or a building. Name anchors with clear ground at their centres",
+          ),
+        );
+      }
       continue;
     }
 
@@ -932,6 +1151,24 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
       infraEntryBlocks: planter.blocks.length,
     },
   };
+}
+
+/**
+ * The grade cap a `between` route uses for this job — **the entry's own**,
+ * which is §3.2's exact wording.
+ *
+ * Every geometry kind already states it: a swept profile's `maxGrade` is the
+ * steepest step its cross-section may take, and a span's is how steep a line of
+ * sight between two anchors may be. Reading it off the geometry rather than
+ * adding a fourth field to the registry row is what keeps a route form from
+ * becoming a place where an entry states the same number twice and the two
+ * disagree.
+ */
+function gradeCapOf(job: InfraEntryJob): number {
+  const geometry = job.def.geometry;
+  if (geometry.kind === "route") return geometry.profile(contextOf(job)).maxGrade;
+  if (geometry.kind === "span") return geometry.span(contextOf(job)).maxGrade;
+  return INFRA_DEFAULT_GRADE_CAP;
 }
 
 /** The context a registry function is handed (§3.3 — `PropContext`'s shape). */
@@ -1137,6 +1374,293 @@ export function seatFittings(
     if (planter.place("infra_fitting", ops, feature.x, base, feature.z, INFRA_RULE)) seated++;
   }
   return seated;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the span — two towers and a hanging curve                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Terms of the `cosh` series. Past this the addend is under 1e-17 for |x| ≤ 4. */
+const COSH_TERMS = 20;
+
+/** The largest argument {@link cosh} is asked for; beyond it the curve is flat. */
+const COSH_LIMIT = 4;
+
+/**
+ * `cosh`, as a series in `+`, `*` and `/` alone.
+ *
+ * **Not `Math.cosh`.** `docs/DESIGN.md`'s determinism rule and `stdlib`'s §6.5
+ * rule 6 say the same thing about the transcendental library: `Math.cosh`,
+ * `Math.exp` and friends are not exactly specified by IEEE 754, so two engines
+ * may return neighbouring doubles for the same input — and a world that
+ * disagreed with itself by one block of chain sag between two machines would
+ * break the byte-identity claim silently, for some users only. The Taylor
+ * series is `+`, `*` and `/`, every one of which *is* exactly specified, so a
+ * fixed term count is a bit-identical answer everywhere.
+ *
+ * Converges fast over the range a catenary ever asks for: the argument is
+ * half-span over the catenary parameter, which for any sag a chain has is under
+ * two, and it is clamped at {@link COSH_LIMIT} so a degenerate solve cannot
+ * walk out of the series' comfortable range.
+ */
+export function cosh(x: number): number {
+  const t = Math.min(Math.abs(x), COSH_LIMIT);
+  const xx = t * t;
+  let term = 1;
+  let sum = 1;
+  for (let k = 1; k < COSH_TERMS; k++) {
+    term = (term * xx) / ((2 * k - 1) * (2 * k));
+    sum += term;
+  }
+  return sum;
+}
+
+/** Halvings the catenary solve takes. Fixed, because a tolerance is a clock. */
+const CATENARY_STEPS = 64;
+
+/**
+ * The catenary parameter `a` whose curve sags `sag` blocks over a chord of
+ * `span` blocks.
+ *
+ * The real thing, not a parabola: a hanging chain is `y = a·cosh(s/a)`, its sag
+ * at mid-span is `a·(cosh(span/2a) − 1)`, and that expression is strictly
+ * *decreasing* in `a` — a taut chain is a large `a` and a slack one a small
+ * one. Strictly monotone means bisection, and bisection with a **fixed** step
+ * count is the deterministic root-finder: a loop that stopped on a tolerance
+ * would stop after a machine-dependent number of iterations at exactly the
+ * inputs where the two machines disagreed.
+ *
+ * Sixty-four halvings of a bracket that starts at four decades takes the
+ * interval below 1e-17 of its width, which is past the point where the rounded
+ * block heights could differ.
+ */
+export function catenaryParameter(span: number, sag: number): number {
+  const want = Math.max(sag, 1e-9);
+  let lo = span / 10_000;
+  let hi = span * 1_000;
+  for (let i = 0; i < CATENARY_STEPS; i++) {
+    const mid = (lo + hi) / 2;
+    const at = mid * (cosh(span / (2 * mid)) - 1);
+    if (at > want) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * The height of every column of a hanging span, tower head to tower head.
+ *
+ * Three things happen here and the order of them is the whole of the geometry:
+ *
+ * 1. **The curve.** The chord between the two heads, interpolated linearly,
+ *    minus the catenary's own dip — which is zero at both ends and `sag·span`
+ *    at mid-span. Unequal heads are handled by carrying the dip on the chord
+ *    rather than by solving an asymmetric catenary, which is the standard
+ *    reading and is exact when the heads are level (the case a harbour mouth
+ *    actually is).
+ * 2. **The floor.** Every column is lifted to `clearance` blocks above whatever
+ *    stands under it, so the chain is *slung across* the water rather than
+ *    lying in it — and never lifted above the chord, because a chain that rose
+ *    over its own supports is not hanging.
+ * 3. **The hang.** From the low point outward to each tower the heights are
+ *    forced non-decreasing, by **raising**, capped at that side's head. Raising
+ *    rather than lowering is what keeps step 2's clearance: a repair that
+ *    lowered would put back the block in the water that step 2 just took out.
+ *    Without this step a floor that lifted one column and not its neighbour
+ *    would leave a chain block with nothing above it and nothing beside it,
+ *    which is the one thing a hanging member may never be.
+ */
+export function spanHeights(
+  headA: number,
+  headB: number,
+  span: number,
+  sag: number,
+  floorAt: (i: number) => number | undefined,
+): number[] {
+  const n = span + 1;
+  if (n < 2) return [headA];
+  const a = catenaryParameter(span, Math.max(0, sag) * span);
+  const mid = span / 2;
+  const crest = cosh(mid / a);
+  const y: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const chord = headA + ((headB - headA) * i) / span;
+    const dip = a * (crest - cosh((i - mid) / a));
+    y.push(Math.round(chord - dip));
+  }
+  y[0] = headA;
+  y[n - 1] = headB;
+
+  // The floor. Interior columns only: a tower head is where it is.
+  for (let i = 1; i < n - 1; i++) {
+    const floor = floorAt(i);
+    if (floor === undefined) continue;
+    const chord = Math.round(headA + ((headB - headA) * i) / span);
+    y[i] = Math.min(chord, Math.max(y[i] as number, floor));
+  }
+
+  // The hang, from the lowest column outward. Ties to the lowest index, which
+  // is a stated order over an index rather than over a height.
+  let low = 0;
+  for (let i = 1; i < n; i++) if ((y[i] as number) < (y[low] as number)) low = i;
+  for (let i = low - 1; i >= 1; i--) y[i] = Math.min(Math.max(y[i] as number, y[i + 1] as number), headA);
+  for (let i = low + 1; i < n - 1; i++) {
+    y[i] = Math.min(Math.max(y[i] as number, y[i - 1] as number), headB);
+  }
+  return y;
+}
+
+/**
+ * The vertical run of member each column carries, as `[bottom, top]`.
+ *
+ * A hanging curve rendered one block per column is not a curve: where the
+ * heights step by more than one, the two blocks touch at a corner and nothing
+ * else, and a chain block whose only neighbour is diagonal is hanging from
+ * nothing. So each column is filled **up to the level of the neighbour nearer
+ * its tower**, which is exactly how a real chain behaves — it goes down
+ * vertically and along horizontally, never diagonally — and it makes the whole
+ * member one 6-connected set anchored at both heads. That connectivity is the
+ * invariant `test/infra-entry.test.ts` asserts, because it is the physics claim:
+ * every block hangs from the tower or from a block of chain above or beside it.
+ */
+export function spanRuns(y: readonly number[]): { lo: number; hi: number }[] {
+  const n = y.length;
+  let low = 0;
+  for (let i = 1; i < n; i++) if ((y[i] as number) < (y[low] as number)) low = i;
+  const runs: { lo: number; hi: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    if (i === 0 || i === n - 1) {
+      // The heads: the tower is the block there, and the curve does not repeat it.
+      runs.push({ lo: y[i] as number, hi: (y[i] as number) - 1 });
+      continue;
+    }
+    const left = y[i - 1] as number;
+    const right = y[i + 1] as number;
+    const hi = i < low ? left : i > low ? right : Math.max(left, right);
+    runs.push({ lo: y[i] as number, hi: Math.max(hi, y[i] as number) });
+  }
+  return runs;
+}
+
+/** The rule the hanging member writes under — it owns air, not a column. */
+const INFRA_CABLE_RULE: PlaceRule = {
+  // A span's whole point is that it crosses ground it does not own: a quay, a
+  // mole, a lane, open water. Demanding a free column would delete the chain
+  // over every one of them, which is the opposite of what a chain across a
+  // harbour mouth is for. The voxel rule stays on — the member takes air and
+  // never a block somebody else wrote — and it is what keeps the claim honest
+  // without a second opinion about who owns the seabed.
+  requireFreeColumn: false,
+  requireEmptyVoxel: true,
+  padAbove: false,
+  onCarriageway: true,
+};
+
+/**
+ * A **span**: two towers on the ends of a resolved corridor, and a catenary
+ * hung between their heads (family E's `harbour_chain_tower`).
+ *
+ * The chain is strung on the **straight chord** between the two towers rather
+ * than along the router's corridor, and the difference is the point: the
+ * corridor is what answers *can these two anchors see each other on ground
+ * something could stand on* — that is why `between` runs the cost field at all,
+ * and it is what refuses a pair of moles with a headland between them — but a
+ * chain hangs on the shortest line between its ends, because that is what
+ * gravity does. Bending a chain round a valley would be a rope on pulleys.
+ */
+function buildSpan(
+  planter: Planter,
+  world: LifeWorld,
+  view: InfraPlacementView,
+  job: InfraEntryJob,
+  course: InfraCourse,
+): BuiltInfraEntry {
+  const def: InfraSpanDef =
+    job.def.geometry.kind === "span"
+      ? job.def.geometry.span(contextOf(job))
+      : // Unreachable: the driver dispatches on the same discriminant. Stated
+        // rather than thrown, for the reason every fallback in this file is.
+        { id: job.def.id, tower: [], cable: "iron_chain", sag: 0, clearance: 0, maxGrade: 1 };
+
+  const ends = [course.path[0] as CoursePoint, course.path[course.path.length - 1] as CoursePoint];
+  let placed = 0;
+  let skipped = 0;
+
+  // --- the two towers ------------------------------------------------------
+  const heads: (number | undefined)[] = ends.map((c) => {
+    const base = world.standY(c.x, c.z);
+    if (base === undefined) return undefined;
+    // The carriageway veto the route path applies, applied to the towers: a
+    // chain tower planted in a lane is the lane's problem, and refusing it is
+    // the same disposition every `open` entry has about the road.
+    if (job.def.crossings === "open" && view.onRoad(c.x, c.z)) return undefined;
+    const ops = def.tower.map((block, k) => op(0, k, 0, block));
+    if (ops.length === 0) return undefined;
+    if (!planter.place("infra_tower", ops, c.x, base, c.z, INFRA_RULE)) return undefined;
+    return base + def.tower.length - 1;
+  });
+  for (const head of heads) {
+    if (head === undefined) skipped++;
+    else placed++;
+  }
+
+  // A span with one tower is a tower. The chain is refused whole rather than
+  // left hanging off the end that did get built — "ships as a pair or not at
+  // all" is the catalog's own sentence about this entry.
+  const [headA, headB] = heads;
+  if (headA === undefined || headB === undefined) {
+    return {
+      nodePath: job.nodePath,
+      entry: job.def.id,
+      form: job.route.form,
+      columns: placed,
+      skipped,
+      openings: 0,
+      fittings: 0,
+      declared: 0,
+    };
+  }
+
+  // --- the curve -----------------------------------------------------------
+  const chord = rasterize([ends[0] as CoursePoint, ends[1] as CoursePoint]);
+  const span = chord.length - 1;
+  const y = spanHeights(headA, headB, span, def.sag, (i) => {
+    const c = chord[i] as CoursePoint;
+    const stand = world.standY(c.x, c.z);
+    return stand === undefined ? undefined : stand + Math.max(0, def.clearance);
+  });
+  const runs = spanRuns(y);
+  for (let i = 1; i < chord.length - 1; i++) {
+    const c = chord[i] as CoursePoint;
+    const run = runs[i] as { lo: number; hi: number };
+    const ops: LifeOp[] = [];
+    // `axis: "y"` said out loud. Every block of the member is part of a
+    // vertical run by construction — the curve goes down and along, never
+    // diagonally — and a chain left on its default state is the `connection.
+    // stale` family of defect one block wide.
+    for (let level = run.lo; level <= run.hi; level++) {
+      ops.push(op(0, level - run.lo, 0, def.cable, { axis: "y" }));
+    }
+    if (ops.length === 0) {
+      skipped++;
+      continue;
+    }
+    // `anchorsGround` off: the member is in the air by construction, and the
+    // stand-height check exists for recipes that stand on the ground.
+    if (planter.place("infra_cable", ops, c.x, run.lo, c.z, INFRA_CABLE_RULE, false)) placed++;
+    else skipped++;
+  }
+
+  return {
+    nodePath: job.nodePath,
+    entry: job.def.id,
+    form: job.route.form,
+    columns: placed,
+    skipped,
+    openings: 0,
+    fittings: 0,
+    declared: 0,
+  };
 }
 
 /**

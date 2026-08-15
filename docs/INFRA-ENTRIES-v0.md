@@ -196,7 +196,7 @@ placement, exactly as a wall course is.
 | `ring` | `{"ring": "<node id>", "margin": n}` | `deriveWallCourse` verbatim: 15°-quantized support hull of what that node actually built, offset by `margin`, rasterized 4-connected | `quarantine_fence`, `hedgerow` round a holding, `dry_stone_wall` |
 | `along` | `{"along": "<road\|edit\|shore>", "offset": n, "side": …}` | the corridor's own polyline, offset laterally — the `along` constraint's line, reused where it is exact instead of a preference | `boardwalk`, `sphinx_avenue`, `cannon_battery`, `cart_track` |
 | `across` | `{"across": "<road id\|river\|node id>"}` | the perpendicular chord at the target's narrowest crossing inside the node's frame | `barricade_line`, `river_log_boom`, `stepping_stones` |
-| `between` | `{"between": ["a", "b"]}` | the road router's cost field at the entry's own grade cap, between two placed anchors | `aqueduct`, `maglev_pylon`, `telegraph_line` — **post-freeze** |
+| `between` | `{"between": ["a", "b"]}` | the road router's cost field at the entry's own grade cap, between two placed anchors | `harbour_chain_tower`; `aqueduct`, `maglev_pylon`, `telegraph_line` |
 | `into` | `{"into": "<node id>", "run": n}` | a run of `n` columns ending at that node, drawn back along the steepest outward bearing to the frame edge | `crash_furrow` |
 
 And one non-route form, for family C:
@@ -206,6 +206,27 @@ And one non-route form, for family C:
 **`ring` and `along` and `across` are the pre-freeze three.** `between` needs the
 router and a tier-A ground declaration and is deliberately held (§5). `into` is
 one bearing computation and rides with `crash_furrow`.
+
+**Amendment, 2026-08-15 — `between` landed.** It is `routeTo` (the road
+network's own A\*) called with a **one-cell road mask**: the seed set it relaxes
+from is the first anchor alone, the goal is the second, and the corridor that
+comes back is the cheapest one under the road network's own costs. The entry's
+grade cap is threaded in as `roads.ts`'s new `maxDrop` option — a **veto inside
+the search**, not a charge and not a post-filter, because a corridor that is
+only cheap for climbing a cliff once is not a corridor. The path is returned
+running from the anchor the node named *first*, since A\* reconstructs backwards
+and an interval feature's phase is locked to the run's start.
+
+Two things the paragraph above got wrong and are worth recording. First, the
+tier-A ground declaration it pairs `between` with belongs to `aqueduct` alone —
+a **carried carriageway** is a statement about the ground; a chain in the air and
+a pole line standing on what it finds are not, so neither had to wait for it.
+Second, "and the catenary hangs rather than sweeps; refuse the chain until it is
+worth a program" (§2, family E) was right that a sweep cannot express it and
+wrong that the answer is a bespoke program: a hanging member is a **third
+geometry kind** on the registry row — `span`, two block stacks and a curve — and
+it is thirty lines, not a program. Its client, `harbour_chain_tower`, is the
+first `between` entry and is why the form landed now.
 
 An author naming something that is not linear, or not placed, gets
 `LOAM-T233 INFRA_ROUTE_UNANCHORED` — the loud version of the mistake the kit
@@ -403,7 +424,9 @@ graph — not before.
 plus the ground contract as they stand. If an entry needs geometry the sweep
 cannot express, the answer is the bespoke tier, not an eighth band role.
 
-**No new `GroundSourceClass`, and no tier-A declaration pre-freeze.** Repeated
+**No new `GroundSourceClass`, and no tier-A declaration.** (2026-08-15: still
+true post-freeze, and `between` landing did not change it — see §3.2's
+amendment.) Repeated
 from §3.5 because it is the line most likely to be crossed by accident: the
 moment an entry declares `structure.linework` the pass must move to before the
 streets, and the gate-finding it does today becomes impossible.
@@ -417,7 +440,7 @@ placing a thing on a line they cannot see. They are params on the structure that
 owns the line.
 
 **The bespoke tier stays the right answer for** anything with one instance and no
-repeat (`floating_stair`, the chain in `harbour_chain_tower`, the wreck at the end
+repeat (`floating_stair`, the wreck at the end
 of a `crash_furrow`), anything whose geometry is computed rather than swept, and
 any centrepiece the prompt names, per F18. The host is for the *fabric*.
 

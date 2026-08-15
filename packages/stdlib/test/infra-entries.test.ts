@@ -43,6 +43,9 @@ const TAIL = [
   "sphinx_avenue",
 ] as const;
 
+/** W4's one — the `between` form's first client. */
+const W4 = ["harbour_chain_tower"] as const;
+
 describe("the registry's shape", () => {
   it("keys every row by its own id", () => {
     for (const [key, def] of Object.entries(INFRA_ENTRIES)) expect(def.id).toBe(key);
@@ -53,12 +56,13 @@ describe("the registry's shape", () => {
       expect(def.routes.length, def.id).toBeGreaterThan(0);
       for (const form of def.routes) {
         expect(INFRA_ROUTE_FORMS, def.id).toContain(form);
-        // `between` is in the vocabulary and is post-freeze (§3.2, §5): no row
-        // may accept a form the host cannot resolve.
+        // No row may accept a form the host cannot resolve. That check is the
+        // point; which forms are implemented is data, and `between` joined
+        // them on 2026-08-15 with `harbour_chain_tower` as its first client.
         expect(isImplementedRouteForm(form), `${def.id} accepts ${form}`).toBe(true);
       }
     }
-    expect(INFRA_ROUTE_FORMS_IMPLEMENTED).not.toContain("between");
+    expect(INFRA_ROUTE_FORMS_IMPLEMENTED).toContain("between");
   });
 
   it("declares no tier-A ground class — §3.5's line, held in data", () => {
@@ -69,8 +73,15 @@ describe("the registry's shape", () => {
 
   it("matches geometry to the forms a row accepts", () => {
     for (const def of Object.values(INFRA_ENTRIES)) {
-      const areal = def.routes.includes("over");
-      expect(def.geometry.kind, def.id).toBe(areal ? "area" : "route");
+      // Three kinds, and the route form a row accepts says which: `over` is
+      // areal, `between` is the only form that names two anchors and so the
+      // only one a span can hang from, and everything else is swept.
+      const expected = def.routes.includes("over")
+        ? "area"
+        : def.routes.includes("between")
+          ? "span"
+          : "route";
+      expect(def.geometry.kind, def.id).toBe(expected);
     }
   });
 
@@ -84,9 +95,9 @@ describe("the registry's shape", () => {
 
 describe("W0's host, W1's four, and the W2/W3 tail", () => {
   it("carries the fixture, P2's four and the tail — and only the fixture is internal", () => {
-    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL]);
+    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4]);
     expect(infraEntry(INFRA_TEST_ENTRY)?.internal).toBe(true);
-    for (const id of [...W1, ...TAIL]) expect(infraEntry(id)?.internal, id).toBeUndefined();
+    for (const id of [...W1, ...TAIL, ...W4]) expect(infraEntry(id)?.internal, id).toBeUndefined();
   });
 
   it("keeps internal rows out of the catalog-backed id set", () => {
@@ -94,7 +105,7 @@ describe("W0's host, W1's four, and the W2/W3 tail", () => {
     // other in both directions; an internal row would fail the reverse
     // direction, and excluding it here is what makes the guard exact rather
     // than weakened to a one-way check.
-    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL]);
+    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4]);
     expect(INFRA_ENTRY_IDS).not.toContain(INFRA_TEST_ENTRY);
   });
 
@@ -229,6 +240,48 @@ describe("the four profiles and the one stamp", () => {
     // A figure, not a disc of hay: the bands are a minority of the disc.
     expect(banded).toBeGreaterThan(0);
     expect(banded).toBeLessThan(covered / 2);
+  });
+});
+
+describe("harbour_chain_tower — the span (W4)", () => {
+  const def = infraEntry("harbour_chain_tower");
+
+  it("is a span, and `between` is the only form it accepts", () => {
+    expect(def?.geometry.kind).toBe("span");
+    expect(def?.routes).toEqual(["between"]);
+    // A chain tower alone is a tower: "ships as a pair or not at all" is the
+    // catalog's own sentence, and one form is how the registry says it.
+    expect(entryAcceptsRoute(def!, "ring")).toBe(false);
+  });
+
+  it("hangs iron_chain from two full-cube towers, and declares no level", () => {
+    if (def?.geometry.kind !== "span") throw new Error("span row");
+    const span = def.geometry.span(CONTEXT);
+    expect(span.cable).toBe("iron_chain");
+    // The renamed block, written directly: `parseBlockString` still maps the
+    // old `chain` spelling and a registry that leaned on that mapping would be
+    // one rename away from silence.
+    expect(span.cable).not.toBe("chain");
+    expect(span.tower.length).toBeGreaterThan(4);
+    // Every course a full cube — a slab or a stair in a stack this pass writes
+    // is a `floating.slab` waiting to happen.
+    for (const block of span.tower) {
+      expect(block, block).not.toMatch(/_slab$|_stairs$|_fence$|lantern$/);
+    }
+    expect(span.sag).toBeGreaterThan(0);
+    expect(span.sag).toBeLessThan(0.5);
+    expect(span.clearance).toBeGreaterThan(0);
+    // Nothing declared: two towers stand on the moles they were given and the
+    // chain is in the air, so §3.5's tier-A question never arises.
+    expect(def.sourceClass).toBeUndefined();
+    expect(def.declaresLevels).toBeUndefined();
+  });
+
+  it("produces the same span every time — a pure function of its context", () => {
+    if (def?.geometry.kind !== "span") throw new Error("span row");
+    const a = def.geometry.span(CONTEXT);
+    const b = def.geometry.span(AREA_CONTEXT);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 });
 

@@ -170,6 +170,13 @@ export const NON_NODE_IMPLEMENTED: readonly string[] = Object.freeze([
   // building grammar, named here because an author needs to know they can ask.
   "blast_door",
   "airlock_vestibule",
+  // The three bridges (docs/INFRA-ENTRIES-v0.md §2 A, ratified 2026-08-15).
+  // None is a node: a bridge is a *style* the bridge kit builds where a route
+  // it did not author crosses water, picked by span length or named outright
+  // with `road.network@0`'s `bridgeStyle`.
+  "stone_bridge",
+  "timber_bridge",
+  "suspension_bridge",
 ]);
 
 /**
@@ -1280,9 +1287,20 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     kind: "building",
     note: "The gate lodge's road cousin: a toll counter with a window seat in the middle of it, a strongbox chest under an iron grille, the rate board on the wall, and a barrier outside on grounded apron posts with a trapdoor arm between them.",
   }),
-  land("stone_bridge", "Stone bridge"),
-  land("timber_bridge", "Timber bridge"),
-  land("suspension_bridge", "Suspension bridge"),
+  // The three bridges are the **bridge kit's** styles, not nodes: a crossing is
+  // built where a route meets water, by the pass that routed it
+  // (docs/INFRA-ENTRIES-v0.md §2 A). Named in `NON_NODE_IMPLEMENTED` for the
+  // same reason the cellar styles are — an author needs to know they can ask,
+  // and the spelling they ask with is `roads.bridgeStyle`.
+  land("stone_bridge", "Stone bridge", "implemented", {
+    note: "The masonry crossing: a dressed-slab deck flush with the lane, a solid coping parapet instead of a fence, revetment piers founded on the bed at the profile's pitch, and an arch haunch springing off each pier under the deck. Chosen for a span of ten columns or more.",
+  }),
+  land("timber_bridge", "Timber bridge", "implemented", {
+    note: "The plank crossing: a top-slab deck, a fence rail on the parapet column and log piers to the bed. What every short span gets, and what the kit has always built.",
+  }),
+  land("suspension_bridge", "Suspension bridge", "implemented", {
+    note: "The cable crossing: a tower over each abutment pier, a taut main cable of iron chain between the tower heads, and chain hangers grown downwards from it whose lengths trace the sag — stopping three blocks clear of the deck, so the walking surface keeps its head room. Chosen for a span of twenty-eight columns or more.",
+  }),
   land("tunnel_portal", "Road tunnel portal"),
   land("milestone", "Milestone", "implemented", {
     wave: 5,
@@ -2089,11 +2107,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nautical_pirate", "size_m"],
     note: "A whitewashed stone cone on a headland with no light in it — the lighthouse's mute cousin, and cheap enough to put on three headlands.",
   }),
-  mil("harbour_chain_tower", "Chain tower", "not_started", {
-    // Family E (docs/INFRA-ENTRIES-v0.md, 2026-08-14): two props and a
-    // catenary — ship the pair as props; the chain hangs rather than sweeps
-    // and is refused until it is worth a program.
-    kind: "prop",
+  mil("harbour_chain_tower", "Chain tower", "implemented", {
+    // Family E (docs/INFRA-ENTRIES-v0.md, 2026-08-14) filed this as two props
+    // and a catenary, and held the chain. Landed 2026-08-15 as the first client
+    // of the `between` route form: what the pair *is* is the relation between
+    // the two towers, no box contains it, and `infra.entry@0`'s new `span`
+    // geometry is where a member that hangs rather than sweeps belongs.
+    kind: "infrastructure",
     tags: ["nautical_pirate", "size_l"],
     note: "The pair that closes a port: two towers on opposite moles with a chain slung between them across the water. Ships as a pair or not at all.",
   }),

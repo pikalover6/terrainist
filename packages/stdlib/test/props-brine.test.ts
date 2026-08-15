@@ -108,12 +108,16 @@ describe("the brine pack's props", () => {
   });
 
   /**
-   * The pack's infrastructure entry is nobody's yet, and must stay that way:
-   * a pair of towers with a chain slung between them across open water is not
-   * something the prop or building registries can host.
+   * The pack's infrastructure entry is not the prop registry's, and must stay
+   * that way: a pair of towers with a chain slung between them across open
+   * water is not something the prop or building registries can host. It landed
+   * on 2026-08-15 where it belongs — `infra.entry@0`'s `span` geometry, on the
+   * `between` route form — and this test now guards the boundary rather than
+   * the emptiness.
    */
-  it("leaves the pack's infrastructure entry alone", () => {
-    expect(structureById("harbour_chain_tower")?.status).toBe("not_started");
+  it("leaves the pack's infrastructure entry to the infrastructure host", () => {
+    expect(structureById("harbour_chain_tower")?.kind).toBe("infrastructure");
+    expect(structureById("harbour_chain_tower")?.status).toBe("implemented");
     expect(PROP_NAMES as readonly string[]).not.toContain("harbour_chain_tower");
   });
 

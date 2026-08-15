@@ -73,8 +73,11 @@ describe("infra.entry@0 — the node", () => {
   it("accepts every entry the registry names, in every form it accepts", () => {
     for (const id of KNOWN_INFRA_ENTRIES) {
       for (const form of INFRA_ENTRY_ROUTES[id] ?? []) {
+        // `between` is the one form whose anchor is a *pair*: it names two
+        // placed nodes, so the fixture value has to be two of them.
+        const anchor = form === "between" ? ["north_mole", "south_mole"] : "holding";
         const result = validateSettlementDocument(
-          doc([entry({ entry: id, route: { [form]: "holding" } })]),
+          doc([entry({ entry: id, route: { [form]: anchor } })]),
         );
         expect(result.diagnostics, `${id} / ${form}`).toEqual([]);
       }
@@ -204,8 +207,39 @@ describe("infra.entry@0 — the route (§3.2, §5)", () => {
     ).toContain("INFRA_ENTRY_PARAM");
   });
 
-  it("refuses `between` as not-yet rather than as a typo", () => {
-    const held = doc([entry({ entry: "test_fence", route: { between: "a" } })]);
+  it("takes `between` as a pair of placed anchors, and nothing else", () => {
+    // Landed 2026-08-15. The form's value is an array of exactly two node ids,
+    // which is the only shape a span could be strung on — and every other
+    // reading of it is a document the compiler would have to guess at.
+    const good = doc([
+      entry({
+        entry: "harbour_chain_tower",
+        route: { between: ["north_mole", "south_mole"] },
+      }),
+    ]);
+    expect(validateSettlementDocument(good).diagnostics).toEqual([]);
+    for (const bad of [
+      "north_mole",
+      ["north_mole"],
+      ["north_mole", "south_mole", "mid"],
+      ["north_mole", 3],
+      ["north_mole", ""],
+    ]) {
+      const result = doc([entry({ entry: "harbour_chain_tower", route: { between: bad } })]);
+      expect(names(result), JSON.stringify(bad)).toContain("INFRA_ENTRY_PARAM");
+    }
+  });
+
+  it("refuses a `between` run from a thing to itself — it has no length", () => {
+    const same = doc([
+      entry({ entry: "harbour_chain_tower", route: { between: ["mole", "mole"] } }),
+    ]);
+    expect(names(same)).toContain("INFRA_ENTRY_PARAM");
+    expect(hints(same).join(" ")).toContain("two different");
+  });
+
+  it("still refuses a form the entry does not accept, pair or not", () => {
+    const held = doc([entry({ entry: "test_fence", route: { between: ["a", "b"] } })]);
     expect(names(held)).toContain("INFRA_ENTRY_PARAM");
     expect(hints(held).join(" ")).toContain("ring");
   });

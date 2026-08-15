@@ -48,6 +48,10 @@ export const KNOWN_INFRA_ENTRIES = [
   "cart_track",
   "boardwalk",
   "sphinx_avenue",
+  // W4 — the `between` form's first client, and the one row of family E that
+  // is not honestly a prop: the pair is a curve over water, and a curve
+  // between two anchors is the form the design held back until now.
+  "harbour_chain_tower",
 ] as const;
 
 /** An entry id. */
@@ -85,6 +89,10 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   cart_track: Object.freeze(["along"]),
   boardwalk: Object.freeze(["along"]),
   sphinx_avenue: Object.freeze(["along"]),
+  // The only `between` client, and `between` is its only form: a chain tower on
+  // its own is a tower, and "ships as a pair or not at all" is the catalog's
+  // own sentence about it.
+  harbour_chain_tower: Object.freeze(["between"]),
 });
 
 /** True for an entry the registry knows. */
@@ -120,6 +128,9 @@ export function nearestInfraEntries(name: string, limit = INFRA_ENTRY_SUGGESTION
 /**
  * The five coordinate-free route forms, plus the one areal form.
  *
+ * (Five linear: `ring`, `along`, `across`, `between`, `into`. `between` is the
+ * one that names a *pair* of anchors, and so the one whose value is an array.)
+ *
  * The project law is that a model never writes a coordinate, so a route is
  * always **named relative to something the compiler placed** and is derived
  * after placement, exactly as a wall course is. `margin`, `offset` and `run`
@@ -135,12 +146,25 @@ export type InfraRouteKey = (typeof INFRA_ROUTE_KEYS)[number];
 /**
  * The forms the host resolves today.
  *
- * `between` needs the road router and a tier-A ground declaration and is
- * deliberately held (§3.2, §5). It is in the vocabulary — the design named it —
- * and it is refused with a fix hint rather than treated as a typo, which is the
- * difference between "not yet" and "never heard of it".
+ * All six, since 2026-08-15: `between` landed with `harbour_chain_tower` as its
+ * first client, routed through the road router's own cost field at the entry's
+ * grade cap (§3.2). The tier-A ground declaration §5 paired it with turned out
+ * to belong to `aqueduct` alone — a carried carriageway *is* a statement about
+ * the ground and is still post-freeze — while a hanging span and a pole line
+ * are not, so neither had to wait for it.
+ *
+ * Kept as a separate list from {@link INFRA_ROUTE_KEYS} rather than deleted:
+ * the next form the design names will be held the same way, and the
+ * "not yet" / "never heard of it" distinction is the thing worth keeping.
  */
-export const INFRA_ROUTE_KEYS_IMPLEMENTED = ["ring", "along", "across", "into", "over"] as const;
+export const INFRA_ROUTE_KEYS_IMPLEMENTED = [
+  "ring",
+  "along",
+  "across",
+  "between",
+  "into",
+  "over",
+] as const;
 
 /** Which side of a corridor an `along` route stands on. */
 export const INFRA_ROUTE_SIDES = ["left", "right"] as const;

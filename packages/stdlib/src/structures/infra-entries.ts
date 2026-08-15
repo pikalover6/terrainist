@@ -126,8 +126,25 @@ export const INFRA_ROUTE_FORMS = ["ring", "along", "across", "between", "into", 
 /** One route form. */
 export type InfraRouteForm = (typeof INFRA_ROUTE_FORMS)[number];
 
-/** The forms the W0 host resolves. `between` is post-freeze (§3.2, §5). */
-export const INFRA_ROUTE_FORMS_IMPLEMENTED = ["ring", "along", "across", "into", "over"] as const;
+/**
+ * The forms the host resolves.
+ *
+ * `between` landed 2026-08-15 (the post-freeze item §3.2 and §5 held): it is
+ * routed through the road router's own cost field at the entry's grade cap,
+ * between two placed anchors. What it did *not* need in the end is the tier-A
+ * ground declaration §5 paired it with — a span hangs in the air and a
+ * telegraph line stands on the ground it finds, so neither has an opinion about
+ * the baseline. That pairing stays true for `aqueduct`, which is a carried
+ * carriageway and still post-freeze for exactly the reason §3.5 gives.
+ */
+export const INFRA_ROUTE_FORMS_IMPLEMENTED = [
+  "ring",
+  "along",
+  "across",
+  "between",
+  "into",
+  "over",
+] as const;
 
 /** True for a form this host resolves today. */
 export function isImplementedRouteForm(form: string): form is InfraRouteForm {
@@ -203,6 +220,56 @@ export interface InfraAreaStamp {
   readonly cell?: (dx: number, dz: number) => InfraAreaCell | undefined;
 }
 
+/**
+ * A **span** — two standing ends and a member that hangs between them.
+ *
+ * The third geometry kind, and the one family E's `harbour_chain_tower` needed:
+ * *"two props and a catenary, and the catenary hangs rather than stands"*
+ * (`docs/INFRA-ENTRIES-v0.md` §2). A sweep cannot say this. Every band of a
+ * `SweptProfile` is measured from a datum that follows the ground, and the
+ * whole point of a hanging member is that it does not — it is a function of the
+ * chord between two tower tops and of nothing underneath it.
+ *
+ * So a span is not a cross-section. It is two block stacks and a curve, and the
+ * curve's shape is the registry's only say: {@link sag} as a fraction of the
+ * chord. The host solves the catenary that has that sag.
+ */
+export interface InfraSpanDef {
+  readonly id: string;
+  /**
+   * The tower, bottom-up from the ground, one block per course.
+   *
+   * Full cubes, for the registry's standing reason: a slab or a stair in a
+   * stack this pass writes is a `floating.slab` waiting to happen. The **last**
+   * block is the head the member hangs from, and its course is the curve's
+   * anchor height.
+   */
+  readonly tower: readonly string[];
+  /** The hanging member — one block id, written along the whole curve. */
+  readonly cable: string;
+  /**
+   * The curve's sag at mid-span, as a fraction of the chord between the two
+   * tower heads. `0.12` is a chain drawn taut across a harbour mouth; `0.3` is
+   * one somebody let out.
+   */
+  readonly sag: number;
+  /**
+   * Blocks of air the curve keeps above whatever stands under it.
+   *
+   * A harbour chain is slung above the water so a boat can be stopped by it
+   * rather than sail under it, and this is that clearance. It is a *floor*
+   * under the curve and never a lift above the tower heads: where the span is
+   * long enough that the sag would reach the water anyway, the chain touches
+   * the water, because the alternative is a chain that hangs upward.
+   */
+  readonly clearance: number;
+  /**
+   * The grade cap the `between` router honours when it looks for these two
+   * anchors' corridor — the entry's own, exactly as §3.2 words it.
+   */
+  readonly maxGrade: number;
+}
+
 /** What a profile or stamp function is handed. Mirrors `PropContext`'s shape. */
 export interface InfraContext {
   /** The settlement's resolved material theme. */
@@ -245,7 +312,8 @@ export interface InfraEntryDef {
   readonly routes: readonly InfraRouteForm[];
   readonly geometry:
     | { readonly kind: "route"; readonly profile: (ctx: InfraContext) => InfraSweptProfile }
-    | { readonly kind: "area"; readonly stamp: (ctx: InfraContext) => InfraAreaStamp };
+    | { readonly kind: "area"; readonly stamp: (ctx: InfraContext) => InfraAreaStamp }
+    | { readonly kind: "span"; readonly span: (ctx: InfraContext) => InfraSpanDef };
   /** §3.5. A route entry that declares nothing writes no level at all. */
   readonly sourceClass?: InfraSourceClass;
   readonly crossings: InfraCrossing;
@@ -945,6 +1013,65 @@ function sphinxAvenueProfile(): InfraSweptProfile {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* W4 — the `between` form's first client                                       */
+/* -------------------------------------------------------------------------- */
+
+/** Courses of tower above the mole, head included. */
+const CHAIN_TOWER_HEIGHT = 9;
+
+/**
+ * `harbour_chain_tower` — the pair that closes a port.
+ *
+ * The catalog note is the whole brief: *"two towers on opposite moles with a
+ * chain slung between them across the water. Ships as a pair or not at all."*
+ * The design filed it under family E — honestly a prop — and then wrote the one
+ * sentence that keeps it out of family E: *"the catenary hangs rather than
+ * sweeps"*. A prop is a box at a place, and no box contains this: what the pair
+ * *is* is the relation between them, and the relation is a curve over water
+ * neither tower touches. Hence {@link InfraSpanDef} and the `between` form,
+ * which is also why this row is the form's first client rather than
+ * `telegraph_line` — a chain across a harbour mouth is one span, and one span
+ * is the honest unit test for a curve.
+ *
+ * ## The chain is a chain now
+ *
+ * W1's module note says "`chain` is not in the pinned 1.21.11 table, so wire is
+ * `iron_bars`". The pinned registry has since renamed `chain` to `iron_chain`
+ * and it *is* in the table, so this row writes `iron_chain` directly rather
+ * than the old spelling that `parseBlockString` still maps. Iron bars would
+ * have been the wrong block anyway: bars are a fence-family block that would
+ * connect sideways to each other and read as a railing strung between two
+ * towers, and a harbour chain is not a railing.
+ *
+ * ## Materials
+ *
+ * Fixed, and for W1's reason turned around: a chain tower is a piece of naval
+ * engineering paid for by an admiralty, not by the town, and it is built out of
+ * whatever will take a battering. A themed chain tower would be the harbour
+ * agreeing with the high street about masonry.
+ */
+function harbourChainTowerSpan(): InfraSpanDef {
+  const shaft = Array.from({ length: CHAIN_TOWER_HEIGHT - 2 }, () => "stone_bricks");
+  return {
+    id: "infra.entry@0/harbour_chain_tower",
+    // A plain shaft, a course of chiselled band, and a polished head for the
+    // chain to leave from. Every one a full cube.
+    tower: [...shaft, "chiseled_stone_bricks", "polished_blackstone"],
+    cable: "iron_chain",
+    // A chain drawn taut but not straight: an eighth of the chord at mid-span
+    // is a curve you can read from a boat and still low enough to look heavy.
+    sag: 0.125,
+    // Two blocks of air over whatever is beneath — enough that the chain reads
+    // as slung *across* the water rather than lying in it.
+    clearance: 2,
+    // Generous, because the two anchors are moles at opposite ends of a harbour
+    // mouth and the corridor between them is water: the router is being asked
+    // whether they face each other, not to find a lane a cart could take.
+    maxGrade: 8,
+  };
+}
+
 /**
  * Every infrastructure entry, by id.
  *
@@ -1131,6 +1258,27 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
       figure_east: { stack: ["cut_sandstone", "chiseled_sandstone", "chiseled_sandstone"] },
       figure_west: { stack: ["cut_sandstone", "chiseled_sandstone", "chiseled_sandstone"] },
     },
+  } satisfies InfraEntryDef,
+
+  /* --- W4: the `between` form's first client --- */
+
+  harbour_chain_tower: {
+    id: "harbour_chain_tower",
+    // One form, and it is the entry: a chain tower alone is a tower. `between`
+    // is the only form that names *two* anchors, which is the only shape this
+    // row has.
+    routes: ["between"],
+    geometry: { kind: "span", span: harbourChainTowerSpan },
+    // Nothing declared: two towers stand on the moles they were given and the
+    // chain is in the air. §3.5's tier-A question never arises.
+    // A span writes on the ground at exactly two columns; where a carriageway
+    // owns one of them the tower is refused rather than planted in the road,
+    // and the chain overhead is unaffected because it is not on the ground.
+    crossings: "open",
+    // Below this the two moles are the same mole and what is between them is a
+    // gap you could step over.
+    minRun: 12,
+    rise: 0,
   } satisfies InfraEntryDef,
 });
 

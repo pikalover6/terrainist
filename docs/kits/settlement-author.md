@@ -2387,7 +2387,7 @@ The corollary is worth saying out loud: **name something that got built.**
 Pointing `along` at a building buys you nothing (a building has no line), and
 pointing `ring` at a node the layout never placed gets you `LOAM-T233`.
 
-### The five route forms
+### The six route forms
 
 | form | written as | what it derives |
 |---|---|---|
@@ -2395,6 +2395,7 @@ pointing `ring` at a node the layout never placed gets you `LOAM-T233`.
 | `along` | `{"along": "<road id>", "offset": n, "side": "left"\|"right"}` | that corridor's own polyline, pushed `offset` columns to one hand |
 | `across` | `{"across": "<road id\|settlement id>"}` | the perpendicular chord over the target's **narrowest** crossing, flanked a little either side. Naming a district or a city takes **its widest street** — the high street — which is what to write when the roads are the settlement's own |
 | `into` | `{"into": "<node id>", "run": n}` | a run of `n` columns **ending** at that node, coming down the steepest bearing out of it |
+| `between` | `{"between": ["<node id>", "<node id>"]}` | a corridor from the first anchor to the second, routed the way a road would go: the cheapest line over ground something could stand on, refusing a climb the entry cannot take. The **only** form that names two things, and the only one whose value is a list |
 | `over` | `{"over": "<node id>"}` | every column of that node's published area — a farm holding's parcels — for the treatments, which are not lines at all |
 
 Each entry accepts the forms it is *about* and no others, so the vocabulary
@@ -2437,6 +2438,25 @@ contamination: it puts the fence and whatever is in the fields in one frame.
   "kind": "generator",
   "generator": "infra.entry@0",
   "params": { "entry": "quarantine_fence", "route": { "ring": "north_holding", "margin": 12 } }
+}
+```
+
+**`harbour_chain_tower`** — `between` two things on opposite sides of a harbour
+mouth. Two towers with an iron chain slung between their heads, hanging in a
+real curve over the water: the pair that closes a port. Name the two moles, jetties or headlands
+the chain is strung between — it ships as a pair or not at all, so if either end
+has no clear ground to stand on you get neither tower and a diagnostic saying
+so.
+
+```json
+{
+  "id": "harbour_chain",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": {
+    "entry": "harbour_chain_tower",
+    "route": { "between": ["north_mole", "south_mole"] }
+  }
 }
 ```
 

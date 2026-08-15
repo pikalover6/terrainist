@@ -68,7 +68,6 @@ import {
   INFRA_OFFSET_MAX,
   INFRA_OFFSET_MIN,
   INFRA_ROUTE_KEYS,
-  INFRA_ROUTE_KEYS_IMPLEMENTED,
   INFRA_ROUTE_PARAM_KEYS,
   INFRA_ROUTE_SIDES,
   INFRA_RUN_MAX,
@@ -3487,15 +3486,47 @@ function validateInfraRoute(
   const form = named[0] as (typeof INFRA_ROUTE_KEYS)[number];
   const value = route[form];
   // The anchor. A name, never a coordinate — see the module note on §5.
+  // `between` is the one form that names *two* anchors, so it is the one form
+  // whose value is not a string. Checked here in full — two entries, both
+  // named, and not the same name twice — because every one of those mistakes
+  // resolves to something the compiler would have to guess at: a span with one
+  // end, or a span of length zero.
   if (form === "between") {
-    out.push(
-      error(
-        "INFRA_ENTRY_PARAM",
-        where,
-        '"between" is in the route vocabulary and is not implemented yet — it needs the road router and a tier-A ground declaration (docs/INFRA-ENTRIES-v0.md §5)',
-        `use one of: ${INFRA_ROUTE_KEYS_IMPLEMENTED.join(", ")} — an aqueduct or a pylon line is post-freeze work`,
-      ),
-    );
+    if (!Array.isArray(value) || value.length !== 2) {
+      out.push(
+        error(
+          "INFRA_ENTRY_PARAM",
+          where,
+          `"between" names two placed anchors, got ${describe(value)}`,
+          'write "between": ["<node id>", "<node id>"] — the two things the run is strung between, named, never written as coordinates',
+        ),
+      );
+      return;
+    }
+    const [a, b] = value as unknown[];
+    if (typeof a !== "string" || a.length === 0 || typeof b !== "string" || b.length === 0) {
+      out.push(
+        error(
+          "INFRA_ENTRY_PARAM",
+          where,
+          `both ends of a "between" route must name a placed node, got [${describe(a)}, ${describe(b)}]`,
+          'write "between": ["north_mole", "south_mole"] — each end is a node id the compiler placed',
+        ),
+      );
+      return;
+    }
+    if (a === b) {
+      out.push(
+        error(
+          "INFRA_ENTRY_PARAM",
+          where,
+          `a "between" route names "${a}" at both ends, and a run between a thing and itself has no length`,
+          "name two different placed nodes — or use a different route form if what you meant was a line around or beside one thing",
+        ),
+      );
+      return;
+    }
+    validateRouteTail(out, where, route, entry, form);
     return;
   }
   if (typeof value !== "string" || value.length === 0) {
@@ -3510,6 +3541,25 @@ function validateInfraRoute(
     return;
   }
 
+  validateRouteTail(out, where, route, entry, form);
+}
+
+/**
+ * The part of a route every form shares: its distances, its side, and whether
+ * the entry accepts the form at all.
+ *
+ * Extracted when `between` landed, because `between`'s anchor is an array and
+ * every other form's is a string: the two branches differ only in how they read
+ * the value the form key carries, and duplicating the tail is how the two would
+ * quietly drift apart.
+ */
+function validateRouteTail(
+  out: LoamDiagnostic[],
+  where: string,
+  route: Record<string, unknown>,
+  entry: string | undefined,
+  form: (typeof INFRA_ROUTE_KEYS)[number],
+): void {
   checkNumbers(out, where, route, {
     margin: { min: INFRA_MARGIN_MIN, max: INFRA_MARGIN_MAX, int: true },
     offset: { min: INFRA_OFFSET_MIN, max: INFRA_OFFSET_MAX, int: true },

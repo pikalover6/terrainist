@@ -35,6 +35,7 @@ import {
 import { warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import { buildBridgeKit } from "./bridge.js";
+import { resolveBridgeStyles, type BridgeStyleSet } from "./bridge-styles.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
@@ -244,6 +245,14 @@ export interface RoadParams {
   readonly lanterns?: boolean;
   /** Blocks between lantern posts. Default {@link ROAD_LANTERN_SPACING}. */
   readonly lanternSpacing?: number;
+  /**
+   * The bridge style every crossing of this network is built in —
+   * `stone_bridge`, `timber_bridge`, `suspension_bridge` (or the bare
+   * `stone` / `timber` / `suspension`).
+   *
+   * Omitted, each span picks its own by length: see `selectBridgeStyle`.
+   */
+  readonly bridgeStyle?: string;
 }
 
 /** One anchor the network must reach. */
@@ -482,7 +491,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     width,
   );
 
-  const states = resolveRoadStates(input.palette, input.stack);
+  const states = resolveRoadStates(input.palette, input.stack, input.params.bridgeStyle);
   const rng = new Rng(streamSeed(input.seed, "grammar"));
   const lanternSide = new Map<string, number>();
 
@@ -571,7 +580,16 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     driver.commit(routeIntents(source, subRank, claimed));
     declaredRoutes.push({ source, columns: claimed.level, bridged: claimed.bridged });
     surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep);
-    blocks.push(...buildBridgeKit(region, plan, surfaced, width, { deck: states.deck, post: states.post, pier: states.pier }, water).blocks);
+    blocks.push(
+      ...buildBridgeKit(
+        region,
+        plan,
+        surfaced,
+        width,
+        { deck: states.deck, post: states.post, pier: states.pier, styles: states.bridge },
+        water,
+      ).blocks,
+    );
 
     routes.push({
       from: anchor.nodePath,
@@ -791,6 +809,8 @@ export interface StreetSurfaceInput {
    * when the document declares no `street.*` symbols of its own.
    */
   readonly theme?: string;
+  /** @see RoadParams.bridgeStyle — a street's canal crossings read the same knob. */
+  readonly bridgeStyle?: string;
   /**
    * Per-district street theme ids, parallel to {@link StreetSurfaceInput.graphs}
    * — **F10**.
@@ -1009,7 +1029,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const roadY = new Int32Array(cells);
   const bridged = new Uint8Array(cells);
   const paved = new Uint8Array(cells);
-  const rural = resolveRoadStates(input.palette, input.stack);
+  const rural = resolveRoadStates(input.palette, input.stack, input.bridgeStyle);
   // §7.3's mask, allocated only when a document asked for a break-up: the
   // surfacer hands it out, and the ground pass grows the green on it.
   const broken =
@@ -1478,7 +1498,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
           plan,
           surfaced,
           job.width,
-          { deck: job.states.deck, post: job.states.post, pier: job.states.pier },
+          {
+            deck: job.states.deck,
+            post: job.states.post,
+            pier: job.states.pier,
+            styles: job.states.bridge,
+          },
           water,
         ).blocks,
       );
@@ -1885,6 +1910,20 @@ export function routeTo(
     bridgeEntry?: number;
     /** Charge per further water cell. Default {@link ROAD_WATER_COST}. */
     waterCost?: number;
+    /**
+     * Blocks of rise or fall one step may take. Absent means no cap.
+     *
+     * A **veto**, not a charge, and that is the difference between a grade cap
+     * and `ROAD_SLOPE_COST`: a cost says "prefer the flatter way" and a cap
+     * says "this way does not exist for me". Added for the infrastructure
+     * host's `between` route form, whose whole derivation is
+     * `docs/INFRA-ENTRIES-v0.md` §3.2's sentence — "the road router's cost
+     * field **at the entry's own grade cap**" — and an aqueduct that climbed a
+     * cliff because the cliff was merely expensive would be exactly the thing
+     * that sentence forbids. A step onto or off water is exempt, as it is for
+     * the slope charge: over water the profile is the deck, not the bed.
+     */
+    maxDrop?: number;
   } = {},
 ): { x: number; z: number }[] | null {
   const water = costs.water;
@@ -1963,6 +2002,9 @@ export function routeTo(
       // Over water the profile is the deck, not the bed, so the bed's drop is
       // not a cost the route pays.
       const drop = wetHere || wetNext ? 0 : Math.abs((plan.ground[nIdx] as number) - here);
+      // The grade cap, when one was asked for: a step steeper than this is not
+      // an expensive step, it is not a step.
+      if (costs.maxDrop !== undefined && drop > costs.maxDrop) continue;
       let cost = (diagonal ? ROAD_DIAGONAL_COST : ROAD_BASE_COST) + ROAD_SLOPE_COST * drop;
       if (wetNext) cost += waterCost + (wetHere ? 0 : bridgeEntry);
       if (wallHug !== undefined && wallHug[nIdx] === 1) cost += ROAD_WALL_HUG_COST;
@@ -2387,21 +2429,26 @@ interface RoadStates {
   readonly deck: number;
   /** Bridge pier: the column dropped from the deck to the bed at each end. */
   readonly pier: number;
+  /**
+   * The three bridge styles, resolved from the same palette (and so from the
+   * same theme) as everything else here. `buildBridgeKit` picks one per span.
+   */
+  readonly bridge?: BridgeStyleSet;
 }
 
-function resolveRoadStates(palette: Palette, stack: PrismarineStack): RoadStates {
+function resolveRoadStates(
+  palette: Palette,
+  stack: PrismarineStack,
+  bridgeStyle?: string,
+): RoadStates {
   const fallback = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
   const at = (symbol: string, name: string) =>
     palette.has(symbol)
       ? (x: number, z: number): number => palette.stateAt(symbol, x, z)
       : (): number => fallback(name);
-  return {
-    surface: at("road.surface", "dirt_path"),
-    shoulder: at("road.shoulder", "gravel"),
-    step: palette.has("road.step") ? palette.state("road.step") : fallback("stone_bricks"),
-    subsurface: palette.has("road.subsurface") ? palette.state("road.subsurface") : fallback("dirt"),
-    post: palette.has("road.post") ? palette.state("road.post") : fallback("oak_fence"),
-    lantern: palette.has("road.lantern") ? palette.state("road.lantern") : fallback("lantern"),
+  // The kit's three states, named once: the styles below fall back to them
+  // field by field, so a world with no ground roles builds what it always did.
+  const base = {
     // A *top* slab, not a bottom one: the lane it meets has its walking
     // surface at `y + 1`, and a bottom slab would put the deck half a block
     // below that — a step at both banks and a visible seam from every angle.
@@ -2409,7 +2456,19 @@ function resolveRoadStates(palette: Palette, stack: PrismarineStack): RoadStates
       ? palette.state("road.deck")
       : (stack.blockStateOf("oak_slab", { type: "top", waterlogged: "false" }) ??
         fallback("oak_planks")),
+    post: palette.has("road.post") ? palette.state("road.post") : fallback("oak_fence"),
     pier: palette.has("road.pier") ? palette.state("road.pier") : fallback("oak_log"),
+  };
+  return {
+    surface: at("road.surface", "dirt_path"),
+    shoulder: at("road.shoulder", "gravel"),
+    step: palette.has("road.step") ? palette.state("road.step") : fallback("stone_bricks"),
+    subsurface: palette.has("road.subsurface") ? palette.state("road.subsurface") : fallback("dirt"),
+    post: base.post,
+    lantern: palette.has("road.lantern") ? palette.state("road.lantern") : fallback("lantern"),
+    deck: base.deck,
+    pier: base.pier,
+    bridge: resolveBridgeStyles(palette, stack, base, bridgeStyle),
   };
 }
 

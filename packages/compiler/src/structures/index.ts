@@ -2098,11 +2098,26 @@ function routeSpecOf(raw: unknown): InfraRouteSpec | undefined {
   if (raw === null || typeof raw !== "object") return undefined;
   const route = raw as Record<string, unknown>;
   for (const form of INFRA_ROUTE_KEYS) {
-    const target = route[form];
-    if (typeof target !== "string" || target.length === 0) continue;
+    const raw = route[form];
+    // `between` is the one form whose value is a *pair* — two placed anchors,
+    // in the node's own order, which the resolver keeps because a run's start
+    // is what an interval feature's phase is locked to. Every other form names
+    // one thing and reads as a string.
+    const pair =
+      Array.isArray(raw) &&
+      raw.length === 2 &&
+      typeof raw[0] === "string" &&
+      raw[0].length > 0 &&
+      typeof raw[1] === "string" &&
+      raw[1].length > 0
+        ? ([raw[0], raw[1]] as const)
+        : undefined;
+    if (pair === undefined && (typeof raw !== "string" || raw.length === 0)) continue;
+    const target = pair === undefined ? (raw as string) : `${pair[0]} → ${pair[1]}`;
     return {
       form: form as InfraRouteSpec["form"],
       target,
+      ...(pair === undefined ? {} : { targets: [pair[0], pair[1]] as [string, string] }),
       ...(typeof route["margin"] === "number" ? { margin: route["margin"] as number } : {}),
       ...(typeof route["offset"] === "number" ? { offset: route["offset"] as number } : {}),
       ...(route["side"] === "left" || route["side"] === "right"

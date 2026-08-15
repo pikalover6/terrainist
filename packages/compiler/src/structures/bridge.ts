@@ -47,6 +47,14 @@ import type { ColumnPlan } from "../terrain/columns.js";
 
 import type { StructureBlock } from "./buildings.js";
 import {
+  BRIDGE_HANGER_CLEARANCE,
+  BRIDGE_HANGER_PITCH,
+  BRIDGE_TOWER_HEIGHT,
+  bridgeStatesFor,
+  type BridgeStyleSet,
+  type BridgeStyleStates,
+} from "./bridge-styles.js";
+import {
   BRIDGE_APPROACH_RUN,
   BRIDGE_PROFILE,
   bridgeOffsets,
@@ -88,6 +96,14 @@ export interface BridgeStates {
   readonly post: number;
   /** The pier column dropped from the deck to the bed. */
   readonly pier: number;
+  /**
+   * The three styles (`bridge-styles.ts`), when the pass resolved them.
+   *
+   * Optional on purpose: absent, every span builds the kit's classic section
+   * out of the three states above, which is byte for byte what the kit built
+   * before the styles existed.
+   */
+  readonly styles?: BridgeStyleSet | undefined;
 }
 
 /** One instance of an interval feature the kit placed, for the dressing pass. */
@@ -224,6 +240,13 @@ function buildSpan(
   if (length < BRIDGE_MIN_SPAN) return null;
 
   const piers = new Set(pierArcs(length));
+  // The style is a pure function of the span's own length (and of a document's
+  // explicit request), so a recompile can never move a crossing from stone to
+  // timber: see `selectBridgeStyle`.
+  const style: BridgeStyleStates =
+    states.styles === undefined
+      ? { style: "timber", deck: states.deck, parapet: states.post, pier: states.pier }
+      : bridgeStatesFor(states.styles, length);
   const columns = sweptColumns(
     region,
     span.map((cell) => ({ x: cell.x, z: cell.z })),
@@ -232,29 +255,132 @@ function buildSpan(
   const blocks: StructureBlock[] = [];
   const features: BridgeFeature[] = [];
   const covered = new Set<number>();
+  /** Rail-lane columns per arc, kept for the tower and hanger passes. */
+  const rails = new Map<number, { x: number; z: number; y: number }[]>();
 
   for (const column of columns) {
     if (!wetAt(column.x, column.z)) continue;
     const arc = Math.min(length - 1, Math.max(0, column.index));
     const deckY = (span[arc] as { y: number }).y;
     covered.add(arc);
-    blocks.push({ x: column.x, y: deckY, z: column.z, stateId: states.deck });
+    blocks.push({ x: column.x, y: deckY, z: column.z, stateId: style.deck });
     if (Math.abs(column.lane) !== outer) continue;
-    blocks.push({ x: column.x, y: deckY + 1, z: column.z, stateId: states.post });
+    // A tower's first course *is* the parapet course of the abutment column:
+    // one block per coordinate, so the two passes cannot write the same voxel
+    // twice and disagree about what it is made of.
+    const towered =
+      style.style === "suspension" && style.tower !== undefined && (arc === 0 || arc === length - 1);
+    blocks.push({
+      x: column.x,
+      y: deckY + 1,
+      z: column.z,
+      stateId: towered ? (style.tower as number) : style.parapet,
+    });
+    const lane = rails.get(arc);
+    if (lane === undefined) rails.set(arc, [{ x: column.x, z: column.z, y: deckY }]);
+    else lane.push({ x: column.x, z: column.z, y: deckY });
     if (!piers.has(arc)) continue;
     // Founded: grown from the bed of *this* column up to the deck. `ground`
     // is the top occupied voxel, so the first pier block always has
     // something under it and the last always meets the deck.
     const bed = plan.ground[index(region, column.x, column.z)] as number;
     for (let y = bed + 1; y < deckY; y++) {
-      blocks.push({ x: column.x, y, z: column.z, stateId: states.pier });
+      blocks.push({ x: column.x, y, z: column.z, stateId: style.pier });
     }
     features.push({ id: "pier", x: column.x, y: deckY, z: column.z });
+    // The arch: a haunch course springing off the pier head, one column each
+    // side of it, immediately under the deck. Every haunch block sits directly
+    // beside a pier column it grew from, so nothing here can float.
+    if (style.haunch === undefined || deckY - 1 <= bed) continue;
+    for (const neighbour of [arc - 1, arc + 1]) {
+      if (neighbour < 0 || neighbour >= length) continue;
+      if (piers.has(neighbour)) continue;
+      const at = span[neighbour] as { x: number; z: number };
+      const dx = at.x - (span[arc] as { x: number }).x;
+      const dz = at.z - (span[arc] as { z: number }).z;
+      const hx = column.x + dx;
+      const hz = column.z + dz;
+      // Over water only, like every other block the kit writes: a haunch on the
+      // bank would be masonry standing in somebody's field.
+      if (!wetAt(hx, hz)) continue;
+      blocks.push({ x: hx, y: deckY - 1, z: hz, stateId: style.haunch });
+    }
   }
 
   // All or nothing: every arc of the span carries deck, or there is no bridge.
   if (covered.size < length) return null;
+  blocks.push(...suspension(span, rails, piers, style, features));
   return { blocks, features };
+}
+
+/**
+ * The towers, the main cable and the hangers of a suspension span.
+ *
+ * Nothing is built unless the style asked for it, so the two founded styles
+ * pay one comparison for this. Three invariants hold by construction:
+ *
+ * 1. **The towers stand on the piers.** They rise from the *abutment* arcs,
+ *    which `pierArcs` always includes, so a tower's first block sits on the
+ *    parapet course over a founded column — never over water.
+ * 2. **The cable ends in stone.** It is one contiguous horizontal run at the
+ *    tower-top level, and its two end columns are the tower heads themselves.
+ * 3. **Every hanger has a chain or a tower above it**, because a hanger is
+ *    grown *downwards* from the cable. Its length traces the sag — longest at
+ *    mid-span — and it stops {@link BRIDGE_HANGER_CLEARANCE} above the deck so
+ *    a player's two blocks of head room over the walking surface are never
+ *    taken by a chain.
+ */
+function suspension(
+  span: readonly { x: number; z: number; y: number }[],
+  rails: ReadonlyMap<number, { x: number; z: number; y: number }[]>,
+  piers: ReadonlySet<number>,
+  style: BridgeStyleStates,
+  features: BridgeFeature[],
+): StructureBlock[] {
+  const { tower, chain } = style;
+  if (style.style !== "suspension" || tower === undefined || chain === undefined) return [];
+  const length = span.length;
+  const ends = [0, length - 1].filter((arc) => piers.has(arc) && rails.has(arc));
+  if (ends.length < 2) return [];
+  const blocks: StructureBlock[] = [];
+
+  // 1. the towers.
+  const topOf = new Map<number, number>();
+  for (const arc of ends) {
+    for (const rail of rails.get(arc) ?? []) {
+      // From `d = 2`: the deck pass already laid the tower's own first course
+      // in place of the parapet at this column.
+      for (let d = 2; d <= BRIDGE_TOWER_HEIGHT; d++) {
+        blocks.push({ x: rail.x, y: rail.y + d, z: rail.z, stateId: tower });
+      }
+      features.push({ id: "tower", x: rail.x, y: rail.y + BRIDGE_TOWER_HEIGHT, z: rail.z });
+    }
+    topOf.set(arc, (rails.get(arc)?.[0]?.y ?? 0) + BRIDGE_TOWER_HEIGHT);
+  }
+  const [first, last] = [ends[0] as number, ends[ends.length - 1] as number];
+  const cableY = Math.min(topOf.get(first) as number, topOf.get(last) as number);
+
+  // 2. the cable, and 3. the hangers under it.
+  for (let arc = first + 1; arc < last; arc++) {
+    const lane = rails.get(arc);
+    if (lane === undefined) continue;
+    const t = (arc - first) / (last - first);
+    // A parabola, zero at the towers and one at mid-span: the hangers are
+    // longest in the middle, which is what draws the sag the taut cable does
+    // not have.
+    const sag = 1 - 4 * (t - 0.5) * (t - 0.5);
+    for (const rail of lane) {
+      const floor = rail.y + BRIDGE_HANGER_CLEARANCE;
+      const drop = Math.round(sag * (cableY - floor));
+      const bottom = Math.max(floor, cableY - drop);
+      blocks.push({ x: rail.x, y: cableY, z: rail.z, stateId: chain });
+      if (arc % BRIDGE_HANGER_PITCH !== 0) continue;
+      for (let y = cableY - 1; y >= bottom; y--) {
+        blocks.push({ x: rail.x, y, z: rail.z, stateId: chain });
+      }
+    }
+  }
+  return blocks;
 }
 
 /**

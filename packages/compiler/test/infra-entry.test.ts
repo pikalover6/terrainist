@@ -38,10 +38,14 @@ import { extentOfRects } from "../src/structures/walls.js";
 import {
   INFRA_DEFAULT_MARGIN,
   buildInfraEntries,
+  catenaryParameter,
   centroid,
+  cosh,
   clampToBounds,
   rasterize,
   resolveInfraRoute,
+  spanHeights,
+  spanRuns,
   type InfraPlacementView,
   type InfraRouteSpec,
 } from "../src/structures/infra-entry.js";
@@ -935,5 +939,303 @@ describe("crop_circle — the figure in the fields (over, flattens its ground)",
 
   it("is deterministic: the same field twice is the same block list", () => {
     expect(JSON.stringify(circle().result.blocks)).toBe(JSON.stringify(circle().result.blocks));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* `between` — the road router's cost field, and the span it carries (W4)      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The `between` form and the `span` geometry are tested together and apart in
+ * the same way the rest of this file is: the corridor is geometry and is
+ * visible in a column list, the curve is arithmetic and is visible in a height
+ * array, and the member's *support* is a claim about blocks and is checked on
+ * the block list. The last one is the physics claim — every chain block hangs
+ * from the tower or from chain above or beside it — and it is the reason a
+ * hanging member could not be a swept profile.
+ */
+describe("between (§3.2)", () => {
+  const MOLE_N = { x: -40, z: 0 };
+  const MOLE_S = { x: 40, z: 0 };
+
+  /** A view with two named anchors, one column each, plus an optional ridge. */
+  function harbour(
+    plan: ColumnPlan,
+    options: { road?: Uint8Array; blockAt?: (x: number, z: number) => boolean } = {},
+  ): InfraPlacementView {
+    const base = view(plan, options.road === undefined ? {} : { road: options.road });
+    return {
+      ...base,
+      extentOf: (id) =>
+        id === "north_mole" ? [MOLE_N] : id === "south_mole" ? [MOLE_S] : undefined,
+      ground: (x, z) => (options.blockAt?.(x, z) === true ? undefined : base.ground(x, z)),
+    };
+  }
+
+  const PAIR: InfraRouteSpec = {
+    form: "between",
+    target: "north_mole → south_mole",
+    targets: ["north_mole", "south_mole"],
+  };
+
+  it("routes a 4-connected corridor from the first anchor to the second", () => {
+    const resolved = resolveInfraRoute(PAIR, harbour(flatPlan()));
+    expect(resolved.kind).toBe("route");
+    if (resolved.kind !== "route") return;
+    const path = resolved.course.path;
+    // Orientation is the node's, not A*'s: the run starts at the anchor the
+    // author named first, because an interval feature's phase is locked to it.
+    expect(path[0]).toEqual(MOLE_N);
+    expect(path[path.length - 1]).toEqual(MOLE_S);
+    expect(resolved.course.closed).toBe(false);
+    for (let i = 0; i + 1 < path.length; i++) {
+      const a = path[i]!;
+      const b = path[i + 1]!;
+      expect(Math.abs(a.x - b.x) + Math.abs(a.z - b.z)).toBe(1);
+    }
+  });
+
+  it("is deterministic — the same placement twice is the same corridor", () => {
+    const a = resolveInfraRoute(PAIR, harbour(flatPlan()));
+    const b = resolveInfraRoute(PAIR, harbour(flatPlan()));
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+
+  it("reports a missing anchor as unanchored, naming the end that is missing", () => {
+    const resolved = resolveInfraRoute(
+      { form: "between", target: "north_mole → nowhere", targets: ["north_mole", "nowhere"] },
+      harbour(flatPlan()),
+    );
+    expect(resolved.kind).toBe("unanchored");
+    if (resolved.kind !== "unanchored") return;
+    expect(resolved.detail).toContain("nowhere");
+  });
+
+  it("refuses a pair with no anchors at all rather than routing from nothing", () => {
+    const resolved = resolveInfraRoute({ form: "between", target: "a → b" }, harbour(flatPlan()));
+    expect(resolved.kind).toBe("unanchored");
+  });
+
+  it("honours the entry's grade cap: a wall the corridor may not climb is empty", () => {
+    // A ridge of unclimbable ground across the middle. At a cap of 8 the
+    // corridor goes over it; at 1 there is no way across at all, and the
+    // difference is the whole of "at the entry's own grade cap".
+    const plan = flatPlan();
+    for (let z = 0; z < REGION.depth; z++) {
+      for (const dx of [-1, 0, 1]) {
+        plan.ground[z * REGION.width + (REGION.width >> 1) + dx] = GROUND + 6;
+      }
+    }
+    const permissive = resolveInfraRoute(PAIR, harbour(plan), { gradeCap: 8 });
+    const strict = resolveInfraRoute(PAIR, harbour(plan), { gradeCap: 1 });
+    expect(permissive.kind).toBe("route");
+    expect(strict.kind).toBe("empty");
+    if (strict.kind !== "empty") return;
+    expect(strict.detail).toContain("grade cap");
+  });
+
+  it("refuses an anchor standing on nothing, rather than routing to it", () => {
+    const resolved = resolveInfraRoute(
+      PAIR,
+      harbour(flatPlan(), { blockAt: (x, z) => x === MOLE_S.x && z === MOLE_S.z }),
+    );
+    expect(resolved.kind).toBe("empty");
+    if (resolved.kind !== "empty") return;
+    expect(resolved.detail).toContain("south_mole");
+  });
+
+  it("refuses a pair that resolved to one column — nothing is between a thing and itself", () => {
+    const plan = flatPlan();
+    const one: InfraPlacementView = {
+      ...harbour(plan),
+      extentOf: () => [MOLE_N],
+    };
+    expect(resolveInfraRoute(PAIR, one).kind).toBe("empty");
+  });
+});
+
+describe("the catenary (family E's span)", () => {
+  it("solves the parameter that gives the sag it was asked for", () => {
+    for (const [span, sag] of [
+      [40, 0.1],
+      [64, 0.125],
+      [80, 0.3],
+    ] as const) {
+      const a = catenaryParameter(span, sag * span);
+      // The definition, back the other way: `a·(cosh(span/2a) − 1)` is the sag.
+      expect(a * (cosh(span / (2 * a)) - 1)).toBeCloseTo(sag * span, 6);
+    }
+  });
+
+  it("is a series, not `Math.cosh` — and agrees with it to the last useful digit", () => {
+    // The series is what makes the curve bit-identical across engines; that it
+    // *also* matches the platform's own answer is what says it is right.
+    for (const x of [0, 0.25, 1, 2, 3.5]) expect(cosh(x)).toBeCloseTo(Math.cosh(x), 10);
+  });
+
+  it("hangs: anchored at both heads, sagging in the middle, convex throughout", () => {
+    const span = 60;
+    const y = spanHeights(120, 120, span, 0.125, () => undefined);
+    expect(y.length).toBe(span + 1);
+    expect(y[0]).toBe(120);
+    expect(y[span]).toBe(120);
+    // The sag is the registry's number, to the block the rounding lands on:
+    // 0.125 of sixty is seven and a half, and a curve made of blocks has to
+    // pick one of them.
+    expect(120 - Math.min(...y)).toBeGreaterThanOrEqual(Math.floor(0.125 * span));
+    expect(120 - Math.min(...y)).toBeLessThanOrEqual(Math.ceil(0.125 * span));
+    // Non-increasing to the low point and non-decreasing after it — a curve,
+    // never a rope with a kink in it.
+    const low = y.indexOf(Math.min(...y));
+    for (let i = 1; i <= low; i++) expect(y[i]!).toBeLessThanOrEqual(y[i - 1]!);
+    for (let i = low + 1; i < y.length; i++) expect(y[i]!).toBeGreaterThanOrEqual(y[i - 1]!);
+  });
+
+  it("keeps its clearance over what stands under it, and never rises over the chord", () => {
+    const span = 60;
+    const floor = (i: number): number => (i > 20 && i < 40 ? 118 : 60);
+    const y = spanHeights(120, 120, span, 0.3, floor);
+    for (let i = 1; i < span; i++) {
+      expect(y[i]!).toBeGreaterThanOrEqual(floor(i));
+      expect(y[i]!).toBeLessThanOrEqual(120);
+    }
+  });
+
+  it("lets the span win where the sag demands it — a clamp is a floor, not a lift", () => {
+    // Ground *above* both heads: the member cannot be lifted over its own
+    // supports, so it stays on the chord and the note that it touches what is
+    // under it is the honest answer.
+    const y = spanHeights(100, 100, 40, 0.2, () => 200);
+    for (const v of y) expect(v).toBeLessThanOrEqual(100);
+  });
+
+  it("is deterministic and unequal-head safe", () => {
+    const a = spanHeights(120, 132, 55, 0.125, () => undefined);
+    const b = spanHeights(120, 132, 55, 0.125, () => undefined);
+    expect(a).toEqual(b);
+    expect(a[0]).toBe(120);
+    expect(a[a.length - 1]).toBe(132);
+  });
+
+  it("fills every vertical gap, so no column's run leaves a block hanging alone", () => {
+    const y = [120, 120, 116, 110, 111, 118, 120];
+    const runs = spanRuns(y);
+    for (let i = 1; i < y.length - 1; i++) {
+      const run = runs[i]!;
+      expect(run.lo).toBe(y[i]);
+      // The run reaches the level of the neighbour nearer its tower, which is
+      // what puts a block beside that neighbour's own block.
+      const low = y.indexOf(Math.min(...y));
+      const towerward = i < low ? y[i - 1]! : i > low ? y[i + 1]! : Math.max(y[i - 1]!, y[i + 1]!);
+      expect(run.hi).toBeGreaterThanOrEqual(towerward);
+    }
+  });
+});
+
+describe("harbour_chain_tower — the span, built", () => {
+  const MOLE_N = { x: -24, z: 0 };
+  const MOLE_S = { x: 24, z: 0 };
+  const DEF_SPAN = INFRA_ENTRIES["harbour_chain_tower"] as InfraEntryDef;
+
+  function built(patch: Partial<InfraEntryDef> = {}, road?: Uint8Array) {
+    const plan = flatPlan();
+    const base = view(plan, road === undefined ? {} : { road });
+    const harbourView: InfraPlacementView = {
+      ...base,
+      extentOf: (id) =>
+        id === "north_mole" ? [MOLE_N] : id === "south_mole" ? [MOLE_S] : undefined,
+    };
+    const result = buildInfraEntries({
+      plan,
+      stack,
+      jobs: [
+        job(
+          {
+            form: "between",
+            target: "north_mole → south_mole",
+            targets: ["north_mole", "south_mole"],
+          },
+          { ...DEF_SPAN, ...patch },
+        ),
+      ],
+      view: harbourView,
+    });
+    return { result, plan };
+  }
+
+  it("stands two towers and slings a chain between their heads", () => {
+    const { result, plan } = built();
+    const chain = stack.blockByName("iron_chain")?.stateId;
+    expect(chain).toBeDefined();
+    const cable = result.blocks.filter((b) => b.stateId === chain);
+    const towers = result.blocks.filter((b) => b.stateId !== chain);
+    expect(towers.length).toBeGreaterThan(0);
+    expect(cable.length).toBeGreaterThan(20);
+    // Both towers, on the ground, at the two anchors and nowhere else.
+    for (const c of [MOLE_N, MOLE_S]) {
+      const column = towers.filter((b) => b.x === c.x && b.z === c.z);
+      expect(column.length, `${c.x},${c.z}`).toBe(DEF_SPAN.geometry.kind === "span" ? column.length : 0);
+      expect(column.length).toBeGreaterThan(4);
+      expect(Math.min(...column.map((b) => b.y))).toBe(
+        (plan.ground[index(REGION, c.x, c.z)] as number) + 1,
+      );
+    }
+    // The chain hangs *below* the heads and touches neither anchor column.
+    const head = Math.max(...towers.map((b) => b.y));
+    for (const b of cable) {
+      expect(b.y).toBeLessThanOrEqual(head);
+      expect(b.x === MOLE_N.x || b.x === MOLE_S.x).toBe(false);
+    }
+    // …and it sags: the low point is well under the heads.
+    expect(Math.min(...cable.map((b) => b.y))).toBeLessThan(head - 2);
+  });
+
+  it("hangs from something: every chain block has chain or tower above or beside it", () => {
+    // The physics claim, checked as connectivity: the member plus the towers is
+    // one 6-connected body, and it contains both tower heads. A block floating
+    // in the air fails this, and so does a curve broken by a rounding step.
+    const { result } = built();
+    const solid = new Set(result.blocks.map((b) => `${b.x},${b.y},${b.z}`));
+    const seen = new Set<string>();
+    const start = `${MOLE_N.x},${Math.max(
+      ...result.blocks.filter((b) => b.x === MOLE_N.x && b.z === MOLE_N.z).map((b) => b.y),
+    )},${MOLE_N.z}`;
+    const queue = [start];
+    seen.add(start);
+    while (queue.length > 0) {
+      const [x, y, z] = (queue.pop() as string).split(",").map(Number) as [number, number, number];
+      for (const [dx, dy, dz] of [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ] as const) {
+        const key = `${x + dx},${y + dy},${z + dz}`;
+        if (!solid.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        queue.push(key);
+      }
+    }
+    expect(seen.size).toBe(solid.size);
+  });
+
+  it("refuses the pair when one tower cannot stand — ships as a pair or not at all", () => {
+    // A carriageway over the south mole: the tower there is refused, and an
+    // `open` entry never plants in the road. The chain goes with it.
+    const road = new Uint8Array(REGION.width * REGION.depth);
+    for (let z = -2; z <= 2; z++) {
+      for (let x = 22; x <= 26; x++) road[index(REGION, x, z)] = 1;
+    }
+    const { result } = built({}, road);
+    const chain = stack.blockByName("iron_chain")?.stateId;
+    expect(result.blocks.filter((b) => b.stateId === chain).length).toBe(0);
+    expect(result.entries[0]?.skipped).toBeGreaterThan(0);
+  });
+
+  it("is byte-identical on a second compile of the same harbour", () => {
+    expect(JSON.stringify(built().result.blocks)).toBe(JSON.stringify(built().result.blocks));
   });
 });
