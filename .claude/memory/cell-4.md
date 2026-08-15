@@ -96,6 +96,26 @@ last), shore_battery ×8 scattered (5 refused on cliffs, correctly).
 Authoring $0.50. Kai is comparing harness approaches via the outline
 artifact; further reshape (mend-don't-drop etc.) NOT ratified — wait.
 
+**GEMINI-AS-FUZZER ROUND (2026-08-15 late):** Kai's v2 walk found two
+compiler bugs Gemini's doc shapes exposed, Luna's dodged by luck. BOTH
+FIXED + pushed: (1) f948fdb wandering colossus — at-constraint region
+fully vetoed by BUILDING slope rule on its own 41-degree bluff, soft-at
+absorbed silently, junk `facing` constraint (inert rotation on
+landmarks) actively walked the node toward its target; now W519
+LANDMARK_CONSTRAINT_IGNORED (feedback-eligible, spells params.face),
+facing inert on landmarks, W520 landmarkCoarseSeat rung (declared
+at/zone wins when ONLY too_steep refused; ground padded), terrain
+profile shares one coarseHint reader, kit shows exact spelling.
+(2) 424b18c sunken sidewalks — segment-id collision: both districts
+named runs ns0/ew0, all-district segmentArcs map let unicorn levels
+overwrite pirate ones, sidewalks paved 4 blocks down at the OTHER
+island's ground; qualifySegmentId(id, graphPath) with "!" separator
+(sorts below form chars → single-quarter worlds byte-identical,
+proven vs archived p1-c3 artifact hashes); city arterials
+(drive/spine/ring) same latent bug, same fix.
+isles_of_war_gem37-v3 IN PRISM: colossus base (80,101,-65) on bluff,
+sidewalks all at own street level. Full tree 4,340/0.
+
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the head-to-head + p4-c3b when installed; judge remaining
   "more subjective" battery polish he deferred; survivor-yards ruling
