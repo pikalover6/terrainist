@@ -66,7 +66,7 @@ import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { index, inside, presentsExposedFace } from "./roads.js";
+import { index, inside, presentsExposedFace, qualifySegmentId } from "./roads.js";
 import { projectToLine, thickenCourse, type ArcFrame, type ArcLevels } from "./sweep.js";
 
 /**
@@ -666,7 +666,11 @@ function paveSidewalks(
   const band = new Map<number, Band>();
 
   for (const segment of graph.segments) {
-    const arc = ctx.levels?.get(`street:segment:${segment.id}`);
+    // Qualified by this quarter's own node path, because a segment id alone is
+    // only unique inside the form that drew it: every `grid` quarter names its
+    // runs `ns0…`/`ew0…`, so on an unqualified key the *other* district's frames
+    // answered here and the band was graded to the other island's level.
+    const arc = ctx.levels?.get(`street:${qualifySegmentId(segment.id, nodePath)}`);
     const inner = half(segment.width) + 1;
     const outer = inner + graph.sidewalk - 1;
     for (const step of walkStreet(segment.path)) {

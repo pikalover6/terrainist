@@ -40,7 +40,11 @@ import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
 import { levelClaimsByColumn } from "../src/structures/ground-declare.js";
 import { driverForPlan, type GroundDriver } from "../src/layout/ground-driver.js";
 import { dressStreets, type SegmentArc, type StreetscapeResult } from "../src/structures/streetscape.js";
-import { surfaceStreetGraph, type StreetSurfaceResult } from "../src/structures/roads.js";
+import {
+  qualifySegmentId,
+  surfaceStreetGraph,
+  type StreetSurfaceResult,
+} from "../src/structures/roads.js";
 import { buildRetainingWalls, type RetainingPassResult } from "../src/structures/retaining.js";
 import { sweep } from "../src/structures/sweep.js";
 import { RETAINING_PROFILE } from "../src/structures/profiles.js";
@@ -51,6 +55,8 @@ const SIZE = 96;
 const REGION: Region = { x0: -SIZE / 2, z0: -SIZE / 2, width: SIZE, depth: SIZE };
 const BOUNDS = { x0: -SIZE / 2, z0: -SIZE / 2, x1: SIZE / 2 - 1, z1: SIZE / 2 - 1 } as const;
 const SEA = 63;
+/** The one quarter this fixture builds — its node path, used as the graph id. */
+const QUARTER = "world.quarter";
 const CELLS = SIZE * SIZE;
 
 /** The upper platform's level, the lower one's, and the drop between them. */
@@ -195,6 +201,10 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
   });
   const streets = surfaceStreetGraph({
     graphs: [graph],
+    // As `buildStructures` passes it. Without it the rank ids are qualified by
+    // the graph's *index* instead of its path, the dressing's lookup below
+    // misses, and I6's assertion goes vacuous against the centre-cell fallback.
+    graphPaths: [QUARTER],
     ground: driver,
     plan,
     palette,
@@ -324,7 +334,9 @@ describe("the shadow declarers, on a stepped quarter", () => {
       ).toBeLessThan(0);
     }
     // The avenue is wider, so it outranks the lane — the proven order, unmoved.
-    expect((streetIntents[0] as GroundIntent).source).toBe("street:segment:a-avenue");
+    expect((streetIntents[0] as GroundIntent).source).toBe(
+      `street:${qualifySegmentId("a-avenue", QUARTER)}`,
+    );
   });
 
   it("sources are unique per (class, source, kind) triple — §4.5 has no ties", () => {

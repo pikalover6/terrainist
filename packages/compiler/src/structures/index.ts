@@ -123,6 +123,7 @@ import {
 } from "./precincts.js";
 import {
   buildRoadNetwork,
+  SEGMENT_ID_SEPARATOR,
   STREET_WEAR_CHANCE,
   index,
   inside,
@@ -950,10 +951,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
   let streetFurniture = 0;
-  const arterials = cities.flatMap((c) => c.plan.arterials);
+  // Qualified by the city that drew them, for the same reason a district's
+  // segments are (`StreetSurfaceInput.graphPaths`): every city plan calls its
+  // runs `drive`/`spine`/`ring`, so two cities in one document would mint one
+  // rank id — and one `street:` intent source — for two different boulevards.
+  // The qualifier trails the id behind `SEGMENT_ID_SEPARATOR`, so a one-city
+  // world ranks its arterials in exactly the order it always did.
+  const arterials = cities.flatMap((c) =>
+    c.plan.arterials.map((a) => ({ ...a, id: `${a.id}${SEGMENT_ID_SEPARATOR}${c.nodePath}` })),
+  );
   if (districts.length > 0 || arterials.length > 0) {
     streets = surfaceStreetGraph({
       graphs: districts.map((d) => d.streets),
+      // What makes a segment id unique across quarters — without it two `grid`
+      // districts both name their runs `ns0…` and the arc-levels map below keeps
+      // only the last one's frames. See `StreetSurfaceInput.graphPaths`.
+      graphPaths: districts.map((d) => d.nodePath),
       ground: input.ground,
       ...(arterials.length === 0
         ? {}

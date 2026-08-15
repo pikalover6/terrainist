@@ -699,10 +699,58 @@ function routeIntents(
 /* district streets (fabric v2, F1)                                            */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The separator between a segment's own id and the graph that owns it.
+ *
+ * `"!"` (0x21) sorts below every character a form puts in a segment id — digits,
+ * letters and `_` — which is the whole reason it was chosen. `compareStreetRank`
+ * breaks its last tie on this string, so a separator *above* those characters
+ * would reorder `ns0` against `ns00` and move blocks in worlds that have no
+ * collision to fix. Below them, the qualified order restricted to one graph is
+ * exactly the bare-id order, and a single-quarter world is byte-identical.
+ */
+export const SEGMENT_ID_SEPARATOR = "!";
+
+/**
+ * A street segment's id, qualified by the graph it belongs to.
+ *
+ * The one place the qualified id is spelled, so the surfacer that mints it and
+ * the sidewalk declarer that looks it up cannot drift apart — drifting apart is
+ * how the sidewalk silently fell back to the centre cell.
+ *
+ * @see StreetSurfaceInput.graphPaths
+ */
+export function qualifySegmentId(segmentId: string, graphPath: string): string {
+  return `segment:${segmentId}${SEGMENT_ID_SEPARATOR}${graphPath}`;
+}
+
 /** Everything {@link surfaceStreetGraph} reads. */
 export interface StreetSurfaceInput {
   /** The skeletons to surface, one per district, in document order. */
   readonly graphs: readonly StreetGraph[];
+  /**
+   * The node path each graph belongs to, parallel to
+   * {@link StreetSurfaceInput.graphs} — **what makes a segment id unique.**
+   *
+   * A {@link StreetGraph}'s segment ids are named by the *form* that drew it and
+   * are therefore only unique inside their own district: every `grid` quarter in
+   * every document calls its runs `ns0…`/`ew0…`, so two quarters in one world
+   * name the same segments. Until this array existed the surfacer built its rank
+   * ids — and therefore its {@link StreetSegmentDeclaration.source} strings, which
+   * §4.1 requires to be unique — out of that id alone, and two districts collided:
+   * the total order in {@link compareStreetRank} stopped being total, and the
+   * arc-levels map keyed on those sources in `structures/index.ts` kept only the
+   * *last* district's frames. The sidewalk declarer then graded one quarter's
+   * bands to another quarter's levels, which on two islands at different heights
+   * is a paved trench several blocks under its own carriageway.
+   *
+   * Absent (or short) at a position falls back to the graph's index, which keeps
+   * the ids unique for the unit tests that surface a bare graph. Nothing but the
+   * uniqueness is read: {@link qualifySegmentId} appends it after the segment's
+   * own id behind a separator that sorts below every character an id can carry,
+   * so the rank order within a graph is exactly the order the bare ids gave.
+   */
+  readonly graphPaths?: readonly string[];
   /**
    * C1's city arterials, surfaced through this same pass and deliberately so.
    *
@@ -1066,6 +1114,9 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   for (const [graphIndex, graph] of input.graphs.entries()) {
     // F10: this quarter's own street family, or the root's when it named none.
     const urbanHere = statesFor(input.graphThemes?.[graphIndex]);
+    // Which quarter's segments these are — see `graphPaths`. Without it two
+    // quarters' `ns0` are one id, and one of them loses its levels.
+    const graphPath = input.graphPaths?.[graphIndex] ?? `#${graphIndex}`;
     // Does this quarter carry water? Two things hang off the answer, and both
     // are gated on it so that a document naming no `canal` quarter grades and
     // surfaces exactly the columns it grades and surfaces today: a street that
@@ -1094,7 +1145,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         continue;
       }
       jobs.push({
-        rank: { id: `segment:${segment.id}`, width: segment.width, role, kind: segment.kind },
+        rank: {
+          id: qualifySegmentId(segment.id, graphPath),
+          width: segment.width,
+          role,
+          kind: segment.kind,
+        },
         order: jobs.length,
         role: role === "steps" ? "steps" : role === "cart" ? "cart" : "carriageway",
         width: segment.width,
