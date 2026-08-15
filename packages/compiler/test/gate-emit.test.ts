@@ -13,6 +13,7 @@ import path from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
+import { parseBlockString } from "../src/emit/blockstring.js";
 import { parseSpikeDocument } from "../src/emit/document.js";
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION, emitWorld } from "../src/emit/world.js";
@@ -74,6 +75,18 @@ describe("emitWorld palette blockstates", () => {
     const mc = loadPrismarine(EMIT_MINECRAFT_VERSION);
     expect(mc.blockByName("chain")).toBeUndefined();
     expect(mc.blockStateOf("iron_chain", { axis: "y" })).toBeDefined();
+  });
+
+  // The rename must live in the PARSER, not one resolver: the first fix sat
+  // only in emit, so the authoring gate passed a chain-bearing dreadnought and
+  // the compile-side lowering pass then failed the whole world on the same
+  // block (measured: the 2026-08-15 Gemini regen, 14 error LOAM lines).
+  it("renames in the shared parser, so every resolver agrees", () => {
+    expect(parseBlockString("minecraft:chain[axis=y,waterlogged=false]")).toEqual({
+      name: "iron_chain",
+      props: { axis: "y", waterlogged: "false" },
+    });
+    expect(parseBlockString("chain")).toEqual({ name: "iron_chain", props: {} });
   });
 
   it("adds no hint for a name that really is not a block", async () => {

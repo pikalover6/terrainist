@@ -6,6 +6,24 @@
  * program pipeline speak this syntax; the emit layer is the lower of the two.
  */
 
+/**
+ * Old block names the pinned registry spells differently — vanilla renames,
+ * applied silently at parse time because the semantics are identical and a
+ * repair round spent on a spelling update is a repair round wasted (Kai,
+ * 2026-08-15). Living in the PARSER is the point: every resolver — the spike
+ * palette, the program-lowering pass, the gate's scratch emit — speaks
+ * through here, so a rename can never pass one gate and fail the other.
+ * (The first fix lived only in the emit resolver, and a document whose
+ * programs passed authoring then failed compile-side lowering on the same
+ * block. One chokepoint or none.)
+ *
+ * `chain` → `iron_chain` is the copper-age rename, the single departure a
+ * 1.21.4-vs-1.21.11 registry diff shows; the `axis` state carried over.
+ */
+const BLOCK_RENAMES: Readonly<Record<string, string>> = {
+  chain: "iron_chain",
+};
+
 /** Split a full block string into its name and its property map. */
 export function parseBlockString(
   block: string,
@@ -21,5 +39,6 @@ export function parseBlockString(
       props[key.trim()] = value.trim();
     }
   }
-  return { name: match[1] as string, props };
+  const raw = match[1] as string;
+  return { name: BLOCK_RENAMES[raw] ?? raw, props };
 }

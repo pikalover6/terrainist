@@ -166,37 +166,19 @@ function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, Em
 }
 
 /**
- * Old block names the pinned registry spells differently — vanilla renames,
- * applied silently at resolution because the semantics are identical and a
- * repair round spent on a spelling update is a repair round wasted (Kai,
- * 2026-08-15).
- *
- * Keyed by bare name (no `minecraft:`, no `[...]` state); the value is the
- * bare name it resolves as, with the original block-state string kept intact.
- * `chain` is the only entry because it is the only such name: diffing the
- * pinned 1.21.11 block list against 1.21.4 shows exactly one departure, the
- * copper-age rename `chain` → `iron_chain` (which kept the same `axis`
- * state and brought the eight `*_copper_chain` variants with it). Every
- * model writes the old name from training data; every model gets the block
- * it meant.
- */
-const BLOCK_RENAMES: Readonly<Record<string, string>> = {
-  chain: "iron_chain",
-};
-
-/**
  * A palette entry may carry blockstate properties —
  * `"minecraft:grass_block[snowy=false]"` — the syntax authored programs use;
- * a bare name resolves to the block's default state.
+ * a bare name resolves to the block's default state. Vanilla renames
+ * (`chain` → `iron_chain`) are handled inside `parseBlockString`, the one
+ * chokepoint every resolver shares.
  */
 function resolveBlockString(mc: PrismarineStack, blockId: string): EmitBlock | undefined {
   const parsed = parseBlockString(blockId);
   if (parsed === undefined) return undefined;
-  const name = BLOCK_RENAMES[parsed.name] ?? parsed.name;
-  const base = mc.blockByName(name);
+  const base = mc.blockByName(parsed.name);
   if (base === undefined) return undefined;
   if (Object.keys(parsed.props).length === 0) return base;
-  const stateId = mc.blockStateOf(name, parsed.props);
+  const stateId = mc.blockStateOf(parsed.name, parsed.props);
   if (stateId === undefined) return undefined;
   return { id: base.id, name: base.name, stateId };
 }
