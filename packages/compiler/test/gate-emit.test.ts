@@ -61,15 +61,19 @@ describe("emitWorld palette blockstates", () => {
   });
 
   // `minecraft:chain` is the copper-age rename: the pinned 1.21.11 registry
-  // spells it `iron_chain` (same block, same `axis` state). Bare E336 read as
-  // "you made that block up" and cost two authoring runs; the hint gives the
-  // rename with the state preserved.
-  it("hints at the rename for a block the pinned registry respells", async () => {
-    const dir = await scratchDir("absentchain");
+  // spells it `iron_chain` (same block, same `axis` state). Every model
+  // writes the old name from training data, so the emit resolves it silently
+  // rather than spending a repair round on a spelling update (Kai,
+  // 2026-08-15).
+  it("silently resolves the renamed chain block, states intact", async () => {
+    const dir = await scratchDir("renamedchain");
     const doc = parseSpikeDocument(docWith({ g: "minecraft:chain[axis=y]" }));
-    await expect(emitWorld(doc, path.join(dir, "world"))).rejects.toThrow(
-      /unknown block or state "minecraft:chain\[axis=y\]".*RENAMED minecraft:iron_chain.*iron_chain\[axis=y\]/s,
-    );
+    const summary = await emitWorld(doc, path.join(dir, "world"));
+    expect(summary.blockCount).toBe(1);
+
+    const mc = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    expect(mc.blockByName("chain")).toBeUndefined();
+    expect(mc.blockStateOf("iron_chain", { axis: "y" })).toBeDefined();
   });
 
   it("adds no hint for a name that really is not a block", async () => {

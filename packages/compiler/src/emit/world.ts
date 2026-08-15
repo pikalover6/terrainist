@@ -157,8 +157,7 @@ function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, Em
     const block = resolveBlockString(mc, blockId);
     if (block === undefined) {
       throw new Error(
-        `emit: palette symbol "${symbol}" refers to unknown block or state "${blockId}"` +
-          registryAbsenceHint(blockId),
+        `emit: palette symbol "${symbol}" refers to unknown block or state "${blockId}"`,
       );
     }
     resolved.set(symbol, block);
@@ -167,33 +166,23 @@ function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, Em
 }
 
 /**
- * Block names every model knows that the pinned registry spells differently —
- * renames, not hallucinations. Without a hint the E336 text reads as "you
- * invented a block", which sends the authoring repair loop hunting for a
- * spelling mistake that isn't there and burns rounds.
+ * Old block names the pinned registry spells differently — vanilla renames,
+ * applied silently at resolution because the semantics are identical and a
+ * repair round spent on a spelling update is a repair round wasted (Kai,
+ * 2026-08-15).
  *
- * Keyed by bare name (no `minecraft:`, no `[...]` state). `chain` is the only
- * entry because it is the only such name: diffing the pinned 1.21.11 block
- * list against 1.21.4 shows exactly one departure, and it is the copper-age
- * rename `chain` → `iron_chain` (the pin also carries the eight
- * `*_copper_chain` variants that arrived with it). The block itself never
- * left; `iron_chain` keeps the same `axis` state, so the old string maps over
- * with its state intact.
+ * Keyed by bare name (no `minecraft:`, no `[...]` state); the value is the
+ * bare name it resolves as, with the original block-state string kept intact.
+ * `chain` is the only entry because it is the only such name: diffing the
+ * pinned 1.21.11 block list against 1.21.4 shows exactly one departure, the
+ * copper-age rename `chain` → `iron_chain` (which kept the same `axis`
+ * state and brought the eight `*_copper_chain` variants with it). Every
+ * model writes the old name from training data; every model gets the block
+ * it meant.
  */
-const REGISTRY_ABSENCE_HINTS: Readonly<Record<string, string>> = {
-  chain:
-    "minecraft:chain was RENAMED minecraft:iron_chain in the pinned 1.21.11 " +
-    "registry (the copper-age rename; copper_chain variants exist too). " +
-    "fix: write minecraft:iron_chain with the same states — " +
-    '"minecraft:chain[axis=y]" becomes "minecraft:iron_chain[axis=y]".',
+const BLOCK_RENAMES: Readonly<Record<string, string>> = {
+  chain: "iron_chain",
 };
-
-/** The hint clause appended to an unknown-block error, or `""` when we have none. */
-function registryAbsenceHint(blockId: string): string {
-  const bare = blockId.replace(/^minecraft:/, "").replace(/\[.*$/, "");
-  const hint = REGISTRY_ABSENCE_HINTS[bare];
-  return hint === undefined ? "" : ` — ${hint}`;
-}
 
 /**
  * A palette entry may carry blockstate properties —
@@ -203,10 +192,11 @@ function registryAbsenceHint(blockId: string): string {
 function resolveBlockString(mc: PrismarineStack, blockId: string): EmitBlock | undefined {
   const parsed = parseBlockString(blockId);
   if (parsed === undefined) return undefined;
-  const base = mc.blockByName(parsed.name);
+  const name = BLOCK_RENAMES[parsed.name] ?? parsed.name;
+  const base = mc.blockByName(name);
   if (base === undefined) return undefined;
   if (Object.keys(parsed.props).length === 0) return base;
-  const stateId = mc.blockStateOf(parsed.name, parsed.props);
+  const stateId = mc.blockStateOf(name, parsed.props);
   if (stateId === undefined) return undefined;
   return { id: base.id, name: base.name, stateId };
 }
