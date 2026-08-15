@@ -157,12 +157,39 @@ function resolvePalette(doc: SpikeDocument, mc: PrismarineStack): Map<string, Em
     const block = resolveBlockString(mc, blockId);
     if (block === undefined) {
       throw new Error(
-        `emit: palette symbol "${symbol}" refers to unknown block or state "${blockId}"`,
+        `emit: palette symbol "${symbol}" refers to unknown block or state "${blockId}"` +
+          registryAbsenceHint(blockId),
       );
     }
     resolved.set(symbol, block);
   }
   return resolved;
+}
+
+/**
+ * Real vanilla blocks that the pinned prismarine registry simply does not
+ * carry — a dependency data gap, not a model hallucination. Without a hint the
+ * E336 text reads as "you invented a block", which sends the authoring repair
+ * loop hunting for a spelling mistake that isn't there and burns rounds.
+ *
+ * Keyed by bare name (no `minecraft:`, no `[...]` state). Verified absent by
+ * diffing the pinned 1.21.11 block list against 1.21.4: `chain` is the only
+ * real block the pin lost. Only add entries you have confirmed absent AND can
+ * name a sensible substitute for.
+ */
+const REGISTRY_ABSENCE_HINTS: Readonly<Record<string, string>> = {
+  chain:
+    "minecraft:chain is a real vanilla block but is missing from the pinned " +
+    "1.21.11 block registry, so it cannot be emitted. " +
+    "fix: use minecraft:iron_bars for a hanging vertical run (visually closest), " +
+    "or attach the lantern directly to a solid block above it.",
+};
+
+/** The hint clause appended to an unknown-block error, or `""` when we have none. */
+function registryAbsenceHint(blockId: string): string {
+  const bare = blockId.replace(/^minecraft:/, "").replace(/\[.*$/, "");
+  const hint = REGISTRY_ABSENCE_HINTS[bare];
+  return hint === undefined ? "" : ` — ${hint}`;
 }
 
 /**

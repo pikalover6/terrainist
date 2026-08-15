@@ -59,6 +59,25 @@ describe("emitWorld palette blockstates", () => {
       'unknown block or state "minecraft:grass_block[snowy=maybe]"',
     );
   });
+
+  // `minecraft:chain` is a real vanilla block that the pinned 1.21.11 registry
+  // lost (confirmed by diffing against 1.21.4). Bare E336 read as "you made
+  // that block up" and cost two authoring runs; the hint names the substitute.
+  it("hints at the substitute for a real block the pinned registry lacks", async () => {
+    const dir = await scratchDir("absentchain");
+    const doc = parseSpikeDocument(docWith({ g: "minecraft:chain[axis=y]" }));
+    await expect(emitWorld(doc, path.join(dir, "world"))).rejects.toThrow(
+      /unknown block or state "minecraft:chain\[axis=y\]".*missing from the pinned.*iron_bars/s,
+    );
+  });
+
+  it("adds no hint for a name that really is not a block", async () => {
+    const dir = await scratchDir("notablock");
+    const doc = parseSpikeDocument(docWith({ g: "minecraft:not_a_block" }));
+    await expect(emitWorld(doc, path.join(dir, "world"))).rejects.toThrow(
+      /unknown block or state "minecraft:not_a_block"$/,
+    );
+  });
 });
 
 describe("the gate world is the world the emitter would write", () => {
