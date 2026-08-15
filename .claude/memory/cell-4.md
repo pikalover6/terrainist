@@ -77,6 +77,25 @@ https://claude.ai/code/artifact/f12c83ed-7bee-4125-bda5-9ddf16e9854e
 tiers, author-time block prevalidation, guard calibration). Kai is
 studying alternatives; NO harness reshape ratified yet — don't build.
 
+
+**HARNESS RESHAPE SHIPPED (Kai's rulings, 2026-08-15) + GEMINI V2:**
+(1) instrumenter auto-braces bodies, style lint deleted (0defed0, reach
+law proven on frozen battery hashes); (2) sandbox keeps `envelope`
+bound; (3) chain→iron_chain auto-rename — MUST live in
+parseBlockString, the shared parser: the emit-only first fix let
+authoring pass and compile fail the same block, $0.50 stranded
+(1cae641, "one chokepoint or none"); (4) gate leniency: quality checks
+(structural/nonsense/physics findings/clip tolerance) demoted to
+recorded warnings via SUSPENDED_GATE_CHECKS in programs/leniency.ts,
+one-constant revert; fatal = static safety, determinism, runtime
+limits, unresolvable blocks (c9bc0c7, LOAM-SPEC §15.2, DESIGN.md
+updated). RESULT — isles_of_war_gem37-v2 in Prism: Gemini e2e now
+ships EVERYTHING: unicorn_colossus (1 attempt, 22 warnings),
+corsair_dreadnought 3,530 blocks (2 attempts — the flagship exists at
+last), shore_battery ×8 scattered (5 refused on cliffs, correctly).
+Authoring $0.50. Kai is comparing harness approaches via the outline
+artifact; further reshape (mend-don't-drop etc.) NOT ratified — wait.
+
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the head-to-head + p4-c3b when installed; judge remaining
   "more subjective" battery polish he deferred; survivor-yards ruling
