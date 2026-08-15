@@ -288,8 +288,9 @@ program runs twice in separate realms and is byte-compared; `outputHash` is
 frozen into the document; every compile re-executes the verification set and
 fails `E334` on mismatch. Ambient entropy, IO and the clock are shadowed to
 throws. Fuel is metered by source instrumentation (a unit per block entry plus
-weighted API costs), with the static lint requiring braced bodies so the one
-unbounded shape cannot be written.
+weighted API costs); the instrumenter brace-wraps braceless control-flow
+bodies itself before splicing, so no style demand is made of the author and
+no body escapes metering.
 
 **The five-step gate** (static lint → double-run determinism → structural →
 physics lint over a real emitted world → nonsense guard) runs at authoring time

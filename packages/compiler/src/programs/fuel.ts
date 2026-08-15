@@ -24,20 +24,32 @@
  *   hundred thousand blocks from being cheaper than the loop that computed
  *   where to put them.
  *
+ * ## Normalization is part of instrumentation
+ *
+ * A `{` is the only thing this can splice into, so before it splices it
+ * brace-wraps every braceless control-flow body — `if (p) f();` becomes
+ * `if (p) { f(); }` — using the spec package's {@link braceBracelessBodies},
+ * the single scanner that knows what a braceless body is. That used to be a
+ * static-lint *rejection*; it is now a deterministic pure function of the
+ * source, run at every run site, so the gate and the compile normalize
+ * identically and the source frozen into a document stays the author's
+ * verbatim text. Wrapping is semantics-preserving (a declaration as a
+ * braceless body is already a SyntaxError), and a scanner mistake fails loudly
+ * at sandbox compile rather than silently changing the output.
+ *
  * The instrumenter classifies a `{` by the significant character before it:
  * `)`, `;`, `{`, `}`, `>` (the tail of `=>`) or one of the keywords `do`,
  * `else`, `try`, `finally` opens a block; anything else (`=`, `(`, `,`, `:`,
  * `return`, an identifier) opens an object literal or a class body and is left
  * alone. The classification is conservative in the safe direction: a missed
- * insertion under-charges, and the static lint's brace requirement is what
- * stops the one shape — an unbraced loop body — where under-charging would be
- * unbounded.
+ * insertion under-charges, and the brace normalization above is what stops the
+ * one shape — an unbraced loop body — where under-charging would be unbounded.
  *
  * The whole thing is deterministic by construction: the same source instruments
  * to the same text and the same run charges the same units on every host.
  */
 
-import { stripLiterals } from "@terrainist/spec";
+import { braceBracelessBodies, stripLiterals } from "@terrainist/spec";
 
 /** What one API call costs. */
 export const FUEL_COSTS = Object.freeze({
@@ -101,7 +113,8 @@ const BLOCK_KEYWORDS = new Set(["do", "else", "try", "finally"]);
  * a string is not a block) and the splice is applied to the original text, so
  * line numbers in a stack trace still point at what the author wrote.
  */
-export function instrumentFuel(source: string): string {
+export function instrumentFuel(rawSource: string): string {
+  const source = braceBracelessBodies(rawSource);
   const code = stripLiterals(source);
   const inserts: number[] = [];
 

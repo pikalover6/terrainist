@@ -9,10 +9,15 @@
  * - the banned surface of §7.4 (`fetch`, `fs`, `process`, `Date`,
  *   `performance`, `Math.random`, `eval`, `Function`, `import()`, `require`);
  * - the export shape the loader understands;
- * - **braced bodies**, because the fuel instrumenter charges a unit per block
- *   entry and a brace-less loop body is a loop it cannot charge (see the
- *   compiler's `fuel.ts`);
  * - no top-level mutable state, so two invocations in one realm cannot differ.
+ *
+ * Braceless loop and branch bodies used to be a *finding* here, on the grounds
+ * that the fuel instrumenter can only charge a `{`. They no longer are: the
+ * instrumenter brace-wraps them itself, deterministically, before it splices
+ * (see {@link braceBracelessBodies}, which the compiler's `fuel.ts` calls).
+ * The scanner that used to produce the finding is what does the wrapping, so
+ * there is still exactly one piece of logic that knows what a braceless body
+ * looks like.
  *
  * A textual check has false positives — `"my Date"` inside a string literal is
  * the classic one — so the scanner strips comments, strings and template
@@ -184,25 +189,38 @@ export function lintProgramSource(source: string): readonly SourceFinding[] {
     }
   }
 
-  findings.push(...findBracelessBodies(source, code));
   findings.push(...findTopLevelMutableState(source, code));
   findings.push(...checkExports(source, code));
   findings.sort((a, b) => a.line - b.line || a.message.localeCompare(b.message));
   return findings;
 }
 
+/** One braceless control-flow body, as a half-open range into the source. */
+export interface BracelessBody {
+  readonly keyword: "for" | "while" | "if" | "else";
+  /** Index of the first character of the body statement. */
+  readonly start: number;
+  /** Index one past the body statement's last character. */
+  readonly end: number;
+}
+
 /**
- * Loop and branch bodies must be braced.
+ * Locate the *first* braceless loop or branch body in `source`.
  *
- * The instrumenter charges fuel on block entry, so `while (p) step();` is an
- * unbounded loop it cannot charge. Requiring braces is a smaller and far more
- * predictable rule than teaching a textual instrumenter to synthesize them.
+ * The one scanner: {@link braceBracelessBodies} is the only caller, and it is
+ * what the fuel instrumenter runs before it splices. Textual by the same rule
+ * as the rest of this file — the literal-stripped mirror decides, the original
+ * text keeps the offsets.
+ *
+ * An **empty-statement** body (`while (c) ;`, and the `while (c);` tail of a
+ * `do … while`) is deliberately left alone: there is nothing to wrap, and
+ * wrapping the do-while tail would be a syntax error.
  */
-function findBracelessBodies(source: string, code: string): SourceFinding[] {
-  const out: SourceFinding[] = [];
+export function findFirstBracelessBody(source: string): BracelessBody | undefined {
+  const code = stripLiterals(source);
   const re = /(?<![\w$])(for|while|if|else)(?![\w$])/g;
   for (const m of code.matchAll(re)) {
-    const keyword = m[1] as string;
+    const keyword = m[1] as BracelessBody["keyword"];
     let i = (m.index ?? 0) + keyword.length;
     if (keyword !== "else") {
       while (i < code.length && /\s/.test(code[i] as string)) i++;
@@ -221,15 +239,120 @@ function findBracelessBodies(source: string, code: string): SourceFinding[] {
     }
     while (i < code.length && /\s/.test(code[i] as string)) i++;
     if (code[i] === "{") continue;
-    if (keyword === "else" && code.slice(i, i + 2) === "if") continue;
-    out.push({
-      line: lineOf(source, m.index ?? 0),
-      message: `\`${keyword}\` body is not braced`,
-      fix: "brace every loop and branch body — the fuel meter charges on block entry, so an unbraced body is a body it cannot meter",
-    });
+    if (code[i] === ";") continue;
+    if (keyword === "else" && /^if(?![\w$])/.test(code.slice(i, i + 3))) continue;
+
+    return { keyword, start: i, end: statementEnd(code, i) };
   }
-  return out;
+  return undefined;
 }
+
+/** Skip whitespace forward from `i`. */
+function skipSpace(code: string, i: number): number {
+  while (i < code.length && /\s/.test(code[i] as string)) i++;
+  return i;
+}
+
+/** Index one past the bracket group opening at `i`, which must be a bracket. */
+function groupEnd(code: string, i: number): number {
+  const open = code[i] as string;
+  const close = open === "(" ? ")" : open === "[" ? "]" : "}";
+  let depth = 0;
+  for (let j = i; j < code.length; j++) {
+    if (code[j] === open) depth++;
+    else if (code[j] === close) {
+      depth--;
+      if (depth === 0) return j + 1;
+    }
+  }
+  return code.length;
+}
+
+/**
+ * Index one past the statement starting at `i`.
+ *
+ * Recursive rather than "scan to the next `;`", because the next `;` is the
+ * wrong answer for exactly the shape this exists to wrap: the body of
+ * `for (…) if (p) f(); else g();` is the whole if-else, and cutting it at the
+ * first `;` would move the `else` outside the loop.
+ */
+function statementEnd(code: string, at: number): number {
+  const i = skipSpace(code, at);
+  if (i >= code.length) return code.length;
+  if (code[i] === "{") return groupEnd(code, i);
+
+  const head = /^(if|for|while|do)(?![\w$])/.exec(code.slice(i, i + 6));
+  if (head !== null) {
+    const keyword = head[1] as string;
+    let j = skipSpace(code, i + keyword.length);
+    if (keyword !== "do") {
+      if (code[j] !== "(") return simpleStatementEnd(code, i);
+      j = groupEnd(code, j);
+    }
+    let end = statementEnd(code, j);
+    if (keyword === "do") {
+      const k = skipSpace(code, end);
+      if (/^while(?![\w$])/.test(code.slice(k, k + 6))) {
+        const p = skipSpace(code, k + 5);
+        end = code[p] === "(" ? groupEnd(code, p) : p;
+        if (code[skipSpace(code, end)] === ";") end = skipSpace(code, end) + 1;
+      }
+      return end;
+    }
+    if (keyword === "if") {
+      const k = skipSpace(code, end);
+      if (/^else(?![\w$])/.test(code.slice(k, k + 5))) return statementEnd(code, k + 4);
+    }
+    return end;
+  }
+  return simpleStatementEnd(code, i);
+}
+
+/**
+ * A statement with no sub-statement ends at the first `;` at bracket depth 0
+ * — or, when the author leant on ASI, at the bracket that closes the block
+ * around it.
+ */
+function simpleStatementEnd(code: string, i: number): number {
+  let depth = 0;
+  for (let j = i; j < code.length; j++) {
+    const c = code[j] as string;
+    if (c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ")" || c === "]" || c === "}") {
+      if (depth === 0) return j;
+      depth--;
+    } else if (c === ";" && depth === 0) return j + 1;
+  }
+  return code.length;
+}
+
+/**
+ * Brace-wrap every braceless loop and branch body. Identity on source that is
+ * already fully braced.
+ *
+ * This is normalization, not repair: wrapping a legal braceless body is
+ * semantics-preserving in JS (a declaration as a braceless body is already a
+ * SyntaxError), so the frozen source in a document stays the author's verbatim
+ * text and this runs at every run site as a pure function of it. A scanner
+ * mistake therefore surfaces as a syntax error when the sandbox compiles the
+ * result — loudly — rather than as a quietly different world.
+ */
+export function braceBracelessBodies(source: string): string {
+  let out = source;
+  // One wrap per pass, re-scanning: wrapping shifts every later offset, and
+  // nested braceless bodies (`for (…) if (p) f();`) need the outer one first.
+  for (let guard = 0; guard < MAX_BRACE_WRAPS; guard++) {
+    const hit = findFirstBracelessBody(out);
+    if (hit === undefined) return out;
+    out = `${out.slice(0, hit.start)}{ ${out.slice(hit.start, hit.end)} }${out.slice(hit.end)}`;
+  }
+  throw new Error(
+    `brace normalization did not converge after ${MAX_BRACE_WRAPS} wraps; the source is not the shape the scanner understands`,
+  );
+}
+
+/** Ceiling on the wrap loop — far above any real program, and it must halt. */
+const MAX_BRACE_WRAPS = 4096;
 
 /** `let`/`var` at column 0 — top-level mutable state, banned by the gate. */
 function findTopLevelMutableState(source: string, code: string): SourceFinding[] {

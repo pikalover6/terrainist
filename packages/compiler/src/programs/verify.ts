@@ -10,8 +10,10 @@
  * The steps:
  *
  * 1. **Static** — {@link gateStatic}: source size, declared envelope, and the
- *    spec's textual lint (banned globals, export shape, braced bodies, no
- *    top-level mutable state).
+ *    spec's textual lint (banned globals, export shape, no top-level mutable
+ *    state). Braceless loop and branch bodies are *not* a failure here: the
+ *    fuel instrumenter brace-wraps them itself, at the gate and at compile
+ *    alike, so the two see identical code.
  * 2. **Double run** — {@link gateDoubleRun}: executed twice in separate realms
  *    and byte-compared, which catches an iteration-order bug at the only
  *    moment we can attribute it. The digest it agrees on is the `outputHash`.

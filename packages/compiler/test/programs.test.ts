@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PROGRAM_LIMITS,
+  braceBracelessBodies,
   lintProgramSource,
   validateProgramMap,
   type AuthoredProgramRecord,
@@ -34,6 +35,7 @@ import {
   planProgramSites,
   programInstanceSeed,
   parseBlockString,
+  rewriteExports,
   runProgramInstance,
   setProgramExecutor,
   sourceHashOf,
@@ -84,6 +86,66 @@ describe("the fuel instrumenter", () => {
     expect(code.match(new RegExp(FUEL_HOOK, "g"))?.length).toBe(1);
   });
 
+  it("wraps braceless bodies and is an identity on already-braced source", () => {
+    // The whole point of the normalization: it is not a repair pass, so a
+    // program that was already braced instruments byte-identically to before.
+    expect(braceBracelessBodies(TOWER.source)).toBe(TOWER.source);
+    expect(braceBracelessBodies(SAUCER.source)).toBe(SAUCER.source);
+    const code = instrumentFuel("function f(a) { for (const x of a) g(x); }");
+    expect(code).toContain(`for (const x of a) {${FUEL_HOOK}(); g(x); }`);
+    expect(code.match(new RegExp(FUEL_HOOK, "g"))?.length).toBe(2);
+  });
+
+  it("charges fuel per iteration inside a body that had no braces", () => {
+    // The failure this guards: a braceless loop body used to be either a gate
+    // rejection or, without one, an unmetered loop. It must burn per-iteration.
+    const source = [
+      "export const envelope = [4, 4, 4];",
+      "export default function build(api) {",
+      "  for (let i = 0; i < 4; i++)",
+      "    api.set(0, i, 0, 'minecraft:stone');",
+      "  return { name: 'x', seatY: 0 };",
+      "}",
+    ].join("\n");
+    const braced = source.replace(
+      "  for (let i = 0; i < 4; i++)\n    api.set(0, i, 0, 'minecraft:stone');",
+      "  for (let i = 0; i < 4; i++) { api.set(0, i, 0, 'minecraft:stone'); }",
+    );
+    const run = (src: string) =>
+      runProgramInstance({
+        programId: "braceless",
+        program: record(src, [4, 4, 4]),
+        nodePath: "world.braceless",
+        worldSeed: 1n,
+        index: 0,
+        count: 1,
+      });
+    const loose = run(source);
+    const tight = run(braced);
+    expect(loose.ok && tight.ok).toBe(true);
+    expect(loose.writes).toBe(4);
+    // Four block entries for four iterations, and the same bill either way.
+    expect(loose.fuelUsed).toBe(tight.fuelUsed);
+    expect(loose.fuelUsed).toBeGreaterThanOrEqual(4 * (1 + 4));
+    expect(loose.outputHash).toBe(tight.outputHash);
+  });
+
+  it("runs a real model draft that arrived with 27 braceless bodies", () => {
+    const source = fixture("braceless-belltower.js");
+    expect(lintProgramSource(source)).toEqual([]);
+    const run = runProgramInstance({
+      programId: "belltower",
+      program: record(source, [27, 36, 27]),
+      nodePath: "world.belltower",
+      worldSeed: 3n,
+      index: 0,
+      count: 1,
+    });
+    expect(run.diagnostics.map((d) => d.message)).toEqual([]);
+    expect(run.ok).toBe(true);
+    expect(run.writes).toBeGreaterThan(500);
+  });
+
   it("stops a runaway loop rather than running forever", () => {
     const source = [
       "export const envelope = [4, 4, 4];",
@@ -130,6 +192,33 @@ describe("the sandbox", () => {
       });
       expect(run.ok, expr).toBe(false);
     }
+  });
+
+  it("keeps `envelope` bound after the export rewrite", () => {
+    // Measured on real model output: `const [W, H, D] = envelope;` on the line
+    // after the export is the obvious thing to write, and the rewrite used to
+    // delete the binding out from under it.
+    expect(rewriteExports("export const envelope = [5, 6, 7];")).toBe(
+      "const envelope = __loam_module.envelope = [5, 6, 7];",
+    );
+    const source = [
+      "export const envelope = [5, 6, 7];",
+      "export default function build(api) {",
+      "  const [W, H, D] = envelope;",
+      "  api.set(0, 0, 0, `minecraft:stone`);",
+      "  return { name: `${W}x${H}x${D}`, seatY: 0 };",
+      "}",
+    ].join("\n");
+    const run = runProgramInstance({
+      programId: "envelope",
+      program: record(source, [5, 6, 7]),
+      nodePath: "world.envelope",
+      worldSeed: 1n,
+      index: 0,
+      count: 1,
+    });
+    expect(run.diagnostics.map((d) => d.message)).toEqual([]);
+    expect(run.result?.name).toBe("5x6x7");
   });
 
   it("is a swappable seam", () => {

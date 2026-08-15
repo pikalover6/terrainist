@@ -111,11 +111,22 @@ Object.freeze(Math);
  * Deliberately dumb, and safe because the static lint has already rejected
  * every other export form and every `export` inside a string is invisible to
  * a line-anchored match on stripped source.
+ *
+ * The envelope rewrite **keeps the binding**. Dropping `const envelope` was a
+ * silent trap: a program that reads its own envelope back — `const [W, H, D] =
+ * envelope;`, which is the obvious thing to write and which real model output
+ * does write — died on a ReferenceError that pointed at nothing the author
+ * could see. Chaining the two assignments (`const envelope =
+ * __loam_module.envelope = […]`) fills the bag *and* leaves the identifier
+ * bound, on one line, so stack-trace line numbers still land on the original.
  */
 export function rewriteExports(source: string): string {
   return source
     .replace(/^(\s*)export\s+default\s+/gm, "$1__loam_module.default = ")
-    .replace(/^(\s*)export\s+const\s+envelope\s*=/gm, "$1__loam_module.envelope =");
+    .replace(
+      /^(\s*)export\s+const\s+envelope\s*=/gm,
+      "$1const envelope = __loam_module.envelope =",
+    );
 }
 
 /** The `node:vm` executor. Default, and the only one until the isolate lands. */

@@ -11,6 +11,7 @@ import {
   PROGRAM_LIMITS,
   allowsPlugin,
   authoredProgramId,
+  braceBracelessBodies,
   isAuthoredGenerator,
   lintProgramSource,
   stripLiterals,
@@ -175,13 +176,36 @@ describe("the static lint", () => {
     expect(stripLiterals('const a = "Date.now()";')).not.toContain("Date");
   });
 
-  it("catches the banned surface, unbraced bodies and module-scope state", () => {
+  it("catches the banned surface and module-scope state", () => {
     const messages = lintProgramSource(
       ["let cache = 0;", "export const envelope = [4,4,4];", "export default function build(api) {", "  if (cache) cache++;", "  const f = new Function('return 1');", "  return { name: 'x', seatY: 0 };", "}"].join("\n"),
     ).map((f) => f.message);
     expect(messages.some((m) => m.includes("Function"))).toBe(true);
-    expect(messages.some((m) => m.includes("not braced"))).toBe(true);
+    // A braceless body is normalization's business, not the lint's: the fuel
+    // instrumenter wraps it before it splices, so it is never a finding.
+    expect(messages.some((m) => m.includes("not braced"))).toBe(false);
     expect(messages.some((m) => m.includes("mutable state"))).toBe(true);
+  });
+
+  it("leaves already-braced source untouched and wraps every braceless body", () => {
+    expect(braceBracelessBodies(SOURCE)).toBe(SOURCE);
+    expect(braceBracelessBodies("if (a) f();")).toBe("if (a) { f(); }");
+    expect(braceBracelessBodies("for (;;) if (a) f(); else g();")).toBe(
+      "for (;;) { if (a) { f(); } else { g(); } }",
+    );
+    // `else if` is a chain, not a braceless body.
+    expect(braceBracelessBodies("if (a) { f(); } else if (b) { g(); }")).toBe(
+      "if (a) { f(); } else if (b) { g(); }",
+    );
+    // ASI, and the `while` tail of a `do`, are both left alone-safe.
+    expect(braceBracelessBodies("while (a) { if (b) continue }")).toBe(
+      "while (a) { if (b) { continue  }}",
+    );
+    expect(braceBracelessBodies("do { f(); } while (a);")).toBe("do { f(); } while (a);");
+    // A `{` inside a string is not a body.
+    expect(braceBracelessBodies('if (a) log("if (x) y();");')).toBe(
+      'if (a) { log("if (x) y();"); }',
+    );
   });
 
   it("demands both exports", () => {
