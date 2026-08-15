@@ -37,6 +37,11 @@ export const FEEDBACK_CODES: readonly string[] = [
   "LOAM-E404", // CONSTRAINT_DEMOTED   — ladder rung 5
   "LOAM-E405", // NODE_DROPPED         — ladder rung 6
   "LOAM-E406", // UNSATISFIABLE        — ladder rung 7
+  // A landmark's constraint that did nothing — a `facing` where `params.face`
+  // was meant, or anything relational in a profile with no solver. Purely a
+  // document fix, and the one an authoring model gets wrong by improvising the
+  // syntax, so it is worth the revision round.
+  "LOAM-W519", // LANDMARK_CONSTRAINT_IGNORED
 ];
 
 /** Codes that mean the compiler misbehaved, not the document. */

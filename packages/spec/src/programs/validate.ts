@@ -541,6 +541,143 @@ export function validateLandmarkParams(
   checkFace(out, params, path);
 }
 
+/** Keys that read as an attempt to spell the bespoke tier's `face` relation. */
+const FACING_LOOKALIKES = ["facing", "face", "toward", "towards", "looking"] as const;
+
+/** The two coarse constraints a landmark's placement actually reads. */
+const LANDMARK_COARSE_TYPES = ["zone", "at"] as const;
+
+/**
+ * Validate the `constraints` of an `authored:<id>` landmark node — the part
+ * the general constraint validator cannot know about.
+ *
+ * A bespoke invocation is not a building, and two of the things an author may
+ * write here cannot do what they say:
+ *
+ * - **`facing`.** A landmark's yaw is decided before the solve, from
+ *   `params.face`, and its box is reserved already turned; the solver has one
+ *   rotation to choose from, so a `facing` constraint cannot turn it. What it
+ *   *can* do is move it — the only remaining way to change the angle between a
+ *   frozen front and a target is to walk the landmark somewhere else — which is
+ *   never what the author meant. Named here, ignored by the solver
+ *   (`layout/cost.ts`), and pointed at the ratified spelling.
+ * - **Everything except `zone`/`at`, in the terrain profile**, which has no
+ *   layout solver: the two coarse hints steer the landmark's ground search
+ *   (`programs/place.ts`) and nothing else is read at all.
+ *
+ * `solver: false` says the caller is the terrain profile. Warnings only: a
+ * constraint that does nothing has never been a reason to refuse a world.
+ */
+export function validateLandmarkConstraints(
+  out: LoamDiagnostic[],
+  constraints: unknown,
+  nodePath: string,
+  options: { readonly solver: boolean },
+): void {
+  if (constraints === undefined) return;
+  const path = `${nodePath}.constraints`;
+  if (!Array.isArray(constraints)) {
+    if (options.solver) return; // The settlement validator already reports the shape.
+    out.push(
+      warning(
+        "LANDMARK_CONSTRAINT_IGNORED",
+        path,
+        `"constraints" must be an array, got ${describe(constraints)}, so nothing in it was read`,
+        'write "constraints": [ { "at": [0.62, 0.38] } ] — on a bespoke landmark the terrain profile reads "at" and "zone", and nothing else',
+      ),
+    );
+    return;
+  }
+  for (const [index, raw] of constraints.entries()) {
+    const at = `${path}[${index}]`;
+    if (!isObject(raw)) {
+      if (!options.solver) {
+        out.push(
+          warning(
+            "LANDMARK_CONSTRAINT_IGNORED",
+            at,
+            `a constraint must be an object, got ${describe(raw)}, so this entry was dropped`,
+            'write { "at": [0.62, 0.38] } to point the landmark at a fraction of the region, or { "zone": "north" } for a nine-grid cell',
+          ),
+        );
+      }
+      continue;
+    }
+    const declared = typeof raw["type"] === "string" ? (raw["type"] as string) : undefined;
+    const keys = Object.keys(raw).filter(
+      (k) => k !== "type" && !["strength", "weight", "tolerance", "note"].includes(k),
+    );
+    const facingKey =
+      declared !== undefined && (FACING_LOOKALIKES as readonly string[]).includes(declared)
+        ? declared
+        : keys.find((k) => (FACING_LOOKALIKES as readonly string[]).includes(k));
+    if (facingKey !== undefined) {
+      const target = raw[facingKey];
+      const named = typeof target === "string" ? target : "<node>";
+      out.push(
+        warning(
+          "LANDMARK_CONSTRAINT_IGNORED",
+          at,
+          `"${facingKey}" in a bespoke landmark's constraints cannot turn it: a landmark's yaw is decided from "params.face" before the solver reserves its (already turned) box, so this constraint is ignored`,
+          `write it as a param instead: "params": { "face": { "toward": ${JSON.stringify(named)} } } (LOAM-SPEC §15.1) — the constraint spelling would only have moved the landmark to change the angle`,
+        ),
+      );
+      continue;
+    }
+    if (options.solver) continue;
+    const coarse =
+      declared !== undefined && (LANDMARK_COARSE_TYPES as readonly string[]).includes(declared)
+        ? declared
+        : keys.find((k) => (LANDMARK_COARSE_TYPES as readonly string[]).includes(k));
+    if (coarse === undefined) {
+      out.push(
+        warning(
+          "LANDMARK_CONSTRAINT_IGNORED",
+          at,
+          `the terrain profile has no layout solver, so ${keys.length === 0 ? "this constraint" : `"${keys.join('", "')}"`} places nothing and was ignored`,
+          'only "at" (a fractional point in the region) and "zone" (a nine-grid cell) steer a bespoke landmark here; anything relational needs the settlement profile',
+        ),
+      );
+      continue;
+    }
+    checkLandmarkCoarse(out, at, coarse, raw[coarse]);
+  }
+}
+
+/** The shape of the one `at`/`zone` hint a terrain-profile landmark reads. */
+function checkLandmarkCoarse(
+  out: LoamDiagnostic[],
+  at: string,
+  type: string,
+  value: unknown,
+): void {
+  if (type === "zone") {
+    if (typeof value === "string" && (ZONE_TOKENS as readonly string[]).includes(value)) return;
+    out.push(
+      warning(
+        "LANDMARK_CONSTRAINT_IGNORED",
+        at,
+        `"zone" is ${describe(value)}, which names no nine-grid cell, so the hint was ignored`,
+        `use one of: ${ZONE_TOKENS.join(", ")}`,
+      ),
+    );
+    return;
+  }
+  const ok =
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1);
+  if (ok) return;
+  out.push(
+    warning(
+      "LANDMARK_CONSTRAINT_IGNORED",
+      at,
+      `"at" is ${describe(value)}, not a pair of region fractions, so the hint was ignored`,
+      'write "at": [0.62, 0.38] — two numbers in 0..1, x then z, as fractions of the region (never world coordinates)',
+    ),
+  );
+}
+
 /**
  * `hover`, shared by a landmark node and `scatter.program@0`.
  *

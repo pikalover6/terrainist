@@ -26,6 +26,7 @@ import {
 import { validateIntentPlacement } from "../intent/validate.js";
 import {
   validateAuthoredReference,
+  validateLandmarkConstraints,
   validateLandmarkParams,
   validateProgramMap,
   validateProgramScatterParams,
@@ -452,6 +453,12 @@ function validateRoot(
         pending,
       });
       validateLandmarkParams(out, raw["params"], childPath);
+      // The terrain profile has no solver, so a landmark's constraints are not
+      // the general §4 vocabulary: `at`/`zone` steer its ground search and
+      // everything else is dropped. Said out loud rather than in silence —
+      // `checkNoConstraints` (which rejects the same keys on a terrain node)
+      // never reaches this branch.
+      validateLandmarkConstraints(out, raw["constraints"], childPath, { solver: false });
       continue;
     }
     if (generator === "scatter.program@0") {

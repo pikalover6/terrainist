@@ -27,6 +27,7 @@ import {
 import { validateIntentPlacement } from "../intent/validate.js";
 import {
   validateAuthoredReference,
+  validateLandmarkConstraints,
   validateLandmarkParams,
   validateProgramMap,
   validateProgramScatterParams,
@@ -339,6 +340,10 @@ function validateRoot(
         checkTags(out, childPath, raw["tags"]);
         checkSeedSalt(out, childPath, raw["seedSalt"]);
         validateConstraints(out, childPath, raw["constraints"], raw["id"], connections);
+        // …and the half a general constraint check cannot know: what a
+        // *landmark* can be told by a constraint at all (`facing` cannot turn
+        // one — `params.face` does).
+        validateLandmarkConstraints(out, raw["constraints"], childPath, { solver: true });
         validatePorts(out, childPath, raw["ports"]);
         validateLandmarkParams(out, raw["params"], childPath);
       }

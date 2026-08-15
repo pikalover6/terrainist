@@ -49,7 +49,7 @@ import {
 import type { Region } from "@terrainist/stdlib";
 
 import type { Placement } from "../layout/types.js";
-import { areaRect } from "./place.js";
+import { areaRect, coarseHintPoint } from "./place.js";
 import { invokeLandmark } from "./invoke.js";
 import {
   cardinalToward,
@@ -275,26 +275,10 @@ function estimatedCentre(
 ): FacingPoint {
   const site = placed.get(nodePath);
   if (site !== undefined) return { x: site.anchor.x, z: site.anchor.z };
-  return constraintHint(node, region) ?? regionCentre(region);
-}
-
-/** The `zone` / `at` hint a node's constraints carry, if either is there. */
-function constraintHint(
-  node: { readonly constraints?: readonly Record<string, unknown>[] },
-  region: Region,
-): FacingPoint | undefined {
-  for (const constraint of node.constraints ?? []) {
-    const zone = constraint["zone"];
-    if (typeof zone === "string") return centreOf(areaRect(region, { zone }));
-    const at = constraint["at"];
-    if (Array.isArray(at) && at.length === 2 && typeof at[0] === "number" && typeof at[1] === "number") {
-      return {
-        x: region.x0 + Math.round((at[0] as number) * (region.width - 1)),
-        z: region.z0 + Math.round((at[1] as number) * (region.depth - 1)),
-      };
-    }
-  }
-  return undefined;
+  // One reader for the coarse hint, shared with the placer that acts on it
+  // (`programs/place.ts`): the direction a landmark is turned and the ground it
+  // is turned on have to be answers about the same point.
+  return coarseHintPoint(node, region) ?? regionCentre(region);
 }
 
 /**
@@ -382,7 +366,7 @@ function defaultTarget(
         child,
         hint:
           placed.get(`${input.rootPath}.${child.id}`) === undefined
-            ? constraintHint(child, input.region)
+            ? coarseHintPoint(child, input.region)
             : estimatedCentre(child, `${input.rootPath}.${child.id}`, input.region, placed),
       }))
       // Only the nodes that actually say where they are: averaging in a dozen

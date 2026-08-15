@@ -45,6 +45,17 @@ export interface LayoutNodeInput {
    */
   readonly amphibious?: boolean;
   /**
+   * This node is a **bespoke landmark** — an `authored:<id>` invocation.
+   *
+   * Two rules turn on it, and both exist because a landmark is not a building.
+   * Its yaw is frozen before the solve (`programs/facing.ts`), so a `facing`
+   * constraint here can only move it and is therefore not scored; and its
+   * declared coarse target is honoured even on ground the building slope veto
+   * refuses, because a padded sculpture stands on a bluff perfectly well and
+   * the alternative is the flattest ground in the region, wherever that is.
+   */
+  readonly landmark?: boolean;
+  /**
    * How this node's ground is prepared — `"pad"` (the default and today's
    * behaviour), `"benched"`, or `"stepped"`
    * (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.2).
@@ -152,7 +163,13 @@ export type LadderRung =
   | "parent_grown"
   | "constraint_demoted"
   | "node_dropped"
-  | "unsatisfiable";
+  | "unsatisfiable"
+  /**
+   * Not a v0.2 rung: a landmark seated on its declared coarse target although
+   * the building slope veto refused it (`LOAM-W520`). It sits here because the
+   * report has one place where "why is this node where it is" is answered.
+   */
+  | "landmark_coarse_seat";
 
 /** How one constraint fared, for the solver report. */
 export interface ConstraintReport {

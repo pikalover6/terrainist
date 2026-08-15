@@ -228,6 +228,7 @@ function programInput(
   const wades = seatPolicyOf(node)?.policy === "wade";
   return {
     ...(wades ? { amphibious: true, wantsWater: true } : {}),
+    landmark: true,
     id: node.id,
     nodePath,
     kind: "generator",

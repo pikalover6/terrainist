@@ -334,6 +334,73 @@ function sampleCandidates(area: Rect, step: number, stream: Seed256): readonly C
   return out;
 }
 
+/**
+ * The coarse placement hint a node's `constraints` carry, as an area.
+ *
+ * `zone` and `at` are the only two things a document says about placement
+ * without saying a coordinate, and they are the only two a landmark's ground
+ * search can act on where there is no layout solver. One reader, used by the
+ * placer here and by `programs/facing.ts` (which needs the same estimate before
+ * anything is placed), so the two can never disagree about what a document
+ * asked for.
+ *
+ * Returns `undefined` when the node declares neither, which is every document
+ * written before the hint existed.
+ */
+export function coarseHintArea(
+  node: { readonly constraints?: readonly Readonly<Record<string, unknown>>[] },
+  region: Region,
+): ProgramScatterParams["area"] | undefined {
+  for (const constraint of node.constraints ?? []) {
+    const zone = constraint["zone"];
+    if (typeof zone === "string" && zone in ZONE_CELLS) return { zone };
+    const at = constraint["at"];
+    if (Array.isArray(at) && at.length === 2 && typeof at[0] === "number" && typeof at[1] === "number") {
+      // The same neighbourhood the solver's `at` calls zero-cost: a tolerance
+      // the author named, else 5% of the region's half-diagonal (§4.9.4).
+      const tolerance =
+        typeof constraint["tolerance"] === "number"
+          ? (constraint["tolerance"] as number)
+          : typeof constraint["radius"] === "number"
+            ? (constraint["radius"] as number)
+            : AT_TOLERANCE_SHARE * 0.5 * Math.sqrt(region.width * region.width + region.depth * region.depth);
+      const half = Math.min(region.width, region.depth) * 0.5;
+      return {
+        at: [at[0] as number, at[1] as number],
+        radius: half <= 0 ? 0 : Math.max(0, tolerance) / half,
+      };
+    }
+  }
+  return undefined;
+}
+
+/** Fraction of the region's half-diagonal an `at` hint is zero-cost within. */
+const AT_TOLERANCE_SHARE = 0.05;
+
+/**
+ * The point a coarse hint names — the zone cell's centre, or the `at`
+ * fraction's column. The *unclamped* point, deliberately: this answers "where
+ * did the author point", which is what a facing measures against, while
+ * {@link coarseHintArea} answers "which ground may be searched", which has to
+ * stay inside the region.
+ */
+export function coarseHintPoint(
+  node: { readonly constraints?: readonly Readonly<Record<string, unknown>>[] },
+  region: Region,
+): { readonly x: number; readonly z: number } | undefined {
+  const area = coarseHintArea(node, region);
+  if (area === undefined) return undefined;
+  if (!("at" in area)) {
+    const rect = areaRect(region, area);
+    return { x: Math.floor((rect.x0 + rect.x1) / 2), z: Math.floor((rect.z0 + rect.z1) / 2) };
+  }
+  const [fx, fz] = area.at;
+  return {
+    x: region.x0 + Math.round(fx * (region.width - 1)),
+    z: region.z0 + Math.round(fz * (region.depth - 1)),
+  };
+}
+
 /** Everything {@link planLandmarkSite} reads. */
 export interface LandmarkPlacementInput {
   /** The program's declared `[w, h, d]`. */
@@ -346,6 +413,12 @@ export interface LandmarkPlacementInput {
   readonly wades?: boolean;
   /** The quarter turn this landmark takes, already decided. */
   readonly rotation?: ProgramRotation;
+  /**
+   * Where the node's `constraints` point ({@link coarseHintArea}). The centre
+   * of *this* is tried first, and the fallback walk is confined to it before it
+   * is allowed the whole region.
+   */
+  readonly hint?: ProgramScatterParams["area"];
 }
 
 /**
@@ -368,9 +441,12 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   const [w, d] = rotatedFootprint(input.envelope[0], input.envelope[2], rotation);
   const region = plan.region;
   const whole = areaRect(region, undefined);
+  // The hint's neighbourhood, or the whole region when the node named none —
+  // in which case every line below is the centre-then-scatter it always was.
+  const wanted = input.hint === undefined ? whole : areaRect(region, input.hint);
 
-  const cx = region.x0 + Math.floor((region.width - w) / 2);
-  const cz = region.z0 + Math.floor((region.depth - d) / 2);
+  const cx = wanted.x0 + Math.floor((wanted.x1 - wanted.x0 + 1 - w) / 2);
+  const cz = wanted.z0 + Math.floor((wanted.z1 - wanted.z0 + 1 - d) / 2);
   const centred: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
   const taken = input.taken ?? [];
   if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
@@ -378,20 +454,28 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
     if (baseY !== undefined) return { index: 0, footprint: centred, baseY, ...turned };
   }
 
-  const [fallback] = planProgramSites({
-    params: {
-      program: "",
-      count: 1,
-      ...(input.wades === true ? { seat: "wade" } : {}),
-    } as unknown as ProgramScatterParams,
-    envelope: input.envelope,
-    plan,
-    seed: input.seed,
-    taken,
-    ...(input.refusals === undefined ? {} : { refusals: input.refusals }),
-    ...(rotation === 0 ? {} : { rotationAt: (): ProgramRotation => rotation }),
-  });
-  return fallback;
+  // The hinted neighbourhood first, the whole region only if nothing in it
+  // will hold the footprint: a hint moves a landmark, it never drops one.
+  const areas: readonly (ProgramScatterParams["area"] | undefined)[] =
+    input.hint === undefined ? [undefined] : [input.hint, undefined];
+  for (const area of areas) {
+    const [site] = planProgramSites({
+      params: {
+        program: "",
+        count: 1,
+        ...(area === undefined ? {} : { area }),
+        ...(input.wades === true ? { seat: "wade" } : {}),
+      } as unknown as ProgramScatterParams,
+      envelope: input.envelope,
+      plan,
+      seed: input.seed,
+      taken,
+      ...(input.refusals === undefined ? {} : { refusals: input.refusals }),
+      ...(rotation === 0 ? {} : { rotationAt: (): ProgramRotation => rotation }),
+    });
+    if (site !== undefined) return site;
+  }
+  return undefined;
 }
 
 /** Everything {@link planHoverSite} reads. */
@@ -403,6 +487,12 @@ export interface HoverPlacementInput {
   readonly hover: number;
   /** The `zone` constraint's zone, if the node wrote one. */
   readonly zone?: string;
+  /**
+   * The node's coarse hint ({@link coarseHintArea}), used when it wrote no
+   * `zone`: an `at` fraction says where a floating thing hangs just as well as
+   * a nine-grid cell does, and used to be dropped on the floor.
+   */
+  readonly hint?: ProgramScatterParams["area"];
   /** The quarter turn this landmark takes, already decided. */
   readonly rotation?: ProgramRotation;
 }
@@ -424,7 +514,7 @@ export function planHoverSite(input: HoverPlacementInput): ProgramSite {
   const [w, d] = rotatedFootprint(input.envelope[0], input.envelope[2], rotation);
   const region = plan.region;
   const whole = areaRect(region, undefined);
-  const area = areaRect(region, input.zone === undefined ? undefined : { zone: input.zone });
+  const area = areaRect(region, input.zone === undefined ? input.hint : { zone: input.zone });
 
   const cx = area.x0 + Math.floor((area.x1 - area.x0 + 1 - w) / 2);
   const cz = area.z0 + Math.floor((area.z1 - area.z0 + 1 - d) / 2);

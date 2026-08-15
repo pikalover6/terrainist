@@ -130,6 +130,15 @@ interface Scored {
   readonly penalty: number;
   /** Why the ground rejected this candidate, or `null` when it did not. */
   readonly veto: TerrainVeto;
+  /**
+   * The ground is the *only* thing refusing this candidate: no sibling overlaps
+   * it and no constraint of the node's own vetoes it. What
+   * {@link landmarkCoarseSeat} needs to know before it seats a landmark on
+   * ground a building would be refused.
+   */
+  readonly groundOnly: boolean;
+  /** This candidate is a landmark seated on its coarse target (`LOAM-W520`). */
+  readonly coarseSeat?: true;
 }
 
 /** Place every structure node. */
@@ -221,6 +230,10 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
     }
     if (best === null) continue; // Only when the pool is empty (a degenerate region).
 
+    if (best.coarseSeat === true) {
+      report.appliedRungs.push("landmark_coarse_seat");
+      diagnostics.push(coarseSeatDiagnostic(node, best));
+    }
     if (report.appliedRungs.length === 0) report.appliedRungs.push("absorbed");
     commit(node, best, placed, report, demoted);
   }
@@ -441,6 +454,7 @@ function scoreCandidate(
     : terrainFeasible(stats, slopeLimit, floorY);
   let feasible = veto === null;
   let penalty = veto === null ? 0 : veto === "too_steep" ? stats.maxSlope - slopeLimit : 1000;
+  let groundOnly = true;
 
   // …and the other half of the same rule: a harbour that does not *straddle*
   // the waterline is not a harbour. Lifting the freeboard veto only says water
@@ -461,6 +475,7 @@ function scoreCandidate(
       const area = overlapArea(self, inflate(other.footprint, margin));
       if (area > 0) {
         feasible = false;
+        groundOnly = false;
         penalty += area;
       }
     }
@@ -482,6 +497,7 @@ function scoreCandidate(
     soft += result.cost;
     if (!result.feasible) {
       feasible = false;
+      groundOnly = false;
       penalty += 1;
     }
   }
@@ -531,6 +547,7 @@ function scoreCandidate(
     evals,
     penalty,
     veto,
+    groundOnly,
   };
 }
 
@@ -553,8 +570,28 @@ function bindsToCorridor(node: LayoutNodeInput): boolean {
   return node.constraints.some((c) => c.type === "along");
 }
 
-/** The cheapest feasible candidate, or `null`. Ties break by candidate order. */
+/**
+ * The candidate this node is placed on: the cheapest feasible one, unless it
+ * is a landmark that walked away from a coarse target it could have stood on
+ * (see {@link landmarkCoarseSeat}).
+ *
+ * Both halves live here, and not at the call site, because the local
+ * improvement pass re-runs this function: a seat decided once and then
+ * improved away would be the same silent relocation with more steps.
+ */
 function bestOf(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): Scored | null {
+  const best = cheapestFeasible(node, pool, ctx, request, demoted);
+  return landmarkCoarseSeat(node, pool, ctx, request, demoted, best) ?? best;
+}
+
+/** The cheapest feasible candidate, or `null`. Ties break by candidate order. */
+function cheapestFeasible(
   node: LayoutNodeInput,
   pool: readonly Candidate[],
   ctx: EvalContext,
@@ -568,6 +605,73 @@ function bestOf(
     if (best === null || scored.total < best.total - IMPROVEMENT_EPSILON) best = scored;
   }
   return best;
+}
+
+/**
+ * A **landmark** standing on the coarse target it was pointed at, on ground the
+ * building slope veto refuses.
+ *
+ * The walked defect: a colossus authored `at` the bluff its own document raised
+ * for it was seated fifty-nine blocks from the *other* island's centre, three
+ * hundred and sixteen from where it was asked to stand, and nothing in the
+ * compile said a word. Every candidate on the bluff was `too_steep` — the veto
+ * a *building* is measured by — so the cheapest feasible candidate was the
+ * flattest ground the region had, wherever that happened to be, and a soft
+ * coarse cost of 1.6 was the only trace.
+ *
+ * A landmark is not a building. Its site is padded and levelled like one
+ * (`padFor`), it has no floors to keep level and no doors to reach, and the
+ * terrain profile's own landmark placer refuses cliffs rather than slopes. So
+ * when the ground is the only objection, the target wins — and says so
+ * (`LOAM-W520`).
+ *
+ * Deliberately narrow: only a node that **declared** a coarse `zone`/`at`, only
+ * when the ordinary answer landed outside it, only for candidates the ground
+ * alone refuses, and only for the `too_steep` veto — water, lava and off-map
+ * are not slopes, and a colossus in a lake is not what the author asked for
+ * either. A document with no coarse constraint on a landmark cannot reach this
+ * code at all, which is what keeps every world that came before byte-identical.
+ */
+function landmarkCoarseSeat(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+  best: Scored | null,
+): Scored | null {
+  if (node.landmark !== true) return null;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return null;
+  if (best !== null && containsPoint(target, best.candidate.anchor)) return null;
+
+  let seat: Scored | null = null;
+  for (const candidate of pool) {
+    if (!containsPoint(target, candidate.anchor)) continue;
+    const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+    // A feasible candidate inside the target would already have won on cost if
+    // it were going to; taking it here would override the cost model itself.
+    if (scored.feasible) continue;
+    if (!scored.groundOnly || scored.veto !== "too_steep") continue;
+    if (seat === null || scored.total < seat.total - IMPROVEMENT_EPSILON) seat = scored;
+  }
+  return seat === null ? null : { ...seat, feasible: true, coarseSeat: true };
+}
+
+/** The zero-cost region a node's coarse constraints agree on, or `null`. */
+function coarseTargetRegion(node: LayoutNodeInput, ctx: EvalContext): Rect | null {
+  let region: Rect | null = null;
+  for (const [index, c] of node.constraints.entries()) {
+    if (c.type !== "zone" && c.type !== "at") continue;
+    const coarse = c.type === "zone" ? coarseZoneRegion(c, index, ctx) : coarseAtRegion(c, ctx);
+    if (coarse.region === null) continue;
+    region = region === null ? coarse.region : (intersectRect(region, coarse.region) ?? region);
+  }
+  return region;
+}
+
+function containsPoint(rect: Rect, p: Point2): boolean {
+  return p.x >= rect.x0 && p.x <= rect.x1 && p.z >= rect.z0 && p.z <= rect.z1;
 }
 
 /** The least-violating candidate, used only at the bottom of the ladder. */
@@ -726,6 +830,17 @@ function unsatisfiableDiagnostic(
     node.nodePath,
     `no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position${ground}`,
     "loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften",
+  );
+}
+
+/** `LOAM-W520`: a landmark seated on its coarse target, slope and all. */
+function coarseSeatDiagnostic(node: LayoutNodeInput, seat: Scored): LoamDiagnostic {
+  const { x, z } = seat.candidate.anchor;
+  return warning(
+    "LANDMARK_COARSE_SEATED",
+    node.nodePath,
+    `every site at this landmark's coarse target was refused by the building slope veto (steepest ${Math.round(seat.stats.maxSlope)}\u00b0 across the footprint); it was seated there anyway, at (${x}, ${z}), and its ground is padded — a landmark is not a building`,
+    'nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept',
   );
 }
 

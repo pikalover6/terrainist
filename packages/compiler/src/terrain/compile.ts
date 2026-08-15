@@ -64,6 +64,7 @@ import {
 } from "@terrainist/spec";
 import {
   buildPrograms,
+  coarseHintArea,
   planLandmarkSite,
   planHoverSite,
   planProgramFacings,
@@ -2043,7 +2044,7 @@ function programJobsFrom(
       }
       // Hovering wins over every other placement route: the node never
       // entered the solver, and the ground has no say over something that
-      // floats. Only a `zone` constraint is honoured (see `planHoverSite`).
+      // floats. Only the coarse hint is honoured (see `planHoverSite`).
       const hover = hoverOf(node);
       const solved = placements.find((p) => p.nodePath === nodePath);
       // Already decided, and already spent: `layoutNodesFrom` reserved the
@@ -2054,11 +2055,13 @@ function programJobsFrom(
       let site: ProgramPlacement | undefined;
       if (hover !== undefined) {
         const zone = zoneOf(node);
+        const hint = coarseHintArea(node, ground.plan.region);
         const hovered = planHoverSite({
           envelope: program.envelope,
           plan: ground.plan,
           hover,
           ...(zone === undefined ? {} : { zone }),
+          ...(hint === undefined ? {} : { hint }),
           ...turned,
         });
         site = { footprint: hovered.footprint, baseY: hovered.baseY, hovering: true, ...turned };
@@ -2068,12 +2071,15 @@ function programJobsFrom(
         // node's seat policy.
         site = { footprint: solved.footprint, baseY: solved.foundationY, ...seatOn(node), ...turned };
       } else if (!ground.solved) {
-        // Terrain: no solver, so the ground picks.
+        // Terrain: no solver, so the ground picks — steered by the one thing
+        // the document said about where this landmark goes (`at`/`zone`).
+        const hint = coarseHintArea(node, ground.plan.region);
         const found = planLandmarkSite({
           envelope: program.envelope,
           plan: ground.plan,
           seed: nodeSeed(ground.worldSeed, nodePath, node.seedSalt ?? ""),
           taken: claimed,
+          ...(hint === undefined ? {} : { hint }),
           // No solver here, so the seat policy is the only thing that can tell
           // the ground search that water is the point rather than a refusal.
           wades: seatPolicyOf(node)?.policy === "wade",

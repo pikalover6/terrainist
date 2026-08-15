@@ -624,6 +624,39 @@ export const TERRAIN_DIAGNOSTICS = {
    * points it somewhere sensible, and the author is told which way it went.
    */
   PROGRAM_FACE_UNRESOLVED: "LOAM-W518",
+  /**
+   * A constraint on a bespoke invocation that the compiler cannot act on.
+   *
+   * Two shapes, one code, because they are the same author mistake — a
+   * constraint written where placement is not decided by constraints:
+   *
+   * - **A `facing` constraint on a landmark.** A bespoke instance's yaw is not
+   *   the solver's to pick (its box is reserved already turned), so a `facing`
+   *   here can never turn anything; the ratified spelling is
+   *   `params.face: { "toward": "<node>" }` (LOAM-SPEC §15.1). Left scored it
+   *   would be worse than useless: with the yaw frozen the only way to satisfy
+   *   it is to *move* the landmark, which is how a colossus ends up on the
+   *   wrong island.
+   * - **Anything but `zone`/`at` in the terrain profile**, which has no layout
+   *   solver at all: the two coarse hints are read (they steer the landmark's
+   *   ground search) and everything else is parsed and dropped.
+   *
+   * **Never fatal.** The instance still stands; the author is told which part
+   * of what they wrote did nothing.
+   */
+  LANDMARK_CONSTRAINT_IGNORED: "LOAM-W519",
+  /**
+   * A landmark's coarse `at`/`zone` target was refused by the *building* slope
+   * veto, and the landmark was seated on it anyway.
+   *
+   * A bespoke landmark is not a building: it is padded like one and its site is
+   * levelled, and the terrain profile's own landmark placer refuses cliffs
+   * rather than slopes. So when an author points a colossus at a bluff they
+   * raised for it, the honest answer is the bluff — the alternative the solver
+   * used to take was the cheapest *flat* ground in the region, which can be
+   * three hundred blocks and one island away, with nothing said about it.
+   */
+  LANDMARK_COARSE_SEATED: "LOAM-W520",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.

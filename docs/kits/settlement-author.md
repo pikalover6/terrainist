@@ -2944,6 +2944,21 @@ Place the ones you request as ordinary generator nodes:
   "constraints": [ { "zone": "northeast" }, { "distance": { "to": "camp", "max": 90 } } ] }
 ```
 
+**Where it stands is `zone` or `at`, and nothing else is a placement.** `zone`
+names a nine-grid cell; `at` takes **two region fractions**, x then z, never
+world coordinates — this is the one to use when you have raised ground for the
+landmark yourself and it has to be *that* ground:
+
+```json
+{ "id": "guardian_colossus", "kind": "generator", "generator": "authored:unicorn_colossus",
+  "constraints": [ { "at": [0.62, 0.38] } ],
+  "params": { "face": { "toward": "pirate_haven" } } }
+```
+
+A landmark pointed `at` ground that is too steep for a *building* is seated
+there anyway — a monument is not a building, and its ground is padded — with a
+`LOAM-W520` saying so. Move the target if that is not what you meant.
+
 A **plugin** program is invoked by a `scatter.program@0` node instead, whose
 `params.program` names the id; it takes the ordinary scatter placement fields:
 
@@ -3021,6 +3036,20 @@ Two senses, and they are the whole vocabulary:
 - **Both at once, on two nodes** — write `"face": { "toward": … }` on each of
   two figures naming the other and they confront each other, however the solver
   ends up placing them.
+
+On an `authored:` landmark node `face` is a **param on the node itself**, in
+exactly the same shape:
+
+```json
+{ "id": "guardian_colossus", "kind": "generator", "generator": "authored:unicorn_colossus",
+  "constraints": [ { "at": [0.62, 0.38] } ],
+  "params": { "face": { "toward": "pirate_haven" } } }
+```
+
+**Never write facing as a constraint.** `{ "facing": "pirate_haven" }` in a
+landmark's `constraints` cannot turn it — a landmark's yaw is settled from
+`params.face` before the solver reserves its box — so it is ignored with a
+`LOAM-W519` telling you to move it into `params.face`.
 
 The target is a selector, exactly as `adjacent_to` takes one: a sibling id, a
 `#tag:` set (the middle of it is what gets faced), or `"root"` for the

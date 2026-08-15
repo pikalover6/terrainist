@@ -598,6 +598,14 @@ function facingEval(
   hard: boolean,
   weight: number,
 ): ConstraintEval {
+  // A bespoke landmark's yaw is not the solver's: it was decided from
+  // `params.face` before its (already turned) box was reserved, and
+  // `rotations` is `[0]`. So the only way this constraint could ever be
+  // "satisfied" is by *moving* the landmark until its frozen front happens to
+  // point the right way — which is how a colossus authored onto one island
+  // ends up on another. It is named at validation (`LOAM-W519`) and costs
+  // nothing here.
+  if (ctx.self.landmark === true) return OK;
   const target = constraint["target"];
   if (typeof target !== "string") return OK;
   const ids = resolveTargets(target, ctx.self, ctx.nodes);
