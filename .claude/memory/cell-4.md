@@ -94,7 +94,9 @@ the durable archive (docs+logs committed, worlds/reports ignored);
 orchestrator commits (agents never); shared-tree git discipline; agent
 briefs carry the physics-lessons block (walkable = solid non-water
 floor + air y+1/y+2; mud is 15/16; no six-air-face; solid-per-course;
-lantern-name rule → glowstone; no chain in 1.21.11; params AND
+lantern-name rule → glowstone; `chain` RENAMED `iron_chain` in
+1.21.11 (copper-age; same axis state — 4b85f01, never "use
+iron_bars"); params AND
 envelope are input space) and distinct committed anchor lineages;
 pipes swallow vitest exits — check COUNTS; tee generates; never emit
 worlds from a dist carrying in-flight agent code; NEVER-WAIT
