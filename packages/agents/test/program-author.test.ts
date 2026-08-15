@@ -232,6 +232,34 @@ describe("authorProgram", () => {
     expect(gate.calls).toHaveLength(1);
   });
 
+  it("accepts a program the gate only warns about, without a repair round", async () => {
+    // Suspended gate checks (Kai, 2026-08-15) come back as warnings: recorded
+    // on the record, never repaired, never a drop.
+    const { fetchImpl, bodies } = stubFetch([REPLY]);
+    const warn: LoamDiagnostic = { ...DIAG, severity: "warning" };
+    const gate = stubProgramGate({ rounds: [[warn]], outputHash: "b3:beef" });
+    const outcome = await authorProgram({
+      request: REQUEST,
+      docContext: DOC_CONTEXT,
+      gate,
+      apiKey: "test",
+      fetchImpl,
+    });
+    expect(outcome.record.ok).toBe(true);
+    expect(outcome.record.attempts).toBe(1);
+    expect(outcome.record.warnings).toBe(1);
+    expect(outcome.entry?.outputHash).toBe("b3:beef");
+    expect(bodies).toHaveLength(1);
+    expect(formatProgramRun({
+      programs: {},
+      records: [outcome.record],
+      skipped: [],
+      usage: outcome.record.usage,
+      budget: { landmarks: 1, plugins: 1 },
+      model: "test",
+    })).toContain("1 warning(s)");
+  });
+
   it("hands the gate's diagnostics back verbatim and accepts the repair", async () => {
     const { fetchImpl, bodies } = stubFetch([REPLY, REPLY]);
     const gate = stubProgramGate({ rounds: [[DIAG], []] });

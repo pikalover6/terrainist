@@ -119,6 +119,33 @@ describe("the gate world is the world the emitter would write", () => {
   }, 120_000);
 });
 
+describe("gatePhysics on a physics finding", () => {
+  it("records the finding as a warning and passes the step", async () => {
+    // Suspended (Kai, 2026-08-15, "for now"): a lint finding from the walked
+    // scratch world is reported, never fatal. A torch hanging in mid air is
+    // exactly the "floating" nit the ruling was made about.
+    const run: ProgramRun = {
+      ok: true,
+      programId: "floating_torch",
+      index: 0,
+      ops: [],
+      voxels: new Map([["1,3,1", "minecraft:torch"]]),
+      opStream: "",
+      outputHash: "",
+      fuelUsed: 0,
+      writes: 1,
+      clipped: 0,
+      logs: [],
+      diagnostics: [],
+    };
+    const dir = await scratchDir("torch");
+    const step = await gatePhysics("floating_torch", [run], [4, 8, 4], { worldDir: dir });
+    expect(step.ok).toBe(true);
+    expect(step.diagnostics.length).toBeGreaterThan(0);
+    expect(step.diagnostics.every((d) => d.severity === "warning")).toBe(true);
+  }, 120_000);
+});
+
 describe("gatePhysics on emitter-refused blocks", () => {
   it("fails the gate with a diagnostic instead of throwing", async () => {
     const run: ProgramRun = {

@@ -470,8 +470,14 @@ export interface ProgramRunRecord {
   readonly ok: boolean;
   /** Why it was dropped. Absent when `ok`. */
   readonly note?: string;
-  /** The last round's diagnostics, verbatim. Empty when `ok`. */
+  /**
+   * The last round's diagnostics, verbatim. When `ok`, the warnings the
+   * suspended gate checks recorded (Kai, 2026-08-15) — a passing program can
+   * carry them.
+   */
   readonly diagnostics: readonly LoamDiagnostic[];
+  /** Warning-severity diagnostics on the accepted (or last) submission. */
+  readonly warnings?: number;
 }
 
 /** What {@link authorPrograms} produced. */
@@ -683,7 +689,12 @@ export async function authorProgram(options: AuthorProgramRequest): Promise<Auth
         envelope: parseEnvelope(source) ?? request.envelope ?? DEFAULT_ENVELOPE,
         source,
       };
-      diagnostics = await gate.verify([submission], docContext);
+      const verdict = await gate.verify([submission], docContext);
+      // Only error-severity diagnostics fail a program or spend a repair
+      // round: the suspended gate checks (Kai, 2026-08-15, "for now") come
+      // back as warnings and are recorded rather than repaired.
+      const warnings = verdict.filter((diag) => diag.severity === "warning");
+      diagnostics = verdict.filter((diag) => diag.severity === "error");
       if (diagnostics.length === 0) {
         const outputHash =
           gate.outputHash === undefined ? undefined : await gate.outputHash(submission, docContext);
@@ -701,7 +712,8 @@ export async function authorProgram(options: AuthorProgramRequest): Promise<Auth
             attempts: round,
             usage: sumUsage(usages),
             ok: true,
-            diagnostics: [],
+            diagnostics: warnings,
+            ...(warnings.length === 0 ? {} : { warnings: warnings.length }),
           },
         };
       }
@@ -918,8 +930,9 @@ export function formatProgramRun(result: AuthorProgramsResult): string {
   ];
   for (const record of result.records) {
     const cost = record.usage.cost === undefined ? "" : `  ($${record.usage.cost.toFixed(4)})`;
+    const warnCount = record.warnings ?? record.diagnostics.filter((d) => d.severity === "warning").length;
     lines.push(
-      `  ${record.ok ? "ok    " : "drop  "} ${record.id} [${record.mode}]  ${record.attempts} attempt(s), ${record.usage.totalTokens} tokens${cost}${record.ok || record.note === undefined ? "" : `  — ${record.note}`}`,
+      `  ${record.ok ? "ok    " : "drop  "} ${record.id} [${record.mode}]  ${record.attempts} attempt(s), ${record.usage.totalTokens} tokens${cost}${warnCount === 0 ? "" : `, ${warnCount} warning(s)`}${record.ok || record.note === undefined ? "" : `  — ${record.note}`}`,
     );
   }
   for (const skip of result.skipped) lines.push(`  skip   ${skip.id}  — ${skip.reason}`);

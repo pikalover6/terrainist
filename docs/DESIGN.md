@@ -294,8 +294,12 @@ no body escapes metering.
 
 **The five-step gate** (static lint → double-run determinism → structural →
 physics lint over a real emitted world → nonsense guard) runs at authoring time
-with a bounded three-round repair loop that hands diagnostics back verbatim. A
-program that cannot pass is **dropped**, never shipped broken, and the world
+with a bounded three-round repair loop that hands diagnostics back verbatim.
+Only the catastrophic classes are fatal — static safety, determinism, runtime
+limits, unresolvable blocks; the quality checks (structural, physics findings,
+nonsense guard, clip tolerance) are **suspended to recorded warnings**
+(LOAM-SPEC §15.2, one-constant revert in `programs/leniency.ts`). A program
+that trips a fatal class is **dropped**, never shipped broken, and the world
 still compiles.
 
 **Placement.**

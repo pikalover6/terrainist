@@ -18,11 +18,18 @@
  *    and byte-compared, which catches an iteration-order bug at the only
  *    moment we can attribute it. The digest it agrees on is the `outputHash`.
  * 3. **Structural** — {@link gateStructural}: one 6-connected solid after
- *    dropping components under `minIslandVolume`.
+ *    dropping components under `minIslandVolume`. **Suspended** — see
+ *    {@link SUSPENDED_GATE_CHECKS}.
  * 4. **Physics** — {@link gatePhysics}: emitted through the real `emitWorld`
  *    into a scratch superflat world and walked by the existing physics rules.
- *    Any error-severity finding fails.
+ *    The findings are **suspended** (recorded as warnings); an emit that
+ *    *throws* is still fatal.
  * 5. **Nonsense** — {@link gateNonsense}: ≥ 500 solid voxels and ≥ 8 tall.
+ *    **Suspended** — see {@link SUSPENDED_GATE_CHECKS}.
+ *
+ * Gate leniency (Kai, 2026-08-15, "for now") is one constant,
+ * {@link SUSPENDED_GATE_CHECKS} in `./leniency.ts`; both gates read it, so the
+ * authoring and compile halves keep the identical severity split.
  *
  * {@link verifyPrograms} runs all five over a map of programs and hands back
  * diagnostics plus the hashes to freeze into the document. That is the entry
@@ -47,6 +54,7 @@ import { parseSpikeDocument } from "../emit/document.js";
 import { lintWorldPhysics } from "../emit/physics.js";
 import { loadPrismarine, type PrismarineStack } from "../emit/prismarine.js";
 import { invokeLandmark } from "./invoke.js";
+import { SUSPENDED_GATE_CHECKS } from "./leniency.js";
 import { opStreamHash, sourceHashOf } from "./hash.js";
 import { runProgramInstance, type HeightSampler, type ProgramRun } from "./run.js";
 
@@ -243,11 +251,13 @@ export function gateStructural(
 
   const significant = components.filter((c) => c >= PROGRAM_LIMITS.minIslandVolume);
   if (significant.length <= 1) return { step: "structural", ok: true, diagnostics: [] };
+  // Suspended (Kai, 2026-08-15, "for now"): recorded, never fatal.
+  const say = SUSPENDED_GATE_CHECKS.structural ? warning : error;
   return {
     step: "structural",
-    ok: false,
+    ok: SUSPENDED_GATE_CHECKS.structural,
     diagnostics: [
-      error(
+      say(
         "PROGRAM_DISCONNECTED",
         nodePath,
         `program ${JSON.stringify(programId)} wrote ${significant.length} separate solids (sizes ${significant.sort((a, b) => b - a).slice(0, 6).join(", ")})`,
@@ -288,9 +298,11 @@ export function gateNonsense(
   }
   const height = solids === 0 ? 0 : maxY - minY + 1;
   const out: LoamDiagnostic[] = [];
+  // Suspended (Kai, 2026-08-15, "for now"): recorded, never fatal.
+  const say = SUSPENDED_GATE_CHECKS.nonsense ? warning : error;
   if (solids < PROGRAM_LIMITS.minSolidVoxels) {
     out.push(
-      error(
+      say(
         "PROGRAM_GATE_FAILED",
         nodePath,
         `program ${JSON.stringify(programId)} placed ${solids} solid blocks, under the ${PROGRAM_LIMITS.minSolidVoxels} the nonsense guard demands`,
@@ -300,7 +312,7 @@ export function gateNonsense(
   }
   if (height < PROGRAM_LIMITS.minHeight) {
     out.push(
-      error(
+      say(
         "PROGRAM_GATE_FAILED",
         nodePath,
         `program ${JSON.stringify(programId)} is ${height} blocks tall, under the ${PROGRAM_LIMITS.minHeight} the nonsense guard demands`,
@@ -308,7 +320,11 @@ export function gateNonsense(
       ),
     );
   }
-  return { step: "nonsense", ok: out.length === 0, diagnostics: out };
+  return {
+    step: "nonsense",
+    ok: SUSPENDED_GATE_CHECKS.nonsense || out.length === 0,
+    diagnostics: out,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -441,9 +457,13 @@ export async function gatePhysics(
       minY: GATE_GROUND_Y - 4,
       maxY: GATE_GROUND_Y + envelope[1] + 8,
     });
+    // Suspended (Kai, 2026-08-15, "for now"): the *findings* from the walked
+    // scratch world are recorded, never fatal. An emit that THROWS above is
+    // still fatal — that is a block the registry cannot resolve.
+    const say = SUSPENDED_GATE_CHECKS.physicsFindings ? warning : error;
     for (const finding of report.findings.slice(0, 24)) {
       out.push(
-        error(
+        say(
           "PROGRAM_GATE_FAILED",
           VERIFICATION_NODE_PATH,
           `physics rule ${finding.rule} at (${finding.x}, ${finding.y}, ${finding.z}) on ${finding.block}: ${finding.detail}`,
@@ -486,6 +506,8 @@ export interface ProgramVerification {
   readonly logs: readonly string[];
   /** Solid voxels the first verification instance placed. */
   readonly solids: number;
+  /** Warning-severity diagnostics recorded — the suspended checks land here. */
+  readonly warnings: number;
 }
 
 /** Options both entry points take. */
@@ -521,6 +543,7 @@ export async function verifyProgram(
     outputHash,
     logs: [],
     solids: 0,
+    warnings: diagnostics.filter((d) => d.severity === "warning").length,
   });
 
   const staticStep = gateStatic(programId, program);
@@ -562,6 +585,7 @@ export async function verifyProgram(
     outputHash: double.outputHash,
     logs: primary.logs,
     solids,
+    warnings: diagnostics.filter((d) => d.severity === "warning").length,
   };
 }
 
@@ -622,3 +646,4 @@ export function verifyOutputHash(
 
 /** Re-export for callers that only want the landmark path. */
 export { invokeLandmark };
+export { SUSPENDED_GATE_CHECKS } from "./leniency.js";

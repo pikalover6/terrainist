@@ -5476,6 +5476,47 @@ relative to a block's own facing — a stair's `shape`, a door's `hinge`, a ches
 `type`, a bed's `part` — are invariant, and the connection states of fences,
 walls and panes are left to the emitter's connection pass.
 
+### 15.2 Gate leniency — the suspended checks (2026-08-15)
+
+The bespoke program gate (§14.6, five steps: static → double run → structural →
+physics → nonsense) was discarding programs that walk beautifully over
+mechanical nits — a sea serpent strung with 39 "floating" sea lanterns that
+reads as art failed on physics findings alone. Kai's ruling, standing and
+explicitly **"for now"**: every non-catastrophic check at the gate is
+**suspended**. The checks still run and are still reported; they no longer fail
+a program and no longer spend a repair round. `[C:high]`
+
+**Still fatal** — a program that trips these cannot ship, or cannot be trusted:
+
+- the **static** step: source size, declared envelope volume, banned globals,
+  export shape;
+- **double-run determinism** and `outputHash` agreement, at the gate and at
+  compile time alike — the freeze contract is nothing without it;
+- the **runtime limits**: fuel, write cap, heap (unchanged; they throw during
+  the run);
+- an **emit that throws** inside the physics step — a block or state the pinned
+  registry cannot resolve, at the gate or when a compiled instance is lowered.
+
+**Suspended** — recorded as warning-severity diagnostics on the program, never
+fatal:
+
+- every **physics-lint finding** from the gate's scratch-world walk, error
+  severity included;
+- the **structural** single-connected-solid verdict (`LOAM-E335`, now reported
+  as a warning);
+- the **nonsense guard** (minimum solid voxels, minimum height);
+- the **envelope-clip threshold** (`LOAM-W331`): an instance that clips more
+  than `clipTolerance` of its writes is recorded rather than dropped. The
+  clipping itself is unchanged — a write outside the declared envelope still
+  never lands.
+
+Both halves of the gate apply the identical split: a program that passes the
+authoring gate and fails the compile gate remains a bug. Suspension is one
+constant in the compiler (`SUSPENDED_GATE_CHECKS`), so restoring the old
+always-fatal behaviour is a one-line change. §14.6's twelve authoring rules are
+unchanged — they remain the guidance handed to the writer; only their
+enforcement is relaxed.
+
 ---
 
 *End of Loam v0.2. Ratified 2026-07-28 against `docs/DESIGN.md`. Review targets,

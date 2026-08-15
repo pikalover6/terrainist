@@ -6,10 +6,11 @@
  * are confined to, and the budgets that stop it. Everything above this file
  * (the landmark path, the scatter path, the gate) is composition.
  *
- * **An instance is all-or-nothing.** A budget trip, a thrown exception, a
- * malformed return value or too many clipped writes drops the whole instance —
- * never half of one. A half-written landmark is exactly the failure the
- * physics lint exists to catch, and it is far cheaper to refuse it here.
+ * **An instance is all-or-nothing.** A budget trip, a thrown exception or a
+ * malformed return value drops the whole instance — never half of one.
+ * Over-clipping used to drop it too; it is now a recorded warning (see
+ * {@link SUSPENDED_GATE_CHECKS}), while the clipping itself is unchanged —
+ * writes outside the envelope never land.
  */
 
 import {
@@ -27,6 +28,7 @@ import { Rng, nodeSeed, positionDigest, streamSeed, type Seed256 } from "@terrai
 
 import { BudgetExceeded, FUEL_COSTS, FuelExhausted, FuelMeter, instrumentFuel } from "./fuel.js";
 import { canonicalOpStream, opStreamHash, normalizeSource, sourceHashOf, type ProgramOp } from "./hash.js";
+import { SUSPENDED_GATE_CHECKS } from "./leniency.js";
 import { getProgramExecutor, rewriteExports } from "./sandbox.js";
 import { VERIFICATION_THEME } from "./theme.js";
 
@@ -222,7 +224,12 @@ export function runProgramInstance(input: ProgramRunInput): ProgramRun {
         "widen the declared envelope, or clamp the program's own bounds — a program that spills is a program whose envelope is wrong",
       ),
     );
-    return failed(input, ops.length, logs, diagnostics, meter.spent, clipped);
+    // Suspended (Kai, 2026-08-15, "for now"): over-clipping is recorded, not
+    // fatal — see SUSPENDED_GATE_CHECKS. The clipping itself is unchanged:
+    // writes outside the envelope still never land.
+    if (!SUSPENDED_GATE_CHECKS.envelopeClip) {
+      return failed(input, ops.length, logs, diagnostics, meter.spent, clipped);
+    }
   }
 
   const opStream = canonicalOpStream(ops, result);

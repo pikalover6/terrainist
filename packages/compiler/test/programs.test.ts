@@ -302,7 +302,7 @@ describe("determinism", () => {
 });
 
 describe("the envelope", () => {
-  it("fails an instance whole when it spills past its declaration", () => {
+  it("records a warning when it spills past its declaration, and still builds", () => {
     const source = [
       "export const envelope = [8, 8, 8];",
       "export default function build(api) {",
@@ -318,9 +318,14 @@ describe("the envelope", () => {
       index: 0,
       count: 1,
     });
-    expect(run.ok).toBe(false);
+    // Suspended (Kai, 2026-08-15): over-clipping is a recorded warning, not a
+    // dropped instance. The clipping itself is unchanged — only the 8 writes
+    // inside the envelope landed.
+    expect(run.ok).toBe(true);
     expect(run.diagnostics[0]?.code).toBe("LOAM-W331");
-    expect(run.ops).toHaveLength(0);
+    expect(run.diagnostics[0]?.severity).toBe("warning");
+    expect(run.ops).toHaveLength(8);
+    expect(run.clipped).toBe(32);
   });
 
   it("tolerates a spill under one percent", () => {
@@ -363,7 +368,7 @@ describe("the gate", () => {
     expect(again.outputHash).toBe(verdict.outputHash);
   });
 
-  it("rejects a floating chunk and a nothing-program", () => {
+  it("records a floating chunk and a nothing-program as warnings, never failures", () => {
     const floater = runProgramInstance({
       programId: "floater",
       program: record(
@@ -387,9 +392,34 @@ describe("the gate", () => {
       count: 1,
     });
     expect(floater.ok).toBe(true);
-    expect(gateStructural("floater", floater).ok).toBe(false);
-    expect(gateStructural("floater", floater).diagnostics[0]?.code).toBe("LOAM-E335");
-    expect(gateNonsense("floater", floater).ok).toBe(false);
+    // Suspended (Kai, 2026-08-15): both steps report, neither fails.
+    const structural = gateStructural("floater", floater);
+    expect(structural.ok).toBe(true);
+    expect(structural.diagnostics[0]?.code).toBe("LOAM-E335");
+    expect(structural.diagnostics[0]?.severity).toBe("warning");
+    const nonsense = gateNonsense("floater", floater);
+    expect(nonsense.ok).toBe(true);
+    expect(nonsense.diagnostics.length).toBeGreaterThan(0);
+    expect(nonsense.diagnostics.every((d) => d.severity === "warning")).toBe(true);
+  });
+
+  it("freezes a program the suspended checks complain about", async () => {
+    const floater = record(
+      [
+        "export const envelope = [8, 24, 8];",
+        "export default function build(api) {",
+        "  for (let z = 0; z < 4; z++) { for (let x = 0; x < 4; x++) { api.set(x, 0, z, 'minecraft:stone'); } }",
+        "  for (let z = 0; z < 4; z++) { for (let x = 0; x < 4; x++) { api.set(x, 20, z, 'minecraft:stone'); } }",
+        "  return { name: 'x', seatY: 0 };",
+        "}",
+      ].join("\n"),
+      [8, 24, 8],
+    );
+    const verdict = await verifyProgram("floater", floater, { skipPhysics: true });
+    expect(verdict.ok).toBe(true);
+    expect(verdict.outputHash).toMatch(/^b3:[0-9a-f]{64}$/);
+    expect(verdict.warnings).toBeGreaterThan(0);
+    expect(verdict.diagnostics.every((d) => d.severity === "warning")).toBe(true);
   });
 
   it("emits a scratch world and walks the physics rules over it", async () => {
