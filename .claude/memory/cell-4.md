@@ -55,9 +55,27 @@ rows N→S leviathan/astronomer/belltower/elephant; only the elephant
 row is a walkable A/B pair. CONFIRMED MACHINERY GAP: minecraft:chain
 is absent from the pinned 1.21.11 prismarine registry (real vanilla
 block; registry data gap) and the E336 message reads like a model
-hallucination — improving that diagnostic to say "use iron_bars" is a
-cheap candidate fix, not yet done. war_elephant_gem took a quarter
-turn from its front anchor — facing machinery observed working live.
+hallucination — FIXED (cfffacf): E336 now hints the substitution; a
+registry diff proved chain is the ONLY real block the pin lost.
+war_elephant_gem took a quarter turn from its front anchor — facing
+machinery observed working live. KAI'S WALK VERDICT: Gemini's
+elephant "miles ahead" of Luna's — the quality signal is real, the
+gate is what's throwing it away.
+
+**UNGATED RERUN (bespoke_gauntlet_401b in Prism):** the 3 dropped
+Gemini subjects re-authored, 1 attempt each, review verdict
+suspended, minimal hand-mends ($0.16 vs $0.37 gated). KEY DISCOVERY:
+all 3 first drafts died at STATIC lint on unbraced if/else bodies
+(4/23/27 sites) — a style rule that exists only for the fuel
+instrumenter, mechanically auto-fixable, and the programs never even
+ran; also `const [W,H,D]=envelope` throws at runtime (sandbox
+rewrite trap). Residual world lint: 83 findings, all cosmetic
+(39 serpent sea_lanterns, 3 isolated blocks, iron_bars-hung bell).
+Harness outline artifact for Kai's voxel-gen comparison study:
+https://claude.ai/code/artifact/f12c83ed-7bee-4125-bda5-9ddf16e9854e
+— reshape directions there (auto-brace at intake, mend-don't-drop
+tiers, author-time block prevalidation, guard calibration). Kai is
+studying alternatives; NO harness reshape ratified yet — don't build.
 
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the head-to-head + p4-c3b when installed; judge remaining
