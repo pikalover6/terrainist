@@ -9,7 +9,7 @@
 
 import { blake3 } from "@noble/hashes/blake3.js";
 
-import type { ProgramResult } from "@terrainist/spec";
+import { normalizeProgramSource, programSourceHash, type ProgramResult } from "@terrainist/spec";
 
 const utf8 = new TextEncoder();
 
@@ -22,22 +22,19 @@ export function digest(bytes: Uint8Array): string {
 }
 
 /**
- * Normalize source before hashing: CRLF folded to LF, trailing whitespace off
- * each line, exactly one trailing newline.
- *
- * Whitespace at the end of a line is the one difference a model, an editor and
- * a JSON round-trip can introduce without changing a single thing the program
- * does, and it is not worth a hard compile error.
+ * Normalize source before hashing — the spec package owns the rule; this is a
+ * re-export so the compile-time check and the authoring freeze cannot drift.
  */
 export function normalizeSource(source: string): string {
-  const lines = source.replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/[ \t]+$/, ""));
-  while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
-  return `${lines.join("\n")}\n`;
+  return normalizeProgramSource(source);
 }
 
-/** `b3:` digest of the normalized source. */
+/**
+ * `b3:` digest of the normalized source — always over the exact text stored in
+ * the document, on every path (see `@terrainist/spec`'s `programs/hash.ts`).
+ */
 export function sourceHashOf(source: string): string {
-  return digest(utf8.encode(normalizeSource(source)));
+  return programSourceHash(source);
 }
 
 /** One recorded write, node-local, in call order. */

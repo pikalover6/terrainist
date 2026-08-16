@@ -17,5 +17,8 @@
   ],
   "scripts": {
     "build": "tsc -b"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.2.0"
   }
 }

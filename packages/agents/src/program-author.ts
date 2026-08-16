@@ -34,9 +34,7 @@
  * {@link ProgramVerificationGate}, built on the compiler side.
  */
 
-import { blake3 } from "@noble/hashes/blake3.js";
-
-import { formatDiagnostic, type LoamDiagnostic } from "@terrainist/spec";
+import { formatDiagnostic, programSourceHash, type LoamDiagnostic } from "@terrainist/spec";
 
 import {
   AUTHORING_MODEL_ID,
@@ -840,11 +838,17 @@ function diag(code: string, name: string, nodePath: string, message: string, fix
   return { code, name, severity: "error", nodePath, message, fix };
 }
 
-/** BLAKE3 of the normalized source — the contract's `sourceHash`. */
+/**
+ * BLAKE3 of the normalized source — the contract's `sourceHash`.
+ *
+ * One rule, defined once in `@terrainist/spec`, so the digest frozen into the
+ * document is the same digest the compiler recomputes from the text beside it.
+ * This used to be a second implementation and it disagreed with the compiler's
+ * on trailing whitespace inside a line (E333 on a Gemini-authored program,
+ * 2026-08-15). Delegate; never re-derive.
+ */
 export function hashSource(source: string): string {
-  const normalized = `${source.replace(/\r\n/g, "\n").trimEnd()}\n`;
-  const digest = blake3(new TextEncoder().encode(normalized), { dkLen: 32 });
-  return `b3:${Array.from(digest, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+  return programSourceHash(source);
 }
 
 /* -------------------------------------------------------------------------- */

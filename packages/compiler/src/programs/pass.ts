@@ -207,11 +207,15 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       );
     }
     if (sites.length === 0) {
+      // Warning, not an error (Kai, 2026-08-15; LOAM-SPEC §15.2 gate leniency):
+      // a program that finds no acceptable site is the W337 PROGRAM_DROPPED
+      // pattern — reported, absent from the world, never fatal. The world
+      // emitted anyway, so an error here only lied about the exit status.
       diagnostics.push(
-        error(
-          "PROGRAM_GATE_FAILED",
+        warning(
+          "PROGRAM_DROPPED",
           job.nodePath,
-          `no site would take ${JSON.stringify(job.programId)}`,
+          `no site would take ${JSON.stringify(job.programId)}; it is absent from the world`,
           // The water clause is the P5 sea-monster lesson: a water- or
           // shore-seated program needs water in reach, and no amount of
           // loosening on land will seat one inland. Default chosen under the
