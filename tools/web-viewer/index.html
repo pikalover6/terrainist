@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Terrainist — walkable world</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #0d1117;
+      }
+      canvas {
+        display: block;
+      }
+      #hud {
+        position: fixed;
+        left: 14px;
+        bottom: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(12, 16, 22, 0.55);
+        color: #dfe7ef;
+        font-size: 12px;
+        line-height: 1.6;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+        backdrop-filter: blur(6px);
+      }
+      #hud b {
+        font-weight: 600;
+        color: #fff;
+      }
+      #hud .dim {
+        color: #8b98a8;
+      }
+      #hud .hint {
+        display: none;
+      }
+      #hud.unlocked .hint {
+        display: block;
+      }
+      #overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #0d1117;
+        color: #c9d4e0;
+        font-size: 13px;
+        transition: opacity 0.45s ease;
+      }
+      #overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="overlay"><span id="overlay-text">loading…</span></div>
+    <div id="hud" class="unlocked">
+      <div><b id="hud-name">—</b> <span class="dim">· <span id="hud-mode">fly</span></span></div>
+      <div class="dim"><span id="hud-position">0 0 0</span></div>
+      <div class="hint dim">click to look · WASD move · space/C up-down · G walk mode · esc release</div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./node_modules/three/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -36,6 +36,7 @@ import {
   buildTerrarium,
   compileTerrain,
   emitWorld,
+  exportWebWorld,
   formatDiagnostic,
   loadSpikeDocument,
 } from "@terrainist/compiler";
@@ -108,6 +109,7 @@ Usage:
                                 [--channel <name>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
+  terrainist export-web <doc.loam.json> --out <dir> [--allow-unstable]
   terrainist devworld [--out <dir>] [--no-zip]
   terrainist terrarium [--out <dir>] [--no-zip]
   terrainist review-import [--log <file>]... [--screenshots <dir>]
@@ -165,6 +167,13 @@ compile options:
   --no-zip          Skip creating the .zip.
   --allow-unstable  Downgrade LOAM-T110 (unstable fluid) to a warning.
   --report <file>   Write the full compile report as JSON.
+
+export-web options:
+  --out <dir>       Directory to fill with manifest.json + chunks/ (required).
+  --allow-unstable  Downgrade LOAM-T110 (unstable fluid) to a warning.
+  Recompiles the document and writes the walkable-web-viewer payload:
+  palette-indexed, run-length-encoded, gzipped 16x16 chunks plus a manifest.
+  No Minecraft assets — block names and occupancy only.
 
 devworld options:
   --out <dir>       Output directory (default: out). Writes <dir>/dev_world/
@@ -575,6 +584,67 @@ export async function runEmit(args: readonly string[]): Promise<void> {
   const zipPath = zip ? await zipWorld(summary.worldDir) : undefined;
 
   printSummary(summary, zipPath);
+}
+
+/**
+ * `terrainist export-web <doc.loam.json> --out <dir>` — the walkable web payload.
+ *
+ * Recompiles the document through the real pipeline and writes a
+ * browser-loadable voxel export (manifest + gzipped, palette-indexed chunks).
+ * No Minecraft assets are involved: the payload is block names and occupancy,
+ * and `tools/web-viewer/` colours them itself.
+ */
+export async function runExportWeb(args: readonly string[]): Promise<number> {
+  let docPath: string | undefined;
+  let outDir: string | undefined;
+  let allowUnstable = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--out" || arg === "-o") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--out requires a directory");
+      outDir = value;
+      i++;
+    } else if (arg === "--allow-unstable") {
+      allowUnstable = true;
+    } else if (arg !== undefined && arg.startsWith("-")) {
+      throw new Error(`unknown option ${arg}`);
+    } else if (docPath === undefined) {
+      docPath = arg;
+    } else {
+      throw new Error(`unexpected argument ${arg}`);
+    }
+  }
+
+  if (docPath === undefined) throw new Error("export-web requires a .loam.json document");
+  if (outDir === undefined) throw new Error("export-web requires --out <dir>");
+
+  const source = await readFile(path.resolve(docPath), "utf8");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch (cause) {
+    throw new Error(`${docPath} is not valid JSON`, { cause: cause as Error });
+  }
+
+  const summary = await exportWebWorld(parsed, {
+    outDir: path.resolve(outDir),
+    allowUnstable,
+  });
+  const b = summary.bounds;
+  console.log(
+    [
+      `exported "${summary.name}" for the web viewer`,
+      `  out        ${summary.outDir}`,
+      `  chunks     ${summary.chunkCount}`,
+      `  palette    ${summary.paletteSize} blocks`,
+      `  bounds     x ${b.minX}..${b.maxX}  y ${b.minY}..${b.maxY}  z ${b.minZ}..${b.maxZ}`,
+      `  spawn      [${summary.spawn.join(", ")}]  sea ${summary.seaLevel}`,
+      `  size       ${(summary.bytes / (1024 * 1024)).toFixed(1)} MB`,
+    ].join("\n"),
+  );
+  return 0;
 }
 
 /** `terrainist compile <doc.loam.json> --out <dir>` — the terrain profile pipeline. */
@@ -1044,6 +1114,8 @@ export async function main(argv: readonly string[]): Promise<number> {
       return await runReviewImport(rest);
     case "catalog":
       return runCatalog(rest);
+    case "export-web":
+      return await runExportWeb(rest);
     case "emit":
       await runEmit(rest);
       return 0;

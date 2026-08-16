@@ -1,0 +1,14 @@
+{
+  "name": "terrainist-web-viewer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Walkable browser viewer for a `terrainist export-web` payload. Standalone: NOT part of the monorepo workspace.",
+  "scripts": {
+    "serve": "npx --yes serve .",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "three": "^0.185.0"
+  }
+}

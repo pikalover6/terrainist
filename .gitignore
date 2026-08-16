@@ -9,3 +9,4 @@ out/
 !.claude/settings.json
 !.claude/hooks/
 !.claude/memory/
+tools/web-viewer/worlds/
