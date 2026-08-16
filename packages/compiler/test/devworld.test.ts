@@ -393,6 +393,54 @@ describe("dev world build", () => {
     expect(result.fluids.samples).toEqual([]);
   });
 
+  it("crosses one channel in all three bridge styles", () => {
+    // Each style is asked for by name, so all three build over water of the
+    // same width and a style that stopped emitting shows up as a zero here
+    // rather than as a gap somebody has to notice in a render.
+    const { perStyle, waterColumns } = result.bridgeStyles;
+    expect(waterColumns).toBeGreaterThan(0);
+    for (const style of ["stone", "timber", "suspension"] as const) {
+      expect(perStyle[style], style).toBeGreaterThan(0);
+    }
+    // The suspension span carries towers, a cable and hangers over the same
+    // deck the other two lay, so it is necessarily the heaviest of the three.
+    expect(perStyle.suspension).toBeGreaterThan(perStyle.stone);
+    expect(perStyle.suspension).toBeGreaterThan(perStyle.timber);
+  });
+
+  it("strings the harbour chain between two moles, whole", () => {
+    // "Ships as a pair or not at all": one tower refused would refuse the
+    // cable too, so a clean run is two towers and every column of chain.
+    expect(result.harbourChain.columns).toBeGreaterThan(2);
+    expect(result.harbourChain.skipped).toBe(0);
+    expect(result.harbourChain.diagnostics).toEqual([]);
+    expect(result.harbourChain.waterColumns).toBeGreaterThan(0);
+  });
+
+  it("holds a head at the weir, the lock and the dam — and refuses at the marsh", () => {
+    const movers = result.waterWorks.movers;
+    expect(movers.map((m) => m.entry)).toEqual(["weir", "canal_lock", "dam", "dam"]);
+    // The three sited movers all close a pool. The head each holds is its
+    // registry row's own — the retry loop never had to give ground, which is
+    // what the reaches were cut deep enough for.
+    for (const mover of movers.slice(0, 3)) {
+      expect(mover.columns, mover.entry).toBeGreaterThan(0);
+      expect(mover.impounded, mover.entry).toBeGreaterThan(0);
+      expect(mover.head, mover.entry).toBeGreaterThan(0);
+    }
+    expect(movers[0]?.head).toBe(1);
+    expect(movers[1]?.head).toBe(2);
+    expect(movers[2]?.head).toBe(5);
+    // The marsh: water at grade has nothing to be held by, so no head from 5
+    // down to 1 closes — and the barrier is built dry anyway, which is the
+    // disposition `planWaterWorks` exists to make visible.
+    const marsh = movers[3];
+    expect(marsh?.head).toBe(0);
+    expect(marsh?.impounded).toBe(0);
+    expect(marsh?.columns).toBeGreaterThan(0);
+    expect(result.waterWorks.diagnostics).toEqual(["LOAM-T234"]);
+  });
+
   it("builds every prop in the catalog, in its own row", () => {
     const planned = PROP_EXHIBIT_PLAN.reduce((sum, r) => sum + r.cells.length, 0);
     expect(result.props).toHaveLength(planned);

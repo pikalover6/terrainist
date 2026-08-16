@@ -20,9 +20,12 @@
  * - **No terrain generator runs.** The column plan is written by hand: grass at
  *   {@link DEV_GROUND_Y}, three of soil, stone below. There is no heightfield,
  *   no climate, no scatter, so nothing upstream of the grammar can move.
- * - **No fluids, anywhere.** The fluid-stability validator is therefore
- *   trivially satisfied, and the smoke test asserts that rather than assuming
- *   it — a building that starts placing water is a defect worth catching here.
+ * - **No fluids on the plain.** Water exists only where an exhibit dug it — the
+ *   harbour row's basin, the shore strip, the bridge channel, the harbour
+ *   chain's inlet and the water movers' watercourse — and every one of those is
+ *   cut so that its neighbours stand at or above its surface. The smoke test
+ *   asserts zero unstable columns rather than assuming it: a pass that starts
+ *   placing water is a defect worth catching here, where it is one band.
  * - **Void outside the grid.** Only the chunks the grid touches are written, so
  *   the world ends where the exhibit ends and there is no horizon to read the
  *   buildings against but sky.
@@ -36,6 +39,22 @@
 import path from "node:path";
 
 import { buildInfraRunExhibit, INFRA_RUN_DEPTH, INFRA_RUN_WIDTH } from "./exhibits/infra.js";
+import {
+  buildBridgeStylesExhibit,
+  buildHarbourChainExhibit,
+  buildWaterWorksExhibit,
+  BRIDGE_STYLES_DEPTH,
+  BRIDGE_STYLES_WIDTH,
+  HARBOUR_CHAIN_DEPTH,
+  HARBOUR_CHAIN_WIDTH,
+  MARSH_DEPTH,
+  MARSH_WIDTH,
+  WATER_WORKS_DEPTH,
+  WATER_WORKS_WIDTH,
+  type BridgeStylesExhibitResult,
+  type HarbourChainExhibitResult,
+  type WaterWorksExhibitResult,
+} from "./exhibits/infra2.js";
 
 import {
   assignMaterials,
@@ -160,6 +179,14 @@ export interface DevGrid {
   readonly contextOrigin: { readonly x: number; readonly z: number };
   /** North-west corner of the infra run exhibit's band. */
   readonly infraOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the three-bridge-styles band. */
+  readonly bridgeStylesOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the harbour chain-tower band. */
+  readonly harbourChainOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the watercourse the three water movers sit on. */
+  readonly waterWorksOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the marsh band — the dam that holds nothing. */
+  readonly marshOrigin: { readonly x: number; readonly z: number };
   /** The context section's plan — strips of shaped ground and what stands on them. */
   readonly context: ContextSection;
 }
@@ -184,6 +211,12 @@ export interface DevWorldResult {
   readonly contextResult: ContextResult;
   /** Every block the grammar emitted, in build order. */
   readonly blocks: readonly StructureBlock[];
+  /** The three bridge styles, over one channel. */
+  readonly bridgeStyles: BridgeStylesExhibitResult;
+  /** The harbour chain: two towers on two moles, and the catenary between. */
+  readonly harbourChain: HarbourChainExhibitResult;
+  /** The weir, the lock, the dam — and the dam that holds nothing. */
+  readonly waterWorks: WaterWorksExhibitResult;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -314,7 +347,31 @@ export function planDevGrid(): DevGrid {
   // run is reviewed as a run, not a cell (INFRA-ENTRIES §3.7).
   const infraOrigin = { x: 0, z };
   maxX = Math.max(maxX, INFRA_RUN_WIDTH);
-  const depthTotal = z + INFRA_RUN_DEPTH;
+  z += INFRA_RUN_DEPTH + DEV_GAP;
+
+  // The three bridge styles, then the harbour chain, then the watercourse and
+  // its marsh: four more bands, each shaping only its own ground, in the same
+  // idiom and for the same reason as the run band above them.
+  const bridgeStylesOrigin = { x: 0, z };
+  maxX = Math.max(maxX, BRIDGE_STYLES_WIDTH);
+  z += BRIDGE_STYLES_DEPTH + DEV_GAP;
+
+  const harbourChainOrigin = { x: 0, z };
+  maxX = Math.max(maxX, HARBOUR_CHAIN_WIDTH);
+  z += HARBOUR_CHAIN_DEPTH + DEV_GAP;
+
+  const waterWorksOrigin = { x: 0, z };
+  maxX = Math.max(maxX, WATER_WORKS_WIDTH);
+  z += WATER_WORKS_DEPTH + DEV_GAP;
+
+  // The marsh gets a band of its own rather than a corner of the watercourse's:
+  // a water mover's crossing is looked for within `WATERCOURSE_SEARCH` columns
+  // of its anchor **in both axes**, and a hopeless pan close enough to the
+  // channel would be the narrowest water in every one of the channel's own
+  // search rectangles — three dams built on one marsh.
+  const marshOrigin = { x: 0, z };
+  maxX = Math.max(maxX, MARSH_WIDTH);
+  const depthTotal = z + MARSH_DEPTH;
 
   const region: Region = {
     x0: -DEV_MARGIN,
@@ -332,6 +389,10 @@ export function planDevGrid(): DevGrid {
     propOrigin,
     contextOrigin,
     infraOrigin,
+    bridgeStylesOrigin,
+    harbourChainOrigin,
+    waterWorksOrigin,
+    marshOrigin,
     context,
   };
 }
@@ -505,7 +566,46 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     DEV_GROUND_Y,
   );
 
-  const structures = [...built.blocks, ...props.blocks, ...context.blocks, ...infraRun.blocks];
+  // The three post-run infra bands, in grid order. Each digs its own water and
+  // writes only inside its own extent, so the bands above are untouched — and
+  // the water movers run through `buildInfraEntries` with a real ground driver,
+  // which is the only path on which a dam's pool goes in at rank 0.
+  const bridgeStyles = buildBridgeStylesExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.bridgeStylesOrigin.x,
+    grid.bridgeStylesOrigin.z,
+    DEV_GROUND_Y,
+  );
+  const harbourChain = buildHarbourChainExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.harbourChainOrigin.x,
+    grid.harbourChainOrigin.z,
+    DEV_GROUND_Y,
+  );
+  const waterWorks = buildWaterWorksExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.waterWorksOrigin.x,
+    grid.waterWorksOrigin.z,
+    grid.marshOrigin.x,
+    grid.marshOrigin.z,
+    DEV_GROUND_Y,
+  );
+
+  const structures = [
+    ...built.blocks,
+    ...props.blocks,
+    ...context.blocks,
+    ...infraRun.blocks,
+    ...bridgeStyles.blocks,
+    ...harbourChain.blocks,
+    ...waterWorks.blocks,
+  ];
 
   const emit = await emitTerrain({
     plan,
@@ -548,5 +648,8 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     pondColumns: props.pondColumns + context.pondColumns,
     contextResult: context,
     blocks: structures,
+    bridgeStyles,
+    harbourChain,
+    waterWorks,
   };
 }
