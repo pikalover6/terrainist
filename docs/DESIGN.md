@@ -5,12 +5,11 @@
 > archived; git history is the archive. `rough-vision.txt` at the repo root is
 > the original vision, kept as a historical artifact and superseded by this file.
 >
-> Last full revision: **2026-08-07**, after the hillside iteration wave (see
-> the Roadmap banners). The ground contract (WP-1 → WP-5), the frontage-led
-> `hillside` form, the walkability + dressing audits, the causeway
-> correction, junction reconciliation, and the **flora grammar through WP-B**
-> are shipped. Normative companions: `docs/GROUND-CONTRACT-v0.md`,
-> `docs/SITE-PLAN-v0.md`, `docs/FLORA-GRAMMAR-v0.md`. Project memory lives
+> Last full revision: **2026-08-15**. Normative companions, each the precise
+> version of a section here: `docs/GROUND-CONTRACT-v0.md`,
+> `docs/SITE-PLAN-v0.md`, `docs/FLORA-GRAMMAR-v0.md`,
+> `docs/INFRA-ENTRIES-v0.md`, `docs/FARM-PLAN-v0.md`,
+> `docs/CATALOG-EXPANSION-v0.md`, `docs/SHIP-PLAN-v0.md`. Project memory lives
 > in `.claude/memory/cell-1..4.md` (funnel protocol in CLAUDE.md).
 
 ## Product
@@ -20,12 +19,18 @@ LLM authors a rich intermediate spec (**Loam**); a deterministic TypeScript
 compiler turns that spec into a world. Authors never emit absolute coordinates —
 the spec's envelopes, constraints, zones and anchors make that unnecessary.
 
+The same world is also **walkable in a browser**, from a payload the compiler
+exports out of the finished world itself. That is what the demo, the landing
+page and the shared link are made of: everything upstream of "install a save"
+needs the world to exist somewhere a stranger can already stand in it. See
+*The world outside the game*.
+
 Two properties are the moat, and every design decision defends them:
 
 1. **Determinism.** Same document + seed → byte-identical world, forever, with
    no model in the loop. A shipped world can always be rebuilt and regression-
    tested.
-2. **Correctness.** A 26-rule physics lint reads the emitted world back off
+2. **Correctness.** A 27-rule physics lint reads the emitted world back off
    disk and refuses findings: no floating blocks, no doors into walls, no
    unreachable stairs, no unstable fluid, no unsupported furniture. Nothing that
    samples a learned model can promise this.
@@ -50,11 +55,11 @@ statement.
 | Spec language | **Loam** | "The fertile ground worlds grow from." Spec: `docs/LOAM-SPEC-v0.2.md` (ratified 2026-07-28); terrain subset: `docs/LOAM-TERRAIN-PROFILE-v0.md`. |
 | Stack | **TypeScript monorepo** | `spec`, `compiler`, `stdlib`, `render`, `agents`, `cli`. PrismarineJS for Anvil IO and `minecraft-data`; deepslate for NBT/rendering heritage; Sponge `.schem` as asset interchange. |
 | Emit target | **Java 1.21.11, DataVersion 4671** | The newest the prismarine stack supports; the modern client auto-upgrades on load. Revisit as libraries catch up. |
-| Authoring model | **GPT 5.6 Luna at effort `max`** (`AUTHORING_MODEL_ID`) | Basis: the 2026-08-01 3×3 comparison — equal authoring reliability to GLM 5.2 at ~⅓ the cost. GLM 5.2 stays one `--model z-ai/glm-5.2` flag away. Models are config, not architecture. |
+| Authoring model | **Gemini 3.7 Flash at effort `high`** (`AUTHORING_MODEL_ID`) | Pinned by id, never floating: a "latest" alias would cost reproducibility. GPT 5.6 Luna and GLM 5.2 are each one `--model` flag away and are kept as pin-verification fixtures. Models are config, not architecture — the pin moves when a measured battery says so. |
 | Planner | **None** | The Opus-class planner is canned indefinitely. Production authoring is cheap-model-first; escalate only at a hard capability wall. |
 | Critique → repair | **Manual** | Deterministic diagnostics feed back automatically; *visual* critique is Kai's, and autonomous repair iteration is never to be built. A repair loop optimises against the lint, and the lint is not the same thing as good. |
-| Demos | **Luna e2e from a text prompt** | Every demo/acceptance world is produced by `terrainist generate`, so demos measure the real product path. Hand-authored documents remain legitimate as test fixtures and exhibits only. |
-| Mesh assets (Tripo) | **DEPRECATED, 2026-08-08 (Kai)** | Superseded entirely by Luna bespoke generation; not to be used for anything. The section below is historical. |
+| Demos | **End-to-end from a text prompt** | Every demo/acceptance world is produced by `terrainist generate` on the pinned authoring model, so demos measure the real product path. Hand-authored documents remain legitimate as test fixtures and exhibits only. |
+| Mesh assets (Tripo) | **DEPRECATED, 2026-08-08 (Kai)** | Superseded entirely by the bespoke tier; not to be used for anything. The section below is historical. |
 
 ## Loam: the spec language
 
@@ -76,8 +81,9 @@ nodes; each declares a **kind** (`composite`, `generator`, `district`, `city`,
 **L1 — generators.** Deterministic parameterised programs producing voxels:
 - **stdlib** — curated and tested: `terrain.heightfield@0` with editable verbs,
   `terrain.climate@0`, `scatter.forest@0`, `cave.carver@0`,
-  `building.grammar@0`, `road.network@0`, `prop.place@0`, `infra.wall@0`, the
-  `precinct.*@0` kits. Cheap and reliable; bias toward these.
+  `building.grammar@0`, `road.network@0`, `prop.place@0`, `infra.wall@0`,
+  `infra.entry@0`, the `precinct.*@0` kits. Cheap and reliable; bias toward
+  these.
 - **authored** — model-written programs against a sandboxed API, referenced as
   `generator: "authored:<id>"` or scattered by `scatter.program@0`. This is the
   bespoke tier; see below.
@@ -100,10 +106,13 @@ install time.
    evaluated once; hydrology, climate, caves.
 4. **Layout solve** — hierarchical placement of districts, cities, buildings,
    plazas and landmark programs against their constraints, with a relaxation
-   ladder and a solver report naming every demotion.
+   ladder and a solver report naming every demotion. A bespoke program's
+   facing is resolved here rather than later, because a quarter turn swaps the
+   footprint the fit has to reserve.
 5. **Fabric** — arterials → district cells → street graphs → blocks → lots →
    terraces, with a prominence field driving the skyline.
-6. **Structures** — building grammar, precincts, roads and sweeps, props.
+6. **Structures** — building grammar, precincts, roads and sweeps, props,
+   infrastructure entries.
 7. **Authored programs** *(pass 5d)* — hash-verified, sandboxed execution of
    bespoke programs into ordinary structure blocks and markers.
 8. **Ground, streetscape, life, set pieces** — ground treatment, sidewalks and
@@ -217,18 +226,67 @@ than a rectangle. Set on the solver's node-scale pads only — a building's
 two-column apron is a doorstep detail, and stretching it on a slope would have
 one house re-level its neighbour's street.
 
-**Structures.** `building.grammar@0` with **343 of 441** catalog entries
-implemented, wings (L/T plans), upper-floor fit-out, themed underground (crypt,
-catacombs, vault, wine cellar, mineshaft), vehicles with a rotated-op path,
-high-rise grammar. `prop.place@0` for coarse-placed props. `infra.wall@0` for
-derived, terrain-following circumvallation with towers and found gates.
+**Structures.** `building.grammar@0` with wings (L/T plans), upper-floor
+fit-out, themed underground (crypt, catacombs, vault, wine cellar, mineshaft),
+vehicles with a rotated-op path, high-rise grammar. `prop.place@0` for
+coarse-placed props. `infra.wall@0` for derived, terrain-following
+circumvallation with towers and found gates. `precinct.farm@0` for a holding —
+a yard, its farmstead and the fields that belong to it, each parcel packed onto
+ground a gentleness scan found rather than onto a levelled envelope, because a
+holding levels its yard and each field separately and leaves the rest of its
+envelope alone. The catalog behind all of them is **585 rows, 509 of them
+implemented** — 308/336 buildings, 161/183 props, 22/48 infrastructure, 18/18
+underground — and `terrainist catalog` is the coverage map.
+
+**Infrastructure entries.** A large tail of the catalog is not an object at a
+place: it is a *line* over ground nobody owns, a *face* between two levels, or
+a *treatment* of a plane somebody else made — which is why the building and
+prop registries could never hold it, and why `curtain_wall` needed a bespoke
+three-file pass of its own. The lesson of that pass was not "write sixty-seven
+more": it was that all three of its parts generalise and none of them is the
+entry — `deriveWallCourse` is a route form, `sweepCourse` is the engine every
+client already shares, and what belongs to `curtain_wall` alone is its
+cross-section and its material table. So `infra.entry@0` is the one host for
+the family: one node kind, one pass, one registry of cross-sections, and an
+entry is a registry row plus a profile function rather than a pass.
+`docs/INFRA-ENTRIES-v0.md` is the contract; **six coordinate-free route forms**
+carry every entry (`ring`, `along`, `across`, `between`, `into`, and the areal
+`over`), each naming something the compiler placed and derived after placement,
+exactly as a wall course is. `between` is the one that names a pair: it calls
+the road network's own A\* with a one-cell seed mask and threads the entry's
+grade cap in as a **veto inside the search**, because a corridor that is only
+cheap for climbing a cliff once is not a corridor. Three geometry kinds —
+`route` (a swept profile), `area` (a stamp over a published mask) and `span`
+(two block stacks and a curve between them, the one geometry that is not a
+sweep). The registry carries fifteen rows today, one of them a deliberate test
+entry rather than a stub — the host is the machinery, and the entries are
+content that arrives after it.
+
+**Water movers.** `dam`, `weir` and `canal_lock` are the entries whose real
+content is not a cross-section but a `fluid.channel` declaration: what makes a
+dam a dam is that the water behind it is somewhere else. Each declares exactly
+two things through the ground contract — a set of solid columns at one crest
+level, and a set of wet columns at one held surface — plus a `preserve` over
+both, and never writes a fluid top by hand, so the physics lint, the vegetation
+clip, the boat clearance and the biome clamp all read one answer. **A pool is
+declared only if it closes**: every wet column's in-region neighbours must be
+wet at the same surface or stand at or above it. Where it does not close the
+head comes down a block and the whole question is asked again, to a floor of
+one — because a Minecraft water surface is flat and a pool cut off at an
+arbitrary column pours downhill on the first tick. There is no partial credit,
+so the only honest answers are "this head closes" and "it does not", and the
+retry is how an entry finds the largest head that does. A barrier with nowhere
+at all to put water still builds, as dry sculpture, and says so. The crossing is
+the narrowest bounded water span and upstream is the higher mean terrain, both
+compared by cross-multiplied integer sums so no rounding enters either.
 
 **The linework engine.** One `SweptProfile` sweeps a cross-section along a
-polyline over real terrain; roads, bridges, path-stairs and city walls are its
-clients. Band membership is a perpendicular-distance test against the *true*
-line, so a diagonal gets one continuous kerb instead of two-column dither, and
-tread synthesis mixes full blocks, slabs and stairs under a climbability
-recurrence.
+polyline over real terrain; roads, bridges, path-stairs, city walls and
+`infra.entry@0` are its clients. Band membership is a perpendicular-distance
+test against the *true* line, so a diagonal gets one continuous kerb instead of
+two-column dither, and tread synthesis mixes full blocks, slabs and stairs under
+a climbability recurrence. The bridge kit builds three styles off it, and one
+geometry — a hanging `span` — deliberately sits beside it rather than on it.
 
 **Semantic intent.** The full dial set resolves and fans out; per-region
 `character` gives two places in one world genuinely different palettes,
@@ -238,11 +296,11 @@ with warnings naming legal values and near-misses.
 **The bespoke tier.** Model-written programs, gated and frozen into the
 document, invoked once (landmark) or scattered (plugin). See below.
 
-**Verification.** 26-rule physics lint over the emitted world; field-hash and
+**Verification.** 27-rule physics lint over the emitted world; field-hash and
 compiled-world goldens; byte-identity tests; Terrarium v3 review worlds with
 teleport stations; `review-import` to fold in-game notes and screenshots into a
 session record; `--channel` installs so several builds of one world sit side by
-side; git provenance stamped into report and manifest sidecars. ~2,280 tests.
+side; git provenance stamped into report and manifest sidecars. ~4,450 tests.
 
 ## The bespoke tier — `AuthoredProgram`
 
@@ -264,6 +322,19 @@ loop.
 expanded voxel list — is canonical, because code is the compressed
 representation of exactly the regularities that make a structure read as
 designed.
+
+`sourceHash` is a promise about the exact text stored in the document, made in
+one package and checked in another, on another machine — so **there is exactly
+one implementation of it**, in the package both sides already depend on, and
+the authoring freeze and the compile-time check are thin re-exports of it. Two
+implementations that agree on every program anyone has tried are not the same
+thing as one: the first time a model left a trailing space on a line, the
+document recorded one digest and the compile computed another and the world
+died on `E333` for a difference no program can observe. Hashing therefore
+normalizes what no program can see — line endings, trailing whitespace, the
+final newline — and rewrites nothing: the document keeps the model's verbatim
+text, and the run-time normalizations (fuel instrumentation, brace-wrapping)
+happen afterwards, on a copy.
 
 **The API is the determinism boundary, not a creative vocabulary.**
 
@@ -292,15 +363,51 @@ weighted API costs); the instrumenter brace-wraps braceless control-flow
 bodies itself before splicing, so no style demand is made of the author and
 no body escapes metering.
 
+**Nothing the harness does to a program may cost the author a legal way to
+write it.** Two rules of that shape, both learned by killing good programs. The
+module rewrite that harvests `export const envelope` **keeps the binding**, so
+`const [W, H, D] = envelope;` — the obvious thing to write, and what real model
+output writes — still resolves; dropping it was a silent trap no test could
+see, because a program that never reads its own envelope back cannot tell the
+difference. And block-name aliases resolve at **one chokepoint**,
+`parseBlockString`: `chain` → `iron_chain` is a registry rename the pinned
+version made, not a model error, and a program refused for spelling a real
+block is a repair round spent teaching nobody anything.
+
 **The five-step gate** (static lint → double-run determinism → structural →
 physics lint over a real emitted world → nonsense guard) runs at authoring time
 with a bounded three-round repair loop that hands diagnostics back verbatim.
-Only the catastrophic classes are fatal — static safety, determinism, runtime
-limits, unresolvable blocks; the quality checks (structural, physics findings,
-nonsense guard, clip tolerance) are **suspended to recorded warnings**
-(LOAM-SPEC §15.2, one-constant revert in `programs/leniency.ts`). A program
-that trips a fatal class is **dropped**, never shipped broken, and the world
-still compiles.
+
+**Only catastrophe is fatal, and the split is deliberate.** Fatal means the
+program cannot ship or cannot be trusted: the static step (source size,
+declared envelope volume, banned globals, export shape), double-run determinism
+and `outputHash` agreement at gate and compile alike, the runtime limits (fuel,
+write cap, heap), and an **emit that throws** — a block or state the pinned
+registry cannot resolve. Everything else is a **recorded warning**: every
+physics-lint finding from the gate's scratch world, error severity included;
+the structural single-connected-solid verdict; the nonsense guard; and the
+envelope-clip threshold (the clipping itself is unchanged — a write outside the
+declared envelope still never lands). The suspended checks still run and are
+still reported; they no longer fail a program and no longer spend a repair
+round. The reason is that they were discarding builds that walk beautifully
+over mechanical nits — a sea serpent strung with thirty-nine "floating" sea
+lanterns that reads as art failed on physics findings alone — and a gate whose
+verdicts a walk overrules is measuring the wrong thing. A lint *finding* about
+a world is suspended; an emit *throw* is not, because that is the compiler
+saying it cannot write the blocks at all.
+
+Both halves of the gate apply the identical split, so a program that passes at
+authoring time and fails at compile time remains a bug rather than a policy.
+Suspension is one constant (`SUSPENDED_GATE_CHECKS`, `programs/leniency.ts`;
+LOAM-SPEC §15.2), and restoring always-fatal behaviour is a one-line change —
+which is the point: the severity line is a **judgement about what a gate is
+for**, held where a measurement of the harness can move it, not welded into
+five call sites.
+
+A program that trips a fatal class is **dropped**, never shipped broken, and
+the world still compiles. So is one the placer can find no acceptable site
+for — `LOAM-W337 PROGRAM_DROPPED`, naming what was lost, because a request
+that silently evaporates is the failure mode this project fears most.
 
 **Placement.**
 - `params.hover: <8..256>` floats a landmark that many blocks above the highest
@@ -317,6 +424,65 @@ still compiles.
   without an author knowing a coordinate of it.
 - `interiors` (v2) declares hollow volumes the existing building fit-out
   furnishes, so a landmark can be entered.
+- **A landmark is not a building, and the slope veto knows it.** When a
+  landmark declares a coarse `at`/`zone` and every candidate inside it is
+  refused by the *building* slope veto, it is seated on its target anyway and
+  its ground is padded (`LOAM-W520`). The alternative the solver used to take
+  was the cheapest flat ground in the region, which can be three hundred blocks
+  and one island away, with a soft cost of 1.6 as the only trace. Deliberately
+  narrow — a declared coarse constraint, an ordinary answer that landed outside
+  it, and slope as the *only* objection: water, lava and off-map are not
+  slopes, and a colossus in a lake is not what the author asked for either.
+
+**Facing — which way the thing points.** A program is authored inside its own
+envelope, in a frame that knows nothing of the world, so a subject with a front
+points wherever the author's local axes point — north, every time, for every
+instance. Twenty-four sea monsters came out of the water facing away from the
+city they were invading. The fix is two coordinate-free halves, and neither of
+them is a bearing.
+
+- **The program declares a front** by building it toward local **−Z** and
+  publishing an anchor named `front`. Publishing it is the whole declaration;
+  a program that publishes none is **never rotated**, which is what keeps every
+  document written before the feature compiling to the blocks it always did.
+  The same anchor doubles as the road-approach point, so a landmark named in
+  `road.network@0`'s anchors is reached at its front when it declares no
+  door-ish anchor.
+- **The document declares a relation** — `params.face: {toward|away_from:
+  <selector>}`, on a landmark or a scatter alike — naming *another node*, never
+  a direction and never an angle. The selector vocabulary is §4.2's: a sibling
+  id, a dotted path, a `#tag:` set (whose members are averaged, so "face the
+  docks" works when the docks are three nodes), or `root` for the region.
+  A relation that names nothing is `LOAM-W518`, a warning, after which the
+  default applies.
+- **The default is the road, then the town.** A lane that arrives is the
+  strongest statement a document makes about which side of a thing is its
+  front; failing that, the mean of everything else the document places.
+- A scattered node resolves **per instance** — a ring of statues around a
+  square is one relation and eight rotations — while a landmark resolves once
+  and carries the answer through the solve.
+
+Two properties make this safe. The rotation is decided **before** the placement
+fit, because a quarter turn swaps the envelope's width and depth and the fit is
+what reserves that footprint; it is measured against the best estimate
+available at that moment (the target's placed site, else its own coarse hint,
+else the region's centre) and that answer is then **binding**. Nothing
+re-measures it, and that is what makes two programs each declaring `toward` the
+other terminate: both aim at where the other is going to be, both turn, and the
+pair faces off. And the turn is applied **outside the sandbox** — the program is
+executed and hashed in its own local frame, so `outputHash` stays a property of
+the program rather than of the world it lands in. The quarter turn is exactly
+vanilla's `CLOCKWISE_90` and moves the voxels, the directional block states,
+the published anchors and the declared interiors together; properties already
+relative to a block's own facing (a stair's `shape`, a door's `hinge`, a bed's
+`part`) are invariant, and fence, wall and pane connections are the emitter's
+connection pass to recompute. A rotation of zero changes nothing, byte for
+byte.
+
+Constraints that cannot act are told so rather than scored: a `facing`
+constraint on a landmark is `LOAM-W519`, because the box is reserved already
+turned and the only way left to satisfy such a constraint is to *move* the
+landmark — which is how a colossus ends up on the wrong island.
 
 **Budgets.** `landmarks = clamp(round(3·A/512²), 3, 12)`,
 `plugins = clamp(…, 3, 6)`, plus a per-world spend stop as a backstop.
@@ -408,16 +574,52 @@ constructions disagree on any diagonal, and the disagreement was the dressing
 pass re-levelling road it had mistaken for sidewalk.
 
 Clients: road surfacing, `infra.wall@0`, the bridge kit (deck, rail, pier
-rhythm, approaches), path-stairs. The infrastructure family (aqueduct, canal,
-rail) is contracted to land on this same engine.
+rhythm, approaches), path-stairs, and `infra.entry@0` — which is what the
+infrastructure family lands on, one registry row at a time, rather than one
+pass per catalog entry.
+
+**The bridge kit builds in three styles** — timber, stone arch, suspension —
+as profile variants of the one kit, not three kits. Timber is what the kit has
+always built (plank deck as a top slab so it is flush with the lane at both
+banks, fence rail, log piers), so a world that names no style compiles to the
+blocks it always did. Stone swaps the wood family for the theme's *ground*
+masonry roles — slab deck, a solid coping parapet, revetment piers — and springs
+an arch haunch off each pier. Suspension stands a tower over each abutment,
+runs a taut main cable between the tower tops and hangs the deck from it on
+hangers whose lengths trace the sag; its closure rule is that every chain block
+either has a chain or a solid block above it or belongs to a horizontal run
+terminating in tower blocks at both ends, which is the `unsupported.chain`
+finding stated as a precondition. **The selection rule has no draw in it**: an
+explicitly requested `bridgeStyle` always wins, and otherwise the span's own
+length decides and nothing else does — no seed, no theme. The same river
+recompiles to the same bridge, and a longer river gets a bigger idea of a
+bridge. Every block is resolved through a theme-derived palette symbol and falls
+back to the kit's own state where a symbol is absent, so a themeless world gets
+the kit rather than grey.
+
+The one thing a sweep cannot express is a member that **hangs**: a catenary is
+not a cross-section swept over ground. That is the `span` geometry kind rather
+than a bespoke program — thirty lines, not a program — and its curve is a real
+hanging chain (`y = a·cosh(s/a)`, the parameter found by fixed-count bisection)
+computed through a Taylor series in `+`, `*` and `/` alone. Not `Math.cosh`:
+the transcendental library is platform-dependent, and a byte-identity claim that
+breaks silently for some users only is worse than no claim.
 
 ## Biome authorship
 
-Land use owns the ground it claims. A settlement footprint (and camp cores —
-**not** farmland) gets one coherent biome and one snow decision, derived from
-the **ambient majority** of a 12-column ring around the footprint and made
-snow-consistent, so a town in windswept hills is windswept hills rather than an
-imposed patch of plains.
+Land use owns the ground it claims. A settlement footprint gets one coherent
+biome and one snow decision, derived from the **ambient majority** of a
+12-column ring around the footprint and made snow-consistent, so a town in
+windswept hills is windswept hills rather than an imposed patch of plains.
+
+What counts as claimed is the **hard, bounded** masks: district and city cells,
+precinct envelopes, building pads, camp cores, and a farm holding's parcel and
+yard rectangles — a tilled parcel is a bounded envelope a pass fully rebuilt,
+which is what the clamp is for and is dimensionally indistinguishable from a
+camp core. What stays out is the **large and soft**: a camp's outfields, and
+every loose agricultural mask that is a floodplain rather than a field. The
+distinction is bounded-and-built versus wide-and-hinted, not crops versus
+buildings.
 
 Precedence: explicit `intent.climate` > land-use clamp > climate-derived.
 
@@ -432,7 +634,7 @@ wide, weighted by a smoothstep, world-locked and RNG-free.
 ```
 prompt
   → intent pre-pass (cheap, inspectable, fail-open)
-  → document authoring (Luna max, kit as system prompt, validation retries)
+  → document authoring (pinned model, kit as system prompt, validation retries)
   → program authoring (proposal → write → five-step gate → ≤3 repair rounds)
   → wiring check (are the programs actually invoked? one focused revision if not)
   → compile → author-actionable diagnostics → ≤N revision rounds
@@ -454,6 +656,68 @@ Kits are the system prompts, and they live in `docs/kits/*.md` so that a human
 editing guidance and the test validating its examples read the same bytes.
 Every closed vocabulary a model can write is either enumerated in the kit or
 aliased on intake — never silently defaulted.
+
+**The model is a pin, and the pin is cheap-model-first.** Every id is written
+out in full and re-checked against the live catalog, with near-matches reported
+when one goes away; a floating "latest" would cost reproducibility, which is
+the one thing the project refuses to give up. Temperature is zero. The effort
+level is pinned to the one the battery was actually measured at rather than the
+highest available — a model that spends half its output on reasoning and passes
+is not improved by being asked to spend more. And the pin is a *harness*
+verdict as much as a model one: authoring quality is only visible through the
+gate, so a model looks unreliable exactly as long as the harness is killing its
+programs for mechanical nits. The measurements that move the pin are taken
+after the harness is honest.
+
+## The world outside the game
+
+A `.zip` is a world only for someone who already owns Minecraft, has a launcher
+open and is willing to install a save. Everything upstream of that — the prompt
+box, the demo, the link a person sends someone else — needs the world to be
+*walkable in a browser*. That is a second product surface, not a compiler
+detail, and it is built in two halves that meet at one file format.
+
+**`terrainist export-web` is the data half, and it recompiles.** Given a
+document it runs the real pipeline into a scratch world folder and reads the
+export back off that world. There is no second materializer, so anything the
+game would render — terrain, fluids, trees, decor, structures, program
+blocks — is in the payload by construction and cannot drift from what the `.zip`
+contains. What ships is a `manifest.json` (format tag, bounds, spawn, sea level,
+the palette as index → block *name*, and the chunk index) plus one gzipped file
+per 16×16 chunk: palette-indexed, trimmed to the y range that chunk actually
+uses, run-length encoded column by column. Chunks are visited in `(z, x)` order
+and the palette is interned first-seen, so the same document exports the same
+bytes; nothing timestamps the payload. The format tag is `major.minor` and a
+reader keyed on the prefix survives a minor bump, because exports are build
+artifacts and a viewer will meet old ones. The manifest carries the world's
+`meta.prompt` when it has one — the sentence the world was authored from is
+what the landing page has to be able to say back.
+
+**Nothing in the payload is Mojang's.** It is block names and occupancy; the
+look on top of them is ours. That is a licensing property first and a size
+property second, and it is why the export can be a static file on a CDN.
+
+**`tools/web-viewer` is the presentation half.** Fetch, gunzip, decode and mesh
+all happen on a worker thread with finished vertex buffers *transferred* rather
+than copied, nearest-and-in-front first, one chunk per macrotask so turning the
+camera re-orders the queue. The mesher culls hidden faces and merges coplanar
+faces of identical block and identical ambient occlusion into single quads —
+about a third to a half of the triangles gone — with four-sample AO baked into
+the vertex colour under a fixed sun. Appearance is a floor and a ceiling: every
+block has a flat colour and a rough box, and a deterministic pastel catches
+anything unlisted, so texture coverage is allowed to be partial and a block the
+mapping table does not name renders exactly as it did before textures existed.
+The landing is the product argument in ten seconds — the prompt types itself
+out, the page fades, and the visitor is standing in the world it describes.
+
+**The textures are borrowed, and the licence is an obligation.** The pack is
+RE:Fi by MysticTempest under **CC BY-SA 4.0**, vendored file by file for only
+the blocks the mapping table asks for. Share-alike means the credit line in the
+page is not decoration and the terms travel with anything derived from it; the
+attribution file next to the textures is the normative statement and is to be
+read before the pack is touched, replaced or extended. A texture pack is the
+one asset class in this project that arrives with someone else's conditions
+attached.
 
 ## Mesh assets (Tripo)
 
@@ -621,7 +885,7 @@ must be justified move by move.
   all.
 - A **generated-world** check per package, not only unit tests. Phase 4.1 shipped
   three defects that passed every unit test; Phase 4.2 shipped six. The bar is a
-  compiled world read back off disk and linted on all 26 rules.
+  compiled world read back off disk and linted on all 27 rules.
 - **Cross-section flatness** for streets (already exists,
   `test/road-cross-section.test.ts`) — the resolver must not regress it.
 - A **conflict test**: two subsystems declaring incompatible levels on one
@@ -762,14 +1026,23 @@ shipped — see "What is built today".)*
   the confirmation the flip was waiting for); the mega-whorl keeps its
   geometry (its 32 unreachable blocks ride the flip as counted
   `persistent` exceptions). Then **WP-C** (fungal + fantasy +
-  `character.flora`), **WP-D** (kit + classifier + Luna e2e demo), and the
+  `character.flora`), **WP-D** (kit + classifier + an e2e demo), and the
   popup-settled follow-ups (per-species `snowLine`; law 1 suspended with
   `capWood` at source).
-- **Infrastructure family** — aqueduct, canal, rail, mine headworks, on the
-  sweep engine.
-- **Agricultural layer and camps** — field parcels following contour, hedgerows,
-  orchards, farmsteads sited to the fields they serve; fishing camps, logging
-  camps, waystations. What makes a settlement look like it eats.
+- **Infrastructure family — the host is shipped, the entries are content.**
+  `infra.entry@0` carries fifteen registry rows; the catalog holds forty-eight
+  infrastructure rows, twenty-two of them implemented by one route or another
+  (the host, the wall, a precinct, a prop). What remains is the tail that needs
+  more than a registry row:
+  **aqueduct** (a carried carriageway is a statement about the ground, so it
+  wants a tier-A ground declaration of its own), viaduct and rail, mine
+  headworks, and the family-B rows that are a declared *face* rather than a
+  line and belong to the retaining pass.
+- **Agricultural layer — the minimal farm is shipped, the taxonomy is not.**
+  `precinct.farm@0` gives a holding its parcels, its farmstead and a farmland
+  clamp; hedgerows and dry-stone walls arrived as infra entries. Camps and the
+  rest of the taxonomy remain — orchards, fishing and logging camps,
+  waystations. What makes a settlement look like it eats, beyond one holding.
 
 **From Kai's walk 4 (2026-08-08), two feature notes — wanted, not urgent.**
 - **Controllable biome gradients**: harsh borders are right in some places
@@ -836,7 +1109,9 @@ regressions; minor bugs go to this ledger and get squashed opportunistically
   genre at a time, each accepted in a single walk of its own exhibit world and
   each reachable from ordinary prompt language before it ships — because an
   unreachable entry is worth zero however well made, and that, not the count,
-  is what curation is for. See `docs/CATALOG-EXPANSION-v0.md`.
+  is what curation is for. Nine packs have landed on that bar and took the
+  catalog past five hundred and eighty rows; the mechanism is the standing one,
+  not a finished job. See `docs/CATALOG-EXPANSION-v0.md`.
 
 ## Risks
 
@@ -855,7 +1130,7 @@ regressions; minor bugs go to this ledger and get squashed opportunistically
    emit a diagnostic naming what was lost.
 4. **Authoring quality is measured rarely.** Every world in the repo was
    authored under supervision; the product claim is unattended prompt→world.
-   Demos are Luna e2e precisely to keep this honest.
+   Demos are end-to-end from a prompt precisely to keep this honest.
 5. **Vocabulary rot.** Themes, eras, forms and flora are only as tested as the
    archetypes that happen to use them. Cross-product testing has to keep pace
    with vocabulary growth.

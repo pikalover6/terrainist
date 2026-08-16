@@ -118,7 +118,7 @@ This is the *development* workflow. The *production* worldgen pipeline
   semantic intent layer, the land-use biome clamp, `formPacks`, the
   `infra.entry` host, and the **bespoke tier** (model-written `authored:`
   programs, gated and frozen into the document, invoked once or scattered)
-  are all shipped. ~4,280 tests; every shipped world lints zero on all 26
+  are all shipped. ~4,450 tests; every shipped world lints zero on all 27
   physics rules. `docs/DESIGN.md` is the current state of the system — it
   carries no dated status blocks, by design; use git history for what a
   given round added. **Visual iteration still needs Kai: never tune looks

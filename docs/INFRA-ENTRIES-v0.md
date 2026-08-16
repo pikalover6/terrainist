@@ -185,7 +185,7 @@ suggestions, the way every closed vocabulary in this compiler is grounded.
 `route` is one of five forms. Everything else the entry needs it gets from its
 registry row and the resolved theme.
 
-### 3.2 The route forms — five, all coordinate-free
+### 3.2 The route forms — six, all coordinate-free
 
 The project law is that a model never writes a coordinate. A route is therefore
 always **named relative to something the compiler placed**, and is derived after
