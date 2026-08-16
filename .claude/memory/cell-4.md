@@ -25,13 +25,10 @@ look + the landing-page fade sequence.
 pirate_vs_unicorn_isles_gem (minus 2 no-site scatters — now warnings),
 trojan_horse_troy_gem, overgrown_metropolis_hideout_gem,
 modern_hellenist_assault_gem, redwood_logging_camp_gem,
-glowing_mushroom_vale_gem installed; alien_farm_invasion was the hash
-casualty — re-frozen doc at scratchpad/p2-refrozen.loam.json compiles
-0 errors, COMPILE+INSTALL PENDING (finish on return if the pause cut
-it). Kai walks the deck A/B against Luna's candidates. Standing: Kai
-is a "big believer" in Gemini but NOT locking it in; leniency stays
-"for now"; his harness-comparison study is the open thread that
-decides permanent gate shape. Luna remains the pinned default.
+glowing_mushroom_vale_gem installed; alien_farm_invasion_gem
+INSTALLED too (re-frozen doc, 0 errors) — the deck is COMPLETE, all
+seven. Kai walks it A/B against Luna's candidates. Leniency stays
+"for now"; the harness-comparison study remains his open thread.
 
 **POST-FREEZE TAIL (Kai un-deferred 2 of 3 rungs):**
 - Wave 1 LANDED (c16b889): three bridges as bridge-kit styles (stone
@@ -41,29 +38,24 @@ decides permanent gate shape. Luna remains the pinned default.
   span geometry kind, deterministic Taylor-cosh catenary) with
   harbour_chain_tower ("ships as a pair or not at all"). Kit doc
   teaches all six route forms.
-- Wave 2 NOT STARTED (next after POC): water-movers — dam, weir,
-  canal_lock via fluid.channel declaration (INFRA-ENTRIES-v0 family C
-  ~line 81-94; rank 0; GROUND-CONTRACT §13.2 adjacency). Medium slot.
+- Wave 2 IN FLIGHT (medium agent): water-movers — dam, weir,
+  canal_lock via fluid.channel declaration; new files
+  structures/water-works.ts + tests visible in tree; commit on land.
 - Still deferred BY DESIGN: tier-A structure.linework, F5 WP-6 freeze,
   maglev_pylon, aqueduct/telegraph (between's other clients).
 
-**UNCOMMITTED AT PAUSE (commit first if pause cut it):** hash-fix
-agent's files — spec/src/programs/hash.ts (NEW canonical
-programSourceHash: CRLF→LF, per-line trailing strip, one trailing \n;
-compiler+agents delegate), pass.ts no-site→W337, program-author.ts,
-spec package.json/index, cli test program-freeze-roundtrip, compiler
-test program-no-site. Root cause was TWO divergent hash impls (whole-
-string vs per-line trim) — a trailing space broke a world; braces
-innocent. Full-tree verification at pause: 1 test failed / 4 files —
-triage load-flake vs real, CHECK before committing.
+**Hash canonicalization LANDED (5281c90):** one programSourceHash in
+spec (two divergent impls — whole-string vs per-line trim — meant a
+trailing space broke a world; braces innocent); no-site→W337 same
+commit. Batch-runner throttle fixed (5e1517a, pid array).
 
 **OPEN / BLOCKED, by whose move:**
 - KAI: walk the gem deck vs Luna deck; harness-study verdict (gate's
   permanent shape + maybe output format); F3 junctions; survivor-yards
   (status quo holds); subjective battery polish list.
-- ME on return: web POC → commit stragglers → p2 compile+install →
-  water-movers wave → batch-runner throttle fix (jobs -rp subshell
-  never engages; use pid array + kill -0 polling).
+- ME: land + commit water-movers wave; author exhibits for wave-1
+  infra (bridges/chain tower) when convenient; POC-review decisions
+  (look, landing sequence) come from Kai.
 
 **Standing discipline reminders:** INSTALLS GO TO PRISM: `--saves
 "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/
