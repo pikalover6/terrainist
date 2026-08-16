@@ -1,4 +1,4 @@
-# Cell 4 — current state (2026-08-16, the browser round)
+# Cell 4 — current state (2026-08-16, goal sweep complete)
 
 **RATIFIED 2026-08-16: GEMINI 3.7 FLASH HIGH IS THE PINNED DEFAULT
 for ALL uses (8217286)** — "the demo worlds are insane"; Luna is the
@@ -60,13 +60,44 @@ spec (two divergent impls — whole-string vs per-line trim — meant a
 trailing space broke a world; braces innocent); no-site→W337 same
 commit. Batch-runner throttle fixed (5e1517a, pid array).
 
+**GOAL SWEEP DONE (Kai's /goal: complete everything autonomously
+completable). All landed + pushed through b0d5553:**
+- Gemini battery archived durably: battery/candidates/p1-gem1..p7-gem1
+  + p1-gemhero (docs+logs; p2 carries original + refrozen doc, NOTE.md).
+- DESIGN.md absorbed the week (63d2172, docs-only high seat): world-
+  outside-the-game section, six-form infra host, water movers, facing,
+  leniency in full, canonical hash, bridge styles, model-is-a-pin.
+  Measured corrections: catalog 509/585 (not 343/441), physics lint 27
+  rules (not 26), Gemini pin present-tense everywhere.
+- between's remaining clients SHIPPED (741abc9): aqueduct (carry span,
+  sealed all-or-nothing trough ABOVE terrain — deliberately not
+  fluid.channel), telegraph_line (iron_bars wire — horizontal chain =
+  unconnected links; poles step aside for roads), maglev_pylon (fixed
+  materials, icon rule). Rank 25 still reserved+unexercised; INFRA doc
+  amended 2026-08-16.
+- devworld gained EIGHT walkable bands (6f66d22 + b0d5553): bridges×3
+  (z 16177-16220), harbour chain (16233-16288), weir/lock/dam
+  (16301-16344, heads 1/2/5 all held), marsh refusal (16357-16380,
+  dry dam + one T234 — the refusal IS the exhibit), aqueduct valley
+  (16393-16424, open bays under held water), telegraph+carriageway
+  (16437-16464, one pole dropped, wire over), maglev beam (16477-16504,
+  90/90 walkable). INSTALLED: dev_world_infra in Prism. 0 unstable
+  fluids, 25,850 chunks.
+- Gemini sweep P5 doc contains a CORRECT unprompted face relation:
+  "face": {"toward": "neopolis"} on wading sea monsters — the icon-law
+  loop closed at authoring time.
+- Full tree at close: 252 files, 4,472 passed / 0 failed.
+- Memory hygiene: cloud-box-workflow trimmed to its evergreen insight.
+
 **OPEN / BLOCKED, by whose move:**
-- KAI: walk the gem deck vs Luna deck; harness-study verdict (gate's
-  permanent shape + maybe output format); F3 junctions; survivor-yards
-  (status quo holds); subjective battery polish list.
-- ME: land + commit water-movers wave; author exhibits for wave-1
-  infra (bridges/chain tower) when convenient; POC-review decisions
-  (look, landing sequence) come from Kai.
+- KAI (everything left is yours): walk the gem deck vs Luna's; walk
+  dev_world_infra's eight new bands (aqueduct look explicitly "wants a
+  walk"); viewer look verdict (RE:Fi live vs flat-color) + landing
+  polish; harness-study verdict (decides permanent gate shape);
+  F3 junctions; survivor-yards; subjective battery polish list.
+- DEFERRED BY DESIGN (untouched deliberately): tier-A
+  structure.linework + §13.2 reopening, F5 WP-6 freeze.
+- NOTHING else is autonomously completable.
 
 **Standing discipline reminders:** INSTALLS GO TO PRISM: `--saves
 "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/
