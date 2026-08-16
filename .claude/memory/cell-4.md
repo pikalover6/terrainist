@@ -16,10 +16,17 @@ scaffolding; the real look is DECIDED AT POC REVIEW (Kai's answer).
 Hero world exported: isles_of_war — 1024 chunks, 188-block palette,
 1.17MB data, 5.6s export. terrainist export-web <doc> --out <dir>;
 serve tools/web-viewer (python3 -m http.server), ?world= param.
-Deferred: greedy merging, stairs as cubes, worker meshing, fog tuned
-for ground level only (aerials need scene.fog pushed out), no
-entities/signs/time-of-day. NEXT DECISIONS AT KAI'S REVIEW: the real
-look + the landing-page fade sequence.
+ROUND 2 SHIPPED (9d62376, Kai's three verdicts): worker meshing
+(22→3.6ms/chunk), greedy AO-aware merging (-37-56% tris), RE:Fi
+textures (CC BY-SA 4.0 verified, ATTRIBUTION.md + footer credit,
+100% palette mapped, flat-color fallback), landing fade = the page
+(prompt types from manifest.prompt, format /1.1). Two live-GPU bugs
+found on first run, fixed in main.js: worker-relative URL (absolutize
+worldUrl before postMessage) and GLSL3 gl_FragColor (alias to
+declared out). Default world isles_of_war (re-exported WITH prompt
+from scratchpad doc). Still deferred: stairs as cubes, time-of-day,
+signs/entities. Chrome rAF throttles occluded tabs — automation
+screenshots show stale frames; bench numbers only valid focused.
 
 **GEMINI BATTERY SWEEP (deck in Prism, ~$1.90 total for 7 worlds):**
 pirate_vs_unicorn_isles_gem (minus 2 no-site scatters — now warnings),
