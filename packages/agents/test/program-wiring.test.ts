@@ -105,7 +105,7 @@ function stubFetch(texts: readonly string[]): { fetchImpl: FetchLike; calls: Rec
     i++;
     return new Response(
       JSON.stringify({
-        model: "openai/gpt-5.6-luna",
+        model: "google/gemini-3.7-flash",
         choices: [{ message: { role: "assistant", content: text }, finish_reason: "stop" }],
         usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150, cost: 0.002 },
       }),

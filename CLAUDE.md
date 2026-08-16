@@ -131,11 +131,12 @@ This is the *development* workflow. The *production* worldgen pipeline
   (cheapness is a core goal) — the Opus 5 planner is canned indefinitely;
   escalate only on a hard capability wall. The critique→repair pass stays
   MANUAL — Kai reviews; never build autonomous repair iteration. Default
-  authoring model is **GPT 5.6 Luna at effort max** (`AUTHORING_MODEL_ID`);
-  GLM 5.2 stays one `--model` flag away. **Demos are Luna e2e from a text
-  prompt, never hand-authored worlds** — every demo/acceptance world is
-  generated via `terrainist generate`, so demos measure the real product
-  path (hand-authored docs remain fine as test fixtures and exhibits).
+  authoring model is **Gemini 3.7 Flash at effort high**
+  (`AUTHORING_MODEL_ID`); GPT 5.6 Luna stays one `--model` flag away.
+  **Demos are generated e2e from a text prompt by the pinned model, never
+  hand-authored worlds** — every demo/acceptance world comes via
+  `terrainist generate`, so demos measure the real product path
+  (hand-authored docs remain fine as test fixtures and exhibits).
 - **Standing rule (Kai): NEVER WAIT ON KAI.** If *anything* remains to do,
   do it — finish the current work, then start the next discussed/ratified
   feature without asking. Pause ONLY when fully hard blocked: a crucial

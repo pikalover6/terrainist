@@ -7,21 +7,32 @@
  * give up. {@link verifyModelAvailable} re-checks the pin against the live
  * catalog and reports near-matches when it has gone away.
  *
- * Default authoring model: **GPT 5.6 Luna** (2026-08-02, Kai's call). The
- * 2026-08-01 model comparison found it equal to GLM 5.2 on authoring
- * reliability at roughly one third of the cost, and cheapness is a core goal of
- * this project. GLM stays one flag away — `--model z-ai/glm-5.2` (or
- * {@link GLM_MODEL_ID} programmatically) restores the old default exactly.
+ * Default authoring model: **Gemini 3.7 Flash at effort "high"** (2026-08-15,
+ * Kai's call — "permanently replacing luna max with gemini 3.7 flash high for
+ * all uses"). Basis: once the harness stopped killing its programs for
+ * mechanical nits (auto-braced bodies, the chain rename, gate leniency, one
+ * canonical source hash), the seven-prompt battery sweep ran ~$1.90 for seven
+ * worlds and Kai's walks judged the results decisively better — "the demo
+ * worlds are insane"; the bespoke gauntlet's elephant was "miles ahead" of
+ * Luna's. Luna stays one flag away — `--model openai/gpt-5.6-luna` (or
+ * {@link LUNA_MODEL_ID} programmatically) restores the old default exactly.
  */
 
-/** The default authoring model id on OpenRouter (GPT 5.6 Luna). */
-export const AUTHORING_MODEL_ID = "openai/gpt-5.6-luna";
+/** The default authoring model id on OpenRouter (Gemini 3.7 Flash). */
+export const AUTHORING_MODEL_ID = "google/gemini-3.7-flash";
+
+/**
+ * The GPT 5.6 Luna model id on OpenRouter.
+ *
+ * The 2026-08-02 → 2026-08-15 default; kept as the one-flag-away fallback and
+ * for pin-verification tests.
+ */
+export const LUNA_MODEL_ID = "openai/gpt-5.6-luna";
 
 /**
  * The GLM 5.2 model id on OpenRouter.
  *
- * No longer the default (see {@link AUTHORING_MODEL_ID}), kept as the
- * one-flag-away fallback and for pin-verification tests.
+ * The original default; kept for pin-verification tests.
  */
 export const GLM_MODEL_ID = "z-ai/glm-5.2";
 
@@ -38,15 +49,15 @@ export const MODELS_URL = `${OPENROUTER_BASE_URL}/models`;
  * Sampling settings for document authoring.
  *
  * `temperature: 0` because the same prompt and seed must yield the same world;
- * `reasoning.effort: "max"` because laying out a landscape in fractional
- * coordinates is the part of the job the model has to actually think about —
- * and with the 2026-08-02 switch to GPT 5.6 Luna the per-run cost dropped far
- * enough (~1/3 of GLM 5.2) that the top effort tier is affordable by default.
+ * `reasoning.effort: "high"` is Gemini 3.7 Flash's measured sweet spot — the
+ * whole 2026-08-15 evaluation ran at high, it spends ~50% of output on
+ * reasoning (vs Luna's ~90% at max) and passed the battery on it; the higher
+ * tiers were never needed.
  */
 export const AUTHORING_TEMPERATURE = 0;
 
 /** Reasoning effort passed to OpenRouter's unified `reasoning` parameter. */
-export const AUTHORING_REASONING_EFFORT = "max";
+export const AUTHORING_REASONING_EFFORT = "high";
 
 /**
  * Output budget for a bespoke-program call, reasoning included.

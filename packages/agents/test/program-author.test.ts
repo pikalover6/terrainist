@@ -48,7 +48,7 @@ function stubFetch(texts: readonly string[]): {
     call++;
     return new Response(
       JSON.stringify({
-        model: "openai/gpt-5.6-luna",
+        model: "google/gemini-3.7-flash",
         choices: [{ message: { content: text }, finish_reason: "stop" }],
         usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.01 },
       }),
@@ -422,7 +422,7 @@ describe("authorPrograms", () => {
       if (call > 1) return new Response("out of credits", { status: 402, statusText: "Payment Required" });
       return new Response(
         JSON.stringify({
-          model: "openai/gpt-5.6-luna",
+          model: "google/gemini-3.7-flash",
           choices: [{ message: { content: REPLY }, finish_reason: "stop" }],
           usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.01 },
         }),
