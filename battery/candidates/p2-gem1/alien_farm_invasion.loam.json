@@ -1,0 +1,822 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "alien_farm_invasion",
+    "worldSeed": "302",
+    "prompt": "A small farm town being invaded by aliens.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "ground.surface": "minecraft:grass_block"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.4,
+    "decline": 0.3,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.2,
+      "humidity": 0.1
+    },
+    "character": {
+      "label": "farm town under alien invasion",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "urbanForm": "linear",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "windmill",
+          "farmhouse",
+          "general_store",
+          "barn"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head",
+          "scarecrow",
+          "hitching_post"
+        ]
+      },
+      "programs": [
+        {
+          "id": "mothership",
+          "mode": "landmark",
+          "brief": "A colossal dark metallic alien dreadnought hovering ominously over the town center, ribbed hull plates with glowing cyan energy seams along its underside.",
+          "envelope": [
+            64,
+            24,
+            64
+          ]
+        },
+        {
+          "id": "crashed_saucer",
+          "mode": "landmark",
+          "brief": "A disc-shaped alien scout craft embedded at an angle into a smoking crater, torn outer hull sections and exposed alien conduits.",
+          "envelope": [
+            20,
+            10,
+            20
+          ]
+        },
+        {
+          "id": "drop_pod",
+          "mode": "plugin",
+          "brief": "An angular alien drop capsule punched into the ground, scorch marks around its landing thrusters and a cracked hatch emitting soft light.",
+          "envelope": [
+            7,
+            8,
+            7
+          ],
+          "count": 12
+        }
+      ]
+    },
+    "tokens": {
+      "event_direction": "alien craft and landing pods descend from the sky over the outer fields, moving toward the town center",
+      "infra": "crop_circle pressed into the crop fields; quarantine_fence ringing the perimeter; barricade_line across the road into town"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling farmland plains with low shelf for the town",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gentle plateau shelf under the settlement and fields",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 160,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "creek_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a shallow dry drainage valley along the western edge",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.1
+                ],
+                [
+                  0.18,
+                  0.5
+                ],
+                [
+                  0.22,
+                  0.9
+                ]
+              ],
+              "width": 32,
+              "depth": 8,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012
+        }
+      },
+      {
+        "id": "surrounding_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "shelterbelts and scattered trees around the farm clearings",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.04,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.06,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "spreading_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "north_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the northern farm holding, fields of wheat and roots",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            160,
+            140
+          ]
+        },
+        "params": {
+          "parcels": 8,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "potatoes",
+            "pasture",
+            "pumpkin"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "terrain_conform": "drape"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "holding",
+          "precinct"
+        ]
+      },
+      {
+        "id": "town_square",
+        "kind": "primitive",
+        "label": "the rural town square and muster point",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "general_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the town general store and supply post",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "town_square",
+            "gap": [
+              1,
+              12
+            ]
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "general_store",
+          "house"
+        ]
+      },
+      {
+        "id": "sheriff_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the local sheriff office and constabulary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 6,
+            "max": 60
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "police_station",
+          "house"
+        ]
+      },
+      {
+        "id": "inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the roadside tavern and boarding house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 6,
+            "max": 60
+          },
+          {
+            "facing": "town_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "grain_mill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the grain windmill overlooking the crops",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 25,
+            "max": 75
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "windmill"
+        ]
+      },
+      {
+        "id": "cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a farmworker cottage on the west lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 8,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a two-storey homestead cottage on the east lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 8,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the country chapel at the southern edge of town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "town_square",
+            "min": 20,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church"
+        ]
+      },
+      {
+        "id": "alien_mothership",
+        "kind": "generator",
+        "generator": "authored:mothership",
+        "label": "the alien flagship looming low over the town center",
+        "params": {
+          "hover": 38
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "alien"
+        ]
+      },
+      {
+        "id": "crashed_craft",
+        "kind": "generator",
+        "generator": "authored:crashed_saucer",
+        "label": "a downed alien saucer embedded in the northeast meadow",
+        "params": {
+          "seat": "embed",
+          "embedDepth": 4,
+          "face": {
+            "toward": "town_square"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "town_square",
+            "min": 35,
+            "max": 120
+          }
+        ],
+        "tags": [
+          "landmark",
+          "alien",
+          "wreck"
+        ]
+      },
+      {
+        "id": "invasion_pods",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "scattered landing capsules punched into the soil",
+        "params": {
+          "program": "drop_pod",
+          "count": 12,
+          "area": {
+            "all": true
+          },
+          "spacing": 28,
+          "seat": "embed",
+          "embedDepth": 3,
+          "avoidTags": [
+            "road",
+            "plaza",
+            "structure"
+          ]
+        }
+      },
+      {
+        "id": "quarantine_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "military quarantine fence ringing the contaminated fields",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "north_holding",
+            "margin": 10
+          }
+        }
+      },
+      {
+        "id": "field_glyphs",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "alien geometry pressed into the standing crops",
+        "params": {
+          "entry": "crop_circle",
+          "route": {
+            "over": "north_holding"
+          }
+        }
+      },
+      {
+        "id": "town_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "defensive sandbag and timber barricade across the main street",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "lanes"
+          }
+        }
+      },
+      {
+        "id": "crash_trench",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "scorched impact furrow leading to the downed scout ship",
+        "params": {
+          "entry": "crash_furrow",
+          "route": {
+            "into": "crashed_craft",
+            "run": 50
+          }
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the dirt lanes connecting homes, farms and the town center",
+        "params": {
+          "anchors": [
+            "town_square",
+            "#tag:house",
+            "north_holding",
+            "chapel",
+            "grain_mill"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "square_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "fleeing_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "an evacuation wagon packed with trunks",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "south",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "abandoned_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "emergency_bulletin",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "emergency notice board by the village green",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      }
+    ]
+  },
+  "programs": {
+    "mothership": {
+      "mode": "landmark",
+      "envelope": [
+        63,
+        28,
+        63
+      ],
+      "sourceHash": "b3:723f562d0ad45568c19ed5f57e5356df75e7f4f8e5ad6764fa3ed13b3c1ca7ff",
+      "outputHash": "b3:2c0d42026e41e00680cebe55f85bacc358a8b44c68d3cfe0c21ebd7c6b2b97f4",
+      "source": "export const envelope = [63, 28, 63];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = Math.floor(W / 2);\n  const cz = Math.floor(D / 2);\n\n  // 3D Grid Buffer for precise geometry and deterministic output\n  const grid = new Array(W * H * D).fill(null);\n\n  function idx(x, y, z) {\n    return (y * D + z) * W + x;\n  }\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[idx(x, y, z)] = block;\n    }\n  }\n\n  // Pre-sample terrain heights around structure footprint\n  const groundH = {};\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      if (dx * dx + dz * dz <= 20 * 20) {\n        const h = api.heightAt(x, z);\n        groundH[`${x},${z}`] = Math.max(-2, Math.min(3, Math.round(h)));\n      }\n    }\n  }\n\n  function getGround(x, z) {\n    const k = `${x},${z}`;\n    return groundH[k] !== undefined ? groundH[k] : 0;\n  }\n\n  // =========================================================================\n  // 1. GROUND SCORCH & CROP CIRCLE ENERGY MATRIX (y = 0..3)\n  // =========================================================================\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n\n      if (r <= 16.5) {\n        const gh = getGround(x, z);\n        const angle = Math.atan2(dz, dx);\n\n        let surfBlock = null;\n        const spoke = Math.abs(Math.sin(angle * 4));\n        const isRune = spoke < 0.13 && r >= 3.0 && r <= 15.0;\n\n        if (r <= 3.8) {\n          surfBlock = \"minecraft:crying_obsidian\";\n        } else if (Math.abs(r - 5.5) <= 0.6) {\n          surfBlock = \"minecraft:sea_lantern\";\n        } else if (Math.abs(r - 8.5) <= 0.6) {\n          surfBlock = \"minecraft:prismarine_bricks\";\n        } else if (Math.abs(r - 12.0) <= 0.6) {\n          surfBlock = isRune ? \"minecraft:sea_lantern\" : \"minecraft:crying_obsidian\";\n        } else if (Math.abs(r - 15.0) <= 0.6) {\n          surfBlock = \"minecraft:dark_prismarine\";\n        } else if (isRune) {\n          surfBlock = Math.floor(r) % 2 === 0 ? \"minecraft:sea_lantern\" : \"minecraft:prismarine_bricks\";\n        } else if (r <= 15.5) {\n          surfBlock = Math.floor(r + Math.sin(angle * 6)) % 2 === 0\n            ? \"minecraft:polished_blackstone\"\n            : \"minecraft:deepslate_tiles\";\n        }\n\n        if (surfBlock) {\n          const minY = Math.min(0, gh);\n          const maxY = Math.max(0, gh);\n          for (let y = minY; y <= maxY; y++) {\n            set(x, y, z, y === maxY ? surfBlock : \"minecraft:deepslate_tiles\");\n          }\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 2. CENTRAL TRACTOR BEAM & GRAV-STABILIZER PYLONS (y = 0..14)\n  // =========================================================================\n  // Core Abduction Energy Vortex\n  for (let y = 0; y <= 13; y++) {\n    for (let dx = -5; dx <= 5; dx++) {\n      for (let dz = -5; dz <= 5; dz++) {\n        const x = cx + dx;\n        const z = cz + dz;\n        const gh = getGround(x, z);\n        if (y < gh) continue;\n\n        const r = Math.sqrt(dx * dx + dz * dz);\n        const angle = Math.atan2(dz, dx);\n\n        if (r <= 1.5) {\n          if (y === 0 || y === 1) {\n            set(x, y, z, \"minecraft:beacon\");\n          } else if (y % 2 === 0) {\n            set(x, y, z, \"minecraft:sea_lantern\");\n          } else {\n            set(x, y, z, \"minecraft:cyan_concrete\");\n          }\n        } else if (r <= 3.2) {\n          const spiral = Math.sin(angle * 3 + y * 0.65);\n          if (spiral > 0.25) {\n            set(x, y, z, \"minecraft:cyan_stained_glass\");\n          } else if (spiral > -0.35) {\n            set(x, y, z, \"minecraft:light_blue_stained_glass\");\n          } else {\n            set(x, y, z, \"minecraft:sea_lantern\");\n          }\n        } else if (r <= 4.2) {\n          if (y % 3 === 0) {\n            set(x, y, z, \"minecraft:cyan_stained_glass\");\n          }\n        }\n      }\n    }\n  }\n\n  // 4 Bio-mechanical Grav-Pylons rooting the ship into the terrain\n  const pylonAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];\n  for (let y = 0; y <= 14; y++) {\n    const pylonRadius = 5.0 + 6.5 * Math.pow(y / 14.0, 1.3);\n    for (const pa of pylonAngles) {\n      const px = cx + Math.round(pylonRadius * Math.cos(pa));\n      const pz = cz + Math.round(pylonRadius * Math.sin(pa));\n\n      for (let ox = -1; ox <= 1; ox++) {\n        for (let oz = -1; oz <= 1; oz++) {\n          if (ox * ox + oz * oz <= 2) {\n            const x = px + ox;\n            const z = pz + oz;\n            const gh = getGround(x, z);\n            if (y >= gh) {\n              if (ox === 0 && oz === 0) {\n                set(x, y, z, y % 3 === 0 ? \"minecraft:crying_obsidian\" : \"minecraft:polished_blackstone_bricks\");\n              } else {\n                set(x, y, z, \"minecraft:deepslate_tiles\");\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 3. MOTHERSHIP DREADNOUGHT HULL GEOMETRY (y = 10..27)\n  // =========================================================================\n  function getHullInfo(u, v) {\n    if (v < -27 || v > 26) return null;\n    const absU = Math.abs(u);\n    let isFuselage = false;\n    let isWing = false;\n    let isEngine = false;\n\n    // Fuselage width profile\n    let wf = 0;\n    if (v < -20) {\n      wf = 2.5 + (v + 27) * 0.85;\n    } else if (v <= 0) {\n      const t = (v + 20) / 20.0;\n      wf = 8.45 + 6.55 * (1.0 - (1.0 - t) * (1.0 - t));\n    } else if (v <= 16) {\n      wf = 15.0 - 1.5 * (v / 16.0);\n    } else {\n      wf = 13.5 - 2.5 * ((v - 16) / 10.0);\n    }\n\n    if (absU <= wf) {\n      isFuselage = true;\n    }\n\n    // Swept pincer wings\n    if (v >= -14 && v <= 22) {\n      let ww = 0;\n      if (v <= 6) {\n        const t = (v + 14) / 20.0;\n        ww = 12.0 + 15.5 * Math.sin(t * Math.PI * 0.5);\n      } else {\n        const t = (v - 6) / 16.0;\n        ww = 27.5 - 12.0 * Math.pow(t, 1.2);\n      }\n\n      if (absU <= ww) {\n        if (v < 10) {\n          isWing = true;\n        } else {\n          const wnotch = 11.0 + 3.0 * ((v - 10) / 12.0);\n          if (absU >= wnotch || absU <= wf) {\n            isWing = true;\n          }\n        }\n      }\n    }\n\n    // Engine housings\n    if (v >= 12 && v <= 26) {\n      if ((absU >= 5.5 && absU <= 12.5) || (absU <= 3.5 && v <= 24)) {\n        isEngine = true;\n      }\n    }\n\n    if (!isFuselage && !isWing && !isEngine) return null;\n\n    let maxW = wf;\n    if (v >= -14 && v <= 22) {\n      const ww = v <= 6\n        ? 12.0 + 15.5 * Math.sin(((v + 14) / 20.0) * Math.PI * 0.5)\n        : 27.5 - 12.0 * Math.pow((v - 6) / 16.0, 1.2);\n      maxW = Math.max(maxW, ww);\n    }\n    const normDist = Math.min(1.0, absU / (maxW + 0.01));\n\n    return { isFuselage, isWing, isEngine, normDist, absU, v };\n  }\n\n  // Render hull blocks\n  for (let z = 0; z < D; z++) {\n    const v = z - cz;\n    for (let x = 0; x < W; x++) {\n      const u = x - cx;\n      const hInfo = getHullInfo(u, v);\n      if (!hInfo) continue;\n\n      const { isFuselage, isWing, isEngine, normDist, absU } = hInfo;\n      const Y_mid = 15.5 + 0.8 * (v / 26.0);\n\n      // Half-thickness calculation\n      let H_fuse = 0;\n      if (v < -20) {\n        H_fuse = 1.2 + 1.8 * ((v + 27) / 7.0);\n      } else if (v <= 0) {\n        H_fuse = 3.0 + 3.0 * ((v + 20) / 20.0);\n      } else if (v <= 16) {\n        H_fuse = 6.0 - 0.5 * (v / 16.0);\n      } else {\n        H_fuse = 5.5 - 1.5 * ((v - 16) / 10.0);\n      }\n\n      const H_wing = 1.2 + 2.3 * Math.pow(Math.max(0, 1.0 - normDist), 1.1);\n      let H_eff = 0;\n\n      if (isWing && !isFuselage) {\n        H_eff = H_wing;\n      } else {\n        H_eff = H_fuse * (1.0 - 0.65 * Math.pow(normDist, 1.4));\n        if (isWing) {\n          H_eff = Math.max(H_eff, H_wing);\n        }\n      }\n\n      if (isEngine) {\n        H_eff = Math.max(H_eff, 3.6);\n      }\n\n      let y_bot = Math.floor(Y_mid - H_eff);\n      let y_top = Math.ceil(Y_mid + H_eff);\n\n      // Bridge superstructure dome on top\n      if (absU <= 6.0 && v >= -7 && v <= 7) {\n        const r_br = Math.sqrt(Math.pow(u / 6.0, 2) + Math.pow(v / 7.0, 2));\n        if (r_br <= 1.0) {\n          y_top = Math.max(y_top, Math.ceil(Y_mid + 4.5 + 3.5 * (1.0 - r_br * r_br)));\n        }\n      }\n\n      // Dorsal spine fin\n      if (absU <= 1.2 && v >= -20 && v <= 16) {\n        const spineAdd = 1.8 * (1.0 - Math.abs(v) / 24.0);\n        y_top = Math.max(y_top, Math.ceil(Y_mid + H_eff + spineAdd));\n      }\n\n      // Core belly reactor chamber on underside\n      if (u * u + v * v <= 49) {\n        const r_core = Math.sqrt(u * u + v * v) / 7.0;\n        y_bot = Math.min(y_bot, Math.floor(Y_mid - 6.0 + 1.8 * r_core));\n      }\n\n      y_bot = Math.max(10, Math.min(23, y_bot));\n      y_top = Math.max(y_bot, Math.min(26, y_top));\n\n      // Layer placement\n      for (let y = y_bot; y <= y_top; y++) {\n        const isBottomLayer = y === y_bot;\n        const isTopLayer = y === y_top;\n\n        // Underside energy conduits\n        const isDiagonalConduit = Math.abs(absU - Math.abs(v)) <= 0.8 && v >= -15 && v <= 15;\n        const isSpineConduit = absU === 0;\n        const isTransverseConduit = Math.abs(v) % 4 === 0 && absU <= 16;\n\n        if (isBottomLayer) {\n          if (isDiagonalConduit || (isSpineConduit && v >= -15 && v <= 10)) {\n            set(x, y, z, \"minecraft:sea_lantern\");\n          } else if (isTransverseConduit) {\n            set(x, y, z, \"minecraft:prismarine_bricks\");\n          } else if ((v + 100) % 3 === 0) {\n            set(x, y, z, \"minecraft:polished_blackstone\");\n          } else {\n            set(x, y, z, \"minecraft:deepslate_tiles\");\n          }\n        } else if (isTopLayer) {\n          if (absU === 0 && v >= -22 && v <= 18) {\n            set(x, y, z, v % 3 === 0 ? \"minecraft:crying_obsidian\" : \"minecraft:polished_blackstone_bricks\");\n          } else if (absU === 3 || absU === 7) {\n            set(x, y, z, \"minecraft:chiseled_deepslate\");\n          } else if ((absU + v + 100) % 5 === 0) {\n            set(x, y, z, \"minecraft:polished_blackstone_bricks\");\n          } else {\n            set(x, y, z, \"minecraft:deepslate_tiles\");\n          }\n        } else {\n          if (isDiagonalConduit && y <= Y_mid) {\n            set(x, y, z, \"minecraft:cyan_concrete\");\n          } else {\n            set(x, y, z, \"minecraft:polished_deepslate\");\n          }\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 4. ENGINE THRUSTER PLUMES & NOZZLE COWLINGS (z = 49..57)\n  // =========================================================================\n  const engineXCenters = [cx - 9, cx + 9, cx];\n  for (const ex of engineXCenters) {\n    const isCenter = ex === cx;\n    const rad = isCenter ? 2.5 : 3.2;\n\n    for (let z = cz + 18; z <= cz + 26; z++) {\n      for (let x = ex - 4; x <= ex + 4; x++) {\n        for (let y = 13; y <= 21; y++) {\n          const dX = x - ex;\n          const dY = y - (16.5 + (isCenter ? 0.5 : 0));\n          const dist2D = Math.sqrt(dX * dX + dY * dY);\n\n          if (dist2D <= rad) {\n            if (z >= cz + 24) {\n              if (dist2D <= 1.2) {\n                set(x, y, z, \"minecraft:sea_lantern\");\n              } else if (dist2D <= 2.2) {\n                set(x, y, z, \"minecraft:cyan_stained_glass\");\n              } else {\n                set(x, y, z, \"minecraft:light_blue_stained_glass\");\n              }\n            } else if (z === cz + 23) {\n              if (dist2D >= rad - 1.0) {\n                set(x, y, z, \"minecraft:chiseled_deepslate\");\n              } else {\n                set(x, y, z, \"minecraft:beacon\");\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 5. COMMAND BRIDGE INTERIOR HOLLOW & SENSOR MAST\n  // =========================================================================\n  // Hollow interior volume for compiler furnishing\n  for (let x = 28; x <= 34; x++) {\n    for (let y = 17; y <= 20; y++) {\n      for (let z = 26; z <= 36; z++) {\n        set(x, y, z, null);\n      }\n    }\n  }\n\n  // Solid bridge floor at y = 16\n  for (let x = 27; x <= 35; x++) {\n    for (let z = 25; z <= 37; z++) {\n      const isRing = Math.abs(x - cx) <= 2 && Math.abs(z - (cz - 1)) <= 2;\n      set(x, 16, z, isRing ? \"minecraft:crying_obsidian\" : \"minecraft:polished_blackstone_bricks\");\n    }\n  }\n\n  // Forward observation viewport facing North\n  for (let x = 29; x <= 33; x++) {\n    for (let y = 18; y <= 19; y++) {\n      set(x, y, 25, \"minecraft:cyan_stained_glass\");\n    }\n  }\n\n  // Recessed ceiling lighting strip\n  for (let z = 27; z <= 35; z++) {\n    set(cx, 21, z, \"minecraft:sea_lantern\");\n  }\n\n  // Dorsal sensor array & communication spires\n  set(cx, 26, cz, \"minecraft:polished_deepslate_wall\");\n  set(cx, 27, cz, \"minecraft:lightning_rod[facing=up]\");\n  set(cx - 5, 24, cz - 2, \"minecraft:end_rod[facing=up]\");\n  set(cx + 5, 24, cz - 2, \"minecraft:end_rod[facing=up]\");\n\n  // =========================================================================\n  // 6. FLUSH TO OUTPUT STREAM\n  // =========================================================================\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const block = grid[idx(x, y, z)];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Alien Mothership Dreadnought\",\n    seatY: 0,\n    anchors: {\n      front: [cx, 16, 0],\n      beam: [cx, 0, cz],\n      bridge: [cx, 17, cz]\n    },\n    interiors: [\n      {\n        min: [28, 17, 26],\n        max: [34, 20, 36],\n        kind: \"bridge\"\n      }\n    ]\n  };\n}"
+    },
+    "crashed_saucer": {
+      "mode": "landmark",
+      "envelope": [
+        24,
+        14,
+        24
+      ],
+      "sourceHash": "b3:1494dd029a4f6f7dc16e651df7338bf864369b88a8bad971f8ff2f5024eb0cd5",
+      "outputHash": "b3:ec173aad124897b0f2e4ad47aa21a37f0da0dbbdd548282cf8cb69eefec59e8b",
+      "source": "export const envelope = [24, 14, 24];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const grid = new Map();\n\n  const key = (x, y, z) => `${x},${y},${z}`;\n  const setVoxel = (x, y, z, block) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid.set(key(x, y, z), block);\n    }\n  };\n  const getVoxel = (x, y, z) => grid.get(key(x, y, z)) || null;\n\n  // Theme ground roles with robust fallbacks\n  const gBank = api.theme.ground?.bank || \"minecraft:dirt\";\n  const gScree = api.theme.ground?.scree || \"minecraft:coarse_dirt\";\n  const gPave = api.theme.ground?.pavement || \"minecraft:cobblestone\";\n  const sPrimary = api.theme.stone?.primary || \"minecraft:stone\";\n\n  // Sci-fi & alien materials\n  const HULL_ARMOR = \"minecraft:polished_blackstone\";\n  const HULL_PLATE = \"minecraft:iron_block\";\n  const HULL_TRIM = \"minecraft:dark_prismarine\";\n  const HULL_ALLOY = \"minecraft:purpur_block\";\n  const HULL_RIB = \"minecraft:purpur_pillar[axis=y]\";\n  const CONDUIT_CORE = \"minecraft:crying_obsidian\";\n  const CONDUIT_GLOW = \"minecraft:sea_lantern\";\n  const CONDUIT_PIPE = \"minecraft:oxidized_copper\";\n  const CONDUIT_CRYSTAL = \"minecraft:amethyst_block\";\n  const DOME_GLASS = \"minecraft:tinted_glass\";\n\n  // Seat plane is at y = 3\n  const seatY = 3;\n\n  // --- PHASE 1: Crater & Impact Trench ---\n  const craterCenterX = 11.5;\n  const craterCenterZ = 12.0;\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - craterCenterX;\n      const dz = z - craterCenterZ;\n      const distCenter = Math.sqrt(dx * dx + dz * dz);\n\n      // Trench leading from crash trajectory (North-South slide)\n      const clampedZ = Math.max(3, Math.min(13, z));\n      const distTrench = Math.sqrt((x - craterCenterX) * (x - craterCenterX) + (z - clampedZ) * (z - clampedZ));\n      const distEff = Math.min(distCenter, distTrench * 1.15);\n\n      // Calculate terrain height profile around crater\n      let surfaceY = seatY;\n      if (distEff < 3.8) {\n        // Impact gouge pit\n        surfaceY = 1.0 + (distEff / 3.8) * 0.8;\n      } else if (distEff < 7.5) {\n        // Crater bowl\n        surfaceY = 1.8 + ((distEff - 3.8) / 3.7) * 1.2;\n      } else if (distEff < 9.8) {\n        // Raised ejecta rim\n        const rimPhase = ((distEff - 7.5) / 2.3) * Math.PI;\n        surfaceY = 3.0 + Math.sin(rimPhase) * 1.4;\n      } else {\n        // Outer undisturbed ground\n        surfaceY = seatY;\n      }\n\n      // Small deterministic ripple for organic earth mound\n      surfaceY += Math.sin(x * 1.3 + z * 0.7) * 0.35 + Math.cos(z * 1.7 - x * 0.5) * 0.25;\n      const groundH = Math.max(1, Math.min(6, Math.round(surfaceY)));\n\n      // Solid ground from base y = 0 up to crater surface\n      for (let y = 0; y <= groundH; y++) {\n        if (y === groundH) {\n          // Surface layer\n          if (distEff < 3.2) {\n            // Scorched core\n            const r = (x * 7 + z * 13) % 10;\n            if (r < 4) setVoxel(x, y, z, \"minecraft:magma_block\");\n            else if (r < 7) setVoxel(x, y, z, \"minecraft:crying_obsidian\");\n            else setVoxel(x, y, z, \"minecraft:blackstone\");\n          } else if (distEff < 6.5) {\n            // Blast zone\n            const r = (x * 11 + z * 17) % 10;\n            if (r < 4) setVoxel(x, y, z, \"minecraft:basalt\");\n            else if (r < 7) setVoxel(x, y, z, \"minecraft:blackstone\");\n            else setVoxel(x, y, z, gScree);\n          } else if (distEff < 9.8) {\n            // Rim rubble\n            const r = (x * 5 + z * 9) % 10;\n            if (r < 4) setVoxel(x, y, z, gScree);\n            else if (r < 7) setVoxel(x, y, z, gPave);\n            else setVoxel(x, y, z, gBank);\n          } else {\n            setVoxel(x, y, z, gBank);\n          }\n        } else if (y >= groundH - 1) {\n          // Sub-surface scorched rock/dirt\n          if (distEff < 5.0) {\n            setVoxel(x, y, z, \"minecraft:basalt\");\n          } else {\n            setVoxel(x, y, z, gBank);\n          }\n        } else {\n          // Deep foundation\n          setVoxel(x, y, z, sPrimary);\n        }\n      }\n    }\n  }\n\n  // --- PHASE 2: Saucer Geometry ---\n  // The saucer is tilted: nose plowed down toward North (-Z), starboard roll\n  const saucerCenter = [11.5, 5.0, 11.5];\n  const pitch = -0.38; // ~22 degrees pitch down into ground\n  const roll = 0.22;   // ~12.5 degrees bank roll\n\n  const cosP = Math.cos(pitch);\n  const sinP = Math.sin(pitch);\n  const cosR = Math.cos(roll);\n  const sinR = Math.sin(roll);\n\n  // Orthonormal basis vectors for the saucer's local frame\n  const right = [cosR, sinR, 0];\n  const up = [-sinR * cosP, cosR * cosP, sinP];\n  const fwd = [sinR * sinP, -cosR * sinP, cosP];\n\n  const saucerRadius = 7.8;\n\n  for (let x = 1; x < W - 1; x++) {\n    for (let y = 1; y < H - 1; y++) {\n      for (let z = 1; z < D - 1; z++) {\n        const dx = x - saucerCenter[0];\n        const dy = y - saucerCenter[1];\n        const dz = z - saucerCenter[2];\n\n        // Transform world point into local craft coordinates\n        const lx = dx * right[0] + dy * right[1] + dz * right[2];\n        const ly = dx * up[0] + dy * up[1] + dz * up[2];\n        const lz = dx * fwd[0] + dy * fwd[1] + dz * fwd[2];\n\n        const r = Math.sqrt(lx * lx + lz * lz);\n        if (r > saucerRadius + 0.5) continue;\n\n        // Disc vertical profile thickness\n        const hullThick = 1.65 * (1.0 - Math.pow(Math.min(1.0, r / saucerRadius), 1.7));\n        \n        // Upper bridge dome\n        let domeTop = 0;\n        if (r < 3.4) {\n          domeTop = 0.6 + 2.1 * Math.sqrt(Math.max(0, 1.0 - (r * r) / (3.4 * 3.4)));\n        }\n\n        // Lower thruster core bulge\n        let coreBot = 0;\n        if (r < 3.0) {\n          coreBot = -0.5 - 1.3 * Math.sqrt(Math.max(0, 1.0 - (r * r) / (3.0 * 3.0)));\n        }\n\n        const topBound = Math.max(hullThick, domeTop);\n        const botBound = Math.min(-hullThick, coreBot);\n\n        // Check if point is inside saucer volume\n        if (ly < botBound - 0.2 || ly > topBound + 0.2) continue;\n\n        // Polar angle in saucer plane\n        const phi = Math.atan2(lz, lx);\n\n        // --- CRASH BREACH & TORN HULL ---\n        // Rear-starboard catastrophic breach where alien conduits are exposed\n        const inBreachSector = phi > 0.5 && phi < 2.2 && r > 2.6;\n        const breachNoise = Math.sin(phi * 4.0 + r * 1.8) + Math.cos(ly * 2.5);\n        const isTornAway = inBreachSector && breachNoise > -0.2 && ly > -0.6;\n\n        if (isTornAway) {\n          // Exposed alien guts / conduits\n          if (r < 4.2 && Math.abs(ly) < 0.8) {\n            const conduitType = (Math.abs(Math.round(lx * 3 + lz * 5))) % 4;\n            if (conduitType === 0) setVoxel(x, y, z, CONDUIT_CORE);\n            else if (conduitType === 1) setVoxel(x, y, z, CONDUIT_GLOW);\n            else if (conduitType === 2) setVoxel(x, y, z, CONDUIT_PIPE);\n            else setVoxel(x, y, z, CONDUIT_CRYSTAL);\n          } else if (Math.sin(phi * 6.0) > 0.4) {\n            // Exposed structural ribs\n            setVoxel(x, y, z, HULL_RIB);\n          }\n          // Other voxels in breach remain empty air/gash\n          continue;\n        }\n\n        // --- INTACT HULL & COCKPIT ---\n        if (r < 3.4 && ly > 0.9) {\n          // Upper canopy / bridge\n          if (ly > topBound - 0.5 || r > 2.8) {\n            // Dome frame vs glass\n            const spoke = Math.abs(Math.sin(phi * 2.0));\n            if (spoke < 0.25 || ly > 2.2) {\n              setVoxel(x, y, z, HULL_ALLOY);\n            } else {\n              setVoxel(x, y, z, DOME_GLASS);\n            }\n          } else {\n            // Interior bridge core\n            if (r < 1.4 && ly < 1.6) {\n              setVoxel(x, y, z, CONDUIT_CORE);\n            } else {\n              setVoxel(x, y, z, CONDUIT_GLOW);\n            }\n          }\n        } else if (r >= saucerRadius - 1.1) {\n          // Outer perimeter rim\n          const rimSpoke = Math.sin(phi * 4.0);\n          if (rimSpoke > 0.75) {\n            setVoxel(x, y, z, CONDUIT_GLOW);\n          } else if (rimSpoke < -0.75) {\n            setVoxel(x, y, z, CONDUIT_CORE);\n          } else {\n            setVoxel(x, y, z, HULL_ARMOR);\n          }\n        } else if (ly <= -0.6 && r < 3.0) {\n          // Lower reactor core\n          if (r < 1.5) {\n            setVoxel(x, y, z, CONDUIT_GLOW);\n          } else {\n            setVoxel(x, y, z, CONDUIT_CORE);\n          }\n        } else {\n          // Main hull plating layers\n          if (r >= 5.0 && r < 6.4) {\n            setVoxel(x, y, z, HULL_TRIM);\n          } else if (r >= 3.4 && r < 4.6) {\n            setVoxel(x, y, z, HULL_ALLOY);\n          } else {\n            const spoke = Math.abs(Math.sin(phi * 3.0));\n            if (spoke < 0.15) {\n              setVoxel(x, y, z, CONDUIT_PIPE);\n            } else {\n              setVoxel(x, y, z, (Math.abs(x + z) % 2 === 0) ? HULL_PLATE : HULL_ARMOR);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- PHASE 3: Embedded Hull Debris, Fire & Smoke ---\n  // Smoking impact emitters & sparks in the crater\n  const smokeSpots = [\n    [10, 2, 8],\n    [15, 3, 14],\n    [8, 3, 13],\n    [13, 2, 6]\n  ];\n\n  for (const [sx, sy, sz] of smokeSpots) {\n    if (getVoxel(sx, sy, sz)) {\n      setVoxel(sx, sy, sz, \"minecraft:blackstone\");\n      setVoxel(sx, sy + 1, sz, \"minecraft:soul_campfire[lit=true,facing=north]\");\n      // Ensure clearance above campfire for smoke pillar\n      setVoxel(sx, sy + 2, sz, \"minecraft:air\");\n      setVoxel(sx, sy + 3, sz, \"minecraft:air\");\n    }\n  }\n\n  // Scattered broken hull shards embedded in crater rim\n  const debris = [\n    [5, 4, 15, HULL_ALLOY],\n    [5, 5, 16, HULL_ARMOR],\n    [18, 4, 7, HULL_TRIM],\n    [19, 5, 6, CONDUIT_CORE],\n    [17, 4, 17, HULL_PLATE],\n    [18, 5, 17, CONDUIT_PIPE],\n    [7, 3, 5, HULL_ARMOR],\n    [6, 4, 5, HULL_ALLOY]\n  ];\n\n  for (const [dx, dy, dz, block] of debris) {\n    setVoxel(dx, dy, dz, block);\n  }\n\n  // Protruding lightning rod conduits from the breach\n  const rods = [\n    [15, 6, 16, \"minecraft:lightning_rod[facing=east]\"],\n    [16, 5, 15, \"minecraft:lightning_rod[facing=up]\"],\n    [14, 7, 17, \"minecraft:end_rod[facing=up]\"],\n    [17, 7, 13, \"minecraft:lightning_rod[facing=north]\"]\n  ];\n\n  for (const [rx, ry, rz, rod] of rods) {\n    if (!getVoxel(rx, ry, rz)) {\n      setVoxel(rx, ry, rz, rod);\n    }\n  }\n\n  // --- PHASE 4: Emit All Blocks Deterministically ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = getVoxel(x, y, z);\n        if (b && b !== \"minecraft:air\") {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Crashed Alien Saucer\",\n    seatY: seatY,\n    anchors: {\n      front: [12, 3, 0],\n      impact: [12, 2, 7],\n      breach: [16, 6, 15],\n      reactor: [12, 5, 12]\n    }\n  };\n}"
+    },
+    "drop_pod": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        11,
+        11
+      ],
+      "sourceHash": "b3:f9ee3d38be992f74fdd17e9477e9fd7ee36b63b01cc91ec2259f99b1372a7701",
+      "outputHash": "b3:73c9029b55ec7621a6364252249bca1e57508181fd01d2e0ca7c47a6427c9c28",
+      "source": "export const envelope = [11, 11, 11];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function put(x, y, z, block) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      grid[ix][iy][iz] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      return grid[ix][iy][iz];\n    }\n    return null;\n  }\n\n  // --- THEME PALETTES & PROCEDURAL SEEDING ---\n  const groundPavement = api.theme?.ground?.pavement || \"minecraft:coarse_dirt\";\n  const groundPlinth = api.theme?.ground?.plinth || \"minecraft:cobblestone\";\n  const groundScree = api.theme?.ground?.scree || \"minecraft:gravel\";\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n\n  // Pod class variants across the 12 plugin instances\n  const podClass = (api.instance.index + Math.floor(api.random() * 3)) % 3;\n  const hatchStatus = (api.instance.index + Math.floor(api.random() * 3)) % 3;\n  const brokenFin = api.random() < 0.65 ? Math.floor(api.random() * 4) : -1;\n  const topType = Math.floor(api.random() * 3);\n\n  let primaryHull, secondaryHull, accentHull, energyVein, glowingCore, windowGlass;\n  let strutBlock, strutStairs, strutSlab, scorchSolid, scorchSlag;\n\n  if (podClass === 0) {\n    // Void Alloy / Stealth Vanguard\n    primaryHull = \"minecraft:polished_blackstone_bricks\";\n    secondaryHull = \"minecraft:polished_blackstone\";\n    accentHull = \"minecraft:chiseled_polished_blackstone\";\n    energyVein = \"minecraft:crying_obsidian\";\n    glowingCore = \"minecraft:sea_lantern\";\n    windowGlass = \"minecraft:cyan_stained_glass\";\n    strutBlock = \"minecraft:polished_blackstone_wall\";\n    strutStairs = \"minecraft:polished_blackstone_stairs\";\n    strutSlab = \"minecraft:polished_blackstone_slab[type=bottom]\";\n    scorchSolid = \"minecraft:polished_blackstone\";\n    scorchSlag = \"minecraft:crying_obsidian\";\n  } else if (podClass === 1) {\n    // Biomechanical Dread Spore\n    primaryHull = \"minecraft:deepslate_tiles\";\n    secondaryHull = \"minecraft:polished_deepslate\";\n    accentHull = \"minecraft:dark_prismarine\";\n    energyVein = \"minecraft:crying_obsidian\";\n    glowingCore = \"minecraft:shroomlight\";\n    windowGlass = \"minecraft:tinted_glass\";\n    strutBlock = \"minecraft:deepslate_tile_wall\";\n    strutStairs = \"minecraft:polished_deepslate_stairs\";\n    strutSlab = \"minecraft:polished_deepslate_slab[type=bottom]\";\n    scorchSolid = \"minecraft:smooth_basalt\";\n    scorchSlag = \"minecraft:obsidian\";\n  } else {\n    // Thermobaric Meteor Breaker\n    primaryHull = \"minecraft:polished_blackstone\";\n    secondaryHull = \"minecraft:smooth_basalt\";\n    accentHull = \"minecraft:obsidian\";\n    energyVein = \"minecraft:magma_block\";\n    glowingCore = \"minecraft:ochre_froglight\";\n    windowGlass = \"minecraft:orange_stained_glass\";\n    strutBlock = \"minecraft:blackstone_wall\";\n    strutStairs = \"minecraft:blackstone_stairs\";\n    strutSlab = \"minecraft:blackstone_slab[type=bottom]\";\n    scorchSolid = \"minecraft:blackstone\";\n    scorchSlag = \"minecraft:magma_block\";\n  }\n\n  // Tilt dynamics (slight impact lean)\n  const cx = 5.0;\n  const cz = 5.0;\n  const tiltX = (api.random() - 0.5) * 0.22;\n  const tiltZ = (api.random() - 0.5) * 0.22;\n\n  function podCenter(y) {\n    return [cx + tiltX * (y - 2), cz + tiltZ * (y - 2)];\n  }\n\n  // --- 1. CRATER & SCORCHED IMPACT BED (Y = 0, 1) ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.hypot(dx, dz);\n\n      // Level Y=0: Base impact disc\n      if (dist <= 4.9) {\n        let b;\n        if (dist <= 2.8) {\n          b = api.random() < 0.4 ? scorchSlag : scorchSolid;\n        } else if (dist <= 4.0) {\n          b = api.random() < 0.5 ? scorchSolid : (api.random() < 0.5 ? groundPlinth : groundPavement);\n        } else {\n          b = api.random() < 0.5 ? groundPavement : (api.random() < 0.5 ? groundScree : stonePrimary);\n        }\n        put(x, 0, z, b);\n      }\n\n      // Terrain rising integration\n      const th = Math.floor(api.heightAt(x, z));\n      if (th > 0 && dist <= 5.0) {\n        for (let y = 1; y <= Math.min(th, 2); y++) {\n          put(x, y, z, dist <= 3.5 ? scorchSolid : groundPlinth);\n        }\n      }\n\n      // Level Y=1: Ejecta rim and impact shelf\n      if (dist <= 4.4) {\n        const angle = Math.atan2(dz, dx);\n        const rimNoise = Math.sin(angle * 4 + api.random()) * 0.4;\n        if (dist <= 3.2) {\n          put(x, 1, z, api.random() < 0.3 ? energyVein : scorchSolid);\n        } else if (dist + rimNoise <= 4.3 && api.random() < 0.75) {\n          put(x, 1, z, api.random() < 0.35 ? scorchSlag : (api.random() < 0.45 ? scorchSolid : groundPavement));\n        }\n      }\n    }\n  }\n\n  // Radial scorch spokes\n  const numSpokes = 5 + Math.floor(api.random() * 3);\n  for (let s = 0; s < numSpokes; s++) {\n    const spAngle = (s * Math.PI * 2) / numSpokes + (api.random() - 0.5) * 0.35;\n    for (let r = 2.0; r <= 4.8; r += 0.8) {\n      const sx = cx + Math.cos(spAngle) * r;\n      const sz = cz + Math.sin(spAngle) * r;\n      put(sx, 0, sz, api.random() < 0.6 ? energyVein : scorchSlag);\n      if (r <= 3.8 && api.random() < 0.5) {\n        put(sx, 1, sz, scorchSolid);\n      }\n    }\n  }\n\n  // --- 2. POD HULL PROFILE & CHAMBER (Y = 1 to 8) ---\n  const radiusProfile = [\n    0,     // y=0 (crater)\n    3.3,   // y=1 (skirt/base)\n    3.0,   // y=2 (lower hull)\n    2.8,   // y=3 (hatch sill)\n    2.6,   // y=4 (mid capsule)\n    2.3,   // y=5 (upper capsule)\n    1.9,   // y=6 (taper neck)\n    1.5,   // y=7 (nose cone)\n    1.1    // y=8 (cap dome)\n  ];\n\n  for (let y = 1; y <= 8; y++) {\n    const [px, pz] = podCenter(y);\n    const R = radiusProfile[y];\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - px;\n        const dz = z - pz;\n        // Faceted octagonal distance\n        const octDist = Math.max(Math.abs(dx), Math.abs(dz), (Math.abs(dx) + Math.abs(dz)) * 0.72);\n\n        if (octDist <= R) {\n          // Hollow crew / reactor core chamber\n          const isInterior = octDist <= R - 1.1 && y >= 2 && y <= 5;\n          const isNorthHatchOpening = dz < -0.8 && Math.abs(dx) <= 0.85 && y >= 2 && y <= 4;\n\n          if (isInterior) {\n            if (y === 2 || y === 3) {\n              if (Math.hypot(dx, dz) <= 1.1) {\n                put(x, y, z, glowingCore);\n              } else {\n                put(x, y, z, energyVein);\n              }\n            } else if (y === 4 || y === 5) {\n              if (Math.hypot(dx, dz) <= 0.8) {\n                put(x, y, z, glowingCore);\n              } else {\n                put(x, y, z, \"minecraft:air\");\n              }\n            }\n          } else {\n            // Hull shell\n            if (isNorthHatchOpening && hatchStatus === 0) {\n              // Blown open hatch - clear doorway for beam of light\n              put(x, y, z, \"minecraft:air\");\n            } else {\n              const isCornerRib = Math.abs(Math.abs(dx) - Math.abs(dz)) < 0.45;\n              const isVeinSeam = (x * 3 + y * 5 + z * 7) % 8 === 0;\n\n              let block = primaryHull;\n              if (isCornerRib) {\n                block = accentHull;\n              } else if (isVeinSeam) {\n                block = energyVein;\n              } else if ((x + y + z) % 2 === 0) {\n                block = secondaryHull;\n              }\n              put(x, y, z, block);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- 3. HATCH DETAILS & LIGHT EMISSION (Facing Local North -Z) ---\n  const [px2, pz2] = podCenter(2);\n  const [px3, pz3] = podCenter(3);\n\n  if (hatchStatus === 0) {\n    // Blown open: Detached blast door lying in the crater to the North\n    put(px2, 2, pz2 - 1, glowingCore);\n    put(px3, 3, pz3 - 1, \"minecraft:air\");\n\n    // Shattered door slab on ground\n    put(px2 - 0.5, 1, pz2 - 3.2, primaryHull);\n    put(px2 + 0.5, 1, pz2 - 3.2, accentHull);\n    put(px2, 1, pz2 - 4.0, strutSlab);\n    // Glowing alien spill / plasma puddle leading north toward town\n    put(px2, 1, pz2 - 2.5, energyVein);\n    put(px2, 1, pz2 - 4.8, energyVein);\n  } else if (hatchStatus === 1) {\n    // Cracked ajar: glowing slit with displaced heavy hatch door\n    put(px2, 2, pz2 - 2.0, windowGlass);\n    put(px2, 3, pz2 - 2.0, windowGlass);\n    put(px2, 2, pz2 - 1.0, glowingCore);\n\n    // Door angled outward on hydraulic hinge\n    put(px2, 2, pz2 - 2.8, strutStairs + \"[facing=south,half=bottom]\");\n    put(px2, 3, pz2 - 2.6, strutSlab);\n    put(px2 + 1, 2, pz2 - 2.4, primaryHull);\n    put(px2, 1, pz2 - 3.0, energyVein);\n  } else {\n    // Breached & Venting: fracture seam with crystal/energy crystallization\n    put(px2, 2, pz2 - 1.8, energyVein);\n    put(px2 - 1, 3, pz2 - 1.8, windowGlass);\n    put(px2, 3, pz2 - 1.8, glowingCore);\n    put(px2 + 1, 4, pz2 - 1.6, energyVein);\n    put(px2, 1, pz2 - 2.2, scorchSlag);\n  }\n\n  // --- 4. KINETIC LANDING STRUTS & FINS ---\n  const [px1, pz1] = podCenter(1);\n  const finAngles = [\n    Math.PI * 0.25, // NE\n    Math.PI * 0.75, // NW\n    Math.PI * 1.25, // SW\n    Math.PI * 1.75  // SE\n  ];\n\n  for (let i = 0; i < 4; i++) {\n    const angle = finAngles[i];\n    const cosA = Math.cos(angle);\n    const sinA = Math.sin(angle);\n    const isBroken = (i === brokenFin);\n\n    if (!isBroken) {\n      // Foot pad\n      put(px1 + cosA * 3.8, 1, pz1 + sinA * 3.8, accentHull);\n      put(px1 + cosA * 3.8, 0, pz1 + sinA * 3.8, scorchSolid);\n\n      // Diagonal strut link\n      put(px1 + cosA * 3.0, 2, pz1 + sinA * 3.0, strutBlock);\n      put(px1 + cosA * 2.3, 3, pz1 + sinA * 2.3, strutBlock);\n\n      // Upper fin strake\n      put(px1 + cosA * 1.9, 4, pz1 + sinA * 1.9, primaryHull);\n      put(px1 + cosA * 1.6, 5, pz1 + sinA * 1.6, accentHull);\n    } else {\n      // Damaged snapped strut stump\n      put(px1 + cosA * 1.8, 4, pz1 + sinA * 1.8, scorchSlag);\n      put(px1 + cosA * 3.9, 1, pz1 + sinA * 3.9, strutBlock);\n      put(px1 + cosA * 4.2, 0, pz1 + sinA * 4.2, energyVein);\n    }\n  }\n\n  // --- 5. TOP AVIONICS SPIRE & EMITTER (Y = 8, 9, 10) ---\n  const [px8, pz8] = podCenter(8);\n  const [px9, pz9] = podCenter(9);\n\n  // Level Y=8: Cap ring\n  put(px8, 8, pz8, glowingCore);\n  put(px8 + 1, 8, pz8, accentHull);\n  put(px8 - 1, 8, pz8, accentHull);\n  put(px8, 8, pz8 + 1, accentHull);\n  put(px8, 8, pz8 - 1, accentHull);\n\n  // Level Y=9: Exhaust manifold / nozzle ring\n  put(px9, 9, pz9, accentHull);\n  put(px9 + 1, 9, pz9, strutSlab);\n  put(px9 - 1, 9, pz9, strutSlab);\n  put(px9, 9, pz9 + 1, strutSlab);\n  put(px9, 9, pz9 - 1, strutSlab);\n\n  // Level Y=10: Apex emitter\n  if (topType === 0) {\n    put(px9, 10, pz9, \"minecraft:lightning_rod[facing=up]\");\n  } else if (topType === 1) {\n    put(px9, 10, pz9, energyVein);\n  } else {\n    put(px9, 10, pz9, \"minecraft:iron_bars\");\n  }\n\n  // --- 6. FLOOD-FILL CONNECTIVITY & SOLID COUNT ASSURANCE ---\n  const isSolid = (x, y, z) => {\n    const b = get(x, y, z);\n    return b !== null && b !== \"minecraft:air\";\n  };\n\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n\n  const queue = [];\n  if (isSolid(5, 0, 5)) {\n    queue.push([5, 0, 5]);\n    visited[5][0][5] = 1;\n  } else {\n    outer: for (let y = 0; y < H; y++) {\n      for (let x = 3; x <= 7; x++) {\n        for (let z = 3; z <= 7; z++) {\n          if (isSolid(x, y, z)) {\n            queue.push([x, y, z]);\n            visited[x][y][z] = 1;\n            break outer;\n          }\n        }\n      }\n    }\n  }\n\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [qx, qy, qz] = queue[head++];\n    for (const [dx, dy, dz] of dirs) {\n      const nx = qx + dx, ny = qy + dy, nz = qz + dz;\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        if (!visited[nx][ny][nz] && isSolid(nx, ny, nz)) {\n          visited[nx][ny][nz] = 1;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // Remove disconnected stray fragments\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (isSolid(x, y, z) && !visited[x][y][z]) {\n          grid[x][y][z] = null;\n        }\n      }\n    }\n  }\n\n  // Ensure solid count is safely above 500 voxels\n  let solidCount = queue.length;\n  if (solidCount < 520) {\n    for (let x = 1; x < W - 1; x++) {\n      for (let z = 1; z < D - 1; z++) {\n        if (!isSolid(x, 0, z) && Math.hypot(x - cx, z - cz) <= 4.8) {\n          put(x, 0, z, scorchSolid);\n          solidCount++;\n        }\n        if (solidCount < 520 && !isSolid(x, 1, z) && Math.hypot(x - cx, z - cz) <= 3.6) {\n          put(x, 1, z, primaryHull);\n          solidCount++;\n        }\n      }\n    }\n  }\n\n  // --- 7. EMIT TO WORLD API ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[x][y][z];\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"drop_pod\",\n    seatY: 0,\n    anchors: {\n      front: [5, 1, 0],\n      hatch: [5, 2, 2],\n      core: [5, 3, 5]\n    }\n  };\n}"
+    }
+  }
+}

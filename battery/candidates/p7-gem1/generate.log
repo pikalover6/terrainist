@@ -1,0 +1,66 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.4,"formality":0.1,"climate":{"biome":"minecraft:mushroom_fields","temperature":0.2,"humidity":0.8},"character":{"label":"glowing mushroom village","materialTheme":"temperate_timber","formPacks":["arcane_magical"],"urbanForm":"grown","flora":{"prefer":["fungal","glow","glowcap","mushroom_giant_red","mushroom_shelf_brown"]},"archetypes":{"prefer":["cottage","tavern","watchtower"]}},"tokens":{"terrain":"a sheltered vale filled with towering, bioluminescent mushrooms forming a glowing canopy","village_layout":"dwellings, stilt platforms, and raised walkways woven between the giant mushroom stems and under the glowing caps"}}
+           1 attempt(s), 6558 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.glowing_vale_mushrooms.params.area
+  tokens     75205 in + 10572 out = 85777  ($0.0480)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_mother_glowcap [landmark]  1 attempt(s), 27569 tokens  ($0.0475), 1 warning(s)
+  ok     cap_suspended_dwelling [plugin]  1 attempt(s), 16115 tokens  ($0.0261), 8 warning(s)
+  tokens     6055 in + 38736 out = 44791  (27903 of the out reasoning)  ($0.0749)
+
+wiring     2 program(s) authored but never invoked: colossal_mother_glowcap [landmark], cap_suspended_dwelling [plugin]
+
+  wired in 1 attempt(s); 90032 in + 16689 out = 106721 tokens  ($0.0402)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.glowing_vale_mushrooms.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+warning LOAM-T119 SCATTER_EMPTY at world.glowing_vale_mushrooms: forest node "glowing_vale_mushrooms" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.38} covers 1 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+  revision 1 authored in 2 attempt(s)
+  tokens     207281 in + 30726 out = 238007  ($0.1063)
+
+compiled "glowing_mushroom_vale" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale
+  seed       307
+  region     512x512 at (-256, -256)
+  heights    57.4..121.5  sea 63  snow line 118.6
+  land       97.8% of columns above sea level
+  biomes     forest 67.8%, windswept_hills 15.8%, plains 12.8%, ocean 2.0%, river 0.6%, stony_peaks 0.6%, beach 0.4%
+  trees      5649 (glowing_vale_mushrooms=1634, vale_slopes_fill=4225)
+  chunks     1024
+  blocks     38323812 (588692 vegetation)
+  markers    96
+  spawn      [0, 83, 0]
+  timings    validate 2ms  field 216ms  layout 112ms  climate 38ms  columns 355ms  caves 0ms  structures 269ms  programs 90ms  scatter 1179ms  biomes 20ms  validators 3ms  emit 3324ms  total 5627ms
+  programs   world.elder_shroom_house=colossal_mother_glowcap×1 (2961 blocks), world.stilt_dwellings=cap_suspended_dwelling×6 (3392 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.spore_paths: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W472 BIOME_INTENT_UNKNOWN at world: climate intent names the biome "minecraft:mushroom_fields", which this emitter's table does not carry; falling back to the land-use clamp's derived biome
+  fix: name one of the 35 biomes this emitter paints: minecraft:ocean, minecraft:deep_ocean, minecraft:cold_ocean, minecraft:deep_cold_ocean, minecraft:beach, minecraft:snowy_beach, minecraft:plains, minecraft:snowy_plains, minecraft:forest, minecraft:taiga, minecraft:windswept_hills, minecraft:stony_peaks, minecraft:snowy_slopes, minecraft:river, minecraft:basalt_deltas, minecraft:dark_forest, minecraft:birch_forest, minecraft:old_growth_birch_forest, minecraft:flower_forest, minecraft:windswept_forest, minecraft:pale_garden, minecraft:cherry_grove, minecraft:sunflower_plains, minecraft:meadow, minecraft:grove, minecraft:savanna, minecraft:windswept_savanna, minecraft:jungle, minecraft:sparse_jungle, minecraft:swamp, minecraft:snowy_taiga, minecraft:old_growth_spruce_taiga, minecraft:old_growth_pine_taiga, minecraft:jagged_peaks, minecraft:frozen_peaks. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2412 footprint columns (plus 12340 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 87% of 7941 ring columns); snow policy auto resolved to "never" on a 0/2412 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 1 compile-feedback round(s), 372518 in + 57987 out = 430505 tokens (11378 of the out reasoning) ($0.1945)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p7-gem/glowing_mushroom_vale

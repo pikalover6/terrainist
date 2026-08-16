@@ -1,0 +1,331 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"ancient","wealth":0.7,"decline":0.1,"formality":0.6,"event":{"kind":"siege","severity":0.9,"recency":0},"climate":{"temperature":0.7,"humidity":-0.2,"snow":"never"},"character":{"label":"walled city of Troy","materialTheme":"sun_clay","fortification":"walled","formPacks":["classical_mediterranean"],"motifs":{"roofType":"flat","massing":"blocky","windowRhythm":"sparse","ornamentDensity":0.4},"urbanForm":"grown","courtyards":0.6,"ground":"stepped"},"tokens":{"terrain":"a fortified city on a rise above the coastal plain; Aegean shore in view in the distance","icons":"colossal wooden horse standing inside the city walls near the main gate; monumental cyclopean walls and gate towers; deserted Greek beachhead camp across the plain; royal citadel megaron rising above dense flat-roofed quarters","event_direction":"Achaean soldiers concealed inside the hollow wooden horse awaiting nightfall to open the gates","infra":"processional cart_track from the beach plain through the Scaean gates into the central plaza"}}
+           1 attempt(s), 6477 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.trojan_olive_groves.params.area
+  tokens     75311 in + 11600 out = 86911  ($0.0500)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     trojan_horse [landmark]  1 attempt(s), 23111 tokens  ($0.0390), 4 warning(s)
+  ok     greek_siege_camp [plugin]  1 attempt(s), 26069 tokens  ($0.0446), 3 warning(s)
+  tokens     5757 in + 43423 out = 49180  (29012 of the out reasoning)  ($0.0836)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.trojan_olive_groves.params.area: "area.radius" is 0.3, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.3 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.3 on a 1024-wide region, "radius": 154).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.trojan_horse_monument: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T119 SCATTER_EMPTY at world.trojan_olive_groves: forest node "trojan_olive_groves" placed 0 trees: its area {"at":[0.65,0.48],"radius":0.3} covers 0 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.3 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.trojan_horse_monument: placed after constraint_demoted (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.72)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.05)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     93798 in + 19947 out = 113745  ($0.0477)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-T119 SCATTER_EMPTY at world.trojan_olive_groves: forest node "trojan_olive_groves" placed 0 trees despite 156 plantable columns: density 0.08 at spacing 4 drew no accepted candidate.
+  fix: raise "density" (toward 1) or lower "spacing" (toward 4), or enlarge "area" so the jittered grid offers more candidates.
+
+  revision 2 authored in 1 attempt(s)
+  tokens     93396 in + 19633 out = 113029  ($0.0718)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.trojan_olive_groves.params.area: "area.radius" is 0.25, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.25 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.25 on a 1024-wide region, "radius": 128).
+warning LOAM-T119 SCATTER_EMPTY at world.trojan_olive_groves: forest node "trojan_olive_groves" placed 0 trees: its area {"at":[0.65,0.48],"radius":0.25} covers 0 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.25 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+  revision 3 authored in 1 attempt(s)
+  tokens     93619 in + 18373 out = 111992  ($0.0696)
+
+compiled "trojan_horse_troy" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy
+  seed       303
+  region     512x512 at (-256, -256)
+  heights    41.6..115.9  sea 63  snow line 113.3
+  land       79.1% of columns above sea level
+  biomes     forest 40.4%, savanna 32.5%, ocean 20.6%, windswept_savanna 3.8%, beach 2.7%, deep_ocean 0.0%
+  trees      2091 (trojan_olive_groves=179, plains_scrub=2110)
+  chunks     1024
+  blocks     35950943 (104723 vegetation)
+  markers    84
+  spawn      [0, 80, 0]
+  timings    validate 2ms  field 339ms  layout 243ms  climate 36ms  columns 22ms  caves 0ms  structures 3574ms  programs 46ms  scatter 998ms  biomes 23ms  validators 3ms  emit 1679ms  total 7021ms
+  programs   world.trojan_horse_monument=trojan_horse×1 (1325 blocks), world.abandoned_beach_camp=greek_siege_camp×6 (1608 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.trojan_way: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.troy_citadel: decline 0.10 gives a ruin share of 0.00: 0 of 34 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.troy_citadel: no block in "world.troy_citadel" can hold a courtyard: 202 of 216 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 10 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 44 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 12 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 24 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 7 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 9 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 44 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 22 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 10 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 9 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 7 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 9 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 37 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 53 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 21 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 26 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 17 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 6 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 6 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 5 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 9 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 9 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 6 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 9 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 6 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 6 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 5 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 8 blocks over 6 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 4 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 5 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: multi-level ground: 53 retaining wall(s) over 1266 column(s) (0 parapeted), 0 kerb seam(s), 72 bank(s), and 3 seam(s) a building already stood on; 667 seam column(s) got no wall (46 building, 67 water, 132 shortRun, 367 tallDrop, 55 builtSeam); 1674 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: built faces by finished drop (§13.8): 1140 face column(s) along the seams a wall was built on — 66 at 1, 177 at 2, 114 at 3, 659 at 4, 36 at 5, 88 at 6
+  fix: No action needed.
+
+warning LOAM-T228 PROP_RESEATED at world.beached_achaean_ship: no water within 48 blocks of the longship's coarse target, so it sought the waterline and seated at [-146, -127]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: every cut face finished: 3221 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.processional_track: the "along" route names "trojan_way": "trojan_way" is not a corridor with a line of its own — pointing "along" at a building buys you nothing
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 42652 footprint columns (plus 18997 feathered over 40 columns) to minecraft:savanna, from the ambient majority (minecraft:savanna, 81% of 10890 ring columns); snow policy never resolved to "never" on a 0/42652 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 3 compile-feedback round(s), 356124 in + 69553 out = 425677 tokens (11759 of the out reasoning) ($0.2391)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p3-gem/trojan_horse_troy

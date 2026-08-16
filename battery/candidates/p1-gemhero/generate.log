@@ -1,0 +1,140 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"climate":{"temperature":0.6,"humidity":0.5,"snow":"never"},"tokens":{"event_direction":"pirate corsairs and unicorn defenders facing off across the water with shore batteries and naval lines","region_pirate_island":"era renaissance, wealth 0.35, decline 0.45, formality 0.15; formPacks nautical_pirate; materialTheme temperate_timber; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; ramshackle fortified cove, shore batteries, careened hulls, black powder redoubts","region_unicorn_island":"era medieval, wealth 0.85, decline 0.05, formality 0.75; formPacks arcane_magical; materialTheme white_quartz; prefer archetypes church, manor, watchtower; flora glow, ancient; sacred crystal groves, enchanted marble battlements, unicorn sanctuaries, rune wards overlooking the coast"}}
+           1 attempt(s), 6408 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.pirate_woods.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.unicorn_woods.params.area
+  tokens     74754 in + 13498 out = 88252  ($0.0533)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     unicorn_colossus [landmark]  1 attempt(s), 28257 tokens  ($0.0488), 22 warning(s)
+  ok     corsair_dreadnought [landmark]  2 attempt(s), 50837 tokens  ($0.0628), 25 warning(s)
+  ok     shore_battery [plugin]  2 attempt(s), 66761 tokens  ($0.0963), 1 warning(s)
+  tokens     43761 in + 102094 out = 145855  (65185 of the out reasoning)  ($0.2078)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p1-gem37-v2/isles_of_war.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The document failed to compile — 11 problem(s):
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.pirate_woods.params.area: "area.radius" is 0.22, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.22 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.22 on a 1024-wide region, "radius": 113).
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.unicorn_woods.params.area: "area.radius" is 0.24, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.24 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.24 on a 1024-wide region, "radius": 123).
+warning LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.pirate_cove: basin interior does not sit below its rim; water fill skipped
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_sanctuary: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_sanctuary: none of the 97 candidate footprints could stand on the ground — 25 sat below sea level, 72 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E406 UNSATISFIABLE at world.guardian_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (96 of 97 candidates were also vetoed by the ground: 0 below sea level, 94 on water or lava, 2 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+error LOAM-E336 PROGRAM_GATE_FAILED at world.flagship_black_tide: instance 0 of "corsair_dreadnought" wrote "minecraft:chain", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.pirate_batteries: no site would take "shore_battery"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+error LOAM-E336 PROGRAM_GATE_FAILED at world.unicorn_defenses: no site would take "shore_battery"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+warning LOAM-T119 SCATTER_EMPTY at world.pirate_woods: forest node "pirate_woods" placed 0 trees: its area {"at":[0.22,0.78],"radius":0.22} covers 0 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.22 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+warning LOAM-T119 SCATTER_EMPTY at world.unicorn_woods: forest node "unicorn_woods" placed 0 trees: its area {"at":[0.78,0.22],"radius":0.24} covers 0 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.24 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+  revision 1 authored in 2 attempt(s)
+  tokens     255082 in + 57378 out = 312460  ($0.1687)
+
+
+compile feedback, round 2 of 4:
+
+The document failed to compile — 6 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_haven: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.pirate_haven: none of the 97 candidate footprints could stand on the ground — 24 sat below sea level, 73 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_sanctuary: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_sanctuary: none of the 97 candidate footprints could stand on the ground — 20 sat below sea level, 77 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+error LOAM-E336 PROGRAM_GATE_FAILED at world.flagship_black_tide: instance 0 of "corsair_dreadnought" wrote "minecraft:chain", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.pirate_batteries: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+  revision 2 authored in 1 attempt(s)
+  tokens     102121 in + 29412 out = 131533  ($0.0934)
+
+
+compile feedback, round 3 of 4:
+
+The document failed to compile — 3 problem(s):
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.flagship_black_tide: instance 0 of "corsair_dreadnought" wrote "minecraft:chain", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.pirate_batteries: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.unicorn_defenses: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+  revision 3 authored in 1 attempt(s)
+  tokens     101705 in + 29277 out = 130982  ($0.0930)
+
+
+compile feedback, round 4 of 4:
+
+The document failed to compile — 3 problem(s):
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.flagship_black_tide: instance 0 of "corsair_dreadnought" wrote "minecraft:chain", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.pirate_batteries: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+error LOAM-E336 PROGRAM_GATE_FAILED at world.unicorn_defenses: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+  revision 4 authored in 1 attempt(s)
+  tokens     101705 in + 28902 out = 130607  ($0.0923)
+
+terrainist: the authored document failed to compile — 11 problem(s)
+
+note LOAM-I512 DISTRICT_RUINS at world.pirate_haven: decline 0.45 gives a ruin share of 0.20: 0 of 4 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.unicorn_sanctuary: decline 0.05 gives a ruin share of 0.00: 0 of 1 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.unicorn_sanctuary: no block in "world.unicorn_sanctuary" can hold a courtyard: 5 of 9 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world.unicorn_sanctuary: intent.era resolves to "medieval", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-T234 INFRA_RUN_REFUSED at world.unicorn_rampart_battery: "cannon_battery" built 231 of 1239 route columns — 1008 were refused by collision or unbuildable ground
+  fix: no change needed if the gaps read as a worn line on a walk — otherwise move the route clear of what it is crossing with a larger margin or offset
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.flagship_black_tide: instance 0 of "corsair_dreadnought" wrote "minecraft:chain", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+warning LOAM-W337 PROGRAM_DROPPED at world.pirate_batteries: 1 candidate site for "shore_battery" was refused: the ground under them falls away like a cliff, and no pad would seat a structure across that
+  fix: widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.pirate_batteries: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+warning LOAM-W337 PROGRAM_DROPPED at world.unicorn_defenses: 6 candidate sites for "shore_battery" were refused: the ground under them falls away like a cliff, and no pad would seat a structure across that
+  fix: widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on
+
+error LOAM-E336 PROGRAM_GATE_FAILED at world.unicorn_defenses: instance 3 of "shore_battery" wrote "minecraft:chain[axis=y,waterlogged=false]", which the pinned registry does not know
+  fix: use full block strings the pinned registry knows, states included; the authoring gate checks this, so a failure here means the document was authored against a different Minecraft version
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 13478 footprint columns (plus 17404 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 100% of 9534 ring columns); snow policy never resolved to "never" on a 0/13478 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+the document was kept at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p1-gem37-v2/isles_of_war.loam.json
+  authoring  5 model run(s), 4 compile-feedback round(s), 635367 in + 158467 out = 793834 tokens (25118 of the out reasoning) ($0.5008)

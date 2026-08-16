@@ -1,0 +1,818 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowing_mushroom_vale",
+    "worldSeed": "307",
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:mushroom_fields",
+      "temperature": 0.2,
+      "humidity": 0.8
+    },
+    "character": {
+      "label": "glowing mushroom village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "arcane_magical"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "glowcap",
+          "mushroom_giant_red",
+          "mushroom_shelf_brown"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "stilt_house",
+          "apothecary",
+          "tavern",
+          "witch_hut",
+          "alchemists_tower"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a sheltered vale filled with towering, bioluminescent mushrooms forming a glowing canopy",
+      "village_layout": "dwellings, stilt platforms, and raised walkways woven between the giant mushroom stems and under the glowing caps"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:mycelium",
+            4
+          ],
+          [
+            "minecraft:moss_block",
+            3
+          ],
+          [
+            "minecraft:podzol",
+            1
+          ]
+        ]
+      },
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:rooted_dirt"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Vale of the Glowing Caps",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a sheltered vale basin surrounded by rolling ridges",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 32,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high enclosing ridge to the north",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.2
+                ],
+                [
+                  0.5,
+                  0.15
+                ],
+                [
+                  0.85,
+                  0.2
+                ]
+              ],
+              "width": 65,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high enclosing ridge to the south",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.8
+                ],
+                [
+                  0.5,
+                  0.85
+                ],
+                [
+                  0.85,
+                  0.8
+                ]
+              ],
+              "width": 65,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "western flanking rise",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.25
+                ],
+                [
+                  0.12,
+                  0.5
+                ],
+                [
+                  0.15,
+                  0.75
+                ]
+              ],
+              "width": 50,
+              "height": 40,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "eastern flanking rise",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.85,
+                  0.25
+                ],
+                [
+                  0.88,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.75
+                ]
+              ],
+              "width": 50,
+              "height": 40,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "vale_floor",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sheltered meadow where the village sits",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 110,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "spore_pool",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a still tarn among the giant stems",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.38,
+                0.44
+              ],
+              "radius": 34,
+              "depth": 8,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "glowing_vale_mushrooms",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the dense bioluminescent mushroom canopy of the vale",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 130
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.2,
+            "flowers": 0.08,
+            "deadwood": 0.06
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "vale_glowcap",
+                  "shape": "glowcap"
+                },
+                {
+                  "id": "vale_red_giant",
+                  "shape": "mushroom_giant_red"
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "shelf_fungus",
+              "shape": "mushroom_shelf_brown",
+              "weight": 3
+            },
+            {
+              "id": "spore_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "vale_slopes_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scattered fungal growth and birch on the surrounding slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.04,
+          "spacing": 5,
+          "clumping": 0.4,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.04,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "slope_birch",
+              "shape": "birch_slim",
+              "weight": 2
+            },
+            {
+              "id": "slope_shelf",
+              "shape": "mushroom_shelf_brown",
+              "weight": 2
+            },
+            {
+              "id": "wild_red_giant",
+              "shape": "mushroom_giant_red",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the village clearing among the giant stems",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "elder_shroom_house",
+        "kind": "generator",
+        "generator": "authored:colossal_mother_glowcap",
+        "label": "the colossal mother glowcap rising above the village clearing",
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 28
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "plaza"
+          }
+        },
+        "tags": [
+          "landmark",
+          "house"
+        ]
+      },
+      {
+        "id": "stilt_dwellings",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "cap-suspended dwellings woven between the giant mushroom stems",
+        "params": {
+          "program": "cap_suspended_dwelling",
+          "count": 6,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.28
+          },
+          "spacing": 18,
+          "maxSlope": 25,
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "tavern_of_the_cap",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mushroom tavern on the clearing edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              7
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "spore_apothecary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "an herbalist brewing tinctures from luminescent spores",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apothecary",
+          "trade"
+        ]
+      },
+      {
+        "id": "witch_hermitage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a crooked witch hut nestled under a low shelf cap",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 16,
+            "max": 65
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "witch_hut",
+          "house"
+        ]
+      },
+      {
+        "id": "alchemist_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a tall conical stone tower where arcane distillations are kept",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 14,
+            "max": 60
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "alchemists_tower"
+        ]
+      },
+      {
+        "id": "crystal_sanctuary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a quiet shrine centered around a glowing amethyst cluster",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 55
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "crystal_shrine"
+        ]
+      },
+      {
+        "id": "fungal_burrow",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a turf-roofed burrow dug beneath the root bed",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 15,
+            "max": 65
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hobbit_hole",
+          "house"
+        ]
+      },
+      {
+        "id": "arcane_circle",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a ring of standing stones humming with faint light",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "hovering_platform",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a strange levitating disc hovering near the clearing",
+        "params": {
+          "prop": "floating_platform",
+          "zone": "center",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "village_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the covered water well on the clearing",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "village_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a notice board covered in mushroom parchment",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "spore_paths",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "organic dirt tracks weaving between stems and doorsteps",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "alchemist_spire",
+            "crystal_sanctuary",
+            "elder_shroom_house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "colossal_mother_glowcap": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        40,
+        27
+      ],
+      "sourceHash": "b3:5d6a783a5d04bd40224945cb3b6eae244ea89263879bb6d058a8f96f73cc21c3",
+      "outputHash": "b3:d5447bf5e39e22ee5365e1bd9b10da1b396ea43dcc7172ef7acf320b0f494897",
+      "source": "export const envelope = [27, 40, 27];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = 13;\n  const cz = 13;\n  const BASE_Y = 4; // Node-local seat plane is at Y=4\n\n  // --- Palette Definitions ---\n  const woodPlanks = api.theme.wood.planks || \"minecraft:birch_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:birch_log\";\n  const woodStripped = api.theme.wood.stripped || \"minecraft:stripped_birch_log\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:birch_slab\";\n  const woodStairs = api.theme.wood.stairs || \"minecraft:birch_stairs\";\n  const woodFence = api.theme.wood.fence || \"minecraft:birch_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:birch_trapdoor\";\n\n  const stoneFloor = api.theme.stone.primary || \"minecraft:mossy_stone_bricks\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:stone_bricks\";\n  const stonePlinth = api.theme.ground.plinth || \"minecraft:cobblestone\";\n  const groundPavement = api.theme.ground.pavement || \"minecraft:mossy_cobblestone\";\n\n  // Specialized bioluminescent & fungal materials\n  const stemBlock = \"minecraft:mushroom_stem\";\n  const capRed = \"minecraft:red_mushroom_block\";\n  const glowLight = \"minecraft:shroomlight\";\n  const frogOchre = \"minecraft:ochre_froglight\";\n  const frogPearlescent = \"minecraft:pearlescent_froglight\";\n  const chain = \"minecraft:chain[axis=y]\";\n\n  // --- 3D Grid Buffer for strictly bounds-safe deterministic writes ---\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function put(x, y, z, block) {\n    const ix = Math.floor(x);\n    const iy = Math.floor(y);\n    const iz = Math.floor(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      grid[ix][iy][iz] = block;\n    }\n  }\n\n  function withState(blockString, state) {\n    if (!blockString) return blockString;\n    const bracketIdx = blockString.indexOf(\"[\");\n    if (bracketIdx === -1) {\n      return `${blockString}[${state}]`;\n    }\n    const base = blockString.slice(0, bracketIdx);\n    const existing = blockString.slice(bracketIdx + 1, -1);\n    return `${base}[${existing},${state}]`;\n  }\n\n  // --- Mathematical Profiles for the Mushroom ---\n  function getOuterStemRadius(relY) {\n    if (relY <= 3) {\n      return 5.8 - relY * 0.4;\n    }\n    if (relY <= 12) {\n      return 4.6 - (relY - 3) * 0.1;\n    }\n    if (relY <= 18) {\n      return 3.7 + (relY - 12) * 0.15;\n    }\n    const t = (relY - 18) / 6;\n    return 4.6 + t * t * 3.4;\n  }\n\n  function getInnerStemRadius(relY) {\n    if (relY <= 3) return 3.4;\n    if (relY <= 12) return 2.8;\n    if (relY <= 18) return 2.7 + (relY - 12) * 0.08;\n    const t = (relY - 18) / 6;\n    return 3.2 + t * t * 1.8;\n  }\n\n  function getCapRadius(relY) {\n    if (relY < 24 || relY > 35) return 0;\n    const t = (35.5 - relY) / 11.5;\n    return 12.6 * Math.pow(Math.max(0, t), 0.45);\n  }\n\n  // Precomputed glowing spore spots on the outer cap dome\n  const spotDefinitions = [\n    { relY: 27, angle: 0.5, radius: 1.8 },\n    { relY: 30, angle: 1.4, radius: 1.6 },\n    { relY: 26, angle: 2.3, radius: 2.0 },\n    { relY: 32, angle: 3.1, radius: 1.5 },\n    { relY: 28, angle: 3.9, radius: 1.9 },\n    { relY: 31, angle: 4.8, radius: 1.7 },\n    { relY: 25, angle: 5.6, radius: 2.1 },\n    { relY: 33, angle: 0.0, radius: 1.4 },\n    { relY: 29, angle: 2.0, radius: 1.7 },\n    { relY: 28, angle: 5.2, radius: 1.8 },\n  ];\n\n  const domeSpots = spotDefinitions.map((s) => {\n    const rAtY = getCapRadius(s.relY) - 0.4;\n    return {\n      x: cx + rAtY * Math.cos(s.angle),\n      y: BASE_Y + s.relY,\n      z: cz + rAtY * Math.sin(s.angle),\n      radius: s.radius,\n    };\n  });\n\n  // --- 1. Ground Footing & Flared Roots (Follow Terrain) ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.hypot(dx, dz);\n      const angle = Math.atan2(dz, dx);\n\n      // 6-lobed root buttresses\n      const rootLobe =\n        Math.cos(6 * angle) * 1.8 + Math.sin(3 * angle) * 0.7;\n      const maxRootR = 5.6 + Math.max(0, rootLobe);\n\n      if (dist <= maxRootR) {\n        // Read terrain height under footprint and anchor down\n        const terrainH = api.heightAt(x, z);\n        const groundY = Math.max(0, Math.min(BASE_Y, BASE_Y + terrainH));\n\n        for (let y = groundY; y <= BASE_Y; y++) {\n          if (y === groundY) {\n            put(x, y, z, stonePlinth);\n          } else if (dist <= 3.8) {\n            put(x, y, z, stoneFloor);\n          } else {\n            put(x, y, z, (dist > 5.0) ? groundPavement : stemBlock);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 2. Hollow Stipe (Stem) Shell (relY = 0 to 24) ---\n  for (let relY = 0; relY <= 24; relY++) {\n    const y = BASE_Y + relY;\n    const rOut = getOuterStemRadius(relY);\n    const rIn = getInnerStemRadius(relY);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const angle = Math.atan2(dz, dx);\n        // Vertical organic fluting ridges\n        const fluting = 0.28 * Math.sin(5 * angle + relY * 0.3);\n        const dist = Math.hypot(dx, dz) + fluting;\n\n        if (dist <= rOut && dist >= rIn) {\n          // Bioluminescent vertical veins along the stem ridges\n          const isVein = Math.sin(4 * angle + relY * 0.5) > 0.82;\n          if (isVein && dist > rIn + 0.6) {\n            put(x, y, z, (relY % 2 === 0) ? glowLight : frogOchre);\n          } else {\n            put(x, y, z, stemBlock);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 3. Internal Floors, Rooms & Clear Air Spaces ---\n  // Ground Floor (Y = BASE_Y)\n  for (let x = cx - 4; x <= cx + 4; x++) {\n    for (let z = cz - 4; z <= cz + 4; z++) {\n      const d = Math.hypot(x - cx, z - cz);\n      if (d <= 3.6) {\n        put(x, BASE_Y, z, (d < 1.5) ? stoneAccent : stoneFloor);\n      }\n    }\n  }\n  // Spore Hearth at ground center\n  put(cx, BASE_Y, cz, frogOchre);\n  put(cx + 1, BASE_Y, cz, withState(woodStairs, \"facing=west,half=bottom\"));\n  put(cx - 1, BASE_Y, cz, withState(woodStairs, \"facing=east,half=bottom\"));\n  put(cx, BASE_Y, cz + 1, withState(woodStairs, \"facing=north,half=bottom\"));\n  put(cx, BASE_Y, cz - 1, withState(woodStairs, \"facing=south,half=bottom\"));\n\n  // Mid-Level Floor (Y = BASE_Y + 8) - Council Chamber\n  for (let x = cx - 4; x <= cx + 4; x++) {\n    for (let z = cz - 4; z <= cz + 4; z++) {\n      const d = Math.hypot(x - cx, z - cz);\n      if (d <= 3.2) {\n        // Leave stairwell hatch open at (cx - 2, cz)\n        if (!(x === cx - 2 && (z === cz || z === cz + 1))) {\n          put(x, BASE_Y + 8, z, (d < 1.2) ? woodStripped : woodPlanks);\n        }\n      }\n    }\n  }\n\n  // Upper Level Floor (Y = BASE_Y + 15) - High Sanctuary\n  for (let x = cx - 4; x <= cx + 4; x++) {\n    for (let z = cz - 4; z <= cz + 4; z++) {\n      const d = Math.hypot(x - cx, z - cz);\n      if (d <= 3.4) {\n        // Center opening for pendant lantern and stair cutout\n        if (d > 1.0 && !(x === cx + 1 && z === cz + 1)) {\n          put(x, BASE_Y + 15, z, woodPlanks);\n        }\n      }\n    }\n  }\n\n  // High Council Rotunda Walkway (Y = BASE_Y + 21)\n  for (let x = cx - 6; x <= cx + 6; x++) {\n    for (let z = cz - 6; z <= cz + 6; z++) {\n      const d = Math.hypot(x - cx, z - cz);\n      if (d >= 2.6 && d <= 5.4) {\n        put(x, BASE_Y + 21, z, woodPlanks);\n        if (d >= 5.0) {\n          put(x, BASE_Y + 22, z, woodFence);\n        }\n      }\n    }\n  }\n  // Central Spore Shrine on Rotunda\n  put(cx, BASE_Y + 21, cz, frogPearlescent);\n  put(cx, BASE_Y + 22, cz, frogPearlescent);\n  put(cx, BASE_Y + 23, cz, glowLight);\n  put(cx + 1, BASE_Y + 22, cz, woodFence);\n  put(cx - 1, BASE_Y + 22, cz, woodFence);\n  put(cx, BASE_Y + 22, cz + 1, woodFence);\n  put(cx, BASE_Y + 22, cz - 1, woodFence);\n\n  // --- 4. Spiral Staircases Connecting Levels ---\n  // Stair 1: Ground to Council (Y = BASE_Y + 1 to BASE_Y + 8)\n  const stair1Steps = [\n    { x: cx + 2, z: cz - 1, y: BASE_Y + 1, facing: \"south\" },\n    { x: cx + 2, z: cz,     y: BASE_Y + 2, facing: \"south\" },\n    { x: cx + 2, z: cz + 1, y: BASE_Y + 3, facing: \"west\" },\n    { x: cx + 1, z: cz + 2, y: BASE_Y + 4, facing: \"west\" },\n    { x: cx,     z: cz + 2, y: BASE_Y + 5, facing: \"north\" },\n    { x: cx - 1, z: cz + 2, y: BASE_Y + 6, facing: \"north\" },\n    { x: cx - 2, z: cz + 1, y: BASE_Y + 7, facing: \"north\" },\n    { x: cx - 2, z: cz,     y: BASE_Y + 8, facing: \"north\" },\n  ];\n  for (const st of stair1Steps) {\n    put(st.x, st.y - 1, st.z, woodPlanks);\n    put(st.x, st.y, st.z, withState(woodStairs, `facing=${st.facing},half=bottom`));\n    // Clearance above step\n    put(st.x, st.y + 1, st.z, null);\n    put(st.x, st.y + 2, st.z, null);\n  }\n\n  // Stair 2: Council to Upper Sanctuary (Y = BASE_Y + 8 to BASE_Y + 15)\n  const stair2Steps = [\n    { x: cx - 2, z: cz - 1, y: BASE_Y + 9,  facing: \"east\" },\n    { x: cx - 1, z: cz - 2, y: BASE_Y + 10, facing: \"east\" },\n    { x: cx,     z: cz - 2, y: BASE_Y + 11, facing: \"south\" },\n    { x: cx + 1, z: cz - 2, y: BASE_Y + 12, facing: \"south\" },\n    { x: cx + 2, z: cz - 1, y: BASE_Y + 13, facing: \"south\" },\n    { x: cx + 2, z: cz,     y: BASE_Y + 14, facing: \"west\" },\n    { x: cx + 1, z: cz + 1, y: BASE_Y + 15, facing: \"west\" },\n  ];\n  for (const st of stair2Steps) {\n    put(st.x, st.y - 1, st.z, woodPlanks);\n    put(st.x, st.y, st.z, withState(woodStairs, `facing=${st.facing},half=bottom`));\n    put(st.x, st.y + 1, st.z, null);\n    put(st.x, st.y + 2, st.z, null);\n  }\n\n  // Stair 3: Upper Sanctuary to Rotunda (Y = BASE_Y + 15 to BASE_Y + 21)\n  const stair3Steps = [\n    { x: cx,     z: cz + 2, y: BASE_Y + 16, facing: \"north\" },\n    { x: cx - 1, z: cz + 2, y: BASE_Y + 17, facing: \"north\" },\n    { x: cx - 2, z: cz + 2, y: BASE_Y + 18, facing: \"east\" },\n    { x: cx - 2, z: cz + 1, y: BASE_Y + 19, facing: \"east\" },\n    { x: cx - 3, z: cz,     y: BASE_Y + 20, facing: \"south\" },\n    { x: cx - 3, z: cz - 1, y: BASE_Y + 21, facing: \"south\" },\n  ];\n  for (const st of stair3Steps) {\n    put(st.x, st.y - 1, st.z, woodPlanks);\n    put(st.x, st.y, st.z, withState(woodStairs, `facing=${st.facing},half=bottom`));\n    put(st.x, st.y + 1, st.z, null);\n    put(st.x, st.y + 2, st.z, null);\n  }\n\n  // --- 5. Portals, Entrance Porch & External Balconies ---\n  // North Ground Entrance Portal (z facing -Z)\n  for (let dy = 1; dy <= 4; dy++) {\n    for (let dx = -1; dx <= 1; dx++) {\n      put(cx + dx, BASE_Y + dy, cz - 4, null);\n      put(cx + dx, BASE_Y + dy, cz - 5, null);\n    }\n  }\n  // Porch awning and deck at North\n  for (let px = cx - 2; px <= cx + 2; px++) {\n    for (let pz = cz - 7; pz <= cz - 5; pz++) {\n      put(px, BASE_Y, pz, woodPlanks);\n      // Foundation under porch\n      const pGround = Math.max(0, Math.min(BASE_Y, BASE_Y + api.heightAt(px, pz)));\n      for (let py = pGround; py < BASE_Y; py++) {\n        put(px, py, pz, stonePlinth);\n      }\n    }\n  }\n  // Porch Timber Pillars & Awning\n  put(cx - 2, BASE_Y + 1, cz - 7, woodLog);\n  put(cx - 2, BASE_Y + 2, cz - 7, woodLog);\n  put(cx - 2, BASE_Y + 3, cz - 7, woodFence);\n  put(cx + 2, BASE_Y + 1, cz - 7, woodLog);\n  put(cx + 2, BASE_Y + 2, cz - 7, woodLog);\n  put(cx + 2, BASE_Y + 3, cz - 7, woodFence);\n  for (let px = cx - 2; px <= cx + 2; px++) {\n    put(px, BASE_Y + 4, cz - 6, woodSlab);\n    put(px, BASE_Y + 4, cz - 7, woodSlab);\n  }\n  // Lanterns on Porch\n  put(cx - 2, BASE_Y + 4, cz - 7, woodTrapdoor);\n  put(cx + 2, BASE_Y + 4, cz - 7, woodTrapdoor);\n  put(cx - 2, BASE_Y + 2, cz - 8, frogOchre);\n  put(cx + 2, BASE_Y + 2, cz - 8, frogOchre);\n\n  // East Balcony at Council Level (Y = BASE_Y + 8 to BASE_Y + 12)\n  // Cut portal through stem\n  for (let dy = 1; dy <= 3; dy++) {\n    put(cx + 4, BASE_Y + 8 + dy, cz, null);\n    put(cx + 4, BASE_Y + 8 + dy, cz - 1, null);\n    put(cx + 3, BASE_Y + 8 + dy, cz, null);\n  }\n  // Cantilevered Balcony Deck\n  for (let bx = cx + 4; bx <= cx + 6; bx++) {\n    for (let bz = cz - 1; bz <= cz + 1; bz++) {\n      put(bx, BASE_Y + 8, bz, woodPlanks);\n      // Support brackets underneath\n      put(bx, BASE_Y + 7, bz, withState(woodStairs, \"facing=east,half=top\"));\n    }\n  }\n  // Balcony Fence Railings\n  for (let bz = cz - 1; bz <= cz + 1; bz++) {\n    put(cx + 6, BASE_Y + 9, bz, woodFence);\n  }\n  put(cx + 4, BASE_Y + 9, cz - 1, woodFence);\n  put(cx + 5, BASE_Y + 9, cz - 1, woodFence);\n  put(cx + 4, BASE_Y + 9, cz + 1, woodFence);\n  put(cx + 5, BASE_Y + 9, cz + 1, woodFence);\n  // Balcony Spore Lamp\n  put(cx + 6, BASE_Y + 11, cz, woodFence);\n  put(cx + 6, BASE_Y + 10, cz, chain);\n  put(cx + 6, BASE_Y + 9, cz, frogPearlescent);\n\n  // South Lookout Perch at Upper Sanctuary (Y = BASE_Y + 15..18)\n  for (let dy = 1; dy <= 3; dy++) {\n    put(cx, BASE_Y + 15 + dy, cz + 3, null);\n    put(cx, BASE_Y + 15 + dy, cz + 4, null);\n  }\n  for (let sx = cx - 1; sx <= cx + 1; sx++) {\n    for (let sz = cz + 4; sz <= cz + 5; sz++) {\n      put(sx, BASE_Y + 15, sz, woodPlanks);\n      put(sx, BASE_Y + 14, sz, withState(woodStairs, \"facing=south,half=top\"));\n    }\n    put(sx, BASE_Y + 16, cz + 5, woodFence);\n  }\n  put(cx - 1, BASE_Y + 16, cz + 4, woodFence);\n  put(cx + 1, BASE_Y + 16, cz + 4, woodFence);\n\n  // --- 6. Underside Gills Fan Blades (relY = 22 to 26) ---\n  for (let relY = 22; relY <= 26; relY++) {\n    const y = BASE_Y + relY;\n    const rCapAtY = Math.max(6.5, getCapRadius(Math.max(24, relY)));\n    const rStemAtY = getOuterStemRadius(relY);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.hypot(dx, dz);\n        const angle = Math.atan2(dz, dx);\n\n        if (dist >= rStemAtY - 0.5 && dist <= rCapAtY) {\n          // 16 radiating gill fins\n          const gillWave = Math.abs(Math.sin(8 * angle));\n          if (gillWave > 0.68) {\n            put(x, y, z, stemBlock);\n          } else if (gillWave < 0.18 && dist > 5.5 && (relY === 23 || relY === 24)) {\n            // Glowing spore veins between gills\n            put(x, y, z, (Math.floor(dist + angle * 3) % 2 === 0) ? frogPearlescent : glowLight);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 7. The Grand Mushroom Cap Dome (relY = 24 to 35) ---\n  for (let relY = 24; relY <= 35; relY++) {\n    const y = BASE_Y + relY;\n    const rOut = getCapRadius(relY);\n    // Dome shell thickness\n    const rIn = (relY <= 25) ? (rOut - 1.2) : (relY <= 33 ? (rOut - 1.6) : 0);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.hypot(dx, dz);\n\n        if (dist <= rOut && dist >= rIn) {\n          // Check proximity to glowing spore spots\n          let isSpot = false;\n          for (const sp of domeSpots) {\n            const dSpot = Math.hypot(x - sp.x, y - sp.y, z - sp.z);\n            if (dSpot <= sp.radius) {\n              isSpot = true;\n              break;\n            }\n          }\n\n          if (isSpot) {\n            put(x, y, z, ((x + y + z) % 2 === 0) ? frogOchre : glowLight);\n          } else {\n            put(x, y, z, capRed);\n          }\n        }\n      }\n    }\n  }\n\n  // Apex Spore Vent / Crown (Y = BASE_Y + 35 = 39)\n  put(cx, BASE_Y + 35, cz, frogPearlescent);\n  put(cx + 1, BASE_Y + 35, cz, withState(woodTrapdoor, \"half=bottom\"));\n  put(cx - 1, BASE_Y + 35, cz, withState(woodTrapdoor, \"half=bottom\"));\n  put(cx, BASE_Y + 35, cz + 1, withState(woodTrapdoor, \"half=bottom\"));\n  put(cx, BASE_Y + 35, cz - 1, withState(woodTrapdoor, \"half=bottom\"));\n\n  // --- 8. Cascading Spore Lanterns Dangling from Cap Rim ---\n  const lanternCount = 12;\n  for (let i = 0; i < lanternCount; i++) {\n    const angle = (i * 2 * Math.PI) / lanternCount + 0.18;\n    const rimR = 11.8;\n    const lx = Math.round(cx + rimR * Math.cos(angle));\n    const lz = Math.round(cz + rimR * Math.sin(angle));\n    const dropLen = 3 + ((i * 5 + 2) % 6); // Varied drop lengths 3 to 7\n    const startY = BASE_Y + 23;\n    const endY = startY - dropLen;\n\n    // Anchor to underside rim\n    put(lx, startY, lz, woodFence);\n    for (let ly = startY - 1; ly > endY; ly--) {\n      put(lx, ly, lz, chain);\n    }\n    // Glowing spore lantern pod\n    const lanternMat = (i % 3 === 0)\n      ? frogPearlescent\n      : ((i % 2 === 0) ? glowLight : frogOchre);\n    put(lx, endY, lz, lanternMat);\n    put(lx, endY - 1, lz, chain);\n  }\n\n  // --- 9. Final Grid Emission to Api ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // --- 10. Return Result ---\n  return {\n    name: \"Colossal Mother Glowcap\",\n    seatY: BASE_Y,\n    anchors: {\n      front: [cx, BASE_Y, 0],\n      door: [cx, BASE_Y, cz - 6],\n      summit: [cx, BASE_Y + 35, cz],\n      council: [cx, BASE_Y + 8, cz],\n      overlook: [cx + 6, BASE_Y + 9, cz],\n    },\n    interiors: [\n      {\n        min: [cx - 3, BASE_Y + 1, cz - 3],\n        max: [cx + 3, BASE_Y + 7, cz + 3],\n        kind: \"hall\",\n      },\n      {\n        min: [cx - 3, BASE_Y + 9, cz - 3],\n        max: [cx + 3, BASE_Y + 14, cz + 3],\n        kind: \"quarters\",\n      },\n      {\n        min: [cx - 3, BASE_Y + 16, cz - 3],\n        max: [cx + 3, BASE_Y + 21, cz + 3],\n        kind: \"vault\",\n      },\n    ],\n  };\n}"
+    },
+    "cap_suspended_dwelling": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        17,
+        13
+      ],
+      "sourceHash": "b3:cf013ba95e71dc2f2ee61ce75472b96fc17dc9d1b41af71719ead52502074a13",
+      "outputHash": "b3:ef4b4b2a958c3779dcf8d4a3e71fab44d3f0a02f8fdcbe30acb124664a9244e2",
+      "source": "export const envelope = [13, 17, 13];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const rng = () => api.random();\n  const inst = api.instance ? api.instance.index : 0;\n\n  // Theme palettes with safe fallbacks\n  const wood = api.theme?.wood || {};\n  const planks = wood.planks || \"minecraft:spruce_planks\";\n  const log = wood.log || \"minecraft:spruce_log\";\n  const stripped = wood.stripped || \"minecraft:stripped_spruce_log\";\n  const fence = wood.fence || \"minecraft:spruce_fence\";\n  const slab = wood.slab || \"minecraft:spruce_slab\";\n  const stairs = wood.stairs || \"minecraft:spruce_stairs\";\n  const trapdoor = wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const ground = api.theme?.ground || {};\n  const plinth = ground.plinth || \"minecraft:mossy_cobblestone\";\n\n  // Fungal and bioluminescent blocks\n  const stem = \"minecraft:mushroom_stem\";\n  const capRed = \"minecraft:red_mushroom_block\";\n  const capBrown = \"minecraft:brown_mushroom_block\";\n  const shroomlight = \"minecraft:shroomlight\";\n  const chain = \"minecraft:chain\";\n\n  // Block grid write helper with strict boundary check\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(Math.floor(x), Math.floor(y), Math.floor(z), block);\n    }\n  }\n\n  // Column downward grounding helper\n  function fillToGround(x, startY, z, primaryBlock, plinthBlock = plinth) {\n    const h = api.heightAt(x, z);\n    const bottomY = Math.min(0, Math.floor(h));\n    for (let y = startY; y >= bottomY; y--) {\n      if (y >= 0 && y < H) {\n        if (y <= 1 && plinthBlock) {\n          set(x, y, z, plinthBlock);\n        } else {\n          set(x, y, z, primaryBlock);\n        }\n      }\n    }\n  }\n\n  // --- Instance Variations ---\n  const isRedCap = inst % 2 === 0;\n  const mainCap = isRedCap ? capRed : capBrown;\n  const stalkShiftX = (inst % 3 === 1) ? 1 : (inst % 3 === 2 ? -1 : 0);\n  const stalkShiftZ = (inst % 2 === 1) ? 1 : 0;\n  const hasSideShelf = (inst % 3 !== 1);\n  const floorY = 5;\n  const podCeilY = 9;\n\n  // Pod Center & Giant Stalk Center\n  const podCx = 5;\n  const podCz = 6;\n  const stalkBaseX = 8 + stalkShiftX;\n  const stalkBaseZ = 7 + stalkShiftZ;\n\n  // ==========================================\n  // 1. GIANT MUSHROOM STALK (Ground to Canopy)\n  // ==========================================\n  for (let y = 0; y <= 15; y++) {\n    // Slight organic curving of the stalk\n    const curveOffset = Math.sin((y / 15) * Math.PI) * 0.8;\n    const sx = Math.round(stalkBaseX - curveOffset * 0.5);\n    const sz = Math.round(stalkBaseZ - curveOffset * 0.3);\n\n    const stalkCross = [\n      [sx, sz],\n      [sx + 1, sz],\n      [sx - 1, sz],\n      [sx, sz + 1],\n      [sx, sz - 1]\n    ];\n\n    for (const [x, z] of stalkCross) {\n      if (y === 0) {\n        fillToGround(x, 0, z, stem);\n      } else {\n        set(x, y, z, stem);\n      }\n    }\n  }\n\n  // Stalk roots flaring out at the base\n  const rootOffsets = [\n    [stalkBaseX + 2, stalkBaseZ],\n    [stalkBaseX - 2, stalkBaseZ],\n    [stalkBaseX, stalkBaseZ + 2],\n    [stalkBaseX + 1, stalkBaseZ - 1]\n  ];\n  for (const [rx, rz] of rootOffsets) {\n    fillToGround(rx, 1, rz, stem);\n  }\n\n  // ==========================================\n  // 2. POD SUSPENSION STILTS & UNDER-BRACING\n  // ==========================================\n  const podCorners = [\n    [3, 4],\n    [7, 4],\n    [3, 8],\n    [7, 8]\n  ];\n\n  for (const [cx, cz] of podCorners) {\n    fillToGround(cx, floorY - 1, cz, log);\n    // Decorative support brackets\n    set(cx, floorY - 1, cz, stairs);\n  }\n\n  // Under-floor wooden framework\n  for (let x = 3; x <= 7; x++) {\n    for (let z = 4; z <= 8; z++) {\n      if ((x === 3 || x === 7 || z === 4 || z === 8)) {\n        set(x, floorY - 1, z, stripped);\n      }\n    }\n  }\n\n  // ==========================================\n  // 3. DWELLING POD (Floor, Walls, Ceiling)\n  // ==========================================\n  // Floor (y = 5)\n  for (let x = 3; x <= 7; x++) {\n    for (let z = 4; z <= 8; z++) {\n      set(x, floorY, z, planks);\n    }\n  }\n\n  // Pod Outer Shell & Walls (y = 6, 7, 8)\n  for (let y = floorY + 1; y < podCeilY; y++) {\n    for (let x = 3; x <= 7; x++) {\n      for (let z = 4; z <= 8; z++) {\n        const isCorner = (x === 3 || x === 7) && (z === 4 || z === 8);\n        const isWall = (x === 3 || x === 7 || z === 4 || z === 8);\n\n        if (isCorner) {\n          set(x, y, z, log);\n        } else if (isWall) {\n          // Window openings\n          if (y === floorY + 2 && (x === 3 || z === 8)) {\n            set(x, y, z, fence);\n          } else if (z === 4 && x === 5) {\n            // Doorway entrance (open standable)\n            set(x, y, z, \"minecraft:air\");\n          } else if (x === 7 && z === 6 && y === floorY + 2) {\n            set(x, y, z, shroomlight);\n          } else {\n            set(x, y, z, planks);\n          }\n        } else {\n          // Hollow Interior Space\n          set(x, y, z, \"minecraft:air\");\n        }\n      }\n    }\n  }\n\n  // Pod Ceiling / Roof (y = 9)\n  for (let x = 3; x <= 7; x++) {\n    for (let z = 4; z <= 8; z++) {\n      set(x, podCeilY, z, planks);\n    }\n  }\n  // Roof Eaves Trim\n  for (let x = 2; x <= 8; x++) {\n    for (let z = 3; z <= 9; z++) {\n      if (x === 2 || x === 8 || z === 3 || z === 9) {\n        if ((x >= 3 && x <= 7) || (z >= 4 && z <= 8)) {\n          set(x, podCeilY, z, slab);\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 4. BALCONIES & BRACKET FUNGI PLATFORMS\n  // ==========================================\n  // Front Porch (North)\n  for (let x = 4; x <= 6; x++) {\n    for (let z = 2; z <= 3; z++) {\n      set(x, floorY, z, capBrown);\n    }\n  }\n  // Front Stilts down to ground\n  fillToGround(4, floorY - 1, 2, fence);\n  fillToGround(6, floorY - 1, 2, fence);\n\n  // Porch Railings (y = 6)\n  set(4, floorY + 1, 2, fence);\n  set(6, floorY + 1, 2, fence);\n  set(4, floorY + 1, 3, fence);\n  set(6, floorY + 1, 3, fence);\n\n  // Steps down towards North entrance\n  set(5, floorY, 1, stairs);\n  fillToGround(5, floorY - 1, 1, plinth);\n\n  // Side Bracket Fungus Shelf (West)\n  if (hasSideShelf) {\n    const shelfY = floorY + 1;\n    for (let x = 1; x <= 2; x++) {\n      for (let z = 5; z <= 7; z++) {\n        set(x, shelfY, z, capBrown);\n      }\n    }\n    set(1, shelfY, 6, shroomlight);\n    set(1, shelfY + 1, 5, fence);\n    set(1, shelfY + 1, 7, fence);\n    // Bracket support underneath\n    set(2, shelfY - 1, 6, stairs);\n  }\n\n  // ==========================================\n  // 5. GIANT GLOWING MUSHROOM CAP (y = 11 to 16)\n  // ==========================================\n  const capCenterX = 6;\n  const capCenterZ = 6;\n\n  // y=11 & 12: Cap Underside Gills & Bioluminescent Spores\n  for (let x = 1; x <= 11; x++) {\n    for (let z = 1; z <= 11; z++) {\n      const dist = Math.sqrt((x - capCenterX) ** 2 + (z - capCenterZ) ** 2);\n      if (dist <= 4.8) {\n        // Alternating radiating gills and shroomlights\n        if ((x + z) % 3 === 0 && dist > 1.8) {\n          set(x, 12, z, shroomlight);\n        } else {\n          set(x, 12, z, stem);\n        }\n      }\n    }\n  }\n\n  // y=13 to 16: Mushroom Cap Dome Geometry\n  const capLayers = [\n    { y: 13, radius: 5.4, height: 1 },\n    { y: 14, radius: 4.8, height: 1 },\n    { y: 15, radius: 3.6, height: 1 },\n    { y: 16, radius: 2.2, height: 1 }\n  ];\n\n  for (const layer of capLayers) {\n    for (let x = 0; x <= 12; x++) {\n      for (let z = 0; z <= 12; z++) {\n        const dist = Math.sqrt((x - capCenterX) ** 2 + (z - capCenterZ) ** 2);\n        if (dist <= layer.radius) {\n          // Polka dot pattern on red mushrooms or organic shading on brown\n          if (isRedCap && layer.y >= 14 && ((x * 3 + z * 5 + layer.y) % 7 === 0)) {\n            set(x, layer.y, z, stem);\n          } else {\n            set(x, layer.y, z, mainCap);\n          }\n        }\n      }\n    }\n  }\n\n  // Top Cap Peak\n  set(capCenterX, 16, capCenterZ, mainCap);\n\n  // ==========================================\n  // 6. SUSPENSION CABLES & HANGING SPORE LANTERNS\n  // ==========================================\n  // Chains suspending pod corners from giant cap underside\n  const cableCorners = [\n    [3, 4],\n    [7, 4],\n    [3, 8],\n    [7, 8]\n  ];\n\n  for (const [cx, cz] of cableCorners) {\n    for (let y = podCeilY + 1; y <= 12; y++) {\n      set(cx, y, cz, chain);\n    }\n  }\n\n  // Hanging Bioluminescent Lantern Pods from Cap Overhang\n  const lanternPoints = [\n    [2, 3],\n    [10, 6],\n    [4, 10]\n  ];\n\n  for (let i = 0; i < lanternPoints.length; i++) {\n    if (i <= (inst % 3) + 1) {\n      const [lx, lz] = lanternPoints[i];\n      set(lx, 11, lz, chain);\n      set(lx, 10, lz, shroomlight);\n      set(lx, 9, lz, fence);\n    }\n  }\n\n  // Dwelling Entrance Anchor & Furnishing Bounds\n  return {\n    name: \"Cap-Suspended Dwelling\",\n    seatY: 0,\n    anchors: {\n      front: [5, floorY + 1, 0],\n      door: [5, floorY + 1, 3]\n    },\n    interiors: [\n      {\n        min: [4, floorY + 1, 5],\n        max: [6, podCeilY - 1, 7],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,723 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "redwood_logging_camp",
+    "worldSeed": "306",
+    "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+    "spawn": {
+      "zone": "southwest"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:coarse_dirt",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:stripped_spruce_log",
+      "plaza.gravel": "minecraft:coarse_dirt"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "formality": 0.15,
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": 0.2,
+      "humidity": 0.6
+    },
+    "character": {
+      "label": "redwood logging camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "flora": {
+        "prefer": [
+          "spruce_tall"
+        ]
+      },
+      "urbanForm": "linear",
+      "programs": [
+        {
+          "id": "colossal_felled_redwood",
+          "mode": "landmark",
+          "brief": "A colossal ancient redwood trunk felled across log skids, partially notched by heavy two-man saws with rough timber staging and split cedar wedges.",
+          "envelope": [
+            36,
+            12,
+            14
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "infra": "skid trails and log chutes leading from the redwood timberline to the sawpit",
+      "camp_character": "rough timber shacks, canvas wall tents, tool sheds, and massive felled tree trunks at the edge of primeval giant redwoods"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "ancient redwood basin and logging camp",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "forested upland ridge grading down to a working logging shelf",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 38,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.5,
+          "warp": {
+            "amount": 24,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "logging_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "flattened shelf at the timberline for camp operations",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.8
+              ],
+              "radius": 120,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ancient_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high mountain ridge holding the primeval redwood canopy",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.2,
+                  0.2
+                ],
+                [
+                  0.55,
+                  0.35
+                ],
+                [
+                  0.85,
+                  0.25
+                ]
+              ],
+              "width": 64,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "flume_creek",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "dry timber runoff gully and creek bed winding past the camp",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.85,
+                  0.2
+                ],
+                [
+                  0.65,
+                  0.45
+                ],
+                [
+                  0.48,
+                  0.68
+                ],
+                [
+                  0.42,
+                  0.95
+                ]
+              ],
+              "width": 8,
+              "depth": 5,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "ancient_redwoods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "primeval stand of colossal emergent redwoods and deep conifer canopy",
+        "params": {
+          "area": {
+            "at": [
+              0.55,
+              0.45
+            ],
+            "radius": 190
+          },
+          "density": 0.22,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 36,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.02,
+            "deadwood": 0.12
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "colossal_redwood",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "mountain_scrub",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "tall_redwood_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "tall_larch",
+              "weight": 1,
+              "shape": "larch_columnar"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fringe",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse timberline fringe around the perimeter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "scrub_spruce",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "tall_spruce_fill",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "timber_yard",
+        "kind": "primitive",
+        "label": "central log landing and timber staging yard",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "sawmill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the steam-powered lumber mill and sawing hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "timber_yard",
+            "gap": [
+              2,
+              20
+            ]
+          },
+          {
+            "facing": "timber_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "sawmill",
+          "craft"
+        ]
+      },
+      {
+        "id": "loggers_bunkhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "logger bunkhouse with ranks of rough-hewn cots",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 4,
+            "max": 45
+          },
+          {
+            "facing": "timber_yard"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dormitory",
+          "house"
+        ]
+      },
+      {
+        "id": "camp_cookhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "mess hall and galley serving the lumberjacks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 4,
+            "max": 50
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "foreman_cabin",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "foreman's log cabin and survey office",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 6,
+            "max": 55
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "log_cabin",
+          "house"
+        ]
+      },
+      {
+        "id": "smith_and_filer",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "saw-filing shack and tool maintenance forge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 4,
+            "max": 45
+          },
+          {
+            "facing": "timber_yard"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "smithy",
+          "craft"
+        ]
+      },
+      {
+        "id": "timber_storehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "covered storage shed for cut lumber, rigging, and chains",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 4,
+            "max": 45
+          },
+          {
+            "facing": "timber_yard"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "store"
+        ]
+      },
+      {
+        "id": "felled_redwood",
+        "kind": "generator",
+        "generator": "authored:colossal_felled_redwood",
+        "label": "the massive felled redwood trunk being worked at the camp boundary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            36,
+            12,
+            14
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "distance": "timber_yard",
+            "min": 10,
+            "max": 65
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4,
+            "maxSlope": 35
+          }
+        ],
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "log_skid_one",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "log_pile",
+          "zone": "southwest",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "log_skid_two",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "log_pile",
+          "zone": "southwest",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "camp_wall_tents",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "canvas wall tents for overflow logging crew",
+        "params": {
+          "prop": "campsite",
+          "zone": "southwest",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "timber_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cart",
+          "zone": "southwest",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "camp_bulletin",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "notice_board",
+          "zone": "southwest",
+          "jitter": 0.04
+        }
+      },
+      {
+        "id": "skid_trails",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "cleared dirt skid trails joining the lumber mill, cabins, and landing",
+        "params": {
+          "anchors": [
+            "timber_yard",
+            "#tag:house",
+            "sawmill",
+            "smith_and_filer",
+            "felled_redwood"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "colossal_felled_redwood": {
+      "mode": "landmark",
+      "envelope": [
+        36,
+        12,
+        14
+      ],
+      "sourceHash": "b3:75323b5e00f7b43c889fb1ba3b1cd3cc63d2661da170b38d894984b07e08638e",
+      "outputHash": "b3:f434f0a1d49bd2c87cca07375341f242799dfe92403b658c512818ab38218793",
+      "source": "export const envelope = [36, 12, 14];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const grid = new Map();\n\n  function key(x, y, z) {\n    return `${x},${y},${z}`;\n  }\n\n  function inBounds(x, y, z) {\n    return x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D;\n  }\n\n  function setBlock(x, y, z, block) {\n    x = Math.floor(x);\n    y = Math.floor(y);\n    z = Math.floor(z);\n    if (inBounds(x, y, z)) {\n      grid.set(key(x, y, z), block);\n    }\n  }\n\n  function getBlock(x, y, z) {\n    return grid.get(key(Math.floor(x), Math.floor(y), Math.floor(z))) || null;\n  }\n\n  // --- Palette & Block States ---\n  const wood = api.theme.wood || {};\n  const ground = api.theme.ground || {};\n  const stone = api.theme.stone || {};\n\n  function withState(b, s) {\n    if (!b) return s;\n    const base = b.split(\"[\")[0];\n    return `${base}[${s}]`;\n  }\n\n  const rawLog = wood.log || \"minecraft:spruce_log\";\n  const rawStripped = wood.stripped || wood.log || \"minecraft:stripped_spruce_log\";\n  const rawPlanks = wood.planks || \"minecraft:spruce_planks\";\n  const rawSlab = wood.slab || \"minecraft:spruce_slab\";\n  const rawStairs = wood.stairs || \"minecraft:spruce_stairs\";\n  const rawFence = wood.fence || \"minecraft:spruce_fence\";\n  const rawTrapdoor = wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const logX = withState(rawLog, \"axis=x\");\n  const logY = withState(rawLog, \"axis=y\");\n  const logZ = withState(rawLog, \"axis=z\");\n\n  const strippedX = withState(rawStripped, \"axis=x\");\n  const strippedY = withState(rawStripped, \"axis=y\");\n  const strippedZ = withState(rawStripped, \"axis=z\");\n\n  const planks = rawPlanks;\n  const slabBottom = withState(rawSlab, \"type=bottom\");\n  const slabTop = withState(rawSlab, \"type=top\");\n\n  const stairsN = withState(rawStairs, \"facing=north,half=bottom,shape=straight\");\n  const stairsS = withState(rawStairs, \"facing=south,half=bottom,shape=straight\");\n  const stairsW = withState(rawStairs, \"facing=west,half=bottom,shape=straight\");\n  const stairsTopN = withState(rawStairs, \"facing=north,half=top,shape=straight\");\n  const stairsTopS = withState(rawStairs, \"facing=south,half=top,shape=straight\");\n\n  const trapdoorFloor = withState(rawTrapdoor, \"facing=north,half=bottom,open=false\");\n  const fence = rawFence;\n\n  const plinth = ground.plinth || stone.primary || \"minecraft:stone_bricks\";\n  const scree = ground.scree || ground.pavement || \"minecraft:coarse_dirt\";\n  const stoneSlab = stone.slab || \"minecraft:stone_slab\";\n\n  const chainY = \"minecraft:chain[axis=y]\";\n  const chainX = \"minecraft:chain[axis=x]\";\n  const chainZ = \"minecraft:chain[axis=z]\";\n  const ironBarsZ = \"minecraft:iron_bars[north=true,south=true]\";\n  const lanternFloor = \"minecraft:lantern[hanging=false]\";\n  const lanternHang = \"minecraft:lantern[hanging=true]\";\n  const ladderW = \"minecraft:ladder[facing=west]\";\n\n  function groundColumn(x, z, startY, block) {\n    const h = api.heightAt(x, z);\n    const bottomY = Math.max(0, Math.min(startY, h));\n    for (let y = startY; y >= bottomY; y--) {\n      if (!getBlock(x, y, z)) {\n        setBlock(x, y, z, block);\n      }\n    }\n  }\n\n  // --- 1. Skid Bunks (Cross timbers under the giant tree) ---\n  const skidPositions = [5, 12, 19, 26, 32];\n  for (const sx of skidPositions) {\n    for (let z = 2; z <= 11; z++) {\n      setBlock(sx, 1, z, logZ);\n      groundColumn(sx, z, 0, plinth);\n    }\n    // Skid chocks to prevent roll\n    setBlock(sx, 2, 3, stairsS);\n    setBlock(sx, 2, 10, stairsN);\n\n    // Retaining stake posts at the ends of skids\n    setBlock(sx, 1, 2, logY);\n    setBlock(sx, 2, 2, fence);\n    setBlock(sx, 1, 11, logY);\n    setBlock(sx, 2, 11, fence);\n  }\n\n  // Double bunks under saw and bucking zones\n  for (let z = 3; z <= 10; z++) {\n    setBlock(13, 1, z, logZ);\n    groundColumn(13, z, 0, plinth);\n    setBlock(20, 1, z, logZ);\n    groundColumn(20, z, 0, plinth);\n  }\n\n  // --- 2. The Colossal Redwood Trunk Geometry ---\n  for (let x = 2; x <= 33; x++) {\n    const t = (x - 2) / 31.0;\n    const cy = 5.2 - 0.7 * t;\n    const cz = 6.6 + 0.25 * Math.sin(t * Math.PI * 1.5);\n    const baseR = 3.35 * (1.0 - 0.36 * t);\n\n    // Buttress flare & fluting at the butt end\n    const flare = Math.max(0, 1.0 - (x - 2) / 7.0);\n\n    const minZ = Math.max(0, Math.floor(cz - baseR * 1.6));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + baseR * 1.6));\n    const minY = Math.max(1, Math.floor(cy - baseR * 1.6));\n    const maxY = Math.min(H - 1, Math.ceil(cy + baseR * 1.6));\n\n    for (let y = minY; y <= maxY; y++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const dy = y - cy;\n        const dz = z - cz;\n        const angle = Math.atan2(dz, dy);\n        const flute = flare * (0.50 * Math.cos(4 * angle) + 0.30 * Math.sin(3 * angle + 0.4));\n        const effectiveR = baseR * (1.0 + flute);\n        const dist = Math.hypot(dy, dz);\n\n        if (dist <= effectiveR) {\n          const isEndFace = (x === 2 || x === 33);\n          const isOuter = (dist >= effectiveR - 0.82);\n\n          if (isEndFace) {\n            // Cut face showing annual growth rings & heartwood\n            if (dist < effectiveR - 0.7) {\n              setBlock(x, y, z, (dist < 1.2) ? planks : strippedX);\n            } else {\n              setBlock(x, y, z, logX);\n            }\n          } else {\n            // Solid log body\n            if (isOuter) {\n              if (dy > 1.2 && dist >= effectiveR - 0.4 && (x + z) % 7 === 0) {\n                setBlock(x, y, z, strippedX); // Peeled bark patch\n              } else {\n                setBlock(x, y, z, logX);\n              }\n            } else {\n              setBlock(x, y, z, ((x + y + z) % 5 === 0) ? strippedX : logX);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- 3. Undercut Felling Notch & Saw Kerf ---\n  // A. Carve the triangular undercut notch on North face (X = 15, 16)\n  for (let x = 15; x <= 16; x++) {\n    for (let y = 3; y <= 9; y++) {\n      for (let z = 2; z <= 12; z++) {\n        const t = (x - 2) / 31.0;\n        const cy = 5.2 - 0.7 * t;\n        const cz = 6.6 + 0.25 * Math.sin(t * Math.PI * 1.5);\n\n        if (z <= cz + 0.2 && y >= cy - 0.4) {\n          const depthFromNorth = (cz + 0.2) - z;\n          const heightAboveFloor = y - (cy - 0.4);\n\n          if (heightAboveFloor <= depthFromNorth * 1.15 + (x === 16 ? 0.9 : 0.0)) {\n            grid.delete(key(x, y, z));\n          }\n        }\n      }\n    }\n  }\n\n  // Notch interior floor & hewn axe-cut roof\n  for (let x = 15; x <= 16; x++) {\n    const t = (x - 2) / 31.0;\n    const cy = 5.2 - 0.7 * t;\n    const floorY = Math.floor(cy);\n    for (let z = 4; z <= 7; z++) {\n      if (!getBlock(x, floorY, z) && getBlock(x, floorY - 1, z)) {\n        setBlock(x, floorY, z, (z === 6 || z === 7) ? slabBottom : strippedX);\n      }\n      const roofY = floorY + Math.max(1, Math.floor((7 - z) * 0.9));\n      if (roofY < H && !getBlock(x, roofY, z) && getBlock(x, roofY + 1, z)) {\n        setBlock(x, roofY, z, stairsTopS);\n      }\n    }\n  }\n\n  // B. The Backcut & Two-Man Saw Blade (at X = 18)\n  const sawY = Math.floor(5.2 - 0.7 * (16 / 31.0));\n  for (let z = 3; z <= 10; z++) {\n    setBlock(18, sawY, z, ironBarsZ);\n  }\n  // Upright wooden handles for the two sawyers\n  setBlock(18, sawY + 1, 3, fence);\n  setBlock(18, sawY + 2, 3, fence);\n  setBlock(18, sawY + 1, 10, fence);\n  setBlock(18, sawY + 2, 10, fence);\n\n  // Split timber wedges driven into back cut to prevent pinch\n  setBlock(18, sawY + 2, 8, stairsTopN);\n  setBlock(18, sawY + 2, 9, slabTop);\n  setBlock(17, sawY + 2, 8, slabTop);\n  setBlock(19, sawY + 3, 7, stoneSlab); // Sledgehammer resting on top of trunk\n\n  // --- 4. Springboards (Sawyers' standing planks at the butt) ---\n  setBlock(4, 4, 3, strippedX);\n  setBlock(4, 4, 2, slabTop);\n  setBlock(4, 4, 1, slabTop);\n  setBlock(4, 3, 2, chainY);\n\n  setBlock(6, 5, 10, strippedX);\n  setBlock(6, 5, 11, slabTop);\n  setBlock(6, 5, 12, slabTop);\n  setBlock(6, 4, 11, chainY);\n\n  // --- 5. Rough Timber Staging & Platforms ---\n  // North Platform (Z = 1..3, X = 13..21, Y = 4)\n  const northPosts = [13, 17, 21];\n  for (const px of northPosts) {\n    for (let y = 0; y <= 4; y++) {\n      setBlock(px, y, 1, logY);\n    }\n    groundColumn(px, 1, 0, plinth);\n\n    for (let y = 1; y <= 4; y++) {\n      if (!getBlock(px, y, 3)) setBlock(px, y, 3, logY);\n    }\n    groundColumn(px, 3, 0, plinth);\n  }\n\n  for (let x = 13; x <= 21; x++) {\n    setBlock(x, 4, 1, logX);\n    for (let z = 2; z <= 3; z++) {\n      if (!getBlock(x, 4, z)) {\n        setBlock(x, 4, z, planks);\n      }\n    }\n  }\n\n  for (let x = 14; x <= 20; x++) {\n    if (x !== 18) {\n      setBlock(x, 5, 1, fence);\n    }\n  }\n  setBlock(13, 5, 1, fence);\n  setBlock(13, 6, 1, fence);\n  setBlock(13, 6, 2, slabTop);\n  setBlock(13, 5, 2, lanternHang);\n\n  setBlock(21, 5, 2, planks);\n  setBlock(21, 6, 2, trapdoorFloor);\n  setBlock(20, 5, 3, lanternFloor);\n\n  for (let y = 1; y <= 4; y++) {\n    setBlock(22, y, 1, ladderW);\n  }\n\n  // South Platform (Z = 10..12, X = 15..22, Y = 4)\n  const southPosts = [15, 18, 22];\n  for (const px of southPosts) {\n    for (let y = 0; y <= 4; y++) {\n      setBlock(px, y, 12, logY);\n    }\n    groundColumn(px, 12, 0, plinth);\n\n    for (let y = 1; y <= 4; y++) {\n      if (!getBlock(px, y, 10)) setBlock(px, y, 10, logY);\n    }\n    groundColumn(px, 10, 0, plinth);\n  }\n\n  for (let x = 15; x <= 22; x++) {\n    setBlock(x, 4, 12, logX);\n    for (let z = 10; z <= 11; z++) {\n      if (!getBlock(x, 4, z)) {\n        setBlock(x, 4, z, planks);\n      }\n    }\n  }\n\n  for (let x = 15; x <= 21; x++) {\n    if (x !== 18) {\n      setBlock(x, 5, 12, fence);\n    }\n  }\n  setBlock(16, 5, 11, lanternFloor);\n\n  setBlock(23, 3, 11, stairsW);\n  setBlock(23, 2, 11, planks);\n  setBlock(24, 2, 11, stairsW);\n  setBlock(24, 1, 11, planks);\n  setBlock(25, 1, 11, stairsW);\n  groundColumn(23, 11, 1, plinth);\n  groundColumn(24, 11, 0, plinth);\n  groundColumn(25, 11, 0, plinth);\n\n  // --- 6. Heavy Rigging & Choker Cables ---\n  const chokerT = (28 - 2) / 31.0;\n  const chokerCy = 5.2 - 0.7 * chokerT;\n  const chokerCz = 6.6 + 0.25 * Math.sin(chokerT * Math.PI * 1.5);\n  const chokerR = 3.35 * (1.0 - 0.36 * chokerT);\n\n  for (let y = 1; y <= 9; y++) {\n    for (let z = 2; z <= 11; z++) {\n      const dist = Math.hypot(y - chokerCy, z - chokerCz);\n      if (dist >= chokerR - 0.15 && dist <= chokerR + 0.85) {\n        if (!getBlock(28, y, z)) {\n          const isVertical = Math.abs(z - chokerCz) > Math.abs(y - chokerCy);\n          setBlock(28, y, z, isVertical ? chainY : chainZ);\n        }\n      }\n    }\n  }\n\n  const topY = Math.ceil(chokerCy + chokerR);\n  setBlock(28, topY, Math.round(chokerCz), chainX);\n  setBlock(29, topY, Math.round(chokerCz), chainX);\n  setBlock(30, topY, Math.round(chokerCz), chainX);\n\n  // --- 7. Burls, Sawn Stubs & Cookie Rounds ---\n  setBlock(9, 9, 6, logY);\n  setBlock(9, 10, 6, logY);\n  setBlock(9, 10, 7, strippedY);\n\n  setBlock(24, 7, 9, logZ);\n  setBlock(24, 7, 10, strippedZ);\n\n  setBlock(31, 4, 4, logZ);\n  setBlock(31, 4, 3, strippedZ);\n\n  // Sawn cookie round standing at butt\n  for (let y = 1; y <= 4; y++) {\n    for (let z = 8; z <= 10; z++) {\n      const cDist = Math.hypot(y - 2.5, z - 9.0);\n      if (cDist <= 1.6) {\n        setBlock(1, y, z, (cDist < 1.0) ? strippedX : logX);\n        setBlock(0, y, z, (cDist < 1.0) ? planks : logX);\n      }\n    }\n  }\n  setBlock(1, 1, 7, stairsS);\n  setBlock(1, 1, 11, stairsN);\n  groundColumn(1, 8, 0, plinth);\n  groundColumn(1, 9, 0, plinth);\n  groundColumn(1, 10, 0, plinth);\n\n  // Split timber shingle bolt stack\n  setBlock(0, 1, 3, slabBottom);\n  setBlock(0, 1, 4, slabBottom);\n  setBlock(1, 1, 3, slabTop);\n  setBlock(1, 1, 4, slabTop);\n  setBlock(0, 2, 3, slabBottom);\n  setBlock(0, 2, 4, slabBottom);\n  groundColumn(0, 3, 0, plinth);\n  groundColumn(0, 4, 0, plinth);\n\n  // --- 8. Sawdust Drifts, Peeled Bark & Skid Chute Runners ---\n  for (let x = 14; x <= 19; x++) {\n    for (let z = 4; z <= 9; z++) {\n      if (!getBlock(x, 1, z)) {\n        setBlock(x, 1, z, ((x + z) % 3 === 0) ? slabBottom : scree);\n      }\n    }\n  }\n\n  setBlock(8, 1, 2, trapdoorFloor);\n  setBlock(9, 1, 2, trapdoorFloor);\n  setBlock(10, 1, 2, slabBottom);\n  setBlock(24, 1, 11, trapdoorFloor);\n  setBlock(25, 1, 11, slabBottom);\n\n  for (let x = 33; x <= 35; x++) {\n    setBlock(x, 1, 5, logX);\n    setBlock(x, 1, 8, logX);\n    setBlock(x, 1, 6, scree);\n    setBlock(x, 1, 7, scree);\n    groundColumn(x, 5, 0, plinth);\n    groundColumn(x, 8, 0, plinth);\n    groundColumn(x, 6, 0, plinth);\n    groundColumn(x, 7, 0, plinth);\n  }\n\n  // --- 9. Final Grounding Pass ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let lowestY = -1;\n      for (let y = 0; y < H; y++) {\n        if (getBlock(x, y, z)) {\n          lowestY = y;\n          break;\n        }\n      }\n      if (lowestY >= 1) {\n        const h = api.heightAt(x, z);\n        const targetMin = Math.min(0, h);\n        for (let y = lowestY - 1; y >= targetMin; y--) {\n          if (!getBlock(x, y, z)) {\n            setBlock(x, y, z, plinth);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 10. Write Grid to World ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = getBlock(x, y, z);\n        if (b) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Colossal Felled Redwood\",\n    seatY: 0,\n    anchors: {\n      front: [18, 5, 0],\n      butt: [2, 5, 7],\n      staging_north: [17, 4, 1],\n      staging_south: [18, 4, 12],\n      skid_trail: [35, 1, 7],\n    },\n  };\n}"
+    }
+  }
+}

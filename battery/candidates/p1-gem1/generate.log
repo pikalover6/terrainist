@@ -1,0 +1,168 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"temperature":0.6,"humidity":0.4,"snow":"never"},"tokens":{"event_direction":"pirate fleet and coastal batteries targeting unicorn island across the open strait","region_pirate_isle":"era renaissance, wealth 0.35, decline 0.4, formality 0.2; materialTheme temperate_timber; formPacks nautical_pirate; prefer archetypes tavern, warehouse, watchtower, lighthouse; props galleon, cart; cannon batteries, fortified harbour, barricades, war supplies","region_unicorn_isle":"era medieval, wealth 0.85, decline 0.1, formality 0.75; materialTheme white_quartz; formPacks arcane_magical; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn groves, enchanted ward stones, defensive towers","infra":"cannon_battery along the pirate shore facing the strait; barricade_line defending the landing cove; runic ward barriers ringing the unicorn sanctuary"}}
+           1 attempt(s), 6362 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   4 problem(s): LOAM-T101 BAD_ENUM@world.unicorn_sanctuary.intent.character.motifs.windowRhythm, LOAM-T118 SCATTER_RADIUS_UNITS@world.unicorn_groves.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.pirate_dark_woods.params.area, LOAM-T207 STRUCTURE_PARAM@world.war_galleon_flagship.params
+  attempt 2   valid
+  tokens     161876 in + 21340 out = 183216  ($0.0758)
+programs   4 of 4 kept (budget 3 landmark / 3 plugin)
+  ok     unicorn_colossus [landmark]  1 attempt(s), 29594 tokens  ($0.0512), 8 warning(s)
+  ok     pirate_skull_fort [landmark]  1 attempt(s), 24055 tokens  ($0.0408), 20 warning(s)
+  ok     arcane_ward_crystal [plugin]  1 attempt(s), 28921 tokens  ($0.0500), 1 warning(s)
+  ok     corsair_cannon_battery [plugin]  1 attempt(s), 23999 tokens  ($0.0407), 1 warning(s)
+  tokens     11376 in + 95193 out = 106569  (71235 of the out reasoning)  ($0.1828)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The document failed to compile — 9 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_haven: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.pirate_haven: none of the 97 candidate footprints could stand on the ground — 96 sat below sea level, 1 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_sanctuary: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_sanctuary: none of the 97 candidate footprints could stand on the ground — 88 sat below sea level, 9 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.guardian_unicorn_colossus: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.guardian_unicorn_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (85 of 97 candidates were also vetoed by the ground: 0 below sea level, 79 on water or lava, 6 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-T209 ROAD_UNROUTABLE at world.conflict_routes: no road could be routed from "world.guardian_unicorn_colossus" to the network hub "world.pirate_skull_bastion_node": no legal path exists
+  fix: move "world.guardian_unicorn_colossus" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+warning LOAM-E170 CANNOT_FIT at world.unicorn_celestial_fountain: no site within 48 blocks fits the fountain
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+error LOAM-E336 PROGRAM_GATE_FAILED at world.ward_crystal_grid: no site would take "arcane_ward_crystal"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+
+  revision 1 authored in 2 attempt(s)
+  tokens     268562 in + 50328 out = 318890  ($0.1951)
+
+
+compile feedback, round 2 of 4:
+
+The document failed to compile — 4 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_haven: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.pirate_haven: none of the 97 candidate footprints could stand on the ground — 41 sat below sea level, 56 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+error LOAM-E336 PROGRAM_GATE_FAILED at world.ward_crystal_grid: no site would take "arcane_ward_crystal"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+error LOAM-E336 PROGRAM_GATE_FAILED at world.shore_battery_line: no site would take "corsair_cannon_battery"
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+
+  revision 2 authored in 1 attempt(s)
+  tokens     104744 in + 32731 out = 137475  ($0.1006)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.guardian_unicorn_colossus: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_skull_bastion_node: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.guardian_unicorn_colossus: placed after constraint_demoted (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.14)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.43)
+  world.pirate_skull_bastion_node: placed after constraint_demoted (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.22)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.38)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     104768 in + 17650 out = 122418  ($0.0724)
+
+
+compile feedback, round 4 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.guardian_unicorn_colossus: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.pirate_skull_bastion_node: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.guardian_unicorn_colossus: placed after constraint_demoted (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.14)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.29)
+  world.pirate_skull_bastion_node: placed after constraint_demoted (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 1.22)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.24)
+
+  revision 4 authored in 1 attempt(s)
+  tokens     104768 in + 30520 out = 135288  ($0.0703)
+
+compiled "pirate_vs_unicorn_isles" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles
+  seed       301
+  region     512x512 at (-256, -256)
+  heights    43.7..107.0  sea 63  snow line 104.8
+  land       66.5% of columns above sea level
+  biomes     ocean 32.7%, windswept_hills 29.6%, forest 20.2%, plains 14.7%, beach 2.7%, deep_ocean 0.2%
+  trees      4315 (unicorn_groves=2034, pirate_dark_woods=2603, wilderness_scatter=421)
+  chunks     1024
+  blocks     37410850 (458753 vegetation)
+  markers    103
+  spawn      [-32, 66, 32]
+  timings    validate 6ms  field 564ms  layout 410ms  climate 67ms  columns 71ms  caves 0ms  structures 1029ms  programs 552ms  scatter 6600ms  biomes 68ms  validators 10ms  emit 6957ms  total 16434ms
+  programs   world.guardian_unicorn_colossus=unicorn_colossus×1 (3876 blocks), world.pirate_skull_bastion_node=pirate_skull_fort×1 (4155 blocks), world.ward_crystal_grid=arcane_ward_crystal×4 (1108 blocks), world.shore_battery_line=corsair_cannon_battery×4 (1960 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.conflict_routes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W520 LANDMARK_COARSE_SEATED at world.pirate_skull_bastion_node: every site at this landmark's coarse target was refused by the building slope veto (steepest 81° across the footprint); it was seated there anyway, at (-91, 62), and its ground is padded — a landmark is not a building
+  fix: nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept
+
+note LOAM-I512 DISTRICT_RUINS at world.pirate_haven: decline 0.40 gives a ruin share of 0.16: 1 of 6 infill lots roll into ruined shells (light 1, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-T224 COURTYARD_NONE at world.pirate_haven: no block in "world.pirate_haven" can hold a courtyard: 7 of 11 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-I512 DISTRICT_RUINS at world.unicorn_sanctuary: decline 0.10 gives a ruin share of 0.00: 0 of 4 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.unicorn_sanctuary: no block in "world.unicorn_sanctuary" can hold a courtyard: 5 of 9 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-W485 INTENT_PROP_UNKNOWN at world.pirate_haven: intent.character.props names 1 value no registry carries: "cannon_battery" — it is ignored
+  fix: use prop catalog ids — e.g. rowboat, fishing_sloop, pier, cart, covered_wagon, rail_line, fountain, gazebo (see docs/kits/settlement-author.md §9d)
+
+warning LOAM-T228 PROP_RESEATED at world.war_galleon_flagship: no water within 48 blocks of the galleon's coarse target, so it sought the waterline and seated at [-230, -150]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 277 ruined columns: 85 climbing strands (0 glow lichen), 0 leaf plugs (0 of them substituted for glazing), 9 moss carpets, 2 pavement substitutions, 0 tufts, 3 street trunks and 0 shell trees elected (2390 spine columns, shortest sight-line run 24, nearest trunk to a junction 5), 120 blocks
+  fix: informational
+
+warning LOAM-W337 PROGRAM_DROPPED at world.ward_crystal_grid: 2 candidate sites for "arcane_ward_crystal" were refused: the ground under them falls away like a cliff, and no pad would seat a structure across that
+  fix: widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 19356 footprint columns (plus 22749 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 100% of 12622 ring columns); snow policy never resolved to "never" on a 0/19356 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-32, 32)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  5 model run(s), 4 compile-feedback round(s), 744718 in + 152569 out = 897287 tokens (21680 of the out reasoning) ($0.5142)
+
+note: 4 compile-feedback round(s) used; the findings above remain
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p1-gem/pirate_vs_unicorn_isles

@@ -1,0 +1,340 @@
+prompt     A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.
+seed       304
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.3,"decline":0.9,"formality":0.4,"climate":{"humidity":0.6,"temperature":0.2},"character":{"label":"overgrown ruined metropolis with high-tech hideout","materialTheme":"modern_city","urbanForm":"grid","flora":{"prefer":["emergent","understory"]},"archetypes":{"prefer":["bunker_complex","laboratory","field_station","watchtower"]},"motifs":{"massing":"towered","roofType":"flat","windowRhythm":"sparse"}},"tokens":{"fittings":"blast_door on the bunker_complex; airlock_vestibule on the laboratory","infra":"barricade_line across the ruined boulevard","visual_brief":"crumbling concrete and steel skyscraper skeletons draped in massive vegetation and vines; hidden within the rubble is a reinforced high-tech survivor sanctuary"}}
+           1 attempt(s), 6758 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   1 problem(s): LOAM-T008 UNKNOWN_KEY@world.hideout_solar_field.params
+  attempt 2   valid
+  tokens     158278 in + 13636 out = 171914  ($0.0601)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     high_tech_sanctuary_bunker [landmark]  1 attempt(s), 21759 tokens  ($0.0366), 25 warning(s)
+  ok     overgrown_skyscraper_skeleton [plugin]  1 attempt(s), 21511 tokens  ($0.0361), 25 warning(s)
+  ok     scavenged_sensor_relay [plugin]  1 attempt(s), 28366 tokens  ($0.0490), 17 warning(s)
+  tokens     8961 in + 63736 out = 72697  (46099 of the out reasoning)  ($0.1229)
+
+wiring     3 program(s) authored but never invoked: high_tech_sanctuary_bunker [landmark], overgrown_skyscraper_skeleton [plugin], scavenged_sensor_relay [plugin]
+
+  wired in 1 attempt(s); 96610 in + 24792 out = 121402 tokens  ($0.0827)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_lab: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_lab: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.hideout_lab: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     96424 in + 22560 out = 118984  ($0.0785)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_sentry_tower: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_sentry_tower: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.hideout_sentry_tower: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.00)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     96435 in + 22849 out = 119284  ($0.0541)
+
+compiled "overgrown_metropolis_hideout" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout
+  seed       304
+  region     512x512 at (-256, -256)
+  heights    55.0..75.6  sea 63  snow line 73.0
+  land       84.8% of columns above sea level
+  biomes     plains 42.5%, forest 40.7%, ocean 14.9%, beach 1.7%, windswept_hills 0.2%
+  trees      9355 (massive_overgrowth=10260)
+  chunks     1024
+  blocks     37523615 (1736086 vegetation)
+  markers    116
+  spawn      [0, 76, 0]
+  timings    validate 4ms  field 560ms  layout 625ms  climate 60ms  columns 34ms  caves 0ms  structures 6150ms  programs 942ms  scatter 4144ms  biomes 67ms  validators 7ms  emit 10093ms  total 22769ms
+  programs   world.hideout_bunker=high_tech_sanctuary_bunker×1 (6731 blocks), world.skyscraper_skeletons=overgrown_skyscraper_skeleton×8 (28545 blocks), world.sensor_relays=scavenged_sensor_relay×6 (1918 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.connecting_corridors: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metro: decline 0.92 gives a ruin share of 0.85: 24 of 28 infill lots roll into ruined shells (light 0, heavy 4, total 20)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.shattered_tower_spire: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.hollow_corporate_hub: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_53_-121: "watchtower" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_66_-121: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_101_-120: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_16_-48: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_33_-48: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_66_-46: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_86_-45: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_128_23: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_128_31: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_131_59: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_140_66: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metro.infill_131_79: "watchtower" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 25 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 25 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 27 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 25 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 25 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 19 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 26 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 14 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 8 blocks over 27 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 4 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 5 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 4 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 3 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metro: a seam in "world.ruined_metro" drops 2 blocks over only 1 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metro: multi-level ground: 28 retaining wall(s) over 625 column(s) (0 parapeted), 0 kerb seam(s), 64 bank(s), and 6 seam(s) a building already stood on; 630 seam column(s) got no wall (20 building, 72 water, 96 shortRun, 213 tallDrop, 229 builtSeam); 287 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metro: built faces by finished drop (§13.8): 672 face column(s) along the seams a wall was built on — 91 at 2, 37 at 3, 523 at 4, 14 at 5, 7 at 6
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metro: every cut face finished: 1789 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 2697 ruined columns: 4964 climbing strands (1 glow lichen), 6 leaf plugs (71 of them substituted for glazing), 98 moss carpets, 35 pavement substitutions, 9 tufts, 13 street trunks and 3 shell trees elected (7480 spine columns, shortest sight-line run 24, nearest trunk to a junction 4), 6207 blocks
+  fix: informational
+
+warning LOAM-W513 GREEN_SKIN_WITHDRAWN at <document>: the street colonizer withdrew 1 of 14 elected trunks to keep every street band one walkable component (U2)
+  fix: no change needed unless the rate is sustained above a few percent — that is a finding about `STREET_TRUNK_SHARE`, not about the withdraw loop
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 62909 footprint columns (plus 33456 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 76% of 22066 ring columns); snow policy auto resolved to "never" on a 0/62909 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 2 compile-feedback round(s), 447747 in + 83837 out = 531584 tokens (14131 of the out reasoning) ($0.2754)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/gem-sweep/p4-gem/overgrown_metropolis_hideout
