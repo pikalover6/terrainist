@@ -2460,6 +2460,54 @@ so.
 }
 ```
 
+**`aqueduct`** — `between` a water source and the town that drinks it. A level
+masonry channel high on an arcade: three columns of held water between lined
+walls, a maintenance walk outside each, and piers to the ground at a regular
+bay so the ground under it keeps its passage. Write this when a prompt says *a
+Roman aqueduct*, *water carried in from the hills*, *a dry city fed from far
+off*. The water is held **level** the whole way, whatever the ground does, and
+it is written whole or not at all — a trough that cannot be sealed comes out
+dry rather than leaking.
+
+```json
+{
+  "id": "water_supply",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "aqueduct", "route": { "between": ["spring_head", "old_town"] } }
+}
+```
+
+**`telegraph_line`** — `between` two places that talk to each other. Timber
+poles at a regular bay following the ground, wire strung head to head. Write
+this when a prompt says *telegraph poles along the road*, *wires out to the
+station*, *a frontier town on the wire*. Name the two ends — the depot and the
+town hall, the station and the mine — rather than the road: the poles step
+aside where a street is in the way and the wire crosses over it.
+
+```json
+{
+  "id": "telegraph",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "telegraph_line", "route": { "between": ["station", "town_hall"] } }
+}
+```
+
+**`maglev_pylon`** — `between` two stations. The aqueduct's far-future sibling
+with the water taken out: a walkable guideway beam high on slender pylons, with
+a copper rail down each edge. Write this when a prompt says *a maglev line*, *an
+elevated transit guideway*, *the train comes in above the rooftops*.
+
+```json
+{
+  "id": "guideway",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "maglev_pylon", "route": { "between": ["north_station", "south_station"] } }
+}
+```
+
 **`crop_circle`** — `over` a farm holding. Rings and spokes pressed into the
 standing crop: the disc levels its own footprint and lays the crop down, so it
 reads from the ground and not only from the air. It needs a `precinct.farm@0`

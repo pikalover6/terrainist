@@ -1425,7 +1425,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   air("windsock", "Windsock"),
 
   /* --- infrastructure ---------------------------------------------------- */
-  infra("aqueduct", "Aqueduct"),
+  // The `between` form's carried client (docs/INFRA-ENTRIES-v0.md §3.2, landed
+  // 2026-08-15). Not a sweep and never was: a swept datum follows the ground
+  // and the whole read of an arcade is that the water on it does not.
+  infra("aqueduct", "Aqueduct", "implemented", {
+    tags: ["water", "size_lin"],
+    note: 'infra.entry@0 `"between"` two anchors: a level masonry channel nine courses up on an arcade, three columns of held water between lined walls with a maintenance walk outside each, and piers to the ground every seven columns so the passage under it stays open at grade. The water is written whole or not at all, so a trough that cannot be sealed comes out dry rather than leaking.',
+  }),
   infra("viaduct", "Viaduct"),
   infra("water_tower", "Water tower", "implemented", {
     wave: 6,
@@ -1454,7 +1460,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   // A mast is a declared box and a yaw, not a line over ground nobody owns
   // (docs/INFRA-ENTRIES-v0.md family E, 2026-08-14).
   infra("radio_mast", "Radio mast", "not_started", { kind: "prop" }),
-  infra("telegraph_line", "Telegraph line"),
+  infra("telegraph_line", "Telegraph line", "implemented", {
+    tags: ["size_lin"],
+    note: 'infra.entry@0 `"between"` two anchors: timber poles every twelve columns following the ground, an iron-bar wire strung head to head with barely any sag, and a pole that would stand in a street dropped so the wire crosses over it instead.',
+  }),
   infra("street_lamp_run", "Street lighting run"),
   infra("city_gate", "City gate"),
   infra("terrace_steps", "Terrace steps"),
@@ -2304,9 +2313,12 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["alien_scifi", "size_s"],
     note: 'A double-door chamber at the way in: a copper step-through sill, a second iron plane one cell inside, and a lit porch projecting into the apron with a warning band round it. Reached as a param on the host building — "entrance": { "treatment": "airlock_vestibule" } — on a hydroponics_bay, laboratory, field_station or bunker_complex.',
   }),
-  infra("maglev_pylon", "Guideway pylon", "not_started", {
+  // Not the sweep engine in the end: a guideway is level and a sweep's datum
+  // follows the ground, so it landed 2026-08-15 as the aqueduct's dry sibling
+  // on `infra.entry@0`'s carried span.
+  infra("maglev_pylon", "Guideway pylon", "implemented", {
     tags: ["alien_scifi", "size_lin"],
-    note: "A raised guideway on tapered piers at a fixed interval — the far-future viaduct, on the sweep engine.",
+    note: 'infra.entry@0 `"between"` two anchors: a three-wide smooth-stone guideway twelve courses up with a cut-copper rail on each edge, walkable end to end, on a single slender concrete pylon every ten columns.',
   }),
   ruin("derelict_mech", "Derelict walker", "implemented", {
     kind: "prop",

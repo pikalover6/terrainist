@@ -96,8 +96,10 @@ describe("the response pack's props", () => {
    * and is never a prop, so none of the seven may appear in `PROP_NAMES` and
    * none of them is this pack's to build. Family D's two fittings are built as
    * well now, and by neither host: a fitting *in* a structure is a param on
-   * that structure. The one still waiting is `maglev_pylon`, which needs the
-   * `between` route form and a tier-A ground declaration.
+   * that structure. `maglev_pylon` was the one still waiting; it landed
+   * 2026-08-15 with the `between` form's carried span, and without the tier-A
+   * ground declaration §5 expected it to need — a pylon stands on the ground it
+   * finds and is refused where it cannot, which asks the ground for nothing.
    */
   it("leaves the pack's infrastructure entries to the infrastructure host", () => {
     for (const id of [
@@ -116,13 +118,16 @@ describe("the response pack's props", () => {
     // in another structure is a param on that structure
     // (docs/INFRA-ENTRIES-v0.md §2 D), so both are credited through
     // `NON_NODE_IMPLEMENTED` and neither is an `infra.entry@0` row. The
-    // `between` route form's pylon is the one still waiting.
+    // `between` route form's pylon is an entry, and the difference is the
+    // teaching: a fitting is a param, a guideway is a line over ground nobody
+    // owns.
     for (const id of ["blast_door", "airlock_vestibule"]) {
       expect(structureById(id)?.status, id).toBe("implemented");
       expect(NON_NODE_IMPLEMENTED as readonly string[], id).toContain(id);
       expect(INFRA_ENTRY_IDS as readonly string[], id).not.toContain(id);
     }
-    expect(structureById("maglev_pylon")?.status).toBe("not_started");
+    expect(structureById("maglev_pylon")?.status).toBe("implemented");
+    expect(INFRA_ENTRY_IDS as readonly string[]).toContain("maglev_pylon");
     for (const id of ["crop_circle", "quarantine_fence", "crash_furrow", "barricade_line"]) {
       expect(structureById(id)?.status, id).toBe("implemented");
       expect(INFRA_ENTRY_IDS as readonly string[], id).toContain(id);

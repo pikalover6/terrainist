@@ -1051,6 +1051,18 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
             "something else already owns both anchors — usually a road, a quay or a building. Name anchors with clear ground at their centres",
           ),
         );
+      } else if (built.impounded === 0) {
+        // A carried channel whose trough could not be sealed comes out dry, and
+        // that is reported rather than hidden — the same disposition a dam
+        // whose pool did not close has. Dry is a walk; leaking is `LOAM-T110`.
+        diagnostics.push(
+          note(
+            "INFRA_RUN_REFUSED",
+            job.nodePath,
+            `"${job.def.id}" built its arcade and no water: the trough could not be closed along the whole run, so it was left dry rather than written with a hole in it`,
+            "no change needed if a dry channel reads on a walk — otherwise move the run clear of what its deck is crossing by naming anchors with more air between them",
+          ),
+        );
       }
       continue;
     }
@@ -1805,33 +1817,55 @@ function buildSpan(
         // rather than thrown, for the reason every fallback in this file is.
         { id: job.def.id, tower: [], cable: "iron_chain", sag: 0, clearance: 0, maxGrade: 1 };
 
-  const ends = [course.path[0] as CoursePoint, course.path[course.path.length - 1] as CoursePoint];
+  // A carried run is the other thing two anchors can have between them, and it
+  // forks here rather than deeper: nothing below this line is about a member
+  // that stands, and a shared function pretending otherwise would be two
+  // geometries wearing one name.
+  if (def.carry !== undefined) return buildCarriedSpan(planter, world, view, job, course, def);
+
+  const path = course.path;
   let placed = 0;
   let skipped = 0;
 
-  // --- the two towers ------------------------------------------------------
-  const heads: (number | undefined)[] = ends.map((c) => {
+  // --- the supports --------------------------------------------------------
+  // Two for a single span; every `pitch` columns for a pole line. Both ends are
+  // always in the set, because the run is fixed to the anchors the author
+  // named and to nothing else.
+  const at = supportIndices(path.length, def.pitch);
+  const poles: { index: number; head: number }[] = [];
+  const heads = new Map<number, number | undefined>();
+  for (const i of at) {
+    const c = path[i] as CoursePoint;
     const base = world.standY(c.x, c.z);
-    if (base === undefined) return undefined;
-    // The carriageway veto the route path applies, applied to the towers: a
+    let head: number | undefined;
+    // The carriageway veto the route path applies, applied to the supports: a
     // chain tower planted in a lane is the lane's problem, and refusing it is
-    // the same disposition every `open` entry has about the road.
-    if (job.def.crossings === "open" && view.onRoad(c.x, c.z)) return undefined;
-    const ops = def.tower.map((block, k) => op(0, k, 0, block));
-    if (ops.length === 0) return undefined;
-    if (!planter.place("infra_tower", ops, c.x, base, c.z, INFRA_RULE)) return undefined;
-    return base + def.tower.length - 1;
-  });
-  for (const head of heads) {
+    // the same disposition every `open` entry has about the road. A *dropped*
+    // pole is not a hole in a pole line — the wire either side of it joins
+    // across the gap below, which is what a line does at a junction.
+    const barred = base === undefined || (job.def.crossings === "open" && view.onRoad(c.x, c.z));
+    if (!barred) {
+      const stack = def.tower ?? [];
+      const ops = stack.map((block, k) => op(0, k, 0, block));
+      if (ops.length > 0 && planter.place("infra_tower", ops, c.x, base as number, c.z, INFRA_RULE)) {
+        head = (base as number) + stack.length - 1;
+      }
+    }
+    heads.set(i, head);
     if (head === undefined) skipped++;
-    else placed++;
+    else {
+      placed++;
+      poles.push({ index: i, head });
+    }
   }
 
-  // A span with one tower is a tower. The chain is refused whole rather than
-  // left hanging off the end that did get built — "ships as a pair or not at
-  // all" is the catalog's own sentence about this entry.
-  const [headA, headB] = heads;
-  if (headA === undefined || headB === undefined) {
+  // A span with one tower is a tower, and a pole line with no pole at one end
+  // is fixed to nothing. The member is refused whole rather than left hanging
+  // off the end that did get built — "ships as a pair or not at all" is the
+  // catalog's own sentence about the first client of this geometry.
+  const first = heads.get(at[0] as number);
+  const last = heads.get(at[at.length - 1] as number);
+  if (first === undefined || last === undefined || poles.length < 2) {
     return {
       nodePath: job.nodePath,
       entry: job.def.id,
@@ -1844,34 +1878,21 @@ function buildSpan(
     };
   }
 
-  // --- the curve -----------------------------------------------------------
-  const chord = rasterize([ends[0] as CoursePoint, ends[1] as CoursePoint]);
-  const span = chord.length - 1;
-  const y = spanHeights(headA, headB, span, def.sag, (i) => {
-    const c = chord[i] as CoursePoint;
-    const stand = world.standY(c.x, c.z);
-    return stand === undefined ? undefined : stand + Math.max(0, def.clearance);
-  });
-  const runs = spanRuns(y);
-  for (let i = 1; i < chord.length - 1; i++) {
-    const c = chord[i] as CoursePoint;
-    const run = runs[i] as { lo: number; hi: number };
-    const ops: LifeOp[] = [];
-    // `axis: "y"` said out loud. Every block of the member is part of a
-    // vertical run by construction — the curve goes down and along, never
-    // diagonally — and a chain left on its default state is the `connection.
-    // stale` family of defect one block wide.
-    for (let level = run.lo; level <= run.hi; level++) {
-      ops.push(op(0, level - run.lo, 0, def.cable, { axis: "y" }));
-    }
-    if (ops.length === 0) {
-      skipped++;
-      continue;
-    }
-    // `anchorsGround` off: the member is in the air by construction, and the
-    // stand-height check exists for recipes that stand on the ground.
-    if (planter.place("infra_cable", ops, c.x, run.lo, c.z, INFRA_CABLE_RULE, false)) placed++;
-    else skipped++;
+  // --- the curve, bay by bay ----------------------------------------------
+  for (let k = 0; k + 1 < poles.length; k++) {
+    const a = poles[k] as { index: number; head: number };
+    const b = poles[k + 1] as { index: number; head: number };
+    const bay = stringMember(
+      planter,
+      world,
+      def,
+      path[a.index] as CoursePoint,
+      path[b.index] as CoursePoint,
+      a.head,
+      b.head,
+    );
+    placed += bay.placed;
+    skipped += bay.skipped;
   }
 
   return {
@@ -1883,6 +1904,385 @@ function buildSpan(
     openings: 0,
     fittings: 0,
     declared: 0,
+  };
+}
+
+/**
+ * Where a span's supports stand, as path indices.
+ *
+ * Both ends, always, and every `pitch` columns between them when the row states
+ * one. The last interior index is dropped when it lands within half a pitch of
+ * the far end, because two poles a stride apart is the one rhythm error a
+ * regular interval can make and it is visible from a mile away.
+ */
+export function supportIndices(length: number, pitch: number | undefined): number[] {
+  const last = length - 1;
+  if (last <= 0) return [0];
+  if (pitch === undefined || pitch <= 0) return [0, last];
+  const out = [0];
+  for (let i = pitch; i < last; i += pitch) {
+    if (last - i < pitch / 2) break;
+    out.push(i);
+  }
+  out.push(last);
+  return out;
+}
+
+/**
+ * One bay of a hanging member: the curve between two support heads.
+ *
+ * The member is strung on the **straight chord** between the two supports
+ * rather than along the router's corridor, and the difference is the point: the
+ * corridor is what answers *can these two anchors see each other on ground
+ * something could stand on*, but a chain hangs on the shortest line between its
+ * ends, because that is what gravity does.
+ */
+function stringMember(
+  planter: Planter,
+  world: LifeWorld,
+  def: InfraSpanDef,
+  a: CoursePoint,
+  b: CoursePoint,
+  headA: number,
+  headB: number,
+): { placed: number; skipped: number } {
+  const chord = rasterize([a, b]);
+  const span = chord.length - 1;
+  let placed = 0;
+  let skipped = 0;
+  if (span < 1) return { placed, skipped };
+  const y = spanHeights(headA, headB, span, def.sag ?? 0, (i) => {
+    const c = chord[i] as CoursePoint;
+    const stand = world.standY(c.x, c.z);
+    return stand === undefined ? undefined : stand + Math.max(0, def.clearance);
+  });
+  const runs = spanRuns(y);
+  const cable = def.cable ?? "iron_chain";
+  for (let i = 1; i < chord.length - 1; i++) {
+    const c = chord[i] as CoursePoint;
+    const run = runs[i] as { lo: number; hi: number };
+    const ops: LifeOp[] = [];
+    // `axis: "y"` said out loud. Every block of the member is part of a
+    // vertical run by construction — the curve goes down and along, never
+    // diagonally — and a chain left on its default state is the `connection.
+    // stale` family of defect one block wide. A member with no axis of its own
+    // (a wire of bars) resolves through the name and takes its state from the
+    // emitter's connection pass instead.
+    for (let level = run.lo; level <= run.hi; level++) {
+      ops.push(op(0, level - run.lo, 0, cable, { axis: "y" }));
+    }
+    if (ops.length === 0) {
+      skipped++;
+      continue;
+    }
+    // `anchorsGround` off: the member is in the air by construction, and the
+    // stand-height check exists for recipes that stand on the ground.
+    if (planter.place("infra_cable", ops, c.x, run.lo, c.z, INFRA_CABLE_RULE, false)) placed++;
+    else skipped++;
+  }
+  return { placed, skipped };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the carried span — a level deck on piers                                    */
+/* -------------------------------------------------------------------------- */
+
+/** The rule a carried deck writes under — it crosses ground it does not own. */
+const INFRA_DECK_RULE: PlaceRule = {
+  // The cable rule's argument, one storey down: an arcade's whole point is that
+  // it strides over a lane, a field, a river. The voxel rule stays on, so the
+  // deck takes air and never a block somebody else wrote.
+  requireFreeColumn: false,
+  requireEmptyVoxel: true,
+  padAbove: false,
+  onCarriageway: true,
+};
+
+/** One column of a carried cross-section, as the host classified it. */
+interface CarryCell {
+  readonly x: number;
+  readonly z: number;
+  /** Columns off the line, signed; the sign is the normal's left hand. */
+  readonly t: number;
+  /** The chord index this column was reached from — which bay it is in. */
+  readonly i: number;
+}
+
+const carryKey = (x: number, z: number): string => `${x},${z}`;
+
+/**
+ * A **carried span**: a level deck on regular piers, between two anchors.
+ *
+ * Three claims, and the order below is all three of them:
+ *
+ * 1. **The deck is level.** One course, from the higher of the two anchors'
+ *    ground plus the row's clearance, end to end. An aqueduct whose water
+ *    followed the ground would be a river, and a guideway that followed it
+ *    would be a road.
+ * 2. **The ground keeps its passage.** Piers stand every `pitch` columns and
+ *    are `pierHalf` wide, so between one and the next there is open ground at
+ *    grade — the arch opening, which is the one thing an arcade must not take
+ *    away from what it crosses. A bay whose ground is further down than
+ *    `maxPier` is left open rather than filled with a leg.
+ * 3. **The water cannot flow.** Every water column is floored, every water
+ *    column's non-water neighbour is walled, and the body is written **whole or
+ *    not at all** — one `Planter` claim, so a trough that could not be sealed
+ *    comes out dry rather than leaking. That is the same argument `canals.ts`
+ *    makes on the column plan, made here over placed blocks because the plan
+ *    cannot see nine blocks of air.
+ */
+function buildCarriedSpan(
+  planter: Planter,
+  world: LifeWorld,
+  view: InfraPlacementView,
+  job: InfraEntryJob,
+  course: InfraCourse,
+  def: InfraSpanDef,
+): BuiltInfraEntry {
+  const carry = def.carry as NonNullable<InfraSpanDef["carry"]>;
+  const ends = [course.path[0] as CoursePoint, course.path[course.path.length - 1] as CoursePoint];
+  const nothing: BuiltInfraEntry = {
+    nodePath: job.nodePath,
+    entry: job.def.id,
+    form: job.route.form,
+    columns: 0,
+    skipped: 1,
+    openings: 0,
+    fittings: 0,
+    declared: 0,
+  };
+  const baseA = world.standY(ends[0]?.x as number, ends[0]?.z as number);
+  const baseB = world.standY(ends[1]?.x as number, ends[1]?.z as number);
+  if (baseA === undefined || baseB === undefined) return nothing;
+
+  const deckY = Math.max(baseA, baseB) + Math.max(1, def.clearance);
+  const chord = rasterize([ends[0] as CoursePoint, ends[1] as CoursePoint]);
+  const n = chord.length;
+  if (n < 3) return nothing;
+
+  // --- the cross-section, as a set of columns ------------------------------
+  // A Map keyed by column rather than a per-index list, because a rasterized
+  // diagonal reaches the same column from two indices and the deck is a *set*:
+  // the closure argument the water rests on is over 4-neighbours in the world,
+  // and it can only be made once each column has exactly one classification.
+  // Ties go to the column nearest the line, which is a stated total order.
+  const cells = new Map<string, CarryCell>();
+  for (let i = 0; i < n; i++) {
+    const c = chord[i] as CoursePoint;
+    const nrm = normalAt(chord, i, false);
+    for (let t = -carry.half; t <= carry.half; t++) {
+      const x = c.x + Math.round(nrm.nx * t);
+      const z = c.z + Math.round(nrm.nz * t);
+      const key = carryKey(x, z);
+      const held = cells.get(key);
+      if (held !== undefined && Math.abs(held.t) <= Math.abs(t)) continue;
+      cells.set(key, { x, z, t, i });
+    }
+  }
+
+  const isEnd = (cell: CarryCell): boolean => cell.i === 0 || cell.i === n - 1;
+  const channel = carry.channel;
+  const water = new Map<string, CarryCell>();
+  if (channel !== undefined) {
+    for (const [key, cell] of cells) {
+      if (!isEnd(cell) && Math.abs(cell.t) <= channel.half) water.set(key, cell);
+    }
+  }
+  // The closure: every 4-neighbour of a water column that is not itself water
+  // must hold the water in, whether or not the deck reached that far. This is
+  // what makes a diagonal run watertight — the rasterization is under no
+  // obligation to tile, and the closure does not care.
+  const wall = new Map<string, { x: number; z: number }>();
+  for (const cell of water.values()) {
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const x = cell.x + dx;
+      const z = cell.z + dz;
+      const key = carryKey(x, z);
+      if (water.has(key) || wall.has(key)) continue;
+      wall.set(key, { x, z });
+    }
+  }
+
+  let placed = 0;
+  let skipped = 0;
+  /** Columns that ended up with a solid block at the water's own course. */
+  const sealed = new Set<string>();
+  /** Columns that ended up with a solid floor under the water's course. */
+  const floored = new Set<string>();
+
+  const stand = (x: number, z: number): number | undefined => world.standY(x, z);
+  const column = (
+    kind: string,
+    x: number,
+    z: number,
+    from: number,
+    to: number,
+    block: string,
+    rule: PlaceRule,
+  ): boolean => {
+    const ops: LifeOp[] = [];
+    for (let y = from; y <= to; y++) ops.push(op(0, y - from, 0, block));
+    if (ops.length === 0) return false;
+    return planter.place(kind, ops, x, from, z, rule, false);
+  };
+
+  // --- 1. the two abutments ------------------------------------------------
+  // Full width, ground to the top of the section: the end of an arcade is a
+  // mass of masonry, and for a channel it is also what caps the trough.
+  const top = channel === undefined ? deckY + (carry.rail === undefined ? 0 : 1) : deckY + 2;
+  for (const cell of cells.values()) {
+    if (!isEnd(cell)) continue;
+    const base = stand(cell.x, cell.z);
+    if (base === undefined || deckY - base > carry.maxPier) {
+      skipped++;
+      continue;
+    }
+    if (column("infra_abutment", cell.x, cell.z, base, top, carry.pier, INFRA_RULE)) {
+      placed++;
+      sealed.add(carryKey(cell.x, cell.z));
+      floored.add(carryKey(cell.x, cell.z));
+    } else skipped++;
+  }
+
+  // --- 2. the piers, and the haunch either side of each --------------------
+  const pitch = Math.max(1, def.pitch ?? Math.max(1, n - 1));
+  for (const cell of cells.values()) {
+    if (isEnd(cell) || Math.abs(cell.t) > carry.pierHalf) continue;
+    const onPier = cell.i % pitch === 0;
+    const onHaunch = (cell.i + 1) % pitch === 0 || (cell.i - 1) % pitch === 0;
+    if (!onPier && !onHaunch) continue;
+    // A pier standing in a lane is the lane's problem, exactly as a tower in
+    // one is: the bay is left open and the deck strides over it.
+    if (job.def.crossings === "open" && view.onRoad(cell.x, cell.z)) {
+      skipped++;
+      continue;
+    }
+    const base = stand(cell.x, cell.z);
+    if (base === undefined) {
+      skipped++;
+      continue;
+    }
+    const from = onPier ? base : deckY - 1;
+    if (onPier && deckY - 1 - base > carry.maxPier) {
+      // Too far down to stand a leg: the arch opening becomes the whole bay,
+      // which is the honest answer over a gorge.
+      skipped++;
+      continue;
+    }
+    if (from > deckY - 1) {
+      skipped++;
+      continue;
+    }
+    if (column("infra_pier", cell.x, cell.z, from, deckY - 1, carry.pier, INFRA_RULE)) placed++;
+    else skipped++;
+  }
+
+  // --- 3. the deck floor ---------------------------------------------------
+  for (const [key, cell] of cells) {
+    // A trough wall carries its own floor, in one claim from the deck course
+    // up: the `Planter` refuses a voxel this pass already owns, so a floor laid
+    // under a wall column *before* the wall is what would leave the trough
+    // open on that hand.
+    if (isEnd(cell) || wall.has(key)) continue;
+    const block = water.has(key) ? (channel as { lining: string }).lining : carry.deck;
+    if (column("infra_deck", cell.x, cell.z, deckY, deckY, block, INFRA_DECK_RULE)) {
+      placed++;
+      floored.add(key);
+    } else skipped++;
+  }
+
+  // --- 4. the trough walls, or the guideway's rails ------------------------
+  if (channel !== undefined) {
+    for (const [key, at] of wall) {
+      const cell = cells.get(key);
+      if (cell !== undefined && isEnd(cell)) continue;
+      // Two courses: one holds the water, the one over it is the kerb that
+      // stops a walker on the maintenance path stepping into the channel.
+      if (column("infra_trough", at.x, at.z, deckY, deckY + 2, channel.lining, INFRA_DECK_RULE)) {
+        placed++;
+        sealed.add(key);
+        floored.add(key);
+      } else skipped++;
+    }
+    // The maintenance walk: every deck column that is neither water nor wall.
+    for (const [key, cell] of cells) {
+      if (isEnd(cell) || water.has(key) || wall.has(key)) continue;
+      if (column("infra_walk", cell.x, cell.z, deckY + 1, deckY + 1, carry.deck, INFRA_DECK_RULE)) {
+        placed++;
+        sealed.add(key);
+      } else skipped++;
+    }
+  } else if (carry.rail !== undefined) {
+    for (const [, cell] of cells) {
+      if (isEnd(cell) || Math.abs(cell.t) !== carry.half) continue;
+      if (column("infra_rail", cell.x, cell.z, deckY + 1, deckY + 1, carry.rail, INFRA_DECK_RULE)) {
+        placed++;
+      } else skipped++;
+    }
+  }
+
+  // --- 5. the water, whole or not at all -----------------------------------
+  let impounded = 0;
+  if (channel !== undefined && water.size > 0) {
+    // Liveness by removal, to a fixed point: a water column survives only if it
+    // has a floor and every one of its four neighbours is either another
+    // surviving water column or a column this pass actually sealed. Anything
+    // that fails takes its neighbours with it, so the answer is the largest
+    // provably-closed body — and the loop is bounded by the body's own size,
+    // which is a fixed iteration count rather than a tolerance.
+    const live = new Set<string>();
+    for (const [key] of water) if (floored.has(key)) live.add(key);
+    for (let pass = 0; pass <= water.size; pass++) {
+      const doomed: string[] = [];
+      for (const key of live) {
+        const cell = water.get(key) as CarryCell;
+        for (const [dx, dz] of [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as const) {
+          const nk = carryKey(cell.x + dx, cell.z + dz);
+          if (live.has(nk) || sealed.has(nk)) continue;
+          doomed.push(key);
+          break;
+        }
+      }
+      if (doomed.length === 0) break;
+      for (const key of doomed) live.delete(key);
+    }
+    // One claim for the whole body: `Planter.place` is all-or-nothing, so a
+    // column it would refuse leaves the trough dry rather than holed. A dry
+    // aqueduct is a walk; a holed one is `LOAM-T110` on the first tick.
+    const ops: LifeOp[] = [];
+    const origin = water.get([...live][0] ?? "") as CarryCell | undefined;
+    if (origin !== undefined) {
+      for (const key of live) {
+        const cell = water.get(key) as CarryCell;
+        ops.push(op(cell.x - origin.x, 0, cell.z - origin.z, "water", { level: "0" }));
+      }
+      if (planter.place("infra_water", ops, origin.x, deckY + 1, origin.z, INFRA_DECK_RULE, false)) {
+        impounded = ops.length;
+        placed += ops.length;
+      } else skipped++;
+    }
+  }
+
+  return {
+    nodePath: job.nodePath,
+    entry: job.def.id,
+    form: job.route.form,
+    columns: placed,
+    skipped,
+    openings: 0,
+    fittings: 0,
+    declared: 0,
+    ...(channel === undefined ? {} : { impounded }),
   };
 }
 

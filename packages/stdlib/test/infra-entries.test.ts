@@ -48,6 +48,9 @@ const TAIL = [
 /** W4's one — the `between` form's first client. */
 const W4 = ["harbour_chain_tower"] as const;
 
+/** W6's three — the `between` form's other clients, in registry order. */
+const W6 = ["aqueduct", "telegraph_line", "maglev_pylon"] as const;
+
 /** W5's three — the water movers (`docs/INFRA-ENTRIES-v0.md` families B, D). */
 const W5 = ["dam", "weir", "canal_lock"] as const;
 
@@ -100,9 +103,9 @@ describe("the registry's shape", () => {
 
 describe("W0's host, W1's four, and the W2/W3 tail", () => {
   it("carries the fixture, P2's four and the tail — and only the fixture is internal", () => {
-    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4, ...W5]);
+    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4, ...W6, ...W5]);
     expect(infraEntry(INFRA_TEST_ENTRY)?.internal).toBe(true);
-    for (const id of [...W1, ...TAIL, ...W4, ...W5]) {
+    for (const id of [...W1, ...TAIL, ...W4, ...W6, ...W5]) {
       expect(infraEntry(id)?.internal, id).toBeUndefined();
     }
   });
@@ -112,7 +115,7 @@ describe("W0's host, W1's four, and the W2/W3 tail", () => {
     // other in both directions; an internal row would fail the reverse
     // direction, and excluding it here is what makes the guard exact rather
     // than weakened to a one-way check.
-    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4, ...W5]);
+    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4, ...W6, ...W5]);
     expect(INFRA_ENTRY_IDS).not.toContain(INFRA_TEST_ENTRY);
   });
 

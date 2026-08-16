@@ -286,7 +286,17 @@ registry row names which one an entry declares:
 
 `structure.linework` is **reserved and unexercised today** — §13.2 put it at 25
 for `infra.wall@0` and recorded that the wall writes no levels, so nothing has
-ever declared it. **Nothing pre-freeze declares it either**, and that is a
+ever declared it.
+
+> **Amended 2026-08-16.** The clients this table once promised to rank 25 —
+> `aqueduct`'s arcade, `maglev_pylon`'s guideway — landed **without it**, as
+> `carry` spans on the `between` form: a pier is *refused* where anything owns
+> the column, never negotiated for, and the aqueduct's water is a sealed
+> all-or-nothing trough above the terrain rather than a `fluid.channel`
+> declaration of it. `telegraph_line` landed the same day as a poled hanging
+> span. The client column above and every "post-freeze" note on these three
+> ids are superseded; rank 25 remains reserved, still unexercised, still
+> waiting on the §13.2 reopening. **Nothing pre-freeze declares it either**, and that is a
 deliberate scope line: a tier-A declarer must declare against the baseline,
 before streets exist, while every pre-freeze entry finds its crossings against the
 *finished* carriageway. Both cannot be true; the wall has lived with exactly this

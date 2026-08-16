@@ -52,6 +52,13 @@ export const KNOWN_INFRA_ENTRIES = [
   // is not honestly a prop: the pair is a curve over water, and a curve
   // between two anchors is the form the design held back until now.
   "harbour_chain_tower",
+  // W6 — the other three clients the route-forms table names for `between`: an
+  // arcade carrying water, a pole line carrying wire, and a guideway carrying
+  // itself. Two of them are *carried* rather than hanging, which is the one
+  // geometry the span kind gained to land them.
+  "aqueduct",
+  "telegraph_line",
+  "maglev_pylon",
   // W5 — the water movers (docs/INFRA-ENTRIES-v0.md families B and D). The
   // three rows whose real content is a `fluid.channel` declaration rather than
   // a cross-section: what makes a dam a dam is that the water behind it is
@@ -100,6 +107,13 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   // its own is a tower, and "ships as a pair or not at all" is the catalog's
   // own sentence about it.
   harbour_chain_tower: Object.freeze(["between"]),
+  // W6's three, and `between` is the only form any of them has for the same
+  // reason: each one *is* the relation between two anchors — a source and a
+  // town, an office and an office, a station and a station — and no single
+  // anchor contains it.
+  aqueduct: Object.freeze(["between"]),
+  telegraph_line: Object.freeze(["between"]),
+  maglev_pylon: Object.freeze(["between"]),
   // The three water movers, and `across` is the only form any of them has: a
   // barrier is a line *across* a watercourse. The host reads that form against
   // the water in the column plan rather than against a carriageway, which is
@@ -164,9 +178,10 @@ export type InfraRouteKey = (typeof INFRA_ROUTE_KEYS)[number];
  * All six, since 2026-08-15: `between` landed with `harbour_chain_tower` as its
  * first client, routed through the road router's own cost field at the entry's
  * grade cap (§3.2). The tier-A ground declaration §5 paired it with turned out
- * to belong to `aqueduct` alone — a carried carriageway *is* a statement about
- * the ground and is still post-freeze — while a hanging span and a pole line
- * are not, so neither had to wait for it.
+ * to be needed by none of the four clients: `aqueduct` and `maglev_pylon`
+ * landed with it too (2026-08-15), and a carried run stands on the ground it
+ * finds and is refused where it cannot — it never asks the ground to
+ * accommodate a pier, which is what rank 25 is reserved for.
  *
  * Kept as a separate list from {@link INFRA_ROUTE_KEYS} rather than deleted:
  * the next form the design names will be held the same way, and the

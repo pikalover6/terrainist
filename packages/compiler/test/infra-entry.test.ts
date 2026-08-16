@@ -46,6 +46,7 @@ import {
   resolveInfraRoute,
   spanHeights,
   spanRuns,
+  supportIndices,
   type InfraPlacementView,
   type InfraRouteSpec,
 } from "../src/structures/infra-entry.js";
@@ -1237,5 +1238,184 @@ describe("harbour_chain_tower — the span, built", () => {
 
   it("is byte-identical on a second compile of the same harbour", () => {
     expect(JSON.stringify(built().result.blocks)).toBe(JSON.stringify(built().result.blocks));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* W6 — the `between` form's other three clients                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A carried run and a poled run are two claims each, and both are checked here
+ * rather than eyeballed on a walk:
+ *
+ * - **the ground keeps its passage** — between one pier and the next there is
+ *   open ground at grade, which is what an arch opening *is*;
+ * - **the water cannot flow** — every water column is floored and every
+ *   neighbour of one is water or solid, which is the whole of the fluid rule
+ *   applied to a trough nine blocks in the air;
+ * - **the wire hangs from something** — one 6-connected body per bay, which is
+ *   the span connectivity law the harbour chain already lives under;
+ * - **a pole steps aside for a street** rather than standing in one.
+ */
+describe("the carried and poled spans (W6)", () => {
+  const A = { x: -30, z: 0 };
+  const B = { x: 30, z: 0 };
+
+  function built(entry: string, road?: Uint8Array) {
+    const plan = flatPlan();
+    const base = view(plan, road === undefined ? {} : { road });
+    const spanView: InfraPlacementView = {
+      ...base,
+      extentOf: (id) => (id === "source" ? [A] : id === "town" ? [B] : undefined),
+    };
+    const result = buildInfraEntries({
+      plan,
+      stack,
+      jobs: [
+        job(
+          { form: "between", target: "source → town", targets: ["source", "town"] },
+          INFRA_ENTRIES[entry] as InfraEntryDef,
+        ),
+      ],
+      view: spanView,
+    });
+    return { result, plan };
+  }
+
+  it("supportIndices puts one at each end, and none a stride from the far one", () => {
+    expect(supportIndices(40, undefined)).toEqual([0, 39]);
+    expect(supportIndices(31, 10)).toEqual([0, 10, 20, 30]);
+    // 30 would be four columns from the end at a pitch of ten: dropped, because
+    // two poles a stride apart is the one rhythm error an interval can make.
+    expect(supportIndices(35, 10)).toEqual([0, 10, 20, 34]);
+    expect(supportIndices(1, 10)).toEqual([0]);
+  });
+
+  it("aqueduct: holds one level of water the whole way, and it cannot flow", () => {
+    const { result } = built("aqueduct");
+    const water = stack.blockByName("water")?.stateId;
+    const wet = result.blocks.filter((b) => b.stateId === water);
+    expect(wet.length).toBeGreaterThan(40);
+    // Level, end to end. A channel that followed the ground would be a river.
+    expect(new Set(wet.map((b) => b.y)).size).toBe(1);
+    const surface = wet[0]?.y as number;
+    const solid = new Set(
+      result.blocks.filter((b) => b.stateId !== water).map((b) => `${b.x},${b.y},${b.z}`),
+    );
+    const wetAt = new Set(wet.map((b) => `${b.x},${b.z}`));
+    for (const b of wet) {
+      // A floor under every drop…
+      expect(solid.has(`${b.x},${b.y - 1},${b.z}`), `floor ${b.x},${b.z}`).toBe(true);
+      // …and water or masonry on all four hands.
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const held =
+          wetAt.has(`${b.x + dx},${b.z + dz}`) ||
+          solid.has(`${b.x + dx},${surface},${b.z + dz}`);
+        expect(held, `wall ${b.x + dx},${b.z + dz}`).toBe(true);
+      }
+    }
+    expect(result.entries[0]?.impounded).toBe(wet.length);
+  });
+
+  it("aqueduct: leaves the ground its passage between the piers", () => {
+    const { result, plan } = built("aqueduct");
+    const grade = plan.ground[index(REGION, 0, 0)] as number;
+    // The columns on the line, one course above the ground: a pier is there or
+    // it is open, and over a sixty-column run it had better be mostly open.
+    const onLine = new Set(
+      result.blocks.filter((b) => b.z === 0 && b.y === grade + 1).map((b) => b.x),
+    );
+    let open = 0;
+    for (let x = A.x + 2; x < B.x - 2; x++) if (!onLine.has(x)) open++;
+    expect(open).toBeGreaterThan((B.x - A.x) / 2);
+  });
+
+  it("maglev_pylon: a walkable beam on slender pylons, clear of the ground", () => {
+    const { result, plan } = built("maglev_pylon");
+    const grade = plan.ground[index(REGION, 0, 0)] as number;
+    // `standY` is the first air above the ground, so the deck is one over the
+    // clearance the row states.
+    const deck = grade + 1 + 12;
+    const beam = result.blocks.filter((b) => b.y === deck && b.z === 0);
+    expect(beam.length).toBeGreaterThan(40);
+    // The centre of the beam is bare: floor at the deck, air over it.
+    const above = new Set(
+      result.blocks.filter((b) => b.y > deck && b.z === 0).map((b) => `${b.x},${b.y}`),
+    );
+    for (const b of beam.slice(2, -2)) {
+      expect(above.has(`${b.x},${deck + 1}`), `head room at ${b.x}`).toBe(false);
+    }
+    // No water anywhere near it — the dry sibling is dry.
+    expect(result.entries[0]?.impounded).toBeUndefined();
+  });
+
+  it("telegraph_line: poles at a pitch, and every wire block hangs from one", () => {
+    const { result, plan } = built("telegraph_line");
+    const bars = stack.blockByName("iron_bars")?.stateId;
+    const wire = result.blocks.filter((b) => b.stateId === bars);
+    expect(wire.length).toBeGreaterThan(30);
+    const grade = plan.ground[index(REGION, 0, 0)] as number;
+    const poles = new Set(
+      result.blocks.filter((b) => b.stateId !== bars && b.y === grade + 1).map((b) => b.x),
+    );
+    // Five poles over sixty columns at a pitch of twelve, both ends included.
+    expect(poles.size).toBeGreaterThanOrEqual(5);
+    expect(poles.has(A.x)).toBe(true);
+    expect(poles.has(B.x)).toBe(true);
+    // The connectivity law: poles and wire are one 6-connected body.
+    const solid = new Set(result.blocks.map((b) => `${b.x},${b.y},${b.z}`));
+    const seen = new Set<string>();
+    const start = `${A.x},${grade + 1},${A.z}`;
+    const queue = [start];
+    seen.add(start);
+    while (queue.length > 0) {
+      const [x, y, z] = (queue.pop() as string).split(",").map(Number) as [number, number, number];
+      for (const [dx, dy, dz] of [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ] as const) {
+        const key = `${x + dx},${y + dy},${z + dz}`;
+        if (!solid.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        queue.push(key);
+      }
+    }
+    expect(seen.size).toBe(solid.size);
+  });
+
+  it("telegraph_line: a pole steps aside for a street, and the wire crosses it", () => {
+    // A carriageway across the middle of the run, on a column the pitch lands
+    // a pole in: the pole is dropped and the bay either side of it joins up.
+    const road = new Uint8Array(REGION.width * REGION.depth);
+    for (let z = -2; z <= 2; z++) {
+      for (let x = -8; x <= -4; x++) road[index(REGION, x, z)] = 1;
+    }
+    const { result, plan } = built("telegraph_line", road);
+    const grade = plan.ground[index(REGION, 0, 0)] as number;
+    for (const b of result.blocks) {
+      const inRoad = b.x >= -8 && b.x <= -4 && b.z >= -2 && b.z <= 2;
+      // Nothing of this entry stands *in* the road; the wire passes over it.
+      if (inRoad) expect(b.y, `${b.x},${b.y},${b.z}`).toBeGreaterThan(grade + 3);
+    }
+    const bars = stack.blockByName("iron_bars")?.stateId;
+    expect(result.blocks.filter((b) => b.stateId === bars).length).toBeGreaterThan(30);
+  });
+
+  it("is byte-identical on a second compile — all three of them", () => {
+    for (const id of ["aqueduct", "telegraph_line", "maglev_pylon"]) {
+      expect(JSON.stringify(built(id).result.blocks), id).toBe(
+        JSON.stringify(built(id).result.blocks),
+      );
+    }
   });
 });

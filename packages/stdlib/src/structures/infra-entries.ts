@@ -134,8 +134,10 @@ export type InfraRouteForm = (typeof INFRA_ROUTE_FORMS)[number];
  * between two placed anchors. What it did *not* need in the end is the tier-A
  * ground declaration §5 paired it with — a span hangs in the air and a
  * telegraph line stands on the ground it finds, so neither has an opinion about
- * the baseline. That pairing stays true for `aqueduct`, which is a carried
- * carriageway and still post-freeze for exactly the reason §3.5 gives.
+ * the baseline. The same turned out to be true of the carried pair — `aqueduct`
+ * and `maglev_pylon`, landed 2026-08-15: a pier is refused where something else
+ * owns the column rather than negotiated for, and rank 25 is reserved for the
+ * entry that asks the *ground* to make room for one.
  */
 export const INFRA_ROUTE_FORMS_IMPLEMENTED = [
   "ring",
@@ -305,35 +307,129 @@ export interface InfraSpanDef {
   /**
    * The tower, bottom-up from the ground, one block per course.
    *
+   * Omitted on a **carried** span, which has no free-standing support at all:
+   * an arcade's ends are abutments of its own masonry and the host raises them
+   * to the deck, so a stated stack there would be a height said twice.
+   *
    * Full cubes, for the registry's standing reason: a slab or a stair in a
    * stack this pass writes is a `floating.slab` waiting to happen. The **last**
    * block is the head the member hangs from, and its course is the curve's
    * anchor height.
    */
-  readonly tower: readonly string[];
-  /** The hanging member — one block id, written along the whole curve. */
-  readonly cable: string;
+  readonly tower?: readonly string[];
+  /**
+   * The hanging member — one block id, written along the whole curve.
+   *
+   * Omitted on a **carried** span ({@link carry}), which has no hanging member
+   * at all: a guideway beam and an aqueduct's channel stand on their piers.
+   */
+  readonly cable?: string;
   /**
    * The curve's sag at mid-span, as a fraction of the chord between the two
    * tower heads. `0.12` is a chain drawn taut across a harbour mouth; `0.3` is
    * one somebody let out.
+   *
+   * Omitted on a carried span, for the same reason {@link cable} is.
    */
-  readonly sag: number;
+  readonly sag?: number;
   /**
-   * Blocks of air the curve keeps above whatever stands under it.
+   * Blocks of air the member keeps above whatever stands under it.
    *
    * A harbour chain is slung above the water so a boat can be stopped by it
    * rather than sail under it, and this is that clearance. It is a *floor*
    * under the curve and never a lift above the tower heads: where the span is
    * long enough that the sag would reach the water anyway, the chain touches
    * the water, because the alternative is a chain that hangs upward.
+   *
+   * On a **carried** span it is read the other way round and is the whole of
+   * the entry's height: the deck stands this many courses above the *higher* of
+   * the two anchors' ground, dead level from end to end, and the piers under it
+   * are however tall the ground beneath each one makes them.
    */
   readonly clearance: number;
+  /**
+   * Columns between one standing support and the next, along the run.
+   *
+   * Absent — `harbour_chain_tower` — means **two supports and no more**: the
+   * pair of towers at the ends, and one curve between them. Present, the run is
+   * a *line* rather than a span: poles down a telegraph route, piers under an
+   * arcade, pylons under a guideway. A support that cannot stand where the
+   * pitch put it (a road, an occupied column, unbuildable ground) is dropped
+   * and the members either side of it join across the gap, which is exactly how
+   * a pole line steps aside for a street.
+   */
+  readonly pitch?: number;
+  /**
+   * A **carried** deck rather than a hanging member (§3.2's other `between`
+   * clients: `aqueduct`, `maglev_pylon`).
+   *
+   * The third thing two anchors can have between them, after "a chain" and
+   * "nothing": a level run held up off the ground on regular supports. It is
+   * not a swept profile — a sweep's datum follows the ground and the whole read
+   * of an arcade is that it does *not* — and it is not a catenary, because it
+   * is stiff. So it is a span whose member stands on piers, and everything
+   * below is the cross-section of that member.
+   */
+  readonly carry?: InfraSpanCarry;
   /**
    * The grade cap the `between` router honours when it looks for these two
    * anchors' corridor — the entry's own, exactly as §3.2 words it.
    */
   readonly maxGrade: number;
+}
+
+/**
+ * A **water channel** carried on a deck — the aqueduct's trough.
+ *
+ * The one place in this registry where a row writes a fluid, and the reason it
+ * may is that the trough is *closed*: the host walls every column of water that
+ * has a neighbour which is not water, floors every one of them, and writes the
+ * body whole or not at all. A source block whose four horizontal neighbours are
+ * water or solid and whose floor is solid cannot flow, which is the same
+ * argument `canals.ts` makes about a dug channel — the difference is only that
+ * this one is nine blocks in the air, where the column plan cannot follow it,
+ * so the closure is over *placed blocks* rather than over the plan.
+ *
+ * A carried channel is therefore **not** a `fluid.channel` ground declaration
+ * and could not be: that class states where the *terrain's* water surface sits,
+ * and an aqueduct's water is above the terrain by construction.
+ */
+export interface InfraSpanChannel {
+  /** Columns of water either side of the line — `1` is a three-wide trough. */
+  readonly half: number;
+  /** The trough's own masonry: its floor, and the wall that holds the water. */
+  readonly lining: string;
+}
+
+/** A carried deck: what stands on the piers of a {@link InfraSpanDef.carry}. */
+export interface InfraSpanCarry {
+  /** Columns of deck either side of the line. `1` is a three-wide beam. */
+  readonly half: number;
+  /** The deck's surface — the beam a walker is on, or the aqueduct's walk. */
+  readonly deck: string;
+  /** The pier, the haunch either side of it, and the two end abutments. */
+  readonly pier: string;
+  /** Columns of pier either side of the line. `0` is a single slender pylon. */
+  readonly pierHalf: number;
+  /**
+   * A course stood on the deck's two outer columns — a guideway's rail.
+   *
+   * Omitted leaves a bare deck, which is what a channel-carrying arcade wants:
+   * its edges are the maintenance walk and a walk with a wall on both hands is
+   * a corridor.
+   */
+  readonly rail?: string;
+  /** The trough, for a run that carries water rather than traffic. */
+  readonly channel?: InfraSpanChannel;
+  /**
+   * The tallest pier the entry will stand, in courses.
+   *
+   * A bay whose ground is further below the deck than this is left **open** —
+   * no pier, and the deck spans it — rather than filled with a column of
+   * masonry the length of a tower. An arcade striding a gorge is an arcade; a
+   * hundred-block leg is a mistake nobody would build.
+   */
+  readonly maxPier: number;
 }
 
 /** What a profile or stamp function is handed. Mirrors `PropContext`'s shape. */
@@ -1150,6 +1246,158 @@ function harbourChainTowerSpan(): InfraSpanDef {
 }
 
 /* -------------------------------------------------------------------------- */
+/* W6 — the `between` form's other three clients (§3.2's route-forms table)     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The route-forms table names four clients for `between` and W4 landed one of
+ * them. These are the other three, and between them they are the whole of what
+ * two anchors can have strung between them: a **carried** run that stands on
+ * piers (`aqueduct`, `maglev_pylon`) and a **poled** run whose member hangs
+ * from one support to the next (`telegraph_line`).
+ *
+ * ## What the ground contract has to say about them, which is nothing
+ *
+ * §5 paired `between` with a tier-A `structure.linework` declaration and W4
+ * found it did not need one. Neither do these: an arcade's piers and a pole
+ * line's poles stand on the ground they find, in the columns they find it in,
+ * and every one of them is refused rather than negotiated where something else
+ * already owns the column. What §3.5 reserves the rank for is an entry that
+ * asks the *ground* to accommodate a pier — a cutting, a levelled pier bed —
+ * and none of these three asks for that. So the driver's refusal of
+ * `structure.linework` stands untouched, and it stands defended: these rows
+ * declare nothing at all.
+ *
+ * ## The aqueduct's water
+ *
+ * Held level, sealed, and written whole — see {@link InfraSpanChannel}. It is
+ * the one fluid in this registry and the reason it is legal is a closure
+ * argument over placed blocks rather than a declaration, because the terrain's
+ * water surface is not where an aqueduct's water is.
+ */
+
+/** Courses of pole, head included — a telegraph pole clears a loaded cart. */
+const POLE_HEIGHT = 7;
+/** Columns between poles. Far enough that the wire reads as a wire. */
+const POLE_PITCH = 12;
+
+/**
+ * `aqueduct` — the channel that walks to town on arches.
+ *
+ * A level trough nine columns of arcade above the higher of its two anchors:
+ * three columns of water on a lined floor, a lining wall either hand standing
+ * two courses proud of it, and a maintenance walk outside each wall. Piers to
+ * the ground every seven columns, three wide, with a haunch either side of each
+ * — so what a walker under it meets is a **rank of openings at grade**, four
+ * columns clear between one pier and the next, which is the one thing an
+ * aqueduct must never take away from the ground it crosses.
+ *
+ * Theme masonry, by W2/W3's rule: an aqueduct is the most public thing a dry
+ * country builds and it is built by the same masons, out of the same valley, as
+ * the town it waters.
+ *
+ * The water is the entry, and it is *held level* — one course, end to end,
+ * regardless of what the ground does underneath. That is the only reading that
+ * makes an aqueduct an aqueduct rather than a wall with a puddle on it, and it
+ * is why this row is carried rather than swept: a swept datum follows the
+ * ground, and water that followed the ground would be a river.
+ */
+function aqueductSpan(ctx: InfraContext): InfraSpanDef {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/aqueduct",
+    // Nine courses over the higher anchor: high enough that the arcade reads
+    // as an arcade, low enough that a walk under it is still a walk under a
+    // building rather than under a cloud.
+    clearance: 9,
+    pitch: 7,
+    maxGrade: 4,
+    carry: {
+      half: 3,
+      deck: stone.primary,
+      pier: stone.primary,
+      pierHalf: 1,
+      maxPier: 24,
+      channel: { half: 1, lining: stone.accent },
+    },
+  };
+}
+
+/**
+ * `telegraph_line` — poles and wire, following the ground.
+ *
+ * The cheapest strong read in family E: a pole every twelve columns, seven
+ * courses of the theme's own timber, and a wire strung head to head with barely
+ * any sag. It is a *poled* span rather than a single one, which is the only
+ * structural difference between this and a harbour chain, and it is the whole
+ * entry — one wire across a valley is a chain, and a line of them down a road
+ * is a telegraph.
+ *
+ * **Iron bars, not chain.** W1's note said bars for want of a chain block and
+ * W4 corrected it for the harbour; here the old answer is the right one for the
+ * opposite reason. A telegraph wire is near-horizontal, so almost every column
+ * of it is a single block, and a horizontal run of `iron_chain` is a line of
+ * unconnected vertical links. Bars join sideways to their neighbours through
+ * the emitter's `applyConnectionStates`, so what comes out is a line.
+ *
+ * The poles step aside for a street rather than standing in one — `crossings:
+ * "open"`, and the host drops a pole it cannot stand and strings the wire
+ * across the gap, which is what a pole line does at a junction.
+ */
+function telegraphLineSpan(ctx: InfraContext): InfraSpanDef {
+  const set = ctx.theme?.woods[0];
+  const log = set?.log ?? "oak_log";
+  const head = set?.planks ?? "oak_planks";
+  return {
+    id: "infra.entry@0/telegraph_line",
+    tower: [...Array.from({ length: POLE_HEIGHT - 1 }, () => log), head],
+    cable: "iron_bars",
+    // Barely any: a telegraph wire is strung tight, and the sag that reads is
+    // the one you notice only when you look along the line.
+    sag: 0.05,
+    // Over a loaded cart and a rider, whatever the ground under the bay does.
+    clearance: 5,
+    pitch: POLE_PITCH,
+    maxGrade: 6,
+  };
+}
+
+/**
+ * `maglev_pylon` — the far-future viaduct.
+ *
+ * The aqueduct's sibling with the water taken out and the ground pushed further
+ * away: a three-wide guideway beam twelve courses up, a copper rail stood on
+ * each edge of it, and a single slender pylon to the ground every ten columns.
+ * The beam's centre column is bare deck with air over it, so the guideway is
+ * walkable end to end — which is not a concession, it is how anybody ever looks
+ * at one of these.
+ *
+ * Fixed materials, by the icon rule §3.3 leaves to the row: a maglev guideway
+ * in the local cobblestone is a Roman aqueduct with the water missing. Concrete
+ * and smooth stone with a cut-copper rail is the whole vocabulary a
+ * block-medium future has.
+ */
+function maglevPylonSpan(): InfraSpanDef {
+  return {
+    id: "infra.entry@0/maglev_pylon",
+    clearance: 12,
+    pitch: 10,
+    // A guideway is surveyed rather than routed: it will take a grade a cart
+    // never would, and the corridor question it asks its two anchors is only
+    // whether a line between them stands on anything at all.
+    maxGrade: 8,
+    carry: {
+      half: 1,
+      deck: "smooth_stone",
+      pier: "light_gray_concrete",
+      pierHalf: 0,
+      maxPier: 32,
+      rail: "cut_copper",
+    },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /* W5 — the water movers (docs/INFRA-ENTRIES-v0.md families B and D)           */
 /* -------------------------------------------------------------------------- */
 
@@ -1495,6 +1743,43 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     // Below this the two moles are the same mole and what is between them is a
     // gap you could step over.
     minRun: 12,
+    rise: 0,
+  } satisfies InfraEntryDef,
+
+  /* --- W6: the `between` form's other three clients --- */
+
+  aqueduct: {
+    id: "aqueduct",
+    // One form, for the harbour tower's reason: an aqueduct is the relation
+    // between a source and a town, and no single anchor contains it.
+    routes: ["between"],
+    geometry: { kind: "span", span: aqueductSpan },
+    // Nothing declared, and §3.5's reserved rank stays reserved: the piers
+    // stand on the ground they find and are refused where they cannot.
+    crossings: "open",
+    // Under two bays there is no arcade — what stands there is a wall with a
+    // gutter on it.
+    minRun: 24,
+    rise: 0,
+  } satisfies InfraEntryDef,
+
+  telegraph_line: {
+    id: "telegraph_line",
+    routes: ["between"],
+    geometry: { kind: "span", span: telegraphLineSpan },
+    // The poles step aside for a carriageway; the wire crosses over it.
+    crossings: "open",
+    // Three bays, or it is two poles and a washing line.
+    minRun: POLE_PITCH * 3,
+    rise: 0,
+  } satisfies InfraEntryDef,
+
+  maglev_pylon: {
+    id: "maglev_pylon",
+    routes: ["between"],
+    geometry: { kind: "span", span: maglevPylonSpan },
+    crossings: "open",
+    minRun: 24,
     rise: 0,
   } satisfies InfraEntryDef,
 
