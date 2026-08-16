@@ -38,9 +38,13 @@ seven. Kai walks it A/B against Luna's candidates. Leniency stays
   span geometry kind, deterministic Taylor-cosh catenary) with
   harbour_chain_tower ("ships as a pair or not at all"). Kit doc
   teaches all six route forms.
-- Wave 2 IN FLIGHT (medium agent): water-movers — dam, weir,
-  canal_lock via fluid.channel declaration; new files
-  structures/water-works.ts + tests visible in tree; commit on land.
+- Wave 2 LANDED: water-works.ts — three-intent declaration (dry
+  barrier platform + pool platform with held surface + preserve),
+  closure-or-drop-head law (no partial pools), upstream computed via
+  integer cross-multiplied means, refusal-still-builds (dry + T234).
+  dam/weir/canal_lock implemented; weir = freeboard zero. Known
+  reversible defaults: movers run post-streets (town caps the head);
+  pre-existing flora in a new pool stays. Full tree 4,434/0.
 - Still deferred BY DESIGN: tier-A structure.linework, F5 WP-6 freeze,
   maglev_pylon, aqueduct/telegraph (between's other clients).
 
