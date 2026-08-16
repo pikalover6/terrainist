@@ -1,15 +1,19 @@
 /**
  * How a block *looks* and *occupies space* in the viewer.
  *
- * Deliberately not Minecraft: there are no textures here and no Mojang assets
- * of any kind, only a flat colour per block family and a rough box. This is
- * scaffolding — the real look is a decision taken at review, and everything
- * here is one table away from being replaced.
+ * Two layers, and the lower one is load-bearing. Underneath is a flat colour
+ * per block family and a rough box: no assets, nothing to license, and a
+ * deterministic pastel for anything unlisted so an unknown block is visible
+ * and stable rather than invisible. On top of it sits `textures.js`, which
+ * names a real texture per face for the blocks a libre Luanti pack has one
+ * for. A block the texture table misses does not fall through a crack — it
+ * renders exactly as it did when there were no textures at all.
  *
- * Anything the table does not name gets a deterministic pastel derived from a
- * hash of its name, so an unlisted block is visible and stable rather than
- * invisible or a different colour each load.
+ * No Mojang assets are involved at either layer, and none ever will be.
  */
+
+import { cellOf } from "./atlas.js";
+import { resolveFaces, textureOf } from "./textures.js";
 
 /** Wood species: planks, log, stripped log, leaves. */
 const WOOD = {
@@ -378,19 +382,59 @@ export function shapeOf(name, solidFlag) {
 }
 
 /**
- * Resolve a whole palette once, at load: colour, shape, alpha and emissivity
- * per index. The mesher does no string work at all.
+ * The six atlas cells and the tint for one block.
+ *
+ * Three outcomes, and only three. A block the texture table knows gets its
+ * cells and a white tint (or a real tint, where the pack has one texture and
+ * we have sixteen colours of it). A block it does not know — or one the atlas
+ * has an incomplete set of faces for — gets no cells at all and its flat
+ * colour as the tint, which is the pre-texture look, unchanged. And with no
+ * atlas at hand (node, tests, a page whose textures failed to load) *every*
+ * block takes that second path.
  */
-export function resolvePalette(palette, solid) {
+function facesOf(name, layout) {
+  const flat = { faces: undefined, tint: colorOf(name) };
+  if (layout === undefined) return flat;
+  const spec = textureOf(name);
+  const files = resolveFaces(spec);
+  if (files === undefined || files.some((file) => file === undefined)) return flat;
+  return {
+    faces: files.map((file) => cellOf(layout, file)),
+    tint: spec.tint ?? [255, 255, 255],
+  };
+}
+
+/**
+ * Resolve a whole palette once, at load: colour, shape, alpha, emissivity and
+ * texture per index. The mesher does no string work at all.
+ *
+ * `layout` is the atlas from `atlas.js`; omit it and the palette resolves to
+ * the flat-colour viewer this started as, which is what the node tests use.
+ */
+export function resolvePalette(palette, solid, layout) {
   return palette.map((name, index) => {
     if (index === 0) {
-      return { name, color: [0, 0, 0], box: FULL, occludes: false, sameCulls: false, alpha: 1, emissive: false, air: true };
+      return {
+        name,
+        color: [0, 0, 0],
+        tint: [0, 0, 0],
+        faces: undefined,
+        box: FULL,
+        occludes: false,
+        sameCulls: false,
+        alpha: 1,
+        emissive: false,
+        air: true,
+      };
     }
     const shape = shapeOf(name, solid?.[index] === true);
     const base = name.startsWith("potted_") ? "flower_pot" : name;
+    const skin = facesOf(name, layout);
     return {
       name,
       color: colorOf(name),
+      tint: skin.tint,
+      faces: skin.faces,
       box: shape.box,
       occludes: shape.occludes,
       sameCulls: shape.sameCulls,
@@ -399,4 +443,15 @@ export function resolvePalette(palette, solid) {
       air: false,
     };
   });
+}
+
+/** Every texture file this palette will ask the atlas for. */
+export function texturesFor(palette) {
+  const wanted = new Set();
+  for (const name of palette) {
+    const files = resolveFaces(textureOf(name));
+    if (files === undefined || files.some((file) => file === undefined)) continue;
+    for (const file of files) wanted.add(file);
+  }
+  return [...wanted].sort();
 }

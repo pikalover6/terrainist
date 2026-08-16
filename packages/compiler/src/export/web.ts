@@ -33,8 +33,18 @@ import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { compileTerrain } from "../terrain/compile.js";
 import { formatDiagnostic } from "@terrainist/spec";
 
-/** Payload format tag; bump when the wire shape changes incompatibly. */
-export const WEB_EXPORT_FORMAT = "terrainist-web-world/1";
+/**
+ * Payload format tag.
+ *
+ * `major.minor`: the major bumps when the wire shape changes incompatibly, the
+ * minor when a field is *added*. A reader keyed on the `terrainist-web-world/`
+ * prefix keeps working across a minor bump — which is the whole point, because
+ * exports are build artifacts and a viewer will meet old ones.
+ *
+ * - `/1`   — the original payload.
+ * - `/1.1` — adds the optional `prompt`: the text the world was authored from.
+ */
+export const WEB_EXPORT_FORMAT = "terrainist-web-world/1.1";
 
 /** Chunk edge, in blocks. Matches Minecraft's, so chunk coords carry over. */
 export const WEB_CHUNK_WIDTH = 16;
@@ -85,8 +95,14 @@ export interface WebChunkEntry {
 }
 
 export interface WebManifest {
-  readonly format: typeof WEB_EXPORT_FORMAT;
+  readonly format: string;
   readonly name: string;
+  /**
+   * The prompt the document was authored from (`meta.prompt`), when it has
+   * one. Absent — not empty — for a hand-written document, so a manifest is
+   * byte-identical to what the previous format wrote in that case.
+   */
+  readonly prompt?: string;
   readonly minecraftVersion: string;
   readonly chunkWidth: number;
   readonly bytesPerIndex: 1 | 2;
@@ -121,6 +137,27 @@ export interface WebExportSummary {
   readonly spawn: readonly [number, number, number];
   readonly seaLevel: number;
   readonly name: string;
+  readonly prompt?: string;
+}
+
+/** `{ prompt }` when there is one, `{}` when there is not. */
+function spreadPrompt(prompt: string | undefined): { prompt?: string } {
+  return prompt === undefined ? {} : { prompt };
+}
+
+/**
+ * `doc.meta.prompt`, when the document carries one and it is a non-empty
+ * string. Anything else — a hand-written document, a null, a number — is
+ * `undefined`, and the manifest simply omits the field.
+ */
+export function promptOf(doc: unknown): string | undefined {
+  if (typeof doc !== "object" || doc === null) return undefined;
+  const meta = (doc as { meta?: unknown }).meta;
+  if (typeof meta !== "object" || meta === null) return undefined;
+  const prompt = (meta as { prompt?: unknown }).prompt;
+  if (typeof prompt !== "string") return undefined;
+  const trimmed = prompt.trim();
+  return trimmed === "" ? undefined : trimmed;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -261,6 +298,9 @@ export async function exportWebWorld(
       name: report.name,
       spawn: report.emit.spawn as readonly [number, number, number],
       seaLevel: report.stats.seaLevel,
+      // Spread, not `prompt: promptOf(doc)`: under `exactOptionalPropertyTypes`
+      // an optional field and a field holding `undefined` are different types.
+      ...spreadPrompt(promptOf(doc)),
     });
   } finally {
     await rm(scratch, { recursive: true, force: true });
@@ -271,6 +311,8 @@ interface WorldFacts {
   readonly name: string;
   readonly spawn: readonly [number, number, number];
   readonly seaLevel: number;
+  /** `meta.prompt`, when the document had one. */
+  readonly prompt?: string;
 }
 
 /**
@@ -401,6 +443,10 @@ export async function writeWebExport(
   const manifest: WebManifest = {
     format: WEB_EXPORT_FORMAT,
     name: facts.name,
+    // Spread rather than `prompt: facts.prompt`: an explicit `undefined` would
+    // still be a key here, and `JSON.stringify` dropping it is a coincidence
+    // this file should not lean on.
+    ...spreadPrompt(facts.prompt),
     minecraftVersion: EMIT_MINECRAFT_VERSION,
     chunkWidth: WEB_CHUNK_WIDTH,
     bytesPerIndex,
@@ -426,5 +472,6 @@ export async function writeWebExport(
     spawn: facts.spawn,
     seaLevel: facts.seaLevel,
     name: facts.name,
+    ...spreadPrompt(facts.prompt),
   };
 }

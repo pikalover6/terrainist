@@ -65,6 +65,11 @@ export class WorldView {
   constructor(manifest) {
     this.manifest = manifest;
     this.chunks = new Map();
+    // The mesher reads a chunk's neighbourhood in scan order, so consecutive
+    // lookups are nearly always in the same chunk. Remembering the last one
+    // turns ~75,000 string-key map lookups per chunk into a pair of integer
+    // comparisons, which on the hero world is most of what `indexAt` costs.
+    this.recent = undefined;
   }
 
   static key(chunkX, chunkZ) {
@@ -73,10 +78,14 @@ export class WorldView {
 
   put(chunk) {
     this.chunks.set(WorldView.key(chunk.chunkX, chunk.chunkZ), chunk);
+    this.recent = chunk;
   }
 
   drop(chunkX, chunkZ) {
     this.chunks.delete(WorldView.key(chunkX, chunkZ));
+    if (this.recent !== undefined && this.recent.chunkX === chunkX && this.recent.chunkZ === chunkZ) {
+      this.recent = undefined;
+    }
   }
 
   has(chunkX, chunkZ) {
@@ -85,10 +94,16 @@ export class WorldView {
 
   /** Palette index at world coordinates; 0 (air) outside anything loaded. */
   indexAt(x, y, z) {
-    const chunkX = Math.floor(x / CHUNK_WIDTH);
-    const chunkZ = Math.floor(z / CHUNK_WIDTH);
-    const chunk = this.chunks.get(WorldView.key(chunkX, chunkZ));
-    if (chunk === undefined) return 0;
+    // `>> 4` is `Math.floor(v / 16)` for anything in world range, and it is
+    // the difference between an integer op and a float division per sample.
+    const chunkX = x >> 4;
+    const chunkZ = z >> 4;
+    let chunk = this.recent;
+    if (chunk === undefined || chunk.chunkX !== chunkX || chunk.chunkZ !== chunkZ) {
+      chunk = this.chunks.get(WorldView.key(chunkX, chunkZ));
+      if (chunk === undefined) return 0;
+      this.recent = chunk;
+    }
     const layer = y - chunk.minY;
     if (layer < 0 || layer >= chunk.height) return 0;
     const localX = x - chunkX * CHUNK_WIDTH;

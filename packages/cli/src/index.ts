@@ -642,6 +642,9 @@ export async function runExportWeb(args: readonly string[]): Promise<number> {
       `  bounds     x ${b.minX}..${b.maxX}  y ${b.minY}..${b.maxY}  z ${b.minZ}..${b.maxZ}`,
       `  spawn      [${summary.spawn.join(", ")}]  sea ${summary.seaLevel}`,
       `  size       ${(summary.bytes / (1024 * 1024)).toFixed(1)} MB`,
+      summary.prompt === undefined
+        ? "  prompt     (none — the document has no meta.prompt)"
+        : `  prompt     ${summary.prompt.length > 68 ? `${summary.prompt.slice(0, 68)}…` : summary.prompt}`,
     ].join("\n"),
   );
   return 0;

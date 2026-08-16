@@ -27,6 +27,7 @@ import {
   encodeChunk,
   encodeRle,
   exportWebWorld,
+  promptOf,
   WEB_CHUNK_WIDTH,
   WEB_EXPORT_FORMAT,
   type WebManifest,
@@ -118,6 +119,7 @@ describe("exporting a compiled document", () => {
     const { dir, manifest } = await exportSmall("shape");
     expect(manifest.format).toBe(WEB_EXPORT_FORMAT);
     expect(manifest.name).toBe("web_export_isle");
+    expect(manifest.prompt).toBe("a small test isle for the web export");
     expect(manifest.palette[0]).toBe("air");
     expect(manifest.solid[0]).toBe(false);
     expect(manifest.palette.length).toBe(manifest.solid.length);
@@ -187,7 +189,9 @@ describe("the hero export on disk", () => {
     const manifest = JSON.parse(
       await readFile(path.join(heroDir, "manifest.json"), "utf8"),
     ) as WebManifest;
-    expect(manifest.format).toBe(WEB_EXPORT_FORMAT);
+    // The prefix, not the exact tag: `worlds/` is a build artifact and an
+    // export from before a minor bump must still load.
+    expect(manifest.format.startsWith("terrainist-web-world/")).toBe(true);
     expect(manifest.name).toBe("isles_of_war");
     expect(manifest.palette[0]).toBe("air");
     expect(manifest.palette.length).toBeGreaterThan(50);
@@ -221,5 +225,42 @@ describe("the hero export on disk", () => {
     let max = 0;
     for (const value of chunk.cells) if (value > max) max = value;
     expect(max).toBeLessThan(manifest.palette.length);
+  });
+});
+
+/**
+ * The prompt, which the landing page types out before the world fades in.
+ *
+ * It is the only field in the manifest that is *optional*, so the two things
+ * worth pinning are that a document carrying one gets it through unchanged and
+ * that a document without one produces a manifest byte-identical to what the
+ * format wrote before the field existed.
+ */
+describe("the prompt in the manifest", () => {
+  it("takes meta.prompt, trims it, and ignores anything that is not text", () => {
+    expect(promptOf({ meta: { prompt: "  two isles at war  " } })).toBe("two isles at war");
+    expect(promptOf({ meta: { prompt: "" } })).toBeUndefined();
+    expect(promptOf({ meta: { prompt: "   " } })).toBeUndefined();
+    expect(promptOf({ meta: { prompt: 7 } })).toBeUndefined();
+    expect(promptOf({ meta: {} })).toBeUndefined();
+    expect(promptOf({})).toBeUndefined();
+    expect(promptOf(null)).toBeUndefined();
+    expect(promptOf("a document, allegedly")).toBeUndefined();
+  });
+
+  it("omits the key entirely for a document with no prompt", async () => {
+    const doc = smallDocument();
+    delete (doc.meta as Record<string, unknown>).prompt;
+    const dir = await mkdtemp(path.join(tmpdir(), "terrainist-webexport-noprompt-"));
+    scratch.push(dir);
+    await exportWebWorld(doc, { outDir: dir });
+    const text = await readFile(path.join(dir, "manifest.json"), "utf8");
+    expect(text).not.toContain("prompt");
+    expect(JSON.parse(text).prompt).toBeUndefined();
+  }, 120_000);
+
+  it("announces the minor version, and stays under the same major", () => {
+    expect(WEB_EXPORT_FORMAT).toBe("terrainist-web-world/1.1");
+    expect(WEB_EXPORT_FORMAT.startsWith("terrainist-web-world/1")).toBe(true);
   });
 });
