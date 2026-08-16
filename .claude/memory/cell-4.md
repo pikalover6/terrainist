@@ -1,7 +1,10 @@
-# Cell 4 — current state (2026-08-15 night, PAUSED for Kai's off-wifi break)
+# Cell 4 — current state (2026-08-16, the browser round)
 
-**FIRST ACTION ON KAI'S RETURN (his explicit words: "POC first thing
-when I get back"): the walkable-world WEB VIEWER proof of concept.**
+**RATIFIED 2026-08-16: GEMINI 3.7 FLASH HIGH IS THE PINNED DEFAULT
+for ALL uses (8217286)** — "the demo worlds are insane"; Luna is the
+one-flag-away fallback (LUNA_MODEL_ID), like GLM before it.
+
+**WEB VIEWER POC SHIPPED (e89bf52) and verified live in Chrome:**
 Kai's vision for the terrainist site: maximalist hyper-modern landing —
 prompt typed into a box, fade, and you are STANDING IN the generated
 world, walking it in the browser. Zero Minecraft code: we own the block
@@ -10,7 +13,13 @@ data pre-NBT. Plan ratified in outline: `terrainist export-web`
 Three.js viewer (greedy-meshed 16³ chunks, pointer-lock walk, baked
 sun + AO). NO Mojang assets ever; POC ships flat-color-per-family + AO
 scaffolding; the real look is DECIDED AT POC REVIEW (Kai's answer).
-Hero world candidate: isles_of_war (the thesis shot). One agent wave.
+Hero world exported: isles_of_war — 1024 chunks, 188-block palette,
+1.17MB data, 5.6s export. terrainist export-web <doc> --out <dir>;
+serve tools/web-viewer (python3 -m http.server), ?world= param.
+Deferred: greedy merging, stairs as cubes, worker meshing, fog tuned
+for ground level only (aerials need scene.fog pushed out), no
+entities/signs/time-of-day. NEXT DECISIONS AT KAI'S REVIEW: the real
+look + the landing-page fade sequence.
 
 **GEMINI BATTERY SWEEP (deck in Prism, ~$1.90 total for 7 worlds):**
 pirate_vs_unicorn_isles_gem (minus 2 no-site scatters — now warnings),
