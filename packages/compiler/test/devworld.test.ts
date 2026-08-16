@@ -441,6 +441,59 @@ describe("dev world build", () => {
     expect(result.waterWorks.diagnostics).toEqual(["LOAM-T234"]);
   });
 
+  it("carries the aqueduct's water level over a valley it cannot leg", () => {
+    const aqueduct = result.aqueduct;
+    expect(aqueduct.diagnostics).toEqual([]);
+    expect(aqueduct.columns).toBeGreaterThan(0);
+    // Water on the deck, all of it at one course: a channel that followed the
+    // ground would be a river, and this ground drops twenty blocks.
+    expect(aqueduct.waterBlocks).toBeGreaterThan(40);
+    expect(aqueduct.waterCourses).toBe(1);
+    // The trough's floor is the deck course; the water stands on it.
+    expect(aqueduct.waterY).toBe(aqueduct.deckY + 1);
+    // And none of it on the terrain: the trough is nine blocks in the air, so
+    // it is held by placed masonry and the column plan never sees a fluid.
+    expect(result.fluids.unstable).toBe(0);
+    // The passage at grade. The valley floor alone is thirteen columns the
+    // arcade must stride, and there are arch openings on the shoulders too.
+    expect(aqueduct.openColumns).toBeGreaterThan(13);
+  });
+
+  it("steps a telegraph pole aside for the street and crosses it with wire", () => {
+    const telegraph = result.telegraph;
+    expect(telegraph.diagnostics).toEqual([]);
+    // The street lands on a column the pitch put a pole in, so at least one
+    // support is refused — that refusal is the whole exhibit.
+    expect(telegraph.skipped).toBeGreaterThanOrEqual(1);
+    expect(telegraph.poles).toBeGreaterThanOrEqual(5);
+    // Nothing of the line stands in the carriageway…
+    const grounded = telegraph.blocks.filter(
+      (b) =>
+        b.x >= telegraph.road.x0 &&
+        b.x <= telegraph.road.x1 &&
+        b.z >= telegraph.road.z0 &&
+        b.z <= telegraph.road.z1 &&
+        b.y <= DEV_GROUND_Y + 3,
+    );
+    expect(grounded).toEqual([]);
+    // …and the wire is continuous across it: every column of the street's
+    // width carries one, which is the bay joining over the dropped pole.
+    expect(telegraph.wireBlocks).toBeGreaterThan(30);
+    expect(telegraph.wireOverRoad).toBe(telegraph.road.x1 - telegraph.road.x0 + 1);
+  });
+
+  it("surveys the maglev beam dead level over ground that is level nowhere", () => {
+    const maglev = result.maglev;
+    expect(maglev.diagnostics).toEqual([]);
+    expect(maglev.beamColumns).toBeGreaterThan(40);
+    // One course, end to end, over a band whose ground never repeats a height.
+    expect(maglev.offLevel).toBe(0);
+    // The centre of the beam is bare: the guideway is walkable end to end.
+    expect(maglev.walkable).toBe(maglev.beamColumns);
+    // And it stands on something: a beam with no pylons is a beam in the sky.
+    expect(maglev.pylons).toBeGreaterThan(4);
+  });
+
   it("builds every prop in the catalog, in its own row", () => {
     const planned = PROP_EXHIBIT_PLAN.reduce((sum, r) => sum + r.cells.length, 0);
     expect(result.props).toHaveLength(planned);

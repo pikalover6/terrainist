@@ -55,6 +55,20 @@ import {
   type HarbourChainExhibitResult,
   type WaterWorksExhibitResult,
 } from "./exhibits/infra2.js";
+import {
+  buildAqueductExhibit,
+  buildMaglevExhibit,
+  buildTelegraphExhibit,
+  AQUEDUCT_DEPTH,
+  AQUEDUCT_WIDTH,
+  MAGLEV_DEPTH,
+  MAGLEV_WIDTH,
+  TELEGRAPH_DEPTH,
+  TELEGRAPH_WIDTH,
+  type AqueductExhibitResult,
+  type MaglevExhibitResult,
+  type TelegraphExhibitResult,
+} from "./exhibits/infra3.js";
 
 import {
   assignMaterials,
@@ -187,6 +201,12 @@ export interface DevGrid {
   readonly waterWorksOrigin: { readonly x: number; readonly z: number };
   /** North-west corner of the marsh band — the dam that holds nothing. */
   readonly marshOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the valley the aqueduct strides. */
+  readonly aqueductOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the rolling run the telegraph poles march down. */
+  readonly telegraphOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the rumpled ground the guideway is surveyed over. */
+  readonly maglevOrigin: { readonly x: number; readonly z: number };
   /** The context section's plan — strips of shaped ground and what stands on them. */
   readonly context: ContextSection;
 }
@@ -217,6 +237,12 @@ export interface DevWorldResult {
   readonly harbourChain: HarbourChainExhibitResult;
   /** The weir, the lock, the dam — and the dam that holds nothing. */
   readonly waterWorks: WaterWorksExhibitResult;
+  /** The arcade over the valley, water and all. */
+  readonly aqueduct: AqueductExhibitResult;
+  /** Poles, wire, and the street one pole stepped aside for. */
+  readonly telegraph: TelegraphExhibitResult;
+  /** The level beam on its pylons, over ground that is level nowhere. */
+  readonly maglev: MaglevExhibitResult;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -371,7 +397,24 @@ export function planDevGrid(): DevGrid {
   // search rectangles — three dams built on one marsh.
   const marshOrigin = { x: 0, z };
   maxX = Math.max(maxX, MARSH_WIDTH);
-  const depthTotal = z + MARSH_DEPTH;
+  z += MARSH_DEPTH + DEV_GAP;
+
+  // The carried and poled spans, last of all: three bands rather than one,
+  // because each of the three entries is *about* a different ground — a valley
+  // deeper than a pier is tall, a gentle roll with a street across it, and a
+  // jumble a level beam does not care about — and one band would have to show
+  // two of the three over the wrong terrain.
+  const aqueductOrigin = { x: 0, z };
+  maxX = Math.max(maxX, AQUEDUCT_WIDTH);
+  z += AQUEDUCT_DEPTH + DEV_GAP;
+
+  const telegraphOrigin = { x: 0, z };
+  maxX = Math.max(maxX, TELEGRAPH_WIDTH);
+  z += TELEGRAPH_DEPTH + DEV_GAP;
+
+  const maglevOrigin = { x: 0, z };
+  maxX = Math.max(maxX, MAGLEV_WIDTH);
+  const depthTotal = z + MAGLEV_DEPTH;
 
   const region: Region = {
     x0: -DEV_MARGIN,
@@ -393,6 +436,9 @@ export function planDevGrid(): DevGrid {
     harbourChainOrigin,
     waterWorksOrigin,
     marshOrigin,
+    aqueductOrigin,
+    telegraphOrigin,
+    maglevOrigin,
     context,
   };
 }
@@ -597,6 +643,36 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     DEV_GROUND_Y,
   );
 
+  // The three carried/poled spans, each on its own shaped band: an arcade over
+  // a valley, a pole line across a street, a guideway over a jumble. All three
+  // go through `buildInfraEntries` on the `between` form — the aqueduct's water
+  // is placed masonry-and-fluid nine blocks up rather than a plan declaration,
+  // so none of them touches `checkFluidStability`.
+  const aqueduct = buildAqueductExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.aqueductOrigin.x,
+    grid.aqueductOrigin.z,
+    DEV_GROUND_Y,
+  );
+  const telegraph = buildTelegraphExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.telegraphOrigin.x,
+    grid.telegraphOrigin.z,
+    DEV_GROUND_Y,
+  );
+  const maglev = buildMaglevExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.maglevOrigin.x,
+    grid.maglevOrigin.z,
+    DEV_GROUND_Y,
+  );
+
   const structures = [
     ...built.blocks,
     ...props.blocks,
@@ -605,6 +681,9 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     ...bridgeStyles.blocks,
     ...harbourChain.blocks,
     ...waterWorks.blocks,
+    ...aqueduct.blocks,
+    ...telegraph.blocks,
+    ...maglev.blocks,
   ];
 
   const emit = await emitTerrain({
@@ -651,5 +730,8 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     bridgeStyles,
     harbourChain,
     waterWorks,
+    aqueduct,
+    telegraph,
+    maglev,
   };
 }
