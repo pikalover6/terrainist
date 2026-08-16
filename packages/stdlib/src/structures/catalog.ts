@@ -1460,9 +1460,22 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   infra("terrace_steps", "Terrace steps"),
 
   /* --- waterworks -------------------------------------------------------- */
-  wat("dam", "Dam"),
-  wat("weir", "Weir"),
-  wat("canal_lock", "Canal lock"),
+  // The three water movers (docs/INFRA-ENTRIES-v0.md families B and D, landed
+  // 2026-08-15). All three are `infra.entry@0` rows whose real content is a
+  // `fluid.channel` declaration — rank 0, tier A — rather than a cross-section:
+  // what makes a dam a dam is that the water behind it is somewhere else.
+  wat("dam", "Dam", "implemented", {
+    tags: ["water", "size_lin"],
+    note: 'infra.entry@0 `"across"` a watercourse: a masonry line with a walkable crest between parapets, the valley behind it impounded up to five blocks over the natural surface, and a dressed face cut into the mass. The head steps down until the pool closes, so it never floods what it cannot hold.',
+  }),
+  wat("weir", "Weir", "implemented", {
+    tags: ["water", "size_s"],
+    note: "The low-water sibling: a dressed lip a single block over the natural surface with a rough shoulder either side, and no parapet. Zero freeboard, so the pool comes right to the lip and the step reads as the thing water goes over.",
+  }),
+  wat("canal_lock", "Canal lock", "implemented", {
+    tags: ["water", "size_m"],
+    note: "A chamber on a watercourse: two closed timber gates a narrowboat apart, stone catwalks flanking each leaf, walls round a dug flat floor, and the water inside standing at the upper reach. Sculpture with correct water — no moving parts.",
+  }),
   wat("canal_basin", "Canal basin"),
   wat("sluice_gate", "Sluice gate"),
   // Family E again (docs/INFRA-ENTRIES-v0.md, 2026-08-14): the waterworks

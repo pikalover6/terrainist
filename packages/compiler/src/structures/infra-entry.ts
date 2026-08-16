@@ -112,7 +112,16 @@ import type { ColumnPlan } from "../terrain/columns.js";
 import type { StructureBlock } from "./buildings.js";
 import { Planter, buildLifeWorld, op, type LifeOp, type LifeWorld, type PlaceRule } from "./life.js";
 import { index, inside, routeTo } from "./roads.js";
-import type { SweptProfile } from "./sweep.js";
+import { profileSpan, type SweptProfile } from "./sweep.js";
+import {
+  WATERCOURSE_FLANK,
+  barrierLine,
+  declareWaterWorks,
+  drownPool,
+  findWatercourse,
+  planWaterWorks,
+  type WaterWorks,
+} from "./water-works.js";
 import {
   deriveWallCourse,
   findGates,
@@ -909,6 +918,15 @@ export interface BuiltInfraEntry {
   readonly fittings: number;
   /** Columns whose level went through the ground contract, or 0. */
   readonly declared: number;
+  /**
+   * Columns of water this entry impounded, and the head it holds.
+   *
+   * Present only on a water mover, and `0`/`0` on one whose pool did not close
+   * at any head — which is a dam built as dry sculpture, and is reported rather
+   * than hidden (`LOAM-T233`).
+   */
+  readonly impounded?: number;
+  readonly head?: number;
 }
 
 /** What {@link buildInfraEntries} produced. */
@@ -963,6 +981,17 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
           "use an entry that declares sweep.run, or nothing — an arcade or a guideway is post-freeze work (docs/INFRA-ENTRIES-v0.md §3.5)",
         ),
       );
+      continue;
+    }
+
+    // The water movers fork before the route forms, and they have to
+    // (`docs/INFRA-ENTRIES-v0.md` families B and D). `across` finds a chord
+    // over a *carriageway*; a dam is a line across a **watercourse**, and the
+    // water is in the column plan rather than in the placement view. Everything
+    // else about the entry — the profile, the theme, the planter, the refusal
+    // diagnostics — is the host's as it stands.
+    if (job.def.water !== undefined) {
+      entries.push(buildWaterEntry(planter, world, input, job, diagnostics));
       continue;
     }
 
@@ -1148,6 +1177,7 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
       infraEntryOpenings: entries.reduce((s, e) => s + e.openings, 0),
       infraEntryFittings: entries.reduce((s, e) => s + e.fittings, 0),
       infraEntryDeclared: entries.reduce((s, e) => s + e.declared, 0),
+      infraEntryImpounded: entries.reduce((s, e) => s + (e.impounded ?? 0), 0),
       infraEntryBlocks: planter.blocks.length,
     },
   };
@@ -1340,6 +1370,199 @@ export function declareRun(
     },
   ]);
   return claims.length;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the water movers                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Build one water-moving entry: `dam`, `weir` or `canal_lock`
+ * (`docs/INFRA-ENTRIES-v0.md` families B and D).
+ *
+ * **Declare, then sweep — in that order, and the order is the whole design.**
+ * Every other entry in this file sweeps a profile over the ground it finds. A
+ * water mover cannot: the ground it is being built on is *under a river*, and
+ * `LifeWorld.standY` returns `undefined` on a wet column, so a dam swept first
+ * would refuse every column that was the point of it. So the fluid declaration
+ * goes in first, at rank 0; the driver's resolve raises the barrier's columns
+ * to the crest and drops the fluid off them; and only then is the profile swept
+ * over ground that is now dry, flat and exactly as high as the entry asked.
+ *
+ * Where no head closes the entry still builds — a dry masonry line across the
+ * water, which is what a dam looks like from downstream anyway — and says so.
+ * Refusing to build at all would leave an author with a silent node.
+ */
+function buildWaterEntry(
+  planter: Planter,
+  world: LifeWorld,
+  input: InfraEntryPassInput,
+  job: InfraEntryJob,
+  diagnostics: LoamDiagnostic[],
+): BuiltInfraEntry {
+  const spec = job.def.water as NonNullable<InfraEntryDef["water"]>;
+  const empty: BuiltInfraEntry = {
+    nodePath: job.nodePath,
+    entry: job.def.id,
+    form: job.route.form,
+    columns: 0,
+    skipped: 0,
+    openings: 0,
+    fittings: 0,
+    declared: 0,
+    impounded: 0,
+    head: 0,
+  };
+
+  // The anchor: a node's own fabric, or — for a node whose extent is a line
+  // rather than an area — the corridor it published. Either way it is a *name
+  // the compiler placed*, which is §5's rule and the reason no coordinate
+  // appears anywhere below.
+  const extent = input.view.extentOf(job.route.target) ?? input.view.corridorOf(job.route.target);
+  const found =
+    extent === undefined
+      ? { kind: "none" as const, detail: `"${job.route.target}" named nothing the compiler placed` }
+      : findWatercourse(input.plan, input.view.bounds, extent);
+  if (found.kind === "none") {
+    diagnostics.push(
+      warning(
+        "INFRA_ROUTE_UNANCHORED",
+        job.nodePath,
+        `"${job.def.id}" is thrown across a watercourse and none was found at "${job.route.target}": ${found.detail}`,
+        'name a node the compiler placed that stands on running water — a riverside district, a mill holding, a canal quarter — e.g. "route": { "across": "mill_holding" }',
+      ),
+    );
+    return empty;
+  }
+  if (found.span < job.def.minRun) {
+    diagnostics.push(
+      warning(
+        "INFRA_ROUTE_EMPTY",
+        job.nodePath,
+        `the narrowest crossing at "${job.route.target}" is ${found.span} column(s) of water, and "${job.def.id}" refuses anything narrower than ${job.def.minRun}`,
+        "point the route at a place the water is wider, or use a smaller waterwork — a weir crosses what a dam will not",
+      ),
+    );
+    return empty;
+  }
+
+  const profile = asSweptProfile(
+    job.def.geometry.kind === "route"
+      ? job.def.geometry.profile(contextOf(job))
+      : { id: job.def.id, bands: [], follow: "step", maxGrade: 1, crossing: "stop" },
+  );
+  const span = profileSpan(profile);
+  const halfSpan = Math.max(Math.abs(span.lo), Math.abs(span.hi));
+  const line = barrierLine(found, WATERCOURSE_FLANK);
+
+  const works: WaterWorks = planWaterWorks({
+    plan: input.plan,
+    crossing: found,
+    spec,
+    halfSpan,
+    taken: (x, z) => world.taken(x, z),
+    flank: WATERCOURSE_FLANK,
+  });
+  if (works.refusal !== undefined) {
+    diagnostics.push(
+      note(
+        "INFRA_RUN_REFUSED",
+        job.nodePath,
+        `"${job.def.id}" holds no water at "${job.route.target}": ${works.refusal} — it is built as a dry structure across the water`,
+        "move it to a narrower, steeper place, or leave it: a barrier that impounds nothing still reads as one from the bank",
+      ),
+    );
+  }
+  declareWaterWorks(input.ground, job.nodePath, works);
+  drownPool(input.plan, works);
+
+  // --- the masonry ---------------------------------------------------------
+  // One profile, swept once per gate. A lock's two gates are the same object
+  // and writing them from one row is what stops them drifting apart.
+  const offsets = works.gateOffset === 0 ? [0] : [0, works.gateOffset];
+  const painted = new Set<number>();
+  let placed = 0;
+  let skipped = 0;
+  for (const offset of offsets) {
+    const path = line.map((c) => ({
+      x: c.x + offset * found.up.dx,
+      z: c.z + offset * found.up.dz,
+    }));
+    const swept = sweepCourse({
+      profile,
+      path,
+      closed: false,
+      rise: job.height ?? job.def.rise,
+      ground: (x, z) => (inside(input.plan.region, x, z) ? world.standY(x, z) : undefined),
+      bends: [],
+    });
+    for (const column of swept.columns) {
+      const base = world.standY(column.x, column.z);
+      if (base === undefined) {
+        skipped++;
+        continue;
+      }
+      // The dressed face: courses of the entry's own masonry cut into the mass
+      // under the crest, on the outermost lanes alone. The mass itself is the
+      // terrain body — everything below a declared ground level is stone by
+      // construction, which is what makes the barrier watertight without this
+      // pass having to build a wall — so this is a facing and never a fill.
+      const dressed = Math.abs(column.offset) === halfSpan ? spec.face : 0;
+      const ops: LifeOp[] = [op(0, -1, 0, column.surface)];
+      for (let c = 2; c <= dressed + 1; c++) ops.push(op(0, -c, 0, column.surface));
+      const cap = column.cap;
+      if (cap !== undefined) {
+        for (let c = 0; c < cap.height; c++) ops.push(op(0, c, 0, cap.block));
+      }
+      if (planter.place("infra_entry", ops, column.x, base, column.z, INFRA_DECLARED_RULE, false)) {
+        placed++;
+        painted.add(index(input.plan.region, column.x, column.z));
+      } else skipped++;
+    }
+  }
+
+  // A lock's chamber walls are declared ground that no gate's cross-section
+  // reaches. They are the coping of the outermost band, laid on the level the
+  // resolver gave, which is the same disposition every declaring entry has.
+  const coping = profile.bands[profile.bands.length - 1]?.surface;
+  if (coping !== undefined) {
+    for (const k of works.barrier.keys()) {
+      if (painted.has(k)) continue;
+      const i = k % input.plan.region.width;
+      const x = input.plan.region.x0 + i;
+      const z = input.plan.region.z0 + (k - i) / input.plan.region.width;
+      const base = world.standY(x, z);
+      if (base === undefined) continue;
+      if (planter.place("infra_entry", [op(0, -1, 0, coping)], x, base, z, INFRA_DECLARED_RULE, false)) {
+        placed++;
+        painted.add(k);
+      }
+    }
+  }
+
+  if (placed === 0) {
+    diagnostics.push(
+      warning(
+        "INFRA_ROUTE_EMPTY",
+        job.nodePath,
+        `a crossing was found for "${job.def.id}" (${found.span} columns of water) and not one column of it could be built`,
+        "something else already owns both banks — move the route to a reach of water nothing is standing on",
+      ),
+    );
+  }
+
+  return {
+    nodePath: job.nodePath,
+    entry: job.def.id,
+    form: job.route.form,
+    columns: placed,
+    skipped,
+    openings: 0,
+    fittings: 0,
+    declared: works.barrier.size + works.pool.size,
+    impounded: works.pool.size,
+    head: works.head,
+  };
 }
 
 /**

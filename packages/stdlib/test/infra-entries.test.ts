@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ALL_MATERIAL_THEMES,
   INFRA_ENTRIES,
   INFRA_ENTRY_IDS,
   INFRA_ROUTE_FORMS,
@@ -19,6 +20,7 @@ import {
   infraEntry,
   isImplementedRouteForm,
   type InfraContext,
+  type MaterialTheme,
 } from "../src/index.js";
 
 const CONTEXT: InfraContext = {
@@ -45,6 +47,9 @@ const TAIL = [
 
 /** W4's one — the `between` form's first client. */
 const W4 = ["harbour_chain_tower"] as const;
+
+/** W5's three — the water movers (`docs/INFRA-ENTRIES-v0.md` families B, D). */
+const W5 = ["dam", "weir", "canal_lock"] as const;
 
 describe("the registry's shape", () => {
   it("keys every row by its own id", () => {
@@ -95,9 +100,11 @@ describe("the registry's shape", () => {
 
 describe("W0's host, W1's four, and the W2/W3 tail", () => {
   it("carries the fixture, P2's four and the tail — and only the fixture is internal", () => {
-    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4]);
+    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4, ...W5]);
     expect(infraEntry(INFRA_TEST_ENTRY)?.internal).toBe(true);
-    for (const id of [...W1, ...TAIL, ...W4]) expect(infraEntry(id)?.internal, id).toBeUndefined();
+    for (const id of [...W1, ...TAIL, ...W4, ...W5]) {
+      expect(infraEntry(id)?.internal, id).toBeUndefined();
+    }
   });
 
   it("keeps internal rows out of the catalog-backed id set", () => {
@@ -105,7 +112,7 @@ describe("W0's host, W1's four, and the W2/W3 tail", () => {
     // other in both directions; an internal row would fail the reverse
     // direction, and excluding it here is what makes the guard exact rather
     // than weakened to a one-way check.
-    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4]);
+    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4, ...W5]);
     expect(INFRA_ENTRY_IDS).not.toContain(INFRA_TEST_ENTRY);
   });
 
@@ -135,6 +142,80 @@ describe("W0's host, W1's four, and the W2/W3 tail", () => {
     expect(infraEntry("barricade_line")?.declaresLevels).toBeUndefined();
     // …and never above tier C, which is §3.5's line held in data.
     for (const id of W1) expect(infraEntry(id)?.sourceClass, id).toBe("sweep.run");
+  });
+});
+
+describe("W5 — the three water movers", () => {
+  it("declares fluid.channel, declares levels, and states a head", () => {
+    for (const id of W5) {
+      const def = infraEntry(id);
+      expect(def, id).toBeDefined();
+      // Rank 0, tier A — the whole reason these three were post-freeze.
+      expect(def?.sourceClass, id).toBe("fluid.channel");
+      expect(def?.declaresLevels, id).toBe(true);
+      // A line across a watercourse, and nothing else: `ring` would ring the
+      // water and `along` would run beside it.
+      expect(def?.routes, id).toEqual(["across"]);
+      // The ground under the barrier is declared: there is nothing to open for.
+      expect(def?.crossings, id).toBe("block");
+      const water = def?.water;
+      expect(water, id).toBeDefined();
+      expect(water?.hold, id).toBeGreaterThanOrEqual(1);
+      expect(water?.freeboard, id).toBeGreaterThanOrEqual(0);
+      expect(water?.reach, id).toBeGreaterThan(0);
+      expect(water?.face, id).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("separates the three by the numbers rather than by the blocks", () => {
+    // A dam holds a valley, a weir holds a lip, and a lock holds a chamber.
+    // That ordering is the entire difference between the three rows, and it is
+    // the cheapest place the claim is checkable.
+    const dam = infraEntry("dam")?.water;
+    const weir = infraEntry("weir")?.water;
+    const lock = infraEntry("canal_lock")?.water;
+    expect(dam?.hold).toBeGreaterThan(weir?.hold ?? 0);
+    expect(dam?.reach).toBeGreaterThan(weir?.reach ?? 0);
+    // Zero freeboard is the weir: the pool comes to the lip, which is what
+    // makes it a thing water goes over rather than a thing water stops at.
+    expect(weir?.freeboard).toBe(0);
+    expect(dam?.freeboard).toBeGreaterThan(0);
+    // Only the lock has a chamber, and that is what a lock *is*.
+    expect(dam?.chamber).toBeUndefined();
+    expect(weir?.chamber).toBeUndefined();
+    expect(lock?.chamber).toBeGreaterThan(0);
+  });
+
+  it("is a pure function of its context, and takes the theme's own stone", () => {
+    for (const id of W5) {
+      const def = infraEntry(id);
+      if (def?.geometry.kind !== "route") throw new Error(`${id} is not a route`);
+      expect(JSON.stringify(def.geometry.profile(CONTEXT)), id).toEqual(
+        JSON.stringify(def.geometry.profile(CONTEXT)),
+      );
+      const bands = def.geometry.profile(CONTEXT).bands;
+      expect(bands.length, id).toBeGreaterThan(0);
+      // Peacetime fabric: a themed profile must differ from the untuned one
+      // somewhere, or `ctx.theme` is decoration on a fixed row. `CONTEXT` has
+      // no theme at all, so the comparison is against a real one.
+      const themed = ALL_MATERIAL_THEMES.find(
+        (t) => (t.stones[0]?.primary ?? "cobblestone") !== "cobblestone",
+      ) as MaterialTheme;
+      expect(JSON.stringify(def.geometry.profile({ ...CONTEXT, theme: themed })), id).not.toEqual(
+        JSON.stringify(def.geometry.profile(CONTEXT)),
+      );
+      // No slab, no stair, no fence: a swept cap of any of the three is
+      // `floating.slab` waiting to happen, and a dam crest is the last place
+      // to find out.
+      for (const band of bands) {
+        for (const block of [band.surface, band.fill, band.cap?.block]) {
+          if (block === undefined) continue;
+          expect(block.endsWith("_slab"), `${id}: ${block}`).toBe(false);
+          expect(block.endsWith("_stairs"), `${id}: ${block}`).toBe(false);
+          expect(block.endsWith("_fence"), `${id}: ${block}`).toBe(false);
+        }
+      }
+    }
   });
 });
 

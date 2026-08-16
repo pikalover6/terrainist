@@ -161,7 +161,73 @@ export function isImplementedRouteForm(form: string): form is InfraRouteForm {
  * finds its crossings against the *finished* carriageway. The driver refuses a
  * row that names it, which is the scope line §5 asks to be defended.
  */
-export type InfraSourceClass = "sweep.run" | "retaining.seam" | "structure.linework";
+export type InfraSourceClass =
+  | "sweep.run"
+  | "retaining.seam"
+  | "fluid.channel"
+  | "structure.linework";
+
+/* -------------------------------------------------------------------------- */
+/* the water movers (docs/INFRA-ENTRIES-v0.md families B and D)                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An entry that **moves water** — `docs/INFRA-ENTRIES-v0.md` family B's last
+ * sentence, *"`dam` and `weir` additionally move water — a `fluid.channel`
+ * declaration, rank 0, tier A"*, and family D's *"`canal_lock` … chambers on a
+ * canal"*.
+ *
+ * A row with this field is not a line that stands on the ground: it is a
+ * statement about **where the water surface sits**, and the surface is declared
+ * once, through the ground contract, at `fluid.channel` — rank 0, above every
+ * other claim — rather than painted block by block. That is not a stylistic
+ * preference. `GROUND-CONTRACT-v0.md` §4's own note on the rank says it: *losing
+ * a water claim is a physics failure, not an ugly walk*, and impounded water
+ * painted into a plan somebody else may still raise a column out of is
+ * `LOAM-T110` on the first tick.
+ *
+ * The host derives everything geometric. A row states only the four numbers
+ * that are the *entry's* opinion — how high it holds, how much freeboard the
+ * crest carries, how far a pool may reach before the entry calls it unbounded,
+ * and (for a lock) how long the chamber is.
+ */
+export interface InfraWaterDef {
+  /**
+   * Blocks above the natural water surface the pool upstream is held at.
+   *
+   * A ceiling, not a promise: the host tries this hold, and where the pool it
+   * would make does not *close* — where the flooded columns run past
+   * {@link reach}, off the region, or into something already built — it drops
+   * the hold a block and tries again, down to 1. A dam in a valley that closes
+   * gets its whole head; the same dam beside a town settles at the head the
+   * town leaves room for, which is the honest answer and is also the only one
+   * that keeps the unstable-fluid count at zero.
+   */
+  readonly hold: number;
+  /** Blocks the crest stands above the held surface — the dry walkway. */
+  readonly freeboard: number;
+  /** Furthest a pool may reach from the barrier before it is called unbounded. */
+  readonly reach: number;
+  /**
+   * Courses of dressed face below the crest, on the barrier's own columns.
+   *
+   * The barrier is declared ground, so the mass under it is the terrain body —
+   * stone by construction, and watertight for the same reason a canal's shell
+   * is. This is how much of the exposed downstream face is re-materialised in
+   * the entry's own masonry rather than left as raw rock.
+   */
+  readonly face: number;
+  /**
+   * A **chamber** between two gates, in columns along the flow — a lock.
+   *
+   * Absent means a plain barrier (a dam, a weir): one line across the water,
+   * a pool behind it. Present means two: the crossing itself is the lower gate,
+   * a second gate stands this far upstream of it, and the water between them is
+   * held at the *upper* reach — gates set for a boat coming down, which is the
+   * only still frame a lock has.
+   */
+  readonly chamber?: number;
+}
 
 /**
  * What an entry does where a carriageway crosses it (§3.6).
@@ -348,6 +414,17 @@ export interface InfraEntryDef {
    * takes the wheat and never the barn.
    */
   readonly declaresLevels?: true;
+  /**
+   * This entry **moves water** (`docs/INFRA-ENTRIES-v0.md` families B and D).
+   *
+   * Implies {@link sourceClass} `"fluid.channel"` and implies the declaring
+   * disposition {@link declaresLevels} names — a water mover is a statement
+   * about the ground *and* about the fluid over it, and neither can be said by
+   * stacking blocks on a surface. The host resolves the watercourse, chooses
+   * the head, declares the barrier and the pool as one rank-0 intent set, and
+   * only then sweeps the profile over the crest the resolver gave it.
+   */
+  readonly water?: InfraWaterDef;
   /**
    * Blocks of datum above the ground the sweep aims for, when the node says
    * nothing. A fence is low; a wall is not.
@@ -1072,6 +1149,146 @@ function harbourChainTowerSpan(): InfraSpanDef {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* W5 — the water movers (docs/INFRA-ENTRIES-v0.md families B and D)           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The three rows below are the post-freeze rung family B held: *"`dam` and
+ * `weir` additionally move water — a `fluid.channel` declaration, rank 0, tier
+ * A"*, plus family D's `canal_lock`, *"a chamber on a canal"*.
+ *
+ * ## What is the entry, and what is the host's
+ *
+ * Nothing about a dam's *shape* is interesting: it is a masonry line with a
+ * walkable crest. What is interesting is that the water behind it is somewhere
+ * else than it was, and that is not something a cross-section can say. So these
+ * three rows are the first in the registry whose real content is four numbers —
+ * {@link InfraWaterDef} — and whose profile function is the small half.
+ *
+ * ## Peacetime fabric, so the materials are the theme's
+ *
+ * W2/W3's rule: a dam is built by the same masons, out of the same valley, as
+ * the town it waters. All three take `ctx.theme` through {@link entryStone}, and
+ * the lock's gates take its timber, because a lock gate is a timber gate
+ * everywhere anybody has ever built one.
+ *
+ * ## No moving parts
+ *
+ * A lock has no pistons, no redstone and no water logic: it is sculpture with
+ * *correct* water. The gates stand closed, the chamber is full to the upper
+ * reach, and what makes it read is that the three water levels either side of
+ * it are the three levels a lock actually has.
+ */
+
+/** Furthest a dam's pool may run before the entry calls the valley unbounded. */
+const DAM_REACH = 96;
+/** A weir's head is one block, so its pool is a fraction of a dam's. */
+const WEIR_REACH = 48;
+/** A lock's pool is a canal reach, not a valley. */
+const LOCK_REACH = 64;
+/** Columns of chamber between a lock's two gates — a narrowboat and its rope. */
+const LOCK_CHAMBER = 12;
+
+/** The theme's timber, as planks — a lock gate is a timber gate. */
+function entryTimber(theme: MaterialTheme | undefined): { planks: string; trim: string } {
+  const id = theme?.woods[0]?.id ?? "dark_oak";
+  return { planks: `${id}_planks`, trim: `${id}_log` };
+}
+
+/**
+ * `dam` — the crest, and the mass under it.
+ *
+ * Three columns of walkway between two parapet courses, which is the narrowest
+ * thing that reads as a dam crest and still passes the traversal rules with a
+ * kerb either side. Every block a full cube: a slab or a stair on a swept cap
+ * is `floating.slab` waiting to happen, and a dam crest is the last place to
+ * find out.
+ *
+ * The *face* is not in this function and could not be — it is courses of
+ * masonry below the declared crest, on ground the resolver has already given,
+ * and {@link InfraWaterDef.face} is the entry's whole say in it.
+ */
+function damProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/dam",
+    // The crest is flat because the *ground* under it is flat: the host
+    // declares one level for the whole barrier and the datum follows the
+    // answer. `step` is what carries it up onto the abutments at either end.
+    follow: "step",
+    maxGrade: 2,
+    crossing: "stop",
+    bands: [
+      { id: "crest", role: "walkway", width: 3, centred: true, surface: stone.accent, fill: stone.primary },
+      {
+        id: "parapet",
+        role: "parapet",
+        width: 1,
+        surface: stone.primary,
+        fill: stone.primary,
+        cap: { height: 1, block: stone.primary },
+      },
+    ],
+  };
+}
+
+/**
+ * `weir` — the low-water sibling: a lip, and a shoulder either side of it.
+ *
+ * Small enough that the geometry is almost all of it. One course of dressed
+ * stone at the head the entry holds, a rough shoulder either side, and no
+ * parapet at all: a weir with a railing is a dam that lost its nerve.
+ */
+function weirProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/weir",
+    follow: "step",
+    maxGrade: 2,
+    crossing: "stop",
+    bands: [
+      { id: "lip", role: "kerb", width: 1, centred: true, surface: stone.accent, fill: stone.primary },
+      { id: "shoulder", role: "verge", width: 1, surface: stone.primary, fill: stone.primary },
+    ],
+  };
+}
+
+/**
+ * `canal_lock` — one gate's cross-section, swept twice.
+ *
+ * The host builds the lower gate on the crossing and the upper gate a chamber's
+ * length upstream, out of this one profile: the two are the same object and
+ * writing them as one row is what stops them drifting apart.
+ *
+ * A closed timber leaf on the centre line with a stone catwalk either side of
+ * it. The catwalks are the walkable part — a lock is crossed beside its gate,
+ * never over it — and the leaf standing two courses proud of them is the whole
+ * read: *shut*.
+ */
+function canalLockProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  const timber = entryTimber(ctx.theme);
+  return {
+    id: "infra.entry@0/canal_lock",
+    follow: "step",
+    maxGrade: 2,
+    crossing: "stop",
+    bands: [
+      {
+        id: "leaf",
+        role: "core",
+        width: 1,
+        centred: true,
+        surface: timber.trim,
+        fill: stone.primary,
+        cap: { height: 2, block: timber.planks },
+      },
+      { id: "catwalk", role: "walkway", width: 1, surface: stone.accent, fill: stone.primary },
+    ],
+  };
+}
+
 /**
  * Every infrastructure entry, by id.
  *
@@ -1279,6 +1496,58 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     // gap you could step over.
     minRun: 12,
     rise: 0,
+  } satisfies InfraEntryDef,
+
+  /* --- W5: the water movers (families B and D) --- */
+
+  dam: {
+    id: "dam",
+    // One form, and it is the entry: a dam is a line *across* a watercourse.
+    // The host reads `across` against the water rather than against a
+    // carriageway for a row that declares `water` — a dam thrown across a
+    // street is a wall.
+    routes: ["across"],
+    geometry: { kind: "route", profile: damProfile },
+    sourceClass: "fluid.channel",
+    // The crest is a road nobody routed: it crosses whatever it crosses, and
+    // the ground under it is declared at rank 0, so there is nothing to open
+    // for. A carriageway that met a dam would be carried over it, not through.
+    crossings: "block",
+    // Under this the "watercourse" is a puddle and the dam is a garden step.
+    minRun: 8,
+    rise: 0,
+    declaresLevels: true,
+    water: { hold: 5, freeboard: 2, reach: DAM_REACH, face: 6 },
+  } satisfies InfraEntryDef,
+
+  weir: {
+    id: "weir",
+    routes: ["across"],
+    geometry: { kind: "route", profile: weirProfile },
+    sourceClass: "fluid.channel",
+    crossings: "block",
+    minRun: 6,
+    rise: 0,
+    declaresLevels: true,
+    // **Zero freeboard is the entry.** A weir's crest sits *at* the head it
+    // holds, so the pool comes right to the lip and the step reads as the thing
+    // water goes over rather than the thing that stops it. It stays stable for
+    // the reason the canal's coping is stable — a neighbour standing at the
+    // water line holds it — and it stays walkable because the lip is dry solid
+    // ground with air above it.
+    water: { hold: 1, freeboard: 0, reach: WEIR_REACH, face: 2 },
+  } satisfies InfraEntryDef,
+
+  canal_lock: {
+    id: "canal_lock",
+    routes: ["across"],
+    geometry: { kind: "route", profile: canalLockProfile },
+    sourceClass: "fluid.channel",
+    crossings: "block",
+    minRun: 6,
+    rise: 0,
+    declaresLevels: true,
+    water: { hold: 2, freeboard: 1, reach: LOCK_REACH, face: 3, chamber: LOCK_CHAMBER },
   } satisfies InfraEntryDef,
 });
 

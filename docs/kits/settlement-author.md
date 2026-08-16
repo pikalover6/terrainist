@@ -2393,7 +2393,7 @@ pointing `ring` at a node the layout never placed gets you `LOAM-T233`.
 |---|---|---|
 | `ring` | `{"ring": "<node id>", "margin": n}` | a closed line round what that node built, `margin` columns outside it, on multiples of 15° like the wall's own course. Ringing a farm holding rings **its fields**, not its farmyard |
 | `along` | `{"along": "<road id>", "offset": n, "side": "left"\|"right"}` | that corridor's own polyline, pushed `offset` columns to one hand |
-| `across` | `{"across": "<road id\|settlement id>"}` | the perpendicular chord over the target's **narrowest** crossing, flanked a little either side. Naming a district or a city takes **its widest street** — the high street — which is what to write when the roads are the settlement's own |
+| `across` | `{"across": "<road id\|settlement id>"}` | the perpendicular chord over the target's **narrowest** crossing, flanked a little either side. Naming a district or a city takes **its widest street** — the high street — which is what to write when the roads are the settlement's own. For the three water movers below (`dam`, `weir`, `canal_lock`) the same word means the narrowest crossing of the **water** near that node instead |
 | `into` | `{"into": "<node id>", "run": n}` | a run of `n` columns **ending** at that node, coming down the steepest bearing out of it |
 | `between` | `{"between": ["<node id>", "<node id>"]}` | a corridor from the first anchor to the second, routed the way a road would go: the cheapest line over ground something could stand on, refusing a climb the entry cannot take. The **only** form that names two things, and the only one whose value is a list |
 | `over` | `{"over": "<node id>"}` | every column of that node's published area — a farm holding's parcels — for the treatments, which are not lines at all |
@@ -2533,6 +2533,51 @@ crosses, so a road never loses its surface to one.
   "params": { "entry": "hedgerow", "route": { "ring": "north_holding", "margin": 4 } }
 }
 ```
+
+### Worked water — when the prompt says a millpond, a harbour behind a dam, a canal step
+
+Three entries do not stand on the ground: they **move the water**. Reach for
+one whenever the prompt implies water that is *held* rather than water that is
+just there — a millpond, a mill leat, a reservoir above a town, a harbour
+behind a barrage, a canal climbing a hill. All three go `across` a
+**watercourse**, and that is the only form any of them takes.
+
+| entry | route | what it builds |
+|---|---|---|
+| `dam` | `across` a node the water runs through | a masonry line with a walkable crest between parapets, the valley behind it flooded up to five blocks over the natural surface, and a dressed face cut into the mass. This is a millpond, a reservoir, a harbour behind a barrage |
+| `weir` | `across` the same | the low-water sibling: a dressed lip one block over the river with a rough shoulder each hand and no parapet. The water comes right to the lip. This is a mill leat's head, a fish pass, a town's river step |
+| `canal_lock` | `across` a canal or a river | two closed timber gates a narrowboat apart, stone catwalks flanking each leaf, walls round a dug flat floor, and the water inside standing at the **upper** reach. Sculpture with correct water — nothing moves |
+
+```json
+{
+  "id": "mill_dam",
+  "kind": "generator",
+  "generator": "infra.entry@0",
+  "params": { "entry": "dam", "route": { "across": "mill_holding" } }
+}
+```
+
+**`across` means something different here, and it has to.** For a barricade it
+is the chord over the narrowest crossing of a *street*; for these three it is
+the chord over the narrowest crossing of the *water* near the node you named.
+So name a node that **sits on running water** — the riverside quarter, the mill
+holding, the canal district — and the entry finds the narrows itself. Name one
+that does not and you get `LOAM-T233` saying there is no watercourse there.
+
+Three things about them are worth knowing before you write one:
+
+- **You never say how deep.** The head is the entry's, and it comes *down* on
+  its own until the pool it would make actually closes: a dam in an empty
+  valley gets its full five blocks, the same dam beside a town settles at
+  whatever the town leaves room for. This is not a limitation to work around —
+  it is the only thing that keeps impounded water from flowing away on the
+  first tick.
+- **A barrier that impounds nothing still builds.** If no head at all closes
+  you get the masonry, dry, across the water, and `LOAM-T234` telling you why.
+  Move it to a narrower, steeper place if you want the pond.
+- **Upstream is found, not written.** The higher ground is upstream, because
+  water runs downhill. You do not get to choose which side floods, and you
+  should not want to.
 
 Two entries the catalog names are **not** here: `log_flume` and `sluice_box`.
 Both are a trough that follows a fall, and no route form expresses one — asking

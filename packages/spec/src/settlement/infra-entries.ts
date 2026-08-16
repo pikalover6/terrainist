@@ -52,6 +52,13 @@ export const KNOWN_INFRA_ENTRIES = [
   // is not honestly a prop: the pair is a curve over water, and a curve
   // between two anchors is the form the design held back until now.
   "harbour_chain_tower",
+  // W5 — the water movers (docs/INFRA-ENTRIES-v0.md families B and D). The
+  // three rows whose real content is a `fluid.channel` declaration rather than
+  // a cross-section: what makes a dam a dam is that the water behind it is
+  // somewhere else.
+  "dam",
+  "weir",
+  "canal_lock",
 ] as const;
 
 /** An entry id. */
@@ -93,6 +100,14 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   // its own is a tower, and "ships as a pair or not at all" is the catalog's
   // own sentence about it.
   harbour_chain_tower: Object.freeze(["between"]),
+  // The three water movers, and `across` is the only form any of them has: a
+  // barrier is a line *across* a watercourse. The host reads that form against
+  // the water in the column plan rather than against a carriageway, which is
+  // the one place `across` means two different things — and it has to, because
+  // a dam thrown across a street is a wall.
+  dam: Object.freeze(["across"]),
+  weir: Object.freeze(["across"]),
+  canal_lock: Object.freeze(["across"]),
 });
 
 /** True for an entry the registry knows. */
