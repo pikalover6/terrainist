@@ -17,6 +17,11 @@
  *   multiplies the result by a vertex colour carrying tint × sun × AO. A block
  *   with no texture points at the atlas's white cell, so the flat-colour
  *   viewer this grew out of is the same code path with a different cell.
+ * - **The look is a separate machine.** `render.js` owns the sun, the shadow
+ *   map, the HDR target and the post chain, and this file owns everything
+ *   else; the seam between them is two materials and a `render()` call. `U`
+ *   cycles ultra → high → off, and `off` is the viewer exactly as it drew
+ *   before any of it existed.
  * - **The landing is a curtain, not a page.** The world starts loading at once
  *   and streams behind the black; the prompt types over the top of it. There is
  *   no navigation, so nothing is thrown away when it lifts. The player is held
@@ -35,6 +40,13 @@ import { resolvePalette, texturesFor } from "./appearance.js";
 import { atlasLayout, drawAtlas, loadAtlasImages } from "./atlas.js";
 import { loadManifest } from "./loader.js";
 import { eyePosition, groundSnap, newPlayer, step as stepPlayer } from "./physics.js";
+import { ShaderPack, TRANSLUCENT_LAYER } from "./render.js";
+import {
+  QUALITY_STORAGE_KEY,
+  nextQuality,
+  qualitySettings,
+  resolveQuality,
+} from "./quality.js";
 
 /** Chunks meshed around the camera. One more ring than this is *loaded*. */
 const VIEW_RADIUS = 10;
@@ -59,6 +71,7 @@ const hud = {
   name: document.getElementById("hud-name"),
   position: document.getElementById("hud-position"),
   mode: document.getElementById("hud-mode"),
+  quality: document.getElementById("hud-quality"),
 };
 const landing = {
   root: document.getElementById("landing"),
@@ -80,8 +93,10 @@ renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = skyGradient();
-const FOG_COLOR = new THREE.Color(0xa8c8e8);
+// The sky is painted by the shader pack, which cannot exist until the atlas
+// does; until then the page is the same black the curtain is, so the seconds
+// before the world arrives are one colour rather than two.
+scene.background = new THREE.Color(0x05070a);
 const FOG_NEAR = VIEW_RADIUS * 8;
 const FOG_FAR = VIEW_RADIUS * CHUNK_WIDTH * 1.15;
 
@@ -91,120 +106,56 @@ addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  shaders?.resize(innerWidth, innerHeight);
 });
 
+/* -------------------------------------------------------------------------- */
+/* the look                                                                    */
+/* -------------------------------------------------------------------------- */
+
 /**
- * A vertical sky gradient, drawn once into a 2×N canvas. Cheaper than a shader
- * and it also lights the fog, which is the only other thing standing between
- * the horizon and a hard edge.
+ * Which of the three looks this page load runs.
+ *
+ * `?quality=` wins and is not remembered; otherwise the visitor's last choice;
+ * otherwise ultra, except on a coarse pointer — a phone that renders a 2048
+ * shadow map at sixty frames is not a phone anybody owns yet.
  */
-function skyGradient() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 2;
-  canvas.height = 256;
-  const context = canvas.getContext("2d");
-  const gradient = context.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, "#3c78c8");
-  gradient.addColorStop(0.55, "#8fbbe8");
-  gradient.addColorStop(1, "#dceaf6");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 2, 256);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.mapping = THREE.EquirectangularReflectionMapping;
-  return texture;
+function storedQuality() {
+  try {
+    return localStorage.getItem(QUALITY_STORAGE_KEY) ?? undefined;
+  } catch {
+    return undefined; // private browsing; the default is fine
+  }
 }
 
-/* -------------------------------------------------------------------------- */
-/* the block shader                                                            */
-/* -------------------------------------------------------------------------- */
-
-const VERTEX_SHADER = /* glsl */ `
-  attribute vec3 acolor;
-  attribute vec4 cell;
-  varying vec2 vUv;
-  varying vec4 vCell;
-  varying vec3 vColor;
-  varying float vDepth;
-
-  void main() {
-    vUv = uv;
-    vCell = cell;
-    vColor = acolor;
-    vec4 view = modelViewMatrix * vec4(position, 1.0);
-    vDepth = -view.z;
-    gl_Position = projectionMatrix * view;
+function rememberQuality(mode) {
+  try {
+    localStorage.setItem(QUALITY_STORAGE_KEY, mode);
+  } catch {
+    // Not being able to remember a preference is not an error worth showing.
   }
-`;
+}
 
-/**
- * The wrap, and why it needs explicit gradients.
- *
- * `fract(vUv)` is what tiles a texture across a merged quad, and it is also a
- * discontinuity: at every tile seam the hardware's own derivative of the
- * coordinate jumps by a whole tile, it concludes the surface is a mile away,
- * and it fetches the coarsest mip — a grey grid over the world. Taking the
- * derivative of the *unwrapped* coordinate and passing it to `textureGrad`
- * fixes it exactly, and is the reason this shader is written by hand rather
- * than assembled out of three.js chunks.
- */
-const FRAGMENT_SHADER = /* glsl */ `
-  precision highp float;
+let qualityMode = resolveQuality({
+  query: params.get("quality"),
+  stored: storedQuality(),
+  coarse: matchMedia?.("(pointer: coarse)").matches === true,
+}).mode;
 
-  // GLSL3 has no gl_FragColor; three's colorspace include still writes to
-  // that name, so alias it to a declared out — three's own idiom. Found on
-  // first GPU compile (the one thing no node test can check).
-  layout(location = 0) out highp vec4 pc_fragColor;
-  #define gl_FragColor pc_fragColor
+/** The shader pack: sun, shadows, water, wind, post chain. Built in `boot`. */
+let shaders;
 
-  uniform sampler2D map;
-  uniform vec3 fogColor;
-  uniform float fogNear;
-  uniform float fogFar;
-  uniform float opacity;
+/** `U`: ultra → high → off → ultra, remembered. */
+function cycleQuality() {
+  qualityMode = nextQuality(qualityMode);
+  rememberQuality(qualityMode);
+  shaders?.apply(qualityMode);
+  showQuality();
+}
 
-  varying vec2 vUv;
-  varying vec4 vCell;
-  varying vec3 vColor;
-  varying float vDepth;
-
-  vec3 srgbToLinear(vec3 c) {
-    return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
-  }
-
-  void main() {
-    vec2 wrapped = vCell.xy + fract(vUv) * vCell.zw;
-    vec2 ddx = dFdx(vUv) * vCell.zw;
-    vec2 ddy = dFdy(vUv) * vCell.zw;
-    vec4 texel = textureGrad(map, wrapped, ddx, ddy);
-    #ifdef CUTOUT
-      if (texel.a < 0.5) discard;
-    #endif
-    vec3 rgb = srgbToLinear(texel.rgb) * vColor;
-    float alpha = texel.a * opacity;
-    rgb = mix(rgb, fogColor, smoothstep(fogNear, fogFar, vDepth));
-    gl_FragColor = vec4(rgb, alpha);
-    #include <colorspace_fragment>
-  }
-`;
-
-function blockMaterial(atlas, { cutout, translucent }) {
-  return new THREE.ShaderMaterial({
-    glslVersion: THREE.GLSL3,
-    uniforms: {
-      map: { value: atlas },
-      fogColor: { value: FOG_COLOR },
-      fogNear: { value: FOG_NEAR },
-      fogFar: { value: FOG_FAR },
-      opacity: { value: translucent ? 0.72 : 1 },
-    },
-    defines: cutout ? { CUTOUT: "" } : {},
-    vertexShader: VERTEX_SHADER,
-    fragmentShader: FRAGMENT_SHADER,
-    transparent: translucent,
-    depthWrite: !translucent,
-    side: translucent ? THREE.DoubleSide : THREE.FrontSide,
-  });
+function showQuality() {
+  if (hud.quality === null) return;
+  hud.quality.textContent = qualitySettings(qualityMode).label;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -257,7 +208,20 @@ const stats = {
 // A debug handle: `terrainist.player.position.set(...)` from the console is how
 // you get to a corner of a 512² world without flying there, and how a
 // screenshot of a specific place gets taken reproducibly.
-globalThis.terrainist = { player, keys, scene, stats, get manifest() { return manifest; } };
+globalThis.terrainist = {
+  player,
+  keys,
+  scene,
+  stats,
+  get manifest() { return manifest; },
+  get shaders() { return shaders; },
+  quality: (mode) => {
+    qualityMode = mode;
+    rememberQuality(mode);
+    shaders?.apply(mode);
+    showQuality();
+  },
+};
 
 async function boot() {
   stats.started = performance.now();
@@ -297,8 +261,19 @@ async function boot() {
     );
   }
 
-  opaqueMaterial = blockMaterial(atlas, { cutout: true, translucent: false });
-  transparentMaterial = blockMaterial(atlas, { cutout: false, translucent: true });
+  shaders = new ShaderPack({
+    renderer,
+    scene,
+    camera,
+    atlas,
+    worldName: manifest.name,
+    fogNear: FOG_NEAR,
+    fogFar: FOG_FAR,
+    mode: qualityMode,
+  });
+  opaqueMaterial = shaders.opaqueMaterial;
+  transparentMaterial = shaders.transparentMaterial;
+  showQuality();
 
   palette = resolvePalette(manifest.palette, manifest.solid, layout);
   world = new WorldView(manifest);
@@ -433,17 +408,28 @@ function drainUploads() {
         [section.transparent, transparentMaterial],
       ]) {
         if (data.triangles === 0) continue;
+        // A worker served from a stale module cache can predate an attribute
+        // this thread expects; degrade to zeros instead of letting one
+        // missing buffer throw inside frame() and kill the render loop
+        // (found live: round-4 main + round-3 worker, python server sends no
+        // cache headers).
+        if (data.flags === undefined) data.flags = new Float32Array(data.position.length / 3);
         bytes += data.position.byteLength + data.color.byteLength + data.uv.byteLength +
-          data.cell.byteLength + data.index.byteLength;
+          data.cell.byteLength + data.flags.byteLength + data.index.byteLength;
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.BufferAttribute(data.position, 3));
         geometry.setAttribute("acolor", new THREE.BufferAttribute(data.color, 3));
         geometry.setAttribute("uv", new THREE.BufferAttribute(data.uv, 2));
         geometry.setAttribute("cell", new THREE.BufferAttribute(data.cell, 4));
+        geometry.setAttribute("aflags", new THREE.BufferAttribute(data.flags, 1));
         geometry.setIndex(new THREE.BufferAttribute(data.index, 1));
         geometry.computeBoundingSphere();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.frustumCulled = true;
+        // The sun's camera never looks at layer 1, which is how water and
+        // glass are kept out of the shadow map without a per-frame walk of
+        // the scene graph. See `render.js`.
+        if (material === transparentMaterial) mesh.layers.set(TRANSLUCENT_LAYER);
         scene.add(mesh);
         meshes.push(mesh);
         stats.quads += data.quads;
@@ -525,6 +511,7 @@ addEventListener("keydown", (event) => {
   if (event.code === "Space") event.preventDefault();
   if (held) return; // auto-repeat is not a second tap
   const now = performance.now();
+  if (event.code === "KeyU") cycleQuality();
   if (event.code === "KeyG") setFly(!player.fly);
   if (event.code === "Space" && doubleTapped("Space", now)) setFly(!player.fly);
   if (event.code === "KeyW" && doubleTapped("KeyW", now)) sprinting = true;
@@ -643,7 +630,12 @@ function frame(now) {
   hud.position.textContent = `${player.position.x.toFixed(1)} ${player.position.y.toFixed(1)} ${player.position.z.toFixed(1)}`;
   hud.mode.textContent = player.fly ? "fly" : player.inWater ? "swim" : "walk";
 
-  renderer.render(scene, camera);
+  // One clock for every animated thing in the shaders. The viewer's runtime is
+  // presentation, not a world, so wall time is allowed here — the world it
+  // draws is still the same bytes on every load.
+  shaders?.update(now / 1000);
+  if (shaders === undefined) renderer.render(scene, camera);
+  else shaders.render();
   requestAnimationFrame(frame);
 }
 
@@ -748,6 +740,30 @@ function reportBench(timing) {
     "frames": stats.frames,
     "worst frame ms": Math.round(stats.worstFrameMs),
     "frames over 32 ms": stats.longFrames,
+  });
+  reportShaders();
+}
+
+/**
+ * What the shader pack costs, per frame, as CPU time spent submitting each
+ * pass. Not a GPU profile — the browser will not give one without an extension
+ * — but the shadow pass is a whole extra draw of the world, and if it is going
+ * to cost anything it costs it here first.
+ */
+function reportShaders() {
+  if (shaders === undefined) return;
+  const { shadowMs, sceneMs, postMs, frames } = shaders.timings;
+  const per = (total) => (total / Math.max(1, frames)).toFixed(2);
+  console.log(`[bench] shader pack — ${qualitySettings(qualityMode).label}`);
+  console.table({
+    "quality": qualitySettings(qualityMode).label,
+    "shadow map": shaders.settings.shadowMap || "off",
+    "ray samples": shaders.settings.rays || "off",
+    "sun azimuth°": shaders.azimuth.toFixed(1),
+    "shadow pass ms / frame": per(shadowMs),
+    "scene pass ms / frame": per(sceneMs),
+    "post chain ms / frame": per(postMs),
+    "graded frames": frames,
   });
 }
 

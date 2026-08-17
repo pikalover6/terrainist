@@ -381,6 +381,19 @@ export function isCross(name) {
   return CROSS.has(name) || name.endsWith("_sapling");
 }
 
+/**
+ * A canopy: a block the wind is allowed to rustle.
+ *
+ * Read by nothing but the shader's material class (see `mesher.blockFlags`),
+ * and deliberately narrow — a leaf block sways as a whole, and anything that
+ * is structurally a *wall* must not, or a house breathes.
+ */
+export function isFoliage(name) {
+  const base = baseName(name);
+  return base.endsWith("_leaves") || base === "leaves" || base === "azalea" ||
+    base === "flowering_azalea";
+}
+
 /** Things with no real volume that are still boxes; drawn as a small one. */
 const SMALL = new Set([
   "flower_pot",
@@ -539,6 +552,7 @@ export function resolvePalette(palette, solid, layout) {
         climb: false,
         alpha: 1,
         emissive: false,
+        foliage: false,
         air: true,
       };
     }
@@ -558,6 +572,7 @@ export function resolvePalette(palette, solid, layout) {
       climb: isClimbable(name),
       alpha: TRANSLUCENT.get(base) ?? 1,
       emissive: EMISSIVE.has(base),
+      foliage: isFoliage(name),
       air: false,
     };
   });

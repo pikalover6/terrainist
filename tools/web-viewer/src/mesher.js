@@ -162,6 +162,37 @@ export function mergeAlong(entry, axis) {
 const WHITE_CELL = [0, 0, 1, 1];
 
 /* -------------------------------------------------------------------------- */
+/* material class                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What *kind* of surface this is, as four bits on every vertex.
+ *
+ * The shader needs to know which quads glow, which sway, which lean and which
+ * are the sea, and it has exactly one channel to learn it through: the vertex
+ * buffer. A byte's worth of flags is cheaper than four attributes and cheaper
+ * than a material per class — a merged quad is one block, so the whole
+ * rectangle carries one value and merging is untouched (the mask key is the
+ * palette index, which already decides the flags).
+ *
+ * 1 emissive · 2 foliage · 4 cross · 8 water. Nothing reads bit 16 yet.
+ */
+export const FLAG_EMISSIVE = 1;
+export const FLAG_FOLIAGE = 2;
+export const FLAG_CROSS = 4;
+export const FLAG_WATER = 8;
+
+export function blockFlags(entry) {
+  if (entry === undefined) return 0;
+  return (
+    (entry.emissive ? FLAG_EMISSIVE : 0) |
+    (entry.foliage ? FLAG_FOLIAGE : 0) |
+    (entry.render === "cross" ? FLAG_CROSS : 0) |
+    (entry.name === "water" ? FLAG_WATER : 0)
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* plants                                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -233,7 +264,7 @@ function emitCross(buffer, entry, x, y, z) {
     ];
     // v runs 1 at the ground and 0 at the tip, the same way the box faces do:
     // the atlas counts rows from the top of the sheet.
-    pushQuad(buffer, corners, [[0, 1], [0, 0], [1, 0], [1, 1]], cell, rgb, true);
+    pushQuad(buffer, corners, [[0, 1], [0, 0], [1, 0], [1, 1]], cell, rgb, true, blockFlags(entry));
   }
 }
 
@@ -253,11 +284,11 @@ function emitFlat(buffer, entry, x, y, z) {
     [x + 1, h, z],
     [x, h, z],
   ];
-  pushQuad(buffer, corners, [[0, 1], [1, 1], [1, 0], [0, 0]], cell, rgb, true);
+  pushQuad(buffer, corners, [[0, 1], [1, 1], [1, 0], [0, 0]], cell, rgb, true, blockFlags(entry));
 }
 
 /** Four vertices, one quad, and optionally the same quad wound the other way. */
-function pushQuad(buffer, corners, uvs, cell, rgb, doubleSided) {
+function pushQuad(buffer, corners, uvs, cell, rgb, doubleSided, flags = 0) {
   for (const winding of doubleSided ? [0, 1] : [0]) {
     const base = buffer.vertices;
     for (let k = 0; k < 4; k++) {
@@ -266,6 +297,7 @@ function pushQuad(buffer, corners, uvs, cell, rgb, doubleSided) {
       buffer.uv.push(uvs[k][0], uvs[k][1]);
       buffer.cell.push(cell[0], cell[1], cell[2], cell[3]);
       buffer.color.push(rgb[0], rgb[1], rgb[2]);
+      buffer.flags.push(flags);
     }
     buffer.vertices += 4;
     buffer.quads += 1;
@@ -440,7 +472,7 @@ function emitSlice(mask, size, merge, palette, face, origin, a, opaque, transpar
 }
 
 function newBuffer() {
-  return { position: [], color: [], uv: [], cell: [], index: [], vertices: 0, quads: 0 };
+  return { position: [], color: [], uv: [], cell: [], flags: [], index: [], vertices: 0, quads: 0 };
 }
 
 function finish(buffer) {
@@ -449,6 +481,7 @@ function finish(buffer) {
     color: new Float32Array(buffer.color),
     uv: new Float32Array(buffer.uv),
     cell: new Float32Array(buffer.cell),
+    flags: new Float32Array(buffer.flags),
     index: buffer.vertices > 65535 ? new Uint32Array(buffer.index) : new Uint16Array(buffer.index),
     triangles: buffer.index.length / 3,
     quads: buffer.quads,
@@ -482,6 +515,7 @@ function emitQuad(buffer, entry, face, origin, a, u, v, width, height, ao) {
   const g = srgbToLinear(entry.tint[1]);
   const b = srgbToLinear(entry.tint[2]);
 
+  const flags = blockFlags(entry);
   const base = buffer.vertices;
   for (let k = 0; k < 4; k++) {
     const corner = face.corners[k];
@@ -500,6 +534,7 @@ function emitQuad(buffer, entry, face, origin, a, u, v, width, height, ao) {
 
     const shade = light * AO_LEVELS[ao[k]];
     buffer.color.push(r * shade, g * shade, b * shade);
+    buffer.flags.push(flags);
   }
   buffer.vertices += 4;
   buffer.quads += 1;

@@ -196,7 +196,14 @@ function buildChunk(key) {
     const built = meshSection(sample, palette, originX, section * 16, originZ);
     for (const part of [built.opaque, built.transparent]) {
       if (part.triangles === 0) continue;
-      transfer.push(part.position.buffer, part.color.buffer, part.uv.buffer, part.cell.buffer, part.index.buffer);
+      transfer.push(
+        part.position.buffer,
+        part.color.buffer,
+        part.uv.buffer,
+        part.cell.buffer,
+        part.flags.buffer,
+        part.index.buffer,
+      );
       if (bench) {
         timing.quads += part.quads;
         timing.triangles += part.triangles;

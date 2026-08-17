@@ -20,6 +20,7 @@ import {
   collisionHeight,
   colorOf,
   fallbackColor,
+  isFoliage,
   resolvePalette,
   shapeOf,
   texturesFor,
@@ -41,6 +42,11 @@ const WORLDS_DIR = path.resolve(import.meta.dirname, "../worlds");
 import {
   AO_LEVELS,
   FACES,
+  FLAG_CROSS,
+  FLAG_EMISSIVE,
+  FLAG_FOLIAGE,
+  FLAG_WATER,
+  blockFlags,
   meshSection,
   mergeAlong,
   packAo,
@@ -48,6 +54,36 @@ import {
   unpackAo,
   vertexAo,
 } from "../src/mesher.js";
+import { cloudField, cloudNoise } from "../src/noise.js";
+import {
+  QUALITY_MODES,
+  nextQuality,
+  qualitySettings,
+  resolveQuality,
+} from "../src/quality.js";
+import { fitSunCamera, sunBasis } from "../src/shadow.js";
+import {
+  AZIMUTH_SPREAD,
+  SUN_AZIMUTH,
+  SUN_ELEVATION,
+  equirectUv,
+  sunDirection,
+  worldAzimuth,
+} from "../src/sky.js";
+import {
+  ANIM_GLSL,
+  BLOCK_FRAGMENT,
+  BLOCK_VERTEX,
+  DEPTH_FRAGMENT,
+  DEPTH_VERTEX,
+  GOD_RAYS_SHADER,
+  GRADE_SHADER,
+  blockDefines,
+  blockUniforms,
+  declaredUniforms,
+  depthDefines,
+} from "../src/shaders.js";
+import { WATER_AMPLITUDE, plantSway, waterHeight } from "../src/wave.js";
 
 /* -------------------------------------------------------------------------- */
 /* the wire format                                                             */
@@ -1252,5 +1288,338 @@ describe("resolving a palette against an atlas", () => {
       );
       expect(percent, world).toBeGreaterThanOrEqual(90);
     }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the shader pack                                                             */
+/* -------------------------------------------------------------------------- */
+
+describe("the sun", () => {
+  it("points at a low warm angle and stays a unit vector", () => {
+    const sun = sunDirection();
+    expect(Math.hypot(sun.x, sun.y, sun.z)).toBeCloseTo(1, 12);
+    // 11.5° above the horizon: low enough to rake, high enough to light.
+    expect(sun.y).toBeCloseTo(Math.sin((SUN_ELEVATION * Math.PI) / 180), 12);
+    expect(sun.y).toBeGreaterThan(0);
+    expect(sun.y).toBeLessThan(0.3);
+  });
+
+  it("turns azimuth the way the viewer turns yaw: 0 is −Z, 90 is +X", () => {
+    const north = sunDirection(0, 0);
+    expect(north.z).toBeCloseTo(-1, 12);
+    expect(north.x).toBeCloseTo(0, 12);
+    const east = sunDirection(90, 0);
+    expect(east.x).toBeCloseTo(1, 12);
+    expect(east.z).toBeCloseTo(0, 12);
+  });
+
+  it("gives every world a stable bearing inside the spread", () => {
+    const names = ["unicorn_pirate_isles", "isles_of_war", "", "a"];
+    for (const name of names) {
+      const azimuth = worldAzimuth(name);
+      expect(worldAzimuth(name)).toBe(azimuth);
+      expect(Math.abs(azimuth - SUN_AZIMUTH)).toBeLessThanOrEqual(AZIMUTH_SPREAD);
+    }
+    expect(worldAzimuth("isles_of_war")).not.toBe(worldAzimuth("unicorn_pirate_isles"));
+  });
+
+  it("maps a direction onto the sky texture the way three's own sampler does", () => {
+    // Straight up is the top row, straight down the bottom, whatever the
+    // bearing. Getting this flipped puts the painted sun where the god rays
+    // are not.
+    expect(equirectUv({ x: 0, y: 1, z: 0 })[1]).toBeCloseTo(1, 12);
+    expect(equirectUv({ x: 0, y: -1, z: 0 })[1]).toBeCloseTo(0, 12);
+    expect(equirectUv({ x: 1, y: 0, z: 0 })[0]).toBeCloseTo(0.5, 12);
+    const [u] = equirectUv(sunDirection(SUN_AZIMUTH));
+    expect(u).toBeGreaterThanOrEqual(0);
+    expect(u).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("the cloud field", () => {
+  it("is the same field every time it is generated", () => {
+    const a = cloudField({ size: 32 });
+    const b = cloudField({ size: 32 });
+    expect(Array.from(a.data)).toEqual(Array.from(b.data));
+    expect(a.data.length).toBe(32 * 32);
+  });
+
+  it("tiles: the far edge continues into the near one", () => {
+    // A seam would be a hard line of shade running across the world, so the
+    // wrap is checked as a *continuity*, not as an equality: u=1 is u=0.
+    for (const v of [0, 0.25, 0.5, 0.75]) {
+      expect(cloudNoise(0.999, v)).toBeCloseTo(cloudNoise(-0.001, v), 6);
+      expect(cloudNoise(v, 0.999)).toBeCloseTo(cloudNoise(v, -0.001), 6);
+      expect(cloudNoise(0, v)).toBeCloseTo(cloudNoise(1, v), 12);
+    }
+  });
+
+  it("stays inside the byte it is stored as, and is not flat", () => {
+    const { data } = cloudField({ size: 64 });
+    let min = 255;
+    let max = 0;
+    for (const value of data) {
+      min = Math.min(min, value);
+      max = Math.max(max, value);
+    }
+    expect(min).toBeGreaterThanOrEqual(0);
+    expect(max).toBeLessThanOrEqual(255);
+    expect(max - min).toBeGreaterThan(80); // there are actually clouds in it
+  });
+});
+
+describe("the quality switch", () => {
+  it("cycles ultra → high → off → ultra", () => {
+    expect(nextQuality("ultra")).toBe("high");
+    expect(nextQuality("high")).toBe("off");
+    expect(nextQuality("off")).toBe("ultra");
+    expect(nextQuality("nonsense")).toBe(QUALITY_MODES[0]);
+  });
+
+  it("lets the query beat the stored choice, and never stores the query", () => {
+    expect(resolveQuality({ query: "off", stored: "ultra" })).toEqual({ mode: "off" });
+    expect(resolveQuality({ query: "OFF " }).mode).toBe("off");
+    expect(resolveQuality({ query: "nonsense", stored: "high" }).mode).toBe("high");
+    expect(resolveQuality({}).mode).toBe("ultra");
+    expect(resolveQuality({ coarse: true }).mode).toBe("high");
+  });
+
+  it("turns everything off in off, and nothing halfway", () => {
+    const off = qualitySettings("off");
+    expect(off.post).toBe(false);
+    expect(off.shadowMap).toBe(0);
+    expect(off.rays).toBe(0);
+    expect(off.bloom).toBe(0);
+    expect(off.preset).toBe("day");
+    for (const flag of [off.water, off.wind, off.grade, off.cloudShadows, off.softShadows]) {
+      expect(flag).toBe(false);
+    }
+  });
+
+  it("makes high cheaper than ultra on every axis that costs anything", () => {
+    const high = qualitySettings("high");
+    const ultra = qualitySettings("ultra");
+    expect(high.shadowMap).toBeLessThan(ultra.shadowMap);
+    expect(high.rays).toBeLessThan(ultra.rays);
+    expect(high.shadowRadius).toBeLessThan(ultra.shadowRadius);
+    expect(high.softShadows).toBe(false);
+    expect(high.cloudShadows).toBe(false);
+    expect(high.preset).toBe("golden");
+  });
+});
+
+describe("the sun's camera", () => {
+  const sun = sunDirection();
+  const fit = (center, mapSize = 2048) =>
+    fitSunCamera({ center, radius: 150, sun, mapSize });
+
+  it("stands behind the world along the light and looks down it", () => {
+    const camera = fit({ x: 0, y: 64, z: 0 });
+    const toTarget = {
+      x: camera.target.x - camera.eye.x,
+      y: camera.target.y - camera.eye.y,
+      z: camera.target.z - camera.eye.z,
+    };
+    const length = Math.hypot(toTarget.x, toTarget.y, toTarget.z);
+    // The camera looks the way the light travels: the opposite of "at the sun".
+    expect(toTarget.x / length).toBeCloseTo(-sun.x, 6);
+    expect(toTarget.y / length).toBeCloseTo(-sun.y, 6);
+    expect(toTarget.z / length).toBeCloseTo(-sun.z, 6);
+    expect(camera.far).toBeGreaterThan(camera.near + 300);
+    expect(camera.halfExtent).toBe(150);
+  });
+
+  it("snaps to its own texel grid, so shadow edges do not crawl", () => {
+    // A step of a fraction of a texel must not move the camera at all: this is
+    // the entire anti-shimmer mechanism, and it is invisible in a screenshot.
+    const still = fit({ x: 100, y: 70, z: -40 });
+    const nudged = fit({ x: 100.001, y: 70, z: -40.002 });
+    expect(nudged.eye.x).toBeCloseTo(still.eye.x, 9);
+    expect(nudged.eye.y).toBeCloseTo(still.eye.y, 9);
+    expect(nudged.eye.z).toBeCloseTo(still.eye.z, 9);
+
+    // …and a step of many texels does move it, or the cascade would not follow.
+    const walked = fit({ x: 140, y: 70, z: -40 });
+    expect(Math.hypot(walked.eye.x - still.eye.x, walked.eye.z - still.eye.z)).toBeGreaterThan(1);
+  });
+
+  it("has a finer texel on the bigger map", () => {
+    expect(fit({ x: 0, y: 0, z: 0 }, 2048).texel).toBeLessThan(fit({ x: 0, y: 0, z: 0 }, 1024).texel);
+    expect(fit({ x: 0, y: 0, z: 0 }, 2048).texel).toBeCloseTo(300 / 2048, 12);
+  });
+
+  it("builds an orthonormal frame whichever way the sun points", () => {
+    for (const direction of [sunDirection(0, 5), sunDirection(200, 60), { x: 0, y: 1, z: 0 }]) {
+      const { right, up, forward } = sunBasis(direction);
+      for (const axis of [right, up, forward]) {
+        expect(Math.hypot(axis.x, axis.y, axis.z)).toBeCloseTo(1, 9);
+      }
+      expect(right.x * up.x + right.y * up.y + right.z * up.z).toBeCloseTo(0, 9);
+      expect(right.x * forward.x + right.y * forward.y + right.z * forward.z).toBeCloseTo(0, 9);
+    }
+  });
+});
+
+describe("wind and water", () => {
+  it("keeps the swell inside the gap water leaves under its own surface", () => {
+    // `appearance.js` stops a water block at 0.9, and the surface must not
+    // punch through the block above it.
+    for (let i = 0; i < 400; i++) {
+      const x = (i % 20) * 3.7 - 30;
+      const z = Math.floor(i / 20) * 2.3 - 20;
+      for (const t of [0, 1.7, 33.3, 900.5]) {
+        expect(Math.abs(waterHeight(x, z, t))).toBeLessThanOrEqual(WATER_AMPLITUDE);
+      }
+    }
+  });
+
+  it("moves the water at all, and differently in different places", () => {
+    expect(waterHeight(0, 0, 0)).not.toBe(waterHeight(0, 0, 1.3));
+    expect(waterHeight(0, 0, 4)).not.toBe(waterHeight(9, 0, 4));
+  });
+
+  it("sways continuously in space, so a merged quad cannot tear", () => {
+    const t = 12.5;
+    const [ax, az] = plantSway(10, 10, t);
+    const [bx, bz] = plantSway(10.0001, 10, t);
+    expect(bx).toBeCloseTo(ax, 4);
+    expect(bz).toBeCloseTo(az, 4);
+    // …and bounded, or a meadow walks away from its own roots.
+    for (let i = 0; i < 200; i++) {
+      const [dx, dz] = plantSway(i * 1.3, i * 0.7, i * 0.11);
+      expect(Math.abs(dx)).toBeLessThan(0.3);
+      expect(Math.abs(dz)).toBeLessThan(0.2);
+    }
+  });
+});
+
+describe("the shaders", () => {
+  const sources = {
+    "block vertex": BLOCK_VERTEX,
+    "block fragment": BLOCK_FRAGMENT,
+    "depth vertex": DEPTH_VERTEX,
+    "depth fragment": DEPTH_FRAGMENT,
+    "god rays": GOD_RAYS_SHADER.fragmentShader,
+    "grade": GRADE_SHADER.fragmentShader,
+  };
+
+  it("declares no uniform the page does not supply", () => {
+    // The one check a node test can make about GLSL: a name that exists in the
+    // shader and not in `blockUniforms` is a uniform nobody ever sets.
+    const supplied = new Set(Object.keys(blockUniforms()));
+    for (const source of [BLOCK_VERTEX, BLOCK_FRAGMENT, DEPTH_VERTEX, DEPTH_FRAGMENT]) {
+      for (const name of declaredUniforms(source)) expect(supplied).toContain(name);
+    }
+    for (const [name, shader] of [
+      ["god rays", GOD_RAYS_SHADER],
+      ["grade", GRADE_SHADER],
+    ]) {
+      const declared = declaredUniforms(shader.fragmentShader);
+      for (const uniform of declared) expect(Object.keys(shader.uniforms), name).toContain(uniform);
+    }
+  });
+
+  it("balances its braces and parentheses", () => {
+    for (const [name, source] of Object.entries(sources)) {
+      const count = (character) => source.split(character).length - 1;
+      expect(count("{"), name).toBe(count("}"));
+      expect(count("("), name).toBe(count(")"));
+    }
+  });
+
+  it("never shadows a built-in it also calls", () => {
+    // `vec2 step = …` next to `step(edge, x)` compiles nowhere. Found by
+    // reading, kept by testing.
+    for (const [name, source] of Object.entries(sources)) {
+      for (const builtin of [
+        "step",
+        "mix",
+        "length",
+        "texture",
+        "cross",
+        "reflect",
+        "clamp",
+        "distance",
+        "smoothstep",
+      ]) {
+        expect(source, `${name} declares a variable named ${builtin}`).not.toMatch(
+          new RegExp(`(float|vec2|vec3|vec4|int)\\s+${builtin}\\s*[=;]`),
+        );
+      }
+    }
+  });
+
+  it("compiles the original program when the switch is off", () => {
+    const off = blockDefines(qualitySettings("off"), { cutout: true });
+    expect(Object.keys(off)).toEqual(["CUTOUT"]);
+    expect(blockDefines(qualitySettings("off"), {})).toEqual({});
+    expect(depthDefines(qualitySettings("off"))).toEqual({});
+  });
+
+  it("gates every effect behind its own define", () => {
+    const ultra = blockDefines(qualitySettings("ultra"), { cutout: true });
+    for (const define of ["CUTOUT", "LIT", "LINEAR_OUTPUT", "SHADOWS", "SOFT_SHADOWS", "CLOUD_SHADOWS", "WIND", "WATER_FX"]) {
+      expect(Object.keys(ultra)).toContain(define);
+    }
+    const high = blockDefines(qualitySettings("high"), { cutout: true });
+    expect(Object.keys(high)).toContain("SHADOWS");
+    expect(Object.keys(high)).not.toContain("SOFT_SHADOWS");
+    expect(Object.keys(high)).not.toContain("CLOUD_SHADOWS");
+  });
+
+  it("keeps the GLSL animation spelling the same constants as its JS twin", () => {
+    // `wave.js` is what the tests can run; `ANIM_GLSL` is what the GPU runs.
+    // They are only worth anything as a pair.
+    for (const constant of ["0.045", "0.030", "0.73", "0.28", "0.19", "0.35", "1.7", "3.1"]) {
+      expect(ANIM_GLSL).toContain(constant);
+    }
+    expect(GOD_RAYS_SHADER.defines.RAY_SAMPLES).toBeGreaterThan(0);
+  });
+
+  it("writes sRGB exactly once, at the end of whichever path is running", () => {
+    // Graded frames go through the composer in linear light and are encoded by
+    // the grade pass; an off frame is encoded by three's own include. Doing
+    // both would gamma the world twice.
+    expect(BLOCK_FRAGMENT).toContain("#ifndef LINEAR_OUTPUT");
+    expect(BLOCK_FRAGMENT).toContain("#include <colorspace_fragment>");
+    expect(GRADE_SHADER.fragmentShader).toContain("linearToSrgb");
+  });
+});
+
+describe("material classes", () => {
+  const names = ["air", "stone", "water", "short_grass", "oak_leaves", "glowstone"];
+  const palette = resolvePalette(names, [false, true, false, false, true, true]);
+  const entryOf = (name) => palette[names.indexOf(name)];
+
+  it("gives every kind of surface its own bit", () => {
+    expect(blockFlags(entryOf("stone"))).toBe(0);
+    expect(blockFlags(entryOf("water"))).toBe(FLAG_WATER);
+    expect(blockFlags(entryOf("short_grass"))).toBe(FLAG_CROSS);
+    expect(blockFlags(entryOf("oak_leaves"))).toBe(FLAG_FOLIAGE);
+    expect(blockFlags(entryOf("glowstone"))).toBe(FLAG_EMISSIVE);
+    expect(blockFlags(undefined)).toBe(0);
+  });
+
+  it("calls leaves foliage and calls nothing structural foliage", () => {
+    for (const name of ["oak_leaves", "spruce_leaves", "azalea_leaves", "cherry_leaves"]) {
+      expect(isFoliage(name), name).toBe(true);
+    }
+    for (const name of ["oak_planks", "stone", "grass_block", "oak_log", "short_grass"]) {
+      expect(isFoliage(name), name).toBe(false);
+    }
+  });
+
+  it("puts one flag on every vertex the mesher emits", () => {
+    const sampler = (x, y, z) =>
+      x === 0 && y === 0 && z === 0 ? 1 : x === 2 && y === 0 && z === 0 ? 2 : x === 4 && y === 0 && z === 0 ? 3 : 0;
+    const built = meshSection(sampler, palette, 0, 0, 0);
+    for (const part of [built.opaque, built.transparent]) {
+      expect(part.flags.length).toBe(part.position.length / 3);
+    }
+    // The stone cube is unflagged, the grass carries the cross bit, and the
+    // water — which is the whole translucent buffer here — carries water's.
+    expect(new Set(built.transparent.flags)).toEqual(new Set([FLAG_WATER]));
+    expect(new Set(built.opaque.flags)).toEqual(new Set([0, FLAG_CROSS]));
   });
 });
