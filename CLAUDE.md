@@ -137,6 +137,16 @@ This is the *development* workflow. The *production* worldgen pipeline
   hand-authored worlds** — every demo/acceptance world comes via
   `terrainist generate`, so demos measure the real product path
   (hand-authored docs remain fine as test fixtures and exhibits).
+- **Standing decisions (Kai, 2026-08-17):** gate leniency is PERMANENT
+  (SUSPENDED_GATE_CHECKS is the design, LOAM-SPEC §15.2; the harness
+  study is closed — mend-don't-drop niceties are ordinary future work).
+  The website/viewer look iterates on Claude's OWN judgment (screenshots
+  as it goes; only major art-direction pivots go to Kai — the manual
+  critique→repair law remains for WORLDS). **Catalog go-ham rule: "the
+  larger the loam catalog the better — anytime you have extra time go
+  ham on just adding more and more structures."** Battery regeneration
+  is pre-authorized (~$2/run, installed alongside) but during an
+  autonomous run regenerate ONCE at the END, never mid-run.
 - **Standing rule (Kai): NEVER WAIT ON KAI.** If *anything* remains to do,
   do it — finish the current work, then start the next discussed/ratified
   feature without asking. Pause ONLY when fully hard blocked: a crucial

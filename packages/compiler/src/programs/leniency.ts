@@ -1,11 +1,12 @@
 /**
  * Gate leniency — the one switch behind the suspended checks.
  *
- * Ratified by Kai, 2026-08-15, explicitly "for now": the bespoke program gate
- * was discarding visually excellent builds over mechanical nits (a serpent
- * strung with 39 "floating" sea lanterns that read as art). The suspended
- * checks still RUN and are still REPORTED — they are demoted to warnings and
- * never fail a program or spend a repair round.
+ * Ratified by Kai 2026-08-15 and made PERMANENT 2026-08-17, closing the
+ * harness study on the Gemini sweep's evidence: the bespoke program gate was
+ * discarding visually excellent builds over mechanical nits (a serpent strung
+ * with 39 "floating" sea lanterns that read as art). The suspended checks
+ * still RUN and are still REPORTED — they are demoted to warnings and never
+ * fail a program or spend a repair round.
  *
  * What stays FATAL is deliberately unchanged: the static step, double-run
  * determinism / `outputHash` agreement, the runtime limits (fuel, writes,

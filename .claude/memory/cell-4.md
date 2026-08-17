@@ -1,4 +1,26 @@
-# Cell 4 — current state (2026-08-16, goal sweep complete)
+# Cell 4 — current state (2026-08-17, autonomous run armed)
+
+**KAI'S FOUR RULINGS (2026-08-17, all standing — recorded in
+CLAUDE.md too):** (1) WEBSITE LOOK: full latitude — iterate viewer/
+landing visuals on my own judgment, screenshots as I go; only major
+art-direction pivots go to Kai; worlds stay walk-gated. (2) GATE
+LENIENCY PERMANENT — harness study CLOSED (spec §15.2 finalized,
+leniency.ts comment updated); mend-don't-drop niceties = ordinary
+future work. (3) NEXT FRONTS: machinery tail UN-DEFERRED (viaduct/
+rail, family-B retaining faces, camps taxonomy, WP-6 freeze, §13.2
+tier-A reopening) + THE GO-HAM RULE: "the larger the loam catalog the
+better — anytime you have extra time go ham on just adding more and
+more structures." (4) BATTERY: standing auth (~$2, install alongside)
+but regenerate ONCE at the END of an autonomous run, never mid-run.
+
+**AUTONOMOUS QUEUE (in order):** round-3 viewer (plants/controller/
+demo — IN FLIGHT) → verify live in Chrome → round-4 SHADERS ("as
+ridiculously over the top as possible": golden-hour shadow map,
+bloom, god rays, animated fresnel water, wind sway on leaves+crosses,
+ACES grade, drifting cloud shadows, quality toggle) → machinery tail
+waves → catalog go-ham waves (perpetual filler) → ONE battery regen
+at the very end + install + archive.
+
 
 **RATIFIED 2026-08-16: GEMINI 3.7 FLASH HIGH IS THE PINNED DEFAULT
 for ALL uses (8217286)** — "the demo worlds are insane"; Luna is the

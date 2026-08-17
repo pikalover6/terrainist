@@ -5481,10 +5481,11 @@ walls and panes are left to the emitter's connection pass.
 The bespoke program gate (§14.6, five steps: static → double run → structural →
 physics → nonsense) was discarding programs that walk beautifully over
 mechanical nits — a sea serpent strung with 39 "floating" sea lanterns that
-reads as art failed on physics findings alone. Kai's ruling, standing and
-explicitly **"for now"**: every non-catastrophic check at the gate is
-**suspended**. The checks still run and are still reported; they no longer fail
-a program and no longer spend a repair round. `[C:high]`
+reads as art failed on physics findings alone. Kai's ruling, ratified
+2026-08-15 and made **permanent** 2026-08-17 (the harness-comparison study
+closed on the Gemini sweep's evidence): every non-catastrophic check at the
+gate is **suspended**. The checks still run and are still reported; they no
+longer fail a program and no longer spend a repair round. `[C:high]`
 
 **Still fatal** — a program that trips these cannot ship, or cannot be trusted:
 
