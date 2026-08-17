@@ -2783,6 +2783,150 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["nordic_viking", "size_m"],
     note: "prop.place@0: the hjell - two ranks of split cod hung from a timber rail carried above head height, so every lane of the yard under it stays walkable. Salting barrels at one end, the gutting table at the other.",
   }),
+
+  /* --- dwarven_volcanic pack -----------------------------------------------
+   * The hold's noun set. "A dwarven hold under the volcano" routes to the
+   * medieval era and arrives as a stone village with a smithy in it: the
+   * palette was never the problem, the nouns were. Fifteen entries, every one
+   * of them a building - this pack ships no props at all. Two ids carry the
+   * hold because the plain words are already taken and stay taken:
+   * `dwarven_gate` is the ARCANA wave's fantasy gate and `assay_office` is the
+   * frontier wave's, word for word.
+   */
+  ind("great_forge", "Great forge", "implemented", {
+    tags: ["dwarven_volcanic", "size_l"],
+    note: "The anchor: the furnace pit running the LENGTH of the axis rather than sitting in a wall, the anvil rank against the working wall with smithing tables in the bays, the chimney breast at the head. Bare `forge`, `smithy` and `foundry` stay the founding table's and the industry wave's; this answers to great_forge/forge_pit/deep_forge.",
+  }),
+  civ("dwarf_hold_gate", "Hold gate", "implemented", {
+    tags: ["dwarven_volcanic", "size_l"],
+    note: "The monumental doorway face cut into the mountain: paired pillars flanking the head, the lintel course carried across their heads, the rune band at their feet and a brazier under the span. The id carries the hold because `dwarven_gate` is the arcana wave's and keeps every plain spelling; this answers to dwarf_hold_gate/hold_gate/under_gate.",
+  }),
+  civ("deep_hall", "Deep hall", "implemented", {
+    tags: ["dwarven_volcanic", "size_xl"],
+    note: "The pillared hall: pillar pairs one cell in from each side wall in bays, the vault springing off each as a stair course turned back to the wall, the glow bedded into the pillar at eye height and the central aisle never touched. Bare `hall` and `great_hall` stay the original table's.",
+  }),
+  ind("smelter_works", "Smelter works", "implemented", {
+    tags: ["dwarven_volcanic", "size_l"],
+    note: "The furnace bank across the head, every furnace COLD by rule (a lit furnace is a fire, and the volcanic pack has an argument to keep), the ore bins stacked two high down one wall and the tapping floor in front of the bank left clear.",
+  }),
+  ind("gem_cutter_workshop", "Gem cuttery", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The one room in the pack that wants windows: cutting benches down both walls against the light, a grindstone at every third bay, the rough on the bench and the polished stone laid out at the head.",
+  }),
+  com("stone_brewhouse", "Dwarven brewhouse", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The kettle rank across the head - cauldrons on stone stalls with the glow bedded between them, which is how a heated brewhouse is said without lighting a fire - and the barrel racks stacked two high down the cold wall. Bare `brewery`/`brewhouse` stay the commerce wave's.",
+  }),
+  res("miners_dormitory", "Miners' dormitory", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "Slab bunks in bays down both walls with a lamp niche bedded over every second one, the wash trough at the head and the kit at the door. Written as SLABS and not as beds: a bed is a two-cell block whose halves must agree, and a head with no foot is a broken block rather than a sparser room.",
+  }),
+  ind("tool_vault", "Tool vault", "implemented", {
+    tags: ["dwarven_volcanic", "size_s"],
+    note: "Barred racks up under the boards on both walls (`iron_bars`, never `chain` - not in the pinned 1.21.11 table), the issue bench of slabs under them and the iron strongbox on its plinth at the head. Bare `vault` and `armoury` stay where they were.",
+  }),
+  rel("rune_forge_shrine", "Rune forge", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The rune anvil out on the floor a pace in front of a chiselled altar band, the glow bedded behind it, unlit candles round the walls. Bare `shrine`/`temple`/`chapel` stay the church's.",
+  }),
+  infra("cart_depot", "Cart depot", "implemented", {
+    kind: "building",
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The minecart staging floor: rails run down the axis - a rail is a PASSABLE block, which is the only reason a line of them down the middle of a room is legal - with a buffer block at the head end, the hoist rack overhead and the spare wheels against the walls. Bare `depot`/`station`/`yard` stay the terminus wave's.",
+  }),
+  civ("ore_assay_hall", "Ore assay hall", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "Sample slabs ranked down both walls with a DIFFERENT ore standing on each (a rank of identical cubes reads as shelving, not as samples), the stonecutter and the ledger table at the head. The id carries the ore because `assay_office` is the frontier wave's word for word, and that one keeps it.",
+  }),
+  lei("stone_bath_house", "Hot-stone bath", "implemented", {
+    tags: ["dwarven_volcanic", "size_s"],
+    note: "Heated benches round the walls with a water cauldron at every third bay and the hot stones bedded under a dressed cap at the head. NO standing water is written anywhere in it: a water cell is not a walkable floor, and a bath house a body cannot cross is a pool. Bare `bathhouse`/`baths` stay the leisure wave's.",
+  }),
+  mil("beacon_brazier_tower", "Brazier tower", "implemented", {
+    tags: ["dwarven_volcanic", "size_s"],
+    note: "The signal floor over the hold's gate road: a fence rail at intervals round the edge so a watch can see out, the brazier bedded in stone at the head, the fuel in the far corner and the ladder well left clear. Bare `beacon_tower`, `beacon_spire`, `watchtower` and `lookout` all stay where they were.",
+  }),
+  civ("kings_treasury", "King's treasury", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The barred vault face across the head - bars at the floor course and again at eye height, so the head wall is seen THROUGH rather than walked into - with the bullion on slab plinths down both walls, gold one side and iron the other. Bare `treasury` and `sanctuary_treasury` stay where they were.",
+  }),
+  rel("stalactite_shrine", "Cavern shrine", "implemented", {
+    tags: ["dwarven_volcanic", "size_m"],
+    note: "The worked cavern shrine: dripstone hanging from the boards along both walls, amethyst set into the plinth under each hanging, the calcite altar across the head with the glow bedded at it. INTERIOR FIT-OUT ONLY - this carves no cave; a cavern is the terrain's business and the cave system's.",
+  }),
+
+  /* --- steppe_nomad pack ---------------------------------------------------
+   * The steppe noun set. "A Mongol camp", "a steppe horde", "the khan's ordu"
+   * all route to the medieval era and arrive as a European village with the
+   * wayside pack's single `yurt` PROP parked outside it: the palette was never
+   * the problem, the nouns were. Fifteen entries - twelve buildings and three
+   * ground pieces. Bare `yurt` stays the wayside prop's, word for word; this
+   * pack's tent answers to `ger`, which is what the thing is actually called
+   * and which no table in the catalog had ever claimed.
+   */
+  ver("ger_round_tent", "Ger", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The anchor: the felt-and-lattice round tent, its dome rebuilt over the eave plate as filled discs stepping in under a timber crown ring, the hearth under the crown where the smoke goes out and the bed platform round the wall. Tags: ger_round_tent/ger/round_tent - bare `yurt` stays the wayside pack's prop.",
+  }),
+  res("khans_ger", "Khan's ger", "implemented", {
+    tags: ["steppe_nomad", "size_l"],
+    note: "The ger organised round the dais at the head: a slab dais across the honoured side, the seat in front of it and a banner post either side, with the tribute chests at the door end.",
+  }),
+  ver("cart_ger", "Cart ger", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The ger that never comes down: the same felt dome standing on a cart bed of plank decking, the axle logs across the floor at both ends and the drawbar at the head. The wheels are deliberately NOT written - a wheel proud of the footprint is a cell in the apron with nothing under it.",
+  }),
+  ind("kumis_tent", "Kumis tent", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "Fermented mare's milk: the churns ranked down one wall, the skin bags hung on a rail over them at head height and the stirring post at the head. Bare `brewery` and bare `dairy` stay where they were.",
+  }),
+  rur("horse_line", "Horse line", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The picket, and NOT a stable: a steppe horse is never stalled, it is tied to a line strung between posts with the troughs in the bays and the middle of the floor bare. Bare `stable`, `paddock` and `corral` stay the founding table's and the agrarian expansion's.",
+  }),
+  ind("felt_workshop", "Felt works", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "Where the camp's walls are made: the wool bales up on a slab plinth off the damp floor, the rolling frame overhead, the wetting vats under it and the sorting table across the head.",
+  }),
+  ind("bowyer_tent", "Bowyer's tent", "implemented", {
+    tags: ["steppe_nomad", "size_s"],
+    note: "The composite bow, the one technology the whole steppe is organised around: horn and sinew seasoning on racks overhead down both walls, the bench under them and the glue pot at the head. Bare `fletcher` and bare `workshop` stay where they were.",
+  }),
+  com("caravan_rest", "Caravan halt", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The open-sided shelter a track has one of every day's ride: cargo stacked clear of the ground on plinths down both walls, water by the way in, fodder at the head. Bare `caravanserai` stays the trade wave's walled masonry courtyard.",
+  }),
+  lei("wrestling_ground", "Wrestling ground", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The bokh ring, whose content is the ABSENCE of content: the floor is left completely bare because two men are about to fall over on it, and the whole fit-out is a low bank of seats round the edge with the judges' posts at the head. Bare `arena` and `stadium` stay the sanctum and leisure waves'.",
+  }),
+  mil("watch_platform_steppe", "Steppe watch platform", "implemented", {
+    tags: ["steppe_nomad", "size_s"],
+    note: "The raised lookout over open grass: a fence rail at intervals round the edge so a watch can see thirty miles, the signal brazier bedded in stone at the head, the horn rack overhead and the ladder well left clear. Bare `watchtower` and `lookout` stay the watchtower's.",
+  }),
+  rur("borts_rack", "Borts rack", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "Air-dried beef on HORIZONTAL poles inside a dark room, hung at the top of the storey so every lane under them stays walkable. Distinct in id and in form from the Nordic pack's `drying_rack_yard`, which is split cod hung vertically off an outdoor shore frame; the two share no word.",
+  }),
+  rur("winter_corral", "Winter corral", "implemented", {
+    tags: ["steppe_nomad", "size_m"],
+    note: "The khashaa, the one fixed thing a nomad household owns: hurdles down one wall, the fodder stacked on a plinth so it never sits on frozen ground, the troughs in the bays and the lean-to shelf across the head.",
+  }),
+  mem("khan_banner_pole", "Tug", "implemented", {
+    kind: "prop",
+    tags: ["steppe_nomad", "size_xs"],
+    note: "prop.place@0: the horsetail standard on its pole - the object that says WHOSE camp this is. A full-block column on a packed slab base, the standard spreading in four cantilevered slabs well over head height so the whole pad stays walkable, a spear point on top.",
+  }),
+  mem("shaman_ovoo", "Ovoo", "implemented", {
+    kind: "prop",
+    tags: ["steppe_nomad", "size_s"],
+    note: "prop.place@0: the heaped stone cairn at a pass, built as filled courses stepping in - never a ring - with four ribbon poles at the corners and the lines strung between their heads above head height, because the point of an ovoo is that a traveller walks round it three times.",
+  }),
+  mem("balbal_stone", "Balbal", "implemented", {
+    kind: "prop",
+    tags: ["steppe_nomad", "size_xs"],
+    note: "prop.place@0: the carved ancestor stone over a grave, face to the east - three courses of the theme's stone with the carved band at the middle and a slab cap, two low kerb stones a body steps over. Bare `stele` stays the sanctum wave's obelisk's.",
+  }),
 ]);
 
 /* -------------------------------------------------------------------------- */

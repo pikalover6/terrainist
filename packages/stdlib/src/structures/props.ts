@@ -117,6 +117,15 @@ import {
   isNorseProp,
   norsePropFootprint,
 } from "./props-norse.js";
+// --- steppe_nomad pack -----------------------------------------------------
+// The Steppe Nomad pack's ground pieces — the three entries of that pack which
+// stand on the open grass rather than roofing a room.
+import {
+  STEPPE_PROP_GENERATORS,
+  STEPPE_PROP_NAMES,
+  isSteppeProp,
+  steppePropFootprint,
+} from "./props-steppe.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -252,6 +261,8 @@ export const PROP_NAMES = [
   ...FRONTIER_PROP_NAMES,
   // --- nordic_viking pack ---
   ...NORSE_PROP_NAMES,
+  // --- steppe_nomad pack ---
+  ...STEPPE_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -590,6 +601,8 @@ export function propFootprint(
   if (isFrontierProp(prop)) return frontierPropFootprint(prop, params);
   // --- nordic_viking pack ---
   if (isNorseProp(prop)) return norsePropFootprint(prop, params);
+  // --- steppe_nomad pack ---
+  if (isSteppeProp(prop)) return steppePropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1142,6 +1155,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...FRONTIER_PROP_GENERATORS,
   // --- nordic_viking pack ---
   ...NORSE_PROP_GENERATORS,
+  // --- steppe_nomad pack ---
+  ...STEPPE_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

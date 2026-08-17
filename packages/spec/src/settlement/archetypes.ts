@@ -167,6 +167,23 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "ball_court", "round_observatory", "palace_range", "market_ramada",
   "tzompantli_rack", "chultun_cistern", "sacbe_terminus", "milpa_terrace",
   "canoe_landing", "thatch_dwelling", "temazcal_bath",
+  // --- dwarven_volcanic pack ----------------------------------------------
+  // The Dwarven & Volcanic pack, LAST, because `BUILDING_ARCHETYPES` spreads
+  // it last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`. The pack ships no props, so nothing of it
+  // appears in `SETTLEMENT_PROP_NAMES`.
+  "great_forge", "dwarf_hold_gate", "deep_hall", "smelter_works",
+  "gem_cutter_workshop", "stone_brewhouse", "miners_dormitory", "tool_vault",
+  "rune_forge_shrine", "cart_depot", "ore_assay_hall", "stone_bath_house",
+  "beacon_brazier_tower", "kings_treasury", "stalactite_shrine",
+  // --- steppe_nomad pack --------------------------------------------------
+  // The Steppe Nomad pack, LAST, because `BUILDING_ARCHETYPES` spreads it
+  // last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`. The pack's `khan_banner_pole`, `shaman_ovoo`
+  // and `balbal_stone` are deliberately absent: all three are PROPS.
+  "ger_round_tent", "khans_ger", "cart_ger", "kumis_tent",
+  "horse_line", "felt_workshop", "bowyer_tent", "caravan_rest",
+  "wrestling_ground", "watch_platform_steppe", "borts_rack", "winter_corral",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

@@ -357,6 +357,27 @@ import {
   norseArchetypeOfTags,
 } from "./archetypes-norse.js";
 
+// --- dwarven_volcanic pack -------------------------------------------------
+// The Dwarven & Volcanic pack's fifteen buildings. Every member of that pack
+// has an inside; it ships no props at all.
+import {
+  DWARVEN_BUILDING_ARCHETYPES,
+  dwarvenArchetypeOfTags,
+  furnishDwarven,
+} from "./archetypes-dwarven.js";
+
+// --- steppe_nomad pack -----------------------------------------------------
+// The Steppe Nomad pack's buildings — the twelve entries of that pack that have
+// an inside. Its banner pole, ovoo and balbal are PROPS (`props-steppe.ts`):
+// none of the three roofs a room.
+import {
+  STEPPE_BUILDING_ARCHETYPES,
+  furnishSteppe,
+  steppeArchetypeOfTags,
+} from "./archetypes-steppe.js";
+
+export * from "./archetypes-steppe.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -448,6 +469,16 @@ export const BUILDING_ARCHETYPES = [
   // same reason: this list's order is the seam `fabric.test.ts` pins, and a
   // pack appended at the end moves nothing that came before it.
   ...MESOAMERICAN_BUILDING_ARCHETYPES,
+  // --- dwarven_volcanic pack ----------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...DWARVEN_BUILDING_ARCHETYPES,
+  // --- steppe_nomad pack ---------------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...STEPPE_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -727,6 +758,30 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // value in `core.ts` besides).
   const meso = mesoamericanArchetypeOfTags(tags);
   if (meso !== null) return meso;
+  // --- dwarven_volcanic pack ----------------------------------------------
+  // The Dwarven & Volcanic pack, beside the other late packs and high for the
+  // reason every later wave is: the tables below are greedy. It claims not one
+  // bare word — `forge`, `smithy`, `foundry`, `hall`, `vault`, `treasury`,
+  // `brewery`, `dormitory`, `depot`, `assay_office`, `bathhouse`, `workshop`,
+  // `shrine`, `temple` and `dwarven_gate` itself all still go exactly where
+  // they went (that last is the ARCANA wave's, and this pack's gate carries
+  // the hold in its id rather than take it). Every claim it makes is a
+  // compound of its own ids.
+  const dwarven = dwarvenArchetypeOfTags(tags);
+  if (dwarven !== null) return dwarven;
+  // --- steppe_nomad pack ---------------------------------------------------
+  // The Steppe Nomad pack, beside the other late packs and high for the reason
+  // every later wave is: the tables below are greedy. It claims nothing an
+  // earlier table claims — bare `yurt` is still the wayside pack's PROP, bare
+  // `tent` the blitz pack's prop, bare `camp`/`encampment` the siegeworks
+  // wave's, bare `stable`/`paddock`/`corral` the founding table's and the
+  // agrarian expansion's, bare `caravanserai` the trade wave's, bare
+  // `watchtower`/`lookout` the watchtower's (claimed above every table here)
+  // and bare `arena`/`stadium` the sanctum and leisure waves'. Every claim it
+  // makes is a compound of its own ids or a word — `ger`, `borts`, `kumis`,
+  // `bokh_ring`, `airag_tent` — no table ever had.
+  const steppe = steppeArchetypeOfTags(tags);
+  if (steppe !== null) return steppe;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1192,6 +1247,10 @@ export function furnish(r: FurnishRequest): number {
   n += furnishNorse(ctx);
   // --- mesoamerican_jungle pack ---
   n += furnishMesoamerican(ctx);
+  // --- dwarven_volcanic pack ---
+  n += furnishDwarven(ctx);
+  // --- steppe_nomad pack ---
+  n += furnishSteppe(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

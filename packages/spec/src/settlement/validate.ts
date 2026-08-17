@@ -3187,6 +3187,14 @@ export const SETTLEMENT_PROP_NAMES = [
   "rune_stone",
   "boat_burial_mound",
   "drying_rack_yard",
+  // --- steppe_nomad pack ---
+  // The Steppe Nomad pack's ground half: the three entries of that pack which
+  // stand on the open grass rather than roofing a room. Order matches
+  // `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts` asserts
+  // element by element.
+  "khan_banner_pole",
+  "shaman_ovoo",
+  "balbal_stone",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

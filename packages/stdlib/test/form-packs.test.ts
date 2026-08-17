@@ -35,6 +35,10 @@ describe("the registry", () => {
       // --- mesoamerican_jungle pack ---
       "mesoamerican_jungle",
       "nordic_viking",
+      // --- dwarven_volcanic pack ---
+      "dwarven_volcanic",
+      // --- steppe_nomad pack ---
+      "steppe_nomad",
     ]);
   });
 
@@ -69,8 +73,12 @@ describe("the registry", () => {
       }
     }
     // 145 proposed by §3, less `sphinx` (ratified out), plus the
-    // mesoamerican_jungle pack's fifteen and the nordic_viking pack's sixteen.
-    expect(seen.size).toBe(175);
+    // mesoamerican_jungle pack's fifteen and the nordic_viking pack's sixteen
+    // (175), plus the dwarven_volcanic pack's fifteen (190), plus the
+    // steppe_nomad pack's fifteen (205). The last of those three is a wave-mate
+    // shipping in parallel: this pin is the WAVE'S end state, and it is the
+    // dwarven pack that owns the arithmetic for both by agreement.
+    expect(seen.size).toBe(205);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

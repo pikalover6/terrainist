@@ -213,6 +213,16 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
     "nordic_viking",
     "vikings/norse/fjords: mead halls with the fire down the middle, a chieftain's high seat, longship sheds on the water, turf houses, a heathen hof, rune stones, boat burials, fish drying racks.",
   ],
+  // --- dwarven_volcanic pack ---
+  [
+    "dwarven_volcanic",
+    "a dwarven hold in the black rock: a great forge with the furnace pit down its middle, a monumental hold gate, a pillared deep hall, smelters, a gem cuttery, a stone brewhouse, miners' dormitories, a rune forge, a cart depot, a king's treasury behind bars and a worked cavern shrine.",
+  ],
+  // --- steppe_nomad pack ---
+  [
+    "steppe_nomad",
+    "mongols/nomads/the open grass: round felt gers with a crown ring at the top, a khan's ger on its dais, a ger on a cart, kumis tents, horse lines, a felt works, a bowyer, borts racks, an ovoo cairn, a horsetail standard and a wrestling ground.",
+  ],
 ] as const;
 
 /** One `id  <- thesis` line per pack, for the prompt. */

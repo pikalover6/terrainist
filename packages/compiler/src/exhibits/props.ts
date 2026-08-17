@@ -284,6 +284,21 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "drying_rack_yard", params: { yaw: 90 } },
     ],
   },
+  // --- steppe_nomad pack ---
+  // The camp ground: the standard, the cairn and the grave marker, each shown
+  // at two yaws so the position-hashed ground scuffing is visibly not a repeat.
+  {
+    row: "steppe_camp",
+    water: false,
+    cells: [
+      { prop: "khan_banner_pole", params: {} },
+      { prop: "khan_banner_pole", params: { yaw: 90 } },
+      { prop: "shaman_ovoo", params: {} },
+      { prop: "shaman_ovoo", params: { yaw: 90 } },
+      { prop: "balbal_stone", params: {} },
+      { prop: "balbal_stone", params: { yaw: 90 } },
+    ],
+  },
   // The east-asian approach: torii ranked, lanterns in numbers — saturation
   // is both pieces' whole job. The dragon boat is base: "water".
   {

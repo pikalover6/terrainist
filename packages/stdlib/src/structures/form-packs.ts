@@ -394,6 +394,63 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "drying_rack_yard",
     ]),
   }),
+  /* --- dwarven_volcanic pack --- */
+  Object.freeze({
+    id: "dwarven_volcanic",
+    name: "Dwarven & Volcanic",
+    thesis:
+      "A hold cut into the black rock: the catalog cannot say great forge, deep hall, smelter, rune forge, cart depot or king's treasury, and a stone village with a smithy in it is not a hold.",
+    eras: Object.freeze(["ancient", "medieval"]),
+    themes: Object.freeze(["white_quartz", "sun_clay"]),
+    characters: Object.freeze(["core", "civic", "industrial"]),
+    members: Object.freeze([
+      "great_forge",
+      // `dwarven_gate` is the ARCANA wave's and a member belongs to one pack
+      // only, so the id carries the hold and the words stay where they were.
+      "dwarf_hold_gate",
+      "deep_hall",
+      "smelter_works",
+      "gem_cutter_workshop",
+      "stone_brewhouse",
+      "miners_dormitory",
+      "tool_vault",
+      "rune_forge_shrine",
+      "cart_depot",
+      // `assay_office` is the frontier wave's, word for word. Same rule.
+      "ore_assay_hall",
+      "stone_bath_house",
+      "beacon_brazier_tower",
+      "kings_treasury",
+      "stalactite_shrine",
+    ]),
+  }),
+  /* --- steppe_nomad pack --- */
+  Object.freeze({
+    id: "steppe_nomad",
+    name: "Steppe Nomad",
+    thesis:
+      "A Mongol camp on the open grass: the catalog cannot say ger, horse line, kumis tent, ovoo, tug or wrestling ground, and a European village with a yurt parked outside it is not a horde.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["sun_clay", "temperate_timber"]),
+    characters: Object.freeze(["lanes", "park", "civic"]),
+    members: Object.freeze([
+      "ger_round_tent",
+      "khans_ger",
+      "cart_ger",
+      "kumis_tent",
+      "horse_line",
+      "felt_workshop",
+      "bowyer_tent",
+      "caravan_rest",
+      "wrestling_ground",
+      "watch_platform_steppe",
+      "borts_rack",
+      "winter_corral",
+      "khan_banner_pole",
+      "shaman_ovoo",
+      "balbal_stone",
+    ]),
+  }),
 ]);
 
 /** Every legal pack word, in registry order. */

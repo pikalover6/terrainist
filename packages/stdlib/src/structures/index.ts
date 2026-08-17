@@ -69,6 +69,11 @@ export * from "./props-frontier.js";
 // --- nordic_viking pack ---
 export * from "./props-norse.js";
 export * from "./archetypes-norse.js";
+// --- steppe_nomad pack ---
+export * from "./props-steppe.js";
+export * from "./archetypes-steppe.js";
+// --- dwarven_volcanic pack ---
+export * from "./archetypes-dwarven.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

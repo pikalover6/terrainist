@@ -71,6 +71,10 @@ import { nileFacadeDefaults } from "./archetypes-nile.js";
 import { norseFacadeDefaults } from "./archetypes-norse.js";
 // --- mesoamerican_jungle pack ---
 import { mesoamericanFacadeDefaults } from "./archetypes-mesoamerican.js";
+// --- dwarven_volcanic pack ---
+import { dwarvenFacadeDefaults } from "./archetypes-dwarven.js";
+// --- steppe_nomad pack ---
+import { steppeFacadeDefaults } from "./archetypes-steppe.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -288,6 +292,23 @@ export function archetypeFacadeDefaults(
       // roof comb and the thatch are built in.
       const meso = mesoamericanFacadeDefaults(archetype);
       if (Object.keys(meso).length > 0) return meso;
+      // --- dwarven_volcanic pack ----------------------------------------
+      // The Dwarven & Volcanic pack, beside the other late packs: thirteen of
+      // its fifteen want the `flat` top a culture that builds into rock puts
+      // over itself, the forge and the smelter want the `gable` a flue hall
+      // wants, and nine want no window rhythm at all because a hold's wall has
+      // doorways, not windows.
+      const dwarven = dwarvenFacadeDefaults(archetype);
+      if (Object.keys(dwarven).length > 0) return dwarven;
+      // --- steppe_nomad pack ---------------------------------------------
+      // The Steppe Nomad pack, beside the packs it was wired in after: the
+      // four tent types want the `hip` whose deep gap between the eave plate
+      // and the allowance is exactly where the felt dome is built, the watch
+      // platform wants the `flat` deck a lookout stands on, and every tent
+      // wants no window rhythm at all — a rank of glass in a felt wall is the
+      // one detail that would make a stranger read the camp as a suburb.
+      const steppe = steppeFacadeDefaults(archetype);
+      if (Object.keys(steppe).length > 0) return steppe;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);
