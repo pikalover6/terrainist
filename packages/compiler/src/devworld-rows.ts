@@ -58,6 +58,18 @@ import { WILDS_EXHIBIT_ROWS } from "./exhibits/wilds.js";
 import { FRONTIER_EXHIBIT_ROWS } from "./exhibits/frontier.js";
 import { NILE_EXHIBIT_ROWS } from "./exhibits/nile.js";
 import { EASTERN_EXHIBIT_ROWS } from "./exhibits/eastern.js";
+
+/** The nordic_viking rows, for tests that assert on the gradient. */
+export { NORSE_EXHIBIT_ROWS, NORSE_ROW_LENGTH, norseSizeFor } from "./exhibits/norse.js";
+
+/** The mesoamerican_jungle rows, for tests that assert on the gradient. */
+export {
+  MESOAMERICAN_EXHIBIT_ROWS,
+  MESOAMERICAN_ROW_LENGTH,
+  mesoamericanSizeFor,
+} from "./exhibits/mesoam.js";
+import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
+import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -146,6 +158,10 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...NILE_EXHIBIT_ROWS,
   // The east-asian pack: the public forms around the houses.
   ...EASTERN_EXHIBIT_ROWS,
+  // The nordic_viking pack: the hall, the naust and the heath.
+  ...NORSE_EXHIBIT_ROWS,
+  // The mesoamerican_jungle pack: the plaza and its monuments.
+  ...MESOAMERICAN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,

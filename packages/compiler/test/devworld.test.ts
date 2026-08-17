@@ -87,6 +87,10 @@ import {
   NILE_ROW_LENGTH,
   EASTERN_EXHIBIT_ROWS,
   EASTERN_ROW_LENGTH,
+  NORSE_EXHIBIT_ROWS,
+  NORSE_ROW_LENGTH,
+  MESOAMERICAN_EXHIBIT_ROWS,
+  MESOAMERICAN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -229,6 +233,10 @@ describe("dev world grid", () => {
     const nile = NILE_EXHIBIT_ROWS.length * NILE_ROW_LENGTH;
     // The east-asian pack: prefixed (`east_tenshu_keep`) likewise.
     const eastern = EASTERN_EXHIBIT_ROWS.length * EASTERN_ROW_LENGTH;
+    // The nordic_viking pack: prefixed (`nor_norse_mead_hall`) likewise.
+    const norse = NORSE_EXHIBIT_ROWS.length * NORSE_ROW_LENGTH;
+    // The mesoamerican_jungle pack: prefixed (`meso_step_pyramid`) likewise.
+    const mesoamerican = MESOAMERICAN_EXHIBIT_ROWS.length * MESOAMERICAN_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -275,6 +283,8 @@ describe("dev world grid", () => {
         frontier +
         nile +
         eastern +
+        norse +
+        mesoamerican +
         commerce +
         garrison + science +
         arcana +
