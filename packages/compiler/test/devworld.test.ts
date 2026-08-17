@@ -91,6 +91,10 @@ import {
   NORSE_ROW_LENGTH,
   MESOAMERICAN_EXHIBIT_ROWS,
   MESOAMERICAN_ROW_LENGTH,
+  DWARVEN_EXHIBIT_ROWS,
+  DWARVEN_ROW_LENGTH,
+  STEPPE_EXHIBIT_ROWS,
+  STEPPE_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -237,6 +241,10 @@ describe("dev world grid", () => {
     const norse = NORSE_EXHIBIT_ROWS.length * NORSE_ROW_LENGTH;
     // The mesoamerican_jungle pack: prefixed (`meso_step_pyramid`) likewise.
     const mesoamerican = MESOAMERICAN_EXHIBIT_ROWS.length * MESOAMERICAN_ROW_LENGTH;
+    // The dwarven_volcanic pack: prefixed (`dwar_great_forge`) likewise.
+    const dwarven = DWARVEN_EXHIBIT_ROWS.length * DWARVEN_ROW_LENGTH;
+    // The steppe_nomad pack: prefixed (`step_khans_ger`) likewise.
+    const steppe = STEPPE_EXHIBIT_ROWS.length * STEPPE_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -285,6 +293,8 @@ describe("dev world grid", () => {
         eastern +
         norse +
         mesoamerican +
+        dwarven +
+        steppe +
         commerce +
         garrison + science +
         arcana +

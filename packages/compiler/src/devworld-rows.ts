@@ -68,8 +68,16 @@ export {
   MESOAMERICAN_ROW_LENGTH,
   mesoamericanSizeFor,
 } from "./exhibits/mesoam.js";
+
+/** The dwarven_volcanic rows, for tests that assert on the gradient. */
+export { DWARVEN_EXHIBIT_ROWS, DWARVEN_ROW_LENGTH, dwarvenSizeFor } from "./exhibits/dwarven.js";
+
+/** The steppe_nomad rows, for tests that assert on the gradient. */
+export { STEPPE_EXHIBIT_ROWS, STEPPE_ROW_LENGTH, steppeSizeFor } from "./exhibits/steppe.js";
 import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
 import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
+import { DWARVEN_EXHIBIT_ROWS } from "./exhibits/dwarven.js";
+import { STEPPE_EXHIBIT_ROWS } from "./exhibits/steppe.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -162,6 +170,10 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...NORSE_EXHIBIT_ROWS,
   // The mesoamerican_jungle pack: the plaza and its monuments.
   ...MESOAMERICAN_EXHIBIT_ROWS,
+  // The dwarven_volcanic pack: the hold, the forge and the deep hall.
+  ...DWARVEN_EXHIBIT_ROWS,
+  // The steppe_nomad pack: the camp, the horse line and the corral.
+  ...STEPPE_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
