@@ -223,6 +223,16 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
     "steppe_nomad",
     "mongols/nomads/the open grass: round felt gers with a crown ring at the top, a khan's ger on its dais, a ger on a cart, kumis tents, horse lines, a felt works, a bowyer, borts racks, an ovoo cairn, a horsetail standard and a wrestling ground.",
   ],
+  // --- swamp_witch pack ---
+  [
+    "swamp_witch",
+    "witches/bogs/fens/the marsh: huts up on stilt posts over the wet, herb drying lofts, a bog apothecary, a chapel the bog pulled over, eel smokehouses, moss cottages, leech pools, a candle workshop, a fortune teller, a coven stone circle and bone charm racks.",
+  ],
+  // --- atlantean pack ---
+  [
+    "atlantean",
+    "atlantis/a sunken city risen/a drowned empire on dry land: a tidal palace colonnaded in prismarine and quartz, a trident temple, a domed sea oracle, a conch amphitheatre, a pearl divers' hall, hippocamp stables, a monumental tide gate over a water channel, coral garden courts, a navigators' academy, salt baths, a water-stained archive, a tide bell hung on iron chain, a moon pool, a leviathan altar and the fallen fragment of a bronze colossus.",
+  ],
 ] as const;
 
 /** One `id  <- thesis` line per pack, for the prompt. */

@@ -74,6 +74,11 @@ export * from "./props-steppe.js";
 export * from "./archetypes-steppe.js";
 // --- dwarven_volcanic pack ---
 export * from "./archetypes-dwarven.js";
+// --- atlantean pack ---
+export * from "./props-atlantean.js";
+// --- swamp_witch pack ---
+export * from "./props-swamp.js";
+export * from "./archetypes-swamp.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

@@ -39,6 +39,10 @@ describe("the registry", () => {
       "dwarven_volcanic",
       // --- steppe_nomad pack ---
       "steppe_nomad",
+      // --- swamp_witch pack ---
+      "swamp_witch",
+      // --- atlantean pack ---
+      "atlantean",
     ]);
   });
 
@@ -75,10 +79,16 @@ describe("the registry", () => {
     // 145 proposed by §3, less `sphinx` (ratified out), plus the
     // mesoamerican_jungle pack's fifteen and the nordic_viking pack's sixteen
     // (175), plus the dwarven_volcanic pack's fifteen (190), plus the
-    // steppe_nomad pack's fifteen (205). The last of those three is a wave-mate
-    // shipping in parallel: this pin is the WAVE'S end state, and it is the
-    // dwarven pack that owns the arithmetic for both by agreement.
-    expect(seen.size).toBe(205);
+    // steppe_nomad pack's fifteen (205), plus THIS wave's two: the
+    // swamp_witch pack's fifteen (220) and the atlantean pack's fifteen (235).
+    //
+    // THE ARITHMETIC, spelled out because this one number is the seam two
+    // agents share: 205 + 15 + 15 = 235. The atlantean pack is a wave-mate
+    // shipping in parallel and this pin is the WAVE'S end state, exactly as
+    // the dwarven pack held it for the steppe last wave; by agreement it is
+    // the swamp_witch pack that owns the arithmetic for both this time, so
+    // the number moves here and nowhere else.
+    expect(seen.size).toBe(235);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

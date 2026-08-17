@@ -2927,6 +2927,168 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["steppe_nomad", "size_xs"],
     note: "prop.place@0: the carved ancestor stone over a grave, face to the east - three courses of the theme's stone with the carved band at the middle and a slab cap, two low kerb stones a body steps over. Bare `stele` stays the sanctum wave's obelisk's.",
   }),
+
+  /* --- swamp_witch pack -----------------------------------------------------
+   * The fen noun set. "A witch's swamp", "a bog hamlet", "a fen coven" all
+   * route to the medieval era and arrive as a European village standing on dry
+   * grass, with the homestead wave's single `witch_hut` as the only
+   * concession: the palette was never the problem, the nouns were. Fifteen
+   * entries - twelve buildings and three ground pieces. Bare `witch_hut`,
+   * `witches_hut` and `witch` stay the homestead wave's, word for word; this
+   * pack's anchor answers to `witch_stilt_hut`, and bare `stilt_house` stays
+   * the regional wave's jungle box. NO `mud` anywhere in the pack: mud is
+   * 15/16 of a block and a bog village floored in it is one you can only look
+   * at.
+   */
+  fan("witch_stilt_hut", "Witch's stilt hut", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "The anchor: the hut carried on a ring of stilt posts in the apron with the deck plate over their heads and the under-hut space GENUINELY open - every post a full column solid to the ground, nothing written at all between them - and the cauldron at the head inside. Tags: witch_stilt_hut/stilt_hut/swamp_hut; bare `witch_hut` stays the homestead wave's and bare `stilt_house` the regional wave's.",
+  }),
+  ind("herb_drying_loft", "Herb drying loft", "implemented", {
+    tags: ["swamp_witch", "size_m"],
+    note: "A ROOM with a floor in it, which is what separates it from every drying frame in the catalog: poles down both walls at the top of the storey, the strands one course under them so every lane stays walkable, the sorting bench under and the composter for the spoiled cut at the head.",
+  }),
+  com("bog_apothecary", "Bog apothecary", "implemented", {
+    tags: ["swamp_witch", "size_m"],
+    note: "The still-room, and NOT the trade wave's shop: no counter side, no customers - the working bench down one wall, the steeping vats and shelf rail down the other, the brewing stand at the head. Bare `apothecary`, `pharmacy`, `herbalist` and `alchemist` all stay the trade wave's.",
+  }),
+  rel("fen_chapel_ruin", "Fen chapel ruin", "implemented", {
+    tags: ["swamp_witch", "size_m"],
+    note: "The chapel the bog pulled over: the RUINS VOCABULARY'S OWN decay operators run from this pack's profile - a structured crumble, heavy overgrowth, mossy cobble and cracked brick survivors - with a cold altar stump at the far end. Reads no `decay` dial of its own: it is exactly this ruined on a pristine page. Bare `ruined_chapel`/`ruined_church` stay the relic wave's.",
+  }),
+  rur("eel_smokehouse", "Eel smokehouse", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "The fen's one reliable protein: racks overhead on both walls with the eels hanging a course under them, and the smoke pit bedded in stone at the head - a GLOW between dressed blocks, never a lit fire in a sealed smoky room. Bare `smokehouse`, `smoke_house`, `smokery` and `smoker` stay the hedgerow expansion's.",
+  }),
+  ver("moss_cottage", "Moss cottage", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "The fen dwelling: the walls re-clad in moss block banded with mossy cobble - the pack's one material argument, named as a substance rather than drawn from the palette - a bed in the corner, the pot on the fire and moss carpet on the floor. Bare `cottage` still falls through to the founding cottage.",
+  }),
+  rur("fen_landing_stage", "Fen landing stage", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "One household's landing at the foot of its garden, and NOT the infrastructure `boardwalk`, which is a public route across the wet that the linework engine builds: decking down both walls in bays, mooring posts in them, ropes coiled overhead and the bait tub by the way in.",
+  }),
+  ind("leech_pools", "Leech pools", "implemented", {
+    tags: ["swamp_witch", "size_m"],
+    note: "The leech farm, and the only fluid in the pack: shallow pools down both wall rows, every one CURBED - the curb laid first in full blocks, never slabs, and the water written only once all four neighbours are CONFIRMED standing, so not a drop can move. A curb that fails to close leaves a dry pool, which is a fine thing to walk past.",
+  }),
+  ind("candle_workshop", "Candle workshop", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "The tallow dipper: dipping vats down one wall, the bench of candles down the other, the drying rods overhead and the tallow vat at the head. Every candle is written lit=false - a rack of lit candles is a rack of fires. Bare `chandlery` stays the nautical wave's SHIP chandler, which sells rope and tar.",
+  }),
+  rur("black_goat_pen", "Black goat pen", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "Two or three animals in a shed behind a hut, not a farm's herd: hurdles down one wall with the troughs in the bays, the fodder up on a plinth so it never sits on wet ground, the muck at the head. Bare `pen`, `pig_pen`, `sheep_pen`, `cattle_pen`, `paddock` and `corral` all stay where they were.",
+  }),
+  lei("fortune_tellers_tent", "Fortune teller's tent", "implemented", {
+    tags: ["swamp_witch", "size_xs"],
+    note: "One piece of furniture and it is the whole building: the table at the head with a seat either side obeying the stair-seat rule, a COLD candle on it and the charms hung well overhead on both walls. Bare `tent` stays the blitz pack's prop and bare `circus_tent` the leisure wave's.",
+  }),
+  rur("mangrove_root_cellar", "Mangrove root cellar", "implemented", {
+    tags: ["swamp_witch", "size_s"],
+    note: "The store cut in among the roots: root ribs of the theme's log laid along x at the top of the storey so the ceiling reads as a mat of roots, shelves down both walls and the crocks under them. The ribs skip any cell the shell already wrote at that course, because the hanging lantern lives up there. Bare `root_cellar` stays the underground grammar's basement style.",
+  }),
+  mem("coven_stone_circle", "Coven stone circle", "implemented", {
+    kind: "prop",
+    tags: ["swamp_witch", "size_m"],
+    note: "prop.place@0: eight standing stones raised on a ring with the low altar stone at the middle, each two courses and a slab cap so the head narrows - raised, not built. Everything else on the pad is left open, because a circle a body cannot walk into has failed at its only job. Bare `henge` and `rune_circle` stay where they were.",
+  }),
+  fan("bone_charm_rack", "Bone charm rack", "implemented", {
+    kind: "prop",
+    tags: ["swamp_witch", "size_xs"],
+    note: "prop.place@0: two posts, a bone crossbar and the charms hanging from it at head height and no lower. DELIBERATELY RESTRAINED - bone and stick, and NOT ONE SKULL: a rack of skulls is the Mesoamerican pack's `tzompantli_rack` and that is that pack's argument to make, not this one's.",
+  }),
+  rel("waterlogged_shrine", "Waterlogged shrine", "implemented", {
+    kind: "prop",
+    tags: ["swamp_witch", "size_s"],
+    note: "prop.place@0: the shrine standing in its own still pool - a COMPLETE ring of full blocks laid before a single source goes in, so the eight cells of water inside it have nowhere to go, with the carved shaft rising out of the middle. The outer ring of the pad stays open ground so a body can walk up and look over the curb. Bare `shrine`, `roadside_shrine` and `votive_shrine` stay where they were.",
+  }),
+  /* --- atlantean pack ------------------------------------------------------
+   * The risen city's noun set. "Atlantis", "a sunken city risen", "a drowned
+   * empire on dry land" all route to the ancient era and arrive as a Greek
+   * town - a peripteral temple, an agora, a stoa. The palette was never the
+   * problem (`white_quartz` has shipped since the founding waves), the nouns
+   * were. Fifteen entries - thirteen buildings and two ground pieces.
+   *
+   * The pack builds ON LAND, in air, with a walkable floor throughout: a city
+   * the sea gave back, not a city the sea still holds. Every drop of water in
+   * it lives in a CURBED SUNKEN BASIN - sunk into the floor plane, inset one
+   * cell from the interior on every side, every touching floor cell written
+   * solid, and the cells claimed through the ground floor's connectivity guard
+   * before a drop is written.
+   *
+   * Not one bare word is taken. The white-stone vocabulary is the most crowded
+   * corner of the catalog and every plain spelling of it stays exactly where it
+   * was: `palace`, `temple`, `shrine`, `rotunda`, `amphitheater`, `theater`,
+   * `arena`, `hall`, `stable`, `gate`, `arch`, `court`, `garden`, `academy`,
+   * `bathhouse`, `baths`, `archive`, `library`, `bell_tower`, `belfry`,
+   * `tower`, `pool`. Every id here is a compound, and every alias is either a
+   * compound or a word - `trident`, `hippocamp`, `conch`, `terme`, `poseidon` -
+   * that no table in the catalog ever had.
+   */
+  civ("tidal_palace", "Tidal palace", "implemented", {
+    tags: ["atlantean", "size_l"],
+    note: "The anchor: the quartz-pillar colonnade down both walls with the shell motifs bedded in the bays between the columns, and the throne dais of slabs across the head with the seat on the row in front of it. Bare `palace` stays `palace_range`'s and the Mesoamerican `maya_palace`'s; this answers to tidal_palace/atlantean_palace/sunken_palace.",
+  }),
+  rel("trident_temple", "Trident temple", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The whole building is one emblem stood upright: three quartz-pillar prongs on the head row, tied across at head height, over an altar band of dark prismarine with the glow bedded in front of it. Bare `temple`, `shrine` and `chapel` stay the church's and the sanctum wave's; `trident` is a word no table ever claimed.",
+  }),
+  rel("sea_oracle_rotunda", "Sea oracle", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The pack's one piece of exterior work: the DOME, built as filled discs stepping in on the temazcal precedent and closing on an oculus of sea lantern - over a ring of seats and the oracle's own curbed basin, set one row off the middle so the room's route never runs through the lantern column. Bare `rotunda` stays where it was.",
+  }),
+  lei("conch_amphitheater", "Conch amphitheatre", "implemented", {
+    tags: ["atlantean", "size_l"],
+    note: "The banked seating, curved: the bank runs all four walls and then turns one cell further in at each corner, so the seating closes round the floor as a spiral rather than meeting at right angles, with an upper tier of slabs behind it. The floor itself is left completely bare. Bare `amphitheater`, `theater`, `arena` and `stadium` stay the sanctum and leisure waves'.",
+  }),
+  com("pearl_diver_hall", "Pearl divers' hall", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "Where the day's take is sorted: the dive lines hung at the top of the storey down both walls, the sorting benches under them, the rinse cauldrons in the bays and a single curbed rinse basin sunk into the floor by the way in. Bare `hall` stays the original table's, across thirty compounds.",
+  }),
+  rur("hippocamp_stable", "Hippocamp stable", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "Stalls built for a horse that swims: hurdles off one wall, the fodder on a plinth down the other and DRIED KELP standing on it, and one stall that is a curbed pool sunk into the floor. Bare `stable`, `stables` and `paddock` stay the founding table's; `pegasus_stable`, `griffin_stable` and `hippogriff_stable` stay the arcana wave's.",
+  }),
+  civ("tide_gate_arch", "Tide gate", "implemented", {
+    tags: ["atlantean", "size_l"],
+    note: "The monumental arch over a water channel: the channel sunk into the floor down one side of the room, inset from the wall so its closure never depends on the shell's window rhythm, with ONE great arch bay spanning it. One bay, and that is a walkability decision - a second would seal the strip between channel and wall into a pocket. Bare `gate`, `arch` and `gatehouse` stay where they were.",
+  }),
+  civ("coral_garden_court", "Coral garden court", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The court of planters: kerbed beds down both walls with DEAD coral standing dry in them, and the court's own curbed basin at the middle of the floor. The coral is dead_* by rule - a live coral block out of water turns grey on the first block tick, and a garden that decays three seconds after the world loads is a bug that looks like a choice. Bare `court`, `courtyard` and `garden` stay where they were.",
+  }),
+  civ("navigator_academy", "Navigators' academy", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "Where a risen city relearns where it is: chart tables and bookshelf ranks down both walls, the armillary of iron bars turning overhead at the top of the storey, and the lodestone standing at the head - the one object in the room unambiguously about bearing rather than about paper. Bare `academy`, `school` and `university` stay the arcane academy's and the institution wave's.",
+  }),
+  lei("salt_bath_terme", "Salt baths", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The sunken bath - the largest body of water the pack writes anywhere, three cells by one, curbed - with the heated benches round it, the brine cauldrons in the bays and the hot stones bedded at the head. The interesting comparison is the dwarven `stone_bath_house`, which writes no water at all on the argument that a bath a body cannot cross is a pool: this one writes water and keeps the crossing by sinking it into the floor.",
+  }),
+  civ("drowned_archive", "Drowned archive", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The library the tide reached once and never left, and NOT ONE CELL OF WATER is written in it: the water is history, and history here is a TIDE LINE - a band of dark prismarine at eye height along both wall rows, level all the way round - plus cobweb at the top of the storey. A pond on the floor would be a room a reader cannot cross, and it would say the tide is still here. Bare `archive` and `library` stay where they were.",
+  }),
+  civ("tide_bell_tower", "Tide bell tower", "implemented", {
+    tags: ["atlantean", "size_s"],
+    note: "The chain lesson made real: `chain` is NOT in the pinned 1.21.11 block table and `iron_chain` is, so the bell hangs on iron_chain under a cap course of the theme's own roof stone, with nothing anywhere in that stack standing over air. On a storey too short to hang a bell over a body's head the bell STANDS instead - a bell tower with no bell in it is not a shorter bell tower. Bare `bell_tower`, `belfry` and `campanile` stay the town's and the stave church's.",
+  }),
+  rel("moon_pool_shrine", "Moon pool shrine", "implemented", {
+    tags: ["atlantean", "size_m"],
+    note: "The pool at the middle of the floor, curbed, with four quartz columns standing at its corners: those columns ARE the light well, and they are how a fit-out says `open to the sky` without cutting a hole in a roof it does not own. Bare `pool`, `swimming_pool`, `scrying_pool` and `moon_gate` stay where they were.",
+  }),
+  mem("leviathan_altar", "Leviathan altar", "implemented", {
+    kind: "prop",
+    tags: ["atlantean", "size_s"],
+    note: "prop.place@0: the offering table under the ribs of the thing it is for - a filled stepped plinth capped by an altar slab, dead coral on its flank, and four bone-block rib posts standing as full columns to the ground with two lintels spanning between them well over a body's head.",
+  }),
+  mem("bronze_colossus_fragment", "Fallen colossus", "implemented", {
+    kind: "prop",
+    tags: ["atlantean", "size_s"],
+    note: "prop.place@0: the forearm and hand of a bronze giant, DOWN. A colossus standing on a plinth is the memorial wave's `colossal_statue` and keeps every spelling of it; what a risen city needs is the fragment, because it fell first. The bronze is the copper oxidation set banded by position; the rubble is honest and gravity-safe - the only gravel is at the base plane and nothing here can fall.",
+  }),
+
 ]);
 
 /* -------------------------------------------------------------------------- */

@@ -126,6 +126,24 @@ import {
   isSteppeProp,
   steppePropFootprint,
 } from "./props-steppe.js";
+// --- atlantean pack --------------------------------------------------------
+// The Atlantean pack's ground pieces — the two entries of that pack which
+// stand on the bare ground rather than roofing a room.
+import {
+  ATLANTEAN_PROP_GENERATORS,
+  ATLANTEAN_PROP_NAMES,
+  atlanteanPropFootprint,
+  isAtlanteanProp,
+} from "./props-atlantean.js";
+// --- swamp_witch pack -------------------------------------------------------
+// The Swamp Witch pack's ground pieces — the three entries of that pack which
+// stand on the wet ground rather than roofing a room.
+import {
+  SWAMP_PROP_GENERATORS,
+  SWAMP_PROP_NAMES,
+  isSwampProp,
+  swampPropFootprint,
+} from "./props-swamp.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -263,6 +281,10 @@ export const PROP_NAMES = [
   ...NORSE_PROP_NAMES,
   // --- steppe_nomad pack ---
   ...STEPPE_PROP_NAMES,
+  // --- swamp_witch pack ---
+  ...SWAMP_PROP_NAMES,
+  // --- atlantean pack ---
+  ...ATLANTEAN_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -603,6 +625,10 @@ export function propFootprint(
   if (isNorseProp(prop)) return norsePropFootprint(prop, params);
   // --- steppe_nomad pack ---
   if (isSteppeProp(prop)) return steppePropFootprint(prop, params);
+  // --- atlantean pack ---
+  if (isAtlanteanProp(prop)) return atlanteanPropFootprint(prop, params);
+  // --- swamp_witch pack ---
+  if (isSwampProp(prop)) return swampPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1157,6 +1183,10 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...NORSE_PROP_GENERATORS,
   // --- steppe_nomad pack ---
   ...STEPPE_PROP_GENERATORS,
+  // --- atlantean pack ---
+  ...ATLANTEAN_PROP_GENERATORS,
+  // --- swamp_witch pack ---
+  ...SWAMP_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

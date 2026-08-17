@@ -195,12 +195,17 @@ describe("precedence", () => {
 
 describe("grounding", () => {
   it("warns once for every word no pack carries, naming the legal packs", () => {
-    const out = checkFormPacks(["classical_mediterranean", "atlantean", "steamy"], undefined, "world");
+    // The two unknown words are deliberately words no pack will ever be. The
+    // first of them used to be `"atlantean"` — which stopped being unknown the
+    // day the Atlantean pack shipped, and failed this test on the way in. A
+    // made-up id in a test is a name reserved by accident; reserve it on
+    // purpose instead.
+    const out = checkFormPacks(["classical_mediterranean", "nonesuch", "steamy"], undefined, "world");
     expect(out).toHaveLength(1);
     expect(out[0]?.code).toBe("LOAM-W516");
     expect(out[0]?.name).toBe("INTENT_FORM_PACK_UNKNOWN");
     expect(out[0]?.severity).toBe("warning");
-    expect(out[0]?.message).toContain('"atlantean"');
+    expect(out[0]?.message).toContain('"nonesuch"');
     expect(out[0]?.message).toContain('"steamy"');
     expect(out[0]?.message).not.toContain("classical_mediterranean");
   });

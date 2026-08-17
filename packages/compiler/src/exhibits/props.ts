@@ -299,6 +299,39 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "balbal_stone", params: { yaw: 90 } },
     ],
   },
+  // --- atlantean pack ---
+  // The risen city's ground: the altar under its ribs and the fallen colossus,
+  // each shown at three yaws so the position-hashed ground scuffing is visibly
+  // not a repeat and the fragment is read from both ends.
+  {
+    row: "atlantean_ground",
+    water: false,
+    cells: [
+      { prop: "leviathan_altar", params: {} },
+      { prop: "leviathan_altar", params: { yaw: 90 } },
+      { prop: "leviathan_altar", params: { yaw: 180 } },
+      { prop: "bronze_colossus_fragment", params: {} },
+      { prop: "bronze_colossus_fragment", params: { yaw: 90 } },
+      { prop: "bronze_colossus_fragment", params: { yaw: 180 } },
+    ],
+  },
+  // --- swamp_witch pack ---
+  // The fen ground: the circle, the charm rack and the shrine in its curbed
+  // pool, each shown at two yaws so the position-hashed ground scuffing is
+  // visibly not a repeat — and so the pool's curb can be walked round from
+  // every side, which is the one thing a still-water piece has to prove.
+  {
+    row: "swamp_fen",
+    water: false,
+    cells: [
+      { prop: "coven_stone_circle", params: {} },
+      { prop: "coven_stone_circle", params: { yaw: 90 } },
+      { prop: "bone_charm_rack", params: {} },
+      { prop: "bone_charm_rack", params: { yaw: 90 } },
+      { prop: "waterlogged_shrine", params: {} },
+      { prop: "waterlogged_shrine", params: { yaw: 90 } },
+    ],
+  },
   // The east-asian approach: torii ranked, lanterns in numbers — saturation
   // is both pieces' whole job. The dragon boat is base: "water".
   {

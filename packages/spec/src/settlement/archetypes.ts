@@ -184,6 +184,24 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "ger_round_tent", "khans_ger", "cart_ger", "kumis_tent",
   "horse_line", "felt_workshop", "bowyer_tent", "caravan_rest",
   "wrestling_ground", "watch_platform_steppe", "borts_rack", "winter_corral",
+  // --- swamp_witch pack ---------------------------------------------------
+  // The Swamp Witch pack, LAST, because `BUILDING_ARCHETYPES` spreads it last:
+  // this list mirrors that one element for element and the seam is pinned by
+  // `fabric.test.ts`. The pack's `coven_stone_circle`, `bone_charm_rack` and
+  // `waterlogged_shrine` are deliberately absent: all three are PROPS.
+  "witch_stilt_hut", "herb_drying_loft", "bog_apothecary", "fen_chapel_ruin",
+  "eel_smokehouse", "moss_cottage", "fen_landing_stage", "leech_pools",
+  "candle_workshop", "black_goat_pen", "fortune_tellers_tent",
+  "mangrove_root_cellar",
+  // --- atlantean pack -----------------------------------------------------
+  // The Atlantean pack, LAST, because `BUILDING_ARCHETYPES` spreads it last:
+  // this list mirrors that one element for element and the seam is pinned by
+  // `fabric.test.ts`. The pack's `leviathan_altar` and
+  // `bronze_colossus_fragment` are deliberately absent: both are PROPS.
+  "tidal_palace", "trident_temple", "sea_oracle_rotunda", "conch_amphitheater",
+  "pearl_diver_hall", "hippocamp_stable", "tide_gate_arch",
+  "coral_garden_court", "navigator_academy", "salt_bath_terme",
+  "drowned_archive", "tide_bell_tower", "moon_pool_shrine",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

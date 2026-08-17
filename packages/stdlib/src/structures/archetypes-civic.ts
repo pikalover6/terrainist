@@ -75,6 +75,10 @@ import { mesoamericanFacadeDefaults } from "./archetypes-mesoamerican.js";
 import { dwarvenFacadeDefaults } from "./archetypes-dwarven.js";
 // --- steppe_nomad pack ---
 import { steppeFacadeDefaults } from "./archetypes-steppe.js";
+// --- atlantean pack ---
+import { atlanteanFacadeDefaults } from "./archetypes-atlantean.js";
+// --- swamp_witch pack ---
+import { swampFacadeDefaults } from "./archetypes-swamp.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -309,6 +313,26 @@ export function archetypeFacadeDefaults(
       // one detail that would make a stranger read the camp as a suburb.
       const steppe = steppeFacadeDefaults(archetype);
       if (Object.keys(steppe).length > 0) return steppe;
+      // --- atlantean pack -------------------------------------------------
+      // The Atlantean pack, beside the packs it was wired in after: the oracle
+      // and the two shrines want the `hip` whose deep gap between the eave
+      // plate and the allowance is exactly where the dome is built, the civic
+      // pieces want the `flat` terrace a risen classical city has instead of a
+      // pitch, and the archive wants no window rhythm at all — a room whose
+      // whole subject is a book that got wet is a room kept dark.
+      const atlantean = atlanteanFacadeDefaults(archetype);
+      if (Object.keys(atlantean).length > 0) return atlantean;
+      // --- swamp_witch pack -----------------------------------------------
+      // The Swamp Witch pack, beside the packs it was wired in after: almost
+      // the whole of it wants the `gable` a fen building has, because rain
+      // runs straight off a ridge and a crooked ridge is the read. The two
+      // exceptions carry the argument — the leech pools want the `flat` cover
+      // a real pool yard has rather than a roof, and the fortune teller's
+      // wants the `hip` that is the closest thing the shell has to canvas —
+      // and the smokehouse, the goat pen, the reader and the root cellar want
+      // no window rhythm at all: smoke, draught, secrecy and the dark.
+      const swamp = swampFacadeDefaults(archetype);
+      if (Object.keys(swamp).length > 0) return swamp;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

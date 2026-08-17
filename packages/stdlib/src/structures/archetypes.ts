@@ -378,6 +378,30 @@ import {
 
 export * from "./archetypes-steppe.js";
 
+// --- atlantean pack ------------------------------------------------------
+// The Atlantean pack's buildings — the thirteen entries of that pack that have
+// an inside. Its `leviathan_altar` and `bronze_colossus_fragment` are PROPS
+// (`props-atlantean.ts`): neither of the two roofs a room.
+import {
+  ATLANTEAN_BUILDING_ARCHETYPES,
+  atlanteanArchetypeOfTags,
+  furnishAtlantean,
+} from "./archetypes-atlantean.js";
+
+export * from "./archetypes-atlantean.js";
+
+// --- swamp_witch pack -------------------------------------------------------
+// The Swamp Witch pack's buildings — the twelve entries of that pack that have
+// an inside. Its stone circle, charm rack and waterlogged shrine are PROPS
+// (`props-swamp.ts`): none of the three roofs a room.
+import {
+  SWAMP_BUILDING_ARCHETYPES,
+  furnishSwamp,
+  swampArchetypeOfTags,
+} from "./archetypes-swamp.js";
+
+export * from "./archetypes-swamp.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -479,6 +503,16 @@ export const BUILDING_ARCHETYPES = [
   // same reason: this list's order is the seam `fabric.test.ts` pins, and a
   // pack appended at the end moves nothing that came before it.
   ...STEPPE_BUILDING_ARCHETYPES,
+  // --- swamp_witch pack ----------------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...SWAMP_BUILDING_ARCHETYPES,
+  // --- atlantean pack ------------------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...ATLANTEAN_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -782,6 +816,35 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `bokh_ring`, `airag_tent` — no table ever had.
   const steppe = steppeArchetypeOfTags(tags);
   if (steppe !== null) return steppe;
+  // --- atlantean pack -------------------------------------------------------
+  // The Atlantean pack, beside the other late packs and high for the reason
+  // every later wave is: the tables below are greedy. It claims not one bare
+  // word, and the words it stays off are the crowded half of the catalog —
+  // `palace`, `temple`, `shrine`, `rotunda`, `amphitheater`, `theater`,
+  // `arena`, `hall`, `stable`, `gate`, `arch`, `court`, `garden`, `academy`,
+  // `bathhouse`, `baths`, `archive`, `library`, `bell_tower`, `belfry`,
+  // `tower` and `pool` all still go exactly where they went. Every claim it
+  // makes is a compound of its own ids or a word — `trident`, `hippocamp`,
+  // `conch`, `terme`, `poseidon` — no table in the catalog ever had.
+  const atlantean = atlanteanArchetypeOfTags(tags);
+  if (atlantean !== null) return atlantean;
+  // --- swamp_witch pack -----------------------------------------------------
+  // The Swamp Witch pack, beside the other late packs and high for the reason
+  // every later wave is: the tables below are greedy. It claims nothing an
+  // earlier table claims — bare `witch_hut`/`witches_hut`/`witch` are still the
+  // homestead wave's, bare `stilt_house`/`stilts` the regional wave's, bare
+  // `apothecary`/`pharmacy`/`herbalist`/`alchemist` the trade wave's, bare
+  // `chapel`/`ruined_chapel`/`ruined_church` the faith and relic waves', bare
+  // `smokehouse`/`smokery`/`smoker` the hedgerow expansion's, bare `cottage`
+  // the founding table's, bare `boardwalk` an INFRASTRUCTURE entry rather than
+  // a building at all, bare `pen`/`paddock`/`corral` the founding table's and
+  // the agrarian expansion's, bare `tent` the blitz pack's prop, bare
+  // `chandlery` the nautical wave's ship chandler and bare `root_cellar` the
+  // underground grammar's basement style. Every claim it makes is a compound
+  // of its own ids or a word — `leech_beds`, `bog_alchemist`, `swamp_jetty`,
+  // `candle_works` — that no table ever had.
+  const swamp = swampArchetypeOfTags(tags);
+  if (swamp !== null) return swamp;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1251,6 +1314,10 @@ export function furnish(r: FurnishRequest): number {
   n += furnishDwarven(ctx);
   // --- steppe_nomad pack ---
   n += furnishSteppe(ctx);
+  // --- atlantean pack ---
+  n += furnishAtlantean(ctx);
+  // --- swamp_witch pack ---
+  n += furnishSwamp(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

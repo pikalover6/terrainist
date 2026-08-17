@@ -3195,6 +3195,21 @@ export const SETTLEMENT_PROP_NAMES = [
   "khan_banner_pole",
   "shaman_ovoo",
   "balbal_stone",
+  // --- swamp_witch pack ---
+  // The Swamp Witch pack's ground half: the three entries of that pack which
+  // stand on the wet ground rather than roofing a room. Order matches
+  // `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts` asserts
+  // element by element.
+  "coven_stone_circle",
+  "bone_charm_rack",
+  "waterlogged_shrine",
+  // --- atlantean pack ---
+  // The Atlantean pack's ground half: the two entries of that pack which stand
+  // on the bare ground rather than roofing a room. Order matches `PROP_NAMES`
+  // in the stdlib, which `compiler/test/props.test.ts` asserts element by
+  // element.
+  "leviathan_altar",
+  "bronze_colossus_fragment",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

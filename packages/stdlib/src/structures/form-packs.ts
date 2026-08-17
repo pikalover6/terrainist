@@ -451,6 +451,66 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "balbal_stone",
     ]),
   }),
+  /* --- swamp_witch pack --- */
+  Object.freeze({
+    id: "swamp_witch",
+    name: "Swamp Witch",
+    thesis:
+      "A witch's fen: the catalog cannot say stilt hut, drying loft, leech pools, eel smokehouse, coven circle or charm rack, and a European village on dry grass with one witch's hut in it is not a bog hamlet.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["temperate_timber", "boreal_pine"]),
+    characters: Object.freeze(["lanes", "park", "core"]),
+    members: Object.freeze([
+      // `witch_hut` is the HOMESTEAD wave's, word for word, and a member
+      // belongs to one pack only — so the anchor carries the stilts in its id
+      // and the words stay where they were.
+      "witch_stilt_hut",
+      "herb_drying_loft",
+      "bog_apothecary",
+      "fen_chapel_ruin",
+      "eel_smokehouse",
+      "moss_cottage",
+      // `boardwalk` is an INFRASTRUCTURE entry — a public route the linework
+      // engine builds — and this is one household's landing. Same rule.
+      "fen_landing_stage",
+      "leech_pools",
+      // `chandlery` is the nautical wave's SHIP chandler. Same rule again.
+      "candle_workshop",
+      "black_goat_pen",
+      "fortune_tellers_tent",
+      "mangrove_root_cellar",
+      "coven_stone_circle",
+      "bone_charm_rack",
+      "waterlogged_shrine",
+    ]),
+  }),
+  /* --- atlantean pack --- */
+  Object.freeze({
+    id: "atlantean",
+    name: "Atlantean",
+    thesis:
+      "A drowned city risen on dry land: the catalog cannot say tidal palace, trident temple, sea oracle, conch amphitheatre, pearl divers' hall, hippocamp stable, tide gate, moon pool or tide bell, and a Greek temple faced in prismarine is still a Greek temple.",
+    eras: Object.freeze(["ancient"]),
+    themes: Object.freeze(["white_quartz", "sun_clay"]),
+    characters: Object.freeze(["civic", "waterfront", "core"]),
+    members: Object.freeze([
+      "tidal_palace",
+      "trident_temple",
+      "sea_oracle_rotunda",
+      "conch_amphitheater",
+      "pearl_diver_hall",
+      "hippocamp_stable",
+      "tide_gate_arch",
+      "coral_garden_court",
+      "navigator_academy",
+      "salt_bath_terme",
+      "drowned_archive",
+      "tide_bell_tower",
+      "moon_pool_shrine",
+      "leviathan_altar",
+      "bronze_colossus_fragment",
+    ]),
+  }),
 ]);
 
 /** Every legal pack word, in registry order. */
