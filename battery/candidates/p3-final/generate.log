@@ -1,0 +1,114 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"ancient","wealth":0.75,"decline":0.1,"formality":0.65,"event":{"kind":"siege","severity":0.85,"recency":0},"climate":{"temperature":0.7,"humidity":-0.2,"snow":"never","blend":"soft"},"character":{"label":"walled citadel of Troy","materialTheme":"sun_clay","fortification":"walled","formPacks":["classical_mediterranean"],"motifs":{"roofType":"flat","massing":"stepped","windowRhythm":"sparse","ornamentDensity":0.4},"urbanForm":"hillside","courtyards":0.6,"ground":"stepped"},"tokens":{"terrain":"a fortified citadel on a rise above a dry coastal plain; the Aegean shore in view","icons":"the colossal wooden horse brought inside the walls onto the central courtyard/plaza; the massive Scaean gate and towered stone circuit wall; Priam's megaron citadel overlooking the flat-roofed city; abandoned Greek siege works and beached ship tracks on the distant shore","event_moment":"dead of night, absolute silence in the slumbering city right before the hidden soldiers drop the belly hatch and emerge"}}
+           1 attempt(s), 7362 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-W519 LANDMARK_CONSTRAINT_IGNORED@world.the_trojan_horse.constraints[1], LOAM-W519 LANDMARK_CONSTRAINT_IGNORED@world.palace_of_priam.constraints[1]
+  tokens     77724 in + 9997 out = 87721  ($0.0479)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     trojan_horse [landmark]  1 attempt(s), 25699 tokens  ($0.0439), 12 warning(s)
+  ok     priams_megaron [landmark]  1 attempt(s), 19815 tokens  ($0.0328), 4 warning(s)
+  ok     greek_siege_wreckage [plugin]  1 attempt(s), 33481 tokens  ($0.0585), 15 warning(s)
+  tokens     8629 in + 70366 out = 78995  (48746 of the out reasoning)  ($0.1352)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 7 problem(s) with the compiled world:
+
+warning LOAM-W519 LANDMARK_CONSTRAINT_IGNORED at world.the_trojan_horse.constraints[1]: "facing" in a bespoke landmark's constraints cannot turn it: a landmark's yaw is decided from "params.face" before the solver reserves its (already turned) box, so this constraint is ignored
+  fix: write it as a param instead: "params": { "face": { "toward": "citadel_plaza" } } (LOAM-SPEC §15.1) — the constraint spelling would only have moved the landmark to change the angle
+warning LOAM-W519 LANDMARK_CONSTRAINT_IGNORED at world.palace_of_priam.constraints[1]: "facing" in a bespoke landmark's constraints cannot turn it: a landmark's yaw is decided from "params.face" before the solver reserves its (already turned) box, so this constraint is ignored
+  fix: write it as a param instead: "params": { "face": { "toward": "citadel_plaza" } } (LOAM-SPEC §15.1) — the constraint spelling would only have moved the landmark to change the angle
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.palace_of_priam: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.palace_of_priam: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E170 CANNOT_FIT at world.troy_citadel.temple_of_apollo: no lot or block in "world.troy_citadel" is big enough for this landmark's 15 × 21 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.troy_citadel.trojan_armory: no lot or block in "world.troy_citadel" is big enough for this landmark's 11 × 15 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.troy_citadel.scaean_gatehouse: no lot or block in "world.troy_citadel" is big enough for this landmark's 13 × 11 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+Layout solver report:
+
+  world.palace_of_priam: placed after constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.05)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     104480 in + 29527 out = 134007  ($0.0697)
+
+compiled "trojan_horse_in_troy" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy
+  seed       303
+  region     512x512 at (-256, -256)
+  heights    51.2..96.2  sea 63  snow line 94.5
+  land       79.9% of columns above sea level
+  biomes     forest 39.6%, savanna 35.0%, ocean 20.0%, beach 4.1%, windswept_savanna 1.4%
+  trees      2034 (trojan_scrub=2149)
+  chunks     1024
+  blocks     35896817 (204399 vegetation)
+  markers    90
+  spawn      [20, 87, 10]
+  timings    validate 4ms  field 178ms  layout 500ms  climate 35ms  columns 23ms  caves 0ms  structures 1265ms  programs 85ms  scatter 177ms  biomes 21ms  validators 3ms  emit 1723ms  total 4065ms
+  programs   world.the_trojan_horse=trojan_horse×1 (1245 blocks), world.palace_of_priam=priams_megaron×1 (3375 blocks), world.greek_camp_debris=greek_siege_wreckage×7 (2847 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.processional_way: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.troy_citadel: decline 0.10 gives a ruin share of 0.00: 0 of 4 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 2 blocks over 9 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 4 blocks over 20 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 4 blocks over 97 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.troy_citadel: a seam in "world.troy_citadel" drops 5 blocks over 54 column(s), past the 6 blocks a retaining wall is built for, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: multi-level ground: 5 retaining wall(s) over 255 column(s) (35 parapeted), 0 kerb seam(s), 4 bank(s), and 0 seam(s) a building already stood on; 93 seam column(s) got no wall (30 building, 63 street); 475 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: transitions by context (§5): 861 planned edge column(s) — fill 490 (180 bank, 310 retaining), cut 371 (370 retaining, 1 rock)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: built faces by finished drop (§13.8): 310 face column(s) along the seams a wall was built on — 81 at 2, 116 at 3, 54 at 4, 38 at 5, 21 at 6
+  fix: No action needed.
+
+warning LOAM-T228 PROP_RESEATED at world.greek_abandoned_cog: no water within 48 blocks of the cog's coarse target, so it sought the waterline and seated at [-144, -256]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: every cut face finished: 1102 column(s) faced in the hill's own rock, of which 371 were declared cut edges (§5.4); 370 of those wanted masonry (§5.2 rule 9) and got rock — an uphill wall is v1
+  fix: No action needed.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-T230 WALL_COURSE_CLAMPED at world.troy_citadel: the settlement is built to the world-region edge, so the circuit flattens along the boundary there — closed, not clipped; buildings on the line become part of the wall
+  fix: no change needed — or grow the settlement with wall room from the region edge if the flattened stretch reads wrong on a walk
+
+warning LOAM-W337 PROGRAM_DROPPED at world.greek_camp_debris: "greek_siege_wreckage" asked for 8 instances and only 7 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 47062 footprint columns (plus 20646 feathered over 32 columns) to minecraft:savanna, from the ambient majority (minecraft:savanna, 75% of 15949 ring columns); snow policy never resolved to "never" on a 0/47062 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 182204 in + 39524 out = 221728 tokens (9329 of the out reasoning) ($0.1176)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p3-final/trojan_horse_in_troy

@@ -1,0 +1,115 @@
+prompt     An ancient forest of colossal redwoods with a small logging camp at its edge.
+seed       306
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.3,"formality":0.15,"climate":{"biome":"minecraft:old_growth_spruce_taiga","temperature":0.2,"humidity":0.8,"snow":"never"},"character":{"label":"redwood logging camp","materialTheme":"boreal_pine","formPacks":["wilds_camps"],"flora":{"prefer":["old_growth","emergent","spruce_ancient"]},"urbanForm":"linear"},"tokens":{"infra":"cut_over_ground along the edge of the camp; timber_skid_trail leading into the redwood groves; log_boom by the stream","trees":"towering colossal redwoods dwarfing the rough-hewn timber cabins, sawpits, and log piles"}}
+           1 attempt(s), 6978 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.ancient_redwood_forest.params.area
+  tokens     77600 in + 10220 out = 87820  ($0.0483)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     steam_donkey_winch [landmark]  2 attempt(s), 38859 tokens  ($0.0485), 12 warning(s)
+  ok     felled_colossal_redwood [plugin]  1 attempt(s), 27389 tokens  ($0.0472), 7 warning(s)
+  ok     springboard_stump [plugin]  1 attempt(s), 27603 tokens  ($0.0476)
+  tokens     22314 in + 72771 out = 95085  (51598 of the out reasoning)  ($0.1448)
+
+wiring     3 program(s) authored but never invoked: steam_donkey_winch [landmark], felled_colossal_redwood [plugin], springboard_stump [plugin]
+
+  wired in 1 attempt(s); 97699 in + 21236 out = 118935 tokens  ($0.0765)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 10 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.ancient_redwood_forest.params.area: "area.radius" is 0.62, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.62 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.62 on a 1024-wide region, "radius": 317).
+warning LOAM-W519 LANDMARK_CONSTRAINT_IGNORED at world.steam_donkey_winch.constraints[1]: "facing" in a bespoke landmark's constraints cannot turn it: a landmark's yaw is decided from "params.face" before the solver reserves its (already turned) box, so this constraint is ignored
+  fix: write it as a param instead: "params": { "face": { "toward": "log_yard" } } (LOAM-SPEC §15.1) — the constraint spelling would only have moved the landmark to change the angle
+note LOAM-T112 RIVER_PONDED at world.terrain.logging_stream: river "logging_stream" is connected to no sea on this map; it was demoted to a chain of 10 ponds over 152 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.steam_donkey_winch: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.steam_donkey_winch: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_mess_hall: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_mess_hall: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.camp_mess_hall: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T209 ROAD_UNROUTABLE at world.skid_lanes: no road could be routed from "world.foreman_cabin" to the network hub "world.log_yard": its approach column is blocked
+  fix: move "world.foreman_cabin" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+warning LOAM-T119 SCATTER_EMPTY at world.ancient_redwood_forest: forest node "ancient_redwood_forest" placed 0 trees: its area {"at":[0.62,0.38],"radius":0.62} covers 2 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.62 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.steam_donkey_winch: placed after constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+  world.camp_mess_hall: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+
+  revision 1 authored in 2 attempt(s)
+  tokens     237724 in + 43395 out = 281119  ($0.1373)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+note LOAM-T112 RIVER_PONDED at world.terrain.logging_stream: river "logging_stream" is connected to no sea on this map; it was demoted to a chain of 10 ponds over 151 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.foreman_cabin: hard "terrain_conform" constraint [3] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.foreman_cabin: hard "distance" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.foreman_cabin: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.foreman_cabin: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     98068 in + 21372 out = 119440  ($0.0768)
+
+compiled "redwood_logging_camp" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp
+  seed       306
+  region     512x512 at (-256, -256)
+  heights    56.4..118.7  sea 63  snow line 115.9
+  land       94.4% of columns above sea level
+  biomes     taiga 76.5%, plains 7.9%, old_growth_spruce_taiga 5.3%, cold_ocean 4.9%, windswept_hills 4.8%, snowy_beach 0.5%, snowy_slopes 0.1%, stony_peaks 0.0%
+  trees      5185 (ancient_redwood_forest=2497, cutover_edge_woods=2769)
+  chunks     1024
+  blocks     36807390 (391415 vegetation)
+  markers    91
+  spawn      [-171, 80, 170]
+  timings    validate 3ms  field 339ms  layout 136ms  climate 39ms  columns 30ms  caves 0ms  structures 254ms  programs 112ms  scatter 861ms  biomes 31ms  validators 4ms  emit 2007ms  total 3837ms
+  programs   world.felled_redwood_trunks=felled_colossal_redwood×5 (2713 blocks), world.springboard_stump_field=springboard_stump×4 (3261 blocks), world.steam_donkey_winch=steam_donkey_winch×1 (608 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.skid_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W337 PROGRAM_DROPPED at world.felled_redwood_trunks: "felled_colossal_redwood" asked for 6 instances and only 5 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 21, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W337 PROGRAM_DROPPED at world.springboard_stump_field: "springboard_stump" asked for 8 instances and only 4 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 17, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2207 footprint columns (plus 11585 feathered over 40 columns) to minecraft:old_growth_spruce_taiga, named by climate intent; snow policy never resolved to "never" on a 0/2207 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 2 compile-feedback round(s), 511091 in + 96223 out = 607314 tokens (13224 of the out reasoning) ($0.3389)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p6-final/redwood_logging_camp

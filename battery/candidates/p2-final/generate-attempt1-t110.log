@@ -1,0 +1,30 @@
+prompt     A small farm town being invaded by aliens.
+seed       302
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.4,"decline":0.15,"formality":0.2,"event":{"kind":"siege","severity":0.85,"recency":0},"character":{"label":"farm town under alien invasion","materialTheme":"temperate_timber","formPacks":["agrarian","alien_scifi"],"urbanForm":"grown","archetypes":{"prefer":["cottage","windmill"]},"props":{"prefer":["cart","well_head"]}},"tokens":{"event_direction":"alien craft descend from the sky over the farmland toward the town centre","infra":"crop_circle pressed into the grain fields; barricade_line across the access road into town; quarantine_fence ringing the outer farmsteads"}}
+           1 attempt(s), 6977 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED@world.north_holding.constraints[2], LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED@world.east_holding.constraints[2]
+  tokens     77598 in + 11895 out = 89493  ($0.0514)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     alien_mothership [landmark]  1 attempt(s), 20470 tokens  ($0.0342), 26 warning(s)
+  ok     crashed_saucer [landmark]  1 attempt(s), 14761 tokens  ($0.0235), 17 warning(s)
+  ok     drop_pod [plugin]  1 attempt(s), 19572 tokens  ($0.0326), 1 warning(s)
+  tokens     8266 in + 46537 out = 54803  (33655 of the out reasoning)  ($0.0904)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p2-final/alien_invasion_farm.loam.json
+
+
+terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.
+The authored document is legal Loam; the compiler still emitted a world that
+breaks its own invariants. Do not re-prompt: file this against the compiler,
+with the document at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p2-final/alien_invasion_farm.loam.json.
+
+error LOAM-T110 UNSTABLE_FLUID at <document>: 23 fluid blocks would flow on the first tick — e.g. water at (99, 63, 121); water at (100, 63, 122); water at (101, 63, 122); water at (102, 63, 123); water at (103, 63, 123); water at (104, 63, 124); water at (105, 63, 125); water at (106, 63, 125)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+

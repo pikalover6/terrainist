@@ -1,0 +1,137 @@
+prompt     A small farm town being invaded by aliens.
+seed       302
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.4,"decline":0.2,"formality":0.2,"event":{"kind":"siege","severity":0.8,"recency":0},"character":{"label":"invaded rural farm settlement","materialTheme":"temperate_timber","formPacks":["agrarian","alien_scifi"],"archetypes":{"prefer":["cottage","barn","windmill"]},"urbanForm":"grown"},"tokens":{"event_direction":"alien invasion forces and hovering craft descending from above the rural fields into the farm town","infra":"crop_circle over the outer crop fields; barricade_line across the main road into town; quarantine_fence ringing the north farmstead","icons":"alien landing pods amidst the wheat fields; damaged silos and tractor tracks; beam scorches across the barn roofs"}}
+           1 attempt(s), 7256 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   2 problem(s): LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED@world.north_holding.constraints[2], LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED@world.east_holding.constraints[2]
+  tokens     77601 in + 12875 out = 90476  ($0.0532)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     alien_mothership [landmark]  1 attempt(s), 24831 tokens  ($0.0424), 25 warning(s)
+  ok     crashed_saucer [landmark]  2 attempt(s), 33715 tokens  ($0.0433), 26 warning(s)
+  ok     drop_pod [plugin]  1 attempt(s), 13895 tokens  ($0.0219), 6 warning(s)
+  tokens     18798 in + 53643 out = 72441  (35901 of the out reasoning)  ($0.1076)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 6 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.town_hall: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.town_hall: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.east_holding: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.east_holding: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.town_hall: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.04)
+  world.diner_tavern: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.12)
+  world.east_holding: placed after constraint_demoted, constraint_demoted (97 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     97137 in + 19713 out = 116850  ($0.0734)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.town_hall: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.town_hall: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.town_hall: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.03)
+  world.diner_tavern: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.10)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     96923 in + 21092 out = 118015  ($0.0759)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.diner_tavern: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.diner_tavern: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.08)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     96599 in + 20121 out = 116720  ($0.0740)
+
+compiled "alien_invasion_farm" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm
+  seed       302
+  region     512x512 at (-256, -256)
+  heights    58.5..97.3  sea 63  snow line 96.6
+  land       99.5% of columns above sea level
+  biomes     forest 72.9%, plains 25.1%, windswept_hills 2.0%
+  trees      2907 (surrounding_woods=1047, pasture_scatter=1904)
+  chunks     1024
+  blocks     36767978 (329937 vegetation)
+  markers    119
+  spawn      [0, 78, 0]
+  timings    validate 4ms  field 143ms  layout 144ms  climate 39ms  columns 19ms  caves 0ms  structures 400ms  programs 367ms  scatter 859ms  biomes 23ms  validators 2ms  emit 1827ms  total 3860ms
+  programs   world.mothership=alien_mothership×1 (14854 blocks), world.crashed_saucer=crashed_saucer×1 (1004 blocks), world.invasion_pods=drop_pod×14 (3742 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm.report.json
+
+warning LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED at world.north_holding.constraints[2]: terrain_conform mode "drape" parses but the solver treats it as "no ground adjustment" for now
+  fix: use "cut_fill" (the default) or "flatten" if the node needs level ground under it
+
+warning LOAM-W407 CONSTRAINT_NOT_IMPLEMENTED at world.east_holding.constraints[2]: terrain_conform mode "drape" parses but the solver treats it as "no ground adjustment" for now
+  fix: use "cut_fill" (the default) or "flatten" if the node needs level ground under it
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "agrarian" (medieval, renaissance, industrial) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-I504 FARM_TRACK at world.north_holding: "world.north_holding" publishes a road_stub at its gate: a road.network@0 node anchored on "world.north_holding" runs the lane to it
+  fix: add "north_holding" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I504 FARM_TRACK at world.east_holding: "world.east_holding" publishes a road_stub at its gate: a road.network@0 node anchored on "world.east_holding" runs the lane to it
+  fix: add "east_holding" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.village_barricade: the "across" route names "lanes": "lanes" is not a corridor, so there is nothing to draw a chord across
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 7205 footprint columns (plus 32187 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 83% of 21023 ring columns); snow policy auto resolved to "never" on a 0/7205 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 3 compile-feedback round(s), 368260 in + 73801 out = 442061 tokens (11567 of the out reasoning) ($0.2765)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p2-final/alien_invasion_farm

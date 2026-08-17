@@ -1,0 +1,132 @@
+prompt     A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.
+seed       304
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"far_future","wealth":0.5,"decline":0.85,"formality":0.6,"climate":{"temperature":0.3,"humidity":0.7,"snow":"never"},"character":{"label":"overgrown ruined metropolis hideout","materialTheme":"modern_city","formPacks":["alien_scifi"],"urbanForm":"grid","archetypes":{"prefer":["watchtower","laboratory"]},"flora":{"prefer":["understory","emergent","jungle_broadleaf"]},"motifs":{"massing":"towered","windowRhythm":"banded"}},"tokens":{"fittings":"blast_door on the fortified bunker_complex; airlock_vestibule on the hidden laboratory","infra":"barricade_line across the shattered boulevard; perimeter_wire ringing the overgrown tower base","atmosphere":"shattered skyscrapers engulfed by dense forest canopy, vine-wrapped concrete shells, concealed high-tech power conduits and fortified redoubt nestled in the metro ruins"}}
+           1 attempt(s), 7399 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   2 problem(s): LOAM-T008 UNKNOWN_KEY@world.solar_power_array.params, LOAM-T008 UNKNOWN_KEY@world.wind_mast.params
+  attempt 2   valid
+  tokens     165365 in + 18351 out = 183716  ($0.0716)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     fusion_reactor_core [landmark]  1 attempt(s), 15316 tokens  ($0.0245), 12 warning(s)
+  ok     defense_turret_pod [plugin]  1 attempt(s), 36145 tokens  ($0.0635), 26 warning(s)
+  tokens     5637 in + 45824 out = 51461  (34032 of the out reasoning)  ($0.0880)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 6 problem(s) with the compiled world:
+
+note LOAM-T113 CARVE_DRY at world.terrain.subway_collapse_basin: basin "subway_collapse_basin" asked to flood ("flooded": "auto") but compiled dry: not one of its columns reaches the sea. Its lowest point sits 67 blocks south of the nearest coastline, so the carve is a dry channel in the middle of the land.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_lab: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_lab: hard "connected" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.hideout_lab: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.reactor_core: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.reactor_core: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.hideout_lab: placed after constraint_demoted, constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+  world.reactor_core: placed after constraint_demoted, constraint_demoted (96 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.01)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     94397 in + 16639 out = 111036  ($0.0666)
+
+compiled "metropolis_hideout" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout
+  seed       304
+  region     512x512 at (-256, -256)
+  heights    56.7..75.8  sea 63  snow line 75.7
+  land       85.7% of columns above sea level
+  biomes     plains 49.1%, forest 35.4%, ocean 14.3%, beach 0.9%, windswept_hills 0.3%
+  trees      4103 (overgrowth_canopy=4464, wild_periphery=352)
+  chunks     1024
+  blocks     37178450 (1324435 vegetation)
+  markers    77
+  spawn      [0, 75, 0]
+  timings    validate 2ms  field 168ms  layout 273ms  climate 37ms  columns 329ms  caves 0ms  structures 3338ms  programs 24ms  scatter 1537ms  biomes 24ms  validators 27ms  emit 4115ms  total 9901ms
+  programs   world.reactor_core=fusion_reactor_core×1 (1609 blocks), world.perimeter_turrets=defense_turret_pod×0 (0 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.patrol_network: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis: decline 0.88 gives a ruin share of 0.77: 25 of 30 infill lots roll into ruined shells (light 0, heavy 0, total 25)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.shattered_tower: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_-63_-54: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_158_-39: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_111_-38: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_89_50: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_111_92: "watchtower" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metropolis: a seam in "world.ruined_metropolis" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metropolis: a seam in "world.ruined_metropolis" drops 2 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metropolis: a seam in "world.ruined_metropolis" drops 3 blocks over only 5 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metropolis: a seam in "world.ruined_metropolis" drops 2 blocks over only 3 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+warning LOAM-W411 RETAINING_REFUSED at world.ruined_metropolis: a seam in "world.ruined_metropolis" drops 2 blocks over only 2 column(s), shorter than the 6 columns a wall needs to read as a wall rather than as a stub, so the two platforms were graded into each other as a bank
+  fix: Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: multi-level ground: 36 retaining wall(s) over 548 column(s) (0 parapeted), 0 kerb seam(s), 5 bank(s), and 11 seam(s) a building already stood on; 392 seam column(s) got no wall (22 building, 15 shortRun, 355 builtSeam); 0 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: built faces by finished drop (§13.8): 534 face column(s) along the seams a wall was built on — 82 at 2, 88 at 3, 339 at 4, 24 at 5, 1 at 6
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: every cut face finished: 1309 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-T234 INFRA_RUN_REFUSED at world.high_street_barricade: "barricade_line" built 10 of 27 route columns — 17 were refused by collision or unbuildable ground
+  fix: no change needed if the gaps read as a worn line on a walk — otherwise move the route clear of what it is crossing with a larger margin or offset
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 4905 ruined columns: 9131 climbing strands (10 glow lichen), 11 leaf plugs (136 of them substituted for glazing), 213 moss carpets, 69 pavement substitutions, 13 tufts, 36 street trunks and 9 shell trees elected (7840 spine columns, shortest sight-line run 24, nearest trunk to a junction 5), 10943 blocks
+  fix: informational
+
+warning LOAM-W513 GREEN_SKIN_WITHDRAWN at <document>: the street colonizer withdrew 2 of 38 elected trunks to keep every street band one walkable component (U2)
+  fix: no change needed unless the rate is sustained above a few percent — that is a finding about `STREET_TRUNK_SHARE`, not about the withdraw loop
+
+warning LOAM-W337 PROGRAM_DROPPED at world.perimeter_turrets: no site would take "defense_turret_pod"; it is absent from the world
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 80219 footprint columns (plus 33876 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 87% of 20602 ring columns); snow policy never resolved to "never" on a 0/80219 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 259762 in + 34990 out = 294752 tokens (9685 of the out reasoning) ($0.1381)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery-retry/p4-final/metropolis_hideout

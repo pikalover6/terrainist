@@ -1,0 +1,30 @@
+prompt     A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.
+seed       304
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.6,"decline":0.85,"formality":0.4,"climate":{"humidity":0.6,"temperature":0.2},"character":{"label":"overgrown ruined metropolis with high-tech hideout","materialTheme":"modern_city","formPacks":["alien_scifi"],"archetypes":{"prefer":["bunker","laboratory","field_station","hydroponics_bay","watchtower"]},"flora":{"prefer":["emergent","understory"]},"urbanForm":"grid","motifs":{"massing":"towered","roofType":"flat"}},"tokens":{"fittings":"blast_door on the hidden bunker_complex; airlock_vestibule on the laboratory","infra":"barricade_line across the collapsed avenue; perimeter_sensor_line ringing the fortified hideout","terrain":"crumbling concrete skyscrapers shattered and reclaimed by dense jungle canopy and strangler vines","icons":"reinforced blast doors sealed into skyscraper basements; solar arrays and satellite dishes camouflaged beneath vines; overgrown highway overpasses; secure power generators"}}
+           1 attempt(s), 6772 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   2 problem(s): LOAM-T008 UNKNOWN_KEY@world.solar_power_array.params, LOAM-T008 UNKNOWN_KEY@world.backup_turbine.params
+  attempt 2   valid
+  tokens     161021 in + 14677 out = 175698  ($0.0630)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     collapsed_skybridge [landmark]  1 attempt(s), 22492 tokens  ($0.0379), 9 warning(s)
+  ok     defense_sensor_pylon [plugin]  1 attempt(s), 28069 tokens  ($0.0484), 4 warning(s)
+  tokens     5673 in + 44888 out = 50561  (32879 of the out reasoning)  ($0.0863)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p4-final/overgrown_metropolis_hideout.loam.json
+
+
+terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.
+The authored document is legal Loam; the compiler still emitted a world that
+breaks its own invariants. Do not re-prompt: file this against the compiler,
+with the document at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/final-battery/p4-final/overgrown_metropolis_hideout.loam.json.
+
+error LOAM-T110 UNSTABLE_FLUID at <document>: 1268 fluid blocks would flow on the first tick — e.g. water at (-147, 63, -149); water at (-146, 63, -149); water at (-145, 63, -149); water at (-144, 63, -149); water at (-143, 63, -149); water at (-142, 63, -149); water at (-148, 63, -148); water at (-141, 63, -148)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+
