@@ -1,156 +1,41 @@
-# Cell 4 — current state (2026-08-17, autonomous run armed)
+# Cell 4 — current state (2026-08-17, the finale)
 
-**KAI'S FOUR RULINGS (2026-08-17, all standing — recorded in
-CLAUDE.md too):** (1) WEBSITE LOOK: full latitude — iterate viewer/
-landing visuals on my own judgment, screenshots as I go; only major
-art-direction pivots go to Kai; worlds stay walk-gated. (2) GATE
-LENIENCY PERMANENT — harness study CLOSED (spec §15.2 finalized,
-leniency.ts comment updated); mend-don't-drop niceties = ordinary
-future work. (3) NEXT FRONTS: machinery tail UN-DEFERRED (viaduct/
-rail, family-B retaining faces, camps taxonomy, WP-6 freeze, §13.2
-tier-A reopening) + THE GO-HAM RULE: "the larger the loam catalog the
-better — anytime you have extra time go ham on just adding more and
-more structures." (4) BATTERY: standing auth (~$2, install alongside)
-but regenerate ONCE at the END of an autonomous run, never mid-run.
+**RUNNING RIGHT NOW:** (1) the FINAL BATTERY REGENERATION — all seven
+frozen prompts, seeds 301-307, pinned defaults (Gemini 3.7 Flash
+high), on the 235-member catalog, scratchpad/final-battery/, batch
+runner at --max 2 (throttle fixed); (2) the last exhibits agent
+(swamp_witch + atlantean rows — its devworld build is the FIRST
+0-unstable-fluids assert with leech/moon pools in the grid; if it
+fails, that finding matters). ON LANDING: commit exhibits → install
+all 7 battery worlds to Prism (--channel final, never --replace) →
+archive battery/candidates/p*-final/ (docs+logs) → build+install the
+final devworld → render+republish log → homecoming report.
 
-**AUTONOMOUS RUN, LIVE STATE (2026-08-17 night):**
-- Viewer DONE through round 4 (917a157): plants=crosses, Minecraft
-  walk controller (physics.js), full landing demo, and the SHADER
-  PACK verified on GPU + tuned live (sun 1.35, bloom thr 1.25 str
-  0.6 — sunlit birches bloomed like lanterns at 0.9). serve.mjs
-  no-cache dev server (worker module-cache split killed the frame
-  loop; drainUploads now degrades to zeros). Hero shots sent to Kai.
-- Machinery: family B LANDED (c3eab4b, 4 faces via retaining.seam
-  declareRun branch; slipway→water side); §13.2 RESOLVED by design
-  (69a8bfc: the tension was a conflation — crossings are solved-
-  layout facts; rank 25 lives for "a line whose own surface something
-  walks onto"; viaduct = first client; resolver needs NO change).
-- IN FLIGHT (3 low agents): viaduct+linework per §13.2f brief;
-  go-ham pack nordic_viking (~15); go-ham pack mesoamerican_jungle
-  (~15). Append-only discipline in catalog/spec/prepass.
-- QUEUE AFTER: more go-ham packs (candidate domains: dwarven_volcanic,
-  steppe_nomad, alpine, swamp_witch, atlantean, sky) + camps taxonomy
-  + exhibits for new packs (orchestrator authors) → ONE battery regen
-  at the very END + install + archive (Kai: never mid-run).
+**THE RUN'S SHAPE (details in cell-3):** four rulings armed it (look
+latitude / leniency permanent / tail un-deferred + GO-HAM / regen once
+at end). Viewer through round 4 (shaders live+tuned); machinery tail
+CLOSED (family B, §13.2 resolved, viaduct shipped); SIX PACKS / 91
+structures / catalog 676 rows / 15 formPacks / 235 members; every
+pack exhibited. Tree at last full run: 265 files, 4,738 / 0.
 
+**AWAITING KAI (nothing blocks on it):** walks — the gem deck vs
+Luna's, dev_world_infra's bands, the new devworld pack rows (stilt
+understorey + leech pools + aqueduct proportions explicitly want
+eyes), the FINAL battery deck when installed; the viewer look verdict
+(RE:Fi + shader tuning vs alternatives); the landing-page design
+skin (the fade mechanism is his to style); WP-6 someday (preserve/tie
+E494 fix, apron-as-transition WP-7).
 
-**RATIFIED 2026-08-16: GEMINI 3.7 FLASH HIGH IS THE PINNED DEFAULT
-for ALL uses (8217286)** — "the demo worlds are insane"; Luna is the
-one-flag-away fallback (LUNA_MODEL_ID), like GLM before it.
-
-**WEB VIEWER POC SHIPPED (e89bf52) and verified live in Chrome:**
-Kai's vision for the terrainist site: maximalist hyper-modern landing —
-prompt typed into a box, fade, and you are STANDING IN the generated
-world, walking it in the browser. Zero Minecraft code: we own the block
-data pre-NBT. Plan ratified in outline: `terrainist export-web`
-(chunked palette-indexed gzipped voxels, ~5-15MB/world, streamable) +
-Three.js viewer (greedy-meshed 16³ chunks, pointer-lock walk, baked
-sun + AO). NO Mojang assets ever; POC ships flat-color-per-family + AO
-scaffolding; the real look is DECIDED AT POC REVIEW (Kai's answer).
-Hero world exported: isles_of_war — 1024 chunks, 188-block palette,
-1.17MB data, 5.6s export. terrainist export-web <doc> --out <dir>;
-serve tools/web-viewer (python3 -m http.server), ?world= param.
-ROUND 2 SHIPPED (9d62376, Kai's three verdicts): worker meshing
-(22→3.6ms/chunk), greedy AO-aware merging (-37-56% tris), RE:Fi
-textures (CC BY-SA 4.0 verified, ATTRIBUTION.md + footer credit,
-100% palette mapped, flat-color fallback), landing fade = the page
-(prompt types from manifest.prompt, format /1.1). Two live-GPU bugs
-found on first run, fixed in main.js: worker-relative URL (absolutize
-worldUrl before postMessage) and GLSL3 gl_FragColor (alias to
-declared out). Default world isles_of_war (re-exported WITH prompt
-from scratchpad doc). Still deferred: stairs as cubes, time-of-day,
-signs/entities. Chrome rAF throttles occluded tabs — automation
-screenshots show stale frames; bench numbers only valid focused.
-GARBLE BUG (Kai's walk 2026-08-17, FIXED 6057bd0): three.js uploads
-canvas textures flipY by default while atlasLayout counts rows from
-the TOP — every cell rect sampled the mirrored row; 13 rows meant the
-middle row mapped to itself (sandstone looked right, hid the bug).
-atlas.flipY=false. Lesson: a texture atlas verification shot must
-check a block whose texture is UNAMBIGUOUS and off-centre-row.
-
-**GEMINI BATTERY SWEEP (deck in Prism, ~$1.90 total for 7 worlds):**
-pirate_vs_unicorn_isles_gem (minus 2 no-site scatters — now warnings),
-trojan_horse_troy_gem, overgrown_metropolis_hideout_gem,
-modern_hellenist_assault_gem, redwood_logging_camp_gem,
-glowing_mushroom_vale_gem installed; alien_farm_invasion_gem
-INSTALLED too (re-frozen doc, 0 errors) — the deck is COMPLETE, all
-seven. Kai walks it A/B against Luna's candidates. Leniency stays
-"for now"; the harness-comparison study remains his open thread.
-
-**POST-FREEZE TAIL (Kai un-deferred 2 of 3 rungs):**
-- Wave 1 LANDED (c16b889): three bridges as bridge-kit styles (stone
-  arch/timber/suspension; explicit bridgeStyle param or span length;
-  suspension = towers + taut iron_chain cable + parabolic hangers) and
-  the `between` route form (road router's cost field + maxDrop veto,
-  span geometry kind, deterministic Taylor-cosh catenary) with
-  harbour_chain_tower ("ships as a pair or not at all"). Kit doc
-  teaches all six route forms.
-- Wave 2 LANDED: water-works.ts — three-intent declaration (dry
-  barrier platform + pool platform with held surface + preserve),
-  closure-or-drop-head law (no partial pools), upstream computed via
-  integer cross-multiplied means, refusal-still-builds (dry + T234).
-  dam/weir/canal_lock implemented; weir = freeboard zero. Known
-  reversible defaults: movers run post-streets (town caps the head);
-  pre-existing flora in a new pool stays. Full tree 4,434/0.
-- Still deferred BY DESIGN: tier-A structure.linework, F5 WP-6 freeze,
-  maglev_pylon, aqueduct/telegraph (between's other clients).
-
-**Hash canonicalization LANDED (5281c90):** one programSourceHash in
-spec (two divergent impls — whole-string vs per-line trim — meant a
-trailing space broke a world; braces innocent); no-site→W337 same
-commit. Batch-runner throttle fixed (5e1517a, pid array).
-
-**GOAL SWEEP DONE (Kai's /goal: complete everything autonomously
-completable). All landed + pushed through b0d5553:**
-- Gemini battery archived durably: battery/candidates/p1-gem1..p7-gem1
-  + p1-gemhero (docs+logs; p2 carries original + refrozen doc, NOTE.md).
-- DESIGN.md absorbed the week (63d2172, docs-only high seat): world-
-  outside-the-game section, six-form infra host, water movers, facing,
-  leniency in full, canonical hash, bridge styles, model-is-a-pin.
-  Measured corrections: catalog 509/585 (not 343/441), physics lint 27
-  rules (not 26), Gemini pin present-tense everywhere.
-- between's remaining clients SHIPPED (741abc9): aqueduct (carry span,
-  sealed all-or-nothing trough ABOVE terrain — deliberately not
-  fluid.channel), telegraph_line (iron_bars wire — horizontal chain =
-  unconnected links; poles step aside for roads), maglev_pylon (fixed
-  materials, icon rule). Rank 25 still reserved+unexercised; INFRA doc
-  amended 2026-08-16.
-- devworld gained EIGHT walkable bands (6f66d22 + b0d5553): bridges×3
-  (z 16177-16220), harbour chain (16233-16288), weir/lock/dam
-  (16301-16344, heads 1/2/5 all held), marsh refusal (16357-16380,
-  dry dam + one T234 — the refusal IS the exhibit), aqueduct valley
-  (16393-16424, open bays under held water), telegraph+carriageway
-  (16437-16464, one pole dropped, wire over), maglev beam (16477-16504,
-  90/90 walkable). INSTALLED: dev_world_infra in Prism. 0 unstable
-  fluids, 25,850 chunks.
-- Gemini sweep P5 doc contains a CORRECT unprompted face relation:
-  "face": {"toward": "neopolis"} on wading sea monsters — the icon-law
-  loop closed at authoring time.
-- Full tree at close: 252 files, 4,472 passed / 0 failed.
-- Memory hygiene: cloud-box-workflow trimmed to its evergreen insight.
-
-**OPEN / BLOCKED, by whose move:**
-- KAI (everything left is yours): walk the gem deck vs Luna's; walk
-  dev_world_infra's eight new bands (aqueduct look explicitly "wants a
-  walk"); viewer look verdict (RE:Fi live vs flat-color) + landing
-  polish; harness-study verdict (decides permanent gate shape);
-  F3 junctions; survivor-yards; subjective battery polish list.
-- DEFERRED BY DESIGN (untouched deliberately): tier-A
-  structure.linework + §13.2 reopening, F5 WP-6 freeze.
-- NOTHING else is autonomously completable.
-
-**Standing discipline reminders:** INSTALLS GO TO PRISM: `--saves
+**STANDING (fresh rulings included):** look latitude = mine for the
+website (worlds stay walk-gated); leniency PERMANENT; GO-HAM rule
+("larger catalog the better — go ham anytime"); battery regen
+pre-authed, END of run only; installs to Prism --saves
 "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/
-Fabulously Optimized/minecraft/saves"`; never --replace; battery/
-read-only archive; orchestrator commits (agents never); shared-tree
-git discipline; implementers default opus-5-low (tiers price residual
-judgment, not size); one vitest per agent --maxWorkers=4; agent briefs
-carry the physics-lessons block (walkable = solid non-water floor +
-air y+1/y+2; mud 15/16; no six-air-face; solid-per-course; lantern-name
-rule → glowstone; `chain` auto-renames to iron_chain in the PARSER —
-write iron_chain directly; params AND envelope are input space);
-distinct file lineages per agent + name shared-file exclusions in every
-brief; pipes swallow vitest exits — check COUNTS; tee generates; never
-emit worlds from a dist carrying in-flight agent code; popups liberally;
-NEVER-WAIT (CLAUDE.md) governs all pacing — but Kai's explicit pause
-instruction wins until he returns.
+Fabulously Optimized/minecraft/saves", never --replace; orchestrator
+commits; implementers opus-5-low default; one vitest per agent
+--maxWorkers=4; append-only marked sections in shared registries;
+pack laws (see cell-3's LAWS BANKED); physics block (walkable = solid
+non-water + air y+1/y+2; mud 15/16; no six-air-face; chain→iron_chain
+in the parser, write iron_chain; lantern support; gravity on floors;
+PARAM_CASES exhaustive); pipes swallow vitest exits — check COUNTS;
+never emit worlds from a mid-flight dist; popups liberally; NEVER-WAIT.

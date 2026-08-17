@@ -197,3 +197,40 @@
   batch runner tools/battery/generate-batch.sh (32f2230; throttle bug:
   jobs -rp in a subshell never engages — all 7 launched at once, fix
   pending).
+
+## The autonomous run (2026-08-17, Kai away) — compressed from cell 4
+
+Armed by four rulings (look latitude; leniency PERMANENT, study closed;
+machinery tail un-deferred + THE GO-HAM RULE; battery regen once at
+end). Everything landed, all pushed:
+- **Viewer rounds 3-4**: cross-plants (hash-nudged off the lattice),
+  Minecraft walk controller (physics.js, node-tested), landing demo
+  end-to-end, then the SHADER PACK — texel-snapped shadow cascade +
+  PCF, bloom (HalfFloat composer), god rays (sky=depth-1 occlusion),
+  fresnel swell water, wind via per-vertex flags, ACES grade, seeded
+  cloud shadows, quality toggle whose off is a different program.
+  Verified live on GPU; tuned by eye (sun 1.35, bloom thr 1.25 —
+  sunlit birches bloomed like lanterns at 0.9). Ops lessons: no-cache
+  serve.mjs (worker module-cache split killed the frame loop);
+  drainUploads degrades instead of dying; flipY row-mirror garble
+  (atlas verification must check an off-centre unambiguous row).
+- **Machinery tail CLOSED**: family B (4 faces via retaining.seam
+  declareRun branch; slipway→water side); §13.2 resolved (the tension
+  was a conflation; rank 25 = "a line whose own surface something
+  walks onto"; resolver unchanged); viaduct SHIPPED per §13.2f with
+  seven §13.2g implementation notes incl. the pre-existing
+  preserve/tie E494 contradiction → WP-6 ledger.
+- **THE GO-HAM ERA: six packs, 91 structures, zero words stolen.**
+  nordic_viking 16, mesoamerican_jungle 15 (59ea2e5); dwarven_volcanic
+  15 (NO FIRE law), steppe_nomad 15 (14944b2); swamp_witch 15 (stilts,
+  curb-before-water, the mud-tempted pack that must not have it),
+  atlantean 15 (all-compound ids, the tide as a line; 6b2828f).
+  Catalog: 676 rows, 389 building archetypes, 15 packs / 235 members.
+  All exhibited in devworld (norse/mesoam cb80458, dwarven/steppe
+  2036c89, swamp/atl following). LAWS BANKED for every future pack:
+  standInRow (free() and put1() are different questions); the shell
+  lights a campfire in 1-storey >5×5; pin arithmetic pre-agreed with
+  a named owner; rename+aliases+negative-sweep; curbed basins claim
+  before they pour; the middle of a room is the door's approach; a
+  made-up id in a test is a name reserved by accident; API-529 deaths
+  resume cleanly via SendMessage.
