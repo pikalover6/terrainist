@@ -423,6 +423,12 @@ ${eraVocabularyLines()}
     - victorian, steampunk, mill town, wild west             -> industrial
     - downtown, suburb, contemporary, cyberpunk              -> modern / far_future
     - roman, greek, classical -> ancient;  tribal, prehistoric -> primitive
+  A NAMED antique place is as decisive as the word itself, and more common in
+  practice: Troy, Ilium, Mycenae, Athens, Sparta, Corinth, Knossos, Rome,
+  Pompeii, Carthage, Alexandria, Babylon, Ur, Nineveh, Persepolis, Thebes,
+  Memphis, Giza, and any Homeric, Biblical or Greco-Roman-myth setting are
+  "era": "ancient" — write it even when the prompt's own subject is an event
+  (a siege, a horse, a burning) rather than the period.
   Leave "era" out ONLY when the prompt fixes no period AND a present-day street
   full of cars and hydrants would look right.
 
@@ -529,6 +535,28 @@ ${formPackLines()}
   words even where the compiler builds them plainly). This is a style rule,
   not a gate — nothing is forbidden by it.
 
+  A PACK ON ITS OWN IS NOT ENOUGH — NAME THE FORMS IN "prefer". A pack is a
+  default the ordinary fabric words outrank, so a document that writes
+  formPacks ["classical_mediterranean"] and then lets the settlement fill its
+  quarters with townhouse, terraced_row and shop_row gets a modern-looking
+  street wall in sandstone: the pack's own nouns never win the draw. Whenever
+  you write a pack for a strongly-dated world, ALSO write
+  "archetypes": { "prefer": [...] } naming five to eight of that pack's forms,
+  so the fabric is built out of them rather than merely allowed to be. For
+  classical_mediterranean that means peristyle_house and megaron for the
+  houses (these are the ancient dwelling, the way townhouse is the modern
+  one), stoa for the street edge, and among peripteral_temple, propylaea,
+  bouleuterion, tholos, palaestra, gymnasion, odeon, sanctuary_treasury,
+  nymphaeum, ship_shed, olive_press for what the quarter is about; for
+  nile_egypt, mastaba, hypostyle_hall, mortuary_temple, mudbrick_granary,
+  nilometer, canopic_shrine in the same way. Prefer BUILDINGS: an id that is
+  a prop or a piece of infrastructure (agora_colonnade, votive_column,
+  pithos_store, acropolis_terrace, pyramid, pylon_gate) is skipped by the lot
+  draw and is a wasted slot here — those arrive on their own.
+  Pair it with "forbid" of the anachronisms the fabric would otherwise
+  reach for — townhouse, terraced_row, shop_row, office, apartment_block —
+  when the prompt is a named antique city and nothing in it is modern.
+
 urbanForm: exactly these ${DISTRICT_FABRICS.length} ids. This is the single field that decides whether
 two towns look like different places, so read the prompt for it deliberately —
 but write it ONLY when the prompt actually says something about the shape of the
@@ -632,6 +660,9 @@ vocabulary allows); its fortification (history walled most ancient cities —
 write "walled"); and a "tokens" line listing the place's ICONS by name so the
 author delivers each one. Worked example — "The Trojan horse in Troy":
   era ancient; materialTheme sun_clay; formPacks ["classical_mediterranean"];
+  archetypes prefer ["peristyle_house", "megaron", "stoa",
+  "peripteral_temple", "palaestra", "olive_press"], forbid ["townhouse",
+  "terraced_row", "shop_row", "office", "apartment_block"];
   fortification "walled";
   motifs roofType flat; climate "blend" as the coast wants;
   tokens: { "terrain": "a walled city on a rise above a sandy coast; the

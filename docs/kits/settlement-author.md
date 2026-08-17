@@ -1775,6 +1775,59 @@ and the ground. You say how thick, how tall, how often — never where.
 | `medium` | ~13–16 | 2–4 | about three in five | a town centre with gaps and yards |
 | `low` | ~12–15 | 1–2 | about one in three | a garden suburb: detached, set back, plenty of green |
 
+**`density: "high"` is a period claim, not just a crowding dial.** High
+density builds a terrace on *every* eligible block face (terrace coverage is
+1.0 there, against 0.72 at medium) at three to eight storeys: a continuous
+party-walled street wall of mid-rise row buildings. That is a downtown, and
+it reads as one whatever archetype names the lots draw and whatever palette
+clads them. A walked Troy (P3 final, 2026-08-16) came back "looks pretty
+bad — building selection seems wrong, just the modern-ish multi storey
+buildings" from exactly this: `"density": "high"` with a `mix` of
+`townhouse`, `terraced_row`, `shop_row`, `warehouse`, `barracks`. **A city
+from antiquity is `medium` at its densest** — the walked-good Troy was
+`"fabric": "grown"`, `"density": "medium"`, and the gaps between its runs
+are what make it a city of houses rather than a block of flats. Reserve
+`high` for the eras that actually built mid-rise: industrial and later.
+
+**A named historical or mythic place pins three things together**, and any
+one of them alone fails: the **era**, the **form pack**, and the
+**`archetypes.prefer` list**. A pack is only a default — its members expand
+*behind* an explicit `prefer` and ahead of the `mix` — so a document that
+names `classical_mediterranean` and then writes a modern `mix` gets modern
+words competing with the pack's on every draw. Name the forms you want.
+Worked example, Troy:
+
+```json
+{
+  "intent": {
+    "era": "ancient",
+    "character": {
+      "materialTheme": "sun_clay",
+      "formPacks": ["classical_mediterranean"],
+      "fortification": "walled",
+      "archetypes": {
+        "prefer": ["peristyle_house", "megaron", "stoa", "peripteral_temple",
+                   "palaestra", "olive_press"],
+        "forbid": ["townhouse", "terraced_row", "shop_row", "office"]
+      }
+    }
+  }
+}
+```
+
+and the district under it takes `"fabric": "grown"`, `"density": "medium"`,
+`"mix": ["peristyle_house", "megaron", "courtyard_house", "hall", "stoa"]`.
+Two rules about `prefer` worth having before you write one: it takes
+**buildings only** — a prop or an infrastructure id (`agora_colonnade`,
+`votive_column`, `pithos_store`, `acropolis_terrace`, `pyramid`,
+`pylon_gate`) is skipped by the lot draw and wastes its slot, and those
+arrive on their own anyway — and `forbid` outranks everything including an
+explicit `mix`, so forbidding the anachronisms is safe even when a quarter
+below still names one. Rome, Athens, Sparta, Mycenae, Carthage and
+Alexandria take the same three-part pin; Egypt (Thebes, Memphis, Giza)
+takes `nile_egypt` with `mastaba`, `hypostyle_hall`, `mortuary_temple`,
+`mudbrick_granary`, `nilometer`, `canopic_shrine`.
+
 **The `mix` vocabulary** is the same list of archetype names that
 `params.archetype` and the building tags draw on — `office`, `townhouse`,
 `shop_row`, `warehouse`, `terraced_row`, `machiya`, and the other two hundred.

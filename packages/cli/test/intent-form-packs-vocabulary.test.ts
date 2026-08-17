@@ -14,10 +14,14 @@
  * the model will write and the compiler will warn away.
  */
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { FORM_PACK_THESES, INTENT_CLASSIFIER_PROMPT } from "@terrainist/agents";
-import { FORM_PACKS, formPackById, formPackIds } from "@terrainist/stdlib";
+import { FORM_PACKS, STRUCTURE_CATALOG, formPackById, formPackIds } from "@terrainist/stdlib";
 
 describe("the classifier's form packs", () => {
   it("teaches exactly the packs the registry carries, in registry order", () => {
@@ -48,8 +52,104 @@ describe("the classifier's form packs", () => {
     );
   });
 
+  it("routes named antique places to era ancient by name, not by adjective", () => {
+    for (const place of ["Troy", "Mycenae", "Athens", "Sparta", "Rome", "Babylon", "Giza"]) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(place);
+    }
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('are\n  "era": "ancient"');
+  });
+
+  it("makes the pack reach the fabric: prefer names the pack's own forms", () => {
+    // P3 final walked modern (2026-08-16) with a pack declared and an empty
+    // `prefer`, so the classical nouns never won a lot draw. The teaching now
+    // says a pack alone is not enough…
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('A PACK ON ITS OWN IS NOT ENOUGH');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"archetypes": { "prefer": [...] }');
+    // …and the Troy worked example now writes the list it asks for.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain(
+      'archetypes prefer ["peristyle_house", "megaron", "stoa",',
+    );
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('forbid ["townhouse",');
+  });
+
+  it("only ever teaches prefer ids the lot draw can actually build", () => {
+    // A prop or an infrastructure id in `prefer` is skipped by `pickArchetype`,
+    // so every id the teaching recommends must be a fabric building.
+    const taught = [
+      "peristyle_house",
+      "megaron",
+      "stoa",
+      "peripteral_temple",
+      "palaestra",
+      "olive_press",
+      "gymnasion",
+      "odeon",
+      "nymphaeum",
+      "ship_shed",
+      "propylaea",
+      "bouleuterion",
+      "tholos",
+      "sanctuary_treasury",
+      "mastaba",
+      "hypostyle_hall",
+      "mortuary_temple",
+      "mudbrick_granary",
+      "nilometer",
+      "canopic_shrine",
+    ];
+    for (const id of taught) {
+      expect(INTENT_CLASSIFIER_PROMPT).toContain(id);
+      const entry = STRUCTURE_CATALOG.find((e) => e.id === id);
+      expect(entry, `${id} is not in the catalog`).toBeDefined();
+      expect(entry?.kind, `${id} must be a building to be worth preferring`).toBe("building");
+    }
+    // …and the prompt names the prop/infrastructure trap explicitly.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("Prefer BUILDINGS");
+  });
+
   it("tells the model the pack is a default vocabulary and affinity is advice", () => {
     expect(INTENT_CLASSIFIER_PROMPT).toContain("DEFAULT vocabulary");
     expect(INTENT_CLASSIFIER_PROMPT).toContain("Affinity is advice");
+  });
+});
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const KIT = readFileSync(path.join(REPO, "docs/kits/settlement-author.md"), "utf8");
+
+describe("the settlement kit's named-place pin", () => {
+  it("warns that high density is a mid-rise street wall, not just crowding", () => {
+    expect(KIT).toContain('`density: "high"` is a period claim');
+    expect(KIT).toContain("A city\nfrom antiquity is `medium` at its densest");
+  });
+
+  it("pins era + pack + prefer together, with a worked Troy", () => {
+    expect(KIT).toContain("A named historical or mythic place pins three things together");
+    expect(KIT).toContain('"formPacks": ["classical_mediterranean"]');
+    expect(KIT).toContain('"prefer": ["peristyle_house", "megaron", "stoa", "peripteral_temple",');
+    expect(KIT).toContain('"forbid": ["townhouse", "terraced_row", "shop_row", "office"]');
+  });
+
+  it("recommends only ids the catalog actually carries, and only buildings", () => {
+    const ids = [
+      "peristyle_house",
+      "megaron",
+      "stoa",
+      "peripteral_temple",
+      "palaestra",
+      "olive_press",
+      "courtyard_house",
+      "hall",
+      "mastaba",
+      "hypostyle_hall",
+      "mortuary_temple",
+      "mudbrick_granary",
+      "nilometer",
+      "canopic_shrine",
+    ];
+    for (const id of ids) {
+      expect(KIT, `${id} should be taught`).toContain(id);
+      expect(STRUCTURE_CATALOG.find((e) => e.id === id)?.kind, id).toBe("building");
+    }
+    expect(KIT).toContain("**buildings only**");
   });
 });
