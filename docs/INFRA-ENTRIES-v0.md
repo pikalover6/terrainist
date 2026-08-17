@@ -91,8 +91,13 @@ Two of the nine are **already built and mis-statused**: `precinct.harbour@0` lay
 a retaining course along the real shoreline and a quay surface behind it
 (`structures/precincts.ts`, `QUAY_DEPTH`, `quayEdge`). `harbour_wall` and `quay`
 are that precinct (Q4). `dam` and `weir` additionally move water — a
-`fluid.channel` declaration, rank 0, tier A — and are post-freeze on that ground
-alone.
+`fluid.channel` declaration, rank 0, tier A — and shipped on exactly that
+ground (W5, 2026-08-16). *(Amended 2026-08-17: the rest of family B landed the
+same week — as `infra.entry@0` rows carrying the retaining pass's CLASS
+(`retaining.seam`, the `face` kind with a paired `preserve`) rather than rows
+inside `buildRetainingWalls`; the mechanism is the one this section names,
+hosted where every other entry lives. `slipway` alone waits on the water side,
+its foot being below the surface.)*
 
 ### C — floor-plane / areal treatments (6)
 
