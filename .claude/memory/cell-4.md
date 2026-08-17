@@ -27,6 +27,12 @@ declared out). Default world isles_of_war (re-exported WITH prompt
 from scratchpad doc). Still deferred: stairs as cubes, time-of-day,
 signs/entities. Chrome rAF throttles occluded tabs — automation
 screenshots show stale frames; bench numbers only valid focused.
+GARBLE BUG (Kai's walk 2026-08-17, FIXED 6057bd0): three.js uploads
+canvas textures flipY by default while atlasLayout counts rows from
+the TOP — every cell rect sampled the mirrored row; 13 rows meant the
+middle row mapped to itself (sandstone looked right, hid the bug).
+atlas.flipY=false. Lesson: a texture atlas verification shot must
+check a block whose texture is UNAMBIGUOUS and off-centre-row.
 
 **GEMINI BATTERY SWEEP (deck in Prism, ~$1.90 total for 7 worlds):**
 pirate_vs_unicorn_isles_gem (minus 2 no-site scatters — now warnings),
