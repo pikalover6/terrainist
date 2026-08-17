@@ -29,14 +29,11 @@ for Kai's walk, install alongside):**
   authoring omission — the archived doc decides; (d) both-landmarks-
   one-island: same question. Reach law: no-program worlds
   byte-identical.
-- DEV APP (low, task a7328fcbcec606018): native macOS SwiftUI app in
-  tools/dev-app/ (NEW dir) — prompt + settings (seed/size/model
-  pinned-Gemini-default/effort/rounds/budget/channel/keep-doc/auto-
-  install), streaming log, parses the CLI's "next: terrainist
-  install" line and auto-installs to Prism. SPM + hand-rolled .app +
-  ad-hoc codesign (CLT only, no Xcode; node at /opt/homebrew/bin,
-  cwd=repo root for .env). ON LANDING: build, launch, `screencapture`
-  the window, SEND KAI THE SHOT, commit.
+- DEV APP: LANDED + COMMITTED. Build: cd tools/dev-app &&
+  ./make-app.sh → dist/Terrainist Dev.app. Selftest proves plumbing.
+  NOBODY HAS SEEN THE WINDOW (screencapture needs a Screen Recording
+  grant no shell has) — Kai eyeballs layout on first launch; expect a
+  polish round from his verdict.
 
 **THE CLOSED AUTONOMOUS RUN (details cell-3):** shaders live+tuned;
 machinery tail closed (family B, §13.2+viaduct); SIX PACKS / 91
