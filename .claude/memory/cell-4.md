@@ -1,15 +1,19 @@
 # Cell 4 — current state (2026-08-17, the finale)
 
-**RUNNING RIGHT NOW:** (1) the FINAL BATTERY REGENERATION — all seven
-frozen prompts, seeds 301-307, pinned defaults (Gemini 3.7 Flash
-high), on the 235-member catalog, scratchpad/final-battery/, batch
-runner at --max 2 (throttle fixed); (2) the last exhibits agent
-(swamp_witch + atlantean rows — its devworld build is the FIRST
-0-unstable-fluids assert with leech/moon pools in the grid; if it
-fails, that finding matters). ON LANDING: commit exhibits → install
-all 7 battery worlds to Prism (--channel final, never --replace) →
-archive battery/candidates/p*-final/ (docs+logs) → build+install the
-final devworld → render+republish log → homecoming report.
+**THE RUN IS CLOSED (2026-08-18 early).** Final deck INSTALLED
+(*_final in Prism: pirate_unicorn_war, alien_invasion_farm,
+trojan_horse_in_troy, metropolis_hideout, modern_hellenist_siege,
+redwood_logging_camp, glowing_mushroom_vale) + ARCHIVED
+(battery/candidates/p*-final, 668de60; p2/p4 are second rolls — first
+attempts died on AUTHORED T110 water, bisect proved machinery
+innocent, attempt-1 logs kept). Final exhibits landed (5dcdc2b) and
+IMMEDIATELY exposed + fixed a dormant pack bug: attachment=ceiling
+bells need a FULL CUBE above — the tide bell now hangs on its cap,
+chain demoted to pull-rope (the exhibit tower was the first thing
+tall enough to reach the branch; the pack test had enshrined the
+invalid config and now asserts the physics truth). Devworld 760 rows
+/ 4,195 buildings / 0 unstable fluids WITH real pools; final build
+installed as dev_world_packs.
 
 **THE RUN'S SHAPE (details in cell-3):** four rulings armed it (look
 latitude / leniency permanent / tail un-deferred + GO-HAM / regen once
