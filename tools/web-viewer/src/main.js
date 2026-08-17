@@ -19,7 +19,13 @@
  *   viewer this grew out of is the same code path with a different cell.
  * - **The landing is a curtain, not a page.** The world starts loading at once
  *   and streams behind the black; the prompt types over the top of it. There is
- *   no navigation, so nothing is thrown away when it lifts.
+ *   no navigation, so nothing is thrown away when it lifts. The player is held
+ *   frozen underneath it and released, standing on the ground at spawn, the
+ *   moment the curtain finishes or the mouse is grabbed.
+ * - **Walking is the default.** The controller lives in `physics.js` — a box,
+ *   gravity, swept collision, step-up, buoyancy — and nothing about it needs a
+ *   browser, so all of it is tested in node. Fly is the toggle (`G`), kept for
+ *   review flights.
  */
 
 import * as THREE from "three";
@@ -28,6 +34,7 @@ import { CHUNK_WIDTH, WorldView } from "./format.js";
 import { resolvePalette, texturesFor } from "./appearance.js";
 import { atlasLayout, drawAtlas, loadAtlasImages } from "./atlas.js";
 import { loadManifest } from "./loader.js";
+import { eyePosition, groundSnap, newPlayer, step as stepPlayer } from "./physics.js";
 
 /** Chunks meshed around the camera. One more ring than this is *loaded*. */
 const VIEW_RADIUS = 10;
@@ -36,12 +43,10 @@ const UPLOAD_BUDGET = 3;
 /** …and a byte ceiling on top of it, for the pathological all-detail chunk. */
 const UPLOAD_BYTES = 1_500_000;
 
-const EYE_HEIGHT = 1.7;
-const PLAYER_RADIUS = 0.3;
-const GRAVITY = 28;
-const JUMP_SPEED = 8.6;
-const WALK_SPEED = 5.2;
+/** Fly mode is the review flight, not the default: see `physics.js`. */
 const FLY_SPEED = 22;
+/** Two presses inside this window are a double-tap. */
+const DOUBLE_TAP_MS = 280;
 
 const params = new URLSearchParams(location.search);
 const worldUrl = params.get("world") ?? "worlds/isles_of_war";
@@ -221,14 +226,19 @@ const requested = new Set();
 /** Finished worker payloads waiting for their turn on the GPU. */
 const uploadQueue = [];
 
-const player = {
-  position: new THREE.Vector3(),
-  velocity: new THREE.Vector3(),
-  yaw: 0,
-  pitch: 0,
-  fly: true,
-  onGround: false,
-};
+/**
+ * The player, as `physics.js` defines it: feet position, plain numbers, walk
+ * mode by default and frozen until the curtain lifts. `position` is the FEET —
+ * the camera sits `PLAYER.eye` above it — which is what makes
+ * `terrainist.player.position.set(x, y, z)` from the console put you *on* a
+ * block rather than inside it.
+ */
+const player = newPlayer();
+// Vectors rather than the plain objects `physics.js` makes, purely so that the
+// documented console teleport — `terrainist.player.position.set(x, y, z)` —
+// keeps working. The controller only ever reads and writes `.x/.y/.z`.
+player.position = new THREE.Vector3();
+player.velocity = new THREE.Vector3();
 
 const keys = new Set();
 const stats = {
@@ -294,7 +304,9 @@ async function boot() {
   world = new WorldView(manifest);
 
   const [sx, sy, sz] = manifest.spawn;
-  player.position.set(sx + 0.5, sy + EYE_HEIGHT, sz + 0.5);
+  player.position.x = sx + 0.5;
+  player.position.y = sy;
+  player.position.z = sz + 0.5;
 
   setStatus("streaming the world");
   worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
@@ -455,7 +467,28 @@ renderer.domElement.addEventListener("click", () => renderer.domElement.requestP
 document.addEventListener("pointerlockchange", () => {
   const locked = document.pointerLockElement === renderer.domElement;
   hud.root.classList.toggle("unlocked", !locked);
+  // Grabbing the mouse is also "I am here now": whatever the curtain is doing,
+  // the world starts moving under you.
+  if (locked) release();
 });
+
+/**
+ * Let go of the player.
+ *
+ * He is frozen from the first frame — gravity included — so that the seconds
+ * the landing spends typing a prompt are not seconds he spends falling through
+ * a world that has not streamed in yet. Two things release him, whichever comes
+ * first: the curtain finishing, or the visitor clicking to take the mouse.
+ */
+function release() {
+  wantRelease = true;
+  settleSpawn();
+  // A world whose spawn chunk never arrives must not leave a visitor welded to
+  // the spot: the ground gets a few seconds, and then he walks regardless.
+  setTimeout(() => {
+    player.frozen = false;
+  }, 6000);
+}
 document.addEventListener("mousemove", (event) => {
   if (document.pointerLockElement !== renderer.domElement) return;
   player.yaw -= event.movementX * 0.0022;
@@ -463,87 +496,92 @@ document.addEventListener("mousemove", (event) => {
   const limit = Math.PI / 2 - 0.01;
   player.pitch = Math.max(-limit, Math.min(limit, player.pitch));
 });
+/**
+ * The keyboard, and the two double-taps.
+ *
+ * `G` toggles fly, double-tapped space does the same (the Minecraft reflex),
+ * and double-tapped `W` sprints until you let go of it. Sprint is also
+ * left-control held, which is the other reflex.
+ */
+const lastTap = new Map();
+let sprinting = false;
+
+function doubleTapped(code, now) {
+  const previous = lastTap.get(code) ?? -Infinity;
+  lastTap.set(code, now);
+  return now - previous < DOUBLE_TAP_MS;
+}
+
+function setFly(flying) {
+  player.fly = flying;
+  player.velocity.x = 0;
+  player.velocity.y = 0;
+  player.velocity.z = 0;
+}
+
 addEventListener("keydown", (event) => {
+  const held = keys.has(event.code);
   keys.add(event.code);
-  if (event.code === "KeyG") {
-    player.fly = !player.fly;
-    player.velocity.set(0, 0, 0);
-  }
   if (event.code === "Space") event.preventDefault();
+  if (held) return; // auto-repeat is not a second tap
+  const now = performance.now();
+  if (event.code === "KeyG") setFly(!player.fly);
+  if (event.code === "Space" && doubleTapped("Space", now)) setFly(!player.fly);
+  if (event.code === "KeyW" && doubleTapped("KeyW", now)) sprinting = true;
 });
-addEventListener("keyup", (event) => keys.delete(event.code));
+addEventListener("keyup", (event) => {
+  keys.delete(event.code);
+  if (event.code === "KeyW") sprinting = false;
+});
 
 /* -------------------------------------------------------------------------- */
 /* movement                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/** Is the block containing this point something you cannot walk through? */
+/**
+ * What you cannot walk through, and how tall it is.
+ *
+ * `collide` is the height of the block's collision box: 1 for a cube, 0.5 for
+ * a slab, 0.08 for a carpet, and 0 for water and for every plant. A slab being
+ * half a block is what makes the 0.6 step-up worth having, and a plant being
+ * zero is the collision half of "plants are not cubes" — the same
+ * `render: "cross"` the mesher draws them from decides it.
+ */
 function solidAt(x, y, z) {
-  const entry = palette[world.indexAt(Math.floor(x), Math.floor(y), Math.floor(z))];
-  return entry !== undefined && !entry.air && entry.occludes;
+  const entry = palette?.[world?.indexAt(x, y, z) ?? 0];
+  return entry === undefined ? 0 : entry.collide;
 }
 
-/** Does the player's box, centred on (x, y, z) feet-first, hit anything? */
-function collides(x, feetY, z) {
-  const top = feetY + EYE_HEIGHT + 0.05;
-  for (let cx = -PLAYER_RADIUS; cx <= PLAYER_RADIUS; cx += PLAYER_RADIUS * 2) {
-    for (let cz = -PLAYER_RADIUS; cz <= PLAYER_RADIUS; cz += PLAYER_RADIUS * 2) {
-      for (let y = feetY + 0.02; y < top; y += 0.9) {
-        if (solidAt(x + cx, y, z + cz)) return true;
-      }
-      if (solidAt(x + cx, top - 0.02, z + cz)) return true;
-    }
-  }
-  return false;
+/**
+ * A stair: solid, but walked up rather than jumped up.
+ *
+ * The mesher draws stairs as full cubes, so without this a staircase is a
+ * ladder of jumps. See `physics.js`.
+ */
+function climbAt(x, y, z) {
+  const entry = palette?.[world?.indexAt(x, y, z) ?? 0];
+  return entry !== undefined && entry.climb === true;
 }
 
-function move(dt) {
-  const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
-  const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
-  const wish = new THREE.Vector3();
-  if (keys.has("KeyW")) wish.add(forward);
-  if (keys.has("KeyS")) wish.sub(forward);
-  if (keys.has("KeyD")) wish.add(right);
-  if (keys.has("KeyA")) wish.sub(right);
-  if (wish.lengthSq() > 0) wish.normalize();
+/** Water and lava: not solid, but you float in them. */
+function fluidAt(x, y, z) {
+  const entry = palette?.[world?.indexAt(x, y, z) ?? 0];
+  return entry !== undefined && (entry.name === "water" || entry.name === "lava");
+}
 
-  if (player.fly) {
-    const speed = FLY_SPEED * (keys.has("ShiftLeft") || keys.has("ShiftRight") ? 0.25 : 1);
-    const vertical =
-      (keys.has("Space") ? 1 : 0) - (keys.has("KeyC") || keys.has("ControlLeft") ? 1 : 0);
-    // Free flight, and free of the world: a viewer that catches on geometry
-    // while flying is worse than one that clips through it.
-    player.position.addScaledVector(wish, speed * dt);
-    player.position.y += vertical * speed * dt;
-    return;
-  }
+const physicsWorld = { solidAt, fluidAt, climbAt };
 
-  const feet = player.position.y - EYE_HEIGHT;
-  player.velocity.y -= GRAVITY * dt;
-  if (player.onGround && keys.has("Space")) player.velocity.y = JUMP_SPEED;
-
-  const step = wish.multiplyScalar(WALK_SPEED * dt);
-  const nextX = player.position.x + step.x;
-  if (!collides(nextX, feet, player.position.z)) player.position.x = nextX;
-  else if (!collides(nextX, feet + 1, player.position.z)) player.position.x = nextX; // step up
-  const nextZ = player.position.z + step.z;
-  if (!collides(player.position.x, feet, nextZ)) player.position.z = nextZ;
-  else if (!collides(player.position.x, feet + 1, nextZ)) player.position.z = nextZ;
-
-  let nextFeet = feet + player.velocity.y * dt;
-  if (collides(player.position.x, nextFeet, player.position.z)) {
-    if (player.velocity.y <= 0) {
-      // Land on top of whatever we hit, rather than inside it.
-      nextFeet = Math.floor(nextFeet) + 1;
-      player.onGround = true;
-    } else {
-      nextFeet = feet;
-    }
-    player.velocity.y = 0;
-  } else {
-    player.onGround = false;
-  }
-  player.position.y = nextFeet + EYE_HEIGHT;
+/** The keyboard, resolved into the six numbers the controller wants. */
+function readInput() {
+  const sneak = keys.has("ShiftLeft") || keys.has("ShiftRight");
+  return {
+    forward: (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0),
+    strafe: (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
+    jump: keys.has("Space"),
+    sink: keys.has("KeyC") || keys.has("ControlLeft") || keys.has("ControlRight"),
+    sprint: sprinting || keys.has("ControlLeft") || keys.has("ControlRight"),
+    sneak,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -552,6 +590,28 @@ function move(dt) {
 
 let last = performance.now();
 let streamAt = 0;
+let spawnSettled = false;
+let wantRelease = false;
+
+/**
+ * Stand the player on the ground, once, as soon as the spawn chunk is in hand.
+ *
+ * The manifest's spawn is a block coordinate and the world it refers to is
+ * still in flight when `boot` reads it, so the snap cannot happen there. It
+ * happens on the first frame the ground actually exists — before the curtain
+ * lifts, because the player is frozen until it does, so nobody ever sees the
+ * drop.
+ */
+function settleSpawn() {
+  if (spawnSettled || world === undefined || palette === undefined) return;
+  const { x, z } = player.position;
+  if (!world.has(chunkOf(x), chunkOf(z))) return;
+  player.position.y = groundSnap(solidAt, x, player.position.y + 2, z);
+  player.velocity.y = 0;
+  player.onGround = true;
+  spawnSettled = true;
+  if (wantRelease) player.frozen = false;
+}
 
 function frame(now) {
   const elapsed = now - last;
@@ -565,9 +625,11 @@ function frame(now) {
   }
   stats.frames++;
 
-  move(dt);
+  settleSpawn();
+  stepPlayer(player, readInput(), physicsWorld, dt, { flySpeed: FLY_SPEED });
 
-  camera.position.copy(player.position);
+  const eye = eyePosition(player);
+  camera.position.set(eye.x, eye.y, eye.z);
   camera.rotation.set(0, 0, 0, "YXZ");
   camera.rotateY(player.yaw);
   camera.rotateX(player.pitch);
@@ -579,7 +641,7 @@ function frame(now) {
   drainUploads();
 
   hud.position.textContent = `${player.position.x.toFixed(1)} ${player.position.y.toFixed(1)} ${player.position.z.toFixed(1)}`;
-  hud.mode.textContent = player.fly ? "fly" : "walk";
+  hud.mode.textContent = player.fly ? "fly" : player.inWater ? "swim" : "walk";
 
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
@@ -623,6 +685,7 @@ async function runLanding(loaded) {
     veil.style.opacity = "0";
     hud.root.classList.add("shown");
     await loaded;
+    release();
     enterHint.classList.add("shown");
     return;
   }
@@ -638,6 +701,7 @@ async function runLanding(loaded) {
   await wait(1500);
   landing.root.remove();
   hud.root.classList.add("shown");
+  release();
   enterHint.classList.add("shown");
   document.addEventListener(
     "pointerlockchange",

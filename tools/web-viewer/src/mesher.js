@@ -161,6 +161,120 @@ export function mergeAlong(entry, axis) {
 
 const WHITE_CELL = [0, 0, 1, 1];
 
+/* -------------------------------------------------------------------------- */
+/* plants                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How far a cross's quads stop short of the cell's corners. Small, and its
+ * only job is to keep a plant from z-fighting the wall it grows against.
+ */
+export const CROSS_INSET = 0.03;
+
+/** How far a plant may wander from the centre of its cell. */
+export const CROSS_JITTER = 0.14;
+
+/** Plants take the sun straight on, whichever way they face. */
+export const CROSS_SHADE = 1.0;
+
+/**
+ * A stable pseudo-random pair in [-1, 1) for one column of the world.
+ *
+ * Minecraft nudges every plant off its lattice, and it is most of the reason a
+ * meadow reads as a meadow rather than as a checkerboard — Kai's word for the
+ * un-nudged version was "in rows". Derived from the world coordinate, so it
+ * survives a chunk being dropped and re-meshed, and it never touches `Math.
+ * random` (the project's determinism rule applies here too).
+ */
+export function plantOffset(x, z) {
+  let h = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(z | 0, 0x165667b1);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  const a = ((h >>> 0) % 1024) / 512 - 1;
+  const b = ((h >>> 10) % 1024) / 512 - 1;
+  return [a * CROSS_JITTER, b * CROSS_JITTER];
+}
+
+/**
+ * One plant: two diagonal quads through the cell, each wound both ways.
+ *
+ * Both windings rather than a double-sided material, because a cross lives in
+ * the same buffer and the same alpha-cutout material as every opaque block —
+ * so it costs eight triangles and no state change, and a plant seen from the
+ * far side is lit and textured exactly as from the near one. Nothing here is
+ * ever merged: a merged plant is a smear, and the mask never sees one (see
+ * `faceKey`).
+ */
+function emitCross(buffer, entry, x, y, z) {
+  const cell = entry.faces === undefined ? WHITE_CELL : entry.faces[0];
+  const light = entry.emissive ? 1 : CROSS_SHADE;
+  const rgb = [
+    srgbToLinear(entry.tint[0]) * light,
+    srgbToLinear(entry.tint[1]) * light,
+    srgbToLinear(entry.tint[2]) * light,
+  ];
+  const [ox, oz] = plantOffset(x, z);
+  const lo = CROSS_INSET;
+  const hi = 1 - CROSS_INSET;
+  const top = y + entry.box[4];
+  const planes = [
+    // corner (lo, lo) → (hi, hi), and the other diagonal
+    [[x + lo, z + lo], [x + hi, z + hi]],
+    [[x + hi, z + lo], [x + lo, z + hi]],
+  ];
+  for (const [[ax, az], [bx, bz]] of planes) {
+    const corners = [
+      [ax + ox, y, az + oz],
+      [ax + ox, top, az + oz],
+      [bx + ox, top, bz + oz],
+      [bx + ox, y, bz + oz],
+    ];
+    // v runs 1 at the ground and 0 at the tip, the same way the box faces do:
+    // the atlas counts rows from the top of the sheet.
+    pushQuad(buffer, corners, [[0, 1], [0, 0], [1, 0], [1, 1]], cell, rgb, true);
+  }
+}
+
+/** Ground cover: one horizontal quad a hair above the floor, both windings. */
+function emitFlat(buffer, entry, x, y, z) {
+  const cell = entry.faces === undefined ? WHITE_CELL : entry.faces[2] ?? entry.faces[0];
+  const light = entry.emissive ? 1 : 1;
+  const rgb = [
+    srgbToLinear(entry.tint[0]) * light,
+    srgbToLinear(entry.tint[1]) * light,
+    srgbToLinear(entry.tint[2]) * light,
+  ];
+  const h = y + entry.box[4];
+  const corners = [
+    [x, h, z + 1],
+    [x + 1, h, z + 1],
+    [x + 1, h, z],
+    [x, h, z],
+  ];
+  pushQuad(buffer, corners, [[0, 1], [1, 1], [1, 0], [0, 0]], cell, rgb, true);
+}
+
+/** Four vertices, one quad, and optionally the same quad wound the other way. */
+function pushQuad(buffer, corners, uvs, cell, rgb, doubleSided) {
+  for (const winding of doubleSided ? [0, 1] : [0]) {
+    const base = buffer.vertices;
+    for (let k = 0; k < 4; k++) {
+      const corner = corners[k];
+      buffer.position.push(corner[0], corner[1], corner[2]);
+      buffer.uv.push(uvs[k][0], uvs[k][1]);
+      buffer.cell.push(cell[0], cell[1], cell[2], cell[3]);
+      buffer.color.push(rgb[0], rgb[1], rgb[2]);
+    }
+    buffer.vertices += 4;
+    buffer.quads += 1;
+    if (winding === 0) buffer.index.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    else buffer.index.push(base + 2, base + 1, base, base + 3, base + 2, base);
+  }
+}
+
+
 /**
  * Mesh one 16×16×16 section.
  *
@@ -213,6 +327,22 @@ export function meshSection(sample, palette, originX, originY, originZ, options 
   }
   if (empty) return { opaque: finish(opaque), transparent: finish(transparent) };
 
+  // Plants first, and entirely outside the mask: they are not boxes, they never
+  // merge, and they never cull or are culled. One pass over the section's own
+  // cells, two crossed quads each.
+  for (let dx = 0; dx < size; dx++) {
+    for (let dy = 0; dy < size; dy++) {
+      for (let dz = 0; dz < size; dz++) {
+        const entry = palette[at(dx, dy, dz)];
+        if (entry === undefined || entry.air) continue;
+        if (entry.render !== "cross" && entry.render !== "flat") continue;
+        const target = entry.alpha < 1 ? transparent : opaque;
+        const emit = entry.render === "cross" ? emitCross : emitFlat;
+        emit(target, entry, originX + dx, originY + dy, originZ + dz);
+      }
+    }
+  }
+
   const mask = new Int32Array(size * size);
   const origin = [originX, originY, originZ];
 
@@ -250,6 +380,8 @@ function faceKey(at, palette, face, cell) {
   if (index === 0) return -1;
   const entry = palette[index];
   if (entry === undefined || entry.air) return -1;
+  // A plant has no faces to mask: it was drawn, in full, by the plant pass.
+  if (entry.render === "cross" || entry.render === "flat") return -1;
 
   const [nx, ny, nz] = face.normal;
   const full = entry.occludes;

@@ -39,14 +39,24 @@ The page needs a *server* — `file://` blocks module imports, workers and
 
 ## Controls
 
+**Walking is the default.** You arrive standing on the ground at the manifest's
+spawn; fly is the toggle, kept for review flights.
+
 | key | |
 | --- | --- |
 | click | grab the mouse (pointer lock); `esc` releases |
 | W A S D | move |
-| space / C | up / down (fly mode) |
-| shift | slow down (fly mode) |
-| space | jump (walk mode) |
-| G | toggle fly ↔ walk |
+| space | jump — or, in fly mode, rise |
+| ctrl, or W W | sprint |
+| shift | sneak (slow); in fly mode, slow down |
+| C / ctrl | descend (fly mode) |
+| G, or space space | toggle walk ↔ fly |
+
+The player is a 0.6 × 1.8 box with his eyes 1.62 up, gravity 32 b/s², a jump
+that clears 1.25 blocks, 4.3 b/s walking and 5.6 sprinting, a 0.6 step-up for
+slabs and carpets, and buoyancy in water. Stairs are drawn as full cubes, so
+they are flagged *climbable* and get a step of a whole block — otherwise a
+staircase would be a ladder of jumps. Plants have no collision box at all.
 
 ## How it works
 
@@ -58,13 +68,19 @@ The page needs a *server* — `file://` blocks module imports, workers and
   a worker thread, with finished vertex buffers *transferred* back rather than
   copied. Nearest-and-in-front first, one chunk per macrotask so a turn of the
   camera re-orders the queue.
-- `src/mesher.js` — voxels to triangles. Hidden faces culled, coplanar faces of
+- `src/mesher.js` — voxels to triangles. Plants leave the box path entirely
+  and come out as two crossed, alpha-cutout quads apiece, jittered off the
+  lattice by a hash of their world position and never merged. Everything else:
+  hidden faces culled, coplanar faces of
   identical block and identical AO merged into single quads (about a third of
   the triangles gone on the hero world), four-sample ambient occlusion baked
   into the vertex colour with a fixed sun. Imports nothing; testable in node.
-- `src/appearance.js` — flat colour and a rough box per block family, with a
-  deterministic pastel for anything unlisted. Still the floor everything else
-  stands on.
+- `src/appearance.js` — flat colour, a rough box, a collision height and a
+  render class (`box`, `cross`, `flat`) per block family, with a deterministic
+  pastel for anything unlisted. Still the floor everything else stands on.
+- `src/physics.js` — the player: swept AABB collision, step-up, buoyancy,
+  ground snap. Imports nothing, so the whole controller is tested in node
+  against hand-written worlds and against the real exports on disk.
 - `src/textures.js` — Minecraft block name → RE:Fi texture files, per face.
 - `src/atlas.js` — the runtime atlas: every tile drawn 2×2 into a padded cell so
   a merged quad can wrap inside it without a mip bleeding across the border.
@@ -116,8 +132,14 @@ sample; and coplanar faces merge.
 ## Known gaps (deliberate)
 
 - Stairs render as full cubes; every other partial block is one box, so a
-  texture on a fence is the fence texture on a post.
-- Plants are boxes with an alpha-cutout texture, not crossed planes.
+  texture on a fence is the fence texture on a post. The controller works
+  around the stairs by flagging them climbable, which is a patch on the mesher
+  rather than a fix to it.
+- A two-block plant (tall grass, a large fern, a sunflower) is one cross
+  wearing its bottom half's texture: the export carries a block name and no
+  block state, so the viewer cannot tell the halves apart.
+- Potted plants are a pot-sized box wearing the flower-pot texture; the plant
+  in the pot is not drawn.
 - Fog is tuned for standing on the ground; from high altitude the world fades.
 - No block entities, no signs, no entities, no time of day.
 - One worker. A pool would help a machine that can stream faster than it can

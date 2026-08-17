@@ -18,7 +18,7 @@ full CC BY-SA 4.0 legal code as `License.txt`. All three agree.
 
 ### What we vendored
 
-`refi/` holds **378 PNGs** — only the files `../src/textures.js` names, copied
+`refi/` holds **397 PNGs** — only the files `../src/textures.js` names, copied
 out of the release by `../tools/vendor-textures.mjs` and listed in
 `refi/FILES.txt`. The rest of the pack (GUI themes, mob skins, items, armour,
 alternate sets, ~4,100 further files) is not distributed here. Filenames are

@@ -8,6 +8,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -15,9 +16,24 @@ import { describe, expect, it } from "vitest";
 import { encodeChunk, encodeRle } from "../../../packages/compiler/src/export/web.js";
 
 import { CHUNK_WIDTH, WorldView, cellOffset, decodeChunk, decodeRle } from "../src/format.js";
-import { colorOf, fallbackColor, resolvePalette, shapeOf, texturesFor } from "../src/appearance.js";
+import {
+  collisionHeight,
+  colorOf,
+  fallbackColor,
+  resolvePalette,
+  shapeOf,
+  texturesFor,
+} from "../src/appearance.js";
 import { CELL, TILE, WHITE, atlasLayout, cellOf } from "../src/atlas.js";
 import { resolveFaces, textureOf } from "../src/textures.js";
+import {
+  PLAYER,
+  boxCollides,
+  eyePosition,
+  groundSnap,
+  newPlayer,
+  step,
+} from "../src/physics.js";
 import { blockNameUniverse } from "../tools/block-names.mjs";
 
 const TEXTURE_DIR = path.resolve(import.meta.dirname, "../textures/refi");
@@ -28,6 +44,7 @@ import {
   meshSection,
   mergeAlong,
   packAo,
+  plantOffset,
   unpackAo,
   vertexAo,
 } from "../src/mesher.js";
@@ -109,7 +126,7 @@ describe("appearance", () => {
     expect(shapeOf("oak_slab", false).occludes).toBe(false);
     expect(shapeOf("oak_fence", false).occludes).toBe(false);
     expect(shapeOf("water", false)).toMatchObject({ occludes: false, sameCulls: true });
-    expect(shapeOf("short_grass", false).box[3]).toBeLessThan(1);
+    expect(shapeOf("short_grass", false).render).toBe("cross");
   });
 
   it("resolves a palette into per-index entries with air at 0", () => {
@@ -210,8 +227,9 @@ describe("mesher", () => {
 
   it("keeps a non-cube from hiding the block behind it", () => {
     const behindGrass = meshSection(samplerOf([[0, 0, 0, 1], [1, 0, 0, 3]]), palette, 0, 0, 0);
-    // The stone keeps all six faces; the grass tuft adds its own six.
-    expect(behindGrass.opaque.triangles).toBe(12 + 12);
+    // The stone keeps all six faces; the grass tuft adds a cross — two planes,
+    // each wound both ways, so four quads.
+    expect(behindGrass.opaque.triangles).toBe(12 + 8);
   });
 
   it("routes translucent blocks into their own buffer and merges their shared faces", () => {
@@ -436,6 +454,641 @@ describe("greedy merging", () => {
 /* -------------------------------------------------------------------------- */
 /* the texture atlas                                                           */
 /* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/* plants                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A plant is not a box, and every property that follows from that is checked
+ * here: two crossed planes rather than six faces, never merged with the plant
+ * next to it, never culling or culled, and never in anybody's way.
+ */
+describe("plants", () => {
+  const names = ["air", "stone", "short_grass", "poppy", "pink_petals", "water", "seagrass"];
+  const solid = [false, true, false, false, false, false, false];
+  const palette = resolvePalette(names, solid);
+
+  function samplerOf(blocks) {
+    const map = new Map(blocks.map(([x, y, z, index]) => [`${x},${y},${z}`, index]));
+    return (x, y, z) => map.get(`${x},${y},${z}`) ?? 0;
+  }
+
+  /** Every quad in a buffer as four points. */
+  function quadsOf(part) {
+    const quads = [];
+    for (let q = 0; q * 4 < part.position.length / 3; q++) {
+      const points = [];
+      const uvs = [];
+      for (let k = 0; k < 4; k++) {
+        const v = q * 4 + k;
+        points.push([part.position[v * 3], part.position[v * 3 + 1], part.position[v * 3 + 2]]);
+        uvs.push([part.uv[v * 2], part.uv[v * 2 + 1]]);
+      }
+      quads.push({ points, uvs });
+    }
+    return quads;
+  }
+
+  it("calls every plant a cross and every ground cover a flat", () => {
+    for (const name of [
+      "short_grass",
+      "tall_grass",
+      "fern",
+      "large_fern",
+      "poppy",
+      "dandelion",
+      "cornflower",
+      "azure_bluet",
+      "oxeye_daisy",
+      "allium",
+      "lily_of_the_valley",
+      "red_tulip",
+      "dead_bush",
+      "oak_sapling",
+      "cherry_sapling",
+      "sweet_berry_bush",
+      "brown_mushroom",
+      "red_mushroom",
+      "seagrass",
+      "tall_seagrass",
+      "kelp",
+      "kelp_plant",
+      "vine",
+      "sugar_cane",
+    ]) {
+      expect(shapeOf(name, false), name).toMatchObject({ render: "cross", occludes: false });
+    }
+    expect(shapeOf("pink_petals", false).render).toBe("flat");
+    // A cube is still a cube: the plant rules must not reach a block.
+    expect(shapeOf("grass_block", true).render).toBe("box");
+    expect(shapeOf("mushroom_stem", true).render).toBe("box");
+    expect(shapeOf("moss_carpet", false).render).toBe("box");
+    // …and a plant nobody listed is a cross with its flat colour, not a cube.
+    expect(shapeOf("scorched_grass_tuft", false).render).toBe("cross");
+  });
+
+  it("draws a plant as two crossed planes, each wound both ways", () => {
+    const built = meshSection(samplerOf([[3, 0, 5, 2]]), palette, 0, 0, 0);
+    const quads = quadsOf(built.opaque);
+    expect(quads).toHaveLength(4);
+    expect(built.opaque.triangles).toBe(8);
+    expect(built.transparent.triangles).toBe(0);
+
+    // Two distinct planes, each appearing exactly twice (front and back).
+    const planes = new Set(
+      quads.map((quad) =>
+        quad.points
+          .map((point) => point.map((value) => value.toFixed(3)).join(":"))
+          .sort()
+          .join("|"),
+      ),
+    );
+    expect(planes.size).toBe(2);
+
+    for (const quad of quads) {
+      const xs = quad.points.map((point) => point[0]);
+      const ys = quad.points.map((point) => point[1]);
+      const zs = quad.points.map((point) => point[2]);
+      // A full-height diagonal that stays inside its own cell, jitter included.
+      expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(1, 6);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(0.8);
+      expect(Math.max(...zs) - Math.min(...zs)).toBeGreaterThan(0.8);
+      expect(Math.min(...xs)).toBeGreaterThan(3 - 0.2);
+      expect(Math.max(...xs)).toBeLessThan(4 + 0.2);
+      expect(Math.min(...zs)).toBeGreaterThan(5 - 0.2);
+      expect(Math.max(...zs)).toBeLessThan(6 + 0.2);
+      // UVs: the whole tile, once, with v = 1 at the ground.
+      const ground = quad.points
+        .map((point, k) => [point[1], quad.uvs[k][1]])
+        .filter(([y]) => y < 0.5);
+      for (const [, v] of ground) expect(v).toBe(1);
+      expect(new Set(quad.uvs.map((uv) => uv.join(","))).size).toBe(4);
+    }
+
+    // Both windings: the two triangles of a plane face opposite ways.
+    const index = Array.from(built.opaque.index);
+    expect(index).toHaveLength(24);
+  });
+
+  it("never merges one plant into the next, however many stand in a row", () => {
+    const row = [];
+    for (let x = 0; x < 8; x++) row.push([x, 0, 0, 2]);
+    const built = meshSection(samplerOf(row), palette, 0, 0, 0);
+    expect(built.opaque.quads).toBe(8 * 4);
+  });
+
+  it("gives every plant its own offset, and the same one every time", () => {
+    const built = meshSection(samplerOf([[1, 0, 1, 2], [2, 0, 1, 2]]), palette, 0, 0, 0);
+    const again = meshSection(samplerOf([[1, 0, 1, 2], [2, 0, 1, 2]]), palette, 0, 0, 0);
+    expect(Array.from(built.opaque.position)).toEqual(Array.from(again.opaque.position));
+    const first = plantOffset(1, 1);
+    const second = plantOffset(2, 1);
+    expect(first).not.toEqual(second);
+    for (const value of [...first, ...second]) expect(Math.abs(value)).toBeLessThanOrEqual(0.14);
+  });
+
+  it("lets a plant hide nothing and be hidden by nothing", () => {
+    // A plant walled in on all six sides still draws, and the stone around it
+    // keeps every face that looks at it.
+    const cells = [[1, 1, 1, 2]];
+    for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      cells.push([1 + dx, 1 + dy, 1 + dz, 1]);
+    }
+    const built = meshSection(samplerOf(cells), palette, 0, 0, 0);
+    // Six cubes, each keeping all six faces (nothing culls against a plant),
+    // plus the plant's own four quads.
+    expect(built.opaque.quads).toBe(6 * 6 + 4);
+  });
+
+  it("draws ground cover as one flat quad on the floor, both ways up", () => {
+    const built = meshSection(samplerOf([[0, 4, 0, 4]]), palette, 0, 0, 0);
+    const quads = quadsOf(built.opaque);
+    expect(quads).toHaveLength(2);
+    for (const quad of quads) {
+      for (const point of quad.points) expect(point[1]).toBeCloseTo(4.0625, 6);
+    }
+  });
+
+  /**
+   * The survey Kai asked for: every plant in every world on disk, named, with
+   * the shape and the texture it will actually wear. It prints the table and
+   * fails on a plant that is still a cube — which is the bug that started this.
+   */
+  it("leaves no plant in any exported world drawn as a cube", () => {
+    const PLANT = new Set([
+      "short_grass",
+      "grass",
+      "tall_grass",
+      "fern",
+      "large_fern",
+      "seagrass",
+      "tall_seagrass",
+      "kelp",
+      "kelp_plant",
+      "dead_bush",
+      "sweet_berry_bush",
+      "brown_mushroom",
+      "red_mushroom",
+      "poppy",
+      "dandelion",
+      "cornflower",
+      "azure_bluet",
+      "oxeye_daisy",
+      "allium",
+      "blue_orchid",
+      "lily_of_the_valley",
+      "wither_rose",
+      "red_tulip",
+      "orange_tulip",
+      "white_tulip",
+      "pink_tulip",
+      "sugar_cane",
+      "vine",
+      "glow_lichen",
+      "pink_petals",
+    ]);
+    const worlds = existsSync(WORLDS_DIR)
+      ? readdirSync(WORLDS_DIR).filter((name) =>
+          existsSync(path.join(WORLDS_DIR, name, "manifest.json")),
+        )
+      : [];
+    for (const world of worlds) {
+      const manifest = JSON.parse(
+        readFileSync(path.join(WORLDS_DIR, world, "manifest.json"), "utf8"),
+      );
+      const rows = [];
+      manifest.palette.forEach((name, index) => {
+        const plant = PLANT.has(name) || name.endsWith("_sapling");
+        const shape = shapeOf(name, manifest.solid?.[index] === true);
+        if (!plant && shape.render === "box") return;
+        const faces = resolveFaces(textureOf(name));
+        rows.push(`${name} → ${shape.render} / ${faces?.[0] ?? "flat colour"}`);
+        expect(shape.render, `${world}: ${name}`).not.toBe("box");
+        expect(collisionHeight(name, shape), `${world}: ${name}`).toBe(0);
+      });
+      console.log(`[plants] ${world}: ${rows.length}\n  ${rows.join("\n  ")}`);
+    }
+  });
+
+  it("draws a waterlogged plant in the opaque pass, inside the water's own", () => {
+    const built = meshSection(samplerOf([[0, 0, 0, 5], [0, 0, 1, 5], [0, 0, 0, 6]]), palette, 0, 0, 0);
+    // The seagrass replaced the water in its cell; what matters is that a
+    // cutout plant never lands in the translucent buffer, where it would be
+    // sorted against the sea it stands in.
+    expect(built.opaque.quads).toBe(4);
+    expect(built.transparent.quads).toBeGreaterThan(0);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* the player                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The controller, run headless.
+ *
+ * A world here is a set of solid block coordinates and a set of fluid ones, and
+ * a "walk" is a few hundred ticks at a fixed 60 Hz. That is enough to catch
+ * every kind of bug this thing has: falling through a floor, climbing a wall
+ * that should hold, sticking on a slab, and drowning on the way to a beach.
+ */
+describe("the player", () => {
+  const TICK = 1 / 60;
+
+  /**
+   * A world of cells. `[x, y, z]` is a full cube; `[x, y, z, h]` is a block `h`
+   * tall — a slab is 0.5, a carpet 0.08, a plant 0, exactly as `appearance.js`
+   * hands them to the viewer.
+   */
+  function worldOf(solids, fluids = []) {
+    const solid = new Map(solids.map((cell) => [cell.slice(0, 3).join(","), cell[3] ?? 1]));
+    const fluid = new Set(fluids.map((cell) => cell.slice(0, 3).join(",")));
+    return {
+      solidAt: (x, y, z) => solid.get(`${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`) ?? 0,
+      fluidAt: (x, y, z) => fluid.has(`${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`),
+    };
+  }
+
+  /** A 16×16 floor at y = 0, its top surface at y = 1. */
+  function floor(y = 0, size = 16, block = undefined) {
+    const cells = [];
+    for (let x = -size; x < size; x++) {
+      for (let z = -size; z < size; z++) cells.push([x, y, z]);
+    }
+    return block === undefined ? cells : cells.concat(block);
+  }
+
+  function standing(x = 0.5, z = 0.5, y = 1) {
+    const player = newPlayer();
+    player.frozen = false;
+    player.position.x = x;
+    player.position.y = y;
+    player.position.z = z;
+    player.onGround = true;
+    return player;
+  }
+
+  const NOTHING = { forward: 0, strafe: 0, jump: false, sink: false, sprint: false, sneak: false };
+  const input = (extra) => ({ ...NOTHING, ...extra });
+
+  function run(player, world, ticks, keys = NOTHING, each) {
+    for (let i = 0; i < ticks; i++) {
+      step(player, typeof keys === "function" ? keys(i) : keys, world, TICK);
+      each?.(player, i);
+    }
+    return player;
+  }
+
+  it("holds a frozen player exactly where he is, gravity and all", () => {
+    const player = standing();
+    player.frozen = true;
+    player.position.y = 30;
+    run(player, worldOf(floor()), 120, input({ forward: 1 }));
+    expect(player.position.y).toBe(30);
+    expect(player.position.x).toBe(0.5);
+  });
+
+  it("falls onto the floor and stops flush on top of it", () => {
+    const player = standing(0.5, 0.5, 12);
+    player.onGround = false;
+    run(player, worldOf(floor()), 120);
+    expect(player.position.y).toBeCloseTo(1, 2);
+    expect(player.onGround).toBe(true);
+    expect(player.velocity.y).toBe(0);
+  });
+
+  it("walks at the speed on the tin, and sprints faster", () => {
+    const world = worldOf(floor());
+    const walker = run(standing(), world, 180, input({ forward: 1 }));
+    const sprinter = run(standing(), world, 180, input({ forward: 1, sprint: true }));
+    // Facing yaw 0 is −z, and one second of the run is the tail of three.
+    const walked = -walker.position.z - 0.5;
+    const sprinted = -sprinter.position.z - 0.5;
+    expect(walked / 3).toBeGreaterThan(PLAYER.walkSpeed * 0.9);
+    expect(walked / 3).toBeLessThan(PLAYER.walkSpeed * 1.02);
+    expect(sprinted).toBeGreaterThan(walked * 1.2);
+    // …and sneaking is slower than either.
+    const sneaker = run(standing(), world, 180, input({ forward: 1, sneak: true }));
+    expect(-sneaker.position.z - 0.5).toBeLessThan(walked * 0.6);
+  });
+
+  it("stops within a few frames of the key coming up", () => {
+    const world = worldOf(floor());
+    const player = run(standing(), world, 60, input({ forward: 1 }));
+    const moving = Math.abs(player.velocity.z);
+    expect(moving).toBeGreaterThan(4);
+    run(player, world, 12);
+    expect(Math.abs(player.velocity.z)).toBeLessThan(moving * 0.15);
+  });
+
+  it("jumps about a block and a quarter, and no higher", () => {
+    const world = worldOf(floor());
+    const player = standing();
+    let peak = player.position.y;
+    run(player, world, 90, (tick) => input({ jump: tick < 3 }), (state) => {
+      peak = Math.max(peak, state.position.y);
+    });
+    expect(peak - 1).toBeGreaterThan(1.15);
+    expect(peak - 1).toBeLessThan(1.4);
+    expect(player.position.y).toBeCloseTo(1, 2);
+  });
+
+  it("steps up a slab, and needs a jump for a whole block", () => {
+    // Facing −x: a pavement of slabs from x = −7 to −3, and a wall of whole
+    // blocks at x = −8.
+    const cells = [];
+    for (let z = -3; z <= 3; z++) {
+      for (let x = -7; x <= -3; x++) cells.push([x, 1, z, 0.5]);
+      cells.push([-8, 1, z], [-8, 2, z]);
+    }
+    const world = worldOf(floor().concat(cells));
+
+    const walker = standing();
+    walker.yaw = Math.PI / 2; // −x
+    run(walker, world, 180, input({ forward: 1 }));
+    // Up onto the slabs without a jump, across them, and stopped by the wall.
+    expect(walker.position.y).toBeCloseTo(1.5, 2);
+    expect(walker.position.x).toBeCloseTo(-7 + PLAYER.width / 2, 1);
+  });
+
+  it("clears a whole block with a jump and never without one", () => {
+    const wall = [];
+    for (let z = -3; z <= 3; z++) wall.push([-3, 1, z]);
+    const world = worldOf(floor().concat(wall));
+
+    const walker = standing();
+    walker.yaw = Math.PI / 2;
+    run(walker, world, 120, input({ forward: 1 }));
+    expect(walker.position.x).toBeCloseTo(-2 + PLAYER.width / 2, 1);
+    expect(walker.position.y).toBeCloseTo(1, 2);
+
+    const jumper = standing();
+    jumper.yaw = Math.PI / 2;
+    run(jumper, world, 180, (tick) => input({ forward: 1, jump: tick % 30 === 0 }));
+    expect(jumper.position.x).toBeLessThan(-3.5);
+  });
+
+  it("refuses to step up anything taller than 0.6", () => {
+    const ledges = [];
+    for (let z = -3; z <= 3; z++) ledges.push([-3, 1, z, 0.7]);
+    const world = worldOf(floor().concat(ledges));
+    const walker = standing();
+    walker.yaw = Math.PI / 2;
+    run(walker, world, 120, input({ forward: 1 }));
+    expect(walker.position.y).toBeCloseTo(1, 2);
+    expect(walker.position.x).toBeCloseTo(-2 + PLAYER.width / 2, 1);
+  });
+
+  it("walks up a flight of half-block steps without ever leaving the ground", () => {
+    // Column tops at 1.5, 2.0, 2.5 … one step of 0.5 per block travelled.
+    const cells = [];
+    for (let z = -3; z <= 3; z++) {
+      for (let s = 1; s <= 8; s++) {
+        const top = 1 + s * 0.5;
+        const x = -2 - s;
+        for (let y = 1; y + 1 <= top; y++) cells.push([x, y, z]);
+        if (top % 1 !== 0) cells.push([x, Math.floor(top), z, 0.5]);
+      }
+    }
+    const world = worldOf(floor().concat(cells));
+    const walker = standing();
+    walker.yaw = Math.PI / 2;
+    let airborne = 0;
+    run(walker, world, 150, input({ forward: 1 }), (state) => {
+      if (!state.onGround) airborne++;
+    });
+    expect(walker.position.y).toBeGreaterThan(4.5);
+    // Eight half-steps climbed, and not one frame of it in the air.
+    expect(airborne).toBe(0);
+  });
+
+  it("walks up a staircase of cubes, because the world calls them climbable", () => {
+    // Stairs are drawn as full cubes, so they are a full block tall; the world
+    // flags them, and the controller gives a flagged block a step of its own.
+    const stairs = [];
+    for (let z = -3; z <= 3; z++) {
+      for (let s = 1; s <= 5; s++) {
+        for (let y = 1; y <= s; y++) stairs.push([-2 - s, y, z]);
+      }
+    }
+    const flagged = new Set(stairs.map((cell) => cell.slice(0, 3).join(",")));
+    const base = worldOf(floor().concat(stairs));
+    const world = {
+      ...base,
+      climbAt: (x, y, z) => flagged.has(`${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`),
+    };
+
+    const walker = standing();
+    walker.yaw = Math.PI / 2;
+    run(walker, world, 100, input({ forward: 1 }));
+    expect(walker.position.y).toBeGreaterThan(5);
+    expect(walker.onGround).toBe(true);
+
+    // Without the flag the same cubes are a wall, exactly as a cliff should be.
+    const blocked = standing();
+    blocked.yaw = Math.PI / 2;
+    run(blocked, base, 100, input({ forward: 1 }));
+    expect(blocked.position.y).toBeCloseTo(1, 2);
+  });
+
+  it("takes its collision box from the palette, plants and water included", () => {
+    const resolved = resolvePalette(
+      ["air", "stone", "oak_slab", "short_grass", "water", "oak_stairs", "glass"],
+      [false, true, false, false, false, true, false],
+    );
+    expect(resolved[0].collide).toBe(0);
+    expect(resolved[1].collide).toBe(1);
+    expect(resolved[2].collide).toBe(0.5);
+    expect(resolved[3].collide).toBe(0); // a plant is not in the way
+    expect(resolved[4].collide).toBe(0); // and neither is water
+    expect(resolved[5].collide).toBe(1);
+    expect(resolved[5].climb).toBe(true);
+    expect(resolved[6].collide).toBe(1); // glass is see-through, not walk-through
+    expect(resolved[1].climb).toBe(false);
+  });
+
+  it("never walks through a wall, however fast it is hit", () => {
+    const wall = [];
+    for (let y = 1; y <= 3; y++) wall.push([-4, y, 0], [-4, y, -1], [-4, y, 1]);
+    const world = worldOf(floor().concat(wall));
+    const player = run(standing(), world, 300, input({ strafe: -1, sprint: true }));
+    expect(player.position.x).toBeGreaterThan(-3.5 + PLAYER.width / 2 - 0.01);
+    expect(player.velocity.x).toBe(0);
+  });
+
+  it("does not tunnel through a thin floor at terminal velocity", () => {
+    const player = standing(0.5, 0.5, 400);
+    player.onGround = false;
+    run(player, worldOf(floor()), 60 * 20);
+    expect(player.position.y).toBeCloseTo(1, 2);
+  });
+
+  it("bumps its head instead of standing inside the ceiling", () => {
+    const world = worldOf(floor().concat([[0, 3, 0]]));
+    const player = standing();
+    run(player, world, 90, (tick) => input({ jump: tick < 3 }));
+    expect(player.position.y).toBeLessThan(3 - PLAYER.height + 0.01);
+    expect(player.position.y).toBeCloseTo(1, 2);
+  });
+
+  it("floats in water rather than sinking like a stone, and rises on the key", () => {
+    const fluids = [];
+    for (let y = 1; y <= 6; y++) {
+      for (let x = -4; x <= 4; x++) {
+        for (let z = -4; z <= 4; z++) fluids.push([x, y, z]);
+      }
+    }
+    const world = worldOf(floor(), fluids);
+    const sinking = standing(0.5, 0.5, 5);
+    sinking.onGround = false;
+    run(sinking, world, 60);
+    expect(sinking.inWater).toBe(true);
+    // A second of sinking, not a second of falling.
+    expect(5 - sinking.position.y).toBeLessThan(PLAYER.swimSink * 1.2);
+
+    const rising = standing(0.5, 0.5, 3);
+    rising.onGround = false;
+    run(rising, world, 60, input({ jump: true }));
+    expect(rising.position.y).toBeGreaterThan(3.5);
+  });
+
+  it("walks out of the water and onto the beach", () => {
+    // A sea at x < 0 six blocks deep, and a beach at x >= 0 whose surface is
+    // the same height as the sea's.
+    const solids = [];
+    const fluids = [];
+    for (let x = -8; x < 24; x++) {
+      for (let z = -8; z < 8; z++) {
+        solids.push([x, 0, z]);
+        if (x >= 2) {
+          solids.push([x, 1, z]);
+        } else {
+          fluids.push([x, 1, z]);
+        }
+      }
+    }
+    const world = worldOf(solids, fluids);
+    const swimmer = standing(-2.5, 0.5, 1);
+    swimmer.onGround = false;
+    swimmer.yaw = -Math.PI / 2; // facing +x
+    // Holding the swim key only while wet: out of the water it would be a hop,
+    // and this test is about arriving, not about bouncing.
+    run(swimmer, world, 60 * 4, () => input({ forward: 1, jump: swimmer.inWater }));
+    expect(swimmer.position.x).toBeGreaterThan(2);
+    expect(swimmer.position.y).toBeCloseTo(2, 1);
+    expect(swimmer.inWater).toBe(false);
+  });
+
+  it("stands on the ground at spawn, whether the spawn is buried or floating", () => {
+    const world = worldOf(floor().concat(floor(1)));
+    // Above it: snapped down onto the surface.
+    expect(groundSnap(world.solidAt, 0.5, 40, 0.5)).toBeCloseTo(2, 2);
+    // Inside it: pushed up, not left in the rock.
+    expect(groundSnap(world.solidAt, 0.5, 0, 0.5)).toBeCloseTo(2, 2);
+    // …and standing there is standing, not falling.
+    const player = standing(0.5, 0.5, groundSnap(world.solidAt, 0.5, 40, 0.5));
+    run(player, world, 60);
+    expect(player.position.y).toBeCloseTo(2, 2);
+    expect(player.onGround).toBe(true);
+  });
+
+  it("walks straight through a meadow, because a plant is not a box", () => {
+    const palette = resolvePalette(["air", "stone", "short_grass"], [false, true, false]);
+    const plants = new Set();
+    for (let x = -8; x < 8; x++) plants.add(`${x},1,0`);
+    const solid = new Set(floor().map((cell) => cell.join(",")));
+    const world = {
+      solidAt: (x, y, z) => {
+        const key = `${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`;
+        if (plants.has(key)) return palette[2].occludes; // false, and that is the point
+        return solid.has(key);
+      },
+      fluidAt: () => false,
+    };
+    const player = standing(0.5, 0.5);
+    player.yaw = Math.PI / 2; // facing −x
+    run(player, world, 120, input({ forward: 1 }));
+    expect(player.position.x).toBeLessThan(-4);
+    expect(player.position.y).toBeCloseTo(1, 2);
+  });
+
+  it("flies free of the world, and lands walking when the mode comes off", () => {
+    const world = worldOf(floor().concat(floor(1), floor(2)));
+    const player = standing(0.5, 0.5, 3);
+    player.fly = true;
+    run(player, world, 60, input({ sink: true }));
+    expect(player.position.y).toBeLessThan(0); // straight through the rock
+    player.fly = false;
+    player.position.y = 8;
+    run(player, world, 180);
+    expect(player.position.y).toBeCloseTo(3, 2);
+    expect(player.onGround).toBe(true);
+  });
+
+  /**
+   * The one test that touches a real export: spawn, snap, and stand.
+   *
+   * Every other test here builds its world by hand, which proves the rules and
+   * proves nothing about the worlds Kai actually walks. This one takes the
+   * manifest's spawn, decodes the chunks around it exactly as the worker does,
+   * and checks that the player ends the first second of the demo standing on
+   * the ground rather than falling through it or buried in it.
+   */
+  it("stands on the ground at the spawn of every world on disk", () => {
+    const worlds = existsSync(WORLDS_DIR)
+      ? readdirSync(WORLDS_DIR).filter((name) =>
+          existsSync(path.join(WORLDS_DIR, name, "manifest.json")),
+        )
+      : [];
+    expect(worlds.length).toBeGreaterThan(0);
+    for (const name of worlds) {
+      const dir = path.join(WORLDS_DIR, name);
+      const manifest = JSON.parse(readFileSync(path.join(dir, "manifest.json"), "utf8"));
+      const palette = resolvePalette(manifest.palette, manifest.solid);
+      const view = new WorldView(manifest);
+      const [sx, , sz] = manifest.spawn;
+      const cx = Math.floor(sx / CHUNK_WIDTH);
+      const cz = Math.floor(sz / CHUNK_WIDTH);
+      for (const entry of manifest.chunks) {
+        if (Math.abs(entry.x - cx) > 1 || Math.abs(entry.z - cz) > 1) continue;
+        view.put(decodeChunk(gunzipSync(readFileSync(path.join(dir, entry.file)))));
+      }
+      const world = {
+        solidAt: (x, y, z) => palette[view.indexAt(x, y, z)]?.collide ?? 0,
+        fluidAt: (x, y, z) => {
+          const block = palette[view.indexAt(x, y, z)];
+          return block !== undefined && (block.name === "water" || block.name === "lava");
+        },
+        climbAt: (x, y, z) => palette[view.indexAt(x, y, z)]?.climb === true,
+      };
+
+      const player = newPlayer();
+      player.frozen = false;
+      player.position.x = sx + 0.5;
+      player.position.z = sz + 0.5;
+      player.position.y = groundSnap(world.solidAt, sx + 0.5, manifest.spawn[1] + 2, sz + 0.5);
+      const landed = player.position.y;
+      run(player, world, 60);
+      expect(player.position.y, name).toBeCloseTo(landed, 2);
+      expect(player.onGround || player.inWater, name).toBe(true);
+      // Standing on it, not in it: the feet are clear of solid rock.
+      expect(boxCollides(world.solidAt, player.position.x, player.position.y, player.position.z), name)
+        .toBe(false);
+      console.log(`[spawn] ${name}: feet at y=${landed.toFixed(3)} (manifest ${manifest.spawn[1]})`);
+    }
+  });
+
+  it("puts the eye 1.62 above the feet and the box 0.6 wide", () => {
+    const player = standing(4.5, 2.5, 7);
+    expect(eyePosition(player)).toMatchObject({ x: 4.5, y: 7 + PLAYER.eye, z: 2.5 });
+    expect(PLAYER.width).toBe(0.6);
+    expect(PLAYER.height).toBe(1.8);
+    expect(PLAYER.eye).toBeCloseTo(1.62, 6);
+    expect(boxCollides(() => true, 0, 0, 0)).toBe(true);
+    expect(boxCollides(() => false, 0, 0, 0)).toBe(false);
+  });
+});
 
 describe("atlas", () => {
   it("reserves slot zero for white and puts every cell inside the sheet", () => {

@@ -155,6 +155,17 @@ const EXACT = {
   cornflower: [70, 106, 200],
   azure_bluet: [222, 226, 232],
   oxeye_daisy: [235, 238, 230],
+  allium: [175, 138, 226],
+  blue_orchid: [47, 181, 199],
+  lily_of_the_valley: [235, 240, 235],
+  red_tulip: [190, 52, 40],
+  orange_tulip: [222, 128, 44],
+  white_tulip: [232, 236, 232],
+  pink_tulip: [232, 170, 200],
+  dead_bush: [148, 112, 60],
+  sweet_berry_bush: [92, 118, 62],
+  pink_petals: [232, 171, 199],
+  wither_rose: [40, 40, 40],
   flower_pot: [126, 80, 62],
   ladder: [143, 112, 65],
   lever: [124, 100, 72],
@@ -293,8 +304,14 @@ const TRANSLUCENT = new Map([
   ["slime_block", 0.7],
 ]);
 
-/** Plants and other things with no real volume; drawn as a small centred box. */
-const SMALL = new Set([
+/**
+ * Plants: two diagonal quads, corner to corner, exactly as Minecraft draws
+ * them. Anything in here is `render: "cross"` — alpha-cutout, never merged,
+ * never occluding, and (see `physics.js`) never solid to walk into. A cube
+ * with a plant texture on it is the single ugliest thing this viewer has ever
+ * drawn; Kai found a meadow of them on his 2026-08-17 walk.
+ */
+const CROSS = new Set([
   "short_grass",
   "grass",
   "tall_grass",
@@ -321,6 +338,51 @@ const SMALL = new Set([
   "lily_of_the_valley",
   "torchflower",
   "wither_rose",
+  "red_tulip",
+  "orange_tulip",
+  "white_tulip",
+  "pink_tulip",
+  "rose_bush",
+  "peony",
+  "lilac",
+  "sunflower",
+  "nether_wart",
+  "crimson_roots",
+  "warped_roots",
+  "nether_sprouts",
+  "bamboo",
+  "bamboo_sapling",
+  "cave_vines",
+  "cave_vines_plant",
+  "twisting_vines",
+  "twisting_vines_plant",
+  "weeping_vines",
+  "weeping_vines_plant",
+  "hanging_roots",
+  "wheat",
+  "carrots",
+  "potatoes",
+  "beetroots",
+]);
+
+/** Ground cover: one flat quad lying just above the floor. */
+const FLAT = new Set(["pink_petals", "wildflowers", "leaf_litter"]);
+
+/**
+ * The shape of a plant name nobody listed. Deliberately narrow, and only ever
+ * consulted for a block the exporter could *not* prove is a full cube, so a
+ * `grass_block` or a `mushroom_stem` never reaches it.
+ */
+const PLANTISH =
+  /(^|_)(grass|fern|flower|flowers|sapling|mushroom|bush|shrub|roots|sprouts|vines|petals|tulip|orchid|lily|seagrass|kelp|wart|sugar_cane)($|_)/;
+
+/** Is this name drawn as a plant rather than as a box? */
+export function isCross(name) {
+  return CROSS.has(name) || name.endsWith("_sapling");
+}
+
+/** Things with no real volume that are still boxes; drawn as a small one. */
+const SMALL = new Set([
   "flower_pot",
   "torch",
   "wall_torch",
@@ -347,11 +409,27 @@ const FULL = [0, 0, 0, 1, 1, 1];
  * judging yet and costs frames everybody is.
  */
 export function shapeOf(name, solidFlag) {
+  // `render` defaults to "box": every rule below that does not say otherwise
+  // is describing a box, and the mesher must never see the field missing.
+  return { render: "box", ...shapeRules(name, solidFlag) };
+}
+
+function shapeRules(name, solidFlag) {
   const base = name.startsWith("potted_") ? "flower_pot" : name;
   if (TRANSLUCENT.has(base)) {
     // A fluid stops just short of the top so its surface reads as a surface.
     const height = base === "water" ? 0.9 : 1;
-    return { box: [0, 0, 0, 1, height, 1], occludes: false, sameCulls: true };
+    return { box: [0, 0, 0, 1, height, 1], occludes: false, sameCulls: true, render: "box" };
+  }
+  // A plant is not a box at all. It keeps a box anyway — a nominal one, the
+  // footprint the cross sweeps — because everything downstream (merging rules,
+  // the debug wireframe) reads `box`, and nothing downstream may treat it as
+  // geometry: `render` is what decides that.
+  if (isCross(base)) {
+    return { box: [0, 0, 0, 1, 1, 1], occludes: false, sameCulls: false, render: "cross" };
+  }
+  if (FLAT.has(base)) {
+    return { box: [0, 0, 0, 1, 0.0625, 1], occludes: false, sameCulls: false, render: "flat" };
   }
   if (SMALL.has(base)) return { box: [0.3, 0, 0.3, 0.7, 0.8, 0.7], occludes: false, sameCulls: false };
   if (base.endsWith("_carpet") || base === "snow" || base.endsWith("_pressure_plate")) {
@@ -375,10 +453,44 @@ export function shapeOf(name, solidFlag) {
   if (base === "cauldron" || base === "water_cauldron" || base === "hopper" || base === "composter") {
     return { box: FULL, occludes: true, sameCulls: false };
   }
+  // A plant name the table has never heard of. It gets no texture and keeps
+  // its flat colour — but it gets that colour as a *cross*, because the one
+  // thing worse than an unknown flower is an unknown flower drawn as a cube.
+  if (!solidFlag && PLANTISH.test(base)) {
+    return { box: [0, 0, 0, 1, 1, 1], occludes: false, sameCulls: false, render: "cross" };
+  }
   // Fall back on what the exporter measured: `isFullCube` is conservative, so
   // "true" is trustworthy and "false" only means "we could not prove it".
   if (solidFlag) return { box: FULL, occludes: true, sameCulls: false };
   return { box: [0.15, 0, 0.15, 0.85, 0.95, 0.85], occludes: false, sameCulls: false };
+}
+
+/**
+ * A block you walk *up* rather than into.
+ *
+ * Stairs, and only stairs. The mesher draws one as a full cube, so the honest
+ * 0.6 step refuses it and a staircase turns into a ladder of jumps; flagging it
+ * here is what lets `physics.js` give it a step of a whole block. When stairs
+ * are meshed as real steps, this goes away.
+ */
+/**
+ * How tall the block is to walk into: 0 for something you pass straight
+ * through, 1 for a cube, and the box's own height for everything in between.
+ *
+ * This is the *only* thing `physics.js` knows about blocks, and it is why a
+ * slab is a step rather than a wall and a meadow is not a maze. Fluids are 0 —
+ * they are buoyant, which the controller handles separately — and so is every
+ * plant, which is the collision half of "plants are not cubes".
+ */
+export function isClimbable(name) {
+  return name.endsWith("_stairs");
+}
+
+export function collisionHeight(name, shape) {
+  const base = name.startsWith("potted_") ? "flower_pot" : name;
+  if (shape.render === "cross" || shape.render === "flat") return 0;
+  if (base === "water" || base === "lava" || base === "bubble_column") return 0;
+  return shape.box[4];
 }
 
 /**
@@ -422,6 +534,9 @@ export function resolvePalette(palette, solid, layout) {
         box: FULL,
         occludes: false,
         sameCulls: false,
+        render: "box",
+        collide: 0,
+        climb: false,
         alpha: 1,
         emissive: false,
         air: true,
@@ -438,6 +553,9 @@ export function resolvePalette(palette, solid, layout) {
       box: shape.box,
       occludes: shape.occludes,
       sameCulls: shape.sameCulls,
+      render: shape.render,
+      collide: collisionHeight(name, shape),
+      climb: isClimbable(name),
       alpha: TRANSLUCENT.get(base) ?? 1,
       emissive: EMISSIVE.has(base),
       air: false,
