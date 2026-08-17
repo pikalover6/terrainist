@@ -1455,7 +1455,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   infra("culvert", "Culvert"),
   infra("storm_drain", "Storm drain"),
-  infra("retaining_wall", "Retaining wall"),
+  infra("retaining_wall", "Retaining wall", "implemented", {
+    tags: ["size_lin"],
+    note: 'infra.entry@0 `"along"` or `"ring"`, family B: a declared face between two levels at `retaining.seam` rather than masonry stood on a slope — one dressed course at the lip and a two-column terrace behind it, three blocks over the ground the wall stands on. A street that crosses stays open, because there the street is the connection between the levels.',
+  }),
   infra("power_pylon", "Power pylon"),
   // A mast is a declared box and a yaw, not a line over ground nobody owns
   // (docs/INFRA-ENTRIES-v0.md family E, 2026-08-14).
@@ -1466,7 +1469,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   }),
   infra("street_lamp_run", "Street lighting run"),
   infra("city_gate", "City gate"),
-  infra("terrace_steps", "Terrace steps"),
+  infra("terrace_steps", "Terrace steps", "implemented", {
+    tags: ["size_lin"],
+    note: 'infra.entry@0 `"across"` a face, family B: the flight that makes one passable. The datum follows the hillside a course at a time and the levels go through the ground contract, so the run is terrain the walker climbs rather than stair blocks laid on a slope. A cheek on each hand.',
+  }),
 
   /* --- waterworks -------------------------------------------------------- */
   // The three water movers (docs/INFRA-ENTRIES-v0.md families B and D, landed
@@ -2034,9 +2040,9 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["classical_mediterranean", "size_m"],
     note: "The monumental fountain: a niched screen wall with basins under it, water in the floor plane on the bathhouse's pool predicate.",
   }),
-  infra("acropolis_terrace", "Sanctuary terrace", "not_started", {
+  infra("acropolis_terrace", "Sanctuary terrace", "implemented", {
     tags: ["classical_mediterranean", "size_lin"],
-    note: "Polygonal masonry retaining that raises a sanctuary above its town — the retaining pass's grandest client, with a stair cut into one face.",
+    note: 'infra.entry@0 `"ring"` or `"along"`, family B\'s grandest row: two columns of polygonal face six blocks proud and a four-column peribolos behind it, declared as a face so the sanctuary stands on its own ground. Votives at a long pitch on the walk. The stair into the face is `terrace_steps` placed across the same seam.',
   }),
   rur("olive_press", "Olive press", "implemented", {
     tags: ["classical_mediterranean", "size_s"],
@@ -2596,10 +2602,10 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["east_asian", "size_xl"],
     note: "Stacked tiered storeys, each smaller than the one below, over a battered stone base with a curved cyclopean face; gables break every second eave.",
   }),
-  mil("castle_base_wall", "Battered stone base", "not_started", {
+  mil("castle_base_wall", "Battered stone base", "implemented", {
     kind: "infrastructure",
     tags: ["east_asian", "size_lin"],
-    note: "The curved ōgi revetment the keep stands on — the retaining pass's most demanding client, and buildable as a swept course with a coping.",
+    note: 'infra.entry@0 `"ring"` or `"along"`, family B: the ōgi revetment the keep stands on, drawn as three courses receding inward as they climb — a batter in one-column steps — with a coping and the bailey behind it, all declared as one face.',
   }),
   civ("drum_tower", "Drum tower", "implemented", {
     tags: ["east_asian", "size_l"],

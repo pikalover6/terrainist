@@ -66,6 +66,16 @@ export const KNOWN_INFRA_ENTRIES = [
   "dam",
   "weir",
   "canal_lock",
+  // W7 — family B, the retaining / terrain-defining entries. The four rows
+  // whose real content is a declared `face` between two levels at
+  // `retaining.seam`, rank 60 / tier B, rather than a thing stood on a slope.
+  // (The family's other five are already answered: `harbour_wall` and `quay`
+  // are `precinct.harbour@0`'s, `dam` and `weir` are W5's, and `slipway` waits
+  // on the water side.)
+  "retaining_wall",
+  "terrace_steps",
+  "acropolis_terrace",
+  "castle_base_wall",
 ] as const;
 
 /** An entry id. */
@@ -122,6 +132,13 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   dam: Object.freeze(["across"]),
   weir: Object.freeze(["across"]),
   canal_lock: Object.freeze(["across"]),
+  // Family B. A face bounds something or runs beside a way, so `ring` and
+  // `along`; the one exception is the flight, and `across` is the whole of what
+  // a flight is — the connection between the two levels a face separates.
+  retaining_wall: Object.freeze(["along", "ring"]),
+  terrace_steps: Object.freeze(["across"]),
+  acropolis_terrace: Object.freeze(["ring", "along"]),
+  castle_base_wall: Object.freeze(["ring", "along"]),
 });
 
 /** True for an entry the registry knows. */

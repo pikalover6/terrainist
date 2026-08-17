@@ -98,25 +98,37 @@ describe("the East Asian pack's props", () => {
   });
 
   /**
-   * The pack's four unbuilt entries are nobody's yet, and must stay that way:
-   * a status flipped without a generator is exactly what `catalog.test.ts`
-   * exists to catch.
+   * The pack's remaining unbuilt entries are nobody's yet, and must stay that
+   * way: a status flipped without a generator is exactly what
+   * `catalog.test.ts` exists to catch.
    *
    * `paifang` and `spirit_wall` were re-kinded to `prop` on 2026-08-14
    * (docs/INFRA-ENTRIES-v0.md family E: a declared box and a yaw, not a route).
    * The kind says who will host them; the status still says nobody has.
+   *
+   * `castle_base_wall` left this list on 2026-08-17: it is family B's ōgi
+   * revetment and landed as an `infra.entry@0` row that declares a face at
+   * `retaining.seam`, which is checked below rather than here.
    */
   it("leaves the pack's unbuilt entries alone", () => {
     for (const [id, kind] of [
       ["moon_gate", "infrastructure"],
       ["paifang", "prop"],
-      ["castle_base_wall", "infrastructure"],
       ["spirit_wall", "prop"],
     ] as const) {
       expect(structureById(id)?.status, id).toBe("not_started");
       expect(structureById(id)?.kind, id).toBe(kind);
       expect(PROP_NAMES as readonly string[], id).not.toContain(id);
     }
+  });
+
+  it("hosts the pack's battered keep base as a family-B entry, not as a prop", () => {
+    // The catalog guard joins implemented `infrastructure` rows to
+    // `INFRA_ENTRY_IDS` in both directions; this is the pack's own half of it.
+    const row = structureById("castle_base_wall");
+    expect(row?.status).toBe("implemented");
+    expect(row?.kind).toBe("infrastructure");
+    expect(PROP_NAMES as readonly string[]).not.toContain("castle_base_wall");
   });
 
   it("does not collide with the houses the pack complements", () => {

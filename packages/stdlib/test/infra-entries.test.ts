@@ -54,6 +54,15 @@ const W6 = ["aqueduct", "telegraph_line", "maglev_pylon"] as const;
 /** W5's three — the water movers (`docs/INFRA-ENTRIES-v0.md` families B, D). */
 const W5 = ["dam", "weir", "canal_lock"] as const;
 
+/**
+ * W7's four — family B, the retaining / terrain-defining entries.
+ *
+ * The family's other five need no row: `harbour_wall` and `quay` are
+ * `precinct.harbour@0`'s and always were, `dam` and `weir` are W5's, and
+ * `slipway` is held for the water side.
+ */
+const W7 = ["retaining_wall", "terrace_steps", "acropolis_terrace", "castle_base_wall"] as const;
+
 describe("the registry's shape", () => {
   it("keys every row by its own id", () => {
     for (const [key, def] of Object.entries(INFRA_ENTRIES)) expect(def.id).toBe(key);
@@ -103,9 +112,9 @@ describe("the registry's shape", () => {
 
 describe("W0's host, W1's four, and the W2/W3 tail", () => {
   it("carries the fixture, P2's four and the tail — and only the fixture is internal", () => {
-    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4, ...W6, ...W5]);
+    expect(Object.keys(INFRA_ENTRIES)).toEqual([INFRA_TEST_ENTRY, ...W1, ...TAIL, ...W4, ...W6, ...W5, ...W7]);
     expect(infraEntry(INFRA_TEST_ENTRY)?.internal).toBe(true);
-    for (const id of [...W1, ...TAIL, ...W4, ...W6, ...W5]) {
+    for (const id of [...W1, ...TAIL, ...W4, ...W6, ...W5, ...W7]) {
       expect(infraEntry(id)?.internal, id).toBeUndefined();
     }
   });
@@ -115,7 +124,7 @@ describe("W0's host, W1's four, and the W2/W3 tail", () => {
     // other in both directions; an internal row would fail the reverse
     // direction, and excluding it here is what makes the guard exact rather
     // than weakened to a one-way check.
-    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4, ...W6, ...W5]);
+    expect(INFRA_ENTRY_IDS).toEqual([...W1, ...TAIL, ...W4, ...W6, ...W5, ...W7]);
     expect(INFRA_ENTRY_IDS).not.toContain(INFRA_TEST_ENTRY);
   });
 
@@ -400,6 +409,141 @@ describe("the test fence — the host's own client", () => {
       // No slab, no stair, no fence, no wall: each is either a physics finding
       // waiting to happen or a hole a mob paths through.
       expect(block, block).not.toMatch(/_(slab|stairs|fence|wall|gate)$/);
+    }
+  });
+});
+
+describe("W7 — family B, the retaining / terrain-defining entries", () => {
+  it("declares a face's class, declares levels, and stands on the ground it finds", () => {
+    for (const id of W7) {
+      const def = infraEntry(id);
+      expect(def, id).toBeDefined();
+      // `retaining.seam` is the only class `face` is legal from
+      // (`GROUND-CONTRACT-v0.md` §2.2), which is the whole of why family B
+      // needed no new host: rank 60 / tier B, the retaining pass's own class.
+      expect(def?.sourceClass, id).toBe("retaining.seam");
+      // The entry *is* a statement about the ground. Said as blocks it would be
+      // a facade with raw dirt behind it.
+      expect(def?.declaresLevels, id).toBe(true);
+      // The lift lives in the bands, never in the datum: a face stands on the
+      // low ground it finds and raises the platform behind it.
+      expect(def?.rise, id).toBe(0);
+      // A street that crosses a face is the connection between its two levels,
+      // so it stays open — except on the flight, where the ground is declared
+      // under the crossing and there is nothing to open for.
+      expect(def?.crossings, id).toBe(id === "terrace_steps" ? "block" : "open");
+      expect(def?.geometry.kind, id).toBe("route");
+    }
+  });
+
+  it("lifts the ground on one hand and writes nothing on the other", () => {
+    // Every row but the flight is `asymmetric`, so the band walker lays lanes
+    // on the inward hand only — lane 0 is the face and the lanes past it run
+    // back into the platform the wall holds. The low side is not written at
+    // all, because the low side is whatever was already there.
+    for (const id of ["retaining_wall", "acropolis_terrace", "castle_base_wall"] as const) {
+      const def = infraEntry(id);
+      if (def?.geometry.kind !== "route") throw new Error(`${id} is not a route`);
+      const profile = def.geometry.profile(CONTEXT);
+      expect(profile.asymmetric, id).toBe(true);
+      const levels = profile.bands.map((b) => b.level ?? 0);
+      // Every band above the datum, and the last one — the standable top — at
+      // the full lift: a face between two levels, not a bank.
+      for (const level of levels) expect(level, id).toBeGreaterThan(0);
+      expect(levels.at(-1), id).toBe(Math.max(...levels));
+      // Non-decreasing inward, which is what makes a batter a batter.
+      for (let i = 1; i < levels.length; i++) {
+        expect((levels[i] as number) >= (levels[i - 1] as number), `${id} band ${i}`).toBe(true);
+      }
+      // The innermost band is the face itself and the outermost is walkable.
+      // …the face on a battered row being its lowest course, so a `footing`.
+      expect(["core", "footing"], id).toContain(profile.bands[0]?.role);
+      expect(profile.bands.at(-1)?.role, id).toBe("walkway");
+    }
+  });
+
+  it("castle_base_wall steps back at every course — the ōgi batter", () => {
+    const def = infraEntry("castle_base_wall");
+    if (def?.geometry.kind !== "route") throw new Error("route row");
+    const bands = def.geometry.profile(CONTEXT).bands;
+    // Three receding courses before the bailey: a batter drawn in one-column
+    // steps is the closest a lattice gets to the fan curve.
+    const rising = bands.filter((b, i) => i === 0 || (b.level ?? 0) > (bands[i - 1]?.level ?? 0));
+    expect(rising.length).toBeGreaterThanOrEqual(3);
+    // Each riser one column wide: a two-column step reads as a terrace.
+    for (const band of bands.slice(0, -1)) expect(band.width, band.id).toBe(1);
+  });
+
+  it("terrace_steps is the flight, and the flight is the only `across` row", () => {
+    const def = infraEntry("terrace_steps");
+    if (def?.geometry.kind !== "route") throw new Error("route row");
+    expect(def.routes).toEqual(["across"]);
+    const profile = def.geometry.profile(CONTEXT);
+    // `follow: "grade"` at `maxGrade: 1` *is* the stair: the datum tracks the
+    // hillside a course at a time and the declaration hands the resolver that
+    // ladder of levels.
+    expect(profile.follow).toBe("grade");
+    expect(profile.maxGrade).toBe(1);
+    // Symmetric, unlike the rest of the family: a flight has a cheek per hand.
+    expect(profile.asymmetric).toBeUndefined();
+    expect(profile.bands[0]?.centred).toBe(true);
+    expect(profile.bands[0]?.role).toBe("walkway");
+    // No band lifted: a flight *is* the transition, so its levels come from
+    // the grade rather than from an offset off the datum.
+    for (const band of profile.bands) expect(band.level ?? 0, band.id).toBe(0);
+  });
+
+  it("leaves the top standable: a solid course, and never a cap over it", () => {
+    // The walkability rule, and the reason no row here carries a `cap`: a
+    // retaining wall's rail is the retaining pass's own per-column `railRun`,
+    // and a swept cap would put a solid ring around the terrace the entry just
+    // made standable.
+    for (const id of W7) {
+      const def = infraEntry(id);
+      if (def?.geometry.kind !== "route") throw new Error(`${id} is not a route`);
+      for (const band of def.geometry.profile(CONTEXT).bands) {
+        expect(band.cap, `${id}: ${band.id}`).toBeUndefined();
+        // Solid non-water, and no slab, stair, fence or wall — each is either a
+        // physics finding waiting to happen or a hole a mob paths through.
+        for (const block of [band.surface, band.fill]) {
+          if (block === undefined) continue;
+          expect(block, `${id}: ${block}`).not.toMatch(/_(slab|stairs|fence|wall|gate)$/);
+          expect(block, `${id}: ${block}`).not.toMatch(/water|lava/);
+        }
+      }
+    }
+  });
+
+  it("is a pure function of its context, and takes the theme's own stone", () => {
+    const themed = ALL_MATERIAL_THEMES.find(
+      (t) => (t.stones[0]?.primary ?? "cobblestone") !== "cobblestone",
+    ) as MaterialTheme;
+    for (const id of W7) {
+      const def = infraEntry(id);
+      if (def?.geometry.kind !== "route") throw new Error(`${id} is not a route`);
+      // Twice over, and against a re-seeded context: geometry never takes a
+      // random number.
+      expect(JSON.stringify(def.geometry.profile(CONTEXT)), id).toBe(
+        JSON.stringify(def.geometry.profile({ ...CONTEXT, seed: new Uint8Array(32).fill(7) })),
+      );
+      expect(JSON.stringify(def.geometry.profile({ ...CONTEXT, theme: themed })), id).not.toBe(
+        JSON.stringify(def.geometry.profile(CONTEXT)),
+      );
+    }
+  });
+
+  it("seats every fitting it names, and names one for every feature it seats", () => {
+    for (const id of W7) {
+      const def = infraEntry(id);
+      if (def?.geometry.kind !== "route") throw new Error(`${id} is not a route`);
+      const features = (def.geometry.profile(CONTEXT).features ?? []).map((f) => f.id).sort();
+      expect(Object.keys(def.fittings ?? {}).sort(), id).toEqual(features);
+      for (const fitting of Object.values(def.fittings ?? {})) {
+        expect(fitting.stack.length, id).toBeGreaterThan(0);
+        for (const block of fitting.stack) {
+          expect(block, `${id}: ${block}`).not.toMatch(/_(slab|stairs|fence|wall|gate)$/);
+        }
+      }
     }
   });
 });

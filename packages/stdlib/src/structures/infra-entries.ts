@@ -1537,6 +1537,217 @@ function canalLockProfile(ctx: InfraContext): InfraSweptProfile {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* W7 — family B, the retaining / terrain-defining entries                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The four rows below are `docs/INFRA-ENTRIES-v0.md` **family B**, and the
+ * family is defined by one sentence: *"a declared `face` between two levels"*.
+ *
+ * ## Why they are declaring entries and not swept walls
+ *
+ * A retaining wall is not masonry stood on a hillside — it is the statement
+ * *"the ground on this hand is higher than the ground on that hand, and the
+ * step between them is dressed"*. Said as blocks it is a facade with raw dirt
+ * behind it; said through the ground contract it is terrain. So every row here
+ * carries `declaresLevels` and `sourceClass: "retaining.seam"`, which is the
+ * only class `face` is legal from (`GROUND-CONTRACT-v0.md` §2.2's `LEGAL_KINDS`,
+ * and §13.2's rank 60 / tier B). The host declares, the resolver arbitrates,
+ * and only then is the top course laid on the ground it was actually given.
+ *
+ * ## The cross-sections are one-sided, and that is the geometry
+ *
+ * Every row is `asymmetric`, so the band walker lays lanes on the **inward**
+ * hand only: lane 0 is the face itself and the lanes past it run back into the
+ * platform the wall holds — `RETAINING_PROFILE`'s own construction, which
+ * thickens outward so a wall never eats the terrace it carries. The low side
+ * is not written at all, because the low side is whatever was already there.
+ * The `level` on each band is therefore the *lift*: how far above the ground
+ * the wall stands on this band's columns end up.
+ *
+ * That also makes the batter free. `castle_base_wall`'s ōgi curve is three
+ * bands at rising levels stepping inward — from below you read courses
+ * receding as they climb, which is what a battered base *is* — and no new
+ * vocabulary was needed to say it.
+ *
+ * ## Walkability
+ *
+ * No row here carries a `cap`. A retaining wall's rail is the retaining pass's
+ * own per-column `railRun` and is not a swept course; a cap here would put a
+ * solid ring around a terrace the entry just made standable. So the top of
+ * every one of these is a solid non-water course with open air over it, which
+ * is the whole of the walkability rule.
+ */
+
+/** Blocks of lift a plain retaining wall carries — a wall, not a kerb. */
+const RETAIN_LIFT = 3;
+
+/** The sanctuary's lift: the terrace is meant to be seen from the town. */
+const ACROPOLIS_LIFT = 6;
+
+/** The keep's podium, in courses — three receding courses and a bailey top. */
+const CASTLE_LIFT = 6;
+
+/**
+ * `retaining_wall` — the plainest face there is (W7, family B).
+ *
+ * One dressed course at the lip and a two-column terrace behind it, three
+ * blocks above the ground the wall stands on. `along` a way or `ring` around
+ * something: those are the two things a retaining wall is ever the boundary
+ * of, and a wall thrown `across` a street is the curtain wall's job.
+ */
+function retainingWallProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/retaining_wall",
+    asymmetric: true,
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "face",
+        role: "core",
+        width: 1,
+        level: RETAIN_LIFT,
+        surface: stone.accent,
+        fill: stone.primary,
+      },
+      {
+        id: "terrace",
+        role: "walkway",
+        width: 2,
+        level: RETAIN_LIFT,
+        surface: stone.primary,
+        fill: stone.primary,
+      },
+    ],
+  };
+}
+
+/**
+ * `terrace_steps` — the flight that makes a face passable (W7, family B).
+ *
+ * The one row of the family that goes `across`, and the reason is the same one
+ * the retaining pass gives for leaving a crossing street open: *a street that
+ * crosses a seam is the connection between its two levels*. A flight is that
+ * connection, drawn on purpose.
+ *
+ * `follow: "grade"` at `maxGrade: 1` is the whole stair. The datum tracks the
+ * hillside a block at a time, the declaration hands the resolver that ladder of
+ * levels, and what the walker gets is a run of columns each one course above
+ * the last — the tread law's own geometry, arrived at by declaring terrain
+ * rather than by stacking stair blocks the physics lint would have to forgive.
+ *
+ * Symmetric, unlike the rest of the family: a flight has a cheek on each hand.
+ */
+function terraceStepsProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/terrace_steps",
+    follow: "grade",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "tread",
+        role: "walkway",
+        width: 3,
+        centred: true,
+        surface: stone.accent,
+        fill: stone.primary,
+      },
+      { id: "cheek", role: "kerb", width: 1, surface: stone.primary, fill: stone.primary },
+    ],
+  };
+}
+
+/**
+ * `acropolis_terrace` — the family's grandest row (W7, family B).
+ *
+ * Two columns of polygonal face six blocks proud, and four columns of
+ * peribolos behind it: the sanctuary stands on its own ground, above the town
+ * that looks up at it. A votive stands on the walk at a long pitch, which is
+ * the one thing that tells a terrace from a plinth on a walk.
+ *
+ * **The stair cut into one face is not here, and that is composition rather
+ * than an omission.** `docs/INFRA-ENTRIES-v0.md` describes this row as "its
+ * grandest row plus a stair cut into one face"; the stair is
+ * {@link terraceStepsProfile}, which an author places `across` the same seam.
+ * Building a second flight into this cross-section would be one entry owning
+ * two mechanisms, and the family already ships the second one.
+ */
+function acropolisTerraceProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/acropolis_terrace",
+    asymmetric: true,
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      {
+        id: "face",
+        role: "core",
+        width: 2,
+        level: ACROPOLIS_LIFT,
+        surface: stone.primary,
+        fill: stone.primary,
+      },
+      {
+        id: "peribolos",
+        role: "walkway",
+        width: 4,
+        level: ACROPOLIS_LIFT,
+        surface: stone.accent,
+        fill: stone.primary,
+      },
+    ],
+    features: [{ id: "votive", pitch: 11, at: "interval", offset: 4 }],
+  };
+}
+
+/**
+ * `castle_base_wall` — the ōgi revetment (W7, family B).
+ *
+ * Three courses receding inward as they climb, then the bailey the keep stands
+ * on. Read from the ground below, a course that steps back at every lift is a
+ * batter, and a batter drawn in one-column steps is the closest a lattice gets
+ * to the fan curve the catalog row names — the same answer `tenshu_keep`'s own
+ * base already gives, said once here so the two agree.
+ */
+function castleBaseWallProfile(ctx: InfraContext): InfraSweptProfile {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/castle_base_wall",
+    asymmetric: true,
+    follow: "step",
+    maxGrade: 1,
+    crossing: "stop",
+    bands: [
+      { id: "footing", role: "footing", width: 1, level: 2, surface: stone.primary, fill: stone.primary },
+      { id: "batter", role: "core", width: 1, level: 4, surface: stone.primary, fill: stone.primary },
+      {
+        id: "coping",
+        role: "kerb",
+        width: 1,
+        level: CASTLE_LIFT,
+        surface: stone.accent,
+        fill: stone.primary,
+      },
+      {
+        id: "bailey",
+        role: "walkway",
+        width: 3,
+        level: CASTLE_LIFT,
+        surface: stone.accent,
+        fill: stone.primary,
+      },
+    ],
+  };
+}
+
 /**
  * Every infrastructure entry, by id.
  *
@@ -1833,6 +2044,65 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     rise: 0,
     declaresLevels: true,
     water: { hold: 2, freeboard: 1, reach: LOCK_REACH, face: 3, chamber: LOCK_CHAMBER },
+  } satisfies InfraEntryDef,
+
+  /* --- W7: family B, the retaining / terrain-defining entries --- */
+  // Four rows, one mechanism: `declaresLevels` at `retaining.seam`, which is
+  // the only class a `face` is legal from. `crossings: "open"` throughout —
+  // a street that crosses a face is the connection between its two levels, and
+  // a wall across a road is the mistake the retaining pass already refuses.
+
+  retaining_wall: {
+    id: "retaining_wall",
+    routes: ["along", "ring"],
+    geometry: { kind: "route", profile: retainingWallProfile },
+    sourceClass: "retaining.seam",
+    crossings: "open",
+    // Under this a "wall" is a kerb, and the terrain pass already makes kerbs.
+    minRun: 8,
+    // The lift lives in the bands' `level`, not in the datum: the wall stands
+    // on the low ground it finds and raises the platform behind it.
+    rise: 0,
+    declaresLevels: true,
+  } satisfies InfraEntryDef,
+
+  terrace_steps: {
+    id: "terrace_steps",
+    routes: ["across"],
+    geometry: { kind: "route", profile: terraceStepsProfile },
+    sourceClass: "retaining.seam",
+    // The one row of the family that does *not* open for a carriageway, and
+    // the dam's argument verbatim: the ground under a flight is declared, so
+    // there is nothing to open for. A way that meets these steps climbs them.
+    crossings: "block",
+    // Four columns is one storey at the grade cap — below that it is a doorstep.
+    minRun: 4,
+    rise: 0,
+    declaresLevels: true,
+  } satisfies InfraEntryDef,
+
+  acropolis_terrace: {
+    id: "acropolis_terrace",
+    routes: ["ring", "along"],
+    geometry: { kind: "route", profile: acropolisTerraceProfile },
+    sourceClass: "retaining.seam",
+    crossings: "open",
+    // A sanctuary terrace shorter than its own lift is a plinth.
+    minRun: 16,
+    rise: 0,
+    declaresLevels: true,
+    fittings: { votive: { stack: ["polished_andesite", "chiseled_stone_bricks"] } },
+  } satisfies InfraEntryDef,
+
+  castle_base_wall: {
+    id: "castle_base_wall",
+    routes: ["ring", "along"],
+    geometry: { kind: "route", profile: castleBaseWallProfile },
+    sourceClass: "retaining.seam",
+    crossings: "open",
+    minRun: 12,
+    rise: 0,
+    declaresLevels: true,
   } satisfies InfraEntryDef,
 });
 

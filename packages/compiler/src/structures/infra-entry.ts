@@ -1372,10 +1372,27 @@ export function declareRun(
   // Ascending column index: the claim list is a fact about the region, not
   // about the order the sweep happened to visit its bands in.
   claims.sort((a, b) => a.idx - b.idx);
+  const source = `${job.nodePath}#run`;
+  const sourceClass = asGroundSourceClass(job.def.sourceClass ?? "sweep.run");
+  // Family B — `docs/INFRA-ENTRIES-v0.md` §2's "a declared `face` between two
+  // levels". A retaining entry is not a run that follows the ground; it is the
+  // step, so it commits the kind only `retaining.seam` and `retaining.skirt`
+  // may commit (`LEGAL_KINDS`), with `transition: "wall"` — the face *is* the
+  // transition, the retaining pass's own words at `retaining.ts` §3.3b — and a
+  // `preserve` over the same columns for the same reason that pass pairs the
+  // two: nothing may be left standing over ground a later claim dropped. Both
+  // in one commit, because the resolver has to see them together.
+  if (sourceClass === "retaining.seam" || sourceClass === "retaining.skirt") {
+    driver.commit([
+      { source, sourceClass, kind: "face", columns: claims, transition: "wall" },
+      { source, sourceClass, kind: "preserve", columns: claims, transition: "none" },
+    ]);
+    return claims.length;
+  }
   driver.commit([
     {
-      source: `${job.nodePath}#run`,
-      sourceClass: asGroundSourceClass(job.def.sourceClass ?? "sweep.run"),
+      source,
+      sourceClass,
       kind: "profile",
       columns: claims,
       transition: "ramp",

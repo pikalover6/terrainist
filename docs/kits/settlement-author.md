@@ -2596,6 +2596,7 @@ behind a barrage, a canal climbing a hill. All three go `across` a
 | `weir` | `across` the same | the low-water sibling: a dressed lip one block over the river with a rough shoulder each hand and no parapet. The water comes right to the lip. This is a mill leat's head, a fish pass, a town's river step |
 | `canal_lock` | `across` a canal or a river | two closed timber gates a narrowboat apart, stone catwalks flanking each leaf, walls round a dug flat floor, and the water inside standing at the **upper** reach. Sculpture with correct water — nothing moves |
 
+
 ```json
 {
   "id": "mill_dam",
@@ -2626,6 +2627,20 @@ Three things about them are worth knowing before you write one:
 - **Upstream is found, not written.** The higher ground is upstream, because
   water runs downhill. You do not get to choose which side floods, and you
   should not want to.
+
+### Worked ground — when the prompt says a terrace, an acropolis, a castle base
+
+These four do not stand *on* the ground: they **are** it. Each declares a face
+between two levels, so what you get is terrain with a dressed top course, not
+masonry with raw dirt behind it. Put them on a slope; on flat ground a face has
+nothing to hold.
+
+| entry | route | what you get |
+|---|---|---|
+| `retaining_wall` | `along` a way, or `ring` a holding | the plain face: one dressed course at the lip and a two-column terrace behind it, three blocks over the ground it stands on, with the low side left as it was. A street that crosses stays open, because there the street is the way between the two levels |
+| `terrace_steps` | `across` a way | the flight that makes a face passable: a three-wide tread with a cheek each hand, cut into the hill a course at a time so it is terrain the walker climbs rather than stairs laid on a slope |
+| `acropolis_terrace` | `ring` a holding, or `along` a way | the sanctuary's own ground: two columns of polygonal face six blocks proud and a four-column peribolos behind it, with votives at a long pitch on the walk. For the stair into it, place `terrace_steps` across the same seam |
+| `castle_base_wall` | `ring` a holding, or `along` a way | the ōgi revetment a keep stands on: three courses receding inward as they climb — a batter in one-column steps — then the coping and the bailey behind it |
 
 Two entries the catalog names are **not** here: `log_flume` and `sluice_box`.
 Both are a trough that follows a fall, and no route form expresses one — asking
