@@ -738,7 +738,7 @@ here.
 | 0 | `fluid.channel` | A | platform, preserve | `digCanals` | Losing a water claim is a *physics* failure, not an ugly walk: raising a column out of a channel opens a face the water flows into on the first tick. `blendShoulders`, `paveSidewalks` and `surfaceRoute` each encode "never move a wet column, never move a column beside one" independently; rank 0 is those three rules stated once. |
 | 10 | `building.footprint` | A | platform, preserve | `padFor` targets, via `pad.record`'s footprint half | A floor plane is fixed before anything else exists. Today enforced by three separate `blocked`/`occupied`/`reserved` masks. |
 | 20 | `precinct.ground` | A | platform | `buildPrecincts` | It runs first of everything today and everything downstream measures what it left. |
-| 25 | `structure.linework` | A | profile, clearance | *reserved* — `infra.wall@0`, aqueducts | Currently writes no level, so the rank is unexercised. Reserved rather than omitted so the table stays total. See §13.2. |
+| 25 | `structure.linework` | A | platform, profile, clearance, preserve | the **linework declaration slot**, between `buildPrecincts` and `pavePlaza` — `viaduct`'s approaches first | A line whose own surface something else must walk onto: the ground makes room for it and the streets *join* it rather than cutting it. Declared against the baseline, with the crossings found in the **solved** layout rather than the finished carriageway — which is what let the rank stop being reserved. See §13.2's 2026-08-17 amendment for the whole contract. |
 | 30 | `plaza.ground` | B | platform | `pavePlaza` | Already outranks streets today, via the `paved` mask and `pinLevel`'s zero band. Rank makes the mask redundant. |
 | 40 | `plaza.well` | B | platform, preserve | `pavePlaza`, `furnishCourtyards` | A one-column dig whose stability proof depends on eight neighbours staying put. |
 | 50 | `courtyard.floor` | B | platform | `furnishCourtyards` | An arch across a step is a lintel with daylight under one end. |
@@ -759,7 +759,12 @@ here.
 **Tier A — the immovable.** Water, floor planes, precinct ground. Each is
 already immovable today via a mask, and each mask exists because a pass
 discovered by walking that it must not write there. Tier A declares against the
-baseline only.
+baseline only. The fourth member, `structure.linework`, is the one that is not a
+mask today: a carried line's own bed, which the network must join rather than
+cut. It declares against the baseline like the other three, and §13.2's
+2026-08-17 amendment is the whole of how it manages that from a pass whose
+crossings are a fact about streets — by taking them from the **solved** layout,
+where they were decided, rather than from the surfaced one.
 
 **Tier B — declared ground.** A plaza, a courtyard, a well, a seam. Each *is* a
 level: it does not accommodate a level, it states one. Tier B declares against
@@ -2115,6 +2120,309 @@ which argues the wall should outrank the road; a wall that cut a street would be
 worse. **Recommendation:** keep 25 (above every street) and require the wall pass
 to declare `"none"` at its gate columns, so the road passes through by
 declaration rather than by rank. Revisit when the wall actually levels ground.
+
+**Reopened and answered, 2026-08-17. Everything from here to §13.3 is
+normative and is the contract for `structure.linework`; the paragraph above is
+kept as the question it was.** The rank stays at 25, it stops being *reserved*,
+and the thing that kept it unexercised turns out to have been a conflation
+rather than a contradiction.
+
+*What the reopening found in the code, and each of these is checkable.*
+
+1. **The resolver is rank-only.** `resolveGround` never reads `GROUND_TIERS`;
+   §5.2's five passes sort by `compareIntent` and nothing else. §4.3's tiers are
+   a statement about what a declarer may **read** (§1.4), not an input to
+   arbitration. A rank-25 intent therefore resolves identically from any
+   pipeline position — the driver re-resolves the whole accumulated prefix
+   against the immutable baseline on every `commit` (§9a.1), so position changes
+   *when* the answer is known, never *what* it is.
+2. **A tier-A class already declares from a post-street pass.**
+   `declareWaterWorks` (`structures/water-works.ts`) commits `fluid.channel` —
+   rank 0, tier A — from `buildInfraEntries`, which runs in the wall's slot,
+   after `surfaceStreetGraph`, `buildRoadNetwork` and `buildDoorsteps`. So
+   "a tier-A declarer must run before the streets" was never a property of the
+   machinery. It is a property of what a tier-A declarer may look at.
+3. **The streets exist before the street pass.** `StreetGraph` — segments
+   carrying `path`, `width`, `kind` and `role`, plus the intersections and the
+   sidewalk band — is decided in the **layout** stage (`layout/district.ts`,
+   `DistrictPlan.streets`), and the arterials are on `CityPlan.arterials`.
+   `surfaceStreetGraph` does not decide *where* a carriageway is; it decides
+   what level it holds and lays it.
+
+Fact 3 is the whole answer. `docs/INFRA-ENTRIES-v0.md` §3.5 wrote *"a tier-A
+declarer must declare against the baseline, before streets exist, while every
+pre-freeze entry finds its crossings against the finished carriageway — both
+cannot be true"*, and the sentence conflates two different questions:
+
+| question | answered by | available |
+| --- | --- | --- |
+| *where does a carriageway cross my line?* | the **solved layout** — segment paths, widths, intersections, arterials, `RouteCorridor`s | from the moment placement is done |
+| *what level does the carriageway hold there?* | the **surfaced** street (§3.6) | only after the street pass |
+
+A tier-A linework needs the first and must never use the second: using it would
+be reading downward, which §1.4 forbids in exactly the terms that make the
+recursion well-founded. Both *can* be true, because they are not the same true.
+
+**13.2a The contract — normative.**
+
+1. **Who declares.** One pass, the **linework declaration slot**. Entries reach
+   it through a registry row, never by each acquiring a pass of its own — the
+   rule `docs/INFRA-ENTRIES-v0.md` §3.3 already states for the host. No other
+   module may construct an intent whose `sourceClass` is `structure.linework`;
+   that is enforced by a `grep`-shaped test in the `agent-defs.test.ts`
+   tradition, beside the one §10 asks for, because a second declarer appearing
+   at a later slot is precisely the failure this contract exists to prevent and
+   it would look exactly like "rank 25 is broken".
+2. **When.** After `buildPrecincts` (rank 20, the last claim above it that
+   grades ground) and **before `pavePlaza`** (rank 30). Pipeline order and rank
+   order then agree from 0 through 30, which is what makes the slot's view a
+   legal tier-A read rather than a convenient one.
+3. **Against what ground state.** The levels a linework declares must be a
+   **pure function of `(GroundBaseline, the resolved answers of ranks 0–20, the
+   solved layout, the finished placement)`** and of nothing else. Concretely:
+   `driver.view()` at the slot, which at that position is the baseline — which
+   already carries the solver's pads, applied to the field before materialisation
+   (§3.12) — plus `precinct.ground` written through. It may not read the
+   plan at any later position, and no linework declarer may run after
+   `pavePlaza`. `digCanals` is rank 0 and runs *later* (§9a.4's named
+   approximation); a linework therefore keeps off water by reading
+   `baseline.fluidKind`, not by waiting for the canal pass, and where it collides
+   anyway rank 0 settles it silently and correctly.
+4. **What it may declare.** `profile` (a bed), `platform` (an abutment or a
+   landing), `clearance` (the underside of whatever it carries), and `preserve`
+   over a subset of the columns it won. **Never `face`** — `LEGAL_KINDS` permits
+   `face` only from `retaining.*`, and that is right: a linework that wants a
+   face declares its bed and lets §5.6 derive the transition, which is how a
+   retaining wall arrives under a viaduct approach without anybody having
+   declared one. **Never `fluid`** — a channel is rank 0, and a linework that
+   holds water is a `fluid.channel` client wearing the wrong hat.
+5. **The crossing set — what refuses, and it refuses by declaring nothing.**
+   Before it declares, the declarer subtracts from **every claim of every kind**:
+   - the **solved carriageway band**: for every `StreetGraph` in the document,
+     every segment whose `role` is absent or `"carriageway"`, rasterized with
+     `lineCells` and dilated by `ceil(width / 2) + 1` in the Chebyshev metric;
+     every arterial `path` at its own width by the same rule; every intersection
+     dilated by `ceil(maxWidth / 2) + 1` for the widest segment meeting there;
+     every registered `RouteCorridor` at its width plus `ROAD_CORRIDOR_MARGIN`;
+   - every column where `baseline.fluidKind !== NONE`. A linework crossing water
+     spans it and declares `clearance` at the deck underside plus `preserve` on
+     the water column (§2.4's bridged column, verbatim) — never a bed.
+
+   Those columns receive **no claim at all**, so the road passes through by
+   declaration rather than by rank. That is §13.2's original instruction,
+   generalised from `infra.wall@0`'s gates to every client of the class.
+6. **The band rule, and why the `+1` is not a fudge.** The crossing set must be
+   a **superset** of the columns the finished carriageway occupies where it meets
+   the course. The `+1` dilation is what makes the superset hold by construction
+   against a rasterizer the declarer does not run, and a test asserts the
+   property directly on both hill-town fixtures and one generated world: no
+   column that ends up `street.network`-owned with `role: "carriageway"` and lies
+   on a declared course is outside the crossing set. If that assertion ever
+   fails the failure is a bed under a lane — the assertion is what makes it loud
+   instead of walked.
+   The dressing is deliberately **not** in the superset. A sidewalk (90), a
+   verge (140) or a doorstep landing (120) losing a column to a bed is the rank
+   order working; a *carriageway* losing one is the defect.
+7. **What the resolver promises.** Given a well-formed declaration:
+   - every claimed column outside the crossing set resolves to the linework's
+     level unless a rank below 25 owns it. Only three classes can:
+     `fluid.channel`, `precinct.ground` and — when something first declares it —
+     `building.footprint`, which is as unexercised today as rank 25 was, because
+     a floor plane reaches the resolver through the baseline and through
+     `pad.record` (150) rather than through rank 10;
+   - every `street.network`, `street.sidewalk`, `road.network`, `sweep.run`,
+     `doorstep.landing`, `farm.parcel`, `prop.pad`, `verge` and `pad.record`
+     claim on those columns loses, silently, counted in its own report row's
+     `refused` and attributed in `refusedTo` (§7);
+   - the boundary between the bed and the ground beside it becomes a
+     `GroundTransition` under §5.6's table — `kerb` under a drop of 2,
+     `retaining` from 2 to `RETAIN_MAX` over at least `MIN_RETAIN_RUN` columns,
+     `bank` otherwise — **derived, never declared**, so a linework never asks
+     for its own retaining wall and never gets one it did not earn;
+   - a `preserve` over the bed turns any lower-ranked loss from silence into
+     `GROUND_CONFLICT` (§5.4), which is how "a doorstep cut into a viaduct
+     approach" becomes news rather than a walk.
+8. **The one thing the contract does not promise, stated so nobody builds on
+   it.** A rank-25 bed does **not** move blocks a lower-ranked pass has already
+   emitted. Materials are Group M and ride the column — a street's
+   `plan.surface` follows its resolved level — but `StructureBlock`s carry an
+   absolute Y, and `dressStreetStairs`, `buildRetainingWalls`,
+   `buildJunctionSteps` and the bridge kit all emit them. A bed committed after
+   those passes would leave their masonry at the old level. **This is the second
+   reason the slot is where it is, and it is what makes rule 2 a hard
+   constraint rather than a stylistic preference.**
+9. **Declare early, build late.** The slot declares levels and writes no block.
+   The materials stay in the wall's slot with the rest of the host, and are laid
+   against `plan.ground` — the resolver's answer — through the existing
+   `declaredColumnOps` path, never against the level the entry asked for. That
+   is §9a.1 rule 2 and §3.13's declare → commit → build, with the declare and the
+   build in two slots instead of one. The two are joined by a handoff record the
+   early pass returns and the late pass consumes: node path → the bed's columns
+   and their declared levels, nothing more.
+10. **Reach law.** A document with no linework-declaring node compiles
+    byte-identically. The slot is total on an empty job list — the caller never
+    constructs the pass, exactly as `buildInfraEntries` is total today — and no
+    world before this contract holds a `structure.linework` claim, so the
+    class's first exercise is byte-identity-free by construction. The same
+    argument `farm.parcel` made at rank 125, for the same reason.
+
+**13.2b Determinism obligations — normative.**
+
+- The route is a pure function of the finished placement plus the solved layout:
+  integer or exact-rational arithmetic over a fixed iteration order, no RNG, no
+  clock (`docs/INFRA-ENTRIES-v0.md` §3.4, unchanged and now load-bearing one
+  tier higher).
+- The crossing set is built by iterating districts in **document order**,
+  `StreetGraph.segments` in their own order, and cells in rasterization order,
+  into a `Set<number>`. The set's iteration order is never observable: the
+  subtraction's result is **sorted ascending by column index** before it becomes
+  an intent's `columns`, which is `declareRun`'s existing rule and §5.7 rule 2
+  restated for a declarer.
+- A bed that crosses itself must merge before it declares. A column claimed
+  twice at two levels is `LOAM-E494` (§5.7 rule 3), so the tie is broken
+  explicitly: **the lower level wins, then the lower chord index** — stated
+  here because an unstated tie-break is two runs disagreeing, which is the one
+  determinism hazard `INFRA-ENTRIES` §3.4 already names for `across` and `into`.
+- `subRank` is unused within `structure.linework` and must stay unset. Two
+  linework declarers order by `source`, which is the node path, which is unique;
+  a `subRank` would make that order depend on a job list nobody promised to
+  stabilise.
+- `columns` may still be generated lazily; the driver materialises each intent
+  on receipt (§9a.1 rule 4).
+
+**13.2c Diagnostics — the `T23x` family, continued from `LOAM-T234`.**
+
+The resolver's `LOAM-W49x` codes are unchanged and do the arbitration half:
+a bed that loses columns to rank 0/10/20 is `GROUND_CLAIM_ADJUSTED`
+(`LOAM-I491`), below `minColumns` it is `GROUND_CLAIM_REFUSED` (`LOAM-W492`),
+and a guarded loss is `GROUND_CONFLICT` (`LOAM-W490`). Two new codes carry the
+half the resolver cannot see, because it is about the *crossing subtraction* and
+happens before anything is declared:
+
+| code | name | fires when |
+| --- | --- | --- |
+| `LOAM-T235` | `LINEWORK_BED_REFUSED` | the bed kept fewer than `minColumns` columns after the crossing subtraction, so no bed is declared at all and the run is built on the ground it finds. The message names the count and which of the two subtractions took them — carriageway or water — because "my viaduct has no approach" and "my viaduct is in a river" are different news |
+| `LOAM-T236` | `LINEWORK_BED_INTERRUPTED` | the bed was declared but the crossing subtraction cut it into more than one run, or removed more than `INFRA_REFUSAL_FRACTION` of its columns. A note, not a warning: the entry is built and the honest recovery is reported the way `WALL_MARGIN_REDUCED` and `INFRA_RUN_REFUSED` report theirs |
+
+Per §13.6's precedent neither enters `FEEDBACK_CODES`: a code that fires on every
+world costs money in the authoring loop and buys an invented change.
+
+**13.2d Why not retirement — the case, weighed and refused.**
+
+Retirement was the honest alternative and it nearly won. Of the three clients
+this section and `INFRA-ENTRIES` §3.5 promised the rank, **two landed without
+it**: `aqueduct` and `maglev_pylon` shipped 2026-08-15 as `carry` spans on the
+`between` form, where a pier is *refused* where something else owns the column
+rather than negotiated for, and `telegraph_line` landed the same day as a poled
+hanging span. The third, `infra.wall@0`, still writes no level. Across all 68
+taxonomy rows, family A declares `sweep.run`, family B declares `retaining.seam`
+(and `fluid.channel` for the two that move water), and families C/D/E/F declare
+nothing at all — so on the evidence of the shipped host, rank 25 has no client
+and the table could lose a member.
+
+The carried-span doctrine is *right*, and the reason it is right is exactly the
+reason it does not generalise: **nothing walks onto an aqueduct's water or a
+maglev guideway's beam.** A run whose surface no other subsystem must meet has
+no business asking the ground for anything, and refusing a pier is a better
+answer than re-levelling a lane to seat one. That property fails for precisely
+one member of the family — the one that did not land. **A viaduct's deck is a
+carriageway.** A road must arrive on it, which means its approach embankments
+are ground the street network has to join rather than cut.
+
+So the rank's purpose can be written in one sentence, which is what it was
+missing:
+
+> **`structure.linework` is for a line whose own surface something else must
+> walk onto.** The ground makes room for it and the streets join it; a line
+> nothing walks onto refuses instead, and stays at `sweep.run`.
+
+Retiring the rank would delete a union member, a rank, a tier row, a typed
+adapter (`InfraSourceClass`) and one refusal, and would buy nothing the first
+viaduct would not have to re-derive from scratch — including this sentence,
+which took a reopening to find. Kept, contracted, and now falsifiable: if the
+first two clients below both come back as refusals on a walk, retirement is the
+right call and the rank number stays reserved-dead for history.
+
+**13.2e The first two clients.**
+
+| client | taxonomy row | route | declares | must not |
+| --- | --- | --- | --- | --- |
+| **`viaduct`** | `INFRA-ENTRIES` §2 family **A**, the 25-row list; catalog `infra("viaduct", "Viaduct")`, still unimplemented — the last of the three carried runs §4's post-freeze tail item 4 promised the rank | `between` two placed anchors, as `aqueduct` and `maglev_pylon` already resolve it | its two **approach embankments** as `profile` at rank 25 — grade at the outer end rising to `deckY` at each abutment, at the entry's own grade cap — plus `clearance` at the deck underside over every bay, plus `preserve` over the embankments | declare a bed **under the arcade**. The bays keep their ground at grade: that is the one thing an arcade must not take away from what it crosses (`INFRA-ENTRIES` §3.2's carried-span rule 2), and a viaduct that levelled its own bays would be an embankment with holes in it |
+| **`infra.wall@0`** | `INFRA-ENTRIES` §2, the two "already answered" rows — and this section's original subject | `ring`, `deriveWallCourse` verbatim, unchanged | a **levelled wall bed**: the course benched rather than following every hummock, as `profile` + `preserve`, and **nothing at all** at the crossing columns, which is where the found gate then lands | change its gate *dressing*. The bed's crossings come from the solved layout in the early slot; the gate fitting keeps being found against the finished carriageway in `walls.ts`'s own slot, and rule 6's superset property is what guarantees the two agree |
+
+**The wall's adoption is gated on a walk, and must not ship blind.** Whether a
+benched course reads better than the found-ground course it has today is an
+aesthetic call, it is Kai's, and the standing manual-critique law says a look is
+never tuned without a walk. The contract above is what makes the experiment
+one flag rather than a redesign: the wall declares nothing until the verdict, and
+the machinery lands with `viaduct`, which is not a taste question.
+
+**13.2f Implementation brief.**
+
+Dispatchable as written; `opus-5-low` against this section, no further design.
+It is machinery plus one client, and the client is what proves the machinery.
+
+*Order, and each step is separately committable.*
+
+1. **The crossing set** — new `layout/solved-carriageway.ts`:
+   `solvedCarriagewayMask(region, districts, cities, corridors): Uint8Array`,
+   implementing §13.2a rule 5's first bullet exactly, reusing `lineCells`
+   (`structures/roads.ts`) and `ROAD_CORRIDOR_MARGIN` (`layout/corridors.ts`).
+   Pure, no plan, unit-testable without a compile — the `street-owner.ts`
+   discipline.
+2. **The slot** — new `structures/linework.ts` and one call site in
+   `structures/index.ts` between `buildPrecincts` (~line 527) and `pavePlaza`
+   (~line 856). Total on an empty job list. It fills the existing
+   `InfraPlacementView` with `onRoad` backed by step 1's mask and `ground`
+   backed by `driver.view()` at the slot, calls `resolveInfraRoute` unchanged,
+   computes the bed, subtracts, sorts ascending, and `driver.commit`s the
+   `profile` + `clearance` + `preserve` triple in **one** call — companion
+   intents belong in one arbitration (§3.13). Returns `LineworkBeds`: node path
+   → columns and declared levels.
+3. **The handoff** — `buildInfraEntries` takes `LineworkBeds` and, for a job
+   whose row declares `structure.linework`, skips the sweep's own declaration
+   and lays materials through `declaredColumnOps` against `plan.ground`. The
+   existing `INFRA_ENTRY_PARAM` refusal at the top of its job loop is
+   **replaced, not deleted**: the wall's slot still refuses the class from its
+   own position, and the message changes from "post-freeze work" to "declare it
+   from the linework slot".
+4. **The codes** — `LOAM-T235` / `LOAM-T236` in
+   `packages/spec/src/terrain/diagnostics.ts`, continuing the block that ends at
+   `INFRA_RUN_REFUSED`, neither in `FEEDBACK_CODES`.
+5. **The client** — `viaduct`'s registry row in
+   `packages/stdlib/src/structures/infra-entries.ts`: `aqueductSpan`'s sibling
+   with the channel removed, the deck widened to a carriageway, `sourceClass:
+   "structure.linework"`, and the approach parameters. Catalog row flips to
+   `implemented` with its note. One exhibit row: a run, not a cell — a straight
+   segment, a curve, a corner and one crossing a slope (`CATALOG-EXPANSION` §5
+   rule 5).
+
+*Tests.*
+
+- `test/ground-contract.test.ts` — `structure.linework` accepts `profile`,
+  `platform`, `clearance`, `preserve` and **rejects `face`**; rank 25 still sits
+  strictly between `precinct.ground` and `plaza.ground`; tier still `A`.
+- `test/linework.test.ts` (new) — the crossing set is a superset of the
+  carriageway columns on both hill-town fixtures and one generated world (rule
+  6); the subtraction is order-independent (shuffle the district list, compare
+  the intent's `columns` element for element); the self-intersection tie-break;
+  `T235` on a bed subtracted below `minColumns`; `T236` on a bed cut in two.
+- `test/ground-resolver.test.ts` — a rank-25 `profile` beats a `street.network`
+  `profile` on a shared column and the street's report row attributes the loss;
+  a rank-0 `fluid.channel` beats the linework; a `preserve` over the bed raises
+  `GROUND_CONFLICT` when a doorstep loses a guarded column.
+- **Reach law** — the byte-identity harness of §12 on `c1-harbourtown`,
+  `showcase-deltamere` and both hill-town fixtures: no linework node, not one
+  byte moved. Prove the harness can see a difference before trusting that it saw
+  none.
+- The **grep-shaped test** of §13.2a rule 1: no module outside
+  `structures/linework.ts` constructs an intent with `sourceClass:
+  "structure.linework"`.
+
+*What this brief must not touch.* `layout/ground-resolver.ts` — the resolver
+needs no change for any of it, and that is the strongest evidence the rank was
+designed right the first time. `structures/retaining.ts`, `walls.ts` and the
+wall's gate finding, all unchanged until the walk verdict of §13.2e.
 
 **13.3 Should the pad's apron become a declared transition?**
 The fourth walked defect — "a building's `apron: 2` ramped away the seam a

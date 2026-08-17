@@ -282,11 +282,11 @@ registry row names which one an entry declares:
 |---|---|---|---|
 | `sweep.run` | 110 / C | `quarantine_fence`, `hedgerow`, `dry_stone_wall`, `cart_track`, `boardwalk`, `barricade_line` | a fence yields to a street; that is correct and it is what the class is for |
 | `retaining.seam` | 60 / B | family B, via the retaining pass | the only class `face` is legal from |
-| `structure.linework` | 25 / A | `aqueduct`'s arcade, `maglev_pylon`'s guideway | ground must accommodate a pier, not the reverse |
+| `structure.linework` | 25 / A | `viaduct`'s approach embankments; `infra.wall@0`'s bed, when a walk asks for one | a line something else must walk onto: the ground makes room for it and the streets join it |
 
-`structure.linework` is **reserved and unexercised today** — §13.2 put it at 25
-for `infra.wall@0` and recorded that the wall writes no levels, so nothing has
-ever declared it.
+`structure.linework` was **reserved and unexercised** for the whole pre-freeze
+period — §13.2 put it at 25 for `infra.wall@0` and recorded that the wall writes
+no levels, so nothing ever declared it.
 
 > **Amended 2026-08-16.** The clients this table once promised to rank 25 —
 > `aqueduct`'s arcade, `maglev_pylon`'s guideway — landed **without it**, as
@@ -296,14 +296,51 @@ ever declared it.
 > declaration of it. `telegraph_line` landed the same day as a poled hanging
 > span. The client column above and every "post-freeze" note on these three
 > ids are superseded; rank 25 remains reserved, still unexercised, still
-> waiting on the §13.2 reopening. **Nothing pre-freeze declares it either**, and that is a
-deliberate scope line: a tier-A declarer must declare against the baseline,
-before streets exist, while every pre-freeze entry finds its crossings against the
-*finished* carriageway. Both cannot be true; the wall has lived with exactly this
-tension by writing no levels; resolving it properly is post-freeze work that
-reopens §13.2.
+> waiting on the §13.2 reopening.
 
-So **every pre-freeze entry declares `sweep.run` or declares nothing.** A
+> **Amended 2026-08-17 — the reopening happened, and this paragraph's premise
+> was wrong.** What stood here said: *nothing pre-freeze declares rank 25
+> either, and that is a deliberate scope line — a tier-A declarer must declare
+> against the baseline, before streets exist, while every pre-freeze entry finds
+> its crossings against the finished carriageway; both cannot be true.* Both
+> **can** be true, and `GROUND-CONTRACT` §13.2's 2026-08-17 amendment is the
+> contract that makes them so. The sentence conflated two questions: *where a
+> carriageway crosses my line* is a fact about the **solved layout** —
+> `DistrictPlan.streets` carries every segment's path, width and role, and
+> `CityPlan.arterials` the rest, all decided in the layout stage — while *what
+> level the carriageway holds there* is a fact about the surfaced street. A
+> tier-A linework needs the first, must never read the second, and the first is
+> available before `pavePlaza`. Two further facts settle it: `resolveGround` is
+> **rank-only** and never reads `GROUND_TIERS`, so position changes when an
+> answer is known and never what it is; and a tier-A class already declares from
+> this very pass — `declareWaterWorks` commits `fluid.channel` at rank 0 from
+> the wall's slot, after the streets, and has done since the water movers
+> landed.
+>
+> **So rank 25 is now contracted, not reserved.** A declaring linework moves to
+> a new **linework declaration slot** between `buildPrecincts` and `pavePlaza`;
+> it subtracts the solved carriageway band and every wet column from its claim
+> before declaring, so the road still passes through by declaration rather than
+> by rank; it declares levels only, and its materials stay in the wall's slot,
+> laid against the resolver's answer through `declaredColumnOps`. §5's risk
+> line *"the moment an entry declares `structure.linework` the pass must move to
+> before the streets, and the gate-finding it does today becomes impossible"* is
+> half right and half superseded: the **declaration** moves, the **gate finding**
+> does not, and rule 6's superset property is what guarantees the two agree.
+> `buildInfraEntries` keeps refusing the class from its own slot — the refusal is
+> re-pointed, not removed.
+>
+> **What this does not change.** The carried-span doctrine stands and is why the
+> rank went unexercised for so long: nothing walks onto an aqueduct's water or a
+> maglev guideway's beam, so refusing a pier is the right answer for both and
+> neither wanted rank 25. It is `viaduct` — family A, still unimplemented, and
+> the one carried run whose deck is a **carriageway** — that needs the ground to
+> make room, because a road has to arrive on it. Every other entry in this
+> document is unaffected, and a document with no linework node compiles
+> byte-identically (`GROUND-CONTRACT` §13.2a rule 10).
+
+So **every entry declares exactly one of the table's three classes, or nothing
+at all** — and only a declaring linework declares from a second slot. A
 floor-plane treatment declares nothing at all — it writes no level, takes no
 column, and only re-materialises the top course of ground the resolver already
 decided, which is the material-ownership gap §13.4 leaves open, accepted here
@@ -376,6 +413,18 @@ after everything that could move the ground under them. Family B's entries do
 **not** run here — they run inside `buildRetainingWalls` at line ~871, where they
 always did.
 
+**Amended 2026-08-17 — one entry family now runs in two slots.** A **declaring
+linework** (§3.5's rank-25 row) splits: its *levels* are declared in the new
+**linework declaration slot**, between `buildPrecincts` and `pavePlaza`, and its
+*materials* are laid here in the wall's slot with everything else, against
+`plan.ground` — the resolver's answer — through `declaredColumnOps`. Two slots
+rather than one is not a convenience either: the early slot is the only position
+from which a tier-A declaration is a legal read (`GROUND-CONTRACT` §1.4), and the
+late slot is the only position at which the carriageway a gate is dressed against
+is finished. The handoff between them is one record — node path → the bed's
+columns and their declared levels. Every non-declaring entry is untouched and
+still runs here alone.
+
 ## 4. What ships pre-freeze
 
 Fifteen days to the 2026-08-28 machinery freeze. **The host is machinery; the
@@ -419,7 +468,10 @@ sweep** — sixteen rows get a `kind` override and a note, zero runtime work;
 **three bridges**, profile variants on the shipped bridge kit; (4) `between` plus
 the **tier-A declaration** — `aqueduct`, `viaduct`, `maglev_pylon` — which is
 where §13.2 is reopened and answered, and is the largest single item on this
-page; (5) the **embedded family (D)**; (6) the **water-movers** — `dam`, `weir`,
+page *(**2026-08-17:** `between` landed 08-15 with `aqueduct` and
+`maglev_pylon`; §13.2 was reopened and answered 08-17; what is left of item 4 is
+`viaduct` alone, which is the contract's first client and now the smallest of
+the four rather than the largest)*; (5) the **embedded family (D)**; (6) the **water-movers** — `dam`, `weir`,
 `canal_lock`, at `fluid.channel` rank 0, which is a real hydrology conversation.
 
 ## 5. Risks and refusals
@@ -440,6 +492,17 @@ amendment.) Repeated
 from §3.5 because it is the line most likely to be crossed by accident: the
 moment an entry declares `structure.linework` the pass must move to before the
 streets, and the gate-finding it does today becomes impossible.
+
+**Superseded 2026-08-17, in its second half only.** "No new
+`GroundSourceClass`" stands and is not negotiable. The tier-A half is now
+answered rather than refused: a declaring linework does move to before the
+streets — the new **linework declaration slot** — and the gate finding does
+*not* become impossible, because a crossing is found in the solved layout, where
+it was decided, and the entry's materials stay in the wall's slot. See §3.5's
+2026-08-17 amendment and `GROUND-CONTRACT` §13.2a. The risk this line was
+guarding against is real and has simply moved: it is now **a second declarer of
+rank 25 appearing at a later slot**, which would look exactly like "rank 25 is
+broken", and §13.2a rule 1's grep-shaped test is what catches it.
 
 **No absolute coordinates, ever.** `margin`, `offset` and `run` are distances and
 are legal; a vertex, a bearing in degrees or an `[x, z]` is not. The route

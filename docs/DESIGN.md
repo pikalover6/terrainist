@@ -1030,14 +1030,14 @@ shipped — see "What is built today".)*
   popup-settled follow-ups (per-species `snowLine`; law 1 suspended with
   `capWood` at source).
 - **Infrastructure family — the host is shipped, the entries are content.**
-  `infra.entry@0` carries fifteen registry rows; the catalog holds forty-eight
-  infrastructure rows, twenty-two of them implemented by one route or another
-  (the host, the wall, a precinct, a prop). What remains is the tail that needs
-  more than a registry row:
-  **aqueduct** (a carried carriageway is a statement about the ground, so it
-  wants a tier-A ground declaration of its own), viaduct and rail, mine
-  headworks, and the family-B rows that are a declared *face* rather than a
-  line and belong to the retaining pass.
+  `infra.entry@0`'s registry keeps growing (seventeen rows and counting —
+  count it, don't quote it); the aqueduct, telegraph line and maglev landed as
+  carried and poled spans that *refuse* ground rather than negotiate for it.
+  What remains is the tail that needs more than a registry row:
+  **viaduct** (a carried *carriageway* something must walk onto — the one
+  client that genuinely wants the tier-A `structure.linework` declaration,
+  whose contract GROUND-CONTRACT §13.2a now states), rail, mine headworks,
+  and the family-B rows that are a declared *face* rather than a line.
 - **Agricultural layer — the minimal farm is shipped, the taxonomy is not.**
   `precinct.farm@0` gives a holding its parcels, its farmstead and a farmland
   clamp; hedgerows and dry-stone walls arrived as infra entries. Camps and the
