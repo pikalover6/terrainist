@@ -269,6 +269,12 @@ async function boot() {
     }),
   );
   atlas.colorSpace = THREE.NoColorSpace; // the shader linearises it itself
+  // The layout counts rows from the canvas TOP; three's default flipY upload
+  // made every cell rect address the vertically mirrored row instead — the
+  // whole world wore someone else's textures, except the middle row, which
+  // mirrors to itself and is why the sandstone alone looked right (found on
+  // Kai's walk, 2026-08-17).
+  atlas.flipY = false;
   atlas.magFilter = THREE.NearestFilter;
   atlas.minFilter = THREE.LinearMipmapLinearFilter;
   atlas.generateMipmaps = true;
