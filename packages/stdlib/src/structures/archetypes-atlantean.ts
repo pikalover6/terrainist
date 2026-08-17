@@ -1615,13 +1615,24 @@ function fitTideBellTower(ctx: FitOutContext, c: PropCounter): void {
   const hangX = bay ?? Math.floor((it.x0 + it.x1) / 2);
   let hung = false;
   if (head >= 5 && front > it.z0 && front < it.z1 && ctx.free(hangX, front)) {
+    // The bell hangs DIRECTLY under the solid cap: the physics lint requires
+    // a full cube at y+1 for attachment=ceiling, and a chain is not one — a
+    // defect dormant until the first exhibit tower tall enough to reach this
+    // branch (found 2026-08-17). The chain now hangs beside the bell, one
+    // column toward the head wall, purely as the pull-rope: cap-supported
+    // top-down, closed by construction.
     c.stack(hangX, front, head, cap);
-    c.stack(hangX, front, head - 1, "iron_chain", CHAIN_Y);
-    hung = c.stack(hangX, front, head - 2, "bell", {
+    hung = c.stack(hangX, front, head - 1, "bell", {
       attachment: "ceiling",
       facing,
       powered: "false",
     });
+    const ropeZ = headZ === it.z0 ? front - 1 : front + 1;
+    if (hung && ropeZ >= it.z0 && ropeZ <= it.z1 && ctx.free(hangX, ropeZ)) {
+      c.stack(hangX, ropeZ, head, cap);
+      c.stack(hangX, ropeZ, head - 1, "iron_chain", CHAIN_Y);
+      c.stack(hangX, ropeZ, head - 2, "iron_chain", CHAIN_Y);
+    }
   }
   if (!hung) {
     standInRow(ctx, c, headZ, hangX, "bell", {

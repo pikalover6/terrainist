@@ -744,8 +744,16 @@ describe("the tide bell's hang", () => {
             continue;
           }
           expect(bell.props?.["attachment"], `${label}: how the bell hangs`).toBe("ceiling");
+          // The physics lint demands a FULL CUBE at y+1 for attachment=ceiling
+          // — iron_chain is not one, which was this pack's one dormant defect
+          // (exposed by the first exhibit tower tall enough to hang, fixed
+          // 2026-08-17). The bell hangs on the solid cap; the chain is the
+          // pull-rope one column toward the head wall, itself closed top-down.
           const over = at.get(`${bell.x},${bell.y + 1},${bell.z}`)?.block;
-          expect(over, `${label}: the bell hangs on`).toBe("iron_chain");
+          expect(
+            over !== undefined && over !== "air" && over !== "iron_chain",
+            `${label}: the bell hangs on a full cube, got ${over}`,
+          ).toBe(true);
         }
       }
     }

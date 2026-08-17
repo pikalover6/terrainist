@@ -95,6 +95,10 @@ import {
   DWARVEN_ROW_LENGTH,
   STEPPE_EXHIBIT_ROWS,
   STEPPE_ROW_LENGTH,
+  SWAMP_EXHIBIT_ROWS,
+  SWAMP_ROW_LENGTH,
+  ATLANTEAN_EXHIBIT_ROWS,
+  ATLANTEAN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -245,6 +249,10 @@ describe("dev world grid", () => {
     const dwarven = DWARVEN_EXHIBIT_ROWS.length * DWARVEN_ROW_LENGTH;
     // The steppe_nomad pack: prefixed (`step_khans_ger`) likewise.
     const steppe = STEPPE_EXHIBIT_ROWS.length * STEPPE_ROW_LENGTH;
+    // The swamp_witch pack: prefixed (`swmp_witch_stilt_hut`) likewise.
+    const swamp = SWAMP_EXHIBIT_ROWS.length * SWAMP_ROW_LENGTH;
+    // The atlantean pack: prefixed (`atl_tidal_palace`) likewise.
+    const atlantean = ATLANTEAN_EXHIBIT_ROWS.length * ATLANTEAN_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -295,6 +303,8 @@ describe("dev world grid", () => {
         mesoamerican +
         dwarven +
         steppe +
+        swamp +
+        atlantean +
         commerce +
         garrison + science +
         arcana +

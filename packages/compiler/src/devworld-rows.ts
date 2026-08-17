@@ -74,10 +74,22 @@ export { DWARVEN_EXHIBIT_ROWS, DWARVEN_ROW_LENGTH, dwarvenSizeFor } from "./exhi
 
 /** The steppe_nomad rows, for tests that assert on the gradient. */
 export { STEPPE_EXHIBIT_ROWS, STEPPE_ROW_LENGTH, steppeSizeFor } from "./exhibits/steppe.js";
+
+/** The swamp_witch rows, for tests that assert on the gradient. */
+export { SWAMP_EXHIBIT_ROWS, SWAMP_ROW_LENGTH, swampSizeFor } from "./exhibits/swamp.js";
+
+/** The atlantean rows, for tests that assert on the gradient. */
+export {
+  ATLANTEAN_EXHIBIT_ROWS,
+  ATLANTEAN_ROW_LENGTH,
+  atlanteanSizeFor,
+} from "./exhibits/atlantean.js";
 import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
 import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
 import { DWARVEN_EXHIBIT_ROWS } from "./exhibits/dwarven.js";
 import { STEPPE_EXHIBIT_ROWS } from "./exhibits/steppe.js";
+import { SWAMP_EXHIBIT_ROWS } from "./exhibits/swamp.js";
+import { ATLANTEAN_EXHIBIT_ROWS } from "./exhibits/atlantean.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -174,6 +186,10 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...DWARVEN_EXHIBIT_ROWS,
   // The steppe_nomad pack: the camp, the horse line and the corral.
   ...STEPPE_EXHIBIT_ROWS,
+  // The swamp_witch pack: the stilt hut, the drying loft and the leech pools.
+  ...SWAMP_EXHIBIT_ROWS,
+  // The atlantean pack: the tidal palace, the rotunda and the moon pool.
+  ...ATLANTEAN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
