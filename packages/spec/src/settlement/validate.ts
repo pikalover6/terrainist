@@ -3179,6 +3179,14 @@ export const SETTLEMENT_PROP_NAMES = [
   "water_tank_trestle",
   "placer_claim",
   "boot_hill_row",
+  // --- nordic_viking pack ---
+  // The Nordic & Viking pack's ground half: the three entries of that pack
+  // which stand on the open ground rather than roofing a room. Order matches
+  // `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts` asserts
+  // element by element.
+  "rune_stone",
+  "boat_burial_mound",
+  "drying_rack_yard",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

@@ -21,7 +21,7 @@ import {
 import { structureById } from "../src/structures/catalog.js";
 
 describe("the registry", () => {
-  it("carries the nine packs of CATALOG-EXPANSION-v0 §3", () => {
+  it("carries the packs of CATALOG-EXPANSION-v0 §3, and every pack since", () => {
     expect(formPackIds()).toEqual([
       "classical_mediterranean",
       "nautical_pirate",
@@ -32,6 +32,9 @@ describe("the registry", () => {
       "frontier_west",
       "nile_egypt",
       "east_asian",
+      // --- mesoamerican_jungle pack ---
+      "mesoamerican_jungle",
+      "nordic_viking",
     ]);
   });
 
@@ -65,7 +68,9 @@ describe("the registry", () => {
         seen.set(member, pack.id);
       }
     }
-    expect(seen.size).toBe(144); // 145 proposed, less `sphinx`, ratified out.
+    // 145 proposed by §3, less `sphinx` (ratified out), plus the
+    // mesoamerican_jungle pack's fifteen and the nordic_viking pack's sixteen.
+    expect(seen.size).toBe(175);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

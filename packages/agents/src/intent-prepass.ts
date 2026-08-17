@@ -151,7 +151,7 @@ export const EXAMPLE_PROP_IDS = [
 ] as const;
 
 /**
- * The nine form packs, `id -> thesis`, exactly as the classifier is shown them.
+ * The form packs, `id -> thesis`, exactly as the classifier is shown them.
  *
  * Hand-listed for the same reason {@link MATERIAL_THEME_IDS} is: the registry
  * lives in `@terrainist/stdlib`, which the agents package deliberately does not
@@ -202,6 +202,16 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
   [
     "east_asian",
     "the PUBLIC forms around the houses: torii, moon gates, paifang arches, dry gardens, a tiered castle keep.",
+  ],
+  // --- mesoamerican_jungle pack ---
+  [
+    "mesoamerican_jungle",
+    "maya/aztec in the rainforest: step pyramids with a stair up the face, ball courts, stelae, a caracol, sacbes, thatch dwellings.",
+  ],
+  // --- nordic_viking pack ---
+  [
+    "nordic_viking",
+    "vikings/norse/fjords: mead halls with the fire down the middle, a chieftain's high seat, longship sheds on the water, turf houses, a heathen hof, rune stones, boat burials, fish drying racks.",
   ],
 ] as const;
 

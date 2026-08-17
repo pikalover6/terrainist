@@ -437,3 +437,92 @@ describe("resolveGround", () => {
     expect(codes(r)).toContain("LOAM-W492");
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* §13.2a rule 7 — what the resolver promises a rank-25 bed                    */
+/* -------------------------------------------------------------------------- */
+
+describe("a `structure.linework` bed (GROUND-CONTRACT §13.2a rule 7)", () => {
+  /** Five columns of approach embankment at 76, over a baseline of 70. */
+  const bed = (extra: Partial<GroundIntent> = {}): GroundIntent =>
+    claim(
+      "world.town.viaduct#linework",
+      "structure.linework",
+      [2, 3, 4, 5, 6].map((x) => ({ idx: idx(x, 8), y: 76 })),
+      { transition: "ramp", ...extra },
+    );
+
+  it("beats a `street.network` profile, and the street's row says who took it", () => {
+    const street = claim(
+      "world.town.high_street",
+      "street.network",
+      [4, 5, 6, 7, 8].map((x) => ({ idx: idx(x, 8), y: 70 })),
+    );
+    // Declared in the *other* order deliberately: the resolver sorts by rank
+    // and the answer must not depend on which pass ran first.
+    const r = resolveGround(baselineAt(70), [street, bed()]);
+    for (const x of [2, 3, 4, 5, 6]) expect(r.ground[idx(x, 8)]).toBe(76);
+    for (const x of [7, 8]) expect(r.ground[idx(x, 8)]).toBe(70);
+
+    const row = r.report.claims.find((c) => c.source === "world.town.high_street");
+    expect(row?.refused).toBe(3);
+    expect(row?.refusedTo["world.town.viaduct#linework"]).toBe(3);
+    // Silently — a lane losing a column to a bed is the rank order working.
+    expect(codes(r)).not.toContain("LOAM-W490");
+  });
+
+  it("loses to a rank-0 `fluid.channel`, which is how it keeps out of a canal", () => {
+    const canal = claim(
+      "world.town.canal",
+      "fluid.channel",
+      [4, 5].map((x) => ({ idx: idx(x, 8), y: 66, fluid: { kind: 1 as const, top: 69 } })),
+    );
+    const r = resolveGround(baselineAt(70), [bed(), canal]);
+    for (const x of [4, 5]) expect(r.ground[idx(x, 8)]).toBe(66);
+    for (const x of [2, 3, 6]) expect(r.ground[idx(x, 8)]).toBe(76);
+    // §13.2a rule 3's named approximation, working: `digCanals` runs *later*
+    // than the linework slot, and rank 0 settles the collision silently.
+    const row = r.report.claims.find((c) => c.source === "world.town.viaduct#linework");
+    expect(row?.refused).toBe(2);
+    expect(row?.refusedTo["world.town.canal"]).toBe(2);
+  });
+
+  it("raises GROUND_CONFLICT when a doorstep cuts into a preserved approach", () => {
+    // The guard is declared alongside the claim it protects, over a subset of
+    // its columns and from the same source — §5.4's rule, which is why the two
+    // share `world.town.viaduct#linework`.
+    const guard = claim(
+      "world.town.viaduct#linework",
+      "structure.linework",
+      [3, 4].map((x) => ({ idx: idx(x, 8), y: 76 })),
+      { kind: "preserve" },
+    );
+    const doorstep = claim(
+      "world.town.cottage#landing",
+      "doorstep.landing",
+      [3, 4].map((x) => ({ idx: idx(x, 8), y: 71 })),
+    );
+    const r = resolveGround(baselineAt(70), [bed(), guard, doorstep]);
+    for (const x of [3, 4]) expect(r.ground[idx(x, 8)]).toBe(76);
+    expect(codes(r)).toContain("LOAM-W490");
+    expect(r.report.conflicts).toHaveLength(2);
+    for (const conflict of r.report.conflicts) {
+      expect(conflict.guard).toBe("world.town.viaduct#linework");
+      expect(conflict.loser).toBe("world.town.cottage#landing");
+      expect(conflict.guardY).toBe(76);
+      expect(conflict.askedY).toBe(71);
+    }
+  });
+
+  it("derives the transition beside the bed rather than being asked for one", () => {
+    // Rule 7's last-but-one bullet: a linework never asks for its own retaining
+    // wall and never gets one it did not earn.
+    const r = resolveGround(baselineAt(70), [bed()]);
+    expect(r.transitions.length).toBeGreaterThan(0);
+    for (const t of r.transitions) {
+      expect(t.aboveSource).toBe("world.town.viaduct#linework");
+      expect(t.requested.above).toBe("ramp");
+      expect(t.drop).toBe(6);
+    }
+  });
+});

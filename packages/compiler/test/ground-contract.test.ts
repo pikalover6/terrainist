@@ -223,3 +223,53 @@ describe("the legal-class table", () => {
     }
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* §13.2a — `structure.linework`, the class that stopped being reserved        */
+/* -------------------------------------------------------------------------- */
+
+describe("structure.linework (GROUND-CONTRACT §13.2a)", () => {
+  it("sits strictly between `precinct.ground` and `plaza.ground`, in tier A", () => {
+    expect(INTENT_RANK["structure.linework"]).toBe(25);
+    expect(INTENT_RANK["precinct.ground"]).toBeLessThan(INTENT_RANK["structure.linework"]);
+    expect(INTENT_RANK["structure.linework"]).toBeLessThan(INTENT_RANK["plaza.ground"]);
+    expect(GROUND_TIERS["structure.linework"]).toBe("A");
+  });
+
+  it("beats every street, sidewalk, road, sweep, doorstep, pad and verge", () => {
+    for (const loser of [
+      "plaza.ground",
+      "retaining.seam",
+      "retaining.skirt",
+      "street.network",
+      "street.sidewalk",
+      "road.network",
+      "sweep.run",
+      "doorstep.landing",
+      "farm.parcel",
+      "prop.pad",
+      "verge",
+      "pad.record",
+    ] as const) {
+      expect(INTENT_RANK["structure.linework"]).toBeLessThan(INTENT_RANK[loser]);
+    }
+  });
+
+  it("loses to the three classes §13.2a rule 7 names, and to nothing else", () => {
+    const beaters = GROUND_SOURCE_CLASSES.filter(
+      (cls) => INTENT_RANK[cls] < INTENT_RANK["structure.linework"],
+    );
+    expect([...beaters]).toEqual(["fluid.channel", "building.footprint", "precinct.ground"]);
+  });
+
+  it("accepts `platform`, `profile`, `clearance` and `preserve` and REJECTS `face`", () => {
+    // §13.2a rule 4: a linework that wants a face declares its bed and lets
+    // §5.6 derive the transition, which is how a retaining wall arrives under a
+    // viaduct approach without anybody having declared one.
+    for (const kind of ["platform", "profile", "clearance", "preserve"] as const) {
+      expect(isLegalKind(kind, "structure.linework")).toBe(true);
+    }
+    expect(isLegalKind("face", "structure.linework")).toBe(false);
+    expect([...LEGAL_KINDS.face]).not.toContain("structure.linework");
+  });
+});

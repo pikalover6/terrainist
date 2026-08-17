@@ -1432,7 +1432,13 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     tags: ["water", "size_lin"],
     note: 'infra.entry@0 `"between"` two anchors: a level masonry channel nine courses up on an arcade, three columns of held water between lined walls with a maintenance walk outside each, and piers to the ground every seven columns so the passage under it stays open at grade. The water is written whole or not at all, so a trough that cannot be sealed comes out dry rather than leaking.',
   }),
-  infra("viaduct", "Viaduct"),
+  // The ground contract's first `structure.linework` client (rank 25, tier A —
+  // GROUND-CONTRACT §13.2's 2026-08-17 amendment). The aqueduct's sibling, and
+  // the one member of the carried family whose deck something walks onto.
+  infra("viaduct", "Viaduct", "implemented", {
+    tags: ["size_lin"],
+    note: 'infra.entry@0 `"between"` two anchors: a seven-wide masonry carriageway eleven courses up on an arcade, a rail course down each edge, and piers to the ground every seven columns so the passage under it stays open at grade. Its two approach embankments are declared through the ground contract at rank 25 before the streets exist, so a lane crossing one passes through by declaration rather than by rank, and a street that meets the deck joins it instead of cutting it.',
+  }),
   infra("water_tower", "Water tower", "implemented", {
     wave: 6,
     kind: "building",
@@ -2634,6 +2640,148 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
   rel("bell_pavilion", "Bell pavilion", "implemented", {
     tags: ["east_asian", "size_m"],
     note: "An open pavilion on a raised podium with a great bell hung from the beam and a striking log slung beside it — the tiered-eave answer to `bell_tower`'s masonry shaft.",
+  }),
+
+  /* --- mesoamerican_jungle pack --- */
+  rel("step_pyramid", "Step pyramid", "implemented", {
+    tags: ["mesoamerican_jungle", "size_xl"],
+    note: "The anchor: tiers stepping inward over the plate, a real climbable stair up the axial face of them, a carved temple crown on top. A temple PLATFORM rather than a solid mass — a building's rebuild budget is the room between the eave plate and the allowance, and a filled storey is `interior.blocked_column` for every column of it (the Nile pack's arithmetic, restated).",
+  }),
+  rel("jaguar_temple", "Jaguar temple", "implemented", {
+    tags: ["mesoamerican_jungle", "size_l"],
+    note: "A mossy limestone shrine under a roof comb — a thin filled wall standing on the ridge, taller than the room and carrying nothing — with a carved throne facing the door.",
+  }),
+  mem("serpent_stair", "Feathered serpent stair", "implemented", {
+    tags: ["mesoamerican_jungle", "size_l"],
+    note: "A balustraded flight up the tiers: real stair treads with a wall rail either side and carved heads where the rails land at the foot.",
+  }),
+  mem("stela_plaza", "Stela plaza", "implemented", {
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "Carved standing stones ranked round an open floor, each capped short of the ceiling, with a low altar slab at the head of the rank.",
+  }),
+  lei("ball_court", "Ball court", "implemented", {
+    tags: ["mesoamerican_jungle", "size_l"],
+    note: "Two banked walls either side of an alley, sloped by a stair course on their inner faces, with a stone ring standing on each bank.",
+  }),
+  sci("round_observatory", "Round observatory", "implemented", {
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "The caracol: a round drum built as filled discs stepping in per course under a dome, lit by glowstone in its own skin. Bare `observatory` stays the science wave's.",
+  }),
+  civ("palace_range", "Palace range", "implemented", {
+    tags: ["mesoamerican_jungle", "size_xl"],
+    note: "A long low range whose whole front is a rank of openings under one roofline, on an apron colonnade of posts and lintels.",
+  }),
+  com("market_ramada", "Market ramada", "implemented", {
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "Open post-and-thatch stalls: posts round the apron, thatch stepping in over them, trestles and baskets instead of rooms.",
+  }),
+  mem("tzompantli_rack", "Skull rack", "implemented", {
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "Deliberately RESTRAINED: posts and two cross beams standing in the apron of a plain platform, and what such a frame carried left to the reader. Nothing here is a head.",
+  }),
+  wat("chultun_cistern", "Chultun", "implemented", {
+    kind: "building",
+    tags: ["mesoamerican_jungle", "size_s"],
+    note: "The bottle cistern's curbed mouth under a corbelled shoulder. The flask itself is below the floor plane, where a building fit-out may not go, so it is implied by the curb rather than lied about.",
+  }),
+  infra("sacbe_terminus", "Sacbe terminus", "implemented", {
+    kind: "building",
+    tags: ["mesoamerican_jungle", "size_l"],
+    note: "The raised white-road platform a causeway climbs onto: a plinth with outward-facing steps all round, a clear deck and a pair of markers.",
+  }),
+  rur("milpa_terrace", "Milpa terrace", "implemented", {
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "Maize beds written INTO the floor plane in whole blocks (moss and coarse dirt, never `farmland` — fifteen sixteenths of a cube is the `mud` lesson in a hat), behind an apron retaining course.",
+  }),
+  water("canoe_landing", "Canoe landing", "implemented", {
+    kind: "building",
+    tags: ["mesoamerican_jungle", "size_m"],
+    note: "Pole walls under thatch with a plank slipway of stairs stepping down the water face and dugouts racked inside.",
+  }),
+  ver("thatch_dwelling", "Thatch dwelling", "implemented", {
+    tags: ["mesoamerican_jungle", "size_s"],
+    note: "The house that has not changed in two thousand years: pole-and-daub walls, a steep four-sided thatch built as filled courses, a hearth block at the near end.",
+  }),
+  ver("temazcal_bath", "Temazcal", "implemented", {
+    tags: ["mesoamerican_jungle", "size_xs"],
+    note: "The low domed sweat bath: discs stepping in fast over the plate, hot stones capped short of the ceiling against the far wall and a water cauldron beside them.",
+  }),
+
+  /* --- nordic_viking pack --------------------------------------------------
+   * The Norse noun set. "A viking settlement" routes to the medieval era and
+   * arrives as a generic European village in spruce: the palette was never
+   * the problem, the nouns were. Sixteen entries — thirteen buildings and three
+   * ground pieces. Wave 4A's `longhouse` is already exactly this pack's plain
+   * dwelling and no second copy of it is shipped — it is simply not listed as
+   * a member, because a member may belong to only one pack and `longhouse` is
+   * the residential wave's building rather than this pack's.
+   */
+  res("norse_mead_hall", "Mead hall", "implemented", {
+    tags: ["nordic_viking", "size_l"],
+    note: "The long drinking hall: the fire running the length of the axis rather than sitting in a wall, benches down both sides of it, carved gable posts at the head. Tags: norse_mead_hall/mjod_hall/drinking_hall - bare `mead_hall` and bare `longhouse` stay wave 4A's longhouse, which is already the right building.",
+  }),
+  res("jarls_hall", "Chieftain's hall", "implemented", {
+    tags: ["nordic_viking", "size_l"],
+    note: "The mead hall organised round the high seat: a slab dais across the head, the high chair in front of it and a carved pillar either side.",
+  }),
+  rur("longship_shed", "Naust", "implemented", {
+    tags: ["nordic_viking", "size_l"],
+    note: "The boat shed, open-gabled to the water: keel blocks in a broken run down the middle of an otherwise empty floor, spars racked overhead and oars against the far wall.",
+  }),
+  ver("turf_house", "Turf house", "implemented", {
+    tags: ["nordic_viking", "size_s"],
+    note: "The torfbaer: dark, warm, one long bench down the wall away from the door and the hearth at the middle of the floor. Distinct from wave three's `sod_house`, which keeps `sod`/`turf` and every plain spelling of them.",
+  }),
+  rel("stave_belfry", "Stave belfry", "implemented", {
+    tags: ["nordic_viking", "size_s"],
+    note: "The small stave tower: four corner staves carrying the bell frame under the boards with the striking rope beside it. Answers to `stave_church` too - nothing else in the catalog claims the word - while `bell_tower`/`belfry`/`campanile` stay the faith wave's masonry shaft's.",
+  }),
+  ind("norse_forge", "Norse forge", "implemented", {
+    tags: ["nordic_viking", "size_s"],
+    note: "Anvil out on the floor a pace in front of the fire, bellows box and tool barrels down one wall, charcoal in the far corner. Bare `smithy` and bare `forge` stay where they were.",
+  }),
+  rel("hof_shrine", "Hof", "implemented", {
+    tags: ["nordic_viking", "size_m"],
+    note: "The heathen temple: three idol posts across the head, the offering bowl on a stone stall in front of them, unlit candles round the walls. Bare `shrine`/`temple`/`chapel` stay the church's.",
+  }),
+  ver("fishermans_cabin", "Fisherman's cabin", "implemented", {
+    tags: ["nordic_viking", "size_xs"],
+    note: "One room on a cold shore: a slab bunk along the wall away from the door, the net rail overhead on the other, catch barrels by the way in.",
+  }),
+  ind("weaving_hall", "Weaving hall", "implemented", {
+    tags: ["nordic_viking", "size_m"],
+    note: "Warp-weighted looms leaning against both long walls with the wool bins in the bays between them and the cloth table across the head.",
+  }),
+  mil("shield_wall_gate", "Shield gate", "implemented", {
+    tags: ["nordic_viking", "size_m"],
+    note: "The stockade's gate room, shields hung at eye height down the inner wall, the watch bench under them and the spear rack opposite. Bare `gate`/`gatehouse`/`barbican` stay the town and garrison waves'.",
+  }),
+  mil("palisade_watchtower", "Palisade watchtower", "implemented", {
+    tags: ["nordic_viking", "size_s"],
+    note: "The lookout floor over a stockade: a fence rail at intervals round the edge so a watch can see out, the signal brazier bedded in stone at the head, the ladder well left clear.",
+  }),
+  rur("norse_storehouse", "Stabbur", "implemented", {
+    tags: ["nordic_viking", "size_s"],
+    note: "The raised storehouse: everything kept off the floor on a slab plinth down both walls, grain bins along the head, the middle bare because that is where a body carrying a sack walks.",
+  }),
+  rur("wool_shed_norse", "Fleece store", "implemented", {
+    tags: ["nordic_viking", "size_m"],
+    note: "The northern half of the wool trade: hurdles down one wall, a winter's clip baled up on a slab plinth off the cold floor, the sorting table across the head. The id carries the pack because `wool_shed` is the agrarian expansion's shearing shed and a form pack's members must be unique registry-wide; bare `wool_shed`/`woolshed`/`shearing_shed` all still reach that one, and this answers to wool_shed_norse/norse_wool_shed/fleece_shed.",
+  }),
+  mem("rune_stone", "Rune stone", "implemented", {
+    kind: "prop",
+    tags: ["nordic_viking", "size_xs"],
+    note: "prop.place@0: the carved memorial slab on its packed cairn, the band of carving cut round its face, two kerb stones at the cairn's corners.",
+  }),
+  mem("boat_burial_mound", "Boat burial", "implemented", {
+    kind: "prop",
+    tags: ["nordic_viking", "size_l"],
+    note: "prop.place@0: a grassed mound heaped filled-course on filled-course with the ship's stem and stern posts still standing out of the crown, the gunwale line showing through the turf and a boulder kerb round the foot with the way up left open.",
+  }),
+  rur("drying_rack_yard", "Fish drying yard", "implemented", {
+    kind: "prop",
+    tags: ["nordic_viking", "size_m"],
+    note: "prop.place@0: the hjell - two ranks of split cod hung from a timber rail carried above head height, so every lane of the yard under it stays walkable. Salting barrels at one end, the gutting table at the other.",
   }),
 ]);
 

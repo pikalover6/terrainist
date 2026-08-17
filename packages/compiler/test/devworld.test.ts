@@ -494,6 +494,31 @@ describe("dev world build", () => {
     expect(maglev.pylons).toBeGreaterThan(4);
   });
 
+  it("declares the viaduct's approaches through the ground contract", () => {
+    // The band the ground contract's first `structure.linework` client is for
+    // (GROUND-CONTRACT §13.2e). Everything asserted here is about the
+    // *declaration*: the shape half is the aqueduct's band next door.
+    const viaduct = result.viaduct;
+    // The bed was cut by the lane crossing the western approach, which is the
+    // band's whole third claim — so `T236` is the band passing, not failing.
+    expect(viaduct.diagnostics).toEqual(["LOAM-T236"]);
+    // Two embankments, both real, both arbitrated.
+    expect(viaduct.approachColumns).toBeGreaterThan(80);
+    // **Every declared column came back at the level it asked for.** This is the
+    // assertion that would catch a bed the resolver refused and the host paved
+    // anyway — the plank-of-approach-in-the-air defect.
+    expect(viaduct.approachHonoured).toBe(viaduct.approachColumns);
+    // The lane's own columns were never claimed, so it kept its ground.
+    expect(viaduct.approachRefused).toBeGreaterThan(0);
+    // One course of deck, end to end, and walkable for every column of it: the
+    // deck **is** a carriageway, which is the whole reason the rank exists.
+    expect(viaduct.deckColumns).toBeGreaterThan(60);
+    expect(viaduct.walkable).toBe(viaduct.deckColumns);
+    // And the bays kept their grade: a rank of openings at ground level under
+    // the arcade, counted rather than eyeballed.
+    expect(viaduct.openColumns).toBeGreaterThan(40);
+  });
+
   it("builds every prop in the catalog, in its own row", () => {
     const planned = PROP_EXHIBIT_PLAN.reduce((sum, r) => sum + r.cells.length, 0);
     expect(result.props).toHaveLength(planned);

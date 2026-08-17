@@ -156,12 +156,25 @@ export function isImplementedRouteForm(form: string): form is InfraRouteForm {
 /**
  * The ground-contract class an entry declares (§3.5).
  *
- * Three, and no new one — the domain is a subset of the compiler's
+ * Four, and no new one — the domain is a subset of the compiler's
  * `GroundSourceClass`, pinned by the same typed adapter as the profile.
- * `structure.linework` is rank 25 / tier A and is **reserved**: a tier-A
- * declarer must declare before the streets exist, and every pre-freeze entry
- * finds its crossings against the *finished* carriageway. The driver refuses a
- * row that names it, which is the scope line §5 asks to be defended.
+ *
+ * `structure.linework` is rank 25 / tier A and stopped being **reserved** on
+ * 2026-08-17 (`docs/GROUND-CONTRACT-v0.md` §13.2's amendment). The thing that
+ * kept it unexercised was a conflation rather than a contradiction: *where does
+ * a carriageway cross my line?* is answered by the **solved layout**, from the
+ * moment placement is done, and only *what level does it hold there?* waits for
+ * the street pass. So a row naming this class declares from the **linework
+ * slot** — `compiler/src/structures/linework.ts`, between `buildPrecincts` and
+ * `pavePlaza` — and the host's own slot lays its materials against the answer.
+ * The host still refuses the class from *its* position, and a row that reaches
+ * it with no bed is that refusal.
+ *
+ * The rank is for **a line whose own surface something else must walk onto**: a
+ * viaduct's deck is a carriageway, so its approach embankments are ground the
+ * street network has to join rather than cut. A line nothing walks onto — an
+ * aqueduct's water, a guideway's beam — refuses a pier instead and stays at
+ * `sweep.run`.
  */
 export type InfraSourceClass =
   | "sweep.run"
@@ -1262,11 +1275,14 @@ function harbourChainTowerSpan(): InfraSpanDef {
  * found it did not need one. Neither do these: an arcade's piers and a pole
  * line's poles stand on the ground they find, in the columns they find it in,
  * and every one of them is refused rather than negotiated where something else
- * already owns the column. What §3.5 reserves the rank for is an entry that
- * asks the *ground* to accommodate a pier — a cutting, a levelled pier bed —
- * and none of these three asks for that. So the driver's refusal of
- * `structure.linework` stands untouched, and it stands defended: these rows
- * declare nothing at all.
+ * already owns the column. These three rows declare nothing at all, and the
+ * reason generalises exactly as far as it should: **nothing walks onto an
+ * aqueduct's water or a maglev guideway's beam**, so neither has any business
+ * asking the ground for anything.
+ *
+ * That property fails for one member of the family — `viaduct`, below, whose
+ * deck *is* a carriageway — and that is the whole of why rank 25 exists
+ * (`docs/GROUND-CONTRACT-v0.md` §13.2d).
  *
  * ## The aqueduct's water
  *
@@ -1377,6 +1393,74 @@ function telegraphLineSpan(ctx: InfraContext): InfraSpanDef {
  * and smooth stone with a cut-copper rail is the whole vocabulary a
  * block-medium future has.
  */
+/**
+ * `viaduct` — the arcade a road walks onto.
+ *
+ * The aqueduct's sibling with the channel taken out and the deck widened to a
+ * carriageway, and that one substitution is the whole reason this row is the
+ * ground contract's first `structure.linework` client. Nothing walks onto an
+ * aqueduct's water or a guideway's beam, so both refuse a pier they cannot
+ * stand and ask the ground for nothing. **A viaduct's deck is a road.** A road
+ * has to *arrive* on it, which means its two approach embankments are ground
+ * the street network must join rather than cut — and that is a rank-25
+ * declaration or it is a ramp of air.
+ *
+ * ## What the row says, and what the slot derives
+ *
+ * The row is a cross-section and two numbers. The **approaches** are not in it
+ * at all: their length is `clearance / grade`, their line is the run's own
+ * bearing continued outward, and their width is the deck's — every one of them
+ * arithmetic over things the compiler already knows, which is the standing rule
+ * that an entry states no geometry the host can derive (§3.3).
+ *
+ * ## The bays keep their grade
+ *
+ * Seven-column pitch with a haunch either side, three columns of pier, exactly
+ * as the aqueduct: what a walker under it meets is a rank of openings at grade.
+ * A viaduct that levelled its own bays would be an embankment with holes in it
+ * (`docs/GROUND-CONTRACT-v0.md` §13.2e), so the arcade declares a *clearance* at
+ * the deck's underside over the bays and never a bed.
+ *
+ * ## Materials
+ *
+ * Theme masonry, by W2/W3's rule: a viaduct is public works, built by the same
+ * masons and out of the same valley as the town it carries traffic into.
+ *
+ * **And no rail**, which is the one place this row differs from `maglev_pylon`
+ * and the difference is physics rather than taste. The host raises a carried
+ * span's two abutments to the top of its whole section, so a row that states a
+ * rail gets a full-width block of masonry a course *above* the deck at each end
+ * — a wall exactly where the approach embankment arrives. On a guideway nobody
+ * notices; on the one carried run something is supposed to walk onto, it is the
+ * defect the rank exists to prevent. Bare deck, flush with the embankment at
+ * both ends, walkable end to end.
+ */
+function viaductSpan(ctx: InfraContext): InfraSpanDef {
+  const stone = entryStone(ctx.theme);
+  return {
+    id: "infra.entry@0/viaduct",
+    // Eleven: two courses more than the aqueduct's nine, because what passes
+    // under a viaduct is a road rather than a footpath, and a loaded cart under
+    // a rank of arches wants the headroom an aqueduct never had to give.
+    clearance: 11,
+    pitch: 7,
+    // The corridor question a viaduct asks its anchors is a road's: it may be
+    // routed over ground a cart could not climb, because the deck is level and
+    // the piers make up the difference. The **approach** grade is not this
+    // number and must not be — see `structures/linework.ts`.
+    maxGrade: 4,
+    carry: {
+      // Seven columns of deck: a five-wide carriageway with a kerb course
+      // either hand, which is the narrowest thing a road reads as.
+      half: 3,
+      deck: stone.primary,
+      pier: stone.primary,
+      pierHalf: 1,
+      maxPier: 24,
+    },
+  };
+}
+
 function maglevPylonSpan(): InfraSpanDef {
   return {
     id: "infra.entry@0/maglev_pylon",
@@ -1982,6 +2066,28 @@ export const INFRA_ENTRIES: Readonly<Record<string, InfraEntryDef>> = Object.fre
     crossings: "open",
     // Three bays, or it is two poles and a washing line.
     minRun: POLE_PITCH * 3,
+    rise: 0,
+  } satisfies InfraEntryDef,
+
+  // The ground contract's first `structure.linework` client
+  // (`docs/GROUND-CONTRACT-v0.md` §13.2e). Its approach embankments are
+  // declared at rank 25 from the linework slot — before the streets exist, with
+  // the crossings found in the *solved* layout — and its materials are laid
+  // here, on the ground the resolver gave.
+  viaduct: {
+    id: "viaduct",
+    routes: ["between"],
+    geometry: { kind: "span", span: viaductSpan },
+    // The one row in this registry that names it. Rank 25, tier A: the ground
+    // makes room for the approaches and the streets *join* them.
+    sourceClass: "structure.linework",
+    // The bays are left open at grade and the deck strides them, exactly as the
+    // aqueduct's arcade does. The approach embankments are the half that is
+    // *not* open: a lane crossing one receives no claim at all, so it passes
+    // through by declaration rather than by rank.
+    crossings: "open",
+    // Under two bays there is no arcade — what stands there is a bridge.
+    minRun: 24,
     rise: 0,
   } satisfies InfraEntryDef,
 

@@ -48,8 +48,16 @@ const TAIL = [
 /** W4's one — the `between` form's first client. */
 const W4 = ["harbour_chain_tower"] as const;
 
-/** W6's three — the `between` form's other clients, in registry order. */
-const W6 = ["aqueduct", "telegraph_line", "maglev_pylon"] as const;
+/**
+ * W6's four — the `between` form's other clients, in registry order.
+ *
+ * `viaduct` joined them on 2026-08-17 as the ground contract's first
+ * `structure.linework` client (GROUND-CONTRACT §13.2e), and it sits beside the
+ * other carried spans rather than in a wave of its own because that is where it
+ * belongs geometrically: it is the aqueduct with the channel taken out and the
+ * deck widened to a carriageway.
+ */
+const W6 = ["aqueduct", "telegraph_line", "viaduct", "maglev_pylon"] as const;
 
 /** W5's three — the water movers (`docs/INFRA-ENTRIES-v0.md` families B, D). */
 const W5 = ["dam", "weir", "canal_lock"] as const;
@@ -82,10 +90,16 @@ describe("the registry's shape", () => {
     expect(INFRA_ROUTE_FORMS_IMPLEMENTED).toContain("between");
   });
 
-  it("declares no tier-A ground class — §3.5's line, held in data", () => {
-    for (const def of Object.values(INFRA_ENTRIES)) {
-      expect(def.sourceClass ?? "sweep.run", def.id).not.toBe("structure.linework");
-    }
+  it("names exactly one tier-A `structure.linework` row, and it is the viaduct", () => {
+    // §3.5's line held "no row may name rank 25" until GROUND-CONTRACT §13.2's
+    // 2026-08-17 amendment gave the class a slot to declare from. The line it
+    // becomes is narrower and stronger: **one** client, because the rank is for
+    // a line whose own surface something else must walk onto, and a second row
+    // arriving without that property is the drift this test exists to catch.
+    const tierA = Object.values(INFRA_ENTRIES)
+      .filter((def) => def.sourceClass === "structure.linework")
+      .map((def) => def.id);
+    expect(tierA).toEqual(["viaduct"]);
   });
 
   it("matches geometry to the forms a row accepts", () => {

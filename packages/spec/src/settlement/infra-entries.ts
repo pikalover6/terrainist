@@ -59,6 +59,11 @@ export const KNOWN_INFRA_ENTRIES = [
   "aqueduct",
   "telegraph_line",
   "maglev_pylon",
+  // The fourth carried client, and the ground contract's first
+  // `structure.linework` row (GROUND-CONTRACT §13.2e, 2026-08-17): the one
+  // member of the family whose deck something *walks onto*, so its approach
+  // embankments are ground the street network joins rather than cuts.
+  "viaduct",
   // W5 — the water movers (docs/INFRA-ENTRIES-v0.md families B and D). The
   // three rows whose real content is a `fluid.channel` declaration rather than
   // a cross-section: what makes a dam a dam is that the water behind it is
@@ -124,6 +129,7 @@ export const INFRA_ENTRY_ROUTES: Readonly<Record<string, readonly string[]>> = O
   aqueduct: Object.freeze(["between"]),
   telegraph_line: Object.freeze(["between"]),
   maglev_pylon: Object.freeze(["between"]),
+  viaduct: Object.freeze(["between"]),
   // The three water movers, and `across` is the only form any of them has: a
   // barrier is a line *across* a watercourse. The host reads that form against
   // the water in the column plan rather than against a carriageway, which is
@@ -195,10 +201,13 @@ export type InfraRouteKey = (typeof INFRA_ROUTE_KEYS)[number];
  * All six, since 2026-08-15: `between` landed with `harbour_chain_tower` as its
  * first client, routed through the road router's own cost field at the entry's
  * grade cap (§3.2). The tier-A ground declaration §5 paired it with turned out
- * to be needed by none of the four clients: `aqueduct` and `maglev_pylon`
- * landed with it too (2026-08-15), and a carried run stands on the ground it
- * finds and is refused where it cannot — it never asks the ground to
- * accommodate a pier, which is what rank 25 is reserved for.
+ * to be needed by three of the four clients: `aqueduct` and `maglev_pylon`
+ * landed without it too (2026-08-15), because a carried run stands on the
+ * ground it finds and is refused where it cannot — nothing walks onto an
+ * aqueduct's water or a guideway's beam, so neither asks the ground for
+ * anything. `viaduct` is the exception and the reason rank 25 exists: its deck
+ * is a carriageway, a road has to arrive on it, and its approach embankments
+ * are declared at `structure.linework` from the linework slot (2026-08-17).
  *
  * Kept as a separate list from {@link INFRA_ROUTE_KEYS} rather than deleted:
  * the next form the design names will be held the same way, and the

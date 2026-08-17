@@ -67,6 +67,10 @@ import { classicalFacadeDefaults } from "./archetypes-classical.js";
 import { xenoFacadeDefaults } from "./archetypes-xeno.js";
 import { corsairFacadeDefaults } from "./archetypes-corsair.js";
 import { nileFacadeDefaults } from "./archetypes-nile.js";
+// --- nordic_viking pack ---
+import { norseFacadeDefaults } from "./archetypes-norse.js";
+// --- mesoamerican_jungle pack ---
+import { mesoamericanFacadeDefaults } from "./archetypes-mesoamerican.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -269,6 +273,21 @@ export function archetypeFacadeDefaults(
       // towers, domes, terraces and kiosk are built in.
       const nile = nileFacadeDefaults(archetype);
       if (Object.keys(nile).length > 0) return nile;
+      // --- nordic_viking pack ---
+      // The Nordic & Viking pack, beside the Nile pack it was wired in after:
+      // eleven of its twelve want the `gable` a ridge architecture is made of,
+      // and the belfry wants the `flat` top its bell frame is built under.
+      const norse = norseFacadeDefaults(archetype);
+      if (Object.keys(norse).length > 0) return norse;
+      // --- mesoamerican_jungle pack -------------------------------------
+      // The Mesoamerican jungle pack, beside the Nile pack it was wired in
+      // after: thirteen of its fifteen want no window rhythm at all (a Maya
+      // wall has doorways, not windows), the palace range and the market
+      // ramada want the open fronts that are their whole read, and every one
+      // of them wants the hip roof whose headroom the tiers, the domes, the
+      // roof comb and the thatch are built in.
+      const meso = mesoamericanFacadeDefaults(archetype);
+      if (Object.keys(meso).length > 0) return meso;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

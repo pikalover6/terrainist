@@ -270,6 +270,20 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "boot_hill_row", params: { yaw: 90 } },
     ],
   },
+  // --- nordic_viking pack ---
+  // The Norse shore: the memorial, the burial and the working yard, each shown
+  // at two yaws so the position-hashed dressing is visibly not a repeat.
+  {
+    row: "norse_shore",
+    water: false,
+    cells: [
+      { prop: "rune_stone", params: {} },
+      { prop: "rune_stone", params: { yaw: 90 } },
+      { prop: "boat_burial_mound", params: {} },
+      { prop: "drying_rack_yard", params: {} },
+      { prop: "drying_rack_yard", params: { yaw: 90 } },
+    ],
+  },
   // The east-asian approach: torii ranked, lanterns in numbers — saturation
   // is both pieces' whole job. The dragon boat is base: "water".
   {

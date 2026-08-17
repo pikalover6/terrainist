@@ -108,6 +108,15 @@ import {
   frontierPropFootprint,
   isFrontierProp,
 } from "./props-frontier.js";
+// --- nordic_viking pack ---------------------------------------------------
+// The Nordic & Viking pack's ground pieces — the three entries of that pack
+// which stand on the open ground rather than roofing a room.
+import {
+  NORSE_PROP_GENERATORS,
+  NORSE_PROP_NAMES,
+  isNorseProp,
+  norsePropFootprint,
+} from "./props-norse.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -241,6 +250,8 @@ export const PROP_NAMES = [
   ...WILDS_PROP_NAMES,
   ...HEDGEROW_PROP_NAMES,
   ...FRONTIER_PROP_NAMES,
+  // --- nordic_viking pack ---
+  ...NORSE_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -577,6 +588,8 @@ export function propFootprint(
   if (isWildsProp(prop)) return wildsPropFootprint(prop, params);
   if (isHedgerowProp(prop)) return hedgerowPropFootprint(prop, params);
   if (isFrontierProp(prop)) return frontierPropFootprint(prop, params);
+  // --- nordic_viking pack ---
+  if (isNorseProp(prop)) return norsePropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1127,6 +1140,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...WILDS_PROP_GENERATORS,
   ...HEDGEROW_PROP_GENERATORS,
   ...FRONTIER_PROP_GENERATORS,
+  // --- nordic_viking pack ---
+  ...NORSE_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

@@ -66,6 +66,9 @@ export * from "./props-brine.js";
 export * from "./props-wilds.js";
 export * from "./props-hedgerow.js";
 export * from "./props-frontier.js";
+// --- nordic_viking pack ---
+export * from "./props-norse.js";
+export * from "./archetypes-norse.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

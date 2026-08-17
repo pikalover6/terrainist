@@ -2424,6 +2424,38 @@ needs no change for any of it, and that is the strongest evidence the rank was
 designed right the first time. `structures/retaining.ts`, `walls.ts` and the
 wall's gate finding, all unchanged until the walk verdict of §13.2e.
 
+**13.2g Implementation notes (2026-08-17, recorded as built).** The viaduct
+landed the same day the brief was written, and seven contract lines took
+their final shape under implementation pressure. Normative where they refine
+the rules above:
+
+1. **The `preserve`/tie contradiction is pre-existing and now on the WP-6
+   ledger.** §5.4 requires a guard to carry its claim's own `source`, and
+   `compareIntent` ignores `kind` — a claim and its guard tie, which is
+   `GROUND_INVARIANT` territory. `retaining.seam`/`retaining.skirt` have
+   shipped around this since they landed; the linework follows that
+   precedent. The proper fix — `compareIntent` breaking its last tie on
+   `kind` — waits for WP-6, where the resolver may be touched.
+2. Rule 5's guard **on a bridged water column** is unimplementable (§5.4
+   again: you cannot guard what you never claimed); clearance covers the
+   bays, water included, and no guard is laid on water.
+3. The approach's grade is **floored at 1** regardless of the entry's
+   routing cap: a ramp a player cannot walk onto defeats the premise of the
+   rank. The routing cap still governs the `between` search.
+4. **T236 counts relatively**: a viaduct legitimately declares two runs, so
+   the diagnostic fires when subtraction *increases* the run count, not on
+   any count above one.
+5. The approach cross-section is a **Chebyshev half-disc** — a normal-offset
+   line shatters into pillars at 45°, and a full disc lays bed under the
+   arcade, which is this section's one prohibition.
+6. The viaduct row carries **no rail**: the host raises a carried span's
+   abutments to the section's top, so a rail walls the deck exactly where
+   the approach arrives (measured: walkable 94/96 → 96/96 without it).
+7. §13.2f's superset test runs against **three form-registry skeletons
+   surfaced by the real `surfaceStreetGraph`** (grid, organic, a true 45°
+   avenue) rather than the hill-town fixtures, which carry no district node
+   and therefore no `StreetGraph` to be a superset of.
+
 **13.3 Should the pad's apron become a declared transition?**
 The fourth walked defect — "a building's `apron: 2` ramped away the seam a
 retaining wall stood on" — happens at stage 2, before materialisation, and the

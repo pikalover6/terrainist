@@ -349,6 +349,38 @@ export const TERRAIN_DIAGNOSTICS = {
    * reported the way `WALL_MARGIN_REDUCED` reports its own.
    */
   INFRA_RUN_REFUSED: "LOAM-T234",
+
+  // --- the linework declaration slot (GROUND-CONTRACT §13.2c) --------------
+  // Two codes, continuing from LOAM-T234, and neither enters `FEEDBACK_CODES`
+  // for the reason the four above it do not: a code that fires on every world
+  // costs money in the authoring loop and buys an invented change (§13.6).
+  //
+  // The resolver's `LOAM-W49x` family already does the *arbitration* half — a
+  // bed that loses columns to rank 0/10/20 is `GROUND_CLAIM_ADJUSTED`, below
+  // `minColumns` it is `GROUND_CLAIM_REFUSED`, a guarded loss is
+  // `GROUND_CONFLICT`. These two carry the half the resolver cannot see,
+  // because it is about the **crossing subtraction** and happens before
+  // anything is declared.
+  /**
+   * `structure.linework` — the bed kept fewer than `minColumns` columns after
+   * the crossing subtraction, so **no bed is declared at all** and the run is
+   * built on the ground it finds.
+   *
+   * The message names the count and which of the two subtractions took them —
+   * carriageway or water — because "my viaduct has no approach" and "my viaduct
+   * is in a river" are different news.
+   */
+  LINEWORK_BED_REFUSED: "LOAM-T235",
+  /**
+   * `structure.linework` — the bed was declared, and the crossing subtraction
+   * cut it into more than one run or removed more than
+   * `INFRA_REFUSAL_FRACTION` of its columns.
+   *
+   * A note, not a warning: the entry is built, and the honest recovery is
+   * reported the way `WALL_MARGIN_REDUCED` and `INFRA_RUN_REFUSED` report
+   * theirs.
+   */
+  LINEWORK_BED_INTERRUPTED: "LOAM-T236",
   /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that

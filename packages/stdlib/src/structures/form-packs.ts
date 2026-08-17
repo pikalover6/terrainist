@@ -84,7 +84,8 @@ export interface FormPack {
 }
 
 /**
- * The nine packs of `docs/CATALOG-EXPANSION-v0.md` §3.
+ * The packs of `docs/CATALOG-EXPANSION-v0.md` §3, plus every pack shipped
+ * since (the Mesoamerican jungle pack is the first of those).
  *
  * Order is the document's. Every member list is that section's table, with one
  * deliberate omission recorded here rather than silently: **`sphinx` was
@@ -334,6 +335,63 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "stone_lantern",
       "dragon_boat",
       "bell_pavilion",
+    ]),
+  }),
+  /* --- mesoamerican_jungle pack --- */
+  Object.freeze({
+    id: "mesoamerican_jungle",
+    name: "Mesoamerican Jungle",
+    thesis:
+      "A Maya or Aztec centre in the rainforest: the catalog cannot say step pyramid, ball court, stela, sacbe or chultun, and a ziggurat in mossy stone is Mesopotamia in a hat.",
+    eras: Object.freeze(["ancient"]),
+    themes: Object.freeze(["sun_clay", "white_quartz"]),
+    characters: Object.freeze(["civic", "core"]),
+    members: Object.freeze([
+      "step_pyramid",
+      "jaguar_temple",
+      "serpent_stair",
+      "stela_plaza",
+      "ball_court",
+      "round_observatory",
+      "palace_range",
+      "market_ramada",
+      "tzompantli_rack",
+      "chultun_cistern",
+      "sacbe_terminus",
+      "milpa_terrace",
+      "canoe_landing",
+      "thatch_dwelling",
+      "temazcal_bath",
+    ]),
+  }),
+  /* --- nordic_viking pack --- */
+  Object.freeze({
+    id: "nordic_viking",
+    name: "Nordic & Viking",
+    thesis:
+      "\"A viking settlement\" routes to the medieval era and arrives as a European village in spruce: no mead hall, no naust, no turf house, no hof, no rune stone.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["boreal_pine", "temperate_timber"]),
+    characters: Object.freeze(["waterfront", "lanes", "civic"]),
+    members: Object.freeze([
+      "norse_mead_hall",
+      "jarls_hall",
+      "longship_shed",
+      "turf_house",
+      "stave_belfry",
+      "norse_forge",
+      "hof_shrine",
+      "fishermans_cabin",
+      "weaving_hall",
+      "shield_wall_gate",
+      "palisade_watchtower",
+      "norse_storehouse",
+      // `wool_shed` is the agrarian pack's and a member belongs to one pack
+      // only, so the id carries the pack and the words stay where they were.
+      "wool_shed_norse",
+      "rune_stone",
+      "boat_burial_mound",
+      "drying_rack_yard",
     ]),
   }),
 ]);

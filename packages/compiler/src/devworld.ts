@@ -69,6 +69,12 @@ import {
   type MaglevExhibitResult,
   type TelegraphExhibitResult,
 } from "./exhibits/infra3.js";
+import {
+  VIADUCT_DEPTH,
+  VIADUCT_WIDTH,
+  buildViaductExhibit,
+  type ViaductExhibitResult,
+} from "./exhibits/infra4.js";
 
 import {
   assignMaterials,
@@ -207,6 +213,8 @@ export interface DevGrid {
   readonly telegraphOrigin: { readonly x: number; readonly z: number };
   /** North-west corner of the rumpled ground the guideway is surveyed over. */
   readonly maglevOrigin: { readonly x: number; readonly z: number };
+  /** North-west corner of the ravine-and-slope band the viaduct is thrown over. */
+  readonly viaductOrigin: { readonly x: number; readonly z: number };
   /** The context section's plan — strips of shaped ground and what stands on them. */
   readonly context: ContextSection;
 }
@@ -243,6 +251,8 @@ export interface DevWorldResult {
   readonly telegraph: TelegraphExhibitResult;
   /** The level beam on its pylons, over ground that is level nowhere. */
   readonly maglev: MaglevExhibitResult;
+  /** The arcade a road walks onto: two declared approaches and a lane through one. */
+  readonly viaduct: ViaductExhibitResult;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -414,7 +424,16 @@ export function planDevGrid(): DevGrid {
 
   const maglevOrigin = { x: 0, z };
   maxX = Math.max(maxX, MAGLEV_WIDTH);
-  const depthTotal = z + MAGLEV_DEPTH;
+  z += MAGLEV_DEPTH + DEV_GAP;
+
+  // The viaduct, last of all and south of the three carried spans it belongs
+  // with: the ground contract's first `structure.linework` client, and the only
+  // band in the world whose subject is a **declaration** rather than a shape.
+  // Its own band, for the reason each of the three above has one — the claim is
+  // about the ground under it, so the ground has to be its own.
+  const viaductOrigin = { x: 0, z };
+  maxX = Math.max(maxX, VIADUCT_WIDTH);
+  const depthTotal = z + VIADUCT_DEPTH;
 
   const region: Region = {
     x0: -DEV_MARGIN,
@@ -439,6 +458,7 @@ export function planDevGrid(): DevGrid {
     aqueductOrigin,
     telegraphOrigin,
     maglevOrigin,
+    viaductOrigin,
     context,
   };
 }
@@ -673,6 +693,18 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     DEV_GROUND_Y,
   );
 
+  // The viaduct, after the maglev band: declare through a real ground driver,
+  // let the resolver arbitrate, then build on the answer. It is the only
+  // exhibit that runs both halves of the ground contract's declare/build split.
+  const viaduct = buildViaductExhibit(
+    plan,
+    stack,
+    DEV_WORLD_SEED,
+    grid.viaductOrigin.x,
+    grid.viaductOrigin.z,
+    DEV_GROUND_Y,
+  );
+
   const structures = [
     ...built.blocks,
     ...props.blocks,
@@ -684,6 +716,7 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     ...aqueduct.blocks,
     ...telegraph.blocks,
     ...maglev.blocks,
+    ...viaduct.blocks,
   ];
 
   const emit = await emitTerrain({
@@ -733,5 +766,6 @@ export async function buildDevWorld(outDir: string): Promise<DevWorldResult> {
     aqueduct,
     telegraph,
     maglev,
+    viaduct,
   };
 }

@@ -335,6 +335,28 @@ import {
 
 export * from "./archetypes-nile.js";
 
+// --- mesoamerican_jungle pack ---------------------------------------------
+// The Mesoamerican jungle pack's fifteen buildings. Imported and exported
+// here beside the Nile pack for the same reason: a form pack is a file, and a
+// file is one seam.
+import {
+  MESOAMERICAN_BUILDING_ARCHETYPES,
+  furnishMesoamerican,
+  mesoamericanArchetypeOfTags,
+} from "./archetypes-mesoamerican.js";
+
+export * from "./archetypes-mesoamerican.js";
+
+// --- nordic_viking pack ---------------------------------------------------
+// The Nordic & Viking pack's buildings — the twelve entries of that pack that
+// have an inside. Its rune stone, boat burial and drying yard are PROPS
+// (`props-norse.ts`): none of the three roofs a room.
+import {
+  NORSE_BUILDING_ARCHETYPES,
+  furnishNorse,
+  norseArchetypeOfTags,
+} from "./archetypes-norse.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -415,10 +437,17 @@ export const BUILDING_ARCHETYPES = [
   ...HIGHRISE_ARCHETYPES,
   ...UNDERGROUND_ARCHETYPES,
   ...DEPTHS_BUILDING_ARCHETYPES,
+  // --- nordic_viking pack ---
+  ...NORSE_BUILDING_ARCHETYPES,
   // Last, and with no tag table of its own: the terrace is asked for by name
   // by the district fabric, and `terrace`/`terraced_row` already belong to
   // wave 4A's single house with party piers. See `terrace.ts`.
   ...TERRACE_ARCHETYPES,
+  // --- mesoamerican_jungle pack -------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...MESOAMERICAN_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -674,6 +703,30 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // value in `core.ts` besides.
   const nile = nileArchetypeOfTags(tags);
   if (nile !== null) return nile;
+  // --- nordic_viking pack ---
+  // The Nordic & Viking pack's buildings, immediately after the Nile pack and
+  // high for the reason every later wave is: the tables below are greedy. It
+  // claims nothing an earlier table claims — bare `longhouse` and bare
+  // `mead_hall` are still wave 4A's longhouse, bare `hall` the great hall's,
+  // bare `sod_house` the regional dwelling's, bare `boathouse`/`shipyard`
+  // Track A's, bare `smithy`/`forge` the founding table's and the industry
+  // wave's, bare `shrine`/`temple`/`chapel` the church's, bare `gate` the
+  // gatehouse's, bare `watchtower`/`lookout` the watchtower's (claimed above
+  // every table here) and bare `store`/`storehouse`/`granary` where they were.
+  // Every claim it makes is a compound of its own ids or a word — `naust`,
+  // `torfbaer`, `hof`, `stabbur`, `skemma`, `mjod_hall` — no table ever had.
+  const norse = norseArchetypeOfTags(tags);
+  if (norse !== null) return norse;
+  // --- mesoamerican_jungle pack -------------------------------------------
+  // The Mesoamerican jungle pack, immediately after the Nile table and high
+  // for the reason every later wave is: the tables below are greedy. It
+  // claims nothing an earlier table claims — bare `temple`, `shrine`,
+  // `observatory`, `palace`, `market`, `court`, `plaza`, `terrace`, `bath`
+  // and `landing` all still go exactly where they went, and bare `pyramid`
+  // stays claimed by NOBODY (it names the Nile pack's prop and is a roof
+  // value in `core.ts` besides).
+  const meso = mesoamericanArchetypeOfTags(tags);
+  if (meso !== null) return meso;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1135,6 +1188,10 @@ export function furnish(r: FurnishRequest): number {
   n += furnishXeno(ctx);
   n += furnishCorsair(ctx);
   n += furnishNile(ctx);
+  // --- nordic_viking pack ---
+  n += furnishNorse(ctx);
+  // --- mesoamerican_jungle pack ---
+  n += furnishMesoamerican(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

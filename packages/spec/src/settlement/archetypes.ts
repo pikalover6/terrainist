@@ -146,9 +146,27 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "hacienda", "fachwerk_barn", "skyscraper", "office",
   "hotel", "apartment_block", "mine_head", "bunker_complex",
   "subway_station", "underground_silo",
+  // --- nordic_viking pack ---------------------------------------------------
+  // The Nordic & Viking pack's buildings, in the order `BUILDING_ARCHETYPES`
+  // spreads them — after the depths wave and BEFORE the terrace, which is where
+  // that list spreads them. Order is load-bearing here, same as every other
+  // pack block. The pack's `rune_stone`, `boat_burial_mound` and
+  // `drying_rack_yard` are deliberately absent: all three are PROPS.
+  "norse_mead_hall", "jarls_hall", "longship_shed", "turf_house",
+  "stave_belfry", "norse_forge", "hof_shrine", "fishermans_cabin",
+  "weaving_hall", "shield_wall_gate", "palisade_watchtower", "norse_storehouse",
+  "wool_shed_norse",
   // The terrace, last for the same reason it is last in `stdlib`: it is the
   // newest wave, and this list's order is `BUILDING_ARCHETYPES`'s order.
   "terrace",
+  // --- mesoamerican_jungle pack -------------------------------------------
+  // The Mesoamerican jungle pack, LAST, because `BUILDING_ARCHETYPES` spreads
+  // it last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`.
+  "step_pyramid", "jaguar_temple", "serpent_stair", "stela_plaza",
+  "ball_court", "round_observatory", "palace_range", "market_ramada",
+  "tzompantli_rack", "chultun_cistern", "sacbe_terminus", "milpa_terrace",
+  "canoe_landing", "thatch_dwelling", "temazcal_bath",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

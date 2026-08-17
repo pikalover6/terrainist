@@ -35,12 +35,21 @@
  *
  * ## Ground contract (§3.5)
  *
- * **No new `GroundSourceClass`, and no tier-A declaration pre-freeze.** An
- * entry declares `sweep.run` (rank 110, tier C) or declares nothing. A registry
- * row naming `structure.linework` is refused here rather than honoured: a
- * tier-A declarer must declare against the baseline, before the streets exist,
- * and this pass runs after them by design. Resolving that properly reopens
- * GROUND-CONTRACT §13.2 and is post-freeze work.
+ * **No new `GroundSourceClass`.** An entry declares `sweep.run` (rank 110, tier
+ * C), `retaining.seam`, `fluid.channel`, `structure.linework` — or nothing.
+ *
+ * A registry row naming `structure.linework` is still refused **from this
+ * slot**, and the refusal is now a signpost rather than a scope line: rank 25 is
+ * tier A, it declares against the baseline, and this pass runs after the streets
+ * by design. What changed on 2026-08-17 is that there is somewhere for it to go.
+ * `structures/linework.ts` runs between `buildPrecincts` and `pavePlaza`, finds
+ * its crossings in the **solved** layout rather than in the finished
+ * carriageway, and hands this pass a {@link LineworkBeds} record: node path →
+ * the bed's columns and the levels the resolver arbitrated for them. So a
+ * linework row reaching this pass *with* its bed is built here — the materials
+ * were always meant to stay in the wall's slot with the rest of the host — and
+ * one reaching it *without* one is the refusal, re-pointed
+ * (`docs/GROUND-CONTRACT-v0.md` §13.2a rule 9, §13.2f step 3).
  *
  * Most entries write no level at all — the wall's own construction, blocks
  * through `life.ts`'s `Planter` on the ground they find. The two that *are* a
@@ -111,6 +120,7 @@ import type { ColumnPlan } from "../terrain/columns.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { Planter, buildLifeWorld, op, type LifeOp, type LifeWorld, type PlaceRule } from "./life.js";
+import type { LineworkBed, LineworkBeds } from "./linework.js";
 import { index, inside, routeTo } from "./roads.js";
 import { profileSpan, type SweptProfile } from "./sweep.js";
 import {
@@ -901,6 +911,21 @@ export interface InfraEntryPassInput {
    * than failing (§3.12's disposition, which every converted pass already has).
    */
   readonly ground?: GroundDriver;
+  /**
+   * The linework slot's handoff (`GROUND-CONTRACT` §13.2a rule 9).
+   *
+   * **Declare early, build late.** A row whose `sourceClass` is
+   * `structure.linework` declared its levels in `structures/linework.ts`, long
+   * before this pass; the resolver arbitrated them; and the plan already holds
+   * the answer. This is the record that says which columns those were, so the
+   * materials can be laid on them here, against `plan.ground` and never against
+   * the level the entry asked for.
+   *
+   * Absent for every caller that is not the world pipeline, and absent for a
+   * pipeline whose document has no linework node — in which case a linework row
+   * arriving here is refused, which is the whole of the re-pointed refusal.
+   */
+  readonly lineworkBeds?: LineworkBeds;
 }
 
 /** One entry, as built. */
@@ -969,16 +994,20 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
   );
 
   for (const job of input.jobs) {
-    // §3.5 / §5, defended rather than documented: a tier-A declarer would have
-    // to run before the streets, and this pass runs after them so its crossings
-    // are found against the finished carriageway. Both cannot be true.
-    if (job.def.sourceClass === "structure.linework") {
+    // **Replaced, not deleted** (§13.2f step 3). The wall's slot still refuses
+    // the class *from its own position* — a tier-A claim declared here would be
+    // arbitrated against a prefix that already contains the streets, and rule 8
+    // says a rank-25 bed does not move masonry a lower-ranked pass has already
+    // emitted. What changed is where the answer is: the linework slot, which
+    // ran before any of that and left its bed on the input.
+    const bed = input.lineworkBeds?.get(job.nodePath);
+    if (job.def.sourceClass === "structure.linework" && bed === undefined) {
       diagnostics.push(
         warning(
           "INFRA_ENTRY_PARAM",
           job.nodePath,
-          `"${job.def.id}" declares structure.linework (ground-contract rank 25, tier A), which no pre-freeze entry may declare: a tier-A declarer must declare against the baseline, before the streets exist, and this pass runs after them so that a crossing is found against the finished carriageway`,
-          "use an entry that declares sweep.run, or nothing — an arcade or a guideway is post-freeze work (docs/INFRA-ENTRIES-v0.md §3.5)",
+          `"${job.def.id}" declares structure.linework (ground-contract rank 25, tier A) and no bed reached this pass: a tier-A declarer declares against the baseline, before the streets exist, and this pass runs after them so that a crossing is found against the finished carriageway`,
+          "declare it from the linework slot — `structures/linework.ts` runs between buildPrecincts and pavePlaza and finds its crossings in the solved layout (docs/GROUND-CONTRACT-v0.md §13.2a)",
         ),
       );
       continue;
@@ -1040,8 +1069,17 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
     // heads rather than a cross-section carried along a datum, so it forks
     // before the sweep is ever constructed.
     if (job.def.geometry.kind === "span") {
+      // The approaches first, then the span. A carried span's abutment stands
+      // on its anchor column and the embankment stands *outside* it, so the two
+      // never contend for a voxel — but laying the ground the deck is met on
+      // before the deck is what makes the `Planter`'s refusals read in the
+      // direction a walker does.
+      const paved = bed === undefined ? 0 : layLineworkBed(planter, world, input, job, bed);
       entries.push(buildSpan(planter, world, view, job, course));
       const built = entries[entries.length - 1] as BuiltInfraEntry;
+      if (paved > 0) {
+        entries[entries.length - 1] = { ...built, declared: paved };
+      }
       if (built.columns === 0) {
         diagnostics.push(
           warning(
@@ -1328,6 +1366,66 @@ export function declaredColumnOps(column: SweptColumn): LifeOp[] {
     for (let c = 0; c < cap.height; c++) ops.push(op(0, c, 0, cap.block));
   }
   return ops;
+}
+
+/**
+ * Lay an approach embankment's materials on the ground the resolver gave it
+ * (`GROUND-CONTRACT` §13.2a rule 9 — **declare early, build late**).
+ *
+ * The levels went in at rank 25 in the linework slot, long before this pass; the
+ * resolver arbitrated them against every other claim on those columns; the
+ * driver wrote the answer into the plan. So there is nothing left to decide
+ * here, and this function is careful to decide nothing: it re-materialises the
+ * **top course of the ground it was given** through {@link declaredColumnOps},
+ * anchored on `world.standY`, exactly as a declaring sweep does. The bed's own
+ * `y` is not read at all — reading it would be laying masonry at the level the
+ * entry *asked* for, which is the mistake §9a.1 rule 2 exists to forbid, and on
+ * a column the resolver refused it is precisely the mistake that leaves a plank
+ * of approach hanging in the air over a lane.
+ *
+ * A column whose level the resolver moved elsewhere therefore comes out as
+ * ordinary ground with the entry's paving on it, which is the honest read: the
+ * road that took it is the surface there.
+ */
+export function layLineworkBed(
+  planter: Planter,
+  world: LifeWorld,
+  input: InfraEntryPassInput,
+  job: InfraEntryJob,
+  bed: LineworkBed,
+): number {
+  const geometry = job.def.geometry;
+  if (geometry.kind !== "span") return 0;
+  const carry = geometry.span(contextOf(job)).carry;
+  if (carry === undefined) return 0;
+  const region = input.plan.region;
+  let placed = 0;
+  // Ascending region index — the order the handoff already carries, restated
+  // here because the `Planter`'s first-claim-wins disposition makes write order
+  // observable where two beds overlap.
+  for (const column of bed.columns) {
+    if (!inside(region, column.x, column.z)) continue;
+    const base = world.standY(column.x, column.z);
+    if (base === undefined) continue;
+    const ops = declaredColumnOps({
+      x: column.x,
+      z: column.z,
+      pathIndex: 0,
+      offset: 0,
+      bandId: "approach",
+      role: "carriageway",
+      // `top` is unread by `declaredColumnOps` and is stated as the stand height
+      // rather than as the bed's declared level, so a later reader cannot mine a
+      // refused level out of this object.
+      top: base,
+      surface: carry.deck,
+      fill: carry.pier,
+    });
+    if (planter.place("infra_linework", ops, column.x, base, column.z, INFRA_DECLARED_RULE, false)) {
+      placed++;
+    }
+  }
+  return placed;
 }
 
 /**

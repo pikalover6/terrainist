@@ -66,6 +66,7 @@ import type { CityProduct } from "../layout/city-pass.js";
 import type { DistrictProduct } from "../layout/district.js";
 import { dressStreets, type SegmentArc } from "./streetscape.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
+import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -104,6 +105,7 @@ import { buildRuinField, type RuinField } from "./ruin-field.js";
 import { growGreenSkin, type GreenSkinResult } from "./green-skin.js";
 import { resolveReclaimSpecies } from "./reclaim-species.js";
 import { dressLife, type LifeBuilding, type LifeStreets } from "./life.js";
+import { declareLinework, declaresLinework } from "./linework.js";
 import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
 import {
@@ -157,6 +159,7 @@ export * from "./retaining.js";
 export * from "./courtyards.js";
 export * from "./doorsteps.js";
 export * from "./life.js";
+export * from "./linework.js";
 export * from "./grounds.js";
 export * from "./plaza.js";
 export * from "./farm.js";
@@ -715,6 +718,90 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     });
     return id === themeId || id === undefined ? theme : pickTheme(themeSeed, id);
   };
+  // --- the linework declaration slot (GROUND-CONTRACT §13.2a) --------------
+  // **After `buildPrecincts` (rank 20) and before `pavePlaza` (rank 30)**, so
+  // pipeline order and rank order agree from 0 through 30 — which is what makes
+  // this slot's view a legal tier-A read rather than a convenient one (rule 2).
+  //
+  // It is also as early inside that window as the theme resolver allows, and
+  // deliberately: rule 8 says a rank-25 bed does **not** move blocks a
+  // lower-ranked pass has already emitted, and `StructureBlock`s carry an
+  // absolute Y. Declaring before `buildBuildings` means there is no emitted
+  // masonry in the world at all when the bed lands, so the rule has nothing to
+  // bite on rather than being obeyed by hand.
+  //
+  // It writes no block. The materials stay in the wall's slot with the rest of
+  // the infrastructure host and are laid against `plan.ground` — the resolver's
+  // answer — through the `LineworkBeds` handoff below (rule 9).
+  const lineworkJobs = infraEntryJobsOf(input.doc, rootPath, input.worldSeed, (p) =>
+    themeForNode(p),
+  ).filter(declaresLinework);
+  // §13.2a rule 5's first bullet: the **solved** carriageway, not the surfaced
+  // one. The street graphs, the arterials and the frozen road corridor are all
+  // decided in the layout stage, which is exactly the distinction that let the
+  // rank stop being reserved.
+  const solvedCarriageway =
+    lineworkJobs.length === 0
+      ? undefined
+      : solvedCarriagewayMask(input.plan.region, districts, cities, [], input.roadCorridor);
+  const linework =
+    lineworkJobs.length === 0 || solvedCarriageway === undefined
+      ? undefined
+      : declareLinework({
+          region: input.plan.region,
+          jobs: lineworkJobs,
+          ground: input.ground,
+          carriageway: solvedCarriageway,
+          // The baseline's water. `digCanals` is rank 0 and runs *later*
+          // (§9a.4's named approximation), so a linework keeps off water by
+          // reading this rather than by waiting for the canal pass; where it
+          // collides anyway rank 0 settles it silently and correctly.
+          fluidKind: input.ground.baseline.fluidKind,
+          view: {
+            bounds: {
+              x0: input.plan.region.x0,
+              z0: input.plan.region.z0,
+              width: input.plan.region.width,
+              depth: input.plan.region.depth,
+            },
+            // The **finished placement** (rule 3), which is what a tier-A
+            // declarer is entitled to and all it is entitled to: the solver's
+            // footprint, never a fabric hull, because no fabric exists yet.
+            extentOf: (id: string) => {
+              const footprint = placementByPath.get(`${rootPath}.${id}`)?.footprint;
+              if (footprint === undefined) return undefined;
+              return [
+                { x: footprint.x0, z: footprint.z0 },
+                { x: footprint.x1, z: footprint.z0 },
+                { x: footprint.x1, z: footprint.z1 },
+                { x: footprint.x0, z: footprint.z1 },
+              ];
+            },
+            // A district's or a city's widest solved street, by the same stated
+            // total order the host's own view uses (greatest width, then the
+            // lowest segment id) so two compiles pick the same one.
+            corridorOf: (id: string) => widestSolvedStreet(districts, `${rootPath}.${id}`),
+            maskOf: () => undefined,
+            // `driver.view()` at this position, which here *is* the baseline
+            // plus the precinct grading written through (rule 3).
+            ground: (x: number, z: number) => {
+              const view = input.ground.view();
+              if (!inside(view.region, x, z)) return undefined;
+              const k = index(view.region, x, z);
+              if (view.fluidKind[k] !== 0) return undefined;
+              return view.ground[k] as number;
+            },
+            // The same mask the subtraction uses, so the two route forms that
+            // ask about a road (`across`, and `open`'s gate finding) and the
+            // subtraction cannot disagree about where one is.
+            onRoad: (x: number, z: number): boolean => {
+              if (!inside(input.plan.region, x, z)) return false;
+              return solvedCarriageway[index(input.plan.region, x, z)] === 1;
+            },
+          },
+        });
+  if (linework !== undefined) diagnostics.push(...linework.diagnostics);
+
   const jobThemes = jobs.map((job) => themeForNode(job.nodePath));
   const groups = new Map<string, number[]>();
   for (const [i, t] of jobThemes.entries()) {
@@ -1659,6 +1746,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           // it — handing it over costs a document with no such entry exactly
           // nothing, because the pass is not constructed at all.
           ground: input.ground,
+          // §13.2a rule 9's handoff — declare early, build late. The levels went
+          // in at rank 25 in the linework slot; these are the columns they went
+          // in on, so the materials can be laid here, on the resolver's answer.
+          ...(linework === undefined ? {} : { lineworkBeds: linework.beds }),
           view: {
             bounds: {
               x0: input.plan.region.x0,
@@ -2059,6 +2150,38 @@ export function infraEntryJobsOf(
     });
   }
   return jobs;
+}
+
+/**
+ * A settlement's widest **solved** street, for the linework slot's own view.
+ *
+ * The host's view answers `corridorOf` from the finished road network and falls
+ * back to the widest street of a named district; the linework slot runs before
+ * either exists as surfaced ground, so it answers the same question from the
+ * layout stage's `StreetGraph` alone. Same stated total order — greatest width,
+ * then the lowest segment id — so a route that names a quarter resolves to the
+ * same line in both slots.
+ */
+function widestSolvedStreet(
+  districts: readonly DistrictProduct[],
+  nodePath: string,
+): readonly { readonly x: number; readonly z: number }[] | undefined {
+  const prefix = `${nodePath}.`;
+  let best: { width: number; segId: string; path: readonly { x: number; z: number }[] } | undefined;
+  for (const district of districts) {
+    if (district.nodePath !== nodePath && !district.nodePath.startsWith(prefix)) continue;
+    for (const segment of district.streets.segments) {
+      if (segment.path.length < 2) continue;
+      if (
+        best === undefined ||
+        segment.width > best.width ||
+        (segment.width === best.width && segment.id < best.segId)
+      ) {
+        best = { width: segment.width, segId: segment.id, path: segment.path };
+      }
+    }
+  }
+  return best === undefined ? undefined : best.path.map((p) => ({ x: p.x, z: p.z }));
 }
 
 /**
