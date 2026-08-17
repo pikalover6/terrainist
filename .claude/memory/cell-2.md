@@ -43,3 +43,20 @@
   (compare decompressed NBT; worktree-CLI resolves to the main tree),
   shared-tree git discipline after three clobber incidents, funnel memory +
   rendered log built.
+
+## 2026-08-09 → 08-14: rung B whole, the icon law, the nine packs
+(compressed from cell 3; full detail in git history of that cell)
+The rung-B feature set landed and was walked; THE ICON LAW ratified
+(worlds must SCREAM the prompt; U1 stranger test). Troy converged over
+three candidates (storeyCeiling ancient→3, sun_clay joined ancient,
+timber projection fixed the sandstone horse). Catalog breadth ratified
+BOTH tracks: original not_started burndown + nine expansion packs (145
+ids) with formPacks as the 4th grounded list; infra.entry@0 host
+shipped W0+W1 (five route forms, test_fence run exhibit); family-D
+entrance fittings; wall machinery (fabric hull, margin backoff, edge
+clamp, curtain role-set); urban floor + arid ambient + inland sand;
+decay orphan cull. NEVER-WAIT ratified 08-13 (CLAUDE.md). The
+nine-pack sweep finished 08-14: catalog 343→~491, tree ~4,234/0,
+battery whole across all seven prompts, /goal met. Installs moved to
+PrismLauncher. Ops lore earned: prettier ban, pipes swallow vitest
+exits, distinct anchor lineages, never emit from mid-flight dist.
