@@ -13,13 +13,25 @@ better — anytime you have extra time go ham on just adding more and
 more structures." (4) BATTERY: standing auth (~$2, install alongside)
 but regenerate ONCE at the END of an autonomous run, never mid-run.
 
-**AUTONOMOUS QUEUE (in order):** round-3 viewer (plants/controller/
-demo — IN FLIGHT) → verify live in Chrome → round-4 SHADERS ("as
-ridiculously over the top as possible": golden-hour shadow map,
-bloom, god rays, animated fresnel water, wind sway on leaves+crosses,
-ACES grade, drifting cloud shadows, quality toggle) → machinery tail
-waves → catalog go-ham waves (perpetual filler) → ONE battery regen
-at the very end + install + archive.
+**AUTONOMOUS RUN, LIVE STATE (2026-08-17 night):**
+- Viewer DONE through round 4 (917a157): plants=crosses, Minecraft
+  walk controller (physics.js), full landing demo, and the SHADER
+  PACK verified on GPU + tuned live (sun 1.35, bloom thr 1.25 str
+  0.6 — sunlit birches bloomed like lanterns at 0.9). serve.mjs
+  no-cache dev server (worker module-cache split killed the frame
+  loop; drainUploads now degrades to zeros). Hero shots sent to Kai.
+- Machinery: family B LANDED (c3eab4b, 4 faces via retaining.seam
+  declareRun branch; slipway→water side); §13.2 RESOLVED by design
+  (69a8bfc: the tension was a conflation — crossings are solved-
+  layout facts; rank 25 lives for "a line whose own surface something
+  walks onto"; viaduct = first client; resolver needs NO change).
+- IN FLIGHT (3 low agents): viaduct+linework per §13.2f brief;
+  go-ham pack nordic_viking (~15); go-ham pack mesoamerican_jungle
+  (~15). Append-only discipline in catalog/spec/prepass.
+- QUEUE AFTER: more go-ham packs (candidate domains: dwarven_volcanic,
+  steppe_nomad, alpine, swamp_witch, atlantean, sky) + camps taxonomy
+  + exhibits for new packs (orchestrator authors) → ONE battery regen
+  at the very END + install + archive (Kai: never mid-run).
 
 
 **RATIFIED 2026-08-16: GEMINI 3.7 FLASH HIGH IS THE PINNED DEFAULT
