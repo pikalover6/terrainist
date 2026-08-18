@@ -82,6 +82,9 @@ export * from "./archetypes-swamp.js";
 // --- desert_caravanserai pack ---
 export * from "./props-caravan.js";
 export * from "./archetypes-caravan.js";
+// --- himalayan_monastery pack ---
+export * from "./props-himalayan.js";
+export * from "./archetypes-himalayan.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

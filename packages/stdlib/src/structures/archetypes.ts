@@ -414,6 +414,18 @@ import {
 
 export * from "./archetypes-caravan.js";
 
+// --- himalayan_monastery pack -----------------------------------------------
+// The himalayan_monastery pack's buildings - the thirteen entries of that pack
+// that have an inside. Its `prayer_flag_line` and `mani_stone_cairn` are PROPS
+// (`props-himalayan.ts`): neither of the two roofs a room.
+import {
+  HIMALAYAN_BUILDING_ARCHETYPES,
+  furnishHimalayan,
+  himalayanArchetypeOfTags,
+} from "./archetypes-himalayan.js";
+
+export * from "./archetypes-himalayan.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -530,6 +542,11 @@ export const BUILDING_ARCHETYPES = [
   // same reason: this list's order is the seam `fabric.test.ts` pins, and a
   // pack appended at the end moves nothing that came before it.
   ...CARAVAN_BUILDING_ARCHETYPES,
+  // --- himalayan_monastery pack --------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...HIMALAYAN_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -875,6 +892,19 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `badgir`, `godown`, `camel`, `oasis` — no table in the catalog ever had.
   const caravan = caravanArchetypeOfTags(tags);
   if (caravan !== null) return caravan;
+  // --- himalayan_monastery pack ---------------------------------------------
+  // The dzong pack, beside the other late packs and high for the reason every
+  // later wave is: the tables below are greedy. It claims not one bare word.
+  // Bare `monastery`, `abbey`, `cloister`, `stupa`, `shrine`, `chapel`,
+  // `bell_pavilion`, `bell_tower`, `bellcote`, `library`, `archive`,
+  // `granary`, `kiln`, `byre`, `stable`, `courtyard`, `hermitage`, `gate`,
+  // `gatehouse`, `kitchen`, `teahouse` and `dormitory` all still go exactly
+  // where they went. Every claim it makes is a compound of its own ids or a
+  // word - `dzong`, `chorten`, `kora`, `mani`, `monk`, `yak`, `scripture`,
+  // `sutra`, `debate`, `incense`, `butter`, `juniper`, `meditation` - that no
+  // table in the catalog ever had.
+  const himalayan = himalayanArchetypeOfTags(tags);
+  if (himalayan !== null) return himalayan;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1350,6 +1380,8 @@ export function furnish(r: FurnishRequest): number {
   n += furnishSwamp(ctx);
   // --- desert_caravanserai pack ---
   n += furnishCaravan(ctx);
+  // --- himalayan_monastery pack ---
+  n += furnishHimalayan(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

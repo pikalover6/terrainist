@@ -211,6 +211,15 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "spice_godown", "camel_lines", "shade_arcade_row", "date_store_tower",
   "serai_cistern", "dye_yard", "desert_glass_kiln", "oasis_shrine",
   "watch_minaret",
+  // --- himalayan_monastery pack -------------------------------------------
+  // The himalayan_monastery pack, LAST, because `BUILDING_ARCHETYPES` spreads
+  // it last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`. The pack's `prayer_flag_line` and
+  // `mani_stone_cairn` are deliberately absent: both are PROPS.
+  "dzong_hall", "prayer_wheel_gallery", "chorten_shrine", "butter_tea_kitchen",
+  "monk_cell_row", "scripture_library", "yak_byre", "dzong_bell_cote",
+  "debate_courtyard", "hermit_retreat", "kora_gatehouse", "stilt_granary",
+  "incense_kiln",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

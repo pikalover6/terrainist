@@ -331,6 +331,24 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "caravan_pack_stack", params: { yaw: 180 } },
     ],
   },
+  // --- himalayan_monastery pack ---
+  // The ridge ground: the flag line and the mani cairn, each shown at three
+  // yaws so the position-hashed ground scuffing is visibly not a repeat and the
+  // flag run is read along its length and across it. The flag line is the row
+  // that matters: every block of it is a full cube standing on its neighbour,
+  // and a yaw that broke the run would show here first.
+  {
+    row: "himalayan_ridge",
+    water: false,
+    cells: [
+      { prop: "prayer_flag_line", params: {} },
+      { prop: "prayer_flag_line", params: { yaw: 90 } },
+      { prop: "prayer_flag_line", params: { yaw: 180 } },
+      { prop: "mani_stone_cairn", params: {} },
+      { prop: "mani_stone_cairn", params: { yaw: 90 } },
+      { prop: "mani_stone_cairn", params: { yaw: 180 } },
+    ],
+  },
   // --- swamp_witch pack ---
   // The fen ground: the circle, the charm rack and the shrine in its curbed
   // pool, each shown at two yaws so the position-hashed ground scuffing is

@@ -3171,6 +3171,86 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "prop.place@0: a caravan's load off the animals for the night - bales, sacks and jars in an L so the stack has a face and a side, the second course only where there is a first course under it, the rolled tent strapped over the bales and one glowstone bedded in it. DELIBERATELY LOW, two courses at its tallest: a thing a body walks round rather than a wall a lane runs into.",
   }),
 
+  /* --- himalayan_monastery pack ----------------------------------------------
+   * The dzong noun set. "A mountain monastery", "a dzong", "a lamasery on a
+   * ridge" all route to the medieval era and arrive as a European abbey in
+   * stone: the palette was never the problem, the nouns were. Fifteen entries -
+   * thirteen buildings and two ground pieces.
+   *
+   * The sweep that named this pack found most of its best words already gone:
+   * `monastery`, `stupa`, `bell_pavilion`, `granary`, `kiln`, `library`,
+   * `cairn`, `courtyard`, `hermitage`, `byre`, `gatehouse` and `teahouse` are
+   * every one of them somebody else's, word for word, so the anchor ships as
+   * `dzong_hall` and every id here is a compound of a word - `dzong`,
+   * `chorten`, `kora`, `mani`, `monk`, `yak`, `scripture`, `debate`, `incense`,
+   * `butter` - that no table ever had. Every drop of water in the pack lives in
+   * a CURBED SUNKEN BASIN, claimed through the ground floor's connectivity
+   * guard before a drop is written. The bell HANGS DIRECTLY UNDER A SOLID CAP,
+   * never under a chain, and the prayer flags are a run of FULL CUBES pole to
+   * pole, never bunting strung through air.
+   */
+  civ("dzong_hall", "Dzong hall", "implemented", {
+    tags: ["himalayan_monastery", "size_l"],
+    note: "The anchor: the assembly hall with its walls BATTERED - the ring re-clad from the ground to the plate, dark deepslate at the foot, calcite whitewash above it, the dark timber band under the eave and ONE course of gold on top, and not a course touched above the plate so nothing the shell hung is stranded. Inside, the dark oak pillar rows, the thangka cloth over head height, the butter lamps and the abbot's dais. Tags: dzong_hall/dzong/dzong_keep; bare `monastery`, `abbey` and `cloister` stay the faith wave's.",
+  }),
+  rel("prayer_wheel_gallery", "Prayer wheel gallery", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The wheels, PILLAR-MOUNTED AND NEVER HUNG: a stone plinth on the floor, the copper drum on the plinth and the gold cap on the drum, every course standing on the one below it. A row of wheels is the obvious thing to hang from a ceiling and the obvious thing to get wrong - a hanger needs a full cube directly above it, and the ceiling plane over a gallery is the shell's business. The walk down the middle is left clear.",
+  }),
+  rel("chorten_shrine", "Chorten", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The pack's one roof rebuild: the DOME built as FILLED DISCS stepping in, each standing on the disc below it, with the SPIRE standing unbroken on its crown and ending in gold - a dome as a ring per course is `floating.isolated` and a hollow one is a sealed pocket. Inside, the ring of seats and the curbed ablution basin, set one row off the lantern column. Bare `stupa`, `shrine` and `chapel` stay where they were.",
+  }),
+  com("butter_tea_kitchen", "Butter tea kitchen", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The room the whole community passes through twice a day: the churns down one wall in bays, the stores up on a plinth down the other, the curbed water trough off the lantern column and the range at the head written COLD (`lit: false`, never a campfire - the shell's own hearth is the room's fire). Bare `kitchen`, `field_kitchen`, `teahouse` and `tea_house` stay where they were.",
+  }),
+  ver("monk_cell_row", "Monks' cells", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The plainest room in the pack: slab bunks in bays down both walls with the bedding roll up on them, the timber screens at the top of the storey between them and the shelf across the head. NO BED BLOCK, deliberately - a bed is two cells that must both land or neither, and a row of them down a narrow cell block is a row of half-beds on the first tight envelope. Bare `dormitory`, `bunkhouse` and `almshouse` stay where they were.",
+  }),
+  civ("scripture_library", "Scripture library", "implemented", {
+    tags: ["himalayan_monastery", "size_s"],
+    note: "The pecha racks, and the darkest room in the pack: ranks of bookshelves on plinths down both walls, two courses where the storey has room, the gangway between them and the reading lectern at the head through the single-must-have placement so it cannot vanish because its cell was the door's. Window rhythm `none` - a room whose subject is keeping the sun off what is in it is kept dark. Bare `library`, `archive` and `scriptorium` stay where they were.",
+  }),
+  rur("yak_byre", "Yak byre", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "Where the herd stands out of the wind: hurdles off one wall with the troughs in the bays, the fodder up on a plinth down the other so it is never trodden into the ground, and the tack shelf across the head. Bare `byre`, `cow_byre`, `stable`, `paddock` and `corral` stay the agrarian expansion's; the caravan pack's `camel_lines` is a walled yard off a trade court, this is a beast shed on a mountain.",
+  }),
+  rel("dzong_bell_cote", "Dzong bell cote", "implemented", {
+    tags: ["himalayan_monastery", "size_s"],
+    note: "The tide-bell lesson written down twice: the cap course goes down FIRST, the bell hangs DIRECTLY UNDER IT (`attachment: ceiling` demands a full cube at y+1, and `iron_chain` is not one), and the pull rope of two chain links under its own cap goes in the column BESIDE it. On a storey too short to hang in, the bell stands on its frame instead - a bell that vanished on a short envelope is a bell cote with no bell. Bare `bell_pavilion`, `bell_tower` and `bellcote` stay where they were.",
+  }),
+  civ("debate_courtyard", "Debating yard", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The yard a debate is walked round: the seat ring down both walls with their backs to the wall, the columns at every third bay and the awning springing off each one AT THE COURSE THE COLUMN ACTUALLY REACHED - a slab at a guessed height beside a column that stopped lower is a slab in mid-air. The middle of the floor is left clear, because it is the floor the debate is walked on. Bare `courtyard` and `cloister` stay where they were.",
+  }),
+  ver("hermit_retreat", "Hermit's retreat", "implemented", {
+    tags: ["himalayan_monastery", "size_xs"],
+    note: "The smallest room in the pack, and deliberately so: a bench down one wall, a shelf down the other, one butter lamp at the head and one water jar. Nothing else - a retreat furnished like a parlour is not a retreat, and the empty floor is the point. Bare `hermitage` and `hermit_grotto` stay the faith and sanctum waves'.",
+  }),
+  civ("kora_gatehouse", "Kora gatehouse", "implemented", {
+    tags: ["himalayan_monastery", "size_m"],
+    note: "The gate the circumambulation begins at: ONE arch bay of deepslate piers with a gold lintel across the course the columns actually reached - one bay and no more is a walkability decision, because a second cuts the room into segments with a column at each end - and the kora flagging down one wall with the mani stones set into it. Bare `gate`, `gatehouse` and `arch` stay where they were, and `caravan_gatehouse` stays the caravan pack's.",
+  }),
+  rur("stilt_granary", "Stilt granary", "implemented", {
+    tags: ["himalayan_monastery", "size_s"],
+    note: "The grain, up off the damp: a plinth of bottom slabs down both walls with the short deepslate stilts standing on it and the bins on the stilts, so nothing touches the floor plane except what carries it. Every course stands on the course below and the second is written only where the storey has room for it. Bare `granary`, `mudbrick_granary` and `staddle_granary` stay the founding table's, the Nile pack's and the agrarian expansion's.",
+  }),
+  ind("incense_kiln", "Incense kiln", "implemented", {
+    tags: ["himalayan_monastery", "size_s"],
+    note: "Juniper in one end and smoke out of the other: the kiln at the head written COLD, the butter lamp bedded beside it, the juniper and the finished sticks ranked on plinths down the walls and the drying rods of iron bars at the TOP of the storey, where a body walks under them rather than into them. Bare `kiln`, `pottery_kiln` and `hop_kiln` stay the works wave's.",
+  }),
+  nom("prayer_flag_line", "Prayer flag line", "implemented", {
+    tags: ["himalayan_monastery", "size_s"],
+    note: "prop.place@0: the lung ta, and the pack's loudest anti-floating argument. The picture in everybody's head is bunting sagging through air between two poles, and every cell of that sag is `floating.isolated` - so the line here is an UNBROKEN RUN OF FULL-CUBE WOOL at one course, five colours in order, terminating on poles that are unbroken columns to the base plane. No banner block, no attachable, no gap; strung well over a body's head so the cells under it keep their two courses of air.",
+  }),
+  mem("mani_stone_cairn", "Mani stone cairn", "implemented", {
+    kind: "prop",
+    tags: ["himalayan_monastery", "size_xs"],
+    note: "prop.place@0: the carved stones a pilgrim adds one to - a FILLED base at y=1 with the carved faces and the whitewash set into it by position, a filled plus for the shoulder written only over base cells, and the cap stone on the middle of it. Built the way a dome is built and for the same reason: a ring per course leaves its outermost stones with air below and beside them. Three courses at its tallest. Bare `cairn` stays where it was.",
+  }),
+
 ]);
 
 /* -------------------------------------------------------------------------- */

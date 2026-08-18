@@ -551,6 +551,52 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "caravan_pack_stack",
     ]),
   }),
+  /* --- himalayan_monastery pack --- */
+  Object.freeze({
+    id: "himalayan_monastery",
+    name: "Himalayan Monastery",
+    thesis:
+      "A dzong on a Himalayan spur: the catalog cannot say dzong hall, prayer wheel gallery, chorten, butter tea kitchen, monks' cells, scripture library, yak byre, debating yard, kora gate or mani stones, and a Cotswold abbey rendered in deepslate is still a Cotswold abbey.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["boreal_pine", "white_quartz"]),
+    characters: Object.freeze(["civic", "core", "lanes"]),
+    members: Object.freeze([
+      // `monastery`, `abbey`, `priory` and `cloister` are the FAITH wave's,
+      // word for word, and a member belongs to one pack only - so the anchor
+      // carries the dzong in its id and the words stay where they were.
+      "dzong_hall",
+      "prayer_wheel_gallery",
+      // `stupa` is already claimed, so the stupa here is a chorten.
+      "chorten_shrine",
+      // `kitchen`, `field_kitchen`, `teahouse` and `tea_house` are the works
+      // and east-asian waves'. Same rule.
+      "butter_tea_kitchen",
+      // `dormitory`, `bunkhouse` and `almshouse` are earlier waves'.
+      "monk_cell_row",
+      // `library`, `archive` and `scriptorium` are earlier waves'.
+      "scripture_library",
+      // `byre`, `cow_byre` and `stable` are the agrarian expansion's.
+      "yak_byre",
+      // `bell_pavilion`, `bell_tower` and `bellcote` are the east-asian pack's
+      // and the faith wave's.
+      "dzong_bell_cote",
+      // `courtyard`, `courtyard_house` and `cloister` are earlier waves'.
+      "debate_courtyard",
+      // `hermitage` and `hermit_grotto` are the faith and sanctum waves'.
+      "hermit_retreat",
+      // `gate`, `gatehouse` and `arch` are the city gate's and the triumphal
+      // arch's, and `caravan_gatehouse` is the caravan pack's.
+      "kora_gatehouse",
+      // `granary`, `mudbrick_granary` and `staddle_granary` are the founding
+      // table's, the Nile pack's and the agrarian expansion's.
+      "stilt_granary",
+      // `kiln`, `pottery_kiln` and `hop_kiln` are the works wave's.
+      "incense_kiln",
+      "prayer_flag_line",
+      // `cairn` bare is already somebody's; the compound is ours.
+      "mani_stone_cairn",
+    ]),
+  }),
 ]);
 
 /** Every legal pack word, in registry order. */

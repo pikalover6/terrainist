@@ -238,6 +238,11 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
     "desert_caravanserai",
     "a silk road oasis/a caravan town/a desert serai: an arcaded serai court with traders' cells round it, a gatehouse wide enough for a loaded animal, a qanat wellhead, houses with wind towers on their heads, a spice godown, camel lines, an arcade of shaded stalls, a date store, a cistern, a dye yard, a glassblower's kiln, a domed shrine at the spring, a watch minaret, date palm groves and stacked caravan loads.",
   ],
+  // --- himalayan_monastery pack ---
+  [
+    "himalayan_monastery",
+    "a mountain monastery/a dzong/a lamasery on a ridge/tibet/the himalaya: a battered whitewashed assembly hall banded in dark timber and gold, a gallery of prayer wheels, a chorten at the gate, a butter tea kitchen, monks' cells, a scripture library, a yak byre, a bell cote, a debating yard, a hermit's retreat, a kora gatehouse, a granary up on stone stilts, an incense kiln, prayer flag lines and mani stone cairns.",
+  ],
 ] as const;
 
 /** One `id  <- thesis` line per pack, for the prompt. */

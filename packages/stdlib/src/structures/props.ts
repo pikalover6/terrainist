@@ -153,6 +153,15 @@ import {
   caravanPropFootprint,
   isCaravanProp,
 } from "./props-caravan.js";
+// --- himalayan_monastery pack -----------------------------------------------
+// The himalayan_monastery pack's ground pieces - the two entries of that pack
+// which stand on the bare ridge rather than roofing a room.
+import {
+  HIMALAYAN_PROP_GENERATORS,
+  HIMALAYAN_PROP_NAMES,
+  himalayanPropFootprint,
+  isHimalayanProp,
+} from "./props-himalayan.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -296,6 +305,8 @@ export const PROP_NAMES = [
   ...ATLANTEAN_PROP_NAMES,
   // --- desert_caravanserai pack ---
   ...CARAVAN_PROP_NAMES,
+  // --- himalayan_monastery pack ---
+  ...HIMALAYAN_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -642,6 +653,8 @@ export function propFootprint(
   if (isSwampProp(prop)) return swampPropFootprint(prop, params);
   // --- desert_caravanserai pack ---
   if (isCaravanProp(prop)) return caravanPropFootprint(prop, params);
+  // --- himalayan_monastery pack ---
+  if (isHimalayanProp(prop)) return himalayanPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1202,6 +1215,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...SWAMP_PROP_GENERATORS,
   // --- desert_caravanserai pack ---
   ...CARAVAN_PROP_GENERATORS,
+  // --- himalayan_monastery pack ---
+  ...HIMALAYAN_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

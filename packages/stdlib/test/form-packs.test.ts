@@ -45,6 +45,8 @@ describe("the registry", () => {
       "atlantean",
       // --- desert_caravanserai pack ---
       "desert_caravanserai",
+      // --- himalayan_monastery pack ---
+      "himalayan_monastery",
     ]);
   });
 
@@ -93,7 +95,10 @@ describe("the registry", () => {
     // …plus the desert_caravanserai pack's fifteen: 235 + 15 = 250. That pack
     // shipped ALONE, so it owns its own arithmetic and this line moves with it
     // and with nothing else.
-    expect(seen.size).toBe(250);
+    // …plus the himalayan_monastery pack's fifteen: 250 + 15 = 265. That pack
+    // shipped ALONE, so it owns its own arithmetic and this line moves with it
+    // and with nothing else.
+    expect(seen.size).toBe(265);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

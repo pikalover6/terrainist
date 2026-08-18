@@ -3217,6 +3217,12 @@ export const SETTLEMENT_PROP_NAMES = [
   // element.
   "date_palm_grove",
   "caravan_pack_stack",
+  // --- himalayan_monastery pack ---
+  // The dzong pack's ground half: the two entries of that pack which stand on
+  // the bare ridge rather than roofing a room. Order matches `PROP_NAMES` in
+  // the stdlib, which `compiler/test/props.test.ts` asserts element by element.
+  "prayer_flag_line",
+  "mani_stone_cairn",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

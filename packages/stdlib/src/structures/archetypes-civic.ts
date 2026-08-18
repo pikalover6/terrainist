@@ -81,6 +81,8 @@ import { atlanteanFacadeDefaults } from "./archetypes-atlantean.js";
 import { swampFacadeDefaults } from "./archetypes-swamp.js";
 // --- desert_caravanserai pack ---
 import { caravanFacadeDefaults } from "./archetypes-caravan.js";
+// --- himalayan_monastery pack ---
+import { himalayanFacadeDefaults } from "./archetypes-himalayan.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -345,6 +347,18 @@ export function archetypeFacadeDefaults(
       // whole subject is keeping the sun off what is in it is kept dark.
       const caravan = caravanFacadeDefaults(archetype);
       if (Object.keys(caravan).length > 0) return caravan;
+      // --- himalayan_monastery pack ---------------------------------------
+      // The dzong pack, beside the packs it was wired in after: most of it
+      // wants `flat`, because a dzong roofs flat over its battered walls - a
+      // flat roof is a drying floor and a terrace, and the snow is shovelled
+      // off it anyway - while the chorten wants the `hip` whose deep gap
+      // between the eave plate and the allowance is exactly where its dome and
+      // spire are built, and the byre and the kiln want the `gable` a working
+      // shed on a mountain sheds its load off. The granary, the library and
+      // the kiln want no window rhythm at all: grain, ink and smoke all want
+      // the dark.
+      const himalayan = himalayanFacadeDefaults(archetype);
+      if (Object.keys(himalayan).length > 0) return himalayan;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

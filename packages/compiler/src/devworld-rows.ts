@@ -91,6 +91,13 @@ export {
   CARAVAN_ROW_LENGTH,
   caravanSizeFor,
 } from "./exhibits/caravan.js";
+
+/** The himalayan_monastery rows, for tests that assert on the gradient. */
+export {
+  HIMALAYAN_EXHIBIT_ROWS,
+  HIMALAYAN_ROW_LENGTH,
+  himalayanSizeFor,
+} from "./exhibits/himalayan.js";
 import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
 import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
 import { DWARVEN_EXHIBIT_ROWS } from "./exhibits/dwarven.js";
@@ -98,6 +105,7 @@ import { STEPPE_EXHIBIT_ROWS } from "./exhibits/steppe.js";
 import { SWAMP_EXHIBIT_ROWS } from "./exhibits/swamp.js";
 import { ATLANTEAN_EXHIBIT_ROWS } from "./exhibits/atlantean.js";
 import { CARAVAN_EXHIBIT_ROWS } from "./exhibits/caravan.js";
+import { HIMALAYAN_EXHIBIT_ROWS } from "./exhibits/himalayan.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -200,6 +208,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...ATLANTEAN_EXHIBIT_ROWS,
   // The desert_caravanserai pack: the serai court, the arcade and the cistern.
   ...CARAVAN_EXHIBIT_ROWS,
+  // The himalayan_monastery pack: the dzong hall, the chorten and the cells.
+  ...HIMALAYAN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,
