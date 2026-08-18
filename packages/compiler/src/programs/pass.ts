@@ -24,7 +24,14 @@ import {
   type ProgramScatterParams,
   type SeatDecision,
 } from "@terrainist/spec";
-import { error, hoverOfParams, seatOfParams, warning } from "@terrainist/spec";
+import {
+  DEFAULT_EMBED_DEPTH,
+  error,
+  explicitSeatOfParams,
+  hoverOfParams,
+  note,
+  warning,
+} from "@terrainist/spec";
 import type { ProgramTheme } from "@terrainist/spec";
 import { nodeSeed, type Marker } from "@terrainist/stdlib";
 
@@ -45,7 +52,13 @@ import {
 } from "./site-treatment.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
 import { facingRotationAt, type ProgramFacing } from "./facing.js";
-import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.js";
+import {
+  conformSeatPlane,
+  frontColumnOf,
+  planProgramSites,
+  type ProgramSite,
+  type SiteRefusals,
+} from "./place.js";
 import { rotateRun, rotatedHeightAt, type ProgramRotation } from "./rotate.js";
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
 import { verifyConformHash, verifyOutputHash } from "./verify.js";
@@ -74,6 +87,17 @@ export interface ProgramPlacement {
   readonly hovering?: boolean;
   /** How a non-hovering landmark meets the ground. Defaults to `"pad"`. */
   readonly seat?: SeatDecision;
+  /**
+   * True when {@link ProgramPlacement.seat} is the seat the **document** wrote
+   * rather than the one `seatOfParams` defaulted to.
+   *
+   * The verdict-aware default (§2.2) needs the distinction and a resolved
+   * `SeatDecision` cannot carry it: an author who wrote `"seat": "pad"` and an
+   * author who wrote nothing produce the same value. Set this and a written
+   * `pad` wins over a `conform` verdict, which is what "an explicit seat always
+   * wins" means; leave it and a plain default `pad` defers to the verdict.
+   */
+  readonly seatExplicit?: boolean;
   /**
    * The quarter turn this landmark stands at (`facing.ts`), or absent for the
    * programs that declared no front and are therefore never turned.
@@ -203,8 +227,22 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
     }
 
     const seat = seatOf(job);
+    // §2.5's compile-report half: "this instance is on a platform because its
+    // program did not conform" is the sentence a walker needs and cannot
+    // otherwise get. Only for a record the gate actually judged — a document
+    // with no verdict says nothing, because nothing was measured.
+    if (job.program.conforms === false && seat?.policy === "pad") {
+      diagnostics.push(
+        note(
+          "PROGRAM_SEATED_PAD",
+          job.nodePath,
+          `${JSON.stringify(job.programId)} writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground`,
+          "no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself",
+        ),
+      );
+    }
     const refusals: SiteRefusals = { cliff: 0 };
-    const sites = resolveSites(job, input, claimed, refusals);
+    const sites = resolveSites(job, input, claimed, refusals, seat);
     if (refusals.cliff > 0) {
       diagnostics.push(
         warning(
@@ -281,6 +319,7 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
     if (!runs.ok) continue;
 
     let clampedFluid = 0;
+    let residual: ConformResidual = { occupied: 0, underpinned: 0, buried: 0 };
     for (const [i, executed] of runs.runs.entries()) {
       const site = sites[i] as ProgramSite;
       // Out of the sandbox and into the world frame. Everything below — the
@@ -311,24 +350,43 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       // The foundation, after the run: only the finished instance knows which
       // columns it actually stands in, and a leg over a dip is the daylight
       // this fills. Skipped for the seats that are not standing on land.
-      if (seat?.policy === "pad" && !siteIsWet(input.plan, site.footprint)) {
-        appendAll(
-          blocks,
-          underpinProgramInstance({
-            plan: input.plan,
-            stack: input.stack,
-            blocks: lowered.blocks,
-            // The run's own seat course, in world Y: `seatedBaseY` put the
-            // program's `seatY` plane exactly on the site's ground plane.
-            seatPlane: site.baseY,
-            plinth: theme.ground.plinth,
-          }),
-        );
+      // `"conform"` joins `"pad"` here, and for a conforming instance this is
+      // the *only* ground courtesy left (§2.7.3): no pad, no apron, just a
+      // foundation under exactly the columns that would otherwise hang in the
+      // air. A program that conformed perfectly gets zero blocks from it.
+      if (
+        (seat?.policy === "pad" || seat?.policy === "conform") &&
+        !siteIsWet(input.plan, site.footprint)
+      ) {
+        const skirt = underpinProgramInstance({
+          plan: input.plan,
+          stack: input.stack,
+          blocks: lowered.blocks,
+          // The run's own seat course, in world Y: `seatedBaseY` put the
+          // program's `seatY` plane exactly on the site's ground plane.
+          seatPlane: site.baseY,
+          plinth: theme.ground.plinth,
+        });
+        appendAll(blocks, skirt);
+        if (seat.policy === "conform") residual = tallyResidual(residual, input.plan, lowered.blocks, skirt);
       }
       // v2: the shell is the program's, the fit-out inside it is the grammar's.
       appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
       appendAll(markers, lowered.markers);
       placed.push(lowered.placed);
+    }
+
+    // §2.8 — the number §2.9's carve is gated on, once per node.
+    if (seat?.policy === "conform" && residual.occupied > 0) {
+      const pct = (n: number): string => `${Math.round((n / residual.occupied) * 100)}%`;
+      diagnostics.push(
+        note(
+          "PROGRAM_CONFORM_RESIDUAL",
+          job.nodePath,
+          `${JSON.stringify(job.programId)} conformed to the ground it was given: of ${residual.occupied} occupied column${residual.occupied === 1 ? "" : "s"}, ${residual.underpinned} (${pct(residual.underpinned)}) needed a skirt under them and ${residual.buried} (${pct(residual.buried)}) are buried in the hill`,
+          "no change needed — a skirted column is a leg the compiler footed, and a buried one is ground standing above the seat plane, which only the program's own answer or a carve can help",
+        ),
+      );
     }
 
     if (clampedFluid > 0) {
@@ -355,9 +413,69 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
  */
 function seatOf(job: ProgramJob): SeatDecision | undefined {
   if (isHovering(job)) return undefined;
-  if (job.placement?.seat !== undefined) return job.placement.seat;
-  if (job.seat !== undefined) return job.seat;
-  return seatOfParams(job.params);
+  const supplied = job.placement?.seat ?? job.seat;
+  // An explicit seat always wins (§2.2). A *supplied* one is only explicit when
+  // it says something the default does not: the callers that resolve a seat for
+  // us hand back `seatOfParams`, whose answer for a document that named no seat
+  // is the same `pad` a document that asked for `pad` gets. So a plain default
+  // `pad` falls through to the verdict, and everything else is honoured.
+  if (job.placement?.seatExplicit === true && supplied !== undefined) return supplied;
+  if (supplied !== undefined && !isDefaultSeat(supplied)) return supplied;
+  const written = explicitSeatOfParams(job.params);
+  if (written !== undefined) return written;
+  // The verdict, and nothing else: a record the gate certified as conforming
+  // is run against the real ground; a record with `conforms: false` or with no
+  // verdict at all — which is every archived document — gets today's pad and
+  // is byte-identical.
+  return job.program.conforms === true
+    ? { policy: "conform", embedDepth: DEFAULT_EMBED_DEPTH }
+    : { policy: "pad", embedDepth: DEFAULT_EMBED_DEPTH };
+}
+
+/** What §2.8 reports: what a conforming instance left the compiler to do. */
+interface ConformResidual {
+  /** Columns the instance occupies, over every instance of the node. */
+  readonly occupied: number;
+  /** Of those, the ones the skirt had to foot — daylight the program left. */
+  readonly underpinned: number;
+  /** Of those, the ones whose highest block is at or under the ground. */
+  readonly buried: number;
+}
+
+/** Fold one instance's columns into the node's running residual. */
+function tallyResidual(
+  running: ConformResidual,
+  plan: ColumnPlan,
+  blocks: readonly StructureBlock[],
+  skirt: readonly StructureBlock[],
+): ConformResidual {
+  const top = new Map<string, number>();
+  for (const b of blocks) {
+    const key = `${b.x},${b.z}`;
+    const known = top.get(key);
+    if (known === undefined || b.y > known) top.set(key, b.y);
+  }
+  const footed = new Set<string>();
+  for (const b of skirt) footed.add(`${b.x},${b.z}`);
+  const { region } = plan;
+  let buried = 0;
+  for (const [key, highest] of top) {
+    const [x, z] = key.split(",").map(Number) as [number, number];
+    const i = x - region.x0;
+    const j = z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+    if (highest <= (plan.ground[j * region.width + i] as number)) buried += 1;
+  }
+  return {
+    occupied: running.occupied + top.size,
+    underpinned: running.underpinned + footed.size,
+    buried: running.buried + buried,
+  };
+}
+
+/** True for the seat `seatOfParams` invents when the document named none. */
+function isDefaultSeat(seat: SeatDecision): boolean {
+  return seat.policy === "pad" && seat.embedDepth === DEFAULT_EMBED_DEPTH;
 }
 
 /**
@@ -407,15 +525,30 @@ function resolveSites(
   input: ProgramPassInput,
   claimed: readonly Rect[],
   refusals: SiteRefusals,
+  seat: SeatDecision | undefined,
 ): readonly ProgramSite[] {
   if (job.mode === "landmark") {
     if (job.placement === undefined) return [];
     const rotation = job.placement.rotation;
+    const footprint = job.placement.footprint;
+    // A conforming landmark seats on its front anchor's own column plus one,
+    // not on the median plane the solver handed down (§2.7.2). Nothing else
+    // about the placement moves.
+    const baseY =
+      seat?.policy === "conform"
+        ? conformSeatPlane(
+            input.plan,
+            footprint,
+            rotation === undefined
+              ? undefined
+              : frontColumnOf(footprint, rotation, job.program.envelope),
+          ) ?? job.placement.baseY
+        : job.placement.baseY;
     return [
       {
         index: 0,
-        footprint: job.placement.footprint,
-        baseY: job.placement.baseY,
+        footprint,
+        baseY,
         ...(rotation === undefined || rotation === 0 ? {} : { rotation }),
       },
     ];
@@ -429,6 +562,7 @@ function resolveSites(
     seed: nodeSeed(input.worldSeed, job.nodePath, job.seedSalt ?? ""),
     taken: claimed,
     refusals,
+    ...(seat === undefined ? {} : { seat }),
     ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
     ...(facing === undefined
       ? {}

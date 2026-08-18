@@ -396,11 +396,20 @@ export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth", "face"] as co
  * - `"pad"` (the default) — the compiler seats the program's own seat plane on
  *   a robust ground plane under the footprint and raises the low columns to
  *   meet it, fill-only. A building on a plinth.
+ * - `"conform"` — **the default for a program the gate certified as
+ *   conforming** (`AuthoredProgramRecord.conforms === true`;
+ *   `docs/GROUND-UNIFICATION-v0.md` §2.2). No pad and no apron: the program is
+ *   run against the real ground of the site it landed on and follows it column
+ *   by column through `api.heightAt`. It is still re-seated by `seatY`, and the
+ *   only ground courtesy left under it is the skirt — a foundation under
+ *   exactly the columns that would otherwise hang in the air.
  * - `"embed"` — the same seating, then sunk `embedDepth` blocks further. No
  *   terrain is cut: the ground simply stands over the buried part, which is
  *   what a *crashed* thing wants rather than one resting on a lawn.
  * - `"drape"` — no pad and no re-seat. The program conforms itself, column by
- *   column, through `api.heightAt`.
+ *   column, through `api.heightAt`. `"conform"` minus the re-seat, which is a
+ *   distinction only a program that already knows its own `seatY` is 0 can
+ *   use: deprecated in the kit, kept in the union.
  * - `"wade"` — this thing stands *in the water*. The seat plane goes on the
  *   seabed, the solid ground under the fluid, and no pad is laid: filling a
  *   bay with dirt to make a plinth is the one thing a wading landmark must
@@ -410,7 +419,7 @@ export const LANDMARK_PARAM_KEYS = ["hover", "seat", "embedDepth", "face"] as co
  *   solver's freeboard veto, so a candidate footprint may reach below sea
  *   level at all.
  */
-export const SEAT_POLICIES = ["pad", "embed", "drape", "wade"] as const;
+export const SEAT_POLICIES = ["pad", "conform", "embed", "drape", "wade"] as const;
 
 /** One of {@link SEAT_POLICIES}. */
 export type SeatPolicy = (typeof SEAT_POLICIES)[number];
@@ -477,10 +486,24 @@ export function seatPolicyOf(node: unknown): SeatDecision | undefined {
 
 /** {@link seatPolicyOf} for a params object — `scatter.program@0`'s spelling. */
 export function seatOfParams(params: unknown): SeatDecision {
-  const fallback: SeatDecision = { policy: "pad", embedDepth: DEFAULT_EMBED_DEPTH };
-  if (typeof params !== "object" || params === null) return fallback;
+  return explicitSeatOfParams(params) ?? { policy: "pad", embedDepth: DEFAULT_EMBED_DEPTH };
+}
+
+/**
+ * The seat the document actually **wrote**, or `undefined` when it wrote none.
+ *
+ * The verdict-aware default (`docs/GROUND-UNIFICATION-v0.md` §2.2: a certified
+ * program seats `conform`, everything else seats `pad`, and an explicit `seat`
+ * always wins) needs to tell "the author asked for `pad`" from "nobody asked",
+ * which `seatOfParams` deliberately cannot: it answers the older question,
+ * "how does this meet the ground", and its answer is still `pad`.
+ */
+export function explicitSeatOfParams(params: unknown): SeatDecision | undefined {
+  if (typeof params !== "object" || params === null) return undefined;
   const seat = (params as { seat?: unknown }).seat;
-  if (typeof seat !== "string" || !(SEAT_POLICIES as readonly string[]).includes(seat)) return fallback;
+  if (typeof seat !== "string" || !(SEAT_POLICIES as readonly string[]).includes(seat)) {
+    return undefined;
+  }
   const raw = (params as { embedDepth?: unknown }).embedDepth;
   const depth =
     typeof raw === "number" &&

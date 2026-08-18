@@ -760,7 +760,7 @@ function checkSeat(
           "BAD_ENUM",
           `${path}.seat`,
           `"seat" is ${describe(seat)}`,
-          `use one of: ${SEAT_POLICIES.join(", ")} — "pad" seats it on a levelled plane, "embed" sinks it into the ground, "drape" lets the program follow the terrain itself, "wade" stands it in the water on the seabed`,
+          `use one of: ${SEAT_POLICIES.join(", ")} — "pad" seats it on a levelled plane, "conform" runs it against the real ground and levels nothing, "embed" sinks it into the ground, "drape" lets the program follow the terrain itself, "wade" stands it in the water on the seabed`,
         ),
       );
     } else if (hovering) {

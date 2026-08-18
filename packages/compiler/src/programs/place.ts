@@ -17,7 +17,7 @@
  * the geometry rather than of who was served first.
  */
 
-import type { ProgramScatterParams } from "@terrainist/spec";
+import type { ProgramScatterParams, SeatDecision } from "@terrainist/spec";
 import { hoverOfParams, seatOfParams } from "@terrainist/spec";
 import { positionFloat, positionInt, type Region, type Seed256 } from "@terrainist/stdlib";
 import { streamSeed } from "@terrainist/stdlib";
@@ -26,7 +26,7 @@ import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { FluidKind } from "../terrain/columns.js";
-import { rotatedFootprint, type ProgramRotation } from "./rotate.js";
+import { rotateLocalPoint, rotatedFootprint, type ProgramRotation } from "./rotate.js";
 
 /**
  * Roughness a program site tolerates before it is refused outright.
@@ -122,6 +122,63 @@ export function programGroundPlane(
   }
   heights.sort((a, b) => a - b);
   return (heights[heights.length >> 1] as number) + 1;
+}
+
+/**
+ * The world Y a **conforming** instance's seat plane goes on.
+ *
+ * `docs/GROUND-UNIFICATION-v0.md` §2.7.2. The front anchor's own column plus
+ * one, not the median: the seat plane is the origin of `api.heightAt`, and
+ * prompt rule 6 teaches "0 where the ground meets it, negative where the ground
+ * falls away". A lowest-contact plane would make `heightAt` ≥ 0 everywhere and
+ * silently invert that teaching for every program already written; the front
+ * anchor keeps the rule true word for word, and it is also the level a road
+ * arrives at, so one number serves both.
+ *
+ * With no front column — a program that declared no front is never turned and
+ * has no face to arrive at — this is `programGroundPlane` unchanged, median and
+ * all, which is also what it falls back to when the named column is outside the
+ * region.
+ */
+export function conformSeatPlane(
+  plan: ColumnPlan,
+  rect: Rect,
+  frontColumn?: { readonly x: number; readonly z: number },
+): number | undefined {
+  if (frontColumn === undefined) return programGroundPlane(plan, rect);
+  const { region } = plan;
+  const i = frontColumn.x - region.x0;
+  const j = frontColumn.z - region.z0;
+  if (i < 0 || j < 0 || i >= region.width || j >= region.depth) {
+    return programGroundPlane(plan, rect);
+  }
+  return (plan.ground[j * region.width + i] as number) + 1;
+}
+
+/**
+ * Ground relief across `rect` — the highest column less the lowest.
+ *
+ * What {@link PROGRAM_GENTLE_LIFT} measures for a **conforming** site (§2.7.5):
+ * there is no fill under one, so "how tall is the plinth" has no answer, and
+ * the question that replaces it is "how much ground does this thing have to
+ * follow". Columns outside the region are skipped, exactly as
+ * {@link padLiftUnder} skips them.
+ */
+export function reliefUnder(plan: ColumnPlan, rect: Rect): number {
+  const { region } = plan;
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      const g = plan.ground[j * region.width + i] as number;
+      if (g < lo) lo = g;
+      if (g > hi) hi = g;
+    }
+  }
+  return Number.isFinite(lo) ? hi - lo : 0;
 }
 
 /**
@@ -223,6 +280,38 @@ export interface ProgramPlacementInput {
    * envelope, which snapping to a cardinal absorbs.
    */
   readonly rotationAt?: (x: number, z: number) => ProgramRotation;
+  /**
+   * The seat the pass resolved for this node, verdict and all.
+   *
+   * `params.seat` alone cannot answer it any more: the default now depends on
+   * the record's `conforms` verdict (`docs/GROUND-UNIFICATION-v0.md` §2.2), and
+   * the placer needs the answer for two decisions — a wading site is allowed
+   * its water, and a conforming site is measured by *relief* rather than by
+   * fill (§2.7.5). Absent, this falls back to `seatOfParams`, which is exactly
+   * what it read before and is why a document with no verdict places
+   * identically.
+   */
+  readonly seat?: SeatDecision;
+}
+
+/**
+ * The world column the instance's **front** stands on, or `undefined` when the
+ * program declared no front and was therefore never turned.
+ *
+ * The front is built toward local −Z (`FRONT_ANCHOR`), so the front column is
+ * the middle of the local `z = 0` edge, turned into the world frame by the same
+ * `rotateLocalPoint` the run itself is turned by. Geometric on purpose: the
+ * seat plane is the origin of `api.heightAt` and therefore has to be known
+ * *before* the run, which is before any anchor the program publishes exists.
+ */
+export function frontColumnOf(
+  rect: Rect,
+  rotation: ProgramRotation | undefined,
+  envelope: readonly [number, number, number],
+): { readonly x: number; readonly z: number } {
+  const [w, , d] = envelope;
+  const [rx, rz] = rotateLocalPoint(Math.floor((w - 1) / 2), 0, rotation ?? 0, w, d);
+  return { x: rect.x0 + rx, z: rect.z0 + rz };
 }
 
 /**
@@ -287,7 +376,12 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   const hover = hoverOfParams(params);
   // A wading scatter — a bay full of half-sunk wrecks — is the one kind whose
   // sites are *supposed* to have water in them.
-  const wades = hover === undefined && seatOfParams(params).policy === "wade";
+  const policy = (input.seat ?? seatOfParams(params)).policy;
+  const wades = hover === undefined && policy === "wade";
+  // A conforming site is never padded either, so the gentle walk's ceiling is a
+  // *relief* ceiling instead of a fill ceiling (§2.7.5): same two walks, same
+  // "never a refusal" guarantee, different measurement.
+  const conforms = hover === undefined && policy === "conform";
 
   const queue = sampleCandidates(area, step, stream);
 
@@ -344,7 +438,22 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
           if (baseY === undefined) continue;
           if (!reliefOk(plan, rect, params, fw, fd)) continue;
           // A wading site is never padded, so it has no lift to be gentle about.
-          if (!wades && padLiftUnder(plan, rect, baseY) > maxLift) continue;
+          if (conforms) {
+            if (reliefUnder(plan, rect) > maxLift) continue;
+            // The seat plane of a conforming instance is the front anchor's own
+            // column, not the median the eligibility test just computed.
+            baseY =
+              conformSeatPlane(
+                plan,
+                rect,
+                // No `rotationAt` means the node declared no face, and a
+                // program with no front has no face to arrive at: the median,
+                // exactly as before.
+                input.rotationAt === undefined
+                  ? undefined
+                  : frontColumnOf(rect, rotation, input.envelope),
+              ) ?? baseY;
+          } else if (!wades && padLiftUnder(plan, rect, baseY) > maxLift) continue;
         }
         if (params.elevation !== undefined) {
           const [lo, hi] = params.elevation;

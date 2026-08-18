@@ -543,6 +543,25 @@ export const TERRAIN_DIAGNOSTICS = {
    * the one code whose purpose is to teach the authoring model something.
    */
   PROGRAM_DID_NOT_CONFORM: "LOAM-W340",
+  /**
+   * This instance stands on a platform because its program did not conform.
+   *
+   * `docs/GROUND-UNIFICATION-v0.md` §2.5 — the compile-report half of
+   * {@link PROGRAM_DID_NOT_CONFORM}. A note, never a failure: "this thing is on
+   * a plinth because the program that wrote it writes the same sole on every
+   * column" is the sentence a walker needs and cannot otherwise get.
+   */
+  PROGRAM_SEATED_PAD: "LOAM-T341",
+  /**
+   * What a conforming instance left for the compiler: how many of its occupied
+   * columns the skirt underpinned, and how many are buried in the hill.
+   *
+   * `docs/GROUND-UNIFICATION-v0.md` §2.8 — the measurement §2.9's carve is
+   * gated on. It has to exist before the carve is built, because building an
+   * earthwork around a hut before knowing how much burial survives site
+   * preference and the program's own answer is inventing one.
+   */
+  PROGRAM_CONFORM_RESIDUAL: "LOAM-T342",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
