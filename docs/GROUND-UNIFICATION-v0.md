@@ -811,6 +811,32 @@ W2 is a cap that never binds and should be left out rather than added blind.
 the walked berm is on a *district street*, drawn by the fabric and never routed.
 It is a reasonable later addition for rural lanes; it is not the fix.
 
+**Forensics verdict (landed after this section was drafted).** The walked berm
+is **not a street at all**: it is `world.unicorn_defense_terrace`, an
+`infra.entry@0` (`acropolis_terrace`, sourceClass `retaining.seam`,
+`ACROPOLIS_LIFT = 6`, `follow: "step"` → `sweepDatum`, so
+`gradeProfile`/`routeFloorAt` never ran on it). Its `deriveWallCourse` ring
+crossed the sacred lake and filled 208 of its 791 above-sea water columns; a
+water veto for non-water-mover entries is the in-flight fix, and a
+"`retaining.seam` requires a seam" relief test is its own later round. The
+predicted routeFloorAt symptom is *absent* in that world — no fill cluster
+along any street near the lake — so the b9f808d floor is exonerated on the
+walked evidence. The cone-propagation hazard above is nonetheless confirmed
+real by instrumentation (a rim floor of 95 propagates 94, 93, 92… along the
+profile; a route leaving a tarn onto ground 6 lower builds an embankment up to
+6 stations long). Reconciliation per the W1/W2 rule: there is **no walked berm
+to measure**, so `ROAD_BERM_MAX` is set from the hazard geometry (2, pinned
+with this verdict), W1 (the pre-envelope clamp) is the load-bearing half, and
+W2 ships only as a cheap assertion.
+
+Two further items this forensics added to the ledger: the refused-seam
+question (`levels.ts` — 126 seam columns got neither wall nor bank on the
+pirate haven and stepped vertically; "what does a refused `tallDrop` become"
+is a design question for the WP-8 retaining round) and the pad-plane
+quantization floor (`referenceY` rounds the continuous field median *up* on
+flat ground — the monument's 1-block plinth; fold into 8F's datum rule, which
+already chooses `Math.floor`).
+
 ## 3.2 Linework and wall beds
 
 `declareLineworkBeds` (`structures/linework.ts`) commits a `profile` at rank 25

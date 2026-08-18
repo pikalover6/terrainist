@@ -17,6 +17,20 @@ author real site terrain, build naturally on it — heightAt exists at
 execution; make conform the default, retire auto-pad to opt-in.
 Design seat (opus-5-high) writing docs/GROUND-UNIFICATION-v0.md.
 
+**P1 FORENSICS (landed):** "bridge" = infra.entry acropolis_terrace
+(retaining.seam, LIFT=6, follow:step) routed its deriveWallCourse
+ring OVER the sacred lake (208/791 water columns filled) + flat
+ground — routeFloorAt EXONERATED (cone hazard real but latent;
+ROAD_BERM_MAX=2 pinned from hazard geometry). Pits+pillars = ONE
+bug: unrouted hub seeded road mask with roadY=0 → blendShoulders
+graded toward y=0 (90-block shaft, preserved seed pillar; same in
+p3; NOT E494, NOT basins — aspect-ratio guard DISCONFIRMED). Pirate
+quarry = 126 refused seam columns (shortRun/tallDrop) stepped raw —
+design question for WP-8 retaining round. Monument 1-block plinth =
+referenceY rounds median UP on flat ground — fold into 8F datum.
+FIX WAVE IN FLIGHT (opus-5-low): roadY hub seed + verge seed clamp +
+infra.entry water veto (roads.ts/infra-entry.ts + NEW test files).
+
 **TROY FORENSICS (landed):** (a) half-squares = terrace copings on
 UNBUILT city blocks (retaining.ts; fix: no-adjacent-claimed-lot seam
 grades as bank); (b) berm = district platform 16-in-5 cut face
