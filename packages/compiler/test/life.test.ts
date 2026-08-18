@@ -522,6 +522,9 @@ describe("modern fittings are era-gated", () => {
     "bicycle_rack",
     "bus_shelter",
     "parkedCar",
+    // Spray-paint graffiti: a glazed panel on a wall is as modern as a
+    // dumpster, and it used to ship on medieval back walls as a stray block.
+    "mural",
   ] as const;
 
   const dress = (modernFittings?: boolean): ReturnType<typeof dressLife> => {
@@ -555,6 +558,16 @@ describe("modern fittings are era-gated", () => {
   it("a pre-modern era plants none of them", () => {
     const off = dress(false);
     for (const kind of MODERN) expect(off.stats[kind] ?? 0).toBe(0);
+  });
+
+  it("plants no glazed terracotta on a pre-modern back wall", () => {
+    // The regression: graffiti bypassed the gate, so a medieval village shipped
+    // single glazed-terracotta blocks stuck to exterior walls.
+    const off = dress(false);
+    const named = (r: ReturnType<typeof dressLife>): string[] =>
+      r.blocks.map((b) => stack.blockNameByStateId(b.stateId) ?? "");
+    for (const name of named(off)) expect(name).not.toContain("glazed_terracotta");
+    expect(named(dress(true)).some((n) => n.includes("glazed_terracotta"))).toBe(true);
   });
 
   it("still dresses the street: the gate substitutes, it does not empty", () => {

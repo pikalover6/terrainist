@@ -1924,7 +1924,10 @@ function dressBack(
   // Graffiti: a glazed panel flat on the wall, at eye height rather than at
   // knee height — a full cube one block off the ground in a service alley is
   // something you walk into, and the point of the panel is that you see it.
-  if (hash2(seed, head.x, head.z, 4) < 0.3) {
+  // Spray paint is a modern fitting: a glazed panel on a medieval back wall
+  // reads as a stray block, not as graffiti, so it goes behind the same gate
+  // as the dumpster and the AC unit.
+  if (modernOk(input) && hash2(seed, head.x, head.z, 4) < 0.3) {
     const at = hashInt(seed, head.x, head.z, 5, 0, n - 1);
     const w = run.wall[at] as { x: number; z: number };
     const y = b.floorY + 2;
