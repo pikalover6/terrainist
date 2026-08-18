@@ -56,7 +56,7 @@
  */
 
 import { note, warning, type LoamDiagnostic } from "@terrainist/spec";
-import type { Region } from "@terrainist/stdlib";
+import { APRON_MAX, APRON_RUN_PER_BLOCK, type Region } from "@terrainist/stdlib";
 
 import type { GroundClaim, ReadonlyUint8Array } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
@@ -188,6 +188,7 @@ export function declareLinework(input: LineworkPassInput): LineworkPassResult {
 
   let declaredColumns = 0;
   let refusedColumns = 0;
+  let skirtColumns = 0;
 
   for (const job of jobs) {
     const built = declareOne(input, job, diagnostics);
@@ -195,6 +196,7 @@ export function declareLinework(input: LineworkPassInput): LineworkPassResult {
     beds.set(job.nodePath, built.bed);
     declaredColumns += built.bed.columns.length;
     refusedColumns += built.subtracted;
+    skirtColumns += built.skirt;
   }
 
   return {
@@ -204,6 +206,7 @@ export function declareLinework(input: LineworkPassInput): LineworkPassResult {
       lineworkBeds: beds.size,
       lineworkBedColumns: declaredColumns,
       lineworkBedColumnsSubtracted: refusedColumns,
+      lineworkSkirtColumns: skirtColumns,
     },
   };
 }
@@ -213,7 +216,7 @@ function declareOne(
   input: LineworkPassInput,
   job: InfraEntryJob,
   diagnostics: LoamDiagnostic[],
-): { bed: LineworkBed; subtracted: number } | undefined {
+): { bed: LineworkBed; subtracted: number; skirt: number } | undefined {
   const geometry = job.def.geometry;
   // A linework client is a carried span today, and the registry's typed adapter
   // is what will make a second shape a compile error rather than a silence.
@@ -386,6 +389,7 @@ function declareOne(
   };
 
   const driver = input.ground;
+  let skirt: GroundClaim[] = [];
   if (driver !== undefined) {
     const claims: GroundClaim[] = bedColumns.map((c) => ({ idx: c.idx, y: c.y }));
     // The clearance is the deck's **underside**: the deck floor sits at `deckY`,
@@ -412,6 +416,19 @@ function declareOne(
       }
     }
     const source = `${job.nodePath}#linework`;
+    // B1/B2/B3 — the skirt is **derived** here from the bed that was just
+    // computed (never authored: an entry that could declare its own apron could
+    // declare a wrong one), it declares at `verge` (rank 140) so an apron can
+    // never outrank a street, and it rides in this same `commit` call because
+    // companion intents belong in one arbitration (§3.13).
+    skirt = lineworkSkirt({
+      region: input.region,
+      bed: bedColumns,
+      crossWidth: minColumns,
+      ground: (x, z) => input.view.ground(x, z),
+      carriageway: input.carriageway,
+      fluidKind: input.fluidKind,
+    });
     driver.commit([
       {
         source,
@@ -447,10 +464,137 @@ function declareOne(
         columns: claims,
         transition: "none",
       },
+      ...(skirt.length === 0
+        ? []
+        : [
+            {
+              source: `${job.nodePath}#linework-skirt`,
+              sourceClass: "verge" as const,
+              kind: "profile" as const,
+              columns: skirt,
+              transition: "ramp" as const,
+            },
+          ]),
     ]);
   }
 
-  return { bed, subtracted };
+  return { bed, subtracted, skirt: skirt.length };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the skirt (GROUND-UNIFICATION §3.2, B1–B3)                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link lineworkSkirt} reads. */
+export interface LineworkSkirtInput {
+  readonly region: Region;
+  /** The declared bed, after the crossing subtraction. Ascending by `idx`. */
+  readonly bed: readonly LineworkBedColumn[];
+  /** The bed's own cross-section width, in columns (`carry.half * 2 + 1`). */
+  readonly crossWidth: number;
+  /** Natural ground — the topmost solid Y, or `undefined` where there is none. */
+  readonly ground: (x: number, z: number) => number | undefined;
+  /** §13.2a rule 5's first bullet: a carriageway column receives no claim. */
+  readonly carriageway: ReadonlyUint8Array;
+  /** The baseline's fluid classification: a skirt keeps off water like a bed. */
+  readonly fluidKind: ReadonlyUint8Array;
+}
+
+/**
+ * Rings of skirt a bed of this cross-section may reach (B1's second cap).
+ *
+ * `programApronRings`' sentence, transposed: "inside its own width the apron is
+ * landscaping; past that it is landscape". A three-wide footbridge approach may
+ * feather six columns; a nineteen-wide viaduct embankment is capped by
+ * {@link APRON_MAX} long before its own width bites.
+ */
+export function lineworkSkirtRings(crossWidth: number): number {
+  return Math.max(0, Math.min(APRON_MAX, Math.max(0, crossWidth) * 2));
+}
+
+/**
+ * **B1 — the lift-keyed apron doctrine, extended to a bed.**
+ *
+ * A declared bed is a berm with a 90° outer face: `gradeBank` steps it back down
+ * at one block per column, which is 45° and still reads as a cut. The skirt is
+ * the feathering that actually gets built until WP-6 re-keys that bank: a ring
+ * band **outside** the bed, at Chebyshev ring `r`, whose per-column target is
+ * `bedY − ceil(r / APRON_RUN_PER_BLOCK)` — the 1:2 slope every pad in the tree
+ * already grades at.
+ *
+ * Three rules make it safe rather than merely smooth:
+ *
+ * 1. **Dropped on ground that is already high enough.** A column whose natural
+ *    ground stands at or above its target is left exactly as it is. The skirt
+ *    only ever *fills* the dip the berm's face falls into; it never cuts a
+ *    hillside, which is what spoiled the mushroom vale when an apron was keyed
+ *    on size rather than on lift.
+ * 2. **Two caps** — {@link lineworkSkirtRings}.
+ * 3. **The crossing subtraction, again** (§13.2a rule 5): a carriageway column
+ *    and a wet column receive no claim. B2's rank is the belt to that brace.
+ *
+ * Rings are **geometric**: a dropped column still propagates distance outward,
+ * so the band's shape is a fact about the bed rather than about the terrain it
+ * happens to cross. Determinism (§13.2b): rings outward, columns ascending by
+ * index within a ring, and a column reachable from two bed columns takes the
+ * **lower** level, then the lower index — the same tie-break the bed itself uses.
+ */
+export function lineworkSkirt(input: LineworkSkirtInput): GroundClaim[] {
+  const rings = lineworkSkirtRings(input.crossWidth);
+  if (rings === 0 || input.bed.length === 0) return [];
+
+  /** idx → the bed level this column's ring inherited. */
+  const assigned = new Map<number, number>();
+  for (const c of input.bed) {
+    const held = assigned.get(c.idx);
+    if (held === undefined || c.y < held) assigned.set(c.idx, c.y);
+  }
+  const bedIds = new Set(assigned.keys());
+
+  const claims: GroundClaim[] = [];
+  let frontier: { idx: number; x: number; z: number; y: number }[] = input.bed.map((c) => ({
+    idx: c.idx,
+    x: c.x,
+    z: c.z,
+    y: assigned.get(c.idx) as number,
+  }));
+
+  for (let ring = 1; ring <= rings; ring++) {
+    const drop = Math.ceil(ring / APRON_RUN_PER_BLOCK);
+    const next = new Map<number, { idx: number; x: number; z: number; y: number }>();
+    for (const cell of frontier) {
+      for (let dz = -1; dz <= 1; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dz === 0) continue;
+          const x = cell.x + dx;
+          const z = cell.z + dz;
+          if (!inside(input.region, x, z)) continue;
+          const idx = index(input.region, x, z);
+          if (bedIds.has(idx) || assigned.has(idx)) continue;
+          const held = next.get(idx);
+          // The bed's own tie-break: the lower level wins, then the lower index.
+          if (held !== undefined && (held.y < cell.y || (held.y === cell.y && held.idx <= cell.idx)))
+            continue;
+          next.set(idx, { idx, x, z, y: cell.y });
+        }
+      }
+    }
+    if (next.size === 0) break;
+    frontier = [...next.values()].sort((a, b) => a.idx - b.idx);
+    for (const cell of frontier) {
+      assigned.set(cell.idx, cell.y);
+      const target = cell.y - drop;
+      if (input.carriageway[cell.idx] === 1) continue;
+      if (input.fluidKind[cell.idx] !== FluidKind.NONE) continue;
+      const natural = input.ground(cell.x, cell.z);
+      // Rule 1: already at or above the target, so there is nothing to feather.
+      if (natural === undefined || natural >= target) continue;
+      claims.push({ idx: cell.idx, y: target });
+    }
+  }
+
+  claims.sort((a, b) => a.idx - b.idx);
+  return claims;
 }
 
 /* -------------------------------------------------------------------------- */
