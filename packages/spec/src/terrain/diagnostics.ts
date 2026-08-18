@@ -382,6 +382,33 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   LINEWORK_BED_INTERRUPTED: "LOAM-T236",
   /**
+   * The frontage tie (`docs/GROUND-UNIFICATION-v0.md` F8): the surfacer's final
+   * level for a segment departs from the datum it was handed by ≥ 1 block at ≥ 1
+   * station. Names the count and the maximum.
+   *
+   * The one legal cause is the per-station water floor, which the datum cannot
+   * apply because `routeFloorAt` needs a `fluidTop` that does not exist at
+   * layout time (F3 step 4). The same lift is Part III's berm, so this finding
+   * and that one are the same measurement seen from two sides.
+   *
+   * A note: the world is correct either way — a street that rose out of the
+   * water is a street doing the right thing. It is reported because a *large*
+   * drift means the datum and the surfacer have become two graders, which is
+   * exactly the defect F2 exists to prevent.
+   */
+  FRONTAGE_TIE_DRIFT: "LOAM-T237",
+  /**
+   * A district's lots were seated with no datum in reach — the fabric drew a
+   * street the datum could not grade, or the lots front the district boundary.
+   *
+   * F6 ("no frontage, no tie") makes an untied lot a legal outcome: it keeps
+   * exactly the seat it had before the tie existed. So this is a note and never
+   * a warning. It earns its code because a district where *every* lot is untied
+   * is the fabric and the grader disagreeing about where the streets are, and
+   * that is invisible in a world that otherwise looks merely old.
+   */
+  FRONTAGE_UNTIED: "LOAM-T238",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.
@@ -504,6 +531,18 @@ export const TERRAIN_DIAGNOSTICS = {
    * the program cannot see.
    */
   PROGRAM_WATER_CLAMPED: "LOAM-W339",
+  /**
+   * The program wrote the same sole on every column of at least one member of
+   * the terrain suite: it is a prefab, not a thing that stands on ground.
+   *
+   * `docs/GROUND-UNIFICATION-v0.md` §2.5 — and this is **never a failure**. It
+   * is a routing decision: the program is seated `pad` and built exactly as it
+   * is today. Gate leniency is permanent, and a beautiful non-conforming
+   * structure is precisely the case leniency exists to protect. What the
+   * warning buys is a change the author can actually make, which is why it is
+   * the one code whose purpose is to teach the authoring model something.
+   */
+  PROGRAM_DID_NOT_CONFORM: "LOAM-W340",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */

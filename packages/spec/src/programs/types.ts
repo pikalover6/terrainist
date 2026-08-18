@@ -34,6 +34,10 @@ export const PROGRAM_KEYS = [
   "source",
   "sourceHash",
   "outputHash",
+  // Optional, and stamped by the authoring gate only — see the two fields on
+  // AuthoredProgramRecord. A document written before they existed is valid.
+  "conforms",
+  "conformHash",
 ] as const;
 
 /**
@@ -86,6 +90,24 @@ export interface AuthoredProgramRecord {
   readonly sourceHash: string;
   /** `b3:<hex>` of the canonical op stream. A mismatch is `E334`. */
   readonly outputHash: string;
+  /**
+   * The gate's conformance verdict: did the program follow the ground it was
+   * given on all five members of the terrain suite?
+   * (`docs/GROUND-UNIFICATION-v0.md` §2.4.)
+   *
+   * Optional, and **absent means `pad`**: every archived document has neither
+   * this nor {@link conformHash}, resolves to today's seating, and is
+   * bit-for-bit unaffected. That is the whole archived-doc compatibility
+   * story, and it is why the verdict is a recorded field rather than something
+   * re-derived at compile time.
+   */
+  readonly conforms?: boolean;
+  /**
+   * `b3:<hex>` over the concatenated canonical op streams of the terrain
+   * suite's runs, in suite order. Verified at compile time **only when
+   * present**.
+   */
+  readonly conformHash?: string;
 }
 
 /** The validated `programs` map. */

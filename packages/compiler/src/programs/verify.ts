@@ -26,6 +26,11 @@
  *    *throws* is still fatal.
  * 5. **Nonsense** — {@link gateNonsense}: ≥ 500 solid voxels and ≥ 8 tall.
  *    **Suspended** — see {@link SUSPENDED_GATE_CHECKS}.
+ * 6. **Conformance** — {@link gateConform}: the program is run once against
+ *    each member of `conform.ts`'s pinned five-piece terrain suite and scored
+ *    on whether it followed the ground. **Never a failure** — the verdict is a
+ *    recorded fact that decides how the instance is *seated*
+ *    (`docs/GROUND-UNIFICATION-v0.md` §2.4–§2.5).
  *
  * Gate leniency (Kai, 2026-08-15, "for now") is one constant,
  * {@link SUSPENDED_GATE_CHECKS} in `./leniency.ts`; both gates read it, so the
@@ -53,6 +58,7 @@ import { emitWorld } from "../emit/index.js";
 import { parseSpikeDocument } from "../emit/document.js";
 import { lintWorldPhysics } from "../emit/physics.js";
 import { loadPrismarine, type PrismarineStack } from "../emit/prismarine.js";
+import { CONFORM_SUITE, conformanceOf, type ConformMemberFinding } from "./conform.js";
 import { invokeLandmark } from "./invoke.js";
 import { SUSPENDED_GATE_CHECKS } from "./leniency.js";
 import { opStreamHash, sourceHashOf } from "./hash.js";
@@ -80,7 +86,7 @@ export const FLAT_GROUND: HeightSampler = () => 0;
 
 /** One gate step's verdict. */
 export interface GateStep {
-  readonly step: "static" | "doubleRun" | "structural" | "physics" | "nonsense";
+  readonly step: "static" | "doubleRun" | "structural" | "physics" | "nonsense" | "conform";
   readonly ok: boolean;
   readonly diagnostics: readonly LoamDiagnostic[];
 }
@@ -490,6 +496,70 @@ export async function gatePhysics(
 }
 
 /* -------------------------------------------------------------------------- */
+/* step 6 — conformance                                                        */
+/* -------------------------------------------------------------------------- */
+
+/** {@link gateConform}'s verdict: a gate step, plus the record fields it stamps. */
+export interface ConformStep extends GateStep {
+  readonly step: "conform";
+  /** §2.4's verdict, to be frozen into the record as `conforms`. */
+  readonly conforms: boolean;
+  /** The suite digest, to be frozen into the record as `conformHash`. */
+  readonly conformHash: string;
+  readonly members: readonly ConformMemberFinding[];
+}
+
+/**
+ * Run the terrain suite and score the program against it.
+ *
+ * `ok` is **always true**. This step exists to decide a *seating*, not to
+ * accept or reject a program: §2.5 — "`conforms: false` is never a failure. It
+ * is a routing decision: the program is seated `pad` and built exactly as it
+ * is today." A member that fails to execute is the same kind of fact; the
+ * program's ability to run at all is the double run's business, on flat
+ * ground, where the diagnostic can be attributed.
+ */
+export function gateConform(
+  programId: string,
+  program: AuthoredProgramRecord,
+  worldSeed: bigint,
+  nodePath = VERIFICATION_NODE_PATH,
+): ConformStep {
+  const result = conformanceOf({
+    programId,
+    program,
+    worldSeed,
+    nodePath,
+    count: program.mode === "landmark" ? 1 : VERIFICATION_COUNT,
+  });
+  const out: LoamDiagnostic[] = [];
+  if (!result.conforms) {
+    const failed = result.members.filter((m) => !m.conforms);
+    const detail = failed
+      .map((m) => (m.ok
+        ? `${m.id} (${m.rigidSole ? "same sole as flat" : `${m.floating} of ${m.occupiedColumns} columns floating`})`
+        : `${m.id} (did not run)`))
+      .join(", ");
+    out.push(
+      warning(
+        "PROGRAM_DID_NOT_CONFORM",
+        nodePath,
+        `program ${JSON.stringify(programId)} did not follow the ground on ${failed.length} of ${CONFORM_SUITE.length} terrain${failed.length === 1 ? "" : "s"}: ${detail}`,
+        "read api.heightAt(x, z) at every column the structure touches and answer it — legs that reach down, a skirt that follows the fall, a plinth that steps, a foundation course that thickens; a program that writes the same sole on every column is set on a platform instead",
+      ),
+    );
+  }
+  return {
+    step: "conform",
+    ok: true,
+    diagnostics: out,
+    conforms: result.conforms,
+    conformHash: result.conformHash,
+    members: result.members,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /* the whole gate                                                              */
 /* -------------------------------------------------------------------------- */
 
@@ -502,6 +572,13 @@ export interface ProgramVerification {
   /** Freeze these into the document when `ok`. */
   readonly sourceHash: string;
   readonly outputHash: string;
+  /**
+   * The conformance verdict and the suite digest beside it — freeze both, or
+   * neither. A record carrying neither is today's record and is seated `pad`
+   * (`docs/GROUND-UNIFICATION-v0.md` §2.2).
+   */
+  readonly conforms: boolean;
+  readonly conformHash: string;
   /** Everything the program said through `api.log`, first run only. */
   readonly logs: readonly string[];
   /** Solid voxels the first verification instance placed. */
@@ -541,6 +618,8 @@ export async function verifyProgram(
     diagnostics,
     sourceHash,
     outputHash,
+    conforms: false,
+    conformHash: "",
     logs: [],
     solids: 0,
     warnings: diagnostics.filter((d) => d.severity === "warning").length,
@@ -567,6 +646,13 @@ export async function verifyProgram(
   diagnostics.push(...nonsense.diagnostics);
   if (!nonsense.ok) return fail(double.outputHash);
 
+  // Never fails; it decides a seating. Placed after the cheap verdicts and
+  // before the physics walk so that a program the earlier steps threw out does
+  // not pay for five more executions.
+  const conform = gateConform(programId, program, worldSeed);
+  steps.push(conform);
+  diagnostics.push(...conform.diagnostics);
+
   if (options.skipPhysics !== true) {
     const physics = await gatePhysics(programId, double.runs, program.envelope, options.physics);
     steps.push(physics);
@@ -583,6 +669,8 @@ export async function verifyProgram(
     diagnostics,
     sourceHash,
     outputHash: double.outputHash,
+    conforms: conform.conforms,
+    conformHash: conform.conformHash,
     logs: primary.logs,
     solids,
     warnings: diagnostics.filter((d) => d.severity === "warning").length,
@@ -641,6 +729,51 @@ export function verifyOutputHash(
     nodePath,
     `program ${JSON.stringify(programId)} re-executed to ${double.outputHash}, but the document records ${program.outputHash}`,
     "this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: a floating-point difference between hosts is exactly what this check exists to surface",
+  );
+}
+
+/**
+ * Re-run the terrain suite and compare against the recorded `conformHash` —
+ * `verifyOutputHash`'s sibling, and the same failure direction.
+ *
+ * **Only when the field is present.** A record with no `conformHash` is every
+ * archived document: nothing is re-executed, nothing is checked, and the
+ * compile is byte-identical to what it was before this check existed. That is
+ * deliberate, and it is the whole of §2.11's reach guarantee.
+ *
+ * Why it is checked at all: once a document carries a verdict, the verdict is
+ * what decides the *seating*, and a host that would run the program
+ * differently on sloped ground would seat it differently too. Better a loud
+ * error than a world that quietly moved.
+ */
+export function verifyConformHash(
+  programId: string,
+  program: AuthoredProgramRecord,
+  worldSeed: bigint,
+  nodePath: string,
+): LoamDiagnostic | undefined {
+  if (program.conformHash === undefined) return undefined;
+  const result = conformanceOf({
+    programId,
+    program,
+    worldSeed,
+    nodePath,
+    count: program.mode === "landmark" ? 1 : VERIFICATION_COUNT,
+  });
+  if (!result.ok) {
+    return error(
+      "PROGRAM_OUTPUT_HASH_MISMATCH",
+      nodePath,
+      `program ${JSON.stringify(programId)} could not be re-executed against the terrain suite`,
+      "re-run the authoring gate on this program; the document records a conformance hash for a program that no longer runs on the ground it was certified against",
+    );
+  }
+  if (result.conformHash === program.conformHash) return undefined;
+  return error(
+    "PROGRAM_OUTPUT_HASH_MISMATCH",
+    nodePath,
+    `program ${JSON.stringify(programId)} re-ran the terrain suite to ${result.conformHash}, but the document records ${program.conformHash}`,
+    "this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one",
   );
 }
 

@@ -48,7 +48,7 @@ import { facingRotationAt, type ProgramFacing } from "./facing.js";
 import { planProgramSites, type ProgramSite, type SiteRefusals } from "./place.js";
 import { rotateRun, rotatedHeightAt, type ProgramRotation } from "./rotate.js";
 import { checkSourceHash, type HeightSampler, type ProgramRun } from "./run.js";
-import { verifyOutputHash } from "./verify.js";
+import { verifyConformHash, verifyOutputHash } from "./verify.js";
 
 /**
  * `target.push(...source)` passes every element as a call argument, and a
@@ -190,6 +190,14 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       const mismatch = verifyOutputHash(job.programId, job.program, input.worldSeed, job.nodePath);
       if (mismatch !== undefined) {
         diagnostics.push(mismatch);
+        continue;
+      }
+      // The terrain suite's sibling check, and a no-op for every document that
+      // predates the verdict: `verifyConformHash` returns immediately when the
+      // record carries no `conformHash` (GROUND-UNIFICATION §2.6).
+      const drift = verifyConformHash(job.programId, job.program, input.worldSeed, job.nodePath);
+      if (drift !== undefined) {
+        diagnostics.push(drift);
         continue;
       }
     }

@@ -123,6 +123,14 @@ export function validateProgram(
       ...sourceFindingsToDiagnostics(lintProgramSource(source), path, id),
     );
   }
+  // The conformance verdict (docs/GROUND-UNIFICATION-v0.md §2.2). Both keys are
+  // optional and both are absent from every document written before the gate
+  // stamped them; a record with neither is exactly today's record.
+  const conforms = readConforms(out, value["conforms"], `${path}.conforms`, id);
+  const conformHash = value["conformHash"] === undefined
+    ? undefined
+    : readHash(out, value["conformHash"], `${path}.conformHash`, id);
+
   if (out.length !== before) return undefined;
   return {
     mode: mode as ProgramMode,
@@ -130,7 +138,29 @@ export function validateProgram(
     source: source as string,
     sourceHash: sourceHash as string,
     outputHash: outputHash as string,
+    ...(conforms === undefined ? {} : { conforms }),
+    ...(conformHash === undefined ? {} : { conformHash }),
   };
+}
+
+function readConforms(
+  out: LoamDiagnostic[],
+  value: unknown,
+  path: string,
+  id: string,
+): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "boolean") {
+    out.push(
+      error(
+        "PROGRAM_SCHEMA",
+        path,
+        `program ${JSON.stringify(id)} has ${describe(value)} where the gate's conformance verdict belongs`,
+        '"conforms" is true or false and is written by the authoring gate — omit it rather than guessing, and the program is seated on a pad as it always was',
+      ),
+    );
+  }
+  return typeof value === "boolean" ? value : undefined;
 }
 
 function readMode(out: LoamDiagnostic[], obj: Obj, path: string, id: string): ProgramMode | undefined {
