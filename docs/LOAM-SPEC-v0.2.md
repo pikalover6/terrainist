@@ -5462,9 +5462,26 @@ because a 90° or 270° turn swaps the envelope's width and depth and the fit is
 what reserves that footprint. It is measured against the best estimate available
 at that moment — the target's placed site if it has one, else the coarse hint its
 own constraints carry (`zone`, `at`), else the region's centre — and that answer
-is then **binding**: nothing later re-measures it. This is what makes the
+is then **binding for the fit**: the box the solver reserves is the turned box,
+and nothing may later ask it for a different one. This is what makes the
 relation total rather than circular: two programs each declared `toward` the
 other resolve, deterministically, to a pair that faces off.
+
+**The one post-solve correction (2026-08-17).** `zone`/`at` is a soft cost the
+ground can outbid (`LOAM-W521 LANDMARK_COARSE_ABANDONED`), and a landmark
+carried *past* the node it was told to face would otherwise keep the turn it took
+against the abandoned estimate — the walked defect being a wading leviathan
+asked to face the city, placed four hundred blocks beyond it, showing the city
+its back and the open sea its face. So a **landmark's** facing is measured once
+more after the solve, from its real site against the real sites of its target,
+and the new answer is adopted **only when it reserves the same footprint the
+solver already gave it** — a 180° flip always does, and every turn does for a
+square envelope. A turn that would swap width for depth is refused and the
+pre-solve answer stands. A correction is reported as **`LOAM-W522
+PROGRAM_FACE_REMEASURED`**, a note. This is one pass over final placements, so
+the cycle property above is unchanged; a `scatter.program@0` node needs no such
+correction, because its instances are placed after the solve and each already
+measures from where it actually stands. `[C:high]`
 
 **Where the rotation is applied.** At placement and materialization, outside the
 verified sandbox: a program is executed and hashed in its own local frame, so

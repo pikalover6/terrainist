@@ -24,10 +24,19 @@
  * the direction is measured against the best estimate available at that moment
  * — the target's placed site if it already has one, else the coarse hint its
  * own constraints carry (`zone`, `at`), else the region's centre — and that
- * answer is then **binding**: nothing later re-measures it. That is not a
+ * answer is then **binding for the fit**: the box the solver reserves is the
+ * turned box, and nothing may later ask for a different one. That is not a
  * concession to convenience. Two programs each declared `toward` the other is a
  * cycle, and a binding estimate is what makes it terminate — both are aimed at
  * where the other is *going to be*, both turn, and the pair faces off.
+ *
+ * The one thing the estimate does *not* bind is the direction itself when the
+ * turn costs the reservation nothing. A coarse hint is a soft cost the ground
+ * can outbid, and a landmark moved past the node it was told to face would
+ * otherwise keep pointing at where it thought it was going to stand — the
+ * walked defect a second time over. So {@link remeasureLandmarkFacings} takes
+ * the measurement again from the solved site and adopts it only when the new
+ * turn reserves the same footprint as the old.
  */
 
 import {
@@ -37,6 +46,7 @@ import {
   faceOf,
   faceOfParams,
   isAuthoredGenerator,
+  note,
   warning,
   type AuthoredProgramRecord,
   type FaceSense,
@@ -192,6 +202,88 @@ export function planProgramFacings(input: FacingPlanInput): FacingPlanResult {
   }
 
   return { facings, diagnostics };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the one correction the binding estimate allows                              */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link remeasureLandmarkFacings} reads. */
+export interface FacingRemeasureInput extends Omit<FacingPlanInput, "scope" | "placements"> {
+  /** What the solver decided. */
+  readonly placements: readonly Placement[];
+  /** The pre-solve answers, as {@link planProgramFacings} gave them. */
+  readonly facings: ReadonlyMap<string, ProgramFacing>;
+}
+
+/** What {@link remeasureLandmarkFacings} decided. */
+export interface FacingRemeasureResult {
+  /** Node path → the rotation that stands, corrected or not. */
+  readonly rotations: ReadonlyMap<string, ProgramRotation>;
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/**
+ * Measure the landmark facings again, now that the sites are real.
+ *
+ * The estimate a facing is first taken against is binding *for the fit* — a
+ * quarter turn swaps the envelope's edges, and the solver reserves the turned
+ * box — but it is not binding for its own sake. `zone`/`at` is a soft cost the
+ * ground can outbid (`LANDMARK_COARSE_ABANDONED`), and a landmark that is moved
+ * past the node it was told to face ends up pointing at nothing: the walked
+ * defect was a wading leviathan asked to face the city, placed four hundred
+ * blocks beyond it, showing the city its back and the open sea its face.
+ *
+ * The correction is narrow on purpose, and it is the footprint that draws the
+ * line. A new turn is adopted only when it reserves **the same footprint** the
+ * solver already gave this landmark — a 180° flip always does, and every turn
+ * does for a square envelope — so nothing this returns can invalidate a
+ * reservation, move a pad, or shift a block by anything but its facing. A turn
+ * that would swap width for depth is refused and the pre-solve answer stands.
+ *
+ * One pass, no iteration: every site is final, so two landmarks each declared
+ * `toward` the other resolve against real positions and still face off.
+ */
+export function remeasureLandmarkFacings(input: FacingRemeasureInput): FacingRemeasureResult {
+  const rotations = new Map<string, ProgramRotation>(
+    [...input.facings].map(([path, facing]) => [path, facing.rotation ?? 0] as const),
+  );
+  const diagnostics: LoamDiagnostic[] = [];
+  if (rotations.size === 0) return { rotations, diagnostics };
+
+  // Diagnostics are dropped deliberately: this is the same plan re-run against
+  // better positions, and an unresolvable `face` was already reported once.
+  const replanned = planProgramFacings({
+    doc: input.doc,
+    rootPath: input.rootPath,
+    region: input.region,
+    worldSeed: input.worldSeed,
+    scope: "landmark",
+    placements: input.placements,
+  }).facings;
+  const placed = new Map(input.placements.map((p) => [p.nodePath, p] as const));
+
+  for (const [nodePath, before] of rotations) {
+    const after = replanned.get(nodePath)?.rotation;
+    if (after === undefined || after === before) continue;
+    const site = placed.get(nodePath);
+    // Never placed (dropped, or a profile with no solver): there is no better
+    // measurement to be had, so the estimate stands.
+    if (site === undefined) continue;
+    const square = site.footprint.x1 - site.footprint.x0 === site.footprint.z1 - site.footprint.z0;
+    if (!square && (after - before) % 180 !== 0) continue;
+    rotations.set(nodePath, after);
+    diagnostics.push(
+      note(
+        "PROGRAM_FACE_REMEASURED",
+        nodePath,
+        `this landmark was placed at (${site.anchor.x}, ${site.anchor.z}), not where its facing was first measured from, so the facing was taken again from the real site: ${before}° becomes ${after}°`,
+        "nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a \"radius\"/\"tolerance\" or a hard \"zone\"",
+      ),
+    );
+  }
+
+  return { rotations, diagnostics };
 }
 
 /* -------------------------------------------------------------------------- */
