@@ -136,7 +136,16 @@ import {
   carriagewayCells,
   type StreetGraph,
 } from "./streets.js";
-import type { LayoutNodeInput, PadEdit, Placement, ResolvedPort } from "./types.js";
+import { gradeStreetDatum, type StreetDatum } from "./street-datum.js";
+import {
+  CORNER_TOLERANCE,
+  FRONTAGE_RISE,
+  FRONTAGE_TIE,
+  type LayoutNodeInput,
+  type PadEdit,
+  type Placement,
+  type ResolvedPort,
+} from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /* the knobs the density turns                                                 */
@@ -907,6 +916,33 @@ export function layDistrict(
   const plan = drawn.outcome.plan;
   const graph = plan.graph;
 
+  // --- the street datum (F2) ------------------------------------------------
+  // Right after the graph is drawn, because F2 is exactly that: "a carriageway's
+  // elevation profile is computed once, at the moment its graph is drawn". The
+  // kernel is pure — `(region, graph, field, seaLevel)` and nothing else — so
+  // this line adds no order dependence to the phase.
+  //
+  // Built **only** while {@link FRONTAGE_TIE} is on. Grading a datum nobody
+  // reads is a per-district raster and a full sweep of every segment, and 8B's
+  // contract is byte-identical *and* free with the flag off.
+  const datum: StreetDatum | null = FRONTAGE_TIE
+    ? gradeStreetDatum({
+        region: {
+          x0: bounds.x0,
+          z0: bounds.z0,
+          width: bounds.x1 - bounds.x0 + 1,
+          depth: bounds.z1 - bounds.z0 + 1,
+        },
+        graph,
+        field: input.field,
+        seaLevel: input.seaLevel ?? 63,
+      })
+    : null;
+  const tieReach = frontageReach(sidewalkWidth);
+  // F6/T238's counters. Both stay 0 while the flag is off.
+  let tiedLots = 0;
+  let untiedLots = 0;
+
   // --- the void ------------------------------------------------------------
   const grid = new Grid(bounds);
   const carriageway = new Uint8Array(grid.cells);
@@ -1130,6 +1166,7 @@ export function layDistrict(
       tags: landmark.tags,
       seed: landmark.seed,
       frontPort: undefined,
+      ...frontageOf(site.rect, site.face, site.lots),
     });
   }
 
@@ -1252,6 +1289,7 @@ export function layDistrict(
       tags: filled.tags,
       seed: nodeSeed(input.worldSeed, `${nodePath}.${filled.id}`, ""),
       frontPort: undefined,
+      ...frontageOf(lot.rect, lot.face, [lot]),
     });
   }
 
@@ -1372,10 +1410,37 @@ export function layDistrict(
     // `FormBench.runs` in the same order. The bench branch is subsumed, not
     // duplicated.
     const platform = levels === null ? NO_PLATFORM : levels.at(rect.x0, rect.z0);
+    // The tie (F1/F4/F5/F6), ahead of the median and behind the platforms: a
+    // quarter that declared its own platforms has already answered the question
+    // this asks, and two answers to one question is the defect class. So the
+    // tied branch replaces only the **last** fallback — the median of the
+    // building's own footprint, which is the lip generator of §0.1.
+    //
+    // `datum` is `null` while {@link FRONTAGE_TIE} is off, so `tied` is
+    // `undefined`, the `??` chain below is character-for-character today's
+    // expression, and this whole branch is dead code.
+    const tied =
+      datum === null || item.street === ""
+        ? undefined
+        : frontageSeat({
+            // `item.rect` is the **parcel**, which is what touches the sidewalk;
+            // `rect` above is the seated building inside it. `item.frontAnchor`
+            // is `frontAnchorOf(item.rect, item.face)` and is what this resolves
+            // to for a non-corner lot.
+            rect: item.rect,
+            face: item.face,
+            corner: item.corner,
+            datum,
+            reach: tieReach,
+          });
+    if (datum !== null && levels === null && cell?.foundationY === undefined) {
+      if (tied === undefined) untiedLots++;
+      else tiedLots++;
+    }
     const foundationY =
       levels !== null && platform !== NO_PLATFORM
         ? (levels.levelY[platform] as number)
-        : cell?.foundationY ?? medianGround(input.field, rect);
+        : cell?.foundationY ?? tied ?? medianGround(input.field, rect);
     const made: Placement = {
       nodePath: item.nodePath,
       id: item.id,
@@ -1416,6 +1481,24 @@ export function layDistrict(
       apron: touchesSeam(rect) ? 0 : BUILDING_APRON,
     });
     params.set(item.nodePath, item.params);
+  }
+
+  // --- F6's report (`LOAM-T238`) --------------------------------------------
+  // A note, never a warning: an untied lot is a *legal* outcome — a
+  // district-boundary lot, a plaza-side lot, a lot the fabric drew off the
+  // network — and F6 says it keeps exactly the seat it has today. What is worth
+  // reporting is a district where the fabric drew streets and the datum could
+  // grade none of them in reach of any lot, because that is the fabric and the
+  // grader disagreeing about where the streets are. Dead while the flag is off.
+  if (datum !== null && untiedLots > 0) {
+    diagnostics.push(
+      note(
+        "FRONTAGE_UNTIED",
+        nodePath,
+        `${untiedLots} of ${untiedLots + tiedLots} seated lot(s) in "${nodePath}" found no graded carriageway within ${tieReach} block(s) of their front edge, and were seated on the median of their own footprint`,
+        `Nothing to change in the document if these are boundary or plaza-side lots — that is the designed outcome. A district where *every* lot is untied means its streets were drawn but not graded: report it.`,
+      ),
+    );
   }
 
   let carriagewayColumns = 0;
@@ -2585,7 +2668,150 @@ interface BuiltLot {
   readonly tags: readonly string[];
   readonly seed: Seed256;
   readonly frontPort: string | undefined;
+  /**
+   * The segment id this thing fronts; `""` when it fronts the district boundary
+   * or was claimed off a block site that names no street.
+   *
+   * `docs/GROUND-UNIFICATION-v0.md` §0.3c: the frontage relation already exists
+   * on {@link Lot} and the tie needs no new geometry — only the *level* of that
+   * segment at the moment the lot is seated. This field is what carries the
+   * relation across the claim, where the lot itself stops existing. A terrace
+   * carries its **first** lot's street, which is the run's street: `terraceRuns`
+   * groups by `block:face` and a run never spans two of them.
+   */
+  readonly street: string;
+  /** True when the thing stands on (or starts/ends on) a corner lot — F5. */
+  readonly corner: boolean;
+  /**
+   * The midpoint of the parcel's {@link BuiltLot.face} edge — F4's `frontAnchor`,
+   * the point the datum is asked for a level at.
+   *
+   * The **parcel's** edge, not the seated building's: the parcel is what touches
+   * the sidewalk band, and a building set back inside its lot must still take
+   * its street's level rather than the level of whatever is beside it halfway up
+   * the hill.
+   */
+  readonly frontAnchor: Point2;
 }
+
+/* -------------------------------------------------------------------------- */
+/* the frontage tie — `docs/GROUND-UNIFICATION-v0.md` Part I                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The midpoint of `rect`'s `face` edge — F4's `frontAnchor`.
+ *
+ * Integer, and the same `floor` midpoint {@link streetBehind} probes from, so a
+ * lot that has a street by the fabric's reckoning is asked about at the column
+ * the fabric asked about.
+ */
+export function frontAnchorOf(rect: Rect, face: HorizontalFace): Point2 {
+  const midX = Math.floor((rect.x0 + rect.x1) / 2);
+  const midZ = Math.floor((rect.z0 + rect.z1) / 2);
+  return {
+    x: face === "west" ? rect.x0 : face === "east" ? rect.x1 : midX,
+    z: face === "north" ? rect.z0 : face === "south" ? rect.z1 : midZ,
+  };
+}
+
+/**
+ * The reach the datum is probed with — F4.
+ *
+ * `graph.sidewalk + STREET_PROBE_SLACK`, which is exactly {@link streetBehind}'s
+ * reach: a lot that has a street by the fabric's reckoning has one by the
+ * datum's, and F6's "no frontage, no tie" therefore never fires on a lot the
+ * fabric believes is on a street.
+ */
+export function frontageReach(sidewalkWidth: number): number {
+  return sidewalkWidth + STREET_PROBE_SLACK;
+}
+
+/** What {@link frontageSeat} needs. Pure in, integer out. */
+export interface FrontageSeatInput {
+  readonly rect: Rect;
+  readonly face: HorizontalFace;
+  /** F5: a corner lot also asks its flanks, and may take the lower answer. */
+  readonly corner: boolean;
+  readonly datum: StreetDatum;
+  readonly reach: number;
+}
+
+/**
+ * The level a tied lot seats at — F4 and F5 — or `undefined` when it is untied.
+ *
+ * F4: `datum.levelNear(frontAnchor, reach) + FRONTAGE_RISE`.
+ *
+ * F5: a corner lot ties to its **front** street and never to its flank, except
+ * where the two disagree by more than {@link CORNER_TOLERANCE}, in which case it
+ * takes the **lower** of the two. Taking the higher would put the front door
+ * above its own pavement, which is the defect; taking the lower puts the flank
+ * pavement above the lot — a step-up along the side wall, which is what a real
+ * corner building on a hill does. Both flanks are asked and the lower of any
+ * answer wins, because `Lot.corner` says *that* the lot is a corner and never
+ * which of its two sides the flank is on.
+ *
+ * F6: no banded column within `reach` of the front edge is **not** a tie — the
+ * caller keeps the seat it has today. A flank with no datum is simply silent;
+ * it can never create a tie the front did not.
+ */
+export function frontageSeat(input: FrontageSeatInput): number | undefined {
+  const { rect, face, corner, datum, reach } = input;
+  const anchor = frontAnchorOf(rect, face);
+  const front = datum.levelNear(anchor.x, anchor.z, reach);
+  if (front === undefined) return undefined;
+  let seatY = front;
+  if (corner) {
+    for (const flankFace of FLANKS_OF[face]) {
+      const flankAnchor = frontAnchorOf(rect, flankFace);
+      const flank = datum.levelNear(flankAnchor.x, flankAnchor.z, reach);
+      if (flank === undefined) continue;
+      if (Math.abs(flank - front) > CORNER_TOLERANCE) seatY = Math.min(seatY, flank);
+    }
+  }
+  return seatY + FRONTAGE_RISE;
+}
+
+/** The frontage record a {@link BuiltLot} carries away from the lots it claimed. */
+export interface FrontageRecord {
+  readonly street: string;
+  readonly corner: boolean;
+  readonly frontAnchor: Point2;
+}
+
+/**
+ * What a claim keeps of the frontage its lots knew — §0.3c.
+ *
+ * One function at all three construction sites (landmark, terrace, infill) so
+ * that a run of lots and a single lot answer the same way:
+ *
+ * - **street** is the *first* lot's, which is the run's: `terraceRuns` groups by
+ *   `block:face` and a run therefore never spans two streets. `""` — the
+ *   district boundary — survives as `""` and is F6's untied case.
+ * - **corner** is true if *any* claimed lot is a corner: a terrace that turns a
+ *   corner has a corner's problem even though most of its bays do not.
+ * - **frontAnchor** is taken from the claim's own rect, which is the union of
+ *   the lots' rects, so the anchor is the middle of the whole frontage rather
+ *   than the middle of one bay of it.
+ */
+export function frontageOf(
+  rect: Rect,
+  face: HorizontalFace,
+  lots: readonly Pick<Lot, "street" | "corner">[],
+): FrontageRecord {
+  return {
+    street: lots[0]?.street ?? "",
+    corner: lots.some((lot) => lot.corner),
+    frontAnchor: frontAnchorOf(rect, face),
+  };
+}
+
+/** The two sides perpendicular to a face — a corner lot's candidate flanks. */
+const FLANKS_OF: Readonly<Record<HorizontalFace, readonly HorizontalFace[]>> = Object.freeze({
+  north: Object.freeze(["west", "east"] as const),
+  south: Object.freeze(["west", "east"] as const),
+  west: Object.freeze(["north", "south"] as const),
+  east: Object.freeze(["north", "south"] as const),
+});
 
 /** The door every infill building declares — the front, on the local south. */
 const INFILL_PORTS: Readonly<Record<string, PortDeclaration>> = Object.freeze({
@@ -3034,6 +3260,7 @@ function terraceRuns(
         tags: ["district", "terrace", "street_wall"],
         seed,
         frontPort: "door",
+        ...frontageOf(rect, face, chunk),
       },
     };
   }

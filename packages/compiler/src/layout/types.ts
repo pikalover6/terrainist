@@ -372,3 +372,52 @@ export const DEFAULT_MAX_SLOPE = 35;
 
 /** Blend radius outside a footprint, when `terrain_conform.blend` is silent. */
 export const DEFAULT_BLEND = 4;
+
+/* -------------------------------------------------------------------------- */
+/* the frontage tie — `docs/GROUND-UNIFICATION-v0.md` Part I                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The master switch for the frontage tie (F1): a lot that fronts a street seats
+ * at the level of that street rather than on the median of its own footprint.
+ *
+ * **`false` through wave 8E.** While it is false every tied code path is dead:
+ * `layDistrict` still seats on `cell?.foundationY ?? medianGround(...)`, still
+ * emits the scalar-apron pad, and every world compiles byte-identically. Wave
+ * 8F flips it, regenerates the deck and hands the look to Kai — the verdict on
+ * {@link FRONTAGE_RISE} and on the rear terrace is his and only his (§7).
+ */
+export const FRONTAGE_TIE = false;
+
+/**
+ * Blocks a tied lot sits above its carriageway's level — F4.
+ *
+ * `0`: `buildings.ts` lays the floor block at `foundationY + 1`, so a lot flush
+ * with its street puts its threshold exactly one block above the pavement — a
+ * doorstep, which is what `buildDoorsteps` exists to dress. `1` (a plinth course
+ * under every shopfront) is the obvious alternative and is a **taste**
+ * parameter: it changes every settlement world and therefore lands only on a
+ * walk.
+ */
+export const FRONTAGE_RISE = 0;
+
+/**
+ * Blocks of disagreement a corner lot tolerates between its front street and its
+ * flank before it takes the **lower** of the two — F5.
+ *
+ * Taking the higher would put the front door above its own pavement, which is
+ * the defect the tie exists to remove; taking the lower puts the flank pavement
+ * above the lot, which is a step-up along the side wall — a real corner building
+ * on a hill, and the ratified hill-town look.
+ */
+export const CORNER_TOLERANCE = 2;
+
+/**
+ * The deepest cut a tied lot may make into the hill behind its frontage — F7.
+ *
+ * Derived, not tuned: it is `RETAIN_MAX`, the deepest face the retaining table
+ * is willing to build, so a tied lot can never ask for a wall the wall pass
+ * refuses. Where it binds the rect is *not* deepened — the pad stops, the rear
+ * apron goes to 0, and the hill stands against the back wall.
+ */
+export const FRONTAGE_CUT_MAX = 6;
