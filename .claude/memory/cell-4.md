@@ -18,22 +18,28 @@ named prefer forms with anachronisms forbidden; "density is a PERIOD
 CLAIM — antiquity caps at medium"; taught ids runtime-checked to be
 kind=building (props in prefer are skipped by the lot draw).
 
-**IN FLIGHT (2 agents; on landing → commit → regen p1/p3/p5/p7 fresh
-for Kai's walk, install alongside):**
-- PAD INTEGRATION (medium, task a92bbd5301e9251ec): measuring pads in
-  recompiled archived docs (battery/candidates/p{1,5,7}-final). Fix
-  directions to confirm: (a) feather pads into terrain over a margin
-  (land-use feather precedent), prefer minimal-lift sites; (b) a pad
-  must NEVER raise water above seaLevel — wading subjects seat on the
-  SEABED (rule 5's own doctrine); (c) ship-on-land: placer bug vs
-  authoring omission — the archived doc decides; (d) both-landmarks-
-  one-island: same question. Reach law: no-program worlds
-  byte-identical.
-- DEV APP: LANDED + COMMITTED. Build: cd tools/dev-app &&
-  ./make-app.sh → dist/Terrainist Dev.app. Selftest proves plumbing.
-  NOBODY HAS SEEN THE WINDOW (screencapture needs a Screen Recording
-  grant no shell has) — Kai eyeballs layout on first launch; expect a
-  polish round from his verdict.
+**PAD DISEASE: FIXED + COMMITTED (a3687e4 fix, 8cb9c77 teaching).**
+Verdicts resolved: (a) apron now keyed on LIFT (1:2, ≤1 step/col, cap
+24 rings AND instance long side; placer prefers lift≤4 sites but only
+at equal instance count); (b) kraken's elevated sea was the PROGRAM
+writing its own ocean — wade y=0 is seabed; fluid above the body's
+surface clamped, LOAM-W339 (p5: 1,811 above-sea columns → 0); (c)
+pirate ship on land = AUTHORING (doc had no water affinity; W520
+padded its 82° hill) → kit teaches wade+coastline declared, never
+inferred from a name; (d) colossus 338 blocks off-island = soft `at`
+outbid by flat ground → LOAM-W521 LANDMARK_COARSE_ABANDONED (report
+only, cost model untouched); rivals need distance/on bindings.
+Program-free worlds byte-identical. New program-pad.test.ts (8);
+known regression: p7 well 3→2 instances (cross-node spacing, W337).
+
+**IN FLIGHT: padfix regen** (bh6mwxwv4): p1/p3/p5/p7 fresh Gemini
+rolls, seeds 301/303/305/307, out scratchpad/padfix-battery, slugs
+*-padfix. On landing → install alongside --channel, archive docs+logs
+to battery/candidates/, render+republish log, report to Kai.
+
+**DEV APP: LANDED + COMMITTED.** cd tools/dev-app && ./make-app.sh →
+dist/Terrainist Dev.app. Selftest proves plumbing. NOBODY HAS SEEN
+THE WINDOW — Kai eyeballs on first launch; expect a polish round.
 
 **THE CLOSED AUTONOMOUS RUN (details cell-3):** shaders live+tuned;
 machinery tail closed (family B, §13.2+viaduct); SIX PACKS / 91
