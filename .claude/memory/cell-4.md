@@ -32,10 +32,20 @@ only, cost model untouched); rivals need distance/on bindings.
 Program-free worlds byte-identical. New program-pad.test.ts (8);
 known regression: p7 well 3→2 instances (cross-node spacing, W337).
 
-**IN FLIGHT: padfix regen** (bh6mwxwv4): p1/p3/p5/p7 fresh Gemini
-rolls, seeds 301/303/305/307, out scratchpad/padfix-battery, slugs
-*-padfix. On landing → install alongside --channel, archive docs+logs
-to battery/candidates/, render+republish log, report to Kai.
+**PADFIX DECK: ALL FOUR INSTALLED *_padfix, archived, AWAITING KAI'S
+WALK.** p3 trojan_horse ONE-SHOT clean ($0.05, first ever). p5
+neopolis_abyssal_siege: doc wades+coastlines its monsters (teaching
+live); W521 on one leviathan 408 blocks off. p7 clean. p1's roll hit
+T110 → diagnosed PRE-EXISTING road bug (NOT the pad commit):
+gradeProfile cut floor was world-constant seaLevel+1; street deck
+shaved the y=95 lake rim. Fix: routeFloorAt in structures/roads.ts
+(b9f808d; 10 worlds byte-identical; road-shore-floor.test.ts 5).
+p1 world compiled from preserved doc, no re-roll. Diagnosis also
+flagged latent: (1) station-vs-cross-section grading gap is general;
+(2) siteWaterLine floors at seaLevel, contradicting "a pond keeps
+its pond" for below-sea ponds (unreachable today); (3) physics lint
+reads the PLAN, never program voxels — W339 is the ONLY guard on
+program fluid.
 
 **DEV APP: LANDED + COMMITTED.** cd tools/dev-app && ./make-app.sh →
 dist/Terrainist Dev.app. Selftest proves plumbing. NOBODY HAS SEEN

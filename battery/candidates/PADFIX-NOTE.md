@@ -11,8 +11,11 @@ terrain as the *-final deck, new authoring + new compiler.
   W339 — the program did not author its own sea. W521: one leviathan
   placed 408 blocks off its soft `at`.
 - p7 glowing_mushroom_vale: clean, no new warnings.
-- p1: LOAM-T110 at first — harness classified COMPILER BUG (basin
-  rim regrade vs new far-reaching aprons suspected); diagnosis ran
-  before this deck was archived; see p1-padfix/ for the final state.
+- p1 pirate_unicorn_war: LOAM-T110 at first — a real compiler bug but
+  PRE-EXISTING (baseline emitted the identical voxels): gradeProfile's
+  cut floor was world-constant seaLevel+1, so a street deck over the
+  sacred lake shaved its y=95 rim. Fixed at source (routeFloorAt,
+  b9f808d); world compiled from the preserved doc, no re-roll. See
+  p1-padfix/NOTE.md.
 
-Installed alongside as *_padfix.
+All four installed alongside as *_padfix.

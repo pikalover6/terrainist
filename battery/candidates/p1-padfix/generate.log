@@ -1,0 +1,78 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"climate":{"temperature":0.6,"humidity":0.4,"snow":"never"},"tokens":{"event_direction":"pirate fleet and shore batteries facing off across the strait against the unicorn island defenses","infra":"cannon_battery along the pirate coast; watchtower cordon and barricades along the unicorn shore","region_pirate_island":"era renaissance, wealth 0.35, decline 0.4, formality 0.2; materialTheme temperate_timber; formPacks nautical_pirate; prefer archetypes tavern, warehouse, lighthouse, watchtower; prefer props galleon, cart; fortified cove, careened hulls, cannon batteries aiming across the water","region_unicorn_island":"era renaissance, wealth 0.8, decline 0.05, formality 0.75; materialTheme white_quartz; formPacks arcane_magical; prefer archetypes church, manor, watchtower; sacred shrine terraces, pastures for battle unicorns, glowing wardstones and coastal fortifications"}}
+           1 attempt(s), 7572 tokens
+
+authored with google/gemini-3.7-flash in 3 attempt(s)
+  attempt 1   4 problem(s): LOAM-T101 BAD_ENUM@world.unicorn_sanctuary.intent.character.motifs.windowRhythm, LOAM-T118 SCATTER_RADIUS_UNITS@world.pirate_woods.params.area, LOAM-T118 SCATTER_RADIUS_UNITS@world.unicorn_woods.params.area, LOAM-T210 DISTRICT_PARAM@world.pirate_haven.params
+  attempt 2   2 problem(s): LOAM-T104 PARAM_OUT_OF_RANGE@world.pirate_coastal_batteries.params.area.radius, LOAM-T104 PARAM_OUT_OF_RANGE@world.unicorn_wardstones.params.area.radius
+  attempt 3   valid
+  tokens     274107 in + 30435 out = 304542  ($0.1336)
+programs   4 of 4 kept (budget 3 landmark / 3 plugin)
+  ok     pirate_flagship [landmark]  1 attempt(s), 25622 tokens  ($0.0437), 13 warning(s)
+  ok     celestial_unicorn_monument [landmark]  1 attempt(s), 32905 tokens  ($0.0574), 11 warning(s)
+  ok     shore_cannon [plugin]  1 attempt(s), 22028 tokens  ($0.0370), 9 warning(s)
+  ok     wardstone_crystal [plugin]  1 attempt(s), 30824 tokens  ($0.0535), 3 warning(s)
+  tokens     11553 in + 99826 out = 111379  (70660 of the out reasoning)  ($0.1915)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p1-padfix/pirate_unicorn_war.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 6 problem(s) with the compiled world:
+
+warning LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.sacred_lake: basin interior does not sit below its rim; water fill skipped
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.unicorn_sanctuary: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_sanctuary: none of the 97 candidate footprints could stand on the ground — 28 sat below sea level, 69 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (87 of 97 candidates were also vetoed by the ground: 5 below sea level, 29 on water or lava, 53 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-T209 ROAD_UNROUTABLE at world.coastal_lanes: no road could be routed from "world.pirate_lookout" to the network hub "world.unicorn_colossus": no legal path exists
+  fix: move "world.pirate_lookout" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+warning LOAM-E170 CANNOT_FIT at world.unicorn_henge: no site within 48 blocks fits the henge
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+
+Layout solver report:
+
+  world.unicorn_sanctuary: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+  world.unicorn_colossus: placed after unsatisfiable (97 candidates considered)
+
+  revision 1 authored in 2 attempt(s)
+  tokens     296986 in + 74685 out = 371671  ($0.2141)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+note LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.sacred_lake: basin rim is not closed; filled to the highest fluid-stable level instead, water surface y=92 over 13 columns
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (71 of 97 candidates were also vetoed by the ground: 0 below sea level, 27 on water or lava, 44 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-T209 ROAD_UNROUTABLE at world.coastal_lanes: no road could be routed from "world.pirate_lookout" to the network hub "world.unicorn_colossus": no legal path exists
+  fix: move "world.pirate_lookout" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+
+Layout solver report:
+
+  world.unicorn_colossus: placed after unsatisfiable (97 candidates considered)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     113714 in + 40992 out = 154706  ($0.1195)
+
+
+terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.
+The authored document is legal Loam; the compiler still emitted a world that
+breaks its own invariants. Do not re-prompt: file this against the compiler,
+with the document at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p1-padfix/pirate_unicorn_war.loam.json.
+
+error LOAM-T110 UNSTABLE_FLUID at <document>: 6 fluid blocks would flow on the first tick — e.g. water at (142, 95, -10); water at (162, 95, -10); water at (143, 95, -9); water at (161, 95, -9); water at (144, 95, -8); water at (160, 95, -8)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+
