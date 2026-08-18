@@ -32,13 +32,17 @@ import {
   type Region,
   type Seed256,
 } from "@terrainist/stdlib";
-import { warning, type LoamDiagnostic } from "@terrainist/spec";
+import { note, warning, type LoamDiagnostic } from "@terrainist/spec";
 
 import { buildBridgeKit } from "./bridge.js";
 import { resolveBridgeStyles, type BridgeStyleSet } from "./bridge-styles.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import type { StreetGraph } from "../layout/streets.js";
+// Type-only, and it must stay type-only: `layout/street-datum.ts` imports this
+// module's kernels (`gradeProfile`, `index`, `clampX/Z`), so a *value* import
+// back the other way would close a runtime cycle. A type import erases.
+import type { StreetDatum } from "../layout/street-datum.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import type {
   GroundClaim,
@@ -172,6 +176,47 @@ export const ROAD_LANTERN_SPACING = 14;
  * column, which is what "a path worn into a field" means.
  */
 export const ROAD_FILL_BAND = 0;
+
+/**
+ * The deepest a **tied** carriageway may cut below its own natural ground at
+ * any station — `docs/GROUND-UNIFICATION-v0.md` F9.
+ *
+ * `gradeProfile`'s doc-comment states the gap plainly: "Fill is capped at
+ * `band` by construction. **Cut is not** — a route crossing a narrow gully digs
+ * as deep as the gully." Under F1 the carriageway is the ground authority, so
+ * that cut is inherited by every lot on the street: a street that digs six
+ * blocks through a saddle drags a whole terrace of frontages down with it.
+ * Capping it turns the dig into a **break** — the floor holds the profile up,
+ * `gradeProfile`'s 1-Lipschitz envelope then has to step down to reach it, and
+ * `ArcLevels.steps` already dresses a stepping station as a tread. A street on
+ * a hill becomes a flight, which is what a street on a hill is.
+ *
+ * **The measurement (§13.8 tradition, pinned beside the constant).** §3.1's
+ * forensics verdict: there was no walked berm to measure — the walked earthwork
+ * was `infra.entry@0`'s wall course, not a graded route — so the road-relief
+ * family is set from *hazard geometry*, and `ROAD_BERM_MAX` landed at **2**,
+ * "a step and a half, the point past which a raised road reads as an
+ * earthwork". F9 sets this constant from that same measurement: a carriageway
+ * standing 2 blocks proud of its ground reads as an embankment, and one sunk 2
+ * blocks into it reads as a cutting. Above that the street stops being ground
+ * and becomes civil engineering.
+ *
+ * **How this divides with the lot cut cap.** `FRONTAGE_CUT_MAX = RETAIN_MAX`
+ * (6, `layout/types.ts`) is the *lot's* budget: the deepest face the retaining
+ * table will build, so a tied lot can never ask for a wall the wall pass
+ * refuses. The two caps stack rather than compete — the street stays within 2
+ * of the natural ground it runs over, and each lot may then cut up to 6 further
+ * into the hill *behind* its frontage. The street's cap is the tighter one
+ * precisely because its cut is inherited by every lot on it, while a lot's cut
+ * is spent by that lot alone and is answered by a wall the lot pays for.
+ *
+ * **Live only on the datum path.** The cap is applied where a segment carries a
+ * {@link StreetSurfaceInput.datums} profile, which is where F1's inheritance
+ * exists. The arterial path, the `road.network@0` path and every ungraded-datum
+ * street keep the uncapped cut they have always had, so `FRONTAGE_TIE = false`
+ * is byte-identical. Wave 8F revisits the number on walk evidence.
+ */
+export const STREET_CUT_MAX = 2;
 
 /**
  * Extra cost for a cell that touches a building's perimeter.
@@ -779,6 +824,33 @@ export interface StreetSurfaceInput {
    */
   readonly graphPaths?: readonly string[];
   /**
+   * The street datum of each graph, parallel to {@link StreetSurfaceInput.graphs}
+   * — `docs/GROUND-UNIFICATION-v0.md` F2/F8.
+   *
+   * > `surfaceStreetGraph` does not re-grade a segment that carries a datum. It
+   * > takes the datum as its profile and applies exactly one further
+   * > constraint: the per-station water floor (`routeFloorAt`), maxed in
+   * > through `gradeProfile`'s existing floor envelope.
+   *
+   * This is the demotion F8 describes: the surfacer stops being a **grader** of
+   * the segments it is handed a datum for and becomes their **consumer**. The
+   * levels the lots were seated against in `layDistrict` and the levels the
+   * street is actually built at are then one number rather than two numbers
+   * that usually agree, which is the whole of F2.
+   *
+   * A datum reaches this pass riding on `DistrictProduct.datum`, which already
+   * crosses `terrain/compile.ts` into `buildStructures`; `structures/index.ts`
+   * lines the array up with `graphs`. Absent entries — and an absent array — are
+   * the ungraded case and grade exactly as they always did.
+   *
+   * **Nothing else consumes it.** There is no arterial datum and no
+   * `road.network@0` datum: an arterial is drawn by the city armature and a
+   * lane is routed by A*, neither has a `StreetGraph` to grade, and F1's
+   * inheritance therefore does not exist on either path. Both are provably
+   * unmoved by this field — see `test/roads-datum.test.ts`.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
+  /**
    * C1's city arterials, surfaced through this same pass and deliberately so.
    *
    * An arterial is a street that happens to be eleven columns wide: it wants
@@ -930,6 +1002,13 @@ export interface StreetSurfaceResult {
    * the `plan.ground` of a centre cell, and that difference is inversion I6.
    */
   readonly declaration: StreetDeclaration;
+  /**
+   * `LOAM-T237 FRONTAGE_TIE_DRIFT`, one per segment whose final level departed
+   * from its datum (F8). **Absent, not empty**, when nothing drifted — which is
+   * every compile with no datum at all — so a pass that was handed no datum
+   * returns exactly the object it always returned.
+   */
+  readonly diagnostics?: readonly LoamDiagnostic[];
 }
 
 /** The raw material of §3.6–§3.8's intents. */
@@ -1082,6 +1161,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     return built;
   };
   const blocks: StructureBlock[] = [];
+  /** F8's `LOAM-T237` rows, one per drifted segment. Empty without a datum. */
+  const streetDiagnostics: LoamDiagnostic[] = [];
   /** §3.6b, recorded as the pass runs. Never read here. */
   const declaredSegments: StreetSegmentDeclaration[] = [];
   /** Avenue centre lines, kept until every segment has been surfaced. */
@@ -1109,6 +1190,18 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     readonly marked: boolean;
     /** The centre-line state of *this run's* street family (F10). */
     readonly marking: number;
+    /**
+     * F8: the datum's per-station profile for this run, when it has one.
+     *
+     * Present only for a district segment whose graph carried a datum *and*
+     * whose path survived the region filter whole — a clipped path builds a
+     * different {@link ArcFrame}, and a profile bound to one frame is not a
+     * profile for another. A clipped run therefore falls back to grading, which
+     * is today's path exactly.
+     */
+    readonly datumY?: readonly number[];
+    /** Where a `LOAM-T237` about this run is reported. */
+    readonly datumPath?: string;
     /** Set by the claim phase. */
     spots?: readonly SweptColumn[];
     /** The run's arc frame — where its height lives. Set by the claim phase. */
@@ -1173,6 +1266,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         // and one no carriageway has ever been able to overwrite.
         continue;
       }
+      // F8's demotion, decided here because here is where the segment and its
+      // graph's datum are both in hand. A `steps` run is deliberately included:
+      // the tread law reads `naturalAt`, not this profile, so the field is
+      // simply never consulted for it.
+      const datumLevels =
+        path.length === segment.path.length
+          ? input.datums?.[graphIndex]?.bySegment.get(segment.id)
+          : undefined;
       jobs.push({
         rank: {
           id: qualifySegmentId(segment.id, graphPath),
@@ -1180,6 +1281,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
           role,
           kind: segment.kind,
         },
+        ...(datumLevels === undefined ? {} : { datumY: datumLevels.y, datumPath: graphPath }),
         order: jobs.length,
         role: role === "steps" ? "steps" : role === "cart" ? "cart" : "carriageway",
         width: segment.width,
@@ -1349,15 +1451,63 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         routeFloorAt(view, water, k, plan.seaLevel, job.decks === true, sectionReach),
       );
     }
-    for (const [i, c] of path.entries()) {
-      const k = index(region, c.x, c.z);
-      if (owner[k] === j || owner[k] === -1) continue;
-      // A junction is a *place*, not a path cell: the pin lands on the station
-      // whose cross-section covers the shared column, so the whole width of this
-      // street arrives at the owner's level rather than one lane of it.
-      pinLevel(ground, band, deckFloor, frame.station(frame.pathArc[i] as number), columnY[k] as number);
+    // --- F8: consume, or grade -------------------------------------------
+    // A run that carries a datum is **not re-graded**. Its profile is the
+    // datum's; the only further constraints are floors, and a floor can only
+    // ever lift. So the two graders F2 exists to prevent cannot appear: every
+    // departure from the datum is a floor biting, and every floor that bites is
+    // reported as `LOAM-T237`.
+    //
+    // The pins are deliberately *not* re-run on this path. A district's own
+    // crossings were pinned by the datum, in the same `compareStreetRank` order,
+    // with the same `pinLevel` — re-pinning here against `columnY` would be the
+    // second grading F8 removes.
+    const datumY = job.datumY;
+    const tied = datumY !== undefined && datumY.length === frame.stations.length;
+    let profile: number[];
+    if (tied && datumY !== undefined) {
+      // F9's cap, folded in as a floor beside the water's: "a carriageway may
+      // not cut more than `STREET_CUT_MAX` below its own natural ground at any
+      // station. Where the cap binds, the profile breaks instead of digging."
+      // Both are floors, so `gradeProfile`'s existing upper envelope of unit
+      // cones carries them — F8's "maxed in through `gradeProfile`'s existing
+      // floor envelope", and W3's "the descent is already right".
+      const floor = deckFloor.map((f, i) => Math.max(f, (ground[i] as number) - STREET_CUT_MAX));
+      // `band` is `ROAD_FILL_BAND` (0) or 0, so the lower envelope of a profile
+      // that is already 1-Lipschitz and already at or below its own ground is
+      // that profile: this call adds the floor and changes nothing else.
+      profile = gradeProfile(datumY, plan.seaLevel, band, floor);
+      let drifted = 0;
+      let worst = 0;
+      for (const [i, y] of profile.entries()) {
+        const lift = y - (datumY[i] as number);
+        if (lift >= 1) {
+          drifted++;
+          if (lift > worst) worst = lift;
+        }
+      }
+      if (drifted > 0) {
+        streetDiagnostics.push(
+          note(
+            "FRONTAGE_TIE_DRIFT",
+            job.datumPath ?? "",
+            `street segment "${job.rank.id}" was surfaced above its datum at ${drifted} of ${profile.length} station(s), by up to ${worst} block(s); the lots seated against that datum keep the level the datum gave them`,
+            `No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.`,
+          ),
+        );
+      }
+    } else {
+      for (const [i, c] of path.entries()) {
+        const k = index(region, c.x, c.z);
+        if (owner[k] === j || owner[k] === -1) continue;
+        // A junction is a *place*, not a path cell: the pin lands on the station
+        // whose cross-section covers the shared column, so the whole width of this
+        // street arrives at the owner's level rather than one lane of it.
+        pinLevel(ground, band, deckFloor, frame.station(frame.pathArc[i] as number), columnY[k] as number);
+      }
+      profile = gradeProfile(ground, plan.seaLevel, band, deckFloor);
     }
-    const levels = arcLevels(frame, gradeProfile(ground, plan.seaLevel, band, deckFloor));
+    const levels = arcLevels(frame, profile);
     job.levels = levels;
     for (const spot of job.spots ?? []) {
       if (owner[spot.idx] !== j) continue;
@@ -1592,6 +1742,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     bridgeColumns,
     arterialColumns,
     ...(broken === undefined ? {} : { broken }),
+    ...(streetDiagnostics.length === 0 ? {} : { diagnostics: streetDiagnostics }),
     declaration: { segments: declaredSegments, shoulders: declaredShoulders },
   };
 }

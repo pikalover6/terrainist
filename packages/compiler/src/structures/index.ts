@@ -1054,6 +1054,14 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       // districts both name their runs `ns0…` and the arc-levels map below keeps
       // only the last one's frames. See `StreetSurfaceInput.graphPaths`.
       graphPaths: districts.map((d) => d.nodePath),
+      // F8: the datum the quarter graded when its graph was drawn, lined up with
+      // `graphs` by the same `districts` walk that lines up `graphPaths`. Handed
+      // over only when at least one quarter has one — which is never while
+      // `FRONTAGE_TIE` is off — so the surfacer is called with exactly the
+      // argument object it has always been called with.
+      ...(districts.some((d) => d.datum !== undefined)
+        ? { datums: districts.map((d) => d.datum) }
+        : {}),
       ground: input.ground,
       ...(arterials.length === 0
         ? {}
@@ -1105,6 +1113,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           })()),
     });
     lay("streets", streets.blocks);
+    // F8's `LOAM-T237`. Absent — not empty — whenever no segment drifted, which
+    // is every compile that was handed no datum.
+    if (streets.diagnostics !== undefined) diagnostics.push(...streets.diagnostics);
     // §3.8b: one entry per surfaced segment, keyed by the surfacer's own source
     // id, so the sidewalk band takes its level from the very `ArcLevels` the
     // carriageway was graded to. A segment with no frame (a flight of steps, a

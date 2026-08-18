@@ -350,6 +350,24 @@ export interface DistrictProduct {
   /** The pinned F4 / road-pass contract. */
   readonly streets: StreetGraph;
   /**
+   * The graded elevation of those streets — `docs/GROUND-UNIFICATION-v0.md` F2,
+   * and **the way the datum crosses the stage boundary** (wave 8D).
+   *
+   * The datum is computed here, in `layDistrict`, at the moment the graph is
+   * drawn; the surfacer two stages later has to *consume* it rather than
+   * re-derive one (F8). It rides on the product because the product is already
+   * the one thing the fabric hands forward: `terrain/compile.ts` collects it
+   * into `layoutOutcome.districts` and passes that straight into
+   * `buildStructures`, which lines the datums up with `graphs` for
+   * `surfaceStreetGraph`. No new parameter crosses the boundary, and no second
+   * copy of the graph-to-district correspondence exists to drift.
+   *
+   * **Absent while `FRONTAGE_TIE` is off**, which is every compile today: the
+   * datum is not even graded, the product is the object it has always been, and
+   * the surfacer's datum path is unreachable.
+   */
+  readonly datum?: StreetDatum;
+  /**
    * Which urban form drew this quarter, and whether it is the one that was
    * asked for.
    *
@@ -1518,6 +1536,10 @@ export function layDistrict(
       nodePath,
       bounds,
       streets: graph,
+      // F2's artifact, handed forward to its consumer. `null` — the flag-off
+      // case — omits the key entirely, so the product is byte-for-byte the one
+      // a quarter carried before wave 8D.
+      ...(datum === null ? {} : { datum }),
       form: plan.record,
       ...(plan.channels === undefined || plan.channels.length === 0
         ? {}
