@@ -59,12 +59,14 @@ rolls, T110 authored water, machinery bisected innocent);
 dev_world_packs installed (760 rows / 4,195 buildings / 0 unstable
 fluids with real pools); the tide-bell full-cube fix.
 
-**GO-HAM: desert_caravanserai SHIPPED (365eded).** Seventh pack, 13
-buildings + 2 props (serai_court anchor — "caravanserai" was
-commerce's; qanat_wellhead chain-from-cap-carries-nothing;
-oasis_shrine filled-disc dome), members 235→250, crvn_* devworld
-rows, 36 bare words asserted unmoved. Devworld recompiled+installed
-alongside for the same walk.
+**GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
+serai_court anchor, crvn_* rows, members 235→250) and
+himalayan_monastery (88bd989, 13+2, dzong_hall anchor, hima_* rows,
+members 250→265; prayer flags = full-cube wool runs, NO banner
+attachables; theme alpine_stone doesn't exist → boreal_pine+
+white_quartz). dev_world_hima installed carries BOTH bands
+(supersedes dev_world_caravan for the walk). Go-ham PAUSED by
+orchestrator context budget — resume packs after Kai's walk wave.
 
 **AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,
