@@ -28,17 +28,24 @@ NOT 618d738 — my gatehouses built one-course arches on wallTop-4
 storeys (arch now needs headroom≥4). NUL byte stripped 3781d6f.
 FULL SUITE 0 FAILURES at 069592e.
 
-**WP TRAIN (GROUND-UNIFICATION):** committed: 8A datum kernel
-2f9de73; 8C apronBySide 6a2f387; 9A conform suite 65780fe (11 exec
-budget); 8B frontage record+flag 676feac (FRONTAGE_TIE=false, all
-byte-identical, proofs in commits). IN FLIGHT: 8D surfacer-consumes-
-datum (medium; owns roads.ts+compile.ts) + 9B conform seat (low;
-owns programs/pass+place). REMAINING: 8E other clients+cities (low),
-9E teaching (low, MUST land before 9C), 10A berm clamps
-(ROAD_BERM_MAX=2 pinned from hazard geometry), 8F FLIP+regen deck
-e2e for Kai's walk (FRONTAGE_RISE + rear-terrace verdicts his), 9C
-re-author battery ~$2 (end-of-run law). REGEN HELD until 8F —
-regenerating earlier shows the same lips.
+**WP TRAIN: MACHINERY COMPLETE, ALL COMMITTED.** 8A 2f9de73 datum
+kernel; 8B 676feac frontage record+flag; 8C 6a2f387 apronBySide; 8D
+f709bbe surfacer-as-consumer (STREET_CUT_MAX=2, T237 drift); 8E
+4953052 props+programs+city-cell clients (+seatExplicit); 9A 65780fe
+conform suite; 9B f70a966 conform seat (T341/T342); 9E 8d5791e
+teaching (rule 6 five grounds, kit conform row, exhibit sloped
+cell); 10A 54ac4a9 berm clamps (T239, deck branch exempt); 10B
+bf94f06+612f134 bed skirt (span set: an apron does not tunnel under
+a viaduct — devworld deck regression caught by the gate and fixed).
+PRE-FLIP GATE: 285 files, 4,984 tests, 0 fail (rpc-timeout flake
+known noise). **IN FLIGHT: 8F flip (medium)** — FRONTAGE_TIE=true,
+re-pin ground-equivalence goldens with attribution (unattributable
+movement = BUG), lip distribution before/after on hillside-village.
+On landing: orchestrator reviews+commits, regenerates p1/p3/p5/p7
+fresh (new teaching → programs judged on five grounds → conform
+seats), installs alongside --channel tie, hands Kai the walk +
+FRONTAGE_RISE / rear-terrace / doorstep questions. 9C re-author of
+SHIPPED program battery (~$2) after the walk.
 
 **TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
 the doc had era ancient + classical_mediterranean. Killers: `density:
