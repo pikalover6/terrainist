@@ -421,6 +421,19 @@ function declareOne(
     // declare a wrong one), it declares at `verge` (rank 140) so an apron can
     // never outrank a street, and it rides in this same `commit` call because
     // companion intents belong in one arbitration (§3.13).
+    // The arcade's own ground — every course cell dilated by the carry's
+    // half-width, the two abutments included — kept off limits to the skirt.
+    const spanColumns = new Set<number>();
+    for (const c of path) {
+      for (let dz = -carry.half; dz <= carry.half; dz++) {
+        for (let dx = -carry.half; dx <= carry.half; dx++) {
+          const x = c.x + dx;
+          const z = c.z + dz;
+          if (!inside(input.region, x, z)) continue;
+          spanColumns.add(index(input.region, x, z));
+        }
+      }
+    }
     skirt = lineworkSkirt({
       region: input.region,
       bed: bedColumns,
@@ -428,6 +441,7 @@ function declareOne(
       ground: (x, z) => input.view.ground(x, z),
       carriageway: input.carriageway,
       fluidKind: input.fluidKind,
+      span: spanColumns,
     });
     driver.commit([
       {
@@ -498,6 +512,22 @@ export interface LineworkSkirtInput {
   readonly carriageway: ReadonlyUint8Array;
   /** The baseline's fluid classification: a skirt keeps off water like a bed. */
   readonly fluidKind: ReadonlyUint8Array;
+  /**
+   * The span's **own** columns — the course dilated by its half-width, ends
+   * included — which the skirt neither claims nor grows through.
+   *
+   * The bays and the abutments are the arcade, and §13.2e's one prohibition is
+   * that a viaduct declares its approaches and never a bed under its own
+   * arcade. Without this the ring band grows *inward* from the first approach
+   * column, back past the abutment and across every bay: the bays lose their
+   * grade, the anchors the deck's own course is measured from stand a course
+   * higher than they did, and `buildCarriedSpan` lays its deck at a different
+   * `deckY` than the one the bed was declared against — an arcade whose deck
+   * and whose approach no longer meet, which is the exact defect rank 25 exists
+   * to prevent. Blocking *propagation* as well as claiming is deliberate: an
+   * apron does not tunnel under a viaduct and come up on the far side.
+   */
+  readonly span?: ReadonlySet<number>;
 }
 
 /**
@@ -571,6 +601,9 @@ export function lineworkSkirt(input: LineworkSkirtInput): GroundClaim[] {
           if (!inside(input.region, x, z)) continue;
           const idx = index(input.region, x, z);
           if (bedIds.has(idx) || assigned.has(idx)) continue;
+          // The arcade is not ground the apron may have — neither to claim nor
+          // to travel through.
+          if (input.span?.has(idx) === true) continue;
           const held = next.get(idx);
           // The bed's own tie-break: the lower level wins, then the lower index.
           if (held !== undefined && (held.y < cell.y || (held.y === cell.y && held.idx <= cell.idx)))

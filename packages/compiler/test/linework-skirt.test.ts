@@ -345,6 +345,52 @@ describe("B2 — the skirt declares at `verge`, never at `structure.linework`", 
   });
 });
 
+describe("the arcade is not the apron's ground", () => {
+  it("claims no column the same node's clearance covers", () => {
+    // The devworld regression, as an assertion: the ring band grown from the
+    // first approach column reached back past the abutment and across every
+    // bay, so the bays lost their grade, the anchors the deck's course is
+    // measured from stood a course higher, and `buildCarriedSpan` laid its deck
+    // at a different `deckY` than the bed had been declared against — the deck
+    // and its approach no longer met.
+    const { batches } = runViaduct();
+    const intents = batches.flat();
+    const clearance = intents.find((i) => i.kind === "clearance") as GroundIntent;
+    const skirt = intents.find((i) => i.sourceClass === "verge") as GroundIntent;
+    const bays = new Set([...clearance.columns].map((c) => c.idx));
+    expect(bays.size).toBeGreaterThan(0);
+    for (const claim of skirt.columns) expect(bays.has(claim.idx)).toBe(false);
+  });
+
+  it("neither claims nor grows through an excluded span column", () => {
+    const r = region(96);
+    // A wall of span two columns wide, right of the bed: nothing beyond it may
+    // be claimed either — an apron does not tunnel under a viaduct.
+    const span = new Set<number>();
+    for (let z = -40; z <= 40; z++) {
+      for (let x = 1; x <= 2; x++) span.add(index(r, x, z));
+    }
+    const claims = lineworkSkirt({
+      region: r,
+      bed: loneBed(r, 80),
+      crossWidth: 64,
+      ground: () => 40,
+      carriageway: new Uint8Array(r.width * r.depth),
+      fluidKind: new Uint8Array(r.width * r.depth).fill(FluidKind.NONE),
+      span,
+    });
+    expect(claims.length).toBeGreaterThan(0);
+    for (const claim of claims) {
+      const x = r.x0 + (claim.idx % r.width);
+      const z = r.z0 + Math.floor(claim.idx / r.width);
+      // Nothing inside the wall, and — for the rows the wall spans — nothing
+      // beyond it.
+      expect(span.has(claim.idx)).toBe(false);
+      if (z >= -38 && z <= 38) expect(x).toBeLessThan(1);
+    }
+  });
+});
+
 describe("§3.13 — companion intents belong in one arbitration", () => {
   it("commits the skirt in the same `driver.commit` call as the bed", () => {
     const { batches } = runViaduct();
