@@ -1544,10 +1544,22 @@ function fitKoraGatehouse(ctx: FitOutContext, c: PropCounter): void {
 
   // The arch, at the head end of the room: two piers three cells apart, and
   // the lintel across their heads at the course the columns actually reached.
+  //
+  // `head >= 4` is the walkability clause, and it is not the same number as
+  // {@link column}'s. A column may stand on a three-course storey — it reaches
+  // courses 1 and 2 and leaves the third clear, which is all a *column* owes.
+  // An arch owes more: the lintel lands on {@link columnTop}, so on three
+  // courses it lands at course 2 and the way through is one course high — a
+  // gate a player cannot walk under, and (because the lintel spans the whole
+  // bay) a wall across the room that strands everything beyond it. That is a
+  // `traversal.unreachable` pocket, found by the terrarium's walk on the
+  // review world's own seven-by-seven gatehouse plan. Four courses is the
+  // first storey with room for a body under the lintel, so below it the room
+  // simply has no arch — the same bar the pack's awnings already keep.
   const archZ = headZ === it.z0 ? it.z0 + 2 : it.z1 - 2;
   const bay = bayOn(ctx, archZ, 2) ?? bayOn(ctx, archZ, 0);
   const piers: number[] = [];
-  if (bay !== null && archZ > it.z0 && archZ < it.z1) {
+  if (bay !== null && archZ > it.z0 && archZ < it.z1 && headroomOf(ctx) >= 4) {
     for (const x of [bay - 2, bay + 2]) {
       if (x < it.x0 || x > it.x1) continue;
       if (column(ctx, c, x, archZ, BATTER)) piers.push(x);

@@ -72,6 +72,13 @@ const BIG: readonly [number, number, number] = [15, 16, 17];
 /** Three envelopes, from generous to tight. */
 const SIZES: readonly (readonly [number, number, number])[] = [BIG, [13, 13, 13], [9, 11, 9]];
 
+/**
+ * The lowest storey these archetypes are asked for in anger: `wallTop` 4, so
+ * three courses of clear air. The review world's exhibit plan, and a course
+ * shorter than anything in {@link SIZES}.
+ */
+const LOW: readonly [number, number, number] = [7, 8, 7];
+
 /** The archetypes that write a curbed basin when the room has room for one. */
 const WET = ["serai_court", "qanat_wellhead", "serai_cistern", "oasis_shrine"] as const;
 
@@ -311,6 +318,22 @@ describe("the desert_caravanserai pack's buildings", () => {
             label: `${a} ${size.join("x")} floors=${floors}`,
           });
         }
+      }
+    }
+  }, 60_000);
+
+  it("is reachable on a three-course storey too — no one-course arch", () => {
+    // The envelope the review world actually hands these archetypes, and the
+    // one no size in SIZES reaches: `LOW` is `wallTop` 4, three courses of air.
+    // The gatehouse lands its lintel on the pier head, so on three courses the
+    // arch was one course high — a gate no body walks under and, because the
+    // lintel spans the bay, a wall across the room. It cost the terrarium five
+    // `traversal.unreachable` findings while every size here passed.
+    for (const a of CARAVAN_BUILDING_ARCHETYPES) {
+      for (const floors of [1, 2]) {
+        assertNoPockets(build(a, LOW, { floors }), {
+          label: `${a} ${LOW.join("x")} floors=${floors}`,
+        });
       }
     }
   }, 60_000);
