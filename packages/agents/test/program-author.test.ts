@@ -232,6 +232,79 @@ describe("authorProgram", () => {
     expect(gate.calls).toHaveLength(1);
   });
 
+  it("stamps the gate's conformance verdict onto the frozen record", async () => {
+    const { fetchImpl } = stubFetch([REPLY]);
+    const gate = stubProgramGate({
+      rounds: [[]],
+      outputHash: "b3:beef",
+      conformance: { conforms: true, conformHash: "b3:c0ffee" },
+    });
+    const outcome = await authorProgram({
+      request: REQUEST,
+      docContext: DOC_CONTEXT,
+      gate,
+      apiKey: "test",
+      fetchImpl,
+    });
+    expect(outcome.entry?.conforms).toBe(true);
+    expect(outcome.entry?.conformHash).toBe("b3:c0ffee");
+    expect(outcome.entry?.outputHash).toBe("b3:beef");
+  });
+
+  it("stamps a judged-and-failed verdict too — conforms: false is a verdict", async () => {
+    const { fetchImpl } = stubFetch([REPLY]);
+    const gate = stubProgramGate({
+      rounds: [[]],
+      outputHash: "b3:beef",
+      conformance: { conforms: false, conformHash: "b3:c0ffee" },
+    });
+    const outcome = await authorProgram({
+      request: REQUEST,
+      docContext: DOC_CONTEXT,
+      gate,
+      apiKey: "test",
+      fetchImpl,
+    });
+    // Kept, not dropped: §2.5 — the verdict routes the seat, it never rejects.
+    expect(outcome.record.ok).toBe(true);
+    expect(outcome.entry?.conforms).toBe(false);
+    expect(outcome.entry?.conformHash).toBe("b3:c0ffee");
+  });
+
+  it("stamps neither field when the gate produced no verdict", async () => {
+    const { fetchImpl } = stubFetch([REPLY]);
+    const gate = stubProgramGate({ rounds: [[]], outputHash: "b3:beef" });
+    const outcome = await authorProgram({
+      request: REQUEST,
+      docContext: DOC_CONTEXT,
+      gate,
+      apiKey: "test",
+      fetchImpl,
+    });
+    expect(gate.freeze).toBeUndefined();
+    expect(outcome.entry).toBeDefined();
+    expect(Object.keys(outcome.entry as object)).not.toContain("conforms");
+    expect(Object.keys(outcome.entry as object)).not.toContain("conformHash");
+  });
+
+  it("refuses a verdict whose digest is not a b3 hash — both fields or neither", async () => {
+    const { fetchImpl } = stubFetch([REPLY]);
+    const gate = stubProgramGate({
+      rounds: [[]],
+      outputHash: "b3:beef",
+      conformance: { conforms: true, conformHash: "" },
+    });
+    const outcome = await authorProgram({
+      request: REQUEST,
+      docContext: DOC_CONTEXT,
+      gate,
+      apiKey: "test",
+      fetchImpl,
+    });
+    expect(outcome.entry?.conforms).toBeUndefined();
+    expect(outcome.entry?.conformHash).toBeUndefined();
+  });
+
   it("accepts a program the gate only warns about, without a repair round", async () => {
     // Suspended gate checks (Kai, 2026-08-15) come back as warnings: recorded
     // on the record, never repaired, never a drop.

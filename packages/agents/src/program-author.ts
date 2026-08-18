@@ -46,6 +46,7 @@ import { loadOpenRouterKey } from "./env.js";
 import { extractJson } from "./json.js";
 import {
   type ProgramDocContext,
+  type ProgramFreezeFields,
   type ProgramMode,
   type ProgramSubmission,
   type ProgramVerificationGate,
@@ -479,6 +480,14 @@ export interface AuthoredProgramEntry {
   readonly sourceHash: string;
   /** Recorded when the gate can execute; `undefined` against a stub gate. */
   readonly outputHash?: string;
+  /**
+   * The gate's conformance verdict (§2.4), stamped with {@link conformHash} or
+   * not at all. Absent means "never judged" — the record is seated `pad`, as
+   * every record was before the step existed.
+   */
+  readonly conforms?: boolean;
+  /** The terrain-suite digest behind {@link conforms}. */
+  readonly conformHash?: string;
   readonly source: string;
 }
 
@@ -718,14 +727,30 @@ export async function authorProgram(options: AuthorProgramRequest): Promise<Auth
       const warnings = verdict.filter((diag) => diag.severity === "warning");
       diagnostics = verdict.filter((diag) => diag.severity === "error");
       if (diagnostics.length === 0) {
-        const outputHash =
-          gate.outputHash === undefined ? undefined : await gate.outputHash(submission, docContext);
+        // Prefer `freeze`: it carries the conformance verdict beside the
+        // op-stream hash, and the real gate produces both from one pass.
+        const frozen: ProgramFreezeFields =
+          gate.freeze !== undefined
+            ? await gate.freeze(submission, docContext)
+            : gate.outputHash === undefined
+              ? {}
+              : { outputHash: await gate.outputHash(submission, docContext) };
+        const { outputHash } = frozen;
+        // Both fields or neither (§2.2): a verdict without a well-formed
+        // digest is not a verdict, and the spec's validator rejects one.
+        const judged =
+          frozen.conforms !== undefined
+          && frozen.conformHash !== undefined
+          && frozen.conformHash.startsWith("b3:");
         return {
           entry: {
             mode: submission.mode,
             envelope: submission.envelope,
             sourceHash: hashSource(source),
             ...(outputHash === undefined ? {} : { outputHash }),
+            ...(judged
+              ? { conforms: frozen.conforms as boolean, conformHash: frozen.conformHash as string }
+              : {}),
             source,
           },
           record: {

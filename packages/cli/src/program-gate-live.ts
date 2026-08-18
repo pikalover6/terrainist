@@ -10,6 +10,7 @@
 
 import type {
   ProgramDocContext,
+  ProgramFreezeFields,
   ProgramSubmission,
   ProgramVerificationGate,
 } from "@terrainist/agents";
@@ -60,6 +61,31 @@ export function compilerProgramGate(): ProgramVerificationGate {
         );
       }
       return verification.outputHash;
+    },
+
+    async freeze(
+      program: ProgramSubmission,
+      docContext: ProgramDocContext,
+    ): Promise<ProgramFreezeFields> {
+      const verification = await verifyProgram(program.id, toRecord(program), {
+        worldSeed: toWorldSeed(docContext.worldSeed),
+      });
+      if (!verification.ok) {
+        // Same contract as `outputHash`: the loop only asks after a clean
+        // `verify`, so a failure here is nondeterminism, which E336 names.
+        throw new Error(
+          `program "${program.id}" failed re-verification while hashing output`,
+        );
+      }
+      // The conformance step ran iff it produced a digest; a program thrown
+      // out before step 6 leaves the hash empty and gets no verdict stamped.
+      const judged = verification.conformHash.startsWith("b3:");
+      return {
+        outputHash: verification.outputHash,
+        ...(judged
+          ? { conforms: verification.conforms, conformHash: verification.conformHash }
+          : {}),
+      };
     },
   };
 }

@@ -67,6 +67,33 @@ export interface ProgramVerificationGate {
     program: ProgramSubmission,
     docContext: ProgramDocContext,
   ): Promise<string>;
+  /**
+   * Everything the authoring loop freezes into the document's record for a
+   * program that has already passed `verify` — the op-stream hash *and* the
+   * conformance verdict the gate's §2.4 step produced.
+   *
+   * Optional for the same reason {@link outputHash} is: a stub cannot execute.
+   * When a gate implements this the loop prefers it over `outputHash`, so the
+   * real gate pays for one verification pass rather than two.
+   */
+  freeze?(
+    program: ProgramSubmission,
+    docContext: ProgramDocContext,
+  ): Promise<ProgramFreezeFields>;
+}
+
+/**
+ * The record fields a gate hands back for freezing.
+ *
+ * `conforms` and `conformHash` travel together or not at all: a gate that did
+ * not reach the conformance step reports neither, and the record stays as it
+ * was before the step existed (seated `pad`). `conforms: false` *with* a hash
+ * is a real verdict — judged, and judged not to follow the ground.
+ */
+export interface ProgramFreezeFields {
+  readonly outputHash?: string;
+  readonly conforms?: boolean;
+  readonly conformHash?: string;
 }
 
 /** Options for {@link stubProgramGate}. */
@@ -78,6 +105,12 @@ export interface StubGateOptions {
   readonly rounds?: readonly (readonly LoamDiagnostic[])[];
   /** Hash handed back by `outputHash`. Omit to leave the method undefined. */
   readonly outputHash?: string;
+  /**
+   * Conformance verdict handed back by `freeze`. Omit to leave `freeze`
+   * undefined — the stub then behaves exactly as it did before the step
+   * existed, and a record frozen through it carries no verdict.
+   */
+  readonly conformance?: { readonly conforms: boolean; readonly conformHash: string };
 }
 
 /**
@@ -101,6 +134,15 @@ export function stubProgramGate(options: StubGateOptions = {}): ProgramVerificat
   if (options.outputHash !== undefined) {
     const hash = options.outputHash;
     gate.outputHash = async (): Promise<string> => hash;
+  }
+  if (options.conformance !== undefined) {
+    const { conforms, conformHash } = options.conformance;
+    const outputHash = options.outputHash;
+    gate.freeze = async (): Promise<ProgramFreezeFields> => ({
+      ...(outputHash === undefined ? {} : { outputHash }),
+      conforms,
+      conformHash,
+    });
   }
   return gate;
 }

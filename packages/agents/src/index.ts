@@ -198,6 +198,7 @@ export type {
 export { stubProgramGate } from "./program-gate.js";
 export type {
   ProgramDocContext,
+  ProgramFreezeFields,
   ProgramMode,
   ProgramSubmission,
   ProgramVerificationGate,
