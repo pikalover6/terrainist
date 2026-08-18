@@ -3326,7 +3326,11 @@ or it touches down.
 
 - `"seat": "pad"` — the default, and what you get by writing nothing. The
   compiler seats the structure on a plane the footprint agrees with and raises
-  the low columns to meet it, fill-only, like a plinth under a building.
+  the low columns to meet it, fill-only, like a plinth under a building. The
+  pad's apron feathers into the terrain at 1:2 and reaches at most 24 columns,
+  so a lift much past 12 blocks shows a visible masonry face. `terrain_conform:
+  "flatten"` on a cliff buys a podium — point a landmark at ground it can
+  stand on, or accept the plinth deliberately.
 - `"seat": "embed"` with `"embedDepth": <1..32>` — the same seating, then sunk
   that many blocks into the ground. No terrain is cut: the land simply stands
   over the buried part. This is what a **crashed** thing wants.
@@ -3355,6 +3359,12 @@ clear of the sea, so a colossus the prompt wanted lying in the shallows comes
 out standing on dry grass above the beach, and the compiler reports an
 `UNSATISFIABLE` you cannot act on. `wade` is what lifts that.
 
+Nothing infers water affinity from a *name*, either. A node called
+`pirate_dreadnought` whose constraints say `at` + `terrain_conform: "flatten"`
+is a hilltop request, and gets a hilltop with a pad under it. A ship, a hulk,
+a sea monster wants `"seat": "wade"` and a coastline binding —
+`{"on": "@terrain:coastline", "band": 24}` — written out.
+
 ```json
 { "id": "drowned_god", "kind": "generator", "generator": "authored:drowned_god_shrine",
   "params": { "seat": "wade" },
@@ -3367,6 +3377,14 @@ honest `seatY`. It does not model a waterline: which courses end up drowned is
 decided by the seabed it lands on and by how tall the figure is, so a shallower
 bay shows more of it. That is the point of `wade` — half-submerged is a
 consequence of the geometry, not a thing anyone drew.
+
+The same rule holds hardest for water itself: **a wading program must not
+model its own sea.** Node-local y = 0 is the *seabed*, not the waterline, so
+a program that lays its own blocks of `minecraft:water` across the footprint
+builds a raised slab of ocean standing proud of the real bay. The compiler
+clamps authored fluid above the water body's own surface and reports
+`LOAM-W339 PROGRAM_WATER_CLAMPED` — build the seabed and whatever breaks the
+surface, and let the world's water fill the gap.
 
 `wade` is a preference for water, not a demand for it. The solver is pulled
 toward the shallows but will still place the node on dry ground rather than
@@ -3411,6 +3429,15 @@ registry parses and is *ignored* with a `LOAM-W407` warning, so stick to these:
 | `along` | `{"along": "lanes", "offset": [1, 4], "faceRoad": true}` | line the node up on a route corridor |
 | `beside` | `{"beside": "the_river", "offset": [4, 12]}` | `along` with a wider band and no facing |
 | `connected` | `{"connected": "great_hall", "via": "tunnel"}` | dig a gallery between two cellars — see below |
+
+**`at` and `zone` are soft costs the ground can outbid.** A landmark that
+abandons its coarse target for cheaper ground elsewhere is reported —
+`LOAM-W521 LANDMARK_COARSE_ABANDONED`, with the distance — but reported is
+all it is. Two rival landmarks that must stay apart (one per island, one per
+faction) need a real binding each: a `distance` band off a node that is
+already there, or an `on` that names the ground itself. When slope is the
+*only* objection inside the target the seat is taken anyway (`LOAM-W520`);
+when the target is merely more expensive, it is not.
 
 ### `on` — build on a terrain feature
 

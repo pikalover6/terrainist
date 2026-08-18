@@ -351,7 +351,10 @@ RULES — each of these is checked by a gate before your program is accepted.
    that stands in water, the ground is the SEABED and \`seatY\` means the same
    as ever: build the whole thing, from its footing upward, and let the
    waterline fall where it falls — never model an air gap or a waterline
-   yourself.
+   yourself, and NEVER lay water or lava as your own sea, pool or "water
+   zone". The world's water fills every gap above the seabed; fluid you
+   author above the real waterline would stand as a raised slab of ocean,
+   so the compiler clamps it and reports LOAM-W339 PROGRAM_WATER_CLAMPED.
 6. FOLLOW THE GROUND YOU ARE GIVEN. \`api.heightAt(x, z)\` is the terrain height
    under your footprint, node-local and measured from the seat plane: 0 where
    the ground meets it, negative where the ground falls away, positive where it

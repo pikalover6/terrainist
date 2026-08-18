@@ -416,8 +416,19 @@ that silently evaporates is the failure mode this project fears most.
   keeps its houses and roads underneath.
 - `params.seat`: `pad` (default — seat on the ground plane and raise low columns
   to meet it), `embed`/`embedDepth` (sink it, which is what a *crashed* thing
-  wants), `drape` (the program conforms itself via `heightAt`). `hover` and
-  `seat` are mutually exclusive.
+  wants), `drape` (the program conforms itself via `heightAt`), `wade` (seat on
+  the **seabed**, no pad, the waterline cuts the figure wherever its height
+  puts it — the only seat allowed below sea level). `hover` and `seat` are
+  mutually exclusive.
+- A program pad's apron is keyed on the pad's **lift**, the same doctrine as
+  `LevelPad.adaptiveApron`: 1:2 grade, at most one block of step per column,
+  capped at 24 rings *and* the instance's own long side, so a hut cannot
+  regrade a hillside. The placer prefers low-lift sites (`PROGRAM_GENTLE_LIFT`)
+  but only when the instance count holds — a count is never traded for a nicer
+  seat. And a wading instance's authored fluid above its water body's own
+  surface is clamped (`LOAM-W339 PROGRAM_WATER_CLAMPED`): node-local y = 0 is
+  the seabed, and a program that models its own sea would otherwise ship a
+  raised slab of ocean.
 - The program's returned `seatY` — the node-local plane that meets the ground —
   is honoured.
 - Anchors publish as §7.3 markers, so a road can be routed to a landmark's door
@@ -433,6 +444,13 @@ that silently evaporates is the failure mode this project fears most.
   narrow — a declared coarse constraint, an ordinary answer that landed outside
   it, and slope as the *only* objection: water, lava and off-map are not
   slopes, and a colossus in a lake is not what the author asked for either.
+  The three-hundred-blocks-away outcome still exists in the other half of the
+  space — when the target's candidates are feasible but merely pricier than
+  flat ground elsewhere, the soft cost loses and the landmark walks. That case
+  is now *audible* rather than fixed: `LOAM-W521 LANDMARK_COARSE_ABANDONED`
+  names the node and the distance, and the cost model is untouched so
+  already-walked worlds keep their placements. Authors who need rivals kept
+  apart bind them (`distance`, `on`) rather than trusting `at`.
 
 **Facing — which way the thing points.** A program is authored inside its own
 envelope, in a frame that knows nothing of the world, so a subject with a front
