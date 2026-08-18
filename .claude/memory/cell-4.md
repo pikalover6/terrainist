@@ -17,18 +17,28 @@ author real site terrain, build naturally on it — heightAt exists at
 execution; make conform the default, retire auto-pad to opt-in.
 Design seat (opus-5-high) writing docs/GROUND-UNIFICATION-v0.md.
 
-**WAVE STATUS (all landed+committed):** diagnostics c15c664 (W523
-CONSTRAINT_TARGET_UNRESOLVED + I524 WALL_FOOTING_DEEP + I525
-CLIFF_PALETTE_REGIONAL + kit laws; byte-identical); hub-shaft +
-water-veto 618d738 (shafts→natural ground both worlds, lake 607→810
-above-sea columns); facing 1bfec03 (backwards monster = PRE-SOLVE
-facing estimate never re-measured after W521 walk; post-solve
-remeasureLandmarkFacings, footprint-preserving turns only, W522
-PROGRAM_FACE_REMEASURED; LOAM-SPEC §15.1 amended — QUEUED FOR KAI'S
-RATIFICATION; taste note queued: face targets aim at node CENTROID,
-nearest-footprint-point would read better). **IN FLIGHT: terrarium
-traversal.unreachable regression from 618d738** (2 mini-station
-doors; opus-5-medium bisecting; LAST BLOCKER before regen plan).
+**REPAIR WAVES ALL COMMITTED:** graffiti gate 0893687; diagnostics
+c15c664 (W523 unresolved-target + I524 wall footing + I525 cliff
+palette + kit laws); hub-shaft + water-veto 618d738 (lake 607→810);
+facing 1bfec03 (pre-solve estimate never re-measured → post-solve
+remeasureLandmarkFacings, W522; LOAM-SPEC §15.1 amended — QUEUED FOR
+KAI'S RATIFICATION; taste note: face aims at CENTROID,
+nearest-footprint-point would read better). Terrarium doors 069592e:
+NOT 618d738 — my gatehouses built one-course arches on wallTop-4
+storeys (arch now needs headroom≥4). NUL byte stripped 3781d6f.
+FULL SUITE 0 FAILURES at 069592e.
+
+**WP TRAIN (GROUND-UNIFICATION):** committed: 8A datum kernel
+2f9de73; 8C apronBySide 6a2f387; 9A conform suite 65780fe (11 exec
+budget); 8B frontage record+flag 676feac (FRONTAGE_TIE=false, all
+byte-identical, proofs in commits). IN FLIGHT: 8D surfacer-consumes-
+datum (medium; owns roads.ts+compile.ts) + 9B conform seat (low;
+owns programs/pass+place). REMAINING: 8E other clients+cities (low),
+9E teaching (low, MUST land before 9C), 10A berm clamps
+(ROAD_BERM_MAX=2 pinned from hazard geometry), 8F FLIP+regen deck
+e2e for Kai's walk (FRONTAGE_RISE + rear-terrace verdicts his), 9C
+re-author battery ~$2 (end-of-run law). REGEN HELD until 8F —
+regenerating earlier shows the same lips.
 
 **P1 FORENSICS (landed):** "bridge" = infra.entry acropolis_terrace
 (retaining.seam, LIFT=6, follow:step) routed its deriveWallCourse
