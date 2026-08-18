@@ -1,11 +1,32 @@
-# Cell 4 — current state (2026-08-18, walk-feedback round, Kai present)
+# Cell 4 — current state (2026-08-18, walk-verdict wave 2, Kai present)
 
-**KAI'S VERDICTS on the final deck (his walk, screenshots):** (1) THE
-PLATFORM DISEASE — bespoke sites ship as raised hard-edged pads: sea
-monster in a SLAB OF ELEVATED OCEAN (pad raised fluidTop), pirate
-ship ON LAND on a hilltop, unicorn statue + p7 structure each on a
-crisp unfeathered disc; both P1 landmarks possibly on ONE island.
-(2) Troy read modern despite correct era+pack.
+**KAI'S PADFIX-DECK VERDICTS (harsh):** Troy "massively regressed" —
+buildings on plinths 1-2 above roads (medium density REVEALED the
+pad/road split that party-wall density hid); horse across a creek;
+L-shaped sandstone outlines on lawns; dirt berm along walls; city
+masonry painted on distant cliffs. p1: huge road embankment through
+plaza (likely routeFloorAt consequence); monument still 1-block
+plinth + dry cone pits (also in Troy); quarry-garble grass pillars
+(E494 preserve/tie). p7 ok except stray terracotta (FIXED 0893687:
+ungated graffiti murals — modernOk gate). p5: backwards sea monster.
+
+**KAI'S RATIFICATIONS (popup):** (1) FRONTAGE TIE — road network =
+ground authority, buildings seat AT their street's level, lots grade
+from road. (2) BESPOKE CONFORM (his own idea): feed the program
+author real site terrain, build naturally on it — heightAt exists at
+execution; make conform the default, retire auto-pad to opt-in.
+Design seat (opus-5-high) writing docs/GROUND-UNIFICATION-v0.md.
+
+**TROY FORENSICS (landed):** (a) half-squares = terrace copings on
+UNBUILT city blocks (retaining.ts; fix: no-adjacent-claimed-lot seam
+grades as bank); (b) berm = district platform 16-in-5 cut face
+(derive min blend from fill) + wall footing extrudes ≤18 courses no
+batter/no diagnostic (walls.ts WALL_MAX_FILL); (c) cliff paint = DOC
+set world ground.cliff to city masonry (kit rule + note); (d) HORSE:
+doc HAD hard distance→priams_megaron but district children are
+INVISIBLE to root solver; resolveTargets []→vacuous satisfied:true.
+COMPILER DEFECT — W522 CONSTRAINT_TARGET_UNRESOLVED wave in flight
+(diagnostics only, byte-identical).
 
 **TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
 the doc had era ancient + classical_mediterranean. Killers: `density:
@@ -32,20 +53,13 @@ only, cost model untouched); rivals need distance/on bindings.
 Program-free worlds byte-identical. New program-pad.test.ts (8);
 known regression: p7 well 3→2 instances (cross-node spacing, W337).
 
-**PADFIX DECK: ALL FOUR INSTALLED *_padfix, archived, AWAITING KAI'S
-WALK.** p3 trojan_horse ONE-SHOT clean ($0.05, first ever). p5
-neopolis_abyssal_siege: doc wades+coastlines its monsters (teaching
-live); W521 on one leviathan 408 blocks off. p7 clean. p1's roll hit
-T110 → diagnosed PRE-EXISTING road bug (NOT the pad commit):
-gradeProfile cut floor was world-constant seaLevel+1; street deck
-shaved the y=95 lake rim. Fix: routeFloorAt in structures/roads.ts
-(b9f808d; 10 worlds byte-identical; road-shore-floor.test.ts 5).
-p1 world compiled from preserved doc, no re-roll. Diagnosis also
-flagged latent: (1) station-vs-cross-section grading gap is general;
-(2) siteWaterLine floors at seaLevel, contradicting "a pond keeps
-its pond" for below-sea ponds (unreachable today); (3) physics lint
-reads the PLAN, never program voxels — W339 is the ONLY guard on
-program fluid.
+**PADFIX DECK (walked, verdicts above):** all four installed
+*_padfix + archived battery/candidates/*-padfix. p3 was ONE-SHOT
+clean ($0.05, first ever). p1's T110 was a PRE-EXISTING road bug →
+routeFloorAt (b9f808d) — which likely bought the plaza embankment.
+Latent notes: physics lint reads the PLAN, never program voxels
+(W339 is the only guard on program fluid); siteWaterLine floors at
+seaLevel (contradicts "pond keeps its pond", unreachable today).
 
 **DEV APP: LANDED + COMMITTED.** cd tools/dev-app && ./make-app.sh →
 dist/Terrainist Dev.app. Selftest proves plumbing. NOBODY HAS SEEN
