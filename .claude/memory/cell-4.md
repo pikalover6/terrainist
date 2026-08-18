@@ -37,15 +37,28 @@ teaching (rule 6 five grounds, kit conform row, exhibit sloped
 cell); 10A 54ac4a9 berm clamps (T239, deck branch exempt); 10B
 bf94f06+612f134 bed skirt (span set: an apron does not tunnel under
 a viaduct — devworld deck regression caught by the gate and fixed).
-PRE-FLIP GATE: 285 files, 4,984 tests, 0 fail (rpc-timeout flake
-known noise). **IN FLIGHT: 8F flip (medium)** — FRONTAGE_TIE=true,
-re-pin ground-equivalence goldens with attribution (unattributable
-movement = BUG), lip distribution before/after on hillside-village.
-On landing: orchestrator reviews+commits, regenerates p1/p3/p5/p7
-fresh (new teaching → programs judged on five grounds → conform
-seats), installs alongside --channel tie, hands Kai the walk +
-FRONTAGE_RISE / rear-terrace / doorstep questions. 9C re-author of
-SHIPPED program battery (~$2) after the walk.
+**8F FLIPPED (9cc82ef)** — tie ON; cell plane became a PIN not floor
+(the floor inverted harbourtown's lip, 25/90 lots under their own
+carriageway — caught at the gate); ground-equivalence 86/86
+unmoved (shim compares within one compile); walkability re-pins
+argued per row (plinth runs < PLINTH_MIN_RUN, "sunken" lamps =
+carriageway rose); lip zero BY CONSTRUCTION on examples. Then TWO
+post-flip bugs caught+fixed: verdict never STAMPED at freeze
+(97fe40d: gate.freeze() one-pass) and conform hash took caller
+nodePath — RNG programs E334'd every round, $1.5 roll burned; fix
+200209b pins CONFORM_RUN=loam.verify (kept docs recompiled FREE).
+
+**TIE2 WALK DECK INSTALLED *_tie2 + archived (d018284).** 11
+programs judged, ONE conforms:true (warding_crystal_pylon p1 — first
+conform-seated structure ever); ten seat pad w/ new feathering
+(T341). T239 bit 5x in Troy's roll; W522 re-measured facing in 3
+worlds. Intermediate *_tie deck also installed (pre-stamp) —
+superseded. Regen spend today ~$4 (padfix 1.0 + tie 1.3 + tie2 1.6),
+over the ~$2 envelope, driven by the two stamped-verdict bugs.
+**AWAITING KAI'S WALK:** tie verdict; FRONTAGE_RISE (0=flush now);
+rear-terrace look; conform rate ~9% → §9 Q5 (prompt iteration vs
+re-sweep); LOAM-SPEC §15.1 ratification. 9C re-author of shipped
+battery deferred until after walk.
 
 **TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
 the doc had era ancient + classical_mediterranean. Killers: `density:
