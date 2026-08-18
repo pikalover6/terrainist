@@ -52,6 +52,7 @@ import {
   authoredProgramId,
   hoverOf,
   hoverOfParams,
+  explicitSeatOfParams,
   seatOfParams,
   seatPolicyOf,
   type SeatDecision,
@@ -969,6 +970,12 @@ async function compileValidated(
         // written: §3.12 excused this pass from the contract when it had no
         // ground of its own to claim, and it has now.
         ...(groundDriver === undefined ? {} : { ground: groundDriver }),
+        // 8E, F1's bespoke-site client. Handed over on exactly the condition
+        // the surfacer's and the prop pass's `datums` are — at least one
+        // quarter graded one, which is never while `FRONTAGE_TIE` is off.
+        ...(structures?.districts.some((d) => d.datum !== undefined) === true
+          ? { datums: structures.districts.map((d) => d.datum) }
+          : {}),
       });
       diagnostics.push(...programs.diagnostics);
       // What a program stands on is claimed ground: the scatter that follows
@@ -2196,10 +2203,28 @@ function programJobsFrom(
   return jobs;
 }
 
-/** The node's seat policy as a `ProgramPlacement` fragment. */
-function seatOn(node: unknown): { seat?: SeatDecision } {
+/**
+ * The node's seat policy as a `ProgramPlacement` fragment.
+ *
+ * `seatPolicyOf` answers "how does this meet the ground" and its answer for a
+ * document that wrote no `seat` is the same `"pad"` an author who wrote `"pad"`
+ * gets — so a placement built from it alone erases the distinction between *the
+ * document wrote a pad* and *nobody wrote a seat*. The verdict-aware default
+ * (`docs/GROUND-UNIFICATION-v0.md` §2.2) needs exactly that distinction for "an
+ * explicit seat always wins" to hold: without the flag a `conform` verdict
+ * would be beaten by a `pad` nobody asked for.
+ *
+ * So `seatExplicit` is set from {@link explicitSeatOfParams}, the one reader
+ * that can tell the two apart, and only when the document really wrote one.
+ * Today it changes nothing — no record in any shipped document carries a
+ * `conforms` verdict, so `seatOf` never reaches the branch that reads it, and
+ * the byte-identity proof says so.
+ */
+export function seatOn(node: unknown): { seat?: SeatDecision; seatExplicit?: boolean } {
   const seat = seatPolicyOf(node);
-  return seat === undefined ? {} : { seat };
+  if (seat === undefined) return {};
+  const params = typeof node === "object" && node !== null ? (node as { params?: unknown }).params : undefined;
+  return explicitSeatOfParams(params) === undefined ? { seat } : { seat, seatExplicit: true };
 }
 
 /** Claim every placed instance's footprint, so later passes route around it. */

@@ -24,6 +24,8 @@ import { streamSeed } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
+import { SITE_FRONTAGE_REACH } from "../layout/types.js";
+import type { StreetDatum } from "../layout/street-datum.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { FluidKind } from "../terrain/columns.js";
 import { rotateLocalPoint, rotatedFootprint, type ProgramRotation } from "./rotate.js";
@@ -122,6 +124,53 @@ export function programGroundPlane(
   }
   heights.sort((a, b) => a - b);
   return (heights[heights.length >> 1] as number) + 1;
+}
+
+/**
+ * The seat plane the **street datum** gives a bespoke site — 8E.
+ *
+ * `docs/GROUND-UNIFICATION-v0.md` §1.6, the bespoke-site client of F1:
+ *
+ * > A bespoke site whose footprint has a banded column within `SITE_FRONTAGE_REACH`
+ * > takes its seat plane from the datum, not from `programGroundPlane`'s
+ * > median — **whether it conforms or pads**.
+ *
+ * Which is why this is applied after the eligibility walk rather than inside
+ * {@link programGroundPlane}: the median, the relief ceiling, the fluid test and
+ * the lift budget all still decide *whether* a site is acceptable, and only the
+ * plane it seats at comes from the datum. `programs/road-anchors.ts` gives a
+ * resolved port `floorY = placement.foundationY`; without this a lane graded to
+ * the datum arrives at a plinth whose top is the median of a hillside, which is
+ * the defect this closes by construction.
+ *
+ * One `levelNear` per datum from the footprint's centre, at
+ * `SITE_FRONTAGE_REACH` grown by half the footprint's diagonal, so the reach is
+ * measured from the footprint rather than from its middle. Datums are consulted
+ * in the caller's order — district order, therefore the document's — and the
+ * first that answers wins; within one datum `levelNear` breaks ties by ascending
+ * region index (F11). No RNG and no iteration order.
+ *
+ * Returns the plane the instance's node-local `y = 0` sits at (`level + 1`, the
+ * first air column above the carriageway surface — the same convention
+ * {@link programGroundPlane} and {@link conformSeatPlane} return), or
+ * `undefined` when no datum reaches the footprint.
+ */
+export function datumSeatPlane(
+  datums: readonly (StreetDatum | undefined)[],
+  rect: Rect,
+  reach: number = SITE_FRONTAGE_REACH,
+): number | undefined {
+  const w = rect.x1 - rect.x0 + 1;
+  const d = rect.z1 - rect.z0 + 1;
+  const cx = rect.x0 + ((w - 1) >> 1);
+  const cz = rect.z0 + ((d - 1) >> 1);
+  const r = reach + Math.ceil(Math.hypot(w - 1, d - 1) / 2);
+  for (const datum of datums) {
+    if (datum === undefined) continue;
+    const level = datum.levelNear(cx, cz, r);
+    if (level !== undefined) return level + 1;
+  }
+  return undefined;
 }
 
 /**
@@ -292,6 +341,14 @@ export interface ProgramPlacementInput {
    * identically.
    */
   readonly seat?: SeatDecision;
+  /**
+   * The quarters' street datums — 8E's bespoke-site client of F1
+   * ({@link datumSeatPlane}).
+   *
+   * Absent for every compile while `FRONTAGE_TIE` is off: no quarter grades a
+   * datum, so the pass is handed none and the tied branch is dead.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
 }
 
 /**
@@ -454,6 +511,17 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
                   : frontColumnOf(rect, rotation, input.envelope),
               ) ?? baseY;
           } else if (!wades && padLiftUnder(plan, rect, baseY) > maxLift) continue;
+          // F1, last word on the plane and only on the plane: every test above
+          // — fluid, relief, the lift budget, the conforming front anchor —
+          // has already decided that this *is* the site. A site the datum
+          // reaches then seats at its street's level rather than at the median
+          // of its own footprint, whether it conforms or pads (§1.6).
+          // `wades` is excluded: a wading seat is a seabed and a waterline, not
+          // a frontage, and F6's exclusions are about exactly that kind of
+          // claimant.
+          if (input.datums !== undefined && !wades) {
+            baseY = datumSeatPlane(input.datums, rect) ?? baseY;
+          }
         }
         if (params.elevation !== undefined) {
           const [lo, hi] = params.elevation;
@@ -615,6 +683,14 @@ export interface LandmarkPlacementInput {
    * is allowed the whole region.
    */
   readonly hint?: ProgramScatterParams["area"];
+  /**
+   * The quarters' street datums — 8E's bespoke-site client of F1
+   * ({@link datumSeatPlane}).
+   *
+   * Absent for every compile while `FRONTAGE_TIE` is off: no quarter grades a
+   * datum, so the pass is handed none and the tied branch is dead.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
 }
 
 /**
@@ -646,8 +722,17 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
   const centred: Rect = { x0: cx, z0: cz, x1: cx + w - 1, z1: cz + d - 1 };
   const taken = input.taken ?? [];
   if (insideRect(centred, whole) && !taken.some((r) => overlaps(r, centred, 0))) {
-    const baseY = programGroundPlane(plan, centred, input.refusals, input.wades === true);
-    if (baseY !== undefined) return { index: 0, footprint: centred, baseY, ...turned };
+    const median = programGroundPlane(plan, centred, input.refusals, input.wades === true);
+    if (median !== undefined) {
+      // §1.6, the same law as the scatter walk: the ground decided whether the
+      // centre will hold this landmark, the datum decides what plane it holds
+      // it at. `wade` is excluded — a wading seat is a seabed, not a frontage.
+      const baseY =
+        input.datums === undefined || input.wades === true
+          ? median
+          : datumSeatPlane(input.datums, centred) ?? median;
+      return { index: 0, footprint: centred, baseY, ...turned };
+    }
   }
 
   // The hinted neighbourhood first, the whole region only if nothing in it
@@ -668,6 +753,7 @@ export function planLandmarkSite(input: LandmarkPlacementInput): ProgramSite | u
       taken,
       ...(input.refusals === undefined ? {} : { refusals: input.refusals }),
       ...(rotation === 0 ? {} : { rotationAt: (): ProgramRotation => rotation }),
+      ...(input.datums === undefined ? {} : { datums: input.datums }),
     });
     if (site !== undefined) return site;
   }

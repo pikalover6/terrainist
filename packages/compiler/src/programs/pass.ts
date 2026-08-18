@@ -43,6 +43,7 @@ import { parseBlockString } from "../emit/blockstring.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { furnishRunInteriors } from "./interiors.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
+import type { StreetDatum } from "../layout/street-datum.js";
 import { materialThemeById, programThemeOf } from "./theme.js";
 import {
   siteIsWet,
@@ -162,6 +163,16 @@ export interface ProgramPassInput {
    * this document in this process — never for a compile from a file.
    */
   readonly skipOutputHash?: boolean;
+  /**
+   * The quarters' street datums — 8E's bespoke-site client of F1 (§1.6).
+   *
+   * Forwarded straight to {@link planProgramSites}, which is where a site's
+   * plane is chosen. A **solved** landmark is deliberately not tied here: its
+   * plane comes from the layout solver's placement, and tying that is the lot's
+   * own branch in `layDistrict` (8B/8C), not a second answer computed downstream
+   * of it. Absent while `FRONTAGE_TIE` is off, which is every compile today.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
 }
 
 /** One instance that stands in the world. */
@@ -567,6 +578,7 @@ function resolveSites(
     ...(facing === undefined
       ? {}
       : { rotationAt: (x: number, z: number): ProgramRotation => facingRotationAt(facing, { x, z }) }),
+    ...(input.datums === undefined ? {} : { datums: input.datums }),
   });
 }
 

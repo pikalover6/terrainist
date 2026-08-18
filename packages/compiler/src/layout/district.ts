@@ -954,6 +954,13 @@ export function layDistrict(
         graph,
         field: input.field,
         seaLevel: input.seaLevel ?? 63,
+        // 8E, the city cell: a quarter that was handed one foundation level is
+        // one terrace, and its own streets are that terrace's floor rather than
+        // a second plane graded from the hillside the pad is about to erase.
+        // The lot branch below already reads `cell?.foundationY` *before* the
+        // tie, so this is the same law told to the carriageway: one plane per
+        // cell, and the datum agrees with it instead of competing with it.
+        ...(cell?.foundationY === undefined ? {} : { floorY: cell.foundationY }),
       })
     : null;
   const tieReach = frontageReach(sidewalkWidth);

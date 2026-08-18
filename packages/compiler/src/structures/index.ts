@@ -1449,6 +1449,13 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           ground: input.ground,
           stack: input.stack,
           reserved: built.map((b) => b.footprint),
+          // 8E, F1's prop client. Handed over on exactly the condition the
+          // surfacer's `datums` is — at least one quarter graded one, which is
+          // never while `FRONTAGE_TIE` is off — so a compile with no datum calls
+          // `buildProps` with the identical argument object it always has.
+          ...(districts.some((d) => d.datum !== undefined)
+            ? { datums: districts.map((d) => d.datum) }
+            : {}),
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   diagnostics.push(...props.diagnostics);

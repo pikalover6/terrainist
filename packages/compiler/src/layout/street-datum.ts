@@ -108,6 +108,30 @@ export interface StreetDatumInput {
   /** The levelled master field, sampled by the materialisation rule. */
   readonly field: HeightField;
   readonly seaLevel: number;
+  /**
+   * A floor every graded level is raised to — **the city cell's plane** (8E).
+   *
+   * `docs/GROUND-UNIFICATION-v0.md` §1.8: "the cell plane becomes its streets'
+   * floor rather than a competing plane". A cell is one terrace: `solveCities`
+   * pins every column of its mask to `maskMedian(field, cell)` at apron 0, but
+   * the pad is composed into the field a full substage *after* this datum is
+   * graded, so the grader would otherwise read the raw hillside under a quarter
+   * that is about to be levelled — and hand the surfacer a carriageway two
+   * blocks below its own shopfronts, which is the very defect `solveCities`'
+   * terrace comment names.
+   *
+   * A **floor**, not a pin: `applyLevelPad` levels the mask in both directions,
+   * so inside the cell the floor is the plane and outside it — the arterial
+   * apron, the wedge a run did not cover — the natural grade still wins where
+   * it is already higher. `Math.max` with a constant preserves both invariants
+   * the kernel promises: 1-Lipschitz over arc length (the max of two 1-Lipschitz
+   * functions is 1-Lipschitz) and the pin agreement at a junction (two levels
+   * equal before the floor are equal after it).
+   *
+   * Absent for every district that is not a city cell, and — because the datum
+   * is only graded at all while `FRONTAGE_TIE` is on — for every compile today.
+   */
+  readonly floorY?: number;
 }
 
 /** A segment as the grader works on it. */
@@ -161,7 +185,7 @@ export function materialisedGround(region: Region, field: HeightField): Int32Arr
  * segments because ids are unique within it.
  */
 export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
-  const { region, graph, field, seaLevel } = input;
+  const { region, graph, field, seaLevel, floorY } = input;
   const cells = region.width * region.depth;
   const ground = materialisedGround(region, field);
 
@@ -233,7 +257,15 @@ export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
         columnY[k] as number,
       );
     }
-    const levels = arcLevels(frame, gradeProfile(stationGround, seaLevel, stationBand, deckFloor));
+    const profile = gradeProfile(stationGround, seaLevel, stationBand, deckFloor);
+    // 8E's one line for the cities. Applied to the graded profile rather than to
+    // the sampled ground so the grade cap still governs the *shape* of the run
+    // and the floor only lifts it; a floored profile is what every later
+    // consumer — `columnY`, `levelNear`, the surfacer's `datumY` — then reads.
+    if (floorY !== undefined) {
+      for (const [i, y] of profile.entries()) if (y < floorY) profile[i] = floorY;
+    }
+    const levels = arcLevels(frame, profile);
     job.levels = levels;
     bySegment.set(job.segment.id, levels);
     for (const spot of job.spots) {

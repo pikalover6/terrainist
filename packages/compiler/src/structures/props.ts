@@ -57,6 +57,7 @@ import { jitteredZonePoint, type Frame, type Point2, type Rect } from "../layout
 import type { OccupancyGrid } from "../layout/types.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
+import type { StreetDatum } from "../layout/street-datum.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 
@@ -161,6 +162,14 @@ export interface PropPassInput {
    * The building pass's footprints, in practice.
    */
   readonly reserved?: readonly Rect[];
+  /**
+   * The quarters' street datums, forwarded to every placement — 8E.
+   *
+   * `buildStructures` hands these over only when at least one district graded
+   * one, which is never while `FRONTAGE_TIE` is off, so the pass is called with
+   * exactly the argument object it has always been called with.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
 }
 
 /** What the prop pass produced. */
@@ -223,6 +232,7 @@ export function buildProps(input: PropPassInput): PropPassResult {
       plan,
       taken,
       anchors: placed,
+      ...(input.datums === undefined ? {} : { datums: input.datums }),
     });
     if (site === undefined) {
       diagnostics.push(
@@ -361,6 +371,13 @@ export interface PropPlacementInput {
   readonly taken?: readonly Rect[];
   /** Props already placed, for `at: "pier"`. */
   readonly anchors?: readonly PlacedProp[];
+  /**
+   * The quarters' street datums — 8E's prop client of F1 ({@link datumPropBase}).
+   *
+   * Absent for every compile while `FRONTAGE_TIE` is off: no quarter grades a
+   * datum, so `buildStructures` hands none over and this whole path is dead.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
 }
 
 /**
@@ -396,8 +413,15 @@ export function planPropPlacement(input: PropPlacementInput): PropSite | undefin
           z1: column.z + d - 1,
         };
         if (overlapsTaken(rect, input.taken)) continue;
-        const baseY = foot.base === "water" ? waterBase(plan, rect) : groundBase(plan, rect);
-        if (baseY === undefined) continue;
+        // F1's prop client. The ground test still has to pass — a prop beside a
+        // street may not stand in water or across a cliff any more than one in a
+        // field may — and only the *plane* comes from the datum when it answers.
+        const ground = foot.base === "water" ? waterBase(plan, rect) : groundBase(plan, rect);
+        if (ground === undefined) continue;
+        const baseY =
+          foot.base === "water" || input.datums === undefined
+            ? ground
+            : datumPropBase(input.datums, rect) ?? ground;
         return { footprint: rect, baseY, yaw };
       }
     }
@@ -634,6 +658,49 @@ export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
   }
   if (hi - lo > propReliefTolerance(rect)) return undefined;
   return hi + 1;
+}
+
+/**
+ * The base plane the **street datum** gives a prop standing in its band — 8E.
+ *
+ * `docs/GROUND-UNIFICATION-v0.md` §1.6, the prop-pad client of F1: "a prop
+ * inside the datum's band takes `datum.levelNear` as its `baseY` instead of the
+ * median under it; a prop outside the band is unchanged". This removes the
+ * bollard-on-a-plinth case: `levelPropPad` is fill-only and late, so a lamp
+ * sited beside a kerb the surfacer has not cut yet takes the *natural* ground's
+ * height and ends up standing on its own two-block footing beside a road that
+ * graded away underneath it.
+ *
+ * The probe is one `levelNear` call per datum from the footprint's centre, with
+ * a reach that just covers the footprint (half its diagonal, rounded up), so
+ * "inside the band" means *any column of the prop's own footprint is banded* —
+ * a three-wide bench with one corner on the pavement counts, and a prop a
+ * chunk away from any street does not. Datums are consulted in the caller's
+ * order and the first that answers wins, which is district order and therefore
+ * the document's; within one datum `levelNear` breaks ties by ascending region
+ * index (F11). No RNG, no iteration order, integer in and integer out.
+ *
+ * Returns the plane a prop's feet stand on — `level + 1`, the first air column
+ * above the carriageway surface, exactly what {@link groundBase} returns — or
+ * `undefined` when no datum bands the footprint.
+ */
+export function datumPropBase(
+  datums: readonly (StreetDatum | undefined)[],
+  rect: Rect,
+): number | undefined {
+  const w = rect.x1 - rect.x0 + 1;
+  const d = rect.z1 - rect.z0 + 1;
+  const cx = rect.x0 + ((w - 1) >> 1);
+  const cz = rect.z0 + ((d - 1) >> 1);
+  // Half the footprint's diagonal: the smallest reach from the centre that
+  // still reaches every column the prop occupies, whatever its aspect.
+  const reach = Math.ceil(Math.hypot(w - 1, d - 1) / 2);
+  for (const datum of datums) {
+    if (datum === undefined) continue;
+    const level = datum.levelNear(cx, cz, reach);
+    if (level !== undefined) return level + 1;
+  }
+  return undefined;
 }
 
 /** What {@link levelPropPad} does with the level it computes. */

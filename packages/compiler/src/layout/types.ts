@@ -421,3 +421,28 @@ export const CORNER_TOLERANCE = 2;
  * apron goes to 0, and the hill stands against the back wall.
  */
 export const FRONTAGE_CUT_MAX = 6;
+
+/**
+ * How far a claimant **with no sidewalk width of its own** probes the datum —
+ * §1.6, the bespoke-site client of F1.
+ *
+ * A district lot asks `frontageReach(sidewalkWidth)` (`layout/district.ts`),
+ * because a lot knows the band its own quarter drew. A bespoke site does not:
+ * it is sited by the program placer against the finished ground, may stand in
+ * any quarter or none, and the question §1.6 asks of it is "does this footprint
+ * have a banded column within `SITE_FRONTAGE_REACH`". So the constant is the same
+ * expression evaluated at the *widest* band the fabric ever draws —
+ * `max(SIDEWALK_BY_DENSITY) + STREET_PROBE_SLACK` = `2 + 10` — which makes a
+ * program beside a downtown avenue and a program beside a village lane ask the
+ * same question, and never asks further than a lot on the same street would.
+ *
+ * Spelt `SITE_` rather than `FRONTAGE_REACH` (the name §1.6 uses) because
+ * `layout/prominence.ts` already exports a `FRONTAGE_REACH` — a landmark's
+ * prominence falloff, an unrelated quantity — and both are re-exported from
+ * `layout/index.ts`. Two different numbers under one name in one barrel is the
+ * ambiguity the compiler refuses and the reader should too.
+ *
+ * Dead while {@link FRONTAGE_TIE} is off: no quarter grades a datum, so nothing
+ * is ever probed.
+ */
+export const SITE_FRONTAGE_REACH = 12;
