@@ -1,0 +1,743 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowing_mushroom_vale",
+    "worldSeed": "307",
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "formality": 0.2,
+    "climate": {
+      "biome": "minecraft:mushroom_fields",
+      "temperature": 0.4,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "glowing mushroom vale village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "glowcap",
+          "mushroom_giant_red",
+          "mushroom_shelf_brown"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "apothecary",
+          "cottage",
+          "tavern",
+          "alchemists_tower"
+        ]
+      }
+    },
+    "tokens": {
+      "atmosphere": "a strange settlement nestled among towering bioluminescent mushroom stalks in a damp vale"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:mycelium",
+      "road.surface": "minecraft:dirt_path",
+      "plaza.path": "minecraft:moss_block",
+      "plaza.border": "minecraft:mud_bricks"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Glowing Mushroom Vale",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a sheltered vale enclosed by high ridges",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 36,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "ridge_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northern sheltering ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.22
+                ],
+                [
+                  0.5,
+                  0.16
+                ],
+                [
+                  0.9,
+                  0.22
+                ]
+              ],
+              "width": 64,
+              "height": 42,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ridge_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the southern enclosing ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.78
+                ],
+                [
+                  0.5,
+                  0.84
+                ],
+                [
+                  0.9,
+                  0.78
+                ]
+              ],
+              "width": 64,
+              "height": 42,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "vale_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep hollow of the vale",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 120,
+              "depth": 14,
+              "water": false,
+              "flooded": "never",
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle plateau holding the village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 90,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "glowing_fungal_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the glowing mushroom forest filling the vale",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 180
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.05,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "towering_glowcap",
+                  "shape": "glowcap"
+                },
+                {
+                  "id": "giant_red_dome",
+                  "shape": "mushroom_giant_red"
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "shelf_canopy",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "pale_spore_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "outer_wilderness_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse highland trees ringing the vale",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "ridge_spruce",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "ridge_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "spore_plaza",
+        "kind": "primitive",
+        "label": "the central spore circle of the village",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "mother_spore_spire",
+        "kind": "generator",
+        "generator": "authored:mother_spore_spire",
+        "label": "the colossal mother spore spire rising above the vale",
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 20,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "elder_mushroom_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the elder's mushroom-domed dwelling on the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 6,
+            "max": 36
+          },
+          {
+            "facing": "spore_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "spore_apothecary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the village apothecary brewing mushroom elixirs",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 6,
+            "max": 36
+          },
+          {
+            "facing": "spore_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apothecary",
+          "trade"
+        ]
+      },
+      {
+        "id": "glow_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glowing cap tavern where foragers gather",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 6,
+            "max": 60
+          },
+          {
+            "facing": "spore_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a domed mushroom cottage nestled among the stalks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 8,
+            "max": 56
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "mycelium_cellar",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a turf root cellar storing spore harvests",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 12,
+            "max": 60
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "root_cellar_mound",
+          "store"
+        ]
+      },
+      {
+        "id": "hermit_burrow",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a burrow home dug beneath giant mushroom roots",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 16,
+            "max": 64
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hobbit_hole",
+          "house"
+        ]
+      },
+      {
+        "id": "cap_dwellings",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "stilt dwellings built between and upon the giant mushroom caps",
+        "params": {
+          "program": "cap_stilt_dwelling",
+          "count": 6,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.22
+          },
+          "spacing": 16,
+          "maxSlope": 25,
+          "avoidTags": [
+            "plaza",
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "spore_lamps",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "glowing spore lamps illuminating the village and vale paths",
+        "params": {
+          "program": "glowshroom_spore_lamp",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.28
+          },
+          "spacing": 12,
+          "maxSlope": 30,
+          "avoidTags": [
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "spore_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the village well drawing glowing subterranean water",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "shrine_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "ancient standing stones at the edge of the clearing",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "center",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "market_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart loaded with collected glowing fungi",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "vale_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "soft paths winding between the giant stems",
+        "params": {
+          "anchors": [
+            "spore_plaza",
+            "#tag:house",
+            "spore_apothecary",
+            "mother_spore_spire",
+            "mycelium_cellar"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "mother_spore_spire": {
+      "mode": "landmark",
+      "envelope": [
+        25,
+        42,
+        25
+      ],
+      "sourceHash": "b3:eb425cd5154d05dd28c46b70121f4d56706c1013ee0494ebda6aedb231858d01",
+      "outputHash": "b3:0c5cbcbeb4388d57575550229fae68b9e011083b6209099e545984c2b96d22fe",
+      "source": "export const envelope = [25, 42, 25];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = 12;\n  const cz = 12;\n  const seatY = 3; // Buffer plane allowing foundation roots to sink into terrain dips\n\n  // Theme-aware palette bindings\n  const woodPlanks = api.theme.wood.planks || \"minecraft:oak_planks\";\n  const woodFence = api.theme.wood.fence || \"minecraft:oak_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:oak_trapdoor\";\n  const groundPavement = api.theme.ground.pavement || \"minecraft:mossy_cobblestone\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:cobblestone_wall\";\n\n  // Specialized fungal blocks\n  const stemBlock = \"minecraft:mushroom_stem\";\n  const redCapBlock = \"minecraft:red_mushroom_block\";\n  const brownCapBlock = \"minecraft:brown_mushroom_block\";\n  const glowBlock = \"minecraft:shroomlight\";\n  const froglightBlock = \"minecraft:ochre_froglight\";\n  const chainBlock = \"minecraft:chain[axis=y]\";\n  const soulLantern = \"minecraft:soul_lantern[hanging=true]\";\n\n  // Safe block placement helper\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Pre-generate deterministic spore spot centers on the cap\n  const sporeSpots = [];\n  const spotCount = 28;\n  for (let i = 0; i < spotCount; i++) {\n    const u = api.random();\n    const v = api.random();\n    const theta = u * 2 * Math.PI;\n    const phi = Math.acos(2 * v - 1) * 0.5; // Top hemisphere\n    const r = 9.5;\n    sporeSpots.push({\n      x: cx + r * Math.sin(phi) * Math.cos(theta),\n      y: seatY + 22 + r * Math.cos(phi) * 0.85,\n      z: cz + r * Math.sin(phi) * Math.sin(theta),\n      isGlow: api.random() < 0.45\n    });\n  }\n\n  // Radii calculation functions for stalk and cap\n  function stalkOuterRadius(yRel) {\n    // yRel in [0, 22]\n    const t = yRel / 22;\n    // Flared base, pinched waist around yRel=10, flared under-cap collar\n    return 5.8 - 2.0 * Math.sin(t * Math.PI) + 2.8 * Math.pow(t, 2.2);\n  }\n\n  function stalkInnerRadius(yRel) {\n    const out = stalkOuterRadius(yRel);\n    return Math.max(1.8, out - 1.7);\n  }\n\n  function capOuterRadius(yRel) {\n    // yRel in [21, 34] (relative to seatY)\n    const t = (yRel - 21) / 13;\n    if (t < 0) return 0;\n    if (t > 1) return 0;\n    // Broad mushroom umbrella dome\n    return 11.2 * Math.sqrt(Math.max(0, 1 - Math.pow(t, 1.35))) * (1 - 0.12 * t);\n  }\n\n  // 1. FOUNDATIONS & ROOT BUTTRESSES (Conforming to terrain)\n  const rootAngles = [0, 1.05, 2.09, 3.14, 4.19, 5.24];\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.hypot(dx, dz);\n      const angle = Math.atan2(dz, dx);\n\n      // Root buttress modulation\n      let maxRootMod = 0;\n      for (const ra of rootAngles) {\n        const diff = Math.abs(Math.atan2(Math.sin(angle - ra), Math.cos(angle - ra)));\n        const mod = Math.max(0, Math.cos(diff * 2.5));\n        if (mod > maxRootMod) maxRootMod = mod;\n      }\n      const rootReach = 5.5 + maxRootMod * 3.4;\n\n      if (dist <= rootReach) {\n        const groundH = api.heightAt(x, z);\n        const startY = Math.max(0, Math.min(seatY, seatY + groundH));\n        for (let y = startY; y <= seatY + 2; y++) {\n          const rBase = rootReach * (1 - (y - startY) / 5.5);\n          if (dist <= rBase) {\n            setBlock(x, y, z, dist > rBase - 1.2 ? groundPavement : stemBlock);\n          }\n        }\n      }\n    }\n  }\n\n  // 2. MAIN HOLLOW STALK & FLOORS\n  for (let y = seatY; y <= seatY + 22; y++) {\n    const yRel = y - seatY;\n    const rOut = stalkOuterRadius(yRel);\n    const rIn = stalkInnerRadius(yRel);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dist = Math.hypot(x - cx, z - cz);\n        const angle = Math.atan2(z - cz, x - cx);\n\n        // Subtle biological ribbing\n        const rib = 0.25 * Math.sin(angle * 8 + yRel * 0.35);\n        const effectiveDist = dist + rib;\n\n        if (effectiveDist <= rOut && effectiveDist >= rIn) {\n          // Stalk wall with organic fungal grain\n          if ((x + y + z) % 7 === 0) {\n            setBlock(x, y, z, brownCapBlock);\n          } else {\n            setBlock(x, y, z, stemBlock);\n          }\n        } else if (y === seatY && dist < rIn) {\n          // Ground floor inside stalk\n          setBlock(x, y, z, groundPavement);\n        }\n      }\n    }\n  }\n\n  // 3. SPIRAL SHELF-FUNGUS STAIRWAY (Interior ascent)\n  for (let y = seatY + 1; y <= seatY + 21; y++) {\n    const yRel = y - seatY;\n    const theta = yRel * 0.62; // Smooth winding angle\n    const rIn = stalkInnerRadius(yRel);\n\n    // Build stepping shelf voxels hugging the inner wall\n    for (let offset = -0.3; offset <= 0.3; offset += 0.25) {\n      const curTheta = theta + offset;\n      const sr = rIn - 0.6;\n      const sx = Math.round(cx + Math.cos(curTheta) * sr);\n      const sz = Math.round(cz + Math.sin(curTheta) * sr);\n\n      setBlock(sx, y, sz, brownCapBlock);\n      // Fungal bracket support underneath\n      setBlock(sx, y - 1, sz, stemBlock);\n\n      // Inner walkable surface\n      const inX = Math.round(cx + Math.cos(curTheta) * (sr - 0.7));\n      const inZ = Math.round(cz + Math.sin(curTheta) * (sr - 0.7));\n      setBlock(inX, y, inZ, woodPlanks);\n    }\n  }\n\n  // 4. EXTERIOR BALCONY SHELF FUNGI\n  const balconies = [\n    { yRel: 6, angle: 0.8, reach: 3.0 },\n    { yRel: 12, angle: 3.3, reach: 3.2 },\n    { yRel: 17, angle: 5.4, reach: 2.8 }\n  ];\n\n  for (const b of balconies) {\n    const by = seatY + b.yRel;\n    const rOut = stalkOuterRadius(b.yRel);\n    const centerDist = rOut + b.reach * 0.5;\n    const bx = cx + Math.cos(b.angle) * centerDist;\n    const bz = cz + Math.sin(b.angle) * centerDist;\n\n    // Shelf disc\n    for (let x = Math.floor(bx - 3); x <= Math.ceil(bx + 3); x++) {\n      for (let z = Math.floor(bz - 3); z <= Math.ceil(bz + 3); z++) {\n        const dShelf = Math.hypot(x - bx, z - bz);\n        if (dShelf <= b.reach * 0.7) {\n          setBlock(x, by, z, brownCapBlock);\n          setBlock(x, by - 1, z, stemBlock);\n\n          // Edge railing\n          if (dShelf > b.reach * 0.7 - 0.9 && (x !== Math.round(bx) || z !== Math.round(bz))) {\n            setBlock(x, by + 1, z, woodFence);\n          }\n        }\n      }\n    }\n\n    // Balcony lantern\n    const lanternX = Math.round(cx + Math.cos(b.angle) * (rOut + b.reach * 0.8));\n    const lanternZ = Math.round(cz + Math.sin(b.angle) * (rOut + b.reach * 0.8));\n    setBlock(lanternX, by + 1, lanternZ, woodFence);\n    setBlock(lanternX, by + 2, lanternZ, froglightBlock);\n\n    // Balcony doorway through stalk wall\n    for (let dy = 1; dy <= 3; dy++) {\n      for (let step = 0; step <= 3; step++) {\n        const dPass = rOut - 1.8 + step * 0.8;\n        const passX = Math.round(cx + Math.cos(b.angle) * dPass);\n        const passZ = Math.round(cz + Math.sin(b.angle) * dPass);\n        setBlock(passX, by + dy, passZ, \"minecraft:air\");\n      }\n    }\n  }\n\n  // 5. ENTRANCE ARCHWAY (Facing Local North: -Z)\n  for (let z = cz - 7; z <= cz - 3; z++) {\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      for (let y = seatY + 1; y <= seatY + 4; y++) {\n        const dx = x - cx;\n        const dy = y - (seatY + 1);\n        if ((dx * dx) / 4 + (dy * dy) / 9 <= 1) {\n          setBlock(x, y, z, \"minecraft:air\");\n        }\n      }\n    }\n  }\n  // Archway frame & threshold lanterns\n  setBlock(cx - 2, seatY + 1, cz - 6, woodFence);\n  setBlock(cx - 2, seatY + 2, cz - 6, glowBlock);\n  setBlock(cx + 2, seatY + 1, cz - 6, woodFence);\n  setBlock(cx + 2, seatY + 2, cz - 6, glowBlock);\n\n  // 6. CENTRAL HANGING SPORE BRAZIERS (Spine of light in hollow core)\n  for (let y = seatY + 4; y <= seatY + 22; y++) {\n    // Central suspended chain\n    setBlock(cx, y, cz, chainBlock);\n\n    // Glowing node clusters at harmonic heights\n    if (y === seatY + 6 || y === seatY + 12 || y === seatY + 18) {\n      setBlock(cx, y, cz, glowBlock);\n      setBlock(cx + 1, y, cz, woodTrapdoor);\n      setBlock(cx - 1, y, cz, woodTrapdoor);\n      setBlock(cx, y, cz + 1, woodTrapdoor);\n      setBlock(cx, y, cz - 1, woodTrapdoor);\n      setBlock(cx, y - 1, cz, chainBlock);\n      setBlock(cx, y - 2, cz, soulLantern);\n    }\n  }\n\n  // 7. UNDER-CAP GILLS (Bioluminescent radial vanes)\n  for (let y = seatY + 20; y <= seatY + 23; y++) {\n    const yRel = y - seatY;\n    const rOut = stalkOuterRadius(yRel) + (yRel - 20) * 1.8;\n    const rIn = stalkInnerRadius(yRel);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dist = Math.hypot(x - cx, z - cz);\n        if (dist >= rIn && dist <= rOut) {\n          const angle = Math.atan2(z - cz, x - cx);\n          const gillWave = Math.sin(angle * 16);\n\n          if (Math.abs(gillWave) > 0.45) {\n            setBlock(x, y, z, stemBlock);\n          } else if (y >= seatY + 22) {\n            setBlock(x, y, z, glowBlock);\n          }\n        }\n      }\n    }\n  }\n\n  // 8. UPPER SPORE SANCTUM (Chamber floor & Sacred Altar)\n  const sanctumY = seatY + 22;\n  for (let x = cx - 5; x <= cx + 5; x++) {\n    for (let z = cz - 5; z <= cz + 5; z++) {\n      const dist = Math.hypot(x - cx, z - cz);\n      if (dist <= 5.0) {\n        // Floor inlay\n        if (dist <= 1.8) {\n          setBlock(x, sanctumY, z, froglightBlock);\n        } else if (dist <= 3.6) {\n          setBlock(x, sanctumY, z, woodPlanks);\n        } else {\n          setBlock(x, sanctumY, z, brownCapBlock);\n        }\n      }\n    }\n  }\n\n  // Central Altar of the Mother Spore\n  setBlock(cx, sanctumY + 1, cz, stoneWall);\n  setBlock(cx, sanctumY + 2, cz, glowBlock);\n  setBlock(cx + 1, sanctumY + 1, cz, woodFence);\n  setBlock(cx - 1, sanctumY + 1, cz, woodFence);\n  setBlock(cx, sanctumY + 1, cz + 1, woodFence);\n  setBlock(cx, sanctumY + 1, cz - 1, woodFence);\n\n  // Sanctum gill windows at 4 cardinal directions\n  for (let dy = 1; dy <= 3; dy++) {\n    setBlock(cx, sanctumY + dy, cz - 6, \"minecraft:air\");\n    setBlock(cx, sanctumY + dy, cz + 6, \"minecraft:air\");\n    setBlock(cx - 6, sanctumY + dy, cz, \"minecraft:air\");\n    setBlock(cx + 6, sanctumY + dy, cz, \"minecraft:air\");\n  }\n\n  // 9. THE COLOSSAL ELDER MUSHROOM CAP\n  for (let y = seatY + 21; y <= seatY + 34; y++) {\n    const yRel = y - seatY;\n    const rCapOut = capOuterRadius(yRel);\n    if (rCapOut <= 0.2) continue;\n\n    // Hollow sanctum dome inside the cap up to yRel = 29\n    const rCapIn = yRel <= 29 ? Math.max(0, rCapOut - 1.8) : 0;\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dist = Math.hypot(x - cx, z - cz);\n        if (dist <= rCapOut && dist >= rCapIn) {\n          // Check proximity to spore spots for glowing nodes & mycelium flecks\n          let isSpot = false;\n          let isGlowSpot = false;\n          for (const s of sporeSpots) {\n            const sd = Math.hypot(x - s.x, y - s.y, z - s.z);\n            if (sd < 1.6) {\n              isSpot = true;\n              if (s.isGlow) isGlowSpot = true;\n              break;\n            }\n          }\n\n          if (isGlowSpot) {\n            setBlock(x, y, z, glowBlock);\n          } else if (isSpot) {\n            setBlock(x, y, z, stemBlock);\n          } else {\n            // Main Elder Red Cap body\n            setBlock(x, y, z, redCapBlock);\n          }\n        } else if (dist < rCapIn && y > sanctumY) {\n          // Clear air inside the upper sanctuary\n          setBlock(x, y, z, \"minecraft:air\");\n        }\n      }\n    }\n  }\n\n  // 10. BIOLUMINESCENT DRIPPING SPORE TENDRILS (Hanging from cap perimeter)\n  for (let i = 0; i < 16; i++) {\n    const angle = (i / 16) * 2 * Math.PI + 0.1;\n    const rimY = seatY + 22;\n    const rimR = capOuterRadius(22) - 0.4;\n    const hx = Math.round(cx + Math.cos(angle) * rimR);\n    const hz = Math.round(cz + Math.sin(angle) * rimR);\n\n    const tendrilLength = 2 + Math.floor(api.random() * 4);\n    for (let ty = 1; ty <= tendrilLength; ty++) {\n      const dropY = rimY - ty;\n      if (ty === tendrilLength) {\n        setBlock(hx, dropY, hz, froglightBlock);\n      } else {\n        setBlock(hx, dropY, hz, chainBlock);\n      }\n    }\n  }\n\n  // Crown pinnacle spore\n  setBlock(cx, seatY + 34, cz, stemBlock);\n  setBlock(cx, seatY + 35, cz, glowBlock);\n\n  return {\n    name: \"mother_spore_spire\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      door: [cx, seatY + 1, cz - 6],\n      sanctum: [cx, sanctumY + 1, cz],\n      crown: [cx, seatY + 35, cz]\n    },\n    interiors: [\n      {\n        min: [cx - 2, seatY + 1, cz - 2],\n        max: [cx + 2, seatY + 7, cz + 2],\n        kind: \"hall\"\n      },\n      {\n        min: [cx - 3, sanctumY + 1, cz - 3],\n        max: [cx + 3, sanctumY + 6, cz + 3],\n        kind: \"sanctuary\"\n      }\n    ]\n  };\n}"
+    },
+    "cap_stilt_dwelling": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        15,
+        11
+      ],
+      "sourceHash": "b3:23157f376b13ef583ab50b208d897133d36392c9326602663bc833333f1ce568",
+      "outputHash": "b3:e2b67d0c4f802741243827bb7663792461f0784d70fba68bf3190f69e40bc6e5",
+      "source": "export const envelope = [11, 15, 11];\n\nexport default function build(api) {\n  const rng = () => api.random();\n\n  // Theme extractions with safe fungal/wood fallbacks\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:oak_planks\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:mushroom_stem\";\n  const woodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_oak_log\";\n  const woodStairs = api.theme?.wood?.stairs || \"minecraft:oak_stairs\";\n  const woodSlab = api.theme?.wood?.slab || \"minecraft:oak_slab\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:oak_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:oak_trapdoor\";\n  const woodDoor = api.theme?.wood?.door || \"minecraft:oak_door\";\n\n  // Safe placement within envelope\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < 11 && y >= 0 && y < 15 && z >= 0 && z < 11) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Follow terrain downward for footings and stilts\n  function fillDown(x, z, startY, block) {\n    const gh = api.heightAt(x, z);\n    const minY = Math.min(0, Math.min(gh, startY));\n    for (let y = minY; y <= startY; y++) {\n      setBlock(x, y, z, block);\n    }\n  }\n\n  // Instance variation parameters\n  const platY = rng() < 0.5 ? 4 : 5;\n  const capType = Math.floor(rng() * 3); // 0: Red Amanita, 1: Brown Shelf Bonnet, 2: Glowing Sporecap\n  const stalkStyle = Math.floor(rng() * 3); // 0: Giant trunk + buttresses, 1: Splayed stilts, 2: Cluster stilts\n\n  const stemBlock = (rng() < 0.5) ? \"minecraft:mushroom_stem\" : woodStripped;\n  const primaryCap = capType === 1 ? \"minecraft:brown_mushroom_block\" : \"minecraft:red_mushroom_block\";\n  const spotBlock = capType === 0 ? \"minecraft:mushroom_stem\" : (capType === 1 ? \"minecraft:shroomlight\" : \"minecraft:ochre_froglight\");\n\n  // ==========================================\n  // 1. ELEVATED STILTS & FOUNDATIONS\n  // ==========================================\n  if (stalkStyle === 0) {\n    // Central massive stalk\n    for (let dx = 0; dx <= 1; dx++) {\n      for (let dz = 0; dz <= 1; dz++) {\n        fillDown(4 + dx, 4 + dz, platY, stemBlock);\n      }\n    }\n    // Corner support stilts\n    const legCoords = [[3, 3], [7, 3], [3, 7], [7, 7]];\n    for (const [lx, lz] of legCoords) {\n      fillDown(lx, lz, platY - 1, woodLog);\n      setBlock(lx, platY - 1, lz, woodFence);\n    }\n  } else if (stalkStyle === 1) {\n    // Splayed 4-corner crooked stilts\n    const stilts = [\n      { bot: [2, 2], top: [3, 3] },\n      { bot: [8, 2], top: [7, 3] },\n      { bot: [2, 8], top: [3, 7] },\n      { bot: [8, 8], top: [7, 7] }\n    ];\n    for (const s of stilts) {\n      fillDown(s.bot[0], s.bot[1], 1, woodLog);\n      for (let y = 2; y <= platY; y++) {\n        setBlock(s.top[0], y, s.top[1], woodLog);\n      }\n    }\n    // Center support stem\n    fillDown(5, 5, platY, stemBlock);\n  } else {\n    // Cluster stalks with cross-bracing\n    fillDown(5, 5, platY, stemBlock);\n    fillDown(4, 5, platY - 1, woodLog);\n    fillDown(6, 5, platY - 1, woodLog);\n    fillDown(5, 4, platY - 1, woodLog);\n    fillDown(5, 6, platY - 1, woodLog);\n\n    const outerLegs = [[3, 3], [7, 3], [3, 7], [7, 7]];\n    for (const [lx, lz] of outerLegs) {\n      fillDown(lx, lz, platY - 2, woodFence);\n      setBlock(lx, platY - 1, lz, woodStairs + \"[facing=north,half=top]\");\n    }\n  }\n\n  // Cross brackets under the platform\n  setBlock(5, platY - 1, 3, woodStairs + \"[facing=south,half=top]\");\n  setBlock(5, platY - 1, 7, woodStairs + \"[facing=north,half=top]\");\n  setBlock(3, platY - 1, 5, woodStairs + \"[facing=east,half=top]\");\n  setBlock(7, platY - 1, 5, woodStairs + \"[facing=west,half=top]\");\n\n  // ==========================================\n  // 2. DWELLING PLATFORM (y = platY)\n  // ==========================================\n  for (let x = 2; x <= 8; x++) {\n    for (let z = 2; z <= 8; z++) {\n      const dx = x - 5;\n      const dz = z - 5;\n      const distSq = dx * dx + dz * dz;\n      if (distSq <= 10) {\n        const isRim = distSq >= 8;\n        setBlock(x, platY, z, isRim ? woodStripped : woodPlanks);\n      }\n    }\n  }\n\n  // Entrance landing porch\n  setBlock(5, platY, 2, woodPlanks);\n  setBlock(4, platY, 2, woodPlanks);\n  setBlock(6, platY, 2, woodPlanks);\n  setBlock(4, platY + 1, 2, woodFence);\n  setBlock(6, platY + 1, 2, woodFence);\n\n  // Entrance ladder on solid post\n  fillDown(5, 2, platY, woodLog);\n  const ladderBottom = Math.max(0, api.heightAt(5, 1));\n  for (let y = ladderBottom; y <= platY; y++) {\n    setBlock(5, y, 1, \"minecraft:ladder[facing=north]\");\n  }\n\n  // ==========================================\n  // 3. ORGANIC WALLS (y = platY + 1 .. platY + 3)\n  // ==========================================\n  for (let y = platY + 1; y <= platY + 3; y++) {\n    // Corner posts\n    setBlock(3, y, 3, woodLog);\n    setBlock(7, y, 3, woodLog);\n    setBlock(3, y, 7, woodLog);\n    setBlock(7, y, 7, woodLog);\n\n    // North wall\n    setBlock(4, y, 3, woodPlanks);\n    setBlock(6, y, 3, woodPlanks);\n\n    // South wall\n    setBlock(4, y, 7, woodPlanks);\n    setBlock(6, y, 7, woodPlanks);\n    setBlock(5, y, 7, (y === platY + 2) ? woodFence : woodPlanks);\n\n    // West wall\n    setBlock(3, y, 4, woodPlanks);\n    setBlock(3, y, 6, woodPlanks);\n    setBlock(3, y, 5, (y === platY + 2) ? woodFence : woodPlanks);\n\n    // East wall\n    setBlock(7, y, 4, woodPlanks);\n    setBlock(7, y, 6, woodPlanks);\n    setBlock(7, y, 5, (y === platY + 2) ? woodFence : woodPlanks);\n  }\n\n  // Doorway on north wall\n  const doorBlock = woodDoor.includes(\"[\") ? woodDoor.split(\"[\")[0] : woodDoor;\n  setBlock(5, platY + 1, 3, `${doorBlock}[facing=north,half=lower,hinge=left]`);\n  setBlock(5, platY + 2, 3, `${doorBlock}[facing=north,half=upper,hinge=left]`);\n  setBlock(5, platY + 3, 3, woodPlanks);\n\n  // Clear interior (3x3x3 volume)\n  for (let x = 4; x <= 6; x++) {\n    for (let z = 4; z <= 6; z++) {\n      for (let y = platY + 1; y <= platY + 3; y++) {\n        setBlock(x, y, z, \"minecraft:air\");\n      }\n    }\n  }\n\n  // Ceiling\n  for (let x = 3; x <= 7; x++) {\n    for (let z = 3; z <= 7; z++) {\n      if ((x - 5) * (x - 5) + (z - 5) * (z - 5) <= 8) {\n        setBlock(x, platY + 4, z, woodPlanks);\n      }\n    }\n  }\n\n  // ==========================================\n  // 4. SHELF FUNGI BRACKETS (Extending from walls)\n  // ==========================================\n  const shelfSide = Math.floor(rng() * 3);\n  if (shelfSide === 0) {\n    // East shelf bracket\n    setBlock(8, platY + 1, 5, \"minecraft:brown_mushroom_block\");\n    setBlock(8, platY + 1, 4, \"minecraft:brown_mushroom_block\");\n    setBlock(8, platY + 1, 6, \"minecraft:brown_mushroom_block\");\n    setBlock(8, platY, 5, woodStairs + \"[facing=east,half=top]\");\n  } else if (shelfSide === 1) {\n    // West shelf bracket\n    setBlock(2, platY + 1, 5, \"minecraft:brown_mushroom_block\");\n    setBlock(2, platY + 1, 4, \"minecraft:brown_mushroom_block\");\n    setBlock(2, platY + 1, 6, \"minecraft:brown_mushroom_block\");\n    setBlock(2, platY, 5, woodStairs + \"[facing=west,half=top]\");\n  } else {\n    // Low bracket near stilt base\n    setBlock(2, platY - 1, 3, \"minecraft:brown_mushroom_block\");\n    setBlock(1, platY - 1, 3, woodSlab);\n  }\n\n  // ==========================================\n  // 5. THATHOED MUSHROOM DOME & EAVES\n  // ==========================================\n  const capTiers = [\n    { dy: 3, rMinSq: 13.0, rMaxSq: 23.5, solid: false }, // Drooping eaves skirt\n    { dy: 4, rMinSq: 9.0,  rMaxSq: 22.0, solid: false }, // Lower brim\n    { dy: 5, rMinSq: 0,    rMaxSq: 16.0, solid: true },  // Mid dome\n    { dy: 6, rMinSq: 0,    rMaxSq: 8.5,  solid: true },  // Upper dome\n    { dy: 7, rMinSq: 0,    rMaxSq: 3.5,  solid: true },  // Crown\n    { dy: 8, rMinSq: 0,    rMaxSq: 1.0,  solid: true }   // Spire peak\n  ];\n\n  for (const tier of capTiers) {\n    const y = platY + tier.dy;\n    if (y >= 15) continue;\n\n    for (let x = 0; x <= 10; x++) {\n      for (let z = 0; z <= 10; z++) {\n        const dx = x - 5;\n        const dz = z - 5;\n        const d2 = dx * dx + dz * dz;\n\n        if (d2 <= tier.rMaxSq && (tier.solid || d2 >= tier.rMinSq)) {\n          // Spot patterning\n          const isSpot = (d2 >= tier.rMaxSq - 4.5) && (((x * 7 + y * 13 + z * 19) % 5 === 0));\n          let blk = isSpot ? spotBlock : primaryCap;\n\n          // Eaves trim variation for brown bonnet\n          if (capType === 1 && tier.dy === 3) {\n            blk = (d2 >= 19.0) ? woodSlab : \"minecraft:brown_mushroom_block\";\n          }\n\n          setBlock(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  // Spore chimney or glowing finial atop the cap\n  const crownY = Math.min(14, platY + 8);\n  if (capType === 2) {\n    setBlock(5, crownY, 5, \"minecraft:shroomlight\");\n    if (crownY + 1 < 15) setBlock(5, crownY + 1, 5, woodFence);\n  } else if (capType === 0) {\n    setBlock(5, crownY, 5, \"minecraft:ochre_froglight\");\n    if (crownY + 1 < 15) setBlock(5, crownY + 1, 5, woodTrapdoor);\n  } else {\n    setBlock(5, crownY, 5, stemBlock);\n    if (crownY + 1 < 15) setBlock(5, crownY + 1, 5, woodFence);\n  }\n\n  // ==========================================\n  // 6. DANGLING SPORE LANTERNS\n  // ==========================================\n  const lanternCorners = [\n    [2, 2], [8, 2], [2, 8], [8, 8],\n    [5, 1], [1, 5], [9, 5], [5, 9]\n  ];\n\n  for (const [lx, lz] of lanternCorners) {\n    if (rng() < 0.6) {\n      const eaveY = platY + 3;\n      // Ensure strictly supported from roof geometry above\n      setBlock(lx, eaveY, lz, primaryCap);\n      setBlock(lx, eaveY - 1, lz, \"minecraft:chain\");\n\n      const lightBlock = (rng() < 0.5) ? \"minecraft:lantern[hanging=true]\" : \"minecraft:shroomlight\";\n      setBlock(lx, eaveY - 2, lz, lightBlock);\n    }\n  }\n\n  return {\n    name: \"cap_stilt_dwelling\",\n    seatY: 0,\n    anchors: {\n      front: [5, platY + 1, 0],\n      door: [5, platY + 1, 2]\n    },\n    interiors: [\n      {\n        min: [4, platY + 1, 4],\n        max: [6, platY + 3, 6],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "glowshroom_spore_lamp": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        13,
+        9
+      ],
+      "sourceHash": "b3:106e43c9dfbb1e3e6bcfb94022ecdf3111abfadd360436bfdd0b6c8ab3e2664c",
+      "outputHash": "b3:a44dc0ee21317d00c51e0cdf10139df0e340c4a3a7dd205aa0c2f8ff09dab7b2",
+      "source": "export const envelope = [9, 13, 9];\n\nexport default function build(api) {\n  const { index } = api.instance;\n  const rng = () => api.random();\n\n  // World Theme fallbacks\n  const woodSlab = api.theme.wood?.slab || \"minecraft:dark_oak_slab\";\n  const groundPave = api.theme.ground?.pavement || \"minecraft:mossy_cobblestone\";\n\n  // Palette families driven by instance index & seeded PRNG\n  const themeType = index % 3;\n  let capBlock, coreLight, podLight, wartBlock, stemBlock;\n\n  if (themeType === 0) {\n    // Luminescent Crimson Amanita\n    capBlock = \"minecraft:red_mushroom_block\";\n    coreLight = \"minecraft:shroomlight\";\n    podLight = \"minecraft:shroomlight\";\n    wartBlock = \"minecraft:mushroom_stem\";\n    stemBlock = \"minecraft:mushroom_stem\";\n  } else if (themeType === 1) {\n    // Deep Vale Ochre Bolete\n    capBlock = \"minecraft:brown_mushroom_block\";\n    coreLight = \"minecraft:ochre_froglight\";\n    podLight = \"minecraft:ochre_froglight\";\n    wartBlock = \"minecraft:mud_bricks\";\n    stemBlock = \"minecraft:mushroom_stem\";\n  } else {\n    // Eerie Azure Ghost-Beacon\n    capBlock = \"minecraft:warped_wart_block\";\n    coreLight = \"minecraft:pearlescent_froglight\";\n    podLight = \"minecraft:verdant_froglight\";\n    wartBlock = \"minecraft:prismarine\";\n    stemBlock = \"minecraft:mushroom_stem\";\n  }\n\n  const grid = new Map();\n  function set(x, y, z, block) {\n    const rx = Math.round(x);\n    const ry = Math.round(y);\n    const rz = Math.round(z);\n    if (rx >= 0 && rx < 9 && ry >= 0 && ry < 13 && rz >= 0 && rz < 9) {\n      grid.set(`${rx},${ry},${rz}`, block);\n    }\n  }\n\n  function get(x, y, z) {\n    return grid.get(`${Math.round(x)},${Math.round(y)},${Math.round(z)}`);\n  }\n\n  const cx = 4;\n  const cz = 4;\n\n  // 1. BASE KNOLL & MYCELIUM ROOTS (y = 0..3)\n  const numLobes = 4 + Math.floor(rng() * 2);\n  const lobeAngles = [];\n  for (let i = 0; i < numLobes; i++) {\n    lobeAngles.push((i * Math.PI * 2) / numLobes + (rng() - 0.5) * 0.45);\n  }\n\n  for (let y = 0; y <= 3; y++) {\n    const baseR = 3.9 - y * 0.72;\n    for (let x = 0; x < 9; x++) {\n      for (let z = 0; z < 9; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.hypot(dx, dz);\n        const angle = Math.atan2(dz, dx);\n\n        let lobeFactor = 0;\n        for (const la of lobeAngles) {\n          const diff = Math.cos(angle - la);\n          if (diff > 0.55) {\n            lobeFactor = Math.max(lobeFactor, Math.pow(diff, 2.8) * 0.75);\n          }\n        }\n\n        const effectiveR = baseR + lobeFactor * (1.3 - y * 0.3);\n        if (dist <= effectiveR) {\n          let b;\n          if (y === 0) {\n            const rChoice = rng();\n            if (rChoice < 0.45) b = \"minecraft:mycelium\";\n            else if (rChoice < 0.75) b = \"minecraft:podzol\";\n            else if (rChoice < 0.9) b = \"minecraft:moss_block\";\n            else b = groundPave;\n          } else if (y === 1) {\n            const rChoice = rng();\n            if (rChoice < 0.45) b = \"minecraft:mycelium\";\n            else if (rChoice < 0.7) b = stemBlock;\n            else b = \"minecraft:podzol\";\n          } else {\n            b = stemBlock;\n          }\n          set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  // 2. STEM TRAJECTORY & TRUNK\n  const archType = index % 4;\n  const H = 10 + (index % 3 === 0 ? 2 : 1);\n  const leanAngle = -Math.PI / 2 + (rng() - 0.5) * 0.6; // Leaning toward North (-Z)\n  const leanDist = 1.3 + rng() * 0.8;\n\n  const stemCurve = [];\n  for (let y = 1; y <= H - 2; y++) {\n    const t = (y - 1) / (H - 3);\n    let sx = cx + Math.cos(leanAngle) * leanDist * Math.sin(t * Math.PI * 0.85);\n    let sz = cz + Math.sin(leanAngle) * leanDist * Math.sin(t * Math.PI * 0.85);\n\n    if (archType === 3) {\n      sx += Math.sin(t * Math.PI * 2) * 0.5;\n    }\n\n    stemCurve.push({ x: sx, y, z: sz });\n\n    const r = y <= 3 ? 1.6 : y >= H - 3 ? 1.5 : 1.25;\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        if (Math.hypot(ox, oz) <= r) {\n          set(sx + ox, y, sz + oz, stemBlock);\n        }\n      }\n    }\n  }\n\n  // 3. BRACKET SHELVES (Polypore shelf fungi spiraling on the trunk)\n  const shelfHeights = [3, 5, 7];\n  for (const shY of shelfHeights) {\n    if (shY < H - 3 && rng() > 0.25) {\n      const pt = stemCurve.find((p) => p.y === shY);\n      if (pt) {\n        const shAngle = rng() * Math.PI * 2;\n        const shDist = 1.7;\n        const shX = Math.round(pt.x + Math.cos(shAngle) * shDist);\n        const shZ = Math.round(pt.z + Math.sin(shAngle) * shDist);\n        set(shX, shY, shZ, capBlock);\n        set(Math.round(pt.x + Math.cos(shAngle) * 1.0), shY, Math.round(pt.z + Math.sin(shAngle) * 1.0), stemBlock);\n        if (rng() > 0.4) {\n          set(shX + 1, shY, shZ, capBlock);\n        }\n      }\n    }\n  }\n\n  // 4. SECONDARY STALK & HEAD (For Twin / Hydracap variants)\n  if (archType === 1 || archType === 3 || rng() > 0.35) {\n    const secAngle = leanAngle + Math.PI + (rng() - 0.5) * 0.85;\n    const secHeight = 6 + Math.floor(rng() * 2);\n    let secX = cx;\n    let secZ = cz;\n\n    for (let sy = 2; sy <= secHeight; sy++) {\n      const st = (sy - 2) / (secHeight - 2);\n      secX = cx + Math.cos(secAngle) * (1.7 * st + 0.3);\n      secZ = cz + Math.sin(secAngle) * (1.7 * st + 0.3);\n      for (let ox = -1; ox <= 1; ox++) {\n        for (let oz = -1; oz <= 1; oz++) {\n          if (Math.hypot(ox, oz) <= 1.15) {\n            set(secX + ox, sy, secZ + oz, stemBlock);\n          }\n        }\n      }\n    }\n\n    const secCapY = secHeight;\n    const sR = 2.2;\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        const d = Math.hypot(ox, oz);\n        if (d <= sR) {\n          set(secX + ox, secCapY, secZ + oz, d <= 1.0 ? coreLight : capBlock);\n        }\n        if (d <= sR - 0.7) {\n          set(secX + ox, secCapY + 1, secZ + oz, capBlock);\n        }\n      }\n    }\n    // Small hanging lantern beneath the secondary head\n    const podSecX = Math.round(secX + Math.cos(secAngle) * 1.4);\n    const podSecZ = Math.round(secZ + Math.sin(secAngle) * 1.4);\n    set(podSecX, secCapY, podSecZ, capBlock);\n    set(podSecX, secCapY - 1, podSecZ, \"minecraft:chain[axis=y]\");\n    set(podSecX, secCapY - 2, podSecZ, podLight);\n  }\n\n  // 5. MAIN MUSHROOM CAP\n  const topPt = stemCurve[stemCurve.length - 1];\n  const capCenterY = H - 2;\n  const capRadius = 3.5 + rng() * 0.3;\n\n  // Layer 1: Underside gills\n  for (let ox = -4; ox <= 4; ox++) {\n    for (let oz = -4; oz <= 4; oz++) {\n      const d = Math.hypot(ox, oz);\n      if (d > 1.2 && d <= capRadius - 0.25) {\n        set(topPt.x + ox, capCenterY - 1, topPt.z + oz, stemBlock);\n      }\n    }\n  }\n\n  // Layer 2: Glowing Core & Broad Spore Rim\n  for (let ox = -4; ox <= 4; ox++) {\n    for (let oz = -4; oz <= 4; oz++) {\n      const d = Math.hypot(ox, oz);\n      if (d <= capRadius) {\n        if (d <= 1.8) {\n          set(topPt.x + ox, capCenterY, topPt.z + oz, coreLight);\n        } else {\n          set(topPt.x + ox, capCenterY, topPt.z + oz, capBlock);\n        }\n      }\n    }\n  }\n\n  // Layer 3: Upper Cap Dome\n  for (let ox = -4; ox <= 4; ox++) {\n    for (let oz = -4; oz <= 4; oz++) {\n      const d = Math.hypot(ox, oz);\n      if (d <= capRadius - 0.75) {\n        const isWart = d > 1.2 && rng() > 0.62;\n        set(topPt.x + ox, capCenterY + 1, topPt.z + oz, isWart ? wartBlock : capBlock);\n      }\n    }\n  }\n\n  // Layer 4: Cap Crown\n  if (capCenterY + 2 < 13) {\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        const d = Math.hypot(ox, oz);\n        if (d <= 1.5) {\n          set(topPt.x + ox, capCenterY + 2, topPt.z + oz, capBlock);\n        }\n      }\n    }\n    set(topPt.x, capCenterY + 2, topPt.z, wartBlock);\n  }\n\n  // 6. DANGLING SPORE POD LANTERNS\n  const numPods = 3 + Math.floor(rng() * 2);\n  for (let i = 0; i < numPods; i++) {\n    const podAngle = (i * Math.PI * 2) / numPods + (rng() - 0.5) * 0.45;\n    const podDist = capRadius - 0.55;\n    const px = Math.round(topPt.x + Math.cos(podAngle) * podDist);\n    const pz = Math.round(topPt.z + Math.sin(podAngle) * podDist);\n\n    // Anchor securely to the cap rim\n    set(px, capCenterY, pz, capBlock);\n    set(px, capCenterY - 1, pz, stemBlock);\n    set(px, capCenterY - 2, pz, \"minecraft:chain[axis=y]\");\n    set(px, capCenterY - 3, pz, podLight);\n\n    if (capCenterY - 4 >= 1) {\n      set(px, capCenterY - 4, pz, woodSlab);\n    }\n  }\n\n  // 7. GROUND BABY GLOW-CAPS\n  const numBabies = 2 + Math.floor(rng() * 2);\n  for (let b = 0; b < numBabies; b++) {\n    const bAngle = rng() * Math.PI * 2;\n    const bDist = 2.4 + rng() * 0.9;\n    const bx = Math.round(cx + Math.cos(bAngle) * bDist);\n    const bz = Math.round(cz + Math.sin(bAngle) * bDist);\n\n    let groundY = -1;\n    for (let gy = 2; gy >= 0; gy--) {\n      if (get(bx, gy, bz)) {\n        groundY = gy;\n        break;\n      }\n    }\n\n    if (groundY >= 0 && groundY + 2 < 13) {\n      set(bx, groundY + 1, bz, stemBlock);\n      set(bx, groundY + 2, bz, rng() > 0.4 ? coreLight : capBlock);\n    }\n  }\n\n  // 8. STRICT 6-CONNECTED FLOOD FILL & SOLID VOLUME VALIDATION\n  const queue = [];\n  const visited = new Set();\n\n  for (let x = 0; x < 9; x++) {\n    for (let z = 0; z < 9; z++) {\n      const key = `${x},0,${z}`;\n      if (grid.has(key)) {\n        visited.add(key);\n        queue.push([x, 0, z]);\n      }\n    }\n  }\n\n  const neighbors = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [qx, qy, qz] = queue[head++];\n    for (const [dx, dy, dz] of neighbors) {\n      const nx = qx + dx;\n      const ny = qy + dy;\n      const nz = qz + dz;\n      const nKey = `${nx},${ny},${nz}`;\n      if (grid.has(nKey) && !visited.has(nKey)) {\n        visited.add(nKey);\n        queue.push([nx, ny, nz]);\n      }\n    }\n  }\n\n  // Ensure total solid count strictly exceeds 500\n  if (visited.size < 520) {\n    for (let y = 0; y <= 2; y++) {\n      for (let x = 0; x < 9; x++) {\n        for (let z = 0; z < 9; z++) {\n          if (Math.hypot(x - cx, z - cz) <= 3.8 - y * 0.35) {\n            const k = `${x},${y},${z}`;\n            if (!grid.has(k)) {\n              grid.set(k, y === 0 ? \"minecraft:mycelium\" : stemBlock);\n              visited.add(k);\n              queue.push([x, y, z]);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Emit all connected blocks\n  for (const k of visited) {\n    const [x, y, z] = k.split(\",\").map(Number);\n    api.set(x, y, z, grid.get(k));\n  }\n\n  return {\n    name: \"glowshroom_spore_lamp\",\n    seatY: 0,\n    anchors: {\n      front: [4, 0, 0],\n      lamp: [Math.round(topPt.x), capCenterY, Math.round(topPt.z)]\n    }\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.4,"formality":0.2,"climate":{"biome":"minecraft:mushroom_fields","temperature":0.4,"humidity":0.8,"snow":"never"},"character":{"label":"glowing mushroom vale village","materialTheme":"temperate_timber","urbanForm":"grown","flora":{"prefer":["fungal","glow","glowcap","mushroom_giant_red","mushroom_shelf_brown"]},"archetypes":{"prefer":["cottage","tavern"]}},"tokens":{"atmosphere":"a strange settlement nestled among towering bioluminescent mushroom stalks in a damp vale"}}
+           1 attempt(s), 7738 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.glowing_fungal_forest.params.area
+  tokens     78802 in + 10125 out = 88927  ($0.0485)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     mother_spore_spire [landmark]  2 attempt(s), 34077 tokens  ($0.0406), 4 warning(s)
+  ok     cap_stilt_dwelling [plugin]  1 attempt(s), 19066 tokens  ($0.0315), 8 warning(s)
+  ok     glowshroom_spore_lamp [plugin]  1 attempt(s), 23497 tokens  ($0.0398), 1 warning(s)
+  tokens     21629 in + 56211 out = 77840  (38144 of the out reasoning)  ($0.1135)
+
+wiring     3 program(s) authored but never invoked: mother_spore_spire [landmark], cap_stilt_dwelling [plugin], glowshroom_spore_lamp [plugin]
+
+  wired in 1 attempt(s); 95613 in + 19566 out = 115179 tokens  ($0.0725)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 9 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.glowing_fungal_forest.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+note LOAM-T113 CARVE_DRY at world.terrain.vale_basin: basin "vale_basin" asked to flood ("flooded": "auto") but compiled dry: not one of its columns reaches the sea. Its lowest point sits 325 blocks north-west of the nearest coastline, so the carve is a dry channel in the middle of the land.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.elder_mushroom_house: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.elder_mushroom_house: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.spore_apothecary: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.spore_apothecary: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.glow_tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.glow_tavern: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-T119 SCATTER_EMPTY at world.glowing_fungal_forest: forest node "glowing_fungal_forest" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.38} covers 1 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.elder_mushroom_house: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+  world.spore_apothecary: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied adjacent_to constraint [0] (declared hard, now soft, weight 1, cost 0.02)
+  world.glow_tavern: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.13)
+
+  revision 1 authored in 2 attempt(s)
+  tokens     226223 in + 34948 out = 261171  ($0.1186)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.glow_tavern: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.glow_tavern: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.glow_tavern: placed after constraint_demoted, constraint_demoted (384 candidates considered)
+    unsatisfied distance constraint [0] (declared hard, now soft, weight 1, cost 0.07)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     95541 in + 18470 out = 114011  ($0.0705)
+
+compiled "glowing_mushroom_vale" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale
+  seed       307
+  region     512x512 at (-256, -256)
+  heights    55.4..116.4  sea 63  snow line 113.7
+  land       96.6% of columns above sea level
+  biomes     forest 70.2%, plains 16.2%, windswept_hills 12.2%, ocean 1.2%, beach 0.2%, stony_peaks 0.0%
+  trees      5117 (glowing_fungal_forest=3386, outer_wilderness_woods=1971)
+  chunks     1024
+  blocks     37543038 (420868 vegetation)
+  markers    102
+  spawn      [0, 67, 0]
+  timings    validate 3ms  field 259ms  layout 103ms  climate 39ms  columns 25ms  caves 0ms  structures 309ms  programs 138ms  scatter 1050ms  biomes 30ms  validators 2ms  emit 2325ms  total 4307ms
+  programs   world.mother_spore_spire=mother_spore_spire×1 (4712 blocks), world.cap_dwellings=cap_stilt_dwelling×4 (1470 blocks), world.spore_lamps=glowshroom_spore_lamp×8 (2657 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.vale_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W337 PROGRAM_DROPPED at world.cap_dwellings: "cap_stilt_dwelling" asked for 6 instances and only 4 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 15, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W337 PROGRAM_DROPPED at world.spore_lamps: "glowshroom_spore_lamp" asked for 14 instances and only 8 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 11, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W472 BIOME_INTENT_UNKNOWN at world: climate intent names the biome "minecraft:mushroom_fields", which this emitter's table does not carry; falling back to the land-use clamp's derived biome
+  fix: name one of the 35 biomes this emitter paints: minecraft:ocean, minecraft:deep_ocean, minecraft:cold_ocean, minecraft:deep_cold_ocean, minecraft:beach, minecraft:snowy_beach, minecraft:plains, minecraft:snowy_plains, minecraft:forest, minecraft:taiga, minecraft:windswept_hills, minecraft:stony_peaks, minecraft:snowy_slopes, minecraft:river, minecraft:basalt_deltas, minecraft:dark_forest, minecraft:birch_forest, minecraft:old_growth_birch_forest, minecraft:flower_forest, minecraft:windswept_forest, minecraft:pale_garden, minecraft:cherry_grove, minecraft:sunflower_plains, minecraft:meadow, minecraft:grove, minecraft:savanna, minecraft:windswept_savanna, minecraft:jungle, minecraft:sparse_jungle, minecraft:swamp, minecraft:snowy_taiga, minecraft:old_growth_spruce_taiga, minecraft:old_growth_pine_taiga, minecraft:jagged_peaks, minecraft:frozen_peaks. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2362 footprint columns (plus 15478 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 9714 ring columns); snow policy never resolved to "never" on a 0/2362 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  4 model run(s), 2 compile-feedback round(s), 496179 in + 83109 out = 579288 tokens (13722 of the out reasoning) ($0.3101)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p7-padfix/glowing_mushroom_vale

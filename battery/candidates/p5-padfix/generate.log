@@ -1,0 +1,146 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.8,"decline":0.3,"formality":0.8,"event":{"kind":"siege","severity":0.85,"recency":0},"climate":{"temperature":0.7,"humidity":0.4,"snow":"never"},"character":{"label":"modern Hellenist coastal city","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["stoa","propylaea","bouleuterion","odeon","nymphaeum","palaestra"]},"urbanForm":"grid","motifs":{"roofType":"flat","massing":"stepped","windowRhythm":"regular","ornamentDensity":0.5}},"tokens":{"event_direction":"colossal sea monsters emerging from the coastal waters assaulting the waterfront promenade and urban harbor","infra":"barricade_line along the seafront avenue and port perimeter; emergency cordon ringing the breached docks","icons":"monumental modern colonnades and Hellenist civic buildings facing the sea; breached seawalls; towering leviathans rising from the bay amidst churning surf"}}
+           1 attempt(s), 8203 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.mediterranean_cypresses.params.area
+  tokens     78943 in + 10857 out = 89800  ($0.0500)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_leviathan [landmark]  2 attempt(s), 61050 tokens  ($0.0774), 25 warning(s)
+  ok     guardian_colossus [landmark]  2 attempt(s), 58111 tokens  ($0.0758), 14 warning(s)
+  ok     amphibious_beast [plugin]  1 attempt(s), 28956 tokens  ($0.0499), 1 warning(s)
+  tokens     49729 in + 98388 out = 148117  (57581 of the out reasoning)  ($0.2031)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.mediterranean_cypresses.params.area: "area.radius" is 0.25, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.25 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.25 on a 1024-wide region, "radius": 128).
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.athena_defense_colossus: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E406 UNSATISFIABLE at world.athena_defense_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (94 of 97 candidates were also vetoed by the ground: 47 below sea level, 47 on water or lava, 0 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-T119 SCATTER_EMPTY at world.mediterranean_cypresses: forest node "mediterranean_cypresses" placed 0 trees: its area {"at":[0.68,0.72],"radius":0.25} covers 3 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.25 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+Layout solver report:
+
+  world.athena_defense_colossus: placed after constraint_demoted, unsatisfiable (97 candidates considered)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     106612 in + 28560 out = 135172  ($0.0935)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E406 UNSATISFIABLE at world.athena_defense_colossus: no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position (95 of 97 candidates were also vetoed by the ground: 73 below sea level, 22 on water or lava, 0 too steep)
+  fix: loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften
+warning LOAM-T209 ROAD_UNROUTABLE at world.city_lanes: no road could be routed from "world.athena_defense_colossus" to the network hub "world.city_harbour": its approach column is blocked
+  fix: move "world.athena_defense_colossus" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+
+Layout solver report:
+
+  world.athena_defense_colossus: placed after unsatisfiable (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.14)
+    unsatisfied distance constraint [1] (declared soft, now soft, weight 1, cost 0.03)
+
+  revision 2 authored in 2 attempt(s)
+  tokens     266707 in + 60640 out = 327347  ($0.2137)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.city_harbour: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E170 CANNOT_FIT at world.downtown_city.atrium_complex: no lot or block in "world.downtown_city.cell_0" is big enough for this landmark's 19 × 19 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+Layout solver report:
+
+  world.city_harbour: placed after constraint_demoted (388 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.58)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     106333 in + 28854 out = 135187  ($0.0940)
+
+compiled "neopolis_abyssal_siege" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege
+  seed       305
+  region     512x512 at (-256, -256)
+  heights    47.0..78.0  sea 63  snow line 77.3
+  land       36.0% of columns above sea level
+  biomes     ocean 64.1%, plains 29.8%, forest 4.3%, beach 1.6%, windswept_hills 0.2%
+  trees      191 (mediterranean_cypresses=40, coastal_scrub=187)
+  chunks     1024
+  blocks     34083265 (12516 vegetation)
+  markers    89
+  spawn      [40, 78, 130]
+  timings    validate 4ms  field 121ms  layout 722ms  climate 37ms  columns 25ms  caves 0ms  structures 564ms  programs 759ms  scatter 640ms  biomes 29ms  validators 3ms  emit 1289ms  total 4222ms
+  programs   world.leviathan_monstrosity=colossal_leviathan×1 (23734 blocks), world.athena_defense_colossus=guardian_colossus×1 (3591 blocks), world.monster_landing_party=amphibious_beast×10 (4881 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.city_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.leviathan_monstrosity: this landmark asked to stand at (-1, -171) and was placed at (90, 227), 408 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+warning LOAM-T217 VISTA_UNCLAIMED at world.downtown_city.the_bouleuterion: no "boulevard" in this city has an end with room for this landmark's 15 × 17 footprint, so it is placed on an ordinary frontage instead
+  fix: write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"
+
+warning LOAM-T217 VISTA_UNCLAIMED at world.downtown_city.atrium_complex: no "spine" in this city has an end with room for this landmark's 15 × 15 footprint, so it is placed on an ordinary frontage instead
+  fix: write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"
+
+note LOAM-I512 DISTRICT_RUINS at world.downtown_city.cell_0: decline 0.35 gives a ruin share of 0.12: 0 of 0 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.downtown_city.cell_2: decline 0.35 gives a ruin share of 0.12: 0 of 0 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+note LOAM-I512 DISTRICT_RUINS at world.downtown_city.cell_4: decline 0.35 gives a ruin share of 0.12: 4 of 10 infill lots roll into ruined shells (light 4, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-W409 PRECINCT_RESEATED at world.city_harbour: precinct.harbour@0 found no quay in the envelope the solver gave it at [25, -169] and reseated itself on the best coastline in the world, at [128, 64] — 88 columns of shoreline facing east
+  fix: nothing to fix if the port is where you want it; to hold it to a particular part of town, mark its "zone" constraint "strength": "hard" and it will fail in place instead of moving
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-T234 INFRA_RUN_REFUSED at world.docks_quarantine_cordon: "quarantine_fence" built 313 of 950 route columns — 637 were refused by collision or unbuildable ground
+  fix: no change needed if the gaps read as a worn line on a walk — otherwise move the route clear of what it is crossing with a larger margin or offset
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 1156 ruined columns: 375 climbing strands (0 glow lichen), 0 leaf plugs (0 of them substituted for glazing), 44 moss carpets, 11 pavement substitutions, 2 tufts, 5 street trunks and 0 shell trees elected (2314 spine columns, shortest sight-line run 24, nearest trunk to a junction 10), 612 blocks
+  fix: informational
+
+warning LOAM-W337 PROGRAM_DROPPED at world.monster_landing_party: "amphibious_beast" asked for 14 instances and only 10 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W472 BIOME_INTENT_UNKNOWN at world: climate intent names the biome "minecraft:warm_ocean", which this emitter's table does not carry; falling back to the land-use clamp's derived biome
+  fix: name one of the 35 biomes this emitter paints: minecraft:ocean, minecraft:deep_ocean, minecraft:cold_ocean, minecraft:deep_cold_ocean, minecraft:beach, minecraft:snowy_beach, minecraft:plains, minecraft:snowy_plains, minecraft:forest, minecraft:taiga, minecraft:windswept_hills, minecraft:stony_peaks, minecraft:snowy_slopes, minecraft:river, minecraft:basalt_deltas, minecraft:dark_forest, minecraft:birch_forest, minecraft:old_growth_birch_forest, minecraft:flower_forest, minecraft:windswept_forest, minecraft:pale_garden, minecraft:cherry_grove, minecraft:sunflower_plains, minecraft:meadow, minecraft:grove, minecraft:savanna, minecraft:windswept_savanna, minecraft:jungle, minecraft:sparse_jungle, minecraft:swamp, minecraft:snowy_taiga, minecraft:old_growth_spruce_taiga, minecraft:old_growth_pine_taiga, minecraft:jagged_peaks, minecraft:frozen_peaks. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 53883 footprint columns (plus 16537 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 82% of 11170 ring columns); snow policy never resolved to "never" on a 0/53883 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 170) is under water or too close to sea level; moved to (40, 130)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  4 model run(s), 3 compile-feedback round(s), 558595 in + 128911 out = 687506 tokens (17137 of the out reasoning) ($0.4512)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/padfix-battery/p5-padfix/neopolis_abyssal_siege
