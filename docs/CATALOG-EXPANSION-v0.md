@@ -512,6 +512,9 @@ them out. A pack exhibit must:
    catalog row shows the object and only a composition shows the *idiom*.
 7. **Lint zero on all 26 rules**, like every shipped world. A pack exhibit is a
    generated world read back off disk.
+8. **Give every bespoke program row one sloped cell**, so that a rigid sole —
+   the same footing on every column — is visible in the exhibit rather than
+   only in a walk of a real world.
 
 ## 6. Prioritization
 

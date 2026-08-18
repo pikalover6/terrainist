@@ -3330,13 +3330,30 @@ Everything that does not hover meets the ground somehow, and `"params": {"seat":
 …}` says how. `seat` and `hover` are mutually exclusive — a thing either floats
 or it touches down.
 
+- `"seat": "conform"` — **not usually something a document writes.** It is the
+  default the compiler picks for a bespoke program whose author followed the
+  ground: the authoring gate runs the program against five synthetic landscapes
+  (a flat, two slopes, a ridge and a shore) and stamps its verdict onto the
+  frozen program record, and a program that passed is stood directly on the real
+  terrain of the site it landed on. Nothing is levelled and nothing is filled
+  except under a leg that would otherwise hang in the air. Expect to see the
+  structure meeting the hillside itself — no plinth course, no apron, no visible
+  masonry face where the ground falls away. Writing `"seat": "conform"` forces
+  it for a program the gate did not certify, which is a request to see what the
+  program actually does with the ground; a program that ignores the terrain then
+  looks like a prefab dropped on a slope, and the compiler's skirt is all that
+  holds it up.
 - `"seat": "pad"` — the default, and what you get by writing nothing. The
   compiler seats the structure on a plane the footprint agrees with and raises
   the low columns to meet it, fill-only, like a plinth under a building. The
   pad's apron feathers into the terrain at 1:2 and reaches at most 24 columns,
   so a lift much past 12 blocks shows a visible masonry face. `terrain_conform:
   "flatten"` on a cliff buys a podium — point a landmark at ground it can
-  stand on, or accept the plinth deliberately.
+  stand on, or accept the plinth deliberately. It stays available for exactly
+  that: write `"seat": "pad"` when the thing genuinely wants a podium (a temple
+  platform, a landing pad), and an explicit `pad` always beats a `conform`
+  verdict. A bespoke program the gate could not certify is given `pad`
+  automatically.
 - `"seat": "embed"` with `"embedDepth": <1..32>` — the same seating, then sunk
   that many blocks into the ground. No terrain is cut: the land simply stands
   over the buried part. This is what a **crashed** thing wants.

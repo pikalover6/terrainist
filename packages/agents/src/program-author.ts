@@ -355,13 +355,34 @@ RULES — each of these is checked by a gate before your program is accepted.
    zone". The world's water fills every gap above the seabed; fluid you
    author above the real waterline would stand as a raised slab of ocean,
    so the compiler clamps it and reports LOAM-W339 PROGRAM_WATER_CLAMPED.
-6. FOLLOW THE GROUND YOU ARE GIVEN. \`api.heightAt(x, z)\` is the terrain height
-   under your footprint, node-local and measured from the seat plane: 0 where
-   the ground meets it, negative where the ground falls away, positive where it
-   rises. A thing that stands on the ground reads it at every column it touches
-   and follows it down — legs, skirt, plinth, foundation, whatever your thing
-   has. The compiler levels modestly under you and never cuts terrain; it does
-   not flatten a hillside for you.
+6. FOLLOW THE GROUND YOU ARE GIVEN — it is real, and nothing will flatten it
+   for you. \`api.heightAt(x, z)\` is the terrain height under your footprint,
+   node-local and measured from the seat plane: 0 where the ground meets it,
+   negative where the ground falls away, positive where it rises. YOU ARE
+   JUDGED ON FIVE PIECES OF GROUND, and the same program must stand on all
+   five: \`flat\` (level, the way it has always been), \`slope10\` (a gentle fall
+   to local south), \`slope20\` (a real hillside falling the same way, twice as
+   fast), \`ridge\` (a crest under the middle of the footprint, falling away to
+   both sides) and \`shore\` (level for the near half, then a bank dropping two
+   blocks a column into the water). A thing that stands on the ground reads
+   \`heightAt\` at EVERY column it occupies and answers it there: legs that
+   reach down to their own column, a skirt that follows the fall, a plinth
+   that steps down in courses, a foundation that thickens where the ground
+   drops away. Where the ground rises ABOVE your seat plane, build up to meet
+   it — a taller wall, a higher course — because the compiler will not cut the
+   hill away. On the \`shore\` member, and anywhere a thing wades, the height
+   you are given is the SEABED, exactly as rule 5 says: keep building down to
+   it and let the waterline fall where it falls (never model the waterline, or
+   LOAM-W339 clamps it). A program that follows the ground is seated
+   \`conform\`: it is stood directly on the real terrain of wherever it lands,
+   with no pad, no podium and no levelling — only a skirt under a leg that
+   would otherwise hang in the air. A program that writes the same sole on
+   every column is a prefab: it is reported (LOAM-W340
+   PROGRAM_DID_NOT_CONFORM), it is seated \`pad\` — set on a levelled platform
+   with an apron graded out of the hillside (LOAM-T341 PROGRAM_SEATED_PAD) —
+   and that platform is the look this rule exists to end. Slightly imperfect
+   is fine: up to a tenth of your occupied columns may float; a sole that
+   never changes at all is not.
 7. FULL BLOCK STRINGS, states included. An unknown id or an invalid block state
    is a gate failure, not a silent placement. And DRAW THE PALETTE FROM
    \`api.theme\`, not from your imagination — but pick the FAMILY from what the
