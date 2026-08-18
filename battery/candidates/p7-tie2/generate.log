@@ -1,0 +1,104 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.4,"decline":0.1,"formality":0.1,"climate":{"humidity":0.7,"temperature":0.2,"snow":"never"},"character":{"label":"glowing mushroom vale village","materialTheme":"temperate_timber","formPacks":["swamp_witch"],"urbanForm":"grown","flora":{"prefer":["glow","fungal","glowcap","mushroom_giant_red","mushroom_shelf_brown"]},"archetypes":{"prefer":["cottage","tavern","watchtower"]}},"tokens":{"terrain":"a sheltered vale filled with colossal bioluminescent mushrooms, with timber walkways and odd dwellings nestled between giant fungal stems under a glowing canopy"}}
+           1 attempt(s), 8172 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   1 problem(s): LOAM-T118 SCATTER_RADIUS_UNITS@world.glowing_canopy_forest.params.area
+  tokens     79768 in + 10089 out = 89857  ($0.0488)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     ancient_mother_glowcap [landmark]  1 attempt(s), 25394 tokens  ($0.0427), 4 warning(s)
+  ok     glow_fungal_cluster [plugin]  1 attempt(s), 24420 tokens  ($0.0409), 2 warning(s)
+  tokens     6503 in + 43311 out = 49814  (30261 of the out reasoning)  ($0.0836)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/tie2-battery/p7-tie2/glowcap_vale.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The document failed to compile — 8 problem(s):
+
+warning LOAM-T118 SCATTER_RADIUS_UNITS at world.glowing_canopy_forest.params.area: "area.radius" is 0.38, which covers less than one block — radius is in BLOCKS, while "at" is fractional (0..1) region coordinates. If 0.38 was meant as a fraction of the region, this node will place nothing.
+  fix: write the radius in blocks, e.g. "radius": 120; "at" stays fractional. To cover a fraction f of a region of extent E, write radius = f × E / 2 (for f=0.38 on a 1024-wide region, "radius": 195).
+note LOAM-T113 CARVE_DRY at world.terrain.the_vale_hollow: basin "the_vale_hollow" asked to flood ("flooded": "auto") but compiled dry: not one of its columns reaches the sea. Its lowest point sits 176 blocks south of the nearest coastline, so the carve is a dry channel in the middle of the land.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.mother_cap: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.mother_cap: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.dwelling_red_cap: hard "terrain_conform" constraint [2] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.dwelling_red_cap: hard "adjacent_to" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.scattered_glow_spores: program "glow_fungal_cluster" re-ran the terrain suite to b3:1640d9e2d18bcc177eb5607fc106667d66c3b7ff9e2c37773fb209f66f54c437, but the document records b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+warning LOAM-T119 SCATTER_EMPTY at world.glowing_canopy_forest: forest node "glowing_canopy_forest" placed 0 trees: its area {"at":[0.5,0.5],"radius":0.38} covers 1 of the region's 512×512 columns.
+  fix: "area.radius" is in BLOCKS while "at" is fractional (0..1). 0.38 blocks is a patch smaller than one tree. For a fraction f of a 512-wide region write radius = f × 512 / 2 — e.g. "radius": 128.
+
+  revision 1 authored in 2 attempt(s)
+  tokens     228580 in + 38629 out = 267209  ($0.1581)
+
+
+compile feedback, round 2 of 4:
+
+The document failed to compile — 3 problem(s):
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.spore_root_cellar: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.spore_root_cellar: hard "distance" constraint [0] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.scattered_glow_spores: program "glow_fungal_cluster" re-ran the terrain suite to b3:1640d9e2d18bcc177eb5607fc106667d66c3b7ff9e2c37773fb209f66f54c437, but the document records b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 2 authored in 1 attempt(s)
+  tokens     96935 in + 18478 out = 115413  ($0.0710)
+
+
+compile feedback, round 3 of 4:
+
+The document failed to compile — 1 problem(s):
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.scattered_glow_spores: program "glow_fungal_cluster" re-ran the terrain suite to b3:1640d9e2d18bcc177eb5607fc106667d66c3b7ff9e2c37773fb209f66f54c437, but the document records b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 3 authored in 1 attempt(s)
+  tokens     96660 in + 17973 out = 114633  ($0.0699)
+
+
+compile feedback, round 4 of 4:
+
+The document failed to compile — 1 problem(s):
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.scattered_glow_spores: program "glow_fungal_cluster" re-ran the terrain suite to b3:1640d9e2d18bcc177eb5607fc106667d66c3b7ff9e2c37773fb209f66f54c437, but the document records b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 4 authored in 1 attempt(s)
+  tokens     96660 in + 17423 out = 114083  ($0.0371)
+
+terrainist: the authored document failed to compile — 6 problem(s)
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.mother_cap: this landmark was placed at (102, -124), not where its facing was first measured from, so the facing was taken again from the real site: 0° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.mother_cap: "ancient_mother_glowcap" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.scattered_glow_spores: program "glow_fungal_cluster" re-ran the terrain suite to b3:1640d9e2d18bcc177eb5607fc106667d66c3b7ff9e2c37773fb209f66f54c437, but the document records b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2726 footprint columns (plus 14458 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 92% of 9042 ring columns); snow policy never resolved to "never" on a 0/2726 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+note LOAM-W471 SNOW_SUPPRESSED at world: removed the snow layer from 47 columns of settlement ground, which the pre-settlement climate had put above the snow line
+  fix: no change needed — set "intent.climate.snow" to "always" to keep the settlement under snow
+
+the document was kept at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/tie2-battery/p7-tie2/glowcap_vale.loam.json
+  authoring  5 model run(s), 4 compile-feedback round(s), 598603 in + 102592 out = 701195 tokens (15077 of the out reasoning) ($0.3851)

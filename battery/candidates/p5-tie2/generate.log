@@ -1,0 +1,118 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.8,"decline":0.2,"formality":0.8,"event":{"kind":"siege","severity":0.85,"recency":0},"climate":{"temperature":0.6,"humidity":0.2,"snow":"never"},"character":{"label":"modern hellenist coastal metropolis","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["stoa","peripteral_temple","propylaea","bouleuterion","odeon"]},"urbanForm":"grid","motifs":{"roofType":"flat","massing":"stepped","windowRhythm":"regular","ornamentDensity":0.6}},"tokens":{"event_direction":"colossal sea monsters surge from the ocean waters attacking the harbour and waterfront boulevards","infra":"barricade_line sealing the coastal avenues; military_cordon across the harbour front","terrain":"a grand coastal metropolis with a wide harbour overlooking deep open waters","icons":"sea monsters breaching the bay water; neoclassical stoas and modern colonnaded avenues; fortified waterfront defenses; emergency barricades along the boardwalk"}}
+           1 attempt(s), 8189 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     79885 in + 9698 out = 89583  ($0.0481)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     kraken_colossus [landmark]  1 attempt(s), 29754 tokens  ($0.0508), 26 warning(s)
+  ok     serpent_spire [landmark]  1 attempt(s), 24793 tokens  ($0.0415), 26 warning(s)
+  ok     sea_beast [plugin]  1 attempt(s), 25439 tokens  ($0.0427), 2 warning(s)
+  tokens     10012 in + 69974 out = 79986  (48821 of the out reasoning)  ($0.1350)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/tie2-battery/p5-tie2/modern_hellenist_invasion.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The document failed to compile — 3 problem(s):
+
+warning LOAM-T209 ROAD_UNROUTABLE at world.coastal_avenue: no road could be routed from "world.kraken_colossus_node" to the network hub "world.serpent_spire_node": its approach column is blocked
+  fix: move "world.kraken_colossus_node" onto ground the network can reach — a route may not cross water, lava or another building's footprint, so check for a lake or a wall of houses between the two
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.kraken_colossus_node: program "kraken_colossus" re-ran the terrain suite to b3:8ea4e18f4eb4122ac01a4fb34fe89498b06d7c648820402499d5e7b360a21f95, but the document records b3:94d076040d0f65057346d53babf4c00bcd98de1e6a270ee3f627bdc0506dc1e2
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.invading_swarm: program "sea_beast" re-ran the terrain suite to b3:c8b35714336ca2ecc5bc5ad187c859f4c49c48619894b35f78e1b7153862b783, but the document records b3:c1c0b46611f02178c290effed2b873bcc96f7d79ebf2fa49a54907238c13adc1
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 1 authored in 1 attempt(s)
+  tokens     105050 in + 25624 out = 130674  ($0.0874)
+
+
+compile feedback, round 2 of 4:
+
+The document failed to compile — 2 problem(s):
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.kraken_colossus_node: program "kraken_colossus" re-ran the terrain suite to b3:8ea4e18f4eb4122ac01a4fb34fe89498b06d7c648820402499d5e7b360a21f95, but the document records b3:94d076040d0f65057346d53babf4c00bcd98de1e6a270ee3f627bdc0506dc1e2
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.invading_swarm: program "sea_beast" re-ran the terrain suite to b3:c8b35714336ca2ecc5bc5ad187c859f4c49c48619894b35f78e1b7153862b783, but the document records b3:c1c0b46611f02178c290effed2b873bcc96f7d79ebf2fa49a54907238c13adc1
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 2 authored in 1 attempt(s)
+  tokens     104969 in + 25266 out = 130235  ($0.0867)
+
+
+compile feedback, round 3 of 4:
+
+The document failed to compile — 2 problem(s):
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.kraken_colossus_node: program "kraken_colossus" re-ran the terrain suite to b3:8ea4e18f4eb4122ac01a4fb34fe89498b06d7c648820402499d5e7b360a21f95, but the document records b3:94d076040d0f65057346d53babf4c00bcd98de1e6a270ee3f627bdc0506dc1e2
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.invading_swarm: program "sea_beast" re-ran the terrain suite to b3:c8b35714336ca2ecc5bc5ad187c859f4c49c48619894b35f78e1b7153862b783, but the document records b3:c1c0b46611f02178c290effed2b873bcc96f7d79ebf2fa49a54907238c13adc1
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 3 authored in 1 attempt(s)
+  tokens     104969 in + 25443 out = 130412  ($0.0871)
+
+
+compile feedback, round 4 of 4:
+
+The document failed to compile — 2 problem(s):
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.kraken_colossus_node: program "kraken_colossus" re-ran the terrain suite to b3:8ea4e18f4eb4122ac01a4fb34fe89498b06d7c648820402499d5e7b360a21f95, but the document records b3:94d076040d0f65057346d53babf4c00bcd98de1e6a270ee3f627bdc0506dc1e2
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.invading_swarm: program "sea_beast" re-ran the terrain suite to b3:c8b35714336ca2ecc5bc5ad187c859f4c49c48619894b35f78e1b7153862b783, but the document records b3:c1c0b46611f02178c290effed2b873bcc96f7d79ebf2fa49a54907238c13adc1
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+  revision 4 authored in 1 attempt(s)
+  tokens     104969 in + 26056 out = 131025  ($0.0882)
+
+terrainist: the authored document failed to compile — 13 problem(s)
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.coastal_avenue: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.kraken_colossus_node: this landmark asked to stand at (-1, -171) and was placed at (231, 140), 388 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.serpent_spire_node: this landmark asked to stand at (-171, -171) and was placed at (174, 218), 520 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.kraken_colossus_node: this landmark was placed at (231, 140), not where its facing was first measured from, so the facing was taken again from the real site: 180° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.serpent_spire_node: this landmark was placed at (174, 218), not where its facing was first measured from, so the facing was taken again from the real site: 180° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+warning LOAM-T217 VISTA_UNCLAIMED at world.neo_athens_metropolis.stoa_centralis: no "spine" in this city has an end with room for this landmark's 21 × 27 footprint, so it is placed on an ordinary frontage instead
+  fix: write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-T239 ROAD_BERM_CLAMPED at arterial:drive!world.neo_athens_metropolis: the water floor asked street segment "arterial:drive!world.neo_athens_metropolis" to stand above its own natural ground at 3 of 160 station(s), by up to 3 block(s); clamped to 2 so the rim's lift could not propagate along the profile
+  fix: No change needed — the street keeps the rim it is beside and drops back to the ground it crosses. A run that wants this at most of its stations is a span rather than a street.
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.waterfront_barricade: the "across" route names "neo_athens_metropolis": "neo_athens_metropolis" is not a corridor, so there is nothing to draw a chord across
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.harbour_cannons: the "along" route names "coastal_avenue": "coastal_avenue" is not a corridor with a line of its own — pointing "along" at a building buys you nothing
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.kraken_colossus_node: program "kraken_colossus" re-ran the terrain suite to b3:8ea4e18f4eb4122ac01a4fb34fe89498b06d7c648820402499d5e7b360a21f95, but the document records b3:94d076040d0f65057346d53babf4c00bcd98de1e6a270ee3f627bdc0506dc1e2
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+error LOAM-E334 PROGRAM_OUTPUT_HASH_MISMATCH at world.invading_swarm: program "sea_beast" re-ran the terrain suite to b3:c8b35714336ca2ecc5bc5ad187c859f4c49c48619894b35f78e1b7153862b783, but the document records b3:c1c0b46611f02178c290effed2b873bcc96f7d79ebf2fa49a54907238c13adc1
+  fix: this host disagrees with the one that authored the world — re-run the authoring gate here, and report it: the suite is integer-pure, so a difference here is a real divergence and not a rounding one
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 9365 footprint columns (plus 4670 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 3281 ring columns); snow policy never resolved to "never" on a 0/9365 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+the document was kept at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/tie2-battery/p5-tie2/modern_hellenist_invasion.loam.json
+  authoring  5 model run(s), 4 compile-feedback round(s), 499842 in + 112087 out = 611929 tokens (10599 of the out reasoning) ($0.3976)

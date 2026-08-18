@@ -1,0 +1,789 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowcap_vale",
+    "worldSeed": "307",
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "humidity": 0.7,
+      "temperature": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "glowing mushroom vale village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "swamp_witch"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "birch_slim"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "witch_hut",
+          "alchemists_tower",
+          "apothecary",
+          "tavern",
+          "root_cellar_mound"
+        ]
+      },
+      "programs": [
+        {
+          "id": "ancient_mother_glowcap",
+          "mode": "landmark",
+          "brief": "A colossal bioluminescent prime mushroom hollowed into a sacred fungal hall, with glowing shroomlight gills beneath its tiered cap and spiraling shelf-bracket steps up its thick stalk.",
+          "envelope": [
+            24,
+            32,
+            24
+          ]
+        },
+        {
+          "id": "glow_fungal_cluster",
+          "mode": "plugin",
+          "brief": "A glowing cluster of twisting bioluminescent mushroom stalks capped with radiant shroomlight pods and spore-dripping tendrils.",
+          "envelope": [
+            5,
+            6,
+            5
+          ],
+          "count": 14
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a sheltered vale filled with colossal bioluminescent mushrooms, with timber walkways and odd dwellings nestled between giant fungal stems under a glowing canopy"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:mycelium",
+            3
+          ],
+          [
+            "minecraft:moss_block",
+            2
+          ],
+          [
+            "minecraft:podzol",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:dirt",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:moss_carpet",
+      "plaza.path": "minecraft:moss_block",
+      "plaza.cobble": "minecraft:deepslate_bricks"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Glowcap Vale",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a sheltered lowland vale ringed by protective ridges",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 32,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_vale_hollow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep secluded hollow cradling the fungal growth",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 145,
+              "depth": 22,
+              "water": false,
+              "flooded": "never",
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a gentle shelf in the vale floor for the village center",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.48
+              ],
+              "radius": 130,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_vale_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the enclosing northern ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.16
+                ],
+                [
+                  0.5,
+                  0.12
+                ],
+                [
+                  0.9,
+                  0.18
+                ]
+              ],
+              "width": 64,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_vale_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the enclosing southern ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.84
+                ],
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.9,
+                  0.82
+                ]
+              ],
+              "width": 64,
+              "height": 45,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "glowing_canopy_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the dense bioluminescent fungal forest covering the vale floor",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 180
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 28,
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.08,
+            "deadwood": 0.1
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "towering_glowcap",
+                  "shape": "glowcap"
+                },
+                {
+                  "id": "red_colossus",
+                  "shape": "mushroom_giant_red"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "mossy_hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "brown_shelf_cap",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "damp_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "ridge_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse dark conifer woods ringing the high outer slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "ridge_spruce",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "spore_plaza",
+        "kind": "primitive",
+        "label": "the luminous spore circle at the center of the village",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "mother_cap",
+        "kind": "generator",
+        "generator": "authored:ancient_mother_glowcap",
+        "label": "the colossal ancient glowcap elderhall towering over the village",
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 10,
+            "max": 55
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "landmark",
+          "sacred"
+        ]
+      },
+      {
+        "id": "scattered_glow_spores",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "bioluminescent mushroom clusters sprouting between the dwellings",
+        "params": {
+          "program": "glow_fungal_cluster",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.35
+          },
+          "spacing": 16,
+          "maxSlope": 25,
+          "avoidTags": [
+            "road",
+            "structure",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "dwelling_red_cap",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a domed fungal dwelling built under a red cap",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 4,
+            "max": 40
+          },
+          {
+            "facing": "spore_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "dwelling_toadstool",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a second mushroom cottage woven into the mycelium",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 8,
+            "max": 55
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "alchemist_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the spore-watcher tower brewing bioluminescent draughts",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 10,
+            "max": 58
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "alchemists_tower"
+        ]
+      },
+      {
+        "id": "spore_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the warm tavern serving mushroom brew to travelers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 4,
+            "max": 40
+          },
+          {
+            "facing": "spore_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "apothecary_den",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the herbalist shop drying rare fungi and glowing lichen",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 6,
+            "max": 50
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apothecary"
+        ]
+      },
+      {
+        "id": "witch_hovel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a crooked stilt hovel nestled in the shadows of giant stalks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 12,
+            "max": 65
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "witch_hut",
+          "house"
+        ]
+      },
+      {
+        "id": "spore_root_cellar",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a mounded storage shelter for fermented mushrooms",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_plaza",
+            "min": 8,
+            "max": 65
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "root_cellar_mound"
+        ]
+      },
+      {
+        "id": "spore_circle_monument",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a circle of carved standing stones glowing with lichen",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "dew_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a stone well collecting pure condensed moisture from the caps",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "spore_log_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked fungal timber seasoned with moss",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "mossy timber and earthen paths winding between the mushroom stems",
+        "params": {
+          "anchors": [
+            "spore_plaza",
+            "#tag:house",
+            "mother_cap",
+            "alchemist_spire",
+            "spore_root_cellar"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "ancient_mother_glowcap": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        42,
+        27
+      ],
+      "sourceHash": "b3:eda0652df0080d14b1d7603792c1a1f30f8ca2e2e34dfae998d4ccb74702ef7a",
+      "outputHash": "b3:40779d8a01eea61be8656121f2287b9c59752cec75b8556cf0e12468ede0e97d",
+      "conforms": false,
+      "conformHash": "b3:fc589b118666ae5b50dc0792792d6043b3c2f60b3c75be3ac94b1ba72b5a5ce1",
+      "source": "export const envelope = [27, 42, 27];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 8;\n\n  // 3D Voxel buffer for deterministic composition\n  const vox = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setV(x, y, z, block) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      vox[ix][iy][iz] = block;\n    }\n  }\n\n  function getV(x, y, z) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      return vox[ix][iy][iz];\n    }\n    return null;\n  }\n\n  // Palette aliases\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodStairs = api.theme.wood.stairs || \"minecraft:spruce_stairs\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n  const stonePrimary = api.theme.stone.primary || \"minecraft:mossy_stone_bricks\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:mossy_stone_brick_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:mossy_stone_brick_wall\";\n\n  // Specialized fungal bioluminescence\n  const mushroomStem = \"minecraft:mushroom_stem\";\n  const redMushroom = \"minecraft:red_mushroom_block\";\n  const brownMushroom = \"minecraft:brown_mushroom_block\";\n  const shroomlight = \"minecraft:shroomlight\";\n  const froglight = \"minecraft:ochre_froglight\";\n  const sporeBlossom = \"minecraft:spore_blossom\";\n  const mossBlock = \"minecraft:moss_block\";\n  const chain = \"minecraft:chain\";\n  const netherWart = \"minecraft:nether_wart_block\";\n\n  // Centerline of the fungal stalk (slight organic curvature)\n  function getCenter(y) {\n    const t = y - SEAT_Y;\n    const cx = 13 + 0.65 * Math.sin(t * 0.14);\n    const cz = 13 + 0.45 * Math.sin(t * 0.11);\n    return [cx, cz];\n  }\n\n  // Stalk outer radius function\n  function getStalkRadius(y, angle) {\n    let r;\n    if (y < SEAT_Y) {\n      r = 4.6 + (SEAT_Y - y) * 0.18;\n    } else if (y <= 14) {\n      const t = (y - SEAT_Y) / 6;\n      r = 4.4 * (1 - t) + 3.1 * t;\n    } else if (y <= 22) {\n      const t = (y - 14) / 8;\n      r = 3.1 * (1 - t) + 4.2 * t;\n    } else {\n      const t = (y - 22) / 6;\n      r = 4.2 * (1 - t) + 6.8 * t;\n    }\n\n    // Root buttress flaring near base\n    if (y <= 12) {\n      const flare = Math.max(0, Math.cos(5 * angle + 0.35));\n      const factor = (12 - y) / 8;\n      r += 1.85 * flare * factor;\n    }\n    return r;\n  }\n\n  // Cap outer dome radius function\n  function getCapOuterR(y) {\n    if (y < 24) return 0;\n    if (y === 24) return 7.2;\n    if (y === 25) return 9.2;\n    if (y === 26) return 10.7;\n    if (y === 27) return 11.6;\n    if (y === 28) return 11.8;\n    const t = (y - 28) / 13; // 28 to 41\n    if (t > 1) return 0;\n    return 11.8 * Math.sqrt(Math.max(0, 1 - Math.pow(t, 1.35)));\n  }\n\n  // Cap interior void (Sacred Fungal Hall)\n  function getHallR(y) {\n    if (y < 28 || y > 35) return 0;\n    const capR = getCapOuterR(y);\n    return Math.max(0, capR - 2.0);\n  }\n\n  // 1. Build the Main Fungal Stalk\n  for (let y = SEAT_Y; y <= 27; y++) {\n    const [cx, cz] = getCenter(y);\n    const rMax = getStalkRadius(y, 0) + 2.5;\n    const minX = Math.max(0, Math.floor(cx - rMax));\n    const maxX = Math.min(W - 1, Math.ceil(cx + rMax));\n    const minZ = Math.max(0, Math.floor(cz - rMax));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + rMax));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const d = Math.sqrt(dx * dx + dz * dz);\n        const angle = Math.atan2(dz, dx);\n        const rStalk = getStalkRadius(y, angle);\n\n        if (d <= rStalk) {\n          const isOuter = d > rStalk - 0.9;\n          if (isOuter) {\n            setV(x, y, z, mushroomStem);\n          } else {\n            // Core tissue with occasional bioluminescent veins\n            if ((x * 3 + y * 7 + z * 5) % 19 === 0) {\n              setV(x, y, z, shroomlight);\n            } else if ((x + z + y) % 2 === 0) {\n              setV(x, y, z, woodStripped);\n            } else {\n              setV(x, y, z, mushroomStem);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 2. Terrain Conformance (Rule 6: skirt down to real ground on all columns)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const [cx, cz] = getCenter(SEAT_Y);\n      const dx = x - cx;\n      const dz = z - cz;\n      const d = Math.sqrt(dx * dx + dz * dz);\n      const angle = Math.atan2(dz, dx);\n      const baseR = getStalkRadius(SEAT_Y, angle);\n\n      if (d <= baseR + 1.2) {\n        const groundHeight = api.heightAt(x, z);\n        const nodeGroundY = Math.max(0, Math.min(H - 1, SEAT_Y + Math.round(groundHeight)));\n\n        if (nodeGroundY < SEAT_Y) {\n          // Ground falls away: build downward skirt to meet terrain\n          for (let y = nodeGroundY; y < SEAT_Y; y++) {\n            const isRim = d > baseR - 0.5;\n            setV(x, y, z, isRim ? woodLog : mushroomStem);\n          }\n        } else if (nodeGroundY > SEAT_Y) {\n          // Ground rises: thicken base upward to meet rising hillside\n          for (let y = SEAT_Y; y <= Math.min(nodeGroundY, 16); y++) {\n            setV(x, y, z, mushroomStem);\n          }\n        }\n\n        // Add root toe anchors on surface\n        if (d > baseR - 0.6 && d <= baseR + 1.5 && nodeGroundY >= 0 && nodeGroundY < H) {\n          setV(x, nodeGroundY, z, (x + z) % 2 === 0 ? mossBlock : woodLog);\n        }\n      }\n    }\n  }\n\n  // 3. Spiraling Shelf-Bracket Fungi Steps (wrapping the exterior stalk)\n  // Terminus angle aligns with the sacred hall entrance\n  const entranceAngle = 2.40;\n  const numSteps = 20;\n  const angleStepRate = 0.38;\n  const startAngle = entranceAngle - numSteps * angleStepRate;\n\n  for (let s = 0; s <= numSteps; s++) {\n    const yStep = SEAT_Y + s;\n    const angle = startAngle + s * angleStepRate;\n    const [cx, cz] = getCenter(yStep);\n    const rTrunk = getStalkRadius(yStep, angle);\n\n    const rMin = rTrunk - 0.2;\n    const rMax = rTrunk + 1.75;\n    const angleSpan = 0.32;\n\n    const shelfX = cx + (rTrunk + 0.8) * Math.cos(angle);\n    const shelfZ = cz + (rTrunk + 0.8) * Math.sin(angle);\n\n    for (let da = -angleSpan; da <= angleSpan; da += 0.08) {\n      const curAngle = angle + da;\n      for (let r = rMin; r <= rMax; r += 0.5) {\n        const px = Math.round(cx + r * Math.cos(curAngle));\n        const pz = Math.round(cz + r * Math.sin(curAngle));\n\n        // Step tread\n        setV(px, yStep, pz, brownMushroom);\n\n        // Bracket fungal support & under-step bioluminescence\n        if (yStep - 1 >= 0) {\n          if (r < rMin + 0.8) {\n            setV(px, yStep - 1, pz, mushroomStem);\n          } else if ((px + pz) % 3 === 0) {\n            setV(px, yStep - 1, pz, shroomlight);\n          } else {\n            setV(px, yStep - 1, pz, woodSlab);\n          }\n        }\n      }\n    }\n\n    // Outer shelf safety rail posts at intervals\n    if (s % 3 === 0 && s < numSteps) {\n      const rx = Math.round(cx + (rMax + 0.1) * Math.cos(angle));\n      const rz = Math.round(cz + (rMax + 0.1) * Math.sin(angle));\n      setV(rx, yStep + 1, rz, woodFence);\n    }\n  }\n\n  // 4. Underside Gills & Bioluminescent Channels (y = 24 to 27)\n  for (let y = 24; y <= 27; y++) {\n    const [cx, cz] = getCenter(y);\n    const capR = getCapOuterR(y);\n    const minX = Math.max(0, Math.floor(cx - capR));\n    const maxX = Math.min(W - 1, Math.ceil(cx + capR));\n    const minZ = Math.max(0, Math.floor(cz - capR));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + capR));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const d = Math.sqrt(dx * dx + dz * dz);\n        const angle = Math.atan2(dz, dx);\n        const rStalk = getStalkRadius(y, angle);\n\n        if (d >= rStalk - 0.4 && d <= capR) {\n          const gillWave = Math.cos(22 * angle);\n          if (d > capR - 1.0) {\n            // Outer cap rim margin\n            setV(x, y, z, mushroomStem);\n          } else if (gillWave > 0.35) {\n            // Structural gill fin\n            setV(x, y, z, mushroomStem);\n          } else if (gillWave < -0.3) {\n            // Glowing bioluminescent channel between gills\n            setV(x, y, z, (x + z) % 3 === 0 ? froglight : shroomlight);\n          } else {\n            setV(x, y, z, mushroomStem);\n          }\n        }\n      }\n    }\n  }\n\n  // Hanging spore tendrils beneath the gills\n  const numTendrils = 14;\n  for (let i = 0; i < numTendrils; i++) {\n    const tAngle = (i / numTendrils) * Math.PI * 2 + 0.15;\n    const [cx, cz] = getCenter(26);\n    const tRadius = getCapOuterR(26) - 1.1;\n    const tx = Math.round(cx + tRadius * Math.cos(tAngle));\n    const tz = Math.round(cz + tRadius * Math.sin(tAngle));\n\n    const dropLen = 2 + (i % 3);\n    for (let dy = 1; dy <= dropLen; dy++) {\n      const curY = 25 - dy;\n      if (curY >= 0) {\n        if (dy === dropLen) {\n          setV(tx, curY, tz, i % 2 === 0 ? sporeBlossom : shroomlight);\n        } else {\n          setV(tx, curY, tz, chain);\n        }\n      }\n    }\n  }\n\n  // 5. Cap Outer Shell & Cream Wart Spots (y = 28 to 41)\n  // Deterministic spot center anchors on the dome\n  const spotAnchors = [\n    [0.65, 0.2], [0.80, 1.2], [0.70, 2.3], [0.85, 3.5], [0.75, 4.6], [0.80, 5.7],\n    [1.15, 0.6], [1.10, 1.9], [1.20, 3.0], [1.12, 4.1], [1.18, 5.2],\n    [0.32, 0.9], [0.35, 3.6], [0.38, 5.3]\n  ];\n\n  const spotPoints = spotAnchors.map(([zenith, azimuth]) => {\n    const sy = 40.5 - 11.5 * (1 - Math.cos(zenith));\n    const [scx, scz] = getCenter(sy);\n    const sr = getCapOuterR(sy) - 0.3;\n    const sx = scx + sr * Math.cos(azimuth) * Math.sin(zenith);\n    const sz = scz + sr * Math.sin(azimuth) * Math.sin(zenith);\n    return [sx, sy, sz];\n  });\n\n  for (let y = 28; y <= 41; y++) {\n    const [cx, cz] = getCenter(y);\n    const capR = getCapOuterR(y);\n    const hallR = getHallR(y);\n\n    const minX = Math.max(0, Math.floor(cx - capR));\n    const maxX = Math.min(W - 1, Math.ceil(cx + capR));\n    const minZ = Math.max(0, Math.floor(cz - capR));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + capR));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const d = Math.sqrt(dx * dx + dz * dz);\n\n        if (d <= capR && d >= hallR) {\n          // Check if close to any cream spot center\n          let isSpot = false;\n          for (let i = 0; i < spotPoints.length; i++) {\n            const [sx, sy, sz] = spotPoints[i];\n            const distSq = (x - sx) ** 2 + (y - sy) ** 2 + (z - sz) ** 2;\n            if (distSq <= 2.4) {\n              isSpot = true;\n              break;\n            }\n          }\n\n          if (isSpot) {\n            setV(x, y, z, mushroomStem);\n          } else {\n            // Rich fungal red canopy with organic nether wart texture\n            const textureHash = (x * 7 + y * 13 + z * 19) % 7;\n            setV(x, y, z, textureHash === 0 ? netherWart : redMushroom);\n          }\n        }\n      }\n    }\n  }\n\n  // 6. Sacred Fungal Hall: Solid Floor at y = 27\n  const [floorCx, floorCz] = getCenter(27);\n  const floorR = getCapOuterR(27) - 0.7;\n  for (let x = Math.floor(floorCx - floorR); x <= Math.ceil(floorCx + floorR); x++) {\n    for (let z = Math.floor(floorCz - floorR); z <= Math.ceil(floorCz + floorR); z++) {\n      const dx = x - floorCx;\n      const dz = z - floorCz;\n      const d = Math.sqrt(dx * dx + dz * dz);\n      if (d <= floorR) {\n        if (d <= 2.2) {\n          setV(x, 27, z, stonePrimary);\n        } else if (d <= 3.8 && d >= 3.0) {\n          setV(x, 27, z, shroomlight);\n        } else {\n          setV(x, 27, z, woodPlanks);\n        }\n      }\n    }\n  }\n\n  // 7. Hall Interior Fit-Out & Architectural Carvings\n  // A. Entrance Archway at spiral stair head (angle ~ 2.40)\n  for (let y = 28; y <= 30; y++) {\n    const [cx, cz] = getCenter(y);\n    for (let da = -0.25; da <= 0.25; da += 0.08) {\n      const curAngle = entranceAngle + da;\n      for (let r = getHallR(y) - 0.5; r <= getCapOuterR(y) + 0.8; r += 0.5) {\n        const px = Math.round(cx + r * Math.cos(curAngle));\n        const pz = Math.round(cz + r * Math.sin(curAngle));\n        setV(px, y, pz, null); // Hollow out doorway\n      }\n    }\n  }\n  // Doorway threshold & frame\n  const doorOuterX = Math.round(floorCx + (getCapOuterR(27) + 0.2) * Math.cos(entranceAngle));\n  const doorOuterZ = Math.round(floorCz + (getCapOuterR(27) + 0.2) * Math.sin(entranceAngle));\n  setV(doorOuterX, 27, doorOuterZ, woodPlanks);\n\n  // B. Balcony Scenic Windows cut into cap wall\n  const windowAngles = [-Math.PI / 2, Math.PI, Math.PI / 4];\n  windowAngles.forEach((wAngle) => {\n    for (let wy = 29; wy <= 30; wy++) {\n      const [cx, cz] = getCenter(wy);\n      for (let da = -0.15; da <= 0.15; da += 0.08) {\n        const curA = wAngle + da;\n        for (let r = getHallR(wy) - 0.2; r <= getCapOuterR(wy); r += 0.5) {\n          const wx = Math.round(cx + r * Math.cos(curA));\n          const wz = Math.round(cz + r * Math.sin(curA));\n          if (r >= getCapOuterR(wy) - 0.8) {\n            setV(wx, wy, wz, woodFence);\n          } else {\n            setV(wx, wy, wz, null);\n          }\n        }\n      }\n    }\n  });\n\n  // C. Central Sacred Shrine & Altar (y = 28 to 29)\n  setV(floorCx, 28, floorCz, shroomlight);\n  setV(floorCx, 29, floorCz, froglight);\n  setV(floorCx + 1, 28, floorCz, stoneWall);\n  setV(floorCx - 1, 28, floorCz, stoneWall);\n  setV(floorCx, 28, floorCz + 1, stoneWall);\n  setV(floorCx, 28, floorCz - 1, stoneWall);\n\n  // D. Ceiling Hanging Chandelier & Spore Bloom (y = 33 to 36)\n  const [ceilCx, ceilCz] = getCenter(35);\n  setV(ceilCx, 36, ceilCz, shroomlight);\n  setV(ceilCx, 35, ceilCz, chain);\n  setV(ceilCx, 34, ceilCz, shroomlight);\n  setV(ceilCx, 33, ceilCz, sporeBlossom); // Fills hollow hall with glowing green spores\n\n  // 8. Ground Level Fungal Grotto (Base archway for ground exploration)\n  const [baseCx, baseCz] = getCenter(SEAT_Y);\n  for (let gy = SEAT_Y; gy <= SEAT_Y + 3; gy++) {\n    for (let gx = Math.round(baseCx - 1); gx <= Math.round(baseCx + 1); gx++) {\n      for (let gz = Math.round(baseCz - getStalkRadius(SEAT_Y, -Math.PI / 2) - 1); gz <= Math.round(baseCz); gz++) {\n        const dCenter = Math.sqrt((gx - baseCx) ** 2 + (gz - baseCz) ** 2);\n        if (dCenter <= 2.2 || gz < baseCz - 1.5) {\n          setV(gx, gy, gz, null); // Hollow entrance portal\n        }\n      }\n    }\n  }\n  // Grotto interior shrine light\n  setV(baseCx, SEAT_Y, baseCz, shroomlight);\n  setV(baseCx, SEAT_Y + 1, baseCz, woodFence);\n\n  // 9. Commit Voxel Buffer to API\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = vox[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"ancient_mother_glowcap\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [13, SEAT_Y, 0],\n      door: [13, SEAT_Y, 8],\n      hall_door: [doorOuterX, 28, doorOuterZ]\n    },\n    interiors: [\n      {\n        min: [9, 28, 9],\n        max: [17, 33, 17],\n        kind: \"hall\"\n      }\n    ]\n  };\n}"
+    },
+    "glow_fungal_cluster": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        15,
+        11
+      ],
+      "sourceHash": "b3:ab48f0b06b5c152006685b5c4a66421657a98e16a77279868435622999053b85",
+      "outputHash": "b3:48e48d1ae5505fa6ddb2f0cf64f85aee8568fcd0d9c68bd1edb17c8fa1b05c38",
+      "conforms": false,
+      "conformHash": "b3:84c8e6243479180306f7e201ed947a7979f70d2142ab200afb4d5050fc0d4212",
+      "source": "export const envelope = [11, 15, 11];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const cx = 5;\n  const cz = 5;\n\n  // Grid initialization\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setVoxel(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getVoxel(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // Palette variations across instances\n  const themeIndex = (api.instance.index + Math.floor(api.random() * 2)) % 4;\n\n  const palettes = [\n    // 0: Warped Cyan Bioluminescence\n    {\n      stem: \"minecraft:mushroom_stem\",\n      stemAccent: \"minecraft:stripped_warped_stem\",\n      capOuter: \"minecraft:warped_wart_block\",\n      capAccent: \"minecraft:cyan_concrete_powder\",\n      glowCore: \"minecraft:verdant_froglight\",\n      glowSub: \"minecraft:shroomlight\",\n      gills: \"minecraft:warped_hyphae\",\n      tendril: \"minecraft:verdant_froglight\",\n      surfaceMoss: \"minecraft:moss_block\",\n      surfaceMycelium: \"minecraft:warped_nylium\",\n      rootBlock: \"minecraft:stripped_warped_stem\",\n    },\n    // 1: Crimson Scarlet Glow\n    {\n      stem: \"minecraft:mushroom_stem\",\n      stemAccent: \"minecraft:stripped_crimson_stem\",\n      capOuter: \"minecraft:red_mushroom_block\",\n      capAccent: \"minecraft:nether_wart_block\",\n      glowCore: \"minecraft:pearlescent_froglight\",\n      glowSub: \"minecraft:shroomlight\",\n      gills: \"minecraft:crimson_hyphae\",\n      tendril: \"minecraft:pearlescent_froglight\",\n      surfaceMoss: \"minecraft:moss_block\",\n      surfaceMycelium: \"minecraft:crimson_nylium\",\n      rootBlock: \"minecraft:stripped_crimson_stem\",\n    },\n    // 2: Amber Ochre & Honeyed Shelf\n    {\n      stem: \"minecraft:mushroom_stem\",\n      stemAccent: \"minecraft:stripped_oak_log\",\n      capOuter: \"minecraft:brown_mushroom_block\",\n      capAccent: \"minecraft:honeycomb_block\",\n      glowCore: \"minecraft:ochre_froglight\",\n      glowSub: \"minecraft:shroomlight\",\n      gills: \"minecraft:brown_mushroom_block\",\n      tendril: \"minecraft:ochre_froglight\",\n      surfaceMoss: \"minecraft:moss_block\",\n      surfaceMycelium: \"minecraft:podzol\",\n      rootBlock: \"minecraft:mushroom_stem\",\n    },\n    // 3: Twilight Mystic Amethyst\n    {\n      stem: \"minecraft:mushroom_stem\",\n      stemAccent: \"minecraft:stripped_warped_hyphae\",\n      capOuter: \"minecraft:purpur_block\",\n      capAccent: \"minecraft:warped_wart_block\",\n      glowCore: \"minecraft:pearlescent_froglight\",\n      glowSub: \"minecraft:verdant_froglight\",\n      gills: \"minecraft:warped_wart_block\",\n      tendril: \"minecraft:shroomlight\",\n      surfaceMoss: \"minecraft:moss_block\",\n      surfaceMycelium: \"minecraft:mycelium\",\n      rootBlock: \"minecraft:stripped_warped_hyphae\",\n    },\n  ];\n\n  const palette = palettes[themeIndex];\n  const plinthTheme = api.theme?.ground?.plinth || \"minecraft:rooted_dirt\";\n  const pavementTheme = api.theme?.ground?.pavement || \"minecraft:moss_block\";\n\n  // 1. Central Mycelium & Root Mound (Conforms to terrain heightAt)\n  const baseRx = 3.3 + api.random() * 0.9;\n  const baseRz = 3.3 + api.random() * 0.9;\n  const moundPhase = api.random() * Math.PI * 2;\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const angle = Math.atan2(dz, dx);\n      const radiusMod = 1.0 + 0.18 * Math.sin(3 * angle + moundPhase);\n      const normDist = Math.hypot(dx / baseRx, dz / baseRz) / radiusMod;\n\n      if (normDist <= 1.0) {\n        const rawH = api.heightAt(x, z);\n        const groundY = Math.max(0, Math.min(H - 1, Math.round(seatY + rawH)));\n        const moundElev = Math.round((1.0 - normDist) * 1.8);\n        const topY = Math.min(H - 2, Math.max(groundY, seatY + moundElev));\n        const startY = Math.min(groundY, seatY);\n\n        for (let y = startY; y <= topY; y++) {\n          if (y === topY) {\n            const pick = api.random();\n            if (pick < 0.45) setVoxel(x, y, z, palette.surfaceMycelium);\n            else if (pick < 0.75) setVoxel(x, y, z, palette.surfaceMoss);\n            else setVoxel(x, y, z, pavementTheme);\n          } else if (y >= topY - 1) {\n            setVoxel(x, y, z, plinthTheme);\n          } else {\n            setVoxel(x, y, z, \"minecraft:rooted_dirt\");\n          }\n        }\n      }\n    }\n  }\n\n  // 2. Generate Stalks\n  const numStalks = 3 + Math.floor(api.random() * 3); // 3 to 5 stalks\n  const stalks = [];\n\n  // Main Stalk\n  const mainLeanAngle = api.random() * Math.PI * 2;\n  const mainLeanDist = 0.8 + api.random() * 0.9;\n  const mainHeight = 9 + Math.floor(api.random() * 3); // 9 to 11 tall\n  stalks.push({\n    bx: cx + (api.random() - 0.5) * 1.2,\n    bz: cz + (api.random() - 0.5) * 1.2,\n    tx: cx + Math.cos(mainLeanAngle) * mainLeanDist,\n    tz: cz + Math.sin(mainLeanAngle) * mainLeanDist,\n    height: mainHeight,\n    baseR: 1.5,\n    midR: 1.1,\n    topR: 1.7,\n    capR: 3.3 + api.random() * 0.7,\n    capType: Math.floor(api.random() * 3),\n    isMain: true,\n  });\n\n  // Secondary Stalk\n  const secAngle = mainLeanAngle + Math.PI * (0.65 + api.random() * 0.5);\n  const secDist = 1.8 + api.random() * 0.8;\n  stalks.push({\n    bx: cx + Math.cos(secAngle) * 1.6,\n    bz: cz + Math.sin(secAngle) * 1.6,\n    tx: cx + Math.cos(secAngle) * secDist,\n    tz: cz + Math.sin(secAngle) * secDist,\n    height: 6 + Math.floor(api.random() * 3),\n    baseR: 1.2,\n    midR: 0.9,\n    topR: 1.3,\n    capR: 2.2 + api.random() * 0.5,\n    capType: Math.floor(api.random() * 3),\n    isMain: false,\n  });\n\n  // Tertiary Stalk\n  const tertAngle = mainLeanAngle - Math.PI * (0.65 + api.random() * 0.5);\n  const tertDist = 1.6 + api.random() * 0.8;\n  stalks.push({\n    bx: cx + Math.cos(tertAngle) * 1.5,\n    bz: cz + Math.sin(tertAngle) * 1.5,\n    tx: cx + Math.cos(tertAngle) * tertDist,\n    tz: cz + Math.sin(tertAngle) * tertDist,\n    height: 4 + Math.floor(api.random() * 3),\n    baseR: 1.0,\n    midR: 0.8,\n    topR: 1.1,\n    capR: 1.7 + api.random() * 0.5,\n    capType: Math.floor(api.random() * 2),\n    isMain: false,\n  });\n\n  // Extra Sprouts\n  for (let i = 3; i < numStalks; i++) {\n    const sprAngle = api.random() * Math.PI * 2;\n    const sprDist = 2.2 + api.random() * 0.8;\n    stalks.push({\n      bx: cx + Math.cos(sprAngle) * sprDist,\n      bz: cz + Math.sin(sprAngle) * sprDist,\n      tx: cx + Math.cos(sprAngle) * (sprDist + 0.5),\n      tz: cz + Math.sin(sprAngle) * (sprDist + 0.5),\n      height: 3 + Math.floor(api.random() * 2),\n      baseR: 0.8,\n      midR: 0.7,\n      topR: 0.9,\n      capR: 1.3 + api.random() * 0.4,\n      capType: 0,\n      isMain: false,\n    });\n  }\n\n  let mainApex = [cx, seatY + mainHeight, cz];\n\n  // Render Stalks and Caps\n  for (const st of stalks) {\n    const rawH = api.heightAt(Math.round(st.bx), Math.round(st.bz));\n    const stalkBaseY = Math.max(0, Math.min(H - 2, Math.round(seatY + rawH)));\n    const apexY = Math.min(H - 2, stalkBaseY + st.height);\n\n    if (st.isMain) {\n      mainApex = [Math.round(st.tx), apexY, Math.round(st.tz)];\n    }\n\n    // Quadratic Bezier Control Point\n    const midX = (st.bx + st.tx) * 0.5 + (api.random() - 0.5) * 0.6;\n    const midZ = (st.bz + st.tz) * 0.5 + (api.random() - 0.5) * 0.6;\n    const midY = (stalkBaseY + apexY) * 0.5;\n\n    // Build Stalk Stem\n    const steps = 18;\n    for (let s = 0; s <= steps; s++) {\n      const t = s / steps;\n      const oneMinusT = 1 - t;\n      const px = oneMinusT * oneMinusT * st.bx + 2 * oneMinusT * t * midX + t * t * st.tx;\n      const py = oneMinusT * oneMinusT * stalkBaseY + 2 * oneMinusT * t * midY + t * t * apexY;\n      const pz = oneMinusT * oneMinusT * st.bz + 2 * oneMinusT * t * midZ + t * t * st.tz;\n\n      let r = st.midR;\n      if (t < 0.3) {\n        r = st.baseR * (1.0 - t / 0.3) + st.midR * (t / 0.3);\n      } else if (t > 0.7) {\n        r = st.midR * ((1.0 - t) / 0.3) + st.topR * ((t - 0.7) / 0.3);\n      }\n\n      const minX = Math.max(0, Math.floor(px - r));\n      const maxX = Math.min(W - 1, Math.ceil(px + r));\n      const minY = Math.max(0, Math.floor(py - 0.6));\n      const maxY = Math.min(H - 1, Math.ceil(py + 0.6));\n      const minZ = Math.max(0, Math.floor(pz - r));\n      const maxZ = Math.min(D - 1, Math.ceil(pz + r));\n\n      for (let vx = minX; vx <= maxX; vx++) {\n        for (let vy = minY; vy <= maxY; vy++) {\n          for (let vz = minZ; vz <= maxZ; vz++) {\n            const dist = Math.hypot(vx - px, vz - pz);\n            if (dist <= r) {\n              const pRand = api.random();\n              let blk = palette.stem;\n              if (pRand < 0.12) blk = palette.glowSub;\n              else if (pRand < 0.28) blk = palette.stemAccent;\n              setVoxel(vx, vy, vz, blk);\n            }\n          }\n        }\n      }\n\n      // If at base, ensure connected downwards to terrain\n      if (s === 0) {\n        const floorY = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(Math.round(px), Math.round(pz)))));\n        for (let vy = floorY; vy <= Math.round(py); vy++) {\n          setVoxel(Math.round(px), vy, Math.round(pz), palette.stem);\n        }\n      }\n    }\n\n    // Bracket shelf fungi on taller stalks\n    if (st.height >= 6 && api.random() < 0.8) {\n      const shelfY = Math.min(H - 3, stalkBaseY + 2 + Math.floor(api.random() * (st.height - 4)));\n      const shelfAngle = api.random() * Math.PI * 2;\n      const shX = Math.round(st.bx + Math.cos(shelfAngle) * 1.3);\n      const shZ = Math.round(st.bz + Math.sin(shelfAngle) * 1.3);\n      setVoxel(shX, shelfY, shZ, palette.capOuter);\n      setVoxel(shX, shelfY - 1, shZ, palette.glowCore);\n    }\n\n    // 3. Build Mushroom Cap\n    const capX = Math.round(st.tx);\n    const capY = apexY;\n    const capZ = Math.round(st.tz);\n    const cR = st.capR;\n\n    if (st.capType === 0) {\n      // Bell / Dome Cap with Glowing Core\n      const capH = Math.min(3, H - 1 - capY);\n      const botY = Math.max(stalkBaseY + 1, capY - 1);\n      const topCapY = Math.min(H - 1, capY + capH);\n\n      for (let y = botY; y <= topCapY; y++) {\n        const v = (y - botY) / Math.max(1, topCapY - botY);\n        const layerR = cR * Math.sin(Math.PI * (0.2 + 0.8 * (1.0 - v)));\n\n        const minX = Math.max(0, Math.floor(capX - layerR));\n        const maxX = Math.min(W - 1, Math.ceil(capX + layerR));\n        const minZ = Math.max(0, Math.floor(capZ - layerR));\n        const maxZ = Math.min(D - 1, Math.ceil(capZ + layerR));\n\n        for (let x = minX; x <= maxX; x++) {\n          for (let z = minZ; z <= maxZ; z++) {\n            const d = Math.hypot(x - capX, z - capZ);\n            if (d <= layerR) {\n              if (d >= layerR - 0.85 || y === topCapY) {\n                // Outer Shell\n                const dot = ((x + y + z) % 3 === 0 && api.random() < 0.35);\n                setVoxel(x, y, z, dot ? palette.capAccent : palette.capOuter);\n              } else if (y === botY) {\n                // Underside gills\n                setVoxel(x, y, z, (d <= 1.2) ? palette.glowCore : palette.gills);\n              } else {\n                // Glowing heart\n                setVoxel(x, y, z, palette.glowCore);\n              }\n            }\n          }\n        }\n      }\n\n      // Spore Dripping Tendrils under rim\n      for (let angleDeg = 0; angleDeg < 360; angleDeg += 45) {\n        if (api.random() < 0.6) {\n          const rad = (angleDeg * Math.PI) / 180;\n          const tx = Math.round(capX + Math.cos(rad) * (cR - 0.4));\n          const tz = Math.round(capZ + Math.sin(rad) * (cR - 0.4));\n          const tLen = 1 + Math.floor(api.random() * 3);\n          for (let dy = 1; dy <= tLen; dy++) {\n            const ty = botY - dy;\n            const gLevel = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(tx, tz))));\n            if (ty > gLevel + 1 && ty >= 0) {\n              setVoxel(tx, ty, tz, (dy === tLen) ? palette.glowCore : palette.capOuter);\n            }\n          }\n        }\n      }\n    } else if (st.capType === 1) {\n      // Wide Parasol / Flared Shelf\n      const botY = Math.max(stalkBaseY + 1, capY - 1);\n      const topCapY = Math.min(H - 1, capY + 1);\n\n      for (let y = botY; y <= topCapY; y++) {\n        const layerR = (y === topCapY) ? cR * 0.6 : (y === capY ? cR : cR - 0.4);\n        const minX = Math.max(0, Math.floor(capX - layerR));\n        const maxX = Math.min(W - 1, Math.ceil(capX + layerR));\n        const minZ = Math.max(0, Math.floor(capZ - layerR));\n        const maxZ = Math.min(D - 1, Math.ceil(capZ + layerR));\n\n        for (let x = minX; x <= maxX; x++) {\n          for (let z = minZ; z <= maxZ; z++) {\n            const d = Math.hypot(x - capX, z - capZ);\n            if (d <= layerR) {\n              if (y === topCapY) {\n                setVoxel(x, y, z, palette.capOuter);\n              } else if (y === capY) {\n                setVoxel(x, y, z, (d >= layerR - 0.6) ? palette.capAccent : palette.glowSub);\n              } else {\n                // Underside glowing gills\n                setVoxel(x, y, z, (d <= 1.2 || (x + z) % 2 === 0) ? palette.glowCore : palette.gills);\n              }\n            }\n          }\n        }\n      }\n\n      // Spore pearls hanging from edge\n      for (let angleDeg = 0; angleDeg < 360; angleDeg += 60) {\n        if (api.random() < 0.55) {\n          const rad = (angleDeg * Math.PI) / 180;\n          const tx = Math.round(capX + Math.cos(rad) * (cR - 0.3));\n          const tz = Math.round(capZ + Math.sin(rad) * (cR - 0.3));\n          const ty = botY - 1;\n          const gLevel = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(tx, tz))));\n          if (ty > gLevel && ty >= 0) {\n            setVoxel(tx, ty, tz, palette.glowCore);\n          }\n        }\n      }\n    } else {\n      // Bulbous Lantern Pod\n      const botY = Math.max(stalkBaseY + 1, capY - 1);\n      const topCapY = Math.min(H - 1, capY + 2);\n\n      for (let y = botY; y <= topCapY; y++) {\n        const v = (y - botY + 0.5) / Math.max(1, topCapY - botY + 1);\n        const layerR = cR * Math.sin(Math.PI * v);\n        const minX = Math.max(0, Math.floor(capX - layerR));\n        const maxX = Math.min(W - 1, Math.ceil(capX + layerR));\n        const minZ = Math.max(0, Math.floor(capZ - layerR));\n        const maxZ = Math.min(D - 1, Math.ceil(capZ + layerR));\n\n        for (let x = minX; x <= maxX; x++) {\n          for (let z = minZ; z <= maxZ; z++) {\n            const d = Math.hypot(x - capX, z - capZ);\n            if (d <= layerR) {\n              const angle = Math.atan2(z - capZ, x - capX);\n              const rib = Math.cos(angle * 4) > 0.2;\n              if (d >= layerR - 0.7) {\n                setVoxel(x, y, z, rib ? palette.capOuter : palette.glowCore);\n              } else {\n                setVoxel(x, y, z, palette.glowCore);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 4. Crawling Root Spurs Across the Soil\n  const numRoots = 3 + Math.floor(api.random() * 3);\n  for (let r = 0; r < numRoots; r++) {\n    const rootAngle = (r / numRoots) * Math.PI * 2 + (api.random() - 0.5) * 0.5;\n    const rootDist = 2.5 + api.random() * 1.5;\n    for (let d = 1.0; d <= rootDist; d += 0.6) {\n      const rx = Math.round(cx + Math.cos(rootAngle) * d);\n      const rz = Math.round(cz + Math.sin(rootAngle) * d);\n      if (rx >= 0 && rx < W && rz >= 0 && rz < D) {\n        const gY = Math.max(0, Math.min(H - 2, Math.round(seatY + api.heightAt(rx, rz))));\n        setVoxel(rx, gY, rz, palette.rootBlock);\n        if (d <= rootDist * 0.6) {\n          setVoxel(rx, gY + 1, rz, palette.rootBlock);\n        }\n      }\n    }\n  }\n\n  // 5. Solid Voxel Count Guarantee & 6-Connected Component Clean-Up\n  let solidCount = 0;\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z]) solidCount++;\n      }\n    }\n  }\n\n  // If under 520 solid voxels, thicken the base mound to satisfy Rule 9\n  let padRadius = 1;\n  while (solidCount < 530 && padRadius <= 4) {\n    for (let x = 1; x < W - 1; x++) {\n      for (let z = 1; z < D - 1; z++) {\n        const d = Math.hypot(x - cx, z - cz);\n        if (d <= padRadius + 0.6) {\n          const gY = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(x, z))));\n          for (let y = Math.min(gY, seatY); y <= seatY + 1; y++) {\n            if (!grid[x][y][z]) {\n              grid[x][y][z] = (y === seatY + 1) ? pavementTheme : plinthTheme;\n              solidCount++;\n            }\n          }\n        }\n      }\n    }\n    padRadius++;\n  }\n\n  // Flood fill 6-connectivity from ground seat voxels\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n  const queue = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gY = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(x, z))));\n      for (let y = 0; y <= gY + 1; y++) {\n        if (grid[x][y][z] && !visited[x][y][z]) {\n          visited[x][y][z] = 1;\n          queue.push([x, y, z]);\n        }\n      }\n    }\n  }\n\n  const dxs = [1, -1, 0, 0, 0, 0];\n  const dys = [0, 0, 1, -1, 0, 0];\n  const dzs = [0, 0, 0, 0, 1, -1];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [qx, qy, qz] = queue[head++];\n    for (let i = 0; i < 6; i++) {\n      const nx = qx + dxs[i];\n      const ny = qy + dys[i];\n      const nz = qz + dzs[i];\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        if (grid[nx][ny][nz] && !visited[nx][ny][nz]) {\n          visited[nx][ny][nz] = 1;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // Prune any stray disconnected voxels\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] && !visited[x][y][z]) {\n          grid[x][y][z] = null;\n        }\n      }\n    }\n  }\n\n  // 6. Emit blocks to world\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z]) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"glow_fungal_cluster\",\n    seatY: seatY,\n    anchors: {\n      spore_crown: [mainApex[0], mainApex[1], mainApex[2]],\n    },\n  };\n}"
+    }
+  }
+}
