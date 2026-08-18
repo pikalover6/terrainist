@@ -405,6 +405,25 @@ export interface ProgramNodeStats {
   /** Instances that stand in the world — one for a landmark, N for a scatter. */
   readonly instances: number;
   readonly blockCount: number;
+  /**
+   * Where each instance stands, so a pad can be measured off the report.
+   *
+   * The walked defect this exists for: "bespoke sites sit on raised, hard-edged
+   * platforms" was impossible to quantify without recompiling with a debug
+   * build, because the only trace an instance left in the report was a count.
+   * Report-only — no block moves because of this field.
+   */
+  readonly sites: readonly ProgramSiteStats[];
+}
+
+/** One placed instance, as the report carries it. */
+export interface ProgramSiteStats {
+  readonly index: number;
+  readonly footprint: Rect;
+  /** World Y of the instance's node-local `y = 0`, after seating. */
+  readonly baseY: number;
+  /** True when it floats — nothing under it was claimed or padded. */
+  readonly hovering?: boolean;
 }
 
 /** What the layout solver contributed, on a settlement-profile compile. */
@@ -2221,6 +2240,12 @@ function programStatsOf(
       mode: job.mode,
       instances: mine.length,
       blockCount: mine.reduce((sum, p) => sum + p.blockCount, 0),
+      sites: mine.map((p) => ({
+        index: p.index,
+        footprint: p.footprint,
+        baseY: p.baseY,
+        ...(p.hovering === true ? { hovering: true } : {}),
+      })),
     };
   });
 }

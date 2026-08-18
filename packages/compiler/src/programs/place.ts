@@ -40,6 +40,29 @@ import { rotatedFootprint, type ProgramRotation } from "./rotate.js";
  */
 export const PROGRAM_MAX_RELIEF = 16;
 
+/**
+ * Fill a site may need before the placer looks for a gentler one.
+ *
+ * **The walked defect (Kai, final battery deck):** bespoke sites "sit on
+ * raised, hard-edged platforms instead of integrating with the terrain". Half
+ * of that is the pad's own edge, which {@link programApronRings} now grades
+ * out; the other half is choosing to stand somewhere that needs a pad that tall
+ * in the first place. Relief was the only ground test — a site could be
+ * perfectly *even* and still four blocks of fill under half its footprint,
+ * because the seat plane is the median.
+ *
+ * So the queue is walked twice: once refusing anything that needs more than
+ * this much fill, and again — only if the count is still short — with the
+ * ceiling off. Four blocks is an eight-column apron, which reads as ground; it
+ * is also the point past which the fill is taller than a player, which is when
+ * a plinth stops being a footing and starts being a podium.
+ *
+ * Never a *refusal*: a scatter that can only be satisfied on lumpy ground still
+ * gets its count, on the same sites it got before, because the second walk sees
+ * exactly the queue the first one did.
+ */
+export const PROGRAM_GENTLE_LIFT = 4;
+
 /** Counts refusals a caller wants to report rather than swallow. */
 export interface SiteRefusals {
   /** Candidates a cliff refused — the ones worth a diagnostic. */
@@ -99,6 +122,30 @@ export function programGroundPlane(
   }
   heights.sort((a, b) => a - b);
   return (heights[heights.length >> 1] as number) + 1;
+}
+
+/**
+ * How deep the pad under `rect` would have to fill to reach `baseY`.
+ *
+ * The pad's top is `baseY − 1` and its deepest column is the lowest ground
+ * under the footprint, so this is the height of the plinth's tallest face —
+ * what a walker sees standing beside the thing, and what
+ * {@link PROGRAM_GENTLE_LIFT} is measured in. Columns outside the region are
+ * skipped rather than refused: the site tests already refused those.
+ */
+export function padLiftUnder(plan: ColumnPlan, rect: Rect, baseY: number): number {
+  const { region } = plan;
+  let lift = 0;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      const g = plan.ground[j * region.width + i] as number;
+      if (baseY - 1 - g > lift) lift = baseY - 1 - g;
+    }
+  }
+  return lift;
 }
 
 /**
@@ -242,53 +289,93 @@ export function planProgramSites(input: ProgramPlacementInput): readonly Program
   // sites are *supposed* to have water in them.
   const wades = hover === undefined && seatOfParams(params).policy === "wade";
 
-  const claimed: Rect[] = hover === undefined ? [...(input.taken ?? [])] : [];
-  const sites: ProgramSite[] = [];
+  const queue = sampleCandidates(area, step, stream);
 
-  for (const cand of sampleCandidates(area, step, stream)) {
-    if (sites.length >= params.count) break;
-    const { x: cx, z: cz } = cand;
-    const rotation =
-      input.rotationAt?.(cx + Math.floor((w - 1) / 2), cz + Math.floor((d - 1) / 2)) ?? 0;
-    const [fw, fd] = rotatedFootprint(w, d, rotation);
-    const rect: Rect = { x0: cx, z0: cz, x1: cx + fw - 1, z1: cz + fd - 1 };
-    if (!insideRect(rect, area)) continue;
-    if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
-    if (!areaAdmits(params.area, region, rect)) continue;
-    // `avoidTags` is honoured whether or not the instance floats: fluid and
-    // relief are statements about ground a thing stands on and a hovering
-    // instance is exempt from those, but `avoidTags` is a statement the
-    // *author* made, and a param the compiler accepts and quietly ignores is
-    // a document that lies. What a hovering instance does skip is the plain
-    // occupancy mask — see `occupied`.
-    if (
-      input.occupancy !== undefined &&
-      occupied(input.occupancy, rect, params.avoidTags, hover !== undefined)
-    ) {
-      continue;
+  /**
+   * One greedy walk of the queue under a fill ceiling.
+   *
+   * `budgets` are tried in order and each continues where the last stopped, so
+   * `[gentle, Infinity]` means "take the gentle sites first, then fill the
+   * shortfall from what is left". `countRefusals` keeps the cliff tally the
+   * diagnostic quotes from being counted once per walk.
+   */
+  const walk = (budgets: readonly number[], countRefusals: boolean): ProgramSite[] => {
+    const claimed: Rect[] = hover === undefined ? [...(input.taken ?? [])] : [];
+    const sites: ProgramSite[] = [];
+    for (const maxLift of budgets) {
+      if (sites.length >= params.count) break;
+
+      for (const cand of queue) {
+        if (sites.length >= params.count) break;
+        const { x: cx, z: cz } = cand;
+        const rotation =
+          input.rotationAt?.(cx + Math.floor((w - 1) / 2), cz + Math.floor((d - 1) / 2)) ?? 0;
+        const [fw, fd] = rotatedFootprint(w, d, rotation);
+        const rect: Rect = { x0: cx, z0: cz, x1: cx + fw - 1, z1: cz + fd - 1 };
+        if (!insideRect(rect, area)) continue;
+        if (claimed.some((r) => overlaps(r, rect, spacing))) continue;
+        if (!areaAdmits(params.area, region, rect)) continue;
+        // `avoidTags` is honoured whether or not the instance floats: fluid and
+        // relief are statements about ground a thing stands on and a hovering
+        // instance is exempt from those, but `avoidTags` is a statement the
+        // *author* made, and a param the compiler accepts and quietly ignores is
+        // a document that lies. What a hovering instance does skip is the plain
+        // occupancy mask — see `occupied`.
+        if (
+          input.occupancy !== undefined &&
+          occupied(input.occupancy, rect, params.avoidTags, hover !== undefined)
+        ) {
+          continue;
+        }
+        let baseY: number | undefined;
+        if (hover !== undefined) {
+          const top = topGroundUnder(plan, rect);
+          if (top === undefined) continue;
+          baseY = top + hover;
+        } else {
+          // Refusals are counted on one walk only: the same cliff seen twice is one
+          // cliff, and the diagnostic quotes this number.
+          baseY = programGroundPlane(
+            plan,
+            rect,
+            countRefusals && maxLift === Infinity ? input.refusals : undefined,
+            wades,
+          );
+          if (baseY === undefined) continue;
+          if (!reliefOk(plan, rect, params, fw, fd)) continue;
+          // A wading site is never padded, so it has no lift to be gentle about.
+          if (!wades && padLiftUnder(plan, rect, baseY) > maxLift) continue;
+        }
+        if (params.elevation !== undefined) {
+          const [lo, hi] = params.elevation;
+          if (baseY < lo || baseY > hi) continue;
+        }
+        claimed.push(rect);
+        sites.push({
+          index: sites.length,
+          footprint: rect,
+          baseY,
+          ...(rotation === 0 ? {} : { rotation }),
+        });
+      }
     }
-    let baseY: number | undefined;
-    if (hover !== undefined) {
-      const top = topGroundUnder(plan, rect);
-      if (top === undefined) continue;
-      baseY = top + hover;
-    } else {
-      baseY = programGroundPlane(plan, rect, input.refusals, wades);
-      if (baseY === undefined) continue;
-      if (!reliefOk(plan, rect, params, fw, fd)) continue;
-    }
-    if (params.elevation !== undefined) {
-      const [lo, hi] = params.elevation;
-      if (baseY < lo || baseY > hi) continue;
-    }
-    claimed.push(rect);
-    sites.push({
-      index: sites.length,
-      footprint: rect,
-      baseY,
-      ...(rotation === 0 ? {} : { rotation }),
-    });
-  }
+    return sites;
+  };
+
+  // The plain walk is the one that decides how many instances this ground can
+  // hold; the gentle walk is preferred **only when it holds just as many**.
+  // Standing on kinder ground is worth a lot, but never worth an instance: the
+  // count is a request the author made, and W337 exists because quietly
+  // rounding it down was already a defect once.
+  const plain = walk([Infinity], true);
+  const sites =
+    hover !== undefined
+      ? plain
+      : ((): ProgramSite[] => {
+          const gentle = walk([PROGRAM_GENTLE_LIFT, Infinity], false);
+          return gentle.length >= plain.length ? gentle : plain;
+        })();
+
   // Acceptance order is a queue, not an identity. The list the caller sees is
   // sorted back into row-major order, so instance `index` remains a property of
   // the geometry — the promise this module opened with, and the reason a run's

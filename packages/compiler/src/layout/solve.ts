@@ -273,6 +273,24 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
     if (moved === 0) break;
   }
 
+  // --- the landmarks that walked away from their target --------------------
+  // Said *after* the improvement rounds, because an improvement is exactly the
+  // move that would make an earlier report a lie.
+  for (const node of nodes) {
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+    const abandoned = coarseAbandonDiagnostic(node, placement, {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    });
+    if (abandoned !== undefined) diagnostics.push(abandoned);
+  }
+
   // --- products ------------------------------------------------------------
   const placements: Placement[] = [];
   const ports: ResolvedPort[] = [];
@@ -841,6 +859,51 @@ function coarseSeatDiagnostic(node: LayoutNodeInput, seat: Scored): LoamDiagnost
     node.nodePath,
     `every site at this landmark's coarse target was refused by the building slope veto (steepest ${Math.round(seat.stats.maxSlope)}\u00b0 across the footprint); it was seated there anyway, at (${x}, ${z}), and its ground is padded — a landmark is not a building`,
     'nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept',
+  );
+}
+
+/**
+ * `LOAM-W521`: a landmark that ended up outside the coarse target it declared.
+ *
+ * **The walked defect (Kai, final battery deck, `pirate_unicorn_war`):** the
+ * document put the pirate fort at `[0.35, 0.65]` and the unicorn colossus at
+ * `[0.65, 0.35]` — opposite corners, one per faction, one per island. The
+ * colossus was placed 280 blocks from its target, on the *pirates'* island,
+ * beside their fort, and the compile said nothing at all: `at` is a soft cost,
+ * the flattest ground won, and a soft cost that loses leaves no trace.
+ *
+ * {@link landmarkCoarseSeat} already covers the case where the target was
+ * *refused* (`W520`). This covers the quieter one, where the target was merely
+ * outbid — and it is deliberately a **report, not a veto**: the cost model is
+ * still the placer, because overriding it here would move every landmark in
+ * every world that already walks. What changes is that the author can see it.
+ *
+ * Narrow by construction: only a landmark, only one that declared a coarse
+ * `zone`/`at`, only when the anchor finished outside that target's zero-cost
+ * region, and never when `W520` already said the louder version.
+ */
+function coarseAbandonDiagnostic(
+  node: LayoutNodeInput,
+  placement: Placement,
+  ctx: EvalContext,
+): LoamDiagnostic | undefined {
+  if (node.landmark !== true) return undefined;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return undefined;
+  const { anchor } = placement;
+  if (containsPoint(target, anchor)) return undefined;
+  const cx = Math.round((target.x0 + target.x1) / 2);
+  const cz = Math.round((target.z0 + target.z1) / 2);
+  // `Math.sqrt`, never `Math.hypot`: §6.5 rule 6 allows only the exactly
+  // specified members, and this number is printed in a diagnostic.
+  const dx = anchor.x - cx;
+  const dz = anchor.z - cz;
+  const away = Math.round(Math.sqrt(dx * dx + dz * dz));
+  return warning(
+    "LANDMARK_COARSE_ABANDONED",
+    node.nodePath,
+    `this landmark asked to stand at (${cx}, ${cz}) and was placed at (${anchor.x}, ${anchor.z}), ${away} blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid`,
+    'nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction\'s shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent',
   );
 }
 

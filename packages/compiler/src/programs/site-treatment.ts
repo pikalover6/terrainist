@@ -49,16 +49,55 @@ import { MAX_FOUNDATION_DEPTH, type StructureBlock } from "../structures/buildin
 import { PROP_MAX_RELIEF, PROP_PAD_SKIRT, levelPropPad } from "../structures/props.js";
 
 /**
- * Rings of graded apron outside the pad's own skirt.
+ * Columns of apron per block of lift the pad absorbs.
  *
- * Modest on purpose, and a function of the thing's own size: a 15 × 15 hut gets
- * one extra ring, a 48-block landmark gets three, and nothing gets more. The
- * apron is a *transition*, not terraforming — a plugin that craters the
- * hillside around it is a worse defect than the one this file fixes.
+ * Two, so the outer face of the pad is a 1:2 slope — the same ratio the
+ * solver's own node-scale pads grade at (`APRON_RUN_PER_BLOCK`,
+ * `stdlib/edits`). One is a 45° bank and still reads as a cut face.
  */
-export function programApronRings(rect: Rect): number {
+export const PROGRAM_APRON_RUN_PER_BLOCK = 2;
+
+/**
+ * Longest apron a program site may grade, in columns.
+ *
+ * Twelve blocks of lift at {@link PROGRAM_APRON_RUN_PER_BLOCK}, matching the
+ * solver's `APRON_MAX`. Past it the site is not sitting on a slope, it is
+ * sitting on a cliff, and the answer there is a different site — which is what
+ * the placer's lift preference (`programs/place.ts`) now looks for — not a
+ * longer ramp.
+ */
+export const PROGRAM_APRON_MAX = 24;
+
+/**
+ * Rings of graded apron outside the pad's own skirt, for a pad of this lift.
+ *
+ * **The walked defect (Kai, final battery deck):** "bespoke program sites sit
+ * on raised, hard-edged platforms instead of integrating with the terrain".
+ * This function used to answer 1–3 *regardless of how high the pad stood* — a
+ * size-keyed constant — so a plugin lifted eight blocks out of a hollow got
+ * three rings of apron and then a five-block cliff. The apron was the right
+ * idea measured against the wrong thing.
+ *
+ * It is keyed on the **lift** now: enough rings to step the pad's own top back
+ * down to the ground it grew out of at one block per
+ * {@link PROGRAM_APRON_RUN_PER_BLOCK} columns, floored at one ring (so a pad
+ * that barely lifts is exactly as cheap as it was) and capped at
+ * {@link PROGRAM_APRON_MAX}. `lift` is the deepest fill under the pad — the
+ * distance the outer face has to come down — and never the pad's height above
+ * sea level or anything else.
+ *
+ * The second cap is the thing's **own long side**, and it is the sentence this
+ * file opened with kept honest: "a plugin that craters the hillside around it
+ * is a worse defect than the one this file fixes". A 16-block hut grading
+ * twenty-four columns in every direction is a 64-block earthwork around a hut,
+ * and on the mushroom vale it reached far enough to spoil the ground a
+ * *different* program was standing on. Inside its own width the apron is
+ * landscaping; past that it is landscape.
+ */
+export function programApronRings(rect: Rect, lift: number): number {
   const long = Math.max(rect.x1 - rect.x0 + 1, rect.z1 - rect.z0 + 1);
-  return Math.max(1, Math.min(3, Math.floor(long / 16) + 1));
+  const needed = Math.max(0, Math.ceil(lift)) * PROGRAM_APRON_RUN_PER_BLOCK;
+  return Math.max(1, Math.min(PROGRAM_APRON_MAX, long, needed));
 }
 
 /** Column index of a world column, or `undefined` outside the region. */
@@ -79,6 +118,38 @@ export function siteIsWet(plan: ColumnPlan, rect: Rect): boolean {
     }
   }
   return false;
+}
+
+/**
+ * The surface of the water a site stands in — the level its own fluid may
+ * reach, and not one block higher.
+ *
+ * **The walked defect (Kai, final battery deck):** a sea monster stood in "a
+ * SLAB OF ELEVATED WATER — a raised rectangle of ocean above sea level with
+ * visible falling-edge faces". The pad was innocent (a `wade` site is never
+ * padded): the *program* laid its own ocean. A wading instance's node-local
+ * `y = 0` is the **seabed** — rule 5's own doctrine — so a program that models
+ * the water it is breaching out of has no way to know how far above it the real
+ * surface is, and the kraken's own sea, four blocks deep in its own frame,
+ * landed three blocks proud of the bay it was standing in.
+ *
+ * The compiler answers the question the program cannot: the highest fluid
+ * surface any column of the footprint actually carries, and the world's sea
+ * level when the site is dry. A pond at y = 80 keeps its pond; the ocean keeps
+ * its shoreline.
+ */
+export function siteWaterLine(plan: ColumnPlan, rect: Rect): number {
+  let line = plan.seaLevel;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      if (plan.fluidKind[idx] === FluidKind.NONE) continue;
+      const top = plan.fluidTop[idx] as number;
+      if (top > line) line = top;
+    }
+  }
+  return line;
 }
 
 /** Everything {@link treatProgramSite} reads. */
@@ -124,20 +195,28 @@ export function treatProgramSite(input: SiteTreatmentInput): StructureBlock[] {
     ...(input.declare === undefined ? {} : { declare: input.declare }),
   });
 
-  for (const block of gradeApron(input, top)) blocks.push(block);
+  // `relief` is the deepest fill the pad just laid — how far its outer face has
+  // to come back down — which is exactly what the apron is sized on.
+  for (const block of gradeApron(input, top, relief)) blocks.push(block);
   return blocks;
 }
 
 /**
- * The stepped ring outside the pad — one block down per ring.
+ * The graded ring outside the pad — one block down per
+ * {@link PROGRAM_APRON_RUN_PER_BLOCK} columns, all the way back to the ground.
  *
  * Fill only, exactly as the pad is: raising is safe from a pass this late,
  * cutting would delete the vegetation and the snow standing on the column.
+ *
+ * The level is a *monotone* staircase outward, `top − ceil(ring / run)`, so no
+ * two neighbouring columns of the apron differ by more than one block and the
+ * outermost ring asks for the ground the pad grew out of. That is the property
+ * the pad's hard edge lacked and the one `program-pad.test.ts` measures.
  */
-function gradeApron(input: SiteTreatmentInput, top: number): StructureBlock[] {
+function gradeApron(input: SiteTreatmentInput, top: number, lift: number): StructureBlock[] {
   const { plan, footprint } = input;
   const out: StructureBlock[] = [];
-  const rings = programApronRings(footprint);
+  const rings = programApronRings(footprint, lift);
   const inner = PROP_PAD_SKIRT;
   const outer = inner + rings;
   const columns: { idx: number; x: number; z: number; want: number; g: number }[] = [];
@@ -153,7 +232,7 @@ function gradeApron(input: SiteTreatmentInput, top: number): StructureBlock[] {
       const idx = indexOf(plan, x, z);
       if (idx === undefined) continue;
       if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
-      const want = top - ring;
+      const want = top - Math.ceil(ring / PROGRAM_APRON_RUN_PER_BLOCK);
       const g = plan.ground[idx] as number;
       if (g >= want) continue;
       columns.push({ idx, x, z, want, g });

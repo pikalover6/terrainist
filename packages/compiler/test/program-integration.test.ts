@@ -255,10 +255,15 @@ function stepped(width: number, atX: number, drop: number): ColumnPlan {
 }
 
 describe("a plugin instance's site treatment", () => {
-  it("scales the apron with the instance, and never terraforms", () => {
-    expect(programApronRings({ x0: 0, z0: 0, x1: 14, z1: 14 })).toBe(1);
-    expect(programApronRings({ x0: 0, z0: 0, x1: 31, z1: 31 })).toBe(3);
-    expect(programApronRings({ x0: 0, z0: 0, x1: 199, z1: 199 })).toBe(3);
+  it("scales the apron with the pad's lift, and never terraforms", () => {
+    // A pad that barely lifts keeps the one ring it always had…
+    expect(programApronRings({ x0: 0, z0: 0, x1: 14, z1: 14 }, 0)).toBe(1);
+    // …a real lift is graded out at 1:2, whatever the instance's size…
+    expect(programApronRings({ x0: 0, z0: 0, x1: 14, z1: 14 }, 3)).toBe(6);
+    expect(programApronRings({ x0: 0, z0: 0, x1: 31, z1: 31 }, 3)).toBe(6);
+    // …and both ceilings hold: the thing's own long side, then the hard cap.
+    expect(programApronRings({ x0: 0, z0: 0, x1: 14, z1: 14 }, 12)).toBe(15);
+    expect(programApronRings({ x0: 0, z0: 0, x1: 199, z1: 199 }, 40)).toBe(24);
   });
 
   it("declares its pad and its apron to the ground driver rather than writing them", () => {

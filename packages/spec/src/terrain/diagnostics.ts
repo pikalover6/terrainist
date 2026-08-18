@@ -493,6 +493,17 @@ export const TERRAIN_DIAGNOSTICS = {
   PROGRAM_DROPPED: "LOAM-W337",
   /** The `programs` map or a reference into it is malformed. */
   PROGRAM_SCHEMA: "LOAM-E338",
+  /**
+   * An instance standing in water wrote fluid above that water's own surface,
+   * and the compiler dropped it.
+   *
+   * The walked defect: a sea monster in a raised rectangle of ocean, three
+   * blocks proud of the bay, with falling-edge faces. A `wade` seat puts
+   * node-local `y = 0` on the **seabed**, so a program that models its own sea
+   * has no way to know where the real surface is — the compiler holds the line
+   * the program cannot see.
+   */
+  PROGRAM_WATER_CLAMPED: "LOAM-W339",
 
   // --- Loam v0.2 core codes, used verbatim ---------------------------------
   /** §3.3 — a `region`/`path` envelope given three-element `size`. */
@@ -689,6 +700,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * three hundred blocks and one island away, with nothing said about it.
    */
   LANDMARK_COARSE_SEATED: "LOAM-W520",
+  /**
+   * A landmark finished outside the coarse `at`/`zone` target it declared,
+   * because a site there cost more than one somewhere else.
+   *
+   * `W520`'s quiet sibling: there the target was *refused* and taken anyway,
+   * here it was merely outbid, and a soft cost that loses leaves no trace. The
+   * walked defect was two rival landmarks — one per faction, one per island —
+   * standing on the same island with nothing said about it.
+   */
+  LANDMARK_COARSE_ABANDONED: "LOAM-W521",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.

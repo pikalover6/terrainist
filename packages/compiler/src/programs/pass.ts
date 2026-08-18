@@ -39,6 +39,7 @@ import type { GroundDriver } from "../layout/ground-driver.js";
 import { materialThemeById, programThemeOf } from "./theme.js";
 import {
   siteIsWet,
+  siteWaterLine,
   treatProgramSite,
   underpinProgramInstance,
 } from "./site-treatment.js";
@@ -271,6 +272,7 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
     fuelUsed += runs.fuelUsed;
     if (!runs.ok) continue;
 
+    let clampedFluid = 0;
     for (const [i, executed] of runs.runs.entries()) {
       const site = sites[i] as ProgramSite;
       // Out of the sandbox and into the world frame. Everything below — the
@@ -279,8 +281,21 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       // the program was verified in (see `rotate.ts`).
       const run = rotateRun(executed, site.rotation ?? 0, job.program.envelope);
       const baseY = seatedBaseY(site, run, seat);
-      const lowered = lowerRun(run, site, baseY, input.stack, job, diagnostics);
+      // Only an instance that stands in water is held to the waterline: a
+      // fountain on a hill is a fountain, and a dry site's fluid is its own
+      // business (the physics lint still refuses an unstable one).
+      const inWater = seat?.policy === "wade" || siteIsWet(input.plan, site.footprint);
+      const lowered = lowerRun(
+        run,
+        site,
+        baseY,
+        input.stack,
+        job,
+        diagnostics,
+        inWater ? siteWaterLine(input.plan, site.footprint) : undefined,
+      );
       if (lowered === undefined) continue;
+      clampedFluid += lowered.clampedFluid;
       // A hovering instance stands over the ground, not on it: the ground
       // beneath stays buildable, so its footprint is never claimed.
       if (!isHovering(job)) claimed.push(site.footprint);
@@ -306,6 +321,17 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
       appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
       appendAll(markers, lowered.markers);
       placed.push(lowered.placed);
+    }
+
+    if (clampedFluid > 0) {
+      diagnostics.push(
+        warning(
+          "PROGRAM_WATER_CLAMPED",
+          job.nodePath,
+          `${JSON.stringify(job.programId)} wrote ${clampedFluid} fluid block${clampedFluid === 1 ? "" : "s"} above the waterline of the body it stands in; they were dropped and the sea kept its own surface`,
+          "a wading program's node-local y = 0 is the SEABED, not the waterline, so it cannot know how deep the water over it is: model the seabed and whatever breaks the surface, and let the world's own water fill the gap",
+        ),
+      );
     }
   }
 
@@ -465,7 +491,18 @@ interface LoweredRun {
   readonly blocks: readonly StructureBlock[];
   readonly markers: readonly Marker[];
   readonly placed: PlacedProgram;
+  /** Fluid voxels dropped for standing above the site's own waterline. */
+  readonly clampedFluid: number;
 }
+
+/**
+ * Fluid a program may not raise: the blocks that *are* a water body.
+ *
+ * Deliberately three names and not "anything waterloggable": a waterlogged
+ * fence is a fence, and a program is entitled to build one wherever it likes.
+ * What it is not entitled to do is stack the sea higher than the sea.
+ */
+const PROGRAM_FLUIDS = new Set(["water", "flowing_water", "bubble_column"]);
 
 /**
  * Resolve one run's voxels against the registry and offset them to its site.
@@ -482,8 +519,10 @@ function lowerRun(
   stack: PrismarineStack,
   job: ProgramJob,
   diagnostics: LoamDiagnostic[],
+  waterLine: number | undefined,
 ): LoweredRun | undefined {
   const blocks: StructureBlock[] = [];
+  let clampedFluid = 0;
   // Sorted, so the block list is a pure function of the voxel set rather than
   // of the order the program happened to write them in.
   for (const key of [...run.voxels.keys()].sort(byColumnThenHeight)) {
@@ -500,9 +539,22 @@ function lowerRun(
       );
       return undefined;
     }
+    const y = baseY + ly;
+    // §the water law: an instance standing *in* a water body may model that
+    // body — a wading monster is half sea — but never raise it. A fluid voxel
+    // above the site's own surface is dropped, and the natural water the
+    // terrain already put in the column is what remains.
+    if (
+      waterLine !== undefined &&
+      y > waterLine &&
+      PROGRAM_FLUIDS.has(stack.blockNameByStateId(stateId) ?? "")
+    ) {
+      clampedFluid += 1;
+      continue;
+    }
     blocks.push({
       x: site.footprint.x0 + lx,
-      y: baseY + ly,
+      y,
       z: site.footprint.z0 + lz,
       stateId,
     });
@@ -535,6 +587,7 @@ function lowerRun(
       seatY: run.result?.seatY ?? 0,
       name: run.result?.name ?? job.programId,
     },
+    clampedFluid,
   };
 }
 
