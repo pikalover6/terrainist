@@ -288,6 +288,9 @@ const PARAM_CASES: Readonly<Record<PropName, readonly Record<string, unknown>[]>
   coven_stone_circle: [{}],
   bone_charm_rack: [{}],
   waterlogged_shrine: [{}],
+  // --- desert_caravanserai pack ---
+  date_palm_grove: [{}],
+  caravan_pack_stack: [{}],
 };
 
 function opsOf(prop: PropName, params: Record<string, unknown> = {}, seed = SEED): LocalVoxelOp[] {

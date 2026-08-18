@@ -511,6 +511,46 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "bronze_colossus_fragment",
     ]),
   }),
+  /* --- desert_caravanserai pack --- */
+  Object.freeze({
+    id: "desert_caravanserai",
+    name: "Desert Caravanserai",
+    thesis:
+      "A Silk Road oasis on a caravan road: the catalog cannot say serai court, qanat wellhead, windcatcher house, spice godown, camel lines, shade arcade, date store, dye yard or oasis shrine, and a Provencal village rendered in sandstone is still a Provencal village.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["sun_clay", "white_quartz"]),
+    characters: Object.freeze(["lanes", "core", "civic"]),
+    members: Object.freeze([
+      // `caravanserai` is the COMMERCE wave's, word for word, and a member
+      // belongs to one pack only — so the anchor carries the court in its id
+      // and the word stays where it was.
+      "serai_court",
+      "caravan_gatehouse",
+      "qanat_wellhead",
+      "windcatcher_house",
+      // `warehouse` is the founding table's and `spice_market` the commerce
+      // wave's souk. Same rule.
+      "spice_godown",
+      "camel_lines",
+      // `bazaar`, `souk` and `market` are the commerce wave's, and `arcade`
+      // and `stoa` the classical wave's. Same rule again.
+      "shade_arcade_row",
+      // `granary` is the founding table's and `mudbrick_granary` the Nile
+      // pack's.
+      "date_store_tower",
+      // `cistern` is the utility wave's infrastructure vessel.
+      "serai_cistern",
+      "dye_yard",
+      // `kiln`, `glassworks` and `glassblower` are the works wave's.
+      "desert_glass_kiln",
+      // `shrine` is the faith wave's, across a dozen compounds.
+      "oasis_shrine",
+      // `minaret` is the faith wave's and `watchtower` the founding table's.
+      "watch_minaret",
+      "date_palm_grove",
+      "caravan_pack_stack",
+    ]),
+  }),
 ]);
 
 /** Every legal pack word, in registry order. */

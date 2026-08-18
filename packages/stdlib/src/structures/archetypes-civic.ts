@@ -79,6 +79,8 @@ import { steppeFacadeDefaults } from "./archetypes-steppe.js";
 import { atlanteanFacadeDefaults } from "./archetypes-atlantean.js";
 // --- swamp_witch pack ---
 import { swampFacadeDefaults } from "./archetypes-swamp.js";
+// --- desert_caravanserai pack ---
+import { caravanFacadeDefaults } from "./archetypes-caravan.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -333,6 +335,16 @@ export function archetypeFacadeDefaults(
       // no window rhythm at all: smoke, draught, secrecy and the dark.
       const swamp = swampFacadeDefaults(archetype);
       if (Object.keys(swamp).length > 0) return swamp;
+      // --- desert_caravanserai pack ---------------------------------------
+      // The oasis pack, beside the packs it was wired in after: almost the
+      // whole of it wants `flat`, because a mudbrick town roofs flat — a flat
+      // roof is a room you sleep on in the summer and rain is not the problem
+      // here — and the shrine wants the `hip` whose deep gap between the eave
+      // plate and the allowance is exactly where its dome is built. The
+      // godown and the date store want no window rhythm at all: a store whose
+      // whole subject is keeping the sun off what is in it is kept dark.
+      const caravan = caravanFacadeDefaults(archetype);
+      if (Object.keys(caravan).length > 0) return caravan;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

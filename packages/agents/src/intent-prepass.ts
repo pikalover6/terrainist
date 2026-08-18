@@ -233,6 +233,11 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
     "atlantean",
     "atlantis/a sunken city risen/a drowned empire on dry land: a tidal palace colonnaded in prismarine and quartz, a trident temple, a domed sea oracle, a conch amphitheatre, a pearl divers' hall, hippocamp stables, a monumental tide gate over a water channel, coral garden courts, a navigators' academy, salt baths, a water-stained archive, a tide bell hung on iron chain, a moon pool, a leviathan altar and the fallen fragment of a bronze colossus.",
   ],
+  // --- desert_caravanserai pack ---
+  [
+    "desert_caravanserai",
+    "a silk road oasis/a caravan town/a desert serai: an arcaded serai court with traders' cells round it, a gatehouse wide enough for a loaded animal, a qanat wellhead, houses with wind towers on their heads, a spice godown, camel lines, an arcade of shaded stalls, a date store, a cistern, a dye yard, a glassblower's kiln, a domed shrine at the spring, a watch minaret, date palm groves and stacked caravan loads.",
+  ],
 ] as const;
 
 /** One `id  <- thesis` line per pack, for the prompt. */

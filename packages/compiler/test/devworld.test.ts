@@ -99,6 +99,8 @@ import {
   SWAMP_ROW_LENGTH,
   ATLANTEAN_EXHIBIT_ROWS,
   ATLANTEAN_ROW_LENGTH,
+  CARAVAN_EXHIBIT_ROWS,
+  CARAVAN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
   WAVE2_ROW_LENGTH,
   WORKS_EXHIBIT_ROWS,
@@ -253,6 +255,8 @@ describe("dev world grid", () => {
     const swamp = SWAMP_EXHIBIT_ROWS.length * SWAMP_ROW_LENGTH;
     // The atlantean pack: prefixed (`atl_tidal_palace`) likewise.
     const atlantean = ATLANTEAN_EXHIBIT_ROWS.length * ATLANTEAN_ROW_LENGTH;
+    // The desert_caravanserai pack: prefixed (`crvn_serai_court`) likewise.
+    const caravan = CARAVAN_EXHIBIT_ROWS.length * CARAVAN_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -305,6 +309,7 @@ describe("dev world grid", () => {
         steppe +
         swamp +
         atlantean +
+        caravan +
         commerce +
         garrison + science +
         arcana +

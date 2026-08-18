@@ -3089,6 +3089,88 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "prop.place@0: the forearm and hand of a bronze giant, DOWN. A colossus standing on a plinth is the memorial wave's `colossal_statue` and keeps every spelling of it; what a risen city needs is the fragment, because it fell first. The bronze is the copper oxidation set banded by position; the rubble is honest and gravity-safe - the only gravel is at the base plane and nothing here can fall.",
   }),
 
+  /* --- desert_caravanserai pack ---------------------------------------------
+   * The oasis noun set. "A Silk Road oasis", "a caravan town", "a desert
+   * serai" all route to the medieval era and arrive as a European village
+   * rendered in sandstone: the palette was never the problem, the nouns were.
+   * Fifteen entries - thirteen buildings and two ground pieces.
+   *
+   * The sweep that named this pack found its best word already gone:
+   * `caravanserai` is the COMMERCE wave's, word for word, so the anchor ships
+   * as `serai_court` and every other bare noun a desert town brushes against
+   * (`cistern`, `granary`, `minaret`, `bazaar`, `souk`, `warehouse`, `kiln`,
+   * `stable`, `gate`, `shrine`, `well`) stays exactly where it was. Every drop
+   * of water in the pack lives in a CURBED SUNKEN BASIN - sunk into the floor
+   * plane, inset one cell from the interior on every side, every touching floor
+   * cell written solid, and the cells claimed through the ground floor's
+   * connectivity guard before a drop is written. NO `mud` anywhere: mud is
+   * 15/16 of a block, and `mud_bricks` and `packed_mud` are what a sun-dried
+   * town is actually made of.
+   */
+  com("serai_court", "Serai court", "implemented", {
+    tags: ["desert_caravanserai", "size_l"],
+    note: "The anchor: the arcaded court - cut-sandstone columns down both wall rows at every other bay, capped short of the ceiling so no column is a pillar, the traders' cells benched between them, the lamp niches bedded among them and the court's own curbed basin at the middle of the floor. Tags: serai_court/serai/oasis_serai; bare `caravanserai` and `khan` stay the commerce wave's, word for word.",
+  }),
+  civ("caravan_gatehouse", "Caravan gatehouse", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "ONE arch bay, wide enough for a loaded animal: two piers and the lintel across the course the columns actually reached. One bay and no more is a walkability decision - a second cuts the room into segments with a column at each end, which is the pocket that passes a connectivity check and fails the walk from the door. Bare `gate`, `gatehouse` and `arch` stay where they were.",
+  }),
+  wat("qanat_wellhead", "Qanat wellhead", "implemented", {
+    kind: "building",
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The underground channel brought up where it can be drawn from: a one-cell curbed run of water down the room, inset from the wall so its closure never depends on a window rhythm, with the draw rope of `iron_chain` hung from a cap course over the WALKWAY beside it. Nothing hangs under the chain - a chain is not a full cube, and `attachment: ceiling` demands one. Bare `well` and `wellhead` stay the utility wave's.",
+  }),
+  ver("windcatcher_house", "Windcatcher house", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The badgir: two shaft columns at the head with the vent grilles tied across their heads at the top of the storey and no lower, the draught vents down one wall, the cool slab platform a household sleeps on down the other and the water jar standing in the draught. No exterior work - the tower a badgir wears is the shell's business.",
+  }),
+  com("spice_godown", "Spice godown", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The store the whole road exists for, and NOT the commerce wave's souk: no counter, no customers - sack ranks in coloured terracotta stacked on plinths off a floor that gets swept, the tally barrels between them and the gangway down the middle. Bare `warehouse` stays the founding table's and `spice_market` the commerce wave's.",
+  }),
+  rur("camel_lines", "Camel lines", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "Where the animals stand while the load is counted: hurdles off one wall with the troughs in the bays, the fodder up on a plinth down the other so it is never trodden into the ground, and the tack shelf across the head. Bare `stable`, `stables`, `paddock` and `corral` stay where they were; the steppe pack's `horse_line` is a picket out on the grass, this is a walled yard off a court.",
+  }),
+  com("shade_arcade_row", "Shade arcade row", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The stall row under its awning: columns down both walls at every third bay with an awning slab springing off each one AT THE COURSE THE COLUMN ACTUALLY REACHED - a slab at a guessed height beside a column that stopped lower is a slab in mid-air - and the counters with the goods on them filling the bays between. Bare `bazaar`, `souk`, `market`, `arcade` and `stoa` stay where they were.",
+  }),
+  rur("date_store_tower", "Date store", "implemented", {
+    tags: ["desert_caravanserai", "size_s"],
+    note: "The year's dates, kept dark and kept up off the floor: bins of bottom slabs down both walls with the pressed blocks on them, the gangway between the ranks and the press at the head through the single-must-have placement, so it cannot vanish because its cell was the door's. Bare `granary` stays the founding table's and `mudbrick_granary` the Nile pack's.",
+  }),
+  wat("serai_cistern", "Serai cistern", "implemented", {
+    kind: "building",
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The pack's largest water and its most careful: ONE curbed basin at the middle of the floor with the drawing steps round it and the jars in the bays. The cells are claimed through the connectivity guard before a drop is written, so a cistern that would strand half the room is refused and the room is simply dry. Bare `cistern` and `reservoir` stay the utility wave's infrastructure vessel.",
+  }),
+  ind("dye_yard", "Dye yard", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The vats down both walls in bays with the cloth drying on the rods over them - at the top of the storey, where a body walks under it rather than into it - and the loom at the head. NOT A DROP of water: a dyer's vat is a cauldron, the block the game already means by it, and an open pool of dye beside an open pool of water is two fluids where the pack can only prove one.",
+  }),
+  ind("desert_glass_kiln", "Desert glass kiln", "implemented", {
+    tags: ["desert_caravanserai", "size_s"],
+    note: "Sand in one end and glass out of the other: the kiln at the head written COLD (`lit: false`, never a campfire - the shell's own hearth is the room's fire), the heat bedded beside it as glowstone, and the sand and the finished glass ranked on plinths down the walls. Sand is a gravity block: every grain of it here stands on a slab standing on the shell's own floor. Bare `kiln`, `glassworks` and `glassblower` stay the works wave's.",
+  }),
+  rel("oasis_shrine", "Oasis shrine", "implemented", {
+    tags: ["desert_caravanserai", "size_m"],
+    note: "The pack's one piece of exterior work: the MUDBRICK DOME, built as FILLED DISCS stepping in, each standing on the disc below it, to a glowstone oculus written last and unconditionally - a dome as a ring per course is `floating.isolated` and a hollow one is a sealed pocket. Inside, the ring of seats and the ablution basin, curbed, set one row off the lantern column. Bare `shrine`, `roadside_shrine` and `chapel` stay the faith and relic waves'.",
+  }),
+  mil("watch_minaret", "Watch minaret", "implemented", {
+    tags: ["desert_caravanserai", "size_s"],
+    note: "The road watch, read off its storeys: fence posts at intervals round the watch floor and never a solid run - a watch floor is a thing you see out of - the watch bench across the head and the signal brazier under a dressed cap, COLD. Bare `minaret` stays the faith wave's and bare `tower` and `watchtower` the founding table's.",
+  }),
+  mem("date_palm_grove", "Date palm grove", "implemented", {
+    kind: "prop",
+    tags: ["desert_caravanserai", "size_s"],
+    note: "prop.place@0: the reason the town is here - three date palms at three heights, each a full-block trunk to the base plane with its crown standing on the trunk's OWN top course, every leaf written persistent so the grove is not three poles by morning, and the watered bed kerbed round their feet low enough to step over.",
+  }),
+  nom("caravan_pack_stack", "Caravan pack stack", "implemented", {
+    tags: ["desert_caravanserai", "size_xs"],
+    note: "prop.place@0: a caravan's load off the animals for the night - bales, sacks and jars in an L so the stack has a face and a side, the second course only where there is a first course under it, the rolled tent strapped over the bales and one glowstone bedded in it. DELIBERATELY LOW, two courses at its tallest: a thing a body walks round rather than a wall a lane runs into.",
+  }),
+
 ]);
 
 /* -------------------------------------------------------------------------- */

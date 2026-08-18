@@ -84,12 +84,20 @@ export {
   ATLANTEAN_ROW_LENGTH,
   atlanteanSizeFor,
 } from "./exhibits/atlantean.js";
+
+/** The desert_caravanserai rows, for tests that assert on the gradient. */
+export {
+  CARAVAN_EXHIBIT_ROWS,
+  CARAVAN_ROW_LENGTH,
+  caravanSizeFor,
+} from "./exhibits/caravan.js";
 import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
 import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
 import { DWARVEN_EXHIBIT_ROWS } from "./exhibits/dwarven.js";
 import { STEPPE_EXHIBIT_ROWS } from "./exhibits/steppe.js";
 import { SWAMP_EXHIBIT_ROWS } from "./exhibits/swamp.js";
 import { ATLANTEAN_EXHIBIT_ROWS } from "./exhibits/atlantean.js";
+import { CARAVAN_EXHIBIT_ROWS } from "./exhibits/caravan.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -190,6 +198,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...SWAMP_EXHIBIT_ROWS,
   // The atlantean pack: the tidal palace, the rotunda and the moon pool.
   ...ATLANTEAN_EXHIBIT_ROWS,
+  // The desert_caravanserai pack: the serai court, the arcade and the cistern.
+  ...CARAVAN_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,

@@ -79,6 +79,9 @@ export * from "./props-atlantean.js";
 // --- swamp_witch pack ---
 export * from "./props-swamp.js";
 export * from "./archetypes-swamp.js";
+// --- desert_caravanserai pack ---
+export * from "./props-caravan.js";
+export * from "./archetypes-caravan.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

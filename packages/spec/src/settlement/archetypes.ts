@@ -202,6 +202,15 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "pearl_diver_hall", "hippocamp_stable", "tide_gate_arch",
   "coral_garden_court", "navigator_academy", "salt_bath_terme",
   "drowned_archive", "tide_bell_tower", "moon_pool_shrine",
+  // --- desert_caravanserai pack -------------------------------------------
+  // The desert_caravanserai pack, LAST, because `BUILDING_ARCHETYPES` spreads
+  // it last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`. The pack's `date_palm_grove` and
+  // `caravan_pack_stack` are deliberately absent: both are PROPS.
+  "serai_court", "caravan_gatehouse", "qanat_wellhead", "windcatcher_house",
+  "spice_godown", "camel_lines", "shade_arcade_row", "date_store_tower",
+  "serai_cistern", "dye_yard", "desert_glass_kiln", "oasis_shrine",
+  "watch_minaret",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

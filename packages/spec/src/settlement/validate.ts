@@ -3210,6 +3210,13 @@ export const SETTLEMENT_PROP_NAMES = [
   // element.
   "leviathan_altar",
   "bronze_colossus_fragment",
+  // --- desert_caravanserai pack ---
+  // The oasis pack's ground half: the two entries of that pack which stand on
+  // the bare ground rather than roofing a room. Order matches `PROP_NAMES` in
+  // the stdlib, which `compiler/test/props.test.ts` asserts element by
+  // element.
+  "date_palm_grove",
+  "caravan_pack_stack",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

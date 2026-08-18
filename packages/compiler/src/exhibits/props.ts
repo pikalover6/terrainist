@@ -315,6 +315,22 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "bronze_colossus_fragment", params: { yaw: 180 } },
     ],
   },
+  // --- desert_caravanserai pack ---
+  // The oasis ground: the grove and the stacked load, each shown at three yaws
+  // so the position-hashed ground scuffing is visibly not a repeat and the
+  // stack is read from both its face and its side.
+  {
+    row: "caravan_ground",
+    water: false,
+    cells: [
+      { prop: "date_palm_grove", params: {} },
+      { prop: "date_palm_grove", params: { yaw: 90 } },
+      { prop: "date_palm_grove", params: { yaw: 180 } },
+      { prop: "caravan_pack_stack", params: {} },
+      { prop: "caravan_pack_stack", params: { yaw: 90 } },
+      { prop: "caravan_pack_stack", params: { yaw: 180 } },
+    ],
+  },
   // --- swamp_witch pack ---
   // The fen ground: the circle, the charm rack and the shrine in its curbed
   // pool, each shown at two yaws so the position-hashed ground scuffing is

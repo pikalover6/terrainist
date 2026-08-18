@@ -402,6 +402,18 @@ import {
 
 export * from "./archetypes-swamp.js";
 
+// --- desert_caravanserai pack ----------------------------------------------
+// The desert_caravanserai pack's buildings — the thirteen entries of that pack
+// that have an inside. Its `date_palm_grove` and `caravan_pack_stack` are PROPS
+// (`props-caravan.ts`): neither of the two roofs a room.
+import {
+  CARAVAN_BUILDING_ARCHETYPES,
+  caravanArchetypeOfTags,
+  furnishCaravan,
+} from "./archetypes-caravan.js";
+
+export * from "./archetypes-caravan.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -513,6 +525,11 @@ export const BUILDING_ARCHETYPES = [
   // same reason: this list's order is the seam `fabric.test.ts` pins, and a
   // pack appended at the end moves nothing that came before it.
   ...ATLANTEAN_BUILDING_ARCHETYPES,
+  // --- desert_caravanserai pack --------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...CARAVAN_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -845,6 +862,19 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // `candle_works` — that no table ever had.
   const swamp = swampArchetypeOfTags(tags);
   if (swamp !== null) return swamp;
+  // --- desert_caravanserai pack ---------------------------------------------
+  // The oasis pack, beside the other late packs and high for the reason every
+  // later wave is: the tables below are greedy. It claims not one bare word,
+  // and the word it most wanted was already gone — bare `caravanserai` and
+  // `khan` are the COMMERCE wave's, which is why this pack's anchor ships as
+  // `serai_court`. Bare `gate`, `gatehouse`, `arch`, `well`, `warehouse`,
+  // `spice_market`, `bazaar`, `souk`, `market`, `stable`, `granary`,
+  // `cistern`, `reservoir`, `kiln`, `glassworks`, `shrine`, `minaret`,
+  // `tower` and `watchtower` all still go exactly where they went. Every claim
+  // it makes is a compound of its own ids or a word — `serai`, `qanat`,
+  // `badgir`, `godown`, `camel`, `oasis` — no table in the catalog ever had.
+  const caravan = caravanArchetypeOfTags(tags);
+  if (caravan !== null) return caravan;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1318,6 +1348,8 @@ export function furnish(r: FurnishRequest): number {
   n += furnishAtlantean(ctx);
   // --- swamp_witch pack ---
   n += furnishSwamp(ctx);
+  // --- desert_caravanserai pack ---
+  n += furnishCaravan(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

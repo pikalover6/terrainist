@@ -43,6 +43,8 @@ describe("the registry", () => {
       "swamp_witch",
       // --- atlantean pack ---
       "atlantean",
+      // --- desert_caravanserai pack ---
+      "desert_caravanserai",
     ]);
   });
 
@@ -88,7 +90,10 @@ describe("the registry", () => {
     // the dwarven pack held it for the steppe last wave; by agreement it is
     // the swamp_witch pack that owns the arithmetic for both this time, so
     // the number moves here and nowhere else.
-    expect(seen.size).toBe(235);
+    // …plus the desert_caravanserai pack's fifteen: 235 + 15 = 250. That pack
+    // shipped ALONE, so it owns its own arithmetic and this line moves with it
+    // and with nothing else.
+    expect(seen.size).toBe(250);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

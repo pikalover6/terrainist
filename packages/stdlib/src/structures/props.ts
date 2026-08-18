@@ -144,6 +144,15 @@ import {
   isSwampProp,
   swampPropFootprint,
 } from "./props-swamp.js";
+// --- desert_caravanserai pack ----------------------------------------------
+// The desert_caravanserai pack's ground pieces — the two entries of that pack
+// which stand on the bare ground rather than roofing a room.
+import {
+  CARAVAN_PROP_GENERATORS,
+  CARAVAN_PROP_NAMES,
+  caravanPropFootprint,
+  isCaravanProp,
+} from "./props-caravan.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -285,6 +294,8 @@ export const PROP_NAMES = [
   ...SWAMP_PROP_NAMES,
   // --- atlantean pack ---
   ...ATLANTEAN_PROP_NAMES,
+  // --- desert_caravanserai pack ---
+  ...CARAVAN_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -629,6 +640,8 @@ export function propFootprint(
   if (isAtlanteanProp(prop)) return atlanteanPropFootprint(prop, params);
   // --- swamp_witch pack ---
   if (isSwampProp(prop)) return swampPropFootprint(prop, params);
+  // --- desert_caravanserai pack ---
+  if (isCaravanProp(prop)) return caravanPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1187,6 +1200,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...ATLANTEAN_PROP_GENERATORS,
   // --- swamp_witch pack ---
   ...SWAMP_PROP_GENERATORS,
+  // --- desert_caravanserai pack ---
+  ...CARAVAN_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */
