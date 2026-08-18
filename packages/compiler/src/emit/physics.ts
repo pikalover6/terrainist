@@ -1449,7 +1449,7 @@ async function lintPalettes(
           for (const entry of palette as RawPaletteEntry[]) {
             const name = typeof entry.Name === "string" ? entry.Name : "";
             const props = normaliseProperties(entry.Properties);
-            const key = `${name} ${Object.entries(props)
+            const key = `${name}${Object.entries(props)
               .map(([k, v]) => `${k}=${v}`)
               .join(",")}`;
             let issue = blockVerdicts.get(key);
