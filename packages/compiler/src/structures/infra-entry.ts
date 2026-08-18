@@ -116,7 +116,7 @@ import type {
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { GroundClaim, GroundSourceClass } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
-import type { ColumnPlan } from "../terrain/columns.js";
+import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { Planter, buildLifeWorld, op, type LifeOp, type LifeWorld, type PlaceRule } from "./life.js";
@@ -1128,8 +1128,22 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
     // (§3.5's declaring path). Before a block is laid, so that every column
     // below reads `standY` as the ground the resolver decided rather than the
     // ground this pass wished for.
+    // The water veto. An entry that is not a water mover (`def.water`) has no
+    // business standing *in* standing water: a ring course whose hull happens
+    // to clip a lake would otherwise declare its own level across the water and
+    // fill it from the bed up, cutting the lake in two with a wall of stone.
+    // A terrace stops at the shore, and the run reads as a run that met a lake.
+    // The veto is applied to the sweep itself rather than to the build loop
+    // alone, because a declaring entry drowns a lake through the *ground
+    // contract* — the blocks are only the visible half.
+    const dryColumns =
+      job.def.water === undefined
+        ? swept.columns.filter((c) => !nearStandingWater(input.plan, c.x, c.z))
+        : swept.columns;
+    const vetoed = swept.columns.length - dryColumns.length;
+
     const declared =
-      job.def.declaresLevels === true ? declareRun(input, world, job, swept.columns) : 0;
+      job.def.declaresLevels === true ? declareRun(input, world, job, dryColumns) : 0;
 
     // `block` and `gap` write through the carriageway on purpose — a hedgerow
     // does not open for a cart track, and a barricade's whole point is that it
@@ -1142,8 +1156,8 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
           ? INFRA_RULE
           : INFRA_CROSSING_RULE;
     let placed = 0;
-    let skipped = 0;
-    for (const column of swept.columns) {
+    let skipped = vetoed;
+    for (const column of dryColumns) {
       // The carriageway is an absolute veto for the two behaviours that leave
       // the road its surface. `open` skipped the gate indices already; this
       // catches a band column thrown sideways into a lane the skip did not
@@ -1244,6 +1258,30 @@ export function buildInfraEntries(input: InfraEntryPassInput): InfraEntryPassRes
  * becoming a place where an entry states the same number twice and the two
  * disagree.
  */
+/**
+ * True when `(x, z)` — or any of its eight neighbours, the one-column shore
+ * margin — holds standing water whose surface is above sea level.
+ *
+ * The test is deliberately about *impounded* water: a lake, a tarn, a
+ * reservoir, the sort of body a ring course can cut in half. The open sea is
+ * left to the entries that cross it, because a mole or a causeway meeting the
+ * ocean at sea level is doing exactly what it was asked to.
+ */
+export function nearStandingWater(plan: ColumnPlan, x: number, z: number): boolean {
+  const region = plan.region;
+  for (let dz = -1; dz <= 1; dz++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const xx = x + dx;
+      const zz = z + dz;
+      if (!inside(region, xx, zz)) continue;
+      const k = index(region, xx, zz);
+      if (plan.fluidKind[k] === FluidKind.NONE) continue;
+      if ((plan.fluidTop[k] as number) > plan.seaLevel) return true;
+    }
+  }
+  return false;
+}
+
 function gradeCapOf(job: InfraEntryJob): number {
   const geometry = job.def.geometry;
   if (geometry.kind === "route") return geometry.profile(contextOf(job)).maxGrade;

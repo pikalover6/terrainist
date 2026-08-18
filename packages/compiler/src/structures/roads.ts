@@ -480,7 +480,16 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
       declaration: { routes: [], shoulders: [] },
     };
   }
-  road[index(region, hub.x, hub.z)] = 1;
+  const hubIdx = index(region, hub.x, hub.z);
+  road[hubIdx] = 1;
+  // …and its level, which is the ground it stands on until a route surfaces
+  // through it. `roadY` is zero-initialised, and a hub nothing routes to keeps
+  // that zero: `blendShoulders` would then seed its dilation at y=0 and grade
+  // the five-by-five around it down toward bedrock, leaving a sheer shaft with
+  // an unclaimed natural pillar at its centre. Wherever a route *is* surfaced
+  // this write is overwritten by `surfaceRoute` before anything reads it, so
+  // the fix is invisible on every world that routes.
+  roadY[hubIdx] = view.ground[hubIdx] as number;
 
   const wallHug = buildWallHugMask(
     region,
@@ -3383,13 +3392,25 @@ function blendShoulders(
   // ungraded columns — clearly visible from the map as a dithered swathe
   // beside every diagonal lane. A dilation has no such gaps by construction,
   // and it needs no notion of heading at all.
-  let frontier = road;
+  const seeds = new Uint8Array(road);
+  let frontier: Uint8Array = seeds;
   const claimed = new Uint8Array(n);
   const height = new Int32Array(n);
   for (let k = 0; k < n; k++) {
     if (road[k] === 1) {
       claimed[k] = 1;
-      height[k] = roadY[k] as number;
+      const y = roadY[k] as number;
+      // Defence in depth against an undeclared level (see the hub seed in
+      // `buildRoadNetwork`). A verge is a bank beside a lane; it must be
+      // structurally incapable of moving ground the height of a mountain. A
+      // road cell whose declared level sits *below the sea* while its own
+      // column stands above it is not a road level at all — it is a hole in
+      // the array — so it is claimed (nothing may grade it) and never seeds.
+      if (y < plan.seaLevel && (view.ground[k] as number) > plan.seaLevel) {
+        seeds[k] = 0;
+        continue;
+      }
+      height[k] = y;
     }
   }
 
