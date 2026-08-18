@@ -59,9 +59,16 @@ rolls, T110 authored water, machinery bisected innocent);
 dev_world_packs installed (760 rows / 4,195 buildings / 0 unstable
 fluids with real pools); the tide-bell full-cube fix.
 
-**AWAITING KAI:** walks of whatever regenerates after the pad fix;
+**GO-HAM: desert_caravanserai SHIPPED (365eded).** Seventh pack, 13
+buildings + 2 props (serai_court anchor — "caravanserai" was
+commerce's; qanat_wellhead chain-from-cap-carries-nothing;
+oasis_shrine filled-disc dome), members 235→250, crvn_* devworld
+rows, 36 bare words asserted unmoved. Devworld recompiled+installed
+alongside for the same walk.
+
+**AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,
-apron WP-7).
+apron WP-7); dev-app first launch.
 
 **STANDING:** look latitude=mine (website only); leniency PERMANENT;
 GO-HAM rule; battery regen pre-authed (end-of-run during autonomy;
