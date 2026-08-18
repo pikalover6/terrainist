@@ -539,6 +539,9 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     const spots = sweptColumns(region, path, carriagewaySpans(width).lanes, { line: frame.line });
     const at = (p: { x: number; z: number }): number =>
       index(region, clampX(region, p.x), clampZ(region, p.z));
+    // The shore floor is asked over the whole cross-section, not the centreline
+    // this profile is graded on. {@link routeFloorAt}.
+    const sectionReach = carriagewaySpans(width).outer + 1;
     const levels = arcLevels(
       frame,
       gradeProfile(
@@ -548,12 +551,9 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
         frame.stations.map((p) => view.ground[at(p)] as number),
         plan.seaLevel,
         frame.stations.map((p) => (paved[at(p)] === 1 ? 0 : ROAD_FILL_BAND)),
-        // A deck has to clear the water it spans, so a bridge cell's floor is
-        // the fluid surface plus one rather than the water table.
-        frame.stations.map((p) => {
-          const k = at(p);
-          return water[k] === 1 ? Math.max(plan.seaLevel, view.fluidTop[k] as number) + 1 : 0;
-        }),
+        // A deck clears the water it spans; a shore cell keeps the rim of the
+        // water beside it. {@link routeFloorAt}.
+        frame.stations.map((p) => routeFloorAt(view, water, at(p), plan.seaLevel, true, sectionReach)),
       ),
     );
     const surfaced: { x: number; z: number; y: number }[] = [];
@@ -1325,16 +1325,19 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     const ground: number[] = [];
     const band: number[] = [];
     const deckFloor: number[] = [];
+    // The shore floor is asked over the whole cross-section, not the centreline
+    // this profile is graded on. {@link routeFloorAt}.
+    const sectionReach = carriagewaySpans(job.width).outer + 1;
     for (const p of frame.stations) {
       const k = index(region, clampX(region, p.x), clampZ(region, p.z));
       ground.push(natural[k] as number);
       band.push(paved[k] === 1 ? 0 : ROAD_FILL_BAND);
-      // A deck has to clear the water it spans, so a bridge cell's floor is the
-      // fluid surface plus one rather than the water table. Without it the grade
-      // would follow the channel's *bed* — a ramp down into the canal and out
-      // the other side — because `plan.ground` under water is the bed.
+      // A deck has to clear the water it spans — without it the grade would
+      // follow the channel's *bed*, a ramp down into the canal and out the other
+      // side, because `plan.ground` under water is the bed — and a shore cell
+      // has to keep the rim of the water beside it. {@link routeFloorAt}.
       deckFloor.push(
-        job.decks && water[k] === 1 ? Math.max(plan.seaLevel, view.fluidTop[k] as number) + 1 : 0,
+        routeFloorAt(view, water, k, plan.seaLevel, job.decks === true, sectionReach),
       );
     }
     for (const [i, c] of path.entries()) {
@@ -1582,6 +1585,74 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     ...(broken === undefined ? {} : { broken }),
     declaration: { segments: declaredSegments, shoulders: declaredShoulders },
   };
+}
+
+/**
+ * The level a graded route may not be cut below, at one station.
+ *
+ * Two floors, and until this function there was one. A **deck** station floors
+ * at the surface of the water it spans plus one, so the profile clears the
+ * channel instead of following its bed. A **shore** station floors at the
+ * surface of whatever water its own cross-section stands beside, because
+ * cutting a shore column lower opens that body's rim: the block that was
+ * holding the water in becomes the block the water pours over, and the physics
+ * lint counts every voxel that would run out of the hole
+ * (`checkFluidStability`, LOAM-T110).
+ *
+ * **The walked defect.** A street bridged a hill basin whose surface stood at
+ * y = 95 and graded the two approaches to 94 — one block *through* the rim the
+ * lake was resting against — and six columns of the lake's edge were left with
+ * an open face. `gradeProfile` had a floor for exactly this and it was
+ * `seaLevel + 1`: a single world constant, so the ocean was safe and every
+ * tarn, pond and basin above it was not. This is that constant per body.
+ *
+ * Three details, each of which is the difference between a fix and a new
+ * defect:
+ *
+ * 1. **The cross-section, not the centreline.** A station's level is written to
+ *    every column the sweep covers, so a centreline three columns from the
+ *    water still cuts the rim through its own kerb. The search is the square of
+ *    radius `reach` — the outer lane offset plus one, the sweep's own footprint
+ *    with room for the column beyond it.
+ * 2. **Dry columns only.** The floor is the surface of water *beside* a dry
+ *    column of the section, never the surface of water the section is standing
+ *    in — that case is the deck's, above.
+ * 3. **The surface, and not one above it.** A dry column adjacent to a stable
+ *    body is already at or above that body's surface — that is what makes it
+ *    the rim — so this floor can only ever cancel a cut, never raise an
+ *    embankment the route never asked for. It is also why the lift is bounded:
+ *    the answer is some nearby column's own natural ground.
+ */
+function routeFloorAt(
+  view: GroundView,
+  water: Uint8Array,
+  k: number,
+  seaLevel: number,
+  decks: boolean,
+  reach: number,
+): number {
+  if (decks && water[k] === 1) return Math.max(seaLevel, view.fluidTop[k] as number) + 1;
+  const { region } = view;
+  const i0 = k % region.width;
+  const j0 = (k - i0) / region.width;
+  let floor = 0;
+  for (let j = Math.max(0, j0 - reach); j <= Math.min(region.depth - 1, j0 + reach); j++) {
+    for (let i = Math.max(0, i0 - reach); i <= Math.min(region.width - 1, i0 + reach); i++) {
+      const c = j * region.width + i;
+      // Water the section stands *in* is the deck's business, not the rim's.
+      if (view.fluidKind[c] !== FluidKind.NONE) continue;
+      const consider = (n: number): void => {
+        if (view.fluidKind[n] === FluidKind.NONE) return;
+        const top = view.fluidTop[n] as number;
+        if (top > floor) floor = top;
+      };
+      if (i > 0) consider(c - 1);
+      if (i < region.width - 1) consider(c + 1);
+      if (j > 0) consider(c - region.width);
+      if (j < region.depth - 1) consider(c + region.width);
+    }
+  }
+  return floor;
 }
 
 /**
