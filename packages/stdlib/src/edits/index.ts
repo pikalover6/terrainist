@@ -2288,6 +2288,50 @@ export interface LevelPad {
    * on a slope would have one house re-level its neighbour's street.
    */
   readonly adaptiveApron?: boolean;
+  /**
+   * Per-side apron widths, overriding {@link apron} on the sides they name.
+   *
+   * A pad's apron is a negotiation with whatever is outside it, and the thing
+   * outside is not the same on all four sides. A lot tied to its carriageway
+   * (`docs/GROUND-UNIFICATION-v0.md` F7) is already *at* the street's level on
+   * its front face — there is nothing to blend, and a two-column smoothstep
+   * there is precisely the lip the tie exists to remove — while its other three
+   * faces still meet untouched hill and still want the adaptive 1:2 ramp. One
+   * scalar cannot say both.
+   *
+   * Every side omitted (or the whole field omitted) falls back to `apron`, so a
+   * pad that does not mention this is bit-for-bit the pad it was before. A side
+   * set to `0` gets no apron at all, adaptive or not: {@link adaptiveApron}
+   * widens a side's reach, it never creates one, exactly as `apron: 0` already
+   * suppresses it globally.
+   *
+   * **The corner rule.** A column diagonally off a corner is outside two sides
+   * at once, and the two may disagree. It takes **the reach of the nearer
+   * side** — the smaller of its two perpendicular offsets — and ties go to the
+   * **lower-index** side in the canonical face order `north, east, south,
+   * west`. Nearer wins because the apron is a falloff and the near side is the
+   * one whose ramp the column is actually standing on; the tie-break is fixed
+   * and index-based rather than value-based so the result is a pure function of
+   * the geometry and never of which side happened to be read first.
+   */
+  readonly apronBySide?: ApronBySide;
+}
+
+/**
+ * Apron widths keyed by the side of a pad they apply to.
+ *
+ * The property order is the canonical face order — `north, east, south, west`,
+ * the same order `FACE_ORDER` rotates through — and it is load-bearing: it is
+ * the index order {@link LevelPad.apronBySide}'s corner tie-break uses. North
+ * is `-Z`, south `+Z`, west `-X`, east `+X`, as everywhere else.
+ *
+ * An omitted side means "use the pad's scalar `apron`", not zero.
+ */
+export interface ApronBySide {
+  readonly north?: number;
+  readonly east?: number;
+  readonly south?: number;
+  readonly west?: number;
 }
 
 /**
@@ -2309,6 +2353,16 @@ export const APRON_RUN_PER_BLOCK = 2;
 export const APRON_MAX = 24;
 
 /**
+ * One side's apron width: the override when it is given, the scalar otherwise.
+ *
+ * Normalised the same way the scalar is (`max(0, floor(w))`), so a side cannot
+ * smuggle in a negative or fractional reach that the scalar path would refuse.
+ */
+function sideWidth(width: number | undefined, apron: number): number {
+  return width === undefined ? apron : Math.max(0, Math.floor(width));
+}
+
+/**
  * Level the field under a structure footprint, with a smooth apron.
  *
  * This is the `plateau` verb's level-to kernel with a rectangular outline
@@ -2323,11 +2377,31 @@ export function applyLevelPad(field: HeightField, pad: LevelPad): void {
   const strength = clamp01(pad.strength ?? 1);
   if (strength === 0) return;
   const apron = Math.max(0, Math.floor(pad.apron));
+  // Per-side aprons, in the canonical face order north, east, south, west — the
+  // index order the corner tie-break below reads. An absent side is the scalar
+  // apron, so a pad with no `apronBySide` fills this with four copies of
+  // `apron` and every expression downstream collapses to what it was.
+  const bySide = pad.apronBySide;
+  const sideApron =
+    bySide === undefined
+      ? [apron, apron, apron, apron]
+      : [
+          sideWidth(bySide.north, apron),
+          sideWidth(bySide.east, apron),
+          sideWidth(bySide.south, apron),
+          sideWidth(bySide.west, apron),
+        ];
+  const widest = Math.max(
+    sideApron[0] as number,
+    sideApron[1] as number,
+    sideApron[2] as number,
+    sideApron[3] as number,
+  );
   // The adaptive apron reaches as far as the tallest step it could be asked to
   // absorb, so the scan window is the cap; the per-column test below is what
   // actually decides, and on level ground it decides `apron` everywhere.
-  const adaptive = pad.adaptiveApron === true && apron > 0;
-  const scan = adaptive ? Math.max(apron, APRON_MAX) : apron;
+  const adaptive = pad.adaptiveApron === true && widest > 0;
+  const scan = adaptive ? Math.max(widest, APRON_MAX) : widest;
 
   const i0 = clamp(pad.x0 - scan - region.x0, 0, region.width - 1) | 0;
   const i1 = clamp(pad.x1 + scan - region.x0, 0, region.width - 1) | 0;
@@ -2337,6 +2411,9 @@ export function applyLevelPad(field: HeightField, pad: LevelPad): void {
   for (let j = j0; j <= j1; j++) {
     const z = region.z0 + j;
     const dz = z < pad.z0 ? pad.z0 - z : z > pad.z1 ? z - pad.z1 : 0;
+    // Which of north (0) / south (2) this row is off, or -1 for a row that runs
+    // through the footprint.
+    const zSide = z < pad.z0 ? 0 : z > pad.z1 ? 2 : -1;
     for (let i = i0; i <= i1; i++) {
       const x = region.x0 + i;
       const dx = x < pad.x0 ? pad.x0 - x : x > pad.x1 ? x - pad.x1 : 0;
@@ -2344,11 +2421,27 @@ export function applyLevelPad(field: HeightField, pad: LevelPad): void {
       if (scan > 0 && d > scan) continue;
       const idx = j * region.width + i;
       const h = field.values[idx] as number;
+      // The side that owns this column's falloff. Off one face only, that face;
+      // off a corner, the *nearer* face — the smaller perpendicular offset —
+      // with ties to the lower index, north < east < south < west.
+      const xSide = x < pad.x0 ? 3 : x > pad.x1 ? 1 : -1;
+      const side =
+        xSide < 0
+          ? zSide
+          : zSide < 0
+            ? xSide
+            : dz < dx
+              ? zSide
+              : dx < dz
+                ? xSide
+                : Math.min(zSide, xSide);
+      const width = side < 0 ? apron : (sideApron[side] as number);
       // How far this column's own falloff runs. Integer, so it is a pure
       // function of the field and not of the order the pads were composed in.
-      const reach = adaptive
-        ? Math.min(APRON_MAX, Math.max(apron, Math.round(Math.abs(h - pad.targetY) * APRON_RUN_PER_BLOCK)))
-        : apron;
+      const reach =
+        adaptive && width > 0
+          ? Math.min(APRON_MAX, Math.max(width, Math.round(Math.abs(h - pad.targetY) * APRON_RUN_PER_BLOCK)))
+          : width;
       if (reach > 0 && d > reach) continue;
       const f = d === 0 ? 1 : reach === 0 ? 0 : smoothstep01(clamp01((reach - d) / reach));
       if (f <= 0) continue;

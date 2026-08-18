@@ -9,7 +9,7 @@
  */
 
 import type { LoamDiagnostic } from "@terrainist/spec";
-import type { Classification, HeightField, Region, Seed256 } from "@terrainist/stdlib";
+import type { ApronBySide, Classification, HeightField, Region, Seed256 } from "@terrainist/stdlib";
 import type {
   CanonicalConstraint,
   DistrictGroundPolicy,
@@ -283,6 +283,18 @@ export interface PadEdit {
    * this is for the one edge where a levelled quarter meets ground nobody cut.
    */
   readonly adaptiveApron?: boolean;
+  /**
+   * Per-side apron widths — `LevelPad.apronBySide`, passed straight through.
+   *
+   * The frontage tie (`docs/GROUND-UNIFICATION-v0.md` F7) wants a pad whose
+   * street face has no apron at all — it is already at the carriageway's level,
+   * so a smoothstep there can only manufacture the lip the tie removes — while
+   * its other three faces keep the adaptive ramp back to the untouched hill.
+   *
+   * Omitted on every pad the compiler emits today, and an omitted field is
+   * exactly the scalar `apron` on all four sides.
+   */
+  readonly apronBySide?: ApronBySide;
 }
 
 /**

@@ -57,6 +57,10 @@ export function applyPadEdits(field: HeightField, edits: readonly PadEdit[]): vo
       targetY: edit.targetY,
       apron: edit.apron,
       ...(edit.adaptiveApron === true ? { adaptiveApron: true } : {}),
+      // Spread rather than assigned, so a pad that never mentions per-side
+      // aprons hands the kernel an object without the key at all — the same
+      // object it handed it before this field existed.
+      ...(edit.apronBySide === undefined ? {} : { apronBySide: edit.apronBySide }),
     });
   }
 }
