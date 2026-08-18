@@ -17,6 +17,19 @@ author real site terrain, build naturally on it — heightAt exists at
 execution; make conform the default, retire auto-pad to opt-in.
 Design seat (opus-5-high) writing docs/GROUND-UNIFICATION-v0.md.
 
+**WAVE STATUS (all landed+committed):** diagnostics c15c664 (W523
+CONSTRAINT_TARGET_UNRESOLVED + I524 WALL_FOOTING_DEEP + I525
+CLIFF_PALETTE_REGIONAL + kit laws; byte-identical); hub-shaft +
+water-veto 618d738 (shafts→natural ground both worlds, lake 607→810
+above-sea columns); facing 1bfec03 (backwards monster = PRE-SOLVE
+facing estimate never re-measured after W521 walk; post-solve
+remeasureLandmarkFacings, footprint-preserving turns only, W522
+PROGRAM_FACE_REMEASURED; LOAM-SPEC §15.1 amended — QUEUED FOR KAI'S
+RATIFICATION; taste note queued: face targets aim at node CENTROID,
+nearest-footprint-point would read better). **IN FLIGHT: terrarium
+traversal.unreachable regression from 618d738** (2 mini-station
+doors; opus-5-medium bisecting; LAST BLOCKER before regen plan).
+
 **P1 FORENSICS (landed):** "bridge" = infra.entry acropolis_terrace
 (retaining.seam, LIFT=6, follow:step) routed its deriveWallCourse
 ring OVER the sacred lake (208/791 water columns filled) + flat
