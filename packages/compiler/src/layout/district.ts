@@ -954,13 +954,20 @@ export function layDistrict(
         graph,
         field: input.field,
         seaLevel: input.seaLevel ?? 63,
-        // 8E, the city cell: a quarter that was handed one foundation level is
-        // one terrace, and its own streets are that terrace's floor rather than
-        // a second plane graded from the hillside the pad is about to erase.
-        // The lot branch below already reads `cell?.foundationY` *before* the
-        // tie, so this is the same law told to the carriageway: one plane per
-        // cell, and the datum agrees with it instead of competing with it.
-        ...(cell?.foundationY === undefined ? {} : { floorY: cell.foundationY }),
+        // 8E, the city cell, as corrected at 8F: a quarter that was handed one
+        // foundation level *is* one terrace, and its own streets are that
+        // terrace — not a second plane graded from the hillside the pad is
+        // about to erase, and not a floor under one either. The lot branch
+        // below already reads `cell?.foundationY` *before* the tie, so this is
+        // the same law told to the carriageway: one plane per cell, and the
+        // datum agrees with it instead of competing with it.
+        //
+        // 8E passed this as `floorY`, which only lifted the datum where the
+        // hillside sat below the plane and left it standing where the hillside
+        // sat above — over exactly the columns `maskRuns` was about to cut down
+        // to the plane. The measurement, and why a pin is the right operator,
+        // is on `StreetDatumInput.planeY`.
+        ...(cell?.foundationY === undefined ? {} : { planeY: cell.foundationY }),
       })
     : null;
   const tieReach = frontageReach(sidewalkWidth);

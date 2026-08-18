@@ -109,29 +109,57 @@ export interface StreetDatumInput {
   readonly field: HeightField;
   readonly seaLevel: number;
   /**
-   * A floor every graded level is raised to — **the city cell's plane** (8E).
+   * A floor every graded level is raised to.
+   *
+   * The general "a floor only ever lifts" primitive, kept because it is the
+   * shape every *other* ground floor in this compiler has (`routeFloorAt`, the
+   * surfacer's `deckFloor`, W1/W2's berm clamp) and because a floored profile
+   * is still 1-Lipschitz and still junction-agreeing: the max of two
+   * 1-Lipschitz functions is 1-Lipschitz, and two levels equal before the floor
+   * are equal after it.
+   *
+   * **Not what a city cell wants** — see {@link StreetDatumInput.planeY}, which
+   * is the client 8E wrote this field for and which 8F had to correct.
+   */
+  readonly floorY?: number;
+  /**
+   * The one level this quarter's whole ground is pinned to — **the city cell's
+   * terrace** (8E, corrected at 8F).
    *
    * `docs/GROUND-UNIFICATION-v0.md` §1.8: "the cell plane becomes its streets'
    * floor rather than a competing plane". A cell is one terrace: `solveCities`
-   * pins every column of its mask to `maskMedian(field, cell)` at apron 0, but
+   * pins every column of its mask to `maskMedian(field, cell)` at apron 0, and
    * the pad is composed into the field a full substage *after* this datum is
-   * graded, so the grader would otherwise read the raw hillside under a quarter
-   * that is about to be levelled — and hand the surfacer a carriageway two
-   * blocks below its own shopfronts, which is the very defect `solveCities`'
-   * terrace comment names.
+   * graded — so a grader that read the raw hillside would hand the surfacer a
+   * carriageway on ground that is about to be levelled out from under it.
    *
-   * A **floor**, not a pin: `applyLevelPad` levels the mask in both directions,
-   * so inside the cell the floor is the plane and outside it — the arterial
-   * apron, the wedge a run did not cover — the natural grade still wins where
-   * it is already higher. `Math.max` with a constant preserves both invariants
-   * the kernel promises: 1-Lipschitz over arc length (the max of two 1-Lipschitz
-   * functions is 1-Lipschitz) and the pin agreement at a junction (two levels
-   * equal before the floor are equal after it).
+   * **A pin, not a floor, and 8F is where that distinction was measured.** 8E
+   * shipped this as `floorY` on the argument that "`applyLevelPad` levels the
+   * mask in both directions, so inside the cell the floor is the plane and
+   * outside it the natural grade still wins where it is already higher". The
+   * second half of that sentence is about ground the graph never occupies —
+   * `CellFabric.mask`'s own contract is that *streets are clipped to `mask`*,
+   * and `maskRuns` pins every column of that mask at apron 0 — while the first
+   * half is only half true: a floor lifts the datum where the raw hillside sits
+   * *below* the plane and leaves it alone where the hillside sits *above* it.
+   * Those are the columns the pad is about to cut down to the plane, so the
+   * street was surfaced from a level its own ground no longer had, and the lots
+   * — which seat on `cell.foundationY` directly — ended up **under** their own
+   * carriageway.
    *
-   * Absent for every district that is not a city cell, and — because the datum
-   * is only graded at all while `FRONTAGE_TIE` is on — for every compile today.
+   * Measured on `c1-harbourtown` at the 8F flip, over the 90 seated lots with a
+   * carriageway within five columns of their footprint: **4 lots off their
+   * street's level before the flip, 25 after it with the floor, 22 of those
+   * *negative*** — the §0.1 lip, inverted, on the one world WP-8 exists to fix.
+   * With the pin it is 4 again and none of them is a cell lot. The datum is
+   * constant over the quarter, which is trivially 1-Lipschitz and trivially
+   * junction-agreeing, and `FRONTAGE_RISE = 0` then puts every cell lot exactly
+   * on its carriageway.
+   *
+   * Takes precedence over {@link StreetDatumInput.floorY}; no caller passes
+   * both. Absent for every district that is not a city cell.
    */
-  readonly floorY?: number;
+  readonly planeY?: number;
 }
 
 /** A segment as the grader works on it. */
@@ -185,7 +213,7 @@ export function materialisedGround(region: Region, field: HeightField): Int32Arr
  * segments because ids are unique within it.
  */
 export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
-  const { region, graph, field, seaLevel, floorY } = input;
+  const { region, graph, field, seaLevel, floorY, planeY } = input;
   const cells = region.width * region.depth;
   const ground = materialisedGround(region, field);
 
@@ -258,11 +286,18 @@ export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
       );
     }
     const profile = gradeProfile(stationGround, seaLevel, stationBand, deckFloor);
-    // 8E's one line for the cities. Applied to the graded profile rather than to
-    // the sampled ground so the grade cap still governs the *shape* of the run
-    // and the floor only lifts it; a floored profile is what every later
-    // consumer — `columnY`, `levelNear`, the surfacer's `datumY` — then reads.
-    if (floorY !== undefined) {
+    // 8E's one line for the cities, corrected at 8F. Applied to the graded
+    // profile rather than to the sampled ground so the grade cap still governs
+    // the *shape* of the run wherever the shape survives; the result is what
+    // every later consumer — `columnY`, `levelNear`, the surfacer's `datumY` —
+    // then reads.
+    //
+    // The plane wins over the floor, and there is no shape left under it: a
+    // pinned quarter is one terrace and its carriageway is that terrace, at
+    // every station of every segment. See `planeY` for the measurement that
+    // says why the floor was the wrong operator here.
+    if (planeY !== undefined) profile.fill(planeY);
+    else if (floorY !== undefined) {
       for (const [i, y] of profile.entries()) if (y < floorY) profile[i] = floorY;
     }
     const levels = arcLevels(frame, profile);

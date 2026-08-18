@@ -9,15 +9,17 @@
  *   than the median under its own feet (`datumPropBase`);
  * - **bespoke sites** — a site with a banded column within `SITE_FRONTAGE_REACH`
  *   seats at its street's level whether it conforms or pads (`datumSeatPlane`);
- * - **the city cell** — the cell's one plane becomes its own streets' *floor*
+ * - **the city cell** — the cell's one plane becomes its own streets' level
  *   rather than a second plane graded from the hillside the cell pad is about
- *   to erase (`gradeStreetDatum`'s `floorY`);
+ *   to erase (`gradeStreetDatum`'s `planeY`, which 8E shipped as a floor and
+ *   8F had to correct to a pin — the group below carries the measurement);
  * - **precincts and plazas** — unchanged in WP-8, and asserted so.
  *
  * Every tie is exercised **through the exported pure function**, never by
- * flipping `FRONTAGE_TIE`: the flag stays false and the last two cases here are
- * the flag-off equivalence — a placer handed no datum produces exactly the
- * object it produced before this wave existed.
+ * flipping `FRONTAGE_TIE` — which is what keeps this file meaningful now that
+ * 8F has flipped it on. The last two cases here are the no-datum equivalence: a
+ * placer handed no datum produces exactly the object it produced before this
+ * wave existed, which is still every district-less compile.
  *
  * The last group is 9B's small landing item: `seatOn` must be able to tell "the
  * document wrote a pad" from "nobody wrote a seat", or §2.2's "an explicit seat
@@ -118,7 +120,7 @@ function oneStreet(): StreetGraph {
 
 function gradeOn(
   h: (x: number, z: number) => number,
-  extra: { readonly floorY?: number } = {},
+  extra: { readonly floorY?: number; readonly planeY?: number } = {},
 ): StreetDatum {
   const r = region();
   return gradeStreetDatum({
@@ -131,21 +133,100 @@ function gradeOn(
 }
 
 /* -------------------------------------------------------------------------- */
-/* the city cell — §1.8's 8E line                                              */
+/* the city cell — §1.8's 8E line, as 8F corrected it                          */
 /* -------------------------------------------------------------------------- */
 
-describe("8E: the cell plane is its streets' floor", () => {
+/**
+ * **8F's correction, and the bug it is a regression test for.**
+ *
+ * 8E gave the city cell `floorY`, on the argument that `applyLevelPad` levels
+ * the mask in both directions so a floor is enough. It is not: a floor lifts
+ * the datum where the raw hillside sits *below* the plane and leaves it exactly
+ * where it is where the hillside sits *above* — and those are precisely the
+ * columns `maskRuns` is about to cut down to the plane. The street was then
+ * surfaced from a level its own ground no longer had, while the cell's lots
+ * seat on `cell.foundationY` directly, so the lots ended up **under** their own
+ * carriageway: §0.1's lip, inverted.
+ *
+ * Measured at the flip on `c1-harbourtown`, over the 90 seated lots with a
+ * carriageway within five columns: 4 lots off their street's level before, **25
+ * after with the floor, 22 of them negative**, and 4 again with the pin. The
+ * `floorY` group below is kept because the floor is still the kernel's general
+ * primitive; the `planeY` group is what a cell actually takes.
+ */
+describe("8F: the cell plane is a pin, not a floor", () => {
   const hillside = (x: number, _z: number): number => 90 + x * 0.4;
 
-  it("lifts every graded level to the cell's plane and never below it", () => {
+  it("grades the whole quarter to the plane, above the hillside and below it", () => {
+    // The run climbs 32 blocks across the region, so a plane at 100 is under
+    // part of it and over the rest — the exact case the floor got wrong.
+    const plain = gradeOn(hillside).bySegment.get("main")?.y as readonly number[];
+    const pinned = gradeOn(hillside, { planeY: 100 }).bySegment.get("main")?.y as readonly number[];
+    expect(Math.min(...plain) < 100 && Math.max(...plain) > 100).toBe(true);
+    expect([...pinned]).toEqual(plain.map(() => 100));
+  });
+
+  it("carries the plane into the raster every other client reads", () => {
+    // `columnY` is what `levelNear`, `frontageSeat` and the surfacer's `datumY`
+    // all resolve through, so a pin that stopped at the profile would be no pin.
+    const pinned = gradeOn(hillside, { planeY: 100 });
+    for (const [k, banded] of pinned.band.entries()) {
+      if (banded !== 1) continue;
+      expect(pinned.columnY[k]).toBe(100);
+    }
+  });
+
+  it("seats a lot on its cell's plane exactly — FRONTAGE_RISE is 0", () => {
+    // The whole point, stated as the number Kai walks: a lot fronting a pinned
+    // quarter's street is at the plane, so `foundationY − carriageway` is 0 and
+    // the threshold is the one doorstep F4 designs for.
+    const pinned = gradeOn(hillside, { planeY: 100 });
+    expect(pinned.levelNear(0, 3, 4)).toBe(100);
+    expect(pinned.levelNear(-30, 3, 4)).toBe(100);
+    expect(pinned.levelNear(30, 3, 4)).toBe(100);
+  });
+
+  it("is trivially 1-Lipschitz, which is what makes a pin legal at all", () => {
+    const y = gradeOn(hillside, { planeY: 100 }).bySegment.get("main")?.y as readonly number[];
+    for (let i = 1; i < y.length; i++) {
+      expect(Math.abs((y[i] as number) - (y[i - 1] as number))).toBe(0);
+    }
+  });
+
+  it("wins over the floor, and no caller passes both", () => {
+    const both = gradeOn(hillside, { floorY: 140, planeY: 100 });
+    const pinned = gradeOn(hillside, { planeY: 100 });
+    expect([...both.columnY]).toEqual([...pinned.columnY]);
+  });
+
+  it("is absent for a district that is not a cell", () => {
+    const r = region();
+    const f = field(r, hillside);
+    const withoutKey = gradeStreetDatum({ region: r, graph: oneStreet(), field: f, seaLevel: SEA });
+    const withUndefined = gradeStreetDatum({
+      region: r,
+      graph: oneStreet(),
+      field: f,
+      seaLevel: SEA,
+      planeY: undefined,
+    });
+    expect([...withUndefined.columnY]).toEqual([...withoutKey.columnY]);
+  });
+});
+
+describe("8E: the floor, which is the kernel's general primitive", () => {
+  const hillside = (x: number, _z: number): number => 90 + x * 0.4;
+
+  it("lifts every graded level to the floor and never below it", () => {
     const plain = gradeOn(hillside);
     const floorY = 100;
     const floored = gradeOn(hillside, { floorY });
     const a = plain.bySegment.get("main")?.y as readonly number[];
     const b = floored.bySegment.get("main")?.y as readonly number[];
     expect(a.length).toBe(b.length);
-    // The cell plane is a floor, not a pin: above it the natural grade still
-    // wins, below it the terrace does.
+    // A floor only ever lifts: above it the natural grade still wins. That is
+    // the correct behaviour for a floor and the wrong operator for a cell —
+    // see the `planeY` group above for the measurement that separated them.
     expect([...b]).toEqual(a.map((y) => Math.max(y, floorY)));
     expect(Math.min(...b)).toBe(floorY);
   });
@@ -166,7 +247,7 @@ describe("8E: the cell plane is its streets' floor", () => {
     }
   });
 
-  it("is a no-op when the cell's plane is below the whole run", () => {
+  it("is a no-op when the floor is below the whole run", () => {
     const plain = gradeOn(hillside);
     const under = gradeOn(hillside, { floorY: 0 });
     expect([...(under.bySegment.get("main")?.y ?? [])]).toEqual([
@@ -175,7 +256,7 @@ describe("8E: the cell plane is its streets' floor", () => {
     expect([...under.columnY]).toEqual([...plain.columnY]);
   });
 
-  it("is absent for a district that is not a cell — the flag-off shape", () => {
+  it("is absent for an ordinary district — the no-floor shape", () => {
     // No `floorY` key at all is the ordinary district call, and it must grade
     // exactly what it graded before the field existed.
     const r = region();
@@ -343,8 +424,12 @@ describe("8E: a bespoke site seats on the datum", () => {
 /* -------------------------------------------------------------------------- */
 
 describe("8E: what stays untied", () => {
-  it("leaves FRONTAGE_TIE off — every tie above is reached through a pure function", () => {
-    expect(FRONTAGE_TIE).toBe(false);
+  it("reaches every tie above through a pure function, flag or no flag", () => {
+    // 8F flipped it. The point of this file is unchanged and is now load-bearing
+    // in the other direction: every case above forces its datum in as a fixture,
+    // so these assertions measure the tie's *functions* and not the flag — they
+    // would read the same had 8F never happened.
+    expect(FRONTAGE_TIE).toBe(true);
   });
 
   it("leaves a water-seated prop on its water", () => {

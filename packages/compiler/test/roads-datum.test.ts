@@ -21,14 +21,16 @@
  *   guarantee that the ground authority and the materialised street cannot
  *   silently diverge;
  * - **no datum, no change.** Omitting the array, passing `undefined` at a
- *   position, and today's flag-off compile are all the pre-8D path exactly;
+ *   position, and any district-less compile are all the pre-8D path exactly;
  * - **the arterial path and the `road.network@0` path are unmoved.** Neither has
  *   a `StreetGraph` to grade and neither can be handed a datum; both are
  *   asserted byte-equal across a call that carries one.
  *
  * The datum is forced in as a **fixture** throughout — `gradeStreetDatum` on a
  * hand-built graph, or a hand-lowered `ArcLevels` — never by flipping
- * `FRONTAGE_TIE`, which stays false and is asserted so.
+ * `FRONTAGE_TIE`. 8F turned that flag on; forcing the fixture in regardless is
+ * what makes these measurements the *consumer's*, independent of what any
+ * quarter happens to grade.
  */
 
 import { describe, expect, it } from "vitest";
@@ -392,12 +394,13 @@ describe("the ungraded path is untouched", () => {
     expect(base.diagnostics).toBeUndefined();
   });
 
-  it("is what every compile takes today, because FRONTAGE_TIE is still false", () => {
-    // The flag is the only thing that grades a datum (`layDistrict`), and the
-    // product only carries one when it was graded — so no compile reaches the
-    // consumer path until 8G flips it. Asserted here so that flipping the flag
-    // has to come past this test.
-    expect(FRONTAGE_TIE).toBe(false);
+  it("is still the path a district-less compile takes, now that the flag is on", () => {
+    // 8F flipped the flag, so a quarter *does* grade a datum and the consumer
+    // path above is live. The no-datum path did not go away with it: devworld,
+    // terrarium and every documents-without-a-district compile still hand the
+    // surfacer nothing, and the three shapes above assert that "nothing" is
+    // byte-identical to the pre-8D call.
+    expect(FRONTAGE_TIE).toBe(true);
   });
 });
 

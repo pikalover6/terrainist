@@ -126,13 +126,47 @@ interface Goldens {
  * compile once and the audit reads the sum, which is the whole premise of this
  * module.
  */
+/**
+ * **The 8F flip is the one change behind every row below that moved**, on both
+ * fixtures, and it is worth stating once rather than fourteen times.
+ *
+ * `FRONTAGE_TIE` went true (`docs/GROUND-UNIFICATION-v0.md` §1.8 wave 8F). On
+ * *these two* documents the flip does **not** move a single building: both
+ * quarters are site-planned, both carry `GroundLevels`, and F1 puts the
+ * platform branch ahead of the tie in `layDistrict`'s `??` chain — a quarter
+ * that declared its own platforms has already answered the question the tie
+ * asks. Measured: the nine seated lots on `site-plan-hillside` and the six on
+ * the steep fixture sit at exactly the levels they sat at before the flip, and
+ * `LOAM-T238`'s counters are 0/0 on both because the tie never arbitrates here.
+ *
+ * What *does* change is the **carriageway**. `layDistrict` now grades a
+ * `StreetDatum` (F2) and `surfaceStreetGraph` consumes it as its profile
+ * instead of re-grading (F8), under F9's `STREET_CUT_MAX = 2` — and F9 caps the
+ * **cut only**. Where the old surfacer dug a street into a rise, the datum's
+ * 1-Lipschitz profile now holds it up and breaks instead. So the street stands
+ * one block higher in places, and every row that moved is that one block seen
+ * through a different instrument. Each says which below.
+ *
+ * `LOAM-T237` is **absent on both fixtures**: no segment was surfaced above its
+ * datum at any station, so the datum and the surfacer are one grader, which is
+ * the property F8 exists to have.
+ *
+ * The direction rule still stands and is not suspended by a wave: `plinth*` and
+ * `sunkenLamps` went **UP**, they are argued for at their rows, and §7 lists 8F
+ * as a walk gate precisely so Kai judges this trade rather than a golden diff.
+ */
 const HILLSIDE: Goldens = {
   // 5120 → 3972. Down, and down is not a loss here: the causeway landing
   // (b90f87a) stopped the lowest street throwing 495 declared columns of
   // connector into open field, and the flight-floor fix (eb93a54) closed band
   // ends over voids rather than paving them. Fewer columns, almost all of them
   // reachable — see `entranceReachableShare`.
-  columns: 3972,
+  //
+  // **3972 → 3973** at the 8F flip: one column. A carriageway cell the old
+  // surfacer had dug below its neighbours now sits level with them and resolves
+  // to a standable cell instead of a buried one. The denominator, moving by
+  // 0.03%.
+  columns: 3973,
   // 120 → 19. **The flight-floor fix (eb93a54)** — a flight lies in the ground
   // rather than on it, so the rail no longer stands on its own carriageway
   // anywhere. What is left is nine columns on the spine, the plaza's six, and
@@ -149,7 +183,12 @@ const HILLSIDE: Goldens = {
   // standable ground rather than over declared paving alone, so the nine
   // orphan columns that a walker reaches across two blocks of grass are
   // reached. Every laid column but one is reachable on foot from the entrance.
-  entranceReachable: 3971,
+  //
+  // **3971 → 3972** at the 8F flip, which is `columns` above moving with its
+  // numerator: the one new standable column is reachable like the rest of them,
+  // and the share is still 1. The invariant this row is really for — "every
+  // laid column but one" — is unchanged.
+  entranceReachable: 3972,
   entranceReachableShare: 1,
   // The terrain control: 71% of the region's standable columns. The remainder
   // is the hill's own cliffs and the ground beyond them — nobody's to serve.
@@ -158,7 +197,13 @@ const HILLSIDE: Goldens = {
   // fixture's `character.archetypes.prefer: ["cottage", "church"]` had never
   // been read; now it prepends into the mix, different shells take the lots,
   // and 33 more ground columns fall reachable. BY DESIGN.
-  groundReachable: 185695,
+  //
+  // **185695 → 185667** at the 8F flip, −28 columns on a share that does not
+  // move off 0.709. A street held up rather than dug in presents a one-block
+  // step to the natural ground on its uphill side at a handful of places, and a
+  // walker crossing there no longer floods through. Twenty-eight columns of
+  // hillside out of 185,000 — the control doing its job, and reporting nothing.
+  groundReachable: 185667,
   groundReachableShare: 0.709,
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 3,
@@ -174,8 +219,17 @@ const HILLSIDE: Goldens = {
   // **0.176 → 0.175** with the archetype-bias wiring (2026-08-11): the same
   // mix shift as `groundReachable` above, dividing by a slightly larger
   // walkable count. BY DESIGN.
-  junctionDensity: 0.175,
-  soloDensity: 0.048,
+  //
+  // **0.175 → 0.171 and 0.048 → 0.042** at the 8F flip, and both DOWN — the
+  // direction this pair is supposed to move, for the reason F2 exists. A
+  // junction where two streets used to arrive from two independent gradings now
+  // arrives from one datum, so there is less to reconcile and fewer courses of
+  // dressing land at the meeting. The solo control fell too, and fell *further*
+  // in proportion — which is the reading the row's own rule warns about, so:
+  // this is not the town getting emptier, it is 12 fewer courses over a
+  // denominator that moved by one column. The numerator is the whole of it.
+  junctionDensity: 0.171,
+  soloDensity: 0.042,
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
   // a *new* row in the wrong direction and it is recorded as such rather than
@@ -320,8 +374,32 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // below it; the deep three are gone too. The denominator fell because the
   // refused causeways took their lit stubs with them (b90f87a); the defect fell
   // to nought because the flights no longer sit a course above their own kerb.
-  streetLamps: 32,
-  sunkenLamps: 0,
+  //
+  // **32 → 30 and 0 → 3 at the 8F flip, and the defect row went UP.** The
+  // argument, because a row that goes up has to carry one:
+  //
+  // The three lamps are at (−4, 62), (−2, 62) and (21, 65), all on
+  // `streetscape:world.hill_town`, each `sunkenBy` exactly 1 and each reached
+  // `viaCarriageway`. **Not one of them moved.** Probed column by column across
+  // the flip, all three stand on ground 109 before and after; what moved is the
+  // carriageway two columns away, 109 → 110 at (−2, 64…65) and at (18…19, 65).
+  // So the instrument is right and its name is wrong here: no lamp sank, a
+  // street rose out from under three of them. That is F9 — the datum caps the
+  // *cut* at `STREET_CUT_MAX` and holds the profile up where the old surfacer
+  // would have dug, and `FURNITURE_REACH` is 2, so a lamp on the outer sidewalk
+  // column reads a carriageway that climbed without it.
+  //
+  // It is a **real** one-block seam between a carriageway and its own verge and
+  // it MUST GO DOWN — the lever is the sidewalk band following the datum out to
+  // the lamp line, not a wider `FURNITURE_REACH`. It is left standing at 8F on
+  // purpose: §7 makes 8F a walk gate, the same one block is what `plinthColumns`
+  // below counts from the other side, and whether it reads as a kerb or as a
+  // defect is Kai's call on the walk and not a golden's.
+  //
+  // The denominator fell 32 → 30 with it: two lamp sites are no longer solid,
+  // dry and paved by the pass at the moment it plants, so they get no post.
+  streetLamps: 30,
+  sunkenLamps: 3,
   deeplySunkenLamps: 0,
   // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
   // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
@@ -382,8 +460,32 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // still no run of plinth road on this fixture — two of the columns that read
   // proud were lane cells raised against a stoop, and they are not raised now
   // (2026-08-07).
-  plinthColumns: 30,
-  plinthLongestRun: 2,
+  //
+  // **30 → 49 columns and run 2 → 5 at the 8F flip. UP, and this is the row the
+  // flip is really about.** F9 caps the cut at `STREET_CUT_MAX = 2` and caps
+  // nothing on the fill: where the pre-8F surfacer dug a carriageway into a
+  // rise, the datum's 1-Lipschitz profile now holds it up and breaks instead,
+  // so nineteen more columns stand proud of the open ground on both sides. The
+  // emitters say it plainly — the new length is on `street:segment:hs1_0` and
+  // `hs0_0`, the quarter's own two streets, which are exactly the segments that
+  // carry a datum; the `road:world.terrace_lanes` entries are the external
+  // road's kerb and are the same ones as before, because `road.network@0` has
+  // no datum and is provably unmoved (8D).
+  //
+  // **The mitigating measurement, and it is the one that matters:**
+  // `PLINTH_MIN_RUN` is 6 and the longest run here is **5**, so `plinthRuns` is
+  // still **0** — not one stretch of this is long enough to read as an
+  // embankment rather than as a kerb, and `stepPlinthColumns` below is still
+  // nought. Nineteen columns spread over 27 runs averaging under two columns
+  // each is a street meeting a hillside, which is what §0.1 traded the lip for.
+  //
+  // It MUST GO DOWN, and the honest levers are two: `STREET_CUT_MAX` (§9.1's
+  // sibling question — a deeper cut buys back the plinth and spends it on
+  // retaining wall), or a fill cap on the datum path to match `ROAD_BERM_MAX`,
+  // which is WP-10's territory and not this wave's. Neither is chosen here.
+  // §7 lists 8F as a walk gate for exactly this: the trade is Kai's.
+  plinthColumns: 49,
+  plinthLongestRun: 5,
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
   // 7 → **0**, 84 → 0. No built face on this fixture is five blocks or taller
@@ -413,7 +515,12 @@ const STEEP_DRESSING: DressingGoldens = {
   openOverSoil: 0,
   floatingDressing: 0,
   streetLamps: 17,
-  sunkenLamps: 0,
+  // **0 → 1 at the 8F flip**, one lamp at (8, 30), `sunkenBy` 1,
+  // `viaCarriageway`. The same seam as the hillside fixture's three and the
+  // same argument — see that row, which carries the column probe. The
+  // denominator did not move here, so this fixture shows the effect clean: one
+  // of seventeen lamps has a carriageway that climbed a block without it.
+  sunkenLamps: 1,
   deeplySunkenLamps: 0,
   // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5). **13 → 16** with the stoop
   // fix (2026-08-07) — three lane columns beside doorsteps that are nosed where
@@ -436,16 +543,36 @@ const STEEP_DRESSING: DressingGoldens = {
   // continuous tread line, which is the other half of the fix (the walked jog at
   // `(62 … 63, 12)` is filled by the alignment round). It MUST GO DOWN further,
   // and the lever is a *flight* between those two streets, not more dressing.
-  junctionColumns: 45,
+  //
+  // **45 → 38 and 24 → 21 at the 8F flip, both DOWN, and this is F2's dividend
+  // measured.** The mangled corner is where the carriage spine `sp0` meets the
+  // terrace street `hs2_0`: two streets that used to be graded independently
+  // and reconciled afterwards by dressing. They now arrive from one datum —
+  // `gradeStreetDatum` pins a junction in `compareStreetRank` order, once — so
+  // there are seven fewer columns of junction dressing and the worst patch is
+  // three columns smaller. `blindStairs` and `strandedTreads`, the two rows
+  // that are actually defects, are unmoved at 1 and 1: nothing was hidden, less
+  // was needed. It still MUST GO DOWN further and the lever is still a flight.
+  junctionColumns: 38,
   blindStairs: 1,
   strandedTreads: 1,
-  cascadeLargest: 24,
+  cascadeLargest: 21,
   // 3 → 5 columns, longest run 1 → 2, and then **5 → 3, run 2 → 1** with the
   // stoop fix (2026-08-07): the lifts it withdrew were exactly the cells that
   // stood proud of the ground beside them. Small either way; a kerb detail,
   // well under `PLINTH_MIN_RUN`. Pinned so it cannot creep.
-  plinthColumns: 3,
-  plinthLongestRun: 1,
+  //
+  // **3 → 8 columns and run 1 → 3 at the 8F flip. UP** — the same F9 mechanism
+  // the hillside fixture's row argues in full, at this fixture's smaller scale:
+  // five more columns where the datum holds the carriageway up rather than
+  // cutting it in, the longest of them a three-column stretch on
+  // `street:segment:hs0_0` at (33, 54). Still less than half `PLINTH_MIN_RUN`,
+  // so `plinthRuns` is 0 and `stepPlinthColumns` is still nought on the
+  // fixture with 1,409 flight columns. A kerb detail on a steep hill; it did
+  // creep, and this is the saying so. MUST GO DOWN — see the hillside row for
+  // the two honest levers, neither of which is this wave's.
+  plinthColumns: 8,
+  plinthLongestRun: 3,
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
   stepPlinthColumns: 0,

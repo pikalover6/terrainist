@@ -381,13 +381,14 @@ export const DEFAULT_BLEND = 4;
  * The master switch for the frontage tie (F1): a lot that fronts a street seats
  * at the level of that street rather than on the median of its own footprint.
  *
- * **`false` through wave 8E.** While it is false every tied code path is dead:
- * `layDistrict` still seats on `cell?.foundationY ?? medianGround(...)`, still
- * emits the scalar-apron pad, and every world compiles byte-identically. Wave
- * 8F flips it, regenerates the deck and hands the look to Kai — the verdict on
- * {@link FRONTAGE_RISE} and on the rear terrace is his and only his (§7).
+ * **`false` through wave 8E; `true` from wave 8F.** While it was false every
+ * tied code path was dead: `layDistrict` seated on
+ * `cell?.foundationY ?? medianGround(...)`, emitted the scalar-apron pad, and
+ * every world compiled byte-identically. Wave 8F flipped it, regenerated the
+ * deck and handed the look to Kai — the verdict on {@link FRONTAGE_RISE} and on
+ * the rear terrace is his and only his (§7).
  */
-export const FRONTAGE_TIE = false;
+export const FRONTAGE_TIE = true;
 
 /**
  * Blocks a tied lot sits above its carriageway's level — F4.

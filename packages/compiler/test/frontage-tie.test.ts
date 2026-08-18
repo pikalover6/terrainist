@@ -103,8 +103,11 @@ function grade(graph: StreetGraph, h: (x: number, z: number) => number): StreetD
 /* -------------------------------------------------------------------------- */
 
 describe("frontage tie: the flag and the constants", () => {
-  it("ships off, so every world is byte-identical through wave 8E", () => {
-    expect(FRONTAGE_TIE).toBe(false);
+  it("ships on from wave 8F — the flip, and the end of byte-identity", () => {
+    // 8A–8E were byte-identical *because* this was false; 8F flips it, and §7's
+    // walk-gate table is the reason the flip is its own wave. A test that reads
+    // `false` again means somebody reverted the tie, not that a golden moved.
+    expect(FRONTAGE_TIE).toBe(true);
   });
 
   it("carries the design's numbers, and the cut cap is derived from RETAIN_MAX", () => {
