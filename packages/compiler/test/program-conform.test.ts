@@ -17,12 +17,14 @@ import type { AuthoredProgramRecord } from "@terrainist/spec";
 
 import {
   CONFORM_FLOAT_TOLERANCE,
+  CONFORM_RUN,
   CONFORM_SUITE,
   conformanceOf,
   gateConform,
   nodeVmExecutor,
   setProgramExecutor,
   sourceHashOf,
+  VERIFICATION_NODE_PATH,
   verifyConformHash,
   verifyProgram,
   type ProgramExecutor,
@@ -53,7 +55,7 @@ function record(
 const RIGID = record(fixture("rigid-prefab.js"), [16, 12, 16]);
 const CONFORMING = record(fixture("conforming-shed.js"), [16, 24, 16]);
 
-const SUITE_INPUT = { worldSeed: 3n, nodePath: "loam.verify", count: 1 } as const;
+const RANDOM = record(fixture("random-shed.js"), [16, 24, 16]);
 
 /* -------------------------------------------------------------------------- */
 /* the suite is integer-pure                                                   */
@@ -127,7 +129,7 @@ describe("the terrain suite", () => {
 
 describe("conformanceOf", () => {
   it("fails a rigid prefab on every member but flat", () => {
-    const result = conformanceOf({ programId: "rigid_prefab", program: RIGID, ...SUITE_INPUT });
+    const result = conformanceOf({ programId: "rigid_prefab", program: RIGID, worldSeed: 3n });
     expect(result.ok).toBe(true);
     expect(result.conforms).toBe(false);
     const verdicts = Object.fromEntries(result.members.map((m) => [m.id, m.conforms]));
@@ -150,7 +152,7 @@ describe("conformanceOf", () => {
   });
 
   it("passes a program that reads the ground on all five", () => {
-    const result = conformanceOf({ programId: "conforming_shed", program: CONFORMING, ...SUITE_INPUT });
+    const result = conformanceOf({ programId: "conforming_shed", program: CONFORMING, worldSeed: 3n });
     expect(result.ok).toBe(true);
     expect(result.members.map((m) => m.conforms)).toEqual([true, true, true, true, true]);
     expect(result.conforms).toBe(true);
@@ -163,13 +165,13 @@ describe("conformanceOf", () => {
   });
 
   it("digests the suite deterministically", () => {
-    const a = conformanceOf({ programId: "conforming_shed", program: CONFORMING, ...SUITE_INPUT });
-    const b = conformanceOf({ programId: "conforming_shed", program: CONFORMING, ...SUITE_INPUT });
+    const a = conformanceOf({ programId: "conforming_shed", program: CONFORMING, worldSeed: 3n });
+    const b = conformanceOf({ programId: "conforming_shed", program: CONFORMING, worldSeed: 3n });
     expect(a.conformHash).toMatch(/^b3:[0-9a-f]{64}$/);
     expect(b.conformHash).toBe(a.conformHash);
     // And it is a property of the program: a different program, a different
     // digest, even though both were run against the identical five grounds.
-    const other = conformanceOf({ programId: "rigid_prefab", program: RIGID, ...SUITE_INPUT });
+    const other = conformanceOf({ programId: "rigid_prefab", program: RIGID, worldSeed: 3n });
     expect(other.conformHash).not.toBe(a.conformHash);
   });
 });
@@ -216,13 +218,66 @@ describe("verifyConformHash", () => {
   it("accepts a record whose hash it re-derives, and refuses one it does not", () => {
     const stamped = {
       ...CONFORMING,
-      conformHash: conformanceOf({ programId: "shed", program: CONFORMING, ...SUITE_INPUT }).conformHash,
+      conformHash: conformanceOf({ programId: "shed", program: CONFORMING, worldSeed: 3n }).conformHash,
     };
     expect(verifyConformHash("shed", stamped, 3n, "world.shed")).toBeUndefined();
     const tampered = { ...CONFORMING, conformHash: "b3:deadbeef" };
     const problem = verifyConformHash("shed", tampered, 3n, "world.shed");
     expect(problem?.code).toBe("LOAM-E334");
     expect(problem?.severity).toBe("error");
+  });
+
+  // The wild-vs-test gap that shipped a fatal E334 on every freshly stamped
+  // world. The gate stamps a program before it has a site; the compile pass
+  // re-derives it at the real node path of the instance that carries the
+  // record, with that instance's scatter count. A program's RNG is seeded from
+  // `hash(worldSeed, nodePath, index)`, so the two ends only ever agreed for a
+  // program that drew no random number — which is every other fixture in this
+  // file, and was every fixture in the e2e test too. `RANDOM` draws.
+  it("round-trips a random-drawing program stamped at the gate and checked elsewhere", () => {
+    for (const mode of ["landmark", "plugin"] as const) {
+      // The gate: no site to speak of, and the mode's own verification set.
+      const gated = gateConform("speckled_shed", { ...RANDOM, mode }, 3n);
+      expect(gated.conformHash, mode).toMatch(/^b3:/);
+      const stamped = { ...RANDOM, mode, conformHash: gated.conformHash };
+      // The compile pass: the instance's real node path, whatever it turned out
+      // to be. Same world, same seed — a different place in it.
+      for (const at of ["world.city.spires", "world.elsewhere.deep.node", "world"]) {
+        expect(verifyConformHash("speckled_shed", stamped, 3n, at), `${mode} @ ${at}`)
+          .toBeUndefined();
+      }
+    }
+  });
+
+  it("hashes a random-drawing program the same in either mode", () => {
+    // The direct statement of the same law, without the gate in the way: the
+    // scatter count is pinned at 1, so a plugin and a landmark carrying the
+    // identical source carry the identical digest.
+    const a = conformanceOf({ programId: "speckled_shed", program: RANDOM, worldSeed: 3n });
+    const b = conformanceOf({
+      programId: "speckled_shed",
+      program: { ...RANDOM, mode: "plugin" },
+      worldSeed: 3n,
+    });
+    expect(a.conformHash).toMatch(/^b3:[0-9a-f]{64}$/);
+    expect(b.conformHash).toBe(a.conformHash);
+    // The seed is the one input that is *not* a site: it is one value per
+    // document and both ends of the check read the same one, exactly as
+    // `outputHash` does. A different world is allowed to hash differently.
+    const elsewhere = conformanceOf({
+      programId: "speckled_shed",
+      program: RANDOM,
+      worldSeed: 4n,
+    });
+    expect(elsewhere.conformHash).not.toBe(a.conformHash);
+  });
+
+  it("keeps the pinned site equal to the gate's, so stamped documents stay valid", () => {
+    // These two constants have to agree or every document stamped before the
+    // site was pinned re-derives to a different digest and dies on E334.
+    expect(CONFORM_RUN.nodePath).toBe(VERIFICATION_NODE_PATH);
+    expect(CONFORM_RUN.count).toBe(1);
+    expect(CONFORM_RUN.index).toBe(0);
   });
 });
 

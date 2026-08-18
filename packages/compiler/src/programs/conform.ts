@@ -168,17 +168,54 @@ export interface ConformanceResult {
   readonly members: readonly ConformMemberFinding[];
 }
 
-/** Everything {@link conformanceOf} reads. */
+/* -------------------------------------------------------------------------- */
+/* the canonical run — why the suite takes no site                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The site the suite is run at, at **every** call site.
+ *
+ * `conformHash` is frozen into the document by the authoring gate and
+ * re-derived by the compile pass, so it may only be built out of inputs the two
+ * ends *share*. They used to share nothing but a convention: the gate ran the
+ * suite at `loam.verify` with the mode's verification count, and the compile
+ * pass ran it at the real node path of the instance carrying the record. A
+ * program's RNG is seeded from `hash(worldSeed, nodePath, index)` — so every
+ * program that called `api.random` hashed one way at the gate and another way
+ * at compile, and every freshly stamped world died on a fatal `E334` that no
+ * authoring round could repair. A program that never drew a random number
+ * round-tripped perfectly, which is exactly why every fixture and every e2e
+ * test passed.
+ *
+ * So the site is pinned here, in the file that owns the measurement, and the
+ * callers hand over no site at all. Where an instance eventually stands and how
+ * many siblings it was scattered with are *seating*, and seating may not reach
+ * a digest that is checked before seating exists.
+ *
+ * `worldSeed` is **not** here, and is not a site: it is one value per document,
+ * identical at both ends by construction, and `outputHash` has always been
+ * computed against it. It stays a caller input.
+ *
+ * `nodePath` is deliberately `verify.ts`'s `VERIFICATION_NODE_PATH` verbatim —
+ * the value the gate half already used — so that every document stamped before
+ * this fix keeps verifying. `program-conform.test.ts` pins the two together.
+ * Changing either of these constants changes `conformHash` for every program
+ * that carries one: a re-authoring event, exactly like reordering
+ * {@link CONFORM_SUITE}.
+ */
+export const CONFORM_RUN = Object.freeze({
+  nodePath: "loam.verify",
+  /** One instance, in both modes — the suite scores a program, not a scatter. */
+  count: 1,
+  index: 0,
+});
+
+/** Everything {@link conformanceOf} reads. Deliberately site-free — see {@link CONFORM_RUN}. */
 export interface ConformanceInput {
   readonly programId: string;
   readonly program: AuthoredProgramRecord;
+  /** The document's world seed — the one value both ends of the check share. */
   readonly worldSeed: bigint;
-  /** The verification node path — supplied by the caller so this file owns no gate constant. */
-  readonly nodePath: string;
-  /** The instance count the run set is drawn from. */
-  readonly count: number;
-  /** Which instance to measure. Default `0`. */
-  readonly index?: number;
 }
 
 /**
@@ -191,8 +228,8 @@ export interface ConformanceInput {
  * `h(x, z)` for the overwhelming majority of programs, whose `seatY` is 0.
  */
 export function conformanceOf(input: ConformanceInput): ConformanceResult {
-  const { programId, program, worldSeed, nodePath, count } = input;
-  const index = input.index ?? 0;
+  const { programId, program, worldSeed } = input;
+  const { nodePath, count, index } = CONFORM_RUN;
   const [w, , d] = program.envelope;
 
   const members: ConformMemberFinding[] = [];

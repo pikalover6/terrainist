@@ -518,6 +518,11 @@ export interface ConformStep extends GateStep {
  * is today." A member that fails to execute is the same kind of fact; the
  * program's ability to run at all is the double run's business, on flat
  * ground, where the diagnostic can be attributed.
+ *
+ * `nodePath` is **where the findings point**, and nothing more: the suite runs
+ * at {@link CONFORM_RUN}'s pinned site, the same one the compile-side
+ * {@link verifyConformHash} uses, because a digest frozen here and checked
+ * there may not depend on where the instance landed.
  */
 export function gateConform(
   programId: string,
@@ -525,13 +530,7 @@ export function gateConform(
   worldSeed: bigint,
   nodePath = VERIFICATION_NODE_PATH,
 ): ConformStep {
-  const result = conformanceOf({
-    programId,
-    program,
-    worldSeed,
-    nodePath,
-    count: program.mode === "landmark" ? 1 : VERIFICATION_COUNT,
-  });
+  const result = conformanceOf({ programId, program, worldSeed });
   const out: LoamDiagnostic[] = [];
   if (!result.conforms) {
     const failed = result.members.filter((m) => !m.conforms);
@@ -745,6 +744,11 @@ export function verifyOutputHash(
  * what decides the *seating*, and a host that would run the program
  * differently on sloped ground would seat it differently too. Better a loud
  * error than a world that quietly moved.
+ *
+ * `nodePath` is the *instance's*, and is used only to point the finding at it.
+ * The suite runs at {@link CONFORM_RUN}'s pinned site here exactly as it does
+ * in {@link gateConform}: a hash that moved because the program landed at a
+ * different node is a hash that can never be checked.
  */
 export function verifyConformHash(
   programId: string,
@@ -753,13 +757,7 @@ export function verifyConformHash(
   nodePath: string,
 ): LoamDiagnostic | undefined {
   if (program.conformHash === undefined) return undefined;
-  const result = conformanceOf({
-    programId,
-    program,
-    worldSeed,
-    nodePath,
-    count: program.mode === "landmark" ? 1 : VERIFICATION_COUNT,
-  });
+  const result = conformanceOf({ programId, program, worldSeed });
   if (!result.ok) {
     return error(
       "PROGRAM_OUTPUT_HASH_MISMATCH",
