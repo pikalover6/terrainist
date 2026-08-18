@@ -409,6 +409,20 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   FRONTAGE_UNTIED: "LOAM-T238",
   /**
+   * The road berm cap bound (`docs/GROUND-UNIFICATION-v0.md` §3.1, W1): a
+   * route's per-station water floor asked to stand more than `ROAD_BERM_MAX`
+   * above that station's own natural ground, and was clamped to it before
+   * `gradeProfile`'s unit-cone envelope could propagate the lift. Names the
+   * route and the station count, and the height it wanted.
+   *
+   * A note, never a warning: the clamp is the *correct* answer — the rim floor
+   * exists to cancel a cut, not to licence a fill — and the world is right
+   * either way. It earns a code because it is the measurement 10C's viaduct
+   * promotion is waiting on: a run that repeatedly wants to stand well above
+   * its own ground is a span, not a street.
+   */
+  ROAD_BERM_CLAMPED: "LOAM-T239",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.

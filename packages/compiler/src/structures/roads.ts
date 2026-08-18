@@ -219,6 +219,32 @@ export const ROAD_FILL_BAND = 0;
 export const STREET_CUT_MAX = 2;
 
 /**
+ * How far above its own natural ground a graded route may be *lifted by a
+ * floor* — `docs/GROUND-UNIFICATION-v0.md` §3.1, W1/W2. The mirror of
+ * {@link STREET_CUT_MAX}: that one caps the dig, this one caps the fill.
+ *
+ * **The measurement (§13.8 tradition, pinned beside the constant).** §3.1's
+ * forensics verdict: **there was no walked berm to measure.** The earthwork on
+ * the walked world was `world.unicorn_defense_terrace`, an `infra.entry@0`
+ * (`acropolis_terrace`, sourceClass `retaining.seam`, `ACROPOLIS_LIFT = 6`,
+ * `follow: "step"` → `sweepDatum`), so neither {@link gradeProfile} nor
+ * {@link routeFloorAt} ever ran on it; its `deriveWallCourse` ring crossed the
+ * sacred lake and filled 208 of the lake's 791 above-sea water columns. The
+ * predicted `routeFloorAt` symptom was *absent* there — no fill cluster along
+ * any street near the lake — so the `b9f808d` floor is **exonerated on the
+ * walked evidence**. The cone-propagation hazard is nonetheless confirmed real
+ * by instrumentation: a rim floor of 95 propagates 94, 93, 92 … along the
+ * profile, so a route leaving a tarn onto ground 6 lower builds an embankment
+ * up to 6 stations long. With no berm to measure, the constant is set from the
+ * hazard geometry: **2** — "a step and a half, the point past which a raised
+ * road reads as an earthwork", the same number F9 reads for the cut.
+ *
+ * Per §3.1's reconciliation rule the pre-envelope clamp in {@link routeFloorAt}
+ * is the load-bearing half; {@link bermExcursion} is W2, a cheap assertion.
+ */
+export const ROAD_BERM_MAX = 2;
+
+/**
  * Extra cost for a cell that touches a building's perimeter.
  *
  * A* has no opinion about walls: a lane that grazes a smithy for fifteen cells
@@ -596,6 +622,8 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     // The shore floor is asked over the whole cross-section, not the centreline
     // this profile is graded on. {@link routeFloorAt}.
     const sectionReach = carriagewaySpans(width).outer + 1;
+    // W1's counter, reported as `LOAM-T239` below.
+    const bites = { clamped: 0, worst: 0 };
     const levels = arcLevels(
       frame,
       gradeProfile(
@@ -607,9 +635,21 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
         frame.stations.map((p) => (paved[at(p)] === 1 ? 0 : ROAD_FILL_BAND)),
         // A deck clears the water it spans; a shore cell keeps the rim of the
         // water beside it. {@link routeFloorAt}.
-        frame.stations.map((p) => routeFloorAt(view, water, at(p), plan.seaLevel, true, sectionReach)),
+        frame.stations.map((p) =>
+          routeFloorAt(view, water, at(p), plan.seaLevel, true, sectionReach, bites),
+        ),
       ),
     );
+    if (bites.clamped > 0) {
+      diagnostics.push(
+        note(
+          "ROAD_BERM_CLAMPED",
+          `${input.nodePath} → ${anchor.nodePath}`,
+          `the water floor asked this route to stand above its own natural ground at ${bites.clamped} of ${frame.stations.length} station(s), by up to ${bites.worst + ROAD_BERM_MAX} block(s); clamped to ${ROAD_BERM_MAX} so the rim's lift could not propagate along the profile`,
+          `No change needed — the lane keeps the rim it is beside and drops back to the ground it crosses. A run that wants this at most of its stations is a span rather than a road.`,
+        ),
+      );
+    }
     const surfaced: { x: number; z: number; y: number }[] = [];
     for (const [i, cell] of path.entries()) {
       surfaced.push({ x: cell.x, z: cell.z, y: levels.at(frame.pathArc[i] as number) });
@@ -1439,6 +1479,8 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     // The shore floor is asked over the whole cross-section, not the centreline
     // this profile is graded on. {@link routeFloorAt}.
     const sectionReach = carriagewaySpans(job.width).outer + 1;
+    // W1's counter, reported as `LOAM-T239` once the stations are sampled.
+    const bites = { clamped: 0, worst: 0 };
     for (const p of frame.stations) {
       const k = index(region, clampX(region, p.x), clampZ(region, p.z));
       ground.push(natural[k] as number);
@@ -1448,7 +1490,17 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // side, because `plan.ground` under water is the bed — and a shore cell
       // has to keep the rim of the water beside it. {@link routeFloorAt}.
       deckFloor.push(
-        routeFloorAt(view, water, k, plan.seaLevel, job.decks === true, sectionReach),
+        routeFloorAt(view, water, k, plan.seaLevel, job.decks === true, sectionReach, bites),
+      );
+    }
+    if (bites.clamped > 0) {
+      streetDiagnostics.push(
+        note(
+          "ROAD_BERM_CLAMPED",
+          job.rank.id,
+          `the water floor asked street segment "${job.rank.id}" to stand above its own natural ground at ${bites.clamped} of ${frame.stations.length} station(s), by up to ${bites.worst + ROAD_BERM_MAX} block(s); clamped to ${ROAD_BERM_MAX} so the rim's lift could not propagate along the profile`,
+          `No change needed — the street keeps the rim it is beside and drops back to the ground it crosses. A run that wants this at most of its stations is a span rather than a street.`,
+        ),
       );
     }
     // --- F8: consume, or grade -------------------------------------------
@@ -1782,6 +1834,21 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
  *    the rim — so this floor can only ever cancel a cut, never raise an
  *    embankment the route never asked for. It is also why the lift is bounded:
  *    the answer is some nearby column's own natural ground.
+ *
+ * **W1 — that third claim is true pointwise and false after propagation**
+ * (`docs/GROUND-UNIFICATION-v0.md` §3.1). `gradeProfile` does not take a
+ * per-cell floor as given: a per-cell floor is not 1-Lipschitz, so it is first
+ * replaced by the *upper* envelope of unit cones, `max_j (floor[j] − |i − j|)`.
+ * One rim station therefore holds the profile up for `rimTop − ground` stations
+ * in **both** directions, across ground nowhere near the water — an embankment
+ * the route never asked for, inherited by every lot tied to that street (F1).
+ * So the rim floor is clamped **here**, per station, to
+ * `ground[k] + ROAD_BERM_MAX`, *before* the envelope runs: clamping a per-cell
+ * array pointwise and then enveloping is the same construction, so the
+ * 1-Lipschitz guarantee is untouched, and the cone now only carries the ramp
+ * needed to get back down. The deck floor above is deliberately **not**
+ * clamped — a deck's own ground is the channel bed, and clearing the water it
+ * spans is the whole point of it.
  */
 function routeFloorAt(
   view: GroundView,
@@ -1790,6 +1857,8 @@ function routeFloorAt(
   seaLevel: number,
   decks: boolean,
   reach: number,
+  /** W1's counter: incremented once per station where the clamp actually bit. */
+  bites?: { clamped: number; worst: number },
 ): number {
   if (decks && water[k] === 1) return Math.max(seaLevel, view.fluidTop[k] as number) + 1;
   const { region } = view;
@@ -1811,6 +1880,15 @@ function routeFloorAt(
       if (j > 0) consider(c - region.width);
       if (j < region.depth - 1) consider(c + region.width);
     }
+  }
+  // W1: a cap on cutting, never a licence to fill.
+  const cap = (view.ground[k] as number) + ROAD_BERM_MAX;
+  if (floor > cap) {
+    if (bites !== undefined) {
+      bites.clamped++;
+      if (floor - cap > bites.worst) bites.worst = floor - cap;
+    }
+    return cap;
   }
   return floor;
 }
@@ -2622,6 +2700,44 @@ export function gradeProfile(
 
   for (let i = 0; i < n; i++) out[i] = Math.max(out[i] as number, floor[i] as number);
   return out;
+}
+
+/**
+ * **W2, the cheap assertion** (`docs/GROUND-UNIFICATION-v0.md` §3.1): the
+ * longest run of consecutive stations at which a graded profile stands more
+ * than `max` blocks above its own natural ground.
+ *
+ * §3.1's formulation is W4's: *"where a run would need to stand more than
+ * `ROAD_BERM_MAX` above its own ground for more than `VIADUCT_MIN_SPAN`
+ * stations, it is a viaduct"*. W1's pre-envelope clamp is what makes the
+ * measurement bounded — the cone then carries only the ramp needed to get back
+ * down, over at most {@link ROAD_BERM_MAX} cells — so over ground that is
+ * itself 1-Lipschitz this returns **0**, and any non-zero answer on a
+ * deck-free run is either a cliff in the sampled ground or a floor that
+ * escaped the clamp. Pure, allocation-free, and asserted by the tests rather
+ * than thrown from the pipeline: per §3.1's reconciliation rule W2 ships as an
+ * assertion, not as a second grader.
+ *
+ * Deck stations are the one legal exception (a deck's ground is the channel
+ * bed), so callers pass a profile they know is not bridged, or subtract the
+ * bridged stations first.
+ */
+export function bermExcursion(
+  profile: readonly number[],
+  ground: readonly number[],
+  max: number = ROAD_BERM_MAX,
+): number {
+  let run = 0;
+  let worst = 0;
+  for (const [i, y] of profile.entries()) {
+    if (y - (ground[i] as number) > max) {
+      run++;
+      if (run > worst) worst = run;
+    } else {
+      run = 0;
+    }
+  }
+  return worst;
 }
 
 /* -------------------------------------------------------------------------- */
