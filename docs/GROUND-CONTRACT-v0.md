@@ -2565,3 +2565,32 @@ since it is a transition. **Recommendation:** do not. The pass computes the ring
 levels and declares them at `verge` rank; the resolver arbitrates. Moving the BFS
 in is precisely the scope creep the brief's first risk names, and the split keeps
 the resolver's own code short enough to read in one sitting.
+
+**13.10 The ledger past WP-7 (added 2026-08-17).**
+This document's WP numbering continues in `docs/GROUND-UNIFICATION-v0.md`, which
+is normative for three work packages ratified on the 2026-08-17 deck walk:
+
+| WP | title | where |
+| --- | --- | --- |
+| **WP-8** | **the frontage tie** — a lot seats at the level of the street it fronts, from a `StreetDatum` computed once in the layout stage; the apron feathers lot → wild | `GROUND-UNIFICATION` Part I |
+| **WP-9** | **bespoke builds on real terrain** — programs are validated against a pinned terrain suite and, when they conform, are run on real ground with no pad under them | `GROUND-UNIFICATION` Part II |
+| **WP-10** | **the lift-keyed edge** — `routeFloorAt`'s berm, and the linework bed's unfeathered skirt | `GROUND-UNIFICATION` Part III |
+
+Three facts about the relationship, each checkable and each load-bearing:
+
+1. **None of the three touches `layout/ground-resolver.ts`, `INTENT_RANK` or
+   `ground-contract.ts`.** They decide what a claimant *asks for*, which §1.5
+   pins as never the resolver's business. The rank table is closed to them.
+2. **WP-7 (§13.3) is unblocked by WP-8, not replaced by it.** WP-8 gives
+   `PadEdit`/`LevelPad` a per-side apron, which is exactly the field a pad
+   declarer would have to read, and it re-measures `PAD_APRON_MISMATCHES` twice
+   with the cause written down — which is the evidence §13.3 says the question
+   needs before WP-6's first change.
+3. **WP-10's bed skirt is a WP-6 interaction and is recorded here so it is not
+   double-built.** It declares an apron at `verge` because nothing yet reads
+   `resolved.transitions` to build (`buildRetainingWalls` still derives its own
+   seams; `farm.ts`'s `countWalls` only counts them) and
+   because `gradeBank` grades a bank 1:1 rather than at the pads' 1:2. When WP-6
+   wires the transition consumers, the skirt becomes redundant **if and only if**
+   `gradeBank` is re-keyed to the lift-keyed ratio; if it is not, deleting the
+   skirt reinstates the berm.
