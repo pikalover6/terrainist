@@ -68,6 +68,7 @@ import {
   planLandmarkSite,
   planHoverSite,
   planProgramFacings,
+  remeasureLandmarkFacings,
   type PlacedProgram,
   type ProgramFacing,
   type ProgramJob,
@@ -149,7 +150,7 @@ import {
 import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js";
 import { decorate, type DecorBlock } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
-import { resolvePalette } from "./palette.js";
+import { cliffPaletteNote, resolvePalette } from "./palette.js";
 import { layUrbanFloor, type UrbanFloorResult } from "./urban-floor.js";
 import { materialThemeById } from "../programs/theme.js";
 import { ensureFanOutRows, fanOut, resolveIntents, type IntentResolution } from "../intent/index.js";
@@ -694,6 +695,24 @@ async function compileValidated(
     diagnostics.push(...solved.diagnostics);
     occupancy = solved.occupancy;
 
+    // The facing, measured again now that the sites are real. A coarse hint is
+    // a soft cost the ground can outbid, and a landmark carried past the node
+    // it was told to face would otherwise keep the turn it took against the
+    // estimate — a leviathan showing the city its back. Only turns that reserve
+    // the footprint the solver already gave it are adopted, so this cannot
+    // invalidate the fit above; everything downstream (the road anchors, the
+    // program pass) reads the corrected map.
+    const remeasured = remeasureLandmarkFacings({
+      doc,
+      rootPath,
+      region,
+      worldSeed,
+      placements: solved.placements,
+      facings: landmarkFacings.facings,
+    });
+    diagnostics.push(...remeasured.diagnostics);
+    for (const [path, rotation] of remeasured.rotations) landmarkRotations.set(path, rotation);
+
     // --- substage 3g: the district fabric (F1) -----------------------------
     // The solver's pads go in *first*, because a district levels its own ground
     // and the fabric pass reads that ground to seat every building it lays. Run
@@ -1212,6 +1231,17 @@ async function compileValidated(
   // The land-use clamp's mask is a pure function of the *finished* placement,
   // which is why it is built here rather than in the structures pass.
   const landUseMask = landUseMaskOf(plan, structures, layoutOutcome?.placements ?? []);
+  // A world palette used as a settlement palette (LOAM-I525). Said here because
+  // this is the first point where both the classification and the finished
+  // placements are in hand; it paints nothing and refuses nothing.
+  const cliffNote = cliffPaletteNote({
+    style: doc.style,
+    region: plan.region,
+    classes: classification.classes,
+    footprints: (layoutOutcome?.placements ?? []).map((p) => p.footprint),
+    nodePath: rootPath,
+  });
+  if (cliffNote !== undefined) diagnostics.push(cliffNote);
   const painted = paintBiomes(plan, classification, climate, scatter.coverage, stack, {
     mask: landUseMask,
     nodePath: rootPath,

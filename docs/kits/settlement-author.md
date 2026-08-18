@@ -509,6 +509,12 @@ speckled rather than banded:
 }
 ```
 
+**`ground.cliff` paints every steep natural slope in the REGION, not the
+settlement** — setting it to the city's masonry dresses distant mountains in
+city stone, so leave it in the stone family unless the whole region should read
+that way (`LOAM-I525 CLIFF_PALETTE_REGIONAL` counts the far columns when it
+does not).
+
 **`ground.surface` is the INLAND soil — say "sandy coast" with `ground.beach`,
 never by mixing sand into the world's soil.** A Troy shipped with
 `coarse_dirt`+`sand` in `ground.surface` and every field for five hundred
@@ -3438,6 +3444,18 @@ faction) need a real binding each: a `distance` band off a node that is
 already there, or an `on` that names the ground itself. When slope is the
 *only* objection inside the target the seat is taken anyway (`LOAM-W520`);
 when the target is merely more expensive, it is not.
+
+**A named set-piece must be bound to the thing it is named with.** "The Trojan
+horse in Troy", "the dragon over the keep", "the wreck on the reef" — the name
+is a constraint, and `at`/`zone` will not hold it. Give it a `distance` band off
+the node it belongs to. **The target must be a node the root places** — a
+district's *children* are placed by the district afterwards and are invisible to
+constraints, so `{"distance": "priams_megaron", "min": 14, "max": 42}` on a
+root-level node binds to nothing at all (`LOAM-W523
+CONSTRAINT_TARGET_UNRESOLVED` now says so; before it, the layout report claimed
+the constraint was satisfied while the horse stood two hundred blocks away).
+Bind to the district itself — `{"distance": "troy_citadel", "min": 0, "max":
+20}` puts the horse just inside the gates instead of across the river.
 
 ### `on` — build on a terrain feature
 

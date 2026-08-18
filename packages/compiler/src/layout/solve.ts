@@ -56,7 +56,9 @@ import {
 import {
   coarseAtRegion,
   coarseZoneRegion,
+  constraintTargetSelector,
   evaluateConstraint,
+  isUnresolvableTarget,
   type Candidate,
   type EvalContext,
 } from "./cost.js";
@@ -289,6 +291,38 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
       ...(request.products === undefined ? {} : { products: request.products }),
     });
     if (abandoned !== undefined) diagnostics.push(abandoned);
+  }
+
+  // --- constraints that bound to nothing at all (LOAM-W523) ----------------
+  // Said once per (node, constraint), here rather than in `evaluateConstraint`:
+  // that runs once per candidate per round and the answer does not depend on
+  // the candidate at all. A selector resolving to no node is a fact about the
+  // document and the solver's node list, both of which are fixed for the whole
+  // solve — so one pass over them says it exactly once, in node order.
+  for (const node of nodes) {
+    const report = reports.get(node.id);
+    const unresolved = new Set<number>();
+    node.constraints.forEach((constraint, index) => {
+      const selector = constraintTargetSelector(constraint);
+      if (selector === undefined || !isUnresolvableTarget(selector, node, nodes)) return;
+      unresolved.add(index);
+      diagnostics.push(
+        warning(
+          "CONSTRAINT_TARGET_UNRESOLVED",
+          node.nodePath,
+          `the "${constraint.type}" constraint [${index}] targets "${selector}", which names no node this solver places; ` +
+            `it was never evaluated against anything and constrained nothing`,
+          `a district's children are placed by the district itself, after this solve, and are invisible to constraints — ` +
+            `bind to the district instead. Otherwise check the id: it must name a sibling in the same placement scope`,
+        ),
+      );
+    });
+    if (report === undefined || unresolved.size === 0) continue;
+    // The report must not go on claiming these are satisfied: nothing was
+    // measured, so "satisfied" was only ever the absence of a measurement.
+    report.constraints = report.constraints.map((c) =>
+      unresolved.has(c.index) ? { ...c, satisfied: false, targetUnresolved: true } : c,
+    );
   }
 
   // --- products ------------------------------------------------------------

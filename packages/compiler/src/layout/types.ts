@@ -184,6 +184,12 @@ export interface ConstraintReport {
   /** Final normalized cost contribution (0 when satisfied). */
   readonly cost: number;
   readonly satisfied: boolean;
+  /**
+   * The target selector resolved to no node at all, so this constraint was
+   * never evaluated against anything (`LOAM-W523`). Not a satisfied constraint
+   * and not a violated one — an unmeasured one.
+   */
+  readonly targetUnresolved?: true;
 }
 
 /** The coarse placement record §4.7 obligation 7 requires. */

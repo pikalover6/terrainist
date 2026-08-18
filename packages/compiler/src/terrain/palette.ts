@@ -8,13 +8,15 @@
  */
 
 import {
+  SurfaceClass,
   positionWeighted,
   streamSeed,
   type MaterialTheme,
+  type Region,
   type Seed256,
   type StoneSet,
 } from "@terrainist/stdlib";
-import type { PaletteValue, TerrainStyle } from "@terrainist/spec";
+import { note, type LoamDiagnostic, type PaletteValue, type TerrainStyle } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 
@@ -1031,4 +1033,99 @@ export function defineGroundRoles(
     palette.derive(symbol, block.stateId);
   }
   return unknown;
+}
+
+/* -------------------------------------------------------------------------- */
+/* `ground.cliff` is a world palette (LOAM-I525)                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How far from every placement footprint a cliff column has to be before it
+ * counts as "nowhere near the settlement", in blocks.
+ */
+export const CLIFF_PALETTE_FAR = 48;
+/** How many far cliff columns it takes before the note is worth making. */
+export const CLIFF_PALETTE_COLUMNS = 400;
+
+/**
+ * Materials that read as *worked* — quarried, fired, cut or laid by hand.
+ *
+ * The default cliff is `minecraft:stone`, and a document that reaches for
+ * deepslate or tuff is still naming rock. A document that reaches for cut
+ * sandstone is naming a building, and this is the list of ways to say so.
+ */
+const WORKED_SUFFIXES: readonly string[] = ["_bricks", "_tiles", "brick", "terracotta"];
+const WORKED_PREFIXES: readonly string[] = ["cut_", "smooth_", "chiseled_", "polished_"];
+
+/** True when a block name is a worked material rather than a natural rock. */
+export function isWorkedMaterial(block: string): boolean {
+  const name = block.startsWith("minecraft:") ? block.slice("minecraft:".length) : block;
+  return (
+    WORKED_PREFIXES.some((p) => name.startsWith(p)) ||
+    WORKED_SUFFIXES.some((s) => name.endsWith(s))
+  );
+}
+
+/** Every block name a palette value can resolve to. */
+function paletteBlocks(value: PaletteValue): readonly string[] {
+  return typeof value === "string" ? [value] : value.mix.map(([block]) => block);
+}
+
+/**
+ * The `ground.cliff` note: a world palette used as a settlement palette.
+ *
+ * `ground.cliff` paints **every** natural slope past the classifier's cliff
+ * threshold anywhere in the region — a ridge an author never thought about is
+ * as much a cliff as the bluff their city stands on. Setting it to the city's
+ * masonry therefore dresses the country in city stone, which is exactly what
+ * happened to a wooded ridge a hundred blocks outside Troy.
+ *
+ * Returns `undefined` unless the override is a worked material *and* enough
+ * painted columns lie further than {@link CLIFF_PALETTE_FAR} from every
+ * placement footprint. Changes nothing: the world is painted either way.
+ */
+export function cliffPaletteNote(input: {
+  readonly style: TerrainStyle | undefined;
+  readonly region: Region;
+  readonly classes: ArrayLike<number>;
+  readonly footprints: readonly { readonly x0: number; readonly z0: number; readonly x1: number; readonly z1: number }[];
+  readonly nodePath: string;
+}): LoamDiagnostic | undefined {
+  const declared = input.style?.palettes?.["ground.cliff"];
+  if (declared === undefined) return undefined;
+  const blocks = paletteBlocks(declared);
+  const worked = blocks.filter((b) => isWorkedMaterial(b));
+  if (worked.length === 0) return undefined;
+
+  const { region, classes, footprints } = input;
+  let total = 0;
+  let far = 0;
+  for (let idx = 0; idx < classes.length; idx++) {
+    if (classes[idx] !== SurfaceClass.CLIFF) continue;
+    total++;
+    const x = region.x0 + (idx % region.width);
+    const z = region.z0 + Math.floor(idx / region.width);
+    let near = false;
+    for (const f of footprints) {
+      const dx = x < f.x0 ? f.x0 - x : x > f.x1 ? x - f.x1 : 0;
+      const dz = z < f.z0 ? f.z0 - z : z > f.z1 ? z - f.z1 : 0;
+      if (dx * dx + dz * dz <= CLIFF_PALETTE_FAR * CLIFF_PALETTE_FAR) {
+        near = true;
+        break;
+      }
+    }
+    if (!near) far++;
+  }
+  if (far < CLIFF_PALETTE_COLUMNS) return undefined;
+
+  return note(
+    "CLIFF_PALETTE_REGIONAL",
+    input.nodePath,
+    `"ground.cliff" is set to ${blocks.join(" + ")}, and ${far} of ${total} cliff column(s) ` +
+      `lie more than ${CLIFF_PALETTE_FAR} blocks from anything this document builds — ` +
+      `that much distant natural rock is painted in ${worked.join(" + ")}`,
+    `"ground.cliff" is a world palette, not a settlement palette — cliffs everywhere will be painted with it. ` +
+      `Leave it in the stone family (stone, deepslate, tuff, andesite) unless the whole region should read as worked ` +
+      `stone, and dress the settlement through its own materials instead`,
+  );
 }

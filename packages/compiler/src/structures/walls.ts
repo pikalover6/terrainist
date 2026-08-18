@@ -94,6 +94,16 @@ export const WALL_DEFAULT_HEIGHT = 6;
  */
 export const WALL_MAX_FILL = 18;
 
+/**
+ * Footing depths past which a wall run is *reported* (`LOAM-I524`), never
+ * refused. A course or two of footing is ordinary ground-following; a mean of
+ * six is a run spending most of its length on stilts, and a single column eight
+ * courses down is a pier taller than the wall it carries.
+ */
+export const WALL_FOOTING_MEAN_NOTE = 6;
+/** @see WALL_FOOTING_MEAN_NOTE */
+export const WALL_FOOTING_MAX_NOTE = 8;
+
 /** Columns a tower is across, and how far it stands proud of the wall-walk. */
 export const WALL_TOWER_SIDE = 5;
 export const WALL_TOWER_RISE = 4;
@@ -478,6 +488,11 @@ export function buildWalls(input: WallPassInput): WallPassResult {
 
     let placed = 0;
     let skipped = 0;
+    // How deep each built column had to reach below the run's own rise to find
+    // ground. Collected, not acted on: see WALL_FOOTING_DEEP below.
+    let footingSum = 0;
+    let footingMax = 0;
+    let footingCount = 0;
     for (const column of swept.columns) {
       // A column a tower already owns is not a skipped column: it is built, and
       // built better. Counting it as a failure would make every wall look
@@ -493,9 +508,25 @@ export function buildWalls(input: WallPassInput): WallPassResult {
         skipped++;
         continue;
       }
-      if (planter.place("wall", ops, column.x, base, column.z, WALL_RULE)) placed++;
-      else skipped++;
+      if (planter.place("wall", ops, column.x, base, column.z, WALL_RULE)) {
+        placed++;
+        const footing = Math.max(0, column.top - base - job.height);
+        footingSum += footing;
+        footingCount++;
+        if (footing > footingMax) footingMax = footing;
+      } else skipped++;
     }
+
+    const footing = wallFootingNote({
+      nodePath: job.nodePath,
+      style: job.style,
+      courseColumns: course.path.length,
+      built: placed,
+      count: footingCount,
+      sum: footingSum,
+      max: footingMax,
+    });
+    if (footing !== undefined) diagnostics.push(footing);
 
     walls.push({
       nodePath: job.nodePath,
@@ -659,4 +690,40 @@ export function roadMaskPredicate(
 ): (x: number, z: number) => boolean {
   return (x: number, z: number): boolean =>
     inside(region, x, z) && mask[index(region, x, z)] === 1;
+}
+
+/**
+ * The footing that became the structure (`LOAM-I524`).
+ *
+ * A curtain column sinks its footing straight down to the ground, silently, all
+ * the way to {@link WALL_MAX_FILL}. Across a dip that is not a wall, it is a
+ * **dam**: the walked defect was a 5-wide pier standing a dozen courses proud of
+ * the valley floor, sheer on both faces, with nothing in the report between
+ * "built" and "refused".
+ *
+ * Pure, and it changes nothing: the wall is the wall it was, and the numbers are
+ * simply said. `undefined` when the run kept to the ground.
+ */
+export function wallFootingNote(run: {
+  readonly nodePath: string;
+  readonly style: string;
+  readonly courseColumns: number;
+  readonly built: number;
+  /** How many built columns the footings were measured over. */
+  readonly count: number;
+  readonly sum: number;
+  readonly max: number;
+}): LoamDiagnostic | undefined {
+  if (run.count === 0) return undefined;
+  const mean = run.sum / run.count;
+  if (mean <= WALL_FOOTING_MEAN_NOTE && run.max <= WALL_FOOTING_MAX_NOTE) return undefined;
+  return note(
+    "WALL_FOOTING_DEEP",
+    run.nodePath,
+    `wall run "${run.style}" (${run.courseColumns} course columns, ${run.built} built) sank its footing ` +
+      `${mean.toFixed(1)} courses on average and ${run.max} at the deepest (cap ${WALL_MAX_FILL}) — ` +
+      `the deep stretch stands as a sheer pier of wall material, not as a wall on the ground`,
+    `no change needed if the pier reads as a rampart on a walk — otherwise move the circuit clear of the dip ` +
+      `with a larger "walls.margin", or shrink the envelope so the course keeps to the settlement's own bench`,
+  );
 }

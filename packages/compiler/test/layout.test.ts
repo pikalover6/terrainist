@@ -811,3 +811,112 @@ describe("solver — diagnostics tell the truth", () => {
     expect(fix).toContain("do not soften it");
   });
 });
+
+/**
+ * `LOAM-W523` — a constraint whose target resolves to nothing.
+ *
+ * The Troy defect: a horse told to stand 14..42 blocks from `priams_megaron`,
+ * which is a *district child* the root solver has never heard of. The
+ * "nothing placed yet" branch swallowed it and the report said `satisfied`.
+ */
+describe("solver — unresolvable constraint targets (LOAM-W523)", () => {
+  const w523 = (result: { diagnostics: readonly { code: string; nodePath: string; message: string }[] }) =>
+    result.diagnostics.filter((d) => d.code === "LOAM-W523");
+
+  it("names a target no node in the solve carries", () => {
+    const result = solveLayout(
+      request([
+        node("town_hall", [12, 9, 10], [{ type: "zone", zone: "center" }]),
+        node(
+          "trojan_horse",
+          [8, 8, 8],
+          [{ type: "distance", target: "priams_megaron", min: 14, max: 42, strength: "hard" }],
+        ),
+      ]),
+    );
+    const fired = w523(result);
+    expect(fired).toHaveLength(1);
+    expect(fired[0]?.nodePath).toBe("world.trojan_horse");
+    expect(fired[0]?.message).toContain("priams_megaron");
+    expect(fired[0]?.message).toContain("distance");
+    // And the report stops calling it satisfied.
+    const report = result.report.nodes.find((n) => n.nodePath === "world.trojan_horse");
+    const constraint = report?.constraints[0];
+    expect(constraint?.satisfied).toBe(false);
+    expect(constraint?.targetUnresolved).toBe(true);
+  });
+
+  it("says it once, however many candidates were costed", () => {
+    const result = solveLayout(
+      request([
+        node("shed", [6, 5, 6], [{ type: "distance", target: "nowhere", min: 4, max: 20 }]),
+      ]),
+    );
+    expect(w523(result)).toHaveLength(1);
+  });
+
+  it("stays silent for a target that is merely placed later", () => {
+    const result = solveLayout(
+      request([
+        // `chapel` is costed before `town_hall` exists — the legitimate
+        // mid-solve state, and not a thing to warn about.
+        node("chapel", [8, 12, 8], [{ type: "distance", target: "town_hall", min: 6, max: 40 }]),
+        node("town_hall", [12, 9, 10], [{ type: "zone", zone: "center" }]),
+      ]),
+    );
+    expect(w523(result)).toHaveLength(0);
+    const report = result.report.nodes.find((n) => n.nodePath === "world.chapel");
+    expect(report?.constraints[0]?.targetUnresolved).toBeUndefined();
+  });
+
+  it("stays silent for `self` and for the namespaces §4.2 does not resolve", () => {
+    const result = solveLayout(
+      request([
+        node("shed", [6, 5, 6], [
+          { type: "distance", target: "self", min: 0, max: 4 },
+          { type: "facing", target: "@world:north" },
+        ]),
+      ]),
+    );
+    expect(w523(result)).toHaveLength(0);
+  });
+
+  it("fires for a `#tag:` selector no node wears, and not for one they do", () => {
+    const withTag = solveLayout(
+      request([
+        node("house", [8, 6, 8], [], { tags: ["house"] }),
+        node("well", [3, 3, 3], [{ type: "distance", target: "#tag:house", min: 2, max: 30 }]),
+      ]),
+    );
+    expect(w523(withTag)).toHaveLength(0);
+
+    const withoutTag = solveLayout(
+      request([
+        node("house", [8, 6, 8], [], { tags: ["cottage"] }),
+        node("well", [3, 3, 3], [{ type: "distance", target: "#tag:house", min: 2, max: 30 }]),
+      ]),
+    );
+    expect(w523(withoutTag)).toHaveLength(1);
+  });
+
+  it("changes no placement", () => {
+    const nodes = (): LayoutNodeInput[] => [
+      node("town_hall", [12, 9, 10], [{ type: "zone", zone: "center" }]),
+      node(
+        "horse",
+        [8, 8, 8],
+        [{ type: "distance", target: "priams_megaron", min: 14, max: 42, strength: "hard" }],
+      ),
+    ];
+    const bound = solveLayout(request(nodes()));
+    // The same document with the dead constraint deleted places identically:
+    // the warning is a report, not a cost.
+    const without = solveLayout(
+      request([
+        node("town_hall", [12, 9, 10], [{ type: "zone", zone: "center" }]),
+        node("horse", [8, 8, 8], []),
+      ]),
+    );
+    expect(JSON.stringify(bound.placements)).toBe(JSON.stringify(without.placements));
+  });
+});

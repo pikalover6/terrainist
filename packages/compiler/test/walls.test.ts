@@ -35,7 +35,10 @@ import {
   WALL_MAX_FILL,
   courseWithMarginBackoff,
   extentOfRects,
+  WALL_FOOTING_MAX_NOTE,
+  WALL_FOOTING_MEAN_NOTE,
   wallColumnOps,
+  wallFootingNote,
   wallProfile,
 } from "../src/structures/walls.js";
 
@@ -503,4 +506,52 @@ describe("infra.wall@0 on a compiled world", () => {
       expect(b[key], key).toBe(a[key]);
     }
   }, 180_000);
+});
+
+/**
+ * `LOAM-I524` — the footing that became the structure.
+ *
+ * Everything under `WALL_MAX_FILL` used to build in silence, so a run that
+ * crossed a dip on a dozen courses of masonry was indistinguishable in the
+ * report from a run that hugged the ground. This is only the report changing.
+ */
+describe("the deep-footing note (LOAM-I524)", () => {
+  const run = (over: Partial<Parameters<typeof wallFootingNote>[0]>) =>
+    wallFootingNote({
+      nodePath: "world.citadel",
+      style: "masonry",
+      courseColumns: 400,
+      built: 380,
+      count: 100,
+      sum: 100,
+      max: 2,
+      ...over,
+    });
+
+  it("says nothing about a wall that keeps to the ground", () => {
+    expect(run({})).toBeUndefined();
+  });
+
+  it("says nothing when there was no wall to measure", () => {
+    expect(run({ count: 0, sum: 0, max: 0 })).toBeUndefined();
+  });
+
+  it("fires on a run spending its length on stilts", () => {
+    const d = run({ sum: (WALL_FOOTING_MEAN_NOTE + 1) * 100, max: 8 });
+    expect(d?.code).toBe("LOAM-I524");
+    expect(d?.severity).toBe("note");
+    expect(d?.nodePath).toBe("world.citadel");
+    expect(d?.message).toContain("7.0 courses on average");
+    expect(d?.message).toContain("8 at the deepest");
+  });
+
+  it("fires on a single pier even when the mean is shallow", () => {
+    expect(run({ max: WALL_FOOTING_MAX_NOTE + 1 })?.code).toBe("LOAM-I524");
+    expect(run({ max: WALL_FOOTING_MAX_NOTE })).toBeUndefined();
+  });
+
+  it("stops exactly at the mean threshold, not near it", () => {
+    expect(run({ sum: WALL_FOOTING_MEAN_NOTE * 100 })).toBeUndefined();
+    expect(run({ sum: WALL_FOOTING_MEAN_NOTE * 100 + 1 })?.code).toBe("LOAM-I524");
+  });
 });

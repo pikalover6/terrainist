@@ -102,6 +102,48 @@ export function resolveTargets(
   return match === undefined ? [] : [match.id];
 }
 
+/**
+ * The relational constraint types whose target is resolved by
+ * {@link resolveTargets} — the ones an unresolvable selector can silence.
+ */
+const NODE_TARGET_TYPES: ReadonlySet<string> = new Set([
+  "distance",
+  "adjacent_to",
+  "facing",
+  "connected",
+]);
+
+/** The node selector a relational constraint aims at, or `undefined`. */
+export function constraintTargetSelector(
+  constraint: CanonicalConstraint,
+): string | undefined {
+  if (!NODE_TARGET_TYPES.has(constraint.type)) return undefined;
+  const field = constraint.type === "connected" ? constraint["to"] : constraint["target"];
+  return typeof field === "string" ? field : undefined;
+}
+
+/**
+ * A selector that names something and resolves to **nothing** (LOAM-W523).
+ *
+ * Deliberately narrower than `resolveTargets(...) === []`. That is also the
+ * answer for `self` (never a real target), for the relative anchors `^`,
+ * `parent` and `root`, and for the `@…` namespaces §4.2 does not resolve yet —
+ * all of which are known, documented silences. What is left is the one case
+ * nobody knows about: an ordinary id, or a `#tag:` selector, matching no node
+ * the solver has ever heard of.
+ */
+export function isUnresolvableTarget(
+  selector: string,
+  self: LayoutNodeInput,
+  nodes: readonly LayoutNodeInput[],
+): boolean {
+  const sel = selector.trim();
+  if (sel === "" || sel === "self" || sel.startsWith("@")) return false;
+  const bare = sel.startsWith("^.") ? sel.slice(2) : sel;
+  if (bare === "^" || bare === "parent" || bare === "root") return false;
+  return resolveTargets(sel, self, nodes).length === 0;
+}
+
 /** Evaluate one constraint against one candidate. */
 export function evaluateConstraint(
   constraint: CanonicalConstraint,

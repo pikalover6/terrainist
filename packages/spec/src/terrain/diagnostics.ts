@@ -710,6 +710,80 @@ export const TERRAIN_DIAGNOSTICS = {
    * standing on the same island with nothing said about it.
    */
   LANDMARK_COARSE_ABANDONED: "LOAM-W521",
+  /**
+   * A landmark's facing was measured again after the solve, because the site it
+   * was measured *from* is not the site it ended up on.
+   *
+   * A quarter turn has to be known before the fit (it swaps the envelope's
+   * width and depth), so the first answer is taken against the best estimate
+   * available then — the coarse `zone`/`at` hint. That estimate is a soft cost
+   * the ground can outbid (`W521`), and when it loses the landmark can finish
+   * on the *other side* of the thing it was told to face: the walked defect was
+   * a wading leviathan that asked to face the city and, having been moved four
+   * hundred blocks past it, faced the open sea.
+   *
+   * So the answer is re-measured from the real site — and adopted only when the
+   * new turn reserves the same footprint the solver already gave it (a 180°
+   * flip always does; every turn does for a square envelope). A turn that would
+   * change the footprint is refused and the pre-solve answer stands, because
+   * the hole in the ground is already the shape it is.
+   *
+   * **Never fatal.** Informational: the instance stands where it stood and
+   * points at what it was told to point at.
+   */
+  PROGRAM_FACE_REMEASURED: "LOAM-W522",
+  /**
+   * A relational constraint names a target that resolves to **nothing at all**,
+   * and was therefore never evaluated against anything.
+   *
+   * The solver's costing loop has a legitimate "target not placed *yet*" state:
+   * a sibling scored before its neighbour exists contributes no cost, and the
+   * local-improvement pass scores it in full once every sibling has a position.
+   * That branch used to swallow a second, entirely different case — a selector
+   * that matches **no node the solver knows about** — and report the constraint
+   * `satisfied: true` in the layout report. The walked defect was a Trojan horse
+   * told to stand 14..42 blocks from `priams_megaron` and standing ~200 away:
+   * `priams_megaron` is a *district child*, placed by the city pass after the
+   * root solve, so the root solver's node list has never heard of it. The same
+   * unresolved id on `face` is loud (`W518`); on `distance` it was silent.
+   *
+   * **A district's children cannot be targeted from a root-level node.** Bind to
+   * the district itself.
+   *
+   * **Never fatal, and it changes no placement.** The constraint is reported
+   * unresolved instead of satisfied and the world is exactly the world that was
+   * being built before; enforcement is future design work.
+   */
+  CONSTRAINT_TARGET_UNRESOLVED: "LOAM-W523",
+  /**
+   * A wall run crossed ground low enough that its footing became the structure.
+   *
+   * A curtain column extrudes its footing straight down to the ground, up to
+   * {@link WALL_MAX_FILL} courses, and anything under that cap is built in
+   * silence. Across a dip that reads as a **dam**: the walked defect was a
+   * 5-wide pier standing 12-15 courses proud of the valley floor, sheer on both
+   * faces, with nothing in the report between "built" and "refused".
+   *
+   * Informational, and it changes nothing: the wall is the wall it was. It names
+   * the run, its length, and the mean and maximum footing so the number is on
+   * the page before somebody walks it.
+   */
+  WALL_FOOTING_DEEP: "LOAM-I524",
+  /**
+   * `ground.cliff` was overridden to a **worked** material, and the cliff class
+   * covers a lot of ground nowhere near anything the document builds.
+   *
+   * `ground.cliff` is a *world* palette, not a settlement palette: it paints
+   * every natural slope past the classifier's cliff threshold anywhere in the
+   * region. The walked defect was a city's sandstone-and-terracotta masonry
+   * applied to 3,701 columns of a wooded ridge 60-100 blocks away — a mountain
+   * dressed in city stone.
+   *
+   * Informational; no block changes. Only worked materials fire it (a stone,
+   * deepslate or tuff cliff is what the default already is), and only when the
+   * painted columns are far from every placement footprint.
+   */
+  CLIFF_PALETTE_REGIONAL: "LOAM-I525",
 
   // --- the ground contract (docs/GROUND-CONTRACT-v0.md §6) -----------------
   // `resolveGround` reconciles every subsystem's claim on a column's level.
