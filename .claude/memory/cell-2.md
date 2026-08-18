@@ -60,3 +60,19 @@ nine-pack sweep finished 08-14: catalog 343→~491, tree ~4,234/0,
 battery whole across all seven prompts, /goal met. Installs moved to
 PrismLauncher. Ops lore earned: prettier ban, pipes swallow vitest
 exits, distinct anchor lineages, never emit from mid-flight dist.
+
+## The Gemini arc (2026-08-14→15) — compressed from cell 3
+
+Head-to-heads (full-gen + 4-brief bespoke gauntlet): Luna reliable
+($0.08-0.14) but Gemini's WORK walked better ("war elephant miles
+ahead") and its failures were mostly HARNESS → the reshape rulings
+(instrumenter auto-braces — style lint deleted; envelope kept bound;
+chain→iron_chain in parseBlockString, one chokepoint or none; gate
+leniency SUSPENDED_GATE_CHECKS §15.2; canonical programSourceHash in
+spec after a trailing space broke a world). Gemini-as-fuzzer found
+the wandering colossus (W519/W520 landmarkCoarseSeat) and sunken
+sidewalks (qualifySegmentId "!"). Then Kai pinned Gemini 3.7 Flash
+high for ALL uses. Harness study artifact:
+https://claude.ai/code/artifact/f12c83ed-7bee-4125-bda5-9ddf16e9854e
+Ops: implementers opus-5-low (tiers price judgment); one vitest
+--maxWorkers=4; batch runner 32f2230.

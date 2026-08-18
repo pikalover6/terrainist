@@ -40,31 +40,6 @@ e2e for Kai's walk (FRONTAGE_RISE + rear-terrace verdicts his), 9C
 re-author battery ~$2 (end-of-run law). REGEN HELD until 8F —
 regenerating earlier shows the same lips.
 
-**P1 FORENSICS (landed):** "bridge" = infra.entry acropolis_terrace
-(retaining.seam, LIFT=6, follow:step) routed its deriveWallCourse
-ring OVER the sacred lake (208/791 water columns filled) + flat
-ground — routeFloorAt EXONERATED (cone hazard real but latent;
-ROAD_BERM_MAX=2 pinned from hazard geometry). Pits+pillars = ONE
-bug: unrouted hub seeded road mask with roadY=0 → blendShoulders
-graded toward y=0 (90-block shaft, preserved seed pillar; same in
-p3; NOT E494, NOT basins — aspect-ratio guard DISCONFIRMED). Pirate
-quarry = 126 refused seam columns (shortRun/tallDrop) stepped raw —
-design question for WP-8 retaining round. Monument 1-block plinth =
-referenceY rounds median UP on flat ground — fold into 8F datum.
-FIX WAVE IN FLIGHT (opus-5-low): roadY hub seed + verge seed clamp +
-infra.entry water veto (roads.ts/infra-entry.ts + NEW test files).
-
-**TROY FORENSICS (landed):** (a) half-squares = terrace copings on
-UNBUILT city blocks (retaining.ts; fix: no-adjacent-claimed-lot seam
-grades as bank); (b) berm = district platform 16-in-5 cut face
-(derive min blend from fill) + wall footing extrudes ≤18 courses no
-batter/no diagnostic (walls.ts WALL_MAX_FILL); (c) cliff paint = DOC
-set world ground.cliff to city masonry (kit rule + note); (d) HORSE:
-doc HAD hard distance→priams_megaron but district children are
-INVISIBLE to root solver; resolveTargets []→vacuous satisfied:true.
-COMPILER DEFECT — W522 CONSTRAINT_TARGET_UNRESOLVED wave in flight
-(diagnostics only, byte-identical).
-
 **TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
 the doc had era ancient + classical_mediterranean. Killers: `density:
 "high"` (TERRACE_COVERAGE high=1 → continuous 3-8 storey party-walled
@@ -75,40 +50,6 @@ outdrew the pack's 14 on every lot; precedence forbid > prefer > pack
 named prefer forms with anachronisms forbidden; "density is a PERIOD
 CLAIM — antiquity caps at medium"; taught ids runtime-checked to be
 kind=building (props in prefer are skipped by the lot draw).
-
-**PAD DISEASE: FIXED + COMMITTED (a3687e4 fix, 8cb9c77 teaching).**
-Verdicts resolved: (a) apron now keyed on LIFT (1:2, ≤1 step/col, cap
-24 rings AND instance long side; placer prefers lift≤4 sites but only
-at equal instance count); (b) kraken's elevated sea was the PROGRAM
-writing its own ocean — wade y=0 is seabed; fluid above the body's
-surface clamped, LOAM-W339 (p5: 1,811 above-sea columns → 0); (c)
-pirate ship on land = AUTHORING (doc had no water affinity; W520
-padded its 82° hill) → kit teaches wade+coastline declared, never
-inferred from a name; (d) colossus 338 blocks off-island = soft `at`
-outbid by flat ground → LOAM-W521 LANDMARK_COARSE_ABANDONED (report
-only, cost model untouched); rivals need distance/on bindings.
-Program-free worlds byte-identical. New program-pad.test.ts (8);
-known regression: p7 well 3→2 instances (cross-node spacing, W337).
-
-**PADFIX DECK (walked, verdicts above):** all four installed
-*_padfix + archived battery/candidates/*-padfix. p3 was ONE-SHOT
-clean ($0.05, first ever). p1's T110 was a PRE-EXISTING road bug →
-routeFloorAt (b9f808d) — which likely bought the plaza embankment.
-Latent notes: physics lint reads the PLAN, never program voxels
-(W339 is the only guard on program fluid); siteWaterLine floors at
-seaLevel (contradicts "pond keeps its pond", unreachable today).
-
-**DEV APP: LANDED + COMMITTED.** cd tools/dev-app && ./make-app.sh →
-dist/Terrainist Dev.app. Selftest proves plumbing. NOBODY HAS SEEN
-THE WINDOW — Kai eyeballs on first launch; expect a polish round.
-
-**THE CLOSED AUTONOMOUS RUN (details cell-3):** shaders live+tuned;
-machinery tail closed (family B, §13.2+viaduct); SIX PACKS / 91
-structures / catalog 676 rows / 15 formPacks / 235 members, all
-exhibited; final battery *_final installed+archived (p2/p4 second
-rolls, T110 authored water, machinery bisected innocent);
-dev_world_packs installed (760 rows / 4,195 buildings / 0 unstable
-fluids with real pools); the tide-bell full-cube fix.
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
