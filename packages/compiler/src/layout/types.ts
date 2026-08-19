@@ -447,3 +447,35 @@ export const FRONTAGE_CUT_MAX = 6;
  * is ever probed.
  */
 export const SITE_FRONTAGE_REACH = 12;
+
+/* -------------------------------------------------------------------------- */
+/* the served seam — `docs/GROUND-UNIFICATION-v0.md` Part IV                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The master switch for the served seam (S1): a seam leaves the retaining pass
+ * with a *built* treatment — a wall, a tier stack, a landform bank, a kerb, the
+ * hill's own rock or a building's own back — rather than falling through five
+ * different refusals onto one word, `"bank"`, and a 45° ramp of raw earth.
+ *
+ * **`false` from wave 11A; flipped at 11F on Kai's walk verdict and nothing
+ * else** (§4.4). While it is false the world is byte-identical to what shipped:
+ * every construction this part adds is either unbuilt or gated here, and the
+ * only thing wave 11A changed unconditionally is the *report* — the seam
+ * accounting behind the `transitions by context (§5)` note now runs on every
+ * quarter, not only on one a site planner drew (§4.0a M2). The risk table says
+ * it in one line: report bytes move at 11A, and **a world hash that moves at
+ * 11A is a bug, not a golden update.**
+ *
+ * What this flag gates, precisely, in `structures/retaining.ts`:
+ * - whether an edge's `EdgeContext` is allowed to *choose* the
+ *   treatment (`treatmentForEdge`) on a quarter with no
+ *   `plannedEdges` — today only a hillside form produces that field, so today
+ *   only a hillside quarter's seams are chosen from context;
+ * - whether a tall bank is **benched** rather than ramped 1:1 on such a quarter
+ *   (§4.3's `retaining.ts:582` row).
+ *
+ * The context itself is computed for every district either way: measuring is
+ * honest, and the report is built from the measurement.
+ */
+export const SEAM_TIERS = false;

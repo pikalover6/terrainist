@@ -80,6 +80,7 @@ import {
   type SeamTreatment,
 } from "../layout/levels.js";
 import type { PlannedEdge } from "../layout/forms/types.js";
+import { SEAM_TIERS } from "../layout/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -508,7 +509,19 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     const levels = district.levels as GroundLevels;
     // §5's gate, and it is one field: a quarter a site planner drew declares its
     // cut edges, and nothing else in the compiler does.
+    //
+    // **What the field still gates, after WP-11 wave 11A.** It gates the cut
+    // edges below, §5.5's error at the end of the pass, and — until
+    // {@link SEAM_TIERS} is flipped — whether the edge's context is allowed to
+    // *choose* the treatment. It no longer gates whether the context is
+    // *measured*: `plannedEdges` is produced by exactly one form
+    // (`layout/forms/hillside.ts`), so gating the measurement on it meant the
+    // whole of §5 was off on every `grown`, `grid` and `radial` quarter, and
+    // the report could not even say so — `docs/GROUND-UNIFICATION-v0.md`
+    // §4.0a M2. Measuring is honest; building is what the flag holds.
     const planned = district.plannedEdges !== undefined;
+    /** Whether context *chooses* here — the flag's whole job at 11A. */
+    const chooses = planned || SEAM_TIERS;
     // §5.2 rule 7's ration, spent in the order the edges are seen.
     let budget = district.wallBudget ?? Number.POSITIVE_INFINITY;
     // The cut edges, as declared. Nothing is built on them — see
@@ -554,10 +567,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // in masonry. `"replan"` reaches here as a benched bank: the planner
       // settled eight passes upstream and its ladder ran on the composition, so
       // what is left is to put something on the face that is not a cliff.
-      const context = planned
-        ? edgeContextOf(region, plan, levels, record, street, occupied, budget)
-        : null;
-      const wanted = context === null ? record.treatment : treatmentForEdge(context);
+      //
+      // The context is measured on **every** quarter (11A); `chooses` decides
+      // whether the measurement is allowed to answer.
+      const context = edgeContextOf(region, plan, levels, record, street, occupied, budget);
+      const wanted = chooses ? treatmentForEdge(context) : record.treatment;
       // **The composite, measured before it is built** — see {@link facesOf}.
       // Every rule above reads the seam's one `drop`, and on a skirt that number
       // is the component's median: the columns below it get the same wall, at
@@ -579,13 +593,20 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // the walked town had sheer platform-to-platform dropoffs mid-town. A
       // composite past the ceiling is the same face by a different arithmetic
       // and gets the same answer.
-      const bench = (context !== null && record.drop > RETAIN_MAX) || overCeiling;
+      // 11A: `context !== null` used to stand here, which meant *only a
+      // hillside quarter* ever benched a tall bank. The condition is now the
+      // flag — until {@link SEAM_TIERS} flips, a `grown` or `stepped` quarter
+      // keeps the 1:1 ramp it shipped with, and the world is byte-identical.
+      const bench = (chooses && record.drop > RETAIN_MAX) || overCeiling;
       // The drop the benches have to get down, which for a composite is **not**
       // `record.drop`: benching a seven-block face in six blocks' worth of
       // benches leaves the last block as a step the bench never reaches.
       const benchDrop = overCeiling ? Math.max(record.drop, ...faces) : record.drop;
       if (overCeiling) compositeBanks++;
-      if (context !== null) treated[treatment] += record.cells.length;
+      // Accounting, and unconditional since 11A: `treated` says what every
+      // seam *became*, on every quarter, which is what makes the
+      // `transitions by context (§5)` note below fire outside a site plan.
+      treated[treatment] += record.cells.length;
       if (treatment === "kerb") {
         kerbs += kerbSeam(region, plan, record, states, street, occupied) > 0 ? 1 : 0;
         continue;
@@ -627,10 +648,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           });
         }
         const short = record.cells.length < MIN_RETAIN_RUN;
-        // On a planned quarter a bank is a **treatment**, counted in `treated`,
-        // and not a wall that failed: `unfaced` answers "why no wall" and the
-        // answer here is "because a bank is what this edge wanted".
-        if (context === null) unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
+        // On a quarter whose context chooses, a bank is a **treatment**,
+        // counted in `treated`, and not a wall that failed: `unfaced` answers
+        // "why no wall" and the answer there is "because a bank is what this
+        // edge wanted".
+        if (!chooses) unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
         diagnostics.push(
           warning(
             "RETAINING_REFUSED",
@@ -653,7 +675,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // ration. Charged on the seam's own length before the face is walked,
       // because the ration has to be decided in the same order the edges are
       // seen or it is not a ration.
-      if (context !== null) budget -= record.cells.length;
+      budget -= record.cells.length;
 
       // --- a wall ---------------------------------------------------------
       // The face is the lowest row of the *upper* platform: the seam's own
@@ -1013,8 +1035,10 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     diagnostics.push(
       note(
         "SWEEP_FEATURES_PLACED",
-        relevant.find((d) => d.plannedEdges !== undefined)?.nodePath ?? "world",
-        `transitions by context (§5): ${fill.total + cut.total} planned edge column(s) — ` +
+        relevant.find((d) => d.plannedEdges !== undefined)?.nodePath ??
+          relevant[0]?.nodePath ??
+          "world",
+        `transitions by context (§5): ${fill.total + cut.total} edge column(s) — ` +
           `fill ${fill.total} (${fill.breakdown === "" ? "none" : fill.breakdown}), ` +
           `cut ${cut.total} (${cut.breakdown === "" ? "none" : cut.breakdown})` +
           (benchedBanks === 0 ? "" : `; ${benchedBanks} bank(s) benched rather than ramped`) +

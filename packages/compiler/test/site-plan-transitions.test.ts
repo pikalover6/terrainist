@@ -356,7 +356,10 @@ describe("the steep fixture's transitions, compiled", () => {
     expect(transitions).toContain(`fill ${STEEP_EDGES.fillColumns}`);
     expect(transitions).toContain(`cut ${STEEP_EDGES.cutColumns}`);
     expect(transitions).toContain(`${STEEP_EDGES.benchedBanks} bank(s) benched`);
-    expect(transitions).toContain(`${STEEP_EDGES.plannedColumns} planned edge column(s)`);
+    // "planned edge column(s)" until GROUND-UNIFICATION wave 11A: the note now
+    // fires on quarters no planner drew (§4.0a M2), so the word came off. The
+    // count is unchanged — this quarter's edges are still planned ones.
+    expect(transitions).toContain(`${STEEP_EDGES.plannedColumns} edge column(s)`);
   });
 
   it("answers the seven-block face as several short faces with soil between", () => {
