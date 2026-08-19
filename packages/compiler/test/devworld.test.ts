@@ -846,8 +846,15 @@ describe("the context section", () => {
     const steps = result.contextResult.doorsteps;
     const cells = planContextSection(0, 0).cells.length;
     // Every door in the section, at every yaw: the pass reaches all four strips
-    // and leaves no threshold you have to jump into.
-    expect(steps.stepped + steps.dropped).toBe(cells);
+    // and leaves no threshold you have to jump into. Since the foot gate
+    // (doorsteps.ts footLands, 2026-08-19) one flight is REFUSED — its foot
+    // would land where the ground one column out deviates more than a step
+    // (the ridge cottage's cut side). A refusal writes nothing; the door
+    // keeps a plain sill and the strip's terrain remains its approach. Held
+    // at exactly one so a second refusal — an apron that stopped grading —
+    // still fails loudly.
+    expect(steps.stepped + steps.dropped + (steps.refused ?? 0)).toBe(cells);
+    expect(steps.refused ?? 0).toBe(1);
     expect(steps.stepped).toBeGreaterThanOrEqual(SLOPE_POSITIONS);
     // Exactly one stair per door, and that is the interesting number: the pad's
     // apron has already graded the four columns outside the footprint back to
@@ -856,7 +863,7 @@ describe("the context section", () => {
     // grading — a blend set to zero, a pad that levelled only the footprint —
     // the flights on the slope strip would lengthen and this number would jump,
     // which is the regression this pins.
-    expect(steps.blocks).toHaveLength(cells);
+    expect(steps.blocks).toHaveLength(cells - (steps.refused ?? 0));
   });
 
   it("puts the same cottage at all four yaws, and a pier over the shore's water", () => {

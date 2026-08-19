@@ -228,8 +228,8 @@ const HILLSIDE: Goldens = {
   // in proportion — which is the reading the row's own rule warns about, so:
   // this is not the town getting emptier, it is 12 fewer courses over a
   // denominator that moved by one column. The numerator is the whole of it.
-  junctionDensity: 0.171,
-  soloDensity: 0.042,
+  junctionDensity: 0.165, // re-pinned 2026-08-19: pad plane floors like the datum (solve.ts materialisedLevel)
+  soloDensity: 0.041, // re-pinned 2026-08-19: combined waves, down
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
   // a *new* row in the wrong direction and it is recorded as such rather than
@@ -287,9 +287,9 @@ const STEEP: Goldens = {
   // **0.125 → 0.126** at wave close (2026-08-07, composed tree): the relief
   // redesign's dressed landings shave the walkable denominator once more;
   // the clutter numerator has not moved since the stoop fix.
-  junctionDensity: 0.126,
+  junctionDensity: 0.12, // re-pinned 2026-08-19: combined pad-floor/verge/lamp waves, moved down
   // 0.043 → 0.044 at wave close, the same denominator shave as the row above.
-  soloDensity: 0.044,
+  soloDensity: 0.043, // re-pinned 2026-08-19: combined waves, down
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
   faceRuns: 4,
@@ -398,8 +398,25 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   //
   // The denominator fell 32 → 30 with it: two lamp sites are no longer solid,
   // dry and paved by the pass at the moment it plants, so they get no post.
-  streetLamps: 30,
-  sunkenLamps: 3,
+  //
+  // **ATTRIBUTION FIX (2026-08-19): 30 → 16 lamps, 3 → 1 sunken, and no world
+  // byte moved.** `lamp_post` is one fence mast carrying THREE lanterns — a head
+  // at the top and two arms hanging off slabs, one column either side. The
+  // census counted each lantern as a lamp and read the ground under the
+  // lantern's *own* column, so each arm was measured over the graded verge
+  // beside the sidewalk (`VERGE_FILL_FEATHER`, legitimately lower) while the
+  // post it hangs off stood level: the sunken rows at (−4, 62) and (−2, 62) were
+  // the two arms of the one post at (−3, 62). `lampFoot` now attributes a
+  // hanging lantern to the mast column within Chebyshev 1 and measures the
+  // mast's own lowest course, and a mast is counted once — so the denominator is
+  // posts, not lanterns (30 lanterns ≈ 16 posts).
+  //
+  // The **residual is real and is the same seam as before**: one post at
+  // (−4, 62) stands `sunkenBy` 1 with `viaCarriageway` true. That is the 8F kerb
+  // above, unchanged in kind — the post did not sink, the carriageway two
+  // columns away rose. It stays pinned at 1 for the reason argued above.
+  streetLamps: 16,
+  sunkenLamps: 1,
   deeplySunkenLamps: 0,
   // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
   // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
@@ -438,8 +455,8 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // these five are the saying. They MUST GO DOWN — by the two surfaces arriving
   // at a level a step can bridge, or by a flight being built there — never by
   // going back to dressing a wall's foot.
-  cutoffColumns: 12,
-  undressedCutoffs: 5,
+  cutoffColumns: 7, // re-pinned 2026-08-19: combined waves, down
+  undressedCutoffs: 3, // re-pinned 2026-08-19: combined waves, down
   // The 2c rows (2026-08-08), pinned from the first compile that has them.
   // `blindStairs` and `strandedTreads` MUST GO DOWN, to 0. `junctionColumns` is
   // the denominator: a "fix" that stops laying junction dressing altogether
@@ -448,8 +465,8 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // The one blind stair left on this fixture is at `(50, 70, 227)` — a lane
   // tread facing a column that reads back as no surface at all, beside the
   // lower cottage's doorstep. It is the same site on both fixtures.
-  junctionColumns: 11,
-  blindStairs: 1,
+  junctionColumns: 8, // re-pinned 2026-08-19: combined waves, down
+  blindStairs: 0, // re-pinned 2026-08-19: combined waves — to zero, the MUST-GO-DOWN target
   // `(75, 70, 244)`, both fixtures: a tread whose four neighbours all read back
   // as unstandable. The columns round it are declared paving that the audit
   // counts as `buried` — a defect of a different pass, showing up here.
@@ -503,7 +520,7 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // them (§2.4's tie rule) and stays one under the higher. `plinthRuns` is
   // still 0. On `glowcap_vale` itself the same change reads 78 → 20 proud
   // columns, longest run 14 → 2.
-  plinthColumns: 32,
+  plinthColumns: 31, // re-pinned 2026-08-19: combined waves, down
   plinthLongestRun: 5,
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
@@ -533,12 +550,18 @@ const STEEP_DRESSING: DressingGoldens = {
   // 2 → 0 and 2 → 0 (eb93a54).
   openOverSoil: 0,
   floatingDressing: 0,
-  streetLamps: 17,
+  streetLamps: 9,
   // **0 → 1 at the 8F flip**, one lamp at (8, 30), `sunkenBy` 1,
   // `viaCarriageway`. The same seam as the hillside fixture's three and the
   // same argument — see that row, which carries the column probe. The
   // denominator did not move here, so this fixture shows the effect clean: one
   // of seventeen lamps has a carriageway that climbed a block without it.
+  //
+  // **ATTRIBUTION FIX (2026-08-19): 17 → 9 lamps, `sunkenLamps` stays 1** — see
+  // the hillside row for the rule. Here the arms of the one affected post used
+  // to split the finding; now the post at (8, 30) reports once, `sunkenBy` 1,
+  // `viaCarriageway`. Same defect, honestly attributed; audit-only, no world
+  // bytes moved.
   sunkenLamps: 1,
   deeplySunkenLamps: 0,
   // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5). **13 → 16** with the stoop
@@ -551,8 +574,8 @@ const STEEP_DRESSING: DressingGoldens = {
   // seven are the treads that used to stand at the foot of a face they could not
   // climb, including the pair at the mangled corner where the carriage spine
   // `sp0` meets the terrace street `hs2_0` three blocks down.
-  cutoffColumns: 16,
-  undressedCutoffs: 7,
+  cutoffColumns: 11, // re-pinned 2026-08-19: combined waves, down
+  undressedCutoffs: 5, // re-pinned 2026-08-19: combined waves, down
   // The 2c rows (2026-08-08). See the hillside block for what each one is.
   //
   // `cascadeLargest` 31 → **24** is the mangled corner at `(53 … 65, 9 … 12)`,
@@ -572,8 +595,8 @@ const STEEP_DRESSING: DressingGoldens = {
   // three columns smaller. `blindStairs` and `strandedTreads`, the two rows
   // that are actually defects, are unmoved at 1 and 1: nothing was hidden, less
   // was needed. It still MUST GO DOWN further and the lever is still a flight.
-  junctionColumns: 38,
-  blindStairs: 1,
+  junctionColumns: 35, // re-pinned 2026-08-19: combined waves, down
+  blindStairs: 0, // re-pinned 2026-08-19: combined waves — to zero, the MUST-GO-DOWN target
   strandedTreads: 1,
   cascadeLargest: 21,
   // 3 → 5 columns, longest run 1 → 2, and then **5 → 3, run 2 → 1** with the
@@ -595,7 +618,7 @@ const STEEP_DRESSING: DressingGoldens = {
   // `VERGE_FILL_FEATHER`) — see the hillside row for the walked defect and the
   // mechanism. The three-column stretch on `hs0_0` is gone entirely; what is
   // left is five isolated columns, each one beside a road cell that steps.
-  plinthColumns: 5,
+  plinthColumns: 3, // re-pinned 2026-08-19: combined waves, down
   plinthLongestRun: 1,
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).

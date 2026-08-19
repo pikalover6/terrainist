@@ -550,6 +550,65 @@ const NEIGHBOURS4 = [
   [0, -1],
 ] as const;
 
+/**
+ * The mast a hanging lantern belongs to — fence, wall or post-like column.
+ *
+ * `lamp_post` (stdlib `props-street.ts`) is a fence mast at the prop's centre
+ * with a lantern on top and **two arm lanterns**, one column either side,
+ * hanging from slabs. Read literally, each arm's own column is over the verge
+ * beside the sidewalk, which `VERGE_FILL_FEATHER` legitimately grades lower —
+ * so the arms used to report as sunken lamps while the post they hang off
+ * stood perfectly level. See {@link lampFoot}.
+ */
+const LAMP_MAST = /(_fence|_wall|_post|_log|_stem|iron_bars|end_rod|chain)$/;
+
+/**
+ * The column a lamp's foot should be measured down.
+ *
+ * **Attribution, not leniency.** A lantern with `hanging: true` is not standing
+ * anywhere — it hangs off a mast one column away, and the honest question about
+ * it is whether *that mast* stands low. So for a hanging lantern we look for a
+ * mast column within Chebyshev 1, at the lantern's own level or the two above
+ * it (the arm hangs below the slab that hangs off the mast), and measure there.
+ * Failing that — a lantern chained under an arch, say — it falls back to its own
+ * column, so nothing drops out of the census. A head lantern (`hanging: false`,
+ * atop the post) already sits in the mast's column and is returned unchanged.
+ *
+ * A post that genuinely stands on sunken ground still counts — all three of its
+ * lanterns resolve to the same low mast column and every one of them reports.
+ * The census denominator is untouched: it is still one row per lantern, so
+ * `streetLamps` does not move and only the *attribution* of the foot changes.
+ *
+ * The mast's foot is read by walking its own column **down** to the last mast
+ * block, not with `groundStanding`: the mast is solid, so there is no standable
+ * cell inside it, and the level it stands at is the level of its lowest course.
+ * Non-hanging lamps keep the old `groundStanding` read of their own column.
+ */
+function lampFoot(
+  probe: DressingProbe,
+  x: number,
+  y: number,
+  z: number,
+): { readonly x: number; readonly z: number; readonly foot: number } | null {
+  const decoded = probe.propsAt(x, y, z);
+  if (decoded !== undefined && decoded.props["hanging"] === "true") {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (dx === 0 && dz === 0) continue;
+        for (let dy = 0; dy <= 2; dy++) {
+          const my = y + dy;
+          if (!LAMP_MAST.test(probe.nameAt(x + dx, my, z + dz))) continue;
+          let low = my;
+          while (low > probe.minY && LAMP_MAST.test(probe.nameAt(x + dx, low - 1, z + dz))) low--;
+          return { x: x + dx, z: z + dz, foot: low };
+        }
+      }
+    }
+  }
+  const foot = probe.groundStanding(x, z, y);
+  return foot === null ? null : { x, z, foot };
+}
+
 /* -------------------------------------------------------------------------- */
 /* the audit                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -672,6 +731,13 @@ export function auditDressing(probe: DressingProbe): DressingReport {
   let streetLamps = 0;
   let sunkenLamps = 0;
   let deeplySunkenLamps = 0;
+  /**
+   * Mast columns already counted. **One lamp is one post**, however many
+   * lanterns it carries: `lamp_post` hangs three (a head and two arms), and
+   * before {@link lampFoot} attributed them all to the mast, one post could
+   * report as three separate street lamps — two of them over the graded verge.
+   */
+  const countedMasts = new Set<string>();
 
   for (const block of probe.blocks) {
     const name = probe.nameAt(block.x, block.y, block.z);
@@ -685,14 +751,22 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     // flight, not a doorstep on the bank above, and within
     // {@link FURNITURE_REACH} columns, which is as far as a lamp's own street
     // can be.
-    // The post's own foot: down the lamp's column to the first floor under it.
-    const foot = probe.groundStanding(block.x, block.z, block.y);
-    if (foot === null) continue;
+    // The post's own foot: down the **mast's** column to the first floor under
+    // it. Not the lantern's own column — an arm lantern hangs a block to the
+    // side of the post, over the graded verge, and reading the ground there
+    // blamed the post for a slope that is verge feathering working as designed.
+    // {@link lampFoot} carries the rule.
+    const stands = lampFoot(probe, block.x, block.y, block.z);
+    if (stands === null) continue;
+    const { x: footX, z: footZ, foot } = stands;
+    const mastKey = `${footX},${footZ}`;
+    if (countedMasts.has(mastKey)) continue;
+    countedMasts.add(mastKey);
     // The census first, over **any** paving within two columns, because a
     // number that reads zero has to show its working: this is what the whole
     // population of lamps beside paving looks like, before the strict rule
     // throws any of it away.
-    const pavement = highestPavedNear(probe, block.x, block.z, FURNITURE_REACH);
+    const pavement = highestPavedNear(probe, footX, footZ, FURNITURE_REACH);
     if (pavement === null) continue;
     streetLamps++;
     const sunkenBy = pavement - foot;
@@ -706,11 +780,13 @@ export function auditDressing(probe: DressingProbe): DressingReport {
     // climbing past: the discriminator that separates "planted in a slot" from
     // "standing beside a stair", carried per row so a reader can tell them apart
     // without re-running anything.
-    const carriage = highestCarriagewayNear(probe, block.x, block.z, FURNITURE_REACH);
+    const carriage = highestCarriagewayNear(probe, footX, footZ, FURNITURE_REACH);
     sunken.push({
-      x: block.x,
+      // The **mast's** column, not the lantern's: an arm lantern's own column
+      // is one to the side and is not what stands low. See {@link lampFoot}.
+      x: footX,
       y: block.y,
-      z: block.z,
+      z: footZ,
       block: name,
       emitter: block.emitter,
       standsAt: foot,
