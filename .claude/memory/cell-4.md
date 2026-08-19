@@ -47,22 +47,30 @@ one 2109-col block = 0 buildings; + 121 stepped-split slivers; fix
 floor, QUEUED); kit taught grown-blockSize + flat-roof-box 2079e50,
 horse courteous-min 453f48f.
 
-**WP-11 THE SERVED SEAM (design 516dd96, Part IV):** headline —
-benching/context was gated on plannedEdges, a field ONLY
-forms/hillside produces: grown/stepped districts NEVER benched
-(Troy's mess). Laws: seam SERVED never refused (W411 retired, I412);
-RETAIN_MAX caps a FACE — ceil(D/6) stacked tiers, one arithmetic
-two dressings by pressedShare (revetted great wall vs planted
-terraces); election pays (bucket levels, sliver merge, W410 finally
-emitted); short runs absorbed; banks 1:2 carrying nothing; seam
-stairs ride street-stairs law. SEAM_TIERS=false until 11F flip
-(Kai's walk). Defaults adopted: tiers≤3, tread3/setback1, fort
-measured, W410 not feedback. **IN FLIGHT: 11A honest refusal (low;
-retaining.ts+types.ts) ∥ 11C election pays (low;
-platforms+district).** THEN: 11B tier stack (med), 11D absorb+bank,
-11E seam stair+door, density core fix, referenceY rounding, datum
-fill cap (Troy street 9-11 proud), sidewalk lamps. Then deck
-troy_v14 / hellenist_city_v10 / pirates_v_unicorns_v17 (--series).
+**WP-11 THE SERVED SEAM: ALL MACHINERY COMMITTED, 11F FLIP IN
+FLIGHT.** Design 516dd96 (headline: benching was gated on
+plannedEdges — hillside-form only; grown/stepped NEVER benched).
+Waves: 11A honest refusal 600df49; 11C election pays e3ce5fb (W410
+first emission); 11B tier stack 09379fe (ceil(D/6) faces, revetted
+vs terraced by pressedShare, I412/W413/I415); 11D absorption+bank
+e96bfc8 (short seams absorbed, 1:2 landform, terminatesOnBank); 11E
+seam stairs e1c797c (landings contract, sst* steps segments ride
+street-stairs law, footLands accepts landings, I414); wiring 5d6bb6a
+(landings cross the pass; I415 on Troy: 26 crossings deepest 5;
+end-to-end fixture: door refused without landings, built with; NOTE
+a stack's flight is climbable BECAUSE of street carry — 3n-2 run vs
+4n rise). ALSO COMMITTED same arc: density 047dee2
+(BLOCK_MULTI_RECT — rectsOf was one-rect for non-grid; Troy 0.173→
+0.222, coverage 34→58%; W527 guard; UNWALKED, one constant to
+revert); pad floor e29b0b9 (horse flush 122/122; every delta
+exactly -1); lamp attribution 52ebf21 (one post one lamp; goldens
+re-pinned DOWNWARD, blindStairs 0). Full suite 5,156/0 at 5d6bb6a.
+**IN FLIGHT: 11F (medium)** — SEAM_TIERS=true, W411-retirement doc
+amendment, re-pin triage, Troy+haven seam stories, physics MUST
+stay clean. ON LANDING: commit, regen deck via install --series
+(troy_v14, hellenist_city_v10, pirates_v_unicorns_v17), install,
+handoff with walk questions (tier dressings SEAM_TREAD/SETBACK,
+BLOCK_MULTI_RECT verdict, fortification promotion off I415's 26).
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
