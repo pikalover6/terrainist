@@ -48,17 +48,31 @@ post-flip bugs caught+fixed: verdict never STAMPED at freeze
 nodePath — RNG programs E334'd every round, $1.5 roll burned; fix
 200209b pins CONFORM_RUN=loam.verify (kept docs recompiled FREE).
 
-**TIE2 WALK DECK INSTALLED *_tie2 + archived (d018284).** 11
-programs judged, ONE conforms:true (warding_crystal_pylon p1 — first
-conform-seated structure ever); ten seat pad w/ new feathering
-(T341). T239 bit 5x in Troy's roll; W522 re-measured facing in 3
-worlds. Intermediate *_tie deck also installed (pre-stamp) —
-superseded. Regen spend today ~$4 (padfix 1.0 + tie 1.3 + tie2 1.6),
-over the ~$2 envelope, driven by the two stamped-verdict bugs.
-**AWAITING KAI'S WALK:** tie verdict; FRONTAGE_RISE (0=flush now);
-rear-terrace look; conform rate ~9% → §9 Q5 (prompt iteration vs
-re-sweep); LOAM-SPEC §15.1 ratification. 9C re-author of shipped
-battery deferred until after walk.
+**KAI'S TIE2 VERDICTS (wave 3, 2026-08-19):** "I may have somewhat
+overreacted — the fixes at least partially worked"; RULING: iterate
+on MAINLINE (gem-plus branch = completed control experiment, gem2
+deck installed *_gem2, archived on that branch). Findings: p5
+HELLENIST = ~90% OPEN OCEAN (rendered proof) — authored heightfield
+drowned the region, city seated least-violating on a scrap, ~3
+structures; p1 unicorn+structures in BACK of island (same land
+scarcity, E406 least-violating); Troy DECENT but: modern houses
+STILL leak (era ancient), density still sparse (huge walled precinct
+mostly empty), stairs-to-nowhere in terrace faces, horse hugs wall
+(kit example min:0 — FIXED 453f48f, min 8..24 + courteous-min law),
+horse still on 1-block pad (referenceY round-up, now verdict-backed
+— QUEUED); glowcap paths float 1 block above terrain (the 8F plinth
+trade Kai now condemns); NAMING SYSTEM requested (sequential
+versions, retroactive, standardized slugs).
+
+**WAVE 3 IN FLIGHT (4 agents):** land-budget feedback diagnostic
+(medium — settlement-needs-land measured, feedback-visible so the
+model repairs terrain; kit terrain paragraph); floating tied paths
+(medium — verge feather on datum segments; + stairs-to-nowhere
+recon); naming/versioning (low — tools/worlds/rename-worlds.mjs,
+slug_vN, retroactive rename of Kai's saves w/ dry-run + ledger,
+install --series); Troy modern-house leak (low — era-gating the
+default pool, deliberate combos stay legal). QUEUED NEXT: density
+(lot-fill vs envelope), referenceY rounding, unicorn prominence.
 
 **TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
 the doc had era ancient + classical_mediterranean. Killers: `density:
