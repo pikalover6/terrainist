@@ -304,6 +304,44 @@ export const ROAD_BRIDGE_MAX_SPAN = 22;
 /** How many columns either side of a lane are graded into it. */
 export const ROAD_SHOULDER_REACH = 2;
 
+/**
+ * How much closer to the lane the verge's **fill** side reaches than its cut
+ * side — the feather that makes a lane *meet* the ground beside it.
+ *
+ * **The walked defect (`glowcap_vale`, 2026-08-19).** The village's connecting
+ * paths stood one block proud of the lawn for their whole length, with a sharp
+ * vertical edge on both sides — a dirt ribbon on a plinth, walkable only by
+ * stepping up. Measured on the recompile: **78 columns in 20 runs, longest 14,
+ * every one of them proud by exactly one**, and every one on `road#shoulders`.
+ * Exactly one is the signature, and it is manufactured here.
+ *
+ * {@link blendShoulders} already fills: a bank below the lane at ring `k` is
+ * *raised* to `y − k`, without limit on how much material that takes. So the
+ * verge climbed the whole bank and then stopped one block short of the lane at
+ * ring 1 — the pass built a kerb the length of every road, out of the fill it
+ * had just laid to remove one. The symmetric allowance was the bug: a cut face
+ * one block tall beside a lane is a bank the eye reads as ground, and a *fill*
+ * face one block tall beside a lane is a plinth the foot has to climb.
+ *
+ * At **1** the fill side reaches one ring further in: ring 1 is graded to the
+ * lane's own level and ring 2 to one below it, which is a 1:1 ramp off the
+ * carriageway onto the field. It adds at most one block of fill to a column the
+ * pass was already filling — never a new embankment, because the *unbounded*
+ * half of the fill was there all along — and it changes nothing on the cut
+ * side, where {@link ROAD_SHOULDER_REACH}'s allowance still governs and a face
+ * is still a face (`seam`, claimed, wet and near-wet columns are all untouched,
+ * and `verge` is rank 140, so a bank still only moves ground nothing else
+ * claimed).
+ *
+ * WP-8F's plinth rows named two levers for the same defect on the datum path —
+ * `STREET_CUT_MAX`, or a fill cap on the datum — and this is neither: it does
+ * not move one carriageway block. The street keeps the profile its datum gave
+ * it (F1's inheritance is untouched, so no lot moves) and the ground beside it
+ * comes up to meet it, which is what the pre-tie streets read like on the walk
+ * only because they were cut in rather than held up.
+ */
+export const VERGE_FILL_FEATHER = 1;
+
 /** Widths this v0 surfaces. */
 export const ROAD_MIN_WIDTH = 2;
 export const ROAD_MAX_WIDTH = 3;
@@ -3604,6 +3642,12 @@ function declareRoute(
  * of stepping. Only the *height* moves — the surface block is left alone, so a
  * lane through grass keeps grass right up to its shoulder.
  *
+ * **The two allowances are not the same number** ({@link VERGE_FILL_FEATHER}).
+ * A bank *below* the lane is graded to `y − (k − 1)`: ring 1 arrives at the
+ * lane's own level and ring 2 one block under it. Symmetric allowances left
+ * every filled verge exactly one block short of the carriageway, which is a
+ * kerb the pass manufactured out of its own fill — the `glowcap_vale` plinth.
+ *
  * Three columns are never touched: anything claimed (road, plaza, footprint),
  * anything wet, and anything **next to** something wet. The last is the fluid
  * invariant: lowering a dry column beside a river opens a face the river would
@@ -3710,7 +3754,12 @@ function blendShoulders(
     }
     for (let k = 0; k < n; k++) if (next[k] === 1) claimed[k] = 1;
 
+    // The cut allowance and the **fill** allowance are not the same number, and
+    // the difference is {@link VERGE_FILL_FEATHER}: a bank below the lane is
+    // graded to `y − (ring − 1)`, so ring 1 arrives *at* the lane and ring 2
+    // one block under it. See the constant for the walked defect.
     const allowed = ring;
+    const allowedBelow = ring - VERGE_FILL_FEATHER;
     for (let j = 0; j < region.depth; j++) {
       for (let i = 0; i < region.width; i++) {
         const idx = j * region.width + i;
@@ -3728,7 +3777,8 @@ function blendShoulders(
 
         const y = height[idx] as number;
         const g = view.ground[idx] as number;
-        const target = g > y + allowed ? y + allowed : g < y - allowed ? y - allowed : g;
+        const target =
+          g > y + allowed ? y + allowed : g < y - allowedBelow ? y - allowedBelow : g;
         if (target === g) continue;
         declared.push({ idx, y: target });
       }

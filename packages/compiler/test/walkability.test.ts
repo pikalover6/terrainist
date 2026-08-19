@@ -484,7 +484,26 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // retaining wall), or a fill cap on the datum path to match `ROAD_BERM_MAX`,
   // which is WP-10's territory and not this wave's. Neither is chosen here.
   // §7 lists 8F as a walk gate for exactly this: the trade is Kai's.
-  plinthColumns: 49,
+  //
+  // **The walk came back: BROKEN, and 49 → 32 is the answer** (2026-08-19,
+  // `glowcap_vale`). Kai walked the paths standing one block proud of the lawn
+  // with a sharp vertical edge, and the mechanism turned out to be neither of
+  // the two levers above — it is not on the carriageway at all. `blendShoulders`
+  // filled a bank below the lane up to `y − k` at ring `k`, so ring 1 stopped
+  // one block short of the road *by construction*: the verge built the kerb out
+  // of its own fill, on every road in the compiler, datum or no datum. The
+  // fill side now reaches one ring further in (`VERGE_FILL_FEATHER`), ring 1
+  // arrives at the lane's own level and ring 2 one below it, and not one
+  // carriageway block moved — so the datum, F1's inheritance and every seated
+  // lot are untouched, which is why `sunkenLamps` below is unmoved at 3: that
+  // one is the sidewalk band, and it is a different lever.
+  //
+  // 32 is two above the pre-flip 30, and those two are the honest residue: a
+  // column that neighbours two road cells a block apart takes the **lower** of
+  // them (§2.4's tie rule) and stays one under the higher. `plinthRuns` is
+  // still 0. On `glowcap_vale` itself the same change reads 78 → 20 proud
+  // columns, longest run 14 → 2.
+  plinthColumns: 32,
   plinthLongestRun: 5,
   stepPlinthColumns: 0,
   stepPlinthLongestRun: 0,
@@ -571,8 +590,13 @@ const STEEP_DRESSING: DressingGoldens = {
   // fixture with 1,409 flight columns. A kerb detail on a steep hill; it did
   // creep, and this is the saying so. MUST GO DOWN — see the hillside row for
   // the two honest levers, neither of which is this wave's.
-  plinthColumns: 8,
-  plinthLongestRun: 3,
+  //
+  // **8 → 5 columns, run 3 → 1** with the verge feather (2026-08-19,
+  // `VERGE_FILL_FEATHER`) — see the hillside row for the walked defect and the
+  // mechanism. The three-column stretch on `hs0_0` is gone entirely; what is
+  // left is five isolated columns, each one beside a road cell that steps.
+  plinthColumns: 5,
+  plinthLongestRun: 1,
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
   stepPlinthColumns: 0,
