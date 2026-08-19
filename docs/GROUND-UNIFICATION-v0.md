@@ -1,10 +1,18 @@
 # Ground unification — the road is the ground, and a program stands on it
 
 > Normative for **WP-8** (the frontage tie), **WP-9** (bespoke builds on real
-> terrain) and **WP-10** (the lift-keyed edge). Both headline directions were
-> ratified by Kai on the 2026-08-17 deck walk, the second in his own words:
-> *"What if we feed the bespoke generator the terrain that its structure will be
-> sitting on and let it build naturally on top of that?"*
+> terrain), **WP-10** (the lift-keyed edge) and **WP-11** (the served seam).
+> The first two headline directions were ratified by Kai on the 2026-08-17 deck
+> walk, the second in his own words: *"What if we feed the bespoke generator the
+> terrain that its structure will be sitting on and let it build naturally on top
+> of that?"* WP-11 (Part IV) answers three walked-bad findings from the padfix
+> and tie2 decks that turn out to be one mechanism, and it closes §3.2's ledger
+> item — *"what does a refused `tallDrop` become"*.
+>
+> **`COURTYARDS-AND-LEVELS-v0.md` §3.4 and §3.5 are amended by Part IV**, which
+> is the one place this document does more than generalise its parents: §3.4's
+> drop table gains a tiered answer, and §3.5's steps 2 and 3 — specified there,
+> never built — are given waves.
 >
 > `docs/GROUND-CONTRACT-v0.md` is the parent: this document adds no new
 > arbitration, no new rank and no second resolver. It decides **what a claimant
@@ -13,7 +21,7 @@
 > `docs/DESIGN.md` is untouched by this document and remains the ratified brief.
 > `docs/SITE-PLAN-v0.md` (the lot walk), `docs/URBAN-FORMS-v0.md` (the fabric)
 > and `docs/COURTYARDS-AND-LEVELS-v0.md` (column ownership) are generalised, not
-> amended.
+> amended — with the one exception Part IV names above.
 
 ---
 
@@ -207,7 +215,7 @@ carriageway puts its threshold exactly one block above the pavement — a
 doorstep, which is the thing `buildDoorsteps` exists to dress. `1` (a plinth
 course under every shopfront) is the obvious alternative and is a **taste**
 parameter: it changes every settlement world's look and therefore lands only on
-a walk (§7).
+a walk (§8).
 
 ### F5 — corner lots
 
@@ -351,7 +359,7 @@ none for `structure.linework`.
 
 Terrain-only worlds, `terrarium`, `devworld`, `theme-sweep`, every farm world,
 every scatter-only world: not one byte. Worlds *with* a settlement all move, and
-that is the point — see §7 for what that means about shipping.
+that is the point — see §8 for what that means about shipping.
 
 ## 1.6 The other four clients of F1
 
@@ -906,7 +914,415 @@ double-built.
 
 ---
 
-## 4. Non-goals
+# Part IV — the served seam (WP-11)
+
+Three walked-bad findings across two decks are one mechanism, and the mechanism
+is a fall-through. `layout/levels.ts`' transition table has nine rules and five
+distinct reasons to say *no wall here*; every one of those reasons lands on the
+same word, `"bank"`, and on the quarters that actually shipped, a bank is a 45°
+ramp of raw earth. So "we decline to build masonry" and "we grade one platform
+into the other at the angle of repose plus twenty degrees" are the same
+sentence, and the second one is the defect.
+
+The question this part answers, plainly:
+
+> **What should a seam become when a single wall is not affordable?**
+
+## 4. What the refusal actually is
+
+### 4.0 The three findings, as numbers
+
+| finding | world | what the report says |
+| --- | --- | --- |
+| **"messy terrain overall"** (Kai, tie2 deck) | `world.troy_citadel`, `battery/candidates/p3-tie2` | 56 × `LOAM-W411`; 47 walls over 1,417 columns, **56 banks**, 437 seam columns unfaced (6 building, 94 shortRun, **337 tallDrop**), **1,983 columns graded as bank**. **Seven** of the refusals are drop **8** over runs of 23, 23, 41, 48, 50, 63 and 73 columns — 321 columns of citadel face graded into a ramp. **Forty-six** more are drops 2–5 over runs of 1–5 columns; the remaining three are drops 7, 8 and 9 over runs of 9, 4 and 7. |
+| **"garbled quarry"** (Kai, p1-padfix walk) | the pirate haven | 126 seam columns refused, 67 `shortRun` + 59 `tallDrop`; platforms stepping vertically, stone-lined trenches with natural-ground stubs between them. Logged in §3.2's forensics ledger as *"what does a refused `tallDrop` become"*. |
+| **stairs to nowhere** (Kai, tie2 deck) | `world.troy_citadel` | 46 doorstep flights stacked up bank faces to doors the bank makes unreachable (`structures/doorsteps.ts`). |
+| *(control)* | `world.troy`, `p3-c5` — the walked-**good** Troy | 59 walls over 1,857 columns, 15 banks, 303 unfaced (**105 tallDrop**), **713 columns graded as bank**. The good world has the same defect at a third of the scale. This matters for §6's blast radius: fixing this moves a world Kai liked. |
+
+### 4.0a The eight mechanism facts, each checkable
+
+**M1 — every "no" lands on one word.** `treatmentForEdge`
+(`layout/levels.ts:518`) computes `soft = ctx.side === "fill" ? "bank" : "rock"`
+and returns it from rules 4 and 7; rule 5 returns `"replan"` on the fill side,
+and `treatmentForSeam` (`levels.ts:340`) collapses `"replan"` to `"bank"` in its
+next line because "there is no planner still running". Four different findings,
+one construction.
+
+**M2 — the good answers are gated on a field one form produces.**
+`buildRetainingWalls` sets `const planned = district.plannedEdges !== undefined`
+(`structures/retaining.ts:511`) and that flag gates three things at once: whether
+`edgeContextOf` runs at all (`:557`), whether a tall bank is **benched**
+(`:582` — `const bench = (context !== null && record.drop > RETAIN_MAX) ||
+overCeiling`), and whether the `transitions by context (§5)` note fires
+(`:1013`). `plannedEdges` is attached at `layout/district.ts:1598`, and only when
+`planned = plan.strips` is defined (`district.ts:1088`) — which only
+`layout/forms/hillside.ts:1048`'s `cutEdges` produces. Troy's citadel is
+`fabric: "grown"`, `ground: "stepped"`: no strips, so **the whole of §5 is off**,
+and the proof is in the log — `p3-tie2/generate.log` carries the `multi-level
+ground` note and does **not** carry the `transitions by context` one. WP-3 built
+the right machinery and shipped it hillside-only.
+
+**M3 — an unbenched bank is 45°.** `gradeBank` (`retaining.ts:2170`) sets
+`const steps = benched ? benchedRun(drop) : drop` (`:2230`) and targets
+`top - ring - 1` — one block of fall per column of run. §3.2 of this document
+already names that ratio as the one `APRON_RUN_PER_BLOCK = 2` was chosen
+*against*: "one is a 45° bank and still reads as cut". An eight-block drop over
+a 73-column contour therefore becomes eight columns of raw earth at 45°, painted
+in `ground.bank` and reported as a success.
+
+**M4 — drop 8 exists because the election allows it.** `derivePlatforms`
+(`layout/platforms.ts:79`) splits a block whose relief exceeds `FLOOR_HEIGHT` by
+bucketing the **blurred** field (`:132`), and then gives each piece the level
+`storey(base, medianOf(piece, heightAt))` — the **raw** median (`:142`). The
+partition and the level are two different quantities measured off two different
+fields, so two 4-adjacent pieces one bucket apart can be two storeys — eight
+blocks — apart. Six of Troy's seams are exactly drop 8, which is
+`2 · FLOOR_HEIGHT`. Nothing anywhere asks what a platform pair will cost at its
+boundary before electing it.
+
+**M5 — slivers stay natural, inside levelled ground.** `platforms.ts:141` drops
+a piece under `MIN_PLATFORM_COLUMNS = 9` with a bare `continue`; the columns keep
+`NO_PLATFORM`, and `levelSeams` states that "natural ground (−1) is not a
+platform and takes part in no seam" (`levels.ts:210`). So a nine-column sliver in
+the middle of a block that everything around it levelled keeps its natural
+height and gets no face. That is the pirate haven's stubs and the "quarry-garble
+grass pillars" of the padfix walk.
+
+**M6 — a short run is refused a wall and then graded anyway.** Forty-seven of
+Troy's fifty-six refusals are runs of five columns or fewer, and twenty-one of
+those are a *single* column. `MIN_RETAIN_RUN` is right to
+refuse a wall there (`levels.ts:98` — "a masonry face taller than it is long is
+a buttress nobody asked for"), and then `gradeBank` spreads `drop` rings of fill
+out of a one-column seam, which is a mound. The refusal is correct; the
+fall-through is not.
+
+**M7 — the reachability rule was never built.**
+`docs/COURTYARDS-AND-LEVELS-v0.md` §3.5 specifies three steps — the form's own
+connections, **derived stairs** over a platform adjacency graph capped at
+`MAX_DERIVED_STAIRS = 12`, and **dissolve what is still orphaned**. Steps 2 and
+3 exist nowhere in the tree: `MAX_DERIVED_STAIRS` has no definition, and
+`LOAM-W410 LEVEL_DISSOLVED` is declared at
+`packages/spec/src/terrain/diagnostics.ts:637` and **has never been emitted**.
+So nothing has ever guaranteed that a platform is reachable, and `buildDoorsteps`
+(`structures/doorsteps.ts:124`) — the one pass that ever tries to get from the
+ground to a threshold — is left to discover the problem per door, with six
+columns of reach and no idea what it is climbing. Hence 46 flights up a bank.
+
+**M8 — the parapet never fires, and that is a different round.** Every battery
+world reports `0 parapeted` (`p3-tie2`, `p1-tie2`, `p4-final`), because
+`railRun`'s `RAIL_ACCESS_RANGE` (`retaining.ts:1277`) requires somebody able to
+walk up to the wall top. GROUND-CONTRACT §13.8 already recorded this. It is real
+and it is **not** this work package's.
+
+## 4.1 The laws
+
+Twelve, in the GROUND-CONTRACT style. They are stated so a wave that violates
+one is visibly wrong.
+
+### S1 — a seam is served, never refused
+
+> **Every seam column leaves `buildRetainingWalls` with exactly one named,
+> *built* treatment: a kerb, a wall, a **tier stack**, a **landform bank**, the
+> hill's own rock, or a building's own back. There is no seventh answer and no
+> null answer.**
+
+`"bank"` stops being the fall-through of five different rules and becomes one
+deliberate construction with its own preconditions (S8). The refusal *reasons*
+survive — `UnfacedReason` (`retaining.ts:322`) is a true and useful accounting
+and is not deleted — but each now names which construction was chosen, not which
+one was skipped.
+
+Reporting follows the same reversal. `LOAM-W411 RETAINING_REFUSED` is retired as
+a warning and replaced by `LOAM-I412 SEAM_SERVED`, one note per quarter naming
+what every seam *became*. A new `LOAM-W413 SEAM_UNSERVED` survives for the only
+honest refusal left: a seam whose chosen treatment could not be physically placed
+because a street, a footprint or water owns the ground. Fifty-six warnings that
+say "we did the other thing" is a report nobody can act on; one note that says
+"12 walls, 6 stacks, 3 banks, 41 absorbed" is.
+
+### S2 — `RETAIN_MAX` is a ceiling on a face, not on a drop
+
+> **A drop of `D` is served by `ceil(D / RETAIN_MAX)` faces, each at most
+> `RETAIN_MAX` tall, stacked with a tread between them. `RETAIN_MAX = 6` is
+> unchanged and still means what `levels.ts:71` always said it meant — the
+> tallest face that reads as *built* rather than as a cliff with a coping on it.**
+
+This is the whole answer to the tallDrop half of the finding, and it is the
+hill-town look Kai ratified: *flattened terraces following the hill's shape*
+(`memory: hill-town-aesthetic-calibration`). The arithmetic is already in the
+file — `benchedRun` and `BENCH_FACE` (`levels.ts:387`, `:402`) do exactly this
+for a *soil* bank. S2 says masonry gets the same treatment, at the masonry
+face height.
+
+### S3 — the stack is bounded, and past the bound the election was wrong
+
+> **`SEAM_TIER_MAX = 3`. A seam whose drop needs more than three faces is not
+> served by a taller stack; it is fed back to the level election (S6), which
+> gives one of the two platforms its level back. Eighteen blocks is a
+> three-storey retained face and it is the most a town builds without becoming
+> a dam.**
+
+This is where "refusing the LEVEL election instead" belongs, and it belongs
+*here* rather than as an alternative to terracing: terracing serves the drops a
+town actually produces, and the election is the backstop for the drops it should
+never have produced. `treatmentForEdge`'s `"replan"` (`levels.ts:549`) finally
+has a caller that can act on it.
+
+### S4 — a tread is the tier's own ground, and it is walkable
+
+> **`SEAM_TREAD = 3` columns. Each tier's tread is levelled and declared exactly
+> as the platform it is — at the existing `retaining.seam` / `retaining.skirt`
+> classes, ranks 60 and 70 — so a later pass may not pull the ground out from
+> under it, which is the `unsupported.chain` finding that survived four rounds
+> (`retaining.ts:780`).**
+
+Three, not `BENCH_TREAD`'s two: two columns of soil between two faces of earth
+is a bank profile, and a tread you are meant to stand on with a two-column
+balustraded ledge is a parapet walk nobody asked for. Three is the width the
+flora pass can plant and a body can turn on.
+
+### S5 — one arithmetic, two dressings, chosen by pressure
+
+> **The tier stack's geometry is identical wherever it is built. Its *dressing*
+> is chosen by `EdgeContext.pressedShare` against `EDGE_PRESSED_SHARE`
+> (`levels.ts:486`):**
+>
+> - **at or above it, the stack is `revetted`** — each tread is `SEAM_SETBACK = 1`
+>   column of coping, and the stack reads as **one battered wall with setbacks**;
+> - **below it, the stack is `terraced`** — each tread is `SEAM_TREAD` columns of
+>   the theme's `ground.bank` earth, planted, and the stack reads as **a hill
+>   town's terraces**.
+
+This is the direct answer to Kai's Troy verdict. A citadel face is pressed on
+both sides by construction — that is what a citadel is — so it gets the
+monumental reading, which is what a great wall with setbacks is. A mid-town face
+with open hillside beyond it is unpressed, so it gets stepped earth you can
+plant, which is the answer §5.2 rule 3's inversion was written for and which has
+never once run on a quarter that shipped (M2).
+
+The two dressings also resolve the run-budget problem, and this is not a
+coincidence: a revetted stack costs `tiers · (1 + SEAM_SETBACK)` columns of run
+and always fits where a single wall fitted, while a terraced stack costs
+`tiers · (1 + SEAM_TREAD)` and needs room. So **where `availableRun` cannot pay
+for the terraced stack, the stack is revetted** — the geometry never fails for
+want of ground, it only changes what it is made of.
+
+### S6 — the election answers for its own seams
+
+> **`derivePlatforms` may not elect a platform pair whose seam it would not pay
+> for.** Three consequences, in order:
+>
+> 1. **A piece's level comes from the bucket that defined it.** `platforms.ts`
+>    partitions on the blurred field and levels on the raw median (M4); under S6
+>    it does both from one quantity, so two 4-adjacent pieces can never be more
+>    than one storey apart and drop 8 stops being expressible.
+> 2. **A sliver merges rather than staying natural.** A piece under
+>    `MIN_PLATFORM_COLUMNS` joins the neighbouring piece it touches most, ties to
+>    the lower — instead of `platforms.ts:141`'s bare `continue`, which leaves
+>    natural ground inside levelled ground (M5).
+> 3. **A pair past `SEAM_TIER_MAX · RETAIN_MAX` dissolves.** The higher piece
+>    gives its level back to the lower. This is `COURTYARDS` §3.5 step 3, moved
+>    from a post-hoc repair to the election, and it finally fires the
+>    `LOAM-W410 LEVEL_DISSOLVED` that has been declared and silent since the code
+>    was written (M7).
+
+Rule 1 is the load-bearing one and it is four lines. Rules 2 and 3 are the
+honest degradation: **the quarter ships with fewer levels rather than with a
+level nothing can serve.**
+
+### S7 — a short run is absorbed, never graded
+
+> **A seam shorter than `MIN_RETAIN_RUN` gets no treatment of its own. Its
+> columns join the treatment of the longest seam any of them is 8-adjacent to;
+> where there is none, the columns are given back — the platform field is edited
+> so they belong to the lower platform — and nothing is graded.**
+
+A one-column seam that spreads a five-ring bank is a mound in a garden (M6). The
+absorption runs in `levelSeams` (`levels.ts:218`), after the 8-connected
+components are built and before `treatmentForSeam` is asked, so every consumer
+sees one list of seams that are all worth serving. `MIN_RETAIN_RUN`'s 2026-08-05
+measurement is unchanged and gains a third duty, alongside the two it already
+has (the wall bar, and the composite gate's bar at `overCeilingRun`,
+`retaining.ts:2080`).
+
+### S8 — a bank is a landform, and a landform carries nothing
+
+> **Where soft is right — fill side, `pressedShare ≤ EDGE_PRESSED_SHARE`,
+> `availableRun ≥ bankRun(drop)` — the bank is graded at `APRON_RUN_PER_BLOCK`
+> (1:2), not 1:1; it is finished in the theme's bank earth as it is today; and
+> it is **published** as `RetainingPassResult.bank`, a column mask. Nothing may
+> terminate on it: no doorstep flight, no stair, no path.**
+
+A door that opens onto a bank keeps a plain sill and the physics lint reports it
+as unreachable, **which it honestly is** — the same argument
+`structures/doorsteps.ts:86` already makes for its own refusal. Building
+decorative masonry up a slope to a door you still cannot use is worse than the
+missing step.
+
+*One ledger note, and it must travel with this law.* GROUND-CONTRACT §13.10.3
+says WP-10's bed skirt becomes redundant *if and only if* `gradeBank` is re-keyed
+from 1:1 to the lift-keyed ratio. S8 is that re-key — but the skirt is **not**
+deleted here and must not be, because nothing yet reads `resolved.transitions`
+to build (§3.2 fact 1), so the skirt's columns are not `gradeBank`'s columns.
+S8 is the *precondition* WP-6 was waiting for, not the deletion.
+
+### S9 — a served seam publishes its landings, and the stair belongs to the seam
+
+> **A tier stack's treads, and a wall's own top and foot, are its **landings**,
+> returned as `RetainingPassResult.landings`. A stair through a served seam is
+> cut at the seam — one flight per stack, at the tread column nearest a street
+> column on each side, `STAIR_PROFILE` width — and registered in the street graph
+> as a `role: "steps"` segment **before surfacing**.**
+
+This is `COURTYARDS` §3.5 step 2, built at last, and it deliberately adds no new
+stair code: registering the segment before surfacing puts it through
+`structures/street-stairs.ts`'s existing tread law
+(`need[k] = max(g[k] + 1, need[k+1] − 1)`) and its whole-run refusal, which is
+the machinery §2.3 built and which already knows that half a staircase ending in
+a two-block hop is worse than no staircase. Capped at `MAX_DERIVED_STAIRS = 12`
+per quarter, exactly as §3.5 sizes it, because `intersectionsOf` is O(n²) in
+segments.
+
+### S10 — a door above a seam is reachable, or it is not a door
+
+> **A doorstep flight may terminate only on a landing (S9), a street column, a
+> platform, or natural ground within `DOORSTEP_FOOT_STEP` of the flight's foot.
+> It may never terminate on a bank face (S8) or on a wall face.**
+
+This is the **complement** of the foot gate the parallel wave is adding to
+`structures/doorsteps.ts` — `DOORSTEP_FOOT_STEP` and `DoorstepResult.refused`,
+whose own doc comment already names this exact case: *"two or more is a bank face
+— the LOAM-W411 case, a terrace seam refused its retaining wall and graded raw —
+and a flight laid up a bank face is the 'stairs to nowhere' a walkthrough
+reported"*. That wave says where a foot may **not** land. S9 is what makes a
+legal foot **exist**, and S10 is the one line that joins them: the gate consults
+`landings` and `bank` instead of guessing from ground heights. **This work
+package extends that gate and never rewrites it** — whichever lands second reads
+the other's constant.
+
+### S11 — a wall circuit crossing a seam is a client, not a second answer
+
+> **`structures/walls.ts` sweeps a fortification course on its own 1-Lipschitz
+> datum and fills each column down to ground (`WALL_MAX_FILL = 18`), so where a
+> circuit crosses a level change the wall material *is* the face. This round
+> **measures** that crossing and reports it as `LOAM-I415
+> WALL_COURSE_CROSSES_SEAM`; it does not move the circuit.**
+
+The eight sheer faces of drop 14 the Troy audit attributed to walls are this,
+and `LOAM-I524 WALL_FOOTING_DEEP` already half-reported it on the same world
+("sank its footing 0.3 courses on average and 9 at the deepest… the deep stretch
+stands as a sheer pier of wall material, not as a wall on the ground",
+`walls.ts:721`). Promoting a circuit's crossing to a tier stack is a real
+feature and it is deliberately **not** in this package: the measurement is what
+decides whether it is worth building, exactly as §3.1's viaduct note does for
+WP-10C. The same measurement covers the `infra.entry` case §3.1's forensics
+flagged — *"a `retaining.seam` requires a seam"*.
+
+### S12 — reach and determinism
+
+> **A document with no `"stepped"` quarter, no `terraced` form and no
+> site-planned quarter compiles byte-identically.**
+
+Terrain-only worlds, `terrarium`, `devworld`, every farm and scatter-only world:
+not one byte. Everything above is a pure function of the platform field and the
+finished plan — no RNG, no clock, every component walk row-major, every tie
+broken on region index, exactly as `levelSeams` (`levels.ts:310`) and
+`skirtSeams` (`retaining.ts:1980`) already do it. The `boxBlur` in
+`platforms.ts:225` stays an integer box filter.
+
+## 4.2 The tier stack, concretely
+
+One function and one loop; nothing about the sweep changes.
+
+```
+tiersOf(drop) -> [{ face, tread }]      // layout/levels.ts
+  n     = ceil(drop / RETAIN_MAX)              // S2
+  if n > SEAM_TIER_MAX -> "replan"             // S3
+  faces = drop split as evenly as possible, tallest at the BOTTOM
+  tread = revetted ? SEAM_SETBACK : SEAM_TREAD // S5
+```
+
+Tallest at the bottom because that is how a retained hillside is actually built
+and how it reads: the load is at the base. A drop of 8 becomes faces of 4 and 4;
+a drop of 11 becomes 6 and 5; a drop of 14 becomes 5, 5, 4.
+
+`buildTieredSeam` (`structures/retaining.ts`) then runs the **existing** wall
+construction once per tier, bottom up:
+
+1. the tier's face course is the seam's own cells for tier 0, and the previous
+   tier's tread for tier *k*;
+2. `thickenCourse` → `chainsOf` → `orient` → `sweep(RETAINING_PROFILE)` →
+   `deepen(plan, k, face)` → the coping structure block — every one of these is
+   called today at `retaining.ts:743`–`:909` and none of them changes;
+3. the tread behind the face is declared as a `face` + `preserve` pair at the
+   tier's own level, which is what S4 requires and what `retaining.ts:798`'s
+   `commit` already builds;
+4. `railRun` is called **on the top tier only** — a balustrade on every tier is
+   a battlement, which is the reading `RETAINING_PROFILE`'s own comment warns
+   about;
+5. `facesByDrop` counts every tier's face, so GROUND-CONTRACT §13.8's histogram
+   keeps its invariant — **no bucket past `RETAIN_MAX` is ever occupied** —
+   and now keeps it by construction rather than by conversion.
+
+`overCeilingRun`'s composite gate (`retaining.ts:2086`) is unchanged and gains a
+better answer: today a composite past the ceiling converts a wall to a benched
+bank; under S2 it converts a wall to a **stack sized for the measured face**,
+which is the same measurement spent on a better construction.
+
+## 4.3 What changes, file by file
+
+| file | change | wave |
+| --- | --- | --- |
+| `structures/retaining.ts:582` | `bench` loses its `context !== null &&` — a tall bank is benched on every quarter, not only a hillside one | 11A |
+| `structures/retaining.ts:511`, `:557` | `edgeContextOf` runs for every district with `levels`; `plannedEdges` keeps only its cut-edge duty (`:518`) and its §5.5 error (`:972`) | 11A |
+| `layout/levels.ts` | `SEAM_TIER_FACE` (= `RETAIN_MAX`), `SEAM_TIER_MAX`, `SEAM_TREAD`, `SEAM_SETBACK`, `tiersOf`, `SeamTreatment` gains `"tiered"`; rule 5 returns it; `absorbShortSeams` in `levelSeams` | 11B, 11D |
+| `structures/retaining.ts` | `buildTieredSeam`; `landings` and `bank` on `RetainingPassResult`; `gradeBank` re-keyed to 1:2 | 11B, 11D |
+| `layout/platforms.ts:132`,`:141` | level from the bucket; sliver merge | 11C |
+| `layout/district.ts` | dissolve past `SEAM_TIER_MAX · RETAIN_MAX` (fires `LOAM-W410`); platform adjacency graph; derived `steps` segments before surfacing | 11C, 11E |
+| `structures/doorsteps.ts` | the foot gate reads `landings` / `bank` — **extends** the parallel wave's `DOORSTEP_FOOT_STEP`, never rewrites it | 11E |
+| `structures/walls.ts` | S11's measurement only: the course's footing against the quarter's platform field, as `LOAM-I415` | 11E |
+| `layout/types.ts` | `export const SEAM_TIERS = false;` beside `FRONTAGE_TIE` | 11A |
+
+## 4.4 Waves
+
+Same shape WP-8 used and for the same reason: everything lands behind one
+compile-time flag, so every wave before the flip is provably byte-identical and
+the flip is a single walk verdict.
+
+- **11A — the honest refusal.** `opus-5-low`. The two edits in
+  `structures/retaining.ts` above, plus the flag. Tests: a `"stepped"`
+  non-hillside quarter now emits the `transitions by context (§5)` note; a
+  drop-8 seam on a `grown` quarter is benched; `test/ground-equivalence.test.ts`
+  proves flag-off identity, **after** proving the harness can see a difference.
+- **11B — the tier stack.** `opus-5-medium`. `tiersOf` and `buildTieredSeam`;
+  new `test/seam-tiers.test.ts`. Assertions: the §13.8 histogram has nothing past
+  `RETAIN_MAX`; a stack's treads are declared and survive a later `verge` write;
+  a revetted stack fits in the run a single wall fitted in.
+- **11C — the election pays for its seams.** `opus-5-low`. S6's three rules in
+  `layout/platforms.ts` and `layout/district.ts`; `LOAM-W410` fires for the first
+  time. Tests: `test/platforms.test.ts` — no 4-adjacent pair more than one storey
+  apart, no piece under `MIN_PLATFORM_COLUMNS` left at `NO_PLATFORM`.
+- **11D — absorption and the landform bank.** `opus-5-low`. S7's
+  `absorbShortSeams`; S8's 1:2 re-key and `bank` mask. Tests:
+  `test/seam-runs.test.ts` — no seam shorter than `MIN_RETAIN_RUN` reaches the
+  pass; a bank's fall is 1:2 at every ring. **Carries the §13.10.3 ledger note.**
+- **11E — the seam stair and the reachable door.** `opus-5-medium`. S9's derived
+  stairs, S10's gate extension, S11's measurement. Tests:
+  `test/doorsteps.test.ts`, `test/street-stairs.test.ts` — every platform is in
+  the street network's component or was dissolved; no flight's foot lands on a
+  `bank` column.
+- **11F — the flip.** `SEAM_TIERS = true`, on Kai's walk verdict and nothing
+  else.
+
+**Concurrency.** 11A and 11C touch disjoint files and run together. 11B and 11D
+both edit `layout/levels.ts` and `structures/retaining.ts` and must be
+sequenced — 11B first, since 11D's `absorbShortSeams` runs upstream of a
+treatment table 11B changes. 11E is last. No implementer spawns a subagent.
+
+
+---
+
+## 5. Non-goals
 
 Stated so that a wave that drifts into one of these is visibly wrong.
 
@@ -928,10 +1344,27 @@ Stated so that a wave that drifts into one of these is visibly wrong.
    suite runs in the same `node:vm` realm.
 8. **No new authoring model, no escalation.** Cheap-model-first stands; WP-9C is
    a re-run of the pinned model, not a promotion.
+9. **No contour-led platform election.** `derivePlatforms` stays block-led — the
+   argument in `layout/platforms.ts`' own header ("contours are `terraced`'s idea
+   and this has to work under `grid`, `grown` and `radial` too") is unchanged.
+   S6 only *refuses* an election; it never redraws one. A contour-following
+   election is a rewrite and is WP-12 at the earliest.
+10. **No change to `RETAIN_MAX`, `MIN_RETAIN_RUN`, `RETAIN_RAIL`,
+    `FLOOR_HEIGHT` or `MIN_PLATFORM_COLUMNS`.** GROUND-CONTRACT §13.8 measured
+    the first three on 2026-08-07 and they stay. WP-11 changes what they *mean
+    at a seam*, not what they are — and note 3 above still holds: the drop
+    table is not moved, it is given more answers to return.
+11. **No parapet work.** `RAIL_ACCESS_RANGE` is why every battery world reports
+    `0 parapeted` (§4.0a M8). Real, recorded, not this package's.
+12. **No promotion of a fortification circuit or an `infra.entry` course to a
+    tier stack.** S11 measures; a later round decides.
+13. **No deletion of WP-10's bed skirt.** S8's 1:2 re-key is the *precondition*
+    GROUND-CONTRACT §13.10.3 names, not the deletion; deleting the skirt before
+    a transition consumer exists reinstates the berm.
 
 ---
 
-## 5. Risks
+## 6. Risks
 
 | risk | blast radius | mitigation |
 | --- | --- | --- |
@@ -944,10 +1377,15 @@ Stated so that a wave that drifts into one of these is visibly wrong.
 | **Gate cost.** Five extra executions per program at 20 M steps each. | authoring wall-clock and money | §2.6.3 keeps the double run on `flat` alone: 6 → 11 executions, not 6 → 30. |
 | **The carve deletes something.** A post-materialisation cut removes snow, vegetation and soil depth. | worlds with bespoke nodes on slopes | Deferred to 9D, capped at `CONFORM_CUT_MAX`, and gated on the §2.8 residual measurement. The `moved` mask and the surface re-cap are the existing machinery. |
 | **`ROAD_BERM_MAX` invented rather than measured.** | every world with above-sea water near a road | 10A is *blocked* on the forensics numbers, and the wave is not committed without the measurement in the comment. |
+| **WP-11 moves a world Kai liked.** `p3-c5`'s walked-good Troy carries 105 `tallDrop` columns and 713 banked ones (§4.0), so the fix changes it too. | every world with a `"stepped"` or `terraced` quarter: Troy (p3-c5, p3-tie2), the pirate haven (p1), `unicorn_citadel` (p1-tie2), `ruined_metropolis` (p4), and the examples `site-plan-hillside`, `site-plan-hillside-steep`, `showcase-aerodale` | One flag, `SEAM_TIERS`, flipped once at 11F on a walk verdict — the WP-8 shape. Every wave before it is proved identical by `test/ground-equivalence.test.ts`, and the standing rule applies: **prove the harness can see a difference before trusting that it saw none.** The p3-c5 Troy is re-generated at the flip and walked *beside* p3-tie2, so the comparison is like for like. |
+| **11C is the biggest blast radius in the package.** Changing `derivePlatforms`' levels changes `foundationY` for every building on a derived platform (`district.ts:1472`), not just the ground between them. | every settlement that elected `"stepped"` via `STEP_RELIEF` | Behind the same flag; asserted structurally rather than by golden — no 4-adjacent platform pair more than one storey apart, no piece left at `NO_PLATFORM` inside a levelled block — so the test states the law rather than pinning a hash. |
+| **The report changes even where the world does not.** Retiring `LOAM-W411` for `LOAM-I412` and firing `transitions by context` on every stepped quarter moves report bytes at 11A. | every compile report, the battery logs | Report goldens are re-measured **with the cause written down**, never updated silently (§9a.5's rule). A world hash that moves at 11A is a bug, not a golden update. |
+| **A tier stack eats run the town wanted.** A terraced stack costs `tiers · (1 + SEAM_TREAD)` columns. | dense quarters on steep ground | S5's fallback is structural, not a tuning: where `availableRun` cannot pay, the stack is revetted at `1 + SEAM_SETBACK` per tier, which always fits where a single wall fitted. Rule 6's `depthAfter` / `MIN_EDGE_DEPTH` guard is unchanged and still returns `"replan"` — now to a caller (S3) that can act on it. |
+| **The doorstep gate is edited by two waves at once.** The in-flight foot-gate wave and 11E both touch `structures/doorsteps.ts`. | one file, one round | S10 is written as an *extension*: whichever lands second reads the other's constant (`DOORSTEP_FOOT_STEP`) and adds a source of truth (`landings`, `bank`) rather than a second rule. The orchestrator sequences them; neither reverts the other's lines. |
 
 ---
 
-## 6. Diagnostics this work adds
+## 7. Diagnostics this work adds
 
 | code | name | severity | feedback set | fires |
 | --- | --- | --- | --- | --- |
@@ -957,23 +1395,31 @@ Stated so that a wave that drifts into one of these is visibly wrong.
 | `LOAM-W340` | `PROGRAM_DID_NOT_CONFORM` | warning | **yes** | the gate's suite verdict is false; names which members and which finding |
 | `LOAM-T341` | `PROGRAM_SEATED_PAD` | note | no | an instance was padded because its program did not conform |
 | `LOAM-T342` | `PROGRAM_CONFORM_RESIDUAL` | note | no | per node: columns underpinned, columns buried, as a fraction of occupied |
+| `LOAM-I412` | `SEAM_SERVED` | note | no | once per quarter: what every seam became — walls, tier stacks (revetted / terraced), banks, kerbs, absorbed, dissolved |
+| `LOAM-W413` | `SEAM_UNSERVED` | warning | no | a seam whose chosen treatment could not be *placed* — street, footprint or water owns the ground. The only honest refusal left (S1) |
+| `LOAM-I414` | `SEAM_STAIR_CUT` | note | no | S9's derived flights: how many, and how many the `MAX_DERIVED_STAIRS` cap refused |
+| `LOAM-I415` | `WALL_COURSE_CROSSES_SEAM` | note | no | S11's measurement: a fortification course or `infra.entry` ring whose fill stands as a face across a platform boundary, with the deepest crossing |
+| `LOAM-W410` | `LEVEL_DISSOLVED` | warning | no | **already declared** (`diagnostics.ts:637`) and never emitted; S6 rule 3 fires it for the first time |
 
 `LOAM-T237`–`T239` continue the `T23x` block that ends at `LINEWORK_BED_INTERRUPTED`;
 `LOAM-W340`–`T342` continue the program block that ends at `PROGRAM_WATER_CLAMPED`.
-Only `W340` enters `FEEDBACK_CODES`, and §2.5 argues why it is the exception to
-§13.6's precedent rather than a violation of it.
+`LOAM-I412`–`I415` continue the level/seam block that ends at
+`RETAINING_REFUSED`; `LOAM-W411` itself is **retired** at 11A (§4.1 S1) and its
+number is not reused. Only `W340` enters `FEEDBACK_CODES`, and §2.5 argues why it
+is the exception to §13.6's precedent rather than a violation of it.
 
 ---
 
-## 7. Walk gates — which steps change what a world looks like
+## 8. Walk gates — which steps change what a world looks like
 
 The standing manual-critique law: a look is never tuned without Kai's walk. It
 does **not** stop the next ratified thing from being built (standing rule: never
 wait on Kai). So the split is explicit.
 
 **Land without a walk** — machinery, byte-identical or provably reach-limited:
-8A, 8B, 8C, 8D, 8E, 9A, 9B, 9E, 10B. Every one of these either changes nothing
-that ships or is gated behind a flag or an absent record field.
+8A, 8B, 8C, 8D, 8E, 9A, 9B, 9E, 10B, **11A, 11B, 11C, 11D, 11E**. Every one of
+these either changes nothing that ships or is gated behind a flag or an absent
+record field.
 
 **Land only on a walk verdict:**
 
@@ -983,14 +1429,15 @@ that ships or is gated behind a flag or an absent record field.
 | **9C** — the re-authored battery | conforming instances on real ground vs the platforms they replace; whether `pad` fallbacks look wrong beside them |
 | **9D** — the carve | whether burial is visible enough to justify cutting |
 | **10A** — the berm cap | only if the measurement is ambiguous; a berm removal is a defect fix, not a taste call |
-| **§13.2e** — the wall's benched course | unchanged, still pending, still Kai's |
+| **§13.2e** — the wall's benched course | **answered by S2, pending the same walk.** A face at exactly `RETAIN_MAX` is one tier and gets no mid-bench; a face past it is a stack. GROUND-CONTRACT §13.8's deliberately-open question ("should a six-block wall carry a mid-bench") is closed *in principle* by the tier arithmetic and confirmed *in fact* at 11F |
+| **11F** — flip `SEAM_TIERS` | the whole of Part IV: whether the citadel face now reads as a great wall with setbacks rather than a bank; whether mid-town seams read as plantable terraces; `SEAM_TIER_MAX` 3 vs 2; `SEAM_TREAD` 3 vs 2; whether the derived stairs land where a person would put them |
 
 **Blocked on measurement, not on Kai:** 10A on the forensics berm numbers, 9D on
-`LOAM-T342`, 10C on `LOAM-T239`.
+`LOAM-T342`, 10C on `LOAM-T239`, and the S11 promotion on `LOAM-I415`.
 
 ---
 
-## 8. Ledger
+## 9. Ledger
 
 WP-1 → WP-6 are the ground contract's (`docs/GROUND-CONTRACT-v0.md`). WP-7 is
 logged in its §13.3 — *"`applyLevelPad` declares the platform and the resolver
@@ -1003,38 +1450,69 @@ measurement of `PAD_APRON_MISMATCHES` is the evidence WP-7 was waiting for.
 | **WP-8** | the frontage tie | Part I, waves 8A–8F | nothing; independent of WP-6 |
 | **WP-9** | bespoke builds on real terrain | Part II, waves 9A–9E | nothing; 9B benefits from 8E |
 | **WP-10** | the lift-keyed edge | Part III, waves 10A–10C | 10A blocked on forensics; 10B notes a WP-6 interaction |
+| **WP-11** | **the served seam** | Part IV, waves 11A–11F | nothing; independent of WP-8 and WP-9. 11E coordinates with the in-flight doorstep foot gate (S10). Closes §3.2's ledger item *"what does a refused `tallDrop` become"* and `COURTYARDS` §3.5 steps 2 and 3 |
 
 ---
 
-## 9. Open questions — the ones only Kai can answer
+## 10. Open questions — the ones only Kai can answer
 
 Each has a recommendation, so a wave is never blocked on an answer.
 
-**9.1 `FRONTAGE_RISE`: flush, or one plinth course?** 0 puts the threshold one
+**10.1 `FRONTAGE_RISE`: flush, or one plinth course?** 0 puts the threshold one
 block above the pavement (a doorstep). 1 puts a visible plinth course under
 every shopfront, which is period-correct for a lot of architecture and wrong for
 a village. *Recommendation: 0, and ask on the 8F walk.* It is one constant and
 one recompile.
 
-**9.2 Should a corner lot take the lower street, or the front street
+**10.2 Should a corner lot take the lower street, or the front street
 regardless?** F5 says the lower when they differ by more than 2. The alternative
 — always the front, and let the flank do whatever it does — is simpler and
 occasionally puts a side door two blocks below its own pavement.
 *Recommendation: the lower, as written; revisit on the walk.*
 
-**9.3 Does `drape` retire?** Under `conform` it is `conform` minus the re-seat.
+**10.3 Does `drape` retire?** Under `conform` it is `conform` minus the re-seat.
 Keeping it costs a union member and a row; retiring it breaks any archived
 document that wrote it. *Recommendation: keep, deprecate in the kit, retire only
 if no shipped document uses it.*
 
-**9.4 Should a non-conforming program be visible in the world, or just in the
+**10.4 Should a non-conforming program be visible in the world, or just in the
 report?** `LOAM-T341` says which instances are on platforms. The stronger option
 is to refuse to scatter a non-conforming program on steep ground at all, which
 costs instance counts. *Recommendation: report only; leniency is permanent and
 this is a look, not a break.*
 
-**9.5 Is a re-authored battery worth a second $2 run if the first one's conform
+**10.5 Is a re-authored battery worth a second $2 run if the first one's conform
 rate is low?** WP-9C stamps verdicts; if most programs still score `false`, the
 prompt change did not land and the honest next move is a prompt iteration rather
 than another sweep. *Recommendation: measure the rate at 9C, report it, and let
 Kai decide whether to spend again.*
+
+**10.6 `SEAM_TIER_MAX`: three tiers (18 blocks) or two (12)?** Three serves every
+drop Troy's citadel actually produced (8) with room to spare and lets an 18-block
+change of level stand as architecture. Two dissolves more levels and ships
+flatter, simpler quarters. *Recommendation: 3, and look at the tallest stack on
+the 11F walk — it is one constant and one recompile.*
+
+**10.7 `SEAM_TREAD = 3` for the terraced dressing, `SEAM_SETBACK = 1` for the
+revetted one?** Three is a tread a body turns on and the flora pass can plant;
+two is `BENCH_TREAD`, which is a bank profile. One column of setback per tier is
+what makes a battered wall read as one wall rather than as a staircase.
+*Recommendation: 3 and 1; both are Kai's on the walk, and the pair is the whole
+of the hill-town-vs-citadel look.*
+
+**10.8 Should the citadel's own fortification circuit be promoted to a tier
+stack (S11)?** Today it sweeps its own datum and fills to ground, so where it
+crosses a level change the wall material *is* a 14-block sheer face. Promotion
+would make the circuit and the seam one construction; it is also a real
+possibility that a rampart standing proud of a dip is exactly right and the
+finding is a taste call. *Recommendation: measure only this round (`LOAM-I415`),
+decide on the 11F walk with the number in hand — the same discipline WP-10C uses
+for viaduct promotion.*
+
+**10.9 When a seam dissolves (S6 rule 3), should the quarter say so loudly?**
+`LOAM-W410` is a warning and enters no feedback set, so the authoring model never
+learns that its terrain asked for a level the town could not serve.
+*Recommendation: keep it a warning and out of `FEEDBACK_CODES` for now — the
+land-budget feedback diagnostic already in flight is the right place for that
+signal, and two passes telling a model about the same hill is how a prompt gets
+noisy.*
