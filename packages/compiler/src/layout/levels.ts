@@ -206,6 +206,107 @@ interface SeamCell {
   readonly cell: number; // index into `levels.index`
 }
 
+/** One 8-connected component, in `levels.index` space, before it is a seam. */
+interface SeamComponent {
+  readonly above: number;
+  readonly below: number;
+  readonly drop: number;
+  /** Row-major indices into `levels.index`. Mutated by {@link absorbShortSeams}. */
+  cells: number[];
+}
+
+/**
+ * **S7 — a short run is absorbed, never graded**
+ * (`docs/GROUND-UNIFICATION-v0.md` §4.1).
+ *
+ * > A seam shorter than {@link MIN_RETAIN_RUN} gets no treatment of its own.
+ * > Its columns join the treatment of the longest seam any of them is
+ * > 8-adjacent to; where there is none, the columns are given back — the
+ * > platform field is edited so they belong to the lower platform — and nothing
+ * > is graded.
+ *
+ * The walked evidence is Troy's: 47 of its 56 refusals were runs of five
+ * columns or fewer, 21 of them a **single** column, and `gradeBank` spread a
+ * ring of `drop` out of each one. A one-column seam that spreads a five-ring
+ * bank is a mound in a garden (§4.0a M6).
+ *
+ * *Hosts are long seams only.* "The longest seam any of them is 8-adjacent to"
+ * has to leave the list with no short seam in it, and absorbing a crumb into a
+ * crumb leaves a crumb; so a host is a component already at or past
+ * {@link MIN_RETAIN_RUN}, and a stub whose only neighbours are stubs is given
+ * back rather than merged. Ties — two hosts of equal length touching the same
+ * stub — go to the one whose first column comes first in row-major order, which
+ * makes the answer a pure function of the field.
+ *
+ * *What "given back" edits.* The stub's columns are columns of the **lower**
+ * platform (that is what a seam cell is), so the edit writes the platform they
+ * already belong to: the field is left stating, explicitly, that these columns
+ * are the lower platform's and no face stands on them. Nothing is graded, and
+ * that is the whole of the change — the step is a step in the terrain, which is
+ * honest, where a five-ring bank out of one column was not.
+ *
+ * Mutates `comps` in place: absorbed components are removed and their columns
+ * appended to their host, whose cells stay in row-major order.
+ */
+function absorbShortSeams(
+  levels: GroundLevels,
+  comps: SeamComponent[],
+  width: number,
+  depth: number,
+): void {
+  const shortOnes = comps.filter((c) => c.cells.length < MIN_RETAIN_RUN);
+  if (shortOnes.length === 0) return;
+  // Host lookup: column → index of the long component that owns it. Built once,
+  // from the components as they stand before any absorption, so the answer does
+  // not depend on the order the stubs are visited.
+  const hostOf = new Map<number, number>();
+  for (const [i, c] of comps.entries()) {
+    if (c.cells.length < MIN_RETAIN_RUN) continue;
+    for (const k of c.cells) if (!hostOf.has(k)) hostOf.set(k, i);
+  }
+  const absorbed = new Set<SeamComponent>();
+  for (const stub of shortOnes) {
+    /** Candidate hosts, by component index — the longest wins, ties row-major. */
+    const candidates = new Set<number>();
+    for (const k of stub.cells) {
+      const i = k % width;
+      const j = (k - i) / width;
+      for (const [di, dj] of SEAM_NEIGHBOURS) {
+        const ii = i + di;
+        const jj = j + dj;
+        if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+        const host = hostOf.get(jj * width + ii);
+        if (host !== undefined) candidates.add(host);
+      }
+    }
+    let chosen = -1;
+    for (const i of candidates) {
+      if (chosen < 0) {
+        chosen = i;
+        continue;
+      }
+      const a = comps[i] as SeamComponent;
+      const b = comps[chosen] as SeamComponent;
+      if (a.cells.length > b.cells.length) chosen = i;
+      else if (a.cells.length === b.cells.length && (a.cells[0] as number) < (b.cells[0] as number))
+        chosen = i;
+    }
+    if (chosen < 0) {
+      // Given back. The columns are the lower platform's, said out loud.
+      for (const k of stub.cells) levels.index[k] = stub.below;
+    } else {
+      // De-duplicated: one column may already be a member of both seams — two
+      // walls meet there — and a column counted twice is a run that lies.
+      const host = comps[chosen] as SeamComponent;
+      host.cells = [...new Set([...host.cells, ...stub.cells])].sort((a, b) => a - b);
+    }
+    absorbed.add(stub);
+  }
+  for (let i = comps.length - 1; i >= 0; i--) {
+    if (absorbed.has(comps[i] as SeamComponent)) comps.splice(i, 1);
+  }
+}
+
 /**
  * Every place two platforms touch, grouped into 8-connected components.
  *
@@ -221,8 +322,19 @@ interface SeamCell {
  * already standing on the seam, whose own foundation skirt is the wall — is a
  * fact about the placements, which this module does not see; WP-B reclassifies
  * a seam it finds built over.
+ *
+ * **S7 runs here** (`docs/GROUND-UNIFICATION-v0.md` §4.1): once the components
+ * are grouped and *before* {@link treatmentForSeam} is asked,
+ * {@link absorbShortSeams} takes every run shorter than {@link MIN_RETAIN_RUN}
+ * out of the list, so every consumer downstream sees one list of seams that are
+ * all worth serving. Gated on `tiered` — the compile-time {@link SEAM_TIERS}
+ * unless a caller (only ever a test) asks for the flag-on world here — so the
+ * shipped world is byte-identical until 11F.
  */
-export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
+export function levelSeams(
+  levels: GroundLevels,
+  options?: { readonly tiered?: boolean },
+): readonly LevelSeam[] {
   const { bounds, index, levelY } = levels;
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
@@ -271,7 +383,7 @@ export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
   // wall — see SEAM_NEIGHBOURS for why the diagonal is not optional. `member`
   // is rebuilt per pair rather than shared, which keeps the grouping
   // independent of the order the pairs were discovered in.
-  const out: LevelSeam[] = [];
+  const comps: SeamComponent[] = [];
   const keys = [...cells.keys()].sort((a, b) => a - b);
   for (const key of keys) {
     const list = cells.get(key) as number[];
@@ -302,18 +414,21 @@ export function levelSeams(levels: GroundLevels): readonly LevelSeam[] {
         }
       }
       component.sort((a, b) => a - b);
-      out.push({
-        above,
-        below,
-        cells: component.map((k) => ({
-          x: bounds.x0 + (k % width),
-          z: bounds.z0 + Math.floor(k / width),
-        })),
-        drop,
-        treatment: treatmentForSeam(drop, component.length),
-      });
+      comps.push({ above, below, drop, cells: component });
     }
   }
+  // S7, before the treatment table is asked of anything.
+  if (options?.tiered ?? SEAM_TIERS) absorbShortSeams(levels, comps, width, depth);
+  const out: LevelSeam[] = comps.map((c) => ({
+    above: c.above,
+    below: c.below,
+    cells: c.cells.map((k) => ({
+      x: bounds.x0 + (k % width),
+      z: bounds.z0 + Math.floor(k / width),
+    })),
+    drop: c.drop,
+    treatment: treatmentForSeam(c.drop, c.cells.length),
+  }));
   // Row-major by first cell, then by the pair, so the list is stable under any
   // change to the order the pairs happened to be discovered in.
   out.sort((a, b) => {

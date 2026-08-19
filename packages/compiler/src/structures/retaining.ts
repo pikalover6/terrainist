@@ -54,7 +54,7 @@
  */
 
 import { TERRAIN_DIAGNOSTICS, error, note, warning, type LoamDiagnostic } from "@terrainist/spec";
-import type { Region } from "@terrainist/stdlib";
+import { APRON_RUN_PER_BLOCK, type Region } from "@terrainist/stdlib";
 
 import type { Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
@@ -279,6 +279,22 @@ export interface RetainingPassResult {
   /** Columns of graded bank finished as earth rather than as bare substrate. */
   readonly banked: number;
   /**
+   * **S8's landform mask**: 1 for every column a bank raised, row-major over the
+   * plan's region (`docs/GROUND-UNIFICATION-v0.md` §4.1 S8).
+   *
+   * *A bank is a landform, and a landform carries nothing.* Nothing may
+   * terminate on these columns — no doorstep flight, no stair, no path — which
+   * is what {@link terminatesOnBank} answers and what S10's foot gate consults
+   * instead of guessing from ground heights. A door that opens onto a bank
+   * keeps a plain sill and the physics lint reports it as unreachable, which it
+   * honestly is; masonry built up a slope to a door you still cannot use is
+   * worse than the missing step.
+   *
+   * Measured on every world, flag or no flag — it says what the bank *took*,
+   * and nothing in this wave reads it, so nothing moves.
+   */
+  readonly bank: Uint8Array;
+  /**
    * **Edge columns by the treatment §5.2 chose for them**, over every edge a
    * site planner's quarter has: the fill edges this pass measures and the cut
    * edges the planner declared.
@@ -472,6 +488,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   const region = plan.region;
   const cells = region.width * region.depth;
   const seam = new Uint8Array(cells);
+  /** S8's landform mask — see {@link RetainingPassResult.bank}. */
+  const bank = new Uint8Array(cells);
   const blocks: StructureBlock[] = [];
   const diagnostics: LoamDiagnostic[] = [];
   let walls = 0;
@@ -537,6 +555,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       treadColumns,
       built,
       banked,
+      bank,
       treated,
       treatedCut,
       benchedBanks,
@@ -703,6 +722,9 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           ringTargets,
           bench,
           measuredDrop,
+          // S8's 1:2 re-key, held by the same flag as everything else in WP-11.
+          tiered,
+          bank,
         );
         if (ringTargets.length > 0) {
           declaredBanks.push({
@@ -1236,6 +1258,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     treadColumns,
     built,
     banked,
+    bank,
     treated,
     treatedCut,
     benchedBanks,
@@ -2387,6 +2410,38 @@ function gradeBank(
    * the sheer face this conversion exists to remove, one block shorter.
    */
   drop = record.drop,
+  /**
+   * **S8 — a bank is a landform** (`docs/GROUND-UNIFICATION-v0.md` §4.1).
+   *
+   * The unbenched ramp above falls one block per column: a 45° face of raw
+   * earth, which from below is the cliff the wall refused to be. Lifted, it
+   * falls at {@link APRON_RUN_PER_BLOCK} — 1:2, the apron ratio every pad in
+   * the tree already grades at and the ratio {@link bankRun} has always said a
+   * bank *reserves* — so the run is `bankRun(drop)` columns and the geometry
+   * §5.2 rule 3 granted the bank is the geometry the bank actually spends.
+   *
+   * *The §13.10.3 ledger note, and it travels with this law.*
+   * `docs/GROUND-CONTRACT-v0.md` §13.10.3 says WP-10's bed skirt becomes
+   * redundant **if and only if** `gradeBank` is re-keyed from 1:1 to the
+   * lift-keyed ratio. This is that re-key — and the skirt is *not* deleted
+   * here and must not be, because nothing yet reads `resolved.transitions` to
+   * build (§3.2 fact 1), so the skirt's columns are not this function's
+   * columns. S8 is the precondition WP-6 was waiting for, not the deletion.
+   *
+   * Defaults to false, which is the 1:1 ramp every world shipped with, so the
+   * world is byte-identical until {@link SEAM_TIERS} flips at 11F.
+   */
+  lifted = false,
+  /**
+   * S8's published mask: every column this bank raised, set to 1.
+   *
+   * *A landform carries nothing.* Nothing may terminate on a bank — no doorstep
+   * flight, no stair, no path — and this is the mask that says which columns
+   * those are ({@link terminatesOnBank}). It is filled on every world, flag or
+   * no flag: it is a *measurement* of what the bank took, and measuring is
+   * honest even where nothing consults it yet.
+   */
+  bank: Uint8Array | undefined = undefined,
 ): number {
   const view = driver.view();
   const cells = region.width * region.depth;
@@ -2404,7 +2459,7 @@ function gradeBank(
   let raised = 0;
   /** The ring targets, with the ground each was measured against (§9 step 2). */
   const rings: { readonly idx: number; readonly target: number; readonly g: number }[] = [];
-  const steps = benched ? benchedRun(drop) : drop;
+  const steps = benched ? benchedRun(drop) : lifted ? bankRun(drop) : drop;
   for (let ring = 0; ring < steps && frontier.length > 0; ring++) {
     // One block per column, or one bench of `BENCH_FACE` blocks every
     // `BENCH_TREAD` columns. The benched profile is clamped one block above the
@@ -2412,7 +2467,9 @@ function gradeBank(
     // step the bench does not reach.
     const target = benched
       ? Math.max(floor + 1, top - BENCH_FACE * (Math.floor(ring / BENCH_TREAD) + 1))
-      : top - ring - 1;
+      : lifted
+        ? top - Math.ceil((ring + 1) / APRON_RUN_PER_BLOCK)
+        : top - ring - 1;
     if (!benched && target <= floor) break;
     const next: number[] = [];
     for (const k of frontier) {
@@ -2423,6 +2480,7 @@ function gradeBank(
         if (target > g) {
           declare?.push({ idx: k, y: target });
           rings.push({ idx: k, target, g });
+          if (bank !== undefined) bank[k] = 1;
           raised++;
         }
       }
@@ -2467,6 +2525,29 @@ function gradeBank(
     plan.soil[idx] = Math.min(255, Math.max(plan.soil[idx] as number, target - g + 1));
   }
   return raised;
+}
+
+/**
+ * **S8's refusal**: does a claim landing on this column land on a bank?
+ *
+ * The one question {@link RetainingPassResult.bank} exists to answer, and the
+ * one S10's doorstep foot gate asks: a flight, a stair or a path may not
+ * *terminate* on a bank face, because a bank is a landform and a landform
+ * carries nothing. It is deliberately a predicate over the published mask and
+ * not a second measurement of the ground — the whole point of publishing the
+ * mask is that nothing downstream has to guess from heights again.
+ *
+ * Out of region is not a bank: a claim nothing measured is refused for its own
+ * reasons, elsewhere.
+ */
+export function terminatesOnBank(
+  bank: Uint8Array,
+  region: Region,
+  x: number,
+  z: number,
+): boolean {
+  if (!inside(region, x, z)) return false;
+  return bank[index(region, x, z)] === 1;
 }
 
 /* -------------------------------------------------------------------------- */
