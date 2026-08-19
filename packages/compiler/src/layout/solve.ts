@@ -73,6 +73,7 @@ import {
   type TerrainVeto,
 } from "./fitness.js";
 import { resolvePorts, rotatedSize } from "./ports.js";
+import { clampY } from "../terrain/columns.js";
 import {
   DEFAULT_BLEND,
   DEFAULT_CANDIDATES,
@@ -1248,14 +1249,36 @@ export function referenceY(node: LayoutNodeInput, stats: FootprintStats): number
   }
   switch (reference) {
     case "min":
-      return Math.round(stats.min);
+      return materialisedLevel(stats.min);
     case "max":
-      return Math.round(stats.max);
+      return materialisedLevel(stats.max);
     case "mean":
-      return Math.round(stats.mean);
+      return materialisedLevel(stats.mean);
     default:
-      return Math.round(stats.median);
+      return materialisedLevel(stats.median);
   }
+}
+
+/**
+ * A continuous height-field statistic, resolved to the block level the terrain
+ * pass will actually materialise there.
+ *
+ * **The rule is `clampY(Math.floor(v))` and nothing else** — the same rule the
+ * street datum samples with (`layout/street-datum.ts` `materialisedGround`) and
+ * the same one `buildColumnPlan` writes with (`terrain/columns.ts`, the
+ * `ground[idx]` write). `Math.round` was the old answer and it is wrong on half
+ * of all columns: flat ground whose top block is 93 carries a field value
+ * anywhere in [93, 94), so a value of 93.6 rounded to 94 and every pad on dead
+ * flat ground shipped standing on a one-block plinth with no ramp to it (Kai's
+ * walk verdict, twice). Flooring makes a pad's foundation the surface block's
+ * own level, so a flat site seats flush.
+ *
+ * `test/pad-datum-agreement.test.ts` asserts this against `clampY` directly,
+ * the way `street-datum.test.ts` does, so the two materialisation rules cannot
+ * drift apart.
+ */
+function materialisedLevel(v: number): number {
+  return clampY(Math.floor(v));
 }
 
 /* -------------------------------------------------------------------------- */
