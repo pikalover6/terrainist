@@ -102,7 +102,7 @@ import {
   type LevelSeam,
 } from "./levels.js";
 import { largestRect } from "./masks.js";
-import { derivePlatforms } from "./platforms.js";
+import { DISSOLVE_DROP_MAX, derivePlatforms, dissolveTallPairs } from "./platforms.js";
 import { biasedMix } from "./mix-intent.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
@@ -141,6 +141,7 @@ import {
   CORNER_TOLERANCE,
   FRONTAGE_RISE,
   FRONTAGE_TIE,
+  SEAM_TIERS,
   type LayoutNodeInput,
   type PadEdit,
   type Placement,
@@ -1030,7 +1031,27 @@ export function layDistrict(
     groundPolicy === "stepped" && declared.length === 0
       ? derivePlatforms({ bounds, blocked, field: input.field })
       : [];
-  const levels = groundLevelsOf(bounds, declared.length > 0 ? declared : derived);
+  const elected = declared.length > 0 ? declared : derived;
+  // S6 rule 3 (`docs/GROUND-UNIFICATION-v0.md` §4.1): the election may not elect
+  // a pair whose seam it would not pay for. A pair past
+  // `SEAM_TIER_MAX · RETAIN_MAX` dissolves — the higher platform gives its level
+  // back to the lower — and the quarter ships with fewer levels rather than with
+  // a level nothing can serve. This is the first caller `LOAM-W410` has ever had.
+  const election =
+    SEAM_TIERS && groundPolicy === "stepped" && elected.length > 1
+      ? dissolveTallPairs(bounds, elected)
+      : { benches: elected, dissolved: [] };
+  for (const gone of election.dissolved) {
+    diagnostics.push(
+      warning(
+        "LEVEL_DISSOLVED",
+        nodePath,
+        `platform "${gone.id}" in "${nodePath}" stood ${gone.drop} block(s) above "${gone.into}", past the ${DISSOLVE_DROP_MAX} a tier stack can serve, so it gave its level back and took its neighbour's`,
+        `Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.`,
+      ),
+    );
+  }
+  const levels = groundLevelsOf(bounds, election.benches);
   // Never accepted and quietly not met (§5.3): a document that asked for
   // stepped ground and got one plane is told so, in the terms it asked in, and
   // the quarter still compiles — as the `"pad"` it turned out to be.

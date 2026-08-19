@@ -35,7 +35,27 @@ import type { HeightField } from "@terrainist/stdlib";
 import { FLOOR_HEIGHT } from "./district.js";
 import type { Rect } from "./frames.js";
 import type { FormBench } from "./forms/types.js";
+import { RETAIN_MAX } from "./levels.js";
 import { maskRuns } from "./masks.js";
+import { SEAM_TIERS } from "./types.js";
+
+/**
+ * The tallest seam the tier stack can serve, in faces
+ * (`docs/GROUND-UNIFICATION-v0.md` §4.1 S3).
+ *
+ * Module-local rather than imported while `layout/levels.ts` belongs to the
+ * tier-stack wave: the number is the design's `SEAM_TIER_MAX = 3` and this
+ * declaration is to be replaced by the import the moment `levels.ts` exports
+ * it. Nothing outside this file reads it, so the two cannot disagree in a way
+ * that compiles.
+ */
+const SEAM_TIER_MAX = 3;
+
+/**
+ * S6 rule 3's threshold: a platform pair whose seam would need more faces than
+ * the stack has is not a pair the election may make.
+ */
+export const DISSOLVE_DROP_MAX = SEAM_TIER_MAX * RETAIN_MAX;
 
 /** Half-width of the box blur applied before a block is split, in columns. */
 const SMOOTH_RADIUS = 2;
@@ -62,6 +82,13 @@ export interface PlatformInput {
   readonly blocked: Uint8Array;
   /** The **natural** field — a `"stepped"` quarter is not pad-levelled. */
   readonly field: HeightField;
+  /**
+   * S6's election rules (`docs/GROUND-UNIFICATION-v0.md` §4.1): level from the
+   * bucket, and merge the slivers. Defaults to {@link SEAM_TIERS}; the
+   * parameter exists so a test may exercise the flag-on election without
+   * flipping a compile-time constant the whole compiler reads.
+   */
+  readonly tiered?: boolean;
 }
 
 /**
@@ -78,6 +105,7 @@ export interface PlatformInput {
  */
 export function derivePlatforms(input: PlatformInput): FormBench[] {
   const { bounds, blocked, field } = input;
+  const tiered = input.tiered ?? SEAM_TIERS;
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
   const cells = width * depth;
@@ -134,12 +162,32 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     const inner = new Uint8Array(cells);
     for (const k of block) inner[k] = 1;
     const split = new Uint8Array(cells);
+    const pieces: SplitPiece[] = [];
     for (const k of block) {
       if (split[k] === 1) continue;
       const b = bucket[k] as number;
       const piece = component(k, cells, width, depth, split, (n) => inner[n] === 1 && bucket[n] === b);
-      if (piece.length < MIN_PLATFORM_COLUMNS) continue;
-      push(benches, bounds, piece, storey(base, medianOf(piece, heightAt)), `block.${start}.${b}`);
+      // S6 rule 1: the level comes from the bucket that defined the piece, not
+      // from the raw median of its columns. Partitioning on one quantity and
+      // levelling by another is what let two 4-adjacent pieces one bucket apart
+      // stand two storeys apart (§4.0a M4); under the flag they never can.
+      const level = tiered
+        ? base + b * FLOOR_HEIGHT
+        : storey(base, medianOf(piece, heightAt));
+      pieces.push({ bucket: b, level, cells: piece });
+    }
+    if (!tiered) {
+      for (const piece of pieces) {
+        if (piece.cells.length < MIN_PLATFORM_COLUMNS) continue;
+        push(benches, bounds, piece.cells, piece.level, `block.${start}.${piece.bucket}`);
+      }
+      continue;
+    }
+    // S6 rule 2: a sliver merges rather than staying natural. Leaving it at
+    // `NO_PLATFORM` puts natural ground *inside* levelled ground — the quarry's
+    // grass stubs (§4.0a M5).
+    for (const piece of mergeSlivers(pieces, width, depth, cells)) {
+      push(benches, bounds, piece.cells, piece.level, `block.${start}.${piece.bucket}`);
     }
   }
 
@@ -149,6 +197,174 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
   const distinct = new Set(benches.map((b) => b.level));
   if (distinct.size <= 1) return [];
   return benches;
+}
+
+/** One 4-connected piece of one bucket, before the sliver merge. */
+interface SplitPiece {
+  readonly bucket: number;
+  level: number;
+  cells: number[];
+}
+
+/**
+ * S6 rule 2 — every piece under {@link MIN_PLATFORM_COLUMNS} joins the
+ * neighbouring piece it touches most; ties break to the **lower** level, then
+ * to the earlier piece.
+ *
+ * Repeated to a fixed point, because a sliver's best neighbour may itself be a
+ * sliver, and merging two of them can make a platform worth having. A sliver
+ * with no neighbour at all — a block that came out as one piece — is kept
+ * rather than dropped: levelled ground with a small platform in it is the
+ * honest answer, natural ground inside levelled ground is not.
+ *
+ * Deterministic throughout: pieces are visited in index order, contacts are
+ * counted row-major, and every tie has a total order.
+ */
+export function mergeSlivers(
+  pieces: readonly SplitPiece[],
+  width: number,
+  depth: number,
+  cells: number,
+): SplitPiece[] {
+  const live = pieces.map((p) => ({ bucket: p.bucket, level: p.level, cells: [...p.cells] }));
+  const dead = new Uint8Array(live.length);
+  const owner = new Int32Array(cells).fill(-1);
+  for (const [i, piece] of live.entries()) for (const k of piece.cells) owner[k] = i;
+
+  for (let guard = 0; guard <= live.length; guard++) {
+    let merged = false;
+    for (const [i, piece] of live.entries()) {
+      if (dead[i] === 1 || piece.cells.length >= MIN_PLATFORM_COLUMNS) continue;
+      const contacts = new Map<number, number>();
+      for (const k of piece.cells) {
+        const ci = k % width;
+        const cj = (k - ci) / width;
+        for (const [di, dj] of NEIGHBOURS) {
+          const ii = ci + di;
+          const jj = cj + dj;
+          if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+          const n = jj * width + ii;
+          const o = owner[n] as number;
+          if (o < 0 || o === i || dead[o] === 1) continue;
+          contacts.set(o, (contacts.get(o) ?? 0) + 1);
+        }
+      }
+      let best = -1;
+      let bestCount = 0;
+      for (const [o, count] of [...contacts.entries()].sort((a, b) => a[0] - b[0])) {
+        const bestPiece = best < 0 ? null : (live[best] as SplitPiece);
+        const better =
+          bestPiece === null ||
+          count > bestCount ||
+          (count === bestCount && (live[o] as SplitPiece).level < bestPiece.level);
+        if (better) {
+          best = o;
+          bestCount = count;
+        }
+      }
+      if (best < 0) continue;
+      const target = live[best] as SplitPiece;
+      for (const k of piece.cells) owner[k] = best;
+      target.cells = [...target.cells, ...piece.cells].sort((a, b) => a - b);
+      piece.cells = [];
+      dead[i] = 1;
+      merged = true;
+    }
+    if (!merged) break;
+  }
+  return live.filter((_, i) => dead[i] !== 1);
+}
+
+/** One platform pair the election could not pay for, as S6 rule 3 dissolved it. */
+export interface DissolvedLevel {
+  /** The higher platform, which gave its level back. */
+  readonly id: string;
+  /** The lower platform it took its level from. */
+  readonly into: string;
+  /** The drop the seam between them would have had to serve. */
+  readonly drop: number;
+}
+
+/**
+ * S6 rule 3 — **a pair past {@link DISSOLVE_DROP_MAX} dissolves.**
+ *
+ * The tier stack serves `SEAM_TIER_MAX` faces of `RETAIN_MAX`; a seam past that
+ * is not a seam a town builds, it is a dam, and the design's answer is that the
+ * *election* was wrong rather than the construction. The higher platform gives
+ * its level back to the lower one and the quarter ships with fewer levels.
+ *
+ * `COURTYARDS-AND-LEVELS` §3.5 step 3, moved from a post-hoc repair into the
+ * election, and the first thing that ever emits `LOAM-W410 LEVEL_DISSOLVED`.
+ *
+ * Pure: adjacency is 4-connected over the benches' own masks, pairs are visited
+ * in `(higher index, lower index)` order, and the walk repeats to a fixed point
+ * so a chain of three dissolves the same way whichever end it is entered from.
+ */
+export function dissolveTallPairs(
+  bounds: Rect,
+  benches: readonly FormBench[],
+): { readonly benches: FormBench[]; readonly dissolved: DissolvedLevel[] } {
+  const width = bounds.x1 - bounds.x0 + 1;
+  const depth = bounds.z1 - bounds.z0 + 1;
+  const cells = width * depth;
+  const dissolved: DissolvedLevel[] = [];
+  if (cells <= 0 || benches.length < 2) return { benches: [...benches], dissolved };
+
+  const owner = new Int32Array(cells).fill(-1);
+  for (const [i, bench] of benches.entries()) {
+    for (const run of bench.runs) {
+      for (let z = run.z0; z <= run.z1; z++) {
+        const j = z - bounds.z0;
+        if (j < 0 || j >= depth) continue;
+        for (let x = run.x0; x <= run.x1; x++) {
+          const ii = x - bounds.x0;
+          if (ii < 0 || ii >= width) continue;
+          owner[j * width + ii] = i;
+        }
+      }
+    }
+  }
+  const levels = benches.map((b) => b.level);
+  // Every 4-adjacent pair, once, as `a < b` on index.
+  const pairs = new Set<number>();
+  for (let k = 0; k < cells; k++) {
+    const a = owner[k] as number;
+    if (a < 0) continue;
+    const i = k % width;
+    const j = (k - i) / width;
+    for (const [di, dj] of NEIGHBOURS) {
+      const ii = i + di;
+      const jj = j + dj;
+      if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+      const b = owner[jj * width + ii] as number;
+      if (b < 0 || b === a) continue;
+      pairs.add(Math.min(a, b) * benches.length + Math.max(a, b));
+    }
+  }
+  const ordered = [...pairs].sort((x, y) => x - y);
+  for (let guard = 0; guard <= benches.length; guard++) {
+    let changed = false;
+    for (const key of ordered) {
+      const a = Math.floor(key / benches.length);
+      const b = key % benches.length;
+      const drop = Math.abs((levels[a] as number) - (levels[b] as number));
+      if (drop <= DISSOLVE_DROP_MAX) continue;
+      const high = (levels[a] as number) > (levels[b] as number) ? a : b;
+      const low = high === a ? b : a;
+      levels[high] = levels[low] as number;
+      dissolved.push({
+        id: benches[high]?.id ?? `${high}`,
+        into: benches[low]?.id ?? `${low}`,
+        drop,
+      });
+      changed = true;
+    }
+    if (!changed) break;
+  }
+  return {
+    benches: benches.map((bench, i) => ({ ...bench, level: levels[i] as number })),
+    dissolved,
+  };
 }
 
 /** §3.3 step 2: a median, quantised to whole storeys above the quarter's base. */
