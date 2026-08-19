@@ -63,7 +63,8 @@ import { resolvePorts } from "../layout/ports.js";
 import { landmarkRoadAnchors } from "../programs/road-anchors.js";
 import type { ProgramRotation } from "../programs/rotate.js";
 import type { CityProduct } from "../layout/city-pass.js";
-import type { DistrictProduct } from "../layout/district.js";
+import { deriveSeamStairs, type DistrictProduct } from "../layout/district.js";
+import type { StreetGraph } from "../layout/streets.js";
 import { dressStreets, type SegmentArc } from "./streetscape.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
@@ -993,6 +994,46 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   diagnostics.push(...retaining.diagnostics);
   lay("retaining", retaining.blocks);
 
+  // --- the seam stairs (S9) ------------------------------------------------
+  // Here, and it can be nowhere else: the retaining pass has just published the
+  // landings a served seam left — its floor, its treads and the platform it
+  // holds — and the surfacer has not run yet. A derived flight is registered as
+  // an ordinary `role: "steps"` segment on the quarter's own graph, so
+  // `surfaceStreetGraph` lays it under the existing tread law and refuses it
+  // whole where it cannot be made climbable. No stair code is added anywhere.
+  //
+  // Empty, and allocating nothing, on every quarter whose seams published no
+  // landings — which is every quarter until `SEAM_TIERS` flips or a fixture
+  // asks one for `tiered: true`.
+  if (retaining.landings.length > 0) {
+    for (const d of districts) {
+      const mine = retaining.landings.filter((l) => l.nodePath === d.nodePath);
+      if (mine.length === 0) continue;
+      const bounds = d.bounds;
+      const width = bounds.x1 - bounds.x0 + 1;
+      const derived = deriveSeamStairs({
+        nodePath: d.nodePath,
+        landings: mine,
+        // The landings *are* the flag: they only exist where a tier stack was
+        // allowed to build, which is `SEAM_TIERS` or a fixture's `tiered: true`
+        // on this one quarter. Reading the compile-time flag again here would
+        // drop the fixture's stairs on the floor.
+        tiered: true,
+        onStreet: (x: number, z: number): boolean => {
+          if (x < bounds.x0 || x > bounds.x1 || z < bounds.z0 || z > bounds.z1) return false;
+          const at = (z - bounds.z0) * width + (x - bounds.x0);
+          return d.carriageway[at] === 1 || d.sidewalk[at] === 1;
+        },
+      });
+      diagnostics.push(...derived.diagnostics);
+      if (derived.segments.length === 0) continue;
+      (d as { streets: StreetGraph }).streets = {
+        ...d.streets,
+        segments: [...d.streets.segments, ...derived.segments],
+      };
+    }
+  }
+
   // --- the courtyards (Phase 4.2, WP-C) ------------------------------------
   // SLOT, filled. It runs after `buildBuildings` and before the streetscape,
   // because the passage arch springs from the flanking bays' walls and is only
@@ -1487,6 +1528,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     ground: input.ground,
     palette: input.palette,
     stack: input.stack,
+    // S10's two sources of truth, straight from the retaining pass: the ground
+    // a served seam left walkable, and the ground a bank took.
+    landings: retaining.landings,
+    bank: retaining.bank,
   });
   lay("doorsteps", doorsteps.blocks);
 
@@ -1720,6 +1765,22 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
             const at = index(region, x, z);
             if (roads !== undefined && (roads as RoadNetworkResult).roadColumns[at] === 1) return true;
             return streets !== undefined && (streets as StreetSurfaceResult).road[at] === 1;
+          },
+          // S11 — *measured, not moved*. The quarters' own `GroundLevels`,
+          // stitched into one field: each district's platform indices are
+          // shifted into a private band so two quarters' platform 0 can never
+          // read as the same ground, and natural ground is −1 everywhere. A
+          // circuit that never crosses a level change reports nothing, which is
+          // every world without platforms.
+          platformAt: (x: number, z: number): number => {
+            let band = 0;
+            for (const d of districts) {
+              band += 1024;
+              if (d.levels === undefined) continue;
+              const p = d.levels.at(x, z);
+              if (p >= 0) return band + p;
+            }
+            return -1;
           },
         });
   if (wallPass !== undefined) {

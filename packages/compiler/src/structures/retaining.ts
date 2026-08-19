@@ -56,7 +56,8 @@
 import { TERRAIN_DIAGNOSTICS, error, note, warning, type LoamDiagnostic } from "@terrainist/spec";
 import { APRON_RUN_PER_BLOCK, type Region } from "@terrainist/stdlib";
 
-import type { Rect } from "../layout/frames.js";
+import type { SeamLanding, SeamLandingStack, SeamLandings } from "../layout/district.js";
+import type { Point2, Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import {
@@ -295,6 +296,14 @@ export interface RetainingPassResult {
    */
   readonly bank: Uint8Array;
   /**
+   * **S9's published landings**, one stack per served seam, in the pass's own
+   * seam order — see {@link SeamLandings}.
+   *
+   * Empty on every world no tier stack served, which is every world until
+   * {@link SEAM_TIERS} flips or a fixture asks one quarter for `tiered: true`.
+   */
+  readonly landings: SeamLandings;
+  /**
    * **Edge columns by the treatment §5.2 chose for them**, over every edge a
    * site planner's quarter has: the fill edges this pass measures and the cut
    * edges the planner declared.
@@ -526,6 +535,8 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     rock: 0,
   };
   const declaredWalls: RetainingDeclaration["walls"][number][] = [];
+  /** S9 — see {@link RetainingPassResult.landings}. */
+  const landings: SeamLandingStack[] = [];
   const declaredBanks: RetainingDeclaration["banks"][number][] = [];
   const unfaced: Record<UnfacedReason, number> = {
     building: 0,
@@ -556,6 +567,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       built,
       banked,
       bank,
+      landings,
       treated,
       treatedCut,
       benchedBanks,
@@ -789,6 +801,13 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           declaredWalls,
         });
         stacks++;
+        if (laid.landings.length > 0) {
+          landings.push({
+            source: `${district.nodePath}#tiers@${jobIndex}`,
+            nodePath: district.nodePath,
+            landings: laid.landings,
+          });
+        }
         stacksByDressing[dressing]++;
         stackTiers += laid.tiers.length;
         stackColumns += laid.faceColumns;
@@ -1259,6 +1278,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     built,
     banked,
     bank,
+    landings,
     treated,
     treatedCut,
     benchedBanks,
@@ -2602,6 +2622,14 @@ export interface TieredSeamResult {
    * S1 leaves, and what `LOAM-W413 SEAM_UNSERVED` reports.
    */
   readonly unplaced: number;
+  /**
+   * **S9's ground a body can stand on**, bottom landing first: the seam floor,
+   * then one entry per tier's tread, then the platform the stack holds.
+   *
+   * Published rather than re-derived because neither consumer can compute it —
+   * see {@link SeamLanding}. Empty when no tier was placed.
+   */
+  readonly landings: readonly SeamLanding[];
 }
 
 /**
@@ -2676,6 +2704,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
       railColumns: 0,
       treadColumns: 0,
       unplaced: 0,
+      landings: [],
     };
   }
   const n = tiers.length;
@@ -2744,6 +2773,18 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
   let railColumns = 0;
   let treadColumns = 0;
   let unplaced = 0;
+  /**
+   * **S9's landings**, filled bottom tier first as the one loop below runs.
+   *
+   * `treads[k]` is tier `k`'s band minus its course — the ground the tier
+   * levelled and declared as its own (S4) and the only part of a tier a body
+   * stands on. The top tier's is empty by construction (its band *is* its
+   * course, at `top`), which is exactly why the platform it holds is published
+   * as a landing of its own below.
+   */
+  const treads: { y: number; columns: number[] }[] = [];
+  /** Tier 0's band, so the seam floor's landing can be found beside it. */
+  let bottomBand: readonly number[] = [];
 
   // --- one loop, bottom up (§4.2) -------------------------------------------
   // Bottom up because that is the order the ground is built in: a tier's face
@@ -2772,6 +2813,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
       continue;
     }
     treadColumns += band.length - courseColumns;
+    if (k === 0) bottomBand = band;
 
     // **S4 — the tread is the tier's own ground, and it is declared as such.**
     // One commit per tier, before its course is swept, so the sweep's datum is
@@ -2793,6 +2835,9 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     );
     const columns: number[] = [];
     for (let c = 0; c < cells; c++) if (course[c] === 1) columns.push(c);
+    // S9, after the thickening: what is left of the band once the masonry has
+    // taken its columns is the tread, and the tread is the landing.
+    treads.push({ y, columns: band.filter((c) => course[c] !== 1) });
     // The sweep owns this tier's **course** and nothing else. Not the whole
     // band: the profile's `verge` lane would pave a tread with sidewalk, and a
     // terraced tread is earth you plant, not a pavement.
@@ -2910,7 +2955,55 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     }
   }
 
-  return { tiers, dressing, faces, faceColumns, railColumns, treadColumns, unplaced };
+  // --- S9's landings, bottom first ------------------------------------------
+  // Neither end tier owns the ground at its own end: tier 0 stands *on* the
+  // seam floor and the top tier's tread *is* the platform it holds. Both are
+  // published beside the treads so a flight is derived from floor to platform
+  // without knowing how many faces are in between.
+  const point = (c: number): Point2 => ({
+    x: region.x0 + (c % region.width),
+    z: region.z0 + Math.floor(c / region.width),
+  });
+  /** Columns of `platform`, 4-adjacent to `beside`, row-major and deduplicated. */
+  const rimOf = (beside: readonly Point2[], platform: number): Point2[] => {
+    const seen = new Uint8Array(cells);
+    for (const p of beside) {
+      if (!inside(region, p.x, p.z)) continue;
+      for (const [dx, dz] of NEIGHBOURS) {
+        if (!inside(region, p.x + dx, p.z + dz)) continue;
+        const m = index(region, p.x + dx, p.z + dz);
+        if (seen[m] === 1) continue;
+        // Never a column the stack itself took: a landing is ground beside the
+        // construction, not the construction.
+        if ((dist[m] as number) >= 0) continue;
+        if (levels.at(p.x + dx, p.z + dz) !== platform) continue;
+        seen[m] = 1;
+      }
+    }
+    const out: Point2[] = [];
+    for (let c = 0; c < cells; c++) if (seen[c] === 1) out.push(point(c));
+    return out;
+  };
+  const landings: SeamLanding[] = [];
+  if (treads.length > 0) {
+    landings.push({ y: floor, columns: rimOf(bottomBand.map(point), record.below) });
+    for (const tread of treads) {
+      if (tread.columns.length === 0) continue;
+      landings.push({ y: tread.y, columns: tread.columns.map(point) });
+    }
+    landings.push({ y: top, columns: rimOf(record.cells, record.above) });
+  }
+
+  return {
+    tiers,
+    dressing,
+    faces,
+    faceColumns,
+    railColumns,
+    treadColumns,
+    unplaced,
+    landings,
+  };
 }
 
 /**
