@@ -40,6 +40,18 @@ import { index, inside } from "./roads.js";
 /** How many columns out from a threshold a doorstep flight may reach. */
 export const DOORSTEP_REACH = 6;
 
+/**
+ * How far a walkable neighbour of a flight's foot may stand from the foot's own
+ * level, in blocks.
+ *
+ * One block is the whole of it: a one-block rise is a jump, and a flight whose
+ * bottom stair has nothing within a jump of it beside it has not arrived
+ * anywhere. Two or more is a bank face — the LOAM-W411 case, a terrace seam
+ * refused its retaining wall and graded raw — and a flight laid up a bank face
+ * is the "stairs to nowhere" a walkthrough reported: masonry decorating a wall.
+ */
+export const DOORSTEP_FOOT_STEP = 1;
+
 /** Input to {@link buildDoorsteps}. */
 export interface DoorstepInput {
   readonly buildings: readonly BuiltBuilding[];
@@ -68,6 +80,14 @@ export interface DoorstepResult {
   readonly dropped: number;
   /** Doors that were already flush. */
   readonly flush: number;
+  /**
+   * Doors whose flight was proposed and then **refused**: its foot would have
+   * landed on a bank face or in mid-bank air rather than on anything walkable
+   * ({@link DOORSTEP_FOOT_STEP}). Nothing is written for these — the door keeps
+   * a plain sill, and the physics lint is left free to report it as unreachable,
+   * which it honestly is.
+   */
+  readonly refused: number;
   /**
    * 1 on every column this pass rewrote or built on, row-major over the plan
    * region — the ground in front of a door, which no later ground treatment
@@ -113,6 +133,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   let stepped = 0;
   let dropped = 0;
   let flush = 0;
+  let refused = 0;
   const touched = new Uint8Array(region.width * region.depth);
   const declarations: DoorstepDeclaration[] = [];
 
@@ -133,6 +154,54 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     input.buildings.some(
       (b) => x >= b.footprint.x0 && x <= b.footprint.x1 && z >= b.footprint.z0 && z <= b.footprint.z1,
     );
+
+  /**
+   * Does the bottom stair of a flight put a walker down on something walkable?
+   *
+   * The same shape of question `connects` asks of a set-piece stair and
+   * `terminusLandings` asks of a street beside a flight: not "is there ground"
+   * — a bank face is ground — but "is there ground you can *stand on and walk
+   * off*". And it is asked **along the flight's own direction**, because that
+   * is what a flight is: a way out of a door. A staircase that can only be left
+   * by side-stepping off its bottom tread never needed to point where it points;
+   * on a terrace seam refused its retaining wall (LOAM-W411) that is exactly
+   * what it is — treads let into the raw graded face of the bank, going nowhere.
+   *
+   * Two columns settle it. The first is where a walker's foot lands coming off
+   * the bottom stair, and it must be within {@link DOORSTEP_FOOT_STEP} of the
+   * stair's own level. The second is one further on, and it must be within the
+   * same step of the first — otherwise the landing is the brink of the face
+   * rather than a way off it, which reads as a landing until you look past it.
+   * Declared paving, a lot plane and genuinely flat ground all pass both:
+   * all three are level where they meet the foot and level again beyond it.
+   */
+  const footLands = (
+    foot: { readonly x: number; readonly z: number; readonly y: number } | null,
+    dx: number,
+    dz: number,
+  ): boolean => {
+    if (foot === null) return false;
+    const nx = foot.x + dx;
+    const nz = foot.z + dz;
+    // Off the region, into a neighbour's wall, or into water: the flight has
+    // arrived at *something*, and none of those are a bank face. An edge is not
+    // a cliff and a wall is a place.
+    if (!inside(region, nx, nz) || claimed(nx, nz)) return true;
+    const n = index(region, nx, nz);
+    if (plan.fluidKind[n] !== FluidKind.NONE) return true;
+    const gn = view.ground[n] as number;
+    // Step one: off the bottom stair onto the ground ahead of it.
+    if (Math.abs(gn - foot.y) > DOORSTEP_FOOT_STEP) return false;
+    // Step two: that ground has to lead on rather than be the last block before
+    // a fall — the brink of a terrace face reads exactly like a landing until
+    // you look one column further.
+    const mx = nx + dx;
+    const mz = nz + dz;
+    if (!inside(region, mx, mz) || claimed(mx, mz)) return true;
+    const m = index(region, mx, mz);
+    if (plan.fluidKind[m] !== FluidKind.NONE) return true;
+    return Math.abs((view.ground[m] as number) - gn) <= DOORSTEP_FOOT_STEP;
+  };
 
   for (const port of input.ports) {
     if (port.type !== "door") continue;
@@ -155,6 +224,15 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     let y = floorY;
     /** §3.11b: the cut columns of this door, and nothing else. */
     const cuts: GroundClaim[] = [];
+    // A flight is *proposed* into these, not written: the masonry and the
+    // columns it would claim are held back until the foot is known to land on
+    // something walkable. A `dropped` approach cuts ground and is not held —
+    // it is a landing graded to meet the sill, not a flight climbing away from
+    // one, so it cannot dead-end.
+    const flight: StructureBlock[] = [];
+    const walked: number[] = [];
+    /** The bottom stair of the proposed flight: where it puts a walker down. */
+    let foot: { readonly x: number; readonly z: number; readonly y: number } | null = null;
 
     for (let k = 1; k <= DOORSTEP_REACH; k++) {
       const x = px + dx * k;
@@ -162,7 +240,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       if (!inside(region, x, z) || claimed(x, z)) break;
       const idx = index(region, x, z);
       if (plan.fluidKind[idx] !== FluidKind.NONE) break;
-      touched[idx] = 1;
+      walked.push(idx);
       const g = view.ground[idx] as number;
 
       if (g >= y) {
@@ -185,15 +263,28 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       // Underpin, then step. Filling to `y - 1` is what makes the stair a
       // stair rather than a slab hanging over a hole.
       for (let fill = g + 1; fill < y; fill++) {
-        blocks.push({ x, y: fill, z, stateId: stepState });
+        flight.push({ x, y: fill, z, stateId: stepState });
       }
-      blocks.push({ x, y, z, stateId: stair });
+      flight.push({ x, y, z, stateId: stair });
+      foot = { x, z, y };
       outcome = "stepped";
       // A stair whose front lands within half a block of natural ground is the
       // last one the flight needs.
       if (y <= g + 1) break;
       y--;
     }
+
+    if (outcome === "stepped" && !footLands(foot, dx, dz)) {
+      // Stairs to nowhere. The flight climbs a raw graded bank — a terrace seam
+      // that was refused a retaining wall (LOAM-W411) — and its bottom stair has
+      // nothing beside it a walker could step onto. Drop the whole proposal: no
+      // masonry, no `touched` claim, no cuts. The door keeps a plain sill and
+      // reads as what it is.
+      refused++;
+      continue;
+    }
+    for (const idx of walked) touched[idx] = 1;
+    blocks.push(...flight);
 
     if (outcome === "stepped") stepped++;
     else if (outcome === "dropped") dropped++;
@@ -223,5 +314,5 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     }
   }
 
-  return { blocks, stepped, dropped, flush, touched, declarations };
+  return { blocks, stepped, dropped, flush, refused, touched, declarations };
 }

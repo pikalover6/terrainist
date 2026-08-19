@@ -269,6 +269,8 @@ export interface StructureStats {
   readonly doorstepsStepped: number;
   /** Doors whose approach was cut down to the threshold. */
   readonly doorstepsDropped: number;
+  /** Doors whose flight was refused: its foot landed on no walkable ground. */
+  readonly doorstepsRefused: number;
   /** Buildings given a cellar, whether asked for or implied by a tunnel. */
   readonly cellars: number;
   /** Tunnels routed and dug. */
@@ -1990,6 +1992,7 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       plazaWell: plaza?.well ?? false,
       doorstepsStepped: doorsteps.stepped,
       doorstepsDropped: doorsteps.dropped,
+      doorstepsRefused: doorsteps.refused,
       cellars: built.filter((b) => b.basementDepth > 0).length,
       tunnels: tunnelPass.tunnels.length,
       tunnelCarvedBlocks: tunnelPass.tunnels.reduce((sum, t) => sum + t.carvedBlocks, 0),
