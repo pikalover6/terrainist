@@ -3471,8 +3471,10 @@ constraints, so `{"distance": "priams_megaron", "min": 14, "max": 42}` on a
 root-level node binds to nothing at all (`LOAM-W523
 CONSTRAINT_TARGET_UNRESOLVED` now says so; before it, the layout report claimed
 the constraint was satisfied while the horse stood two hundred blocks away).
-Bind to the district itself — `{"distance": "troy_citadel", "min": 0, "max":
-20}` puts the horse just inside the gates instead of across the river.
+Bind to the district itself — `{"distance": "troy_citadel", "min": 8, "max":
+24}` puts the horse before the gates instead of across the river. Keep a
+courteous `min`: distance is measured to the node's *edge*, and `"min": 0`
+invites the set-piece to stand pressed against the wall it was meant to face.
 
 ### `on` — build on a terrain feature
 
