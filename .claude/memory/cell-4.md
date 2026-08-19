@@ -80,9 +80,26 @@ GONE. Full suite 5,169/0.
 pirates_v_unicorns_v17** — all first-roll exit 0 (~$0.75), installed
 via --series. hellenist authored a REAL METROPOLIS (land-budget
 feedback working — render sent to Kai; v8 was 90% ocean).
-**AWAITING KAI'S WALK:** tier dressings SEAM_TREAD3/SETBACK1;
-BLOCK_MULTI_RECT (unwalked, 1 constant to revert); fortification
-promotion off I415; W413 flagged seams; §15.1 ratification.
+**KAI'S v14-DECK VERDICT (wave 4, harsh): "continuing to regress."**
+hellenist v10: basically NO WATER, monsters on land (W526 fix
+OVERCORRECTED — taught land with no keep-the-sea counterweight);
+pirates v17: one landmass, unicorn way out of city, FLOATING
+bespoke gens, ship out of place; troy v14: streets SUNKEN ~2 BLOCKS
+vs terrain (suspect STREET_CUT_MAX on tie path), density not fixed
+on foot, still modern-ish multi-storey. His anchors of GOOD:
+pirates v16 (tie2), metropolis_hideout v1 + hellenist v1 monsters
+(gem1). VERSIONING RULED INCOHERENT: must anchor generations of the
+same BUILD together (deck-first cohorts, rN shared across prompts,
+manifest→commit) — CODING QUEUED behind matrix verdict.
+**RULINGS (popup): FLAG MATRIX FIRST** (approved); screening =
+render+annotate but INSTALL ANYWAY (reroll-gate only when he asks
+for autonomous iteration). MY DIAGNOSIS OF THE LOOP: every deck
+confounds compiler+authoring-roll+teaching; archived docs + flags
+separate them for free.
+**IN FLIGHT: matrix agent (low)** — P16 (p1-tie2 doc) × {head,
+notie, noseam, nodens, allold} + M1/H1 (gem1 docs) × head; installs
+mx_* alongside; renders for annotation; era baselines already in
+saves. NO OTHER CODING until the matrix verdict.
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
