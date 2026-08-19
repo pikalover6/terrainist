@@ -59,7 +59,10 @@ describe("the row", () => {
   });
 
   it("declares what it reads, for the registry dump", () => {
-    expect(fanOutRow(ROW)?.reads).toEqual(["character"]);
+    // `era` joined `character` on 2026-08-19: the row grew a last rung that
+    // fills the hole an era-blind `"regular"` default used to fill. See
+    // `RHYTHM_BY_ERA` in themes-intent.ts and the Troy block below.
+    expect(fanOutRow(ROW)?.reads).toEqual(["era", "character"]);
     expect(fanOutRow(ROW)?.status).toBe("today");
     expect((fanOutRow(ROW)?.drives ?? "").length).toBeGreaterThan(20);
   });
@@ -73,7 +76,6 @@ describe("grammar.windowRhythm is total", () => {
 
   it("has no opinion for an intent that declares every dial but this motif", () => {
     const busy = {
-      era: "ancient",
       wealth: 0.9,
       formality: 0.8,
       decline: 0.3,
@@ -81,6 +83,44 @@ describe("grammar.windowRhythm is total", () => {
     };
     expect(rhythm(busy)).toBeUndefined();
     expect(rhythm(busy, "dense")).toBe("dense");
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* the era hole-filler — the Troy "modern houses" defect, 2026-08-19        */
+  /* ---------------------------------------------------------------------- */
+
+  it("fills a pre-modern facade's empty rhythm rather than leaving it the modern grid", () => {
+    // Nothing else spoke: no node param, no archetype identity. Before this
+    // rung the grammar's own default `"regular"` — an evenly spaced grid on
+    // every storey, the strongest modern tell a wall has — landed on a Bronze
+    // Age citadel. Now the era answers.
+    expect(rhythm({ era: "ancient" })).toBe("sparse");
+    expect(rhythm({ era: "bronze age" })).toBe("sparse");
+    expect(rhythm({ era: "medieval" })).toBe("sparse");
+    expect(rhythm({ era: "stone age" })).toBe("none");
+  });
+
+  it("leaves every era from the Renaissance on exactly where it was", () => {
+    // The regular grid *is* their answer, so the row stays silent and those
+    // documents are byte-identical, not merely equivalent.
+    for (const era of ["renaissance", "industrial", "modern", "far future"]) {
+      expect(rhythm({ era })).toBeUndefined();
+      expect(rhythm({ era }, "dense")).toBe("dense");
+    }
+  });
+
+  it("never speaks over the node or the archetype, in any era", () => {
+    // `today` is the node's own param, else the archetype's intrinsic facade.
+    // A church keeps its bay lights in 1200 BC exactly as in 1900.
+    expect(rhythm({ era: "ancient" }, "regular")).toBe("regular");
+    expect(rhythm({ era: "ancient" }, "dense")).toBe("dense");
+  });
+
+  it("lets the author's motif beat the era, so a deliberate combination stands", () => {
+    // A modern quarter inside an ancient city is legal and must stay sayable:
+    // the motif is intent, the era table is only a default.
+    expect(rhythm({ era: "ancient", character: { motifs: { windowRhythm: "regular" } } })).toBe("regular");
+    expect(rhythm({ era: "ancient", character: { motifs: { windowRhythm: "dense" } } }, "none")).toBe("dense");
   });
 
   it("speaks the spec's vocabulary and nothing else", () => {

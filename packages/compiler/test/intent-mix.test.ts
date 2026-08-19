@@ -164,3 +164,83 @@ describe("scope inheritance", () => {
     expect(biasedMix(inherited, "world.town", TODAY)).toEqual(["cottage", "smithy"]);
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* the Troy walk, 2026-08-19 — what the mix is, and what it is not             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Kai walked `trojan_horse_in_troy` (battery p3-tie2) and reported modern
+ * houses in a Bronze Age citadel. The first suspect was this row, so the first
+ * thing pinned here is that **the row is not the leak**: the doc's own intent,
+ * replayed against its own `params.mix`, produces a mix with nothing modern in
+ * it, and the compiled world's 44 lot draws came back classical to the last
+ * one. The modern read was a *facade* — the grammar's era-blind `"regular"`
+ * window grid on an archetype with no intrinsic facade — and it is pinned in
+ * `window-rhythm.test.ts`.
+ *
+ * These cases stay because the next walk that says "modern houses" should be
+ * able to rule the mix out in one test run rather than one compile.
+ */
+describe("an ancient document's mix (the Troy regression)", () => {
+  /** The doc's own intent, transcribed. */
+  const TROY = {
+    era: "ancient",
+    character: {
+      formPacks: ["classical_mediterranean"],
+      archetypes: {
+        prefer: ["peristyle_house", "megaron", "stoa", "peripteral_temple", "palaestra", "olive_press"],
+        forbid: ["townhouse", "terraced_row", "shop_row", "office", "apartment_block"],
+      },
+    },
+  };
+
+  /** The doc's own `params.mix` for the citadel quarter. */
+  const CITADEL = ["peristyle_house", "megaron", "courtyard_house", "hall", "stoa"] as const;
+
+  /** Words whose vocabulary is unmistakably modern. */
+  const MODERN = [
+    "office",
+    "apartment_block",
+    "shop_row",
+    "townhouse",
+    "terraced_row",
+    "office_tower",
+    "strip_mall",
+    "parking_garage",
+    "gas_station",
+    "supermarket",
+  ];
+
+  it("draws zero modern-vocabulary archetypes", () => {
+    const mix = ask(TROY, CITADEL);
+    for (const word of MODERN) expect(mix).not.toContain(word);
+    expect(mix.length).toBeGreaterThan(CITADEL.length);
+  });
+
+  it("puts the author's own preferences at the front, ahead of the pack", () => {
+    const mix = ask(TROY, CITADEL);
+    expect(mix.slice(0, 6)).toEqual(TROY.character.archetypes.prefer);
+  });
+
+  it("still lets a modern era draw a modern form", () => {
+    // The reverse of the defect is legal and must stay legal: nothing here
+    // knows about eras, so a modern document keeps its whole vocabulary.
+    const mix = ask({ era: "modern", character: { archetypes: { prefer: ["office"] } } }, [
+      "townhouse",
+      "shop_row",
+    ]);
+    expect(mix[0]).toBe("office");
+    expect(mix).toContain("shop_row");
+  });
+
+  it("still lets an ancient document ask for a modern form on purpose", () => {
+    // A modern quarter inside an ancient city is a deliberate combination, and
+    // author intent outranks every default: an explicit `prefer` wins.
+    const mix = ask(
+      { era: "ancient", character: { formPacks: ["classical_mediterranean"], archetypes: { prefer: ["office"] } } },
+      CITADEL,
+    );
+    expect(mix[0]).toBe("office");
+  });
+});

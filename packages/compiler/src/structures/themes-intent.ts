@@ -77,6 +77,51 @@ const ROOF_BY_ERA: Readonly<Record<EraClass, RoofType>> = Object.freeze({
 });
 
 /**
+ * The window rhythm an era punches into a facade **that nothing else spoke
+ * for** — not the node's own `params.windowRhythm`, and not the archetype's
+ * intrinsic facade.
+ *
+ * ## Why this table exists (the Troy defect, 2026-08-19)
+ *
+ * Kai walked `trojan_horse_in_troy` and reported "modern houses" in a Bronze
+ * Age citadel. The archetype draw was **not** the culprit and the mix bias is
+ * not broken: with `era: ancient`, the `classical_mediterranean` pack and the
+ * doc's `prefer`/`forbid`, every one of the 44 lot draws came back classical
+ * (`peristyle_house`, `megaron`, `stoa`, `propylaea`, `nymphaeum`, …) and not
+ * one forbidden or modern id was drawn. What read as modern was the *facade*:
+ * an archetype with no intrinsic facade (`hall`, and any word outside the
+ * `archetypeFacadeDefaults` chain) fell through to the grammar's own default
+ * rhythm, which is `"regular"` — an evenly spaced window grid on every storey.
+ * A regular grid of identical punched windows is the single strongest modern
+ * tell a wall has, and antiquity does not have one: it has a blank wall, a
+ * colonnade, and the occasional slot.
+ *
+ * So this is the hole-filler, and it fills **only** the hole. The order it
+ * takes part in is unchanged and stated in the row below: an explicit
+ * `motifs.windowRhythm` wins, then the node's own param or the archetype's
+ * identity (`ctx.today`), and this table speaks last, only when both were
+ * silent and only when the author declared an era at all.
+ *
+ * `undefined` means "the grammar's own default is already right for this era" —
+ * and it is right for every era from the Renaissance on, which is why a modern
+ * document is byte-identical across this change rather than merely equivalent.
+ */
+const RHYTHM_BY_ERA: Readonly<Record<EraClass, string | undefined>> = Object.freeze({
+  // A wall with a hole in it, and not many of those.
+  primitive: "none",
+  // Antiquity's wall is blank; the openings are the colonnade's business.
+  ancient: "sparse",
+  // Small openings, unevenly, wherever the frame allowed one.
+  medieval: "sparse",
+  // The regular grid *is* the Renaissance's invention: from here the
+  // grammar's own default is the period answer.
+  renaissance: undefined,
+  industrial: undefined,
+  modern: undefined,
+  far_future: undefined,
+});
+
+/**
  * The prop an era furnishes its streets with.
  *
  * **Every value is a real `PROP_NAMES` id.** It used to be a family *word*
@@ -173,7 +218,7 @@ export function registerStructureFanOut(): void {
   /* --- motifs → window rhythm -------------------------------------------- */
   registerFanOut<string | undefined>({
     id: STRUCTURE_ROWS.windowRhythm,
-    reads: ["character"],
+    reads: ["era", "character"],
     status: "today",
     drives: "motifs.windowRhythm → the window grid of a facade and of a terrace bay",
     resolve(intent, ctx) {
@@ -184,7 +229,14 @@ export function registerStructureFanOut(): void {
       // named a rhythm on one building keeps it.
       const motif = intent.intent.character?.motifs?.windowRhythm;
       if (motif !== undefined) return motif;
-      return ctx.today;
+      // The era's hole-filler, and it is a hole-filler: it speaks only where
+      // the node's param and the archetype's own facade both said nothing, so
+      // a church keeps its bay lights and a warehouse keeps its blank wall in
+      // every century. See {@link RHYTHM_BY_ERA} for why the row grew this
+      // rung — a `"regular"` grid on a Bronze Age wall is the modern read.
+      if (ctx.today !== undefined) return ctx.today;
+      if (!intent.eraDeclared) return ctx.today;
+      return RHYTHM_BY_ERA[intent.eraClass] ?? ctx.today;
     },
   });
 
