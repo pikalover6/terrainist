@@ -65,12 +65,24 @@ a stack's flight is climbable BECAUSE of street carry — 3n-2 run vs
 revert); pad floor e29b0b9 (horse flush 122/122; every delta
 exactly -1); lamp attribution 52ebf21 (one post one lamp; goldens
 re-pinned DOWNWARD, blindStairs 0). Full suite 5,156/0 at 5d6bb6a.
-**IN FLIGHT: 11F (medium)** — SEAM_TIERS=true, W411-retirement doc
-amendment, re-pin triage, Troy+haven seam stories, physics MUST
-stay clean. ON LANDING: commit, regen deck via install --series
-(troy_v14, hellenist_city_v10, pirates_v_unicorns_v17), install,
-handoff with walk questions (tier dressings SEAM_TREAD/SETBACK,
-BLOCK_MULTI_RECT verdict, fortification promotion off I415's 26).
+**11F FLIPPED f082504 + waterline floor 0a1575a.** Flip found+fixed
+3 bugs (tier overhang past RETAIN_MAX — held computed outward-first;
+tiered unthreaded in 2 table calls; W411 push unconditional → now 0
+everywhere). Then STOP-THE-LINE T110: the election built a platform
+UNDER THE SEA (bucket level 60 vs seaLevel 63; dissolve dragged the
+shoulder down; reclassification called 2,436 citadel columns ocean;
+fabric built a flooded town). PlatformInput.waterFloor: a platform's
+lowest level is the water surface beside it, flush legal (quay).
+Troy clean, tier stack finally standing; haven 126 refused columns
+GONE. Full suite 5,169/0.
+
+**THE v14 DECK INSTALLED (d4b692e): troy_v14 / hellenist_city_v10 /
+pirates_v_unicorns_v17** — all first-roll exit 0 (~$0.75), installed
+via --series. hellenist authored a REAL METROPOLIS (land-budget
+feedback working — render sent to Kai; v8 was 90% ocean).
+**AWAITING KAI'S WALK:** tier dressings SEAM_TREAD3/SETBACK1;
+BLOCK_MULTI_RECT (unwalked, 1 constant to revert); fortification
+promotion off I415; W413 flagged seams; §15.1 ratification.
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
