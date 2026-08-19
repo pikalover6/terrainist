@@ -77,6 +77,27 @@ export interface PlatformInput {
    * flipping a compile-time constant the whole compiler reads.
    */
   readonly tiered?: boolean;
+  /**
+   * The lowest level a platform may take: **the water surface beside it.**
+   *
+   * A platform is finished ground the town stands on, and the compiler's
+   * standing rule is that nothing seats below the waterline — the solver's
+   * ground rules refuse water, `infra.entry` refuses a waterline for a
+   * frontage, and a basin is curbed before it is poured. A level *below* the
+   * surface of the water next door is none of those: it is a hole the sea
+   * pours into. Grading it lowers the field, the reclassification that follows
+   * a pad edit calls the result ocean, and the quarter ships as a lake with
+   * lots elected on it (`LOAM-T110 UNSTABLE_FLUID` at the first doorstep cut
+   * into the bank beside it).
+   *
+   * So every level this returns is raised to the floor. Level *at* the floor is
+   * legal and is the quay case — a surface flush with the water beside it has
+   * no face for the water to flow over.
+   *
+   * Optional: a quarter with no terrain under it (a fixture, a devworld) has no
+   * water surface to answer to, and the election is unchanged without one.
+   */
+  readonly waterFloor?: number;
 }
 
 /**
@@ -94,6 +115,12 @@ export interface PlatformInput {
 export function derivePlatforms(input: PlatformInput): FormBench[] {
   const { bounds, blocked, field } = input;
   const tiered = input.tiered ?? SEAM_TIERS;
+  // The waterline floor (`PlatformInput.waterFloor`). Applied where a level is
+  // *computed* rather than to the finished benches, so the sliver merge — which
+  // breaks ties to the lower level — reasons about levels that exist: a level
+  // under the water is not a lower level, it is not a level at all.
+  const dry = (level: number): number =>
+    input.waterFloor === undefined ? level : Math.max(level, input.waterFloor);
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
   const cells = width * depth;
@@ -137,7 +164,7 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
       if (h > hi) hi = h;
     }
     if (hi - lo <= FLOOR_HEIGHT) {
-      push(benches, bounds, block, storey(base, medianOf(block, heightAt)), `block.${start}`);
+      push(benches, bounds, block, dry(storey(base, medianOf(block, heightAt))), `block.${start}`);
       continue;
     }
     // Split. The bucket is the blurred storey, and each 4-connected piece of a
@@ -159,9 +186,9 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
       // from the raw median of its columns. Partitioning on one quantity and
       // levelling by another is what let two 4-adjacent pieces one bucket apart
       // stand two storeys apart (§4.0a M4); under the flag they never can.
-      const level = tiered
-        ? base + b * FLOOR_HEIGHT
-        : storey(base, medianOf(piece, heightAt));
+      const level = dry(
+        tiered ? base + b * FLOOR_HEIGHT : storey(base, medianOf(piece, heightAt)),
+      );
       pieces.push({ bucket: b, level, cells: piece });
     }
     if (!tiered) {
@@ -287,10 +314,18 @@ export interface DissolvedLevel {
  * Pure: adjacency is 4-connected over the benches' own masks, pairs are visited
  * in `(higher index, lower index)` order, and the walk repeats to a fixed point
  * so a chain of three dissolves the same way whichever end it is entered from.
+ *
+ * `waterFloor` is {@link PlatformInput.waterFloor}, and the dissolve honours it
+ * for the same reason the election does: giving a level back is still electing
+ * one, and a platform may not take a level below the surface of the water
+ * beside it. Without this a plateau adjacent to a shore piece dissolves *into
+ * the sea* — the whole quarter is graded under the waterline, the pad edit's
+ * reclassification floods it, and the fabric is laid on a lake.
  */
 export function dissolveTallPairs(
   bounds: Rect,
   benches: readonly FormBench[],
+  waterFloor?: number,
 ): { readonly benches: FormBench[]; readonly dissolved: DissolvedLevel[] } {
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
@@ -312,7 +347,9 @@ export function dissolveTallPairs(
       }
     }
   }
-  const levels = benches.map((b) => b.level);
+  const dry = (level: number): number =>
+    waterFloor === undefined ? level : Math.max(level, waterFloor);
+  const levels = benches.map((b) => dry(b.level));
   // Every 4-adjacent pair, once, as `a < b` on index.
   const pairs = new Set<number>();
   for (let k = 0; k < cells; k++) {
@@ -339,7 +376,7 @@ export function dissolveTallPairs(
       if (drop <= DISSOLVE_DROP_MAX) continue;
       const high = (levels[a] as number) > (levels[b] as number) ? a : b;
       const low = high === a ? b : a;
-      levels[high] = levels[low] as number;
+      levels[high] = dry(levels[low] as number);
       dissolved.push({
         id: benches[high]?.id ?? `${high}`,
         into: benches[low]?.id ?? `${low}`,

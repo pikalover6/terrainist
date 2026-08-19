@@ -1136,7 +1136,17 @@ export function layDistrict(
   const declared = plan.benches ?? [];
   const derived =
     groundPolicy === "stepped" && declared.length === 0
-      ? derivePlatforms({ bounds, blocked, field: input.field })
+      ? derivePlatforms({
+          bounds,
+          blocked,
+          field: input.field,
+          // The waterline the election may not elect below. A district levels
+          // its own ground by editing the field, and the field is *reclassified*
+          // after a pad edit — so a platform elected under the sea does not
+          // merely sit low, it becomes ocean, and the fabric is laid on the
+          // lake it made. See `PlatformInput.waterFloor`.
+          ...(input.seaLevel === undefined ? {} : { waterFloor: input.seaLevel }),
+        })
       : [];
   const elected = declared.length > 0 ? declared : derived;
   // S6 rule 3 (`docs/GROUND-UNIFICATION-v0.md` §4.1): the election may not elect
@@ -1146,7 +1156,7 @@ export function layDistrict(
   // a level nothing can serve. This is the first caller `LOAM-W410` has ever had.
   const election =
     SEAM_TIERS && groundPolicy === "stepped" && elected.length > 1
-      ? dissolveTallPairs(bounds, elected)
+      ? dissolveTallPairs(bounds, elected, input.seaLevel)
       : { benches: elected, dissolved: [] };
   for (const gone of election.dissolved) {
     diagnostics.push(
