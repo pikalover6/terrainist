@@ -106,7 +106,7 @@ Usage:
                                  [--no-programs] [--bespoke-budget <usd>]
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
-                                [--channel <name>]
+                                [--channel <name>] [--series <slug>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist export-web <doc.loam.json> --out <dir> [--allow-unstable]
@@ -158,6 +158,10 @@ install options:
                     rewrite the in-game world name to match, so two channels of
                     the same world sit side by side and are told apart in the
                     world list.
+  --series <slug>   Install as <slug>_v<N>, the next free version in that
+                    prompt's series (e.g. "troy" -> troy_v14), and rewrite the
+                    in-game name to match. The prompt, not the model's world
+                    name of the day, is the identity. Never replaces.
   Stamps level.dat's LastPlayed with the current time — the only place
   Terrainist reads the wall clock.
 
@@ -919,6 +923,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   let replace = false;
   let force = false;
   let channel: string | undefined;
+  let series: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -926,6 +931,11 @@ export async function runInstall(args: readonly string[]): Promise<number> {
       const value = args[i + 1];
       if (value === undefined) throw new Error("--saves requires a directory");
       savesDir = value;
+      i++;
+    } else if (arg === "--series") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--series requires a slug");
+      series = value;
       i++;
     } else if (arg === "--channel") {
       const value = args[i + 1];
@@ -953,6 +963,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
     force,
     ...(savesDir === undefined ? {} : { savesDir }),
     ...(channel === undefined ? {} : { channel }),
+    ...(series === undefined ? {} : { series }),
   });
 
   const lines = [
@@ -1155,7 +1166,17 @@ if (entry !== undefined && import.meta.url === pathToFileURL(entry).href) {
   );
 }
 
-export { defaultSavesDir, installWorld, longToMillis, millisToLong, stampLastPlayed, stampLevelDat } from "./install.js";
+export {
+  defaultSavesDir,
+  installWorld,
+  longToMillis,
+  millisToLong,
+  nextSeriesVersion,
+  parseSeriesVersion,
+  seriesFolderName,
+  stampLastPlayed,
+  stampLevelDat,
+} from "./install.js";
 export { BASELINE_TAG, gitProvenance } from "./provenance.js";
 export type { InstallOptions, InstallResult } from "./install.js";
 export { parseGenerateArgs, seedFromPrompt, persistGenerateArtifacts } from "./generate.js";

@@ -39,6 +39,8 @@ export interface InstallResult {
   readonly renamed: boolean;
   /** True when an existing same-name save was deleted to make room. */
   readonly replaced: boolean;
+  /** The version picked, when installed with `series`. */
+  readonly seriesVersion?: number;
 }
 
 /** Options for {@link installWorld}. */
@@ -67,6 +69,60 @@ export interface InstallOptions {
    * match the folder.
    */
   readonly channel?: string;
+  /**
+   * Install into a numbered per-prompt series: `<slug>_v<N>`.
+   *
+   * The battery reruns the same seven prompts over and over, and the model
+   * picks a fresh world name every roll — `troy_horse_c1`, `trojan_horse_in_troy_final`,
+   * `neo_athens_invasion_gem2` — so the saves list gives no hint which walk is
+   * which prompt, nor which came first. A series makes the *prompt* the
+   * identity: the slug is canonical, and the version is just how many times
+   * that prompt has been rolled into this saves folder. The next free `N` is
+   * whatever the highest `<slug>_v<N>` already sitting there is, plus one, so
+   * two installs never collide and the order on disk is the order generated.
+   *
+   * Mutually exclusive with `channel`. `replace` stays forbidden with it —
+   * a series never overwrites, it appends.
+   */
+  readonly series?: string;
+}
+
+/**
+ * The version number `folder` carries within `slug`'s series, or undefined.
+ *
+ * Exact match only: `troy_v3` is version 3 of `troy`, while `troy_v3-2`,
+ * `troy_v03`, `troy_vx` and `troylike_v1` are not in the series at all. Being
+ * strict here is what keeps the collision-suffix names (`troy_v3-2`, which an
+ * ordinary install would produce) from being read back as a version and
+ * silently shifting the sequence.
+ */
+export function parseSeriesVersion(folder: string, slug: string): number | undefined {
+  const prefix = `${slug}_v`;
+  if (!folder.startsWith(prefix)) return undefined;
+  const rest = folder.slice(prefix.length);
+  if (!/^[1-9][0-9]*$/.test(rest)) return undefined;
+  return Number(rest);
+}
+
+/**
+ * The next free version for `slug` given the folder names already present.
+ *
+ * One past the highest existing version, never one past the *count*: a gap
+ * (someone deleted `_v2`) must not hand out a number that was already used,
+ * because the ledger and the walk notes refer to versions by number forever.
+ */
+export function nextSeriesVersion(existing: readonly string[], slug: string): number {
+  let highest = 0;
+  for (const folder of existing) {
+    const version = parseSeriesVersion(folder, slug);
+    if (version !== undefined && version > highest) highest = version;
+  }
+  return highest + 1;
+}
+
+/** The folder (and display) name for version `version` of `slug`. */
+export function seriesFolderName(slug: string, version: number): string {
+  return `${slug}_v${version}`;
 }
 
 /** The default Minecraft saves directory for this platform. */
@@ -96,10 +152,24 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
 
   const channel =
     options.channel === undefined || options.channel === "" ? undefined : options.channel;
+  const series =
+    options.series === undefined || options.series === "" ? undefined : options.series;
+  if (series !== undefined && channel !== undefined) {
+    throw new Error("--series and --channel name the same thing two ways; pick one");
+  }
+  if (series !== undefined && options.replace === true) {
+    throw new Error("--series never replaces: each install is the next version");
+  }
+  const seriesVersion =
+    series === undefined
+      ? undefined
+      : nextSeriesVersion(await readdir(savesDir).catch(() => [] as string[]), series);
   const requested =
-    channel === undefined
-      ? path.basename(worldDir)
-      : `${path.basename(worldDir)}_${channel}`;
+    series !== undefined
+      ? seriesFolderName(series, seriesVersion as number)
+      : channel === undefined
+        ? path.basename(worldDir)
+        : `${path.basename(worldDir)}_${channel}`;
   const replace = options.replace === true;
   const folderName = replace ? requested : await freeName(savesDir, requested);
   const installedPath = path.join(savesDir, folderName);
@@ -128,7 +198,7 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
   await stampLevelDat(
     path.join(installedPath, "level.dat"),
     lastPlayed,
-    channel === undefined ? undefined : folderName,
+    channel === undefined && series === undefined ? undefined : folderName,
   );
 
   return {
@@ -136,6 +206,7 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
     folderName,
     savesDir,
     lastPlayed,
+    ...(seriesVersion === undefined ? {} : { seriesVersion }),
     renamed: folderName !== requested,
     replaced,
   };
